@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVABLE_AREA_EXPANDER__TYPES_HPP_
-#define DRIVABLE_AREA_EXPANDER__TYPES_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__TYPES_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__TYPES_HPP_
 
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 
 using point_t = tier4_autoware_utils::Point2d;
@@ -44,5 +44,5 @@ struct Footprint
 
   Footprint(polygon_t footprint_, point_t origin_) : footprint{footprint_}, origin{origin_} {}
 };
-}  // namespace drivable_area_expander
-#endif  // DRIVABLE_AREA_EXPANDER__TYPES_HPP_
+}  // namespace drivable_area_expansion
+#endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__TYPES_HPP_

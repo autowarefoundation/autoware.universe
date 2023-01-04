@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVABLE_AREA_EXPANDER__MAP_UTILS_HPP_
-#define DRIVABLE_AREA_EXPANDER__MAP_UTILS_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__MAP_UTILS_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__MAP_UTILS_HPP_
 
-#include "drivable_area_expander/types.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
 #include <lanelet2_core/LaneletMap.h>
 
 #include <string>
 #include <vector>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
 /// @brief Extract uncrossable linestrings from the lanelet map
 /// @param[in] lanelet_map lanelet map
@@ -36,6 +36,6 @@ multilinestring_t extractUncrossableLines(
 /// @param[in] types type strings to check
 /// @return true if the linestring has one of the given types
 bool hasTypes(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types);
-}  // namespace drivable_area_expander
+}  // namespace drivable_area_expansion
 
-#endif  // DRIVABLE_AREA_EXPANDER__MAP_UTILS_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__MAP_UTILS_HPP_

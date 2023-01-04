@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_HPP_
-#define DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_
 
-#include "drivable_area_expander/obstacles.hpp"
-#include "drivable_area_expander/parameters.hpp"
-#include "drivable_area_expander/types.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/footprints.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
 #include <string>
 #include <vector>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
+bool expandDrivableArea(
+  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
+  multilinestring_t uncrossable_lines,
+  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects);
 /// @brief filter the footprints such that it does not cross the given predicted paths and
 /// uncrossable lines
 /// @param[in] footprints ego footprints to filter
@@ -50,7 +54,8 @@ bool expandDrivableArea(
 /// @param[in] path the path for which to create a footprint
 /// @param[in] params expansion parameters defining how to create the footprint
 /// @return footprints of the path
-std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionParameters & params);
+std::vector<Footprint> createPathFootprints(
+  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params);
 
 /// @brief create footprints from the predicted paths of the given objects
 /// @param[in] predicted_objects predicted objects
@@ -58,13 +63,14 @@ std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionPa
 /// @return the objects' predicted path footprints
 std::vector<Footprint> createPredictedPathFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const ExpansionParameters & params);
+  const DrivableAreaExpansionParameters & params);
 
 /// @brief create lines around the path
 /// @param[in] path input path
 /// @param[in] max_expansion_distance maximum distance from the path
 /// @return line around the path with the given distance
-linestring_t createMaxExpansionLine(const Path & path, const double max_expansion_distance);
-}  // namespace drivable_area_expander
+linestring_t createMaxExpansionLine(
+  const PathWithLaneId & path, const double max_expansion_distance);
+}  // namespace drivable_area_expansion
 
-#endif  // DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_

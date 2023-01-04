@@ -14,6 +14,9 @@
 
 #include "behavior_path_planner/utilities.hpp"
 
+#include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
+
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -1203,6 +1206,13 @@ void generateDrivableArea(
     tier4_autoware_utils::calcDistance2d(path.right_bound.back(), right_goal_point) >
     overlap_threshold) {
     path.right_bound.push_back(right_goal_point);
+  }
+  const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
+  if (expansion_params.enabled) {
+    const auto uncrossable_lines = drivable_area_expansion::extractUncrossableLines(
+      *planner_data->route_handler->getLaneletMapPtr(), expansion_params.avoid_linestring_types);
+    drivable_area_expansion::expandDrivableArea(
+      path, expansion_params, uncrossable_lines, *planner_data->dynamic_object);
   }
 }
 

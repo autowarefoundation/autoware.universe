@@ -12,21 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "drivable_area_expander/obstacles.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/footprints.hpp"
 
-#include "drivable_area_expander/parameters.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/geometry.hpp>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
 #include <tf2/utils.h>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
 polygon_t rotatePolygon(const polygon_t & polygon, const double angle)
 {
@@ -56,22 +53,24 @@ Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t
 
 std::vector<Footprint> createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
-  const ExpansionParameters & params)
+  const DrivableAreaExpansionParameters & params)
 {
   std::vector<Footprint> footprints;
-  for (const auto & object : objects.objects) {
-    const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
-    const auto rear = -object.shape.dimensions.x / 2 - params.dynamic_objects_extra_rear_offset;
-    const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
-    const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
-    polygon_t base_footprint;
-    base_footprint.outer() = {
-      point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
-      point_t{front, left}};
-    for (const auto & path : object.kinematics.predicted_paths)
-      for (const auto & pose : path.path)
-        footprints.push_back(createFootprint(pose, base_footprint));
+  if (params.avoid_dynamic_objects) {
+    for (const auto & object : objects.objects) {
+      const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
+      const auto rear = -object.shape.dimensions.x / 2 - params.dynamic_objects_extra_rear_offset;
+      const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
+      const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
+      polygon_t base_footprint;
+      base_footprint.outer() = {
+        point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
+        point_t{front, left}};
+      for (const auto & path : object.kinematics.predicted_paths)
+        for (const auto & pose : path.path)
+          footprints.push_back(createFootprint(pose, base_footprint));
+    }
   }
   return footprints;
 }
-}  // namespace drivable_area_expander
+}  // namespace drivable_area_expansion

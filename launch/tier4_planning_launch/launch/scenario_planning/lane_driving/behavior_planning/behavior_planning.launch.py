@@ -182,7 +182,7 @@ def launch_setup(context, *args, **kwargs):
                 "~/input/occupancy_grid",
                 "/perception/occupancy_grid_map/map",
             ),
-            ("~/output/path", "unexpanded_path"),
+            ("~/output/path", "path"),
             ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
             (
                 "~/output/infrastructure_commands",
@@ -210,37 +210,6 @@ def launch_setup(context, *args, **kwargs):
             behavior_velocity_smoother_type_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
-    )
-
-    # TODO(Maxime): use same style as the other nodes
-    import os
-
-    from ament_index_python import get_package_share_directory
-
-    drivable_area_expander_param_path = os.path.join(
-        get_package_share_directory("drivable_area_expander"),
-        "config",
-        "drivable_area_expander.param.yaml",
-    )
-    with open(drivable_area_expander_param_path, "r") as f:
-        drivable_area_expander_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    from launch_ros.actions import Node
-
-    drivable_area_expander = Node(
-        package="drivable_area_expander",
-        name="drivable_area_expander",
-        executable="drivable_area_expander",
-        namespace="",
-        remappings=[
-            ("~/input/map", LaunchConfiguration("map_topic_name")),
-            ("~/input/path", "unexpanded_path"),
-            ("~/output/path", "path"),
-            ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
-        ],
-        parameters=[
-            drivable_area_expander_param,
-            vehicle_param,
-        ],
     )
 
     container = ComposableNodeContainer(
@@ -305,7 +274,6 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             container,
-            drivable_area_expander,
             load_compare_map,
             load_vector_map_inside_area_filter,
         ]

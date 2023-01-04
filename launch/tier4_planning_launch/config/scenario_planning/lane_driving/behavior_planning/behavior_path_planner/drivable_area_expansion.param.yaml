@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+    # Static expansion
     avoidance:
       drivable_area_right_bound_offset: 0.0
       drivable_area_left_bound_offset: 0.0
@@ -24,3 +25,25 @@
       drivable_area_right_bound_offset: 0.0
       drivable_area_left_bound_offset: 0.0
       drivable_area_types_to_skip: [road_border]
+
+    # Dynamic expansion by projecting the ego footprint along the path
+    dynamic_expansion:
+      enabled: true
+      ego:
+        extra_footprint_offset:
+          front: 5.5 # [m] extra length to add to the front of the ego footprint
+          rear: 0.5 # [m] extra length to add to the rear of the ego footprint
+          left: 0.5 # [m] extra length to add to the left of the ego footprint
+          right: 0.5 # [m] extra length to add to the rear of the ego footprint
+      dynamic_objects:
+        avoid: true # if true, the drivable area is not expanded in the predicted path of dynamic objects
+        extra_footprint_offset:
+          front: 0.5 # [m] extra length to add to the front of the ego footprint
+          rear: 0.5 # [m] extra length to add to the rear of the ego footprint
+          left: 0.5 # [m] extra length to add to the left of the ego footprint
+          right: 0.5 # [m] extra length to add to the rear of the ego footprint
+      max_distance: 0.0 # [m] maximum distance by which the drivable area can be expended
+      avoid_linestring_types: # linestring types in the lanelet maps that will not be crossed when expanding the drivable area
+        - guard_rail
+        - road_border
+      avoid_linestring_distance: 0.0 # [m] distance to keep between the drivable area and the linestrings to avoid

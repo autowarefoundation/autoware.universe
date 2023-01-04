@@ -12,38 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVABLE_AREA_EXPANDER__PARAMETERS_HPP_
-#define DRIVABLE_AREA_EXPANDER__PARAMETERS_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__PARAMETERS_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__PARAMETERS_HPP_
 
-#include <drivable_area_expander/types.hpp>
+#include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
+
 #include <rclcpp/node.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <string>
 #include <vector>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
 
-struct ExpansionParameters
+struct DrivableAreaExpansionParameters
 {
-  static constexpr auto MAX_EXP_DIST_PARAM = "expansion.max_distance";
-  static constexpr auto EGO_EXTRA_OFFSET_FRONT = "expansion.ego.extra_footprint_offset.front";
-  static constexpr auto EGO_EXTRA_OFFSET_REAR = "expansion.ego.extra_footprint_offset.rear";
-  static constexpr auto EGO_EXTRA_OFFSET_LEFT = "expansion.ego.extra_footprint_offset.left";
-  static constexpr auto EGO_EXTRA_OFFSET_RIGHT = "expansion.ego.extra_footprint_offset.right";
+  static constexpr auto ENABLED_PARAM = "dynamic_expansion.enabled";
+  static constexpr auto MAX_EXP_DIST_PARAM = "dynamic_expansion.max_distance";
+  static constexpr auto EGO_EXTRA_OFFSET_FRONT =
+    "dynamic_expansion.ego.extra_footprint_offset.front";
+  static constexpr auto EGO_EXTRA_OFFSET_REAR = "dynamic_expansion.ego.extra_footprint_offset.rear";
+  static constexpr auto EGO_EXTRA_OFFSET_LEFT = "dynamic_expansion.ego.extra_footprint_offset.left";
+  static constexpr auto EGO_EXTRA_OFFSET_RIGHT =
+    "dynamic_expansion.ego.extra_footprint_offset.right";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_FRONT =
-    "expansion.dynamic_objects.extra_footprint_offset.front";
+    "dynamic_expansion.dynamic_objects.extra_footprint_offset.front";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_REAR =
-    "expansion.dynamic_objects.extra_footprint_offset.rear";
+    "dynamic_expansion.dynamic_objects.extra_footprint_offset.rear";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_LEFT =
-    "expansion.dynamic_objects.extra_footprint_offset.left";
+    "dynamic_expansion.dynamic_objects.extra_footprint_offset.left";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_RIGHT =
-    "expansion.dynamic_objects.extra_footprint_offset.right";
-  static constexpr auto AVOID_DYN_OBJECTS_PARAM = "expansion.dynamic_objects.avoid";
-  static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "expansion.avoid_linestring_types";
-  static constexpr auto AVOID_LINESTRING_DIST_PARAM = "expansion.avoid_linestring_distance";
+    "dynamic_expansion.dynamic_objects.extra_footprint_offset.right";
+  static constexpr auto AVOID_DYN_OBJECTS_PARAM = "dynamic_expansion.dynamic_objects.avoid";
+  static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "dynamic_expansion.avoid_linestring_types";
+  static constexpr auto AVOID_LINESTRING_DIST_PARAM = "dynamic_expansion.avoid_linestring_distance";
 
+  bool enabled = false;
   double max_expansion_distance{};
   std::vector<std::string> avoid_linestring_types{};
   bool avoid_dynamic_objects{};
@@ -61,9 +66,12 @@ struct ExpansionParameters
   double dynamic_objects_extra_rear_offset;
   double dynamic_objects_extra_front_offset;
 
-  ExpansionParameters() = default;
-  explicit ExpansionParameters(rclcpp::Node & node)
+  DrivableAreaExpansionParameters() = default;
+  explicit DrivableAreaExpansionParameters(rclcpp::Node & node) { init(node); }
+
+  void init(rclcpp::Node & node)
   {
+    enabled = node.declare_parameter<bool>(ENABLED_PARAM);
     max_expansion_distance = node.declare_parameter<double>(MAX_EXP_DIST_PARAM);
     ego_extra_front_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_FRONT);
     ego_extra_rear_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_REAR);
@@ -90,32 +98,5 @@ struct ExpansionParameters
   }
 };
 
-struct PreprocessingParameters
-{
-  static constexpr auto DOWNSAMPLING_PARAM = "preprocessing.downsample_factor";
-  static constexpr auto BACKWARD_LENGTH_PARAM = "preprocessing.backward_length";
-  static constexpr auto FORWARD_LENGTH_PARAM = "preprocessing.forward_length";
-
-  int downsample_factor{};
-  double backward_length{};
-  double forward_length{};
-
-  PreprocessingParameters() = default;
-  explicit PreprocessingParameters(rclcpp::Node & node)
-  {
-    downsample_factor = node.declare_parameter<int>(DOWNSAMPLING_PARAM);
-    backward_length = node.declare_parameter<double>(BACKWARD_LENGTH_PARAM);
-    forward_length = node.declare_parameter<double>(FORWARD_LENGTH_PARAM);
-  }
-  bool updateDownsampleFactor(const int new_downsample_factor)
-  {
-    if (new_downsample_factor > 0) {
-      downsample_factor = new_downsample_factor;
-      return true;
-    }
-    return false;
-  }
-};
-
-}  // namespace drivable_area_expander
-#endif  // DRIVABLE_AREA_EXPANDER__PARAMETERS_HPP_
+}  // namespace drivable_area_expansion
+#endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__PARAMETERS_HPP_

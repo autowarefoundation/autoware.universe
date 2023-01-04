@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "drivable_area_expander/drivable_area_expander.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
 
-#include "drivable_area_expander/obstacles.hpp"
-#include "drivable_area_expander/parameters.hpp"
-#include "drivable_area_expander/types.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/footprints.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -25,8 +25,22 @@
 #include <boost/geometry/algorithms/transform.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
+bool expandDrivableArea(
+  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
+  multilinestring_t uncrossable_lines,
+  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects)
+{
+  auto path_footprints = createPathFootprints(path, params);
+  uncrossable_lines.push_back(createMaxExpansionLine(path, params.max_expansion_distance));
+  const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
+  const auto filtered_footprint = filterFootprint(
+    path_footprints, predicted_paths, uncrossable_lines, params.avoid_linestring_dist);
+
+  return expandDrivableArea(path.left_bound, path.right_bound, filtered_footprint);
+}
+
 multipolygon_t filterFootprint(
   const std::vector<Footprint> & footprints, const std::vector<Footprint> & predicted_paths,
   const multilinestring_t & uncrossable_lines, const double dist_from_uncrossable_lines)
@@ -147,7 +161,8 @@ bool expandDrivableArea(
   return true;
 }
 
-std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionParameters & params)
+std::vector<Footprint> createPathFootprints(
+  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params)
 {
   const auto left = params.ego_left_offset + params.ego_extra_left_offset;
   const auto right = params.ego_right_offset - params.ego_extra_right_offset;
@@ -160,28 +175,20 @@ std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionPa
   std::vector<Footprint> footprints;
   footprints.reserve(path.points.size());
   for (const auto & point : path.points)
-    footprints.push_back(createFootprint(point.pose, base_footprint));
+    footprints.push_back(createFootprint(point.point.pose, base_footprint));
   return footprints;
 }
 
-std::vector<Footprint> createPredictedPathFootprints(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const ExpansionParameters & params)
-{
-  if (params.avoid_dynamic_objects)
-    return createObjectFootprints(predicted_objects, params);
-  else
-    return {};
-}
-
-linestring_t createMaxExpansionLine(const Path & path, const double max_expansion_distance)
+linestring_t createMaxExpansionLine(
+  const PathWithLaneId & path, const double max_expansion_distance)
 {
   namespace strategy = boost::geometry::strategy::buffer;
   linestring_t max_expansion_line;
   if (max_expansion_distance > 0.0) {
     multipolygon_t polygons;
     linestring_t path_ls;
-    for (const auto & p : path.points) path_ls.push_back({p.pose.position.x, p.pose.position.y});
+    for (const auto & p : path.points)
+      path_ls.push_back({p.point.pose.position.x, p.point.pose.position.y});
     boost::geometry::buffer(
       path_ls, polygons, strategy::distance_symmetric<double>(max_expansion_distance),
       strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
@@ -194,4 +201,4 @@ linestring_t createMaxExpansionLine(const Path & path, const double max_expansio
   }
   return max_expansion_line;
 }
-}  // namespace drivable_area_expander
+}  // namespace drivable_area_expansion

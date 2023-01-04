@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVABLE_AREA_EXPANDER__OBSTACLES_HPP_
-#define DRIVABLE_AREA_EXPANDER__OBSTACLES_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__FOOTPRINTS_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__FOOTPRINTS_HPP_
 
-#include "drivable_area_expander/parameters.hpp"
-#include "drivable_area_expander/types.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-namespace drivable_area_expander
+namespace drivable_area_expansion
 {
 /// @brief rotate a polygon by some angle around (0,0)
 /// @param[in] polygon input polygon
@@ -63,6 +63,6 @@ Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t
 /// @return footprints of the object's predicted paths
 std::vector<Footprint> createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
-  const ExpansionParameters & params);
-}  // namespace drivable_area_expander
-#endif  // DRIVABLE_AREA_EXPANDER__OBSTACLES_HPP_
+  const DrivableAreaExpansionParameters & params);
+}  // namespace drivable_area_expansion
+#endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__FOOTPRINTS_HPP_
