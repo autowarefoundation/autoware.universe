@@ -344,9 +344,9 @@ private:
     path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
   }
 
-  boost::optional<double> getFeasibleDecelDistance(const double target_velocity) const;
+  double getFeasibleDecelDistance(const double target_velocity) const;
 
-  boost::optional<double> getMildDecelDistance(const double target_velocity) const;
+  double getMildDecelDistance(const double target_velocity) const;
 
   // ========= safety check ==============
 
