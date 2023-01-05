@@ -172,7 +172,8 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 
   // // send a request to map_loader
   auto result{pcd_loader_client_->async_send_request(
-    request, [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
+    request,
+    [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
 
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
