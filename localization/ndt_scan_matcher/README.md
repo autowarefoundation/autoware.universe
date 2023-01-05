@@ -176,6 +176,22 @@ Autoware supports dynamic map loading feature for `ndt_scan_matcher`. Using this
 
 Using the feature, `ndt_scan_matcher` can theoretically handle any large size maps in terms of memory usage. (Note that it is still possible that there exists a limitation due to other factors, e.g. floating-point error)
 
+### Additional interfaces
+#### Additional inputs
+| Name                                | Type                                            | Description                           |
+| ----------------------------------- | ----------------------------------------------- | ------------------------------------- |
+| `input_ekf_odom`          | `nav_msgs::msg::Odometry` | Vehicle localization results (used for map update decision) |
+
+#### Additional outputs
+| Name                                | Type                                            | Description                           |
+| ----------------------------------- | ----------------------------------------------- | ------------------------------------- |
+| `debug/loaded_pointcloud_map`          | `sensor_msgs::msg::PointCloud2` | pointcloud maps used for localization (for debug) |
+
+#### Additional client
+| Name                                | Type                                            | Description                           |
+| ----------------------------------- | ----------------------------------------------- | ------------------------------------- |
+| `client_map_loader`          | `autoware_map_msgs::srv::GetDifferentialPointCloudMap` | map loading client  |
+
 ### Parameters
 
 | Name                                  | Type   | Description                                                           |
