@@ -35,8 +35,10 @@ MapUpdateModule::MapUpdateModule(
   clock_(node->get_clock()),
   tf2_listener_module_(tf2_listener_module),
   state_ptr_(state_ptr),
-  dynamic_map_loading_update_distance_(node->declare_parameter<double>("dynamic_map_loading_update_distance")),
-  dynamic_map_loading_map_radius_(node->declare_parameter<double>("dynamic_map_loading_map_radius")),
+  dynamic_map_loading_update_distance_(
+    node->declare_parameter<double>("dynamic_map_loading_update_distance")),
+  dynamic_map_loading_map_radius_(
+    node->declare_parameter<double>("dynamic_map_loading_map_radius")),
   lidar_radius_(node->declare_parameter<double>("lidar_radius"))
 {
   initial_estimate_particles_num_ = node->declare_parameter<int>("initial_estimate_particles_num");
