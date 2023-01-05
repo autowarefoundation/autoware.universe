@@ -3159,6 +3159,10 @@ void AvoidanceModule::updateData()
   updateRegisteredObject(avoidance_data_.target_objects);
   compensateDetectionLost(avoidance_data_.target_objects, avoidance_data_.other_objects);
 
+  std::sort(
+    avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
+    [](auto a, auto b) { return a.longitudinal < b.longitudinal; });
+
   path_shifter_.setPath(avoidance_data_.reference_path);
 
   // update registered shift point for new reference path & remove past objects
