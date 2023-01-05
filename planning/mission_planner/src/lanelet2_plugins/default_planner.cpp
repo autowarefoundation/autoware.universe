@@ -107,13 +107,10 @@ double project_goal_to_map(
 namespace mission_planner::lanelet2
 {
 
-void DefaultPlanner::initialize(rclcpp::Node * node)
+void DefaultPlanner::initialize_common(rclcpp::Node * node)
 {
   is_graph_ready_ = false;
   node_ = node;
-  map_subscriber_ = node_->create_subscription<HADMapBin>(
-    "input/vector_map", rclcpp::QoS{10}.transient_local(),
-    std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   pub_goal_footprint_marker_ =
@@ -123,10 +120,17 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
   param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
 }
 
+void DefaultPlanner::initialize(rclcpp::Node * node)
+{
+  initialize_common(node);
+  map_subscriber_ = node_->create_subscription<HADMapBin>(
+    "input/vector_map", rclcpp::QoS{10}.transient_local(),
+    std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
+}
+
 void DefaultPlanner::initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg)
 {
-  is_graph_ready_ = false;
-  node_ = node;
+  initialize_common(node);
   map_callback(msg);
 }
 
@@ -272,6 +276,25 @@ bool DefaultPlanner::is_goal_valid(
   const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets)
 {
   const auto logger = node_->get_logger();
+
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
+
+  // check if goal is in shoulder lanelet
+  lanelet::Lanelet closest_shoulder_lanelet;
+  if (lanelet::utils::query::getClosestLanelet(
+        shoulder_lanelets_, goal, &closest_shoulder_lanelet)) {
+    if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
+      const auto lane_yaw =
+        lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
+      const auto goal_yaw = tf2::getYaw(goal.orientation);
+      const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
+      const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
+      if (std::abs(angle_diff) < th_angle) {
+        return true;
+      }
+    }
+  }
+
   lanelet::Lanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &closest_lanelet)) {
     return false;
@@ -298,8 +321,6 @@ bool DefaultPlanner::is_goal_valid(
     return false;
   }
 
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
-
   if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
     const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
@@ -323,23 +344,6 @@ bool DefaultPlanner::is_goal_valid(
     return true;
   }
 
-  // check if goal is in shoulder lanelet
-  lanelet::Lanelet closest_shoulder_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(
-        shoulder_lanelets_, goal, &closest_shoulder_lanelet)) {
-    return false;
-  }
-  // check if goal pose is in shoulder lane
-  if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
-    const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
-
-    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
-    if (std::abs(angle_diff) < th_angle) {
-      return true;
-    }
-  }
   return false;
 }
 

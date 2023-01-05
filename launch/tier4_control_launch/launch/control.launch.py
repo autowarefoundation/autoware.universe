@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -33,76 +31,38 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
-    with open(vehicle_info_param_path, "r") as f:
+    with open(LaunchConfiguration("vehicle_param_file").perform(context), "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    lat_controller_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "trajectory_follower",
-        "lateral_controller.param.yaml",
-    )
-    with open(lat_controller_param_path, "r") as f:
-        lat_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    nearest_search_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "common",
-        "nearest_search.param.yaml",
-    )
-    with open(nearest_search_param_path, "r") as f:
+    with open(LaunchConfiguration("nearest_search_param_path").perform(context), "r") as f:
         nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    lon_controller_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "trajectory_follower",
-        "longitudinal_controller.param.yaml",
-    )
-    with open(lon_controller_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("trajectory_follower_node_param_path").perform(context), "r"
+    ) as f:
+        trajectory_follower_node_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("lat_controller_param_path").perform(context), "r") as f:
+        lat_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("lon_controller_param_path").perform(context), "r") as f:
         lon_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    vehicle_cmd_gate_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "vehicle_cmd_gate",
-        "vehicle_cmd_gate.param.yaml",
-    )
-    with open(vehicle_cmd_gate_param_path, "r") as f:
+    with open(LaunchConfiguration("vehicle_cmd_gate_param_path").perform(context), "r") as f:
         vehicle_cmd_gate_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    lane_departure_checker_param_path = LaunchConfiguration(
-        "lane_departure_checker_param_path"
-    ).perform(context)
-    with open(lane_departure_checker_param_path, "r") as f:
+    with open(LaunchConfiguration("lane_departure_checker_param_path").perform(context), "r") as f:
         lane_departure_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    operation_mode_transition_manager_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "operation_mode_transition_manager",
-        "operation_mode_transition_manager.param.yaml",
-    )
-    with open(operation_mode_transition_manager_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context), "r"
+    ) as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    shift_decider_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "shift_decider",
-        "shift_decider.param.yaml",
-    )
-    with open(shift_decider_param_path, "r") as f:
+    with open(LaunchConfiguration("shift_decider_param_path").perform(context), "r") as f:
         shift_decider_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    obstacle_collision_checker_param_path = os.path.join(
-        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
-        "obstacle_collision_checker",
-        "obstacle_collision_checker.param.yaml",
-    )
-
-    with open(obstacle_collision_checker_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("obstacle_collision_checker_param_path").perform(context), "r"
+    ) as f:
         obstacle_collision_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     controller_component = ComposableNode(
-        package="trajectory_follower_nodes",
-        plugin="autoware::motion::control::trajectory_follower_nodes::Controller",
+        package="trajectory_follower_node",
+        plugin="autoware::motion::control::trajectory_follower_node::Controller",
         name="controller_node_exe",
         namespace="trajectory_follower",
         remappings=[
@@ -118,10 +78,10 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             {
-                "ctrl_period": 0.03,
                 "lateral_controller_mode": LaunchConfiguration("lateral_controller_mode"),
             },
             nearest_search_param,
+            trajectory_follower_node_param,
             lon_controller_param,
             lat_controller_param,
             vehicle_info_param,
@@ -206,13 +166,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             vehicle_cmd_gate_param,
             vehicle_info_param,
-            {
-                "use_emergency_handling": LaunchConfiguration("use_emergency_handling"),
-                "check_external_emergency_heartbeat": LaunchConfiguration(
-                    "check_external_emergency_heartbeat"
-                ),
-                "use_start_request": LaunchConfiguration("use_start_request"),
-            },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -235,7 +188,7 @@ def launch_setup(context, *args, **kwargs):
             ("control_mode_request", "/control/control_mode_request"),
         ],
         parameters=[
-            nearest_search_param_path,
+            nearest_search_param,
             operation_mode_transition_manager_param,
             vehicle_info_param,
         ],
@@ -249,7 +202,10 @@ def launch_setup(context, *args, **kwargs):
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
             ("target_container", "/control/control_container"),
-            ("initial_selector_mode", LaunchConfiguration("initial_selector_mode")),
+            (
+                "external_cmd_selector_param_path",
+                LaunchConfiguration("external_cmd_selector_param_path"),
+            ),
         ],
     )
 
@@ -328,58 +284,24 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    # parameter
-    add_launch_arg(
-        "tier4_control_launch_param_path",
-        [
-            FindPackageShare("tier4_control_launch"),
-            "/config",
-        ],
-        "tier4_control_launch parameter path",
-    )
-
-    # lateral controller
-    add_launch_arg(
-        "lateral_controller_mode",
-        "mpc_follower",
-        "lateral controller mode: `mpc_follower` or `pure_pursuit`",
-    )
-
-    # longitudinal controller mode
-    add_launch_arg(
-        "longitudinal_controller_mode",
-        "pid",
-        "longitudinal controller mode: `pid`",
-    )
-
-    add_launch_arg(
-        "vehicle_info_param_file",
-        [
-            FindPackageShare("vehicle_info_util"),
-            "/config/vehicle_info.param.yaml",
-        ],
-        "path to the parameter file of vehicle information",
-    )
-
-    add_launch_arg(
-        "lane_departure_checker_param_path",
-        [FindPackageShare("lane_departure_checker"), "/config/lane_departure_checker.param.yaml"],
-    )
-
-    # obstacle collision checker
-    add_launch_arg("enable_obstacle_collision_checker", "false", "use obstacle collision checker")
-
-    # velocity controller
-    add_launch_arg("show_debug_info", "false", "show debug information")
-    add_launch_arg("enable_pub_debug", "true", "enable to publish debug information")
-
-    # vehicle cmd gate
-    add_launch_arg("use_emergency_handling", "false", "use emergency handling")
-    add_launch_arg("check_external_emergency_heartbeat", "true", "use external emergency stop")
-    add_launch_arg("use_start_request", "false", "use start request service")
-
-    # external cmd selector
-    add_launch_arg("initial_selector_mode", "remote", "local or remote")
+    # option
+    add_launch_arg("vehicle_param_file")
+    add_launch_arg("vehicle_id")
+    add_launch_arg("enable_obstacle_collision_checker")
+    add_launch_arg("lateral_controller_mode")
+    add_launch_arg("longitudinal_controller_mode")
+    # common param path
+    add_launch_arg("nearest_search_param_path")
+    # package param path
+    add_launch_arg("trajectory_follower_node_param_path")
+    add_launch_arg("lat_controller_param_path")
+    add_launch_arg("lon_controller_param_path")
+    add_launch_arg("vehicle_cmd_gate_param_path")
+    add_launch_arg("lane_departure_checker_param_path")
+    add_launch_arg("operation_mode_transition_manager_param_path")
+    add_launch_arg("shift_decider_param_path")
+    add_launch_arg("obstacle_collision_checker_param_path")
+    add_launch_arg("external_cmd_selector_param_path")
 
     # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")

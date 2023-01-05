@@ -31,6 +31,7 @@
 
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
+
 namespace behavior_path_planner
 {
 PullOutModule::PullOutModule(
@@ -100,6 +101,7 @@ void PullOutModule::onExit()
   clearWaitingApproval();
   removeRTCStatus();
   steering_factor_interface_ptr_->clearSteeringFactors();
+  resetPathCandidate();
   current_state_ = BT::NodeStatus::SUCCESS;
   RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }
@@ -165,12 +167,14 @@ BehaviorModuleOutput PullOutModule::plan()
 {
   if (isWaitingApproval()) {
     clearWaitingApproval();
+    resetPathCandidate();
     // save current_pose when approved for start_point of turn_signal for backward driving
     last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_pose->pose);
   }
 
   BehaviorModuleOutput output;
   if (!status_.is_safe) {
+    RCLCPP_INFO(getLogger(), "not found safe path");
     return output;
   }
 
@@ -295,7 +299,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   output.path = std::make_shared<PathWithLaneId>(stop_path);
   output.turn_signal_info = calcTurnSignalInfo();
-  output.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
+  path_candidate_ = std::make_shared<PathWithLaneId>(candidate_path);
 
   const uint16_t steering_factor_direction = std::invoke([&output]() {
     if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
@@ -368,6 +372,7 @@ void PullOutModule::planWithPriorityOnEfficientPath(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
 {
   status_.is_safe = false;
+  status_.planner_type = PlannerType::NONE;
 
   // plan with each planner
   for (const auto & planner : pull_out_planners_) {
@@ -399,6 +404,7 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
 {
   status_.is_safe = false;
+  status_.planner_type = PlannerType::NONE;
 
   for (size_t i = 0; i < start_pose_candidates.size(); ++i) {
     // pull out start pose is current_pose
@@ -424,6 +430,33 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
     // pull out start pose is not current_pose(index > 0), so need back.
     status_.back_finished = false;
   }
+}
+
+void PullOutModule::generateStopPath()
+{
+  const auto & current_pose = planner_data_->self_pose->pose;
+  constexpr double dummy_path_distance = 1.0;
+  const auto & moved_pose = calcOffsetPose(current_pose, dummy_path_distance, 0, 0);
+
+  // convert Pose to PathPointWithLaneId with 0 velocity.
+  auto toPathPointWithLaneId = [this](const Pose & pose) {
+    PathPointWithLaneId p{};
+    p.point.pose = pose;
+    p.point.longitudinal_velocity_mps = 0.0;
+    lanelet::Lanelet closest_shoulder_lanelet;
+    lanelet::utils::query::getClosestLanelet(
+      planner_data_->route_handler->getShoulderLanelets(), pose, &closest_shoulder_lanelet);
+    p.lane_ids.push_back(closest_shoulder_lanelet.id());
+    return p;
+  };
+
+  PathWithLaneId path{};
+  path.points.push_back(toPathPointWithLaneId(current_pose));
+  path.points.push_back(toPathPointWithLaneId(moved_pose));
+
+  status_.pull_out_path.partial_paths.push_back(path);
+  status_.pull_out_path.start_pose = current_pose;
+  status_.pull_out_path.end_pose = current_pose;
 }
 
 void PullOutModule::updatePullOutStatus()
@@ -460,12 +493,14 @@ void PullOutModule::updatePullOutStatus()
       getLogger(),
       "search_priority should be efficient_path or short_back_distance, but %s is given.",
       parameters_.search_priority.c_str());
+    throw std::domain_error("[pull_out] invalid search_priority");
   }
 
   if (!status_.is_safe) {
-    RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Not found safe pull out path");
-    status_.is_safe = false;
-    return;
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Not found safe pull out path, generate stop path");
+    status_.back_finished = true;  // no need to drive backward
+    generateStopPath();
   }
 
   checkBackFinished();
@@ -548,8 +583,7 @@ bool PullOutModule::hasFinishedPullOut() const
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.end_pose);
 
   // has passed pull out end point
-  return arclength_current.length - arclength_pull_out_end.length >
-         parameters_.pull_out_finish_judge_buffer;
+  return arclength_current.length - arclength_pull_out_end.length > 0.0;
 }
 
 void PullOutModule::checkBackFinished()
@@ -631,7 +665,7 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
   // pull out path does not overlap
   const double distance_from_end = motion_utils::calcSignedArcLength(
     path.points, status_.pull_out_path.end_pose.position, current_pose.position);
-  if (distance_from_end < parameters_.pull_out_finish_judge_buffer) {
+  if (distance_from_end < 0.0) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;

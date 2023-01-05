@@ -39,17 +39,10 @@ using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
 using tier4_autoware_utils::pose2transform;
+using tier4_autoware_utils::toHexString;
 
 namespace
 {
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-  }
-  return ss.str();
-}
 geometry_msgs::msg::Point32 createPoint32(const double x, const double y, const double z)
 {
   geometry_msgs::msg::Point32 p;
@@ -453,7 +446,7 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
   const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
   const auto margin = stop_at_stop_line ? stop_line_distance + base_link2front
                                         : planner_param_.stop_margin + base_link2front;
-  const auto stop_pose = calcLongitudinalOffsetPose(sparse_resample_path.points, p_stop, -margin);
+  const auto stop_pose = calcLongitudinalOffsetPose(ego_path.points, p_stop, -margin);
 
   if (!stop_pose) {
     return {};

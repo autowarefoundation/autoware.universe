@@ -47,6 +47,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::util
@@ -67,6 +68,7 @@ using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
 using route_handler::RouteHandler;
+using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
@@ -87,7 +89,7 @@ struct ProjectedDistancePoint
   double distance{0.0};
 };
 
-template <typename Pythagoras = bg::strategy::distance::pythagoras<> >
+template <typename Pythagoras = bg::strategy::distance::pythagoras<>>
 ProjectedDistancePoint pointToSegment(
   const Point2d & reference_point, const Point2d & point_from_ego,
   const Point2d & point_from_object);
@@ -200,6 +202,9 @@ bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygo
 bool calcObjectPolygon(
   const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
 
+bool calcObjectPolygon(
+  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
+
 PredictedPath resamplePredictedPath(
   const PredictedPath & input_path, const double resolution, const double duration);
 
@@ -259,13 +264,19 @@ std::vector<size_t> filterObjectIndicesByLanelets(
   const double start_arc_length, const double end_arc_length);
 
 /**
- * @brief Get index of the obstacles inside the lanelets
- * @return Indices corresponding to the obstacle inside the lanelets
+ * @brief Separate index of the obstacles into two part based on whether the object is within
+ * lanelet.
+ * @return Indices of objects pair. first objects are in the lanelet, and second others are out of
+ * lanelet.
  */
-std::vector<size_t> filterObjectIndicesByLanelets(
+std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
-PredictedObjects filterObjectsByLanelets(
+/**
+ * @brief Separate the objects into two part based on whether the object is within lanelet.
+ * @return Objects pair. first objects are in the lanelet, and second others are out of lanelet.
+ */
+std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
 std::vector<size_t> filterObjectsIndicesByPath(
@@ -294,9 +305,9 @@ std::vector<DrivableLanes> cutOverlappedLanes(
 
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data);
+  const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
 
-lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
+lanelet::ConstLineStrings3d getMaximumDrivableArea(
   const std::shared_ptr<const PlannerData> & planner_data);
 
 /**
@@ -358,6 +369,9 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
 
 double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
+std::optional<double> getSignedDistanceFromShoulderLeftBoundary(
+  const lanelet::ConstLanelets & shoulder_lanelets, const LinearRing2d & footprint,
+  const Pose & vehicle_pose);
 double getSignedDistanceFromRightBoundary(
   const lanelet::ConstLanelets & lanelets, const Pose & pose);
 
@@ -467,7 +481,7 @@ bool isSafeInLaneletCollisionCheck(
   const double check_start_time, const double check_end_time, const double check_time_resolution,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
-  const double rear_decel, CollisionCheckDebug & debug);
+  const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
@@ -478,11 +492,12 @@ bool isSafeInFreeSpaceCollisionCheck(
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
-double calcTotalLaneChangeDistanceWithBuffer(const BehaviorPathPlannerParameters & common_param);
+double calcTotalLaneChangeDistance(
+  const BehaviorPathPlannerParameters & common_param, const bool include_buffer = true);
 
 double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
-  const double length_to_intersection);
+  const double length_to_intersection = 0.0);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
