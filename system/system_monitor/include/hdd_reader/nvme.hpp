@@ -21,6 +21,7 @@
 
 #include <linux/nvme_ioctl.h>
 #include <sys/ioctl.h>
+#include <syslog.h>
 
 #include <string>
 

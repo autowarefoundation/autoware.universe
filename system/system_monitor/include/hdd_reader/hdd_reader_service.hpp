@@ -70,7 +70,8 @@ protected:
    * @param [out] out boost::archive::text_oarchive object
    * @return 0 on success, otherwise error
    */
-  int get_hdd_information(boost::archive::text_iarchive & in, boost::archive::text_oarchive & out);
+  static int get_hdd_information(
+    boost::archive::text_iarchive & in, boost::archive::text_oarchive & out);
 
   /**
    * @brief unmount device with lazy option

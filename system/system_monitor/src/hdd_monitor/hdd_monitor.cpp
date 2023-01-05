@@ -39,6 +39,7 @@ namespace bp = boost::process;
 HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
 : Node("hdd_monitor", options),
   updater_(this),
+  hostname_(),
   socket_path_(declare_parameter("socket_path", hdd_reader_service::socket_path)),
   last_hdd_stat_update_time_{0, 0, this->get_clock()->get_clock_type()}
 {
@@ -242,7 +243,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   int hdd_index = 0;
   int whole_level = DiagStatus::OK;
-  std::string error_str = "";
+  std::string error_str;
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
     if (!hdd_connected_flags_[itr->first]) {
@@ -293,7 +294,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     std::string line;
     int index = 0;
     std::vector<std::string> list;
-    int avail;
+    int avail = 0;
 
     while (std::getline(is_out, line) && !line.empty()) {
       // Skip header
@@ -694,16 +695,19 @@ void HddMonitor::start_hdd_transfer_measurement()
   for (auto & hdd_stat : hdd_stats_) {
     hdd_stat.second.error_str = "";
 
+    // Skip if device is disconnected
     if (!hdd_connected_flags_[hdd_stat.first]) {
       continue;
     }
 
-    SysfsDevStat sysfs_dev_stat{};
-    if (read_sysfs_device_stat(hdd_stat.second.device, sysfs_dev_stat)) {
-      hdd_stat.second.error_str = "stat file read error";
+    DeviceStatistics statistics{};
+    int ret = get_device_statistics(hdd_stat.second.device, statistics);
+    if (ret != EXIT_SUCCESS) {
+      hdd_stat.second.error_str = fmt::format("Failed to open stat. {}}", strerror(ret));
       continue;
     }
-    hdd_stat.second.last_sysfs_dev_stat = sysfs_dev_stat;
+
+    hdd_stat.second.last_statistics = statistics;
   }
 
   last_hdd_stat_update_time_ = this->now();
@@ -716,30 +720,32 @@ void HddMonitor::update_hdd_statistics()
   for (auto & hdd_stat : hdd_stats_) {
     hdd_stat.second.error_str = "";
 
+    // Skip if device is disconnected
     if (!hdd_connected_flags_[hdd_stat.first]) {
       continue;
     }
 
-    SysfsDevStat sysfs_dev_stat{};
-    if (read_sysfs_device_stat(hdd_stat.second.device, sysfs_dev_stat)) {
-      hdd_stat.second.error_str = "stat file read error";
+    DeviceStatistics statistics{};
+    int ret = get_device_statistics(hdd_stat.second.device, statistics);
+    if (ret != EXIT_SUCCESS) {
+      hdd_stat.second.error_str = fmt::format("Failed to open stat. {}}", strerror(ret));
       continue;
     }
 
-    SysfsDevStat & last_sysfs_dev_stat = hdd_stat.second.last_sysfs_dev_stat;
+    DeviceStatistics & last_statistics = hdd_stat.second.last_statistics;
 
     hdd_stat.second.read_data_rate_MBs = get_increase_sysfs_device_stat_value_per_sec(
-      sysfs_dev_stat.rd_sectors, last_sysfs_dev_stat.rd_sectors, duration_sec);
+      statistics.read_sectors, last_statistics.read_sectors, duration_sec);
     hdd_stat.second.read_data_rate_MBs /= 2048;
     hdd_stat.second.write_data_rate_MBs = get_increase_sysfs_device_stat_value_per_sec(
-      sysfs_dev_stat.wr_sectors, last_sysfs_dev_stat.wr_sectors, duration_sec);
+      statistics.write_sectors, last_statistics.write_sectors, duration_sec);
     hdd_stat.second.write_data_rate_MBs /= 2048;
     hdd_stat.second.read_iops = get_increase_sysfs_device_stat_value_per_sec(
-      sysfs_dev_stat.rd_ios, last_sysfs_dev_stat.rd_ios, duration_sec);
+      statistics.read_ios, last_statistics.read_ios, duration_sec);
     hdd_stat.second.write_iops = get_increase_sysfs_device_stat_value_per_sec(
-      sysfs_dev_stat.wr_ios, last_sysfs_dev_stat.wr_ios, duration_sec);
+      statistics.write_ios, last_statistics.write_ios, duration_sec);
 
-    hdd_stat.second.last_sysfs_dev_stat = sysfs_dev_stat;
+    hdd_stat.second.last_statistics = statistics;
   }
 
   last_hdd_stat_update_time_ = this->now();
@@ -754,36 +760,48 @@ double HddMonitor::get_increase_sysfs_device_stat_value_per_sec(
   return 0.0;
 }
 
-int HddMonitor::read_sysfs_device_stat(const std::string & device, SysfsDevStat & sysfs_dev_stat)
+int HddMonitor::get_device_statistics(const std::string & device, DeviceStatistics & statistics)
 {
-  int ret = -1;
-  unsigned int ios_pgr, tot_ticks, rq_ticks, wr_ticks;
-  uint64_t rd_ios, rd_merges_or_rd_sec, wr_ios, wr_merges;
-  uint64_t rd_sec_or_wr_ios, wr_sec, rd_ticks_or_wr_sec;
-  uint64_t dc_ios, dc_merges, dc_sec, dc_ticks;
+  uint64_t read_ios = 0;           // Number of read I/Os processed
+  uint64_t read_merges = 0;        // Number of read I/Os merged with in-queue I/O
+  uint64_t read_sectors = 0;       // Number of sectors read
+  uint64_t read_ticks = 0;         // Total wait time for read requests
+  uint64_t write_ios = 0;          // Number of write I/Os processed
+  uint64_t write_merges = 0;       // Number of write I/Os merged with in-queue I/O
+  uint64_t write_sectors = 0;      // Number of sectors written
+  unsigned int write_ticks = 0;    // Total wait time for write requests
+  unsigned int in_flight = 0;      // Number of I/Os currently in flight
+  unsigned int io_ticks = 0;       // Total time this block device has been active
+  unsigned int time_in_queue = 0;  // Total wait time for all requests
+  uint64_t discard_ios = 0;        // Number of discard I/Os processed
+  uint64_t discard_merges = 0;     // Number of discard I/Os merged with in-queue I/O
+  uint64_t discard_sectors = 0;    // Number of sectors discarded
+  uint64_t discard_ticks = 0;      // Total wait time for discard requests
 
-  std::string filename("/sys/block/");
-  filename += device + "/stat";
-  FILE * fp = fopen(filename.c_str(), "r");
-  if (fp == nullptr) {
-    return ret;
+  std::ifstream file(fmt::format("/sys/block/{}/stat", device), std::ios::in);
+  if (file.fail()) {
+    RCLCPP_ERROR(
+      get_logger(), "Failed to open statistics of %s. %s", device.c_str(), strerror(errno));
+    return errno;
   }
 
-  int i = fscanf(
-    fp, "%lu %lu %lu %lu %lu %lu %lu %u %u %u %u %lu %lu %lu %lu", &rd_ios, &rd_merges_or_rd_sec,
-    &rd_sec_or_wr_ios, &rd_ticks_or_wr_sec, &wr_ios, &wr_merges, &wr_sec, &wr_ticks, &ios_pgr,
-    &tot_ticks, &rq_ticks, &dc_ios, &dc_merges, &dc_sec, &dc_ticks);
+  std::string line;
+  getline(file, line);
+  int scanned = sscanf(
+    line.data(), "%lu %lu %lu %lu %lu %lu %lu %u %u %u %u %lu %lu %lu %lu", &read_ios, &read_merges,
+    &read_sectors, &read_ticks, &write_ios, &write_merges, &write_sectors, &write_ticks, &in_flight,
+    &io_ticks, &time_in_queue, &discard_ios, &discard_merges, &discard_sectors, &discard_ticks);
 
-  if (i >= 7) {
-    sysfs_dev_stat.rd_ios = rd_ios;
-    sysfs_dev_stat.rd_sectors = rd_sec_or_wr_ios;
-    sysfs_dev_stat.wr_ios = wr_ios;
-    sysfs_dev_stat.wr_sectors = wr_sec;
-    ret = 0;
+  if (scanned < 7) {
+    return EIO;
   }
 
-  fclose(fp);
-  return ret;
+  statistics.read_ios = read_ios;
+  statistics.read_sectors = read_sectors;
+  statistics.write_ios = write_ios;
+  statistics.write_sectors = write_sectors;
+
+  return EXIT_SUCCESS;
 }
 
 bool HddMonitor::connect_service()

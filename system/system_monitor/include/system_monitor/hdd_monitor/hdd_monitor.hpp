@@ -59,14 +59,14 @@ struct HddParam
 };
 
 /**
- * @brief Statistics of sysfs device
+ * @brief Statistics of block device
  */
-struct SysfsDevStat
+struct DeviceStatistics
 {
-  uint64_t rd_ios;      //!< @brief Number of read operations issued to the device
-  uint64_t rd_sectors;  //!< @brief Number of sectors read
-  uint64_t wr_ios;      //!< @brief Number of write operations issued to the device
-  uint64_t wr_sectors;  //!< @brief Number of sectors written
+  uint64_t read_ios;       //!< @brief Number of read I/Os processed
+  uint64_t read_sectors;   //!< @brief Number of sectors read
+  uint64_t write_ios;      //!< @brief Number of write I/Os processed
+  uint64_t write_sectors;  //!< @brief Number of sectors written
 };
 
 /**
@@ -80,7 +80,7 @@ struct HddStat
   float write_data_rate_MBs;         //!< @brief Data rate of write (MB/s)
   float read_iops;                   //!< @brief IOPS of read
   float write_iops;                  //!< @brief IOPS of write
-  SysfsDevStat last_sysfs_dev_stat;  //!< @brief Last statistics of sysfs device
+  DeviceStatistics last_statistics;  //!< @brief Last statistics of device
 };
 
 /**
@@ -255,12 +255,12 @@ protected:
     uint64_t cur_val, uint64_t last_val, double duration_sec);
 
   /**
-   * @brief Read stats for current whole device using /sys/block/ directory
+   * @brief Get statistics about the state of block device
    * @param [in] device Device name
-   * @param [out] sysfs_dev_stat Statistics of sysfs device
-   * @return result of success or failure
+   * @param [out] statistics Statistics of block device
+   * @return 0 on success, otherwise error
    */
-  static int read_sysfs_device_stat(const std::string & device, SysfsDevStat & sysfs_dev_stat);
+  int get_device_statistics(const std::string & device, DeviceStatistics & statistics);
 
   /**
    * @brief Connect to hdd-reader service

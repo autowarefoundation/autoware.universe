@@ -22,8 +22,6 @@
 #include <fmt/format.h>
 #include <syslog.h>
 
-namespace process = boost::process;
-
 namespace hdd_reader_service
 {
 
