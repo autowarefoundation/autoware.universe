@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     # Use dynamic map loading
-    use_dynamic_map_loading: false
+    use_dynamic_map_loading: true
 
     # Vehicle reference frame
     base_frame: "base_link"
