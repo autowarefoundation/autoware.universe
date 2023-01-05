@@ -85,7 +85,6 @@ private:
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_odom_sub_;
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
   rclcpp::CallbackGroup::SharedPtr map_callback_group_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
@@ -97,10 +96,6 @@ private:
   std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 
   int initial_estimate_particles_num_;
-  std::mutex pcd_loader_client_mutex_;
-  std::mutex initial_pose_pcd_loader_client_mutex_;
-  std::condition_variable condition_;
-  bool value_ready_ = false;
   geometry_msgs::msg::Point::SharedPtr last_update_position_ptr_;
   double dynamic_map_loading_update_distance_;
   double dynamic_map_loading_map_radius_;
