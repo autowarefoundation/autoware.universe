@@ -4,6 +4,8 @@
 #include <pcdless_common/color.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
+#include <geometry_msgs/msg/polygon.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pcdless::ll2_decomposer
@@ -60,17 +62,22 @@ void print_attr(const lanelet::LaneletMapPtr & lanelet_map)
   }
 }
 
-pcl::PointCloud<pcl::PointXYZ> convert_polygon_to_xyz(const lanelet::PolygonLayer & polygons)
+pcl::PointCloud<pcl::PointXYZL> convert_polygon_to_xyz(const lanelet::PolygonLayer & polygons)
 {
-  pcl::PointCloud<pcl::PointXYZ> cloud;
+  pcl::PointCloud<pcl::PointXYZL> cloud;
   int index = 0;
+
   for (const lanelet::ConstPolygon3d & polygon : polygons) {
+    if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
+    if (attr.value() != "pcdless_init_area") continue;
     for (const lanelet::ConstPoint3d & p : polygon) {
-      pcl::PointXYZ xyz;
-      xyz.x = p.x();
-      xyz.y = p.y();
-      xyz.z = p.z();
-      cloud.push_back(xyz);
+      pcl::PointXYZL xyzl;
+      xyzl.x = p.x();
+      xyzl.y = p.y();
+      xyzl.z = p.z();
+      xyzl.label = index;
+      cloud.push_back(xyzl);
     }
     index++;
   }
@@ -90,7 +97,7 @@ void Ll2Decomposer::on_map(const HADMapBin & msg)
   auto tmp2 = extract_specified_line_string(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = split_line_strings(tmp1);
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = split_line_strings(tmp2);
-  pcl::PointCloud<pcl::PointXYZ> ll2_polygon = convert_polygon_to_xyz(lanelet_map->polygonLayer);
+  pcl::PointCloud<pcl::PointXYZL> ll2_polygon = convert_polygon_to_xyz(lanelet_map->polygonLayer);
 
   publish_additional_marker(lanelet_map);
 
@@ -206,13 +213,17 @@ Ll2Decomposer::MarkerArray Ll2Decomposer::make_polygon_marker_msg(
     marker.ns = ns;
     marker.id = id++;
 
-    for (const lanelet::ConstPoint3d & p : polygon) {
+    auto gen_point = [](const lanelet::ConstPoint3d & p) -> geometry_msgs::msg::Point {
       geometry_msgs::msg::Point gp;
       gp.x = p.x();
       gp.y = p.y();
       gp.z = p.z();
-      marker.points.push_back(gp);
-    }
+      return gp;
+    };
+
+    for (const lanelet::ConstPoint3d & p : polygon) marker.points.push_back(gen_point(p));
+    marker.points.push_back(gen_point(polygon.front()));
+
     marker_array.markers.push_back(marker);
   }
   return marker_array;
@@ -223,7 +234,8 @@ void Ll2Decomposer::publish_additional_marker(const lanelet::LaneletMapPtr & lan
   auto marker1 =
     make_sign_marker_msg(lanelet_map->lineStringLayer, sign_board_labels_, "sign_board");
   auto marker2 = make_sign_marker_msg(lanelet_map->lineStringLayer, {"virtual"}, "virtual");
-  auto marker3 = make_polygon_marker_msg(lanelet_map->polygonLayer, {"polygon"}, "unmapped");
+  auto marker3 =
+    make_polygon_marker_msg(lanelet_map->polygonLayer, {"pcdless_init_area"}, "polygon");
 
   std::copy(marker2.markers.begin(), marker2.markers.end(), std::back_inserter(marker1.markers));
   std::copy(marker3.markers.begin(), marker3.markers.end(), std::back_inserter(marker1.markers));

@@ -32,6 +32,8 @@ private:
   std::set<std::string> road_marking_labels_;
   std::set<std::string> sign_board_labels_;
 
+  void on_map(const HADMapBin & msg);
+
   pcl::PointNormal to_point_normal(
     const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to) const;
 
@@ -43,12 +45,9 @@ private:
   lanelet::ConstPolygons3d extract_specified_polygon(
     const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & visible_labels);
 
-  void on_map(const HADMapBin & msg);
-
   MarkerArray make_sign_marker_msg(
     const lanelet::LineStringLayer & line_string_layer, const std::set<std::string> & labels,
     const std::string & ns);
-
   MarkerArray make_polygon_marker_msg(
     const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & labels,
     const std::string & ns);
