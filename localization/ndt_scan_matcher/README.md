@@ -171,20 +171,22 @@ The color of the trajectory indicates the error (meter) from the reference traje
 <img src="./media/trajectory_without_regularization.png" alt="drawing" width="300"/> <img src="./media/trajectory_with_regularization.png" alt="drawing" width="300"/>
 
 ## Dynamic map loading
+
 Autoware supports dynamic map loading feature for `ndt_scan_matcher`. Using this feature, NDT dynamically requests for the surrounding pointcloud map to `pointcloud_map_loader`, and then receive and preprocess the map in an online fashion.
 
 Using the feature, `ndt_scan_matcher` can theoretically handle any large size maps in terms of memory usage. (Note that it is still possible that there exists a limitation due to other factors, e.g. floating-point error)
 
 ### Parameters
 
-| Name                          | Type   | Description                                                            |
-| ----------------------------- | ------ | ---------------------------------------------------------------------- |
-| `use_dynamic_map_loading`      | bool   | Flag to enable dynamic map loading feature for NDT (FALSE by default) |
-| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s) |
-| `dynamic_map_loading_map_radius` | double | Map loading radius for every update  |
-| `lidar_radius` | double | LiDAR radius used for localization (only used for diagnosis) |
+| Name                                  | Type   | Description                                                           |
+| ------------------------------------- | ------ | --------------------------------------------------------------------- |
+| `use_dynamic_map_loading`             | bool   | Flag to enable dynamic map loading feature for NDT (FALSE by default) |
+| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                                  |
+| `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                                   |
+| `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis)          |
 
 ### Enabling the dynamic map loading feature
+
 The dynamic map loading feature is disabled by default. To use the feature, please follow the next instructions.
 
 1. enable dynamic map loading in `ndt_scan_matcher` (by setting `use_dynamic_map_loading` to true)
@@ -193,9 +195,9 @@ The dynamic map loading feature is disabled by default. To use the feature, plea
 
 Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample-map-rosbag_split.zip`](https://github.com/autowarefoundation/autoware.universe/files/10349104/sample-map-rosbag_split.zip)
 
-| PCD files  | `use_dynamic_map_loading`  | `enable_differential_load` | How NDT loads map(s) |
-|:----------:|:-------------:|:-----------:|:-------------:|
-| single file | true/false | true/false | at once (standard) |
-| splitted    | true   | false | **does NOT work** |
-| splitted    | true   | true | dynamically |
-| splitted    | false  | true/false | at once (standard) |
+|  PCD files  | `use_dynamic_map_loading` | `enable_differential_load` | How NDT loads map(s) |
+| :---------: | :-----------------------: | :------------------------: | :------------------: |
+| single file |        true/false         |         true/false         |  at once (standard)  |
+|  splitted   |           true            |           false            |  **does NOT work**   |
+|  splitted   |           true            |            true            |     dynamically      |
+|  splitted   |           false           |         true/false         |  at once (standard)  |
