@@ -35,8 +35,9 @@ MapUpdateModule::MapUpdateModule(
   clock_(node->get_clock()),
   tf2_listener_module_(tf2_listener_module),
   state_ptr_(state_ptr),
-  dml_update_map_distance_(node->declare_parameter<double>("dml_update_map_distance")),
-  dml_loading_radius_(node->declare_parameter<double>("dml_loading_radius"))
+  dynamic_map_loading_update_distance_(node->declare_parameter<double>("dynamic_map_loading_update_distance")),
+  dynamic_map_loading_map_radius_(node->declare_parameter<double>("dynamic_map_loading_map_radius")),
+  lidar_radius_(node->declare_parameter<double>("lidar_radius"))
 {
   initial_estimate_particles_num_ = node->declare_parameter<int>("initial_estimate_particles_num");
 
@@ -129,9 +130,7 @@ void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr 
     return;
   }
   double distance = norm_xy(*current_position_ptr_, *last_update_position_ptr_);
-  double LIDAR_CROP_DISTANCE =
-    100;  // TODO (koji minoda): parametrize before merge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (distance + LIDAR_CROP_DISTANCE > dml_loading_radius_) {
+  if (distance + lidar_radius_ > dynamic_map_loading_map_radius_) {
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Dynamic map loading is not keeping up.");
   }
 }
@@ -159,7 +158,7 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
 {
   if (last_update_position_ptr_ == nullptr) return false;
   double distance = norm_xy(position, *last_update_position_ptr_);
-  return distance > dml_update_map_distance_;
+  return distance > dynamic_map_loading_update_distance_;
 }
 
 void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
@@ -167,7 +166,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   // create a loading request with mode = 1
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
   request->area.center = position;
-  request->area.radius = dml_loading_radius_;
+  request->area.radius = dynamic_map_loading_map_radius_;
   request->cached_ids = ndt_ptr_->getCurrentMapIDs();
 
   // send a request to map_loader

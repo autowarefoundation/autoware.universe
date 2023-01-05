@@ -97,8 +97,9 @@ private:
   std::condition_variable condition_;
   bool value_ready_ = false;
   geometry_msgs::msg::Point::SharedPtr last_update_position_ptr_;
-  double dml_update_map_distance_;
-  double dml_loading_radius_;
+  double dynamic_map_loading_update_distance_;
+  double dynamic_map_loading_map_radius_;
+  double lidar_radius_;
   geometry_msgs::msg::Point::SharedPtr current_position_ptr_;
 };
 

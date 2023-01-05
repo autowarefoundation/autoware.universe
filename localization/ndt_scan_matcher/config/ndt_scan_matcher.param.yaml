@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     # Use dynamic map loading
-    use_dynamic_map_loading: true
+    use_dynamic_map_loading: false
 
     # Vehicle reference frame
     base_frame: "base_link"
@@ -65,7 +65,10 @@
     regularization_scale_factor: 0.01
 
     # Dynamic map loading distance
-    dml_update_map_distance: 20.0
+    dynamic_map_loading_update_distance: 20.0
 
     # Dynamic map loading loading radius
-    dml_loading_radius: 120.0
+    dynamic_map_loading_map_radius: 150.0
+
+    # LiDAR input LiDAR radius (used for diagnostics of dynamic map loading)
+    lidar_radius: 100.0
