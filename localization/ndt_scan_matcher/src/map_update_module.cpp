@@ -171,19 +171,29 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   request->area.radius = dynamic_map_loading_map_radius_;
   request->cached_ids = ndt_ptr_->getCurrentMapIDs();
 
-  // send a request to map_loader
+  // // send a request to map_loader
+  // auto result{pcd_loader_client_->async_send_request(
+  //   request,
+  //   [this](const rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture
+  //            response) {
+  //     (void)response;
+  //     std::lock_guard<std::mutex> lock{pcd_loader_client_mutex_};
+  //     value_ready_ = true;
+  //     condition_.notify_all();
+  //   })};
+  // std::unique_lock<std::mutex> lock{pcd_loader_client_mutex_};
+  // condition_.wait(lock, [this]() { return value_ready_; });
   auto result{pcd_loader_client_->async_send_request(
-    request,
-    [this](const rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture
-             response) {
-      (void)response;
-      std::lock_guard<std::mutex> lock{pcd_loader_client_mutex_};
-      value_ready_ = true;
-      condition_.notify_all();
-    })};
-  std::unique_lock<std::mutex> lock{pcd_loader_client_mutex_};
-  condition_.wait(lock, [this]() { return value_ready_; });
+    request, [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
 
+  std::future_status status = result.wait_for(std::chrono::seconds(0));
+  while (status != std::future_status::ready) {
+    RCLCPP_INFO(logger_, "waiting response");
+    if (!rclcpp::ok()) {
+      return;
+    }
+    status = result.wait_for(std::chrono::seconds(1));
+  }
   update_ndt(result.get()->new_pointcloud_with_ids, result.get()->ids_to_remove);
 }
 
