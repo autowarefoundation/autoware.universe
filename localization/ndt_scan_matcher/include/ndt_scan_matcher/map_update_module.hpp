@@ -33,6 +33,11 @@
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <vector>
+#include <map>
+#include <memory>
+#include <string>
+
 class MapUpdateModule
 {
   using PointSource = pcl::PointXYZ;

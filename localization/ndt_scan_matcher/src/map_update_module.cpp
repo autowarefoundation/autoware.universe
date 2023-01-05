@@ -192,9 +192,9 @@ void MapUpdateModule::update_ndt(
   const std::vector<std::string> & map_ids_to_remove)
 {
   RCLCPP_INFO(
-    logger_, "Update map (Add: %d, Remove: %d)", int(maps_to_add.size()),
-    int(map_ids_to_remove.size()));
-  if ((int(maps_to_add.size()) == 0) & (int(map_ids_to_remove.size()) == 0)) {
+    logger_, "Update map (Add: %d, Remove: %d)", static_cast<int>(maps_to_add.size()),
+    static_cast<int>(map_ids_to_remove.size()));
+  if ((static_cast<int>(maps_to_add.size()) == 0) & (static_cast<int>(map_ids_to_remove.size()) == 0)) {
     RCLCPP_INFO(logger_, "Skip map update");
     return;
   }
