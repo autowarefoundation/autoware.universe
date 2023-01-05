@@ -165,24 +165,12 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
 
 void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 {
-  // create a loading request with mode = 1
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
   request->area.center = position;
   request->area.radius = dynamic_map_loading_map_radius_;
   request->cached_ids = ndt_ptr_->getCurrentMapIDs();
 
   // // send a request to map_loader
-  // auto result{pcd_loader_client_->async_send_request(
-  //   request,
-  //   [this](const rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture
-  //            response) {
-  //     (void)response;
-  //     std::lock_guard<std::mutex> lock{pcd_loader_client_mutex_};
-  //     value_ready_ = true;
-  //     condition_.notify_all();
-  //   })};
-  // std::unique_lock<std::mutex> lock{pcd_loader_client_mutex_};
-  // condition_.wait(lock, [this]() { return value_ready_; });
   auto result{pcd_loader_client_->async_send_request(
     request, [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
 
