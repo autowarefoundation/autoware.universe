@@ -118,7 +118,12 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
     }
   }
   is_obstacle_table_ = is_obstacle_table;
-
+  
+  // Clear the collision index table before constructing
+  // to avoid memleak issue
+  //BugFix : Memleak issue
+  coll_indexes_table_.clear();
+  
   // construct collision indexes table
   for (int i = 0; i < planner_common_param_.theta_size; i++) {
     std::vector<IndexXY> indexes_2d, vertex_indexes_2d;
