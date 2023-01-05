@@ -33,10 +33,10 @@
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <vector>
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class MapUpdateModule
 {

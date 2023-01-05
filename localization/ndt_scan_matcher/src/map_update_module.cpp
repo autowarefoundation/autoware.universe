@@ -194,7 +194,9 @@ void MapUpdateModule::update_ndt(
   RCLCPP_INFO(
     logger_, "Update map (Add: %d, Remove: %d)", static_cast<int>(maps_to_add.size()),
     static_cast<int>(map_ids_to_remove.size()));
-  if ((static_cast<int>(maps_to_add.size()) == 0) & (static_cast<int>(map_ids_to_remove.size()) == 0)) {
+  if (
+    (static_cast<int>(maps_to_add.size()) == 0) &
+    (static_cast<int>(map_ids_to_remove.size()) == 0)) {
     RCLCPP_INFO(logger_, "Skip map update");
     return;
   }
