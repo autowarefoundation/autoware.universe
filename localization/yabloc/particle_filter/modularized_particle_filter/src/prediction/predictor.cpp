@@ -35,14 +35,17 @@ Predictor::Predictor()
 
   // Subscribers
   using std::placeholders::_1;
-  auto gnss_cb = std::bind(&Predictor::on_gnss_pose, this, _1);
+  auto on_gnss_pose = std::bind(&Predictor::on_gnss_pose, this, _1);
   auto initial_cb = std::bind(&Predictor::on_initial_pose, this, _1);
   auto twist_cb = std::bind(&Predictor::on_twist, this, _1);
   auto twist_cov_cb = std::bind(&Predictor::on_twist_cov, this, _1);
   auto particle_cb = std::bind(&Predictor::on_weighted_particles, this, _1);
   auto height_cb = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
+  auto on_init_area = std::bind(&Predictor::on_init_area, this, _1);
 
-  gnss_sub_ = create_subscription<PoseStamped>("initial_gnss_pose", 1, gnss_cb);
+  sub_init_area_ =
+    create_subscription<PointCloud2>("/localization/map/ll2_polygon", 1, on_init_area);
+  gnss_sub_ = create_subscription<PoseStamped>("initial_gnss_pose", 1, on_gnss_pose);
   initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, initial_cb);
   twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
   twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, twist_cov_cb);
@@ -57,16 +60,32 @@ Predictor::Predictor()
     this, this->get_clock(), rclcpp::Rate(prediction_rate).period(), std::move(cb_timer));
 }
 
+void Predictor::on_init_area(const PointCloud2 & msg)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "initialize pcdless init areas");
+  init_area_ = InitArea(msg);
+}
+
 void Predictor::on_gnss_pose(const PoseStamped::ConstSharedPtr pose)
 {
-  if (particle_array_opt_.has_value()) return;
   PoseCovStamped pose_cov;
   pose_cov.header = pose->header;
   pose_cov.pose.pose = pose->pose;
   pose_cov.pose.covariance[6 * 0 + 0] = 0.25;
   pose_cov.pose.covariance[6 * 1 + 1] = 0.25;
   pose_cov.pose.covariance[6 * 5 + 5] = 0.04;
-  initialize_particles(pose_cov);
+
+  if (init_area_) {
+    auto p = pose->pose.position;
+    if (init_area_->is_inside({p.x, p.y, p.z})) {
+      RCLCPP_WARN_STREAM(get_logger(), "Initialize pose because gnss enters initializable area");
+      initialize_particles(pose_cov);
+    }
+  } else {
+    if (particle_array_opt_.has_value()) return;
+
+    initialize_particles(pose_cov);
+  }
 }
 
 void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose)
