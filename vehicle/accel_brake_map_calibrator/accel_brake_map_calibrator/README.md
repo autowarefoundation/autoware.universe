@@ -252,5 +252,7 @@ Update the offsets by RLS in four grids around newly obtained data. By consideri
 See eq.(7)-(10) in [1] for the updated formula. In addition, eq.(17),(18) from [1] are used for Anti-Windup.
 
 ### References
+
 <!-- cspell: ignore Lochrie, Doljevic, Yongsoon, Yoon, IFAC -->
+
 [1] [Gabrielle Lochrie, Michael Doljevic, Mario Nona, Yongsoon Yoon, Anti-Windup Recursive Least Squares Method for Adaptive Lookup Tables with Application to Automotive Powertrain Control Systems, IFAC-PapersOnLine, Volume 54, Issue 20, 2021, Pages 840-845](https://www.sciencedirect.com/science/article/pii/S240589632102320X)

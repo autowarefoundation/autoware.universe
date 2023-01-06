@@ -27,25 +27,24 @@
 
 namespace tensorrt_yolox
 {
-TrtYoloX::TrtYoloX(const std::string& model_path, const std::string& precision, const int num_class,
-                   const float score_threshold, const float nms_threshold,
-                   [[maybe_unused]] const std::string& cache_dir, const tensorrt_common::BatchConfig& batch_config,
-                   const size_t max_workspace_size)
+TrtYoloX::TrtYoloX(
+  const std::string & model_path, const std::string & precision, const int num_class,
+  const float score_threshold, const float nms_threshold,
+  [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
+  const size_t max_workspace_size)
 {
-  trt_common_ =
-      std::make_unique<tensorrt_common::TrtCommon>(model_path, precision, nullptr, batch_config, max_workspace_size);
+  trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    model_path, precision, nullptr, batch_config, max_workspace_size);
   trt_common_->setup();
 
-  if (!trt_common_->isInitialized())
-  {
+  if (!trt_common_->isInitialized()) {
     return;
   }
 
   // Judge whether decoding output is required
   // Plain models require decoding, while models with EfficientNMS_TRT module don't.
   // If getNbBindings == 5, the model contains EfficientNMS_TRT
-  switch (trt_common_->getNbBindings())
-  {
+  switch (trt_common_->getNbBindings()) {
     case 2:
       // Specified model is plain one.
       // Bindings are: [input, output]
@@ -63,24 +62,22 @@ TrtYoloX::TrtYoloX(const std::string& model_path, const std::string& precision, 
     default:
       std::stringstream s;
       s << "\"" << model_path << "\" is unsupported format";
-      std::runtime_error{ s.str() };
+      std::runtime_error{s.str()};
   }
 
   // GPU memory allocation
   const auto input_dims = trt_common_->getBindingDimensions(0);
   const auto input_size =
-      std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
-  if (needs_output_decode_)
-  {
+    std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
+  if (needs_output_decode_) {
     const auto output_dims = trt_common_->getBindingDimensions(1);
     input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
-    out_elem_num_ = std::accumulate(output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
+    out_elem_num_ = std::accumulate(
+      output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
     out_elem_num_per_batch_ = static_cast<int>(out_elem_num_ / batch_config[2]);
     out_prob_d_ = cuda_utils::make_unique<float[]>(out_elem_num_);
     out_prob_h_ = cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
-  }
-  else
-  {
+  } else {
     const auto out_scores_dims = trt_common_->getBindingDimensions(3);
     max_detections_ = out_scores_dims.d[1];
     input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
@@ -91,7 +88,7 @@ TrtYoloX::TrtYoloX(const std::string& model_path, const std::string& precision, 
   }
 }
 
-void TrtYoloX::preprocess(const std::vector<cv::Mat>& images)
+void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
 {
   const auto batch_size = images.size();
   auto input_dims = trt_common_->getBindingDimensions(0);
@@ -101,8 +98,7 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat>& images)
   const float input_width = static_cast<float>(input_dims.d[3]);
   std::vector<cv::Mat> dst_images;
   scales_.clear();
-  for (const auto& image : images)
-  {
+  for (const auto & image : images) {
     cv::Mat dst_image;
     const float scale = std::min(input_width / image.cols, input_height / image.rows);
     scales_.emplace_back(scale);
@@ -110,10 +106,11 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat>& images)
     cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
     const auto bottom = input_height - dst_image.rows;
     const auto right = input_width - dst_image.cols;
-    copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, { 114, 114, 114 });
+    copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
     dst_images.emplace_back(dst_image);
   }
-  const auto chw_images = cv::dnn::blobFromImages(dst_images, 1.0, cv::Size(), cv::Scalar(), false, false, CV_32F);
+  const auto chw_images =
+    cv::dnn::blobFromImages(dst_images, 1.0, cv::Size(), cv::Scalar(), false, false, CV_32F);
 
   const auto data_length = chw_images.total();
   input_h_.reserve(data_length);
@@ -121,34 +118,31 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat>& images)
   input_h_ = chw_images.isContinuous() ? flat : flat.clone();
 }
 
-bool TrtYoloX::doInference(const std::vector<cv::Mat>& images, ObjectArrays& objects)
+bool TrtYoloX::doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects)
 {
-  if (!trt_common_->isInitialized())
-  {
+  if (!trt_common_->isInitialized()) {
     return false;
   }
 
   preprocess(images);
 
-  CHECK_CUDA_ERROR(
-      cudaMemcpy(input_d_.get(), input_h_.data(), input_h_.size() * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaMemcpy(
+    input_d_.get(), input_h_.data(), input_h_.size() * sizeof(float), cudaMemcpyHostToDevice));
 
-  if (needs_output_decode_)
-  {
+  if (needs_output_decode_) {
     return feedforwardAndDecode(images, objects);
-  }
-  else
-  {
+  } else {
     return feedforward(images, objects);
   }
 }
 
 // This method is assumed to be called when specified YOLOX model contains
 // EfficientNMS_TRT module.
-bool TrtYoloX::feedforward(const std::vector<cv::Mat>& images, ObjectArrays& objects)
+bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects)
 {
-  std::vector<void*> buffers = { input_d_.get(), out_num_detections_d_.get(), out_boxes_d_.get(), out_scores_d_.get(),
-                                 out_classes_d_.get() };
+  std::vector<void *> buffers = {
+    input_d_.get(), out_num_detections_d_.get(), out_boxes_d_.get(), out_scores_d_.get(),
+    out_classes_d_.get()};
 
   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
 
@@ -158,22 +152,24 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat>& images, ObjectArrays& obj
   auto out_scores = std::make_unique<float[]>(batch_size * max_detections_);
   auto out_classes = std::make_unique<int32_t[]>(batch_size * max_detections_);
 
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(out_num_detections.get(), out_num_detections_d_.get(), sizeof(int32_t) * batch_size,
-                                   cudaMemcpyDeviceToHost, *stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(out_boxes.get(), out_boxes_d_.get(),
-                                   sizeof(float) * 4 * batch_size * max_detections_, cudaMemcpyDeviceToHost, *stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(out_scores.get(), out_scores_d_.get(), sizeof(float) * batch_size * max_detections_,
-                                   cudaMemcpyDeviceToHost, *stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(out_classes.get(), out_classes_d_.get(),
-                                   sizeof(int32_t) * batch_size * max_detections_, cudaMemcpyDeviceToHost, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_num_detections.get(), out_num_detections_d_.get(), sizeof(int32_t) * batch_size,
+    cudaMemcpyDeviceToHost, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_boxes.get(), out_boxes_d_.get(), sizeof(float) * 4 * batch_size * max_detections_,
+    cudaMemcpyDeviceToHost, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_scores.get(), out_scores_d_.get(), sizeof(float) * batch_size * max_detections_,
+    cudaMemcpyDeviceToHost, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_classes.get(), out_classes_d_.get(), sizeof(int32_t) * batch_size * max_detections_,
+    cudaMemcpyDeviceToHost, *stream_));
   cudaStreamSynchronize(*stream_);
   objects.clear();
-  for (size_t i = 0; i < batch_size; ++i)
-  {
+  for (size_t i = 0; i < batch_size; ++i) {
     const size_t num_detection = static_cast<size_t>(out_num_detections[i]);
     ObjectArray object_array(num_detection);
-    for (size_t j = 0; j < num_detection; ++j)
-    {
+    for (size_t j = 0; j < num_detection; ++j) {
       Object object{};
       const auto x1 = out_boxes[i * max_detections_ * 4 + j * 4] / scales_[i];
       const auto y1 = out_boxes[i * max_detections_ * 4 + j * 4 + 1] / scales_[i];
@@ -192,23 +188,23 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat>& images, ObjectArrays& obj
   return true;
 }
 
-bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat>& images, ObjectArrays& objects)
+bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects)
 {
-  std::vector<void*> buffers = { input_d_.get(), out_prob_d_.get() };
+  std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
 
   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
 
   const auto batch_size = images.size();
 
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(out_prob_h_.get(), out_prob_d_.get(), sizeof(float) * out_elem_num_,
-                                   cudaMemcpyDeviceToHost, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_prob_h_.get(), out_prob_d_.get(), sizeof(float) * out_elem_num_, cudaMemcpyDeviceToHost,
+    *stream_));
   cudaStreamSynchronize(*stream_);
   objects.clear();
 
-  for (size_t i = 0; i < batch_size; ++i)
-  {
+  for (size_t i = 0; i < batch_size; ++i) {
     auto image_size = images[i].size();
-    float* batch_prob = out_prob_h_.get() + (i * out_elem_num_per_batch_);
+    float * batch_prob = out_prob_h_.get() + (i * out_elem_num_per_batch_);
     ObjectArray object_array;
     decodeOutputs(batch_prob, object_array, scales_[i], image_size);
     objects.emplace_back(object_array);
@@ -216,13 +212,14 @@ bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat>& images, ObjectAr
   return true;
 }
 
-void TrtYoloX::decodeOutputs(float* prob, ObjectArray& objects, float scale, cv::Size& img_size) const
+void TrtYoloX::decodeOutputs(
+  float * prob, ObjectArray & objects, float scale, cv::Size & img_size) const
 {
   ObjectArray proposals;
   auto input_dims = trt_common_->getBindingDimensions(0);
   const float input_height = static_cast<float>(input_dims.d[2]);
   const float input_width = static_cast<float>(input_dims.d[3]);
-  std::vector<int> strides = { 8, 16, 32 };
+  std::vector<int> strides = {8, 16, 32};
   std::vector<GridAndStride> grid_strides;
   generateGridsAndStride(input_width, input_height, strides, grid_strides);
   generateYoloxProposals(grid_strides, prob, score_threshold_, proposals);
@@ -235,8 +232,7 @@ void TrtYoloX::decodeOutputs(float* prob, ObjectArray& objects, float scale, cv:
 
   int count = static_cast<int>(picked.size());
   objects.resize(count);
-  for (int i = 0; i < count; i++)
-  {
+  for (int i = 0; i < count; i++) {
     objects[i] = proposals[picked[i]];
 
     // adjust offset to original unpadded
@@ -258,30 +254,28 @@ void TrtYoloX::decodeOutputs(float* prob, ObjectArray& objects, float scale, cv:
   }
 }
 
-void TrtYoloX::generateGridsAndStride(const int target_w, const int target_h, std::vector<int>& strides,
-                                      std::vector<GridAndStride>& grid_strides) const
+void TrtYoloX::generateGridsAndStride(
+  const int target_w, const int target_h, std::vector<int> & strides,
+  std::vector<GridAndStride> & grid_strides) const
 {
-  for (auto stride : strides)
-  {
+  for (auto stride : strides) {
     int num_grid_w = target_w / stride;
     int num_grid_h = target_h / stride;
-    for (int g1 = 0; g1 < num_grid_h; g1++)
-    {
-      for (int g0 = 0; g0 < num_grid_w; g0++)
-      {
-        grid_strides.push_back(GridAndStride{ g0, g1, stride });
+    for (int g1 = 0; g1 < num_grid_h; g1++) {
+      for (int g0 = 0; g0 < num_grid_w; g0++) {
+        grid_strides.push_back(GridAndStride{g0, g1, stride});
       }
     }
   }
 }
 
-void TrtYoloX::generateYoloxProposals(std::vector<GridAndStride> grid_strides, float* feat_blob, float prob_threshold,
-                                      ObjectArray& objects) const
+void TrtYoloX::generateYoloxProposals(
+  std::vector<GridAndStride> grid_strides, float * feat_blob, float prob_threshold,
+  ObjectArray & objects) const
 {
   const int num_anchors = grid_strides.size();
 
-  for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++)
-  {
+  for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++) {
     const int grid0 = grid_strides[anchor_idx].grid0;
     const int grid1 = grid_strides[anchor_idx].grid1;
     const int stride = grid_strides[anchor_idx].stride;
@@ -299,12 +293,10 @@ void TrtYoloX::generateYoloxProposals(std::vector<GridAndStride> grid_strides, f
     float y0 = y_center - h * 0.5f;
 
     float box_objectness = feat_blob[basic_pos + 4];
-    for (int class_idx = 0; class_idx < num_class_; class_idx++)
-    {
+    for (int class_idx = 0; class_idx < num_class_; class_idx++) {
       float box_cls_score = feat_blob[basic_pos + 5 + class_idx];
       float box_prob = box_objectness * box_cls_score;
-      if (box_prob > prob_threshold)
-      {
+      if (box_prob > prob_threshold) {
         Object obj;
         obj.x_offset = x0;
         obj.y_offset = y0;
@@ -319,26 +311,22 @@ void TrtYoloX::generateYoloxProposals(std::vector<GridAndStride> grid_strides, f
   }    // point anchor loop
 }
 
-void TrtYoloX::qsortDescentInplace(ObjectArray& face_objects, int left, int right) const
+void TrtYoloX::qsortDescentInplace(ObjectArray & face_objects, int left, int right) const
 {
   int i = left;
   int j = right;
   float p = face_objects[(left + right) / 2].score;
 
-  while (i <= j)
-  {
-    while (face_objects[i].score > p)
-    {
+  while (i <= j) {
+    while (face_objects[i].score > p) {
       i++;
     }
 
-    while (face_objects[j].score < p)
-    {
+    while (face_objects[j].score < p) {
       j--;
     }
 
-    if (i <= j)
-    {
+    if (i <= j) {
       // swap
       std::swap(face_objects[i], face_objects[j]);
 
@@ -351,54 +339,50 @@ void TrtYoloX::qsortDescentInplace(ObjectArray& face_objects, int left, int righ
   {
 #pragma omp section
     {
-      if (left < j)
-      {
+      if (left < j) {
         qsortDescentInplace(face_objects, left, j);
       }
     }
 #pragma omp section
     {
-      if (i < right)
-      {
+      if (i < right) {
         qsortDescentInplace(face_objects, i, right);
       }
     }
   }
 }
 
-void TrtYoloX::nmsSortedBboxes(const ObjectArray& face_objects, std::vector<int>& picked, float nms_threshold) const
+void TrtYoloX::nmsSortedBboxes(
+  const ObjectArray & face_objects, std::vector<int> & picked, float nms_threshold) const
 {
   picked.clear();
   const int n = face_objects.size();
 
   std::vector<float> areas(n);
-  for (int i = 0; i < n; i++)
-  {
-    cv::Rect rect(face_objects[i].x_offset, face_objects[i].y_offset, face_objects[i].width, face_objects[i].height);
+  for (int i = 0; i < n; i++) {
+    cv::Rect rect(
+      face_objects[i].x_offset, face_objects[i].y_offset, face_objects[i].width,
+      face_objects[i].height);
     areas[i] = rect.area();
   }
 
-  for (int i = 0; i < n; i++)
-  {
-    const Object& a = face_objects[i];
+  for (int i = 0; i < n; i++) {
+    const Object & a = face_objects[i];
 
     int keep = 1;
-    for (int j = 0; j < static_cast<int>(picked.size()); j++)
-    {
-      const Object& b = face_objects[picked[j]];
+    for (int j = 0; j < static_cast<int>(picked.size()); j++) {
+      const Object & b = face_objects[picked[j]];
 
       // intersection over union
       float inter_area = intersectionArea(a, b);
       float union_area = areas[i] + areas[picked[j]] - inter_area;
       // float IoU = inter_area / union_area
-      if (inter_area / union_area > nms_threshold)
-      {
+      if (inter_area / union_area > nms_threshold) {
         keep = 0;
       }
     }
 
-    if (keep)
-    {
+    if (keep) {
       picked.push_back(i);
     }
   }
