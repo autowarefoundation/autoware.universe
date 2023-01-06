@@ -62,7 +62,6 @@ One optional function is regularization. Please see the regularization chapter i
 | `max_iterations`                        | int    | The number of iterations required to calculate alignment                                        |
 | `converged_param_type`                  | int    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                 |
 | `converged_param_transform_probability` | double | Threshold for deciding whether to trust the estimation result                                   |
-| `neighborhood_search_method`            | int    | neighborhood search method (0=KDTREE, 1=DIRECT26, 2=DIRECT7, 3=DIRECT1)                         |
 | `num_threads`                           | int    | Number of threads used for parallel computing                                                   |
 
 (TP: Transform Probability, NVTL: Nearest Voxel Transform Probability)
@@ -217,7 +216,9 @@ Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample
 
 |  PCD files  | `use_dynamic_map_loading` | `enable_differential_load` | How NDT loads map(s) |
 | :---------: | :-----------------------: | :------------------------: | :------------------: |
-| single file |        true/false         |         true/false         |  at once (standard)  |
-|  splitted   |           true            |           false            |  **does NOT work**   |
+| single file |           true            |            true            |  at once (standard)  |
+| single file |           true            |           false            |  **does NOT work**   |
+| single file |           false           |         true/false         |  at once (standard)  |
 |  splitted   |           true            |            true            |     dynamically      |
+|  splitted   |           true            |           false            |  **does NOT work**   |
 |  splitted   |           false           |         true/false         |  at once (standard)  |

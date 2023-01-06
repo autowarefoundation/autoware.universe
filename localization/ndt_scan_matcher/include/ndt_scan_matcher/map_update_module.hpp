@@ -97,9 +97,9 @@ private:
 
   int initial_estimate_particles_num_;
   geometry_msgs::msg::Point::SharedPtr last_update_position_ptr_;
-  double dynamic_map_loading_update_distance_;
-  double dynamic_map_loading_map_radius_;
-  double lidar_radius_;
+  const double dynamic_map_loading_update_distance_;
+  const double dynamic_map_loading_map_radius_;
+  const double lidar_radius_;
   geometry_msgs::msg::Point::SharedPtr current_position_ptr_;
 };
 

@@ -197,8 +197,6 @@ private:
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
-
-  bool use_dynamic_map_loading_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

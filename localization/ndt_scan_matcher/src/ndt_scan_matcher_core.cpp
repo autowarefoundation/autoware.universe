@@ -95,8 +95,6 @@ NDTScanMatcher::NDTScanMatcher()
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false))
 {
-  use_dynamic_map_loading_ = this->declare_parameter<bool>("use_dynamic_map_loading");
-
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
@@ -212,7 +210,7 @@ NDTScanMatcher::NDTScanMatcher()
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
 
-  if (use_dynamic_map_loading_) {
+  if (this->declare_parameter<bool>("use_dynamic_map_loading")) {
     map_update_module_ = std::make_unique<MapUpdateModule>(
       this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
       state_ptr_);
