@@ -198,17 +198,17 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 
 ### Parameters
 
-| Name                                  | Type   | Description                                                           |
-| ------------------------------------- | ------ | --------------------------------------------------------------------- |
-| `use_dynamic_map_loading`             | bool   | Flag to enable dynamic map loading feature for NDT (TRUE by default)  |
-| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                                  |
-| `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                                   |
-| `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis)          |
+| Name                                  | Type   | Description                                                          |
+| ------------------------------------- | ------ | -------------------------------------------------------------------- |
+| `use_dynamic_map_loading`             | bool   | Flag to enable dynamic map loading feature for NDT (TRUE by default) |
+| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                                 |
+| `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                                  |
+| `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis)         |
 
 ### Enabling the dynamic map loading feature
 
 To use dynamic map loading feature for `ndt_scan_matcher`, you also need to appropriately configure some other settings outside of this node.
-Follow the next two instructions. 
+Follow the next two instructions.
 
 1. enable dynamic map loading interface in `pointcloud_map_loader` (by setting `enable_differential_load` to true in the package)
 2. split the PCD files into grids (recommended split size: 20[m] x 20[m])
