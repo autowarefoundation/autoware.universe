@@ -52,6 +52,15 @@ PullOverModule::PullOverModule(
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_over");
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_over");
+
+  rclcpp::CallbackGroup::SharedPtr callback_group =
+    node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  auto sub_opt = rclcpp::SubscriptionOptions();
+  sub_opt.callback_group = callback_group;
+  occupancy_grid_sub_ = node.create_subscription<OccupancyGrid>(
+    "~/input/occupancy_grid_map", 1,
+    std::bind(&PullOverModule::onOccupancyGrid, this, std::placeholders::_1));
+
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
 
@@ -106,14 +115,9 @@ void PullOverModule::resetStatus()
   goal_candidates_.clear();
 }
 
-// This function is needed for waiting for planner_data_
-void PullOverModule::updateOccupancyGrid()
+void PullOverModule::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
-  if (!planner_data_->occupancy_grid) {
-    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "occupancy_grid is not ready");
-    return;
-  }
-  occupancy_grid_map_->setMap(*(planner_data_->occupancy_grid));
+  occupancy_grid_map_->setMap(*msg);
 }
 
 // generate pull over candidate paths
@@ -183,7 +187,6 @@ void PullOverModule::onTimer()
 BehaviorModuleOutput PullOverModule::run()
 {
   current_state_ = BT::NodeStatus::RUNNING;
-  updateOccupancyGrid();
   return plan();
 }
 
@@ -570,7 +573,6 @@ CandidateOutput PullOverModule::planCandidate() const { return CandidateOutput{}
 
 BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
-  updateOccupancyGrid();
   BehaviorModuleOutput out;
   plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(generateStopPath());

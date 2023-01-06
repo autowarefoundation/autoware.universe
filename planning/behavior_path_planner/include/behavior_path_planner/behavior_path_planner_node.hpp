@@ -145,7 +145,6 @@ private:
   void onVelocity(const Odometry::ConstSharedPtr msg);
   void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
-  void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
   void onExternalApproval(const ApprovalMsg::ConstSharedPtr msg);
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);

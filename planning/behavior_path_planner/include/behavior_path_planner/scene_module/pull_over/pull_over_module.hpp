@@ -133,13 +133,14 @@ private:
   bool isStopped();
   bool hasFinishedCurrentPath();
   bool hasFinishedPullOver();
-  void updateOccupancyGrid();
   void resetStatus();
 
   bool checkCollision(const PathWithLaneId & path) const;
   bool hasEnoughDistance(const PullOverPath & pull_over_path) const;
 
   TurnSignalInfo calcTurnSignalInfo() const;
+
+  void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
 
   // timer for generating pull over path candidates
   void onTimer();

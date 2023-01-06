@@ -73,7 +73,6 @@ struct PlannerData
   Odometry::ConstSharedPtr self_odometry{};
   AccelWithCovarianceStamped::ConstSharedPtr self_acceleration{};
   PredictedObjects::ConstSharedPtr dynamic_object{};
-  OccupancyGrid::ConstSharedPtr occupancy_grid{};
   PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};
   lanelet::ConstLanelets current_lanes{};
