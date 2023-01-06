@@ -52,7 +52,7 @@ void generateFeatures_worker(
         pillar_idx * config.max_point_in_voxel_size_ * config.point_feature_size_ +
         i * config.point_feature_size_;
       for (std::size_t j = 0; j < config.point_feature_size_; j++) {
-        // point (x, y, z, instensity)
+        // point (x, y, z, intensity)
         if (i < points_count && j < 3) points_sum[j] += voxel_features[point_idx + j];
       }
     }
