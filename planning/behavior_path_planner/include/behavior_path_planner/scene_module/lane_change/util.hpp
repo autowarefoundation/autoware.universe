@@ -113,9 +113,10 @@ ShiftLine getLaneChangeShiftLine(
 
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double prepare_distance,
-  const double lane_changing_distance, const double min_total_lane_changing_distance,
-  const double forward_path_length, const double lane_changing_speed, const bool is_goal_in_route);
+  const Pose & lane_changing_start_pose, const double target_lane_length,
+  const double dist_prepare_to_lc_end, const double lane_changing_distance,
+  const double min_total_lane_changing_distance, const double forward_path_length,
+  const double lane_changing_speed, const bool is_goal_in_route);
 
 PathWithLaneId getLaneChangePathPrepareSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
