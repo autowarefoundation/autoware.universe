@@ -81,6 +81,7 @@
 
     <node pkg="corrector_manager" exec="corrector_manager" name="corrector_manager" output="screen" args="--ros-args --log-level info">
         <remap from="/sensing/gnss/ublox/pose" to="/localization/pf/initial_gnss_pose"/> 
+        <param name="camera_corrector_enabled_at_first" value="false"/>
     </node>
 
 </launch>
