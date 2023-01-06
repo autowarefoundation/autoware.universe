@@ -120,6 +120,12 @@ protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
+   * @brief Check HDD connection
+   * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
+   */
+  void check_connection(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  /**
    * @brief Check HDD temperature
    * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
    */
@@ -142,6 +148,19 @@ protected:
    * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
    */
   void check_smart_recovered_error(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  int set_smart_temperature(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
+  int set_smart_power_on_hours(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
+  int set_smart_total_data_written(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
+  int set_smart_recovered_error(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
 
   /**
    * @brief Check S.M.A.R.T. information
@@ -188,12 +207,6 @@ protected:
   void check_statistics(diagnostic_updater::DiagnosticStatusWrapper & stat, HddStatItem item);
 
   /**
-   * @brief Check HDD connection
-   * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
-   */
-  void check_connection(diagnostic_updater::DiagnosticStatusWrapper & stat);
-
-  /**
    * @brief Human readable size string to MB
    * @param [in] human Readable size string
    * @return Megabyte
@@ -208,9 +221,17 @@ protected:
   /**
    * @brief Get device name from mount point
    * @param [in] mount_point Mount point
-   * @return device name
+   * @return Device name
    */
   std::string get_device_from_mount_point(const std::string & mount_point);
+
+  /**
+   * @brief Get HDD information from device name
+   * @param [in] device Device name
+   * @param [out] info HDD information
+   * @return true on success, false on error
+   */
+  bool get_hdd_information(const std::string & device, hdd_reader_service::HddInformation & info);
 
   /**
    * @brief Update HDD connections
@@ -310,8 +331,8 @@ protected:
   std::map<std::string, uint32_t>
     initial_recovered_errors_;                //!< @brief List of initial recovered error count
   std::map<std::string, HddStat> hdd_stats_;  //!< @brief List of HDD statistics
-  //!< @brief diagnostic of connection
-  diagnostic_updater::DiagnosticStatusWrapper connect_diag_;
+  diagnostic_updater::DiagnosticStatusWrapper
+    communication_diag_;  //!< @brief Diagnostic status for communication errors
   hdd_reader_service::HddInformationList hdd_info_list_;  //!< @brief List of HDD information
   rclcpp::Time last_hdd_stat_update_time_;  //!< @brief Last HDD statistics update time
 
@@ -330,6 +351,12 @@ protected:
      {DiagStatus::WARN, "high soft error rate"},
      {DiagStatus::ERROR, "unused"}},
   };
+
+  /**
+   * @brief HDD temperature status messages
+   */
+  const std::map<int, const char *> temp_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "hot"}, {DiagStatus::ERROR, "critical hot"}};
 
   /**
    * @brief HDD usage status messages

@@ -75,7 +75,7 @@ struct HddInformation
   uint64_t power_on_hours;           //!< @brief power on hours count
   uint64_t total_data_written;       //!< @brief total data written
   uint32_t recovered_error;          //!< @brief recovered error count
-  bool is_valid_temp;                //!< @brief whether temp_ is valid value
+  bool is_valid_temp;                //!< @brief whether temp is valid value
   bool is_valid_power_on_hours;      //!< @brief whether power_on_hours_ is valid value
   bool is_valid_total_data_written;  //!< @brief whether total_data_written_ is valid value
   bool is_valid_recovered_error;     //!< @brief whether recovered_error_ is valid value
