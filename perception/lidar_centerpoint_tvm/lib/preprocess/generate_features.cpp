@@ -104,6 +104,7 @@ void generateFeatures_worker(
   }
 }
 
+// cspell: ignore divup
 void generateFeatures(
   const std::vector<float> & voxel_features, const std::vector<float> & voxel_num_points,
   const std::vector<int32_t> & coords, const std::size_t num_voxels,

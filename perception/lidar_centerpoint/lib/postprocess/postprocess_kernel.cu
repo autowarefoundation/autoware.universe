@@ -114,6 +114,7 @@ PostProcessCUDA::PostProcessCUDA(const CenterPointConfig & config) : config_(con
     config_.yaw_norm_thresholds_.begin(), config_.yaw_norm_thresholds_.end());
 }
 
+// cspell: ignore divup
 cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
   const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d,

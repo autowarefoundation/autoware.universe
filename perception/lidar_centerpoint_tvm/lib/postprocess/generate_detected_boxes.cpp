@@ -114,6 +114,7 @@ void generateBoxes3D_worker(
   }
 }
 
+// cspell: ignore divup
 void generateDetectedBoxes3D(
   const std::vector<float> & out_heatmap, const std::vector<float> & out_offset,
   const std::vector<float> & out_z, const std::vector<float> & out_dim,
