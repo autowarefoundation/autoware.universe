@@ -151,7 +151,7 @@ void generateDetectedBoxes3D(
   // sort by score
   std::sort(det_boxes3d_nonms.begin(), det_boxes3d_nonms.end(), score_greater());
 
-  // supress by NMS
+  // suppress by NMS
   std::vector<bool> final_keep_mask(num_det_boxes3d);
   const auto num_final_det_boxes3d =
     circleNMS(det_boxes3d_nonms, config.circle_nms_dist_threshold_, final_keep_mask);
