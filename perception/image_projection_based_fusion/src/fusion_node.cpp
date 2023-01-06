@@ -233,10 +233,10 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
         "debug/processing_time_ms", processing_time_ms);
     }
   } else {
-    if (sub_stdpair_.second != nullptr) {
+    if (sub_std_pair_.second != nullptr) {
       timer_->cancel();
-      postprocess(*(sub_stdpair_.second));
-      publish(*(sub_stdpair_.second));
+      postprocess(*(sub_std_pair_.second));
+      publish(*(sub_std_pair_.second));
       std::fill(is_fused_.begin(), is_fused_.end(), false);
 
       // add processing time for debug
@@ -250,8 +250,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
       }
     }
 
-    sub_stdpair_.first = int64_t(timestamp_nsec);
-    sub_stdpair_.second = output_msg;
+    sub_std_pair_.first = int64_t(timestamp_nsec);
+    sub_std_pair_.second = output_msg;
   }
 }
 
@@ -263,8 +263,8 @@ void FusionNode<Msg, Obj>::roiCallback(
     (*input_roi_msg).header.stamp.sec * (int64_t)1e9 + (*input_roi_msg).header.stamp.nanosec;
 
   // if cached Msg exist, try to match
-  if (sub_stdpair_.second != nullptr) {
-    int64_t new_stamp = sub_stdpair_.first + input_offset_ms_.at(roi_i) * (int64_t)1e6;
+  if (sub_std_pair_.second != nullptr) {
+    int64_t new_stamp = sub_std_pair_.first + input_offset_ms_.at(roi_i) * (int64_t)1e6;
     int64_t interval = abs(timestamp_nsec - new_stamp);
 
     if (interval < match_threshold_ms_ * (int64_t)1e6 && is_fused_.at(roi_i) == false) {
@@ -278,12 +278,12 @@ void FusionNode<Msg, Obj>::roiCallback(
       }
 
       fuseOnSingleImage(
-        *(sub_stdpair_.second), roi_i, *input_roi_msg, camera_info_map_.at(roi_i),
-        *(sub_stdpair_.second));
+        *(sub_std_pair_.second), roi_i, *input_roi_msg, camera_info_map_.at(roi_i),
+        *(sub_std_pair_.second));
       is_fused_.at(roi_i) = true;
 
       if (debug_publisher_) {
-        double timestamp_interval_ms = (timestamp_nsec - sub_stdpair_.first) / 1e6;
+        double timestamp_interval_ms = (timestamp_nsec - sub_std_pair_.first) / 1e6;
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
@@ -293,10 +293,10 @@ void FusionNode<Msg, Obj>::roiCallback(
 
       if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
         timer_->cancel();
-        postprocess(*(sub_stdpair_.second));
-        publish(*(sub_stdpair_.second));
+        postprocess(*(sub_std_pair_.second));
+        publish(*(sub_std_pair_.second));
         std::fill(is_fused_.begin(), is_fused_.end(), false);
-        sub_stdpair_.second = nullptr;
+        sub_std_pair_.second = nullptr;
 
         // add processing time for debug
         if (debug_publisher_) {
@@ -325,12 +325,12 @@ void FusionNode<Msg, Obj>::timer_callback()
   timer_->cancel();
   if (mutex_.try_lock()) {
     // timeout, postprocess cached msg
-    if (sub_stdpair_.second != nullptr) {
-      postprocess(*(sub_stdpair_.second));
-      publish(*(sub_stdpair_.second));
+    if (sub_std_pair_.second != nullptr) {
+      postprocess(*(sub_std_pair_.second));
+      publish(*(sub_std_pair_.second));
     }
     std::fill(is_fused_.begin(), is_fused_.end(), false);
-    sub_stdpair_.second = nullptr;
+    sub_std_pair_.second = nullptr;
 
     // add processing time for debug
     if (debug_publisher_) {

@@ -111,7 +111,7 @@ protected:
 
   // cache for fusion
   std::vector<bool> is_fused_;
-  std::pair<int64_t, typename Msg::SharedPtr> sub_stdpair_;
+  std::pair<int64_t, typename Msg::SharedPtr> sub_std_pair_;
   std::vector<std::map<int64_t, DetectedObjectsWithFeature::ConstSharedPtr>> roi_stdmap_;
   std::mutex mutex_;
 
