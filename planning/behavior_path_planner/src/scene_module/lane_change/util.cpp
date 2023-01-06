@@ -39,6 +39,15 @@ namespace behavior_path_planner::lane_change_utils
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using lanelet::ArcCoordinates;
 
+inline double calcLaneChangeResamplingInterval(
+  const double lane_changing_distance, const double lane_changing_speed)
+{
+  constexpr auto min_resampling_points{30.0};
+  constexpr auto resampling_dt{0.2};
+  return std::max(
+    lane_changing_distance / min_resampling_points, lane_changing_speed * resampling_dt);
+}
+
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2)
 {
   PathWithLaneId path;
@@ -151,7 +160,6 @@ std::optional<LaneChangePath> constructCandidatePath(
         motion_utils::findNearestIndex(lane_changing_segment.points, point.point.pose);
       point.lane_ids = lane_changing_segment.points.at(*nearest_idx).lane_ids;
     }
-    shifted_path.path.points.back().point.longitudinal_velocity_mps = 0.0;
 
     candidate_path.path = combineReferencePath(prepare_segment, shifted_path.path);
     candidate_path.shifted_path = shifted_path;
@@ -268,10 +276,12 @@ LaneChangePaths getLaneChangePaths(
 
     const Pose & lane_changing_start_pose = prepare_segment_reference.points.back().point.pose;
 
-    const PathWithLaneId target_lane_reference_path = getReferencePathFromTargetLane(
+    const auto resample_interval =
+      calcLaneChangeResamplingInterval(lane_changing_distance, lane_changing_speed);
+    const auto target_lane_reference_path = getReferencePathFromTargetLane(
       route_handler, target_lanelets, lane_changing_start_pose, target_lane_length,
-      dist_prepare_to_lc_end, lane_changing_distance, required_total_min_distance,
-      forward_path_length, lane_changing_speed, is_goal_in_route);
+      dist_prepare_to_lc_end, required_total_min_distance, forward_path_length, resample_interval,
+      is_goal_in_route);
 
     const ShiftLine shift_line = getLaneChangeShiftLine(
       prepare_segment_reference, lane_changing_segment_reference, target_lanelets,
@@ -649,9 +659,8 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double dist_prepare_to_lc_end, const double lane_changing_distance,
-  const double min_total_lane_changing_distance, const double forward_path_length,
-  const double lane_changing_speed, const bool is_goal_in_route)
+  const double dist_prepare_to_lc_end, const double min_total_lane_changing_distance,
+  const double forward_path_length, const double resample_interval, const bool is_goal_in_route)
 {
   const ArcCoordinates lane_change_start_arc_position =
     lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose);
@@ -679,10 +688,6 @@ PathWithLaneId getReferencePathFromTargetLane(
   const auto lane_changing_reference_path =
     route_handler.getCenterLinePath(target_lanes, s_start, s_end);
 
-  constexpr auto min_resampling_points{30.0};
-  constexpr auto resampling_dt{0.2};
-  const auto resample_interval =
-    std::max(lane_changing_distance / min_resampling_points, lane_changing_speed * resampling_dt);
   return util::resamplePathWithSpline(
     lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_distance});
 }
