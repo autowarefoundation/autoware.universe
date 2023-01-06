@@ -121,6 +121,7 @@ protected:
   // debugger
   std::shared_ptr<Debugger> debugger_;
   virtual bool out_of_scope(const ObjType & obj) = 0;
+  // cspell: ignore minx, maxx, miny, maxy, minz, maxz
   float filter_scope_minx_;
   float filter_scope_maxx_;
   float filter_scope_miny_;
