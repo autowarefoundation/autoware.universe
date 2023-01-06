@@ -174,13 +174,13 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
       std::list<int64_t> outdate_stamps;
 
       for (const auto & [k, v] : roi_stdmap_.at(roi_i)) {
-        int64_t newstamp = timestamp_nsec + input_offset_ms_.at(roi_i) * (int64_t)1e6;
-        int64_t interval = abs(int64_t(k) - newstamp);
+        int64_t new_stamp = timestamp_nsec + input_offset_ms_.at(roi_i) * (int64_t)1e6;
+        int64_t interval = abs(int64_t(k) - new_stamp);
 
         if (interval <= min_interval && interval <= match_threshold_ms_ * (int64_t)1e6) {
           min_interval = interval;
           matched_stamp = k;
-        } else if (int64_t(k) < newstamp && interval > match_threshold_ms_ * (int64_t)1e6) {
+        } else if (int64_t(k) < new_stamp && interval > match_threshold_ms_ * (int64_t)1e6) {
           outdate_stamps.push_back(int64_t(k));
         }
       }
@@ -264,8 +264,8 @@ void FusionNode<Msg, Obj>::roiCallback(
 
   // if cached Msg exist, try to match
   if (sub_stdpair_.second != nullptr) {
-    int64_t newstamp = sub_stdpair_.first + input_offset_ms_.at(roi_i) * (int64_t)1e6;
-    int64_t interval = abs(timestamp_nsec - newstamp);
+    int64_t new_stamp = sub_stdpair_.first + input_offset_ms_.at(roi_i) * (int64_t)1e6;
+    int64_t interval = abs(timestamp_nsec - new_stamp);
 
     if (interval < match_threshold_ms_ * (int64_t)1e6 && is_fused_.at(roi_i) == false) {
       if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
