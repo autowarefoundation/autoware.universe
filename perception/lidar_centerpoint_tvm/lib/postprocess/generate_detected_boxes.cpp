@@ -156,11 +156,11 @@ void generateDetectedBoxes3D(
     circleNMS(det_boxes3d_nonms, config.circle_nms_dist_threshold_, final_keep_mask);
 
   det_boxes3d.resize(num_final_det_boxes3d);
-  std::size_t boxid = 0;
+  std::size_t box_id = 0;
   for (std::size_t idx = 0; idx < final_keep_mask.size(); idx++) {
     if (final_keep_mask[idx]) {
-      det_boxes3d[boxid] = det_boxes3d_nonms[idx];
-      boxid++;
+      det_boxes3d[box_id] = det_boxes3d_nonms[idx];
+      box_id++;
     }
   }
   // std::copy_if(det_boxes3d_nonms.begin(), det_boxes3d_nonms.end(), final_keep_mask.begin(),
