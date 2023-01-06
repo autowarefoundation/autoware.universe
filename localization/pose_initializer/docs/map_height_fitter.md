@@ -20,7 +20,7 @@ instead of loading whole map by subscription interface. To use this interface,
 
 | Name                      | Type | Description                                                                           |       |
 | ------------------------- | ---- | ------------------------------------------------------------------------------------- | ----- |
-| `enable_partial_map_load` | bool | If true, use partial map load interface. If false, use topic subscription interaface. | false |
+| `enable_partial_map_load` | bool | If true, use partial map load interface. If false, use topic subscription interface. | false |
 
 ### Services
 
