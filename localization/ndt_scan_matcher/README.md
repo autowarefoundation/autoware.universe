@@ -200,18 +200,18 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 
 | Name                                  | Type   | Description                                                           |
 | ------------------------------------- | ------ | --------------------------------------------------------------------- |
-| `use_dynamic_map_loading`             | bool   | Flag to enable dynamic map loading feature for NDT (FALSE by default) |
+| `use_dynamic_map_loading`             | bool   | Flag to enable dynamic map loading feature for NDT (TRUE by default)  |
 | `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                                  |
 | `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                                   |
 | `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis)          |
 
 ### Enabling the dynamic map loading feature
 
-The dynamic map loading feature is disabled by default. To use the feature, please follow the next instructions.
+To use dynamic map loading feature for `ndt_scan_matcher`, you also need to appropriately configure some other settings outside of this node.
+Follow the next two instructions. 
 
-1. enable dynamic map loading in `ndt_scan_matcher` (by setting `use_dynamic_map_loading` to true)
-2. enable dynamic map loading interface in `pointcloud_map_loader` (by setting `enable_differential_load` to true in the package)
-3. split the PCD files into grids (recommended split size: 20[m] x 20[m])
+1. enable dynamic map loading interface in `pointcloud_map_loader` (by setting `enable_differential_load` to true in the package)
+2. split the PCD files into grids (recommended split size: 20[m] x 20[m])
 
 Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample-map-rosbag_split.zip`](https://github.com/autowarefoundation/autoware.universe/files/10349104/sample-map-rosbag_split.zip)
 
