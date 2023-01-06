@@ -38,6 +38,7 @@ using Pose = freespace_planning_algorithms::ReedsSheppStateSpace::StateXYT;
 using ReedsSheppStateSpace = freespace_planning_algorithms::ReedsSheppStateSpace;
 const double inf = std::numeric_limits<double>::infinity();
 
+// cspell: ignore rsspace
 class CSpace
 {
 public:
