@@ -75,8 +75,6 @@ MapUpdateModule::MapUpdateModule(
       "Waiting for pcd loader service. Check if the enable_differential_load in "
       "pointcloud_map_loader is set `true`.");
   }
-  last_update_position_ptr_ = nullptr;
-  current_position_ptr_ = nullptr;
 
   double map_update_dt = 1.0;
   auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -120,18 +118,17 @@ void MapUpdateModule::service_ndt_align(
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 
-  last_update_position_ptr_ =
-    std::make_shared<geometry_msgs::msg::Point>(res->pose_with_covariance.pose.pose.position);
+  last_update_position_ = res->pose_with_covariance.pose.pose.position;
 }
 
 void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr)
 {
-  current_position_ptr_ = std::make_shared<geometry_msgs::msg::Point>(odom_ptr->pose.pose.position);
+  current_position_ = odom_ptr->pose.pose.position;
 
-  if (last_update_position_ptr_ == nullptr) {
+  if (last_update_position_ == std::nullopt) {
     return;
   }
-  double distance = norm_xy(*current_position_ptr_, *last_update_position_ptr_);
+  double distance = norm_xy(current_position_.value(), last_update_position_.value());
   if (distance + lidar_radius_ > dynamic_map_loading_map_radius_) {
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Dynamic map loading is not keeping up.");
   }
@@ -139,27 +136,27 @@ void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr 
 
 void MapUpdateModule::map_update_timer_callback()
 {
-  if (current_position_ptr_ == nullptr) {
+  if (current_position_ == std::nullopt) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       logger_, *clock_, 1,
       "Cannot find the reference position for map update. Please check if the EKF odometry is "
       "provided to NDT.");
     return;
   }
-  if (last_update_position_ptr_ == nullptr) return;
+  if (last_update_position_ == std::nullopt) return;
 
   // continue only if we should update the map
-  if (should_update_map(*current_position_ptr_)) {
+  if (should_update_map(current_position_.value())) {
     RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
-    update_map(*current_position_ptr_);
-    *last_update_position_ptr_ = *current_position_ptr_;
+    update_map(current_position_.value());
+    last_update_position_ = current_position_;
   }
 }
 
 bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position) const
 {
-  if (last_update_position_ptr_ == nullptr) return false;
-  double distance = norm_xy(position, *last_update_position_ptr_);
+  if (last_update_position_ == std::nullopt) return false;
+  double distance = norm_xy(position, last_update_position_.value());
   return distance > dynamic_map_loading_update_distance_;
 }
 

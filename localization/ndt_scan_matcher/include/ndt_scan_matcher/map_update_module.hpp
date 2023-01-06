@@ -37,6 +37,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 class MapUpdateModule
 {
@@ -96,11 +97,11 @@ private:
   std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 
   int initial_estimate_particles_num_;
-  geometry_msgs::msg::Point::SharedPtr last_update_position_ptr_;
+  std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
   const double dynamic_map_loading_update_distance_;
   const double dynamic_map_loading_map_radius_;
   const double lidar_radius_;
-  geometry_msgs::msg::Point::SharedPtr current_position_ptr_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
