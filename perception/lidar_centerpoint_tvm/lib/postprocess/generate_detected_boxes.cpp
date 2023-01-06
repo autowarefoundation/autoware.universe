@@ -135,7 +135,7 @@ void generateDetectedBoxes3D(
     threadPool[idx].join();
   }
 
-  // suppress by socre
+  // suppress by score
   const auto num_det_boxes3d =
     std::count_if(boxes3d.begin(), boxes3d.end(), is_score_greater(config.score_threshold_));
   if (num_det_boxes3d == 0) {

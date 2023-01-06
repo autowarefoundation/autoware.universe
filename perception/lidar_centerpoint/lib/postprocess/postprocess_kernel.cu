@@ -130,7 +130,7 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
     thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
     thrust::raw_pointer_cast(boxes3d_d_.data()));
 
-  // suppress by socre
+  // suppress by score
   const auto num_det_boxes3d = thrust::count_if(
     thrust::device, boxes3d_d_.begin(), boxes3d_d_.end(),
     is_score_greater(config_.score_threshold_));
