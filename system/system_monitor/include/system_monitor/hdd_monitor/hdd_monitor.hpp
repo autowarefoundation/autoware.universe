@@ -33,7 +33,7 @@
 #include <vector>
 
 /**
- * @brief Error and warning temperature levels
+ * @brief Parameters
  */
 struct HddParam
 {
@@ -41,12 +41,12 @@ struct HddParam
   std::string disk_device;                    //!< @brief Disk device
   float temp_warn{55.0};                      //!< @brief HDD temperature(DegC) to generate warning
   float temp_error{70.0};                     //!< @brief HDD temperature(DegC) to generate error
-  int power_on_hours_warn{3000000};           //!< @brief HDD power on hours to generate warning
+  uint64_t power_on_hours_warn{3000000};      //!< @brief HDD power on hours to generate warning
   uint64_t total_data_written_warn{4915200};  //!< @brief HDD total data written to generate warning
   float total_data_written_safety_factor{0.05};  //!< @brief Safety factor of HDD total data written
-  int recovered_error_warn{1};        //!< @brief HDD recovered error count to generate warning
-  int free_warn{5120};                //!< @brief HDD free space(MB) to generate warning
-  int free_error{100};                //!< @brief HDD free space(MB) to generate error
+  uint32_t recovered_error_warn{1};   //!< @brief HDD recovered error count to generate warning
+  uint32_t free_warn{5120};           //!< @brief HDD free space(MB) to generate warning
+  uint32_t free_error{100};           //!< @brief HDD free space(MB) to generate error
   float read_data_rate_warn{360.0};   //!< @brief HDD data rate(MB/s) of read to generate warning
   float write_data_rate_warn{103.5};  //!< @brief HDD data rate(MB/s) of write to generate warning
   float read_iops_warn{63360.0};      //!< @brief HDD IOPS of read to generate warning
@@ -84,21 +84,14 @@ struct HddStat
 };
 
 /**
- * @brief SMART information items to check
+ * @brief Type to check
  */
-enum class HddSmartInfoItem : uint32_t {
+enum class CheckType {
   TEMPERATURE = 0,
   POWER_ON_HOURS,
   TOTAL_DATA_WRITTEN,
   RECOVERED_ERROR,
-  SIZE
-};
-
-/**
- * @brief HDD statistics items to check
- */
-enum class HddStatItem : uint32_t {
-  READ_DATA_RATE = 0,
+  READ_DATA_RATE,
   WRITE_DATA_RATE,
   READ_IOPS,
   WRITE_IOPS,
@@ -149,25 +142,60 @@ protected:
    */
   void check_smart_recovered_error(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
+  /**
+   * @brief Check S.M.A.R.T. information
+   * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
+   * @param [in] type Type to check
+   */
+  void check_smart(diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type);
+
+  /**
+   * @brief Set temperature data
+   * @param [in] param Parameters
+   * @param [in] info HDD information
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
   int set_smart_temperature(
-    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
-    std::string & key, std::string & value);
-  int set_smart_power_on_hours(
-    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
-    std::string & key, std::string & value);
-  int set_smart_total_data_written(
-    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
-    std::string & key, std::string & value);
-  int set_smart_recovered_error(
     const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
     std::string & key, std::string & value);
 
   /**
-   * @brief Check S.M.A.R.T. information
-   * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
-   * @param [in] item S.M.A.R.T information item to be checked
+   * @brief Set power on hours data
+   * @param [in] param Parameters
+   * @param [in] info HDD information
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
    */
-  void check_smart(diagnostic_updater::DiagnosticStatusWrapper & stat, HddSmartInfoItem item);
+  int set_smart_power_on_hours(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
+
+  /**
+   * @brief Set total data written data
+   * @param [in] param Parameters
+   * @param [in] info HDD information
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
+  int set_smart_total_data_written(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
+
+  /**
+   * @brief Set recovered error count data
+   * @param [in] param Parameters
+   * @param [in] info HDD information
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
+  int set_smart_recovered_error(
+    const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
+    std::string & key, std::string & value);
 
   /**
    * @brief Check HDD usage
@@ -202,9 +230,9 @@ protected:
   /**
    * @brief Check HDD statistics
    * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
-   * @param [in] item Statistic item to be checked
+   * @param [in] type Type to check
    */
-  void check_statistics(diagnostic_updater::DiagnosticStatusWrapper & stat, HddStatItem item);
+  void check_statistics(diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type);
 
   /**
    * @brief Human readable size string to MB
@@ -337,44 +365,30 @@ protected:
   rclcpp::Time last_hdd_stat_update_time_;  //!< @brief Last HDD statistics update time
 
   /**
-   * @brief HDD SMART status messages
+   * @brief HDD connection status messages
    */
-  const std::map<int, const char *> smart_dicts_[static_cast<uint32_t>(HddSmartInfoItem::SIZE)] = {
-    // temperature
+  const std::map<int, const char *> connection_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "not connected"}, {DiagStatus::ERROR, "unused"}};
+
+  /**
+   * @brief HDD status messages
+   */
+  const std::map<int, const char *> hdd_dicts_[static_cast<int>(CheckType::SIZE)] = {
+    // Temperature
     {{DiagStatus::OK, "OK"}, {DiagStatus::WARN, "hot"}, {DiagStatus::ERROR, "critical hot"}},
-    // power on hours
+    // Power On Hours
     {{DiagStatus::OK, "OK"}, {DiagStatus::WARN, "lifetime limit"}, {DiagStatus::ERROR, "unused"}},
-    // total data written
+    // Total data written
     {{DiagStatus::OK, "OK"}, {DiagStatus::WARN, "warranty period"}, {DiagStatus::ERROR, "unused"}},
-    // recovered error count
+    // Recovered error count
     {{DiagStatus::OK, "OK"},
      {DiagStatus::WARN, "high soft error rate"},
      {DiagStatus::ERROR, "unused"}},
-  };
-
-  /**
-   * @brief HDD temperature status messages
-   */
-  const std::map<int, const char *> temp_dict_ = {
-    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "hot"}, {DiagStatus::ERROR, "critical hot"}};
-
-  /**
-   * @brief HDD usage status messages
-   */
-  const std::map<int, const char *> usage_dict_ = {
-    {DiagStatus::OK, "OK"},
-    {DiagStatus::WARN, "low disk space"},
-    {DiagStatus::ERROR, "very low disk space"}};
-
-  /**
-   * @brief HDD statistics status messages
-   */
-  const std::map<int, const char *> stat_dicts_[static_cast<uint32_t>(HddStatItem::SIZE)] = {
-    // data rate of read
+    // Data rate of read
     {{DiagStatus::OK, "OK"},
      {DiagStatus::WARN, "high data rate of read"},
      {DiagStatus::ERROR, "unused"}},
-    // data rate of write
+    // Data rate of write
     {{DiagStatus::OK, "OK"},
      {DiagStatus::WARN, "high data rate of write"},
      {DiagStatus::ERROR, "unused"}},
@@ -389,10 +403,12 @@ protected:
   };
 
   /**
-   * @brief HDD connection status messages
+   * @brief HDD usage status messages
    */
-  const std::map<int, const char *> connection_dict_ = {
-    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "not connected"}, {DiagStatus::ERROR, "unused"}};
+  const std::map<int, const char *> usage_dict_ = {
+    {DiagStatus::OK, "OK"},
+    {DiagStatus::WARN, "low disk space"},
+    {DiagStatus::ERROR, "very low disk space"}};
 };
 
 #endif  // SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_

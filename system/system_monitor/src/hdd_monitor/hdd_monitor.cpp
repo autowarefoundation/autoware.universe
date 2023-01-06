@@ -141,22 +141,22 @@ void HddMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
 
 void HddMonitor::check_smart_temperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_smart(stat, HddSmartInfoItem::TEMPERATURE);
+  check_smart(stat, CheckType::TEMPERATURE);
 }
 
 void HddMonitor::check_smart_power_on_hours(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_smart(stat, HddSmartInfoItem::POWER_ON_HOURS);
+  check_smart(stat, CheckType::POWER_ON_HOURS);
 }
 
 void HddMonitor::check_smart_total_data_written(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_smart(stat, HddSmartInfoItem::TOTAL_DATA_WRITTEN);
+  check_smart(stat, CheckType::TOTAL_DATA_WRITTEN);
 }
 
 void HddMonitor::check_smart_recovered_error(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_smart(stat, HddSmartInfoItem::RECOVERED_ERROR);
+  check_smart(stat, CheckType::RECOVERED_ERROR);
 }
 
 int HddMonitor::set_smart_temperature(
@@ -196,12 +196,11 @@ int HddMonitor::set_smart_power_on_hours(
     return level;
   }
 
-  auto power_on_hours = static_cast<int64_t>(info.power_on_hours);
-  if (power_on_hours >= param.power_on_hours_warn) {
+  if (info.power_on_hours >= param.power_on_hours_warn) {
     level = DiagStatus::WARN;
   }
 
-  value = fmt::format("{} Hours", power_on_hours);
+  value = fmt::format("{} Hours", info.power_on_hours);
   return level;
 }
 
@@ -218,12 +217,11 @@ int HddMonitor::set_smart_total_data_written(
     return level;
   }
 
-  auto total_data_written = static_cast<uint64_t>(info.total_data_written);
-  if (total_data_written >= param.total_data_written_warn) {
+  if (info.total_data_written >= param.total_data_written_warn) {
     level = DiagStatus::WARN;
   }
 
-  value = fmt::format("{}", total_data_written);
+  value = fmt::format("{}", info.total_data_written);
   return level;
 }
 
@@ -240,17 +238,15 @@ int HddMonitor::set_smart_recovered_error(
     return level;
   }
 
-  auto recovered_error = static_cast<int32_t>(info.recovered_error);
-  if (recovered_error >= param.recovered_error_warn) {
+  if (info.recovered_error >= param.recovered_error_warn) {
     level = DiagStatus::WARN;
   }
 
-  value = fmt::format("{}", recovered_error);
+  value = fmt::format("{}", info.recovered_error);
   return level;
 }
 
-void HddMonitor::check_smart(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, HddSmartInfoItem item)
+void HddMonitor::check_smart(diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type)
 {
   if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
@@ -276,25 +272,24 @@ void HddMonitor::check_smart(
     std::string key;
     std::string value;
 
-    switch (item) {
-      case HddSmartInfoItem::TEMPERATURE:
+    switch (type) {
+      case CheckType::TEMPERATURE:
         level = set_smart_temperature(param, info, index, key, value);
         break;
-      case HddSmartInfoItem::POWER_ON_HOURS:
+      case CheckType::POWER_ON_HOURS:
         level = set_smart_power_on_hours(param, info, index, key, value);
         break;
-      case HddSmartInfoItem::TOTAL_DATA_WRITTEN:
+      case CheckType::TOTAL_DATA_WRITTEN:
         level = set_smart_total_data_written(param, info, index, key, value);
         break;
-      case HddSmartInfoItem::RECOVERED_ERROR:
+      case CheckType::RECOVERED_ERROR:
         level = set_smart_recovered_error(param, info, index, key, value);
         break;
       default:
         break;
     }
 
-    stat.add(
-      fmt::format("HDD {}: status", index), smart_dicts_[static_cast<uint32_t>(item)].at(level));
+    stat.add(fmt::format("HDD {}: status", index), hdd_dicts_[static_cast<int>(type)].at(level));
     stat.add(fmt::format("HDD {}: name", index), param.disk_device.c_str());
     stat.add(key, value.c_str());
 
@@ -302,7 +297,7 @@ void HddMonitor::check_smart(
     ++index;
   }
 
-  stat.summary(whole_level, smart_dicts_[static_cast<uint32_t>(item)].at(whole_level));
+  stat.summary(whole_level, hdd_dicts_[static_cast<int>(type)].at(whole_level));
 }
 
 void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -368,7 +363,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     std::string line;
     int index = 0;
     std::vector<std::string> list;
-    int avail = 0;
+    uint32_t avail = 0;
 
     while (std::getline(is_out, line) && !line.empty()) {
       // Skip header
@@ -427,26 +422,26 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void HddMonitor::check_read_data_rate(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_statistics(stat, HddStatItem::READ_DATA_RATE);
+  check_statistics(stat, CheckType::READ_DATA_RATE);
 }
 
 void HddMonitor::check_write_data_rate(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_statistics(stat, HddStatItem::WRITE_DATA_RATE);
+  check_statistics(stat, CheckType::WRITE_DATA_RATE);
 }
 
 void HddMonitor::check_read_iops(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_statistics(stat, HddStatItem::READ_IOPS);
+  check_statistics(stat, CheckType::READ_IOPS);
 }
 
 void HddMonitor::check_write_iops(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  check_statistics(stat, HddStatItem::WRITE_IOPS);
+  check_statistics(stat, CheckType::WRITE_IOPS);
 }
 
 void HddMonitor::check_statistics(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, HddStatItem item)
+  diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -469,8 +464,8 @@ void HddMonitor::check_statistics(
 
     int level = DiagStatus::OK;
 
-    switch (item) {
-      case HddStatItem::READ_DATA_RATE: {
+    switch (type) {
+      case CheckType::READ_DATA_RATE: {
         float read_data_rate = hdd_stats_[itr->first].read_data_rate_MBs;
 
         if (read_data_rate >= itr->second.read_data_rate_warn) {
@@ -479,7 +474,7 @@ void HddMonitor::check_statistics(
         key_str = fmt::format("HDD {}: data rate of read", hdd_index);
         val_str = fmt::format("{:.2f} MB/s", read_data_rate);
       } break;
-      case HddStatItem::WRITE_DATA_RATE: {
+      case CheckType::WRITE_DATA_RATE: {
         float write_data_rate = hdd_stats_[itr->first].write_data_rate_MBs;
 
         if (write_data_rate >= itr->second.write_data_rate_warn) {
@@ -488,7 +483,7 @@ void HddMonitor::check_statistics(
         key_str = fmt::format("HDD {}: data rate of write", hdd_index);
         val_str = fmt::format("{:.2f} MB/s", write_data_rate);
       } break;
-      case HddStatItem::READ_IOPS: {
+      case CheckType::READ_IOPS: {
         float read_iops = hdd_stats_[itr->first].read_iops;
 
         if (read_iops >= itr->second.read_iops_warn) {
@@ -497,7 +492,7 @@ void HddMonitor::check_statistics(
         key_str = fmt::format("HDD {}: IOPS of read", hdd_index);
         val_str = fmt::format("{:.2f} IOPS", read_iops);
       } break;
-      case HddStatItem::WRITE_IOPS: {
+      case CheckType::WRITE_IOPS: {
         float write_iops = hdd_stats_[itr->first].write_iops;
 
         if (write_iops >= itr->second.write_iops_warn) {
@@ -516,8 +511,7 @@ void HddMonitor::check_statistics(
       stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device.c_str());
     } else {
       stat.add(
-        fmt::format("HDD {}: status", hdd_index),
-        stat_dicts_[static_cast<uint32_t>(item)].at(level));
+        fmt::format("HDD {}: status", hdd_index), hdd_dicts_[static_cast<int>(type)].at(level));
       stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device.c_str());
       stat.add(key_str, val_str.c_str());
     }
@@ -528,7 +522,7 @@ void HddMonitor::check_statistics(
   if (!error_str.empty()) {
     stat.summary(DiagStatus::ERROR, error_str);
   } else {
-    stat.summary(whole_level, stat_dicts_[static_cast<uint32_t>(item)].at(whole_level));
+    stat.summary(whole_level, hdd_dicts_[static_cast<int>(type)].at(whole_level));
   }
 
   // Measure elapsed time since start time and report
@@ -543,6 +537,8 @@ void HddMonitor::get_hdd_params()
     const auto mount_point = declare_parameter<std::string>(prefix + ".name", "/");
 
     HddParam param;
+
+    // Related to S.M.A.R.T
     param.temp_warn = declare_parameter<float>(prefix + ".temp_warn", 55.0f);
     param.temp_error = declare_parameter<float>(prefix + ".temp_error", 70.0f);
     param.power_on_hours_warn = declare_parameter<int>(prefix + ".power_on_hours_warn", 3000000);
@@ -553,8 +549,12 @@ void HddMonitor::get_hdd_params()
     param.total_data_written_warn = static_cast<uint64_t>(
       total_data_written_warn_org * (1.0f - param.total_data_written_safety_factor));
     param.recovered_error_warn = declare_parameter<int>(prefix + ".recovered_error_warn", 1);
+
+    // Usage
     param.free_warn = declare_parameter<int>(prefix + ".free_warn", 5120);
     param.free_error = declare_parameter<int>(prefix + ".free_error", 100);
+
+    // Statistics
     param.read_data_rate_warn = declare_parameter<float>(prefix + ".read_data_rate_warn", 360.0);
     param.write_data_rate_warn = declare_parameter<float>(prefix + ".write_data_rate_warn", 103.5);
     param.read_iops_warn = declare_parameter<float>(prefix + ".read_iops_warn", 63360.0);
@@ -700,8 +700,11 @@ int HddMonitor::unmount_device(std::string & device)
 
 void HddMonitor::on_timer()
 {
+  // Update HDD connections
   update_hdd_connections();
+  // Update HDD information list
   update_hdd_info_list();
+  // Update HDD statistics
   update_hdd_statistics();
 }
 
