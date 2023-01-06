@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>camera_particle_corrector</name>
+  <name>corrector_manager</name>
   <version>0.1.0</version>
-  <description>The camera particle filter corrector package</description>
+  <description>The package makes correctors disable and enable </description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
   <license>TODO</license>
 
@@ -11,10 +11,9 @@
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>visualization_msgs</depend>
+  <depend>sophus</depend>
 
   <depend>modularized_particle_filter</depend>
   <depend>pcdless_common</depend>
@@ -23,3 +22,4 @@
     <build_type>ament_cmake</build_type>
   </export>
 </package>
+

@@ -1,8 +1,8 @@
-#include "modularized_particle_filter/prediction/init_area.hpp"
+#include "corrector_manager/init_area.hpp"
 
 #include <boost/geometry/geometry.hpp>
 
-namespace pcdless::modularized_particle_filter
+namespace pcdless
 {
 
 InitArea::InitArea(const sensor_msgs::msg::PointCloud2 & msg)
@@ -10,9 +10,7 @@ InitArea::InitArea(const sensor_msgs::msg::PointCloud2 & msg)
   pcl::PointCloud<pcl::PointXYZL>::Ptr points{new pcl::PointCloud<pcl::PointXYZL>()};
   pcl::fromROSMsg(msg, *points);
 
-  // TODO: boost::geometry::polygon
-
-  if (!points->empty()) return;
+  if (points->empty()) return;
 
   polygon poly;
 
@@ -41,4 +39,4 @@ bool InitArea::is_inside(const Eigen::Vector3d & xyz) const
   return false;
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace pcdless

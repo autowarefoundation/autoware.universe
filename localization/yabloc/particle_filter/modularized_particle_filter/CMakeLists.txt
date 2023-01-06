@@ -34,7 +34,6 @@ target_link_libraries(abst_corrector Sophus::Sophus ${PCL_LIBRARIES})
 ament_auto_add_library(predictor
   src/prediction/predictor.cpp
   src/prediction/resampler.cpp
-  src/prediction/init_area.cpp
   src/common/visualize.cpp
   src/common/mean.cpp
 )

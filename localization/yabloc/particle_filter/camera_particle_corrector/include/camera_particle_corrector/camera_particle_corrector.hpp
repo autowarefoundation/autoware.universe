@@ -3,6 +3,7 @@
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
 #include <pcdless_common/hierarchical_cost_map.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -28,6 +29,7 @@ public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Pose = geometry_msgs::msg::Pose;
   using Bool = std_msgs::msg::Bool;
+  using SetBool = std_srvs::srv::SetBool;
   CameraParticleCorrector();
 
 private:
@@ -41,7 +43,7 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
-  rclcpp::Subscription<Bool>::SharedPtr sub_switch_;
+  rclcpp::Service<SetBool>::SharedPtr switch_service_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
@@ -53,13 +55,14 @@ private:
   std::optional<PoseStamped> latest_pose_{std::nullopt};
   std::function<float(float)> score_converter_;
 
-  bool enable_weights_{true};
+  bool enable_switch_{true};
 
   void on_lsd(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
   void on_unmapped_area(const PointCloud2 & msg);
   void on_pose(const PoseStamped & msg);
   void on_timer();
+  void on_service(SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response);
 
   std::pair<LineSegments, LineSegments> split_linesegments(const PointCloud2 & msg);
 

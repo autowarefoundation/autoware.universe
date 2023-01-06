@@ -58,6 +58,7 @@ CameraParticleCorrector::CameraParticleCorrector()
   cost_map_(this)
 {
   using std::placeholders::_1;
+  using std::placeholders::_2;
 
   // Publication
   pub_image_ = create_publisher<Image>("match_image", 10);
@@ -74,10 +75,9 @@ CameraParticleCorrector::CameraParticleCorrector()
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_unmapped_area_ = create_subscription<PointCloud2>("ll2_polygon", 10, on_unmapped_area);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
-  sub_switch_ = create_subscription<Bool>("/switch", 10, [this](Bool::ConstSharedPtr msg) -> void {
-    RCLCPP_WARN_STREAM(this->get_logger(), "SWITCH " << int(msg->data));
-    this->enable_weights_ = msg->data;
-  });
+
+  auto on_service = std::bind(&CameraParticleCorrector::on_service, this, _1, _2);
+  switch_service_ = create_service<SetBool>("/switch", on_service);
 
   // Timer callback
   auto on_timer = std::bind(&CameraParticleCorrector::on_timer, this);
@@ -91,6 +91,17 @@ CameraParticleCorrector::CameraParticleCorrector()
 }
 
 void CameraParticleCorrector::on_pose(const PoseStamped & msg) { latest_pose_ = msg; }
+
+void CameraParticleCorrector::on_service(
+  SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response)
+{
+  enable_switch_ = request->data;
+  response->success = true;
+  if (enable_switch_)
+    RCLCPP_INFO_STREAM(get_logger(), "camera_corrector is enabled");
+  else
+    RCLCPP_INFO_STREAM(get_logger(), "camera_corrector is disabled");
+}
 
 void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
 {
@@ -183,7 +194,7 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       particle.weight = score_converter_(raw_score);
     }
 
-    if (enable_weights_) {
+    if (enable_switch_) {
       this->set_weighted_particle_array(weighted_particles);
     }
   }

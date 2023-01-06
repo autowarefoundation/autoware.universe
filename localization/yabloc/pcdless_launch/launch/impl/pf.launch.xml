@@ -44,7 +44,7 @@
 
     <arg name="output_scored_cloud" default="scored_cloud"/>
     <arg name="output_cost_map_range" default="cost_map_range"/>
-    <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level info">
+    <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="visualize" value="true"/>
         <remap from="particles_marker_array" to="camera_debug_marker"/>
 
@@ -78,4 +78,9 @@
         <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
         <remap from="gnss_range_marker" to="/localization/pf/gnss_range_marker"/>
     </node>
+
+    <node pkg="corrector_manager" exec="corrector_manager" name="corrector_manager" output="screen" args="--ros-args --log-level info">
+        <remap from="/sensing/gnss/ublox/pose" to="/localization/pf/initial_gnss_pose"/> 
+    </node>
+
 </launch>

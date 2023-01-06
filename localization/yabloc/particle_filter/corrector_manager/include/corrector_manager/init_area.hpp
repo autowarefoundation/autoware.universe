@@ -8,7 +8,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless::modularized_particle_filter
+namespace pcdless
 {
 class InitArea
 {
@@ -24,4 +24,4 @@ private:
   std::vector<polygon> areas_;
 };
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace pcdless
