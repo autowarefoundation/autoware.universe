@@ -72,10 +72,10 @@ struct DeviceStatistics
 /**
  * @brief Statistics of HDD
  */
-struct HddStat
+struct HddStatistics
 {
   std::string device;                //!< @brief Disk device
-  std::string error_str;             //!< @brief Error string
+  std::string error_message;         //!< @brief Error message
   float read_data_rate_MBs;          //!< @brief Data rate of read (MB/s)
   float write_data_rate_MBs;         //!< @brief Data rate of write (MB/s)
   float read_iops;                   //!< @brief IOPS of read
@@ -157,7 +157,7 @@ protected:
    * @param [out] key Key value of diagnostic message
    * @param [out] value Value of diagnostic message
    */
-  int set_smart_temperature(
+  static int set_smart_temperature(
     const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
     std::string & key, std::string & value);
 
@@ -169,7 +169,7 @@ protected:
    * @param [out] key Key value of diagnostic message
    * @param [out] value Value of diagnostic message
    */
-  int set_smart_power_on_hours(
+  static int set_smart_power_on_hours(
     const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
     std::string & key, std::string & value);
 
@@ -181,7 +181,7 @@ protected:
    * @param [out] key Key value of diagnostic message
    * @param [out] value Value of diagnostic message
    */
-  int set_smart_total_data_written(
+  static int set_smart_total_data_written(
     const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
     std::string & key, std::string & value);
 
@@ -193,7 +193,7 @@ protected:
    * @param [out] key Key value of diagnostic message
    * @param [out] value Value of diagnostic message
    */
-  int set_smart_recovered_error(
+  static int set_smart_recovered_error(
     const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
     std::string & key, std::string & value);
 
@@ -233,6 +233,54 @@ protected:
    * @param [in] type Type to check
    */
   void check_statistics(diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type);
+
+  /**
+   * @brief Set rate of read data
+   * @param [in] param Parameters
+   * @param [in] stat Statistics of HDD
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
+  static int set_statistics_read_data_rate(
+    const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+    std::string & value);
+
+  /**
+   * @brief Set rate of write data
+   * @param [in] param Parameters
+   * @param [in] stat Statistics of HDD
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
+  static int set_statistics_write_data_rate(
+    const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+    std::string & value);
+
+  /**
+   * @brief Set IOPS of read data
+   * @param [in] param Parameters
+   * @param [in] stat Statistics of HDD
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
+  static int set_statistics_read_iops(
+    const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+    std::string & value);
+
+  /**
+   * @brief Set IOPS of write data
+   * @param [in] param Parameters
+   * @param [in] stat Statistics of HDD
+   * @param [in] index Index number of HDD
+   * @param [out] key Key value of diagnostic message
+   * @param [out] value Value of diagnostic message
+   */
+  static int set_statistics_write_iops(
+    const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+    std::string & value);
 
   /**
    * @brief Human readable size string to MB
@@ -350,18 +398,15 @@ protected:
 
   std::string socket_path_;             //!< @brief Path of UNIX domain socket
   boost::asio::io_service io_service_;  //!< @brief Core I/O functionality
-  std::unique_ptr<local::stream_protocol::acceptor> acceptor_;  //!< @brief UNIX domain acceptor
-  std::unique_ptr<local::stream_protocol::socket> socket_;      //!< @brief UNIX domain socket
+  std::unique_ptr<local::stream_protocol::acceptor> acceptor_;      //!< @brief UNIX domain acceptor
+  std::unique_ptr<local::stream_protocol::socket> socket_;          //!< @brief UNIX domain socket
+  diagnostic_updater::DiagnosticStatusWrapper communication_diag_;  //!< @brief Communication errors
 
-  std::map<std::string, HddParam> hdd_params_;  //!< @brief List of error and warning levels
-  std::map<std::string, bool>
-    hdd_connected_flags_;  //!< @brief List of flag whether HDD is connected
-  std::map<std::string, uint32_t>
-    initial_recovered_errors_;                //!< @brief List of initial recovered error count
-  std::map<std::string, HddStat> hdd_stats_;  //!< @brief List of HDD statistics
-  diagnostic_updater::DiagnosticStatusWrapper
-    communication_diag_;  //!< @brief Diagnostic status for communication errors
-  hdd_reader_service::HddInformationList hdd_info_list_;  //!< @brief List of HDD information
+  std::map<std::string, HddParam> hdd_params_;       //!< @brief List of error and warning levels
+  std::map<std::string, bool> hdd_connected_flags_;  //!< @brief List of HDD is connected
+  hdd_reader_service::HddInformationList hdd_info_list_;      //!< @brief List of HDD information
+  std::map<std::string, uint32_t> initial_recovered_errors_;  //!< @brief Initial recovered error
+  std::map<std::string, HddStatistics> hdd_stats_;            //!< @brief List of HDD statistics
   rclcpp::Time last_hdd_stat_update_time_;  //!< @brief Last HDD statistics update time
 
   /**

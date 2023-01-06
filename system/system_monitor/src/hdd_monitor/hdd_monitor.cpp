@@ -159,6 +159,60 @@ void HddMonitor::check_smart_recovered_error(diagnostic_updater::DiagnosticStatu
   check_smart(stat, CheckType::RECOVERED_ERROR);
 }
 
+void HddMonitor::check_smart(diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type)
+{
+  if (hdd_params_.empty()) {
+    stat.summary(DiagStatus::ERROR, "invalid disk parameter");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+  int index = 0;
+
+  // Loop in number of mount points
+  for (const auto & hdd_param : hdd_params_) {
+    // Skip if device is disconnected
+    if (!hdd_connected_flags_[hdd_param.first]) continue;
+
+    const auto & param = hdd_param.second;
+
+    // Get HDD information
+    hdd_reader_service::HddInformation info;
+    // Skip if error occurs
+    if (!get_hdd_information(param.disk_device, info)) continue;
+
+    std::string key;
+    std::string value;
+    int level = DiagStatus::OK;
+
+    switch (type) {
+      case CheckType::TEMPERATURE:
+        level = set_smart_temperature(param, info, index, key, value);
+        break;
+      case CheckType::POWER_ON_HOURS:
+        level = set_smart_power_on_hours(param, info, index, key, value);
+        break;
+      case CheckType::TOTAL_DATA_WRITTEN:
+        level = set_smart_total_data_written(param, info, index, key, value);
+        break;
+      case CheckType::RECOVERED_ERROR:
+        level = set_smart_recovered_error(param, info, index, key, value);
+        break;
+      default:
+        break;
+    }
+
+    stat.add(fmt::format("HDD {}: status", index), hdd_dicts_[static_cast<int>(type)].at(level));
+    stat.add(fmt::format("HDD {}: name", index), param.disk_device.c_str());
+    stat.add(key, value.c_str());
+
+    whole_level = std::max(whole_level, level);
+    ++index;
+  }
+
+  stat.summary(whole_level, hdd_dicts_[static_cast<int>(type)].at(whole_level));
+}
+
 int HddMonitor::set_smart_temperature(
   const HddParam & param, const hdd_reader_service::HddInformation & info, int index,
   std::string & key, std::string & value)
@@ -246,60 +300,6 @@ int HddMonitor::set_smart_recovered_error(
   return level;
 }
 
-void HddMonitor::check_smart(diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type)
-{
-  if (hdd_params_.empty()) {
-    stat.summary(DiagStatus::ERROR, "invalid disk parameter");
-    return;
-  }
-
-  int level = DiagStatus::OK;
-  int whole_level = DiagStatus::OK;
-  int index = 0;
-
-  // Loop in number of mount points
-  for (const auto & hdd_param : hdd_params_) {
-    // Skip if device is disconnected
-    if (!hdd_connected_flags_[hdd_param.first]) continue;
-
-    const auto & param = hdd_param.second;
-
-    // Get HDD information
-    hdd_reader_service::HddInformation info;
-    // Skip if error occurs
-    if (!get_hdd_information(param.disk_device, info)) continue;
-
-    std::string key;
-    std::string value;
-
-    switch (type) {
-      case CheckType::TEMPERATURE:
-        level = set_smart_temperature(param, info, index, key, value);
-        break;
-      case CheckType::POWER_ON_HOURS:
-        level = set_smart_power_on_hours(param, info, index, key, value);
-        break;
-      case CheckType::TOTAL_DATA_WRITTEN:
-        level = set_smart_total_data_written(param, info, index, key, value);
-        break;
-      case CheckType::RECOVERED_ERROR:
-        level = set_smart_recovered_error(param, info, index, key, value);
-        break;
-      default:
-        break;
-    }
-
-    stat.add(fmt::format("HDD {}: status", index), hdd_dicts_[static_cast<int>(type)].at(level));
-    stat.add(fmt::format("HDD {}: name", index), param.disk_device.c_str());
-    stat.add(key, value.c_str());
-
-    whole_level = std::max(whole_level, level);
-    ++index;
-  }
-
-  stat.summary(whole_level, hdd_dicts_[static_cast<int>(type)].at(whole_level));
-}
-
 void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
@@ -312,9 +312,10 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   int hdd_index = 0;
   int whole_level = DiagStatus::OK;
-  std::string error_str;
+  std::string error_message;
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
+    // Skip if device is disconnected
     if (!hdd_connected_flags_[itr->first]) {
       continue;
     }
@@ -323,7 +324,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     // So create file descriptor with O_CLOEXEC and pass it to boost::process.
     int out_fd[2];
     if (pipe2(out_fd, O_CLOEXEC) != 0) {
-      error_str = "pipe2 error";
+      error_message = "pipe2 error";
       stat.add(fmt::format("HDD {}: status", hdd_index), "pipe2 error");
       stat.add(fmt::format("HDD {}: name", hdd_index), itr->first.c_str());
       stat.add(fmt::format("HDD {}: pipe2", hdd_index), strerror(errno));
@@ -334,7 +335,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     int err_fd[2];
     if (pipe2(err_fd, O_CLOEXEC) != 0) {
-      error_str = "pipe2 error";
+      error_message = "pipe2 error";
       stat.add(fmt::format("HDD {}: status", hdd_index), "pipe2 error");
       stat.add(fmt::format("HDD {}: name", hdd_index), itr->first.c_str());
       stat.add(fmt::format("HDD {}: pipe2", hdd_index), strerror(errno));
@@ -352,7 +353,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     if (c.exit_code() != 0) {
       std::ostringstream os;
       is_err >> os.rdbuf();
-      error_str = "df error";
+      error_message = "df error";
       stat.add(fmt::format("HDD {}: status", hdd_index), "df error");
       stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.part_device.c_str());
       stat.add(fmt::format("HDD {}: df", hdd_index), os.str().c_str());
@@ -378,7 +379,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
         avail = std::stoi(list[3]);
       } catch (std::exception & e) {
         avail = -1;
-        error_str = e.what();
+        error_message = e.what();
         stat.add(fmt::format("HDD {}: status", hdd_index), "avail string error");
       }
 
@@ -391,27 +392,20 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       }
 
       stat.add(fmt::format("HDD {}: status", hdd_index), usage_dict_.at(level));
+      stat.add(fmt::format("HDD {}: mount point", hdd_index), itr->first.c_str());
       stat.add(fmt::format("HDD {}: filesystem", hdd_index), list[0].c_str());
       stat.add(fmt::format("HDD {}: size", hdd_index), (list[1] + " MiB").c_str());
       stat.add(fmt::format("HDD {}: used", hdd_index), (list[2] + " MiB").c_str());
       stat.add(fmt::format("HDD {}: avail", hdd_index), (list[3] + " MiB").c_str());
       stat.add(fmt::format("HDD {}: use", hdd_index), list[4].c_str());
-      std::string mounted = list[5];
-      if (list.size() > 6) {
-        std::string::size_type pos = line.find("% /");
-        if (pos != std::string::npos) {
-          mounted = line.substr(pos + 2);  // 2 is "% " length
-        }
-      }
-      stat.add(fmt::format("HDD {}: mounted on", hdd_index), mounted.c_str());
 
       whole_level = std::max(whole_level, level);
       ++index;
     }
   }
 
-  if (!error_str.empty()) {
-    stat.summary(DiagStatus::ERROR, error_str);
+  if (!error_message.empty()) {
+    stat.summary(DiagStatus::ERROR, error_message);
   } else {
     stat.summary(whole_level, usage_dict_.at(whole_level));
   }
@@ -443,90 +437,123 @@ void HddMonitor::check_write_iops(diagnostic_updater::DiagnosticStatusWrapper & 
 void HddMonitor::check_statistics(
   diagnostic_updater::DiagnosticStatusWrapper & stat, CheckType type)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
   if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
   }
 
-  int hdd_index = 0;
   int whole_level = DiagStatus::OK;
-  std::string error_str;
-  std::string key_str;
-  std::string val_str;
+  int index = 0;
+  std::string error_message;
 
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
-    if (!hdd_connected_flags_[itr->first]) {
+  // Loop in number of mount points
+  for (const auto & hdd_param : hdd_params_) {
+    // Skip if device is disconnected
+    if (!hdd_connected_flags_[hdd_param.first]) continue;
+
+    const auto & param = hdd_param.second;
+
+    HddStatistics statistics = hdd_stats_[hdd_param.first];
+
+    // Error occurs
+    if (!statistics.error_message.empty()) {
+      stat.add(fmt::format("HDD {}: status", index), statistics.error_message);
+      stat.add(fmt::format("HDD {}: name", index), param.disk_device.c_str());
+      error_message = statistics.error_message;
+      ++index;
       continue;
     }
 
+    std::string key;
+    std::string value;
     int level = DiagStatus::OK;
 
     switch (type) {
-      case CheckType::READ_DATA_RATE: {
-        float read_data_rate = hdd_stats_[itr->first].read_data_rate_MBs;
-
-        if (read_data_rate >= itr->second.read_data_rate_warn) {
-          level = DiagStatus::WARN;
-        }
-        key_str = fmt::format("HDD {}: data rate of read", hdd_index);
-        val_str = fmt::format("{:.2f} MB/s", read_data_rate);
-      } break;
-      case CheckType::WRITE_DATA_RATE: {
-        float write_data_rate = hdd_stats_[itr->first].write_data_rate_MBs;
-
-        if (write_data_rate >= itr->second.write_data_rate_warn) {
-          level = DiagStatus::WARN;
-        }
-        key_str = fmt::format("HDD {}: data rate of write", hdd_index);
-        val_str = fmt::format("{:.2f} MB/s", write_data_rate);
-      } break;
-      case CheckType::READ_IOPS: {
-        float read_iops = hdd_stats_[itr->first].read_iops;
-
-        if (read_iops >= itr->second.read_iops_warn) {
-          level = DiagStatus::WARN;
-        }
-        key_str = fmt::format("HDD {}: IOPS of read", hdd_index);
-        val_str = fmt::format("{:.2f} IOPS", read_iops);
-      } break;
-      case CheckType::WRITE_IOPS: {
-        float write_iops = hdd_stats_[itr->first].write_iops;
-
-        if (write_iops >= itr->second.write_iops_warn) {
-          level = DiagStatus::WARN;
-        }
-        key_str = fmt::format("HDD {}: IOPS of write", hdd_index);
-        val_str = fmt::format("{:.2f} IOPS", write_iops);
-      } break;
+      case CheckType::READ_DATA_RATE:
+        level = set_statistics_read_data_rate(param, statistics, index, key, value);
+        break;
+      case CheckType::WRITE_DATA_RATE:
+        level = set_statistics_write_data_rate(param, statistics, index, key, value);
+        break;
+      case CheckType::READ_IOPS:
+        level = set_statistics_read_iops(param, statistics, index, key, value);
+        break;
+      case CheckType::WRITE_IOPS:
+        level = set_statistics_write_iops(param, statistics, index, key, value);
+        break;
       default:
         break;
     }
 
-    if (!hdd_stats_[itr->first].error_str.empty()) {
-      error_str = hdd_stats_[itr->first].error_str;
-      stat.add(fmt::format("HDD {}: status", hdd_index), error_str);
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device.c_str());
-    } else {
-      stat.add(
-        fmt::format("HDD {}: status", hdd_index), hdd_dicts_[static_cast<int>(type)].at(level));
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device.c_str());
-      stat.add(key_str, val_str.c_str());
-    }
+    stat.add(fmt::format("HDD {}: status", index), hdd_dicts_[static_cast<int>(type)].at(level));
+    stat.add(fmt::format("HDD {}: name", index), param.disk_device.c_str());
+    stat.add(key, value.c_str());
 
     whole_level = std::max(whole_level, level);
+    ++index;
   }
 
-  if (!error_str.empty()) {
-    stat.summary(DiagStatus::ERROR, error_str);
+  if (!error_message.empty()) {
+    stat.summary(DiagStatus::ERROR, error_message);
   } else {
     stat.summary(whole_level, hdd_dicts_[static_cast<int>(type)].at(whole_level));
   }
+}
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+int HddMonitor::set_statistics_read_data_rate(
+  const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+  std::string & value)
+{
+  int level = DiagStatus::OK;
+
+  if (stat.read_data_rate_MBs >= param.read_data_rate_warn) {
+    level = DiagStatus::WARN;
+  }
+  key = fmt::format("HDD {}: data rate of read", index);
+  value = fmt::format("{:.2f} MB/s", stat.read_data_rate_MBs);
+  return level;
+}
+
+int HddMonitor::set_statistics_write_data_rate(
+  const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+  std::string & value)
+{
+  int level = DiagStatus::OK;
+
+  if (stat.write_data_rate_MBs >= param.write_data_rate_warn) {
+    level = DiagStatus::WARN;
+  }
+  key = fmt::format("HDD {}: data rate of write", index);
+  value = fmt::format("{:.2f} MB/s", stat.write_data_rate_MBs);
+  return level;
+}
+
+int HddMonitor::set_statistics_read_iops(
+  const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+  std::string & value)
+{
+  int level = DiagStatus::OK;
+
+  if (stat.read_iops >= param.read_iops_warn) {
+    level = DiagStatus::WARN;
+  }
+  key = fmt::format("HDD {}: IOPS of read", index);
+  value = fmt::format("{:.2f} IOPS", stat.read_iops);
+  return level;
+}
+
+int HddMonitor::set_statistics_write_iops(
+  const HddParam & param, const HddStatistics & stat, int index, std::string & key,
+  std::string & value)
+{
+  int level = DiagStatus::OK;
+
+  if (stat.write_iops >= param.write_iops_warn) {
+    level = DiagStatus::WARN;
+  }
+  key = fmt::format("HDD {}: IOPS of write", index);
+  value = fmt::format("{:.2f} IOPS", stat.write_iops);
+  return level;
 }
 
 void HddMonitor::get_hdd_params()
@@ -570,7 +597,7 @@ void HddMonitor::get_hdd_params()
 
     hdd_params_[mount_point] = param;
 
-    HddStat stat;
+    HddStatistics stat;
     hdd_stats_[mount_point] = stat;
   }
 }
@@ -753,7 +780,7 @@ void HddMonitor::update_hdd_info_list()
 void HddMonitor::start_hdd_transfer_measurement()
 {
   for (auto & hdd_stat : hdd_stats_) {
-    hdd_stat.second.error_str = "";
+    hdd_stat.second.error_message = "";
 
     // Skip if device is disconnected
     if (!hdd_connected_flags_[hdd_stat.first]) {
@@ -763,7 +790,7 @@ void HddMonitor::start_hdd_transfer_measurement()
     DeviceStatistics statistics{};
     int ret = get_device_statistics(hdd_stat.second.device, statistics);
     if (ret != EXIT_SUCCESS) {
-      hdd_stat.second.error_str = fmt::format("Failed to open stat. {}}", strerror(ret));
+      hdd_stat.second.error_message = fmt::format("Failed to open stat. {}}", strerror(ret));
       continue;
     }
 
@@ -778,7 +805,7 @@ void HddMonitor::update_hdd_statistics()
   double duration_sec = (this->now() - last_hdd_stat_update_time_).seconds();
 
   for (auto & hdd_stat : hdd_stats_) {
-    hdd_stat.second.error_str = "";
+    hdd_stat.second.error_message = "";
 
     // Skip if device is disconnected
     if (!hdd_connected_flags_[hdd_stat.first]) {
@@ -788,7 +815,7 @@ void HddMonitor::update_hdd_statistics()
     DeviceStatistics statistics{};
     int ret = get_device_statistics(hdd_stat.second.device, statistics);
     if (ret != EXIT_SUCCESS) {
-      hdd_stat.second.error_str = fmt::format("Failed to open stat. {}}", strerror(ret));
+      hdd_stat.second.error_message = fmt::format("Failed to open stat. {}}", strerror(ret));
       continue;
     }
 
