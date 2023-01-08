@@ -46,7 +46,7 @@
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
-
+using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
 /// \class PidLongitudinalController
@@ -88,6 +88,7 @@ private:
   nav_msgs::msg::Odometry m_current_kinematic_state;
   geometry_msgs::msg::AccelWithCovarianceStamped m_current_accel;
   autoware_auto_planning_msgs::msg::Trajectory m_trajectory;
+  autoware_auto_vehicle_msgs::msg::ControlModeReport m_current_control_mode;
 
   // vehicle info
   double m_wheel_base;
@@ -224,6 +225,12 @@ private:
    * @param [in] msg trajectory message
    */
   void setCurrentAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped & msg);
+
+  /**
+   * @brief set current control mode with received message
+   * @param [in] msg control mode report message
+   */
+  void setCurrentControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport & msg);
 
   /**
    * @brief set reference trajectory with received message
