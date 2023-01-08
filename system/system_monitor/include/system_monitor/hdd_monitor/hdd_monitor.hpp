@@ -356,13 +356,13 @@ protected:
 
   /**
    * @brief Get increment value of sysfs device stats per second
-   * @param [in] cur_val Current value
-   * @param [in] last_val last value
-   * @param [in] duration_sec Duration in seconds
+   * @param [in] current_value Current value
+   * @param [in] last_value last value
+   * @param [in] duration Duration in seconds
    * @return Increment value
    */
-  static double get_increase_sysfs_device_stat_value_per_sec(
-    uint64_t cur_val, uint64_t last_val, double duration_sec);
+  static float get_increase_statistics_value(
+    uint64_t current_value, uint64_t last_value, double duration);
 
   /**
    * @brief Get statistics about the state of block device

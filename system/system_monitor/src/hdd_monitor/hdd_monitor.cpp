@@ -815,7 +815,7 @@ void HddMonitor::start_hdd_transfer_measurement()
 
 void HddMonitor::update_hdd_statistics()
 {
-  double duration_sec = (this->now() - last_hdd_stat_update_time_).seconds();
+  double duration = (this->now() - last_hdd_stat_update_time_).seconds();
 
   for (auto & hdd_stat : hdd_stats_) {
     hdd_stat.second.error_message = "";
@@ -834,16 +834,16 @@ void HddMonitor::update_hdd_statistics()
 
     DeviceStatistics & last_statistics = hdd_stat.second.last_statistics;
 
-    hdd_stat.second.read_data_rate_MBs = get_increase_sysfs_device_stat_value_per_sec(
-      statistics.read_sectors, last_statistics.read_sectors, duration_sec);
+    hdd_stat.second.read_data_rate_MBs = get_increase_statistics_value(
+      statistics.read_sectors, last_statistics.read_sectors, duration);
     hdd_stat.second.read_data_rate_MBs /= 2048;
-    hdd_stat.second.write_data_rate_MBs = get_increase_sysfs_device_stat_value_per_sec(
-      statistics.write_sectors, last_statistics.write_sectors, duration_sec);
+    hdd_stat.second.write_data_rate_MBs = get_increase_statistics_value(
+      statistics.write_sectors, last_statistics.write_sectors, duration);
     hdd_stat.second.write_data_rate_MBs /= 2048;
-    hdd_stat.second.read_iops = get_increase_sysfs_device_stat_value_per_sec(
-      statistics.read_ios, last_statistics.read_ios, duration_sec);
-    hdd_stat.second.write_iops = get_increase_sysfs_device_stat_value_per_sec(
-      statistics.write_ios, last_statistics.write_ios, duration_sec);
+    hdd_stat.second.read_iops =
+      get_increase_statistics_value(statistics.read_ios, last_statistics.read_ios, duration);
+    hdd_stat.second.write_iops =
+      get_increase_statistics_value(statistics.write_ios, last_statistics.write_ios, duration);
 
     hdd_stat.second.last_statistics = statistics;
   }
@@ -851,11 +851,11 @@ void HddMonitor::update_hdd_statistics()
   last_hdd_stat_update_time_ = this->now();
 }
 
-double HddMonitor::get_increase_sysfs_device_stat_value_per_sec(
-  uint64_t cur_val, uint64_t last_val, double duration_sec)
+float HddMonitor::get_increase_statistics_value(
+  uint64_t current_value, uint64_t last_value, double duration)
 {
-  if (cur_val > last_val && duration_sec > 0.0) {
-    return static_cast<double>(cur_val - last_val) / duration_sec;
+  if (current_value > last_value && duration > 0.0) {
+    return static_cast<float>(current_value - last_value) / duration;
   }
   return 0.0;
 }
