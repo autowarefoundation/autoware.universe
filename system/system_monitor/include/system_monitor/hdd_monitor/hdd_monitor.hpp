@@ -25,6 +25,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <boost/asio.hpp>
+#include <boost/process.hpp>
 
 #include <climits>
 #include <map>
@@ -98,6 +99,7 @@ enum class CheckType {
   SIZE
 };
 
+namespace bp = boost::process;
 namespace local = boost::asio::local;
 
 class HddMonitor : public rclcpp::Node
@@ -202,6 +204,15 @@ protected:
    * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
    */
   void check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  /**
+   * @brief Run df(disk free) command
+   * @param [in] partition Device name of partition
+   * @param [out] is_out Output stream
+   * @param [out] error_message Error message
+   */
+  int run_disk_free_command(
+    const std::string & partition, bp::ipstream & is_out, std::string & error_message);
 
   /**
    * @brief Check HDD data rate of read
