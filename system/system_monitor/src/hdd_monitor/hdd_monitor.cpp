@@ -310,94 +310,58 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     return;
   }
 
-  int hdd_index = 0;
+  int index = 0;
   int whole_level = DiagStatus::OK;
   std::string error_message;
 
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
+  // Loop in number of mount points
+  for (const auto & hdd_param : hdd_params_) {
     // Skip if device is disconnected
-    if (!hdd_connected_flags_[itr->first]) {
-      continue;
-    }
+    if (!hdd_connected_flags_[hdd_param.first]) continue;
 
-    // boost::process create file descriptor without O_CLOEXEC required for multithreading.
-    // So create file descriptor with O_CLOEXEC and pass it to boost::process.
-    int out_fd[2];
-    if (pipe2(out_fd, O_CLOEXEC) != 0) {
-      error_message = "pipe2 error";
-      stat.add(fmt::format("HDD {}: status", hdd_index), "pipe2 error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->first.c_str());
-      stat.add(fmt::format("HDD {}: pipe2", hdd_index), strerror(errno));
-      continue;
-    }
-    bp::pipe out_pipe{out_fd[0], out_fd[1]};
-    bp::ipstream is_out{std::move(out_pipe)};
+    HddParam param = hdd_param.second;
 
-    int err_fd[2];
-    if (pipe2(err_fd, O_CLOEXEC) != 0) {
-      error_message = "pipe2 error";
-      stat.add(fmt::format("HDD {}: status", hdd_index), "pipe2 error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->first.c_str());
-      stat.add(fmt::format("HDD {}: pipe2", hdd_index), strerror(errno));
-      continue;
-    }
-    bp::pipe err_pipe{err_fd[0], err_fd[1]};
-    bp::ipstream is_err{std::move(err_pipe)};
-
-    // Invoke shell to use shell wildcard expansion
-    bp::child c(
-      "/bin/sh", "-c", fmt::format("df -Pm {}*", itr->second.part_device.c_str()),
-      bp::std_out > is_out, bp::std_err > is_err);
-    c.wait();
-
-    if (c.exit_code() != 0) {
-      std::ostringstream os;
-      is_err >> os.rdbuf();
-      error_message = "df error";
-      stat.add(fmt::format("HDD {}: status", hdd_index), "df error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.part_device.c_str());
-      stat.add(fmt::format("HDD {}: df", hdd_index), os.str().c_str());
+    // Run disk free(df) command
+    std::stringstream stream;
+    if (!run_disk_free_command(stat, stream, hdd_param.first, param.part_device, index)) {
+      error_message = stream.str();
+      ++index;
       continue;
     }
 
     int level = DiagStatus::OK;
     std::string line;
-    int index = 0;
     std::vector<std::string> list;
     uint32_t avail = 0;
 
-    while (std::getline(is_out, line) && !line.empty()) {
-      // Skip header
-      if (index <= 0) {
-        ++index;
-        continue;
-      }
+    // Skip header
+    std::getline(stream, line);
 
+    while (std::getline(stream, line) && !line.empty()) {
       boost::split(list, line, boost::is_space(), boost::token_compress_on);
-
       try {
         avail = std::stoi(list[3]);
       } catch (std::exception & e) {
         avail = -1;
         error_message = e.what();
-        stat.add(fmt::format("HDD {}: status", hdd_index), "avail string error");
+        stat.add(fmt::format("HDD {}: status", index), "avail string error");
       }
 
-      if (avail <= itr->second.free_error) {
+      if (avail <= param.free_error) {
         level = DiagStatus::ERROR;
-      } else if (avail <= itr->second.free_warn) {
+      } else if (avail <= param.free_warn) {
         level = DiagStatus::WARN;
       } else {
         level = DiagStatus::OK;
       }
 
-      stat.add(fmt::format("HDD {}: status", hdd_index), usage_dict_.at(level));
-      stat.add(fmt::format("HDD {}: mount point", hdd_index), itr->first.c_str());
-      stat.add(fmt::format("HDD {}: filesystem", hdd_index), list[0].c_str());
-      stat.add(fmt::format("HDD {}: size", hdd_index), (list[1] + " MiB").c_str());
-      stat.add(fmt::format("HDD {}: used", hdd_index), (list[2] + " MiB").c_str());
-      stat.add(fmt::format("HDD {}: avail", hdd_index), (list[3] + " MiB").c_str());
-      stat.add(fmt::format("HDD {}: use", hdd_index), list[4].c_str());
+      stat.add(fmt::format("HDD {}: status", index), usage_dict_.at(level));
+      stat.add(fmt::format("HDD {}: mount point", index), hdd_param.first.c_str());
+      stat.add(fmt::format("HDD {}: filesystem", index), list[0].c_str());
+      stat.add(fmt::format("HDD {}: size", index), (list[1] + " MiB").c_str());
+      stat.add(fmt::format("HDD {}: used", index), (list[2] + " MiB").c_str());
+      stat.add(fmt::format("HDD {}: avail", index), (list[3] + " MiB").c_str());
+      stat.add(fmt::format("HDD {}: use", index), list[4].c_str());
 
       whole_level = std::max(whole_level, level);
       ++index;
@@ -412,6 +376,55 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
+}
+
+bool HddMonitor::run_disk_free_command(
+  diagnostic_updater::DiagnosticStatusWrapper & stat, std::stringstream & stream,
+  const std::string & mount_point, const std::string & partition, int index)
+{
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    stream << "pipe2 error";
+    stat.add(fmt::format("HDD {}: status", index), "pipe2 error");
+    stat.add(fmt::format("HDD {}: mount point", index), mount_point.c_str());
+    stat.add(fmt::format("HDD {}: pipe2", index), strerror(errno));
+    return false;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    stream << "pipe2 error";
+    stat.add(fmt::format("HDD {}: status", index), "pipe2 error");
+    stat.add(fmt::format("HDD {}: mount point", index), mount_point.c_str());
+    stat.add(fmt::format("HDD {}: pipe2", index), strerror(errno));
+    return false;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
+  // Invoke shell to use shell wildcard expansion
+  bp::child c(
+    "/bin/sh", "-c", fmt::format("df -Pm {}*", partition.c_str()), bp::std_out > is_out,
+    bp::std_err > is_err);
+  c.wait();
+
+  if (c.exit_code() != 0) {
+    std::ostringstream os;
+    is_err >> os.rdbuf();
+    stream << "df error";
+    stat.add(fmt::format("HDD {}: status", index), "df error");
+    stat.add(fmt::format("HDD {}: name", index), partition.c_str());
+    stat.add(fmt::format("HDD {}: df", index), os.str().c_str());
+    return false;
+  }
+
+  is_out >> stream.rdbuf();
+
+  return true;
 }
 
 void HddMonitor::check_read_data_rate(diagnostic_updater::DiagnosticStatusWrapper & stat)

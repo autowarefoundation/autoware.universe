@@ -204,6 +204,19 @@ protected:
   void check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
+   * @brief Run disk free(df) command
+   * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
+   * @param [out] stream Output stream
+   * @param [in] mount_point Mount point
+   * @param [in] partition Device name of partition
+   * @param [in] Index of HDD device
+   * @return true on success, false on error
+   */
+  bool run_disk_free_command(
+    diagnostic_updater::DiagnosticStatusWrapper & stat, std::stringstream & stream,
+    const std::string & mount_point, const std::string & partition, int index);
+
+  /**
    * @brief Check HDD data rate of read
    * @param [out] stat Diagnostic message passed directly to diagnostic publish calls
    */
