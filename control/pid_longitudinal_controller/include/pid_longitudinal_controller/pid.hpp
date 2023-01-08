@@ -89,6 +89,6 @@ private:
   bool m_is_gains_set;
   bool m_is_limits_set;
 };
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller
 
 #endif  // PID_LONGITUDINAL_CONTROLLER__PID_HPP_

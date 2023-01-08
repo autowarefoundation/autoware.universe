@@ -62,5 +62,5 @@ public:
     return ret;
   }
 };
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller
 #endif  // PID_LONGITUDINAL_CONTROLLER__LOWPASS_FILTER_HPP_

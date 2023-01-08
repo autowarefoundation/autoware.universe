@@ -373,6 +373,6 @@ private:
     const Motion & ctrl_cmd, const geometry_msgs::msg::Pose & current_pose,
     const ControlData & control_data);
 };
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller
 
 #endif  // PID_LONGITUDINAL_CONTROLLER__PID_LONGITUDINAL_CONTROLLER_HPP_

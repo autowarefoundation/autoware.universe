@@ -102,4 +102,4 @@ void PIDController::reset()
   m_prev_error = 0.0;
   m_is_first_time = true;
 }
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller

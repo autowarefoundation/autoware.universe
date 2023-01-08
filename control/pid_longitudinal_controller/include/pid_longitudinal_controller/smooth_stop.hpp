@@ -110,6 +110,6 @@ private:
   rclcpp::Time m_weak_acc_time;
   bool m_is_set_params = false;
 };
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller
 
 #endif  // PID_LONGITUDINAL_CONTROLLER__SMOOTH_STOP_HPP_

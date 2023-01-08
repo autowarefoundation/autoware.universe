@@ -158,4 +158,4 @@ double SmoothStop::calculate(
   // when the car is not running
   return m_params.strong_stop_acc;
 }
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller

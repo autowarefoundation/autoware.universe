@@ -88,6 +88,6 @@ public:
 private:
   std::array<double, static_cast<size_t>(TYPE::SIZE)> m_values;
 };
-}  // autoware::motion::control::pid_longitudinal_controller
+}  // namespace autoware::motion::control::pid_longitudinal_controller
 
 #endif  // PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_

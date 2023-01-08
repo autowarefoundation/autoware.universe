@@ -96,8 +96,7 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
 
     // set lowpass filter for vel error and pitch
     const double lpf_vel_error_gain{node_->declare_parameter<double>("lpf_vel_error_gain")};
-    m_lpf_vel_error =
-      std::make_shared<LowpassFilter1d>(0.0, lpf_vel_error_gain);
+    m_lpf_vel_error = std::make_shared<LowpassFilter1d>(0.0, lpf_vel_error_gain);
 
     m_current_vel_threshold_pid_integrate =
       node_->declare_parameter<double>("current_vel_threshold_pid_integration");  // [m/s]
@@ -445,10 +444,9 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
     current_pose, m_trajectory, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
-  const double raw_pitch =
-    longitudinal_utils::getPitchByPose(current_pose.orientation);
-  const double traj_pitch = longitudinal_utils::getPitchByTraj(
-    m_trajectory, control_data.nearest_idx, m_wheel_base);
+  const double raw_pitch = longitudinal_utils::getPitchByPose(current_pose.orientation);
+  const double traj_pitch =
+    longitudinal_utils::getPitchByTraj(m_trajectory, control_data.nearest_idx, m_wheel_base);
   control_data.slope_angle = m_use_traj_for_pitch ? traj_pitch : m_lpf_pitch->filter(raw_pitch);
   updatePitchDebugValues(control_data.slope_angle, traj_pitch, raw_pitch);
 
@@ -460,10 +458,10 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
 {
   // These accelerations are without slope compensation
   const auto & p = m_emergency_state_params;
-  const double vel = longitudinal_utils::applyDiffLimitFilter(
-    p.vel, m_prev_raw_ctrl_cmd.vel, dt, p.acc);
-  const double acc = longitudinal_utils::applyDiffLimitFilter(
-    p.acc, m_prev_raw_ctrl_cmd.acc, dt, p.jerk);
+  const double vel =
+    longitudinal_utils::applyDiffLimitFilter(p.vel, m_prev_raw_ctrl_cmd.vel, dt, p.acc);
+  const double acc =
+    longitudinal_utils::applyDiffLimitFilter(p.acc, m_prev_raw_ctrl_cmd.acc, dt, p.jerk);
 
   RCLCPP_ERROR_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 3000, "[Emergency stop] vel: %3.3f, acc: %3.3f", vel,
@@ -616,9 +614,8 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
   Motion raw_ctrl_cmd{};
   Motion target_motion{};
   if (m_control_state == ControlState::DRIVE) {
-    const auto target_pose =
-      longitudinal_utils::calcPoseAfterTimeDelay(
-        current_pose, m_delay_compensation_time, current_vel);
+    const auto target_pose = longitudinal_utils::calcPoseAfterTimeDelay(
+      current_pose, m_delay_compensation_time, current_vel);
     const auto target_interpolated_point = calcInterpolatedTargetValue(m_trajectory, target_pose);
     target_motion = Motion{
       target_interpolated_point.longitudinal_velocity_mps,
@@ -628,8 +625,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
 
     const double pred_vel_in_target =
       predictedVelocityInTargetPoint(control_data.current_motion, m_delay_compensation_time);
-    m_debug_values.setValues(
-      DebugValues::TYPE::PREDICTED_VEL, pred_vel_in_target);
+    m_debug_values.setValues(DebugValues::TYPE::PREDICTED_VEL, pred_vel_in_target);
 
     raw_ctrl_cmd.vel = target_motion.vel;
     raw_ctrl_cmd.acc = applyVelocityFeedback(target_motion, control_data.dt, pred_vel_in_target);
@@ -766,9 +762,8 @@ double PidLongitudinalController::calcFilteredAcc(
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED, acc_slope_filtered);
 
   // This jerk filter must be applied after slope compensation
-  const double acc_jerk_filtered =
-    longitudinal_utils::applyDiffLimitFilter(
-      acc_slope_filtered, m_prev_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
+  const double acc_jerk_filtered = longitudinal_utils::applyDiffLimitFilter(
+    acc_slope_filtered, m_prev_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, acc_jerk_filtered);
 
   return acc_jerk_filtered;
