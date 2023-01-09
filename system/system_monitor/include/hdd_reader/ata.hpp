@@ -192,7 +192,7 @@ public:
     }
 
     // IDENTIFY DEVICE
-    std::string identify = std::string(data, sizeof(data));
+    const std::string identify = std::string(data, sizeof(data));
     // Word 10..19 Serial number
     info.serial = identify.substr(20, 20);
     swap_char(info.serial, 20);

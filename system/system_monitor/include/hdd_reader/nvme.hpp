@@ -80,7 +80,7 @@ public:
     }
 
     // Identify Controller Data Structure
-    std::string identify = std::string(data, sizeof(data));
+    const std::string identify = std::string(data, sizeof(data));
     // Bytes 23:04 Serial Number (SN)
     info.serial = identify.substr(4, 20);
     boost::trim(info.serial);
@@ -104,7 +104,7 @@ public:
   static int get_nvme_smart_data(int fd, HddInformation & info)
   {
     nvme_admin_cmd cmd{};
-    unsigned char data[144]{};  // 36 Dword (get byte 0 to 143)
+    char data[144]{};  // 36 Dword (get byte 0 to 143)
 
     // The Get Log Page command returns a data buffer containing the log page requested
     cmd.opcode = 0x02;      // Get Log Page
@@ -123,9 +123,13 @@ public:
 
     // Bytes 2:1 Composite Temperature
     // Convert kelvin to celsius
-    unsigned int temperature = ((data[2] << 8u) | data[1]) - 273;
+    unsigned int temperature = data[2] << 8u;
+    temperature |= data[1] - 273;
     info.is_valid_temp = true;
     info.temp = static_cast<uint8_t>(temperature);
+
+    const std::string smart_data = std::string(data, sizeof(data));
+    char * end = nullptr;
 
     // Bytes 63:48 Data Units Written
     // This value is reported in thousands
@@ -134,12 +138,14 @@ public:
     // (e.g., one indicates that the number of 512 byte data units written
     // is from 1 to 1,000, three indicates that the number of 512 byte data
     // units written is from 2,001 to 3,000)
+    const std::string total_data_written = smart_data.substr(48, 16);
     info.is_valid_total_data_written = true;
-    info.total_data_written = *(reinterpret_cast<uint64_t *>(&data[48]));
+    info.total_data_written = strtoull(total_data_written.c_str(), &end, 10);
 
     // Bytes 143:128 Power On Hours
+    const std::string power_on_hours = smart_data.substr(128, 16);
     info.is_valid_power_on_hours = true;
-    info.power_on_hours = *(reinterpret_cast<uint64_t *>(&data[128]));
+    info.power_on_hours = strtoull(power_on_hours.c_str(), &end, 10);
 
     // NVMe S.M.A.R.T has no information of recovered error count
     info.is_valid_recovered_error = false;

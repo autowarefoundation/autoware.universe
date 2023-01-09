@@ -587,7 +587,8 @@ void HddMonitor::get_hdd_params()
     int64_t total_data_written_warn_org =
       declare_parameter<int64_t>(prefix + ".total_data_written_warn", 4915200);
     param.total_data_written_warn = static_cast<uint64_t>(
-      total_data_written_warn_org * (1.0f - param.total_data_written_safety_factor));
+      static_cast<double>(total_data_written_warn_org) *
+      (1.0f - param.total_data_written_safety_factor));
     param.recovered_error_warn = declare_parameter<int>(prefix + ".recovered_error_warn", 1);
 
     // Usage
@@ -855,7 +856,7 @@ double HddMonitor::get_increase_statistics_value(
   uint64_t current_value, uint64_t last_value, double duration)
 {
   if (current_value > last_value && duration > 0.0) {
-    return (current_value - last_value) / duration;
+    return static_cast<double>(current_value - last_value) / duration;
   }
   return 0.0;
 }
