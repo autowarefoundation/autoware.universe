@@ -123,8 +123,9 @@ public:
 
     // Bytes 2:1 Composite Temperature
     // Convert kelvin to celsius
-    unsigned int temperature = data[2] << 8u;
-    temperature |= data[1] - 273;
+    unsigned char upper = static_cast<unsigned char>(data[2]);
+    unsigned char lower = static_cast<unsigned char>(data[1]);
+    unsigned int temperature = ((upper << 8) | lower) - 273;
     info.is_valid_temp = true;
     info.temp = static_cast<uint8_t>(temperature);
 
