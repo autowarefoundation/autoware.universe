@@ -68,7 +68,8 @@ public:
     char data[4096]{};  // Fixed size for Identify command
 
     // The Identify command returns a data buffer that describes information about the NVM subsystem
-    cmd.opcode = 0x06;            // Identify
+    cmd.opcode = 0x06;  // Identify
+    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-cstyle-cast]
     cmd.addr = (uint64_t)data;    // memory address of data
     cmd.data_len = sizeof(data);  // length of data
     cmd.cdw10 = 0x01;             // Identify Controller data structure
@@ -79,12 +80,13 @@ public:
     }
 
     // Identify Controller Data Structure
+    std::string identify = std::string(data, sizeof(data));
     // Bytes 23:04 Serial Number (SN)
-    info.serial = std::string(data + 4, 20);
+    info.serial = identify.substr(4, 20);
     boost::trim(info.serial);
 
     // Bytes 63:24 Model Number (MN)
-    info.model = std::string(data + 24, 40);
+    info.model = identify.substr(24, 40);
     boost::trim(info.model);
 
     return EXIT_SUCCESS;
@@ -105,8 +107,9 @@ public:
     unsigned char data[144]{};  // 36 Dword (get byte 0 to 143)
 
     // The Get Log Page command returns a data buffer containing the log page requested
-    cmd.opcode = 0x02;            // Get Log Page
-    cmd.nsid = 0xFFFFFFFF;        // Global log page
+    cmd.opcode = 0x02;      // Get Log Page
+    cmd.nsid = 0xFFFFFFFF;  // Global log page
+    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-cstyle-cast]
     cmd.addr = (uint64_t)data;    // memory address of data
     cmd.data_len = sizeof(data);  // length of data
     cmd.cdw10 = 0x00240002;       // Bit 27:16 Number of Dwords (NUMD) = 024h (36 Dword)
@@ -120,7 +123,7 @@ public:
 
     // Bytes 2:1 Composite Temperature
     // Convert kelvin to celsius
-    unsigned int temperature = ((data[2] << 8) | data[1]) - 273;
+    unsigned int temperature = ((data[2] << 8u) | data[1]) - 273;
     info.is_valid_temp = true;
     info.temp = static_cast<uint8_t>(temperature);
 

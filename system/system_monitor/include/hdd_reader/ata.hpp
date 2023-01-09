@@ -165,7 +165,7 @@ public:
   {
     sg_io_hdr_t hdr{};
     AtaPassThrough12 ata{};
-    unsigned char data[512]{};  // 256 words
+    char data[512]{};  // 256 words
 
     // Create a command descriptor block(CDB)
     ata.operation_code = 0xA1;  // ATA PASS-THROUGH (12) command
@@ -179,7 +179,8 @@ public:
     // Create a control structure
     hdr.interface_id = 'S';                   // This must be set to 'S'
     hdr.dxfer_direction = SG_DXFER_FROM_DEV;  // a SCSI READ command
-    hdr.cmd_len = sizeof(ata);         // length in bytes of the SCSI command that 'cmdp' points to
+    hdr.cmd_len = sizeof(ata);  // length in bytes of the SCSI command that 'cmdp' points to
+    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-cstyle-cast]
     hdr.cmdp = (unsigned char *)&ata;  // SCSI command to be executed
     hdr.dxfer_len = sizeof(data);      // number of bytes to be moved in the data transfer
     hdr.dxferp = data;                 // a pointer to user memory
@@ -191,13 +192,14 @@ public:
     }
 
     // IDENTIFY DEVICE
+    std::string identify = std::string(data, sizeof(data));
     // Word 10..19 Serial number
-    info.serial = std::string(reinterpret_cast<char *>(data) + 20, 20);
+    info.serial = identify.substr(20, 20);
     swap_char(info.serial, 20);
     boost::trim(info.serial);
 
     // Word 27..46 Model number
-    info.model = std::string(reinterpret_cast<char *>(data) + 54, 40);
+    info.model = identify.substr(54, 40);
     swap_char(info.model, 40);
     boost::trim(info.model);
 
@@ -243,7 +245,8 @@ public:
     // Create a control structure
     hdr.interface_id = 'S';                   // This must be set to 'S'
     hdr.dxfer_direction = SG_DXFER_FROM_DEV;  // a SCSI READ command
-    hdr.cmd_len = sizeof(ata);         // length in bytes of the SCSI command that 'cmdp' points to
+    hdr.cmd_len = sizeof(ata);  // length in bytes of the SCSI command that 'cmdp' points to
+    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-cstyle-cast]
     hdr.cmdp = (unsigned char *)&ata;  // SCSI command to be executed
     hdr.dxfer_len = sizeof(data);      // number of bytes to be moved in the data transfer
     hdr.dxferp = &data;                // a pointer to user memory

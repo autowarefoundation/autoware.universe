@@ -39,19 +39,20 @@ struct HddParam
 {
   std::string part_device;                    //!< @brief Partition device
   std::string disk_device;                    //!< @brief Disk device
-  float temp_warn{55.0};                      //!< @brief HDD temperature(DegC) to generate warning
-  float temp_error{70.0};                     //!< @brief HDD temperature(DegC) to generate error
+  double temp_warn{55.0};                     //!< @brief HDD temperature(DegC) to generate warning
+  double temp_error{70.0};                    //!< @brief HDD temperature(DegC) to generate error
   uint64_t power_on_hours_warn{3000000};      //!< @brief HDD power on hours to generate warning
   uint64_t total_data_written_warn{4915200};  //!< @brief HDD total data written to generate warning
-  float total_data_written_safety_factor{0.05};  //!< @brief Safety factor of HDD total data written
-  uint32_t recovered_error_warn{1};   //!< @brief HDD recovered error count to generate warning
-  uint32_t free_warn{5120};           //!< @brief HDD free space(MB) to generate warning
-  uint32_t free_error{100};           //!< @brief HDD free space(MB) to generate error
-  float read_data_rate_warn{360.0};   //!< @brief HDD data rate(MB/s) of read to generate warning
-  float write_data_rate_warn{103.5};  //!< @brief HDD data rate(MB/s) of write to generate warning
-  float read_iops_warn{63360.0};      //!< @brief HDD IOPS of read to generate warning
-  float write_iops_warn{24120.0};     //!< @brief HDD IOPS of write to generate warning
-  uint8_t temp_attribute_id{0xC2};    //!< @brief S.M.A.R.T attribute ID of temperature
+  double total_data_written_safety_factor{
+    0.05};                             //!< @brief Safety factor of HDD total data written
+  uint32_t recovered_error_warn{1};    //!< @brief HDD recovered error count to generate warning
+  uint32_t free_warn{5120};            //!< @brief HDD free space(MB) to generate warning
+  uint32_t free_error{100};            //!< @brief HDD free space(MB) to generate error
+  double read_data_rate_warn{360.0};   //!< @brief HDD data rate(MB/s) of read to generate warning
+  double write_data_rate_warn{103.5};  //!< @brief HDD data rate(MB/s) of write to generate warning
+  double read_iops_warn{63360.0};      //!< @brief HDD IOPS of read to generate warning
+  double write_iops_warn{24120.0};     //!< @brief HDD IOPS of write to generate warning
+  uint8_t temp_attribute_id{0xC2};     //!< @brief S.M.A.R.T attribute ID of temperature
   uint8_t power_on_hours_attribute_id{0x09};  //!< @brief S.M.A.R.T attribute ID of power on hours
   uint8_t total_data_written_attribute_id{
     0xF1};  //!< @brief S.M.A.R.T attribute ID of total data written
@@ -76,10 +77,10 @@ struct HddStatistics
 {
   std::string device;                //!< @brief Disk device
   std::string error_message;         //!< @brief Error message
-  float read_data_rate_MBs;          //!< @brief Data rate of read (MB/s)
-  float write_data_rate_MBs;         //!< @brief Data rate of write (MB/s)
-  float read_iops;                   //!< @brief IOPS of read
-  float write_iops;                  //!< @brief IOPS of write
+  double read_data_rate_MBs;         //!< @brief Data rate of read (MB/s)
+  double write_data_rate_MBs;        //!< @brief Data rate of write (MB/s)
+  double read_iops;                  //!< @brief IOPS of read
+  double write_iops;                 //!< @brief IOPS of write
   DeviceStatistics last_statistics;  //!< @brief Last statistics of device
 };
 
@@ -361,7 +362,7 @@ protected:
    * @param [in] duration Duration in seconds
    * @return Increment value
    */
-  static float get_increase_statistics_value(
+  static double get_increase_statistics_value(
     uint64_t current_value, uint64_t last_value, double duration);
 
   /**

@@ -579,11 +579,11 @@ void HddMonitor::get_hdd_params()
     HddParam param;
 
     // Related to S.M.A.R.T
-    param.temp_warn = declare_parameter<float>(prefix + ".temp_warn", 55.0f);
-    param.temp_error = declare_parameter<float>(prefix + ".temp_error", 70.0f);
+    param.temp_warn = declare_parameter<double>(prefix + ".temp_warn", 55.0f);
+    param.temp_error = declare_parameter<double>(prefix + ".temp_error", 70.0f);
     param.power_on_hours_warn = declare_parameter<int>(prefix + ".power_on_hours_warn", 3000000);
     param.total_data_written_safety_factor =
-      declare_parameter<float>(prefix + ".total_data_written_safety_factor", 0.05f);
+      declare_parameter<double>(prefix + ".total_data_written_safety_factor", 0.05f);
     int64_t total_data_written_warn_org =
       declare_parameter<int64_t>(prefix + ".total_data_written_warn", 4915200);
     param.total_data_written_warn = static_cast<uint64_t>(
@@ -595,10 +595,10 @@ void HddMonitor::get_hdd_params()
     param.free_error = declare_parameter<int>(prefix + ".free_error", 100);
 
     // Statistics
-    param.read_data_rate_warn = declare_parameter<float>(prefix + ".read_data_rate_warn", 360.0);
-    param.write_data_rate_warn = declare_parameter<float>(prefix + ".write_data_rate_warn", 103.5);
-    param.read_iops_warn = declare_parameter<float>(prefix + ".read_iops_warn", 63360.0);
-    param.write_iops_warn = declare_parameter<float>(prefix + ".write_iops_warn", 24120.0);
+    param.read_data_rate_warn = declare_parameter<double>(prefix + ".read_data_rate_warn", 360.0);
+    param.write_data_rate_warn = declare_parameter<double>(prefix + ".write_data_rate_warn", 103.5);
+    param.read_iops_warn = declare_parameter<double>(prefix + ".read_iops_warn", 63360.0);
+    param.write_iops_warn = declare_parameter<double>(prefix + ".write_iops_warn", 24120.0);
     param.temp_attribute_id =
       static_cast<uint8_t>(declare_parameter<int>(prefix + ".temp_attribute_id", 0xC2));
     param.power_on_hours_attribute_id =
@@ -851,11 +851,11 @@ void HddMonitor::update_hdd_statistics()
   last_hdd_stat_update_time_ = this->now();
 }
 
-float HddMonitor::get_increase_statistics_value(
+double HddMonitor::get_increase_statistics_value(
   uint64_t current_value, uint64_t last_value, double duration)
 {
   if (current_value > last_value && duration > 0.0) {
-    return static_cast<float>(current_value - last_value) / static_cast<float>(duration);
+    return (current_value - last_value) / duration;
   }
   return 0.0;
 }
