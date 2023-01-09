@@ -125,6 +125,7 @@ public:
     // Convert kelvin to celsius
     const auto upper = static_cast<unsigned char>(data[2]);
     const auto lower = static_cast<unsigned char>(data[1]);
+    // NOLINTNEXTLINE [hicpp-signed-bitwise]
     unsigned int temperature = ((upper << 8u) | lower) - 273;
     info.is_valid_temp = true;
     info.temp = static_cast<uint8_t>(temperature);
