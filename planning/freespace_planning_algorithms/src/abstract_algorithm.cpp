@@ -120,8 +120,7 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
   is_obstacle_table_ = is_obstacle_table;
 
   // construct collision indexes table
-  if (is_collision_table_initialized == false)
-  {
+  if (is_collision_table_initialized == false) {
     for (int i = 0; i < planner_common_param_.theta_size; i++) {
       std::vector<IndexXY> indexes_2d, vertex_indexes_2d;
       computeCollisionIndexes(i, indexes_2d, vertex_indexes_2d);
