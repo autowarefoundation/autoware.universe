@@ -855,7 +855,7 @@ float HddMonitor::get_increase_statistics_value(
   uint64_t current_value, uint64_t last_value, double duration)
 {
   if (current_value > last_value && duration > 0.0) {
-    return static_cast<float>(current_value - last_value) / duration;
+    return static_cast<float>(current_value - last_value) / static_cast<float>(duration);
   }
   return 0.0;
 }

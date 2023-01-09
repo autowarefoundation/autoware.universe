@@ -212,7 +212,7 @@ protected:
    * @param [in] Index of HDD device
    * @return true on success, false on error
    */
-  bool run_disk_free_command(
+  static bool run_disk_free_command(
     diagnostic_updater::DiagnosticStatusWrapper & stat, std::stringstream & stream,
     const std::string & mount_point, const std::string & partition, int index);
 
