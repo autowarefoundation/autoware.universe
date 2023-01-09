@@ -275,7 +275,7 @@ public:
         // Total LBAs Written
       } else if (entry.attribute_id == parameter.total_data_written_id) {
         info.total_data_written =
-          (entry.data | (static_cast<uint64_t>(entry.attribute_specific) << 32));
+          (entry.data | (static_cast<uint64_t>(entry.attribute_specific) << 32u));
         info.is_valid_total_data_written = true;
         // Hardware ECC Recovered
       } else if (entry.attribute_id == parameter.recovered_error_id) {
