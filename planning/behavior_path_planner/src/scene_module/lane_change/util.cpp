@@ -547,7 +547,7 @@ PathWithLaneId getReferencePathFromTargetLane(
   const auto resample_interval =
     std::max(lane_changing_distance / min_resampling_points, lane_changing_speed * resampling_dt);
   return util::resamplePathWithSpline(
-    lane_changing_reference_path, resample_interval, false, {0.0, lane_changing_distance});
+    lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_distance});
 }
 
 PathWithLaneId getReferencePathFromTargetLane(
