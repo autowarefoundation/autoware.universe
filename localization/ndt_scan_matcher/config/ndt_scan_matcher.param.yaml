@@ -70,5 +70,5 @@
     # Dynamic map loading loading radius
     dynamic_map_loading_map_radius: 150.0
 
-    # LiDAR input LiDAR radius (used for diagnostics of dynamic map loading)
+    # Radius of input LiDAR range (used for diagnostics of dynamic map loading)
     lidar_radius: 100.0
