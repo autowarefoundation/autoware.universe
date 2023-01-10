@@ -210,7 +210,7 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
 
   for (const auto & point : pointcloud_ptr->points) {
-    no_height_pointcloud_ptr->push_back(pcl::PointXYZ(point.x, point.y, 0.0));
+    no_height_pointcloud_ptr->push_back(pcl::PointXYZ(point.x, point.y, point.z));
   }
   filter.setInputCloud(no_height_pointcloud_ptr);
   filter.setLeafSize(0.05f, 0.05f, 100000.0f);
