@@ -56,7 +56,7 @@ As for 'llvm' backend, real-time performance cannot be achieved.
 
 ### Scatter Implementation
 
-Scatter function can be implemented using either TVMScript or C++. For C++ implementation, please refer to https://github.com/angry-crab/autoware.universe/blob/c020419fe52e359287eccb1b77e93bdc1a681e24/perception/lidar_centerpoint_tvm/lib/network/scatter.cpp#L65
+Scatter function can be implemented using either TVMScript or C++. For C++ implementation, please refer to <https://github.com/angry-crab/autoware.universe/blob/c020419fe52e359287eccb1b77e93bdc1a681e24/perception/lidar_centerpoint_tvm/lib/network/scatter.cpp#L65>
 
 ## Reference
 
