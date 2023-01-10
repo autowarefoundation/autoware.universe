@@ -18,7 +18,7 @@ public:
 
   InitArea(const sensor_msgs::msg::PointCloud2 & msg);
 
-  // Return <whether it is inside or not, whether it is init area or not>
+  // Return whether it is inside of init/deinit area or not
   bool is_inside(const Eigen::Vector3d & xyz, bool * init_area) const;
 
 private:

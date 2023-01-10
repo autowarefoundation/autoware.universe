@@ -23,17 +23,16 @@ CorrectorManager::CorrectorManager() : Node("predictor")
   while (!client_->wait_for_service(1s) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
-
-  call_service(declare_parameter<bool>("camera_corrector_enabled_at_first", true));
 }
 
 void CorrectorManager::on_timer()
-{  // TODO:
+{
+  // TODO:
 }
 
 void CorrectorManager::on_init_area(const PointCloud2 & msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "initialize pcdless init areas");
+  RCLCPP_INFO_STREAM(get_logger(), "initialize pcdless init/deinit areas");
   init_area_ = InitArea(msg);
 }
 
@@ -44,7 +43,7 @@ void CorrectorManager::on_gnss_pose(const PoseStamped & msg)
   const auto p = msg.pose.position;
   bool init_area;
   if (init_area_->is_inside({p.x, p.y, p.z}, &init_area)) {
-    RCLCPP_WARN_STREAM(get_logger(), "Initialize pose because gnss enters initializable area");
+    RCLCPP_WARN_STREAM(get_logger(), "Init/Deinit corrector because gnss enters init/deinit area");
     call_service(init_area);
   }
 }
@@ -55,13 +54,15 @@ void CorrectorManager::call_service(bool data)
   auto request = std::make_shared<SetBool::Request>();
   request->data = data;
 
-  auto result_future = client_->async_send_request(request);
-  std::future_status status = result_future.wait_for(1000ms);
-  if (status == std::future_status::ready) {
-    RCLCPP_WARN_STREAM(get_logger(), "service responce is received successfully");
-    return;
-  } else {
-    RCLCPP_WARN_STREAM(get_logger(), "service responce is time out");
+  while (rclcpp::ok()) {
+    auto result_future = client_->async_send_request(request);
+    std::future_status status = result_future.wait_for(1000ms);
+    if (status == std::future_status::ready) {
+      RCLCPP_INFO_STREAM(get_logger(), "service responce is received successfully");
+      return;
+    } else {
+      RCLCPP_WARN_STREAM(get_logger(), "service responce is time out");
+    }
   }
 }
 

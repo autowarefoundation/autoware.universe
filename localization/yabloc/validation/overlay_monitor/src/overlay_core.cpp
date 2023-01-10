@@ -54,23 +54,23 @@ void Overlay::on_image(const sensor_msgs::msg::Image & msg)
   const rclcpp::Time stamp = msg.header.stamp;
 
   // Search synchronized pose
-  float min_dt = std::numeric_limits<float>::max();
-  geometry_msgs::msg::PoseStamped synched_pose;
+  float min_abs_dt = std::numeric_limits<float>::max();
+  std::optional<Pose> synched_pose{std::nullopt};
   for (auto pose : pose_buffer_) {
     auto dt = (rclcpp::Time(pose.header.stamp) - stamp);
     auto abs_dt = std::abs(dt.seconds());
-    if (abs_dt < min_dt) {
-      min_dt = abs_dt;
-      synched_pose = pose;
+    if (abs_dt < min_abs_dt) {
+      min_abs_dt = abs_dt;
+      synched_pose = pose.pose;
     }
   }
-  if (min_dt > 0.1) return;
+  if (min_abs_dt > 0.1) synched_pose = std::nullopt;
   auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
   RCLCPP_INFO_STREAM(
-    get_logger(), "dt: " << min_dt << " image:" << stamp.nanoseconds()
+    get_logger(), "dt: " << min_abs_dt << " image:" << stamp.nanoseconds()
                          << " latest_pose:" << latest_pose_stamp.nanoseconds());
 
-  draw_overlay(image, synched_pose.pose, stamp);
+  draw_overlay(image, synched_pose, stamp);
 }
 
 void Overlay::on_lsd(const PointCloud2 & msg)
@@ -98,17 +98,22 @@ void Overlay::on_lsd(const PointCloud2 & msg)
   make_vis_marker(lsd_cloud, synched_pose.pose, stamp);
 }
 
-void Overlay::draw_overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
+void Overlay::draw_overlay(
+  const cv::Mat & image, const std::optional<Pose> & pose, const rclcpp::Time & stamp)
 {
   if (ll2_cloud_.empty()) return;
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
 
   using common::extract_near_line_segments;
-  draw_overlay_line_segments(
-    overlayed_image, pose, extract_near_line_segments(ll2_cloud_, common::pose_to_se3(pose), 60));
-  draw_overlay_line_segments(
-    overlayed_image, pose, extract_near_line_segments(sign_board_, common::pose_to_se3(pose), 60));
+  if (pose) {
+    draw_overlay_line_segments(
+      overlayed_image, *pose,
+      extract_near_line_segments(ll2_cloud_, common::pose_to_se3(*pose), 60));
+    draw_overlay_line_segments(
+      overlayed_image, *pose,
+      extract_near_line_segments(sign_board_, common::pose_to_se3(*pose), 60));
+  }
 
   cv::Mat show_image;
   cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);

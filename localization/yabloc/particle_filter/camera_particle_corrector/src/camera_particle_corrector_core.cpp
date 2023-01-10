@@ -60,6 +60,8 @@ CameraParticleCorrector::CameraParticleCorrector()
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  enable_switch_ = declare_parameter<bool>("enabled_at_first", true);
+
   // Publication
   pub_image_ = create_publisher<Image>("match_image", 10);
   pub_map_image_ = create_publisher<Image>("cost_map_image", 10);

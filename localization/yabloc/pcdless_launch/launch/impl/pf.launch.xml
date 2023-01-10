@@ -56,6 +56,7 @@
         <param name="max_raw_score" value="100000.0"/>
         <param name="min_prob" value="0.1"/>
         <param name="far_weight_gain" value="0.001"/>
+        <param name="enabled_at_first" value="false"/>
 
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
         <remap from="lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
@@ -66,7 +67,7 @@
     </node>
 
     <!-- gnss correction -->
-    <node name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level info">
+    <node name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
         <param name="for_fixed/max_weight" value="5.0"/>
@@ -81,7 +82,6 @@
 
     <node pkg="corrector_manager" exec="corrector_manager" name="corrector_manager" output="screen" args="--ros-args --log-level info">
         <remap from="/sensing/gnss/ublox/pose" to="/localization/pf/initial_gnss_pose"/> 
-        <param name="camera_corrector_enabled_at_first" value="false"/>
     </node>
 
 </launch>

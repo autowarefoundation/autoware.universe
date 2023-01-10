@@ -58,7 +58,8 @@ private:
   void on_image(const Image & msg);
   void on_lsd(const PointCloud2 & msg);
 
-  void draw_overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
+  void draw_overlay(
+    const cv::Mat & image, const std::optional<Pose> & pose, const rclcpp::Time & stamp);
   void draw_overlay_line_segments(
     cv::Mat & image, const Pose & pose, const LineSegments & linesegments);
 
