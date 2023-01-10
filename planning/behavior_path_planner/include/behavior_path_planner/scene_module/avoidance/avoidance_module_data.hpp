@@ -26,6 +26,7 @@
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,6 +34,7 @@
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
 using tier4_autoware_utils::Point2d;
@@ -68,6 +70,9 @@ struct AvoidanceParameters
   // enable update path when if detected objects on planner data is gone.
   bool enable_update_path_when_object_is_gone{false};
 
+  // enable safety check. if avoidance path is NOT safe, the ego will execute yield maneuver
+  bool enable_safety_check{false};
+
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
   double threshold_distance_object_is_on_center;
@@ -80,6 +85,10 @@ struct AvoidanceParameters
 
   // continue to detect backward vehicles as avoidance targets until they are this distance away
   double object_check_backward_distance;
+
+  // if the distance between object and goal position is less than this parameter, the module ignore
+  // the object.
+  double object_check_goal_distance;
 
   // use in judge whether the vehicle is parking object on road shoulder
   double object_check_shiftable_ratio;
@@ -99,6 +108,9 @@ struct AvoidanceParameters
   // don't ever set this value to 0
   double lateral_collision_safety_buffer{0.5};
 
+  // margin between object back and end point of avoid shift point
+  double longitudinal_collision_safety_buffer{0.0};
+
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
   double longitudinal_collision_margin_min_distance;
@@ -106,6 +118,21 @@ struct AvoidanceParameters
   // when complete avoidance motion, there is a time margin with the object
   // for longitudinal direction
   double longitudinal_collision_margin_time;
+
+  // find adjacent lane vehicles
+  double safety_check_backward_distance;
+
+  // minimum longitudinal margin for vehicles in adjacent lane
+  double safety_check_min_longitudinal_margin;
+
+  // safety check time horizon
+  double safety_check_time_horizon;
+
+  // use in RSS calculation
+  double safety_check_idling_time;
+
+  // use in RSS calculation
+  double safety_check_accel_for_rss;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -162,6 +189,12 @@ struct AvoidanceParameters
   // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
   double avoidance_execution_lateral_threshold;
+
+  // target velocity matrix
+  std::vector<double> target_velocity_matrix;
+
+  // matrix col size
+  size_t col_size;
 
   // true by default
   bool avoid_car{true};      // avoidance is performed for type object car
@@ -234,6 +267,9 @@ struct ObjectData  // avoidance target
 
   // lateral distance from overhang to the road shoulder
   double to_road_shoulder_distance{0.0};
+
+  // unavoidable reason
+  std::string reason{""};
 };
 using ObjectDataArray = std::vector<ObjectData>;
 
@@ -286,11 +322,24 @@ struct AvoidancePlanningData
   // current driving lanelet
   lanelet::ConstLanelets current_lanelets;
 
+  // output path
+  ShiftedPath candidate_path;
+
   // avoidance target objects
   ObjectDataArray target_objects;
 
   // the others
   ObjectDataArray other_objects;
+
+  // raw shift point
+  AvoidLineArray unapproved_raw_sl{};
+
+  // new shift point
+  AvoidLineArray unapproved_new_sl{};
+
+  bool safe{false};
+
+  bool avoiding_now{false};
 };
 
 /*
@@ -316,6 +365,27 @@ struct ShiftLineData
 
   std::vector<std::vector<double>> shift_line_history;
 };
+
+/*
+ * Data struct for longitudinal margin
+ */
+struct MarginData
+{
+  Pose pose{};
+
+  bool enough_lateral_margin{true};
+
+  double longitudinal_distance{std::numeric_limits<double>::max()};
+
+  double longitudinal_margin{std::numeric_limits<double>::lowest()};
+
+  double vehicle_width;
+
+  double base_link2front;
+
+  double base_link2rear;
+};
+using MarginDataArray = std::vector<MarginData>;
 
 /*
  * Debug information for marker array
@@ -344,6 +414,20 @@ struct DebugData
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
+
+  bool exist_adjacent_objects{false};
+
+  // future pose
+  PathWithLaneId path_with_planned_velocity;
+
+  // margin
+  MarginDataArray margin_data_array;
+
+  // avoidance require objects
+  ObjectDataArray unavoidable_objects;
+
+  // avoidance unsafe objects
+  ObjectDataArray unsafe_objects;
 
   // tmp for plot
   PathWithLaneId center_line;

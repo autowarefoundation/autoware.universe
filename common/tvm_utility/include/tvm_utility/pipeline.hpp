@@ -182,8 +182,21 @@ private:
   PostProcessorType post_processor_{};
 };
 
-// Each node should be specified with a string name and a shape
-using NetworkNode = std::pair<std::string, std::vector<int64_t>>;
+// NetworkNode
+typedef struct
+{
+  // Node name
+  std::string node_name;
+
+  // Network data type configurations
+  DLDataTypeCode tvm_dtype_code;
+  int32_t tvm_dtype_bits;
+  int32_t tvm_dtype_lanes;
+
+  // Shape info
+  std::vector<int64_t> node_shape;
+} NetworkNode;
+
 typedef struct
 {
   // Network info
@@ -195,11 +208,6 @@ typedef struct
   std::string network_module_path;
   std::string network_graph_path;
   std::string network_params_path;
-
-  // Network data type configurations
-  DLDataTypeCode tvm_dtype_code;
-  int32_t tvm_dtype_bits;
-  int32_t tvm_dtype_lanes;
 
   // Inference hardware configuration
   DLDeviceType tvm_device_type;
@@ -278,8 +286,8 @@ public:
 
     for (auto & output_config : config.network_outputs) {
       output_.push_back(TVMArrayContainer(
-        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        config.tvm_device_type, config.tvm_device_id));
+        output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
+        output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
     }
   }
 
@@ -290,7 +298,7 @@ public:
       if (input[index].getArray() == nullptr) {
         throw std::runtime_error("input variable is null");
       }
-      set_input(config_.network_inputs[index].first.c_str(), input[index].getArray());
+      set_input(config_.network_inputs[index].node_name.c_str(), input[index].getArray());
     }
 
     // Execute the inference
@@ -337,6 +345,59 @@ private:
   tvm::runtime::PackedFunc get_output;
   // Latest supported model version.
   const std::array<char, 3> version_up_to{2, 1, 0};
+};
+
+template <
+  class PreProcessorType, class InferenceEngineType, class TVMScriptEngineType,
+  class PostProcessorType>
+class TowStagePipeline
+{
+  using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
+  using OutputType = decltype(std::declval<PostProcessorType>().output_type_indicator_);
+
+public:
+  /**
+   * @brief Construct a new Pipeline object
+   *
+   * @param pre_processor a PreProcessor object
+   * @param post_processor a PostProcessor object
+   * @param inference_engine a InferenceEngine object
+   */
+  TowStagePipeline(
+    std::shared_ptr<PreProcessorType> pre_processor,
+    std::shared_ptr<InferenceEngineType> inference_engine_1,
+    std::shared_ptr<TVMScriptEngineType> tvm_script_engine,
+    std::shared_ptr<InferenceEngineType> inference_engine_2,
+    std::shared_ptr<PostProcessorType> post_processor)
+  : pre_processor_(pre_processor),
+    inference_engine_1_(inference_engine_1),
+    tvm_script_engine_(tvm_script_engine),
+    inference_engine_2_(inference_engine_2),
+    post_processor_(post_processor)
+  {
+  }
+
+  /**
+   * @brief run the pipeline. Return asynchronously in a callback.
+   *
+   * @param input The data to push into the pipeline
+   * @return The pipeline output
+   */
+  OutputType schedule(const InputType & input)
+  {
+    auto input_tensor = pre_processor_->schedule(input);
+    auto output_infer_1 = inference_engine_1_->schedule(input_tensor);
+    auto output_tvm_script = tvm_script_engine_->schedule(output_infer_1);
+    auto output_infer_2 = inference_engine_2_->schedule(output_tvm_script);
+    return post_processor_->schedule(output_infer_2);
+  }
+
+private:
+  std::shared_ptr<PreProcessorType> pre_processor_;
+  std::shared_ptr<InferenceEngineType> inference_engine_1_;
+  std::shared_ptr<TVMScriptEngineType> tvm_script_engine_;
+  std::shared_ptr<InferenceEngineType> inference_engine_2_;
+  std::shared_ptr<PostProcessorType> post_processor_;
 };
 
 }  // namespace pipeline
