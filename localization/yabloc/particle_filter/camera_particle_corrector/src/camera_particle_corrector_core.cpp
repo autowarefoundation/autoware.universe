@@ -67,6 +67,7 @@ CameraParticleCorrector::CameraParticleCorrector()
   pub_map_image_ = create_publisher<Image>("cost_map_image", 10);
   pub_marker_ = create_publisher<MarkerArray>("cost_map_range", 10);
   pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
+  pub_string_ = create_publisher<String>("state_string", 10);
 
   // Subscription
   auto on_lsd = std::bind(&CameraParticleCorrector::on_lsd, this, _1);
@@ -239,6 +240,17 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     RCLCPP_WARN_STREAM(get_logger(), "on_lsd: " << timer);
   } else {
     RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
+  }
+
+  // Publish status as string
+  {
+    String msg;
+    std::stringstream ss;
+    ss << "-- Camera particle corrector --" << std::endl;
+    ss << (enable_switch_ ? "ENABLED" : "disabled") << std::endl;
+    ss << "time: " << timer << std::endl;
+    msg.data = ss.str();
+    pub_string_->publish(msg);
   }
 }
 

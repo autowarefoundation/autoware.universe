@@ -9,6 +9,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -29,6 +30,7 @@ public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Pose = geometry_msgs::msg::Pose;
   using Bool = std_msgs::msg::Bool;
+  using String = std_msgs::msg::String;
   using SetBool = std_srvs::srv::SetBool;
   CameraParticleCorrector();
 
@@ -50,6 +52,7 @@ private:
   rclcpp::Publisher<Image>::SharedPtr pub_map_image_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_scored_cloud_;
+  rclcpp::Publisher<String>::SharedPtr pub_string_;
 
   Eigen::Vector3f last_mean_position_;
   std::optional<PoseStamped> latest_pose_{std::nullopt};
