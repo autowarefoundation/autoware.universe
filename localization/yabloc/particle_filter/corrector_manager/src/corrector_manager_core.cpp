@@ -42,9 +42,10 @@ void CorrectorManager::on_gnss_pose(const PoseStamped & msg)
   if (!init_area_) return;
 
   const auto p = msg.pose.position;
-  if (init_area_->is_inside({p.x, p.y, p.z})) {
+  bool init_area;
+  if (init_area_->is_inside({p.x, p.y, p.z}, &init_area)) {
     RCLCPP_WARN_STREAM(get_logger(), "Initialize pose because gnss enters initializable area");
-    call_service(true);
+    call_service(init_area);
   }
 }
 

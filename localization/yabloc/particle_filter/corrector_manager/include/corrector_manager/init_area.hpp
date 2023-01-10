@@ -18,10 +18,12 @@ public:
 
   InitArea(const sensor_msgs::msg::PointCloud2 & msg);
 
-  bool is_inside(const Eigen::Vector3d & xyz) const;
+  // Return <whether it is inside or not, whether it is init area or not>
+  bool is_inside(const Eigen::Vector3d & xyz, bool * init_area) const;
 
 private:
-  std::vector<polygon> areas_;
+  std::vector<polygon> init_areas_;
+  std::vector<polygon> deinit_areas_;
 };
 
 }  // namespace pcdless

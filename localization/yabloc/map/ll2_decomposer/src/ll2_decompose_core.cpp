@@ -41,7 +41,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   }
 }
 
-void print_attr(const lanelet::LaneletMapPtr & lanelet_map)
+void print_attr(const lanelet::LaneletMapPtr & lanelet_map, const rclcpp::Logger & logger)
 {
   std::set<std::string> types;
   for (const lanelet::ConstLineString3d & line : lanelet_map->lineStringLayer) {
@@ -58,7 +58,7 @@ void print_attr(const lanelet::LaneletMapPtr & lanelet_map)
   }
 
   for (const auto & type : types) {
-    std::cout << "lanelet type: " << type << std::endl;
+    RCLCPP_INFO_STREAM(logger, "lanelet type: " << type);
   }
 }
 
@@ -70,13 +70,16 @@ pcl::PointCloud<pcl::PointXYZL> convert_polygon_to_xyz(const lanelet::PolygonLay
   for (const lanelet::ConstPolygon3d & polygon : polygons) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    if (attr.value() != "pcdless_init_area") continue;
+    bool is_init_label = (attr.value() == "pcdless_init_area");
+    bool is_deinit_label = (attr.value() == "pcdless_deinit_area");
+    if (!is_init_label && !is_deinit_label) continue;
+
     for (const lanelet::ConstPoint3d & p : polygon) {
       pcl::PointXYZL xyzl;
       xyzl.x = p.x();
       xyzl.y = p.y();
       xyzl.z = p.z();
-      xyzl.label = index;
+      xyzl.label = (is_deinit_label) ? index + (512) : index;
       cloud.push_back(xyzl);
     }
     index++;
@@ -92,7 +95,7 @@ void Ll2Decomposer::on_map(const HADMapBin & msg)
   const rclcpp::Time stamp = msg.header.stamp;
 
   const auto & ls_layer = lanelet_map->lineStringLayer;
-  print_attr(lanelet_map);
+  print_attr(lanelet_map, get_logger());
   auto tmp1 = extract_specified_line_string(ls_layer, sign_board_labels_);
   auto tmp2 = extract_specified_line_string(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = split_line_strings(tmp1);
@@ -234,8 +237,8 @@ void Ll2Decomposer::publish_additional_marker(const lanelet::LaneletMapPtr & lan
   auto marker1 =
     make_sign_marker_msg(lanelet_map->lineStringLayer, sign_board_labels_, "sign_board");
   auto marker2 = make_sign_marker_msg(lanelet_map->lineStringLayer, {"virtual"}, "virtual");
-  auto marker3 =
-    make_polygon_marker_msg(lanelet_map->polygonLayer, {"pcdless_init_area"}, "polygon");
+  auto marker3 = make_polygon_marker_msg(
+    lanelet_map->polygonLayer, {"pcdless_init_area", "pcdless_deinit_area"}, "polygon");
 
   std::copy(marker2.markers.begin(), marker2.markers.end(), std::back_inserter(marker1.markers));
   std::copy(marker3.markers.begin(), marker3.markers.end(), std::back_inserter(marker1.markers));
