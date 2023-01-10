@@ -31,8 +31,7 @@ StopLineModule::StopLineModule(
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   stop_line_(stop_line),
-  state_(State::APPROACH),
-  last_state_(State::START)
+  state_(State::APPROACH)
 {
   velocity_factor_.init(VelocityFactor::STOP_SIGN);
   planner_param_ = planner_param;

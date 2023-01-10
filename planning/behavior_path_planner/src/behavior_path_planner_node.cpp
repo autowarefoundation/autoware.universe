@@ -295,6 +295,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_check_goal_distance = dp("object_check_goal_distance", 20.0);
   p.object_check_shiftable_ratio = dp("object_check_shiftable_ratio", 1.0);
   p.object_check_min_road_shoulder_width = dp("object_check_min_road_shoulder_width", 0.5);
   p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
@@ -381,6 +382,8 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   };
 
   LaneChangeParameters p{};
+
+  // trajectory generation
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
   p.lane_changing_safety_check_duration = dp("lane_changing_safety_check_duration", 4.0);
   p.lane_changing_lateral_jerk = dp("lane_changing_lateral_jerk", 0.5);
@@ -390,18 +393,26 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
-  p.abort_lane_change_velocity_thresh = dp("abort_lane_change_velocity_thresh", 0.5);
-  p.abort_lane_change_angle_thresh =
-    dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
-  p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
-  p.prepare_phase_ignore_target_speed_thresh = dp("prepare_phase_ignore_target_speed_thresh", 0.1);
-  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
+
+  // collision check
   p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.prepare_phase_ignore_target_speed_thresh = dp("prepare_phase_ignore_target_speed_thresh", 0.1);
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
   p.use_all_predicted_path = dp("use_all_predicted_path", true);
-  p.publish_debug_marker = dp("publish_debug_marker", false);
+
+  // abort
+  p.enable_cancel_lane_change = dp("enable_cancel_lane_change", true);
+  p.enable_abort_lane_change = dp("enable_abort_lane_change", false);
+
+  p.abort_delta_time = dp("abort_delta_time", 3.0);
+  p.abort_max_lateral_jerk = dp("abort_max_lateral_jerk", 10.0);
+
+  // drivable area expansion
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
+
+  // debug marker
+  p.publish_debug_marker = dp("publish_debug_marker", false);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -416,6 +427,13 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
       get_logger(), "maximum_deceleration cannot be negative value. Given parameter: "
                       << p.maximum_deceleration << std::endl
                       << "Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+
+  if (p.abort_delta_time < 1.0) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
+                                         << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
