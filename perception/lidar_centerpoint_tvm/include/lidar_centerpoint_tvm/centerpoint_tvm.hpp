@@ -68,7 +68,7 @@ private:
   tvm_utility::pipeline::InferenceEngineTVMConfig config_;
   TVMArrayContainer coords_;
   TVMArrayContainerVector output_;
-  tvm::runtime::PackedFunc f;
+  tvm::runtime::PackedFunc scatter_function;
 };
 
 class LIDAR_CENTERPOINT_TVM_LOCAL VoxelEncoderPreProcessor

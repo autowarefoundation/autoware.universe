@@ -18,7 +18,6 @@
 #include <centerpoint_backbone/preprocessing_inference_engine_tvm_config.hpp>
 #include <centerpoint_encoder/inference_engine_tvm_config.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
-#include <lidar_centerpoint_tvm/network/scatter.hpp>
 #include <lidar_centerpoint_tvm/preprocess/generate_features.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tvm_utility/pipeline.hpp>
@@ -58,7 +57,7 @@ TVMScatterIE::TVMScatterIE(
   module.close();
   tvm::runtime::Module runtime_mod = tvm::runtime::Module::LoadFromFile(network_module_path);
 
-  f = runtime_mod.GetFunction(function_name);
+  scatter_function = runtime_mod.GetFunction(function_name);
 
   for (auto & output_config : config.network_outputs) {
     output_.push_back(TVMArrayContainer(
@@ -69,7 +68,7 @@ TVMScatterIE::TVMScatterIE(
 
 TVMArrayContainerVector TVMScatterIE::schedule(const TVMArrayContainerVector & input)
 {
-  f(input[0].getArray(), coords_.getArray(), output_[0].getArray());
+  scatter_function(input[0].getArray(), coords_.getArray(), output_[0].getArray());
 
   return output_;
 }
@@ -98,7 +97,7 @@ VoxelEncoderPreProcessor::VoxelEncoderPreProcessor(
 
 TVMArrayContainerVector VoxelEncoderPreProcessor::schedule(const MixedInputs & voxel_inputs)
 {
-  /// generate encoder_in_features from the voxels
+  // generate encoder_in_features from the voxels
   generateFeatures(
     voxel_inputs.features, voxel_inputs.num_points_per_voxel, voxel_inputs.coords,
     voxel_inputs.num_voxels, config_detail, encoder_in_features);

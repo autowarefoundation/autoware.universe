@@ -30,7 +30,6 @@ if((NOT NN_DEPENDENCY_ENCODER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQ
     lib/centerpoint_tvm.cpp
     lib/utils.cpp
     lib/ros_utils.cpp
-    lib/network/scatter.cpp
     lib/preprocess/pointcloud_densification.cpp
     lib/preprocess/voxel_generator.cpp
     lib/preprocess/generate_features.cpp
