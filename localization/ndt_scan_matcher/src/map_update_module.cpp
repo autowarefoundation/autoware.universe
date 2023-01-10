@@ -44,7 +44,7 @@ MapUpdateModule::MapUpdateModule(
   initial_estimate_particles_num_ = node->declare_parameter<int>("initial_estimate_particles_num");
 
   sensor_aligned_pose_pub_ =
-    node->create_publisher<sensor_msgs::msg::PointCloud2>("debug/monte_carlo_points_aligned", 10);
+    node->create_publisher<sensor_msgs::msg::PointCloud2>("monte_carlo_points_aligned", 10);
   ndt_monte_carlo_initial_pose_marker_pub_ =
     node->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
