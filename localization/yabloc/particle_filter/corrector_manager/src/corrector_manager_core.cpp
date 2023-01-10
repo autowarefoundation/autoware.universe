@@ -26,8 +26,7 @@ CorrectorManager::CorrectorManager() : Node("predictor")
 }
 
 void CorrectorManager::on_timer()
-{
-  // TODO:
+{  // TODO:
 }
 
 void CorrectorManager::on_init_area(const PointCloud2 & msg)
