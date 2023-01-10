@@ -456,7 +456,7 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->state) {
       case MRMState::NONE:
         text = "NONE";
-        style_sheet = "background-color: #FFFF00;";  // yellow
+        style_sheet = "background-color: #00FF00;";  // green
         break;
 
       case MRMState::MRM_OPERATING:
@@ -466,12 +466,12 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
 
       case MRMState::MRM_SUCCEEDED:
         text = "MRM_SUCCEEDED";
-        style_sheet = "background-color: #00FF00;";  // green
+        style_sheet = "background-color: #FFFF00;";  // yellow
         break;
 
       case MRMState::MRM_FAILED:
         text = "MRM_FAILED";
-        style_sheet = "background-color: #00FF00;";  // green
+        style_sheet = "background-color: #FF0000;";  // red
         break;
 
       default:
@@ -490,17 +490,17 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->state) {
       case MRMState::NONE:
         text = "NONE";
-        style_sheet = "background-color: #FFFF00;";  // yellow
+        style_sheet = "background-color: #00FF00;";  // green
         break;
 
       case MRMState::COMFORTABLE_STOP:
         text = "COMFORTABLE_STOP";
-        style_sheet = "background-color: #FFA500;";  // orange
+        style_sheet = "background-color: #FFFF00;";  // yellow
         break;
 
       case MRMState::EMERGENCY_STOP:
         text = "EMERGENCY_STOP";
-        style_sheet = "background-color: #00FF00;";  // green
+        style_sheet = "background-color: #FFA500;";  // orange
         break;
 
       default:
