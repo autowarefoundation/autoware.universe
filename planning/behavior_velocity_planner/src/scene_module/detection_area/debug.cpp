@@ -18,10 +18,9 @@
 #include <utilization/util.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
-#include <std_msgs/color_rgba.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
-#include <std_msgs/color_rgba.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
@@ -59,7 +58,7 @@ geometry_msgs::msg::Point toMsg(const lanelet::BasicPoint3d & point)
 
 visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   const lanelet::autoware::DetectionArea & detection_area_reg_elem, const rclcpp::Time & now,
-  ColorRGBA marker_color)
+  ColorRGBA & marker_color)
 {
   visualization_msgs::msg::MarkerArray msg;
 
