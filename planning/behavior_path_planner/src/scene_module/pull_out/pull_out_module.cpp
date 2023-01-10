@@ -435,7 +435,7 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
 
 void PullOutModule::generateStopPath()
 {
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   constexpr double dummy_path_distance = 1.0;
   const auto & moved_pose = calcOffsetPose(current_pose, dummy_path_distance, 0, 0);
 

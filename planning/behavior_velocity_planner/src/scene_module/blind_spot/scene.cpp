@@ -390,7 +390,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
         to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
         lanelet::utils::to2D(areas_opt.get().detection_area));
       bool exist_in_conflict_area = isPredictedPathInArea(
-        object, areas_opt.get().conflict_area, planner_data_->current_pose.pose);
+        object, areas_opt.get().conflict_area, planner_data_->current_odometry->pose);
       if (exist_in_detection_area || exist_in_conflict_area) {
         obstacle_detected = true;
         debug_data_.conflicting_targets.objects.push_back(object);
