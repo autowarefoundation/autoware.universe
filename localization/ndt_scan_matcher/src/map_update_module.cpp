@@ -199,7 +199,6 @@ void MapUpdateModule::update_ndt(
   const auto exe_start_time = std::chrono::system_clock::now();
 
   NormalDistributionsTransform backup_ndt = *ndt_ptr_;
-  backup_ndt.setInputSource(ndt_ptr_->getInputSource());
 
   // Add pcd
   for (const auto & map_to_add : maps_to_add) {
