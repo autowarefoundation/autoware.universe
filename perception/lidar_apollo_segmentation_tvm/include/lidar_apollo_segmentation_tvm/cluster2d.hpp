@@ -36,7 +36,6 @@ namespace perception
 {
 namespace lidar_apollo_segmentation_tvm
 {
-
 using autoware::common::types::char8_t;
 
 /// \brief Internal obstacle classification categories.
