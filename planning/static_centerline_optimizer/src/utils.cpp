@@ -22,8 +22,7 @@ namespace static_centerline_optimizer
 {
 namespace
 {
-nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(
-  const geometry_msgs::msg::Pose & pose)
+nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(const geometry_msgs::msg::Pose & pose)
 {
   auto odometry_ptr = std::make_shared<nav_msgs::msg::Odometry>();
   odometry_ptr->pose.pose = pose;
