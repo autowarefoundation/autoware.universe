@@ -68,6 +68,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+    p.voxel_grid_x =  declare_parameter("voxel_grid_x", 0.05);
+    p.voxel_grid_y =  declare_parameter("voxel_grid_y", 0.05);
+    p.voxel_grid_z =  declare_parameter("voxel_grid_z", 100000.0);
   }
 
   {
@@ -216,7 +219,7 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
     no_height_pointcloud_ptr->push_back(pcl::PointXYZ(point.x, point.y, 0.0));
   }
   filter.setInputCloud(no_height_pointcloud_ptr);
-  filter.setLeafSize(0.05f, 0.05f, 100000.0f);
+  filter.setLeafSize(node_param_.voxel_grid_x, node_param_.voxel_grid_y, node_param_.voxel_grid_z);
   filter.filter(*no_height_filtered_pointcloud_ptr);
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
