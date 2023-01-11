@@ -910,7 +910,6 @@ double PidLongitudinalController::applyVelocityFeedback(
   const double target_vel_abs = std::fabs(target_motion.vel);
   const bool enable_integration = (current_vel_abs > m_current_vel_threshold_pid_integrate);
   const double error_vel_filtered = m_lpf_vel_error->filter(target_vel_abs - current_vel_abs);
-  std::cerr << "is_under_control = " << is_under_control << std::endl;
 
   std::vector<double> pid_contributions(3);
   const double pid_acc =
