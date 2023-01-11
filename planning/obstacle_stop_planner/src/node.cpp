@@ -227,7 +227,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   const auto stop_param = stop_param_;
   const auto obstacle_ros_pointcloud_ptr = obstacle_ros_pointcloud_ptr_;
   const auto object_ptr = object_ptr_;
-  const auto current_velocity_ptr = current_velocity_ptr_;
+  const auto current_odometry_ptr = current_odometry_ptr_;
   const auto current_acceleration_ptr = current_acceleration_ptr_;
   mutex_.unlock();
 
@@ -248,7 +248,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
       return;
     }
 
-    if (!current_velocity_ptr) {
+    if (!current_odometry_ptr) {
       waiting("current velocity");
       return;
     }
@@ -263,7 +263,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     }
   }
 
-  const auto current_vel = current_velocity_ptr->twist.twist.linear.x;
+  const auto current_vel = current_odometry_ptr->twist.twist.linear.x;
   const auto current_acc = current_acceleration_ptr->accel.accel.linear.x;
 
   // TODO(someone): support backward path
@@ -278,7 +278,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
 
   PlannerData planner_data{};
 
-  getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
+  planner_data.current_pose = current_odometry_ptr_->pose.pose;
 
   Trajectory output_trajectory = *input_msg;
   TrajectoryPoints output_trajectory_points =
@@ -410,13 +410,13 @@ void ObstacleStopPlannerNode::searchObstacle(
 
         mutex_.lock();
         const auto object_ptr = object_ptr_;
-        const auto current_velocity_ptr = current_velocity_ptr_;
+        const auto current_odometry_ptr = current_odometry_ptr_;
         mutex_.unlock();
 
         acc_controller_->insertAdaptiveCruiseVelocity(
           decimate_trajectory, planner_data.decimate_trajectory_collision_index,
           planner_data.current_pose, planner_data.nearest_collision_point,
-          planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
+          planner_data.nearest_collision_point_time, object_ptr, current_odometry_ptr,
           &planner_data.stop_require, &output, trajectory_header);
 
         if (planner_data.stop_require) {
@@ -836,7 +836,7 @@ void ObstacleStopPlannerNode::onOdometry(const Odometry::ConstSharedPtr input_ms
 {
   // mutex for current_acc_, lpf_acc_
   std::lock_guard<std::mutex> lock(mutex_);
-  current_velocity_ptr_ = input_msg;
+  current_odometry_ptr_ = input_msg;
 }
 
 void ObstacleStopPlannerNode::onAcceleration(

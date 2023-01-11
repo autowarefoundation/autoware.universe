@@ -128,7 +128,7 @@ private:
   rclcpp::Time last_detect_time_collision_point_;
   rclcpp::Time last_detect_time_slowdown_point_;
 
-  Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
+  Odometry::ConstSharedPtr current_odometry_ptr_{nullptr};
   AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_{nullptr};
   bool is_driving_forward_{true};
 
