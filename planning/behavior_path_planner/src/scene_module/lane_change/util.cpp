@@ -693,7 +693,8 @@ PathWithLaneId getReferencePathFromTargetLane(
     route_handler.getCenterLinePath(target_lanes, s_start, s_end);
 
   return util::resamplePathWithSpline(
-    lane_changing_reference_path, resample_interval, true, {0.0, dist_prepare_to_lc_end.lane_changing});
+    lane_changing_reference_path, resample_interval, true,
+    {0.0, dist_prepare_to_lc_end.lane_changing});
 }
 
 bool isEgoWithinOriginalLane(
