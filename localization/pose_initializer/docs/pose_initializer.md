@@ -49,4 +49,4 @@ Finally, it publishes the initial pose to `ekf_localizer`.
 
 This `pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `default_ad_api`](https://github.com/autowarefoundation/autoware.universe/blob/main/system/default_ad_api/document/localization.md).
 
-<img src="../media/pose_initialization.drawio.svg" alt="drawing" width="800"/>
+<img src="../../../system/default_ad_api/document/images/localization.drawio.svg" alt="drawing" width="800"/>
