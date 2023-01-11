@@ -461,7 +461,7 @@ bool withinPolyhedron(
   }
   boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
 
-  for ( const auto & candidate_point : *candidate_points_ptr) {
+  for (const auto & candidate_point : *candidate_points_ptr) {
     Point2d point(candidate_point.x, candidate_point.y);
     if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
