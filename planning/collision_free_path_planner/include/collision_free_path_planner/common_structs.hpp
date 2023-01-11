@@ -29,13 +29,15 @@ namespace collision_free_path_planner
 {
 struct PlannerData
 {
+  // input
   Path path;
-  std::vector<geometry_msgs::msg::Point> right_bound;
   std::vector<geometry_msgs::msg::Point> left_bound;
+  std::vector<geometry_msgs::msg::Point> right_bound;
+  // external input
+  std::vector<PredictedObject> objects{};
+  // ego
   geometry_msgs::msg::Pose ego_pose{};
   double ego_vel{};
-  std::vector<PredictedObject> objects{};
-  bool enable_avoidance{false};
 };
 
 struct ReferencePoint;
@@ -236,7 +238,6 @@ struct EgoNearestParam
   double dist_threshold{0.0};
   double yaw_threshold{0.0};
 };
-
 }  // namespace collision_free_path_planner
 
 #endif  // COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_

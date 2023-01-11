@@ -1703,6 +1703,7 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
     ref_points.at(i).alpha =
       tier4_autoware_utils::normalizeRadian(front_wheel_yaw - ref_points.at(i).yaw);
 
+    /*
     // near objects
     ref_points.at(i).near_objects = [&]() {
       const int avoidance_check_steps =
@@ -1720,6 +1721,7 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
       }
       return false;
     }();
+    */
 
     // The point are considered to be near the object if nearest previous ref point is near the
     // object.
@@ -1799,9 +1801,7 @@ void MPTOptimizer::calcBounds(
         min_soft_road_clearance,
       -5.0);
 
-    ref_points.at(i).bounds = Bounds{
-      lat_dist_to_right_bound, lat_dist_to_left_bound, CollisionType::NO_COLLISION,
-      CollisionType::NO_COLLISION};
+    ref_points.at(i).bounds = Bounds{lat_dist_to_right_bound, lat_dist_to_left_bound};
     debug_data_ptr_->sequential_bounds.push_back(ref_points.at(i).bounds);
   }
 
@@ -1812,9 +1812,7 @@ void MPTOptimizer::calcBounds(
   const double lat_dist_to_right_bound =
     -motion_utils::calcLateralOffset(right_bound, ref_points.back().getPosition()) +
     min_soft_road_clearance;
-  ref_points.back().bounds = Bounds{
-    lat_dist_to_right_bound, lat_dist_to_left_bound, CollisionType::NO_COLLISION,
-    CollisionType::NO_COLLISION};
+  ref_points.back().bounds = Bounds{lat_dist_to_right_bound, lat_dist_to_left_bound};
   debug_data_ptr_->sequential_bounds.push_back(ref_points.back().bounds);
 
   debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)

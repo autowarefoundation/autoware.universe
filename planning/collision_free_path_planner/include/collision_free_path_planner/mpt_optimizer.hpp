@@ -59,35 +59,20 @@
 
 namespace collision_free_path_planner
 {
-enum class CollisionType { NO_COLLISION = 0, OUT_OF_SIGHT = 1, OUT_OF_ROAD = 2, OBJECT = 3 };
-
 struct Bounds
 {
+  /*
   Bounds() = default;
   Bounds(
-    const double lower_bound_, const double upper_bound_, CollisionType lower_collision_type_,
-    CollisionType upper_collision_type_)
+    const double lower_bound_, const double upper_bound_)
   : lower_bound(lower_bound_),
     upper_bound(upper_bound_),
-    lower_collision_type(lower_collision_type_),
-    upper_collision_type(upper_collision_type_)
   {
   }
+  */
 
   double lower_bound;
   double upper_bound;
-
-  CollisionType lower_collision_type;
-  CollisionType upper_collision_type;
-
-  bool hasCollisionWithRightObject() const { return lower_collision_type == CollisionType::OBJECT; }
-
-  bool hasCollisionWithLeftObject() const { return upper_collision_type == CollisionType::OBJECT; }
-
-  bool hasCollisionWithObject() const
-  {
-    return hasCollisionWithRightObject() || hasCollisionWithLeftObject();
-  }
 
   static Bounds lerp(Bounds prev_bounds, Bounds next_bounds, double ratio)
   {
@@ -96,14 +81,7 @@ struct Bounds
     const double upper_bound =
       interpolation::lerp(prev_bounds.upper_bound, next_bounds.upper_bound, ratio);
 
-    if (ratio < 0.5) {
-      return Bounds{
-        lower_bound, upper_bound, prev_bounds.lower_collision_type,
-        prev_bounds.upper_collision_type};
-    }
-
-    return Bounds{
-      lower_bound, upper_bound, next_bounds.lower_collision_type, next_bounds.upper_collision_type};
+    return Bounds{lower_bound, upper_bound};
   }
 
   void translate(const double offset)

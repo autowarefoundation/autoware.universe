@@ -36,99 +36,6 @@
 
 namespace collision_free_path_planner
 {
-namespace
-{
-template <typename T>
-boost::optional<geometry_msgs::msg::Pose> lerpPose(
-  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t closest_seg_idx)
-{
-  constexpr double epsilon = 1e-6;
-
-  const double closest_to_target_dist =
-    motion_utils::calcSignedArcLength(points, closest_seg_idx, target_pos);
-  const double seg_dist =
-    motion_utils::calcSignedArcLength(points, closest_seg_idx, closest_seg_idx + 1);
-
-  const auto & closest_pose = points[closest_seg_idx].pose;
-  const auto & next_pose = points[closest_seg_idx + 1].pose;
-
-  geometry_msgs::msg::Pose interpolated_pose;
-  if (std::abs(seg_dist) < epsilon) {
-    interpolated_pose.position.x = next_pose.position.x;
-    interpolated_pose.position.y = next_pose.position.y;
-    interpolated_pose.position.z = next_pose.position.z;
-    interpolated_pose.orientation = next_pose.orientation;
-  } else {
-    const double ratio = closest_to_target_dist / seg_dist;
-    if (ratio < 0 || 1 < ratio) {
-      return {};
-    }
-
-    interpolated_pose.position.x =
-      interpolation::lerp(closest_pose.position.x, next_pose.position.x, ratio);
-    interpolated_pose.position.y =
-      interpolation::lerp(closest_pose.position.y, next_pose.position.y, ratio);
-    interpolated_pose.position.z =
-      interpolation::lerp(closest_pose.position.z, next_pose.position.z, ratio);
-
-    const double closest_yaw = tf2::getYaw(closest_pose.orientation);
-    const double next_yaw = tf2::getYaw(next_pose.orientation);
-    const double interpolated_yaw = interpolation::lerp(closest_yaw, next_yaw, ratio);
-    interpolated_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(interpolated_yaw);
-  }
-  return interpolated_pose;
-}
-
-template <typename T>
-double lerpTwistX(
-  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t closest_seg_idx)
-{
-  if (points.size() == 1) {
-    return points.at(0).longitudinal_velocity_mps;
-  }
-
-  constexpr double epsilon = 1e-6;
-
-  const double closest_to_target_dist =
-    motion_utils::calcSignedArcLength(points, closest_seg_idx, target_pos);
-  const double seg_dist =
-    motion_utils::calcSignedArcLength(points, closest_seg_idx, closest_seg_idx + 1);
-
-  const double closest_vel = points[closest_seg_idx].longitudinal_velocity_mps;
-  const double next_vel = points[closest_seg_idx + 1].longitudinal_velocity_mps;
-
-  if (std::abs(seg_dist) < epsilon) {
-    return next_vel;
-  }
-
-  const double ratio = std::min(1.0, std::max(0.0, closest_to_target_dist / seg_dist));
-  return interpolation::lerp(closest_vel, next_vel, ratio);
-}
-
-template <typename T>
-double lerpPoseZ(
-  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t closest_seg_idx)
-{
-  if (points.size() == 1) {
-    return points.at(0).pose.position.z;
-  }
-
-  constexpr double epsilon = 1e-6;
-
-  const double closest_to_target_dist =
-    motion_utils::calcSignedArcLength(points, closest_seg_idx, target_pos);
-  const double seg_dist =
-    motion_utils::calcSignedArcLength(points, closest_seg_idx, closest_seg_idx + 1);
-
-  const double closest_z = points[closest_seg_idx].pose.position.z;
-  const double next_z = points[closest_seg_idx + 1].pose.position.z;
-
-  return std::abs(seg_dist) < epsilon
-           ? next_z
-           : interpolation::lerp(closest_z, next_z, closest_to_target_dist / seg_dist);
-}
-}  // namespace
-
 class CollisionFreePathPlanner : public rclcpp::Node
 {
   FRIEND_TEST(CollisionFreePathPlanner, MPTOptimizer);
@@ -162,7 +69,6 @@ private:
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   bool enable_outside_drivable_area_stop_;
-  bool enable_avoidance_;
   bool enable_smoothing_;
   bool enable_skip_optimization_;
   bool enable_reset_prev_optimization_;
@@ -189,11 +95,11 @@ private:
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_ptr_;
 
-  // Interface publisher
+  // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_pub_;
 
-  // Interface subscriber
+  // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
@@ -208,7 +114,7 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
-  // subscriber callback functions
+  // subscriber callback function
   void onPath(const Path::SharedPtr);
 
   // reset functions
@@ -222,7 +128,7 @@ private:
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<PathPoint> & path_points,
     const std::vector<TrajectoryPoint> & optimized_points);
-  void publishDebugDataInMain(const Path & path) const;
+  void publishDebugData(const Path & path) const;
 
   // functions in generateOptimizedTrajectory
   std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);

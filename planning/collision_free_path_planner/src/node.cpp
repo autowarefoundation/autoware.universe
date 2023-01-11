@@ -28,20 +28,6 @@ namespace collision_free_path_planner
 // TODO(murooka) check if velocity is updated while optimization is skipped.
 namespace
 {
-[[maybe_unused]] void fillYawInTrajectoryPoint(std::vector<TrajectoryPoint> & traj_points)
-{
-  std::vector<geometry_msgs::msg::Point> points;
-  for (const auto & traj_point : traj_points) {
-    points.push_back(traj_point.pose.position);
-  }
-  const auto yaw_vec = interpolation::splineYawFromPoints(points);
-
-  for (size_t i = 0; i < traj_points.size(); ++i) {
-    traj_points.at(i).pose.orientation =
-      tier4_autoware_utils::createQuaternionFromYaw(yaw_vec.at(i));
-  }
-}
-
 template <class T>
 std::vector<T> concatVectors(const std::vector<T> & prev_vector, const std::vector<T> & next_vector)
 {
@@ -75,11 +61,11 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()),
   debug_data_ptr_(std::make_shared<DebugData>())
 {
-  // Interface publisher
+  // interface publisher
   traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
   virtual_wall_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
 
-  // Interface subscriber
+  // interface subscriber
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&CollisionFreePathPlanner::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(
@@ -91,13 +77,11 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
   debug_markers_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
-  debug_calculation_time_pub_ =
-    create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
 
   {  // option parameter
     enable_outside_drivable_area_stop_ =
       declare_parameter<bool>("option.enable_outside_drivable_area_stop");
-    enable_avoidance_ = declare_parameter<bool>("option.enable_avoidance");
     enable_smoothing_ = declare_parameter<bool>("option.enable_smoothing");
     enable_skip_optimization_ = declare_parameter<bool>("option.enable_skip_optimization");
     enable_reset_prev_optimization_ =
@@ -125,6 +109,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   mpt_optimizer_ptr_ = std::make_shared<MPTOptimizer>(
     this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_, debug_data_ptr_);
 
+  // first, reset planners
   resetPlanning();
 
   // set parameter callback
@@ -141,7 +126,6 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
   {  // option parameter
     updateParam<bool>(
       parameters, "option.enable_outside_drivable_area_stop", enable_outside_drivable_area_stop_);
-    updateParam<bool>(parameters, "option.enable_avoidance", enable_avoidance_);
     updateParam<bool>(parameters, "option.enable_smoothing", enable_smoothing_);
     updateParam<bool>(parameters, "option.enable_skip_optimization", enable_skip_optimization_);
     updateParam<bool>(
@@ -229,7 +213,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   setZeroVelocityAfterStopPoint(extended_traj_points);
 
   // 6. publish debug data
-  publishDebugDataInMain(*path_ptr);
+  publishDebugData(*path_ptr);
 
   debug_data_ptr_->msg_stream << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n"
                               << "========================================";
@@ -278,13 +262,12 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
 {
   // create planner data
   PlannerData planner_data;
-  planner_data.path = path;  // TODO(murooka) make path path points and add timestamp
+  planner_data.path = path;
   planner_data.right_bound = path.right_bound;
   planner_data.left_bound = path.left_bound;
   planner_data.ego_pose = ego_state_ptr_->pose.pose;
   planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
   planner_data.objects = objects_ptr_->objects;
-  planner_data.enable_avoidance = enable_avoidance_;
 
   // update debug data
   debug_data_ptr_->ego_pose = planner_data.ego_pose;
@@ -550,7 +533,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   return resampled_traj_points;
 }
 
-void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
+void CollisionFreePathPlanner::publishDebugData(const Path & path) const
 {
   stop_watch_.tic(__func__);
 
