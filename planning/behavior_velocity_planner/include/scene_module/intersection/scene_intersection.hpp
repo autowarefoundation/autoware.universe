@@ -46,7 +46,6 @@ public:
   struct DebugData
   {
     bool stop_required;
-    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
 
     geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
@@ -167,7 +166,7 @@ private:
   Polygon2d generateEgoIntersectionLanePolygon(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int start_idx, const double extra_dist, const double ignore_dist) const;
+    const double extra_dist, const double ignore_dist) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.

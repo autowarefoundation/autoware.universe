@@ -204,18 +204,6 @@ MarkerArray OcclusionSpotModule::createDebugMarkerArray()
       makePolygonMarker(debug_data_.close_partition, "close_partition", module_id_, debug_data_.z),
       &debug_marker_array, now);
   }
-  if (!debug_data_.path_interpolated.points.empty()) {
-    const int64_t virtual_lane_id = 0;
-    appendMarkerArray(
-      debug::createPathMarkerArray(
-        debug_data_.path_raw, "path_raw", virtual_lane_id, now, 0.6, 0.3, 0.3, 0.0, 1.0, 1.0),
-      &debug_marker_array, now);
-    appendMarkerArray(
-      debug::createPathMarkerArray(
-        debug_data_.path_interpolated, "path_interpolated", virtual_lane_id, now, 0.6, 0.3, 0.3,
-        0.0, 1.0, 1.0),
-      &debug_marker_array, now);
-  }
   if (!debug_data_.occlusion_points.empty()) {
     appendMarkerArray(
       debug::createPointsMarkerArray(
@@ -231,13 +219,12 @@ MarkerArray OcclusionSpotModule::createVirtualWallMarkerArray()
 
   MarkerArray wall_marker;
   std::string module_name = "occlusion_spot";
-  if (!debug_data_.possible_collisions.empty()) {
-    for (size_t id = 0; id < debug_data_.possible_collisions.size(); id++) {
-      const auto & pose = debug_data_.possible_collisions.at(id).intersection_pose;
-      appendMarkerArray(
-        motion_utils::createSlowDownVirtualWallMarker(pose, module_name, current_time, id),
-        &wall_marker, current_time);
-    }
+  for (size_t id = 0; id < debug_data_.debug_poses.size(); id++) {
+    const auto p_front =
+      calcOffsetPose(debug_data_.debug_poses.at(id), debug_data_.baselink_to_front, 0.0, 0.0);
+    appendMarkerArray(
+      motion_utils::createSlowDownVirtualWallMarker(p_front, module_name, current_time, id),
+      &wall_marker, current_time);
   }
   return wall_marker;
 }

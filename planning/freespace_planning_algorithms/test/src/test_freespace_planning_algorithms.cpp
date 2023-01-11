@@ -245,7 +245,7 @@ std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
    {RRTSTAR_UPDATE, "fpalgos-rrtstar_update"},
    {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}});
 
-bool test_algorithm(enum AlgorithmType algo_type)
+bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
 {
   std::unique_ptr<fpa::AbstractPlanningAlgorithm> algo;
   if (algo_type == AlgorithmType::ASTAR_SINGLE) {
@@ -268,8 +268,6 @@ bool test_algorithm(enum AlgorithmType algo_type)
 
   rclcpp::Clock clock{RCL_SYSTEM_TIME};
   for (size_t i = 0; i < goal_poses.size(); ++i) {
-    const std::string dir_name =
-      "/tmp/" + rosbag_dir_prefix_table[algo_type] + "-case" + std::to_string(i);
     const auto goal_pose = goal_poses.at(i);
 
     bool success_local = true;
@@ -320,32 +318,38 @@ bool test_algorithm(enum AlgorithmType algo_type)
       success_all = false;
     }
 
-    rcpputils::fs::remove_all(dir_name);
+    if (dump_rosbag) {
+      // dump rosbag for visualization using python script
+      const std::string dir_name =
+        "/tmp/" + rosbag_dir_prefix_table[algo_type] + "-case" + std::to_string(i);
 
-    rosbag2_storage::StorageOptions storage_options;
-    storage_options.uri = dir_name;
-    storage_options.storage_id = "sqlite3";
+      rcpputils::fs::remove_all(dir_name);
 
-    rosbag2_cpp::ConverterOptions converter_options;
-    converter_options.input_serialization_format = "cdr";
-    converter_options.output_serialization_format = "cdr";
+      rosbag2_storage::StorageOptions storage_options;
+      storage_options.uri = dir_name;
+      storage_options.storage_id = "sqlite3";
 
-    rosbag2_cpp::Writer writer(std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
-    writer.open(storage_options, converter_options);
+      rosbag2_cpp::ConverterOptions converter_options;
+      converter_options.input_serialization_format = "cdr";
+      converter_options.output_serialization_format = "cdr";
 
-    add_message_to_rosbag(
-      writer, create_float_msg(vehicle_shape.length), "vehicle_length", "std_msgs/msg/Float64");
-    add_message_to_rosbag(
-      writer, create_float_msg(vehicle_shape.width), "vehicle_width", "std_msgs/msg/Float64");
-    add_message_to_rosbag(
-      writer, create_float_msg(vehicle_shape.base2back), "vehicle_base2back",
-      "std_msgs/msg/Float64");
+      rosbag2_cpp::Writer writer(std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+      writer.open(storage_options, converter_options);
 
-    add_message_to_rosbag(writer, costmap_msg, "costmap", "nav_msgs/msg/OccupancyGrid");
-    add_message_to_rosbag(writer, create_pose_msg(start_pose), "start", "geometry_msgs/msg/Pose");
-    add_message_to_rosbag(writer, create_pose_msg(goal_pose), "goal", "geometry_msgs/msg/Pose");
-    add_message_to_rosbag(writer, trajectory, "trajectory", "geometry_msgs/msg/PoseArray");
-    add_message_to_rosbag(writer, create_float_msg(msec), "elapsed_time", "std_msgs/msg/Float64");
+      add_message_to_rosbag(
+        writer, create_float_msg(vehicle_shape.length), "vehicle_length", "std_msgs/msg/Float64");
+      add_message_to_rosbag(
+        writer, create_float_msg(vehicle_shape.width), "vehicle_width", "std_msgs/msg/Float64");
+      add_message_to_rosbag(
+        writer, create_float_msg(vehicle_shape.base2back), "vehicle_base2back",
+        "std_msgs/msg/Float64");
+
+      add_message_to_rosbag(writer, costmap_msg, "costmap", "nav_msgs/msg/OccupancyGrid");
+      add_message_to_rosbag(writer, create_pose_msg(start_pose), "start", "geometry_msgs/msg/Pose");
+      add_message_to_rosbag(writer, create_pose_msg(goal_pose), "goal", "geometry_msgs/msg/Pose");
+      add_message_to_rosbag(writer, trajectory, "trajectory", "geometry_msgs/msg/PoseArray");
+      add_message_to_rosbag(writer, create_float_msg(msec), "elapsed_time", "std_msgs/msg/Float64");
+    }
   }
   return success_all;
 }

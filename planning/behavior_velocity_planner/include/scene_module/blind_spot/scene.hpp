@@ -48,13 +48,11 @@ public:
 
   struct DebugData
   {
-    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon conflict_area_for_blind_spot;
     geometry_msgs::msg::Polygon detection_area_for_blind_spot;
-    autoware_auto_planning_msgs::msg::PathWithLaneId spline_path;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
   };
 
@@ -67,6 +65,7 @@ public:
     double ignore_width_from_center_line;  //! ignore width from center line from detection_area
     double
       max_future_movement_time;  //! maximum time[second] for considering future movement of object
+    double threshold_yaw_diff;   //! threshold of yaw difference between ego and target object
   };
 
   BlindSpotModule(
@@ -155,7 +154,7 @@ private:
    */
   bool isPredictedPathInArea(
     const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const lanelet::CompoundPolygon3d & area) const;
+    const lanelet::CompoundPolygon3d & area, geometry_msgs::msg::Pose ego_pose) const;
 
   /**
    * @brief Generate a stop line and insert it into the path.

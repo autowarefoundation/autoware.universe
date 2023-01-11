@@ -39,17 +39,10 @@ using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
 using tier4_autoware_utils::pose2transform;
+using tier4_autoware_utils::toHexString;
 
 namespace
 {
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-  }
-  return ss.str();
-}
 geometry_msgs::msg::Point32 createPoint32(const double x, const double y, const double z)
 {
   geometry_msgs::msg::Point32 p;
@@ -137,6 +130,7 @@ CrosswalkModule::CrosswalkModule(
   crosswalk_(std::move(crosswalk)),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::CROSSWALK);
   passed_safety_slow_point_ = false;
 }
 
@@ -218,9 +212,15 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   if (nearest_stop_point) {
     insertDecelPointWithDebugInfo(nearest_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_factor.stop_pose,
+      VelocityFactor::UNKNOWN);
   } else if (rtc_stop_point) {
     insertDecelPointWithDebugInfo(rtc_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_factor_rtc.stop_pose,
+      VelocityFactor::UNKNOWN);
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -446,7 +446,7 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
   const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
   const auto margin = stop_at_stop_line ? stop_line_distance + base_link2front
                                         : planner_param_.stop_margin + base_link2front;
-  const auto stop_pose = calcLongitudinalOffsetPose(sparse_resample_path.points, p_stop, -margin);
+  const auto stop_pose = calcLongitudinalOffsetPose(ego_path.points, p_stop, -margin);
 
   if (!stop_pose) {
     return {};

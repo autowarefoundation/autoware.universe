@@ -36,16 +36,6 @@ using VehicleBounds = std::vector<Bounds>;
 using SequentialBounds = std::vector<Bounds>;
 
 using BoundsCandidates = std::vector<Bounds>;
-using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
-
-struct CVMaps
-{
-  cv::Mat drivable_area;
-  cv::Mat clearance_map;
-  cv::Mat only_objects_clearance_map;
-  cv::Mat area_with_objects_map;
-  nav_msgs::msg::MapMetaData map_info;
-};
 
 struct QPParam
 {
@@ -163,6 +153,7 @@ struct DebugData
 
   std::vector<geometry_msgs::msg::Pose> mpt_ref_poses;
   std::vector<double> lateral_errors;
+  std::vector<double> yaw_errors;
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> eb_traj;
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_fixed_traj;
@@ -171,7 +162,7 @@ struct DebugData
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_fixed_traj;
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_non_fixed_traj;
 
-  SequentialBoundsCandidates sequential_bounds_candidates;
+  BoundsCandidates bounds_candidates;
 };
 
 struct Trajectories

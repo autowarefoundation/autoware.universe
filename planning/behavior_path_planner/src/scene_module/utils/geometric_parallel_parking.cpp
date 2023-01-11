@@ -98,31 +98,6 @@ PathWithLaneId GeometricParallelParking::getArcPath() const
 
 bool GeometricParallelParking::isParking() const { return current_path_idx_ > 0; }
 
-bool GeometricParallelParking::isEnoughDistanceToStart(const Pose & start_pose) const
-{
-  const Pose current_pose = planner_data_->self_pose->pose;
-  const Pose current_to_start =
-    inverseTransformPose(start_pose, current_pose);  // todo: arc length is better
-
-  // not enough to stop with max deceleration
-  const double current_vel = util::l2Norm(planner_data_->self_odometry->twist.twist.linear);
-  const double stop_distance = std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
-  if (current_to_start.position.x < stop_distance) {
-    return false;
-  }
-
-  // not enough to restart from stopped
-  constexpr double min_restart_distance = 3.0;
-  if (
-    current_vel < parameters_.th_stopped_velocity &&
-    current_to_start.position.x > parameters_.th_arrived_distance &&
-    current_to_start.position.x < min_restart_distance) {
-    return false;
-  }
-
-  return true;
-}
-
 void GeometricParallelParking::setVelocityToArcPaths(
   std::vector<PathWithLaneId> & arc_paths, const double velocity)
 {
@@ -143,9 +118,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
   const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
   const bool is_forward, const double end_pose_offset, const double velocity)
 {
-  if (!isEnoughDistanceToStart(start_pose)) {
-    return std::vector<PathWithLaneId>{};
-  }
   const double lane_departure_margin = is_forward
                                          ? parameters_.forward_parking_lane_departure_margin
                                          : parameters_.backward_parking_lane_departure_margin;
@@ -162,6 +134,16 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
 
   // straight path from current to parking start
   const auto straight_path = generateStraightPath(start_pose);
+
+  // check the continuity of straight path and arc path
+  const Pose & road_path_last_pose = straight_path.points.back().point.pose;
+  const Pose & arc_path_first_pose = arc_paths.front().points.front().point.pose;
+  const double yaw_diff = tier4_autoware_utils::normalizeRadian(
+    tf2::getYaw(road_path_last_pose.orientation), tf2::getYaw(arc_path_first_pose.orientation));
+  const double distance = calcDistance2d(road_path_last_pose, arc_path_first_pose);
+  if (yaw_diff > tier4_autoware_utils::deg2rad(5.0) || distance > 0.1) {
+    return std::vector<PathWithLaneId>{};
+  }
 
   // combine straight_path -> arc_path*2
   auto paths = arc_paths;

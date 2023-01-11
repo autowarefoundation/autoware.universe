@@ -61,7 +61,6 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     this->create_publisher<TurnIndicatorsCommand>("output/turn_indicators_cmd", durable_qos);
   hazard_light_cmd_pub_ =
     this->create_publisher<HazardLightsCommand>("output/hazard_lights_cmd", durable_qos);
-
   gate_mode_pub_ = this->create_publisher<GateMode>("output/gate_mode", durable_qos);
   engage_pub_ = this->create_publisher<EngageMsg>("output/engage", durable_qos);
   pub_external_emergency_ =
@@ -84,6 +83,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     [this](const OperationModeState::SharedPtr msg) { current_operation_mode_ = *msg; });
   mrm_state_sub_ = this->create_subscription<MrmState>(
     "input/mrm_state", 1, std::bind(&VehicleCmdGate::onMrmState, this, _1));
+  gear_status_sub_ = this->create_subscription<GearReport>(
+    "input/gear_status", 1, std::bind(&VehicleCmdGate::onGearStatus, this, _1));
 
   // Subscriber for auto
   auto_control_cmd_sub_ = this->create_subscription<AckermannControlCommand>(
@@ -126,39 +127,40 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     "input/emergency/gear_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyShiftCmd, this, _1));
 
   // Parameter
-  update_period_ = 1.0 / declare_parameter("update_rate", 10.0);
-  use_emergency_handling_ = declare_parameter("use_emergency_handling", false);
-  use_external_emergency_stop_ = declare_parameter("use_external_emergency_stop", false);
+  update_period_ = 1.0 / declare_parameter<double>("update_rate");
+  use_emergency_handling_ = declare_parameter<bool>("use_emergency_handling");
+  check_external_emergency_heartbeat_ =
+    declare_parameter<bool>("check_external_emergency_heartbeat");
   system_emergency_heartbeat_timeout_ =
-    declare_parameter("system_emergency_heartbeat_timeout", 0.5);
+    declare_parameter<double>("system_emergency_heartbeat_timeout");
   external_emergency_stop_heartbeat_timeout_ =
-    declare_parameter("external_emergency_stop_heartbeat_timeout", 0.5);
-  stop_hold_acceleration_ = declare_parameter("stop_hold_acceleration", -1.5);
-  emergency_acceleration_ = declare_parameter("emergency_acceleration", -2.4);
+    declare_parameter<double>("external_emergency_stop_heartbeat_timeout");
+  stop_hold_acceleration_ = declare_parameter<double>("stop_hold_acceleration");
+  emergency_acceleration_ = declare_parameter<double>("emergency_acceleration");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
-    p.vel_lim = declare_parameter("nominal.vel_lim", 25.0);
-    p.lon_acc_lim = declare_parameter("nominal.lon_acc_lim", 5.0);
-    p.lon_jerk_lim = declare_parameter("nominal.lon_jerk_lim", 5.0);
-    p.lat_acc_lim = declare_parameter("nominal.lat_acc_lim", 5.0);
-    p.lat_jerk_lim = declare_parameter("nominal.lat_jerk_lim", 5.0);
-    p.actual_steer_diff_lim = declare_parameter("nominal.actual_steer_diff_lim", 1.0);
+    p.vel_lim = declare_parameter<double>("nominal.vel_lim");
+    p.lon_acc_lim = declare_parameter<double>("nominal.lon_acc_lim");
+    p.lon_jerk_lim = declare_parameter<double>("nominal.lon_jerk_lim");
+    p.lat_acc_lim = declare_parameter<double>("nominal.lat_acc_lim");
+    p.lat_jerk_lim = declare_parameter<double>("nominal.lat_jerk_lim");
+    p.actual_steer_diff_lim = declare_parameter<double>("nominal.actual_steer_diff_lim");
     filter_.setParam(p);
   }
 
   {
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
-    p.vel_lim = declare_parameter("on_transition.vel_lim", 25.0);
-    p.lon_acc_lim = declare_parameter("on_transition.lon_acc_lim", 0.5);
-    p.lon_jerk_lim = declare_parameter("on_transition.lon_jerk_lim", 0.25);
-    p.lat_acc_lim = declare_parameter("on_transition.lat_acc_lim", 0.5);
-    p.lat_jerk_lim = declare_parameter("on_transition.lat_jerk_lim", 0.25);
-    p.actual_steer_diff_lim = declare_parameter("on_transition.actual_steer_diff_lim", 0.05);
+    p.vel_lim = declare_parameter<double>("on_transition.vel_lim");
+    p.lon_acc_lim = declare_parameter<double>("on_transition.lon_acc_lim");
+    p.lon_jerk_lim = declare_parameter<double>("on_transition.lon_jerk_lim");
+    p.lat_acc_lim = declare_parameter<double>("on_transition.lat_acc_lim");
+    p.lat_jerk_lim = declare_parameter<double>("on_transition.lat_jerk_lim");
+    p.actual_steer_diff_lim = declare_parameter<double>("on_transition.actual_steer_diff_lim");
     filter_on_transition_.setParam(p);
   }
 
@@ -224,7 +226,7 @@ bool VehicleCmdGate::isDataReady()
     }
   }
 
-  if (use_external_emergency_stop_) {
+  if (check_external_emergency_heartbeat_) {
     if (!external_emergency_stop_heartbeat_received_time_) {
       RCLCPP_WARN(get_logger(), "external_emergency_stop_heartbeat_received_time_ is false");
       return false;
@@ -255,6 +257,8 @@ void VehicleCmdGate::onAutoHazardLightsCmd(HazardLightsCommand::ConstSharedPtr m
 }
 
 void VehicleCmdGate::onAutoShiftCmd(GearCommand::ConstSharedPtr msg) { auto_commands_.gear = *msg; }
+
+void VehicleCmdGate::onGearStatus(GearReport::ConstSharedPtr msg) { current_gear_ptr_ = msg; }
 
 // for remote
 void VehicleCmdGate::onRemoteCtrlCmd(AckermannControlCommand::ConstSharedPtr msg)
@@ -322,7 +326,7 @@ void VehicleCmdGate::onTimer()
   }
 
   // Check external emergency stop heartbeat
-  if (use_external_emergency_stop_) {
+  if (check_external_emergency_heartbeat_) {
     is_external_emergency_stop_heartbeat_timeout_ = isHeartbeatTimeout(
       external_emergency_stop_heartbeat_received_time_, external_emergency_stop_heartbeat_timeout_);
 
@@ -345,6 +349,15 @@ void VehicleCmdGate::onTimer()
     return;
   }
 
+  if (is_gate_mode_changed_) {
+    // If gate mode is external, is_engaged_ is always true
+    // While changing gate mode external to auto, the first is_engaged_ is always true for the first
+    // loop in this scope. So we need to wait for the second loop
+    // after gate mode is changed.
+    is_gate_mode_changed_ = false;
+    return;
+  }
+
   // Select commands
   TurnIndicatorsCommand turn_indicator;
   HazardLightsCommand hazard_light;
@@ -361,6 +374,11 @@ void VehicleCmdGate::onTimer()
 
       // Don't send turn signal when autoware is not engaged
       if (!is_engaged_) {
+        if (!current_gear_ptr_) {
+          gear.command = GearCommand::NONE;
+        } else {
+          gear.command = current_gear_ptr_.get()->report;
+        }
         turn_indicator.command = TurnIndicatorsCommand::NO_COMMAND;
         hazard_light.command = HazardLightsCommand::NO_COMMAND;
       }
@@ -563,7 +581,7 @@ void VehicleCmdGate::onGateMode(GateMode::ConstSharedPtr msg)
 {
   const auto prev_gate_mode = current_gate_mode_;
   current_gate_mode_ = *msg;
-
+  is_gate_mode_changed_ = true;
   if (current_gate_mode_.data != prev_gate_mode.data) {
     RCLCPP_INFO(
       get_logger(), "GateMode changed: %s -> %s", getGateModeName(prev_gate_mode.data),

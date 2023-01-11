@@ -25,14 +25,11 @@ struct BehaviorPathPlannerParameters
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
   double minimum_lane_change_length;
+  double minimum_lane_change_prepare_distance;
+
   double minimum_pull_over_length;
   double minimum_pull_out_length;
   double drivable_area_resolution;
-
-  double drivable_lane_forward_length;
-  double drivable_lane_backward_length;
-  double drivable_lane_margin;
-  double drivable_area_margin;
 
   double refine_goal_search_radius_range;
 
@@ -41,6 +38,7 @@ struct BehaviorPathPlannerParameters
   double turn_signal_search_time;
   double turn_signal_minimum_search_distance;
   double turn_signal_shift_length_threshold;
+  bool turn_signal_on_swerving;
 
   double path_interval;
 
@@ -60,8 +58,8 @@ struct BehaviorPathPlannerParameters
   double base_link2front;
   double base_link2rear;
 
-  // drivable area visualization
-  bool visualize_drivable_area_for_shared_linestrings_lanelet;
+  // maximum drivable area visualization
+  bool visualize_maximum_drivable_area;
 
   // collision check
   double lateral_distance_max_threshold;

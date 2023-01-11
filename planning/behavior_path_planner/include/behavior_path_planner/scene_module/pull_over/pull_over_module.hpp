@@ -53,7 +53,6 @@ enum PathType {
 
 struct PUllOverStatus
 {
-  std::shared_ptr<PullOverPlannerBase> planner{};
   PullOverPath pull_over_path{};
   size_t current_path_idx{0};
   std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
@@ -65,6 +64,7 @@ struct PUllOverStatus
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
+  std::optional<Pose> stop_pose{};
 };
 
 class PullOverModule : public SceneModuleInterface
@@ -78,9 +78,10 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
-  void onTimer();
-  bool planWithEfficientPath();
-  bool planWithCloseGoal();
+  BT::NodeStatus getNodeStatusWhileWaitingApproval() const override
+  {
+    return BT::NodeStatus::SUCCESS;
+  }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -103,9 +104,6 @@ private:
   PullOverPath shift_parking_path_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  const double pull_over_lane_length_{200.0};
-  const double check_distance_{100.0};
-
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
   rclcpp::Publisher<PoseStamped>::SharedPtr goal_pose_pub_;
 
@@ -113,7 +111,9 @@ private:
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_;
   Pose modified_goal_pose_;
   Pose refined_goal_pose_;
-  std::vector<GoalCandidate> goal_candidates_;
+  GoalCandidates goal_candidates_;
+  std::vector<PullOverPath> pull_over_path_candidates_;
+  std::optional<Pose> closest_start_pose_;
   GeometricParallelParking parallel_parking_planner_;
   ParallelParkingParameters parallel_parking_parameters_;
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
@@ -124,17 +124,11 @@ private:
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
-  PathWithLaneId getFullPath() const;
-  PathWithLaneId getReferencePath() const;
-  PathWithLaneId generateStopPath() const;
-  Pose calcRefinedGoal() const;
+  Pose calcRefinedGoal(const Pose & goal_pose) const;
   ParallelParkingParameters getGeometricPullOverParameters() const;
-  bool isLongEnoughToParkingStart(
-    const PathWithLaneId & path, const Pose & parking_start_pose) const;
-  bool isLongEnough(
-    const lanelet::ConstLanelets & lanelets, const Pose & goal_pose, const double buffer = 0) const;
-  double calcMinimumShiftPathDistance() const;
   std::pair<double, double> calcDistanceToPathChange() const;
+  PathWithLaneId generateStopPath();
+  PathWithLaneId generateEmergencyStopPath();
 
   bool isStopped();
   bool hasFinishedCurrentPath();
@@ -142,7 +136,16 @@ private:
   void updateOccupancyGrid();
   void resetStatus();
 
+  bool checkCollision(const PathWithLaneId & path) const;
+  bool hasEnoughDistance(const PullOverPath & pull_over_path) const;
+
   TurnSignalInfo calcTurnSignalInfo() const;
+
+  // timer for generating pull over path candidates
+  void onTimer();
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::CallbackGroup::SharedPtr timer_cb_group_;
+  std::mutex mutex_;
 
   // debug
   void setDebugData();

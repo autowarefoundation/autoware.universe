@@ -63,6 +63,7 @@ BlindSpotModule::BlindSpotModule(
   turn_direction_(TurnDirection::INVALID),
   is_over_pass_judge_line_(false)
 {
+  velocity_factor_.init(VelocityFactor::REAR_CHECK);
   planner_param_ = planner_param;
 
   const auto & assigned_lanelet =
@@ -83,7 +84,6 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   *stop_reason = planning_utils::initializeStopReason(StopReason::BLIND_SPOT);
 
   const auto input_path = *path;
-  debug_data_.path_raw = input_path;
 
   StateMachine::State current_state = state_machine_.getState();
   RCLCPP_DEBUG(
@@ -184,6 +184,8 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
   } else {
     *path = input_path;  // reset path
   }
@@ -235,7 +237,6 @@ bool BlindSpotModule::generateStopLine(
   if (!splineInterpolate(*path, interval, path_ip, logger_)) {
     return false;
   }
-  debug_data_.spline_path = path_ip;
 
   /* generate stop point */
   int stop_idx_ip = 0;  // stop point index for interpolated path.
@@ -388,7 +389,8 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
       bool exist_in_detection_area = bg::within(
         to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
         lanelet::utils::to2D(areas_opt.get().detection_area));
-      bool exist_in_conflict_area = isPredictedPathInArea(object, areas_opt.get().conflict_area);
+      bool exist_in_conflict_area = isPredictedPathInArea(
+        object, areas_opt.get().conflict_area, planner_data_->current_pose.pose);
       if (exist_in_detection_area || exist_in_conflict_area) {
         obstacle_detected = true;
         debug_data_.conflicting_targets.objects.push_back(object);
@@ -402,16 +404,23 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
 
 bool BlindSpotModule::isPredictedPathInArea(
   const autoware_auto_perception_msgs::msg::PredictedObject & object,
-  const lanelet::CompoundPolygon3d & area) const
+  const lanelet::CompoundPolygon3d & area, geometry_msgs::msg::Pose ego_pose) const
 {
   const auto area_2d = lanelet::utils::to2D(area);
+  const auto ego_yaw = tf2::getYaw(ego_pose.orientation);
+  const auto threshold_yaw_diff = planner_param_.threshold_yaw_diff;
   // NOTE: iterating all paths including those of low confidence
   return std::any_of(
     object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
-    [&area_2d](const auto & path) {
-      return std::any_of(path.path.begin(), path.path.end(), [&area_2d](const auto & point) {
-        return bg::within(to_bg2d(point.position), area_2d);
-      });
+    [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & path) {
+      return std::any_of(
+        path.path.begin(), path.path.end(),
+        [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & point) {
+          const auto is_in_area = bg::within(to_bg2d(point.position), area_2d);
+          const auto match_yaw =
+            std::fabs(ego_yaw - tf2::getYaw(point.orientation)) < threshold_yaw_diff;
+          return is_in_area && match_yaw;
+        });
     });
 }
 
