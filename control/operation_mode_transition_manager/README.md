@@ -13,7 +13,7 @@ There is also an `In Transition` state that occurs during each mode transitions.
 
 ### Features
 
-- Transite mode between `Autonomous`, `Local`, `Remote` and `Stop` based on the indication command.
+- Transit mode between `Autonomous`, `Local`, `Remote` and `Stop` based on the indication command.
 - Check whether the each transition is available (safe or not).
 - Limit some sudden motion control in `In Transition` mode (this is done with `vehicle_cmd_gate` feature).
 - Check whether the transition is completed.
