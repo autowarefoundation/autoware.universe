@@ -47,6 +47,7 @@
 #include "eigen3/Eigen/Sparse"
 #include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -289,13 +290,18 @@ private:
   //   const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
   // functions to update reference points
+  void updateCurvature(
+    std::vector<ReferencePoint> & ref_points,
+    const SplineInterpolationPoints2d & ref_points_spline) const;
+  void updateOrientation(
+    std::vector<ReferencePoint> & ref_points,
+    const SplineInterpolationPoints2d & ref_points_spline) const;
+
   void calcBounds(
     std::vector<ReferencePoint> & ref_points,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
     const std::vector<geometry_msgs::msg::Point> & right_bound) const;
   void calcVehicleBounds(std::vector<ReferencePoint> & ref_points) const;
-  void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
-  void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
   void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
   void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
   void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;

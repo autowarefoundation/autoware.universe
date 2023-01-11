@@ -16,18 +16,17 @@
 
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
-// #include "collision_free_path_planner/utils/utils.hpp"
 #include "motion_utils/motion_utils.hpp"
 
 #include "visualization_msgs/msg/marker_array.hpp"
 
+namespace collision_free_path_planner
+{
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 
-namespace collision_free_path_planner
-{
 namespace
 {
 template <typename T>
@@ -177,14 +176,13 @@ MarkerArray getDebugConstrainMarkers(
   return marker_array;
 }
 
-MarkerArray getRectanglesMarkerArray(
+MarkerArray getFootprintsMarkerArray(
   const std::vector<TrajectoryPoint> & mpt_traj,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const std::string & ns, const double r,
-  const double g, const double b, const size_t sampling_num)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t sampling_num)
 {
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_STRIP, createMarkerScale(0.05, 0.0, 0.0),
-    createMarkerColor(r, g, b, 0.99));
+    "map", rclcpp::Clock().now(), "mpt_footprints", 0, Marker::LINE_STRIP,
+    createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(0.99, 0.99, 0.2, 0.99));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   MarkerArray marker_array;
@@ -254,8 +252,8 @@ MarkerArray getRectanglesNumMarkerArray(
 }
 
 MarkerArray getBoundsLineMarkerArray(
-  const std::vector<ReferencePoint> & ref_points, const double r, const double g, const double b,
-  const double vehicle_width, const size_t sampling_num)
+  const std::vector<ReferencePoint> & ref_points, const double vehicle_width,
+  const size_t sampling_num)
 {
   const auto current_time = rclcpp::Clock().now();
   MarkerArray marker_array;
@@ -265,13 +263,13 @@ MarkerArray getBoundsLineMarkerArray(
   // craete lower bound marker
   auto lb_marker = createDefaultMarker(
     "map", rclcpp::Clock().now(), "", 0, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
-    createMarkerColor(r + 0.5, g, b, 0.3));
+    createMarkerColor(0.99 + 0.5, 0.99, 0.2, 0.3));
   lb_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   // craete upper bound marker
   auto ub_marker = createDefaultMarker(
     "map", rclcpp::Clock().now(), "", 1, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
-    createMarkerColor(r, g + 0.5, b, 0.3));
+    createMarkerColor(0.99, 0.99 + 0.5, 0.2, 0.3));
   ub_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   for (size_t bound_idx = 0; bound_idx < ref_points.at(0).vehicle_bounds.size(); ++bound_idx) {
@@ -489,16 +487,13 @@ MarkerArray getDebugMarker(
 
   // mpt footprints
   appendMarkerArray(
-    getRectanglesMarkerArray(
-      optimized_points, vehicle_info, "mpt_footprints", 0.99, 0.99, 0.2,
-      debug_data.mpt_visualize_sampling_num),
+    getFootprintsMarkerArray(optimized_points, vehicle_info, debug_data.mpt_visualize_sampling_num),
     &marker_array);
 
   // bounds
   appendMarkerArray(
     getBoundsLineMarkerArray(
-      debug_data.ref_points, 0.99, 0.99, 0.2, vehicle_info.vehicle_width_m,
-      debug_data.mpt_visualize_sampling_num),
+      debug_data.ref_points, vehicle_info.vehicle_width_m, debug_data.mpt_visualize_sampling_num),
     &marker_array);
 
   // vehicle circle line

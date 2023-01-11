@@ -85,10 +85,8 @@ std::vector<double> spline(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys)
 {
-  SplineInterpolation interpolator;
-
   // calculate spline coefficients
-  interpolator.calcSplineCoefficients(base_keys, base_values);
+  SplineInterpolation interpolator(base_keys, base_values);
 
   // interpolate base_keys at query_keys
   return interpolator.getSplineInterpolatedValues(query_keys);

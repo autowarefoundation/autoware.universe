@@ -73,14 +73,14 @@ std::array<std::vector<double>, 3> slerp2dFromXY(
   const std::vector<double> & base_keys, const std::vector<double> & base_x_values,
   const std::vector<double> & base_y_values, const std::vector<double> & query_keys)
 {
-  SplineInterpolation interpolator_x, interpolator_y;
-  std::vector<double> yaw_vec;
-
   // calculate spline coefficients
-  interpolator_x.calcSplineCoefficients(base_keys, base_x_values);
-  interpolator_y.calcSplineCoefficients(base_keys, base_y_values);
+  SplineInterpolation interpolator_x(base_keys, base_x_values);
+  SplineInterpolation interpolator_y(base_keys, base_y_values);
   const auto diff_x = interpolator_x.getSplineInterpolatedDiffValues(query_keys);
   const auto diff_y = interpolator_y.getSplineInterpolatedDiffValues(query_keys);
+
+  // calculate yaw
+  std::vector<double> yaw_vec;
   for (size_t i = 0; i < diff_x.size(); i++) {
     double yaw = std::atan2(diff_y[i], diff_x[i]);
     yaw_vec.push_back(yaw);
@@ -152,7 +152,7 @@ double SplineInterpolationPoints2d::getSplineInterpolatedYaw(const size_t idx, c
 std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedYaws() const
 {
   std::vector<double> yaw_vec;
-  for (size_t i = 0; i < spline_x_; ++i) {
+  for (size_t i = 0; i < spline_x_.getSize(); ++i) {
     const double yaw = getSplineInterpolatedYaw(i, 0.0);
     yaw_vec.push_back(yaw);
   }
@@ -182,7 +182,7 @@ double SplineInterpolationPoints2d::getSplineInterpolatedCurvature(
 std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedCurvatures() const
 {
   std::vector<double> curvature_vec;
-  for (size_t i = 0; i < spline_x_; ++i) {
+  for (size_t i = 0; i < spline_x_.getSize(); ++i) {
     const double curvature = getSplineInterpolatedCurvature(i, 0.0);
     curvature_vec.push_back(curvature);
   }
@@ -207,6 +207,6 @@ void SplineInterpolationPoints2d::calcSplineCoefficientsInner(
   const auto & base_y_vec = base.at(2);
 
   // calculate spline coefficients
-  spline_x_.calcSplineCoefficients(base_s_vec_, base_x_vec);
-  spline_y_.calcSplineCoefficients(base_s_vec_, base_y_vec);
+  spline_x_ = SplineInterpolation(base_s_vec_, base_x_vec);
+  spline_y_ = SplineInterpolation(base_s_vec_, base_y_vec);
 }

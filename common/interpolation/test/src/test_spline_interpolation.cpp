@@ -294,15 +294,13 @@ TEST(spline_interpolation, splineYawFromPoints)
 
 TEST(spline_interpolation, SplineInterpolation)
 {
-  SplineInterpolation s;
-
   // curve: query_keys is random
   const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
   const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
   const std::vector<double> query_keys{0.0, 8.0, 18.0};
   const std::vector<double> ans{-0.075611, 0.997242, 1.573258};
 
-  s.calcSplineCoefficients(base_keys, base_values);
+  SplineInterpolation s(base_keys, base_values);
   const std::vector<double> query_values = s.getSplineInterpolatedValues(query_keys);
 
   for (size_t i = 0; i < query_values.size(); ++i) {
@@ -314,8 +312,6 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
 {
   using tier4_autoware_utils::createPoint;
 
-  SplineInterpolationPoints2d s;
-
   // curve
   std::vector<geometry_msgs::msg::Point> points;
   points.push_back(createPoint(-2.0, -10.0, 0.0));
@@ -324,7 +320,7 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
   points.push_back(createPoint(5.0, 10.0, 0.0));
   points.push_back(createPoint(10.0, 12.5, 0.0));
 
-  s.calcSplineCoefficients(points);
+  SplineInterpolationPoints2d s(points);
 
   {  // point
     // front
@@ -393,7 +389,7 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
   // size of base_keys is 1 (infeasible to interpolate)
   std::vector<geometry_msgs::msg::Point> single_points;
   single_points.push_back(createPoint(1.0, 0.0, 0.0));
-  EXPECT_THROW(s.calcSplineCoefficients(single_points), std::logic_error);
+  EXPECT_THROW(SplineInterpolationPoints2d(single_points), std::logic_error);
 }
 
 TEST(spline_interpolation, SplineInterpolationPoints2dPolymorphism)
@@ -413,11 +409,9 @@ TEST(spline_interpolation, SplineInterpolationPoints2dPolymorphism)
     trajectory_points.push_back(tp);
   }
 
-  SplineInterpolationPoints2d s_point;
-  s_point.calcSplineCoefficients(points);
+  SplineInterpolationPoints2d s_point(points);
   s_point.getSplineInterpolatedPoint(0, 0.);
 
-  SplineInterpolationPoints2d s_traj_point;
-  s_traj_point.calcSplineCoefficients(trajectory_points);
+  SplineInterpolationPoints2d s_traj_point(trajectory_points);
   s_traj_point.getSplineInterpolatedPoint(0, 0.);
 }

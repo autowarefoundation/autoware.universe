@@ -47,6 +47,7 @@ std::vector<double> splineYawFromPoints(const std::vector<T> & points);
 class SplineInterpolationPoints2d
 {
 public:
+  SplineInterpolationPoints2d() = default;
   template <typename T>
   explicit SplineInterpolationPoints2d(const std::vector<T> & points)
   {

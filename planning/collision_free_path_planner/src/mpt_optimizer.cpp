@@ -124,14 +124,14 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   return {ub_vec, lb_vec};
 }
 
-geometry_msgs::msg::Pose calcVehiclePose(
-  const ReferencePoint & ref_point, const KinematicState & deviation, const double offset)
+geometry_msgs::msg::Pose offsetPose(
+  const ReferencePoint & ref_point, const KinematicState & deviation, const double lon_offset)
 {
   geometry_msgs::msg::Pose pose;
   pose.position.x = ref_point.p.x - std::sin(ref_point.yaw) * deviation.lat -
-                    std::cos(ref_point.yaw + deviation.yaw) * offset;
+                    std::cos(ref_point.yaw + deviation.yaw) * lon_offset;
   pose.position.y = ref_point.p.y + std::cos(ref_point.yaw) * deviation.lat -
-                    std::sin(ref_point.yaw + deviation.yaw) * offset;
+                    std::sin(ref_point.yaw + deviation.yaw) * lon_offset;
 
   pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw + deviation.yaw);
 
@@ -724,14 +724,13 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
     -backward_distance - tmp_margin);
 
-  // calculate curvature
-  // must be after interpolation since curvatre's resampling is not
-  // length-based but index-based.
-  // NOTE: Calculating curvature and orientation requirs points
+  SplineInterpolationPoints2d ref_points_spline(ref_points);
+
+  // NOTE: Calculating orientation and curvature requirs points
   // around the target points to be smooth.
   //       Therefore, crop margin is required.
-  calcCurvature(ref_points);
-  calcOrientation(ref_points);
+  updateOrientation(ref_points, ref_points_spline);
+  updateCurvature(ref_points, ref_points_spline);
 
   // crop backward
   ref_points = trajectory_utils::cropPoints(
@@ -810,6 +809,30 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
                               << " [ms]\n";
   return ref_points;
+}
+
+void MPTOptimizer::updateOrientation(
+  std::vector<ReferencePoint> & ref_points,
+  const SplineInterpolationPoints2d & ref_points_spline) const
+{
+  assert(ref_points.size() == ref_points_spline.size());
+
+  const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    ref_points.at(i).yaw = yaw_vec.at(i);
+  }
+}
+
+void MPTOptimizer::updateCurvature(
+  std::vector<ReferencePoint> & ref_points,
+  const SplineInterpolationPoints2d & ref_points_spline) const
+{
+  assert(ref_points.size() == ref_points_spline.size());
+
+  const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    ref_points.at(i).k = curvature_vec.at(i);
+  }
 }
 
 void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) const
@@ -1588,7 +1611,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
     }
 
     TrajectoryPoint traj_point;
-    traj_point.pose = calcVehiclePose(ref_point, deviation, 0.0);
+    traj_point.pose = offsetPose(ref_point, deviation, 0.0);
 
     traj_points.push_back(traj_point);
 
@@ -1633,51 +1656,6 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
                               << " [ms]\n";
 
   return traj_points;
-}
-
-void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) const
-{
-  // NOTE: tmp: At least, two points are required.
-  if (ref_points.empty() || ref_points.size() == 1) {
-    return;
-  }
-
-  const auto yaw_angles = splineYawFromReferencePoints(ref_points);
-  for (size_t i = 0; i < ref_points.size(); ++i) {
-    if (ref_points.at(i).fix_kinematic_state) {
-      continue;
-    }
-
-    ref_points.at(i).yaw = yaw_angles.at(i);
-  }
-}
-
-// TODO(murooka) replace with spline-based curvature calculation
-void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> & ref_points) const
-{
-  const size_t num_points = static_cast<int>(ref_points.size());
-
-  // calculate curvature by circle fitting from three points
-  size_t max_smoothing_num = static_cast<size_t>(std::floor(0.5 * (num_points - 1)));
-  size_t L =
-    std::min(static_cast<size_t>(mpt_param_.num_curvature_sampling_points), max_smoothing_num);
-  auto curvatures = trajectory_utils::calcCurvature(
-    ref_points, static_cast<size_t>(mpt_param_.num_curvature_sampling_points));
-  for (size_t i = L; i < num_points - L; ++i) {
-    if (!ref_points.at(i).fix_kinematic_state) {
-      ref_points.at(i).k = curvatures.at(i);
-    }
-  }
-  // first and last curvature is copied from next value
-  for (size_t i = 0; i < std::min(L, num_points); ++i) {
-    if (!ref_points.at(i).fix_kinematic_state) {
-      ref_points.at(i).k = ref_points.at(std::min(L, num_points - 1)).k;
-    }
-    if (!ref_points.at(num_points - i - 1).fix_kinematic_state) {
-      ref_points.at(num_points - i - 1).k =
-        ref_points.at(std::max(static_cast<int>(num_points) - static_cast<int>(L) - 1, 0)).k;
-    }
-  }
 }
 
 void MPTOptimizer::calcArcLength(std::vector<ReferencePoint> & ref_points) const
@@ -1833,9 +1811,8 @@ void MPTOptimizer::calcVehicleBounds(std::vector<ReferencePoint> & ref_points) c
     return;
   }
 
-  SplineInterpolationPoints2d ref_points_spline_interpolation;
-  ref_points_spline_interpolation.calcSplineCoefficients(
-    trajectory_utils::convertToPoints(ref_points));
+  SplineInterpolationPoints2d ref_points_spline_interpolation(ref_points);
+  // trajectory_utils::convertToPoints(ref_points));
 
   for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
     const auto & ref_point = ref_points.at(p_idx);
@@ -1927,7 +1904,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::extractMPTFixedPoints(
   for (const auto & ref_point : ref_points) {
     if (ref_point.fix_kinematic_state) {
       TrajectoryPoint fixed_traj_point;
-      fixed_traj_point.pose = calcVehiclePose(ref_point, ref_point.fix_kinematic_state.get(), 0.0);
+      fixed_traj_point.pose = offsetPose(ref_point, ref_point.fix_kinematic_state.get(), 0.0);
       mpt_fixed_traj.push_back(fixed_traj_point);
     }
   }
