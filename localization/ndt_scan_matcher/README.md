@@ -172,12 +172,12 @@ The color of the trajectory indicates the error (meter) from the reference traje
 <img src="./media/trajectory_without_regularization.png" alt="drawing" width="300"/> <img src="./media/trajectory_with_regularization.png" alt="drawing" width="300"/>
 
 ## Dynamic map loading
+
 Autoware supports dynamic map loading feature for `ndt_scan_matcher`. Using this feature, NDT dynamically requests for the surrounding pointcloud map to `pointcloud_map_loader`, and then receive and preprocess the map in an online fashion.
 
 Using the feature, `ndt_scan_matcher` can theoretically handle any large size maps in terms of memory usage. (Note that it is still possible that there exists a limitation due to other factors, e.g. floating-point error)
 
 <img src="./media/differential_area_loading.gif" alt="drawing" width="400"/>
-
 
 ### Additional interfaces
 
