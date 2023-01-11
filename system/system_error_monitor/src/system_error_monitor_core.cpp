@@ -609,6 +609,10 @@ void AutowareErrorMonitor::updateTimeoutHazardStatus()
     emergency_state_switch_time_ = this->now();
   }
 
+  hazard_status_.diag_no_fault = std::vector<diagnostic_msgs::msg::DiagnosticStatus>();
+  hazard_status_.diag_safe_fault = std::vector<diagnostic_msgs::msg::DiagnosticStatus>();
+  hazard_status_.diag_latent_fault = std::vector<diagnostic_msgs::msg::DiagnosticStatus>();
+
   diagnostic_msgs::msg::DiagnosticStatus diag;
   diag.name = "system_error_monitor/input_data_timeout";
   diag.hardware_id = "system_error_monitor";
