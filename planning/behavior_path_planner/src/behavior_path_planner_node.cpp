@@ -626,7 +626,6 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("self_acceleration");
   }
 
-  mutex_pd_.unlock();
   return true;
 }
 
