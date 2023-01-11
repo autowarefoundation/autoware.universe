@@ -461,12 +461,12 @@ bool withinPolyhedron(
   }
   boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
 
-  for (size_t j = 0; j < candidate_points_ptr->size(); ++j) {
-    Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
+  for ( const auto & candidate_point : *candidate_points_ptr) {
+    Point2d point(candidate_point.x, candidate_point.y);
     if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
-        if (candidate_points_ptr->at(j).z < z_max && candidate_points_ptr->at(j).z > z_min) {
-          within_points_ptr->push_back(candidate_points_ptr->at(j));
+        if (candidate_point.z < z_max && candidate_point.z > z_min) {
+          within_points_ptr->push_back(candidate_point);
           find_within_points = true;
         }
       }

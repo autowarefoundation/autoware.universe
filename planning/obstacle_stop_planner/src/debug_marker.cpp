@@ -99,12 +99,8 @@ bool ObstacleStopPlannerDebugNode::pushPolyhedron(
 {
   std::vector<Eigen::Vector3d> eigen_polyhedron;
   for (const auto & point : polyhedron) {
-    Eigen::Vector3d eigen_point;
-    eigen_point << point.x, point.y, z_min;
-    eigen_polyhedron.push_back(eigen_point);
-    Eigen::Vector3d eigen_point1;
-    eigen_point1 << point.x, point.y, z_max;
-    eigen_polyhedron.push_back(eigen_point1);
+    eigen_polyhedron.emplace_back(point.x, point.y, z_min);
+    eigen_polyhedron.emplace_back(point.x, point.y, z_max);
   }
 
   return pushPolyhedron(eigen_polyhedron, type);
@@ -276,7 +272,7 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
     }
 
     for (size_t i = 0; i < vehicle_polyhedrons_.size(); ++i) {
-      for (size_t j = 0; j < vehicle_polyhedrons_.at(i).size() - 2; ++j) {
+      for (size_t j = 0; j + 2 < vehicle_polyhedrons_.at(i).size(); ++j) {
         const auto & p = vehicle_polyhedrons_.at(i).at(j);
         marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
         const auto & p1 = vehicle_polyhedrons_.at(i).at(j + 2);
@@ -308,7 +304,7 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
     }
 
     for (size_t i = 0; i < collision_polyhedrons_.size(); ++i) {
-      for (size_t j = 0; j < collision_polyhedrons_.at(i).size() - 2; ++j) {
+      for (size_t j = 0; j + 2 < collision_polyhedrons_.at(i).size(); ++j) {
         const auto & p = collision_polyhedrons_.at(i).at(j);
         marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
         const auto & p1 = collision_polyhedrons_.at(i).at(j + 2);
