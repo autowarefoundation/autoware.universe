@@ -275,7 +275,8 @@ private:
   MPTParam mpt_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
-  autoware::common::osqp::OSQPInterface osqp_solver_;
+  // autoware::common::osqp::OSQPInterface osqp_solver_;
+  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;

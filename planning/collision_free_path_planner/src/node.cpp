@@ -75,11 +75,11 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()),
   debug_data_ptr_(std::make_shared<DebugData>())
 {
-  // I/F publisher
+  // Interface publisher
   traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
   virtual_wall_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
 
-  // I/F subscriber
+  // Interface subscriber
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&CollisionFreePathPlanner::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(

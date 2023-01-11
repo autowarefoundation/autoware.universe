@@ -154,8 +154,8 @@ private:
   DrivingDirectionChecker driving_direction_checker_{};
 
   // argument variables
-  mutable std::shared_ptr<DebugData> debug_data_ptr_;
   vehicle_info_util::VehicleInfo vehicle_info_{};
+  mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
   // flags for some functions
   bool enable_pub_debug_marker_;

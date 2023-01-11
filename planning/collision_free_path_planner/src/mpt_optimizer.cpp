@@ -282,7 +282,8 @@ MPTOptimizer::MPTOptimizer(
     std::make_unique<KinematicsBicycleModel>(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
 
   // osqp solver
-  osqp_solver_.updateEpsAbs(osqp_epsilon_);
+  // osqp_solver_.updateEpsAbs(osqp_epsilon_);
+  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_);
 
   // publisher
   debug_mpt_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
@@ -1182,21 +1183,20 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
     osqp_solver_.updateL(lower_bound);
     osqp_solver_.updateU(upper_bound);
     */
+
+    osqp_solver_ptr_->updateCscP(P_csc);
+    osqp_solver_ptr_->updateQ(f);
+    osqp_solver_ptr_->updateCscA(A_csc);
+    osqp_solver_ptr_->updateL(lower_bound);
+    osqp_solver_ptr_->updateU(upper_bound);
+
   } else {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "no warm start");
 
-    osqp_solver_.updateCscP(P_csc);
-    osqp_solver_.updateQ(f);
-    osqp_solver_.updateCscA(A_csc);
-    osqp_solver_.updateL(lower_bound);
-    osqp_solver_.updateU(upper_bound);
-
-    /*
-    osqp_solver_ = autoware::common::osqp::OSQPInterface(
+    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
       // obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
-    */
   }
   prev_mat_n = H.rows();
   prev_mat_m = A.rows();
@@ -1207,7 +1207,8 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
 
   // solve
   stop_watch_.tic("solveOsqp");
-  const auto result = osqp_solver_.optimize();
+  // const auto result = osqp_solver_.optimize();
+  const auto result = osqp_solver_ptr_->optimize();
   debug_data_ptr_->msg_stream << "          "
                               << "solveOsqp"
                               << ":= " << stop_watch_.toc("solveOsqp") << " [ms]\n";
@@ -1215,7 +1216,8 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   // check solution status
   const int solution_status = std::get<3>(result);
   if (solution_status != 1) {
-    osqp_solver_.logUnsolvedStatus("[MPT]");
+    // osqp_solver_.logUnsolvedStatus("[MPT]");
+    osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
     return boost::none;
   }
 
