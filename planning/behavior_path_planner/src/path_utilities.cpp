@@ -98,8 +98,7 @@ PathWithLaneId resamplePathWithSpline(
   std::vector<double> s_out = s_in;
 
   const auto start_s = std::max(target_section.first, 0.0);
-  const auto end_s =
-    std::min(target_section.second, motion_utils::calcArcLength(transformed_path));
+  const auto end_s = std::min(target_section.second, motion_utils::calcArcLength(transformed_path));
   for (double s = start_s; s < end_s; s += interval) {
     if (!has_almost_same_value(s_out, s)) {
       s_out.push_back(s);
