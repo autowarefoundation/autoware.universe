@@ -437,6 +437,15 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     exit(EXIT_FAILURE);
   }
 
+  const auto lc_buffer =
+    this->get_parameter("lane_change.backward_length_buffer_for_end_of_lane").get_value<double>();
+  if (lc_buffer < p.lane_change_finish_judge_buffer + 1.0) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(),
+      "finish judge buffer should not be more than lane change buffer. Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+
   return p;
 }
 
