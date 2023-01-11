@@ -16,7 +16,6 @@
 
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
-#include "collision_free_path_planner/utils/cv_utils.hpp"
 // #include "collision_free_path_planner/utils/utils.hpp"
 #include "motion_utils/motion_utils.hpp"
 
@@ -178,27 +177,6 @@ MarkerArray getDebugConstrainMarkers(
   return marker_array;
 }
 
-MarkerArray getObjectsMarkerArray(
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const std::string & ns, const double r, const double g, const double b)
-{
-  MarkerArray msg;
-
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::CUBE, createMarkerScale(3.0, 1.0, 1.0),
-    createMarkerColor(r, g, b, 0.8));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-
-  for (size_t i = 0; i < objects.size(); ++i) {
-    const auto & object = objects.at(i);
-    marker.id = i;
-    marker.pose = object.kinematics.initial_pose_with_covariance.pose;
-    msg.markers.push_back(marker);
-  }
-
-  return msg;
-}
-
 MarkerArray getRectanglesMarkerArray(
   const std::vector<TrajectoryPoint> & mpt_traj,
   const vehicle_info_util::VehicleInfo & vehicle_info, const std::string & ns, const double r,
@@ -272,50 +250,6 @@ MarkerArray getRectanglesNumMarkerArray(
     marker.pose.position = top_right_pos;
     msg.markers.push_back(marker);
   }
-  return msg;
-}
-
-MarkerArray getBoundsCandidatesLineMarkerArray(
-  const std::vector<ReferencePoint> & ref_points,
-  const std::vector<std::vector<Bounds>> & bounds_candidates, const double r, const double g,
-  const double b, [[maybe_unused]] const double vehicle_width, const size_t sampling_num)
-{
-  const auto current_time = rclcpp::Clock().now();
-  MarkerArray msg;
-  const std::string ns = "bounds_candidates";
-
-  if (ref_points.empty()) return msg;
-
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
-    createMarkerColor(r + 0.5, g, b, 0.3));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-
-  for (size_t i = 0; i < ref_points.size(); i++) {
-    if (i % sampling_num != 0) {
-      continue;
-    }
-
-    const auto & bound_candidates = bounds_candidates.at(i);
-    for (size_t j = 0; j < bound_candidates.size(); ++j) {
-      geometry_msgs::msg::Pose pose;
-      pose.position = ref_points.at(i).p;
-      pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_points.at(i).yaw);
-
-      // lower bound
-      const double lb_y = bound_candidates.at(j).lower_bound;
-      const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
-      marker.points.push_back(lb);
-
-      // upper bound
-      const double ub_y = bound_candidates.at(j).upper_bound;
-      const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
-      marker.points.push_back(ub);
-
-      msg.markers.push_back(marker);
-    }
-  }
-
   return msg;
 }
 
@@ -545,11 +479,6 @@ MarkerArray getDebugMarker(
     appendMarkerArray(
       getPointsTextMarkerArray(debug_data.eb_traj, "eb_traj_text", 0.99, 0.99, 0.2), &marker_array);
 
-    // avoiding objects
-    appendMarkerArray(
-      getObjectsMarkerArray(debug_data.avoiding_objects, "avoiding_objects", 0.99, 0.99, 0.2),
-      &marker_array);
-
     // lateral error line
     appendMarkerArray(
       getLateralErrorsLineMarkerArray(
@@ -570,13 +499,6 @@ MarkerArray getDebugMarker(
     getBoundsLineMarkerArray(
       debug_data.ref_points, 0.99, 0.99, 0.2, vehicle_info.vehicle_width_m,
       debug_data.mpt_visualize_sampling_num),
-    &marker_array);
-
-  // bounds candidates
-  appendMarkerArray(
-    getBoundsCandidatesLineMarkerArray(
-      debug_data.ref_points, debug_data.sequential_bounds_candidates, 0.2, 0.99, 0.99,
-      vehicle_info.vehicle_width_m, debug_data.mpt_visualize_sampling_num),
     &marker_array);
 
   // vehicle circle line
@@ -602,19 +524,5 @@ MarkerArray getDebugMarker(
     &marker_array);
 
   return marker_array;
-}
-
-OccupancyGrid getDebugCostmap(const cv::Mat & clearance_map, const OccupancyGrid & occupancy_grid)
-{
-  if (clearance_map.empty()) return OccupancyGrid();
-
-  cv::Mat tmp;
-  clearance_map.copyTo(tmp);
-  cv::normalize(tmp, tmp, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-  OccupancyGrid clearance_map_in_og = occupancy_grid;
-  tmp.forEach<unsigned char>([&](const unsigned char & value, const int * position) -> void {
-    cv_utils::putOccupancyGridValue(clearance_map_in_og, position[0], position[1], value);
-  });
-  return clearance_map_in_og;
 }
 }  // namespace collision_free_path_planner

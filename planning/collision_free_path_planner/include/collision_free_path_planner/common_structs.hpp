@@ -16,8 +16,6 @@
 #define COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_
 
 #include "collision_free_path_planner/type_alias.hpp"
-#include "opencv2/core.hpp"
-#include "opencv2/opencv.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -32,6 +30,8 @@ namespace collision_free_path_planner
 struct PlannerData
 {
   Path path;
+  std::vector<geometry_msgs::msg::Point> right_bound;
+  std::vector<geometry_msgs::msg::Point> left_bound;
   geometry_msgs::msg::Pose ego_pose{};
   double ego_vel{};
   std::vector<PredictedObject> objects{};
@@ -44,17 +44,8 @@ struct Bounds;
 using VehicleBounds = std::vector<Bounds>;
 using SequentialBounds = std::vector<Bounds>;
 
-using BoundsCandidates = std::vector<Bounds>;
-using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
-
-struct CVMaps
-{
-  cv::Mat drivable_area;
-  cv::Mat clearance_map;
-  cv::Mat only_objects_clearance_map;
-  cv::Mat area_with_objects_map;
-  nav_msgs::msg::MapMetaData map_info;
-};
+// using BoundsCandidates = std::vector<Bounds>;
+// using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
 
 struct EBParam
 {
@@ -140,15 +131,13 @@ struct DebugData
   std::vector<double> vehicle_circle_radiuses;
   std::vector<double> vehicle_circle_longitudinal_offsets;
 
-  // costmap
-  std::vector<PredictedObject> avoiding_objects;
   // eb
   std::vector<ConstrainRectangle> constrain_rectangles;
   std::vector<TrajectoryPoint> eb_traj;
   // mpt
   std::vector<ReferencePoint> ref_points;
   std::vector<geometry_msgs::msg::Pose> mpt_ref_poses;
-  SequentialBoundsCandidates sequential_bounds_candidates;
+  SequentialBounds sequential_bounds;
   std::vector<double> lateral_errors;
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
 

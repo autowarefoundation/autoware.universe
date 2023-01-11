@@ -16,7 +16,6 @@
 
 #include "collision_free_path_planner/common_structs.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
-#include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
@@ -39,7 +38,5 @@ MarkerArray getDebugMarker(
 MarkerArray getDebugWallMarker(
   DebugData & debug_data, const vehicle_info_util::VehicleInfo & vehicle_info,
   const rclcpp::Time & now);
-
-OccupancyGrid getDebugCostmap(const cv::Mat & clearance_map, const OccupancyGrid & occupancy_grid);
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_

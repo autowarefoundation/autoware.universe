@@ -22,6 +22,7 @@
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -79,30 +80,10 @@ geometry_msgs::msg::Quaternion getQuaternionFromPoints(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
 
-template <typename T>
-geometry_msgs::msg::Point transformMapToImage(
-  const T & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info)
-{
-  geometry_msgs::msg::Point relative_p =
-    transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
-  double resolution = occupancy_grid_info.resolution;
-  double map_y_height = occupancy_grid_info.height;
-  double map_x_width = occupancy_grid_info.width;
-  double map_x_in_image_resolution = relative_p.x / resolution;
-  double map_y_in_image_resolution = relative_p.y / resolution;
-  geometry_msgs::msg::Point image_point;
-  image_point.x = map_y_height - map_y_in_image_resolution;
-  image_point.y = map_x_width - map_x_in_image_resolution;
-  return image_point;
-}
-
-boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
-  const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & occupancy_grid_info);
-
-bool transformMapToImage(
-  const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & occupancy_grid_info, geometry_msgs::msg::Point & image_point);
+bool isOutsideDrivableAreaFromRectangleFootprint(
+  const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound,
+  const vehicle_info_util::VehicleInfo & vehicle_info);
 }  // namespace geometry_utils
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__GEOMETRY_UTILS_HPP_

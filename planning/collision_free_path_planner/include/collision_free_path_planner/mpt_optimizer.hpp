@@ -157,6 +157,8 @@ struct ReferencePoint
     pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
     return pose;
   }
+
+  geometry_msgs::msg::Point getPosition() const { return p; }
 };
 
 struct MPTTrajs
@@ -176,8 +178,7 @@ public:
     const std::shared_ptr<DebugData> debug_data_ptr);
 
   boost::optional<MPTTrajs> getModelPredictiveTrajectory(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-    const CVMaps & maps);
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
@@ -297,8 +298,7 @@ private:
   void initializeMPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
 
   std::vector<ReferencePoint> getReferencePoints(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-    const CVMaps & maps) const;
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const;
 
   // void calcPlanningFromEgo(
   //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
@@ -311,11 +311,10 @@ private:
 
   // functions to update reference points
   void calcBounds(
-    std::vector<ReferencePoint> & ref_points, const bool enable_avoidance,
-    const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps) const;
-  void calcVehicleBounds(
-    std::vector<ReferencePoint> & ref_points, const CVMaps & maps,
-    const bool enable_avoidance) const;
+    std::vector<ReferencePoint> & ref_points,
+    const std::vector<geometry_msgs::msg::Point> & left_bound,
+    const std::vector<geometry_msgs::msg::Point> & right_bound) const;
+  void calcVehicleBounds(std::vector<ReferencePoint> & ref_points) const;
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
   void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
   void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
@@ -337,7 +336,7 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   boost::optional<Eigen::VectorXd> executeOptimization(
-    const bool enable_avoidance, const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
+    const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
     const std::vector<ReferencePoint> & ref_points);
 
   std::vector<TrajectoryPoint> getMPTPoints(
@@ -345,26 +344,12 @@ private:
     std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
     const MPTMatrix & mpt_matrix);
 
-  BoundsCandidates getBoundsCandidates(
-    const bool enable_avoidance, const geometry_msgs::msg::Pose & avoiding_point,
-    const CVMaps & maps) const;
-
-  CollisionType getCollisionType(
-    const CVMaps & maps, const bool enable_avoidance,
-    const geometry_msgs::msg::Pose & avoiding_point, const double traversed_dist,
-    const double bound_angle) const;
-
-  boost::optional<double> getClearance(
-    const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
-    const nav_msgs::msg::MapMetaData & map_info) const;
-
   ObjectiveMatrix getObjectiveMatrix(
     const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
     [[maybe_unused]] const std::vector<ReferencePoint> & ref_points) const;
 
   ConstraintMatrix getConstraintMatrix(
-    const bool enable_avoidance, const MPTMatrix & mpt_mat,
-    const std::vector<ReferencePoint> & ref_points) const;
+    const MPTMatrix & mpt_mat, const std::vector<ReferencePoint> & ref_points) const;
 
   // functions for debug publish
   void publishDebugTrajectories(

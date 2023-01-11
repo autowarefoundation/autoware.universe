@@ -22,6 +22,7 @@
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
+#include "boost/assign/list_of.hpp"
 #include "boost/optional.hpp"
 
 #include <algorithm>
@@ -123,44 +124,6 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   return {ub_vec, lb_vec};
 }
 
-Bounds findNearestBounds(
-  const geometry_msgs::msg::Pose & bounds_pose, const BoundsCandidates & front_bounds_candidates,
-  const geometry_msgs::msg::Point & target_pos)
-{
-  double min_dist = std::numeric_limits<double>::max();
-  size_t min_dist_index = 0;
-  if (front_bounds_candidates.size() != 1) {
-    for (size_t candidate_idx = 0; candidate_idx < front_bounds_candidates.size();
-         ++candidate_idx) {
-      const auto & front_bounds_candidate = front_bounds_candidates.at(candidate_idx);
-
-      const double bound_center =
-        (front_bounds_candidate.upper_bound + front_bounds_candidate.lower_bound) / 2.0;
-      const auto center_pos =
-        tier4_autoware_utils::calcOffsetPose(bounds_pose, 0.0, bound_center, 0.0);
-      const double dist = tier4_autoware_utils::calcDistance2d(center_pos, target_pos);
-
-      if (dist < min_dist) {
-        min_dist_index = candidate_idx;
-        min_dist = dist;
-      }
-    }
-  }
-  return front_bounds_candidates.at(min_dist_index);
-}
-
-double calcOverlappedBoundsSignedLength(
-  const Bounds & prev_front_continuous_bounds, const Bounds & front_bounds_candidate)
-{
-  const double min_ub =
-    std::min(front_bounds_candidate.upper_bound, prev_front_continuous_bounds.upper_bound);
-  const double max_lb =
-    std::max(front_bounds_candidate.lower_bound, prev_front_continuous_bounds.lower_bound);
-
-  const double overlapped_signed_length = min_ub - max_lb;
-  return overlapped_signed_length;
-}
-
 geometry_msgs::msg::Pose calcVehiclePose(
   const ReferencePoint & ref_point, const KinematicState & deviation, const double offset)
 {
@@ -258,6 +221,47 @@ std::vector<T> createVector(const T & value, const std::vector<T> & vector)
     trajectory_utils::resampleTrajectoryPoints(traj_points, interval);
   return trajectory_utils::convertToReferencePoints(resampled_traj_points);
 }
+
+boost::optional<Eigen::Vector2d> intersection(
+  const Eigen::Vector2d & start_point1, const Eigen::Vector2d & end_point1,
+  const Eigen::Vector2d & start_point2, const Eigen::Vector2d & end_point2)
+{
+  using Point = boost::geometry::model::d2::point_xy<double>;
+  using Line = boost::geometry::model::linestring<Point>;
+
+  const Line line1 =
+    boost::assign::list_of<Point>(start_point1(0), start_point1(1))(end_point1(0), end_point1(1));
+  const Line line2 =
+    boost::assign::list_of<Point>(start_point2(0), start_point2(1))(end_point2(0), end_point2(1));
+
+  std::vector<Point> output;
+  boost::geometry::intersection(line1, line2, output);
+  if (output.empty()) {
+    return {};
+  }
+
+  const Eigen::Vector2d output_point{output.front().x(), output.front().y()};
+  return output_point;
+}
+
+double calcLateralDistToBound(
+  const Eigen::Vector2d & current_point, const Eigen::Vector2d & edge_point,
+  const std::vector<geometry_msgs::msg::Point> & bound, const bool is_right_bound = false)
+{
+  for (size_t i = 0; i < bound.size() - 1; ++i) {
+    const Eigen::Vector2d current_bound_point = {bound.at(i).x, bound.at(i).y};
+    const Eigen::Vector2d next_bound_point = {bound.at(i + 1).x, bound.at(i + 1).y};
+
+    const auto intersects_point =
+      intersection(current_point, edge_point, current_bound_point, next_bound_point);
+    if (intersects_point) {
+      const double dist = (*intersects_point - current_point).norm();
+      return is_right_bound ? -dist : dist;
+    }
+  }
+
+  return is_right_bound ? -5.0 : 5.0;
+}
 }  // namespace
 
 MPTOptimizer::MPTOptimizer(
@@ -278,7 +282,7 @@ MPTOptimizer::MPTOptimizer(
     std::make_unique<KinematicsBicycleModel>(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
 
   // osqp solver
-  osqp_solver_ = autoware::common::osqp::OSQPInterface(osqp_epsilon_);
+  osqp_solver_.updateEpsAbs(osqp_epsilon_);
 
   // publisher
   debug_mpt_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
@@ -613,8 +617,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 }
 
 boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
-  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-  const CVMaps & maps)
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points)
 {
   stop_watch_.tic(__func__);
 
@@ -632,8 +635,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   }
 
   // calculate reference points
-  std::vector<ReferencePoint> full_ref_points =
-    getReferencePoints(planner_data, smoothed_points, maps);
+  std::vector<ReferencePoint> full_ref_points = getReferencePoints(planner_data, smoothed_points);
   if (full_ref_points.empty()) {
     logInfo("return boost::none since ref_points is empty");
     return boost::none;
@@ -673,7 +675,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const auto val_matrix = generateValueMatrix(non_fixed_ref_points, path_points);
 
   const auto optimized_control_variables =
-    executeOptimization(p.enable_avoidance, mpt_matrix, val_matrix, non_fixed_ref_points);
+    executeOptimization(mpt_matrix, val_matrix, non_fixed_ref_points);
   if (!optimized_control_variables) {
     logInfo("return boost::none since could not solve qp");
     return boost::none;
@@ -699,8 +701,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
 }
 
 std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
-  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-  const CVMaps & maps) const
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const
 {
   stop_watch_.tic(__func__);
 
@@ -740,8 +741,8 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   calcFixedPoints(ref_points);
 
   // crop with margin
-  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps);
-  calcVehicleBounds(ref_points, maps, p.enable_avoidance);
+  calcBounds(ref_points, p.left_bound, p.right_bound);
+  calcVehicleBounds(ref_points);
 
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation.
@@ -787,8 +788,8 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   }
 
   // set bounds information
-  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps);
-  calcVehicleBounds(ref_points, maps, p.enable_avoidance);
+  calcBounds(ref_points, p.left_bound, p.right_bound);
+  calcVehicleBounds(ref_points);
 
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation.
@@ -1108,7 +1109,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
 }
 
 boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
-  const bool enable_avoidance, const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
+  const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
   const std::vector<ReferencePoint> & ref_points)
 {
   if (ref_points.empty()) {
@@ -1121,7 +1122,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
 
   // get matrix
   ObjectiveMatrix obj_m = getObjectiveMatrix(mpt_mat, val_mat, ref_points);
-  ConstraintMatrix const_m = getConstraintMatrix(enable_avoidance, mpt_mat, ref_points);
+  ConstraintMatrix const_m = getConstraintMatrix(mpt_mat, ref_points);
 
   // manual warm start
   Eigen::VectorXd u0 = Eigen::VectorXd::Zero(obj_m.gradient.size());
@@ -1174,18 +1175,28 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   if (mpt_param_.enable_warm_start && prev_mat_n == H.rows() && prev_mat_m == A.rows()) {
     RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "warm start");
 
+    /*
     osqp_solver_.updateCscP(P_csc);
     osqp_solver_.updateQ(f);
     osqp_solver_.updateCscA(A_csc);
     osqp_solver_.updateL(lower_bound);
     osqp_solver_.updateU(upper_bound);
+    */
   } else {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "no warm start");
 
+    osqp_solver_.updateCscP(P_csc);
+    osqp_solver_.updateQ(f);
+    osqp_solver_.updateCscA(A_csc);
+    osqp_solver_.updateL(lower_bound);
+    osqp_solver_.updateU(upper_bound);
+
+    /*
     osqp_solver_ = autoware::common::osqp::OSQPInterface(
       // obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
+    */
   }
   prev_mat_n = H.rows();
   prev_mat_m = A.rows();
@@ -1328,8 +1339,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 // x := [u0, ..., uN-1 | z00, ..., z0N-1 | z10, ..., z1N-1 | z20, ..., z2N-1]
 //   \in \mathbb{R}^{N * (N_vehicle_circle + 1)}
 MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
-  [[maybe_unused]] const bool enable_avoidance, const MPTMatrix & mpt_mat,
-  const std::vector<ReferencePoint> & ref_points) const
+  const MPTMatrix & mpt_mat, const std::vector<ReferencePoint> & ref_points) const
 {
   stop_watch_.tic(__func__);
 
@@ -1747,108 +1757,71 @@ void MPTOptimizer::addSteerWeightR(
 }
 
 void MPTOptimizer::calcBounds(
-  std::vector<ReferencePoint> & ref_points, const bool enable_avoidance,
-  const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps) const
+  std::vector<ReferencePoint> & ref_points,
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
   stop_watch_.tic(__func__);
 
+  if (left_bound.empty() || right_bound.empty()) {
+    std::cerr << "[ObstacleAvoidancePlanner]: Boundary is empty when calculating bounds"
+              << std::endl;
+    return;
+  }
+
+  /*
+  const double min_soft_road_clearance = vehicle_param_.width / 2.0 +
+                                         mpt_param_.soft_clearance_from_road +
+                                         mpt_param_.extra_desired_clearance_from_road;
+  */
+  const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0;
+
   // search bounds candidate for each ref points
-  SequentialBoundsCandidates sequential_bounds_candidates;
-  for (const auto & ref_point : ref_points) {
-    const auto bounds_candidates = getBoundsCandidates(enable_avoidance, ref_point.getPose(), maps);
-    sequential_bounds_candidates.push_back(bounds_candidates);
+  debug_data_ptr_->sequential_bounds.clear();
+  for (size_t i = 0; i < ref_points.size() - 1; ++i) {
+    const auto curr_ref_position = ref_points.at(i).getPosition();
+    const auto next_ref_position = ref_points.at(i + 1).getPosition();
+    const Eigen::Vector2d current_ref_point = {curr_ref_position.x, curr_ref_position.y};
+    const Eigen::Vector2d next_ref_point = {next_ref_position.x, next_ref_position.y};
+    const Eigen::Vector2d current_to_next_vec = next_ref_point - current_ref_point;
+    const Eigen::Vector2d left_vertical_vec = {-current_to_next_vec(1), current_to_next_vec(0)};
+    const Eigen::Vector2d right_vertical_vec = {current_to_next_vec(1), -current_to_next_vec(0)};
+
+    const Eigen::Vector2d left_point = current_ref_point + left_vertical_vec.normalized() * 5.0;
+    const Eigen::Vector2d right_point = current_ref_point + right_vertical_vec.normalized() * 5.0;
+    const double lat_dist_to_left_bound = std::min(
+      calcLateralDistToBound(current_ref_point, left_point, left_bound) - min_soft_road_clearance,
+      5.0);
+    const double lat_dist_to_right_bound = std::max(
+      calcLateralDistToBound(current_ref_point, right_point, right_bound, true) +
+        min_soft_road_clearance,
+      -5.0);
+
+    ref_points.at(i).bounds = Bounds{
+      lat_dist_to_right_bound, lat_dist_to_left_bound, CollisionType::NO_COLLISION,
+      CollisionType::NO_COLLISION};
+    debug_data_ptr_->sequential_bounds.push_back(ref_points.at(i).bounds);
   }
-  debug_data_ptr_->sequential_bounds_candidates = sequential_bounds_candidates;
 
-  // search continuous and widest bounds only for front point
-  for (size_t i = 0; i < sequential_bounds_candidates.size(); ++i) {
-    // NOTE: back() is the front avoiding circle
-    const auto & bounds_candidates = sequential_bounds_candidates.at(i);
-
-    // extract only continuous bounds;
-    if (i == 0) {  // TODO(murooka) use previous bounds, not widest bounds
-      const auto target_pos = [&]() {
-        if (prev_ref_points_ptr_ && !prev_ref_points_ptr_->empty()) {
-          return prev_ref_points_ptr_->front().p;
-        }
-        return ego_pose.position;
-      }();
-
-      geometry_msgs::msg::Pose ref_pose;
-      ref_pose.position = ref_points.at(i).p;
-      ref_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_points.at(i).yaw);
-
-      const auto & nearest_bounds = findNearestBounds(ref_pose, bounds_candidates, target_pos);
-      ref_points.at(i).bounds = nearest_bounds;
-    } else {
-      const auto & prev_ref_point = ref_points.at(i - 1);
-      const auto & prev_continuous_bounds = prev_ref_point.bounds;
-
-      BoundsCandidates filtered_bounds_candidates;
-      for (const auto & bounds_candidate : bounds_candidates) {
-        // Step 1. Bounds is continuous to the previous one,
-        //         and the overlapped signed length is longer than vehicle width
-        //         overlapped_signed_length already considers vehicle width.
-        const double overlapped_signed_length =
-          calcOverlappedBoundsSignedLength(prev_continuous_bounds, bounds_candidate);
-        if (overlapped_signed_length < 0) {
-          RCLCPP_INFO_EXPRESSION(
-            rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
-            "non-overlapped length bounds is ignored.");
-          RCLCPP_INFO_EXPRESSION(
-            rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
-            "In detail, prev: lower=%f, upper=%f, candidate: lower=%f, upper=%f",
-            prev_continuous_bounds.lower_bound, prev_continuous_bounds.upper_bound,
-            bounds_candidate.lower_bound, bounds_candidate.upper_bound);
-          continue;
-        }
-
-        // Step 2. Bounds is longer than vehicle width.
-        //         bounds_length already considers vehicle width.
-        const double bounds_length = bounds_candidate.upper_bound - bounds_candidate.lower_bound;
-        if (bounds_length < 0) {
-          RCLCPP_INFO_EXPRESSION(
-            rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
-            "negative length bounds is ignored.");
-          continue;
-        }
-
-        filtered_bounds_candidates.push_back(bounds_candidate);
-      }
-
-      // Step 3. Nearest bounds to trajectory
-      if (!filtered_bounds_candidates.empty()) {
-        const auto nearest_bounds = std::min_element(
-          filtered_bounds_candidates.begin(), filtered_bounds_candidates.end(),
-          [](const auto & a, const auto & b) {
-            return std::min(std::abs(a.lower_bound), std::abs(a.upper_bound)) <
-                   std::min(std::abs(b.lower_bound), std::abs(b.upper_bound));
-          });
-        if (
-          filtered_bounds_candidates.begin() <= nearest_bounds &&
-          nearest_bounds < filtered_bounds_candidates.end()) {
-          ref_points.at(i).bounds = *nearest_bounds;
-          continue;
-        }
-      }
-
-      // invalid bounds
-      RCLCPP_WARN_EXPRESSION(
-        rclcpp::get_logger("getBounds: not front"), enable_debug_info_, "invalid bounds");
-      const auto invalid_bounds =
-        Bounds{-5.0, 5.0, CollisionType::OUT_OF_ROAD, CollisionType::OUT_OF_ROAD};
-      ref_points.at(i).bounds = invalid_bounds;
-    }
-  }
+  // Terminal Boundary
+  const double lat_dist_to_left_bound =
+    -motion_utils::calcLateralOffset(left_bound, ref_points.back().getPosition()) -
+    min_soft_road_clearance;
+  const double lat_dist_to_right_bound =
+    -motion_utils::calcLateralOffset(right_bound, ref_points.back().getPosition()) +
+    min_soft_road_clearance;
+  ref_points.back().bounds = Bounds{
+    lat_dist_to_right_bound, lat_dist_to_left_bound, CollisionType::NO_COLLISION,
+    CollisionType::NO_COLLISION};
+  debug_data_ptr_->sequential_bounds.push_back(ref_points.back().bounds);
 
   debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
                               << " [ms]\n";
+
   return;
 }
 
-void MPTOptimizer::calcVehicleBounds(
-  std::vector<ReferencePoint> & ref_points, [[maybe_unused]] const CVMaps & maps,
-  [[maybe_unused]] const bool enable_avoidance) const
+void MPTOptimizer::calcVehicleBounds(std::vector<ReferencePoint> & ref_points) const
 {
   stop_watch_.tic(__func__);
 
@@ -1928,172 +1901,6 @@ void MPTOptimizer::calcVehicleBounds(
 
   debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
                               << " [ms]\n";
-}
-
-BoundsCandidates MPTOptimizer::getBoundsCandidates(
-  const bool enable_avoidance, const geometry_msgs::msg::Pose & avoiding_point,
-  const CVMaps & maps) const
-{
-  BoundsCandidates bounds_candidate;
-
-  constexpr double max_search_lane_width = 5.0;
-  const auto search_widths = mpt_param_.bounds_search_widths;
-
-  // search right to left
-  const double bound_angle =
-    tier4_autoware_utils::normalizeRadian(tf2::getYaw(avoiding_point.orientation) + M_PI_2);
-
-  double traversed_dist = -max_search_lane_width;
-  double current_right_bound = -max_search_lane_width;
-
-  // calculate the initial position is empty or not
-  // 0.drivable, 1.out of map, 2.out of road, 3. object
-  CollisionType previous_collision_type =
-    getCollisionType(maps, enable_avoidance, avoiding_point, traversed_dist, bound_angle);
-
-  const auto has_collision = [&](const CollisionType & collision_type) -> bool {
-    return collision_type == CollisionType::OUT_OF_ROAD || collision_type == CollisionType::OBJECT;
-  };
-  CollisionType latest_right_bound_collision_type = previous_collision_type;
-
-  while (traversed_dist < max_search_lane_width) {
-    for (size_t search_idx = 0; search_idx < search_widths.size(); ++search_idx) {
-      const double ds = search_widths.at(search_idx);
-      while (true) {
-        const CollisionType current_collision_type =
-          getCollisionType(maps, enable_avoidance, avoiding_point, traversed_dist, bound_angle);
-
-        if (has_collision(current_collision_type)) {  // currently collision
-          if (!has_collision(previous_collision_type)) {
-            // if target_position becomes collision from no collision or out_of_sight
-            if (search_idx == search_widths.size() - 1) {
-              const double left_bound = traversed_dist - ds / 2.0;
-              bounds_candidate.push_back(Bounds{
-                current_right_bound, left_bound, latest_right_bound_collision_type,
-                current_collision_type});
-              previous_collision_type = current_collision_type;
-            }
-            break;
-          }
-        } else if (current_collision_type == CollisionType::OUT_OF_SIGHT) {  // currently
-                                                                             // out_of_sight
-          if (previous_collision_type == CollisionType::NO_COLLISION) {
-            // if target_position becomes out_of_sight from no collision
-            if (search_idx == search_widths.size() - 1) {
-              const double left_bound = max_search_lane_width;
-              bounds_candidate.push_back(Bounds{
-                current_right_bound, left_bound, latest_right_bound_collision_type,
-                current_collision_type});
-              previous_collision_type = current_collision_type;
-            }
-            break;
-          }
-        } else {  // currently no collision
-          if (has_collision(previous_collision_type)) {
-            // if target_position becomes no collision from collision
-            if (search_idx == search_widths.size() - 1) {
-              current_right_bound = traversed_dist - ds / 2.0;
-              latest_right_bound_collision_type = previous_collision_type;
-              previous_collision_type = current_collision_type;
-            }
-            break;
-          }
-        }
-
-        // if target_position is longer than max_search_lane_width
-        if (traversed_dist >= max_search_lane_width) {
-          if (!has_collision(previous_collision_type)) {
-            if (search_idx == search_widths.size() - 1) {
-              const double left_bound = traversed_dist - ds / 2.0;
-              bounds_candidate.push_back(Bounds{
-                current_right_bound, left_bound, latest_right_bound_collision_type,
-                CollisionType::OUT_OF_ROAD});
-            }
-          }
-          break;
-        }
-
-        // go forward with ds
-        traversed_dist += ds;
-        previous_collision_type = current_collision_type;
-      }
-
-      if (search_idx != search_widths.size() - 1) {
-        // go back with ds since target_position became empty or road/object
-        // NOTE: if ds is the last of search_widths, don't have to go back
-        traversed_dist -= ds;
-      }
-    }
-  }
-
-  // if empty
-  // TODO(murooka) sometimes this condition realizes
-  if (bounds_candidate.empty()) {
-    RCLCPP_WARN_EXPRESSION(
-      rclcpp::get_logger("getBoundsCandidate"), enable_debug_info_, "empty bounds candidate");
-    // NOTE: set invalid bounds so that MPT won't be solved
-    const auto invalid_bounds =
-      Bounds{-5.0, 5.0, CollisionType::OUT_OF_ROAD, CollisionType::OUT_OF_ROAD};
-    bounds_candidate.push_back(invalid_bounds);
-  }
-
-  return bounds_candidate;
-}
-
-// 0.NO_COLLISION, 1.OUT_OF_SIGHT, 2.OUT_OF_ROAD, 3.OBJECT
-CollisionType MPTOptimizer::getCollisionType(
-  const CVMaps & maps, const bool enable_avoidance, const geometry_msgs::msg::Pose & avoiding_point,
-  const double traversed_dist, const double bound_angle) const
-{
-  // calculate clearance
-  const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0 +
-                                         mpt_param_.soft_clearance_from_road +
-                                         mpt_param_.extra_desired_clearance_from_road;
-  const double min_obj_clearance = vehicle_info_.vehicle_width_m / 2.0 +
-                                   mpt_param_.clearance_from_object +
-                                   mpt_param_.soft_clearance_from_road;
-
-  // calculate target position
-  const geometry_msgs::msg::Point target_pos = tier4_autoware_utils::createPoint(
-    avoiding_point.position.x + traversed_dist * std::cos(bound_angle),
-    avoiding_point.position.y + traversed_dist * std::sin(bound_angle), 0.0);
-
-  const auto opt_road_clearance = getClearance(maps.clearance_map, target_pos, maps.map_info);
-  const auto opt_obj_clearance =
-    getClearance(maps.only_objects_clearance_map, target_pos, maps.map_info);
-
-  // object has more priority than road, so its condition exists first
-  if (enable_avoidance && opt_obj_clearance) {
-    const bool is_obj = opt_obj_clearance.get() < min_obj_clearance;
-    if (is_obj) {
-      return CollisionType::OBJECT;
-    }
-  }
-
-  if (opt_road_clearance) {
-    const bool out_of_road = opt_road_clearance.get() < min_soft_road_clearance;
-    if (out_of_road) {
-      return CollisionType::OUT_OF_ROAD;
-    } else {
-      return CollisionType::NO_COLLISION;
-    }
-  }
-
-  return CollisionType::OUT_OF_SIGHT;
-}
-
-boost::optional<double> MPTOptimizer::getClearance(
-  const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & map_info) const
-{
-  const auto image_point = geometry_utils::transformMapToOptionalImage(map_point, map_info);
-  if (!image_point) {
-    return boost::none;
-  }
-  const float clearance = clearance_map.ptr<float>(static_cast<int>(
-                            image_point.get().y))[static_cast<int>(image_point.get().x)] *
-                          map_info.resolution;
-  return clearance;
 }
 
 // functions for debug publish

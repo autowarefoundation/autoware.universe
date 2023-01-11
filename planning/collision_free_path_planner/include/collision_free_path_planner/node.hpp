@@ -15,13 +15,11 @@
 #define COLLISION_FREE_PATH_PLANNER__NODE_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/costmap_generator.hpp"
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/replan_checker.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -170,7 +168,6 @@ private:
   bool enable_reset_prev_optimization_;
 
   // core algorithm
-  std::shared_ptr<CostmapGenerator> costmap_generator_ptr_;
   std::shared_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
   std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_;
   std::shared_ptr<ReplanChecker> replan_checker_ptr_;
@@ -192,11 +189,11 @@ private:
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_ptr_;
 
-  // I/F publisher
+  // Interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_pub_;
 
-  // IF subscriber
+  // Interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
@@ -204,7 +201,7 @@ private:
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_markers_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr debug_calculation_time_pub_;
+  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_pub_;
 
   // parameter callback
   rcl_interfaces::msg::SetParametersResult onParam(
@@ -219,25 +216,22 @@ private:
   void resetPrevOptimization();
 
   // main functions
-  bool isDataReady();
-  PlannerData createPlannerData(const Path & path);
-  std::vector<TrajectoryPoint> generateOptimizedTrajectory(
-    const PlannerData & planner_data, const CVMaps & cv_maps);
+  bool isDataReady(const Path & path);
+  PlannerData createPlannerData(const Path & path) const;
+  std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<PathPoint> & path_points,
     const std::vector<TrajectoryPoint> & optimized_points);
   void publishDebugDataInMain(const Path & path) const;
 
   // functions in generateOptimizedTrajectory
-  std::vector<TrajectoryPoint> optimizeTrajectory(
-    const PlannerData & planner_data, const CVMaps & cv_maps);
+  std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
     const std::vector<PathPoint> & path_points) const;
   void applyPathVelocity(
     std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const;
   void insertZeroVelocityOutsideDrivableArea(
-    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
-    const CVMaps & cv_maps);
+    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
   void publishDebugMarkerInOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 

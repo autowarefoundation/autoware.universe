@@ -5,14 +5,12 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
 
 ament_auto_add_library(collision_free_path_planner SHARED
   # node
   src/node.cpp
   # core algorithms
   src/replan_checker.cpp
-  src/costmap_generator.cpp
   src/eb_path_optimizer.cpp
   src/mpt_optimizer.cpp
   # debug marker
@@ -23,17 +21,11 @@ ament_auto_add_library(collision_free_path_planner SHARED
   # utils
   src/utils/trajectory_utils.cpp
   src/utils/geometry_utils.cpp
-  src/utils/cv_utils.cpp
 )
 
 target_include_directories(collision_free_path_planner
   SYSTEM PUBLIC
-    ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
-)
-
-target_link_libraries(collision_free_path_planner
-  ${OpenCV_LIBRARIES}
 )
 
 # register node

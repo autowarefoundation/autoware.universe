@@ -11,9 +11,6 @@
         # flag to publish
         # NOTE: Most of them are disabled to reduce the computation cost.
         enable_debug_marker_pub: true           # publish debug marker
-        enable_clearance_map_pub: false         # publish clearance map as nav_msgs::OccupancyGrid
-        enable_object_clearance_map_pub: false  # publish object clearance map as nav_msgs::OccupancyGrid
-        enable_area_with_objects_pub: false     # publish occupancy map of objects as nav_msgs::OccupancyGrid
 
         # flag to show
         enable_debug_info: false

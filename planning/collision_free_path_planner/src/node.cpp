@@ -15,7 +15,7 @@
 #include "collision_free_path_planner/node.hpp"
 
 #include "collision_free_path_planner/debug_marker.hpp"
-#include "collision_free_path_planner/utils/cv_utils.hpp"
+#include "collision_free_path_planner/utils/geometry_utils.hpp"
 #include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "rclcpp/time.hpp"
@@ -120,7 +120,6 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
 
   // create core algorithm pointers with parameter declaration
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
-  costmap_generator_ptr_ = std::make_shared<CostmapGenerator>(this, debug_data_ptr_);
   eb_path_optimizer_ptr_ = std::make_shared<EBPathOptimizer>(
     this, enable_debug_info_, ego_nearest_param_, traj_param_, debug_data_ptr_);
   mpt_optimizer_ptr_ = std::make_shared<MPTOptimizer>(
@@ -165,7 +164,6 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
 
   // core algorithms parameters
   replan_checker_ptr_->onParam(parameters);
-  costmap_generator_ptr_->onParam(parameters);
   eb_path_optimizer_ptr_->onParam(parameters);
   mpt_optimizer_ptr_->onParam(parameters);
 
@@ -182,7 +180,7 @@ void CollisionFreePathPlanner::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
 
-  // NOTE: no need to update replan_checker_ptr_ and costmap_generator_ptr_
+  // NOTE: no need to update replan_checker_ptr_
   eb_path_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
 
@@ -200,9 +198,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   stop_watch_.tic(__func__);
 
   // check if data is ready and valid
-  if (!isDataReady()) {
-    return;
-  } else if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
+  if (!isDataReady(*path_ptr)) {
     return;
   }
 
@@ -223,11 +219,8 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   // 1. create planner data
   const auto planner_data = createPlannerData(*path_ptr);
 
-  // 2. create clearance maps
-  const CVMaps cv_maps = costmap_generator_ptr_->getMaps(planner_data, traj_param_);
-
   // 3. generate optimized trajectory
-  const auto optimized_traj_points = generateOptimizedTrajectory(planner_data, cv_maps);
+  const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
 
   // 4. extend trajectory to connect the optimized trajectory and the following path smoothly
   auto extended_traj_points = extendTrajectory(planner_data.path.points, optimized_traj_points);
@@ -252,29 +245,42 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   traj_pub_->publish(output_traj_msg);
 }
 
-bool CollisionFreePathPlanner::isDataReady()
+// TODO(murooka) make isDataReady const by adding clock arguments.
+bool CollisionFreePathPlanner::isDataReady(const Path & path)
 {
-  const auto is_data_missing = [this](const auto & name) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
-    return false;
-  };
-
   if (!ego_state_ptr_) {
-    return is_data_missing("ego pose and twist");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Waiting for ego pose and twist.");
+    return false;
   }
 
   if (!objects_ptr_) {
-    return is_data_missing("dynamic object");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Waiting for dynamic objects.");
+    return false;
+  }
+
+  if (path.points.empty()) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "Path is empty.");
+    return false;
+  }
+
+  if (path.left_bound.empty() || path.right_bound.empty()) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Left or right bound in path is empty.");
+    return false;
   }
 
   return true;
 }
 
-PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path)
+PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
 {
   // create planner data
   PlannerData planner_data;
-  planner_data.path = path;
+  planner_data.path = path;  // TODO(murooka) make path path points and add timestamp
+  planner_data.right_bound = path.right_bound;
+  planner_data.left_bound = path.left_bound;
   planner_data.ego_pose = ego_state_ptr_->pose.pose;
   planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
   planner_data.objects = objects_ptr_->objects;
@@ -287,7 +293,7 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path)
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajectory(
-  const PlannerData & planner_data, const CVMaps & cv_maps)
+  const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
@@ -295,7 +301,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 
   // 1. calculate trajectory with EB and MPT
   //    NOTE: This function may return previously optimized trajectory points.
-  auto optimized_traj_points = optimizeTrajectory(planner_data, cv_maps);
+  auto optimized_traj_points = optimizeTrajectory(planner_data);
 
   // 2. update velocity
   //    Even if optimization is skipped, velocity in trajectory points must be updated
@@ -304,7 +310,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 
   // 3. insert zero velocity when trajectory is over drivable area
   if (enable_outside_drivable_area_stop_) {
-    insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points, cv_maps);
+    insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
   }
 
   // 4. publish debug marker
@@ -316,7 +322,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
-  const PlannerData & planner_data, const CVMaps & cv_maps)
+  const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
   const auto & p = planner_data;
@@ -355,7 +361,7 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
 
   // 3. MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs =
-    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, eb_traj.get(), cv_maps);
+    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, eb_traj.get());
   if (!mpt_trajs) {
     return getPrevOptimizedTrajectory(p.path.points);
   }
@@ -409,8 +415,7 @@ void CollisionFreePathPlanner::applyPathVelocity(
 }
 
 void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
-  const PlannerData & planner_data, std::vector<TrajectoryPoint> & mpt_traj_points,
-  const CVMaps & cv_maps)
+  const PlannerData & planner_data, std::vector<TrajectoryPoint> & mpt_traj_points)
 {
   stop_watch_.tic(__func__);
 
@@ -433,8 +438,8 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
     auto & traj_point = mpt_traj_points.at(i);
 
     // check if the footprint is outside the drivable area
-    const bool is_outside = cv_drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
-      traj_point.pose, cv_maps, vehicle_info_);
+    const bool is_outside = geometry_utils::isOutsideDrivableAreaFromRectangleFootprint(
+      traj_point.pose, planner_data.left_bound, planner_data.right_bound, vehicle_info_);
 
     if (is_outside) {
       // NOTE: No need to assign zero velocity to following points after being outside the drivable
