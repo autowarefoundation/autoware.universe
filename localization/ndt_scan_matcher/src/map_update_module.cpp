@@ -188,8 +188,7 @@ void MapUpdateModule::update_ndt(
   const std::vector<std::string> & map_ids_to_remove)
 {
   RCLCPP_INFO(
-    logger_, "Update map (Add: %d, Remove: %d)", static_cast<int>(maps_to_add.size()),
-    static_cast<int>(map_ids_to_remove.size()));
+    logger_, "Update map (Add: %lu, Remove: %lu)", maps_to_add.size(), map_ids_to_remove.size());
   if (maps_to_add.empty() && map_ids_to_remove.empty()) {
     RCLCPP_INFO(logger_, "Skip map update");
     return;
@@ -216,7 +215,7 @@ void MapUpdateModule::update_ndt(
   const double exe_time =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count() /
     1000.0;
-  RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %f [ms]", exe_time);
+  RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
 
   // swap
   (*ndt_ptr_mutex_).lock();
