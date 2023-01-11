@@ -94,10 +94,8 @@ std::array<std::vector<double>, 3> slerp2dFromXY(
 template <typename T>
 std::vector<double> splineYawFromPoints(const std::vector<T> & points)
 {
-  SplineInterpolationPoints2d interpolator;
-
   // calculate spline coefficients
-  interpolator.calcSplineCoefficients(points);
+  SplineInterpolationPoints2d interpolator(points);
 
   // interpolate base_keys at query_keys
   std::vector<double> yaw_vec;
@@ -142,18 +140,53 @@ double SplineInterpolationPoints2d::getSplineInterpolatedYaw(const size_t idx, c
     throw std::out_of_range("idx is out of range.");
   }
 
-  double whole_s = base_s_vec_.at(idx) + s;
-  if (whole_s < base_s_vec_.front()) {
-    whole_s = base_s_vec_.front();
-  }
-  if (whole_s > base_s_vec_.back()) {
-    whole_s = base_s_vec_.back();
-  }
+  const double whole_s =
+    std::clamp(base_s_vec_.at(idx) + s, base_s_vec_.front(), base_s_vec_.back());
 
   const double diff_x = spline_x_.getSplineInterpolatedDiffValues({whole_s}).at(0);
   const double diff_y = spline_y_.getSplineInterpolatedDiffValues({whole_s}).at(0);
 
   return std::atan2(diff_y, diff_x);
+}
+
+std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedYaws() const
+{
+  std::vector<double> yaw_vec;
+  for (size_t i = 0; i < spline_x_; ++i) {
+    const double yaw = getSplineInterpolatedYaw(i, 0.0);
+    yaw_vec.push_back(yaw);
+  }
+  return yaw_vec;
+}
+
+double SplineInterpolationPoints2d::getSplineInterpolatedCurvature(
+  const size_t idx, const double s) const
+{
+  if (base_s_vec_.size() <= idx) {
+    throw std::out_of_range("idx is out of range.");
+  }
+
+  const double whole_s =
+    std::clamp(base_s_vec_.at(idx) + s, base_s_vec_.front(), base_s_vec_.back());
+
+  const double diff_x = spline_x_.getSplineInterpolatedDiffValues({whole_s}).at(0);
+  const double diff_y = spline_y_.getSplineInterpolatedDiffValues({whole_s}).at(0);
+
+  const double quad_diff_x = spline_x_.getSplineInterpolatedQuadDiffValues({whole_s}).at(0);
+  const double quad_diff_y = spline_y_.getSplineInterpolatedQuadDiffValues({whole_s}).at(0);
+
+  return std::abs(diff_x * quad_diff_y - quad_diff_x * diff_y) /
+         std::pow(std::pow(diff_x, 2) + std::pow(diff_y, 2), 1.5);
+}
+
+std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedCurvatures() const
+{
+  std::vector<double> curvature_vec;
+  for (size_t i = 0; i < spline_x_; ++i) {
+    const double curvature = getSplineInterpolatedCurvature(i, 0.0);
+    curvature_vec.push_back(curvature);
+  }
+  return curvature_vec;
 }
 
 double SplineInterpolationPoints2d::getAccumulatedLength(const size_t idx) const

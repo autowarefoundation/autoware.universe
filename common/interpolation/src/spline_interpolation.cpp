@@ -266,3 +266,27 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
 
   return res;
 }
+
+std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
+  const std::vector<double> & query_keys) const
+{
+  // throw exceptions for invalid arguments
+  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+
+  const auto & a = multi_spline_coef_.a;
+  const auto & b = multi_spline_coef_.b;
+  const auto & c = multi_spline_coef_.c;
+
+  std::vector<double> res;
+  size_t j = 0;
+  for (const auto & query_key : validated_query_keys) {
+    while (base_keys_.at(j + 1) < query_key) {
+      ++j;
+    }
+
+    const double ds = query_key - base_keys_.at(j);
+    res.push_back(2.0 * b.at(j) + 6.0 * a.at(j) * ds);
+  }
+
+  return res;
+}

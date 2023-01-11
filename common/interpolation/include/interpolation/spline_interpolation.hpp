@@ -86,6 +86,13 @@ public:
   //            return value will be dx/dt(t) vector
   std::vector<double> getSplineInterpolatedDiffValues(const std::vector<double> & query_keys) const;
 
+  //!< @brief get 2nd differential values of spline interpolation on designated sampling points.
+  //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
+  //            meaning that spline interpolation was applied to x(t),
+  //            return value will be d^2/dt^2(t) vector
+  std::vector<double> getSplineInterpolatedQuadDiffValues(
+    const std::vector<double> & query_keys) const;
+
 private:
   std::vector<double> base_keys_;
   interpolation::MultiSplineCoef multi_spline_coef_;
