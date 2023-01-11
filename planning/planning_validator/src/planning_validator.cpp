@@ -220,18 +220,18 @@ bool PlanningValidator::checkValidFiniteValue(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
 {
-  // // debug_marker_.clearPoseMarker("trajectory_interval");
+  debug_pose_publisher_->clearPoseMarker("trajectory_interval");
 
   const auto interval_distances = calcIntervalDistance(trajectory);
   const auto [max_interval_distance, i] = getAbsMaxValAndIdx(interval_distances);
   validation_status_.max_interval_distance = max_interval_distance;
-  //  std::cerr << "max_interval_distance = " << max_interval_distance << ", index = " << i << ",
-  //  threshold = " << validation_params_.interval_threshold << std::endl;
 
   if (max_interval_distance > validation_params_.interval_threshold) {
-    // const auto &p = trajectory.points;
-    // debug_marker_.pushPoseMarker(p.at(i - 1), "trajectory_interval");
-    // debug_marker_.pushPoseMarker(p.at(i), "trajectory_interval");
+    if (i > 0) {
+      const auto & p = trajectory.points;
+      debug_pose_publisher_->pushPoseMarker(p.at(i - 1), "trajectory_interval");
+      debug_pose_publisher_->pushPoseMarker(p.at(i), "trajectory_interval");
+    }
     return false;
   }
 
@@ -240,17 +240,19 @@ bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidRelativeAngle(const Trajectory & trajectory)
 {
-  // debug_marker_.clearPoseMarker("trajectory_relative_angle");
+  debug_pose_publisher_->clearPoseMarker("trajectory_relative_angle");
 
   const auto relative_angles = calcRelativeAngles(trajectory);
   const auto [max_relative_angle, i] = getAbsMaxValAndIdx(relative_angles);
   validation_status_.max_relative_angle = max_relative_angle;
 
   if (max_relative_angle > validation_params_.relative_angle_threshold) {
-    // const auto &p = trajectory.points;
-    // debug_marker_.pushPoseMarker(p.at(i), "trajectory_relative_angle", 0);
-    // debug_marker_.pushPoseMarker(p.at(i + 1), "trajectory_relative_angle", 1);
-    // debug_marker_.pushPoseMarker(p.at(i + 2), "trajectory_relative_angle", 2);
+    const auto & p = trajectory.points;
+    if (i < p.size() - 3) {
+      debug_pose_publisher_->pushPoseMarker(p.at(i), "trajectory_relative_angle", 0);
+      debug_pose_publisher_->pushPoseMarker(p.at(i + 1), "trajectory_relative_angle", 1);
+      debug_pose_publisher_->pushPoseMarker(p.at(i + 2), "trajectory_relative_angle", 2);
+    }
     return false;
   }
   return true;
@@ -258,16 +260,18 @@ bool PlanningValidator::checkValidRelativeAngle(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidCurvature(const Trajectory & trajectory)
 {
-  // // debug_marker.clearPoseMarker("trajectory_curvature");
+  debug_pose_publisher_->clearPoseMarker("trajectory_curvature");
 
   const auto curvatures = calcCurvature(trajectory);
   const auto [max_curvature, i] = getAbsMaxValAndIdx(curvatures);
   validation_status_.max_curvature = max_curvature;
   if (max_curvature > validation_params_.curvature_threshold) {
-    // const auto &p = trajectory.points;
-    // debug_marker_.pushPoseMarker(p.at(i - 1), "trajectory_curvature");
-    // debug_marker_.pushPoseMarker(p.at(i), "trajectory_curvature");
-    // debug_marker_.pushPoseMarker(p.at(i + 1), "trajectory_curvature");
+    const auto & p = trajectory.points;
+    if (i > 0 && i < p.size() - 1) {
+      debug_pose_publisher_->pushPoseMarker(p.at(i - 1), "trajectory_curvature");
+      debug_pose_publisher_->pushPoseMarker(p.at(i), "trajectory_curvature");
+      debug_pose_publisher_->pushPoseMarker(p.at(i + 1), "trajectory_curvature");
+    }
     return false;
   }
   return true;
@@ -275,11 +279,13 @@ bool PlanningValidator::checkValidCurvature(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidLateralAcceleration(const Trajectory & trajectory)
 {
+  debug_pose_publisher_->clearPoseMarker("lateral_acceleration");
+
   const auto lateral_acc_arr = calcLateralAcceleration(trajectory);
   const auto [max_lateral_acc, i] = getAbsMaxValAndIdx(lateral_acc_arr);
   validation_status_.max_lateral_acc = max_lateral_acc;
   if (max_lateral_acc > validation_params_.lateral_acc_threshold) {
-    // debug_marker_.pushPoseMarker(trajectory.points.at(i), "lateral_acceleration");
+    debug_pose_publisher_->pushPoseMarker(trajectory.points.at(i), "lateral_acceleration");
     return false;
   }
   return true;
@@ -288,11 +294,11 @@ bool PlanningValidator::checkValidLateralAcceleration(const Trajectory & traject
 bool PlanningValidator::checkValidMinLongitudinalAcceleration(const Trajectory & trajectory)
 {
   const auto acc_arr = getLongitudinalAccArray(trajectory);
-  const auto [min_longitudinal_acc, i_min] = getMinValAndIdx(acc_arr);
+  const auto [min_longitudinal_acc, i] = getMinValAndIdx(acc_arr);
   validation_status_.min_longitudinal_acc = min_longitudinal_acc;
 
   if (min_longitudinal_acc < validation_params_.longitudinal_min_acc_threshold) {
-    // debug_marker_.pushPoseMarker(trajectory.points.at(i).pose, "min_longitudinal_acc");
+    debug_pose_publisher_->pushPoseMarker(trajectory.points.at(i).pose, "min_longitudinal_acc");
     return false;
   }
   return true;
@@ -301,11 +307,11 @@ bool PlanningValidator::checkValidMinLongitudinalAcceleration(const Trajectory &
 bool PlanningValidator::checkValidMaxLongitudinalAcceleration(const Trajectory & trajectory)
 {
   const auto acc_arr = getLongitudinalAccArray(trajectory);
-  const auto [max_longitudinal_acc, i_max] = getAbsMaxValAndIdx(acc_arr);
+  const auto [max_longitudinal_acc, i] = getAbsMaxValAndIdx(acc_arr);
   validation_status_.max_longitudinal_acc = max_longitudinal_acc;
 
   if (max_longitudinal_acc > validation_params_.longitudinal_max_acc_threshold) {
-    // debug_marker_.pushPoseMarker(trajectory.points.at(i).pose, "max_longitudinal_acc");
+    debug_pose_publisher_->pushPoseMarker(trajectory.points.at(i).pose, "max_longitudinal_acc");
     return false;
   }
   return true;
@@ -314,11 +320,11 @@ bool PlanningValidator::checkValidMaxLongitudinalAcceleration(const Trajectory &
 bool PlanningValidator::checkValidSteering(const Trajectory & trajectory)
 {
   const auto steerings = calcSteeringAngles(trajectory, vehicle_info_.wheel_base_m);
-  const auto [max_steering, i_max] = getAbsMaxValAndIdx(steerings);
+  const auto [max_steering, i] = getAbsMaxValAndIdx(steerings);
   validation_status_.max_steering = max_steering;
 
   if (max_steering > validation_params_.steering_threshold) {
-    // debug_marker_.pushPoseMarker(trajectory.points.at(i_max).pose, "max_steering");
+    debug_pose_publisher_->pushPoseMarker(trajectory.points.at(i).pose, "max_steering");
     return false;
   }
   return true;
@@ -327,11 +333,11 @@ bool PlanningValidator::checkValidSteering(const Trajectory & trajectory)
 bool PlanningValidator::checkValidSteeringRate(const Trajectory & trajectory)
 {
   const auto steering_rates = calcSteeringRates(trajectory, vehicle_info_.wheel_base_m);
-  const auto [max_steering_rate, i_max] = getAbsMaxValAndIdx(steering_rates);
+  const auto [max_steering_rate, i] = getAbsMaxValAndIdx(steering_rates);
   validation_status_.max_steering_rate = max_steering_rate;
 
   if (max_steering_rate > validation_params_.steering_rate_threshold) {
-    // debug_marker_.pushPoseMarker(trajectory.points.at(i_max).pose, "max_steering_rate");
+    debug_pose_publisher_->pushPoseMarker(trajectory.points.at(i).pose, "max_steering_rate");
     return false;
   }
   return true;
