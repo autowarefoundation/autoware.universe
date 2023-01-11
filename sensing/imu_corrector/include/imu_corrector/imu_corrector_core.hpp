@@ -43,15 +43,15 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
 
-  double angular_velocity_offset_x_imu_link_;
-  double angular_velocity_offset_y_imu_link_;
-  double angular_velocity_offset_z_imu_link_;
+  double angular_velocity_offset_x_base_link_;
+  double angular_velocity_offset_y_base_link_;
+  double angular_velocity_offset_z_base_link_;
 
-  double angular_velocity_stddev_xx_imu_link_;
-  double angular_velocity_stddev_yy_imu_link_;
-  double angular_velocity_stddev_zz_imu_link_;
+  double angular_velocity_stddev_xx_base_link_;
+  double angular_velocity_stddev_yy_base_link_;
+  double angular_velocity_stddev_zz_base_link_;
 
-  double accel_stddev_imu_link_;
+  double accel_stddev_base_link_;
 
   std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
 
