@@ -46,6 +46,7 @@ Finally, it publishes the initial pose to `ekf_localizer`.
 | `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped                | calculated initial ego pose |
 
 ## Connection with Default AD API
+
 This `pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `default_ad_api`](https://github.com/autowarefoundation/autoware.universe/blob/main/system/default_ad_api/document/localization.md).
 
 <img src="../media/pose_initialization.drawio.svg" alt="drawing" width="800"/>
