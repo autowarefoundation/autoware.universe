@@ -697,6 +697,7 @@ bool LaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) cons
 
 void LaneChangeModule::updateOutputTurnSignal(BehaviorModuleOutput & output)
 {
+  calcTurnSignalInfo();
   const auto turn_signal_info = util::getPathTurnSignal(
     status_.current_lanes, status_.lane_change_path.shifted_path,
     status_.lane_change_path.shift_line, getEgoPose(), getEgoTwist().linear.x,
@@ -704,6 +705,53 @@ void LaneChangeModule::updateOutputTurnSignal(BehaviorModuleOutput & output)
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
 
   lane_change_utils::get_turn_signal_info(status_.lane_change_path, &output.turn_signal_info);
+}
+
+void LaneChangeModule::calcTurnSignalInfo()
+{
+  const auto & path = status_.lane_change_path;
+
+  TurnSignalInfo turn_signal_info{};
+
+  turn_signal_info.desired_start_point = std::invoke([&]() {
+    const auto blinker_start_duration = planner_data_->parameters.turn_signal_search_time;
+    const auto prepare_duration = parameters_->lane_change_prepare_duration;
+    const auto diff = prepare_duration - blinker_start_duration;
+    if (diff < 1e-5) {
+      return path.path.points.front().point.pose;
+    }
+
+    auto sum{0.0};
+    const auto & points = path.path.points;
+    for (auto it = points.cbegin(); std::next(it) != points.cend(); ++it) {
+      const auto & pt1 = it->point.pose;
+      const auto & pt2 = std::next(it)->point.pose;
+      sum += util::getSignedDistance(pt1, pt2, path.reference_lanelets);
+      if (sum > diff) {
+        return pt1;
+      }
+    }
+
+    RCLCPP_WARN(getLogger(), "unable to determine blinker start pose...");
+
+    return path.path.points.front().point.pose;
+  });
+
+  turn_signal_info.required_start_point = path.shift_line.start;
+  const auto mid_lane_change_length = path.lane_change_length / 2;
+  const auto & shifted_path = path.shifted_path.path.points;
+  auto sum{0.0};
+  for (auto it = shifted_path.cbegin(); std::next(it) != shifted_path.cend(); ++it) {
+    const auto & pt1 = it->point.pose;
+    const auto & pt2 = std::next(it)->point.pose;
+    sum += util::getSignedDistance(pt1, pt2, path.target_lanelets);
+    if (sum > mid_lane_change_length) {
+      turn_signal_info.required_end_point = pt1;
+    }
+  }
+
+  turn_signal_info.desired_end_point = path.shift_line.end;
+  status_.lane_change_path.turn_signal_info = turn_signal_info;
 }
 
 void LaneChangeModule::resetParameters()
