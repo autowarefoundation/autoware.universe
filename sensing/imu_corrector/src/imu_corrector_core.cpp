@@ -33,9 +33,12 @@ ImuCorrector::ImuCorrector(const rclcpp::NodeOptions & node_options)
 {
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
 
-  angular_velocity_offset_x_base_link_ = declare_parameter<double>("angular_velocity_offset_x", 0.0);
-  angular_velocity_offset_y_base_link_ = declare_parameter<double>("angular_velocity_offset_y", 0.0);
-  angular_velocity_offset_z_base_link_ = declare_parameter<double>("angular_velocity_offset_z", 0.0);
+  angular_velocity_offset_x_base_link_ =
+    declare_parameter<double>("angular_velocity_offset_x", 0.0);
+  angular_velocity_offset_y_base_link_ =
+    declare_parameter<double>("angular_velocity_offset_y", 0.0);
+  angular_velocity_offset_z_base_link_ =
+    declare_parameter<double>("angular_velocity_offset_z", 0.0);
 
   angular_velocity_stddev_xx_base_link_ =
     declare_parameter<double>("angular_velocity_stddev_xx", 0.03);
