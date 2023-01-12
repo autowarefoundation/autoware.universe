@@ -36,9 +36,13 @@ constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 
 OptimizationBasedPlanner::OptimizationBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-  const vehicle_info_util::VehicleInfo & vehicle_info)
-: PlannerInterface(node, longitudinal_info, vehicle_info)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param)
+: PlannerInterface(node, longitudinal_info, vehicle_info, ego_nearest_param)
 {
+  smoothed_traj_sub_ = node.create_subscription<Trajectory>(
+    "/planning/scenario_planning/trajectory", rclcpp::QoS{1},
+    [this](const Trajectory::ConstSharedPtr msg) { smoothed_trajectory_ptr_ = msg; });
+
   // parameter
   dense_resampling_time_interval_ =
     node.declare_parameter<double>("optimization_based_planner.dense_resampling_time_interval");
@@ -85,8 +89,7 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
   optimized_sv_pub_ = node.create_publisher<Trajectory>("~/optimized_sv_trajectory", 1);
   optimized_st_graph_pub_ = node.create_publisher<Trajectory>("~/optimized_st_graph", 1);
   boundary_pub_ = node.create_publisher<Trajectory>("~/boundary", 1);
-  debug_wall_marker_pub_ =
-    node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", 1);
+  debug_wall_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/wall_marker", 1);
 }
 
 Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
@@ -105,16 +108,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   }
 
   // Get the nearest point on the trajectory
-  const auto closest_idx = motion_utils::findNearestSegmentIndex(
-    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
-  if (!closest_idx) {  // Check validity of the closest index
-    RCLCPP_ERROR(
-      rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
-      "Closest Index is Invalid");
-    prev_output_ = planner_data.traj;
-    return planner_data.traj;
-  }
+  const size_t closest_idx = findEgoSegmentIndex(planner_data.traj, planner_data.current_pose);
 
   // Compute maximum velocity
   double v_max = 0.0;
@@ -129,7 +123,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   a0 = std::min(longitudinal_info_.max_accel, std::max(a0, longitudinal_info_.min_accel));
 
   // Check trajectory size
-  if (planner_data.traj.points.size() - *closest_idx <= 2) {
+  if (planner_data.traj.points.size() - closest_idx <= 2) {
     RCLCPP_DEBUG(
       rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
       "The number of points on the trajectory is too small or failed to calculate front offset");
@@ -174,7 +168,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
 
   // Publish Debug trajectories
   const double traj_front_to_vehicle_offset =
-    motion_utils::calcSignedArcLength(planner_data.traj.points, 0, *closest_idx);
+    motion_utils::calcSignedArcLength(planner_data.traj.points, 0, closest_idx);
   publishDebugTrajectory(
     planner_data, traj_front_to_vehicle_offset, time_vec, *s_boundaries, optimized_result);
 
@@ -194,8 +188,8 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   // Check Size
   if (opt_position.size() == 1 && opt_velocity.front() < ZERO_VEL_THRESHOLD) {
     auto output = planner_data.traj;
-    output.points.at(*closest_idx).longitudinal_velocity_mps = data.v0;
-    for (size_t i = *closest_idx + 1; i < output.points.size(); ++i) {
+    output.points.at(closest_idx).longitudinal_velocity_mps = data.v0;
+    for (size_t i = closest_idx + 1; i < output.points.size(); ++i) {
       output.points.at(i).longitudinal_velocity_mps = 0.0;
     }
     prev_output_ = output;
@@ -217,7 +211,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
     }
   }
   const auto traj_stop_dist =
-    motion_utils::calcDistanceToForwardStopPoint(planner_data.traj.points, *closest_idx);
+    motion_utils::calcDistanceToForwardStopPoint(planner_data.traj.points, closest_idx);
   if (traj_stop_dist) {
     closest_stop_dist = std::min(*traj_stop_dist + traj_front_to_vehicle_offset, closest_stop_dist);
   }
@@ -225,7 +219,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   // Resample Optimum Velocity
   size_t break_id = planner_data.traj.points.size();
   std::vector<double> resampled_opt_position;
-  for (size_t i = *closest_idx; i < planner_data.traj.points.size(); ++i) {
+  for (size_t i = closest_idx; i < planner_data.traj.points.size(); ++i) {
     const double query_s = std::max(
       motion_utils::calcSignedArcLength(planner_data.traj.points, 0, i), opt_position.front());
     if (query_s > opt_position.back()) {
@@ -243,12 +237,12 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
 
   // Create Output Data
   Trajectory output = planner_data.traj;
-  for (size_t i = 0; i < *closest_idx; ++i) {
+  for (size_t i = 0; i < closest_idx; ++i) {
     output.points.at(i).longitudinal_velocity_mps = data.v0;
   }
-  for (size_t i = *closest_idx; i < output.points.size(); ++i) {
+  for (size_t i = closest_idx; i < output.points.size(); ++i) {
     output.points.at(i).longitudinal_velocity_mps =
-      resampled_opt_velocity.at(i - *closest_idx) + velocity_margin_;
+      resampled_opt_velocity.at(i - closest_idx) + velocity_margin_;
   }
   output.points.back().longitudinal_velocity_mps = 0.0;  // terminal velocity is zero
 
@@ -293,8 +287,8 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const auto & input_traj = planner_data.traj;
   const double vehicle_speed{std::abs(current_vel)};
   const auto current_closest_point = motion_utils::calcInterpolatedPoint(
-    input_traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    input_traj, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
   const double target_vel{std::abs(current_closest_point.longitudinal_velocity_mps)};
 
   double initial_vel{};
@@ -310,11 +304,11 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   TrajectoryPoint prev_output_closest_point;
   if (smoothed_trajectory_ptr_) {
     prev_output_closest_point = motion_utils::calcInterpolatedPoint(
-      *smoothed_trajectory_ptr_, current_pose, nearest_dist_deviation_threshold_,
-      nearest_yaw_deviation_threshold_);
+      *smoothed_trajectory_ptr_, current_pose, ego_nearest_param_.dist_threshold,
+      ego_nearest_param_.yaw_threshold);
   } else {
     prev_output_closest_point = motion_utils::calcInterpolatedPoint(
-      prev_traj, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+      prev_traj, current_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
   }
 
   // when velocity tracking deviation is large
@@ -337,8 +331,8 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= engage_velocity_) {
       const auto stop_dist = motion_utils::calcDistanceToForwardStopPoint(
-        input_traj.points, current_pose, nearest_dist_deviation_threshold_,
-        nearest_yaw_deviation_threshold_);
+        input_traj.points, current_pose, ego_nearest_param_.dist_threshold,
+        ego_nearest_param_.yaw_threshold);
       if ((stop_dist && *stop_dist > stop_dist_to_prohibit_engage_) || !stop_dist) {
         initial_vel = engage_velocity_;
         initial_acc = engage_acceleration_;
@@ -372,8 +366,8 @@ bool OptimizationBasedPlanner::checkHasReachedGoal(const ObstacleCruisePlannerDa
 {
   // If goal is close and current velocity is low, we don't optimize trajectory
   const auto closest_stop_dist = motion_utils::calcDistanceToForwardStopPoint(
-    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    planner_data.traj.points, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
   if (closest_stop_dist && *closest_stop_dist < 0.5 && planner_data.current_vel < 0.6) {
     return true;
   }
@@ -446,7 +440,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
       planner_data.traj.points, planner_data.current_pose.position, min_slow_down_point_length);
 
     if (marker_pose) {
-      visualization_msgs::msg::MarkerArray wall_msg;
+      MarkerArray wall_msg;
 
       if (obj.has_stopped) {
         const auto markers = motion_utils::createStopVirtualWallMarker(
@@ -599,19 +593,18 @@ bool OptimizationBasedPlanner::checkOnTrajectory(
 }
 
 boost::optional<double> OptimizationBasedPlanner::calcTrajectoryLengthFromCurrentPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Pose & current_pose)
+  const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose)
 {
   const auto traj_length = motion_utils::calcSignedArcLength(
-    traj.points, current_pose, traj.points.size() - 1, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    traj.points, current_pose, traj.points.size() - 1, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
 
   if (!traj_length) {
     return {};
   }
 
   const auto dist_to_closest_stop_point = motion_utils::calcDistanceToForwardStopPoint(
-    traj.points, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    traj.points, current_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
   if (dist_to_closest_stop_point) {
     return std::min(traj_length.get(), dist_to_closest_stop_point.get());
   }

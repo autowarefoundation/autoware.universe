@@ -33,8 +33,9 @@ class GroundSegmentationPipeline:
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
         ground_segmentation_param_path = os.path.join(
-            LaunchConfiguration("tier4_perception_launch_param_path").perform(context),
-            "obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml",
+            LaunchConfiguration("obstacle_segmentation_ground_segmentation_param_path").perform(
+                context
+            ),
         )
         with open(ground_segmentation_param_path, "r") as f:
             self.ground_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -47,17 +48,20 @@ class GroundSegmentationPipeline:
         self.use_time_series_filter = self.ground_segmentation_param["use_time_series_filter"]
 
     def get_vehicle_info(self):
-        path = LaunchConfiguration("vehicle_param_file").perform(self.context)
-        with open(path, "r") as f:
-            p = yaml.safe_load(f)["/**"]["ros__parameters"]
-        p["vehicle_length"] = p["front_overhang"] + p["wheel_base"] + p["rear_overhang"]
-        p["vehicle_width"] = p["wheel_tread"] + p["left_overhang"] + p["right_overhang"]
-        p["min_longitudinal_offset"] = -p["rear_overhang"]
-        p["max_longitudinal_offset"] = p["front_overhang"] + p["wheel_base"]
-        p["min_lateral_offset"] = -(p["wheel_tread"] / 2.0 + p["right_overhang"])
-        p["max_lateral_offset"] = p["wheel_tread"] / 2.0 + p["left_overhang"]
+        # TODO(TIER IV): Use Parameter Substitution after we drop Galactic support
+        # https://github.com/ros2/launch_ros/blob/master/launch_ros/launch_ros/substitutions/parameter.py
+        gp = self.context.launch_configurations.get("ros_params", {})
+        if not gp:
+            gp = dict(self.context.launch_configurations.get("global_params", {}))
+        p = {}
+        p["vehicle_length"] = gp["front_overhang"] + gp["wheel_base"] + gp["rear_overhang"]
+        p["vehicle_width"] = gp["wheel_tread"] + gp["left_overhang"] + gp["right_overhang"]
+        p["min_longitudinal_offset"] = -gp["rear_overhang"]
+        p["max_longitudinal_offset"] = gp["front_overhang"] + gp["wheel_base"]
+        p["min_lateral_offset"] = -(gp["wheel_tread"] / 2.0 + gp["right_overhang"])
+        p["max_lateral_offset"] = gp["wheel_tread"] / 2.0 + gp["left_overhang"]
         p["min_height_offset"] = 0.0
-        p["max_height_offset"] = p["vehicle_height"]
+        p["max_height_offset"] = gp["vehicle_height"]
         return p
 
     def get_vehicle_mirror_info(self):
@@ -81,8 +85,6 @@ class GroundSegmentationPipeline:
                     {
                         "input_frame": LaunchConfiguration("base_frame"),
                         "output_frame": LaunchConfiguration("base_frame"),
-                        "min_z": self.vehicle_info["min_height_offset"],
-                        "max_z": self.vehicle_info["max_height_offset"],
                     },
                     self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"],
                 ],
@@ -215,8 +217,6 @@ class GroundSegmentationPipeline:
                     {
                         "input_frame": LaunchConfiguration("base_frame"),
                         "output_frame": LaunchConfiguration("base_frame"),
-                        "min_z": self.vehicle_info["min_height_offset"],
-                        "max_z": self.vehicle_info["max_height_offset"],
                     },
                     self.ground_segmentation_param["common_crop_box_filter"]["parameters"],
                 ],
@@ -269,7 +269,7 @@ class GroundSegmentationPipeline:
             components.append(
                 self.get_additional_lidars_concatenated_component(
                     input_topics=[common_pipeline_output]
-                    + list(map(lambda x: f"{x}/pointcloud"), additional_lidars),
+                    + [f"{x}/pointcloud" for x in additional_lidars],
                     output_topic=relay_topic if use_ransac else output_topic,
                 )
             )
@@ -330,12 +330,9 @@ class GroundSegmentationPipeline:
                         "inpaint_radius": 1.0,
                         "param_file_path": PathJoinSubstitution(
                             [
-                                LaunchConfiguration("tier4_perception_launch_param_path").perform(
-                                    context
-                                ),
-                                "obstacle_segmentation",
-                                "ground_segmentation",
-                                "elevation_map_parameters.yaml",
+                                LaunchConfiguration(
+                                    "obstacle_segmentation_ground_segmentation_elevation_map_param_path"
+                                ).perform(context),
                             ]
                         ),
                         "elevation_map_directory": PathJoinSubstitution(
@@ -515,12 +512,10 @@ def generate_launch_description():
         launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
 
     add_launch_arg("base_frame", "base_link")
-    add_launch_arg("vehicle_param_file")
     add_launch_arg("use_multithread", "False")
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
     add_launch_arg("container_name", "perception_pipeline_container")
-    add_launch_arg("tier4_perception_launch_param_path", "tier4_perception_launch parameter path")
     add_launch_arg("input/pointcloud", "/sensing/lidar/concatenated/pointcloud")
 
     set_container_executable = SetLaunchConfiguration(

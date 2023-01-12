@@ -48,13 +48,11 @@ public:
 
   struct DebugData
   {
-    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon conflict_area_for_blind_spot;
     geometry_msgs::msg::Polygon detection_area_for_blind_spot;
-    autoware_auto_planning_msgs::msg::PathWithLaneId spline_path;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
   };
 
@@ -67,6 +65,7 @@ public:
     double ignore_width_from_center_line;  //! ignore width from center line from detection_area
     double
       max_future_movement_time;  //! maximum time[second] for considering future movement of object
+    double threshold_yaw_diff;   //! threshold of yaw difference between ego and target object
   };
 
   BlindSpotModule(
@@ -78,9 +77,7 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -157,7 +154,7 @@ private:
    */
   bool isPredictedPathInArea(
     const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const lanelet::CompoundPolygon3d & area) const;
+    const lanelet::CompoundPolygon3d & area, geometry_msgs::msg::Pose ego_pose) const;
 
   /**
    * @brief Generate a stop line and insert it into the path.
@@ -198,7 +195,7 @@ private:
    * @param lane_id lane id of objective lanelet
    * @return end point of lanelet
    */
-  boost::optional<geometry_msgs::msg::Point> getStartPointFromLaneLet(const int lane_id) const;
+  boost::optional<geometry_msgs::msg::Pose> getStartPointFromLaneLet(const int lane_id) const;
 
   /**
    * @brief get straight lanelets in intersection

@@ -19,10 +19,16 @@
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
+#include "tier4_planning_msgs/msg/lane_change_debug_msg.hpp"
+#include "tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp"
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 
 #include <tf2/utils.h>
 
@@ -35,7 +41,11 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
+using tier4_planning_msgs::msg::LaneChangeDebugMsg;
+using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
 class LaneChangeModule : public SceneModuleInterface
 {
@@ -43,8 +53,6 @@ public:
   LaneChangeModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<LaneChangeParameters> parameters);
-
-  BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -54,6 +62,10 @@ public:
   CandidateOutput planCandidate() const override;
   void onEntry() override;
   void onExit() override;
+
+  std::shared_ptr<LaneChangeDebugMsgArray> get_debug_msg_array() const;
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
   void publishRTCStatus() override
   {
@@ -72,20 +84,41 @@ public:
     return false;
   }
 
+  void lockRTCCommand() override
+  {
+    rtc_interface_left_.lockCommandUpdate();
+    rtc_interface_right_.lockCommandUpdate();
+  }
+
+  void unlockRTCCommand() override
+  {
+    rtc_interface_left_.unlockCommandUpdate();
+    rtc_interface_right_.unlockCommandUpdate();
+  }
+
 private:
   std::shared_ptr<LaneChangeParameters> parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
+  mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
+  LaneChangeStates current_lane_change_state_;
+  std::shared_ptr<LaneChangePath> abort_path_;
+  PathWithLaneId prev_approved_path_;
 
   double lane_change_lane_length_{200.0};
   double check_distance_{100.0};
+  bool is_abort_path_approved_{false};
+  bool is_abort_approval_requested_{false};
+  bool is_abort_condition_satisfied_{false};
+  bool is_activated_ = false;
 
   RTCInterface rtc_interface_left_;
   RTCInterface rtc_interface_right_;
   UUID uuid_left_;
   UUID uuid_right_;
+  UUID candidate_uuid_;
 
-  bool is_activated_ = false;
+  void resetParameters();
 
   void waitApprovalLeft(const double start_distance, const double finish_distance)
   {
@@ -107,12 +140,14 @@ private:
       rtc_interface_left_.updateCooperateStatus(
         uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_left_;
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_right_.updateCooperateStatus(
         uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_right_;
       return;
     }
 
@@ -127,6 +162,21 @@ private:
     rtc_interface_right_.clearCooperateStatus();
   }
 
+  void removePreviousRTCStatusLeft()
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    }
+  }
+
+  void removePreviousRTCStatusRight()
+  {
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    }
+  }
+
+  lanelet::ConstLanelets get_original_lanes() const;
   PathWithLaneId getReferencePath() const;
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length) const;
@@ -135,13 +185,28 @@ private:
     LaneChangePath & safe_path) const;
 
   void updateLaneChangeStatus();
+  void generateExtendedDrivableArea(PathWithLaneId & path);
+  void updateOutputTurnSignal(BehaviorModuleOutput & output);
+  void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
+  bool isApprovedPathSafe(Pose & ego_pose_before_collision) const;
 
+  void updateSteeringFactorPtr(
+    const CandidateOutput & output, const LaneChangePath & selected_path) const;
   bool isSafe() const;
+  bool isValidPath(const PathWithLaneId & path) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
-  bool isAbortConditionSatisfied() const;
+  bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
+  bool isAbortState() const;
 
+  // getter
+  Pose getEgoPose() const;
+  Twist getEgoTwist() const;
+  std_msgs::msg::Header getRouteHeader() const;
+  void resetPathIfAbort();
+
+  // debug
   void setObjectDebugVisualization() const;
   mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
   mutable std::vector<LaneChangePath> debug_valid_path_;

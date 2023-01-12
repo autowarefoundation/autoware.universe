@@ -45,6 +45,13 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
   const std::string & target_frame_id, const rclcpp::Time & time)
 {
   try {
+    // check if the frames are ready
+    std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
+    if (!tf_buffer.canTransform(
+          target_frame_id, source_frame_id, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
+      return boost::none;
+    }
+
     geometry_msgs::msg::TransformStamped self_transform_stamped;
     self_transform_stamped = tf_buffer.lookupTransform(
       /*target*/ target_frame_id, /*src*/ source_frame_id, time,
@@ -54,76 +61,6 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
     RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
     return boost::none;
   }
-}
-
-inline float getVelocity(const autoware_auto_perception_msgs::msg::TrackedObject & object)
-{
-  return std::hypot(
-    object.kinematics.twist_with_covariance.twist.linear.x,
-    object.kinematics.twist_with_covariance.twist.linear.y);
-}
-
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_perception_msgs::msg::TrackedObject & object)
-{
-  return object.kinematics.pose_with_covariance.pose;
-}
-
-float getXYSquareDistance(
-  const geometry_msgs::msg::Transform & self_transform,
-  const autoware_auto_perception_msgs::msg::TrackedObject & object)
-{
-  const auto object_pos = getPose(object).position;
-  const float x = self_transform.translation.x - object_pos.x;
-  const float y = self_transform.translation.y - object_pos.y;
-  return x * x + y * y;
-}
-
-/**
- * @brief If the tracker is stable at a low speed and has a vehicle type, it will keep
- * tracking for a longer time to deal with detection lost due to occlusion, etc.
- * @param tracker The tracker to be determined.
- * @param time Target time to determine.
- * @param self_transform Position of the vehicle at the target time.
- * @return Result of deciding whether to leave tracker or not.
- */
-bool isSpecificAlivePattern(
-  const std::shared_ptr<const Tracker> & tracker, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
-{
-  autoware_auto_perception_msgs::msg::TrackedObject object;
-  tracker->getTrackedObject(time, object);
-
-  constexpr float min_detection_rate = 0.2;
-  constexpr int min_measurement_count = 5;
-  constexpr float max_elapsed_time = 10.0;
-  constexpr float max_velocity = 1.0;
-  constexpr float max_distance = 100.0;
-
-  const std::uint8_t label = tracker->getHighestProbLabel();
-
-  const float detection_rate =
-    tracker->getTotalMeasurementCount() /
-    (tracker->getTotalNoMeasurementCount() + tracker->getTotalMeasurementCount());
-
-  const bool big_vehicle = utils::isLargeVehicleLabel(label);
-
-  const bool slow_velocity = getVelocity(object) < max_velocity;
-
-  const bool high_confidence =
-    (min_detection_rate < detection_rate ||
-     min_measurement_count < tracker->getTotalMeasurementCount());
-
-  const bool not_too_far =
-    getXYSquareDistance(self_transform, object) < max_distance * max_distance;
-
-  const bool within_max_survival_period =
-    tracker->getElapsedTimeFromLastUpdate(time) < max_elapsed_time;
-
-  const bool is_specific_alive_pattern =
-    high_confidence && big_vehicle && within_max_survival_period && not_too_far && slow_velocity;
-
-  return is_specific_alive_pattern;
 }
 
 }  // namespace
@@ -221,7 +158,7 @@ void MultiObjectTracker::onMeasurement(
       (*(tracker_itr))
         ->updateWithMeasurement(
           transformed_objects.objects.at(direct_assignment.find(tracker_idx)->second),
-          measurement_time);
+          measurement_time, *self_transform);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement();
     }
@@ -238,7 +175,7 @@ void MultiObjectTracker::onMeasurement(
       continue;
     }
     std::shared_ptr<Tracker> tracker =
-      createNewTracker(transformed_objects.objects.at(i), measurement_time);
+      createNewTracker(transformed_objects.objects.at(i), measurement_time, *self_transform);
     if (tracker) list_tracker_.push_back(tracker);
   }
 
@@ -248,30 +185,30 @@ void MultiObjectTracker::onMeasurement(
 }
 
 std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const rclcpp::Time & time) const
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & self_transform) const
 {
   const std::uint8_t label = perception_utils::getHighestProbLabel(object.classification);
   if (tracker_map_.count(label) != 0) {
     const auto tracker = tracker_map_.at(label);
 
     if (tracker == "bicycle_tracker") {
-      return std::make_shared<BicycleTracker>(time, object);
+      return std::make_shared<BicycleTracker>(time, object, self_transform);
     } else if (tracker == "big_vehicle_tracker") {
-      return std::make_shared<BigVehicleTracker>(time, object);
+      return std::make_shared<BigVehicleTracker>(time, object, self_transform);
     } else if (tracker == "multi_vehicle_tracker") {
-      return std::make_shared<MultipleVehicleTracker>(time, object);
+      return std::make_shared<MultipleVehicleTracker>(time, object, self_transform);
     } else if (tracker == "normal_vehicle_tracker") {
-      return std::make_shared<NormalVehicleTracker>(time, object);
+      return std::make_shared<NormalVehicleTracker>(time, object, self_transform);
     } else if (tracker == "pass_through_tracker") {
-      return std::make_shared<PassThroughTracker>(time, object);
+      return std::make_shared<PassThroughTracker>(time, object, self_transform);
     } else if (tracker == "pedestrian_and_bicycle_tracker") {
-      return std::make_shared<PedestrianAndBicycleTracker>(time, object);
+      return std::make_shared<PedestrianAndBicycleTracker>(time, object, self_transform);
     } else if (tracker == "pedestrian_tracker") {
-      return std::make_shared<PedestrianTracker>(time, object);
+      return std::make_shared<PedestrianTracker>(time, object, self_transform);
     }
   }
-  return std::make_shared<UnknownTracker>(time, object);
+  return std::make_shared<UnknownTracker>(time, object, self_transform);
 }
 
 void MultiObjectTracker::onTimer()
@@ -294,7 +231,7 @@ void MultiObjectTracker::onTimer()
 
 void MultiObjectTracker::checkTrackerLifeCycle(
   std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+  [[maybe_unused]] const geometry_msgs::msg::Transform & self_transform)
 {
   /* params */
   constexpr float max_elapsed_time = 1.0;
@@ -302,8 +239,7 @@ void MultiObjectTracker::checkTrackerLifeCycle(
   /* delete tracker */
   for (auto itr = list_tracker.begin(); itr != list_tracker.end(); ++itr) {
     const bool is_old = max_elapsed_time < (*itr)->getElapsedTimeFromLastUpdate(time);
-    const bool is_specific_alive_pattern = isSpecificAlivePattern(*itr, time, self_transform);
-    if (is_old && !is_specific_alive_pattern) {
+    if (is_old) {
       auto erase_itr = itr;
       --itr;
       list_tracker.erase(erase_itr);
@@ -333,7 +269,8 @@ void MultiObjectTracker::sanitizeTracker(
         continue;
       }
 
-      const auto iou = perception_utils::get2dIoU(object1, object2);
+      const double min_union_iou_area = 1e-2;
+      const auto iou = perception_utils::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
       const auto & label2 = (*itr2)->getHighestProbLabel();
       bool should_delete_tracker1 = false;

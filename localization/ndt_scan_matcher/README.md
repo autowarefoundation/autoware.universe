@@ -32,9 +32,11 @@ One optional function is regularization. Please see the regularization chapter i
 | `ndt_pose_with_covariance`        | `geometry_msgs::msg::PoseWithCovarianceStamped` | estimated pose with covariance                                                                                                           |
 | `/diagnostics`                    | `diagnostic_msgs::msg::DiagnosticArray`         | diagnostics                                                                                                                              |
 | `points_aligned`                  | `sensor_msgs::msg::PointCloud2`                 | [debug topic] pointcloud aligned by scan matching                                                                                        |
+| `points_aligned_no_ground`        | `sensor_msgs::msg::PointCloud2`                 | [debug topic] de-grounded pointcloud aligned by scan matching                                                                            |
 | `initial_pose_with_covariance`    | `geometry_msgs::msg::PoseWithCovarianceStamped` | [debug topic] initial pose used in scan matching                                                                                         |
 | `exe_time_ms`                     | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] execution time for scan matching [ms]                                                                                      |
 | `transform_probability`           | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching                                                                                                     |
+| `no_ground_transform_probability` | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching based on de-grounded LiDAR scan                                                                     |
 | `iteration_num`                   | `tier4_debug_msgs::msg::Int32Stamped`           | [debug topic] number of scan matching iterations                                                                                         |
 | `initial_to_result_distance`      | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the initial point and the convergence point [m]                                                |
 | `initial_to_result_distance_old`  | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the older of the two initial points used in linear interpolation and the convergence point [m] |
@@ -56,14 +58,16 @@ One optional function is regularization. Please see the regularization chapter i
 | --------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
 | `base_frame`                            | string | Vehicle reference frame                                                                         |
 | `input_sensor_points_queue_size`        | int    | Subscriber queue size                                                                           |
-| `ndt_implement_type`                    | int    | NDT implementation type (0=PCL_GENERIC, 1=PCL_MODIFIED, 2=OMP)                                  |
 | `trans_epsilon`                         | double | The maximum difference between two consecutive transformations in order to consider convergence |
 | `step_size`                             | double | The newton line search maximum step length                                                      |
 | `resolution`                            | double | The ND voxel grid resolution [m]                                                                |
 | `max_iterations`                        | int    | The number of iterations required to calculate alignment                                        |
+| `converged_param_type`                  | int    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                 |
 | `converged_param_transform_probability` | double | Threshold for deciding whether to trust the estimation result                                   |
-| `omp_neighborhood_search_method`        | int    | neighborhood search method in OMP (0=KDTREE, 1=DIRECT26, 2=DIRECT7, 3=DIRECT1)                  |
-| `omp_num_threads`                       | int    | Number of threads used for parallel computing                                                   |
+| `neighborhood_search_method`            | int    | neighborhood search method (0=KDTREE, 1=DIRECT26, 2=DIRECT7, 3=DIRECT1)                         |
+| `num_threads`                           | int    | Number of threads used for parallel computing                                                   |
+
+(TP: Transform Probability, NVTL: Nearest Voxel Transform Probability)
 
 ## Regularization
 
@@ -110,7 +114,6 @@ $$
 
 Regularization is disabled by default.
 If you wish to use it, please edit the following parameters to enable it.
-Regularization is only available for `NDT_OMP` and not for other NDT implementation types (`PCL_GENERIC`, `PCL_MODIFIED`).
 
 #### Where is regularization available
 
@@ -168,3 +171,17 @@ The color of the trajectory indicates the error (meter) from the reference traje
 - The right figure shows that the regularization suppresses the longitudinal error.
 
 <img src="./media/trajectory_without_regularization.png" alt="drawing" width="300"/> <img src="./media/trajectory_with_regularization.png" alt="drawing" width="300"/>
+
+## Scan matching score based on de-grounded LiDAR scan
+
+### Abstract
+
+This is a function that using de-grounded LiDAR scan estimate scan matching score.This score can more accurately reflect the current localization performance.
+[related issue](https://github.com/autowarefoundation/autoware.universe/issues/2044).
+
+### Parameters
+
+| Name                                  | Type   | Description                                                                           |
+| ------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `estimate_scores_for_degrounded_scan` | bool   | Flag for using scan matching score based on de-grounded LiDAR scan (FALSE by default) |
+| `z_margin_for_ground_removal`         | double | Z-value margin for removal ground points                                              |

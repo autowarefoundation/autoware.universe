@@ -41,7 +41,18 @@ std::vector<double> calcPathArcLengthArray(
   const PathWithLaneId & path, const size_t start = 0,
   const size_t end = std::numeric_limits<size_t>::max(), const double offset = 0.0);
 
-PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interval);
+/**
+ * @brief resample path by spline with constant interval distance
+ * @param [in] path original path to be resampled
+ * @param [in] interval constant interval distance
+ * @param [in] keep_input_points original points are kept in the resampled points
+ * @param [in] target_section target section defined by arclength if you want to resample a part of
+ * the path
+ * @return resampled path
+ */
+PathWithLaneId resamplePathWithSpline(
+  const PathWithLaneId & path, const double interval, const bool keep_input_points = false,
+  const std::pair<double, double> target_section = {0.0, std::numeric_limits<double>::max()});
 
 Path toPath(const PathWithLaneId & input);
 
@@ -56,7 +67,7 @@ void clipPathLength(
 
 std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
-  const ShiftPoint & shift_point, const Pose & pose, const double & velocity,
+  const ShiftLine & shift_line, const Pose & pose, const double & velocity,
   const BehaviorPathPlannerParameters & common_parameter);
 
 }  // namespace behavior_path_planner::util

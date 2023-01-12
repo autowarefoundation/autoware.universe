@@ -1,4 +1,4 @@
-// Copyright 2015-2019 Autoware Foundation
+// Copyright 2015-2019 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 #include "freespace_planning_algorithms/reeds_shepp.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <nav_msgs/msg/path.hpp>
 #include <std_msgs/msg/header.hpp>
 
@@ -27,6 +29,7 @@
 #include <queue>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 namespace freespace_planning_algorithms
@@ -105,15 +108,33 @@ class AstarSearch : public AbstractPlanningAlgorithm
 public:
   using TransitionTable = std::vector<std::vector<NodeUpdate>>;
 
-  AstarSearch(const PlannerCommonParam & planner_common_param, const AstarParam & astar_param);
+  AstarSearch(
+    const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
+    const AstarParam & astar_param);
+
+  AstarSearch(
+    const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
+    rclcpp::Node & node)
+  : AstarSearch(
+      planner_common_param, collision_vehicle_shape,
+      AstarParam{
+        node.declare_parameter("astar.only_behind_solutions", false),
+        node.declare_parameter("astar.use_back", true),
+        node.declare_parameter("astar.distance_heuristic_weight", 1.0)})
+  {
+  }
 
   void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(
     const geometry_msgs::msg::Pose & start_pose,
     const geometry_msgs::msg::Pose & goal_pose) override;
-  bool hasFeasibleSolution() override;  // currently used only in testing
 
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
+
+  inline int getKey(const IndexXYT & index)
+  {
+    return (index.theta + (index.y * x_scale_ + index.x) * y_scale_);
+  }
 
 private:
   bool search();
@@ -121,17 +142,21 @@ private:
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
-  double estimateCost(const geometry_msgs::msg::Pose & pose);
-  bool isGoal(const AstarNode & node);
+  double estimateCost(const geometry_msgs::msg::Pose & pose) const;
+  bool isGoal(const AstarNode & node) const;
 
-  AstarNode * getNodeRef(const IndexXYT & index) { return &nodes_[index.y][index.x][index.theta]; }
+  AstarNode * getNodeRef(const IndexXYT & index)
+  {
+    return &(graph_.emplace(getKey(index), AstarNode()).first->second);
+  }
 
   // Algorithm specific param
   AstarParam astar_param_;
 
   // hybrid astar variables
   TransitionTable transition_table_;
-  std::vector<std::vector<std::vector<AstarNode>>> nodes_;
+  std::unordered_map<uint, AstarNode> graph_;
+
   std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison> openlist_;
 
   // goal node, which may helpful in testing and debugging
@@ -139,6 +164,9 @@ private:
 
   // distance metric option (removed when the reeds_shepp gets stable)
   bool use_reeds_shepp_;
+
+  int x_scale_;
+  int y_scale_;
 };
 }  // namespace freespace_planning_algorithms
 

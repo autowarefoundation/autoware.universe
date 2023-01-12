@@ -32,11 +32,12 @@
 #define FREESPACE_PLANNER__FREESPACE_PLANNER_NODE_HPP_
 
 #include <freespace_planning_algorithms/astar_search.hpp>
+#include <freespace_planning_algorithms/rrtstar.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -62,11 +63,15 @@
 
 namespace freespace_planner
 {
-using autoware_auto_planning_msgs::msg::HADMapRoute;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::LaneletRoute;
 using freespace_planning_algorithms::AbstractPlanningAlgorithm;
 using freespace_planning_algorithms::AstarParam;
+using freespace_planning_algorithms::AstarSearch;
 using freespace_planning_algorithms::PlannerCommonParam;
+using freespace_planning_algorithms::RRTStar;
+using freespace_planning_algorithms::RRTStarParam;
+using freespace_planning_algorithms::VehicleShape;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
@@ -83,7 +88,7 @@ struct NodeParam
   double th_arrived_distance_m;
   double th_stopped_time_sec;
   double th_stopped_velocity_mps;
-  double th_course_out_distance_m;
+  double th_course_out_distance_m;  // collision margin [m]
   double vehicle_shape_margin_m;
   bool replan_when_obstacle_found;
   bool replan_when_course_out;
@@ -101,7 +106,7 @@ private:
   rclcpp::Publisher<PoseArray>::SharedPtr debug_partial_pose_array_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
 
-  rclcpp::Subscription<HADMapRoute>::SharedPtr route_sub_;
+  rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
@@ -113,8 +118,7 @@ private:
 
   // params
   NodeParam node_param_;
-  PlannerCommonParam planner_common_param_;
-  AstarParam astar_param_;
+  VehicleShape vehicle_shape_;
 
   // variables
   std::unique_ptr<AbstractPlanningAlgorithm> algo_;
@@ -128,7 +132,7 @@ private:
   size_t target_index_;
   bool is_completed_ = false;
 
-  HADMapRoute::ConstSharedPtr route_;
+  LaneletRoute::ConstSharedPtr route_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
   Scenario::ConstSharedPtr scenario_;
   Odometry::ConstSharedPtr odom_;
@@ -137,11 +141,10 @@ private:
   std::deque<Odometry::ConstSharedPtr> odom_buffer_;
 
   // functions used in the constructor
-  void getPlanningCommonParam();
-  void getAstarParam();
+  PlannerCommonParam getPlannerCommonParam();
 
   // functions, callback
-  void onRoute(const HADMapRoute::ConstSharedPtr msg);
+  void onRoute(const LaneletRoute::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
   void onScenario(const Scenario::ConstSharedPtr msg);
   void onOdometry(const Odometry::ConstSharedPtr msg);

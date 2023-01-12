@@ -1,4 +1,4 @@
-// Copyright 2021 Arm Limited and Contributors.
+// Copyright 2021-2022 Arm Limited and Contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "tvm_utility/model_zoo.hpp"
 #include "tvm_utility/pipeline.hpp"
+#include "yolo_v2_tiny/inference_engine_tvm_config.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -45,18 +45,18 @@ class PreProcessorYoloV2Tiny : public tvm_utility::pipeline::PreProcessor<std::s
 {
 public:
   explicit PreProcessorYoloV2Tiny(tvm_utility::pipeline::InferenceEngineTVMConfig config)
-  : network_input_width(config.network_inputs[0].second[1]),
-    network_input_height(config.network_inputs[0].second[2]),
-    network_input_depth(config.network_inputs[0].second[3]),
-    network_datatype_bytes(config.tvm_dtype_bits / 8)
+  : network_input_width(config.network_inputs[0].node_shape[1]),
+    network_input_height(config.network_inputs[0].node_shape[2]),
+    network_input_depth(config.network_inputs[0].node_shape[3]),
+    network_input_datatype_bytes(config.network_inputs[0].tvm_dtype_bits / 8)
   {
     // Allocate input variable
     std::vector<int64_t> shape_x{1, network_input_width, network_input_height, network_input_depth};
     tvm_utility::pipeline::TVMArrayContainer x{
       shape_x,
-      config.tvm_dtype_code,
-      config.tvm_dtype_bits,
-      config.tvm_dtype_lanes,
+      config.network_inputs[0].tvm_dtype_code,
+      config.network_inputs[0].tvm_dtype_bits,
+      config.network_inputs[0].tvm_dtype_lanes,
       config.tvm_device_type,
       config.tvm_device_id};
 
@@ -101,7 +101,8 @@ public:
 
     TVMArrayCopyFromBytes(
       output.getArray(), image_3f.data,
-      network_input_width * network_input_height * network_input_depth * network_datatype_bytes);
+      network_input_width * network_input_height * network_input_depth *
+        network_input_datatype_bytes);
 
     return {output};
   }
@@ -110,7 +111,7 @@ private:
   int64_t network_input_width;
   int64_t network_input_height;
   int64_t network_input_depth;
-  int64_t network_datatype_bytes;
+  int64_t network_input_datatype_bytes;
   tvm_utility::pipeline::TVMArrayContainer output;
 };
 
@@ -118,9 +119,10 @@ class PostProcessorYoloV2Tiny : public tvm_utility::pipeline::PostProcessor<std:
 {
 public:
   explicit PostProcessorYoloV2Tiny(tvm_utility::pipeline::InferenceEngineTVMConfig config)
-  : network_output_width(config.network_outputs[0].second[1]),
-    network_output_height(config.network_outputs[0].second[2]),
-    network_output_depth(config.network_outputs[0].second[3])
+  : network_output_width(config.network_outputs[0].node_shape[1]),
+    network_output_height(config.network_outputs[0].node_shape[2]),
+    network_output_depth(config.network_outputs[0].node_shape[3]),
+    network_output_datatype_bytes(config.network_outputs[0].tvm_dtype_bits / 8)
   {
     // Parse human readable names for the classes
     std::ifstream label_file{LABEL_FILENAME};
@@ -164,16 +166,20 @@ public:
     assert(input[0].getArray()->strides == nullptr);
     assert(input[0].getArray()->dtype.bits == sizeof(float) * 8);
 
-    // Get a pointer to the output data
-    float * data_ptr = reinterpret_cast<float *>(
-      reinterpret_cast<uint8_t *>(input[0].getArray()->data) + input[0].getArray()->byte_offset);
+    // Copy the inference data to CPU memory
+    std::vector<float> infer(
+      network_output_width * network_output_height * network_output_depth, 0);
+    TVMArrayCopyToBytes(
+      input[0].getArray(), infer.data(),
+      network_output_width * network_output_height * network_output_depth *
+        network_output_datatype_bytes);
 
     // Utility function to return data from y given index
-    auto get_output_data = [this, data_ptr, n_classes, n_anchors, n_coords](
+    auto get_output_data = [this, infer, n_classes, n_anchors, n_coords](
                              auto row_i, auto col_j, auto anchor_k, auto offset) {
       auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
       auto index = box_index + anchor_k * (n_classes + n_coords + 1);
-      return data_ptr[index + offset];
+      return infer[index + offset];
     };
 
     // Vector used to check if the result is accurate,
@@ -228,6 +234,7 @@ private:
   int64_t network_output_width;
   int64_t network_output_height;
   int64_t network_output_depth;
+  int64_t network_output_datatype_bytes;
   std::vector<std::string> labels{};
   std::vector<std::pair<float, float>> anchors{};
 };
@@ -240,10 +247,13 @@ TEST(PipelineExamples, SimplePipeline)
   using PostPT = PostProcessorYoloV2Tiny;
 
   PrePT PreP{config};
-  IET IE{config};
+  IET IE{config, "tvm_utility"};
   PostPT PostP{config};
 
   tvm_utility::pipeline::Pipeline<PrePT, IET, PostPT> pipeline(PreP, IE, PostP);
+
+  auto version_status = IE.version_check({2, 0, 0});
+  EXPECT_NE(version_status, tvm_utility::Version::Unsupported);
 
   // Push data input the pipeline and get the output
   auto output = pipeline.schedule(IMAGE_FILENAME);

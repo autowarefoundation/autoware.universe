@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -25,6 +26,7 @@
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,12 +34,16 @@
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::TransformStamped;
 
 struct AvoidanceParameters
 {
@@ -61,6 +67,30 @@ struct AvoidanceParameters
   // to use this, enable_avoidance_over_same_direction need to be set to true.
   bool enable_avoidance_over_opposite_direction{true};
 
+  // enable update path when if detected objects on planner data is gone.
+  bool enable_update_path_when_object_is_gone{false};
+
+  // enable safety check. if avoidance path is NOT safe, the ego will execute yield maneuver
+  bool enable_safety_check{false};
+
+  // enable yield maneuver.
+  bool enable_yield_maneuver{false};
+
+  // constrains
+  bool use_constraints_for_decel{false};
+
+  // max deceleration for
+  double max_deceleration;
+
+  // max jerk
+  double max_jerk;
+
+  // comfortable deceleration
+  double nominal_deceleration;
+
+  // comfortable jerk
+  double nominal_jerk;
+
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
   double threshold_distance_object_is_on_center;
@@ -74,11 +104,33 @@ struct AvoidanceParameters
   // continue to detect backward vehicles as avoidance targets until they are this distance away
   double object_check_backward_distance;
 
+  // if the distance between object and goal position is less than this parameter, the module ignore
+  // the object.
+  double object_check_goal_distance;
+
+  // use in judge whether the vehicle is parking object on road shoulder
+  double object_check_shiftable_ratio;
+
+  // minimum road shoulder width. maybe 0.5 [m]
+  double object_check_min_road_shoulder_width;
+
+  // object's enveloped polygon
+  double object_envelope_buffer;
+
+  // vehicles which is moving more than this parameter will not be avoided
+  double threshold_time_object_is_moving;
+
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
   // a buffer in case lateral_collision_margin is set to 0. Will throw error
   // don't ever set this value to 0
   double lateral_collision_safety_buffer{0.5};
+
+  // if object overhang is less than this value, the ego stops behind the object.
+  double lateral_passable_safety_buffer{0.5};
+
+  // margin between object back and end point of avoid shift point
+  double longitudinal_collision_safety_buffer{0.0};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -87,6 +139,33 @@ struct AvoidanceParameters
   // when complete avoidance motion, there is a time margin with the object
   // for longitudinal direction
   double longitudinal_collision_margin_time;
+
+  // find adjacent lane vehicles
+  double safety_check_backward_distance;
+
+  // minimum longitudinal margin for vehicles in adjacent lane
+  double safety_check_min_longitudinal_margin;
+
+  // safety check time horizon
+  double safety_check_time_horizon;
+
+  // use in RSS calculation
+  double safety_check_idling_time;
+
+  // use in RSS calculation
+  double safety_check_accel_for_rss;
+
+  // transit hysteresis (unsafe to safe)
+  double safety_check_hysteresis_factor;
+
+  // keep target velocity in yield maneuver
+  double yield_velocity;
+
+  // minimum stop distance
+  double stop_min_distance;
+
+  // maximum stop distance
+  double stop_max_distance;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -144,6 +223,12 @@ struct AvoidanceParameters
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
   double avoidance_execution_lateral_threshold;
 
+  // target velocity matrix
+  std::vector<double> target_velocity_matrix;
+
+  // matrix col size
+  size_t col_size;
+
   // true by default
   bool avoid_car{true};      // avoidance is performed for type object car
   bool avoid_truck{true};    // avoidance is performed for type object truck
@@ -155,6 +240,13 @@ struct AvoidanceParameters
   bool avoid_bicycle{false};     // avoidance is performed for type object bicycle
   bool avoid_motorcycle{false};  // avoidance is performed for type object motorbike
   bool avoid_pedestrian{false};  // avoidance is performed for type object pedestrian
+
+  // drivable area expansion
+  double drivable_area_right_bound_offset;
+  double drivable_area_left_bound_offset;
+
+  // clip left and right bounds for objects
+  bool enable_bound_clipping{false};
 
   // debug
   bool publish_debug_marker = false;
@@ -183,9 +275,16 @@ struct ObjectData  // avoidance target
   // lateral distance to the closest footprint, in Frenet coordinate
   double overhang_dist;
 
+  // lateral shiftable ratio
+  double shiftable_ratio{0.0};
+
   // count up when object disappeared. Removed when it exceeds threshold.
   rclcpp::Time last_seen;
   double lost_time{0.0};
+
+  // count up when object moved. Removed when it exceeds threshold.
+  rclcpp::Time last_stop;
+  double move_time{0.0};
 
   // store the information of the lanelet which the object's overhang is currently occupying
   lanelet::ConstLanelet overhang_lanelet;
@@ -193,19 +292,28 @@ struct ObjectData  // avoidance target
   // the position of the overhang
   Pose overhang_pose;
 
+  // envelope polygon
+  Polygon2d envelope_poly{};
+
+  // envelope polygon centroid
+  Point2d centroid{};
+
   // lateral distance from overhang to the road shoulder
   double to_road_shoulder_distance{0.0};
+
+  // if lateral margin is NOT enough, the ego must avoid the object.
+  bool avoid_required{false};
+
+  // unavoidable reason
+  std::string reason{""};
 };
 using ObjectDataArray = std::vector<ObjectData>;
 
 /*
  * Shift point with additional info for avoidance planning
  */
-struct AvoidPoint : public ShiftPoint
+struct AvoidLine : public ShiftLine
 {
-  // relative shift length from start to end point
-  double start_length = 0.0;
-
   // Distance from ego to start point in Frenet
   double start_longitudinal = 0.0;
 
@@ -221,19 +329,33 @@ struct AvoidPoint : public ShiftPoint
   // corresponding object
   ObjectData object{};
 
-  double getRelativeLength() const { return length - start_length; }
+  double getRelativeLength() const { return end_shift_length - start_shift_length; }
 
   double getRelativeLongitudinal() const { return end_longitudinal - start_longitudinal; }
 
   double getGradient() const { return getRelativeLength() / getRelativeLongitudinal(); }
 };
-using AvoidPointArray = std::vector<AvoidPoint>;
+using AvoidLineArray = std::vector<AvoidLine>;
+
+/*
+ * avoidance state
+ */
+enum class AvoidanceState {
+  NOT_AVOID = 0,
+  AVOID_EXECUTE,
+  YIELD,
+  AVOID_PATH_READY,
+  AVOID_PATH_NOT_READY,
+};
 
 /*
  * Common data for avoidance planning
  */
 struct AvoidancePlanningData
 {
+  // ego final state
+  AvoidanceState state{AvoidanceState::NOT_AVOID};
+
   // un-shifted pose (for current lane detection)
   Pose reference_pose;
 
@@ -250,8 +372,33 @@ struct AvoidancePlanningData
   // current driving lanelet
   lanelet::ConstLanelets current_lanelets;
 
+  // output path
+  ShiftedPath candidate_path;
+
   // avoidance target objects
-  ObjectDataArray objects;
+  ObjectDataArray target_objects;
+
+  // the others
+  ObjectDataArray other_objects;
+
+  // raw shift point
+  AvoidLineArray unapproved_raw_sl{};
+
+  // new shift point
+  AvoidLineArray unapproved_new_sl{};
+
+  // safe shift point
+  AvoidLineArray safe_new_sl{};
+
+  bool safe{false};
+
+  bool avoiding_now{false};
+
+  bool avoid_required{false};
+
+  bool yield_required{false};
+
+  bool found_avoidance_path{false};
 };
 
 /*
@@ -279,6 +426,27 @@ struct ShiftLineData
 };
 
 /*
+ * Data struct for longitudinal margin
+ */
+struct MarginData
+{
+  Pose pose{};
+
+  bool enough_lateral_margin{true};
+
+  double longitudinal_distance{std::numeric_limits<double>::max()};
+
+  double longitudinal_margin{std::numeric_limits<double>::lowest()};
+
+  double vehicle_width;
+
+  double base_link2front;
+
+  double base_link2rear;
+};
+using MarginDataArray = std::vector<MarginData>;
+
+/*
  * Debug information for marker array
  */
 struct DebugData
@@ -287,24 +455,42 @@ struct DebugData
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
   std::shared_ptr<lanelet::ConstLineStrings3d> farthest_linestring_from_overhang;
 
-  AvoidPointArray current_shift_points;  // in path shifter
-  AvoidPointArray new_shift_points;      // in path shifter
+  AvoidLineArray current_shift_lines;  // in path shifter
+  AvoidLineArray new_shift_lines;      // in path shifter
 
-  AvoidPointArray registered_raw_shift;
-  AvoidPointArray current_raw_shift;
-  AvoidPointArray extra_return_shift;
+  AvoidLineArray registered_raw_shift;
+  AvoidLineArray current_raw_shift;
+  AvoidLineArray extra_return_shift;
 
-  AvoidPointArray merged;
-  AvoidPointArray trim_similar_grad_shift;
-  AvoidPointArray quantized;
-  AvoidPointArray trim_small_shift;
-  AvoidPointArray trim_similar_grad_shift_second;
-  AvoidPointArray trim_momentary_return;
-  AvoidPointArray trim_too_sharp_shift;
+  AvoidLineArray merged;
+  AvoidLineArray trim_similar_grad_shift;
+  AvoidLineArray quantized;
+  AvoidLineArray trim_small_shift;
+  AvoidLineArray trim_similar_grad_shift_second;
+  AvoidLineArray trim_momentary_return;
+  AvoidLineArray trim_too_sharp_shift;
   std::vector<double> pos_shift;
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
+
+  boost::optional<Pose> stop_pose{boost::none};
+  boost::optional<Pose> slow_pose{boost::none};
+  boost::optional<Pose> feasible_bound{boost::none};
+
+  bool exist_adjacent_objects{false};
+
+  // future pose
+  PathWithLaneId path_with_planned_velocity;
+
+  // margin
+  MarginDataArray margin_data_array;
+
+  // avoidance require objects
+  ObjectDataArray unavoidable_objects;
+
+  // avoidance unsafe objects
+  ObjectDataArray unsafe_objects;
 
   // tmp for plot
   PathWithLaneId center_line;

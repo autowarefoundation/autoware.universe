@@ -46,7 +46,6 @@ public:
   struct DebugData
   {
     bool stop_required;
-    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
 
     geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
@@ -107,9 +106,7 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -138,8 +135,8 @@ private:
   bool checkCollision(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const std::vector<int> & detection_area_lanelet_ids,
-    const std::vector<int> & adjacent_lanelet_ids,
+    const lanelet::ConstLanelets & detection_area_lanelets,
+    const lanelet::ConstLanelets & adjacent_lanelets,
     const std::optional<Polygon2d> & intersection_area,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
@@ -169,7 +166,7 @@ private:
   Polygon2d generateEgoIntersectionLanePolygon(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int start_idx, const double extra_dist, const double ignore_dist) const;
+    const double extra_dist, const double ignore_dist) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
@@ -222,7 +219,7 @@ private:
    * @return true if the given pose belongs to any target lanelet
    */
   bool checkAngleForTargetLanelets(
-    const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids,
+    const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelet_ids,
     const double margin = 0);
 
   /**

@@ -63,6 +63,8 @@ OcclusionSpotModule::OcclusionSpotModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::UNKNOWN);
+
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     debug_data_.detection_type = "occupancy";
     //! occupancy grid limitation( 100 * 100 )
@@ -78,8 +80,7 @@ OcclusionSpotModule::OcclusionSpotModule(
 }
 
 bool OcclusionSpotModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
+  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   if (param_.is_show_processing_time) stop_watch_.tic("total_processing_time");
   debug_data_.resetData();
@@ -182,14 +183,12 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // Note: Consider offset from path start to ego here
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego);
   // apply safe velocity using ebs and pbs deceleration
-  utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
+  utils::applySafeVelocityConsideringPossibleCollision(
+    path, possible_collisions, debug_data_.debug_poses, param_);
+  debug_data_.baselink_to_front = param_.baselink_to_front;
   // these debug topics needs computation resource
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
-  if (param_.is_show_occlusion) {
-    debug_data_.path_interpolated = path_interpolated;
-    debug_data_.path_raw.points = clipped_path.points;
-  }
   DEBUG_PRINT(show_time, "total [ms]: ", stop_watch_.toc("total_processing_time", true));
   return true;
 }

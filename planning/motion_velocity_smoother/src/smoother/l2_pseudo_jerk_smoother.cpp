@@ -106,11 +106,11 @@ bool L2PseudoJerkSmoother::apply(
   // pseudo jerk: d(ai)/ds -> minimize weight * (a1 - a0)^2
   for (unsigned int i = N; i < 2 * N - 1; ++i) {
     unsigned int j = i - N;
-    const double w_x_ds_inv = smooth_weight * (1.0 / std::max(interval_dist_arr.at(j), 0.0001));
-    P(i, i) += w_x_ds_inv * w_x_ds_inv;
-    P(i, i + 1) -= w_x_ds_inv * w_x_ds_inv;
-    P(i + 1, i) -= w_x_ds_inv * w_x_ds_inv;
-    P(i + 1, i + 1) += w_x_ds_inv * w_x_ds_inv;
+    const double w_x_ds_inv = 1.0 / std::max(interval_dist_arr.at(j), 0.0001);
+    P(i, i) += w_x_ds_inv * w_x_ds_inv * smooth_weight;
+    P(i, i + 1) -= w_x_ds_inv * w_x_ds_inv * smooth_weight;
+    P(i + 1, i) -= w_x_ds_inv * w_x_ds_inv * smooth_weight;
+    P(i + 1, i + 1) += w_x_ds_inv * w_x_ds_inv * smooth_weight;
   }
 
   for (unsigned int i = 2 * N; i < 3 * N; ++i) {  // over velocity cost
@@ -208,10 +208,7 @@ bool L2PseudoJerkSmoother::apply(
   //     v_max[i], optval.at(i + N), optval.at(i), optval.at(i + 2 * N), optval.at(i + 3 * N));
   // }
 
-  const int status_val = std::get<3>(result);
-  if (status_val != 1) {
-    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
-  }
+  qp_solver_.logUnsolvedStatus("[motion_velocity_smoother]");
 
   const auto tf2 = std::chrono::system_clock::now();
   const double dt_ms2 =
@@ -221,7 +218,7 @@ bool L2PseudoJerkSmoother::apply(
   return true;
 }
 
-boost::optional<TrajectoryPoints> L2PseudoJerkSmoother::resampleTrajectory(
+TrajectoryPoints L2PseudoJerkSmoother::resampleTrajectory(
   const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,
   const double nearest_dist_threshold, const double nearest_yaw_threshold) const
 {

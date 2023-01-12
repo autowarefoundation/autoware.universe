@@ -15,6 +15,7 @@
 #include "map_based_prediction/map_based_prediction_node.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
+#include <motion_utils/resample/resample.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
@@ -37,17 +38,6 @@
 
 namespace map_based_prediction
 {
-namespace
-{
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-  }
-  return ss.str();
-}
-
 lanelet::ConstLanelets getLanelets(const map_based_prediction::LaneletsData & data)
 {
   lanelet::ConstLanelets lanelets;
@@ -246,7 +236,6 @@ bool hasPotentialToReach(
 
   return false;
 }
-}  // namespace
 
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
@@ -256,6 +245,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   prediction_sampling_time_interval_ = declare_parameter("prediction_sampling_delta_time", 0.5);
   min_velocity_for_map_based_prediction_ =
     declare_parameter("min_velocity_for_map_based_prediction", 1.0);
+  min_crosswalk_user_velocity_ = declare_parameter("min_crosswalk_user_velocity", 1.0);
   dist_threshold_for_searching_lanelet_ =
     declare_parameter("dist_threshold_for_searching_lanelet", 3.0);
   delta_yaw_threshold_for_searching_lanelet_ =
@@ -274,8 +264,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
 
   path_generator_ = std::make_shared<PathGenerator>(
-    prediction_time_horizon_, prediction_sampling_time_interval_,
-    min_velocity_for_map_based_prediction_);
+    prediction_time_horizon_, prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,
@@ -364,7 +353,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   visualization_msgs::msg::MarkerArray debug_markers;
 
   for (const auto & object : in_objects->objects) {
-    std::string object_id = toHexString(object.object_id);
+    std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
     TrackedObject transformed_object = object;
 
     // transform object frame if it's based on map frame
@@ -463,6 +452,9 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       for (const auto & ref_path : ref_paths) {
         PredictedPath predicted_path =
           path_generator_->generatePathForOnLaneVehicle(transformed_object, ref_path.path);
+        if (predicted_path.path.empty()) {
+          continue;
+        }
         predicted_path.confidence = ref_path.probability;
 
         predicted_paths.push_back(predicted_path);
@@ -528,7 +520,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     if (hasPotentialToReach(
           object, entry_point.first, std::numeric_limits<double>::max(),
-          min_velocity_for_map_based_prediction_)) {
+          min_crosswalk_user_velocity_)) {
       PredictedPath predicted_path =
         path_generator_->generatePathToTargetPoint(object, entry_point.first);
       predicted_path.confidence = 1.0;
@@ -537,7 +529,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     if (hasPotentialToReach(
           object, entry_point.second, std::numeric_limits<double>::max(),
-          min_velocity_for_map_based_prediction_)) {
+          min_crosswalk_user_velocity_)) {
       PredictedPath predicted_path =
         path_generator_->generatePathToTargetPoint(object, entry_point.second);
       predicted_path.confidence = 1.0;
@@ -555,7 +547,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       if (hasPotentialToReach(
             object, entry_point.first, prediction_time_horizon_ * 2.0,
-            min_velocity_for_map_based_prediction_)) {
+            min_crosswalk_user_velocity_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, entry_point.first);
         predicted_path.confidence = 1.0;
@@ -564,7 +556,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       if (hasPotentialToReach(
             object, entry_point.second, prediction_time_horizon_ * 2.0,
-            min_velocity_for_map_based_prediction_)) {
+            min_crosswalk_user_velocity_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, entry_point.second);
         predicted_path.confidence = 1.0;
@@ -577,11 +569,9 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       const auto entry_point = getCrosswalkEntryPoint(crosswalk);
 
       const auto reachable_first = hasPotentialToReach(
-        object, entry_point.first, prediction_time_horizon_,
-        min_velocity_for_map_based_prediction_);
+        object, entry_point.first, prediction_time_horizon_, min_crosswalk_user_velocity_);
       const auto reachable_second = hasPotentialToReach(
-        object, entry_point.second, prediction_time_horizon_,
-        min_velocity_for_map_based_prediction_);
+        object, entry_point.second, prediction_time_horizon_, min_crosswalk_user_velocity_);
 
       if (!reachable_first && !reachable_second) {
         continue;
@@ -589,7 +579,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       const auto reachable_crosswalk = isReachableEntryPoint(
         object, entry_point, lanelet_map_ptr_, prediction_time_horizon_,
-        min_velocity_for_map_based_prediction_);
+        min_crosswalk_user_velocity_);
 
       if (!reachable_crosswalk) {
         continue;
@@ -746,7 +736,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 
   // If the object is in the objects history, we check if the target lanelet is
   // inside the current lanelets id or following lanelets
-  const std::string object_id = toHexString(object.object_id);
+  const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
   if (objects_history_.count(object_id) != 0) {
     const std::vector<lanelet::ConstLanelet> & possible_lanelet =
       objects_history_.at(object_id).back().future_possible_lanelets;
@@ -819,7 +809,7 @@ void MapBasedPredictionNode::updateObjectsHistory(
   const std_msgs::msg::Header & header, const TrackedObject & object,
   const LaneletsData & current_lanelets_data)
 {
-  std::string object_id = toHexString(object.object_id);
+  std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
   const auto current_lanelets = getLanelets(current_lanelets_data);
 
   ObjectData single_object_data;
@@ -847,44 +837,33 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
   const double object_detected_time)
 {
-  const double delta_horizon = 1.0;
   const double obj_vel = std::fabs(object.kinematics.twist_with_covariance.twist.linear.x);
 
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
+    // parameter for lanelet::routing::PossiblePathsParams
+    const double search_dist = prediction_time_horizon_ * obj_vel +
+                               lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+    lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
+
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     if (!!opt_left) {
-      for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-        const double search_dist = horizon * obj_vel + 10.0;
-        lanelet::routing::LaneletPaths tmp_paths =
-          routing_graph_ptr_->possiblePaths(*opt_left, search_dist, 0, false);
-        addValidPath(tmp_paths, left_paths);
-      }
+      left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     if (!!opt_right) {
-      for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-        const double search_dist = horizon * obj_vel + 10.0;
-        lanelet::routing::LaneletPaths tmp_paths =
-          routing_graph_ptr_->possiblePaths(*opt_right, search_dist, 0, false);
-        addValidPath(tmp_paths, right_paths);
-      }
+      right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     }
 
     // Step1.3 Get the centerline
-    lanelet::routing::LaneletPaths center_paths;
-    for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-      const double search_dist = horizon * obj_vel + 10.0;
-      lanelet::routing::LaneletPaths tmp_paths =
-        routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, search_dist, 0, false);
-      addValidPath(tmp_paths, center_paths);
-    }
+    lanelet::routing::LaneletPaths center_paths =
+      routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
@@ -912,32 +891,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   return all_ref_paths;
 }
 
-void MapBasedPredictionNode::addValidPath(
-  const lanelet::routing::LaneletPaths & candidate_paths,
-  lanelet::routing::LaneletPaths & valid_paths)
-{
-  // Check if candidate paths are already in the valid paths
-  for (const auto & candidate_path : candidate_paths) {
-    bool already_searched = false;
-    for (const auto & valid_path : valid_paths) {
-      for (const auto & llt : valid_path) {
-        if (candidate_path.back().id() == llt.id()) {
-          already_searched = true;
-        }
-      }
-    }
-    if (!already_searched) {
-      valid_paths.push_back(candidate_path);
-    }
-  }
-}
-
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
   const double object_detected_time)
 {
   // Step1. Check if we have the object in the buffer
-  const std::string object_id = toHexString(object.object_id);
+  const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
   if (objects_history_.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
@@ -1096,7 +1055,7 @@ double MapBasedPredictionNode::calcLeftLateralOffset(
 void MapBasedPredictionNode::updateFuturePossibleLanelets(
   const TrackedObject & object, const lanelet::routing::LaneletPaths & paths)
 {
-  std::string object_id = toHexString(object.object_id);
+  std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
   if (objects_history_.count(object_id) == 0) {
     return;
   }
@@ -1216,8 +1175,7 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
         lanelet::ConstLanelet prev_lanelet = prev_lanelets.front();
         for (const auto & lanelet_p : prev_lanelet.centerline()) {
           geometry_msgs::msg::Pose current_p;
-          current_p.position =
-            tier4_autoware_utils::createPoint(lanelet_p.x(), lanelet_p.y(), lanelet_p.z());
+          current_p.position = lanelet::utils::conversion::toGeomMsgPt(lanelet_p);
           const double lane_yaw = lanelet::utils::getLaneletAngle(prev_lanelet, current_p.position);
           current_p.orientation = tier4_autoware_utils::createQuaternionFromYaw(lane_yaw);
           converted_path.push_back(current_p);
@@ -1228,8 +1186,7 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
     for (const auto & lanelet : path) {
       for (const auto & lanelet_p : lanelet.centerline()) {
         geometry_msgs::msg::Pose current_p;
-        current_p.position =
-          tier4_autoware_utils::createPoint(lanelet_p.x(), lanelet_p.y(), lanelet_p.z());
+        current_p.position = lanelet::utils::conversion::toGeomMsgPt(lanelet_p);
         const double lane_yaw = lanelet::utils::getLaneletAngle(lanelet, current_p.position);
         current_p.orientation = tier4_autoware_utils::createQuaternionFromYaw(lane_yaw);
 
@@ -1247,68 +1204,12 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
     }
 
     // Resample Path
-    const auto resampled_converted_path = resamplePath(converted_path);
+    const auto resampled_converted_path =
+      motion_utils::resamplePoseVector(converted_path, reference_path_resolution_);
     converted_paths.push_back(resampled_converted_path);
   }
 
   return converted_paths;
-}
-
-PosePath MapBasedPredictionNode::resamplePath(const PosePath & base_path) const
-{
-  std::vector<double> base_s(base_path.size());
-  std::vector<double> base_x(base_path.size());
-  std::vector<double> base_y(base_path.size());
-  std::vector<double> base_z(base_path.size());
-  for (size_t i = 0; i < base_path.size(); ++i) {
-    base_x.at(i) = base_path.at(i).position.x;
-    base_y.at(i) = base_path.at(i).position.y;
-    base_z.at(i) = base_path.at(i).position.z;
-    base_s.at(i) = motion_utils::calcSignedArcLength(base_path, 0, i);
-  }
-  const double base_path_len = base_s.back();
-
-  std::vector<double> resampled_s;
-  for (double s = 0.0; s <= base_path_len; s += reference_path_resolution_) {
-    resampled_s.push_back(s);
-  }
-
-  if (resampled_s.empty()) {
-    return base_path;
-  }
-
-  // Insert End Point
-  const double epsilon = 0.01;
-  if (std::fabs(resampled_s.back() - base_path_len) < epsilon) {
-    resampled_s.back() = base_path_len;
-  } else {
-    resampled_s.push_back(base_path_len);
-  }
-
-  if (resampled_s.size() < 2) {
-    return base_path;
-  }
-
-  const auto resampled_x = interpolation::lerp(base_s, base_x, resampled_s);
-  const auto resampled_y = interpolation::lerp(base_s, base_y, resampled_s);
-  const auto resampled_z = interpolation::lerp(base_s, base_z, resampled_s);
-
-  PosePath resampled_path(resampled_x.size());
-  // Position
-  for (size_t i = 0; i < resampled_path.size(); ++i) {
-    resampled_path.at(i).position =
-      tier4_autoware_utils::createPoint(resampled_x.at(i), resampled_y.at(i), resampled_z.at(i));
-  }
-  // Orientation
-  for (size_t i = 0; i < resampled_path.size() - 1; ++i) {
-    const auto curr_p = resampled_path.at(i).position;
-    const auto next_p = resampled_path.at(i + 1).position;
-    const double yaw = std::atan2(next_p.y - curr_p.y, next_p.x - curr_p.x);
-    resampled_path.at(i).orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
-  }
-  resampled_path.back().orientation = resampled_path.at(resampled_path.size() - 2).orientation;
-
-  return resampled_path;
 }
 
 bool MapBasedPredictionNode::isDuplicated(

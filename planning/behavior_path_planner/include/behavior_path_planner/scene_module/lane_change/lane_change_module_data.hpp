@@ -25,22 +25,36 @@ namespace behavior_path_planner
 {
 struct LaneChangeParameters
 {
-  double lane_change_prepare_duration;
-  double lane_changing_duration;
-  double minimum_lane_change_prepare_distance;
-  double lane_change_finish_judge_buffer;
-  double minimum_lane_change_velocity;
-  double prediction_time_resolution;
-  double maximum_deceleration;
-  int lane_change_sampling_num;
-  double abort_lane_change_velocity_thresh;
-  double abort_lane_change_angle_thresh;
-  double abort_lane_change_distance_thresh;
-  bool enable_abort_lane_change;
-  bool enable_collision_check_at_prepare_phase;
-  bool use_predicted_path_outside_lanelet;
-  bool use_all_predicted_path;
-  bool publish_debug_marker;
+  // trajectory generation
+  double lane_change_prepare_duration{2.0};
+  double lane_changing_safety_check_duration{4.0};
+  double lane_changing_lateral_jerk{0.5};
+  double lane_changing_lateral_acc{0.5};
+  double lane_change_finish_judge_buffer{3.0};
+  double minimum_lane_change_velocity{5.6};
+  double prediction_time_resolution{0.5};
+  double maximum_deceleration{1.0};
+  int lane_change_sampling_num{10};
+
+  // collision check
+  bool enable_collision_check_at_prepare_phase{true};
+  double prepare_phase_ignore_target_speed_thresh{0.1};
+  bool use_predicted_path_outside_lanelet{false};
+  bool use_all_predicted_path{false};
+
+  // abort
+  bool enable_cancel_lane_change{true};
+  bool enable_abort_lane_change{false};
+
+  double abort_delta_time{3.0};
+  double abort_max_lateral_jerk{10.0};
+
+  // drivable area expansion
+  double drivable_area_right_bound_offset{0.0};
+  double drivable_area_left_bound_offset{0.0};
+
+  // debug marker
+  bool publish_debug_marker{false};
 };
 
 struct LaneChangeStatus
@@ -53,6 +67,21 @@ struct LaneChangeStatus
   std::vector<uint64_t> lane_change_lane_ids;
   bool is_safe;
   double start_distance;
+};
+
+enum class LaneChangeStates {
+  Normal = 0,
+  Cancel,
+  Abort,
+  Stop,
+};
+
+struct LaneChangePhaseInfo
+{
+  double prepare{0.0};
+  double lane_changing{0.0};
+
+  [[nodiscard]] double sum() const { return prepare + lane_changing; }
 };
 }  // namespace behavior_path_planner
 

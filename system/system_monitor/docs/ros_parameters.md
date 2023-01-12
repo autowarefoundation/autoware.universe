@@ -61,14 +61,14 @@ mem_monitor:
 
 net_monitor:
 
-| Name                              |     Type     |  Unit   | Default | Notes                                                                                                                                                |
-| :-------------------------------- | :----------: | :-----: | :-----: | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| devices                           | list[string] |   n/a   |  none   | The name of network interface to monitor. (e.g. eth0, \* for all network interfaces)                                                                 |
-| usage_warn                        |    float     | %(1e-2) |  0.95   | Generates warning when network usage reaches a specified value or higher.                                                                            |
-| crc_error_check_duration          |     int      |   sec   |    1    | CRC error check duration.                                                                                                                            |
-| crc_error_count_threshold         |     int      |   n/a   |    1    | Generates warning when count of CRC errors during CRC error check duration reaches a specified value or higher.                                      |
-| reassembles_failed_check_duration |     int      |   sec   |    1    | IP packet reassembles failed check duration.                                                                                                         |
-| reassembles_failed_check_count    |     int      |   n/a   |    1    | Generates warning when count of IP packet reassembles failed during IP packet reassembles failed check duration reaches a specified value or higher. |
+| Name                              |     Type     | Unit |  Default   | Notes                                                                                                                                                |
+| :-------------------------------- | :----------: | :--: | :--------: | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| devices                           | list[string] | n/a  |    none    | The name of network interface to monitor. (e.g. eth0, \* for all network interfaces)                                                                 |
+| monitor_program                   |    string    | n/a  | greengrass | program name to be monitored by nethogs name.                                                                                                        |
+| crc_error_check_duration          |     int      | sec  |     1      | CRC error check duration.                                                                                                                            |
+| crc_error_count_threshold         |     int      | n/a  |     1      | Generates warning when count of CRC errors during CRC error check duration reaches a specified value or higher.                                      |
+| reassembles_failed_check_duration |     int      | sec  |     1      | IP packet reassembles failed check duration.                                                                                                         |
+| reassembles_failed_check_count    |     int      | n/a  |     1      | Generates warning when count of IP packet reassembles failed during IP packet reassembles failed check duration reaches a specified value or higher. |
 
 ## <u>NTP Monitor</u>
 
@@ -100,3 +100,13 @@ gpu_monitor:
 | gpu_usage_error    | float | %(1e-2) |  1.00   | Generates error when GPU usage reaches a specified value or higher.          |
 | memory_usage_warn  | float | %(1e-2) |  0.90   | Generates warning when GPU memory usage reaches a specified value or higher. |
 | memory_usage_error | float | %(1e-2) |  1.00   | Generates error when GPU memory usage reaches a specified value or higher.   |
+
+## <u>Voltage Monitor</u>
+
+voltage_monitor:
+
+| Name               |  Type  | Unit | Default | Notes                                                                           |
+| :----------------- | :----: | :--: | :-----: | :------------------------------------------------------------------------------ |
+| cmos_battery_warn  | float  | volt |   2.9   | Generates warning when voltage of CMOS Battery is lower.                        |
+| cmos_battery_error | float  | volt |   2.7   | Generates error when voltage of CMOS Battery is lower.                          |
+| cmos_battery_label | string | n/a  |   ""    | voltage string in sensors command outputs. if empty no voltage will be checked. |

@@ -41,7 +41,8 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("BicycleTracker")),
   last_update_time_(time),
@@ -214,37 +215,57 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   return true;
 }
 
+/**
+ * @brief measurement update with ekf on receiving detected_object
+ *
+ * @param object : Detected object
+ * @return bool : measurement is updatable
+ */
 bool BicycleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  constexpr int dim_y = 2;  // pos x, pos y, depending on Pose output
-  // double measurement_yaw =
-  //   tier4_autoware_utils::normalizeRadian(tf2::getYaw(object.state.pose_covariance.pose.orientation));
-  // {
-  //   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  //   ekf_.getX(X_t);
-  //   while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
-  //     measurement_yaw = measurement_yaw + M_PI;
-  //   }
-  //   while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
-  //     measurement_yaw = measurement_yaw - M_PI;
-  //   }
-  //   float theta = std::acos(
-  //     std::cos(X_t(IDX::YAW)) * std::cos(measurement_yaw) +
-  //     std::sin(X_t(IDX::YAW)) * std::sin(measurement_yaw));
-  //   if (tier4_autoware_utils::deg2rad(60) < std::fabs(theta)) return false;
-  // }
+  // yaw measurement
+  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
+    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
+
+  // prediction
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  ekf_.getX(X_t);
+
+  // validate if orientation is available
+  bool use_orientation_information = false;
+  if (
+    object.kinematics.orientation_availability ==
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {  // has 180 degree
+                                                                                   // uncertainty
+    // fix orientation
+    while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
+      measurement_yaw = measurement_yaw + M_PI;
+    }
+    while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
+      measurement_yaw = measurement_yaw - M_PI;
+    }
+    use_orientation_information = true;
+
+  } else if (
+    object.kinematics.orientation_availability ==
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {  // know full angle
+
+    use_orientation_information = true;
+  }
+
+  const int dim_y =
+    use_orientation_information ? 3 : 2;  // pos x, pos y, (pos yaw) depending on Pose output
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
-  Y << object.kinematics.pose_with_covariance.pose.position.x,
-    object.kinematics.pose_with_covariance.pose.position.y;
+  Y(IDX::X, 0) = object.kinematics.pose_with_covariance.pose.position.x;
+  Y(IDX::Y, 0) = object.kinematics.pose_with_covariance.pose.position.y;
 
   /* Set measurement matrix */
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   C(0, IDX::X) = 1.0;  // for pos x
   C(1, IDX::Y) = 1.0;  // for pos y
-  // C(2, IDX::YAW) = 1.0;  // for yaw
 
   /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
@@ -254,18 +275,32 @@ bool BicycleTracker::measureWithPose(
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
     R(1, 0) = R(0, 1);              // y - x
-    // R(2, 2) = ekf_params_.r_cov_yaw;                        // yaw - yaw
   } else {
     R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    // R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
     R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
     R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    // R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
-    // R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
-    // R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
-    // R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
+
+  // if there are orientation available
+  if (dim_y == 3) {
+    // fill yaw observation and measurement matrix
+    Y(IDX::YAW, 0) = measurement_yaw;
+    C(2, IDX::YAW) = 1.0;
+
+    // fill yaw covariance
+    if (!object.kinematics.has_position_covariance) {
+      R(2, 2) = ekf_params_.r_cov_yaw;  // yaw - yaw
+    } else {
+      R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
+      R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
+      R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
+      R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
+      R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    }
+  }
+
+  // update with ekf
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
@@ -301,15 +336,16 @@ bool BicycleTracker::measureWithShape(
   }
   constexpr float gain = 0.9;
 
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.x;
-  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.y;
+  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
   bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
 
   return true;
 }
 
 bool BicycleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 {
   const auto & current_classification = getClassification();
   object_ = object;
@@ -400,8 +436,8 @@ bool BicycleTracker::getTrackedObject(
   twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
 
   // set shape
-  object.shape.dimensions.x = bounding_box_.width;
-  object.shape.dimensions.y = bounding_box_.length;
+  object.shape.dimensions.x = bounding_box_.length;
+  object.shape.dimensions.y = bounding_box_.width;
   object.shape.dimensions.z = bounding_box_.height;
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);

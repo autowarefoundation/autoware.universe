@@ -26,15 +26,15 @@
 namespace image_projection_based_fusion
 {
 
-PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & options)
+PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>("pointpainting_fusion", options)
 {
   const float score_threshold =
     static_cast<float>(this->declare_parameter<double>("score_threshold", 0.4));
   const float circle_nms_dist_threshold =
     static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", 1.5));
-  const float yaw_norm_threshold =
-    static_cast<float>(this->declare_parameter<double>("yaw_norm_threshold", 0.5));
+  const auto yaw_norm_thresholds =
+    this->declare_parameter<std::vector<double>>("yaw_norm_thresholds");
   // densification param
   const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
@@ -63,6 +63,18 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
 
+  std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> sub_callback =
+    std::bind(&PointPaintingFusionNode::subCallback, this, std::placeholders::_1);
+  sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
+
+  tan_h_.resize(rois_number_);
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    auto fx = camera_info_map_[roi_i].k.at(0);
+    auto x0 = camera_info_map_[roi_i].k.at(2);
+    tan_h_[roi_i] = x0 / fx;
+  }
+
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
@@ -73,18 +85,16 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   centerpoint::CenterPointConfig config(
     class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_threshold);
+    yaw_norm_thresholds);
 
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
 
-  // sub and pub
-  sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
   obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 }
 
-void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
   sensor_msgs::msg::PointCloud2 tmp;
   tmp = painted_pointcloud_msg;
@@ -131,9 +141,10 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     static_cast<uint32_t>(painted_pointcloud_msg.data.size() / painted_pointcloud_msg.height);
 }
 
-void PointpaintingFusionNode::fuseOnSingleImage(
+void PointPaintingFusionNode::fuseOnSingleImage(
   __attribute__((unused)) const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  const std::size_t image_id, const DetectedObjectsWithFeature & input_roi_msg,
+  __attribute__((unused)) const std::size_t image_id,
+  const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info,
   sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
@@ -164,16 +175,17 @@ void PointpaintingFusionNode::fuseOnSingleImage(
   tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
   // iterate points
-  sensor_msgs::PointCloud2Iterator<float> iter_painted_intensity(
-    painted_pointcloud_msg, "intensity");
   sensor_msgs::PointCloud2Iterator<float> iter_car(painted_pointcloud_msg, "CAR");
   sensor_msgs::PointCloud2Iterator<float> iter_ped(painted_pointcloud_msg, "PEDESTRIAN");
   sensor_msgs::PointCloud2Iterator<float> iter_bic(painted_pointcloud_msg, "BICYCLE");
+
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_pointcloud, "x"),
        iter_y(transformed_pointcloud, "y"), iter_z(transformed_pointcloud, "z");
-       iter_x != iter_x.end();
-       ++iter_x, ++iter_y, ++iter_z, ++iter_painted_intensity, ++iter_car, ++iter_ped, ++iter_bic) {
-    if (*iter_z <= 0.0) {
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++iter_car, ++iter_ped, ++iter_bic) {
+    // filter the points outside of the horizontal field of view
+    if (
+      *iter_z <= 0.0 || (*iter_x / *iter_z) > tan_h_.at(image_id) ||
+      (*iter_x / *iter_z) < -tan_h_.at(image_id)) {
       continue;
     }
     // project
@@ -216,6 +228,8 @@ void PointpaintingFusionNode::fuseOnSingleImage(
             *iter_bic = 1.0;
             break;
         }
+      }
+      if (debugger_) {
         debug_image_points.push_back(normalized_projected_point);
       }
     }
@@ -231,7 +245,7 @@ void PointpaintingFusionNode::fuseOnSingleImage(
   }
 }
 
-void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
   std::vector<centerpoint::Box3D> det_boxes3d;
   bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
@@ -250,17 +264,14 @@ void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     output_obj_msg.objects.emplace_back(obj);
   }
 
-  detection_class_remapper_.mapClasses(output_obj_msg);
-
   obj_pub_ptr_->publish(output_obj_msg);
 }
 
-bool PointpaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
+bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
 {
   return false;
 }
-
 }  // namespace image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::PointpaintingFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::PointPaintingFusionNode)

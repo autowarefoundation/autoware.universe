@@ -17,11 +17,12 @@
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/route.hpp>
 #include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
-#include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <autoware_planning_msgs/srv/set_route.hpp>
 
 namespace planning_interface
 {
@@ -34,7 +35,7 @@ struct SetRoutePoints
 
 struct SetRoute
 {
-  using Service = autoware_adapi_v1_msgs::srv::SetRoute;
+  using Service = autoware_planning_msgs::srv::SetRoute;
   static constexpr char name[] = "/planning/mission_planning/set_route";
 };
 
@@ -55,11 +56,20 @@ struct RouteState
 
 struct Route
 {
-  using Message = autoware_adapi_v1_msgs::msg::Route;
+  using Message = autoware_planning_msgs::msg::LaneletRoute;
   static constexpr char name[] = "/planning/mission_planning/route";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+};
+
+struct Trajectory
+{
+  using Message = autoware_auto_planning_msgs::msg::Trajectory;
+  static constexpr char name[] = "/planning/scenario_planning/trajectory";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
 }  // namespace planning_interface

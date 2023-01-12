@@ -87,7 +87,7 @@ public:
     TrajectoryDebugInfo data;
     data.stamp = node_->now();
     data.size = points.size();
-    data.curvature = calcCurvature(points);
+    data.curvature = motion_utils::calcCurvature(points);
     const auto arclength_offset = motion_utils::calcSignedArcLength(points, 0, ego_p);
     data.arclength = calcPathArcLengthArray(points, -arclength_offset);
     data.velocity = getVelocityArray(points);
@@ -116,7 +116,7 @@ private:
   void onEgoKinematics(const Odometry::ConstSharedPtr msg);
 
   std::vector<std::shared_ptr<TrajectoryAnalyzer<Path>>> path_analyzers_;
-  std::vector<std::shared_ptr<TrajectoryAnalyzer<PathWithLaneId>>> path_wlid_analyzers_;
+  std::vector<std::shared_ptr<TrajectoryAnalyzer<PathWithLaneId>>> path_with_lane_id_analyzers_;
   std::vector<std::shared_ptr<TrajectoryAnalyzer<Trajectory>>> trajectory_analyzers_;
 };
 

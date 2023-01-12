@@ -28,8 +28,8 @@ ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_option
   using std::placeholders::_2;
 
   // Parameter
-  double update_rate = declare_parameter("update_rate", 10.0);
-  std::string initial_selector_mode = declare_parameter("initial_selector_mode", "local");
+  double update_rate = declare_parameter<double>("update_rate");
+  std::string initial_selector_mode = declare_parameter<std::string>("initial_selector_mode");
 
   // Publisher
   pub_current_selector_mode_ =
@@ -185,7 +185,11 @@ bool ExternalCmdSelector::onSelectExternalCommandService(
   return true;
 }
 
-void ExternalCmdSelector::onTimer() { pub_current_selector_mode_->publish(current_selector_mode_); }
+void ExternalCmdSelector::onTimer()
+{
+  pub_current_selector_mode_->publish(current_selector_mode_);
+  updater_.force_update();
+}
 
 ExternalCmdSelector::InternalGearShift ExternalCmdSelector::convert(
   const ExternalGearShift & command)

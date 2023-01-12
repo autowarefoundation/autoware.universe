@@ -4,6 +4,9 @@ project(lidar_centerpoint)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+# TODO(lidar_centerpoint): Remove once upgrading to TensorRT 8.5 is complete
+add_compile_options(-Wno-deprecated-declarations)
+
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 # set flags for CUDA availability
@@ -70,12 +73,12 @@ message(STATUS "start to download")
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 # Download trained models
   set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
-  set(DONWLOAD_BASE_URL https://awf.ml.dev.web.auto/perception/models/centerpoint)
+  set(DOWNLOAD_BASE_URL https://awf.ml.dev.web.auto/perception/models/centerpoint)
   execute_process(COMMAND mkdir -p ${DATA_PATH})
 
   function(download VERSION FILE_NAME FILE_HASH)
     message(STATUS "Checking and downloading ${FILE_NAME} ")
-    set(DOWNLOAD_URL ${DONWLOAD_BASE_URL}/${VERSION}/${FILE_NAME})
+    set(DOWNLOAD_URL ${DOWNLOAD_BASE_URL}/${VERSION}/${FILE_NAME})
     set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
     set(STATUS_CODE 0)
     message(STATUS "start ${FILE_NAME}")
@@ -107,12 +110,12 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   endfunction()
 
   # centerpoint
-  download(v1 pts_voxel_encoder_centerpoint.onnx 94dcf01ccd53ef14a79787afaada63b4)
-  download(v1 pts_backbone_neck_head_centerpoint.onnx 7046995e502e11f35c9459668d8afde3)
+  download(v2 pts_voxel_encoder_centerpoint.onnx e8369d7e0f59951cf87c0274830de1fe)
+  download(v2 pts_backbone_neck_head_centerpoint.onnx 44e44d26781a69c741bf9bddde57fbb3)
 
   # centerpoint_tiny
-  download(v1 pts_voxel_encoder_centerpoint_tiny.onnx 410f730c537968cb27fbd70c941849a8)
-  download(v1 pts_backbone_neck_head_centerpoint_tiny.onnx e97c165c7877222c0e27e44409a07517)
+  download(v2 pts_voxel_encoder_centerpoint_tiny.onnx 5fb774fac44dc83949d05eb3ba077309)
+  download(v2 pts_backbone_neck_head_centerpoint_tiny.onnx e4658325b70222f7c3637fe00e586b82)
 
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
@@ -130,6 +133,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     lib/ros_utils.cpp
     lib/network/network_trt.cpp
     lib/network/tensorrt_wrapper.cpp
+    lib/postprocess/non_maximum_suppression.cpp
     lib/preprocess/pointcloud_densification.cpp
     lib/preprocess/voxel_generator.cpp
   )
@@ -177,6 +181,27 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     PLUGIN "centerpoint::LidarCenterPointNode"
     EXECUTABLE lidar_centerpoint_node
   )
+
+  ## single inference node ##
+  ament_auto_add_library(single_inference_lidar_centerpoint_component SHARED
+    src/single_inference_node.cpp
+  )
+
+  target_link_libraries(single_inference_lidar_centerpoint_component
+    centerpoint_lib
+  )
+
+  rclcpp_components_register_node(single_inference_lidar_centerpoint_component
+    PLUGIN "centerpoint::SingleInferenceLidarCenterPointNode"
+    EXECUTABLE single_inference_lidar_centerpoint_node
+  )
+
+  install(PROGRAMS
+    scripts/lidar_centerpoint_visualizer.py
+    DESTINATION lib/${PROJECT_NAME}
+  )
+
+  ament_export_dependencies(ament_cmake_python)
 
   ament_auto_package(
     INSTALL_TO_SHARE

@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace motion_utils
@@ -347,6 +348,43 @@ boost::optional<size_t> findNearestSegmentIndex(
  */
 template <class T>
 double calcLateralOffset(
+  const T & points, const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
+  const bool throw_exception = false)
+{
+  const auto overlap_removed_points = removeOverlapPoints(points, 0);
+
+  if (throw_exception) {
+    validateNonEmpty(overlap_removed_points);
+  } else {
+    try {
+      validateNonEmpty(overlap_removed_points);
+    } catch (const std::exception & e) {
+      std::cerr << e.what() << std::endl;
+      return std::nan("");
+    }
+  }
+
+  if (overlap_removed_points.size() == 1) {
+    const std::runtime_error e("Same points are given.");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return std::nan("");
+  }
+
+  const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx));
+  const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
+
+  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
+  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
+
+  const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
+  return cross_vec(2) / segment_vec.norm();
+}
+
+template <class T>
+double calcLateralOffset(
   const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false)
 {
   const auto overlap_removed_points = removeOverlapPoints(points, 0);
@@ -372,15 +410,7 @@ double calcLateralOffset(
   }
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, p_target);
-
-  const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx));
-  const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
-
-  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
-  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
-
-  const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
-  return cross_vec(2) / segment_vec.norm();
+  return calcLateralOffset(points, p_target, seg_idx, throw_exception);
 }
 
 /**
@@ -549,6 +579,43 @@ double calcArcLength(const T & points)
   }
 
   return calcSignedArcLength(points, 0, points.size() - 1);
+}
+
+template <class T>
+inline std::vector<double> calcCurvature(const T & points)
+{
+  std::vector<double> curvature_vec(points.size());
+
+  for (size_t i = 1; i < points.size() - 1; ++i) {
+    const auto p1 = tier4_autoware_utils::getPoint(points.at(i - 1));
+    const auto p2 = tier4_autoware_utils::getPoint(points.at(i));
+    const auto p3 = tier4_autoware_utils::getPoint(points.at(i + 1));
+    curvature_vec.at(i) = (tier4_autoware_utils::calcCurvature(p1, p2, p3));
+  }
+  curvature_vec.at(0) = curvature_vec.at(1);
+  curvature_vec.at(curvature_vec.size() - 1) = curvature_vec.at(curvature_vec.size() - 2);
+
+  return curvature_vec;
+}
+
+template <class T>
+inline std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T & points)
+{
+  // Note that arclength is for the segment, not the sum.
+  std::vector<std::pair<double, double>> curvature_arc_length_vec;
+  curvature_arc_length_vec.push_back(std::pair(0.0, 0.0));
+  for (size_t i = 1; i < points.size() - 1; ++i) {
+    const auto p1 = tier4_autoware_utils::getPoint(points.at(i - 1));
+    const auto p2 = tier4_autoware_utils::getPoint(points.at(i));
+    const auto p3 = tier4_autoware_utils::getPoint(points.at(i + 1));
+    const double curvature = tier4_autoware_utils::calcCurvature(p1, p2, p3);
+    const double arc_length = tier4_autoware_utils::calcDistance2d(points.at(i - 1), points.at(i)) +
+                              tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
+    curvature_arc_length_vec.push_back(std::pair(curvature, arc_length));
+  }
+  curvature_arc_length_vec.push_back(std::pair(0.0, 0.0));
+
+  return curvature_arc_length_vec;
 }
 
 /**
@@ -1037,7 +1104,7 @@ inline boost::optional<size_t> insertStopPoint(
   }
 
   for (size_t i = *stop_idx; i < points_with_twist.size(); ++i) {
-    points_with_twist.at(i).longitudinal_velocity_mps = 0.0;
+    tier4_autoware_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
   }
 
   return stop_idx;
@@ -1070,7 +1137,7 @@ inline boost::optional<size_t> insertStopPoint(
   }
 
   for (size_t i = *stop_idx; i < points_with_twist.size(); ++i) {
-    points_with_twist.at(i).longitudinal_velocity_mps = 0.0;
+    tier4_autoware_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
   }
 
   return stop_idx;

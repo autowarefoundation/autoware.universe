@@ -24,10 +24,10 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_velocity_for_map_based_prediction)
+  const double min_crosswalk_user_velocity)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
-  min_velocity_for_map_based_prediction_(min_velocity_for_map_based_prediction)
+  min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
 {
 }
 
@@ -46,8 +46,7 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
 
   const Eigen::Vector2d pedestrian_to_entry_point(point.x() - obj_pos.x, point.y() - obj_pos.y);
-  const auto velocity =
-    std::max(std::hypot(obj_vel.x, obj_vel.y), min_velocity_for_map_based_prediction_);
+  const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   for (double dt = 0.0; dt < arrival_time + ep; dt += sampling_time_interval_) {
@@ -84,8 +83,7 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const Eigen::Vector2d entry_to_exit_point(
     reachable_crosswalk.second.x() - reachable_crosswalk.first.x(),
     reachable_crosswalk.second.y() - reachable_crosswalk.first.y());
-  const auto velocity =
-    std::max(std::hypot(obj_vel.x, obj_vel.y), min_velocity_for_map_based_prediction_);
+  const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   for (double dt = 0.0; dt < time_horizon_ + ep; dt += sampling_time_interval_) {
@@ -112,6 +110,17 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
     if (predicted_path.path.size() >= predicted_path.path.max_size()) {
       break;
     }
+  }
+
+  // calculate orientation of each point
+  if (predicted_path.path.size() >= 2) {
+    for (size_t i = 0; i < predicted_path.path.size() - 1; i++) {
+      const auto yaw = tier4_autoware_utils::calcAzimuthAngle(
+        predicted_path.path.at(i).position, predicted_path.path.at(i + 1).position);
+      predicted_path.path.at(i).orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    }
+    predicted_path.path.back().orientation =
+      predicted_path.path.at(predicted_path.path.size() - 2).orientation;
   }
 
   predicted_path.confidence = 1.0;
@@ -141,8 +150,7 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   const TrackedObject & object, const PosePath & ref_paths)
 {
   if (ref_paths.size() < 2) {
-    const PredictedPath empty_path;
-    return empty_path;
+    return generateStraightPath(object);
   }
 
   return generatePolynomialPath(object, ref_paths);
@@ -192,8 +200,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
 
   if (frenet_predicted_path.size() < 2 || interpolated_ref_path.size() < 2) {
-    const PredictedPath empty_path;
-    return empty_path;
+    return generateStraightPath(object);
   }
 
   // Step4. Convert predicted trajectory from Frenet to Cartesian coordinate

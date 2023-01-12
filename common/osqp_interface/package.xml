@@ -5,13 +5,15 @@
   <version>1.0.0</version>
   <description>Interface for the OSQP solver</description>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
+  <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
+  <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
+  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <license>Apache 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>autoware_auto_common</depend>
   <depend>eigen</depend>
   <depend>osqp_vendor</depend>
   <depend>rclcpp</depend>

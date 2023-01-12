@@ -15,7 +15,6 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 
-#include "common/types.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/visibility_control.hpp"
@@ -24,6 +23,7 @@
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_vehicle_msgs/msg/control_mode_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/engage.hpp"
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
@@ -35,16 +35,16 @@
 #include "autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
+#include "autoware_auto_vehicle_msgs/srv/control_mode_command.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_external_api_msgs/srv/initialize_pose.hpp"
-#include "tier4_vehicle_msgs/msg/control_mode.hpp"
-#include "tier4_vehicle_msgs/srv/control_mode_request.hpp"
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -58,9 +58,6 @@ namespace simulation
 {
 namespace simple_planning_simulator
 {
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-using autoware::common::types::float64_t;
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_geometry_msgs::msg::Complex32;
@@ -76,28 +73,28 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
 using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
+using autoware_auto_vehicle_msgs::srv::ControlModeCommand;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Twist;
+using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::Odometry;
 using tier4_external_api_msgs::srv::InitializePose;
-using tier4_vehicle_msgs::msg::ControlMode;
-using tier4_vehicle_msgs::srv::ControlModeRequest;
 
 class DeltaTime
 {
 public:
   DeltaTime() : prev_updated_time_ptr_(nullptr) {}
-  float64_t get_dt(const rclcpp::Time & now)
+  double get_dt(const rclcpp::Time & now)
   {
     if (prev_updated_time_ptr_ == nullptr) {
       prev_updated_time_ptr_ = std::make_shared<rclcpp::Time>(now);
       return 0.0;
     }
-    const float64_t dt = (now - *prev_updated_time_ptr_).seconds();
+    const double dt = (now - *prev_updated_time_ptr_).seconds();
     *prev_updated_time_ptr_ = now;
     return dt;
   }
@@ -144,10 +141,11 @@ private:
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_ackermann_cmd_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_manual_ackermann_cmd_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;
+  rclcpp::Subscription<TwistStamped>::SharedPtr sub_init_twist_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
   rclcpp::Subscription<Engage>::SharedPtr sub_engage_;
 
-  rclcpp::Service<ControlModeRequest>::SharedPtr srv_mode_req_;
+  rclcpp::Service<ControlModeCommand>::SharedPtr srv_mode_req_;
 
   rclcpp::CallbackGroup::SharedPtr group_api_service_;
   tier4_api_utils::Service<InitializePose>::SharedPtr srv_set_pose_;
@@ -164,6 +162,8 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   /* received & published topics */
+  PoseWithCovarianceStamped::ConstSharedPtr initial_pose_;
+  TwistStamped initial_twist_;
   VelocityReport current_velocity_;
   Odometry current_odometry_;
   SteeringReport current_steer_;
@@ -175,22 +175,22 @@ private:
   HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_;
   Trajectory::ConstSharedPtr current_trajectory_ptr_;
   bool simulate_motion_;  //!< stop vehicle motion simulation if false
-  ControlMode current_control_mode_;
+  ControlModeReport current_control_mode_;
 
   /* frame_id */
   std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
   std::string origin_frame_id_;     //!< @brief map frame_id
 
   /* flags */
-  bool8_t is_initialized_;         //!< @brief flag to check the initial position is set
-  bool8_t add_measurement_noise_;  //!< @brief flag to add measurement noise
+  bool is_initialized_;         //!< @brief flag to check the initial position is set
+  bool add_measurement_noise_;  //!< @brief flag to add measurement noise
 
   DeltaTime delta_time_;  //!< @brief to calculate delta time
 
   MeasurementNoiseGenerator measurement_noise_;  //!< @brief for measurement noise
 
-  float64_t x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
-  float64_t y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
+  double x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
+  double y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
   enum class VehicleModelType {
@@ -229,6 +229,11 @@ private:
   void on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg);
 
   /**
+   * @brief set initial twist for simulation with received message
+   */
+  void on_initialtwist(const TwistStamped::ConstSharedPtr msg);
+
+  /**
    * @brief set initial pose for simulation with received request
    */
   void on_set_pose(
@@ -249,8 +254,8 @@ private:
    * @brief ControlModeRequest server
    */
   void on_control_mode_request(
-    const ControlModeRequest::Request::SharedPtr request,
-    const ControlModeRequest::Response::SharedPtr response);
+    const ControlModeCommand::Request::SharedPtr request,
+    const ControlModeCommand::Response::SharedPtr response);
 
   /**
    * @brief get z-position from trajectory

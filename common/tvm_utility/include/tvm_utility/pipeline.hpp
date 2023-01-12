@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef TVM_UTILITY__PIPELINE_HPP_
+#define TVM_UTILITY__PIPELINE_HPP_
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <tvm_vendor/dlpack/dlpack.h>
@@ -26,11 +29,19 @@
 #include <utility>
 #include <vector>
 
-#ifndef TVM_UTILITY__PIPELINE_HPP_
-#define TVM_UTILITY__PIPELINE_HPP_
-
 namespace tvm_utility
 {
+
+/**
+ * @brief Possible version status for a neural network.
+ */
+enum class Version {
+  OK,
+  Unknown,
+  Untested,
+  Unsupported,
+};
+
 namespace pipeline
 {
 
@@ -113,7 +124,7 @@ class InferenceEngine : public PipelineStage<TVMArrayContainerVector, TVMArrayCo
  * @brief The post processing stage of the inference pipeline. In charge of
  * converting the tensor data from the inference stage into detections in
  * OutputType, usually a ROS message format. Thing such as decoding bounding
- * boxes, non-maximum-supperssion and minimum score filtering should be done in
+ * boxes, non-maximum-suppression and minimum score filtering should be done in
  * this stage.
  *
  * @tparam OutputType The data type of the output of the inference pipeline.
@@ -171,11 +182,25 @@ private:
   PostProcessorType post_processor_{};
 };
 
-// Each node should be specificed with a string name and a shape
-using NetworkNode = std::pair<std::string, std::vector<int64_t>>;
+// NetworkNode
+typedef struct
+{
+  // Node name
+  std::string node_name;
+
+  // Network data type configurations
+  DLDataTypeCode tvm_dtype_code;
+  int32_t tvm_dtype_bits;
+  int32_t tvm_dtype_lanes;
+
+  // Shape info
+  std::vector<int64_t> node_shape;
+} NetworkNode;
+
 typedef struct
 {
   // Network info
+  std::array<char, 3> modelzoo_version;
   std::string network_name;
   std::string network_backend;
 
@@ -183,11 +208,6 @@ typedef struct
   std::string network_module_path;
   std::string network_graph_path;
   std::string network_params_path;
-
-  // Network data type configurations
-  DLDataTypeCode tvm_dtype_code;
-  int32_t tvm_dtype_bits;
-  int32_t tvm_dtype_lanes;
 
   // Inference hardware configuration
   DLDeviceType tvm_device_type;
@@ -203,12 +223,12 @@ typedef struct
 class InferenceEngineTVM : public InferenceEngine
 {
 public:
-  explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config) : config_(config)
+  explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config, const std::string & pkg_name)
+  : config_(config)
   {
     // Get full network path
-    std::string network_prefix =
-      ament_index_cpp::get_package_share_directory("neural_networks_provider") + "/networks/" +
-      config.network_name + "/" + config.network_backend + "/";
+    std::string network_prefix = ament_index_cpp::get_package_share_directory(pkg_name) +
+                                 "/models/" + config.network_name + "/";
     std::string network_module_path = network_prefix + config.network_module_path;
     std::string network_graph_path = network_prefix + config.network_graph_path;
     std::string network_params_path = network_prefix + config.network_params_path;
@@ -266,8 +286,8 @@ public:
 
     for (auto & output_config : config.network_outputs) {
       output_.push_back(TVMArrayContainer(
-        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        kDLCPU, 0));
+        output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
+        output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
     }
   }
 
@@ -278,7 +298,7 @@ public:
       if (input[index].getArray() == nullptr) {
         throw std::runtime_error("input variable is null");
       }
-      set_input(config_.network_inputs[index].first.c_str(), input[index].getArray());
+      set_input(config_.network_inputs[index].node_name.c_str(), input[index].getArray());
     }
 
     // Execute the inference
@@ -294,12 +314,90 @@ public:
     return output_;
   }
 
+  /**
+   * @brief Get version information from the config structure and check if there is a mismatch
+   *        between the supported version(s) and the actual version.
+   * @param[in] version_from Earliest supported model version.
+   * @return The version status.
+   */
+  Version version_check(const std::array<char, 3> & version_from) const
+  {
+    auto x{config_.modelzoo_version[0]};
+    auto y{config_.modelzoo_version[1]};
+    Version ret{Version::OK};
+
+    if (x == 0) {
+      ret = Version::Unknown;
+    } else if (x > version_up_to[0] || (x == version_up_to[0] && y > version_up_to[1])) {
+      ret = Version::Untested;
+    } else if (x < version_from[0] || (x == version_from[0] && y < version_from[1])) {
+      ret = Version::Unsupported;
+    }
+
+    return ret;
+  }
+
 private:
   InferenceEngineTVMConfig config_;
   TVMArrayContainerVector output_;
   tvm::runtime::PackedFunc set_input;
   tvm::runtime::PackedFunc execute;
   tvm::runtime::PackedFunc get_output;
+  // Latest supported model version.
+  const std::array<char, 3> version_up_to{2, 1, 0};
+};
+
+template <
+  class PreProcessorType, class InferenceEngineType, class TVMScriptEngineType,
+  class PostProcessorType>
+class TowStagePipeline
+{
+  using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
+  using OutputType = decltype(std::declval<PostProcessorType>().output_type_indicator_);
+
+public:
+  /**
+   * @brief Construct a new Pipeline object
+   *
+   * @param pre_processor a PreProcessor object
+   * @param post_processor a PostProcessor object
+   * @param inference_engine a InferenceEngine object
+   */
+  TowStagePipeline(
+    std::shared_ptr<PreProcessorType> pre_processor,
+    std::shared_ptr<InferenceEngineType> inference_engine_1,
+    std::shared_ptr<TVMScriptEngineType> tvm_script_engine,
+    std::shared_ptr<InferenceEngineType> inference_engine_2,
+    std::shared_ptr<PostProcessorType> post_processor)
+  : pre_processor_(pre_processor),
+    inference_engine_1_(inference_engine_1),
+    tvm_script_engine_(tvm_script_engine),
+    inference_engine_2_(inference_engine_2),
+    post_processor_(post_processor)
+  {
+  }
+
+  /**
+   * @brief run the pipeline. Return asynchronously in a callback.
+   *
+   * @param input The data to push into the pipeline
+   * @return The pipeline output
+   */
+  OutputType schedule(const InputType & input)
+  {
+    auto input_tensor = pre_processor_->schedule(input);
+    auto output_infer_1 = inference_engine_1_->schedule(input_tensor);
+    auto output_tvm_script = tvm_script_engine_->schedule(output_infer_1);
+    auto output_infer_2 = inference_engine_2_->schedule(output_tvm_script);
+    return post_processor_->schedule(output_infer_2);
+  }
+
+private:
+  std::shared_ptr<PreProcessorType> pre_processor_;
+  std::shared_ptr<InferenceEngineType> inference_engine_1_;
+  std::shared_ptr<TVMScriptEngineType> tvm_script_engine_;
+  std::shared_ptr<InferenceEngineType> inference_engine_2_;
+  std::shared_ptr<PostProcessorType> post_processor_;
 };
 
 }  // namespace pipeline

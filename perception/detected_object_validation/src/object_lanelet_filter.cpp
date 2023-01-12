@@ -55,6 +55,7 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
 void ObjectLaneletFilterNode::mapCallback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
 {
+  lanelet_frame_id_ = map_msg->header.frame_id;
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
   const lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
@@ -64,8 +65,6 @@ void ObjectLaneletFilterNode::mapCallback(
 void ObjectLaneletFilterNode::objectCallback(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-
   // Guard
   if (object_pub_->get_subscription_count() < 1) return;
 
@@ -77,8 +76,9 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!perception_utils::transformObjects(*input_msg, "map", tf_buffer_, transformed_objects)) {
-    RCLCPP_ERROR(get_logger(), "Failed transform to map.");
+  if (!perception_utils::transformObjects(
+        *input_msg, lanelet_frame_id_, tf_buffer_, transformed_objects)) {
+    RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
     return;
   }
 
@@ -90,20 +90,13 @@ void ObjectLaneletFilterNode::objectCallback(
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
     const auto & footprint = object.shape.footprint;
-    const auto & position = object.kinematics.pose_with_covariance.pose.position;
     const auto & label = object.classification.front().label;
-    if (
-      (label == Label::UNKNOWN && filter_target_.UNKNOWN) ||
-      (label == Label::CAR && filter_target_.CAR) ||
-      (label == Label::TRUCK && filter_target_.TRUCK) ||
-      (label == Label::BUS && filter_target_.BUS) ||
-      (label == Label::TRAILER && filter_target_.TRAILER) ||
-      (label == Label::MOTORCYCLE && filter_target_.MOTORCYCLE) ||
-      (label == Label::BICYCLE && filter_target_.BICYCLE) ||
-      (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
+    if (filter_target_.isTarget(label)) {
       Polygon2d polygon;
       for (const auto & point : footprint.points) {
-        polygon.outer().emplace_back(point.x + position.x, point.y + position.y);
+        const geometry_msgs::msg::Point32 point_transformed =
+          tier4_autoware_utils::transformPoint(point, object.kinematics.pose_with_covariance.pose);
+        polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
       }
       polygon.outer().push_back(polygon.outer().front());
       if (isPolygonOverlapLanelets(polygon, intersected_lanelets)) {

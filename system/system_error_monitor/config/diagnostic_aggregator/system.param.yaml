@@ -20,6 +20,12 @@
           contains: [": emergency_stop_operation"]
           timeout: 1.0
 
+        service_log_checker:
+          type: diagnostic_aggregator/GenericAnalyzer
+          path: service_log_checker
+          contains: ["service_log_checker"]
+          timeout: 5.0
+
         resource_monitoring:
           type: diagnostic_aggregator/AnalyzerGroup
           path: resource_monitoring
@@ -128,7 +134,7 @@
                   contains: [": Network Traffic"]
                   timeout: 3.0
 
-                netowork_crc_error:
+                network_crc_error:
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: network_crc_error
                   contains: [": Network CRC Error"]
@@ -224,4 +230,14 @@
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: tasks_summary
                   contains: [": Tasks Summary"]
+                  timeout: 3.0
+
+            hardware:
+              type: diagnostic_aggregator/AnalyzerGroup
+              path: voltage
+              analyzers:
+                cmos_battery:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: cmos_battery
+                  contains: [": CMOS Battery Status"]
                   timeout: 3.0

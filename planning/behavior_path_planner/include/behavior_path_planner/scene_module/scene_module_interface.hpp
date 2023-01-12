@@ -16,12 +16,16 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
+#include <behavior_path_planner/steering_factor_interface.hpp>
+#include <behavior_path_planner/turn_signal_decider.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
@@ -40,31 +44,16 @@
 
 namespace behavior_path_planner
 {
+using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using rtc_interface::RTCInterface;
+using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
-
-struct TurnSignalInfo
-{
-  TurnSignalInfo()
-  {
-    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
-    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
-  }
-
-  // desired turn signal
-  TurnIndicatorsCommand turn_signal;
-  HazardLightsCommand hazard_signal;
-
-  // TODO(Horibe) replace with point. Distance should be calculates in turn_signal_decider.
-  // distance to the turn signal trigger point (to choose nearest signal for multiple requests)
-  double signal_distance{std::numeric_limits<double>::max()};
-};
 
 struct BehaviorModuleOutput
 {
@@ -72,9 +61,6 @@ struct BehaviorModuleOutput
 
   // path planed by module
   PlanResult path{};
-
-  // path candidate planed by module
-  PlanResult path_candidate{};
 
   TurnSignalInfo turn_signal_info{};
 };
@@ -98,7 +84,7 @@ public:
     clock_{node.get_clock()},
     uuid_(generateUUID()),
     is_waiting_approval_{false},
-    current_state_{BT::NodeStatus::IDLE}
+    current_state_{BT::NodeStatus::SUCCESS}
   {
     std::string module_ns;
     module_ns.resize(name.size());
@@ -116,6 +102,15 @@ public:
    *        These condition is to be implemented in each modules.
    */
   virtual BT::NodeStatus updateState() = 0;
+
+  /**
+   * @brief If the module plan customized reference path while waiting approval, it should output
+   * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
+   */
+  virtual BT::NodeStatus getNodeStatusWhileWaitingApproval() const
+  {
+    return BT::NodeStatus::FAILURE;
+  }
 
   /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
@@ -141,7 +136,7 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
   }
 
@@ -216,6 +211,14 @@ public:
     return false;
   }
 
+  virtual void publishSteeringFactor()
+  {
+    if (!steering_factor_interface_ptr_) {
+      return;
+    }
+    steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
+  }
+
   /**
    * @brief set planner data
    */
@@ -229,14 +232,28 @@ public:
 
   std::shared_ptr<const PlannerData> planner_data_;
 
-  AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
-  {
-    if (debug_avoidance_msg_array_ptr_) {
-      debug_avoidance_msg_array_ptr_->header.stamp = clock_->now();
-    }
-    return debug_avoidance_msg_array_ptr_;
-  }
   bool isWaitingApproval() const { return is_waiting_approval_; }
+
+  PlanResult getPathCandidate() const { return path_candidate_; }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
+  virtual void lockRTCCommand()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->lockCommandUpdate();
+  }
+
+  virtual void unlockRTCCommand()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->unlockCommandUpdate();
+  }
+  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
 private:
   std::string name_;
@@ -245,12 +262,13 @@ private:
 protected:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
-  mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
+  PlanResult path_candidate_;
 
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {

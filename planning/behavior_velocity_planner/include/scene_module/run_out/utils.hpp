@@ -62,6 +62,9 @@ struct VehicleParam
   float base_to_front;
   float base_to_rear;
   float width;
+  float wheel_tread;
+  double right_overhang;
+  double left_overhang;
 };
 
 struct DetectionArea
@@ -75,9 +78,14 @@ struct ApproachingParam
   bool enable;
   float margin;
   float limit_vel_kmph;
+};
+
+struct StateParam
+{
   float stop_thresh;
   float stop_time_thresh;
-  float dist_thresh;
+  float disable_approach_dist;
+  float keep_approach_duration;
 };
 
 struct SlowDownLimit
@@ -99,15 +107,10 @@ struct PlannerParam
   VehicleParam vehicle_param;
   DetectionArea detection_area;
   ApproachingParam approaching;
+  StateParam state_param;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
   Smoother smoother;
-};
-
-enum class State {
-  GO = 0,
-  APPROACH,
-  STOP,
 };
 
 enum class DetectionMethod {

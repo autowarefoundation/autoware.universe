@@ -68,6 +68,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+    p.voxel_grid_x = declare_parameter("voxel_grid_x", 0.05);
+    p.voxel_grid_y = declare_parameter("voxel_grid_y", 0.05);
+    p.voxel_grid_z = declare_parameter("voxel_grid_z", 100000.0);
   }
 
   {
@@ -163,6 +166,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
     "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
+  pub_obstacle_pointcloud_ =
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
+
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
@@ -213,10 +219,11 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
     no_height_pointcloud_ptr->push_back(pcl::PointXYZ(point.x, point.y, 0.0));
   }
   filter.setInputCloud(no_height_pointcloud_ptr);
-  filter.setLeafSize(0.05f, 0.05f, 100000.0f);
+  filter.setLeafSize(node_param_.voxel_grid_x, node_param_.voxel_grid_y, node_param_.voxel_grid_z);
   filter.filter(*no_height_filtered_pointcloud_ptr);
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
+  pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
 }
 
 void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_msg)
@@ -234,7 +241,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   {
     const auto waiting = [this](const auto & str) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "waiting for %s ...",
+        get_logger(), *get_clock(), std::chrono::milliseconds(5000).count(), "waiting for %s ...",
         str);
     };
 
@@ -582,13 +589,23 @@ void ObstacleStopPlannerNode::insertVelocity(
       const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
         index_with_dist_remain.get().first, output, -index_with_dist_remain.get().second);
 
+      const auto slow_down_velocity =
+        slow_down_param_.min_slow_down_velocity +
+        (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
+          std::max(planner_data.lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
+          slow_down_param_.lateral_margin;
+
+      const auto target_velocity = slow_down_param_.consider_constraints
+                                     ? slow_down_param_.slow_down_velocity
+                                     : slow_down_velocity;
+
       SlowDownSection slow_down_section{};
       slow_down_section.slow_down_start_idx = 0;
       slow_down_section.start_point = output.front();
       slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
       slow_down_section.end_point = end_insert_point_with_idx.get().second;
-      slow_down_section.velocity = set_velocity_limit_ ? std::numeric_limits<double>::max()
-                                                       : slow_down_param_.slow_down_velocity;
+      slow_down_section.velocity =
+        set_velocity_limit_ ? std::numeric_limits<double>::max() : target_velocity;
 
       insertSlowDownSection(slow_down_section, output);
     } else if (no_hunting_slowdown_point) {

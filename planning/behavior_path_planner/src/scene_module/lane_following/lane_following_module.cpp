@@ -65,7 +65,7 @@ void LaneFollowingModule::onEntry()
 void LaneFollowingModule::onExit()
 {
   initParam();
-  current_state_ = BT::NodeStatus::IDLE;
+  current_state_ = BT::NodeStatus::SUCCESS;
   RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onExit");
 }
 
@@ -93,8 +93,9 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   }
 
   // For current_lanes with desired length
-  lanelet::ConstLanelets current_lanes = planner_data_->route_handler->getLaneletSequence(
+  const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
+  const auto drivable_lanes = util::generateDrivableLanes(current_lanes);
 
   if (current_lanes.empty()) {
     return reference_path;
@@ -127,36 +128,21 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
         p, optional_lengths);
     }
 
-    const double buffer = p.backward_length_buffer_for_end_of_lane;
     const double lane_change_buffer =
-      num_lane_change * (p.minimum_lane_change_length + buffer) + optional_lengths;
+      util::calcLaneChangeBuffer(p, num_lane_change, optional_lengths);
 
     reference_path = util::setDecelerationVelocity(
       *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
       lane_change_buffer);
   }
 
-  if (parameters_.expand_drivable_area) {
-    lanelet::ConstLanelets expand_lanes{};
-    for (const auto & current_lane : current_lanes) {
-      const std::string r_type =
-        current_lane.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
-      const std::string l_type =
-        current_lane.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
 
-      const double r_offset =
-        r_type.compare("road_border") != 0 ? -parameters_.right_bound_offset : 0.0;
-      const double l_offset =
-        l_type.compare("road_border") != 0 ? parameters_.left_bound_offset : 0.0;
+  const auto expanded_lanes = util::expandLanelets(
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
 
-      expand_lanes.push_back(lanelet::utils::getExpandedLanelet(current_lane, l_offset, r_offset));
-    }
-
-    current_lanes = expand_lanes;
-  }
-
-  reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+  util::generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data_);
 
   return reference_path;
 }

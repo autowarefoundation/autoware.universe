@@ -19,8 +19,8 @@
 
 namespace motion_utils
 {
-std::vector<geometry_msgs::msg::Pose> resamplePath(
-  const std::vector<geometry_msgs::msg::Pose> & points,
+std::vector<geometry_msgs::msg::Point> resamplePointVector(
+  const std::vector<geometry_msgs::msg::Point> & points,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy,
   const bool use_lerp_for_z)
 {
@@ -40,17 +40,17 @@ std::vector<geometry_msgs::msg::Pose> resamplePath(
   z.reserve(points.size());
 
   input_arclength.push_back(0.0);
-  x.push_back(points.front().position.x);
-  y.push_back(points.front().position.y);
-  z.push_back(points.front().position.z);
+  x.push_back(points.front().x);
+  y.push_back(points.front().y);
+  z.push_back(points.front().z);
   for (size_t i = 1; i < points.size(); ++i) {
     const auto & prev_pt = points.at(i - 1);
     const auto & curr_pt = points.at(i);
-    const double ds = tier4_autoware_utils::calcDistance2d(prev_pt.position, curr_pt.position);
+    const double ds = tier4_autoware_utils::calcDistance2d(prev_pt, curr_pt);
     input_arclength.push_back(ds + input_arclength.back());
-    x.push_back(curr_pt.position.x);
-    y.push_back(curr_pt.position.y);
-    z.push_back(curr_pt.position.z);
+    x.push_back(curr_pt.x);
+    y.push_back(curr_pt.y);
+    z.push_back(curr_pt.z);
   }
 
   // Interpolate
@@ -65,15 +65,71 @@ std::vector<geometry_msgs::msg::Pose> resamplePath(
   const auto interpolated_y = use_lerp_for_xy ? lerp(y) : spline(y);
   const auto interpolated_z = use_lerp_for_z ? lerp(z) : spline(z);
 
-  std::vector<geometry_msgs::msg::Pose> resampled_points;
+  std::vector<geometry_msgs::msg::Point> resampled_points;
   resampled_points.resize(interpolated_x.size());
 
-  // Insert Position, Velocity and Heading Rate
+  // Insert Position
   for (size_t i = 0; i < resampled_points.size(); ++i) {
+    geometry_msgs::msg::Point point;
+    point.x = interpolated_x.at(i);
+    point.y = interpolated_y.at(i);
+    point.z = interpolated_z.at(i);
+    resampled_points.at(i) = point;
+  }
+
+  return resampled_points;
+}
+
+std::vector<geometry_msgs::msg::Point> resamplePointVector(
+  const std::vector<geometry_msgs::msg::Point> & points, const double resample_interval,
+  const bool use_lerp_for_xy, const bool use_lerp_for_z)
+{
+  const double input_length = motion_utils::calcArcLength(points);
+
+  std::vector<double> resampling_arclength;
+  for (double s = 0.0; s < input_length; s += resample_interval) {
+    resampling_arclength.push_back(s);
+  }
+  if (resampling_arclength.empty()) {
+    std::cerr << "[motion_utils]: resampling arclength is empty" << std::endl;
+    return points;
+  }
+
+  // Insert terminal point
+  if (input_length - resampling_arclength.back() < motion_utils::overlap_threshold) {
+    resampling_arclength.back() = input_length;
+  } else {
+    resampling_arclength.push_back(input_length);
+  }
+
+  return resamplePointVector(points, resampling_arclength, use_lerp_for_xy, use_lerp_for_z);
+}
+
+std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
+  const std::vector<geometry_msgs::msg::Pose> & points,
+  const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy,
+  const bool use_lerp_for_z)
+{
+  // validate arguments
+  if (!resample_utils::validate_arguments(points, resampled_arclength)) {
+    return points;
+  }
+
+  std::vector<geometry_msgs::msg::Point> position(points.size());
+  for (size_t i = 0; i < points.size(); ++i) {
+    position.at(i) = points.at(i).position;
+  }
+  const auto resampled_position =
+    resamplePointVector(position, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
+
+  std::vector<geometry_msgs::msg::Pose> resampled_points(resampled_position.size());
+
+  // Insert Position
+  for (size_t i = 0; i < resampled_position.size(); ++i) {
     geometry_msgs::msg::Pose pose;
-    pose.position.x = interpolated_x.at(i);
-    pose.position.y = interpolated_y.at(i);
-    pose.position.z = interpolated_z.at(i);
+    pose.position.x = resampled_position.at(i).x;
+    pose.position.y = resampled_position.at(i).y;
+    pose.position.z = resampled_position.at(i).z;
     resampled_points.at(i) = pose;
   }
 
@@ -88,6 +144,31 @@ std::vector<geometry_msgs::msg::Pose> resamplePath(
   }
 
   return resampled_points;
+}
+
+std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
+  const std::vector<geometry_msgs::msg::Pose> & points, const double resample_interval,
+  const bool use_lerp_for_xy, const bool use_lerp_for_z)
+{
+  const double input_length = motion_utils::calcArcLength(points);
+
+  std::vector<double> resampling_arclength;
+  for (double s = 0.0; s < input_length; s += resample_interval) {
+    resampling_arclength.push_back(s);
+  }
+  if (resampling_arclength.empty()) {
+    std::cerr << "[motion_utils]: resampling arclength is empty" << std::endl;
+    return points;
+  }
+
+  // Insert terminal point
+  if (input_length - resampling_arclength.back() < motion_utils::overlap_threshold) {
+    resampling_arclength.back() = input_length;
+  } else {
+    resampling_arclength.push_back(input_length);
+  }
+
+  return resamplePoseVector(points, resampling_arclength, use_lerp_for_xy, use_lerp_for_z);
 }
 
 autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
@@ -164,7 +245,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   };
 
   const auto interpolated_pose =
-    resamplePath(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
+    resamplePoseVector(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
   const auto interpolated_v_lon = use_zero_order_hold_for_v ? zoh(v_lon) : lerp(v_lon);
   const auto interpolated_v_lat = use_zero_order_hold_for_v ? zoh(v_lat) : lerp(v_lat);
   const auto interpolated_heading_rate = lerp(heading_rate);
@@ -179,7 +260,8 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
 
   autoware_auto_planning_msgs::msg::PathWithLaneId resampled_path;
   resampled_path.header = input_path.header;
-  resampled_path.drivable_area = input_path.drivable_area;
+  resampled_path.left_bound = input_path.left_bound;
+  resampled_path.right_bound = input_path.right_bound;
   resampled_path.points.resize(interpolated_pose.size());
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;
@@ -308,7 +390,7 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
   };
 
   const auto interpolated_pose =
-    resamplePath(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
+    resamplePoseVector(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
   const auto interpolated_v_lon = use_zero_order_hold_for_v ? zoh(v_lon) : lerp(v_lon);
   const auto interpolated_v_lat = use_zero_order_hold_for_v ? zoh(v_lat) : lerp(v_lat);
   const auto interpolated_heading_rate = lerp(heading_rate);
@@ -321,7 +403,8 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
 
   autoware_auto_planning_msgs::msg::Path resampled_path;
   resampled_path.header = input_path.header;
-  resampled_path.drivable_area = input_path.drivable_area;
+  resampled_path.left_bound = input_path.left_bound;
+  resampled_path.right_bound = resampled_path.right_bound;
   resampled_path.points.resize(interpolated_pose.size());
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;
@@ -333,6 +416,65 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
   }
 
   return resampled_path;
+}
+
+autoware_auto_planning_msgs::msg::Path resamplePath(
+  const autoware_auto_planning_msgs::msg::Path & input_path, const double resample_interval,
+  const bool use_lerp_for_xy, const bool use_lerp_for_z, const bool use_zero_order_hold_for_twist,
+  const bool resample_input_path_stop_point)
+{
+  // validate arguments
+  if (!resample_utils::validate_arguments(input_path.points, resample_interval)) {
+    return input_path;
+  }
+
+  const double input_path_len = motion_utils::calcArcLength(input_path.points);
+
+  std::vector<double> resampling_arclength;
+  for (double s = 0.0; s < input_path_len; s += resample_interval) {
+    resampling_arclength.push_back(s);
+  }
+  if (resampling_arclength.empty()) {
+    std::cerr << "[motion_utils]: resampling arclength is empty" << std::endl;
+    return input_path;
+  }
+
+  // Insert terminal point
+  if (input_path_len - resampling_arclength.back() < motion_utils::overlap_threshold) {
+    resampling_arclength.back() = input_path_len;
+  } else {
+    resampling_arclength.push_back(input_path_len);
+  }
+
+  // Insert stop point
+  if (resample_input_path_stop_point) {
+    const auto distance_to_stop_point =
+      motion_utils::calcDistanceToForwardStopPoint(input_path.points, 0);
+    if (distance_to_stop_point && !resampling_arclength.empty()) {
+      for (size_t i = 1; i < resampling_arclength.size(); ++i) {
+        if (
+          resampling_arclength.at(i - 1) <= *distance_to_stop_point &&
+          *distance_to_stop_point < resampling_arclength.at(i)) {
+          const double dist_to_prev_point =
+            std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
+          const double dist_to_following_point =
+            std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
+          if (dist_to_prev_point < motion_utils::overlap_threshold) {
+            resampling_arclength.at(i - 1) = *distance_to_stop_point;
+          } else if (dist_to_following_point < motion_utils::overlap_threshold) {
+            resampling_arclength.at(i) = *distance_to_stop_point;
+          } else {
+            resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  return resamplePath(
+    input_path, resampling_arclength, use_lerp_for_xy, use_lerp_for_z,
+    use_zero_order_hold_for_twist);
 }
 
 autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
@@ -400,7 +542,7 @@ autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   };
 
   const auto interpolated_pose =
-    resamplePath(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
+    resamplePoseVector(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
   const auto interpolated_v_lon = use_zero_order_hold_for_twist ? zoh(v_lon) : lerp(v_lon);
   const auto interpolated_v_lat = use_zero_order_hold_for_twist ? zoh(v_lat) : lerp(v_lat);
   const auto interpolated_heading_rate = lerp(heading_rate);

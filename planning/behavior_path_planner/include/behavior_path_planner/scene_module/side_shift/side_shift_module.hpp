@@ -34,6 +34,8 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_planning_msgs::msg::LateralOffset;
 
+enum class SideShiftStatus { STOP = 0, BEFORE_SHIFT, SHIFTING, AFTER_SHIFT };
+
 struct SideShiftParameters
 {
   double time_to_start_shifting;
@@ -45,6 +47,9 @@ struct SideShiftParameters
   double drivable_area_width;
   double drivable_area_height;
   double shift_request_time_limit;
+  // drivable area expansion
+  double drivable_area_right_bound_offset;
+  double drivable_area_left_bound_offset;
 };
 
 class SideShiftModule : public SceneModuleInterface
@@ -67,6 +72,11 @@ public:
 
   void setParameters(const SideShiftParameters & parameters);
 
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
+
 private:
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
 
@@ -77,9 +87,9 @@ private:
   // non-const methods
   void adjustDrivableArea(ShiftedPath * path) const;
 
-  ShiftPoint calcShiftPoint() const;
+  ShiftLine calcShiftLine() const;
 
-  bool addShiftPoint();
+  void replaceShiftLine();
 
   // const methods
   void publishPath(const PathWithLaneId & path) const;
@@ -92,8 +102,17 @@ private:
   lanelet::ConstLanelets current_lanelets_;
   SideShiftParameters parameters_;
 
-  // Current lateral offset to shift the reference path.
-  double lateral_offset_{0.0};
+  // Requested lateral offset to shift the reference path.
+  double requested_lateral_offset_{0.0};
+
+  // Inserted lateral offset to shift the reference path.
+  double inserted_lateral_offset_{0.0};
+
+  // Inserted shift lines in the path
+  ShiftLine inserted_shift_line_;
+
+  // Shift status
+  SideShiftStatus shift_status_;
 
   // Flag to check lateral offset change is requested
   bool lateral_offset_change_request_{false};
@@ -104,7 +123,7 @@ private:
   PathShifter path_shifter_;
 
   ShiftedPath prev_output_;
-  ShiftPoint prev_shift_point_;
+  ShiftLine prev_shift_line_;
 
   // NOTE: this function is ported from avoidance.
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;

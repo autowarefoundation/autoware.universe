@@ -21,10 +21,10 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -41,10 +41,10 @@
 
 namespace lane_departure_checker
 {
-using autoware_auto_planning_msgs::msg::HADMapRoute;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::PoseDeviation;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
@@ -68,7 +68,7 @@ struct Input
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose{};
   nav_msgs::msg::Odometry::ConstSharedPtr current_odom{};
   lanelet::LaneletMapPtr lanelet_map{};
-  HADMapRoute::ConstSharedPtr route{};
+  LaneletRoute::ConstSharedPtr route{};
   lanelet::ConstLanelets route_lanelets{};
   Trajectory::ConstSharedPtr reference_trajectory{};
   Trajectory::ConstSharedPtr predicted_trajectory{};
@@ -107,6 +107,9 @@ public:
   bool checkPathWillLeaveLane(
     const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const;
 
+  static bool isOutOfLane(
+    const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
+
 private:
   Param param_;
   std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
@@ -131,9 +134,6 @@ private:
   static bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
-
-  static bool isOutOfLane(
-    const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
 };
 }  // namespace lane_departure_checker
 
