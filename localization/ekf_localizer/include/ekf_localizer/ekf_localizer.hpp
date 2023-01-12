@@ -47,17 +47,8 @@
 #include <string>
 #include <vector>
 
-struct PoseInfo
-{
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose;
-  int counter;
-};
-
-struct TwistInfo
-{
-  geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr twist;
-  int counter;
-};
+using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
 
 class Simple1DFilter
 {
@@ -179,8 +170,12 @@ private:
   bool is_activated_;
 
   /* for model prediction */
-  std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
-  std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
+  std::queue<TwistWithCovarianceStamped::SharedPtr> current_twist_queue_;    //!< @brief current measured twist
+  std::queue<int> current_twist_count_queue_;
+
+  std::queue<PoseWithCovarianceStamped::SharedPtr> current_pose_queue_;      //!< @brief current measured pose
+  std::queue<int> current_pose_count_queue_;
+
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
     current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
