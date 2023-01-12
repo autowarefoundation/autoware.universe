@@ -57,7 +57,7 @@ enum TYPE {
 namespace pure_pursuit
 {
 PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
-: node_{&node}, self_pose_listener_(&node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
+: node_{&node}, tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
 {
   pure_pursuit_ = std::make_unique<PurePursuit>();
 
@@ -101,35 +101,6 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   tf_utils::waitForTransform(tf_buffer_, "map", "base_link");
 }
 
-bool PurePursuitLateralController::isDataReady()
-{
-  if (!current_odometry_) {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "waiting for current_odometry...");
-    return false;
-  }
-
-  if (!trajectory_) {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "waiting for trajectory...");
-    return false;
-  }
-
-  if (!current_pose_) {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "waiting for current_pose...");
-    return false;
-  }
-
-  if (!current_steering_) {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "waiting for current_steering...");
-    return false;
-  }
-
-  return true;
-}
-
 double PurePursuitLateralController::calcLookaheadDistance(
   const double lateral_error, const double curvature, const double velocity, const double min_ld,
   const bool is_control_cmd)
@@ -168,13 +139,6 @@ double PurePursuitLateralController::calcLookaheadDistance(
   return total_ld;
 }
 
-void PurePursuitLateralController::setInputData(InputData const & input_data)
-{
-  trajectory_ = input_data.current_trajectory_ptr;
-  current_odometry_ = input_data.current_odometry_ptr;
-  current_steering_ = input_data.current_steering_ptr;
-}
-
 TrajectoryPoint PurePursuitLateralController::calcNextPose(
   const double ds, TrajectoryPoint & point, AckermannLateralCommand cmd) const
 {
@@ -196,7 +160,7 @@ void PurePursuitLateralController::setResampledTrajectory()
 {
   // Interpolate with constant interval distance.
   std::vector<double> out_arclength;
-  const auto input_tp_array = motion_utils::convertToTrajectoryPointArray(*trajectory_);
+  const auto input_tp_array = motion_utils::convertToTrajectoryPointArray(trajectory_);
   const auto traj_length = motion_utils::calcArcLength(input_tp_array);
   for (double s = 0; s < traj_length; s += param_.resampling_ds) {
     out_arclength.push_back(s);
@@ -204,10 +168,9 @@ void PurePursuitLateralController::setResampledTrajectory()
   trajectory_resampled_ =
     std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(motion_utils::resampleTrajectory(
       motion_utils::convertToTrajectory(input_tp_array), out_arclength));
-  trajectory_resampled_->points.back() = trajectory_->points.back();
-  trajectory_resampled_->header = trajectory_->header;
-  output_tp_array_ = boost::optional<std::vector<TrajectoryPoint>>(
-    motion_utils::convertToTrajectoryPointArray(*trajectory_resampled_));
+  trajectory_resampled_->points.back() = trajectory_.points.back();
+  trajectory_resampled_->header = trajectory_.header;
+  output_tp_array_ = motion_utils::convertToTrajectoryPointArray(*trajectory_resampled_);
 }
 
 double PurePursuitLateralController::calcCurvature(const size_t closest_idx)
@@ -298,7 +261,7 @@ void PurePursuitLateralController::averageFilterTrajectory(
 boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
 {
   const auto closest_idx_result =
-    motion_utils::findNearestIndex(*output_tp_array_, current_pose_->pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(output_tp_array_, current_pose_, 3.0, M_PI_4);
 
   if (!closest_idx_result) {
     return boost::none;
@@ -319,8 +282,8 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
       // For first point, use the odometry for velocity, and use the current_pose for prediction.
 
       TrajectoryPoint p;
-      p.pose = current_pose_->pose;
-      p.longitudinal_velocity_mps = current_odometry_->twist.twist.linear.x;
+      p.pose = current_pose_;
+      p.longitudinal_velocity_mps = current_odometry_.twist.twist.linear.x;
       predicted_trajectory.points.push_back(p);
 
       const auto pp_output = calcTargetCurvature(true, predicted_trajectory.points.at(i).pose);
@@ -365,27 +328,27 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
   return predicted_trajectory;
 }
 
-boost::optional<LateralOutput> PurePursuitLateralController::run()
+bool PurePursuitLateralController::isReady([[maybe_unused]] const InputData & input_data)
 {
-  current_pose_ = self_pose_listener_.getCurrentPose();
-  if (!isDataReady()) {
-    return boost::none;
-  }
+  return true;
+}
+
+LateralOutput PurePursuitLateralController::run(const InputData & input_data)
+{
+  current_pose_ = input_data.current_odometry.pose.pose;
+  trajectory_ = input_data.current_trajectory;
+  current_odometry_ = input_data.current_odometry;
+  current_steering_ = input_data.current_steering;
+
   setResampledTrajectory();
-  if (!output_tp_array_ || !trajectory_resampled_) {
-    return boost::none;
-  }
   if (param_.enable_path_smoothing) {
     averageFilterTrajectory(*trajectory_resampled_);
   }
   const auto cmd_msg = generateOutputControlCmd();
-  if (!cmd_msg) {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to generate control command.");
-    return boost::none;
-  }
+
   LateralOutput output;
-  output.control_cmd = *cmd_msg;
-  output.sync_data.is_steer_converged = calcIsSteerConverged(*cmd_msg);
+  output.control_cmd = cmd_msg;
+  output.sync_data.is_steer_converged = calcIsSteerConverged(cmd_msg);
 
   // calculate predicted trajectory with iterative calculation
   const auto predicted_trajectory = generatePredictedTrajectory();
@@ -400,14 +363,14 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
 
 bool PurePursuitLateralController::calcIsSteerConverged(const AckermannLateralCommand & cmd)
 {
-  return std::abs(cmd.steering_tire_angle - current_steering_->steering_tire_angle) <
+  return std::abs(cmd.steering_tire_angle - current_steering_.steering_tire_angle) <
          static_cast<float>(param_.converged_steer_rad_);
 }
 
-boost::optional<AckermannLateralCommand> PurePursuitLateralController::generateOutputControlCmd()
+AckermannLateralCommand PurePursuitLateralController::generateOutputControlCmd()
 {
   // Generate the control command
-  const auto pp_output = calcTargetCurvature(true, current_pose_->pose);
+  const auto pp_output = calcTargetCurvature(true, current_pose_);
   AckermannLateralCommand output_cmd;
 
   if (pp_output) {
@@ -447,7 +410,7 @@ void PurePursuitLateralController::publishDebugMarker() const
 
   marker_array.markers.push_back(createNextTargetMarker(debug_data_.next_target));
   marker_array.markers.push_back(
-    createTrajectoryCircleMarker(debug_data_.next_target, current_pose_->pose));
+    createTrajectoryCircleMarker(debug_data_.next_target, current_pose_));
 
   pub_debug_marker_->publish(marker_array);
 }
@@ -465,7 +428,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   // Calculate target point for velocity/acceleration
 
   const auto closest_idx_result =
-    motion_utils::findNearestIndex(*output_tp_array_, pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(output_tp_array_, pose, 3.0, M_PI_4);
   if (!closest_idx_result) {
     RCLCPP_ERROR(node_->get_logger(), "cannot find closest waypoint");
     return {};
@@ -491,7 +454,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   double lookahead_distance = min_lookahead_distance;
   if (is_control_output) {
     lookahead_distance = calcLookaheadDistance(
-      lateral_error, current_curvature, current_odometry_->twist.twist.linear.x,
+      lateral_error, current_curvature, current_odometry_.twist.twist.linear.x,
       min_lookahead_distance, is_control_output);
   } else {
     lookahead_distance = calcLookaheadDistance(
@@ -518,7 +481,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   PpOutput output{};
   output.curvature = kappa;
   if (!is_control_output) {
-    output.velocity = current_odometry_->twist.twist.linear.x;
+    output.velocity = current_odometry_.twist.twist.linear.x;
   } else {
     output.velocity = target_vel;
   }
