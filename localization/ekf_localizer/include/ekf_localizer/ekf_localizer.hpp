@@ -51,14 +51,12 @@ struct PoseInfo
 {
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose;
   int counter;
-  int smoothing_steps;
 };
 
 struct TwistInfo
 {
   geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr twist;
   int counter;
-  int smoothing_steps;
 };
 
 class Simple1DFilter
