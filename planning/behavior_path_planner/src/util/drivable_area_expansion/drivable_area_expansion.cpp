@@ -38,7 +38,7 @@ bool expandDrivableArea(
   const auto filtered_footprint = filterFootprint(
     path_footprints, predicted_paths, uncrossable_lines, params.avoid_linestring_dist);
 
-  return expandDrivableArea(path.left_bound, path.right_bound, filtered_footprint);
+  return expandDrivableArea(path.left_bound, path.right_bound, filtered_footprint, path);
 }
 
 multipolygon_t filterFootprint(
@@ -82,7 +82,7 @@ multipolygon_t filterFootprint(
 
 bool expandDrivableArea(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
-  const multipolygon_t & footprint)
+  const multipolygon_t & footprint, const PathWithLaneId & path)
 {
   const auto to_point_t = [](const auto & p) { return point_t{p.x, p.y}; };
   const auto to_point = [](const auto & p) { return Point().set__x(p.x()).set__y(p.y()); };
@@ -109,6 +109,20 @@ bool expandDrivableArea(
   // remove the duplicated point (front == back) to prevent issue when splitting into left/right
   extended_da_poly.outer().resize(extended_da_poly.outer().size() - 1);
   // extract left and right bounds: find the points closest to the original start and end points
+  const auto is_left_of_segment = [](const point_t & a, const point_t & b, const point_t & p) {
+    return (b.x() - a.x()) * (p.y() - a.y()) - (b.y() - a.y()) * (p.x() - a.x()) > 0;
+  };
+  const auto is_left_of_path_start = [&](const point_t & p) {
+    return is_left_of_segment(
+      to_point_t(path.points[0].point.pose.position),
+      to_point_t(path.points[1].point.pose.position), p);
+  };
+  const auto is_left_of_path_end = [&](const point_t & p) {
+    const auto size = path.points.size();
+    return is_left_of_segment(
+      to_point_t(path.points[size - 2].point.pose.position),
+      to_point_t(path.points[size - 1].point.pose.position), p);
+  };
   const auto begin = extended_da_poly.outer().begin();
   const auto end = extended_da_poly.outer().end();
   auto lf = end;
@@ -120,25 +134,31 @@ bool expandDrivableArea(
   auto rb = end;
   double rb_min_dist = std::numeric_limits<double>::max();
   for (auto it = extended_da_poly.outer().begin(); it != extended_da_poly.outer().end(); ++it) {
-    const auto lf_dist = boost::geometry::distance(to_point_t(left_bound.front()), *it);
-    const auto rf_dist = boost::geometry::distance(to_point_t(right_bound.front()), *it);
-    const auto lb_dist = boost::geometry::distance(to_point_t(left_bound.back()), *it);
-    const auto rb_dist = boost::geometry::distance(to_point_t(right_bound.back()), *it);
-    if (lf_dist < lf_min_dist) {
-      lf = it;
-      lf_min_dist = lf_dist;
+    if (is_left_of_path_start(*it)) {
+      const auto lf_dist = boost::geometry::distance(to_point_t(left_bound.front()), *it);
+      if (lf_dist < lf_min_dist) {
+        lf = it;
+        lf_min_dist = lf_dist;
+      }
+    } else {
+      const auto rf_dist = boost::geometry::distance(to_point_t(right_bound.front()), *it);
+      if (rf_dist < rf_min_dist) {
+        rf = it;
+        rf_min_dist = rf_dist;
+      }
     }
-    if (rf_dist < rf_min_dist) {
-      rf = it;
-      rf_min_dist = rf_dist;
-    }
-    if (lb_dist < lb_min_dist) {
-      lb = it;
-      lb_min_dist = lb_dist;
-    }
-    if (rb_dist < rb_min_dist) {
-      rb = it;
-      rb_min_dist = rb_dist;
+    if (is_left_of_path_end(*it)) {
+      const auto lb_dist = boost::geometry::distance(to_point_t(left_bound.back()), *it);
+      if (lb_dist < lb_min_dist) {
+        lb = it;
+        lb_min_dist = lb_dist;
+      }
+    } else {
+      const auto rb_dist = boost::geometry::distance(to_point_t(right_bound.back()), *it);
+      if (rb_dist < rb_min_dist) {
+        rb = it;
+        rb_min_dist = rb_dist;
+      }
     }
   }
   std::vector<Point> extended_left_bound;

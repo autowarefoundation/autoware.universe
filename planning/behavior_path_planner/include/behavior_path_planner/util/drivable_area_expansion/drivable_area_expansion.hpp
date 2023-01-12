@@ -45,10 +45,11 @@ multipolygon_t filterFootprint(
 /// @param[inout] left_bound left drivable area bound to expand
 /// @param[inout] right_bound right drivable area bound to expand
 /// @param[in] footprint polygon to make drivable
+/// @param[in] path reference path
 /// @return false if the algorithm failed
 bool expandDrivableArea(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
-  const multipolygon_t & footprint);
+  const multipolygon_t & footprint, const PathWithLaneId & path);
 
 /// @brief create the footprint polygon from a path
 /// @param[in] path the path for which to create a footprint
