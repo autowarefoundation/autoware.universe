@@ -72,7 +72,6 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.voxel_grid_y = declare_parameter("voxel_grid_y", 0.05);
     p.voxel_grid_z = declare_parameter("voxel_grid_z", 100000.0);
     p.is_it_predicted_object = declare_parameter<bool>("is_it_predicted_object");
-//    p.is_it_predicted_object = declare_parameter<bool>("is_it_predicted_object");
   }
 
   {
