@@ -36,7 +36,6 @@ namespace bg = boost::geometry;
 typedef bg::model::d2::point_xy<double> bg_point;
 typedef bg::model::polygon<bg_point> bg_polygon;
 
-
 namespace
 {
 std::vector<double> convertEulerAngleToMonotonic(const std::vector<double> & angle)
@@ -656,19 +655,21 @@ bool isFrontDrivableArea(
   return false;
 }
 
-bg_polygon createDrivablePolygon(const std::vector<geometry_msgs::msg::Point>& left_bound, const std::vector<geometry_msgs::msg::Point>& right_bound)
+bg_polygon createDrivablePolygon(
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
   bg_polygon drivable_area_poly;
 
   // right bound
-  for(const auto rp : right_bound) {
+  for (const auto rp : right_bound) {
     drivable_area_poly.outer().push_back(bg_point(rp.x, rp.y));
   }
 
   // left bound
   auto reversed_left_bound = left_bound;
   std::reverse(reversed_left_bound.begin(), reversed_left_bound.end());
-  for(const auto lp : reversed_left_bound) {
+  for (const auto lp : reversed_left_bound) {
     drivable_area_poly.outer().push_back(bg_point(lp.x, lp.y));
   }
 
@@ -681,8 +682,8 @@ namespace drivable_area_utils
 {
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
-  const std::vector<geometry_msgs::msg::Point>& left_bound,
-  const std::vector<geometry_msgs::msg::Point>& right_bound, const VehicleParam & vehicle_param)
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound, const VehicleParam & vehicle_param)
 {
   if (left_bound.empty() || right_bound.empty()) {
     return false;
@@ -715,20 +716,27 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   // create rectangle
   const auto drivable_area_poly = createDrivablePolygon(left_bound, right_bound);
 
-  if(!front_top_left && !bg::within(bg_point(top_left_pos.x, top_left_pos.y), drivable_area_poly)) {
-      return true;
+  if (
+    !front_top_left && !bg::within(bg_point(top_left_pos.x, top_left_pos.y), drivable_area_poly)) {
+    return true;
   }
 
-  if(!front_top_right && !bg::within(bg_point(top_right_pos.x, top_right_pos.y), drivable_area_poly)) {
-      return true;
+  if (
+    !front_top_right &&
+    !bg::within(bg_point(top_right_pos.x, top_right_pos.y), drivable_area_poly)) {
+    return true;
   }
 
-  if(!front_bottom_left && !bg::within(bg_point(bottom_left_pos.x, bottom_left_pos.y), drivable_area_poly)) {
-      return true;
+  if (
+    !front_bottom_left &&
+    !bg::within(bg_point(bottom_left_pos.x, bottom_left_pos.y), drivable_area_poly)) {
+    return true;
   }
 
-  if(!front_bottom_right && !bg::within(bg_point(bottom_right_pos.x, bottom_right_pos.y), drivable_area_poly)) {
-      return true;
+  if (
+    !front_bottom_right &&
+    !bg::within(bg_point(bottom_right_pos.x, bottom_right_pos.y), drivable_area_poly)) {
+    return true;
   }
 
   return false;
