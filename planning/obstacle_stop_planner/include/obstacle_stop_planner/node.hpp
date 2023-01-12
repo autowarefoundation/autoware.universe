@@ -58,6 +58,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <utility>
 #include <vector>
 
 namespace motion_planning
@@ -123,6 +124,7 @@ private:
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   boost::optional<StopPoint> latest_stop_point_{boost::none};
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
+  std::vector<std::pair<rclcpp::Time, pcl::PointXYZ>> obstacle_history_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
@@ -202,6 +204,27 @@ private:
   void onDynamicObjects(const PredictedObjects::ConstSharedPtr input_msg);
 
   void onExpandStopRange(const ExpandStopRange::ConstSharedPtr input_msg);
+
+  void updateObstacleHistory(const rclcpp::Time & now)
+  {
+    for (auto itr = obstacle_history_.begin(); itr != obstacle_history_.end();) {
+      const auto expired = (now - itr->first).seconds() > node_param_.hunting_threshold;
+
+      if (expired) {
+        itr = obstacle_history_.erase(itr);
+        continue;
+      }
+
+      itr++;
+    }
+  }
+
+  void appendOldPoints(PointCloud::Ptr & points)
+  {
+    for (const auto & p : obstacle_history_) {
+      points->push_back(p.second);
+    }
+  }
 };
 }  // namespace motion_planning
 

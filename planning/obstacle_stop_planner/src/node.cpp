@@ -335,6 +335,10 @@ void ObstacleStopPlannerNode::searchObstacle(
     return;
   }
 
+  const auto now = this->now();
+
+  updateObstacleHistory(now);
+
   for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
     // create one step circle center for vehicle
     const auto & p_front = decimate_trajectory.at(i).pose;
@@ -400,10 +404,21 @@ void ObstacleStopPlannerNode::searchObstacle(
         next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
       if (planner_data.found_collision_points) {
+        pcl::PointXYZ nearest_collision_point;
+        rclcpp::Time nearest_collision_point_time;
+
         planner_data.decimate_trajectory_collision_index = i;
+        getNearestPoint(
+          *collision_pointcloud_ptr, p_front, &nearest_collision_point,
+          &nearest_collision_point_time);
+
+        appendOldPoints(collision_pointcloud_ptr);
+
         getNearestPoint(
           *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
           &planner_data.nearest_collision_point_time);
+
+        obstacle_history_.emplace_back(now, nearest_collision_point);
 
         debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
         debug_ptr_->pushPolygon(
