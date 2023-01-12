@@ -400,9 +400,8 @@ void EKFLocalizer::initEKF()
 void warnIfDelayTimeLassThanZero(const Warning & warning, const double delay_time)
 {
   if (delay_time < 0.0) {
-    const auto s = fmt::format(
-      "Pose time stamp is inappropriate, set delay to 0[s]. delay = {}",
-      delay_time);
+    const auto s =
+      fmt::format("Pose time stamp is inappropriate, set delay to 0[s]. delay = {}", delay_time);
     warning.warnThrottle(s, 1000);
   }
 }
