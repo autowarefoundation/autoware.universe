@@ -392,48 +392,78 @@ void ObstacleStopPlannerNode::searchObstacle(
       PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
-      planner_data.found_collision_points = withinPolygon(
+      const auto found_collision_points = withinPolygon(
         one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
         next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
-      if (planner_data.found_collision_points) {
+      if (found_collision_points) {
         pcl::PointXYZ nearest_collision_point;
         rclcpp::Time nearest_collision_point_time;
 
-        planner_data.decimate_trajectory_collision_index = i;
         getNearestPoint(
           *collision_pointcloud_ptr, p_front, &nearest_collision_point,
           &nearest_collision_point_time);
 
-        appendOldPoints(collision_pointcloud_ptr);
-
-        getNearestPoint(
-          *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
-          &planner_data.nearest_collision_point_time);
-
-        debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
-        debug_ptr_->pushPolygon(
-          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
-
-        planner_data.stop_require = planner_data.found_collision_points;
-
-        mutex_.lock();
-        const auto object_ptr = object_ptr_;
-        const auto current_velocity_ptr = current_velocity_ptr_;
-        mutex_.unlock();
-
-        acc_controller_->insertAdaptiveCruiseVelocity(
-          decimate_trajectory, planner_data.decimate_trajectory_collision_index,
-          planner_data.current_pose, planner_data.nearest_collision_point,
-          planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
-          &planner_data.stop_require, &output, trajectory_header);
-
-        if (planner_data.stop_require) {
-          obstacle_history_.emplace_back(now, nearest_collision_point);
-        }
+        obstacle_history_.emplace_back(now, nearest_collision_point);
 
         break;
       }
+    }
+  }
+
+  for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
+    // create one step circle center for vehicle
+    const auto & p_front = decimate_trajectory.at(i).pose;
+    const auto & p_back = decimate_trajectory.at(i + 1).pose;
+    const auto prev_center_pose = getVehicleCenterFromBase(p_front, vehicle_info);
+    const Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
+    const auto next_center_pose = getVehicleCenterFromBase(p_back, vehicle_info);
+    const Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
+
+    std::vector<cv::Point2d> one_step_move_vehicle_polygon;
+    // create one step polygon for vehicle
+    createOneStepPolygon(
+      p_front, p_back, one_step_move_vehicle_polygon, vehicle_info, stop_param.lateral_margin);
+    debug_ptr_->pushPolygon(
+      one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
+      PolygonType::Vehicle);
+
+    PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
+    collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
+
+    // check new collision points
+    planner_data.found_collision_points = withinPolygon(
+      one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+      next_center_point, getOldPointCloudPtr(), collision_pointcloud_ptr);
+
+    if (planner_data.found_collision_points) {
+      planner_data.decimate_trajectory_collision_index = i;
+      getNearestPoint(
+        *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
+        &planner_data.nearest_collision_point_time);
+
+      debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
+      debug_ptr_->pushPolygon(
+        one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+
+      planner_data.stop_require = planner_data.found_collision_points;
+
+      mutex_.lock();
+      const auto object_ptr = object_ptr_;
+      const auto current_velocity_ptr = current_velocity_ptr_;
+      mutex_.unlock();
+
+      acc_controller_->insertAdaptiveCruiseVelocity(
+        decimate_trajectory, planner_data.decimate_trajectory_collision_index,
+        planner_data.current_pose, planner_data.nearest_collision_point,
+        planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
+        &planner_data.stop_require, &output, trajectory_header);
+
+      if (!planner_data.stop_require) {
+        obstacle_history_.clear();
+      }
+
+      break;
     }
   }
 }

@@ -216,11 +216,15 @@ private:
     }
   }
 
-  void appendOldPoints(PointCloud::Ptr & points)
+  PointCloud::Ptr getOldPointCloudPtr() const
   {
+    PointCloud::Ptr ret(new PointCloud);
+
     for (const auto & p : obstacle_history_) {
-      points->push_back(p.second);
+      ret->push_back(p.second);
     }
+
+    return ret;
   }
 };
 }  // namespace motion_planning
