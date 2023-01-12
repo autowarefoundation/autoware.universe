@@ -746,6 +746,15 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
           calcVehicleCirclesInfo(
             vehicle_param_, vehicle_circle_num_for_calculation_,
             vehicle_circle_radius_ratios_.front());
+      } else if (vehicle_circle_method_ == "fitting_uniform_circle") {
+        updateParam<int>(
+          parameters,
+          "advanced.mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num",
+          vehicle_circle_num_for_calculation_);
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(vehicle_param_, vehicle_circle_num_for_calculation_);
       } else if (vehicle_circle_method_ == "rear_drive") {
         updateParam<int>(
           parameters,
