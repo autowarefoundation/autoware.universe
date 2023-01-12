@@ -17,9 +17,10 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
   // Publisher
-  pub_cloud_ = create_publisher<Cloud2>("ll2_road_marking", latch_qos);
-  pub_polygon_ = create_publisher<Cloud2>("ll2_polygon", latch_qos);
+  pub_road_marking_ = create_publisher<Cloud2>("ll2_road_marking", latch_qos);
   pub_sign_board_ = create_publisher<Cloud2>("ll2_sign_board", latch_qos);
+  pub_transition_area_ = create_publisher<Cloud2>("ll2_transition_area", latch_qos);
+  pub_bounding_box_ = create_publisher<Cloud2>("ll2_bounding_box", latch_qos);
   pub_marker_ = create_publisher<MarkerArray>("sign_board_marker", latch_qos);
 
   // Subscriber
@@ -35,6 +36,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 
   loadLanelet2Labels("road_marking_labels", road_marking_labels_);
   loadLanelet2Labels("sign_board_labels", sign_board_labels_);
+
   if (road_marking_labels_.empty()) {
     RCLCPP_FATAL_STREAM(
       get_logger(), "There are no road marking labels. No LL2 elements will publish");
@@ -62,7 +64,30 @@ void print_attr(const lanelet::LaneletMapPtr & lanelet_map, const rclcpp::Logger
   }
 }
 
-pcl::PointCloud<pcl::PointXYZL> convert_polygon_to_xyz(const lanelet::PolygonLayer & polygons)
+pcl::PointCloud<pcl::PointXYZL> load_bounding_boxes(const lanelet::PolygonLayer & polygons)
+{
+  pcl::PointCloud<pcl::PointXYZL> cloud;
+  int index = 0;
+
+  for (const lanelet::ConstPolygon3d & polygon : polygons) {
+    if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
+    if (attr.value() != "pcdless_init_area") continue;
+
+    for (const lanelet::ConstPoint3d & p : polygon) {
+      pcl::PointXYZL xyzl;
+      xyzl.x = p.x();
+      xyzl.y = p.y();
+      xyzl.z = p.z();
+      xyzl.label = index;
+      cloud.push_back(xyzl);
+    }
+    index++;
+  }
+  return cloud;
+}
+
+pcl::PointCloud<pcl::PointXYZL> load_transition_areas(const lanelet::PolygonLayer & polygons)
 {
   pcl::PointCloud<pcl::PointXYZL> cloud;
   int index = 0;
@@ -91,22 +116,25 @@ void Ll2Decomposer::on_map(const HADMapBin & msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
   lanelet::LaneletMapPtr lanelet_map = from_bin_msg(msg);
+  print_attr(lanelet_map, get_logger());
 
   const rclcpp::Time stamp = msg.header.stamp;
 
   const auto & ls_layer = lanelet_map->lineStringLayer;
-  print_attr(lanelet_map, get_logger());
+  const auto & po_layer = lanelet_map->polygonLayer;
   auto tmp1 = extract_specified_line_string(ls_layer, sign_board_labels_);
   auto tmp2 = extract_specified_line_string(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = split_line_strings(tmp1);
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = split_line_strings(tmp2);
-  pcl::PointCloud<pcl::PointXYZL> ll2_polygon = convert_polygon_to_xyz(lanelet_map->polygonLayer);
+  pcl::PointCloud<pcl::PointXYZL> ll2_transition_area = load_transition_areas(po_layer);
+  pcl::PointCloud<pcl::PointXYZL> ll2_bounding_box = load_bounding_boxes(po_layer);
 
   publish_additional_marker(lanelet_map);
 
+  common::publish_cloud(*pub_road_marking_, ll2_road_marking, stamp);
   common::publish_cloud(*pub_sign_board_, ll2_sign_board, stamp);
-  common::publish_cloud(*pub_cloud_, ll2_road_marking, stamp);
-  common::publish_cloud(*pub_polygon_, ll2_polygon, stamp);
+  common::publish_cloud(*pub_transition_area_, ll2_transition_area, stamp);
+  common::publish_cloud(*pub_bounding_box_, ll2_bounding_box, stamp);
 
   RCLCPP_INFO_STREAM(get_logger(), "successed map decomposing");
 }
@@ -212,7 +240,7 @@ Ll2Decomposer::MarkerArray Ll2Decomposer::make_polygon_marker_msg(
     marker.header.stamp = get_clock()->now();
     marker.type = Marker::LINE_STRIP;
     marker.color = common::Color(0.4f, 0.4f, 0.8f, 0.999f);
-    marker.scale.x = 0.1;
+    marker.scale.x = 0.2;
     marker.ns = ns;
     marker.id = id++;
 
@@ -238,10 +266,13 @@ void Ll2Decomposer::publish_additional_marker(const lanelet::LaneletMapPtr & lan
     make_sign_marker_msg(lanelet_map->lineStringLayer, sign_board_labels_, "sign_board");
   auto marker2 = make_sign_marker_msg(lanelet_map->lineStringLayer, {"virtual"}, "virtual");
   auto marker3 = make_polygon_marker_msg(
-    lanelet_map->polygonLayer, {"pcdless_init_area", "pcdless_deinit_area"}, "polygon");
+    lanelet_map->polygonLayer, {"pcdless_init_area", "pcdless_deinit_area"}, "transition_area");
+  auto marker4 =
+    make_polygon_marker_msg(lanelet_map->polygonLayer, {"bounding_box"}, "bounding_box");
 
   std::copy(marker2.markers.begin(), marker2.markers.end(), std::back_inserter(marker1.markers));
   std::copy(marker3.markers.begin(), marker3.markers.end(), std::back_inserter(marker1.markers));
+  std::copy(marker4.markers.begin(), marker4.markers.end(), std::back_inserter(marker1.markers));
   pub_marker_->publish(marker1);
 }
 

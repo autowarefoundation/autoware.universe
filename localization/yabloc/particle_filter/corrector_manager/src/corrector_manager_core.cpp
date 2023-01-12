@@ -8,7 +8,7 @@ CorrectorManager::CorrectorManager() : Node("predictor")
   auto on_gnss_pose = std::bind(&CorrectorManager::on_gnss_pose, this, _1);
   auto on_init_area = std::bind(&CorrectorManager::on_init_area, this, _1);
   sub_init_area_ =
-    create_subscription<PointCloud2>("/localization/map/ll2_polygon", 10, on_init_area);
+    create_subscription<PointCloud2>("/localization/map/ll2_transition_area", 10, on_init_area);
   sub_gnss_pose_ = create_subscription<PoseStamped>("/sensing/gnss/ublox/pose", 10, on_gnss_pose);
 
   // Timer
