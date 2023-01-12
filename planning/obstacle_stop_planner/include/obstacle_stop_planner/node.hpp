@@ -122,15 +122,12 @@ private:
 
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
-  boost::optional<StopPoint> latest_stop_point_{boost::none};
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
   std::vector<std::pair<rclcpp::Time, pcl::PointXYZ>> obstacle_history_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
-  rclcpp::Time last_detect_time_collision_point_;
-  rclcpp::Time last_detect_time_slowdown_point_;
 
   Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
   AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_{nullptr};
