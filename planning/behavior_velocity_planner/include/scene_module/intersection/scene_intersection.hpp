@@ -139,7 +139,7 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const std::optional<Polygon2d> & intersection_area,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
+    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area, const double time_delay);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -186,7 +186,7 @@ private:
    */
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int objective_lane_id) const;
+    const int objective_lane_id, const double time_delay) const;
 
   /**
    * @brief check if the object has a target type for collision check

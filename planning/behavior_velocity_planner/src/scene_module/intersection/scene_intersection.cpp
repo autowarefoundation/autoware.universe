@@ -193,9 +193,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
 
   /* calculate dynamic collision around detection area */
+  const double time_delay = is_go_out_ ? 0.0 : planner_param_.state_transit_margin_time;
   const bool has_collision = checkCollision(
     lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
-    closest_idx, stuck_vehicle_detect_area);
+    closest_idx, stuck_vehicle_detect_area, time_delay);
 
   /* calculate final stop lines */
   int stop_line_idx_final =
@@ -310,7 +311,7 @@ bool IntersectionModule::checkCollision(
   const lanelet::ConstLanelets & adjacent_lanelets,
   const std::optional<Polygon2d> & intersection_area,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
+  const int closest_idx, const Polygon2d & stuck_vehicle_detect_area, const double time_delay)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -378,7 +379,8 @@ bool IntersectionModule::checkCollision(
   /* check collision between target_objects predicted path and ego lane */
 
   // cut the predicted path at passing_time
-  const auto time_distance_array = calcIntersectionPassingTime(path, closest_idx, lane_id_);
+  const auto time_distance_array =
+    calcIntersectionPassingTime(path, closest_idx, lane_id_, time_delay);
   const double passing_time = time_distance_array.back().first;
   cutPredictPathWithDuration(&target_objects, passing_time);
 
@@ -522,7 +524,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
 
 TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const int objective_lane_id) const
+  const int objective_lane_id, const double time_delay) const
 {
   static constexpr double k_minimum_velocity = 1e-01;
 
@@ -555,7 +557,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
   // calculate when ego is going to reach each (interpolated) points on the path
   TimeDistanceArray time_distance_array{};
   dist_sum = 0.0;
-  double passing_time = 0.0;
+  double passing_time = time_delay;
   time_distance_array.emplace_back(passing_time, dist_sum);
   for (size_t i = 1; i < smoothed_reference_path.points.size(); ++i) {
     const auto & p1 = smoothed_reference_path.points.at(i - 1);
