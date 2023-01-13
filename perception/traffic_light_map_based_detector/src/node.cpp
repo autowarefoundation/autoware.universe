@@ -332,7 +332,9 @@ void MapBasedDetector::getVisibleTrafficLights(
 {
   for (const auto & traffic_light : all_traffic_lights) {
     // some "Traffic Light" are actually not traffic lights
-    if(traffic_light.hasAttribute("subtype") == false || traffic_light.attribute("subtype").value() == "solid"){
+    if (
+      traffic_light.hasAttribute("subtype") == false ||
+      traffic_light.attribute("subtype").value() == "solid") {
       continue;
     }
     const auto & tl_left_down_point = traffic_light.front();
