@@ -199,7 +199,7 @@ v_{target} = max(v_{ego} + v_{add}, v_{min, cruise})
 $$
 
 | Variable          | Description                             |
-| ----------------- |-----------------------------------------|
+| ----------------- | --------------------------------------- |
 | `d`               | actual distance to obstacle             |
 | `d_{rss}`         | ideal distance to obstacle based on RSS |
 | `v_{min, cruise}` | `min_cruise_target_vel`                 |
