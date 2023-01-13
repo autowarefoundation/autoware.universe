@@ -72,7 +72,7 @@ pcl::PointCloud<pcl::PointXYZL> load_bounding_boxes(const lanelet::PolygonLayer 
   for (const lanelet::ConstPolygon3d & polygon : polygons) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    if (attr.value() != "pcdless_init_area") continue;
+    if (attr.value() != "bounding_box") continue;
 
     for (const lanelet::ConstPoint3d & p : polygon) {
       pcl::PointXYZL xyzl;

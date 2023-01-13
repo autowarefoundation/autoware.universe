@@ -41,7 +41,7 @@ private:
   const float far_weight_gain_;
   common::HierarchicalCostMap cost_map_;
 
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_unmapped_area_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_bounding_box_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
@@ -62,7 +62,7 @@ private:
 
   void on_lsd(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
-  void on_unmapped_area(const PointCloud2 & msg);
+  void on_bounding_box(const PointCloud2 & msg);
   void on_pose(const PoseStamped & msg);
   void on_timer();
   void on_service(SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response);

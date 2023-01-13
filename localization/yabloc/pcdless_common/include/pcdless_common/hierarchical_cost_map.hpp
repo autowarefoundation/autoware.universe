@@ -7,6 +7,8 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/functional/hash.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -25,10 +27,18 @@ struct Area
 
   Eigen::Vector2f real_scale() const { return {x * unit_length_, y * unit_length_}; };
 
+  std::array<Eigen::Vector2f, 2> real_scale_boundary() const
+  {
+    std::array<Eigen::Vector2f, 2> boundary;
+    boundary.at(0) = real_scale();
+    boundary.at(1) = real_scale() + Eigen::Vector2f(unit_length_, unit_length_);
+    return boundary;
+  };
+
   void throw_error() const
   {
-    std::cerr << "Are::unit_length_ is not initialized" << std::endl;
-    exit(EXIT_FAILURE);
+    std::cerr << "Area::unit_length_ is not initialized" << std::endl;
+    throw std::runtime_error("invalid Area::unit_length");
   }
   int x, y;
   static float unit_length_;
@@ -55,12 +65,14 @@ public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Pose = geometry_msgs::msg::Pose;
 
+  using BgPoint = boost::geometry::model::d2::point_xy<double>;
+  using BgPolygon = boost::geometry::model::polygon<BgPoint>;
+
   HierarchicalCostMap(rclcpp::Node * node);
 
   void set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
-  void set_unmapped_area(const pcl::PointCloud<pcl::PointXYZ> & polygon);
+  void set_bounding_box(const pcl::PointCloud<pcl::PointXYZL> & cloud);
 
-  float at(const Eigen::Vector2f & position);
   cv::Vec2b at2(const Eigen::Vector2f & position);
   cv::Vec3b at3(const Eigen::Vector2f & position);
 
@@ -85,12 +97,12 @@ private:
 
   std::list<Area> generated_map_history_;
   std::optional<pcl::PointCloud<pcl::PointNormal>> cloud_;
-  pcl::PointCloud<pcl::PointXYZ> unmapped_polygon_;
+  std::vector<BgPolygon> bounding_boxes_;
   std::unordered_map<Area, cv::Mat, Area> cost_maps_;
 
-  cv::Point to_cv_point(const Area & are, const Eigen::Vector2f);
+  cv::Point to_cv_point(const Area & are, const Eigen::Vector2f) const;
   void build_map(const Area & area);
 
-  cv::Mat create_available_area_image(const Area & area);
+  cv::Mat create_available_area_image(const Area & area) const;
 };
 }  // namespace pcdless::common

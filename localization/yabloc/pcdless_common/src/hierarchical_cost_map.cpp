@@ -6,6 +6,8 @@
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
 
+#include <boost/geometry/geometry.hpp>
+
 namespace pcdless::common
 {
 float Area::unit_length_ = -1;
@@ -21,7 +23,7 @@ HierarchicalCostMap::HierarchicalCostMap(rclcpp::Node * node)
   gamma_converter.reset(gamma);
 }
 
-cv::Point2i HierarchicalCostMap::to_cv_point(const Area & area, const Eigen::Vector2f p)
+cv::Point2i HierarchicalCostMap::to_cv_point(const Area & area, const Eigen::Vector2f p) const
 {
   Eigen::Vector2f relative = p - area.real_scale();
   float px = relative.x() / max_range_ * image_size_;
@@ -62,19 +64,6 @@ cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
   return {value[0], value[1]};
 }
 
-float HierarchicalCostMap::at(const Eigen::Vector2f & position)
-{
-  Area key(position);
-  if (cost_maps_.count(key) == 0) {
-    build_map(key);
-  }
-  map_accessed_[key] = true;
-
-  cv::Point2i tmp = to_cv_point(key, position);
-  // return cost_maps_.at(key).at<cv::Vec3b>(tmp)[0];
-  return cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x][0];
-}
-
 void HierarchicalCostMap::set_height(float height)
 {
   if (height_) {
@@ -88,9 +77,23 @@ void HierarchicalCostMap::set_height(float height)
   height_ = height;
 }
 
-void HierarchicalCostMap::set_unmapped_area(const pcl::PointCloud<pcl::PointXYZ> & polygon)
+void HierarchicalCostMap::set_bounding_box(const pcl::PointCloud<pcl::PointXYZL> & cloud)
 {
-  unmapped_polygon_ = polygon;
+  if (cloud.empty()) return;
+  BgPolygon poly;
+
+  std::optional<uint32_t> last_label = std::nullopt;
+  for (const pcl::PointXYZL p : cloud) {
+    if (last_label) {
+      if ((*last_label) != p.label) {
+        bounding_boxes_.push_back(poly);
+        poly.outer().clear();
+      }
+    }
+    poly.outer().push_back(BgPoint(p.x, p.y));
+    last_label = p.label;
+  }
+  bounding_boxes_.push_back(poly);
 }
 
 void HierarchicalCostMap::set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
@@ -232,18 +235,33 @@ void HierarchicalCostMap::erase_obsolete()
   map_accessed_.clear();
 }
 
-cv::Mat HierarchicalCostMap::create_available_area_image(const Area & area)
+cv::Mat HierarchicalCostMap::create_available_area_image(const Area & area) const
 {
   cv::Mat available_area = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
-  if (unmapped_polygon_.empty()) return available_area;
+  if (bounding_boxes_.empty()) return available_area;
 
-  // TODO: Need roughly check before drawContours because it will be heavy to repeat.
-  std::vector<std::vector<cv::Point2i>> contours(1);
-  for (const pcl::PointXYZ & p : unmapped_polygon_) {
-    contours.front().push_back(to_cv_point(area, {p.x, p.y}));
+  // Define current area
+  using BgBox = boost::geometry::model::box<BgPoint>;
+
+  BgBox area_polygon;
+  std::array<Eigen::Vector2f, 2> area_bounding_box = area.real_scale_boundary();
+  area_polygon.min_corner() = {area_bounding_box[0].x(), area_bounding_box[0].y()};
+  area_polygon.max_corner() = {area_bounding_box[1].x(), area_bounding_box[1].y()};
+
+  std::vector<std::vector<cv::Point2i>> contours;
+
+  for (const BgPolygon & box : bounding_boxes_) {
+    if (boost::geometry::disjoint(area_polygon, box)) {
+      continue;
+    }
+    std::vector<cv::Point2i> contour;
+    for (BgPoint p : box.outer()) {
+      contour.push_back(to_cv_point(area, {p.x(), p.y()}));
+    }
+    contours.push_back(contour);
   }
 
-  cv::drawContours(available_area, contours, 0, cv::Scalar::all(1), -1);
+  cv::drawContours(available_area, contours, -1, cv::Scalar::all(1), -1);
   return available_area;
 }
 

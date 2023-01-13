@@ -1,4 +1,5 @@
 #include "camera_particle_corrector/camera_particle_corrector.hpp"
+#include "camera_particle_corrector/fast_cos.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
@@ -11,43 +12,7 @@
 
 namespace pcdless::modularized_particle_filter
 {
-namespace
-{
-struct FastCosSin
-{
-  FastCosSin(int bin = 90)
-  {
-    for (int i = 0; i < bin + 1; ++i) {
-      cos_.push_back(std::cos(i * M_PI / 180.f));
-    }
-  }
-  float cos(float deg) const
-  {
-    while (deg < 0) {
-      deg += 360;
-    }
-    while (deg > 360) {
-      deg -= 360;
-    }
-    if (deg < 90) {
-      return cos_.at(int(deg));
-    } else if (deg < 180) {
-      return -cos_.at(int(180 - deg));
-    } else if (deg < 270) {
-      return -cos_.at(int(deg - 180));
-    } else {
-      return cos_.at(int(360 - deg));
-    }
-  }
-
-  float sin(float deg) const { return cos(deg - 90.f); }
-
-private:
-  std::vector<float> cos_;
-};
-
 FastCosSin fast_math;
-}  // namespace
 
 CameraParticleCorrector::CameraParticleCorrector()
 : AbstCorrector("camera_particle_corrector"),
@@ -72,11 +37,11 @@ CameraParticleCorrector::CameraParticleCorrector()
   // Subscription
   auto on_lsd = std::bind(&CameraParticleCorrector::on_lsd, this, _1);
   auto on_ll2 = std::bind(&CameraParticleCorrector::on_ll2, this, _1);
-  auto on_unmapped_area = std::bind(&CameraParticleCorrector::on_unmapped_area, this, _1);
+  auto on_bounding_box = std::bind(&CameraParticleCorrector::on_bounding_box, this, _1);
   auto on_pose = std::bind(&CameraParticleCorrector::on_pose, this, _1);
   sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
-  sub_unmapped_area_ = create_subscription<PointCloud2>("ll2_polygon", 10, on_unmapped_area);
+  sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
 
   auto on_service = std::bind(&CameraParticleCorrector::on_service, this, _1, _2);
@@ -106,14 +71,13 @@ void CameraParticleCorrector::on_service(
     RCLCPP_INFO_STREAM(get_logger(), "camera_corrector is disabled");
 }
 
-void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
+void CameraParticleCorrector::on_bounding_box(const PointCloud2 & msg)
 {
   // NOTE: Under construction
-  // TODO: This does not handle multiple polygons
-  pcl::PointCloud<pcl::PointXYZ> ll2_polygon;
-  pcl::fromROSMsg(msg, ll2_polygon);
-  cost_map_.set_unmapped_area(ll2_polygon);
-  RCLCPP_INFO_STREAM(get_logger(), "Set unmapped-area into Hierarchical cost map");
+  pcl::PointCloud<pcl::PointXYZL> ll2_bounding_box;
+  pcl::fromROSMsg(msg, ll2_bounding_box);
+  cost_map_.set_bounding_box(ll2_bounding_box);
+  RCLCPP_INFO_STREAM(get_logger(), "Set bounding box into cost map");
 }
 
 std::pair<CameraParticleCorrector::LineSegments, CameraParticleCorrector::LineSegments>
