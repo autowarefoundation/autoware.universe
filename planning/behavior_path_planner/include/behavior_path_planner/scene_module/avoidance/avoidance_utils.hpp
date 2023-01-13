@@ -101,6 +101,23 @@ void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects,
   const bool enable_bound_clipping);
+
+double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
+
+bool isCentroidWithinLanelets(
+  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
+
+lanelet::ConstLanelets getTargetLanelets(
+  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
+  const double left_offset, const double right_offset);
+
+double calcDecelDistWithJerkAndAccConstraints(
+  const double current_vel, const double target_vel, const double current_acc, const double acc_min,
+  const double jerk_acc, const double jerk_dec);
+
+void insertDecelPoint(
+  const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
+  boost::optional<Pose> & p_out);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_

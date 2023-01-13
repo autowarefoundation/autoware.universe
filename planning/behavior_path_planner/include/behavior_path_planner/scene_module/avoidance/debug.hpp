@@ -36,7 +36,10 @@ namespace marker_utils::avoidance_marker
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::AvoidancePlanningData;
+using behavior_path_planner::AvoidanceState;
 using behavior_path_planner::AvoidLineArray;
+using behavior_path_planner::DebugData;
 using behavior_path_planner::ObjectDataArray;
 using behavior_path_planner::ShiftLineArray;
 using geometry_msgs::msg::Point;
@@ -44,15 +47,25 @@ using geometry_msgs::msg::Polygon;
 using geometry_msgs::msg::Pose;
 using visualization_msgs::msg::MarkerArray;
 
+MarkerArray createEgoStatusMarkerArray(
+  const AvoidancePlanningData & data, const Pose & p_ego, std::string && ns);
+
+MarkerArray createSafetyCheckMarkerArray(
+  const AvoidanceState & state, const Pose & pose, const DebugData & data);
+
 MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_points, std::string && ns, const float & r, const float & g,
   const float & b, const double & w);
 
-MarkerArray createTargetObjectsMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects, std::string && ns);
+MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::string && ns);
 
-MarkerArray createOtherObjectsMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects, std::string && ns);
+MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
+
+MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
+
+MarkerArray createUnsafeObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
+
+MarkerArray createUnavoidableObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
 
 MarkerArray makeOverhangToRoadShoulderMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns);
