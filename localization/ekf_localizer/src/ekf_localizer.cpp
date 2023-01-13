@@ -397,7 +397,7 @@ void EKFLocalizer::initEKF()
   ekf_.init(X, P, params_.extend_state_step);
 }
 
-void warnIfDelayTimeLassThanZero(const Warning & warning, const double delay_time)
+void warnIfPoseDelayTimeLessThanZero(const Warning & warning, const double delay_time)
 {
   if (delay_time < 0.0) {
     const auto s =
@@ -426,7 +426,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
 
   /* Calculate delay step */
   double delay_time = (t_curr - pose.header.stamp).seconds() + params_.pose_additional_delay;
-  warnIfDelayTimeLassThanZero(warning_, delay_time);
+  warnIfPoseDelayTimeLessThanZero(warning_, delay_time);
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
