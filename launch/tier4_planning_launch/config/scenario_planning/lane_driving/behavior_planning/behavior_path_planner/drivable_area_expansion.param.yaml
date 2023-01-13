@@ -31,10 +31,13 @@
       enabled: true
       ego:
         extra_footprint_offset:
-          front: 5.5 # [m] extra length to add to the front of the ego footprint
+          front: 0.5 # [m] extra length to add to the front of the ego footprint
           rear: 0.5 # [m] extra length to add to the rear of the ego footprint
           left: 0.5 # [m] extra length to add to the left of the ego footprint
           right: 0.5 # [m] extra length to add to the rear of the ego footprint
+        use_circle_footprint: false # if true, a circle is used to approximate the ego footprint
+        compensate: true  # if true, when the drivable area cannot be expanded in one direction to completely include the ego footprint, it is shifted in the opposite direction
+        extra_compensate_shift: 0.0  # [m] extra distance to shift a footprint when compensating
       dynamic_objects:
         avoid: true # if true, the drivable area is not expanded in the predicted path of dynamic objects
         extra_footprint_offset:

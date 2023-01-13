@@ -57,6 +57,13 @@ polygon_t translatePolygon(const polygon_t & polygon, const double x, const doub
 /// @return footprint
 Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t base_footprint);
 
+/// @brief create the footprint polygon from a path
+/// @param[in] path the path for which to create a footprint
+/// @param[in] params expansion parameters defining how to create the footprint
+/// @return footprints of the path
+std::vector<Footprint> createPathFootprints(
+  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params);
+
 /// @brief create footprints of the predicted paths of an object
 /// @param [in] objects objects from which to create polygons
 /// @param[in] params expansion parameters containing extra offsets to add to the dynamic objects
@@ -64,5 +71,6 @@ Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t
 std::vector<Footprint> createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const DrivableAreaExpansionParameters & params);
+
 }  // namespace drivable_area_expansion
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__FOOTPRINTS_HPP_

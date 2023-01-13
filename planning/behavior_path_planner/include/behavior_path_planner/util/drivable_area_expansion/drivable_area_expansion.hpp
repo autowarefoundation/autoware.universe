@@ -51,21 +51,6 @@ bool expandDrivableArea(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
   const multipolygon_t & footprint, const PathWithLaneId & path);
 
-/// @brief create the footprint polygon from a path
-/// @param[in] path the path for which to create a footprint
-/// @param[in] params expansion parameters defining how to create the footprint
-/// @return footprints of the path
-std::vector<Footprint> createPathFootprints(
-  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params);
-
-/// @brief create footprints from the predicted paths of the given objects
-/// @param[in] predicted_objects predicted objects
-/// @param[in] params expansion parameters
-/// @return the objects' predicted path footprints
-std::vector<Footprint> createPredictedPathFootprints(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const DrivableAreaExpansionParameters & params);
-
 /// @brief create lines around the path
 /// @param[in] path input path
 /// @param[in] max_expansion_distance maximum distance from the path
