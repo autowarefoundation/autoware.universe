@@ -16,7 +16,7 @@ FastCosSin fast_math;
 
 CameraParticleCorrector::CameraParticleCorrector()
 : AbstCorrector("camera_particle_corrector"),
-  score_offset_(declare_parameter<float>("score_offset", -64.f)),
+  score_offset_(declare_parameter<float>("score_offset", -128.f)),
   max_raw_score_(declare_parameter<float>("max_raw_score", 5000.0)),
   min_prob_(declare_parameter<float>("min_prob", 0.01)),
   far_weight_gain_(declare_parameter<float>("far_weight_gain", 0.001)),

@@ -32,6 +32,7 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   std::set<std::string> road_marking_labels_;
   std::set<std::string> sign_board_labels_;
+  std::set<std::string> bounding_box_labels_;
 
   void on_map(const HADMapBin & msg);
 
@@ -40,6 +41,8 @@ private:
 
   pcl::PointCloud<pcl::PointNormal> split_line_strings(
     const lanelet::ConstLineStrings3d & line_strings);
+
+  pcl::PointCloud<pcl::PointXYZL> load_bounding_boxes(const lanelet::PolygonLayer & polygons) const;
 
   lanelet::ConstLineStrings3d extract_specified_line_string(
     const lanelet::LineStringLayer & line_strings, const std::set<std::string> & visible_labels);

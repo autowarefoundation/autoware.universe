@@ -27,15 +27,16 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   auto cb_map = std::bind(&Ll2Decomposer::on_map, this, _1);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
 
-  auto loadLanelet2Labels =
+  auto load_lanelet2_labels =
     [this](const std::string & param_name, std::set<std::string> & labels) -> void {
     declare_parameter(param_name, std::vector<std::string>{});
     auto label_array = get_parameter(param_name).as_string_array();
     for (auto l : label_array) labels.insert(l);
   };
 
-  loadLanelet2Labels("road_marking_labels", road_marking_labels_);
-  loadLanelet2Labels("sign_board_labels", sign_board_labels_);
+  load_lanelet2_labels("road_marking_labels", road_marking_labels_);
+  load_lanelet2_labels("sign_board_labels", sign_board_labels_);
+  load_lanelet2_labels("bounding_box_labels", bounding_box_labels_);
 
   if (road_marking_labels_.empty()) {
     RCLCPP_FATAL_STREAM(
@@ -64,7 +65,8 @@ void print_attr(const lanelet::LaneletMapPtr & lanelet_map, const rclcpp::Logger
   }
 }
 
-pcl::PointCloud<pcl::PointXYZL> load_bounding_boxes(const lanelet::PolygonLayer & polygons)
+pcl::PointCloud<pcl::PointXYZL> Ll2Decomposer::load_bounding_boxes(
+  const lanelet::PolygonLayer & polygons) const
 {
   pcl::PointCloud<pcl::PointXYZL> cloud;
   int index = 0;
@@ -72,7 +74,7 @@ pcl::PointCloud<pcl::PointXYZL> load_bounding_boxes(const lanelet::PolygonLayer 
   for (const lanelet::ConstPolygon3d & polygon : polygons) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    if (attr.value() != "bounding_box") continue;
+    if (bounding_box_labels_.count(attr.value()) == 0) continue;
 
     for (const lanelet::ConstPoint3d & p : polygon) {
       pcl::PointXYZL xyzl;

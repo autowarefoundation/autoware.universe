@@ -31,7 +31,7 @@ cv::Point2i HierarchicalCostMap::to_cv_point(const Area & area, const Eigen::Vec
   return {static_cast<int>(px), static_cast<int>(py)};
 }
 
-cv::Vec3b HierarchicalCostMap::at3(const Eigen::Vector2f & position)
+cv::Vec3b HierarchicalCostMap::at(const Eigen::Vector2f & position)
 {
   if (!cloud_.has_value()) {
     return cv::Vec3b(128, 0, 0);
@@ -44,24 +44,7 @@ cv::Vec3b HierarchicalCostMap::at3(const Eigen::Vector2f & position)
   map_accessed_[key] = true;
 
   cv::Point2i tmp = to_cv_point(key, position);
-  return cost_maps_.at(key).at<cv::Vec3b>(tmp);
-}
-
-cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
-{
-  if (!cloud_.has_value()) {
-    return cv::Vec2b(128, 0);
-  }
-
-  Area key(position);
-  if (cost_maps_.count(key) == 0) {
-    build_map(key);
-  }
-  map_accessed_[key] = true;
-
-  cv::Point2i tmp = to_cv_point(key, position);
-  cv::Vec3b value = cost_maps_.at(key).at<cv::Vec3b>(tmp);
-  return {value[0], value[1]};
+  return cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x];
 }
 
 void HierarchicalCostMap::set_height(float height)
@@ -198,19 +181,19 @@ cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
 
   auto toVector2f = [this, center, R](float h, float w) -> Eigen::Vector2f {
     Eigen::Vector2f offset;
-    offset.x() = (w / this->image_size_ - 0.5f) * this->max_range_;
-    offset.y() = -(h / this->image_size_ - 0.5f) * this->max_range_;
+    offset.x() = (w / this->image_size_ - 0.5f) * this->max_range_ * 2;
+    offset.y() = -(h / this->image_size_ - 0.5f) * this->max_range_ * 2;
     return center + R * offset;
   };
 
   cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
   for (int w = 0; w < image_size_; w++) {
     for (int h = 0; h < image_size_; h++) {
-      cv::Vec3b v3 = this->at3(toVector2f(h, w));
+      cv::Vec3b v3 = this->at(toVector2f(h, w));
       if (v3[2] == 0)
         image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], v3[0], v3[0]);
       else
-        image.at<cv::Vec3b>(h, w) = cv::Vec3b(0, 0, 255);
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], v3[0], 50);
     }
   }
 

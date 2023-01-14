@@ -73,8 +73,7 @@ public:
   void set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
   void set_bounding_box(const pcl::PointCloud<pcl::PointXYZL> & cloud);
 
-  cv::Vec2b at2(const Eigen::Vector2f & position);
-  cv::Vec3b at3(const Eigen::Vector2f & position);
+  cv::Vec3b at(const Eigen::Vector2f & position);
 
   MarkerArray show_map_range() const;
 
