@@ -1,8 +1,9 @@
 #pragma once
 
+#include "camera_particle_corrector/hierarchical_cost_map.hpp"
+
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
-#include <pcdless_common/hierarchical_cost_map.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>

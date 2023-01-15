@@ -31,7 +31,9 @@ find_package(PCL REQUIRED COMPONENTS common)
 set(TARGET camera_particle_corrector)
 ament_auto_add_executable(${TARGET}
   src/camera_particle_corrector_node.cpp
+  src/hierarchical_cost_map.cpp
   src/filt_lsd.cpp
+  src/direct_cost_map.cpp
   src/camera_particle_corrector_core.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})

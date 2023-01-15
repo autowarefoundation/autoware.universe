@@ -1,6 +1,6 @@
-#include "pcdless_common/hierarchical_cost_map.hpp"
+#include "camera_particle_corrector/hierarchical_cost_map.hpp"
 
-#include "pcdless_common/direct_cost_map.hpp"
+#include "camera_particle_corrector/direct_cost_map.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
