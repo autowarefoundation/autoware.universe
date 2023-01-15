@@ -50,7 +50,7 @@ CameraParticleCorrector::CameraParticleCorrector()
   // Timer callback
   auto on_timer = std::bind(&CameraParticleCorrector::on_timer, this);
   timer_ =
-    rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(5).period(), std::move(on_timer));
+    rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer));
 
   score_converter_ = [this, k = -std::log(min_prob_) / 2.f](float raw) -> float {
     raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
@@ -257,11 +257,11 @@ float CameraParticleCorrector::compute_score(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = exp(-far_weight_gain_ * squared_norm);
 
-      cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
+      cv::Vec3b v3 = cost_map_.at(p.topRows(2));
       if (pn.label == 0) {
-        score += 0.5 * gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+        score += 0.5 * gain * (abs_cos(tangent, v3[1]) * v3[0] + score_offset_);
       } else {
-        score += gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+        score += gain * (abs_cos(tangent, v3[1]) * v3[0] + score_offset_);
       }
     }
   }
@@ -283,8 +283,8 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
-      cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      float score = gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+      cv::Vec3b v3 = cost_map_.at(p.topRows(2));
+      float score = gain * (abs_cos(tangent, v3[1]) * v3[0] + score_offset_);
 
       pcl::PointXYZI xyzi(score);
       xyzi.getVector3fMap() = p;
