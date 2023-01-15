@@ -322,7 +322,7 @@ inline T rotate_2d(const T & pt, const float32_t th_rad)
 /// \brief compute q s.t. p T q, or p * q = 0
 ///        This is the equivalent of a 90 degree ccw rotation
 /// \param[in] pt point to get normal point of
-/// \return point normal to p (unnormalized)
+/// \return point normal to p (un-normalized)
 template <typename T>
 inline T get_normal(const T & pt)
 {
