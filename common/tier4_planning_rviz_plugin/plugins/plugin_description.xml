@@ -24,6 +24,11 @@
     base_class_type="rviz_common::Display">
     <description>Display footprint of autoware_auto_planning_msg::PathWithLaneId</description>
   </class>
+  <class name="rviz_plugins/PoseStampedWithUuid"
+    type="rviz_plugins::AutowarePoseStampedWithUuidDisplay"
+    base_class_type="rviz_common::Display">
+    <description>Display pose_stamped_with_uuid of autoware_planning_msg::PoseStampedWithUuid</description>
+  </class>
   <class name="rviz_plugins/Trajectory"
     type="rviz_plugins::AutowareTrajectoryDisplay"
     base_class_type="rviz_common::Display">
