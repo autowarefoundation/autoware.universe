@@ -77,6 +77,9 @@ PullOverModule::PullOverModule(
       node, parameters, getGeometricPullOverParameters(), lane_departure_checker,
       occupancy_grid_map_, is_forward));
   }
+  if (pull_over_planners_.empty()) {
+    RCLCPP_ERROR(getLogger(), "Not found enabled planner");
+  }
 
   // set selected goal searcher
   // currently there is only one goal_searcher_type
@@ -488,7 +491,7 @@ BehaviorModuleOutput PullOverModule::plan()
       const auto shorten_lanes = util::cutOverlappedLanes(path, status_.lanes);
       const auto expanded_lanes = util::expandLanelets(
         shorten_lanes, parameters_.drivable_area_left_bound_offset,
-        parameters_.drivable_area_right_bound_offset);
+        parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
       util::generateDrivableArea(
         path, expanded_lanes, planner_data_->parameters.vehicle_length, planner_data_);
     }
@@ -653,14 +656,16 @@ PathWithLaneId PullOverModule::generateStopPath()
     status_.is_safe ? status_.pull_over_path.start_pose
                     : (closest_start_pose_ ? closest_start_pose_.value() : *search_start_pose);
 
-  // if stop pose is behind current pose, stop as soon as possible
+  // if stop pose is closer than min_stop_distance, stop as soon as possible
   const size_t ego_idx = findEgoIndex(reference_path.points);
   const size_t stop_idx = findFirstNearestSegmentIndexWithSoftConstraints(
     reference_path.points, stop_pose, common_parameters.ego_nearest_dist_threshold,
     common_parameters.ego_nearest_yaw_threshold);
   const double ego_to_stop_distance = calcSignedArcLength(
     reference_path.points, current_pose.position, ego_idx, stop_pose.position, stop_idx);
-  if (ego_to_stop_distance < 0.0) {
+  const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
+  const double min_stop_distance = std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
+  if (ego_to_stop_distance < min_stop_distance) {
     return generateEmergencyStopPath();
   }
 
@@ -680,7 +685,7 @@ PathWithLaneId PullOverModule::generateStopPath()
   const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_.drivable_area_left_bound_offset,
-    parameters_.drivable_area_right_bound_offset);
+    parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
   util::generateDrivableArea(
     reference_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 
@@ -737,7 +742,7 @@ PathWithLaneId PullOverModule::generateEmergencyStopPath()
   const auto shorten_lanes = util::cutOverlappedLanes(stop_path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_.drivable_area_left_bound_offset,
-    parameters_.drivable_area_right_bound_offset);
+    parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
   util::generateDrivableArea(
     stop_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 
