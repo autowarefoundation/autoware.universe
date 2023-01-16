@@ -170,10 +170,12 @@ private:
   bool is_activated_;
 
   /* for model prediction */
-  std::queue<TwistWithCovarianceStamped::SharedPtr> current_twist_queue_;    //!< @brief current measured twist
+  std::queue<TwistWithCovarianceStamped::SharedPtr>
+    current_twist_queue_;  //!< @brief current measured twist
   std::queue<int> current_twist_count_queue_;
 
-  std::queue<PoseWithCovarianceStamped::SharedPtr> current_pose_queue_;      //!< @brief current measured pose
+  std::queue<PoseWithCovarianceStamped::SharedPtr>
+    current_pose_queue_;  //!< @brief current measured pose
   std::queue<int> current_pose_count_queue_;
 
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
