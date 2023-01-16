@@ -1,5 +1,6 @@
 #include "camera_particle_corrector/camera_particle_corrector.hpp"
 #include "camera_particle_corrector/fast_cos.hpp"
+#include "camera_particle_corrector/logit.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
@@ -157,8 +158,9 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
       transformed_lsd += transformed_iffy_lsd;
 
-      float raw_score = compute_score(transformed_lsd, transform.translation());
-      particle.weight = score_converter_(raw_score);
+      float logit = compute_logit(transformed_lsd, transform.translation());
+      std::cout << logit << std::endl;
+      particle.weight = logit_to_prob(logit);
     }
 
     if (enable_switch_) {
@@ -187,7 +189,7 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     for (const auto p : cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = common::color_scale::blue_red(0.5 + p.intensity / max_score * 0.5);
+      rgb.rgba = common::color_scale::blue_red(p.intensity / max_score);
       rgb_cloud.push_back(rgb);
     }
     for (const auto p : iffy_cloud) {
@@ -242,10 +244,10 @@ float abs_cos(const Eigen::Vector3f & t, float deg)
   return std::abs(x.dot(y));
 }
 
-float CameraParticleCorrector::compute_score(
+float CameraParticleCorrector::compute_logit(
   const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
 {
-  float score = 0;
+  float logit = 0;
   for (const LineSegment & pn : lsd_cloud) {
     const Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     const float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
@@ -257,15 +259,15 @@ float CameraParticleCorrector::compute_score(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = exp(-far_weight_gain_ * squared_norm);
 
-      cv::Vec3b v3 = cost_map_.at(p.topRows(2));
+      cv::Vec3f f3 = cost_map_.at(p.topRows(2));
       if (pn.label == 0) {
-        score += 0.5 * gain * (abs_cos(tangent, v3[1]) * v3[0] + score_offset_);
+        logit += prob_to_logit(0.5 * gain * (abs_cos(tangent, f3[1]) * f3[0]));
       } else {
-        score += gain * (abs_cos(tangent, v3[1]) * v3[0] + score_offset_);
+        logit += prob_to_logit(gain * (abs_cos(tangent, f3[1]) * f3[0]));
       }
     }
   }
-  return score;
+  return logit;
 }
 
 pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
@@ -283,10 +285,10 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
-      cv::Vec3b v3 = cost_map_.at(p.topRows(2));
-      float score = gain * (abs_cos(tangent, v3[1]) * v3[0] + score_offset_);
+      cv::Vec3f f3 = cost_map_.at(p.topRows(2));
+      float prob = gain * (abs_cos(tangent, f3[1]) * f3[0]);
 
-      pcl::PointXYZI xyzi(score);
+      pcl::PointXYZI xyzi(prob);
       xyzi.getVector3fMap() = p;
       cloud.push_back(xyzi);
     }

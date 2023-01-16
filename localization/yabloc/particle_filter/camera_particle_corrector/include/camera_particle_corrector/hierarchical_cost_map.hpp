@@ -73,7 +73,13 @@ public:
   void set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
   void set_bounding_box(const pcl::PointCloud<pcl::PointXYZL> & cloud);
 
-  cv::Vec3b at(const Eigen::Vector2f & position);
+  /**
+   * Get pixel value at specified pixel
+   *
+   * @param[in] position Real scale position at world frame
+   * @return The combination of intensity (0-1), angle (0-180), unmapped flag (0, 1)
+   */
+  cv::Vec3f at(const Eigen::Vector2f & position);
 
   MarkerArray show_map_range() const;
 

@@ -38,7 +38,7 @@ CameraParticleCorrector::filt(const LineSegments & iffy_lines)
   LineSegments good, bad;
   const Sophus::SE3f pose = common::pose_to_se3(latest_pose_.value().pose);
 
-  pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
+  // pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
   for (const auto & line : iffy_lines) {
     const Eigen::Vector3f p1 = line.getVector3fMap();
     const Eigen::Vector3f p2 = line.getNormalVector3fMap();
@@ -54,13 +54,13 @@ CameraParticleCorrector::filt(const LineSegments & iffy_lines)
       score += (cos2 * v3[0]);
       count++;
 
-      pcl::PointXYZRGB rgb;
-      rgb.getVector3fMap() = px;
-      rgb.rgba = common::color_scale::blue_red(cos2 * v3[0] / 255.0f);
-      rgb_cloud.push_back(rgb);
+      // pcl::PointXYZRGB rgb;
+      // rgb.getVector3fMap() = px;
+      // rgb.rgba = common::color_scale::blue_red(cos2 * v3[0] / 255.0f);
+      // rgb_cloud.push_back(rgb);
     }
 
-    if (score / count > 128) {
+    if (score / count > 0.5f) {
       good.push_back(line);
     } else {
       bad.push_back(line);

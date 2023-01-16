@@ -31,7 +31,7 @@ cv::Point2i HierarchicalCostMap::to_cv_point(const Area & area, const Eigen::Vec
   return {static_cast<int>(px), static_cast<int>(py)};
 }
 
-cv::Vec3b HierarchicalCostMap::at(const Eigen::Vector2f & position)
+cv::Vec3f HierarchicalCostMap::at(const Eigen::Vector2f & position)
 {
   if (!cloud_.has_value()) {
     return cv::Vec3b(128, 0, 0);
@@ -44,7 +44,8 @@ cv::Vec3b HierarchicalCostMap::at(const Eigen::Vector2f & position)
   map_accessed_[key] = true;
 
   cv::Point2i tmp = to_cv_point(key, position);
-  return cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x];
+  cv::Vec3b b3 = cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x];
+  return {b3[0] / 255.f, static_cast<float>(b3[1]), static_cast<float>(b3[2])};
 }
 
 void HierarchicalCostMap::set_height(float height)
@@ -189,11 +190,11 @@ cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
   cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
   for (int w = 0; w < image_size_; w++) {
     for (int h = 0; h < image_size_; h++) {
-      cv::Vec3b v3 = this->at(toVector2f(h, w));
+      cv::Vec3f v3 = this->at(toVector2f(h, w));
       if (v3[2] == 0)
-        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], v3[0], v3[0]);
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], 255 * v3[0], 255 * v3[0]);
       else
-        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], v3[0], 50);
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], 255 * v3[0], 50);
     }
   }
 

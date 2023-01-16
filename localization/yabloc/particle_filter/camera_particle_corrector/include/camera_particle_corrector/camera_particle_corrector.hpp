@@ -70,7 +70,8 @@ private:
 
   std::pair<LineSegments, LineSegments> split_linesegments(const PointCloud2 & msg);
 
-  float compute_score(const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+  float compute_logit(const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+
   pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
     const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
 
