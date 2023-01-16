@@ -464,6 +464,22 @@ Polygon2d createOneStepPolygon(
   return hull_polygon;
 }
 
+void findClosestPointToTrajectory(
+  TrajectoryPoints & output, const geometry_msgs::msg::Point & point, geometry_msgs::msg::Point & closest_point,
+  int & closest_point_index)
+{
+  double min_dist = std::numeric_limits<double>::max();
+  for (size_t i = 0; i < output.size(); ++i) {
+    const double dist = tier4_autoware_utils::calcSquaredDistance2d(
+      output.at(i).pose.position, point);
+    if (dist < min_dist) {
+      min_dist = dist;
+      closest_point = output.at(i).pose.position;
+      closest_point_index = static_cast<int>(i);
+    }
+  }
+}
+
 void ObstacleStopPlannerNode::searchObstacle(
   const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
   PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
@@ -485,7 +501,7 @@ void ObstacleStopPlannerNode::searchObstacle(
         for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
           for (const auto & point : object_polygon.outer()) {
             obm.header.frame_id = "map";
-            obm.id = point.count();
+            obm.id = i;
             obm.scale.x = 0.1;
             obm.color.r = 0.0;
             obm.color.g = 1.0;
@@ -501,7 +517,8 @@ void ObstacleStopPlannerNode::searchObstacle(
             obm.points.push_back(p);
             object_polygon_marker.markers.push_back(obm);
           }
-          //          marker_publisher_->publish(object_polygon_marker);
+//          marker_publisher_->publish(object_polygon_marker);
+
 
           // create one step circle center for vehicle
           const auto & p_front = decimate_trajectory.at(i).pose;
@@ -532,7 +549,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             ovm.points.push_back(p);
             one_step_move_vehicle_polygon_marker.markers.push_back(ovm);
           }
-          //          marker_publisher_->publish(one_step_move_vehicle_polygon_marker);
+//          marker_publisher_->publish(one_step_move_vehicle_polygon_marker);
 
           Polygon2d one_step_move_vehicle_polygon2d;
           for (size_t j = 0; j <= one_step_move_vehicle_polygon.size() - 1; ++j) {
@@ -544,6 +561,7 @@ void ObstacleStopPlannerNode::searchObstacle(
 
           // check collision
           std::deque<Point2d> intersect;
+          planner_data.found_collision_points = bg::intersects(object_polygon, one_step_move_vehicle_polygon2d);
           bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, intersect);
           visualization_msgs::msg::MarkerArray intersect_marker;
           visualization_msgs::msg::Marker im;
@@ -568,28 +586,36 @@ void ObstacleStopPlannerNode::searchObstacle(
               intersect_marker.markers.push_back(im);
             }
           }
+//          marker_publisher_->publish(intersect_marker);
 
-          const auto idx = motion_utils::findNearestIndex(decimate_trajectory, p);
-          std::cout << "nearest point: " << decimate_trajectory.at(idx).pose.position.x << "  "
-                    << decimate_trajectory.at(idx).pose.position.y << std::endl;
+
+          int idx = 0;
+          geometry_msgs::msg::Point closest_point;
+          findClosestPointToTrajectory(output, p, closest_point, idx);
+          std::cout << "closest point x: " << closest_point.x << " closest point y: " << closest_point.y << std::endl;
+
+//          std::cout << "x: " << object_ptr_->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x <<
+//            " y: "  << object_ptr_->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y << std::endl;
           visualization_msgs::msg::MarkerArray nearest_point_marker;
           visualization_msgs::msg::Marker np;
           geometry_msgs::msg::Pose p2;
           np.header.frame_id = "map";
           np.id = i;
-          np.scale.x = 0.1;
-          np.color.r = 0.0;
+          np.scale.x = 1.0;
+          np.scale.y = 1.0;
+          np.scale.z = 1.0;
+          np.color.r = 1.0;
           np.color.g = 0.0;
-          np.color.b = 1.0;
+          np.color.b = 0.0;
           np.color.a = 1.0;
-          np.lifetime = rclcpp::Duration::from_nanoseconds(100000);
-          np.type = visualization_msgs::msg::Marker::LINE_STRIP;
+          np.lifetime = rclcpp::Duration::from_seconds(10);
+          np.type = visualization_msgs::msg::Marker::SPHERE;
           np.action = visualization_msgs::msg::Marker::ADD;
-          p2.position.x = decimate_trajectory.at(idx).pose.position.x;
-          p2.position.y = decimate_trajectory.at(idx).pose.position.y;
-          p2.position.z = 0.0;
-          np.points.push_back(p2.position);
+          p2.position.x = closest_point.x;
+          p2.position.y = closest_point.y;
+          np.pose.position = p2.position;
           nearest_point_marker.markers.push_back(np);
+
           marker_publisher_->publish(nearest_point_marker);
 
           debug_ptr_->pushPolygon(
