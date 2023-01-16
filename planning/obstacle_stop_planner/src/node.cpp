@@ -465,13 +465,13 @@ Polygon2d createOneStepPolygon(
 }
 
 void findClosestPointToTrajectory(
-  TrajectoryPoints & output, const geometry_msgs::msg::Point & point, geometry_msgs::msg::Point & closest_point,
-  int & closest_point_index)
+  TrajectoryPoints & output, const geometry_msgs::msg::Point & point,
+  geometry_msgs::msg::Point & closest_point, int & closest_point_index)
 {
   double min_dist = std::numeric_limits<double>::max();
   for (size_t i = 0; i < output.size(); ++i) {
-    const double dist = tier4_autoware_utils::calcSquaredDistance2d(
-      output.at(i).pose.position, point);
+    const double dist =
+      tier4_autoware_utils::calcSquaredDistance2d(output.at(i).pose.position, point);
     if (dist < min_dist) {
       min_dist = dist;
       closest_point = output.at(i).pose.position;
@@ -517,8 +517,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             obm.points.push_back(p);
             object_polygon_marker.markers.push_back(obm);
           }
-//          marker_publisher_->publish(object_polygon_marker);
-
+          //          marker_publisher_->publish(object_polygon_marker);
 
           // create one step circle center for vehicle
           const auto & p_front = decimate_trajectory.at(i).pose;
@@ -549,7 +548,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             ovm.points.push_back(p);
             one_step_move_vehicle_polygon_marker.markers.push_back(ovm);
           }
-//          marker_publisher_->publish(one_step_move_vehicle_polygon_marker);
+          //          marker_publisher_->publish(one_step_move_vehicle_polygon_marker);
 
           Polygon2d one_step_move_vehicle_polygon2d;
           for (size_t j = 0; j <= one_step_move_vehicle_polygon.size() - 1; ++j) {
@@ -561,7 +560,8 @@ void ObstacleStopPlannerNode::searchObstacle(
 
           // check collision
           std::deque<Point2d> intersect;
-          planner_data.found_collision_points = bg::intersects(object_polygon, one_step_move_vehicle_polygon2d);
+          planner_data.found_collision_points =
+            bg::intersects(object_polygon, one_step_move_vehicle_polygon2d);
           bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, intersect);
           visualization_msgs::msg::MarkerArray intersect_marker;
           visualization_msgs::msg::Marker im;
@@ -586,16 +586,20 @@ void ObstacleStopPlannerNode::searchObstacle(
               intersect_marker.markers.push_back(im);
             }
           }
-//          marker_publisher_->publish(intersect_marker);
-
+          //          marker_publisher_->publish(intersect_marker);
 
           int idx = 0;
           geometry_msgs::msg::Point closest_point;
           findClosestPointToTrajectory(output, p, closest_point, idx);
-          std::cout << "closest point x: " << closest_point.x << " closest point y: " << closest_point.y << std::endl;
+          std::cout << "closest point x: " << closest_point.x
+                    << " closest point y: " << closest_point.y << std::endl;
 
-//          std::cout << "x: " << object_ptr_->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x <<
-//            " y: "  << object_ptr_->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y << std::endl;
+          //          std::cout << "x: " <<
+          //          object_ptr_->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x
+          //          <<
+          //            " y: "  <<
+          //            object_ptr_->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y
+          //            << std::endl;
           visualization_msgs::msg::MarkerArray nearest_point_marker;
           visualization_msgs::msg::Marker np;
           geometry_msgs::msg::Pose p2;
