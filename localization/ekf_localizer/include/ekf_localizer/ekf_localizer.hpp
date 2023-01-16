@@ -47,9 +47,6 @@
 #include <string>
 #include <vector>
 
-using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
-
 class Simple1DFilter
 {
 public:
@@ -106,6 +103,9 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
+  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+
   const Warning warning_;
 
   //!< @brief ekf estimated pose publisher
@@ -174,8 +174,7 @@ private:
     current_twist_queue_;  //!< @brief current measured twist
   std::queue<int> current_twist_count_queue_;
 
-  std::queue<PoseWithCovarianceStamped::SharedPtr>
-    current_pose_queue_;  //!< @brief current measured pose
+  std::queue<PoseWithCovarianceStamped::SharedPtr> current_pose_queue_;  //!< @brief current measured pose
   std::queue<int> current_pose_count_queue_;
 
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
