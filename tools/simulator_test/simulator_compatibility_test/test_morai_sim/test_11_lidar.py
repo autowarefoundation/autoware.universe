@@ -2,26 +2,12 @@ from test_base.test_11_lidar import Test11LidarBase
 
 
 class Test11LidarMorai(Test11LidarBase):
+    @classmethod
+    def setup_class(cls) -> None:
+        super().setup_class()
+
     def test_get_left_raw(self):
-        result = self.get_left_raw()
-        assert len(result) != 0
-
-    def test_get_left_raw_ex(self):
-        result = self.get_left_raw_ex()
-        assert len(result) != 0
-
-    def test_get_right_raw(self):
-        result = self.get_right_raw()
-        assert len(result) != 0
-
-    def test_get_right_raw_ex(self):
-        result = self.get_right_raw_ex()
-        assert len(result) != 0
-
-    def test_get_top_raw(self):
-        result = self.get_top_raw()
-        assert len(result) != 0
-
-    def test_get_top_raw_ex(self):
-        result = self.get_top_raw_ex()
-        assert len(result) != 0
+        self.update_pointcloud_data()
+        for sensor in self.sensors:
+            result = self.get_data(sensor["topic"])
+            assert len(result) != 0

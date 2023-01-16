@@ -9,11 +9,12 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import Image
+from test_base.configuration_loader import ConfigFileHandler
 
 
 class Test08CameraSensorBase:
-    sensor_msgs_rx = []
-    sensor_info_msgs_rx = []
+    sensor_msgs_rx = {}
+    sensor_info_msgs_rx = {}
     node = None
     sub_sensor = None
     sub_sensor_info = None
@@ -21,6 +22,10 @@ class Test08CameraSensorBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        cls.configHandler = ConfigFileHandler("sensor_configurations.json")
+        cls.configHandler.load()
+        cls.sensors = cls.configHandler.get_camera_list()
+
         QOS_BEKL10V = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             history=QoSHistoryPolicy.KEEP_LAST,
@@ -29,18 +34,23 @@ class Test08CameraSensorBase:
         )
         rclpy.init()
         cls.node = rclpy.create_node("test_08_camera_sensor_base")
-        cls.sub_sensor = cls.node.create_subscription(
-            Image,
-            "/sensing/camera/traffic_light/image_raw",
-            lambda msg: cls.sensor_msgs_rx.append(msg),
-            QOS_BEKL10V,
-        )
-        cls.sub_sensor_info = cls.node.create_subscription(
-            CameraInfo,
-            "/sensing/camera/traffic_light/camera_info",
-            lambda msg: cls.sensor_info_msgs_rx.append(msg),
-            QOS_BEKL10V,
-        )
+        for sensor in cls.sensors:
+            if "Image" in sensor["msg"]:
+                cls.sensor_msgs_rx[sensor["topic"]] = []
+                cls.sub_sensor = cls.node.create_subscription(
+                    Image,
+                    sensor["topic"],
+                    lambda msg: cls.sensor_msgs_rx[sensor["topic"]].append(msg),
+                    QOS_BEKL10V,
+                )
+            elif "CameraInfo" in sensor["msg"]:
+                cls.sensor_info_msgs_rx[sensor["topic"]] = []
+                cls.sub_sensor_info = cls.node.create_subscription(
+                    CameraInfo,
+                    sensor["topic"],
+                    lambda msg: cls.sensor_info_msgs_rx[sensor["topic"]].append(msg),
+                    QOS_BEKL10V,
+                )
         cls.executor = SingleThreadedExecutor()
         cls.executor.add_node(cls.node)
 
@@ -52,10 +62,13 @@ class Test08CameraSensorBase:
 
     @pytest.fixture
     def setup_method(self):
-        self.sensor_msgs_rx.clear()
-        self.sensor_info_msgs_rx.clear()
+        for sensor in self.sensors:
+            if "Image" in sensor["msg"]:
+                self.sensor_msgs_rx[sensor["topic"]].clear()
+            elif "CameraInfo" in sensor["msg"]:
+                self.sensor_info_msgs_rx[sensor["topic"]].clear()
 
-    def get_sensor_info(self):
+    def update_sensor_info(self):
         time.sleep(1)
         try:
             if rclpy.ok():
@@ -66,7 +79,7 @@ class Test08CameraSensorBase:
         finally:
             return self.sensor_info_msgs_rx
 
-    def get_sensor_data(self):
+    def update_sensor_data(self):
         time.sleep(1)
         try:
             if rclpy.ok():
@@ -76,3 +89,11 @@ class Test08CameraSensorBase:
             print(e)
         finally:
             return self.sensor_msgs_rx
+
+    def get_data(self, topic):
+        if topic in self.sensor_msgs_rx:
+            return self.sensor_msgs_rx[topic]
+        elif topic in self.sensor_info_msgs_rx:
+            return self.sensor_info_msgs_rx[topic]
+        else:
+            return []
