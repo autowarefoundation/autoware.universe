@@ -17,8 +17,6 @@ FastCosSin fast_math;
 
 CameraParticleCorrector::CameraParticleCorrector()
 : AbstCorrector("camera_particle_corrector"),
-  score_offset_(declare_parameter<float>("score_offset", -128.f)),
-  max_raw_score_(declare_parameter<float>("max_raw_score", 5000.0)),
   min_prob_(declare_parameter<float>("min_prob", 0.01)),
   far_weight_gain_(declare_parameter<float>("far_weight_gain", 0.001)),
   cost_map_(this)
@@ -52,11 +50,6 @@ CameraParticleCorrector::CameraParticleCorrector()
   auto on_timer = std::bind(&CameraParticleCorrector::on_timer, this);
   timer_ =
     rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer));
-
-  score_converter_ = [this, k = -std::log(min_prob_) / 2.f](float raw) -> float {
-    raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
-    return this->min_prob_ * std::exp(k * (raw / this->max_raw_score_ + 1));
-  };
 }
 
 void CameraParticleCorrector::on_pose(const PoseStamped & msg) { latest_pose_ = msg; }
@@ -160,7 +153,6 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
 
       float logit = compute_logit(transformed_lsd, transform.translation());
       particle.weight = logit_to_prob(logit, 0.01f);
-      std::cout << logit << " " << particle.weight << std::endl;
     }
 
     if (enable_switch_) {
@@ -261,9 +253,9 @@ float CameraParticleCorrector::compute_logit(
 
       cv::Vec3f f3 = cost_map_.at(p.topRows(2));
       if (pn.label == 0) {  // posteriori
-        logit += 0.5f * (gain * abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
+        logit += 0.2f * gain * (abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
       } else {  // apriori
-        logit += (gain * abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
+        logit += gain * (abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
       }
     }
   }
@@ -286,9 +278,9 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec3f f3 = cost_map_.at(p.topRows(2));
-      float logit = gain * abs_cos(tangent, f3[1]) * f3[0] - 0.5f;
+      float logit = gain * (abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
 
-      pcl::PointXYZI xyzi(logit_to_prob(logit));
+      pcl::PointXYZI xyzi(logit_to_prob(logit, 10.f));
       xyzi.getVector3fMap() = p;
       cloud.push_back(xyzi);
     }

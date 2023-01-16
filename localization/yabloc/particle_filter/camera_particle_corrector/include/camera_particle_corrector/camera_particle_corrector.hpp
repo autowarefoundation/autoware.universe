@@ -36,8 +36,6 @@ public:
   CameraParticleCorrector();
 
 private:
-  const float score_offset_;
-  const float max_raw_score_;
   const float min_prob_;
   const float far_weight_gain_;
   common::HierarchicalCostMap cost_map_;

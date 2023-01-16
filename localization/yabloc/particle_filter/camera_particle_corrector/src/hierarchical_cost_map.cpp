@@ -182,8 +182,8 @@ cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
 
   auto toVector2f = [this, center, R](float h, float w) -> Eigen::Vector2f {
     Eigen::Vector2f offset;
-    offset.x() = (w / this->image_size_ - 0.5f) * this->max_range_ * 2;
-    offset.y() = -(h / this->image_size_ - 0.5f) * this->max_range_ * 2;
+    offset.x() = (w / this->image_size_ - 0.5f) * this->max_range_ * 1.5f;
+    offset.y() = -(h / this->image_size_ - 0.5f) * this->max_range_ * 1.5f;
     return center + R * offset;
   };
 
