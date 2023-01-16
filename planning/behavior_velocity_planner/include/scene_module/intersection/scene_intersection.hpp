@@ -116,7 +116,7 @@ private:
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
-
+  std::shared_ptr<std::ofstream> predicted_velocity_;
   // Parameter
   PlannerParam planner_param_;
 

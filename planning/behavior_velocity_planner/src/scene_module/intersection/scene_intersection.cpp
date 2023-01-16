@@ -27,6 +27,7 @@
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
+#include <fstream>
 #include <memory>
 #include <vector>
 
@@ -55,7 +56,10 @@ IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id), is_go_out_(false)
+: SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
+  is_go_out_(false),
+  predicted_velocity_(nullptr)
 {
   velocity_factor_.init(VelocityFactor::INTERSECTION);
   planner_param_ = planner_param;
@@ -66,6 +70,7 @@ IntersectionModule::IntersectionModule(
   has_traffic_light_ =
     !(assigned_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>().empty());
   state_machine_.setMarginTime(planner_param_.state_transit_margin_time);
+  predicted_velocity_ = std::make_shared<std::ofstream>("predicted_velocity.csv");
 }
 
 bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -554,6 +559,12 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
     RCLCPP_WARN(logger_, "smoothPath failed");
   }
 
+  std::ofstream & ofs = *predicted_velocity_;
+  std::string delim = "";
+  for (const auto & point : smoothed_reference_path.points) {
+    ofs << std::exchange(delim, ",") << point.point.longitudinal_velocity_mps;
+  }
+  ofs << "\n";
   // calculate when ego is going to reach each (interpolated) points on the path
   TimeDistanceArray time_distance_array{};
   dist_sum = 0.0;
