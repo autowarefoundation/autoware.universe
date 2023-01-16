@@ -51,6 +51,7 @@ private:
   rclcpp::Publisher<Image>::SharedPtr pub_map_image_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_scored_cloud_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_scored_posteriori_cloud_;
   rclcpp::Publisher<String>::SharedPtr pub_string_;
 
   Eigen::Vector3f last_mean_position_;

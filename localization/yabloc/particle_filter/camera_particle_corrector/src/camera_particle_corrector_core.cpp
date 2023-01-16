@@ -30,8 +30,9 @@ CameraParticleCorrector::CameraParticleCorrector()
   pub_image_ = create_publisher<Image>("match_image", 10);
   pub_map_image_ = create_publisher<Image>("cost_map_image", 10);
   pub_marker_ = create_publisher<MarkerArray>("cost_map_range", 10);
-  pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
   pub_string_ = create_publisher<String>("state_string", 10);
+  pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
+  pub_scored_posteriori_cloud_ = create_publisher<PointCloud2>("scored_post_cloud", 10);
 
   // Subscription
   auto on_lsd = std::bind(&CameraParticleCorrector::on_lsd, this, _1);
@@ -174,6 +175,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       common::transform_linesegments(iffy_lsd_cloud, transform), transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
+    pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud2;
+
     float max_score = 0;
     for (const auto p : cloud) {
       max_score = std::max(max_score, std::abs(p.intensity));
@@ -187,11 +190,12 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     for (const auto p : iffy_cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = common::Color(0, 0.8, 0, 0.5f);
-      rgb_cloud.push_back(rgb);
+      rgb.rgba = common::color_scale::blue_red(p.intensity / max_score);
+      rgb_cloud2.push_back(rgb);
     }
 
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
+    common::publish_cloud(*pub_scored_posteriori_cloud_, rgb_cloud2, lsd_msg.header.stamp);
   }
 
   if (timer.milli_seconds() > 80) {
