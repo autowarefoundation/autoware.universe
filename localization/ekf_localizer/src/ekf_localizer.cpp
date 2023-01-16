@@ -404,6 +404,19 @@ void warnIfPoseDelayTimeLessThanZero(const Warning & warning, const double delay
   }
 }
 
+bool checkDelayStep(const Warning & warning, const int delay_step, const int extend_state_step)
+{
+  const bool good = delay_step < extend_state_step;
+  if (!good) {
+    warning.warnThrottle(
+      fmt::format(
+        "The delay step {} should be less than the maximum state step {}.",
+        delay_step, extend_state_step),
+      1000);
+  }
+  return good;
+}
+
 /*
  * measurementUpdatePose
  */
@@ -428,13 +441,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (delay_step > params_.extend_state_step - 1) {
-    warning_.warnThrottle(
-      fmt::format(
-        "Pose delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
-        "extend_state_step * ekf_dt : %f [s]",
-        delay_time, params_.extend_state_step * ekf_dt_),
-      1000);
+  if (checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
