@@ -92,6 +92,17 @@ using vehicle_info_util::VehicleInfo;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
+struct ObstacleWithDetectionTime
+{
+  ObstacleWithDetectionTime() = default;
+  ObstacleWithDetectionTime(const rclcpp::Time & t, pcl::PointXYZ & p) : detection_time(t), point(p)
+  {
+  }
+
+  rclcpp::Time detection_time;
+  pcl::PointXYZ point;
+};
+
 class ObstacleStopPlannerNode : public rclcpp::Node
 {
 public:
@@ -123,7 +134,7 @@ private:
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
-  std::vector<std::pair<rclcpp::Time, pcl::PointXYZ>> obstacle_history_{};
+  std::vector<ObstacleWithDetectionTime> obstacle_history_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
@@ -205,7 +216,7 @@ private:
   void updateObstacleHistory(const rclcpp::Time & now)
   {
     for (auto itr = obstacle_history_.begin(); itr != obstacle_history_.end();) {
-      const auto expired = (now - itr->first).seconds() > node_param_.hunting_threshold;
+      const auto expired = (now - itr->detection_time).seconds() > node_param_.hunting_threshold;
 
       if (expired) {
         itr = obstacle_history_.erase(itr);
@@ -221,7 +232,7 @@ private:
     PointCloud::Ptr ret(new PointCloud);
 
     for (const auto & p : obstacle_history_) {
-      ret->push_back(p.second);
+      ret->push_back(p.point);
     }
 
     return ret;
