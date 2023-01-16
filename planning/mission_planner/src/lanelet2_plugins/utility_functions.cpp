@@ -87,43 +87,29 @@ lanelet::ConstLanelet combine_lanelets(const lanelet::ConstLanelets & lanelets)
   return std::move(combined_lanelet);
 }
 
-boost::optional<size_t> findNearestIndex(
-        const lanelet::ConstLineString3d & line, const geometry_msgs::msg::Point & point)
+std::vector<geometry_msgs::msg::Point> convertCenterlineToPoints(const lanelet::Lanelet & lanelet)
 {
-    if (line.empty()) {
-        return {};
-    }
-
-    double min_dist = std::numeric_limits<double>::max();
-    size_t min_idx = 0;
-
-    for (size_t i = 0; i < line.size(); ++i) {
-        geometry_msgs::msg::Point p1;
-        p1.x = line[i].basicPoint().x();
-        p1.y = line[i].basicPoint().y();
-
-        const auto dx = p1.x - point.x;
-        const auto dy = p1.y - point.y;
-        const auto squared_distance = dx * dx + dy * dy;
-
-        if (squared_distance < min_dist) {
-            min_dist = squared_distance;
-            min_idx = i;
-        }
-    }
-    return min_idx;
+  std::vector<geometry_msgs::msg::Point> centerline_points;
+  geometry_msgs::msg::Point center_point;
+  for (const auto & point : lanelet.centerline()) {
+    center_point.x = point.basicPoint().x();
+    center_point.y = point.basicPoint().y();
+    center_point.z = point.basicPoint().z();
+    centerline_points.push_back(tier4_autoware_utils::getPoint(center_point));
+  }
+  return centerline_points;
 }
 
 geometry_msgs::msg::Pose convertBasicPoint3dToPose(
-        const lanelet::BasicPoint3d & point, const geometry_msgs::msg::Quaternion & quaternion)
+  const lanelet::BasicPoint3d & point, const double & lane_yaw)
 {
-    geometry_msgs::msg::Pose pose;
+  // calculate new orientation of goal
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = point.x();
+  pose.position.y = point.y();
+  pose.position.z = point.z();
 
-    pose.position.x = point.x();
-    pose.position.y = point.y();
-    pose.position.z = point.z();
+  pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(0.0, 0.0, lane_yaw);
 
-    pose.orientation = quaternion;
-
-    return pose;
+  return pose;
 }

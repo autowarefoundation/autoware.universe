@@ -74,8 +74,6 @@ private:
     const lanelet::ConstLanelet & combined_prev_lanelet,
     const tier4_autoware_utils::Polygon2d & goal_footprint, double & next_lane_length,
     const double search_margin = 2.0);
-  geometry_msgs::msg::Pose get_closest_centerline_pose(
-    const lanelet::ConstLanelets road_lanelets, const geometry_msgs::msg::Pose & point);
   bool is_goal_valid(const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets);
   Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
 };
