@@ -538,8 +538,8 @@ BehaviorModuleOutput PullOverModule::plan()
     (!prev_goal_id_ || *prev_goal_id_ != modified_goal_pose_->id)) {
     PoseStampedWithUuid modified_goal{};
     modified_goal.uuid = planner_data_->route_handler->getRouteUuid();
-    modified_goal.pose_stamped.pose = modified_goal_pose_->goal_pose;
-    modified_goal.pose_stamped.header = planner_data_->route_handler->getRouteHeader();
+    modified_goal.pose = modified_goal_pose_->goal_pose;
+    modified_goal.header = planner_data_->route_handler->getRouteHeader();
     output.modified_goal = modified_goal;
     prev_goal_id_ = modified_goal_pose_->id;
   }
@@ -577,7 +577,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
   updateOccupancyGrid();
   BehaviorModuleOutput out;
-  plan();  // update status_
+  out.modified_goal = plan().modified_goal;  // update status_
   out.path = std::make_shared<PathWithLaneId>(generateStopPath());
   path_candidate_ = status_.is_safe
                       ? std::make_shared<PathWithLaneId>(status_.pull_over_path.getFullPath())

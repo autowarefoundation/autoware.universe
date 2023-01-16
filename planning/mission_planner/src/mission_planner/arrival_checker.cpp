@@ -58,7 +58,9 @@ bool ArrivalChecker::is_arrived(const geometry_msgs::msg::PoseStamped & pose) co
   if (goal_pose_ == nullptr) {
     return false;
   }
-  const auto & goal = goal_pose_->pose_stamped;
+  geometry_msgs::msg::PoseStamped goal;
+  goal.header = goal_pose_->header;
+  goal.pose = goal_pose_->pose;
 
   // Check frame_id.
   if (goal.header.frame_id != pose.header.frame_id) {
