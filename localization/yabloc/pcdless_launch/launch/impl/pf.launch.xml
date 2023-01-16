@@ -57,8 +57,9 @@
         <param name="far_weight_gain" value="0.001"/>
         <param name="enabled_at_first" value="false"/>
 
-        <!-- <remap from="weighted_particles" to="$(var inout_weighted_particles)"/> -->
-        <remap from="weighted_particles" to="/disabled/particles"/>
+        <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
+        <!-- <remap from="weighted_particles" to="/disabled/particles"/> -->
+
         <remap from="lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
         <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
         <remap from="ll2_bounding_box" to="$(var input_ll2_bounding_box)"/>

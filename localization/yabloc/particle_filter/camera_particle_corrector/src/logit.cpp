@@ -28,7 +28,7 @@ struct ProbToLogitTable
 
 }  // namespace
 
-float logit_to_prob(float logit) { return 1.f / (1 + std::exp(-logit)); }
+float logit_to_prob(float logit, float gain) { return 1.f / (1 + std::exp(-gain * logit)); }
 
 float prob_to_logit(float prob) { return prob_to_logit_table(prob); }
 

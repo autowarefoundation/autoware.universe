@@ -1,7 +1,7 @@
 #pragma once
 namespace pcdless
 {
-float logit_to_prob(float logit);
+float logit_to_prob(float logit, float gain = 1.0f);
 
 /**
  * Convert probability to logit

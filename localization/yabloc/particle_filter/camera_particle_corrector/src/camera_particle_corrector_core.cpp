@@ -159,8 +159,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       transformed_lsd += transformed_iffy_lsd;
 
       float logit = compute_logit(transformed_lsd, transform.translation());
-      std::cout << logit << std::endl;
-      particle.weight = logit_to_prob(logit);
+      particle.weight = logit_to_prob(logit, 0.01f);
+      std::cout << logit << " " << particle.weight << std::endl;
     }
 
     if (enable_switch_) {
@@ -257,13 +257,13 @@ float CameraParticleCorrector::compute_logit(
 
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
-      float gain = exp(-far_weight_gain_ * squared_norm);
+      float gain = exp(-far_weight_gain_ * squared_norm);  // 0 < gain < 1
 
       cv::Vec3f f3 = cost_map_.at(p.topRows(2));
-      if (pn.label == 0) {
-        logit += prob_to_logit(0.5 * gain * (abs_cos(tangent, f3[1]) * f3[0]));
-      } else {
-        logit += prob_to_logit(gain * (abs_cos(tangent, f3[1]) * f3[0]));
+      if (pn.label == 0) {  // posteriori
+        logit += 0.5f * (gain * abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
+      } else {  // apriori
+        logit += (gain * abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
       }
     }
   }
@@ -286,9 +286,9 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec3f f3 = cost_map_.at(p.topRows(2));
-      float prob = gain * (abs_cos(tangent, f3[1]) * f3[0]);
+      float logit = gain * abs_cos(tangent, f3[1]) * f3[0] - 0.5f;
 
-      pcl::PointXYZI xyzi(prob);
+      pcl::PointXYZI xyzi(logit_to_prob(logit));
       xyzi.getVector3fMap() = p;
       cloud.push_back(xyzi);
     }
