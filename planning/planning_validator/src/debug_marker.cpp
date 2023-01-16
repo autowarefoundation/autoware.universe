@@ -14,6 +14,7 @@
 
 #include "planning_validator/debug_marker.hpp"
 
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <memory>
@@ -22,20 +23,29 @@
 
 using visualization_msgs::msg::Marker;
 
-PlanningValidatorDebugPosePublisher::PlanningValidatorDebugPosePublisher(rclcpp::Node * node)
+PlanningValidatorDebugMarkerPublisher::PlanningValidatorDebugMarkerPublisher(rclcpp::Node * node)
 : node_(node)
 {
   debug_viz_pub_ =
     node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
+
+  virtual_wall_pub_ =
+    node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
 }
 
-void PlanningValidatorDebugPosePublisher::pushPoseMarker(
+void PlanningValidatorDebugMarkerPublisher::clearMarkers()
+{
+  marker_array_.markers.clear();
+  marker_array_virtual_wall_.markers.clear();
+}
+
+void PlanningValidatorDebugMarkerPublisher::pushPoseMarker(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & p, const std::string & ns, int id)
 {
   pushPoseMarker(p.pose, ns, id);
 }
 
-void PlanningValidatorDebugPosePublisher::pushPoseMarker(
+void PlanningValidatorDebugMarkerPublisher::pushPoseMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & ns, int id)
 {
   // append arrow marker
@@ -64,20 +74,34 @@ void PlanningValidatorDebugPosePublisher::pushPoseMarker(
   marker_array_.markers.push_back(marker);
 }
 
-void PlanningValidatorDebugPosePublisher::clearPoseMarker(const std::string & ns)
+void PlanningValidatorDebugMarkerPublisher::pushWarningMsg(
+  const geometry_msgs::msg::Pose & pose, const std::string & msg)
 {
-  clearMarkerId(ns);
-
-  if (marker_array_.markers.empty()) {
-    return;
-  }
-
-  for (int i = static_cast<int>(marker_array_.markers.size()) - 1; i >= 0; i--) {
-    if (marker_array_.markers.at(i).ns == ns) {
-      // clear markers with the namespace "ns"
-      marker_array_.markers.erase(marker_array_.markers.begin() + i);
-    }
-  }
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.header.stamp = node_->get_clock()->now();
+  marker.ns = "warning_msg";
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker.pose = pose;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+  marker.text = msg;
+  marker.scale = tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0);
+  marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.999);
+  marker_array_virtual_wall_.markers.push_back(marker);
 }
 
-void PlanningValidatorDebugPosePublisher::publish() { debug_viz_pub_->publish(marker_array_); }
+void PlanningValidatorDebugMarkerPublisher::pushVirtualWall(const geometry_msgs::msg::Pose & pose)
+{
+  const auto now = node_->get_clock()->now();
+  const auto stop_wall_marker =
+    motion_utils::createStopVirtualWallMarker(pose, "planning_validator", now, 0);
+  tier4_autoware_utils::appendMarkerArray(stop_wall_marker, &marker_array_virtual_wall_, now);
+}
+
+void PlanningValidatorDebugMarkerPublisher::publish()
+{
+  debug_viz_pub_->publish(marker_array_);
+  virtual_wall_pub_->publish(marker_array_virtual_wall_);
+}

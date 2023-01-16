@@ -88,6 +88,7 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<PlanningValidatorStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   // system parameters
   bool use_previous_trajectory_on_invalid_ = true;
@@ -108,7 +109,7 @@ private:
 
   Odometry::ConstSharedPtr current_kinematics_;
 
-  std::shared_ptr<PlanningValidatorDebugPosePublisher> debug_pose_publisher_;
+  std::shared_ptr<PlanningValidatorDebugMarkerPublisher> debug_pose_publisher_;
 };
 }  // namespace planning_validator
 

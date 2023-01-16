@@ -40,8 +40,9 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 
   pub_traj_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_status_ = create_publisher<PlanningValidatorStatus>("~/output/validation_status", 1);
+  pub_markers_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/output/markers", 1);
 
-  debug_pose_publisher_ = std::make_shared<PlanningValidatorDebugPosePublisher>(this);
+  debug_pose_publisher_ = std::make_shared<PlanningValidatorDebugMarkerPublisher>(this);
 
   setupParameters();
 
@@ -75,7 +76,8 @@ void PlanningValidator::setupParameters()
   try {
     vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   } catch (...) {
-    // RCLCPP_ERROR(get_logger(), "failed to get vehicle info. use default value.");
+    RCLCPP_ERROR(get_logger(), "failed to get vehicle info. use default value.");
+    vehicle_info_.front_overhang_m = 0.5;
     vehicle_info_.wheel_base_m = 4.0;
   }
 }
@@ -147,14 +149,16 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
 
   if (!isDataReady()) return;
 
+  debug_pose_publisher_->clearMarkers();
+
   validate(*current_trajectory_);
 
   diag_updater_.force_update();
 
   publishTrajectory();
 
+  // for debug
   publishDebugInfo();
-
   displayStatus();
 }
 
@@ -184,6 +188,13 @@ void PlanningValidator::publishDebugInfo()
 {
   validation_status_.stamp = get_clock()->now();
   pub_status_->publish(validation_status_);
+
+  if (!isAllValid(validation_status_)) {
+    geometry_msgs::msg::Pose front_pose = current_kinematics_->pose.pose;
+    shiftPose(front_pose, vehicle_info_.front_overhang_m + vehicle_info_.wheel_base_m);
+    debug_pose_publisher_->pushVirtualWall(front_pose);
+    debug_pose_publisher_->pushWarningMsg(front_pose, "INVALID PLANNING");
+  }
   debug_pose_publisher_->publish();
 }
 
@@ -220,8 +231,6 @@ bool PlanningValidator::checkValidFiniteValue(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
 {
-  debug_pose_publisher_->clearPoseMarker("trajectory_interval");
-
   const auto interval_distances = calcIntervalDistance(trajectory);
   const auto [max_interval_distance, i] = getAbsMaxValAndIdx(interval_distances);
   validation_status_.max_interval_distance = max_interval_distance;
@@ -240,8 +249,6 @@ bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidRelativeAngle(const Trajectory & trajectory)
 {
-  debug_pose_publisher_->clearPoseMarker("trajectory_relative_angle");
-
   const auto relative_angles = calcRelativeAngles(trajectory);
   const auto [max_relative_angle, i] = getAbsMaxValAndIdx(relative_angles);
   validation_status_.max_relative_angle = max_relative_angle;
@@ -260,8 +267,6 @@ bool PlanningValidator::checkValidRelativeAngle(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidCurvature(const Trajectory & trajectory)
 {
-  debug_pose_publisher_->clearPoseMarker("trajectory_curvature");
-
   const auto curvatures = calcCurvature(trajectory);
   const auto [max_curvature, i] = getAbsMaxValAndIdx(curvatures);
   validation_status_.max_curvature = max_curvature;
@@ -279,8 +284,6 @@ bool PlanningValidator::checkValidCurvature(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidLateralAcceleration(const Trajectory & trajectory)
 {
-  debug_pose_publisher_->clearPoseMarker("lateral_acceleration");
-
   const auto lateral_acc_arr = calcLateralAcceleration(trajectory);
   const auto [max_lateral_acc, i] = getAbsMaxValAndIdx(lateral_acc_arr);
   validation_status_.max_lateral_acc = max_lateral_acc;

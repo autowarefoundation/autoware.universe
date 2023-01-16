@@ -26,22 +26,27 @@
 #include <string>
 #include <vector>
 
-class PlanningValidatorDebugPosePublisher
+class PlanningValidatorDebugMarkerPublisher
 {
 public:
-  explicit PlanningValidatorDebugPosePublisher(rclcpp::Node * node);
+  explicit PlanningValidatorDebugMarkerPublisher(rclcpp::Node * node);
 
   void pushPoseMarker(
     const autoware_auto_planning_msgs::msg::TrajectoryPoint & p, const std::string & ns,
     int id = 0);
   void pushPoseMarker(const geometry_msgs::msg::Pose & pose, const std::string & ns, int id = 0);
-  void clearPoseMarker(const std::string & ns);
+  void pushVirtualWall(const geometry_msgs::msg::Pose & pose);
+  void pushWarningMsg(const geometry_msgs::msg::Pose & pose, const std::string & msg);
   void publish();
+
+  void clearMarkers();
 
 private:
   rclcpp::Node * node_;
   visualization_msgs::msg::MarkerArray marker_array_;
+  visualization_msgs::msg::MarkerArray marker_array_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_pub_;
   std::map<std::string, int> marker_id_;
 
   int getMarkerId(const std::string & ns)
@@ -51,8 +56,6 @@ private:
     }
     return marker_id_[ns]++;
   }
-
-  void clearMarkerId(const std::string & ns) { marker_id_[ns] = 0; }
 };
 
 #endif  // PLANNING_VALIDATOR__DEBUG_MARKER_HPP_

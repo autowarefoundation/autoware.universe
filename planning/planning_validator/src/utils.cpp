@@ -213,4 +213,11 @@ bool checkFinite(const TrajectoryPoint & point)
   return quat_result && p_result && v_result && w_result && a_result;
 }
 
+void shiftPose(geometry_msgs::msg::Pose & pose, double longitudinal)
+{
+  const auto yaw = tf2::getYaw(pose.orientation);
+  pose.position.x += std::cos(yaw) * longitudinal;
+  pose.position.y += std::sin(yaw) * longitudinal;
+}
+
 }  // namespace planning_validator

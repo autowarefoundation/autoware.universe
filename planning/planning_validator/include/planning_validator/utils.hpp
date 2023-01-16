@@ -52,6 +52,8 @@ std::vector<double> calcSteeringRates(const Trajectory & trajectory, const doubl
 
 bool checkFinite(const TrajectoryPoint & point);
 
+void shiftPose(geometry_msgs::msg::Pose & pose, double longitudinal);
+
 }  // namespace planning_validator
 
 #endif  // PLANNING_VALIDATOR__UTILS_HPP_
