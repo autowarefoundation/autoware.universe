@@ -410,8 +410,8 @@ bool checkDelayStep(const Warning & warning, const int delay_step, const int ext
   if (!good) {
     warning.warnThrottle(
       fmt::format(
-        "The delay step {} should be less than the maximum state step {}.",
-        delay_step, extend_state_step),
+        "The delay step {} should be less than the maximum state step {}.", delay_step,
+        extend_state_step),
       1000);
   }
   return good;
