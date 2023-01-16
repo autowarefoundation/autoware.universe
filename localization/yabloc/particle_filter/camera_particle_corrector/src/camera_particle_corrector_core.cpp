@@ -255,11 +255,16 @@ float CameraParticleCorrector::compute_logit(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = exp(-far_weight_gain_ * squared_norm);  // 0 < gain < 1
 
-      cv::Vec3f f3 = cost_map_.at(p.topRows(2));
+      const CostMapValue v3 = cost_map_.at(p.topRows(2));
+
+      if (v3.unmapped) {
+        // logit does not change if target pixel is unmapped
+        continue;
+      }
       if (pn.label == 0) {  // posteriori
-        logit += 0.2f * gain * (abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
+        logit += 0.2f * gain * (abs_cos(tangent, v3.angle) * v3.intensity - 0.5f);
       } else {  // apriori
-        logit += gain * (abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
+        logit += gain * (abs_cos(tangent, v3.angle) * v3.intensity - 0.5f);
       }
     }
   }
@@ -281,8 +286,9 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
-      cv::Vec3f f3 = cost_map_.at(p.topRows(2));
-      float logit = gain * (abs_cos(tangent, f3[1]) * f3[0] - 0.5f);
+      CostMapValue v3 = cost_map_.at(p.topRows(2));
+      float logit = 0;
+      if (!v3.unmapped) logit = gain * (abs_cos(tangent, v3.angle) * v3.intensity - 0.5f);
 
       pcl::PointXYZI xyzi(logit_to_prob(logit, 10.f));
       xyzi.getVector3fMap() = p;

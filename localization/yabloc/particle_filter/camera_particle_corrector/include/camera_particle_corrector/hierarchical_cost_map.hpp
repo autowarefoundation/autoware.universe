@@ -13,7 +13,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace pcdless::common
+namespace pcdless::modularized_particle_filter
 {
 struct Area
 {
@@ -58,6 +58,17 @@ struct Area
   }
 };
 
+struct CostMapValue
+{
+  CostMapValue(float intensity, int angle, bool unmapped)
+  : intensity(intensity), angle(angle), unmapped(unmapped)
+  {
+  }
+  float intensity;  // 0~1
+  int angle;        // 0~180
+  bool unmapped;    // true/false
+};
+
 class HierarchicalCostMap
 {
 public:
@@ -79,7 +90,7 @@ public:
    * @param[in] position Real scale position at world frame
    * @return The combination of intensity (0-1), angle (0-180), unmapped flag (0, 1)
    */
-  cv::Vec3f at(const Eigen::Vector2f & position);
+  CostMapValue at(const Eigen::Vector2f & position);
 
   MarkerArray show_map_range() const;
 
@@ -110,4 +121,4 @@ private:
 
   cv::Mat create_available_area_image(const Area & area) const;
 };
-}  // namespace pcdless::common
+}  // namespace pcdless::modularized_particle_filter

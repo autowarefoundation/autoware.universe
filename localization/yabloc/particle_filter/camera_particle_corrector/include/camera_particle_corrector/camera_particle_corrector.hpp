@@ -38,7 +38,7 @@ public:
 private:
   const float min_prob_;
   const float far_weight_gain_;
-  common::HierarchicalCostMap cost_map_;
+  HierarchicalCostMap cost_map_;
 
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_bounding_box_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;

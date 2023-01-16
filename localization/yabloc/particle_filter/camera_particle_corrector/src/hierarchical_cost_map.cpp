@@ -8,7 +8,7 @@
 
 #include <boost/geometry/geometry.hpp>
 
-namespace pcdless::common
+namespace pcdless::modularized_particle_filter
 {
 float Area::unit_length_ = -1;
 
@@ -31,10 +31,10 @@ cv::Point2i HierarchicalCostMap::to_cv_point(const Area & area, const Eigen::Vec
   return {static_cast<int>(px), static_cast<int>(py)};
 }
 
-cv::Vec3f HierarchicalCostMap::at(const Eigen::Vector2f & position)
+CostMapValue HierarchicalCostMap::at(const Eigen::Vector2f & position)
 {
   if (!cloud_.has_value()) {
-    return cv::Vec3b(128, 0, 0);
+    return CostMapValue{0.5f, 0, true};
   }
 
   Area key(position);
@@ -45,7 +45,7 @@ cv::Vec3f HierarchicalCostMap::at(const Eigen::Vector2f & position)
 
   cv::Point2i tmp = to_cv_point(key, position);
   cv::Vec3b b3 = cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x];
-  return {b3[0] / 255.f, static_cast<float>(b3[1]), static_cast<float>(b3[2])};
+  return {b3[0] / 255.f, b3[1], b3[2] == 1};
 }
 
 void HierarchicalCostMap::set_height(float height)
@@ -190,11 +190,11 @@ cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
   cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
   for (int w = 0; w < image_size_; w++) {
     for (int h = 0; h < image_size_; h++) {
-      cv::Vec3f v3 = this->at(toVector2f(h, w));
-      if (v3[2] == 0)
-        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], 255 * v3[0], 255 * v3[0]);
+      CostMapValue v3 = this->at(toVector2f(h, w));
+      if (v3.unmapped)
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3.angle, 255 * v3.intensity, 50);
       else
-        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], 255 * v3[0], 50);
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3.angle, 255 * v3.intensity, 255 * v3.intensity);
     }
   }
 
@@ -249,4 +249,4 @@ cv::Mat HierarchicalCostMap::create_available_area_image(const Area & area) cons
   return available_area;
 }
 
-}  // namespace pcdless::common
+}  // namespace pcdless::modularized_particle_filter

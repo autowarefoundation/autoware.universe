@@ -49,9 +49,9 @@ CameraParticleCorrector::filt(const LineSegments & iffy_lines)
     int count = 0;
     for (float distance = 0; distance < length; distance += 0.1f) {
       Eigen::Vector3f px = pose * (p2 + tangent * distance);
-      cv::Vec3b v3 = cost_map_.at(px.topRows(2));
-      float cos2 = abs_cos2(pose.so3() * tangent, v3[1]);
-      score += (cos2 * v3[0]);
+      CostMapValue v3 = cost_map_.at(px.topRows(2));
+      float cos2 = abs_cos2(pose.so3() * tangent, v3.angle);
+      score += (cos2 * v3.intensity);
       count++;
 
       // pcl::PointXYZRGB rgb;
