@@ -208,6 +208,11 @@ bool BehaviorVelocityPlannerNode::isDataReady(
   const auto & d = planner_data;
 
   // from callbacks
+  if (!d.current_odometry) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current odometry");
+    return false;
+  }
+
   if (!d.current_velocity) {
     RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current velocity");
     return false;
@@ -284,6 +289,7 @@ void BehaviorVelocityPlannerNode::onOdometry(const nav_msgs::msg::Odometry::Cons
   auto current_odometry = std::make_shared<geometry_msgs::msg::PoseStamped>();
   current_odometry->header = msg->header;
   current_odometry->pose = msg->pose.pose;
+  planner_data_.current_odometry = current_odometry;
 
   auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
   current_velocity->header = msg->header;
