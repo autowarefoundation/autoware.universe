@@ -14,6 +14,7 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
+#include "ekf_localizer/check.hpp"
 #include "ekf_localizer/covariance.hpp"
 #include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
@@ -402,19 +403,6 @@ void warnIfPoseDelayTimeLessThanZero(const Warning & warning, const double delay
       fmt::format("Pose time stamp is inappropriate, set delay to 0[s]. delay = {}", delay_time);
     warning.warnThrottle(s, 1000);
   }
-}
-
-bool checkDelayStep(const Warning & warning, const int delay_step, const int extend_state_step)
-{
-  const bool good = delay_step < extend_state_step;
-  if (!good) {
-    warning.warnThrottle(
-      fmt::format(
-        "The delay step {} should be less than the maximum state step {}.", delay_step,
-        extend_state_step),
-      1000);
-  }
-  return good;
 }
 
 /*
