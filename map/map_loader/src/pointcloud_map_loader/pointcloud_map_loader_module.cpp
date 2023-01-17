@@ -40,7 +40,7 @@ sensor_msgs::msg::PointCloud2 downsample(
 }
 
 PointcloudMapLoaderModule::PointcloudMapLoaderModule(
-  rclcpp::Node * node, const std::vector<std::string> & pcd_paths, const std::string publisher_name,
+  rclcpp::Node * node, const std::vector<std::string> & pcd_paths, const std::string & publisher_name,
   const bool use_downsample)
 : logger_(node->get_logger())
 {
@@ -72,12 +72,12 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
   sensor_msgs::msg::PointCloud2 whole_pcd;
   sensor_msgs::msg::PointCloud2 partial_pcd;
 
-  for (int i = 0; i < static_cast<int>(pcd_paths.size()); ++i) {
+  for (size_t i = 0; i < pcd_paths.size(); ++i) {
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
       RCLCPP_INFO_STREAM(
         logger_,
-        fmt::format("Load {} ({} out of {})", path, i + 1, static_cast<int>(pcd_paths.size())));
+        fmt::format("Load {} ({} out of {})", path, i + 1, pcd_paths.size()));
     }
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
