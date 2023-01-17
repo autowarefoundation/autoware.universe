@@ -21,40 +21,44 @@ The following functions are supported for trajectory validation. Thresholds for 
 
 ### Inputs
 
-| Name                 | Type                                     | Description                                    |
-| -------------------- | ---------------------------------------- | ---------------------------------------------- |
-| `~/input/kinematics` | `nav_msgs/Odometry`                      | ego pose and twist                             |
-| `~/input/trajectory` | `autoware_auto_planning_msgs/Trajectory` | target trajectory to be validated in this node |
+| Name                 | Type                                   | Description                                    |
+| -------------------- | -------------------------------------- | ---------------------------------------------- |
+| `~/input/kinematics` | nav_msgs/Odometry                      | ego pose and twist                             |
+| `~/input/trajectory` | autoware_auto_planning_msgs/Trajectory | target trajectory to be validated in this node |
 
 ### Outputs
 
-| Name                         | Type                                         | Description                                                               |
-| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------- |
-| `~/output/trajectory`        | `autoware_auto_planning_msgs/Trajectory`     | validated trajectory                                                      |
-| `~/output/validation_status` | `planning_validator/PlanningValidatorStatus` | validator status to inform the reason why the trajectory is valid/invalid |
-| `/diagnostics`               | `diagnostic_msgs/DiagnosticStatus`           | diagnostics to report errors                                              |
+| Name                         | Type                                       | Description                                                               |
+| ---------------------------- | ------------------------------------------ | ------------------------------------------------------------------------- |
+| `~/output/trajectory`        | autoware_auto_planning_msgs/Trajectory     | validated trajectory                                                      |
+| `~/output/validation_status` | planning_validator/PlanningValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
+| `/diagnostics`               | diagnostic_msgs/DiagnosticStatus           | diagnostics to report errors                                              |
 
 ## Parameters
 
 ### System parameters
 
-| Name                                 | Type   | Description                                                                                                              | Default value |
-| :----------------------------------- | :----- | :----------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `publish_diag`                       | `bool` | if true, diagnostics msg is published.                                                                                   | true          |
-| `use_previous_trajectory_on_invalid` | `bool` | if true, previous validated trajectory is published when the current trajectory is invalid. Otherwise none is published. | true          |
-| `display_on_terminal`                | `bool` | show error msg on terminal                                                                                               | true          |
+| Name                                 | Type | Description                                                                                                              | Default value |
+| :----------------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `publish_diag`                       | bool | if true, diagnostics msg is published.                                                                                   | true          |
+| `use_previous_trajectory_on_invalid` | bool | if true, previous validated trajectory is published when the current trajectory is invalid. Otherwise none is published. | true          |
+| `display_on_terminal`                | bool | show error msg on terminal                                                                                               | true          |
 
 ### Algorithm parameters
 
-| Name         | Type     | Description | Default value |
-| :----------- | :------- | :---------- | :------------ |
-| `stop_decel` | `double` |             | 100.0         |
-| `max_jerk`   | `double` |             | 2.0           |
-| `min_jerk`   | `double` |             | 1.0           |
-| `min_jerk`   | `double` |             | 9.8           |
-| `min_jerk`   | `double` |             | 9.8           |
-| `min_jerk`   | `double` |             | -9.8          |
-| `min_jerk`   | `double` |             | 1.414         |
-| `min_jerk`   | `double` |             | 10.0          |
-| `min_jerk`   | `double` |             | 100.0         |
-| `min_jerk`   | `double` |             | 100.0         |
+#### Thresholds
+
+The input trajectory is detected as invalid if the index exceeds the following threholds.
+
+| Name                              | Type   | Description                                                                                                   | Default value |
+| :-------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------ | :------------ |
+| `thresholds.interval`             | double | invalid threshold of the distance of two neighboring trajectory points                                        | 100.0         |
+| `thresholds.relative_angle`       | double | invalid threshold of the relative angle of two neighboring trajectory points                                  | 2.0           |
+| `thresholds.curvature`            | double | invalid threshold of the curvature in each trajectory point                                                   | 1.0           |
+| `thresholds.lateral_acc`          | double | invalid threshold of the lateral acceleration in each trajectory point                                        | 9.8           |
+| `thresholds.longitudinal_max_acc` | double | invalid threshold of the maximum longitudinal acceleration in each trajectory point                           | 9.8           |
+| `thresholds.longitudinal_min_acc` | double | invalid threshold of the minimum longitudinal deceleration in each trajectory point                           | -9.8          |
+| `thresholds.steering`             | double | invalid threshold of the steering angle in each trajectory point                                              | 1.414         |
+| `thresholds.steering_rate`        | double | invalid threshold of the steering angle rate in each trajectory point                                         | 10.0          |
+| `thresholds.velocity_deviation`   | double | invalid threshold of the velocity deviation between the ego velocity and the trajectory point closest to ego. | 100.0         |
+| `thresholds.distance_deviation`   | double | invalid threshold of the distance deviation between the ego position and the trajectory point closest to ego. | 100.0         |
