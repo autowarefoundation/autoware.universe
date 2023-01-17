@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef EKF_LOCALIZER__CHECK_HPP_
 #define EKF_LOCALIZER__CHECK_HPP_
 

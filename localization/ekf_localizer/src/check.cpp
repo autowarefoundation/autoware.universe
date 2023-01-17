@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include "ekf_localizer/check.hpp"
+
 #include "ekf_localizer/warning.hpp"
 
 #include <fmt/core.h>
 
 #include <string>
-
 
 bool checkDelayStep(const Warning & warning, const int delay_step, const int extend_state_step)
 {
