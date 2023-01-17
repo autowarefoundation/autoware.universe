@@ -71,74 +71,71 @@ Trajectory resampleTrajectory(const Trajectory & trajectory, const double min_in
   return resampled;
 }
 
-std::vector<double> calcCurvature(const Trajectory & trajectory)
+void calcCurvature(const Trajectory & trajectory, std::vector<double> &v)
 {
   if (trajectory.points.size() < 3) {
-    return std::vector<double>(trajectory.points.size(), 0.0);
+    v = std::vector<double>(trajectory.points.size(), 0.0);
+    return;
   }
 
-  std::vector<double> curvature_arr;
-  curvature_arr.push_back(0.0);
+  v.push_back(0.0);
   for (size_t i = 1; i < trajectory.points.size() - 1; ++i) {
     const auto p1 = getPoint(trajectory.points.at(i - 1));
     const auto p2 = getPoint(trajectory.points.at(i));
     const auto p3 = getPoint(trajectory.points.at(i + 1));
     try {
-      curvature_arr.push_back(tier4_autoware_utils::calcCurvature(p1, p2, p3));
+      v.push_back(tier4_autoware_utils::calcCurvature(p1, p2, p3));
     } catch (...) {
       // maybe distance is too close
-      curvature_arr.push_back(0.0);
+      v.push_back(0.0);
     }
   }
-  curvature_arr.push_back(0.0);
-  return curvature_arr;
+  v.push_back(0.0);
+  return;
 }
 
-std::vector<double> calcIntervalDistance(const Trajectory & trajectory)
+void calcIntervalDistance(const Trajectory & trajectory, std::vector<double> & v)
 {
   if (trajectory.points.size() < 2) {
-    return std::vector<double>(trajectory.points.size(), 0.0);
+    v = std::vector<double>(trajectory.points.size(), 0.0);
+    return;
   }
 
-  std::vector<double> interval_distances;
   for (size_t i = 1; i < trajectory.points.size(); ++i) {
-    interval_distances.push_back(
+    v.push_back(
       calcDistance2d(trajectory.points.at(i), trajectory.points.at(i - 1)));
   }
-  return interval_distances;
+  return;
 }
 
-std::vector<double> calcLateralAcceleration(const Trajectory & trajectory)
+void calcLateralAcceleration(const Trajectory & trajectory, std::vector<double> & lat_acc_arr)
 {
-  const auto curvatures = calcCurvature(trajectory);
+  std::vector<double> curvatures;
+  calcCurvature(trajectory, curvatures);
 
-  std::vector<double> lat_acc_arr;
   for (size_t i = 0; i < curvatures.size(); ++i) {
     const auto v = trajectory.points.at(i).longitudinal_velocity_mps;
     const auto lat_acc = v * v * curvatures.at(i);
     lat_acc_arr.push_back(lat_acc);
   }
-  return lat_acc_arr;
 }
 
-std::vector<double> getLongitudinalAccArray(const Trajectory & trajectory)
+void getLongitudinalAccArray(const Trajectory & trajectory, std::vector<double> & v)
 {
-  std::vector<double> acc_arr;
   for (const auto & p : trajectory.points) {
-    acc_arr.push_back(p.acceleration_mps2);
+    v.push_back(p.acceleration_mps2);
   }
-  return acc_arr;
 }
 
-std::vector<double> calcRelativeAngles(const Trajectory & trajectory)
+void calcRelativeAngles(const Trajectory & trajectory, std::vector<double> & v)
 {
   // We need at least three points to compute relative angle
   const size_t relative_angle_points_num = 3;
   if (trajectory.points.size() < relative_angle_points_num) {
-    return {0.0};
+    v = {0.0};
+    return;
   }
 
-  std::vector<double> relative_angles;
 
   for (size_t i = 0; i <= trajectory.points.size() - relative_angle_points_num; ++i) {
     const auto & p1 = trajectory.points.at(i).pose.position;
@@ -151,36 +148,39 @@ std::vector<double> calcRelativeAngles(const Trajectory & trajectory)
     // convert relative angle to [-pi ~ pi]
     const auto relative_angle = std::abs(tier4_autoware_utils::normalizeRadian(angle_b - angle_a));
 
-    relative_angles.push_back(relative_angle);
+    v.push_back(relative_angle);
   }
 
-  return relative_angles;
+  return;
 }
 
-std::vector<double> calcSteeringAngles(const Trajectory & trajectory, const double wheelbase)
+void calcSteeringAngles(const Trajectory & trajectory, const double wheelbase, std::vector<double> & v)
 {
   const auto curvature_to_steering = [](const auto k, const auto wheelbase) {
     return std::atan(k * wheelbase);
   };
 
-  const auto curvatures = calcCurvature(trajectory);
+  std::vector<double> curvatures;
+  calcCurvature(trajectory, curvatures);
 
   std::vector<double> steerings;
   for (const auto & k : curvatures) {
-    steerings.push_back(curvature_to_steering(k, wheelbase));
+    v.push_back(curvature_to_steering(k, wheelbase));
   }
-  return steerings;
+  return;
 }
 
-std::vector<double> calcSteeringRates(const Trajectory & trajectory, const double wheelbase)
+void calcSteeringRates(const Trajectory & trajectory, const double wheelbase, std::vector<double> & steering_rates)
 {
   if (trajectory.points.size() < 1) {
-    return {0.0};
+    steering_rates = {0.0};
+    return;
   }
 
-  const auto steerings = calcSteeringAngles(trajectory, wheelbase);
+  std::vector<double> steerings;
+  calcSteeringAngles(trajectory, wheelbase, steerings);
 
-  std::vector<double> steering_rates;
+  
   for (size_t i = 0; i < trajectory.points.size() - 1; ++i) {
     const auto & p_prev = trajectory.points.at(i);
     const auto & p_next = trajectory.points.at(i + 1);
@@ -199,7 +199,6 @@ std::vector<double> calcSteeringRates(const Trajectory & trajectory, const doubl
     steering_rates.push_back(steering_rates.back());
   }
 
-  return steering_rates;
 }
 
 bool checkFinite(const TrajectoryPoint & point)

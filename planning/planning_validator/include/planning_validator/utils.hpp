@@ -36,19 +36,19 @@ std::pair<double, size_t> getAbsMaxValAndIdx(const std::vector<double> & v);
 
 Trajectory resampleTrajectory(const Trajectory & trajectory, const double min_interval);
 
-std::vector<double> calcCurvature(const Trajectory & trajectory);
+void calcCurvature(const Trajectory & trajectory, std::vector<double> & v);
 
-std::vector<double> calcIntervalDistance(const Trajectory & trajectory);
+void calcIntervalDistance(const Trajectory & trajectory, std::vector<double> & v);
 
-std::vector<double> calcLateralAcceleration(const Trajectory & trajectory);
+void calcLateralAcceleration(const Trajectory & trajectory, std::vector<double> & v);
 
-std::vector<double> getLongitudinalAccArray(const Trajectory & trajectory);
+void getLongitudinalAccArray(const Trajectory & trajectory, std::vector<double> & v);
 
-std::vector<double> calcRelativeAngles(const Trajectory & trajectory);
+void calcRelativeAngles(const Trajectory & trajectory, std::vector<double> & v);
 
-std::vector<double> calcSteeringAngles(const Trajectory & trajectory, const double wheelbase);
+void calcSteeringAngles(const Trajectory & trajectory, const double wheelbase, std::vector<double> & v);
 
-std::vector<double> calcSteeringRates(const Trajectory & trajectory, const double wheelbase);
+void calcSteeringRates(const Trajectory & trajectory, const double wheelbase, std::vector<double> & v);
 
 bool checkFinite(const TrajectoryPoint & point);
 

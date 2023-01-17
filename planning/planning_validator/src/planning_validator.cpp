@@ -246,7 +246,8 @@ bool PlanningValidator::checkValidFiniteValue(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
 {
-  const auto interval_distances = calcIntervalDistance(trajectory);
+  std::vector<double> interval_distances;
+  calcIntervalDistance(trajectory, interval_distances);
   const auto [max_interval_distance, i] = getAbsMaxValAndIdx(interval_distances);
   validation_status_.max_interval_distance = max_interval_distance;
 
@@ -264,7 +265,8 @@ bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidRelativeAngle(const Trajectory & trajectory)
 {
-  const auto relative_angles = calcRelativeAngles(trajectory);
+  std::vector<double> relative_angles;
+  calcRelativeAngles(trajectory, relative_angles);
   const auto [max_relative_angle, i] = getAbsMaxValAndIdx(relative_angles);
   validation_status_.max_relative_angle = max_relative_angle;
 
@@ -282,7 +284,8 @@ bool PlanningValidator::checkValidRelativeAngle(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidCurvature(const Trajectory & trajectory)
 {
-  const auto curvatures = calcCurvature(trajectory);
+  std::vector<double> curvatures;
+  calcCurvature(trajectory, curvatures);
   const auto [max_curvature, i] = getAbsMaxValAndIdx(curvatures);
   validation_status_.max_curvature = max_curvature;
   if (max_curvature > validation_params_.curvature_threshold) {
@@ -299,7 +302,8 @@ bool PlanningValidator::checkValidCurvature(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidLateralAcceleration(const Trajectory & trajectory)
 {
-  const auto lateral_acc_arr = calcLateralAcceleration(trajectory);
+  std::vector<double> lateral_acc_arr;
+  calcLateralAcceleration(trajectory, lateral_acc_arr);
   const auto [max_lateral_acc, i] = getAbsMaxValAndIdx(lateral_acc_arr);
   validation_status_.max_lateral_acc = max_lateral_acc;
   if (max_lateral_acc > validation_params_.lateral_acc_threshold) {
@@ -311,7 +315,8 @@ bool PlanningValidator::checkValidLateralAcceleration(const Trajectory & traject
 
 bool PlanningValidator::checkValidMinLongitudinalAcceleration(const Trajectory & trajectory)
 {
-  const auto acc_arr = getLongitudinalAccArray(trajectory);
+  std::vector<double> acc_arr;
+  getLongitudinalAccArray(trajectory, acc_arr);
   const auto [min_longitudinal_acc, i] = getMinValAndIdx(acc_arr);
   validation_status_.min_longitudinal_acc = min_longitudinal_acc;
 
@@ -324,7 +329,8 @@ bool PlanningValidator::checkValidMinLongitudinalAcceleration(const Trajectory &
 
 bool PlanningValidator::checkValidMaxLongitudinalAcceleration(const Trajectory & trajectory)
 {
-  const auto acc_arr = getLongitudinalAccArray(trajectory);
+  std::vector<double> acc_arr;
+  getLongitudinalAccArray(trajectory, acc_arr);
   const auto [max_longitudinal_acc, i] = getAbsMaxValAndIdx(acc_arr);
   validation_status_.max_longitudinal_acc = max_longitudinal_acc;
 
@@ -337,7 +343,8 @@ bool PlanningValidator::checkValidMaxLongitudinalAcceleration(const Trajectory &
 
 bool PlanningValidator::checkValidSteering(const Trajectory & trajectory)
 {
-  const auto steerings = calcSteeringAngles(trajectory, vehicle_info_.wheel_base_m);
+  std::vector<double> steerings;
+  calcSteeringAngles(trajectory, vehicle_info_.wheel_base_m, steerings);
   const auto [max_steering, i] = getAbsMaxValAndIdx(steerings);
   validation_status_.max_steering = max_steering;
 
@@ -350,7 +357,8 @@ bool PlanningValidator::checkValidSteering(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidSteeringRate(const Trajectory & trajectory)
 {
-  const auto steering_rates = calcSteeringRates(trajectory, vehicle_info_.wheel_base_m);
+  std::vector<double> steering_rates;
+  calcSteeringRates(trajectory, vehicle_info_.wheel_base_m, steering_rates);
   const auto [max_steering_rate, i] = getAbsMaxValAndIdx(steering_rates);
   validation_status_.max_steering_rate = max_steering_rate;
 
