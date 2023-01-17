@@ -14,8 +14,8 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
-#include "ekf_localizer/check.hpp"
 #include "ekf_localizer/covariance.hpp"
+#include "ekf_localizer/delay.hpp"
 #include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"

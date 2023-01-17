@@ -15,7 +15,6 @@ ament_auto_find_build_dependencies()
 
 ament_auto_add_library(ekf_localizer_lib SHARED
   src/ekf_localizer.cpp
-  src/check.cpp
   src/covariance.cpp
   src/mahalanobis.cpp
   src/measurement.cpp
@@ -45,7 +44,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
   set(TEST_FILES
-    test/test_check.cpp
+    test/test_delay.cpp
     test/test_mahalanobis.cpp
     test/test_measurement.cpp
     test/test_numeric.cpp

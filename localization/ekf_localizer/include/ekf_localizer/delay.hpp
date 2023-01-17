@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ekf_localizer/check.hpp"
+#ifndef EKF_LOCALIZER__DELAY_HPP_
+#define EKF_LOCALIZER__DELAY_HPP_
 
-#include "ekf_localizer/warning.hpp"
-
-#include <fmt/core.h>
-
-#include <string>
-
-bool checkDelayStep(const Warning & warning, const int delay_step, const int extend_state_step)
+inline bool delayStepIsSufficientlySmall(const double delay_step, const double max_delay_step)
 {
-  const bool good = delay_step < extend_state_step;
-  if (!good) {
-    const std::string s = "The delay step {} should be less than the maximum state step {}.";
-    warning.warnThrottle(fmt::format(s, delay_step, extend_state_step), 1000);
-  }
-  return good;
+  return delay_step < max_delay_step;
 }
+
+#endif  // EKF_LOCALIZER__DELAY_HPP_
