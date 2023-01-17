@@ -18,6 +18,7 @@
 
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <memory>
 #include <string>
@@ -151,8 +152,17 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
 
   debug_pose_publisher_->clearMarkers();
 
-  validate(*current_trajectory_);
+  static tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
+  static int count = 0;
+  static double total_ms = 0.0;
 
+  stopwatch.tic();
+  validate(*current_trajectory_);
+  const auto t = stopwatch.toc();
+  total_ms += t;
+  count++;
+  std::cerr << "time = " << t << " [ms] (total " << total_ms << " [ms], count = " << count << ", average_time = " << total_ms / count << ")" << "(traj.size = " << current_trajectory_->points.size() << ")" << std::endl;
+  
   diag_updater_.force_update();
 
   publishTrajectory();
