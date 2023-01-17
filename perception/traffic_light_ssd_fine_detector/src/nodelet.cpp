@@ -36,6 +36,16 @@ inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
   return std::vector<float>(double_vector.begin(), double_vector.end());
 }
 
+inline cv::Point getRoiCenter(const sensor_msgs::msg::RegionOfInterest & roi)
+{
+  return cv::Point(roi.x_offset + roi.width / 2, roi.y_offset + roi.height / 2);
+}
+
+inline int distSquare(const cv::Point & p1, const cv::Point & p2)
+{
+  return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+}
+
 TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const rclcpp::NodeOptions & options)
 : Node("traffic_light_ssd_fine_detector_node", options)
@@ -185,7 +195,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     // Get Output
     std::vector<Detection> detections;
     if (!cnnOutput2BoxDetection(
-          scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections)) {
+          scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections, in_roi_msg)) {
       RCLCPP_ERROR(this->get_logger(), "Fail to postprocess image");
       return;
     }
@@ -250,32 +260,78 @@ bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
 
 bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
   const float * scores, const float * boxes, const int tlr_id, const std::vector<cv::Mat> & in_imgs,
-  const int num_rois, std::vector<Detection> & detections)
+  const int num_rois, std::vector<Detection> & detections,
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr rough_roi_msg)
 {
   if (tlr_id > class_num_ - 1) {
     return false;
   }
+  /**
+   * Assume the rough roi is R and the traffic light corresponding to R is T.
+   * if R might contain multiple traffic lights, it's difficult to figure out whether
+   * the ssd bbox with highest score is T.
+   * It might be very dangerous if the traffic light from next cross is detected as the traffic
+   * light from this cross. To solve this, for every R, we will find out all traffic lights that
+   * might be within it. Then for every ssd bbox, calculate the distance from the bbox to every
+   * traffic light within R and select the best(highest score) ssd bbox from all bboxes that are
+   * closest to the R.
+   *
+   * Here it's assumed that the center of Rough roi (Rc) should be close to center of the
+   * corresponding traffic light(Tc) and we use Rc as Tc
+   */
   for (int i = 0; i < num_rois; ++i) {
-    std::vector<float> tlr_scores;
-    Detection det;
-    for (int j = 0; j < detection_per_class_; ++j) {
-      tlr_scores.push_back(scores[i * detection_per_class_ * class_num_ + tlr_id + j * class_num_]);
+    cv::Point center_i = getRoiCenter(rough_roi_msg->rois[i].roi);
+    // firstly list all traffic lights that might be within R
+    std::vector<cv::Point> tl_centers;
+    for (size_t j = 0; j < rough_roi_msg->rois.size(); j++) {
+      if (i == static_cast<int>(j)) continue;
+      cv::Point center_j = getRoiCenter(rough_roi_msg->rois[j].roi);
+      if (
+        std::abs(center_i.x - center_j.x) <= rough_roi_msg->rois[i].roi.width &&
+        std::abs(center_i.y - center_j.y) <= rough_roi_msg->rois[i].roi.height) {
+        tl_centers.push_back(center_j);
+      }
     }
-    std::vector<float>::iterator iter = std::max_element(tlr_scores.begin(), tlr_scores.end());
-    size_t index = std::distance(tlr_scores.begin(), iter);
-    size_t box_index = i * detection_per_class_ * 4 + index * 4;
+    size_t best_box_idx = 0;
+    float best_score = 0;
+    for (int j = 0; j < detection_per_class_; j++) {
+      float score = scores[i * detection_per_class_ * class_num_ + tlr_id + j * class_num_];
+      size_t box_idx = i * detection_per_class_ * 4 + j * 4;
+      int box_cx = (boxes[box_idx] + boxes[box_idx + 2]) * in_imgs.at(i).cols / 2 +
+                   rough_roi_msg->rois[i].roi.x_offset;
+      int box_cy = (boxes[box_idx + 1] + boxes[box_idx + 3]) * in_imgs.at(i).rows / 2 +
+                   rough_roi_msg->rois[i].roi.y_offset;
+      cv::Point box_center(box_cx, box_cy);
+      // calculate Rc
+      int dist_center_i = distSquare(box_center, center_i);
+      // flag if the distance from box to current roi is smallest
+      bool box_near_center_i = true;
+      for (const cv::Point & tl_center : tl_centers) {
+        if (distSquare(box_center, tl_center) < dist_center_i) {
+          box_near_center_i = false;
+          break;
+        }
+      }
+      if (box_near_center_i) {
+        if (score > best_score) {
+          best_score = score;
+          best_box_idx = box_idx;
+        }
+      }
+    }
+
     cv::Point lt, rb;
-    lt.x = boxes[box_index] * in_imgs.at(i).cols;
-    lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
-    rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
-    rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
+    lt.x = boxes[best_box_idx] * in_imgs.at(i).cols;
+    lt.y = boxes[best_box_idx + 1] * in_imgs.at(i).rows;
+    rb.x = boxes[best_box_idx + 2] * in_imgs.at(i).cols;
+    rb.y = boxes[best_box_idx + 3] * in_imgs.at(i).rows;
     fitInFrame(lt, rb, cv::Size(in_imgs.at(i).cols, in_imgs.at(i).rows));
+    Detection det;
     det.x = lt.x;
     det.y = lt.y;
     det.w = rb.x - lt.x;
     det.h = rb.y - lt.y;
-
-    det.prob = tlr_scores[index];
+    det.prob = best_score;
     detections.push_back(det);
   }
   return true;

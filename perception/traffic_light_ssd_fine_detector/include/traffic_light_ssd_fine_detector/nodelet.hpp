@@ -62,7 +62,8 @@ private:
     const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<float> & data);
   bool cnnOutput2BoxDetection(
     const float * scores, const float * boxes, const int tlr_id,
-    const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<Detection> & detections);
+    const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<Detection> & detections,
+    const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr rough_roi_msg);
   bool rosMsg2CvMat(const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image);
   bool fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size);
   void cvRect2TlRoiMsg(
