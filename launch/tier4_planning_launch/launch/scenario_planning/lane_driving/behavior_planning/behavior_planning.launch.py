@@ -85,7 +85,21 @@ def launch_setup(context, *args, **kwargs):
             drivable_area_expansion_param,
             behavior_path_planner_param,
             vehicle_param,
-            {"bt_tree_config_path": LaunchConfiguration("behavior_path_planner_tree_param_path")},
+            {
+                "lane_change.enable_abort_lane_change": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "lane_change.enable_collision_check_at_prepare_phase": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "lane_change.use_predicted_path_outside_lanelet": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "lane_change.use_all_predicted_path": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "bt_tree_config_path": LaunchConfiguration("behavior_path_planner_tree_param_path"),
+            },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
