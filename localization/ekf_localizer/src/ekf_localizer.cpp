@@ -429,7 +429,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
+  if (!checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
@@ -508,7 +508,7 @@ void EKFLocalizer::measurementUpdateTwist(
     delay_time = 0.0;
   }
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
+  if (!checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
