@@ -548,6 +548,7 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.longitudinal_margin = dp("longitudinal_margin", 3.0);
   p.max_lateral_offset = dp("max_lateral_offset", 1.0);
   p.lateral_offset_interval = dp("lateral_offset_interval", 0.25);
+  p.ignore_distance_from_lane_start = dp("ignore_distance_from_lane_start", 15.0);
   // occupancy grid map
   p.use_occupancy_grid = dp("use_occupancy_grid", true);
   p.use_occupancy_grid_for_longitudinal_margin =
@@ -643,6 +644,7 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.deceleration_interval = dp("deceleration_interval", 10.0);
   // geometric pull out
   p.enable_geometric_pull_out = dp("enable_geometric_pull_out", true);
+  p.divide_pull_out_path = dp("divide_pull_out_path", false);
   p.geometric_pull_out_velocity = dp("geometric_pull_out_velocity", 1.0);
   p.arc_path_interval = dp("arc_path_interval", 1.0);
   p.lane_departure_margin = dp("lane_departure_margin", 0.2);
