@@ -131,7 +131,9 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
 
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr bnk_marker_publisher_;
+
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr bnk_array_publisher_;
 
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
