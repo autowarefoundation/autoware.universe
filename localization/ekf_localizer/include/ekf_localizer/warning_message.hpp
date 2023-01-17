@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_LOCALIZER__CHECK_HPP_
-#define EKF_LOCALIZER__CHECK_HPP_
+#ifndef EKF_LOCALIZER__WARNING_MESSAGE_HPP_
+#define EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 
-#include "ekf_localizer/warning.hpp"
+#include <string>
 
-inline bool delayStepIsSufficientlySmall(const int delay_step, const int extend_state_step)
-{
-  return delay_step < extend_state_step;
-}
+#include <fmt/core.h>
 
-#endif  // EKF_LOCALIZER__CHECK_HPP_
+std::string delayStepWarningMessage(const double delay_step, const double extend_state_step);
+
+#endif  // EKF_LOCALIZER__WARNING_MESSAGE_HPP_

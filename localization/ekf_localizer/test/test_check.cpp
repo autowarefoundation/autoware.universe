@@ -19,13 +19,8 @@
 
 #include <gtest/gtest.h>
 
-TEST(CheckDelayStep, SmokeTest)
+TEST(DelayStepIsSufficientlySmall, SmokeTest)
 {
-  rclcpp::init(0, {});
-
-  auto node = rclcpp::Node::make_shared("_test");
-  const Warning warning(node.get());
-
-  EXPECT_TRUE(checkDelayStep(warning, 4, 5));
-  EXPECT_FALSE(checkDelayStep(warning, 4, 4));
+  EXPECT_TRUE(delayStepIsSufficientlySmall(4, 5));
+  EXPECT_FALSE(delayStepIsSufficientlySmall(4, 4));
 }

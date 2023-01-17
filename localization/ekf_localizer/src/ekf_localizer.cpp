@@ -23,6 +23,7 @@
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
+#include "ekf_localizer/warning_message.hpp"
 
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
@@ -429,7 +430,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (!checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
+  if (!delayStepIsSufficientlySmall(delay_step, params_.extend_state_step)) {
+    warning_.warnThrottle(delayStepWarningMessage(delay_step, params_.extend_state_step), 2000);
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
@@ -508,7 +510,8 @@ void EKFLocalizer::measurementUpdateTwist(
     delay_time = 0.0;
   }
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (!checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
+  if (!delayStepIsSufficientlySmall(delay_step, params_.extend_state_step)) {
+    warning_.warnThrottle(delayStepWarningMessage(delay_step, params_.extend_state_step), 2000);
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
