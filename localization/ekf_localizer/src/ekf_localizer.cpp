@@ -508,13 +508,7 @@ void EKFLocalizer::measurementUpdateTwist(
     delay_time = 0.0;
   }
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (delay_step > params_.extend_state_step - 1) {
-    warning_.warnThrottle(
-      fmt::format(
-        "Twist delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
-        "extend_state_step * ekf_dt : %f [s]",
-        delay_time, params_.extend_state_step * ekf_dt_),
-      1000);
+  if (checkDelayStep(warning_, delay_step, params_.extend_state_step)) {
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
