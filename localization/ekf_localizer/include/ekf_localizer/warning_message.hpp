@@ -15,9 +15,9 @@
 #ifndef EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 #define EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 
-#include <string>
-
 #include <fmt/core.h>
+
+#include <string>
 
 std::string delayStepWarningMessage(const double delay_step, const double extend_state_step);
 

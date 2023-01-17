@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-
 #include "ekf_localizer/warning_message.hpp"
+
+#include <string>
 
 std::string delayStepWarningMessage(const double delay_step, const double extend_state_step)
 {
