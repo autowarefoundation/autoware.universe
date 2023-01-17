@@ -376,12 +376,13 @@ void PullOutModule::planWithPriorityOnEfficientPath(
 
   // plan with each planner
   for (const auto & planner : pull_out_planners_) {
-    for (size_t i = 0; i < start_pose_candidates.size(); ++i) {
-      // pull out start pose is current_pose
-      if (i == 0) {
-        status_.back_finished = true;
-      }
-      const auto & pull_out_start_pose = start_pose_candidates.at(i);
+    for (const Pose & pull_out_start_pose : start_pose_candidates) {
+      // check pull_out_start_pose is current_pose
+      const double distance_from_current_pose = tier4_autoware_utils::calcDistance2d(
+        pull_out_start_pose.position, planner_data_->self_pose->pose.position);
+      constexpr double epsilon = 0.1;
+      status_.back_finished = distance_from_current_pose < epsilon;
+
       planner->setPlannerData(planner_data_);
       const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
       if (pull_out_path) {  // found safe path
@@ -391,8 +392,6 @@ void PullOutModule::planWithPriorityOnEfficientPath(
         status_.planner_type = planner->getPlannerType();
         break;
       }
-      // pull out start pose is not current_pose(index > 0), so need back.
-      status_.back_finished = false;
     }
     if (status_.is_safe) {
       break;
@@ -406,12 +405,12 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
   status_.is_safe = false;
   status_.planner_type = PlannerType::NONE;
 
-  for (size_t i = 0; i < start_pose_candidates.size(); ++i) {
-    // pull out start pose is current_pose
-    if (i == 0) {
-      status_.back_finished = true;
-    }
-    const auto & pull_out_start_pose = start_pose_candidates.at(i);
+  for (const Pose & pull_out_start_pose : start_pose_candidates) {
+    // check pull_out_start_pose is current_pose
+    const double distance_from_current_pose = tier4_autoware_utils::calcDistance2d(
+      pull_out_start_pose.position, planner_data_->self_pose->pose.position);
+    constexpr double epsilon = 0.1;
+    status_.back_finished = distance_from_current_pose < epsilon;
     // plan with each planner
     for (const auto & planner : pull_out_planners_) {
       planner->setPlannerData(planner_data_);
@@ -427,8 +426,6 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
     if (status_.is_safe) {
       break;
     }
-    // pull out start pose is not current_pose(index > 0), so need back.
-    status_.back_finished = false;
   }
 }
 
@@ -518,7 +515,7 @@ void PullOutModule::updatePullOutStatus()
 // make this class?
 std::vector<Pose> PullOutModule::searchBackedPoses()
 {
-  const auto current_pose = planner_data_->self_pose->pose;
+  const Pose & current_pose = planner_data_->self_pose->pose;
 
   // get backward shoulder path
   const auto arc_position_pose =
@@ -542,6 +539,16 @@ std::vector<Pose> PullOutModule::searchBackedPoses()
     const auto backed_pose = calcLongitudinalOffsetPose(
       backward_shoulder_path.points, current_pose.position, -back_distance);
     if (!backed_pose) {
+      continue;
+    }
+
+    // check the back pose is near the lane end
+    const double length_to_backed_pose =
+      lanelet::utils::getArcCoordinates(status_.pull_out_lanes, *backed_pose).length;
+    const double length_to_lane_end =
+      lanelet::utils::getLaneletLength2d(status_.pull_out_lanes.back());
+    const double distance_from_lane_end = length_to_lane_end - length_to_backed_pose;
+    if (distance_from_lane_end < parameters_.ignore_distance_from_lane_end) {
       continue;
     }
 
