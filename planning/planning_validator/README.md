@@ -1,25 +1,27 @@
 # Planning Validator
 
-This `planning_validator` takes validation of the trajectory to prevent unexpected abnormal trajectory from being published. When an invalid trajectory is detected, the `planning_validator` will either "not publish the trajectory" or "publish the latest valid trajectory" according to the selected option. The status of the validation can be seen in the `/diagnostics` and `/validation_status` topics.
+The `planning_validator` is a module that checks the validity of a trajectory before it is published. If an invalid trajectory is detected, the `planning_validator` can either "not publish the trajectory" or "publish the latest valid trajectory" depending on the selected option. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics.
 
 ## Supported features
 
-The following functions are supported for trajectory validation. Thresholds for the validation can be set by parameters. To turn off a certain validation item individually, set a large value for the associated threshold.
+The following features are supported for trajectory validation and can have thresholds set by parameters:
 
-- invalid field (e.g. Inf, Nan)
-- trajectory points interval (invalid if any of the distance of trajectory points is too large)
-- curvature (invalid if the trajectory has too sharp turns that is not feasible for the given vehicle kinematics)
-- relative angle (invalid if the yaw angle changes too fast in the sequence of trajectory points)
-- lateral acceleration (invalid if the expected lateral acceleration/deceleration is too large)
-- longitudinal acceleration/deceleration (invalid if the acceleration/deceleration in the trajectory point is too large)
-- steering angle (invalid if the expected steering value is too large estimated from trajectory curvature)
-- steering angle rate (invalid if the expected steering rate value is too large)
-- velocity deviation (invalid if the planning velocity is too far from the ego velocity)
-- distance deviation (invalid if the ego is too far from the trajectory)
+- Invalid field (e.g. Inf, Nan)
+- Trajectory points interval (invalid if any of the distance of trajectory points is too large)
+- Curvature (invalid if the trajectory has too sharp turns that is not feasible for the given vehicle kinematics)
+- Relative angle (invalid if the yaw angle changes too fast in the sequence of trajectory points)
+- Lateral acceleration (invalid if the expected lateral acceleration/deceleration is too large)
+- Longitudinal acceleration/deceleration (invalid if the acceleration/deceleration in the trajectory point is too large)
+- Steering angle (invalid if the expected steering value is too large estimated from trajectory curvature)
+- Steering angle rate (invalid if the expected steering rate value is too large)
+- Velocity deviation (invalid if the planning velocity is too far from the ego velocity)
+- Distance deviation (invalid if the ego is too far from the trajectory)
 
 ## Inputs/Outputs
 
 ### Inputs
+
+The `planning_validator` takes in the following inputs:
 
 | Name                 | Type                                   | Description                                    |
 | -------------------- | -------------------------------------- | ---------------------------------------------- |
@@ -28,6 +30,8 @@ The following functions are supported for trajectory validation. Thresholds for 
 
 ### Outputs
 
+It outputs the following:
+
 | Name                         | Type                                       | Description                                                               |
 | ---------------------------- | ------------------------------------------ | ------------------------------------------------------------------------- |
 | `~/output/trajectory`        | autoware_auto_planning_msgs/Trajectory     | validated trajectory                                                      |
@@ -35,6 +39,8 @@ The following functions are supported for trajectory validation. Thresholds for 
 | `/diagnostics`               | diagnostic_msgs/DiagnosticStatus           | diagnostics to report errors                                              |
 
 ## Parameters
+
+The following parameters can be set for the `planning_validator`:
 
 ### System parameters
 
