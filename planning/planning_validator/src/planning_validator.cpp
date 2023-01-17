@@ -200,6 +200,11 @@ void PlanningValidator::publishDebugInfo()
 
 void PlanningValidator::validate(const Trajectory & trajectory)
 {
+  if (trajectory.points.size() < 2) {
+    RCLCPP_ERROR(get_logger(), "trajectory size is less than 2. Cannot validate.");
+    return;
+  }
+
   auto & s = validation_status_;
 
   s.is_valid_finite_value = checkValidFiniteValue(trajectory);

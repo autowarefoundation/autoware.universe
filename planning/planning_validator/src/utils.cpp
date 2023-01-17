@@ -135,7 +135,7 @@ std::vector<double> calcRelativeAngles(const Trajectory & trajectory)
   // We need at least three points to compute relative angle
   const size_t relative_angle_points_num = 3;
   if (trajectory.points.size() < relative_angle_points_num) {
-    return {};
+    return {0.0};
   }
 
   std::vector<double> relative_angles;
@@ -174,6 +174,10 @@ std::vector<double> calcSteeringAngles(const Trajectory & trajectory, const doub
 
 std::vector<double> calcSteeringRates(const Trajectory & trajectory, const double wheelbase)
 {
+  if (trajectory.points.size() < 1) {
+    return {0.0};
+  }
+
   const auto steerings = calcSteeringAngles(trajectory, wheelbase);
 
   std::vector<double> steering_rates;
