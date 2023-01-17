@@ -117,10 +117,14 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
   const auto nearest_idx =
     motion_utils::findNearestIndex(convertCenterlineToPoints(closest_lanelet), point.position);
   const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
+
   // update y coordinate according to the asymmetric vehicle margin
-  const double refined_y =
-    nearest_point.y() - (vehicle_info.left_overhang_m - vehicle_info.right_overhang_m) / 2.0;
-  lanelet::BasicPoint3d refined_point(nearest_point.x(), refined_y, nearest_point.z());
+  const auto shift_length = (vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
+  const auto delta_x = -1 * shift_length * sin(lane_yaw);
+  const auto delta_y = shift_length * cos(lane_yaw);
+
+  lanelet::BasicPoint3d refined_point(
+    nearest_point.x() + delta_x, nearest_point.y() + delta_y, nearest_point.z());
 
   auto closest_pose = convertBasicPoint3dToPose(refined_point, lane_yaw);
 
@@ -410,12 +414,13 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
   goal_pose = points.back();
   if (param_.correct_goal_pose) {
     goal_pose = get_closest_centerline_pose(road_lanelets_, goal_pose, vehicle_info_);
-  } else {
-    if (!is_goal_valid(goal_pose, all_route_lanelets)) {
-      RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
-      return route_msg;
-    }
   }
+
+  if (!is_goal_valid(goal_pose, all_route_lanelets)) {
+    RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
+    return route_msg;
+  }
+
   if (route_handler_.isRouteLooped(route_sections)) {
     RCLCPP_WARN(logger, "Loop detected within route!");
     return route_msg;
