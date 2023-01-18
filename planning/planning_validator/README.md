@@ -8,16 +8,16 @@ The `planning_validator` is a module that checks the validity of a trajectory be
 
 The following features are supported for trajectory validation and can have thresholds set by parameters:
 
-- Invalid field (e.g. Inf, Nan)
-- Trajectory points interval (invalid if any of the distance of trajectory points is too large)
-- Curvature (invalid if the trajectory has too sharp turns that is not feasible for the given vehicle kinematics)
-- Relative angle (invalid if the yaw angle changes too fast in the sequence of trajectory points)
-- Lateral acceleration (invalid if the expected lateral acceleration/deceleration is too large)
-- Longitudinal acceleration/deceleration (invalid if the acceleration/deceleration in the trajectory point is too large)
-- Steering angle (invalid if the expected steering value is too large estimated from trajectory curvature)
-- Steering angle rate (invalid if the expected steering rate value is too large)
-- Velocity deviation (invalid if the planning velocity is too far from the ego velocity)
-- Distance deviation (invalid if the ego is too far from the trajectory)
+- **Invalid field** : e.g. Inf, Nan
+- **Trajectory points interval** : invalid if any of the distance of trajectory points is too large
+- **Curvature** : invalid if the trajectory has too sharp turns that is not feasible for the given vehicle kinematics
+- **Relative angle** : invalid if the yaw angle changes too fast in the sequence of trajectory points
+- **Lateral acceleration** : invalid if the expected lateral acceleration/deceleration is too large
+- **Longitudinal acceleration/deceleration** : invalid if the acceleration/deceleration in the trajectory point is too large
+- **Steering angle** : invalid if the expected steering value is too large estimated from trajectory curvature
+- **Steering angle rate** : invalid if the expected steering rate value is too large
+- **Velocity deviation** : invalid if the planning velocity is too far from the ego velocity
+- **Distance deviation** : invalid if the ego is too far from the trajectory
 
 ## Inputs/Outputs
 
