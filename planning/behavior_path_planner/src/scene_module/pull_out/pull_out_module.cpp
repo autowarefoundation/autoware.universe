@@ -174,7 +174,8 @@ BehaviorModuleOutput PullOutModule::plan()
 
   BehaviorModuleOutput output;
   if (!status_.is_safe) {
-    RCLCPP_INFO(getLogger(), "not found safe path");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     return output;
   }
 
@@ -549,6 +550,9 @@ std::vector<Pose> PullOutModule::searchBackedPoses()
       lanelet::utils::getLaneletLength2d(status_.pull_out_lanes.back());
     const double distance_from_lane_end = length_to_lane_end - length_to_backed_pose;
     if (distance_from_lane_end < parameters_.ignore_distance_from_lane_end) {
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 5000,
+        "the ego is too close to the lane end, so needs backward driving");
       continue;
     }
 
