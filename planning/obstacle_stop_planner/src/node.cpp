@@ -71,7 +71,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.voxel_grid_x = declare_parameter("voxel_grid_x", 0.05);
     p.voxel_grid_y = declare_parameter("voxel_grid_y", 0.05);
     p.voxel_grid_z = declare_parameter("voxel_grid_z", 100000.0);
-    p.is_it_predicted_object = declare_parameter<bool>("is_it_predicted_object");
+    p.use_predicted_object = declare_parameter<bool>("use_predicted_object");
   }
 
   {
@@ -482,7 +482,7 @@ void ObstacleStopPlannerNode::searchObstacle(
 {
   const auto object_ptr = object_ptr_;
   Polygon2d object_polygon{};
-  if (node_param_.is_it_predicted_object) {
+  if (node_param_.use_predicted_object) {
     if (object_ptr->objects.empty()) {
       return;
     }
