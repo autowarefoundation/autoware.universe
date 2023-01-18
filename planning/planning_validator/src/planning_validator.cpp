@@ -53,8 +53,17 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 
 void PlanningValidator::setupParameters()
 {
-  use_previous_trajectory_on_invalid_ =
-    declare_parameter<bool>("use_previous_trajectory_on_invalid");
+  const auto type = declare_parameter<int>("invalid_trajectory_handling_type");
+  if (type == 0) {
+    invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IT;
+  } else if (type == 1) {
+    invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::STOP_PUBLISHING;
+  } else if (type == 2) {
+    invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::USE_PREVIOUS_RESULT;
+  } else {
+    throw std::invalid_argument{
+      "unsupported invalid_trajectory_handling_type (" + std::to_string(type) + ")"};
+  }
   publish_diag_ = declare_parameter<bool>("publish_diag");
   display_on_terminal_ = declare_parameter<bool>("display_on_terminal");
 
@@ -171,16 +180,32 @@ void PlanningValidator::publishTrajectory()
     return;
   }
 
-  // invalid factor is found. Publish previous trajectory.
-  if (use_previous_trajectory_on_invalid_ && previous_published_trajectory_) {
-    pub_traj_->publish(*previous_published_trajectory_);
-    RCLCPP_ERROR(get_logger(), "Invalid Trajectory is detected. Use previous trajectory.");
+  //  ----- invalid factor is found. Publish previous trajectory. -----
+
+  if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IT) {
+    pub_traj_->publish(*current_trajectory_);
+    RCLCPP_ERROR(get_logger(), "Caution! Invalid Trajectory published.");
     return;
   }
 
-  // current_path is invalid and no previous trajectory available.
+  if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::STOP_PUBLISHING) {
+    RCLCPP_ERROR(get_logger(), "Invalid Trajectory detected. Trajectory is not published.");
+    return;
+  }
+
+  if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::USE_PREVIOUS_RESULT) {
+    if (previous_published_trajectory_) {
+      pub_traj_->publish(*previous_published_trajectory_);
+      RCLCPP_ERROR(get_logger(), "Invalid Trajectory detected. Use previous trajectory.");
+      return;
+    }
+  }
+
   // trajectory is not published.
-  RCLCPP_ERROR(get_logger(), "Invalid Trajectory is detected. Trajectory is not published.");
+  RCLCPP_ERROR(
+    get_logger(),
+    "Invalid Trajectory detected, no valid trajectory found in the past. Trajectory is not "
+    "published.");
   return;
 }
 

@@ -91,7 +91,11 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   // system parameters
-  bool use_previous_trajectory_on_invalid_ = true;
+  enum class InvalidTrajectoryHandlingType {
+    PUBLISH_AS_IT_IT,
+    STOP_PUBLISHING,
+    USE_PREVIOUS_RESULT,
+  } invalid_trajectory_handling_type_;
   bool publish_diag_ = true;
   bool display_on_terminal_ = true;
 

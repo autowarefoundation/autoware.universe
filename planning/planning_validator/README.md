@@ -1,6 +1,6 @@
 # Planning Validator
 
-The `planning_validator` is a module that checks the validity of a trajectory before it is published. If an invalid trajectory is detected, the `planning_validator` can either "not publish the trajectory" or "publish the latest valid trajectory" depending on the selected option. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics.
+The `planning_validator` is a module that checks the validity of a trajectory before it is published. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics. When an invalid trajectory is detected, the `planning_validator` will process the trajectory following the selected option: "0. publish the trajectory as it is", "1. stop publishing the trajectory", "2. publish the last validated trajectory".
 
 ![planning_validator](./image/planning_validator.drawio.svg)
 
@@ -46,11 +46,11 @@ The following parameters can be set for the `planning_validator`:
 
 ### System parameters
 
-| Name                                 | Type | Description                                                                                                              | Default value |
-| :----------------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `publish_diag`                       | bool | if true, diagnostics msg is published.                                                                                   | true          |
-| `use_previous_trajectory_on_invalid` | bool | if true, previous validated trajectory is published when the current trajectory is invalid. Otherwise none is published. | true          |
-| `display_on_terminal`                | bool | show error msg on terminal                                                                                               | true          |
+| Name                               | Type | Description                                                                                                                                                                           | Default value |
+| :--------------------------------- | :--- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
+| `publish_diag`                     | bool | if true, diagnostics msg is published.                                                                                                                                                | true          |
+| `invalid_trajectory_handling_type` | int  | set the operation when the invalid trajectory is detected. 0: publish the trajectory even if it is invalid, 1: stop publishing the trajectory, 2: use previusly validated trajectory. | 0             |
+| `display_on_terminal`              | bool | show error msg on terminal                                                                                                                                                            | true          |
 
 ### Algorithm parameters
 
