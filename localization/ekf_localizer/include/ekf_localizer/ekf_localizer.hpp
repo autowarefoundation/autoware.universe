@@ -103,9 +103,6 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
-
   const Warning warning_;
 
   //!< @brief ekf estimated pose publisher
@@ -170,11 +167,11 @@ private:
   bool is_activated_;
 
   /* for model prediction */
-  std::queue<TwistWithCovarianceStamped::SharedPtr>
+  std::queue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr>
     current_twist_queue_;  //!< @brief current measured twist
   std::queue<int> current_twist_count_queue_;
 
-  std::queue<PoseWithCovarianceStamped::SharedPtr>
+  std::queue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr>
     current_pose_queue_;  //!< @brief current measured pose
   std::queue<int> current_pose_count_queue_;
 
