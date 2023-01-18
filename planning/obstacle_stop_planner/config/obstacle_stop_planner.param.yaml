@@ -18,9 +18,9 @@
       # params for detection area
       detection_area:
         lateral_margin: 0.0                  # margin of vehicle footprint [m]
-        pedestrian_lateral_margin: 0.0       # margin of pedestrian footprint [m]
-        car_lateral_margin: 2.0              # margin of car footprint [m]
-        unknown_lateral_margin: 10.0
+        pedestrian_lateral_margin: 0.0       # margin of detection area for pedestrian [m]
+        car_lateral_margin: 2.0              # margin of detection area for car [m]
+        unknown_lateral_margin: 10.0         # margin of detection area for unknown object [m]
         step_length: 1.0                     # step length for pointcloud search range [m]
         extend_distance: 0.0                 # extend trajectory to consider after goal obstacle in the extend_distance [m]
 
