@@ -46,11 +46,11 @@ The following parameters can be set for the `planning_validator`:
 
 ### System parameters
 
-| Name                               | Type | Description                                                                                                                                                                           | Default value |
-| :--------------------------------- | :--- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
-| `publish_diag`                     | bool | if true, diagnostics msg is published.                                                                                                                                                | true          |
+| Name                               | Type | Description                                                                                                                                                                                          | Default value |
+| :--------------------------------- | :--- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `publish_diag`                     | bool | if true, diagnostics msg is published.                                                                                                                                                               | true          |
 | `invalid_trajectory_handling_type` | int  | set the operation when the invalid trajectory is detected. <br>0: publish the trajectory even if it is invalid, <br>1: stop publishing the trajectory, <br>2: publish the last validated trajectory. | 0             |
-| `display_on_terminal`              | bool | show error msg on terminal                                                                                                                                                            | true          |
+| `display_on_terminal`              | bool | show error msg on terminal                                                                                                                                                                           | true          |
 
 ### Algorithm parameters
 
