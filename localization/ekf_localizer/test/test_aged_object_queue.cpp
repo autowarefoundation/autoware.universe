@@ -73,3 +73,17 @@ TEST(AgedObjectQueue, Empty)
 
   EXPECT_TRUE(queue.empty());
 }
+
+TEST(AgedObjectQueue, Clear)
+{
+  AgedObjectQueue<std::string> queue(3);
+
+  queue.push("a");
+  queue.push("b");
+
+  EXPECT_EQ(queue.size(), 2U);
+
+  queue.clear();
+
+  EXPECT_EQ(queue.size(), 0U);
+}
