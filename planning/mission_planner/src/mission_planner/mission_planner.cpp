@@ -121,7 +121,7 @@ void MissionPlanner::change_route(const LaneletRoute & route)
 {
   // TODO(Takagi, Isamu): replace when modified goal is always published
   // arrival_checker_.reset_goal();
-  PoseStampedWithUuid goal;
+  PoseWithUuidStamped goal;
   goal.header = route.header;
   goal.pose = route.goal_pose;
   goal.uuid = route.uuid;

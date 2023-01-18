@@ -536,7 +536,7 @@ BehaviorModuleOutput PullOverModule::plan()
   if (
     status_.is_safe && modified_goal_pose_ &&
     (!prev_goal_id_ || *prev_goal_id_ != modified_goal_pose_->id)) {
-    PoseStampedWithUuid modified_goal{};
+    PoseWithUuidStamped modified_goal{};
     modified_goal.uuid = planner_data_->route_handler->getRouteUuid();
     modified_goal.pose = modified_goal_pose_->goal_pose;
     modified_goal.header = planner_data_->route_handler->getRouteHeader();

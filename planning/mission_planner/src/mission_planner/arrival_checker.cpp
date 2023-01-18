@@ -31,9 +31,9 @@ ArrivalChecker::ArrivalChecker(rclcpp::Node * node) : vehicle_stop_checker_(node
   distance_ = node->declare_parameter<double>("arrival_check_distance");
   duration_ = node->declare_parameter<double>("arrival_check_duration");
 
-  sub_goal_ = node->create_subscription<autoware_planning_msgs::msg::PoseStampedWithUuid>(
+  sub_goal_ = node->create_subscription<autoware_planning_msgs::msg::PoseWithUuidStamped>(
     "input/modified_goal", 1,
-    [this](const autoware_planning_msgs::msg::PoseStampedWithUuid::ConstSharedPtr msg) {
+    [this](const autoware_planning_msgs::msg::PoseWithUuidStamped::ConstSharedPtr msg) {
       goal_pose_ = msg;
     });
 }
@@ -45,9 +45,9 @@ void ArrivalChecker::reset_goal()
 }
 
 // TODO(Takagi, Isamu): remove when modified goal is always published
-void ArrivalChecker::reset_goal(const autoware_planning_msgs::msg::PoseStampedWithUuid & goal)
+void ArrivalChecker::reset_goal(const autoware_planning_msgs::msg::PoseWithUuidStamped & goal)
 {
-  const auto pose = std::make_shared<autoware_planning_msgs::msg::PoseStampedWithUuid>();
+  const auto pose = std::make_shared<autoware_planning_msgs::msg::PoseWithUuidStamped>();
   *pose = goal;
   goal_pose_ = pose;
 }
