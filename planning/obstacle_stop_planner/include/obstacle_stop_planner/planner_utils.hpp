@@ -144,11 +144,25 @@ void getNearestPoint(
   const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * nearest_collision_point,
   rclcpp::Time * nearest_collision_point_time);
 
+Polygon2d convertPolygonObjectToGeometryPolygon(
+  const Pose & current_pose, const autoware_auto_perception_msgs::msg::Shape & obj_shape);
+
+Polygon2d convertCylindricalObjectToGeometryPolygon(
+  const Pose & current_pose, const autoware_auto_perception_msgs::msg::Shape & obj_shape);
+
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width);
+
 void getLateralNearestPoint(
   const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
   double * deviation);
 
 Pose getVehicleCenterFromBase(const Pose & base_pose, const VehicleInfo & vehicle_info);
+
+void findClosestPointToTrajectory(
+  TrajectoryPoints & output, const geometry_msgs::msg::Point & point,
+  geometry_msgs::msg::Point & closest_point, int & closest_point_index);
 
 std::string jsonDumpsPose(const Pose & pose);
 
