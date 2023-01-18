@@ -56,7 +56,7 @@ The following parameters can be set for the `planning_validator`:
 
 #### Thresholds
 
-The input trajectory is detected as invalid if the index exceeds the following threholds.
+The input trajectory is detected as invalid if the index exceeds the following thresholds.
 
 | Name                              | Type   | Description                                                                                                   | Default value |
 | :-------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------ | :------------ |
