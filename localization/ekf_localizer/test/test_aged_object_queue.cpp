@@ -87,3 +87,15 @@ TEST(AgedObjectQueue, Clear)
 
   EXPECT_EQ(queue.size(), 0U);
 }
+
+TEST(AgedObjectQueue, Back)
+{
+  AgedObjectQueue<std::string> queue(3);
+
+  queue.push("a");
+
+  EXPECT_EQ(queue.back(), std::string{"a"});
+  queue.push("b");
+
+  EXPECT_EQ(queue.back(), std::string{"b"});
+}

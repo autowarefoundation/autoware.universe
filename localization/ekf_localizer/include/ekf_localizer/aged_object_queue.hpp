@@ -28,6 +28,8 @@ public:
 
   size_t size() const { return objects_.size(); }
 
+  Object back() const { return objects_.back(); }
+
   void push(const Object & object)
   {
     objects_.push(object);
