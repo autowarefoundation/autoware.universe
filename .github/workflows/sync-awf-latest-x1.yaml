@@ -29,3 +29,5 @@ jobs:
             bot
             sync-awf-latest-x1
           auto-merge-method: merge
+          pr-assignees: takayuki5168
+          pr-reviewers: takayuki5168
