@@ -2,7 +2,7 @@
 <launch>
   <arg name="accel_brake_map_calib_param" default="$(find-pkg-share accel_brake_map_calibrator)/config/accel_brake_map_calibrator.param.yaml"/>
   <arg name="csv_default_map_dir" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/"/>
-  <arg name="csv_calibrated_map_dir" default="$(find-pkg-share accel_brake_map_calibrator)/config/"/>
+  <arg name="csv_calibrated_map_dir" default="$(find-pkg-share accel_brake_map_calibrator)/data/"/>
   <arg name="logger_level" default="info"/>
   <arg name="rviz" default="true"/>
   <arg name="pedal_accel_graph_output" default="true"/>

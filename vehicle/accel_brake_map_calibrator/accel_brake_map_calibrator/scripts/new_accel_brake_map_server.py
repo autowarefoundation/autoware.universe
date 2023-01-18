@@ -52,7 +52,7 @@ class DrawGraph(Node):
 
         package_path = get_package_share_directory("accel_brake_map_calibrator")
         self.declare_parameter(
-            "/accel_brake_map_calibrator/csv_calibrated_map_dir", package_path + "/config/"
+            "/accel_brake_map_calibrator/csv_calibrated_map_dir", package_path + "/data/"
         )
         self.calibrated_map_dir = (
             self.get_parameter("/accel_brake_map_calibrator/csv_calibrated_map_dir")
