@@ -37,16 +37,6 @@ namespace collision_free_path_planner
 {
 struct Bounds
 {
-  /*
-  Bounds() = default;
-  Bounds(
-    const double lower_bound_, const double upper_bound_)
-  : lower_bound(lower_bound_),
-    upper_bound(upper_bound_),
-  {
-  }
-  */
-
   double lower_bound;
   double upper_bound;
 
@@ -78,9 +68,7 @@ struct KinematicState
 struct ReferencePoint
 {
   // these should be calcualted when initialization
-  geometry_msgs::msg::Point p{};
-  double yaw{0.0};
-  // double v{0.0};
+  geometry_msgs::msg::Pose pose;
 
   // additional information
   double k{0.0};
@@ -104,15 +92,7 @@ struct ReferencePoint
   // for debug visualization
   std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};
 
-  geometry_msgs::msg::Pose getPose() const
-  {
-    geometry_msgs::msg::Pose pose;
-    pose.position = p;
-    pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
-    return pose;
-  }
-
-  geometry_msgs::msg::Point getPosition() const { return p; }
+  double getYaw() const { return tf2::getYaw(pose.orientation); }
 };
 
 struct MPTTrajs

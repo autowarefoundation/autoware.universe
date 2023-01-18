@@ -95,13 +95,15 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
 geometry_msgs::msg::Pose offsetPose(
   const ReferencePoint & ref_point, const KinematicState & deviation, const double lon_offset)
 {
-  geometry_msgs::msg::Pose pose;
-  pose.position.x = ref_point.p.x - std::sin(ref_point.yaw) * deviation.lat -
-                    std::cos(ref_point.yaw + deviation.yaw) * lon_offset;
-  pose.position.y = ref_point.p.y + std::cos(ref_point.yaw) * deviation.lat -
-                    std::sin(ref_point.yaw + deviation.yaw) * lon_offset;
+  const double ref_yaw = ref_point.getYaw();
 
-  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw + deviation.yaw);
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = ref_point.pose.position.x - std::sin(ref_yaw) * deviation.lat -
+                    std::cos(ref_yaw + deviation.yaw) * lon_offset;
+  pose.position.y = ref_point.pose.position.y + std::cos(ref_yaw) * deviation.lat -
+                    std::sin(ref_yaw + deviation.yaw) * lon_offset;
+
+  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_yaw + deviation.yaw);
 
   return pose;
 }
@@ -157,19 +159,6 @@ double calcLateralError(
   Eigen::VectorXd kinematics = Eigen::VectorXd::Zero(2);
   kinematics << lat_error, yaw_error;
   return kinematics;
-}
-
-std::vector<double> splineYawFromReferencePoints(const std::vector<ReferencePoint> & ref_points)
-{
-  if (ref_points.size() == 1) {
-    return {ref_points.front().yaw};
-  }
-
-  std::vector<geometry_msgs::msg::Point> points;
-  for (const auto & ref_point : ref_points) {
-    points.push_back(ref_point.p);
-  }
-  return interpolation::splineYawFromPoints(points);
 }
 
 template <class T>
@@ -712,7 +701,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   updateVehicleBounds(ref_points, ref_points_spline);
 
   // set extra information (alpha and has_object_collision)
-  // NOTE: This must be after bounds calculation.
+  // NOTE: This must be after bounds calculation and updateOrientation
   calcExtraPoints(ref_points);
 
   const double ref_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
@@ -739,7 +728,8 @@ void MPTOptimizer::updateOrientation(
 
   const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ref_points.at(i).yaw = yaw_vec.at(i);
+    ref_points.at(i).pose.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(yaw_vec.at(i));
   }
 }
 
@@ -1072,12 +1062,9 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
     const size_t D_x = vehicle_model_ptr_->getDimX();
 
     if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
-      geometry_msgs::msg::Pose ref_front_point;
-      ref_front_point.position = ref_points.front().p;
-      ref_front_point.orientation =
-        tier4_autoware_utils::createQuaternionFromYaw(ref_points.front().yaw);
+      geometry_msgs::msg::Pose ref_front_point = ref_points.front().pose;
 
-      const size_t seg_idx = trajectory_utils::findSoftNearestIndex(
+      const size_t seg_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
         *prev_ref_points_ptr_, ref_front_point, ego_nearest_param_.dist_threshold,
         ego_nearest_param_.yaw_threshold);
 
@@ -1484,9 +1471,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
     const double lat_error = deviation.lat;
     const double yaw_error = deviation.yaw;
 
-    geometry_msgs::msg::Pose ref_pose;
-    ref_pose.position = ref_point.p;
-    ref_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw);
+    geometry_msgs::msg::Pose ref_pose = ref_point.pose;
     debug_data_ptr_->mpt_ref_poses.push_back(ref_pose);
     debug_data_ptr_->lateral_errors.push_back(lat_error);
 
@@ -1506,18 +1491,20 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
     traj_points.push_back(traj_point);
 
     {  // for debug visualization
-      const double base_x = ref_point.p.x - std::sin(ref_point.yaw) * lat_error;
-      const double base_y = ref_point.p.y + std::cos(ref_point.yaw) * lat_error;
+      const double ref_yaw = ref_point.getYaw();
+
+      const double base_x = ref_point.pose.position.x - std::sin(ref_yaw) * lat_error;
+      const double base_y = ref_point.pose.position.y + std::cos(ref_yaw) * lat_error;
 
       // NOTE: coordinate of vehicle_circle_longitudinal_offsets is back wheel center
       for (const double d : mpt_param_.vehicle_circle_longitudinal_offsets) {
         geometry_msgs::msg::Pose vehicle_circle_pose;
 
-        vehicle_circle_pose.position.x = base_x + d * std::cos(ref_point.yaw + yaw_error);
-        vehicle_circle_pose.position.y = base_y + d * std::sin(ref_point.yaw + yaw_error);
+        vehicle_circle_pose.position.x = base_x + d * std::cos(ref_yaw + yaw_error);
+        vehicle_circle_pose.position.y = base_y + d * std::sin(ref_yaw + yaw_error);
 
         vehicle_circle_pose.orientation =
-          tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw + ref_point.alpha);
+          tier4_autoware_utils::createQuaternionFromYaw(ref_yaw + ref_point.alpha);
 
         debug_data_ptr_->vehicle_circles_pose.at(i).push_back(vehicle_circle_pose);
       }
@@ -1564,12 +1551,13 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
       trajectory_utils::getNearestPosition(ref_points, i, vehicle_info_.wheel_base_m);
 
     const bool are_too_close_points =
-      tier4_autoware_utils::calcDistance2d(front_wheel_pos, ref_points.at(i).p) < 1e-03;
-    const auto front_wheel_yaw = are_too_close_points ? ref_points.at(i).yaw
-                                                      : tier4_autoware_utils::calcAzimuthAngle(
-                                                          ref_points.at(i).p, front_wheel_pos);
+      tier4_autoware_utils::calcDistance2d(front_wheel_pos, ref_points.at(i).pose.position) < 1e-03;
+    const auto front_wheel_yaw =
+      are_too_close_points
+        ? ref_points.at(i).getYaw()
+        : tier4_autoware_utils::calcAzimuthAngle(ref_points.at(i).pose.position, front_wheel_pos);
     ref_points.at(i).alpha =
-      tier4_autoware_utils::normalizeRadian(front_wheel_yaw - ref_points.at(i).yaw);
+      tier4_autoware_utils::normalizeRadian(front_wheel_yaw - ref_points.at(i).getYaw());
 
     /*
     // near objects
@@ -1594,10 +1582,8 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
     // The point are considered to be near the object if nearest previous ref point is near the
     // object.
     if (prev_ref_points_ptr_ && prev_ref_points_ptr_->empty()) {
-      const auto ref_points_with_yaw = trajectory_utils::convertToPosesWithYawEstimation(
-        trajectory_utils::convertToPoints(ref_points));
-      const size_t prev_idx = trajectory_utils::findSoftNearestIndex(
-        *prev_ref_points_ptr_, ref_points_with_yaw.at(i),
+      const size_t prev_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+        *prev_ref_points_ptr_, tier4_autoware_utils::getPose(ref_points.at(i)),
         traj_param_.delta_dist_threshold_for_closest_point,
         traj_param_.delta_yaw_threshold_for_closest_point);
       const double dist_to_nearest_prev_ref =
@@ -1640,12 +1626,10 @@ void MPTOptimizer::updateBounds(
   // calculate distance to left/right bound on each reference point
   debug_data_ptr_->sequential_bounds.clear();
   for (auto & ref_point : ref_points) {
-    const auto pose = ref_point.getPose();
-
     const double dist_to_left_bound =
-      calcLateralDistToBound(pose, left_bound, min_soft_road_clearance, true);
+      calcLateralDistToBound(ref_point.pose, left_bound, min_soft_road_clearance, true);
     const double dist_to_right_bound =
-      calcLateralDistToBound(pose, left_bound, min_soft_road_clearance, false);
+      calcLateralDistToBound(ref_point.pose, left_bound, min_soft_road_clearance, false);
     ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
     debug_data_ptr_->sequential_bounds.push_back(ref_point.bounds);
   }
@@ -1686,13 +1670,13 @@ void MPTOptimizer::updateVehicleBounds(
         tier4_autoware_utils::createQuaternionFromYaw(collision_check_yaw);
 
       // calculate beta
-      const double beta = ref_point.yaw - collision_check_yaw;
+      const double beta = ref_point.getYaw() - collision_check_yaw;
       ref_points.at(p_idx).beta.push_back(beta);
 
       // calculate vehicle_bounds_pose
       const double tmp_yaw = std::atan2(
-        collision_check_pose.position.y - ref_point.p.y,
-        collision_check_pose.position.x - ref_point.p.x);
+        collision_check_pose.position.y - ref_point.pose.position.y,
+        collision_check_pose.position.x - ref_point.pose.position.x);
       const double offset_y =
         -tier4_autoware_utils::calcDistance2d(ref_point, collision_check_pose) *
         std::sin(tmp_yaw - collision_check_yaw);

@@ -374,7 +374,7 @@ void CollisionFreePathPlanner::applyPathVelocity(
   stop_watch_.tic(__func__);
 
   for (size_t i = 0; i < traj_points.size(); i++) {
-    const size_t nearest_seg_idx = trajectory_utils::findSoftNearestSegmentIndex(
+    const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       path_points, traj_points.at(i).pose, traj_param_.delta_dist_threshold_for_closest_point,
       traj_param_.delta_yaw_threshold_for_closest_point);
 

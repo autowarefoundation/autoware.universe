@@ -38,16 +38,13 @@ namespace tier4_autoware_utils
 template <>
 geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p)
 {
-  return p.p;
+  return p.pose.position;
 }
 
 template <>
 geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p)
 {
-  geometry_msgs::msg::Pose pose;
-  pose.position = p.p;
-  pose.orientation = createQuaternionFromYaw(p.yaw);
-  return pose;
+  return p.pose;
 }
 }  // namespace tier4_autoware_utils
 
@@ -55,42 +52,11 @@ namespace collision_free_path_planner
 {
 namespace trajectory_utils
 {
-// functions to convert to another type of points
-std::vector<geometry_msgs::msg::Pose> convertToPosesWithYawEstimation(
-  const std::vector<geometry_msgs::msg::Point> points)
-{
-  std::vector<geometry_msgs::msg::Pose> poses;
-  if (points.empty()) {
-    return poses;
-  } else if (points.size() == 1) {
-    geometry_msgs::msg::Pose pose;
-    pose.position = points.at(0);
-    poses.push_back(pose);
-    return poses;
-  }
-
-  for (size_t i = 0; i < points.size(); ++i) {
-    geometry_msgs::msg::Pose pose;
-    pose.position = points.at(i);
-
-    const size_t front_idx = (i == points.size() - 1) ? i - 1 : i;
-    const double points_yaw =
-      tier4_autoware_utils::calcAzimuthAngle(points.at(front_idx), points.at(front_idx + 1));
-    pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(points_yaw);
-
-    poses.push_back(pose);
-  }
-  return poses;
-}
-
 ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point)
 {
   ReferencePoint ref_point;
 
-  ref_point.p = traj_point.pose.position;
-  ref_point.yaw = tf2::getYaw(traj_point.pose.orientation);
-  // ref_point.v = traj_point.longitudinal_velocity_mps;
-
+  ref_point.pose = traj_point.pose;
   return ref_point;
 }
 
@@ -137,11 +103,11 @@ geometry_msgs::msg::Point getNearestPosition(
     sum_arc_length += points.at(target_idx).delta_arc_length;
 
     if (offset < sum_arc_length) {
-      return points.at(target_idx).p;
+      return points.at(target_idx).pose.position;
     }
   }
 
-  return points.back().p;
+  return points.back().pose.position;
 }
 
 Trajectory createTrajectory(

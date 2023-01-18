@@ -99,24 +99,6 @@ bool isOutsideDrivableArea(
 
 namespace geometry_utils
 {
-// TODO(murooka) check if this can be replaced with calcOffsetPose considering calculation time
-geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin)
-{
-  // NOTE: implement transformation without defining yaw variable
-  //       but directly sin/cos of yaw for fast calculation
-  const auto & q = origin.orientation;
-  const double cos_yaw = 1 - 2 * q.z * q.z;
-  const double sin_yaw = 2 * q.w * q.z;
-
-  geometry_msgs::msg::Point absolute_p;
-  absolute_p.x = point.x * cos_yaw - point.y * sin_yaw + origin.position.x;
-  absolute_p.y = point.x * sin_yaw + point.y * cos_yaw + origin.position.y;
-  absolute_p.z = point.z;
-
-  return absolute_p;
-}
-
 geometry_msgs::msg::Quaternion getQuaternionFromPoints(
   const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root)
 {

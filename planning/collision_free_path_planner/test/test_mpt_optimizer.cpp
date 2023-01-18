@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 // #include "collision_free_path_planner/mpt_optimizer.hpp"
 
 namespace collision_free_path_planner
@@ -28,10 +29,10 @@ namespace
 ReferencePoint createRefPoint(const double x, const double y, const double z, const double yaw)
 {
   ReferencePoint ref_point;
-  ref_point.p.x = x;
-  ref_point.p.y = y;
-  ref_point.p.z = z;
-  ref_point.yaw = yaw;
+  ref_point.pose.position.x = x;
+  ref_point.pose.position.y = y;
+  ref_point.pose.position.z = z;
+  ref_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
 
   return ref_point;
 }

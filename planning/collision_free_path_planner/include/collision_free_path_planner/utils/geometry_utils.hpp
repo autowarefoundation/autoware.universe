@@ -50,29 +50,6 @@ namespace collision_free_path_planner
 {
 namespace geometry_utils
 {
-template <typename T>
-geometry_msgs::msg::Point transformToRelativeCoordinate2D(
-  const T & point, const geometry_msgs::msg::Pose & origin)
-{
-  // NOTE: implement transformation without defining yaw variable
-  //       but directly sin/cos of yaw for fast calculation
-  const auto & q = origin.orientation;
-  const double cos_yaw = 1 - 2 * q.z * q.z;
-  const double sin_yaw = 2 * q.w * q.z;
-
-  geometry_msgs::msg::Point relative_p;
-  const double tmp_x = point.x - origin.position.x;
-  const double tmp_y = point.y - origin.position.y;
-  relative_p.x = tmp_x * cos_yaw + tmp_y * sin_yaw;
-  relative_p.y = -tmp_x * sin_yaw + tmp_y * cos_yaw;
-  relative_p.z = point.z;
-
-  return relative_p;
-}
-
-geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin);
-
 geometry_msgs::msg::Quaternion getQuaternionFromPoints(
   const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root);
 
