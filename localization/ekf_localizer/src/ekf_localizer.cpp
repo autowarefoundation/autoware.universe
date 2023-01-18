@@ -107,6 +107,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   /* debug */
   pub_debug_ = create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>("debug", 1);
+  pub_measured_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("debug/measured_pose", 1);
 }
 
 /*
@@ -606,7 +607,19 @@ void EKFLocalizer::publishEstimateResult()
   odometry.twist = twist_cov.twist;
   pub_odom_->publish(odometry);
 
+  /* debug measured pose */
+  if (!pose_queue_.empty()) {
+    geometry_msgs::msg::PoseStamped p;
+    p.pose = pose_queue_.back()->pose.pose;
+    p.header.stamp = current_time;
+    pub_measured_pose_->publish(p);
+  }
+
+  /* debug publish */
   double pose_yaw = 0.0;
+  if (!pose_queue_.empty()) {
+    pose_yaw = tf2::getYaw(pose_queue_.back()->pose.pose.orientation);
+  }
 
   tier4_debug_msgs::msg::Float64MultiArrayStamped msg;
   msg.stamp = current_time;
