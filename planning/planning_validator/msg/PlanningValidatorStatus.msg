@@ -24,3 +24,5 @@ float64 max_steering
 float64 max_steering_rate
 float64 velocity_deviation
 float64 distance_deviation
+
+int64 invalid_count

@@ -46,11 +46,13 @@ The following parameters can be set for the `planning_validator`:
 
 ### System parameters
 
-| Name                               | Type | Description                                                                                                                                                                                          | Default value |
-| :--------------------------------- | :--- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `publish_diag`                     | bool | if true, diagnostics msg is published.                                                                                                                                                               | true          |
-| `invalid_trajectory_handling_type` | int  | set the operation when the invalid trajectory is detected. <br>0: publish the trajectory even if it is invalid, <br>1: stop publishing the trajectory, <br>2: publish the last validated trajectory. | 0             |
-| `display_on_terminal`              | bool | show error msg on terminal                                                                                                                                                                           | true          |
+| Name                               | Type | Description                                                                                                                                                                                                                                | Default value |
+| :--------------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `invalid_trajectory_handling_type` | int  | set the operation when the invalid trajectory is detected. <br>0: publish the trajectory even if it is invalid, <br>1: stop publishing the trajectory, <br>2: publish the last validated trajectory.                                       | 0             |
+| `publish_diag`                     | bool | the Diag will be set to ERROR when the number of consecutive invalid trajectory exceeds this threshold. (For example, threshold = 1 means, even if the trajectory is invalid, the Diag will not be ERROR if the next trajectory is valid.) | true          |
+| `diag_error_count_threshold`       | int  | if true, diagnostics msg is published.                                                                                                                                                                                                     | true          |
+
+| `display_on_terminal` | bool | show error msg on terminal | true |
 
 ### Algorithm parameters
 

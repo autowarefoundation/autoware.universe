@@ -65,6 +65,7 @@ void PlanningValidator::setupParameters()
       "unsupported invalid_trajectory_handling_type (" + std::to_string(type) + ")"};
   }
   publish_diag_ = declare_parameter<bool>("publish_diag");
+  diag_error_count_threshold_ = declare_parameter<int>("diag_error_count_threshold");
   display_on_terminal_ = declare_parameter<bool>("display_on_terminal");
 
   {
@@ -91,47 +92,57 @@ void PlanningValidator::setupParameters()
   }
 }
 
+void PlanningValidator::setStatus(
+  DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg)
+{
+  if (is_ok) {
+    stat.summary(DiagnosticStatus::OK, "validated.");
+  } else if (validation_status_.invalid_count < diag_error_count_threshold_) {
+    const auto warn_msg = msg + " (invalid count is less than error threshold: " +
+                          std::to_string(validation_status_.invalid_count) + " < " +
+                          std::to_string(diag_error_count_threshold_) + ")";
+    stat.summary(DiagnosticStatus::WARN, warn_msg);
+  } else {
+    stat.summary(DiagnosticStatus::ERROR, msg);
+  }
+}
+
 void PlanningValidator::setupDiag()
 {
-  const auto checkFlag =
-    [](DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg) {
-      is_ok ? stat.summary(DiagnosticStatus::OK, "ok") : stat.summary(DiagnosticStatus::ERROR, msg);
-    };
-
   auto & d = diag_updater_;
   d.setHardwareID("planning_validator");
 
   std::string ns = "trajectory_validation_";
   d.add(ns + "finite", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_finite_value, "infinite value is found");
+    setStatus(stat, validation_status_.is_valid_finite_value, "infinite value is found");
   });
   d.add(ns + "interval", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_interval, "points interval is too long");
+    setStatus(stat, validation_status_.is_valid_interval, "points interval is too long");
   });
   d.add(ns + "relative_angle", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_relative_angle, "relative angle is too large");
+    setStatus(stat, validation_status_.is_valid_relative_angle, "relative angle is too large");
   });
   d.add(ns + "curvature", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_curvature, "curvature is too large");
+    setStatus(stat, validation_status_.is_valid_curvature, "curvature is too large");
   });
   d.add(ns + "lateral_acceleration", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_lateral_acc, "lateral acceleration is too large");
+    setStatus(stat, validation_status_.is_valid_lateral_acc, "lateral acceleration is too large");
   });
   d.add(ns + "acceleration", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_longitudinal_max_acc, "acceleration is too large");
+    setStatus(stat, validation_status_.is_valid_longitudinal_max_acc, "acceleration is too large");
   });
   d.add(ns + "deceleration", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_longitudinal_min_acc, "deceleration is too large");
+    setStatus(stat, validation_status_.is_valid_longitudinal_min_acc, "deceleration is too large");
   });
   d.add(ns + "steering", [&](auto & stat) {
-    checkFlag(stat, validation_status_.is_valid_steering, "expected steering is too large");
+    setStatus(stat, validation_status_.is_valid_steering, "expected steering is too large");
   });
   d.add(ns + "steering_rate", [&](auto & stat) {
-    checkFlag(
+    setStatus(
       stat, validation_status_.is_valid_steering_rate, "expected steering rate is too large");
   });
   d.add(ns + "velocity_deviation", [&](auto & stat) {
-    checkFlag(
+    setStatus(
       stat, validation_status_.is_valid_velocity_deviation, "velocity deviation is too large");
   });
 }
@@ -249,6 +260,8 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.is_valid_curvature = checkValidCurvature(resampled);
   s.is_valid_steering = checkValidSteering(resampled);
   s.is_valid_steering_rate = checkValidSteeringRate(resampled);
+
+  s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
 
 bool PlanningValidator::checkValidFiniteValue(const Trajectory & trajectory)

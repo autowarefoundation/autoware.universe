@@ -84,6 +84,8 @@ private:
   void publishDebugInfo();
   void displayStatus();
 
+  void setStatus(DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg);
+
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
@@ -97,6 +99,7 @@ private:
     USE_PREVIOUS_RESULT,
   } invalid_trajectory_handling_type_;
   bool publish_diag_ = true;
+  int diag_error_count_threshold_ = 0;
   bool display_on_terminal_ = true;
 
   Updater diag_updater_{this};
