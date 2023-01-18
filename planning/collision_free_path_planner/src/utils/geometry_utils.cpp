@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -144,27 +144,26 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
     return false;
   }
 
-  const double base_to_right = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
-  const double base_to_left = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.left_overhang_m;
+  const double offset_right = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
+  const double offset_left = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.left_overhang_m;
+  const double offset_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
+  const double offset_rear = vehicle_info.rear_overhang_m;
 
-  const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
-  const double base_to_rear = vehicle_info.rear_overhang_m;
+  // define function to check if the offsetted point is outside the bounds
+  const auto is_offsetted_point_outside = [&](const double offset_x, const double offset_y) {
+    const auto offset_pos =
+      tier4_autoware_utils::calcOffsetPose(pose, offset_x, offset_y, 0.0).position;
+    return isOutsideDrivableArea(offset_pos, left_bound, right_bound);
+  };
 
-  const auto top_left_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, base_to_front, -base_to_left, 0.0).position;
-  const auto top_right_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, base_to_front, base_to_right, 0.0).position;
-  const auto bottom_right_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, -base_to_rear, base_to_right, 0.0).position;
-  const auto bottom_left_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, -base_to_rear, -base_to_left, 0.0).position;
+  const bool is_top_left_outside = is_offsetted_point_outside(offset_front, -offset_left);
+  const bool is_top_right_outside = is_offsetted_point_outside(offset_front, offset_right);
+  const bool is_bottom_left_outside = is_offsetted_point_outside(-offset_rear, -offset_left);
+  const bool is_bottom_right_outside = is_offsetted_point_outside(-offset_rear, offset_right);
 
-  const bool out_top_left = isOutsideDrivableArea(top_left_pos, left_bound, right_bound);
-  const bool out_top_right = isOutsideDrivableArea(top_right_pos, left_bound, right_bound);
-  const bool out_bottom_left = isOutsideDrivableArea(bottom_left_pos, left_bound, right_bound);
-  const bool out_bottom_right = isOutsideDrivableArea(bottom_right_pos, left_bound, right_bound);
-
-  if (out_top_left || out_top_right || out_bottom_left || out_bottom_right) {
+  if (
+    is_top_left_outside || is_top_right_outside || is_bottom_left_outside ||
+    is_bottom_right_outside) {
     return true;
   }
 

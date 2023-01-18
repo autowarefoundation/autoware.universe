@@ -1,4 +1,4 @@
-// Copyright 2022 The Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,15 +25,13 @@ namespace collision_free_path_planner
 
 namespace
 {
-ReferencePoint createRefPoint(
-  const double x, const double y, const double z, const double yaw, const double v)
+ReferencePoint createRefPoint(const double x, const double y, const double z, const double yaw)
 {
   ReferencePoint ref_point;
   ref_point.p.x = x;
   ref_point.p.y = y;
   ref_point.p.z = z;
   ref_point.yaw = yaw;
-  ref_point.v = v;
 
   return ref_point;
 }
@@ -59,9 +57,9 @@ TEST(CollisionFreePathPlanner, MPTOptimizer)
   auto node = CollisionFreePathPlanner(node_options);
   const auto & mpt = *node.mpt_optimizer_ptr_;
 
-  ReferencePoint ref_point1 = createRefPoint(1, 0, 0, 1, 1);
-  ReferencePoint ref_point2 = createRefPoint(2, 0, 0, 2, 2);
-  ReferencePoint ref_point3 = createRefPoint(3, 0, 0, 3, 3);
+  ReferencePoint ref_point1 = createRefPoint(1, 0, 0, 1);
+  ReferencePoint ref_point2 = createRefPoint(2, 0, 0, 2);
+  ReferencePoint ref_point3 = createRefPoint(3, 0, 0, 3);
 
   {  // test various points arguments
     std::vector<ReferencePoint> empty_ref_points{};

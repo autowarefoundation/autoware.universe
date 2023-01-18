@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -124,6 +124,14 @@ struct DebugData
     stop_pose_by_drivable_area = boost::none;
   }
 
+  void tic(const std::string & func_name) { stop_watch_.tic(func_name); }
+
+  void toc(const std::string & func_name, const std::string & white_spaces)
+  {
+    const double elapsed_time = stop_watch_.toc(func_name);
+    msg_stream << white_spaces << func_name << ":= " << elapsed_time << " [ms]\n";
+  }
+
   // string stream for calculation time
   StreamWithPrint msg_stream;
 
@@ -150,6 +158,10 @@ struct DebugData
   // std::vector<TrajectoryPoint> mpt_fixed_traj;
   // std::vector<TrajectoryPoint> mpt_ref_traj;
   // std::vector<TrajectoryPoint> mpt_traj;
+
+  tier4_autoware_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;
 };
 
 struct TrajectoryParam

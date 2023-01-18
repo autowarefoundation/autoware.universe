@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,31 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/*
- * This Code is inspired by code from https://github.com/LiJiangnanBit/path_optimizer
- *
- * MIT License
- *
- * Copyright (c) 2022 Li Jiangnan
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 #ifndef COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
 #define COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
@@ -105,7 +80,7 @@ struct ReferencePoint
   // these should be calcualted when initialization
   geometry_msgs::msg::Point p{};
   double yaw{0.0};
-  double v{0.0};
+  // double v{0.0};
 
   // additional information
   double k{0.0};
@@ -165,14 +140,14 @@ public:
 private:
   struct MPTMatrix
   {
-    Eigen::MatrixXd Bex;
-    Eigen::VectorXd Wex;
+    Eigen::MatrixXd B;
+    Eigen::VectorXd W;
   };
 
   struct ValueMatrix
   {
-    Eigen::SparseMatrix<double> Qex;
-    Eigen::SparseMatrix<double> Rex;
+    Eigen::SparseMatrix<double> Q;
+    Eigen::SparseMatrix<double> R;
   };
 
   struct ObjectiveMatrix
@@ -204,11 +179,7 @@ private:
 
     double hard_clearance_from_road;
     double soft_clearance_from_road;
-    double soft_second_clearance_from_road;
-    double extra_desired_clearance_from_road;
-    double clearance_from_object;
     double soft_avoidance_weight;
-    double soft_second_avoidance_weight;
 
     double lat_error_weight;
     double yaw_error_weight;
@@ -236,7 +207,6 @@ private:
     bool soft_constraint;
     bool hard_constraint;
     bool l_inf_norm;
-    bool two_step_soft_constraint;
     bool plan_from_ego;
     double max_plan_from_ego_length;
   };
@@ -277,9 +247,6 @@ private:
 
   void initializeMPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
 
-  std::vector<ReferencePoint> getReferencePoints(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const;
-
   // void calcPlanningFromEgo(
   //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
   //   std::vector<ReferencePoint> & ref_points) const;
@@ -289,40 +256,36 @@ private:
   //   const std::vector<TrajectoryPoint> & smoothed_points,
   //   const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
-  // functions to update reference points
+  std::vector<ReferencePoint> getReferencePoints(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const;
   void updateCurvature(
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
   void updateOrientation(
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
-
-  void calcBounds(
+  void updateBounds(
     std::vector<ReferencePoint> & ref_points,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
     const std::vector<geometry_msgs::msg::Point> & right_bound) const;
-  void calcVehicleBounds(std::vector<ReferencePoint> & ref_points) const;
+  void updateVehicleBounds(
+    std::vector<ReferencePoint> & ref_points,
+    const SplineInterpolationPoints2d & ref_points_spline) const;
   void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
-  void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
+  void updateArcLength(std::vector<ReferencePoint> & ref_points) const;
   void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
 
-  /*
-   * state equation: X = A x0 + B * U + W = Bex U' + Wex
-   * cost function: J = X^t Q X + (U' - U'_ref)^t R (U' - U'_ref)
-   */
   MPTMatrix generateMPTMatrix(const std::vector<ReferencePoint> & reference_points) const;
-
   ValueMatrix generateValueMatrix(
     const std::vector<ReferencePoint> & reference_points,
     const std::vector<PathPoint> & path_points) const;
-
-  void addSteerWeightR(
-    std::vector<Eigen::Triplet<double>> & Rex_triplet_vec,
-    const std::vector<ReferencePoint> & ref_points) const;
-
   boost::optional<Eigen::VectorXd> executeOptimization(
     const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
     const std::vector<ReferencePoint> & ref_points);
+
+  void addSteerWeightR(
+    std::vector<Eigen::Triplet<double>> & R_triplet_vec,
+    const std::vector<ReferencePoint> & ref_points) const;
 
   std::vector<TrajectoryPoint> getMPTPoints(
     std::vector<ReferencePoint> & fixed_ref_points,
@@ -331,7 +294,7 @@ private:
 
   ObjectiveMatrix getObjectiveMatrix(
     const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
-    [[maybe_unused]] const std::vector<ReferencePoint> & ref_points) const;
+    const std::vector<ReferencePoint> & ref_points) const;
 
   ConstraintMatrix getConstraintMatrix(
     const MPTMatrix & mpt_mat, const std::vector<ReferencePoint> & ref_points) const;

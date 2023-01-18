@@ -110,6 +110,16 @@ template std::vector<double> splineYawFromPoints(
 
 }  // namespace interpolation
 
+geometry_msgs::msg::Pose SplineInterpolationPoints2d::getSplineInterpolatedPose(
+  const size_t idx, const double s) const
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position = getSplineInterpolatedPoint(idx, s);
+  pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(getSplineInterpolatedYaw(idx, s));
+  return pose;
+}
+
 geometry_msgs::msg::Point SplineInterpolationPoints2d::getSplineInterpolatedPoint(
   const size_t idx, const double s) const
 {
@@ -187,6 +197,17 @@ std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedCurvatures
     curvature_vec.push_back(curvature);
   }
   return curvature_vec;
+}
+
+size_t SplineInterpolationPoints2d::getOffsetIndex(const size_t idx, const double offset) const
+{
+  const double whole_s = base_s_vec_.at(idx) + offset;
+  for (size_t s_idx = 0; s_idx < base_s_vec_.size(); ++s_idx) {
+    if (whole_s < base_s_vec_.at(s_idx)) {
+      return s_idx;
+    }
+  }
+  return base_s_vec_.size() - 1;
 }
 
 double SplineInterpolationPoints2d::getAccumulatedLength(const size_t idx) const

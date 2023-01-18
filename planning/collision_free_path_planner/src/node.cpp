@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -140,16 +140,16 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
       parameters, "option.debug.enable_calculation_time_info", enable_calculation_time_info_);
   }
 
-  // ego nearest search parameters
-  ego_nearest_param_.onParam(parameters);
+  {  // parameters
+    ego_nearest_param_.onParam(parameters);
+    traj_param_.onParam(parameters);
+  }
 
-  // trajectory parameters
-  traj_param_.onParam(parameters);
-
-  // core algorithms parameters
-  replan_checker_ptr_->onParam(parameters);
-  eb_path_optimizer_ptr_->onParam(parameters);
-  mpt_optimizer_ptr_->onParam(parameters);
+  {  // core algorithms parameters
+    replan_checker_ptr_->onParam(parameters);
+    eb_path_optimizer_ptr_->onParam(parameters);
+    mpt_optimizer_ptr_->onParam(parameters);
+  }
 
   // reset planners
   resetPlanning();
@@ -203,16 +203,16 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   // 1. create planner data
   const auto planner_data = createPlannerData(*path_ptr);
 
-  // 3. generate optimized trajectory
+  // 2. generate optimized trajectory
   const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
 
-  // 4. extend trajectory to connect the optimized trajectory and the following path smoothly
+  // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
   auto extended_traj_points = extendTrajectory(planner_data.path.points, optimized_traj_points);
 
-  // 5. set zero velocity after stop point
+  // 4. set zero velocity after stop point
   setZeroVelocityAfterStopPoint(extended_traj_points);
 
-  // 6. publish debug data
+  // 5. publish debug data
   publishDebugData(*path_ptr);
 
   debug_data_ptr_->msg_stream << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n"
@@ -292,9 +292,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   applyPathVelocity(optimized_traj_points, path.points);
 
   // 3. insert zero velocity when trajectory is over drivable area
-  if (enable_outside_drivable_area_stop_) {
-    insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
-  }
+  insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
 
   // 4. publish debug marker
   publishDebugMarkerInOptimization(planner_data, optimized_traj_points);
@@ -401,6 +399,10 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   const PlannerData & planner_data, std::vector<TrajectoryPoint> & mpt_traj_points)
 {
   stop_watch_.tic(__func__);
+
+  if (!enable_outside_drivable_area_stop_) {
+    return;
+  }
 
   if (mpt_traj_points.empty()) {
     return;

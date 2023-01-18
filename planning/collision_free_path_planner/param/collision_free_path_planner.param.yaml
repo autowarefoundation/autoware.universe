@@ -2,18 +2,19 @@
   ros__parameters:
     option:
       enable_outside_drivable_area_stop: true  # stop if the ego's trajectory footprint is outside the drivable area
-      enable_avoidance: false                  # enable obstacle avoidance
-      enable_smoothing: true                   # enable path smoothing by elastic band
+      # enable_avoidance: false                  # enable obstacle avoidance
+      enable_smoothing: false                   # enable path smoothing by elastic band
       enable_skip_optimization: false          # skip elastic band and model predictive trajectory
+      # TODO(murooka) make enable_collision_free_planning
       enable_reset_prev_optimization: false    # If true, optimization has no fix constraint to the previous result.
 
       debug:
         # flag to publish
         # NOTE: Most of them are disabled to reduce the computation cost.
-        enable_debug_marker_pub: true           # publish debug marker
+        enable_pub_debug_marker: true           # publish debug marker
 
         # flag to show
-        enable_debug_info: false
+        enable_debug_info: true
         enable_calculation_time_info: true
 
     common:
@@ -100,9 +101,6 @@
         clearance:  # clearance(distance) between vehicle and roads/objects when generating trajectory
           hard_clearance_from_road: 0.0 # clearance from road boundary[m]
           soft_clearance_from_road: 0.1 # clearance from road boundary[m]
-          soft_second_clearance_from_road: 1.0 # clearance from road boundary[m]
-          clearance_from_object: 1.0 # clearance from object[m]
-          extra_desired_clearance_from_road: 0.0 # extra desired clearance from road
 
         # weight parameter for optimization
         weight:
@@ -134,7 +132,6 @@
             l_inf_norm: true
             soft_constraint: true
             hard_constraint: false
-            # two_step_soft_constraint: false
 
           # how to represent footprint as circles
           vehicle_circles:
@@ -148,13 +145,3 @@
             uniform_circle:
               num: 3
               radius_ratio: 0.8
-
-            # manual:
-            #   longitudinal_offset: [0, 1, 2]
-            #   radius: [1, 1, 1]
-
-            # obsolete
-            rear_drive:
-              num_for_calculation: 3
-              front_radius_ratio: 1.0
-              rear_radius_ratio: 1.0

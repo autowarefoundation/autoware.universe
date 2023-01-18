@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,80 +34,48 @@ namespace collision_free_path_planner
 {
 namespace
 {
-std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
-  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
-  const double rear_radius_ratio, const double front_radius_ratio)
-{
-  std::vector<double> longitudinal_offsets;
-  std::vector<double> radiuses;
-
-  {  // 1st circle (rear)
-    longitudinal_offsets.push_back(-vehicle_info.rear_overhang_m);
-    radiuses.push_back(vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio);
-  }
-
-  {  // 2nd circle (front)
-    const double radius = std::hypot(
-      vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
-      vehicle_info.vehicle_width_m / 2.0);
-
-    const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
-    const double longitudinal_offset =
-      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_info.rear_overhang_m;
-
-    longitudinal_offsets.push_back(longitudinal_offset);
-    radiuses.push_back(radius * front_radius_ratio);
-  }
-
-  return {radiuses, longitudinal_offsets};
-}
-
-std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesByUniformModel(
   const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
   const double radius_ratio)
 {
-  std::vector<double> longitudinal_offsets;
-  std::vector<double> radiuses;
-
   const double radius = std::hypot(
                           vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
                           vehicle_info.vehicle_width_m / 2.0) *
                         radius_ratio;
-  const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
+  std::vector<double> radiuses(circle_num, radius);
 
+  const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
+  std::vector<double> longitudinal_offsets;
   for (size_t i = 0; i < circle_num; ++i) {
     longitudinal_offsets.push_back(
       unit_lon_length / 2.0 + unit_lon_length * i - vehicle_info.rear_overhang_m);
-    radiuses.push_back(radius);
   }
 
   return {radiuses, longitudinal_offsets};
 }
 
-std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBicycleModel(
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesByBicycleModel(
   const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
   const double rear_radius_ratio, const double front_radius_ratio)
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
 
-  {  // 1st circle (rear wheel)
-    longitudinal_offsets.push_back(0.0);
-    radiuses.push_back(vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio);
-  }
+  // 1st circle (rear wheel)
+  longitudinal_offsets.push_back(0.0);
+  radiuses.push_back(vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio);
 
-  {  // 2nd circle (front wheel)
-    const double radius = std::hypot(
-      vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
-      vehicle_info.vehicle_width_m / 2.0);
+  // 2nd circle (front wheel)
+  const double radius = std::hypot(
+    vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
+    vehicle_info.vehicle_width_m / 2.0);
 
-    const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
-    const double longitudinal_offset =
-      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_info.rear_overhang_m;
+  const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
+  const double longitudinal_offset =
+    unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_info.rear_overhang_m;
 
-    longitudinal_offsets.push_back(longitudinal_offset);
-    radiuses.push_back(radius * front_radius_ratio);
-  }
+  longitudinal_offsets.push_back(longitudinal_offset);
+  radiuses.push_back(radius * front_radius_ratio);
 
   return {radiuses, longitudinal_offsets};
 }
@@ -222,45 +190,50 @@ std::vector<T> createVector(const T & value, const std::vector<T> & vector)
   return trajectory_utils::convertToReferencePoints(resampled_traj_points);
 }
 
-boost::optional<Eigen::Vector2d> intersection(
-  const Eigen::Vector2d & start_point1, const Eigen::Vector2d & end_point1,
-  const Eigen::Vector2d & start_point2, const Eigen::Vector2d & end_point2)
+boost::optional<geometry_msgs::msg::Point> intersect(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
+  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
   using Line = boost::geometry::model::linestring<Point>;
 
-  const Line line1 =
-    boost::assign::list_of<Point>(start_point1(0), start_point1(1))(end_point1(0), end_point1(1));
-  const Line line2 =
-    boost::assign::list_of<Point>(start_point2(0), start_point2(1))(end_point2(0), end_point2(1));
+  const Line l1{{p1.x, p1.y}, {p2.x, p2.y}};
+  const Line l2{{p3.x, p3.y}, {p4.x, p4.y}};
 
-  std::vector<Point> output;
-  boost::geometry::intersection(line1, line2, output);
-  if (output.empty()) {
+  std::vector<Point> intersect_points;
+  boost::geometry::intersection(l1, l2, intersect_points);
+  if (intersect_points.empty()) {
     return {};
   }
 
-  const Eigen::Vector2d output_point{output.front().x(), output.front().y()};
-  return output_point;
+  geometry_msgs::msg::Point intersect_point;
+  intersect_point.x = intersect_points.front().x();
+  intersect_point.y = intersect_points.front().y();
+  return intersect_point;
 }
 
 double calcLateralDistToBound(
-  const Eigen::Vector2d & current_point, const Eigen::Vector2d & edge_point,
-  const std::vector<geometry_msgs::msg::Point> & bound, const bool is_right_bound = false)
+  const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & bound,
+  const double additional_offset, const bool is_left_bound = true)
 {
-  for (size_t i = 0; i < bound.size() - 1; ++i) {
-    const Eigen::Vector2d current_bound_point = {bound.at(i).x, bound.at(i).y};
-    const Eigen::Vector2d next_bound_point = {bound.at(i + 1).x, bound.at(i + 1).y};
+  constexpr double max_lat_offset = 5.0;
 
-    const auto intersects_point =
-      intersection(current_point, edge_point, current_bound_point, next_bound_point);
-    if (intersects_point) {
-      const double dist = (*intersects_point - current_point).norm();
-      return is_right_bound ? -dist : dist;
+  const auto lat_offset_point =
+    tier4_autoware_utils::calcOffsetPose(pose, 0.0, max_lat_offset, 0.0).position;
+  double dist_to_bound = is_left_bound ? max_lat_offset : -max_lat_offset;
+
+  for (size_t i = 0; i < bound.size() - 1; ++i) {
+    const auto intersect_point =
+      intersect(pose.position, lat_offset_point, bound.at(i), bound.at(i + 1));
+    if (intersect_point) {
+      const double tmp_dist =
+        tier4_autoware_utils::calcDistance2d(pose.position, *intersect_point) +
+        (is_left_bound ? -1 : 1) * additional_offset;
+      dist_to_bound = std::min(tmp_dist, dist_to_bound);
     }
   }
 
-  return is_right_bound ? -5.0 : 5.0;
+  return dist_to_bound;
 }
 }  // namespace
 
@@ -342,11 +315,6 @@ void MPTOptimizer::initializeMPTParam(
   mpt_param_.hard_constraint =
     node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.hard_constraint");
 
-  // TODO(murooka) implement two-step soft constraint
-  mpt_param_.two_step_soft_constraint = false;
-  // mpt_param_.two_step_soft_constraint =
-  // node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.two_step_soft_constraint");
-
   {  // vehicle_circles
      // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
     vehicle_circle_method_ = node->declare_parameter<std::string>(
@@ -359,22 +327,9 @@ void MPTOptimizer::initializeMPTParam(
         "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio"));
 
       std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
+        calcVehicleCirclesByUniformModel(
           vehicle_info_, vehicle_circle_num_for_calculation_,
           vehicle_circle_radius_ratios_.front());
-    } else if (vehicle_circle_method_ == "rear_drive") {
-      vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation");
-
-      vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio"));
-      vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio"));
-
-      std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
-          vehicle_info_, vehicle_circle_num_for_calculation_, vehicle_circle_radius_ratios_.front(),
-          vehicle_circle_radius_ratios_.back());
     } else if (vehicle_circle_method_ == "bicycle_model") {
       vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
         "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
@@ -388,7 +343,7 @@ void MPTOptimizer::initializeMPTParam(
                                         "bicycle_model.front_radius_ratio"));
 
       std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfoByBicycleModel(
+        calcVehicleCirclesByBicycleModel(
           vehicle_info_, vehicle_circle_num_for_calculation_, vehicle_circle_radius_ratios_.front(),
           vehicle_circle_radius_ratios_.back());
     } else {
@@ -402,19 +357,11 @@ void MPTOptimizer::initializeMPTParam(
       node->declare_parameter<double>("advanced.mpt.clearance.hard_clearance_from_road");
     mpt_param_.soft_clearance_from_road =
       node->declare_parameter<double>("advanced.mpt.clearance.soft_clearance_from_road");
-    mpt_param_.soft_second_clearance_from_road =
-      node->declare_parameter<double>("advanced.mpt.clearance.soft_second_clearance_from_road");
-    mpt_param_.extra_desired_clearance_from_road =
-      node->declare_parameter<double>("advanced.mpt.clearance.extra_desired_clearance_from_road");
-    mpt_param_.clearance_from_object =
-      node->declare_parameter<double>("advanced.mpt.clearance.clearance_from_object");
   }
 
   {  // weight
     mpt_param_.soft_avoidance_weight =
       node->declare_parameter<double>("advanced.mpt.weight.soft_avoidance_weight");
-    mpt_param_.soft_second_avoidance_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.soft_second_avoidance_weight");
 
     mpt_param_.lat_error_weight =
       node->declare_parameter<double>("advanced.mpt.weight.lat_error_weight");
@@ -494,9 +441,6 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   // collision_free_constraints
   updateParam<bool>(
     parameters, "advanced.mpt.collision_free_constraints.option.l_inf_norm", mpt_param_.l_inf_norm);
-  // updateParam<bool>(
-  //   parameters, "advanced.mpt.collision_free_constraints.option.two_step_soft_constraint",
-  //   mpt_param_.two_step_soft_constraint);
   updateParam<bool>(
     parameters, "advanced.mpt.collision_free_constraints.option.soft_constraint",
     mpt_param_.soft_constraint);
@@ -510,6 +454,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
     //   parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.method",
     //   vehicle_circle_method_);
 
+    // TODO(murooka) add bicycle
     if (vehicle_circle_method_ == "uniform_circle") {
       updateParam<int>(
         parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num",
@@ -520,29 +465,9 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
         vehicle_circle_radius_ratios_.front());
 
       std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
+        calcVehicleCirclesByUniformModel(
           vehicle_info_, vehicle_circle_num_for_calculation_,
           vehicle_circle_radius_ratios_.front());
-    } else if (vehicle_circle_method_ == "rear_drive") {
-      updateParam<int>(
-        parameters,
-        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation",
-        vehicle_circle_num_for_calculation_);
-
-      updateParam<double>(
-        parameters,
-        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio",
-        vehicle_circle_radius_ratios_.front());
-
-      updateParam<double>(
-        parameters,
-        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio",
-        vehicle_circle_radius_ratios_.back());
-
-      std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
-          vehicle_info_, vehicle_circle_num_for_calculation_, vehicle_circle_radius_ratios_.front(),
-          vehicle_circle_radius_ratios_.back());
     } else {
       throw std::invalid_argument(
         "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
@@ -556,22 +481,11 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
     updateParam<double>(
       parameters, "advanced.mpt.clearance.soft_clearance_from_road",
       mpt_param_.soft_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.soft_second_clearance_from_road",
-      mpt_param_.soft_second_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.extra_desired_clearance_from_road",
-      mpt_param_.extra_desired_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.clearance_from_object", mpt_param_.clearance_from_object);
   }
 
   {  // weight
     updateParam<double>(
       parameters, "advanced.mpt.weight.soft_avoidance_weight", mpt_param_.soft_avoidance_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.soft_second_avoidance_weight",
-      mpt_param_.soft_second_avoidance_weight);
 
     updateParam<double>(
       parameters, "advanced.mpt.weight.lat_error_weight", mpt_param_.lat_error_weight);
@@ -620,12 +534,16 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   const auto & p = planner_data;
   const auto & path_points = p.path.points;
 
-  // check if arguments are valid
+  // assert arguments
+  assert(!smoothed_points.empty());
+  assert(!path_points.empty());
+
+  // check if assert is assured
   if (smoothed_points.empty()) {
     logInfo("return boost::none since smoothed_points is empty");
     return boost::none;
@@ -669,14 +587,14 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
     }
   }
 
-  // calculate B and W matrices where x = Bu + W
+  // calculate B and W matrices where x = B u + W
   const auto mpt_matrix = generateMPTMatrix(non_fixed_ref_points);
 
   // calculate Q and R matrices where J(x, u) = x^t Q x + u^t R u
-  const auto val_matrix = generateValueMatrix(non_fixed_ref_points, path_points);
+  const auto value_matrix = generateValueMatrix(non_fixed_ref_points, path_points);
 
   const auto optimized_control_variables =
-    executeOptimization(mpt_matrix, val_matrix, non_fixed_ref_points);
+    executeOptimization(mpt_matrix, value_matrix, non_fixed_ref_points);
   if (!optimized_control_variables) {
     logInfo("return boost::none since could not solve qp");
     return boost::none;
@@ -692,8 +610,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // publish
   publishDebugTrajectories(p.path.header, full_optimized_ref_points, mpt_points);
 
-  debug_data_ptr_->msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "      ");
 
   const auto mpt_trajs = MPTTrajs{full_optimized_ref_points, mpt_points};
   prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(full_optimized_ref_points);
@@ -708,22 +625,25 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   const auto & p = planner_data;
 
-  const double forward_distance = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
-  const double backward_distance = traj_param_.output_backward_traj_length;
+  const double forward_traj_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
+  const double backward_traj_length = traj_param_.output_backward_traj_length;
 
-  // convert smoothed points to reference points
-  const auto resampled_smoothed_points =
-    trajectory_utils::resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
-  auto ref_points = trajectory_utils::convertToReferencePoints(resampled_smoothed_points);
+  // resample and convert smoothed points type from trajectory points to reference points
+  auto ref_points = [&]() {
+    const auto resampled_smoothed_points =
+      trajectory_utils::resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
+    return trajectory_utils::convertToReferencePoints(resampled_smoothed_points);
+  }();
 
   // crop reference points with margin first to reduce calculation cost
   const double tmp_margin = 10.0;
   const size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
   ref_points = trajectory_utils::cropPoints(
-    ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
-    -backward_distance - tmp_margin);
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
+    -backward_traj_length - tmp_margin);
 
+  // calculate spline interpolation of reference points
   SplineInterpolationPoints2d ref_points_spline(ref_points);
 
   // NOTE: Calculating orientation and curvature requirs points
@@ -734,26 +654,26 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   // crop backward
   ref_points = trajectory_utils::cropPoints(
-    ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
-    -backward_distance);
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
+    -backward_traj_length);
 
   // must be after backward cropping
   calcFixedPoints(ref_points);
 
   // crop with margin
-  calcBounds(ref_points, p.left_bound, p.right_bound);
-  calcVehicleBounds(ref_points);
+  /*
+  updateBounds(ref_points, p.left_bound, p.right_bound);
+  updateVehicleBounds(ref_points, ref_points_spline);
 
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation.
   calcExtraPoints(ref_points);
-
-  calcArcLength(ref_points);
+  */
 
   /*
   // crop forward
   ref_points = trajectory_utils::cropForwardPoints(
-    ref_points, p.ego_pose.position, ego_seg_idx, forward_distance);
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
   */
 
   /*
@@ -788,8 +708,8 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   }
 
   // set bounds information
-  calcBounds(ref_points, p.left_bound, p.right_bound);
-  calcVehicleBounds(ref_points);
+  updateBounds(ref_points, p.left_bound, p.right_bound);
+  updateVehicleBounds(ref_points, ref_points_spline);
 
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation.
@@ -815,7 +735,7 @@ void MPTOptimizer::updateOrientation(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  assert(ref_points.size() == ref_points_spline.size());
+  assert(ref_points.size() == ref_points_spline.size());  // NOTE: not assured
 
   const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
@@ -827,7 +747,7 @@ void MPTOptimizer::updateCurvature(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  assert(ref_points.size() == ref_points_spline.size());
+  assert(ref_points.size() == ref_points_spline.size());  // NOTE: not assured
 
   const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
@@ -981,18 +901,12 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
 }
 */
 
-// predict equation: x = Bex u + Wex (u includes x_0)
-//                   NOTE: Originaly, x = A x_0 + B u + W.
-// cost function: J = x' Qex x + u' Rex u
+// state equation: x = B u + W (u includes x_0)
+// NOTE: Originaly, x_t+1 = Ad x_t + Bd u + Wd.
 MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
   const std::vector<ReferencePoint> & ref_points) const
 {
   stop_watch_.tic(__func__);
-
-  // It can be removed.
-  // if (ref_points.empty()) {
-  //   return MPTMatrix{};
-  // }
 
   // NOTE: center offset of vehicle is always 0 in this algorithm.
   // vehicle_model_ptr_->updateCenterOffset(0.0);
@@ -1002,17 +916,19 @@ MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
   const size_t D_u = vehicle_model_ptr_->getDimU();
   const size_t D_v = D_x + D_u * (N_ref - 1);
 
-  Eigen::MatrixXd Bex = Eigen::MatrixXd::Zero(D_x * N_ref, D_v);
-  Eigen::VectorXd Wex = Eigen::VectorXd::Zero(D_x * N_ref);
+  // matrices for whole state equation
+  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(D_x * N_ref, D_v);
+  Eigen::VectorXd W = Eigen::VectorXd::Zero(D_x * N_ref);
 
+  // matrices for one-step state equation
   Eigen::MatrixXd Ad(D_x, D_x);
   Eigen::MatrixXd Bd(D_x, D_u);
   Eigen::MatrixXd Wd(D_x, 1);
 
-  // predict kinematics for N_ref times
+  // calculate one-step state equation considering kinematics N_ref times
   for (size_t i = 0; i < N_ref; ++i) {
     if (i == 0) {
-      Bex.block(0, 0, D_x, D_x) = Eigen::MatrixXd::Identity(D_x, D_x);
+      B.block(0, 0, D_x, D_x) = Eigen::MatrixXd::Identity(D_x, D_x);
       continue;
     }
 
@@ -1023,30 +939,30 @@ MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
     // get discrete kinematics matrix A, B, W
     const double ds = ref_points.at(i).delta_arc_length;
     const double ref_k = ref_points.at(std::max(0, static_cast<int>(i) - 1)).k;
-    vehicle_model_ptr_->setCurvature(ref_k);
-    vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, ds);
+    vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, ref_k, ds);
 
-    Bex.block(idx_x_i, 0, D_x, D_x) = Ad * Bex.block(idx_x_i_prev, 0, D_x, D_x);
-    Bex.block(idx_x_i, D_x + idx_u_i_prev, D_x, D_u) = Bd;
+    B.block(idx_x_i, 0, D_x, D_x) = Ad * B.block(idx_x_i_prev, 0, D_x, D_x);
+    B.block(idx_x_i, D_x + idx_u_i_prev, D_x, D_u) = Bd;
 
     for (size_t j = 0; j < i - 1; ++j) {
       size_t idx_u_j = j * D_u;
-      Bex.block(idx_x_i, D_x + idx_u_j, D_x, D_u) =
-        Ad * Bex.block(idx_x_i_prev, D_x + idx_u_j, D_x, D_u);
+      B.block(idx_x_i, D_x + idx_u_j, D_x, D_u) =
+        Ad * B.block(idx_x_i_prev, D_x + idx_u_j, D_x, D_u);
     }
 
-    Wex.segment(idx_x_i, D_x) = Ad * Wex.block(idx_x_i_prev, 0, D_x, 1) + Wd;
+    W.segment(idx_x_i, D_x) = Ad * W.block(idx_x_i_prev, 0, D_x, 1) + Wd;
   }
 
   MPTMatrix mpt_mat;
-  mpt_mat.Bex = Bex;
-  mpt_mat.Wex = Wex;
+  mpt_mat.B = B;
+  mpt_mat.W = W;
 
   debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
                               << " [ms]\n";
   return mpt_mat;
 }
 
+// cost function: J = x' Q x + u' R u
 MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
   const std::vector<ReferencePoint> & ref_points, const std::vector<PathPoint> & path_points) const
 {
@@ -1067,9 +983,10 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
     ref_points.back(), path_points, 0.0001, traj_param_.delta_yaw_threshold_for_closest_point);
 
   // update Q
-  Eigen::SparseMatrix<double> Qex_sparse_mat(D_x * N_ref, D_x * N_ref);
-  std::vector<Eigen::Triplet<double>> Qex_triplet_vec;
+  Eigen::SparseMatrix<double> Q_sparse_mat(D_x * N_ref, D_x * N_ref);
+  std::vector<Eigen::Triplet<double>> Q_triplet_vec;
   for (size_t i = 0; i < N_ref; ++i) {
+    // TODO(murooka): refactor this
     // this is for plan_from_ego
     // const bool near_kinematic_state_while_planning_from_ego = [&]() {
     //   const size_t min_idx = static_cast<size_t>(std::max(0, static_cast<int>(i) - 20));
@@ -1103,29 +1020,29 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
     const double adaptive_lat_error_weight = adaptive_error_weight.at(0);
     const double adaptive_yaw_error_weight = adaptive_error_weight.at(1);
 
-    Qex_triplet_vec.push_back(Eigen::Triplet<double>(i * D_x, i * D_x, adaptive_lat_error_weight));
-    Qex_triplet_vec.push_back(
+    Q_triplet_vec.push_back(Eigen::Triplet<double>(i * D_x, i * D_x, adaptive_lat_error_weight));
+    Q_triplet_vec.push_back(
       Eigen::Triplet<double>(i * D_x + 1, i * D_x + 1, adaptive_yaw_error_weight));
   }
-  Qex_sparse_mat.setFromTriplets(Qex_triplet_vec.begin(), Qex_triplet_vec.end());
+  Q_sparse_mat.setFromTriplets(Q_triplet_vec.begin(), Q_triplet_vec.end());
 
   // update R
-  Eigen::SparseMatrix<double> Rex_sparse_mat(D_v, D_v);
-  std::vector<Eigen::Triplet<double>> Rex_triplet_vec;
+  Eigen::SparseMatrix<double> R_sparse_mat(D_v, D_v);
+  std::vector<Eigen::Triplet<double>> R_triplet_vec;
   for (size_t i = 0; i < N_ref - 1; ++i) {
     const double adaptive_steer_weight = ref_points.at(i).near_objects
                                            ? mpt_param_.obstacle_avoid_steer_input_weight
                                            : mpt_param_.steer_input_weight;
-    Rex_triplet_vec.push_back(
+    R_triplet_vec.push_back(
       Eigen::Triplet<double>(D_x + D_u * i, D_x + D_u * i, adaptive_steer_weight));
   }
-  addSteerWeightR(Rex_triplet_vec, ref_points);
+  addSteerWeightR(R_triplet_vec, ref_points);
 
-  Rex_sparse_mat.setFromTriplets(Rex_triplet_vec.begin(), Rex_triplet_vec.end());
+  R_sparse_mat.setFromTriplets(R_triplet_vec.begin(), R_triplet_vec.end());
 
   ValueMatrix m;
-  m.Qex = Qex_sparse_mat;
-  m.Rex = Rex_sparse_mat;
+  m.Q = Q_sparse_mat;
+  m.R = R_sparse_mat;
 
   debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
                               << " [ms]\n";
@@ -1270,7 +1187,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
 
 MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
-  [[maybe_unused]] const std::vector<ReferencePoint> & ref_points) const
+  const std::vector<ReferencePoint> & ref_points) const
 {
   stop_watch_.tic(__func__);
 
@@ -1283,7 +1200,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 
   // generate T matrix and vector to shift optimization center
   //   define Z as time-series vector of shifted deviation error
-  //   Z = sparse_T_mat * (Bex * U + Wex) + T_vec
+  //   Z = sparse_T_mat * (B * U + W) + T_vec
   Eigen::SparseMatrix<double> sparse_T_mat(D_xn, D_xn);
   Eigen::VectorXd T_vec = Eigen::VectorXd::Zero(D_xn);
   std::vector<Eigen::Triplet<double>> triplet_T_vec;
@@ -1300,17 +1217,17 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   }
   sparse_T_mat.setFromTriplets(triplet_T_vec.begin(), triplet_T_vec.end());
 
-  const Eigen::MatrixXd B = sparse_T_mat * mpt_mat.Bex;
-  const Eigen::MatrixXd QB = val_mat.Qex * B;
-  const Eigen::MatrixXd R = val_mat.Rex;
+  const Eigen::MatrixXd B = sparse_T_mat * mpt_mat.B;
+  const Eigen::MatrixXd QB = val_mat.Q * B;
+  const Eigen::MatrixXd R = val_mat.R;
 
   // min J(v) = min (v'Hv + v'f)
   Eigen::MatrixXd H = Eigen::MatrixXd::Zero(D_v, D_v);
   H.triangularView<Eigen::Upper>() = B.transpose() * QB + R;
   H.triangularView<Eigen::Lower>() = H.transpose();
 
-  // Eigen::VectorXd f = ((sparse_T_mat * mpt_mat.Wex + T_vec).transpose() * QB).transpose();
-  Eigen::VectorXd f = (sparse_T_mat * mpt_mat.Wex + T_vec).transpose() * QB;
+  // Eigen::VectorXd f = ((sparse_T_mat * mpt_mat.W + T_vec).transpose() * QB).transpose();
+  Eigen::VectorXd f = (sparse_T_mat * mpt_mat.W + T_vec).transpose() * QB;
 
   const size_t N_avoid = mpt_param_.vehicle_circle_longitudinal_offsets.size();
   const size_t N_first_slack = [&]() -> size_t {
@@ -1322,15 +1239,9 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
     }
     return 0;
   }();
-  const size_t N_second_slack = [&]() -> size_t {
-    if (mpt_param_.two_step_soft_constraint) {
-      return N_first_slack;
-    }
-    return 0;
-  }();
 
   // number of slack variables for one step
-  const size_t N_slack = N_first_slack + N_second_slack;
+  const size_t N_slack = N_first_slack;
 
   // extend H for slack variables
   Eigen::MatrixXd full_H = Eigen::MatrixXd::Zero(D_v + N_ref * N_slack, D_v + N_ref * N_slack);
@@ -1343,10 +1254,6 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   if (N_first_slack > 0) {
     full_f.segment(D_v, N_ref * N_first_slack) =
       mpt_param_.soft_avoidance_weight * Eigen::VectorXd::Ones(N_ref * N_first_slack);
-  }
-  if (N_second_slack > 0) {
-    full_f.segment(D_v + N_ref * N_first_slack, N_ref * N_second_slack) =
-      mpt_param_.soft_second_avoidance_weight * Eigen::VectorXd::Ones(N_ref * N_second_slack);
   }
 
   ObjectiveMatrix obj_matrix;
@@ -1369,7 +1276,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   stop_watch_.tic(__func__);
 
   // NOTE: currently, add additional length to soft bounds approximately
-  //       for soft second and hard bounds
+  //       for hard bounds
   const size_t D_x = vehicle_model_ptr_->getDimX();
   const size_t D_u = vehicle_model_ptr_->getDimU();
   const size_t N_ref = ref_points.size();
@@ -1389,16 +1296,9 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     }
     return 0;
   }();
-  const size_t N_second_slack = [&]() -> size_t {
-    if (mpt_param_.soft_constraint && mpt_param_.two_step_soft_constraint) {
-      return N_first_slack;
-    }
-    return 0;
-  }();
 
   // number of all slack variables is N_ref * N_slack
-  const size_t N_slack = N_first_slack + N_second_slack;
-  const size_t N_soft = mpt_param_.two_step_soft_constraint ? 2 : 1;
+  const size_t N_slack = N_first_slack;
 
   const size_t A_cols = [&] {
     if (mpt_param_.soft_constraint) {
@@ -1419,7 +1319,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   size_t A_rows = 0;
   if (mpt_param_.soft_constraint) {
     // 3 means slack variable constraints to be between lower and upper bounds, and positive.
-    A_rows += 3 * N_ref * N_avoid * N_soft;
+    A_rows += 3 * N_ref * N_avoid;
   }
   if (mpt_param_.hard_constraint) {
     A_rows += N_ref * N_avoid;
@@ -1454,8 +1354,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     C_sparse_mat.setFromTriplets(C_triplet_vec.begin(), C_triplet_vec.end());
 
     // calculate CB, and CW
-    const Eigen::MatrixXd CB = C_sparse_mat * mpt_mat.Bex;
-    const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.Wex + C_vec;
+    const Eigen::MatrixXd CB = C_sparse_mat * mpt_mat.B;
+    const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.W + C_vec;
 
     // calculate bounds
     const double bounds_offset =
@@ -1465,48 +1365,38 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     // soft constraints
     if (mpt_param_.soft_constraint) {
       size_t A_offset_cols = D_v;
-      for (size_t s_idx = 0; s_idx < N_soft; ++s_idx) {
-        const size_t A_blk_rows = 3 * N_ref;
+      const size_t A_blk_rows = 3 * N_ref;
 
-        // A := [C * Bex | O | ... | O | I | O | ...
-        //      -C * Bex | O | ... | O | I | O | ...
-        //          O    | O | ... | O | I | O | ... ]
-        Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, A_cols);
-        A_blk.block(0, 0, N_ref, D_v) = CB;
-        A_blk.block(N_ref, 0, N_ref, D_v) = -CB;
+      // A := [C * B | O | ... | O | I | O | ...
+      //      -C * B | O | ... | O | I | O | ...
+      //          O    | O | ... | O | I | O | ... ]
+      Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, A_cols);
+      A_blk.block(0, 0, N_ref, D_v) = CB;
+      A_blk.block(N_ref, 0, N_ref, D_v) = -CB;
 
-        size_t local_A_offset_cols = A_offset_cols;
-        if (!mpt_param_.l_inf_norm) {
-          local_A_offset_cols += N_ref * l_idx;
-        }
-        A_blk.block(0, local_A_offset_cols, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-        A_blk.block(N_ref, local_A_offset_cols, N_ref, N_ref) =
-          Eigen::MatrixXd::Identity(N_ref, N_ref);
-        A_blk.block(2 * N_ref, local_A_offset_cols, N_ref, N_ref) =
-          Eigen::MatrixXd::Identity(N_ref, N_ref);
-
-        // lb := [lower_bound - CW
-        //        CW - upper_bound
-        //               O        ]
-        Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(A_blk_rows);
-        lb_blk.segment(0, N_ref) = -CW + part_lb;
-        lb_blk.segment(N_ref, N_ref) = CW - part_ub;
-
-        if (s_idx == 1) {
-          // add additional clearance
-          const double diff_clearance =
-            mpt_param_.soft_second_clearance_from_road - mpt_param_.soft_clearance_from_road;
-          lb_blk.segment(0, N_ref) -= Eigen::MatrixXd::Constant(N_ref, 1, diff_clearance);
-          lb_blk.segment(N_ref, N_ref) -= Eigen::MatrixXd::Constant(N_ref, 1, diff_clearance);
-        }
-
-        A_offset_cols += N_ref * N_first_slack;
-
-        A.block(A_rows_end, 0, A_blk_rows, A_cols) = A_blk;
-        lb.segment(A_rows_end, A_blk_rows) = lb_blk;
-
-        A_rows_end += A_blk_rows;
+      size_t local_A_offset_cols = A_offset_cols;
+      if (!mpt_param_.l_inf_norm) {
+        local_A_offset_cols += N_ref * l_idx;
       }
+      A_blk.block(0, local_A_offset_cols, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
+      A_blk.block(N_ref, local_A_offset_cols, N_ref, N_ref) =
+        Eigen::MatrixXd::Identity(N_ref, N_ref);
+      A_blk.block(2 * N_ref, local_A_offset_cols, N_ref, N_ref) =
+        Eigen::MatrixXd::Identity(N_ref, N_ref);
+
+      // lb := [lower_bound - CW
+      //        CW - upper_bound
+      //               O        ]
+      Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(A_blk_rows);
+      lb_blk.segment(0, N_ref) = -CW + part_lb;
+      lb_blk.segment(N_ref, N_ref) = CW - part_ub;
+
+      A_offset_cols += N_ref * N_first_slack;
+
+      A.block(A_rows_end, 0, A_blk_rows, A_cols) = A_blk;
+      lb.segment(A_rows_end, A_blk_rows) = lb_blk;
+
+      A_rows_end += A_blk_rows;
     }
 
     // hard constraints
@@ -1528,12 +1418,12 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   // CX = C(B v + w) where C extracts fixed points
   if (fixed_points_indices.size() > 0) {
     for (const size_t i : fixed_points_indices) {
-      A.block(A_rows_end, 0, D_x, D_v) = mpt_mat.Bex.block(i * D_x, 0, D_x, D_v);
+      A.block(A_rows_end, 0, D_x, D_v) = mpt_mat.B.block(i * D_x, 0, D_x, D_v);
 
       lb.segment(A_rows_end, D_x) =
-        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.Wex.segment(i * D_x, D_x);
+        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
       ub.segment(A_rows_end, D_x) =
-        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.Wex.segment(i * D_x, D_x);
+        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
 
       A_rows_end += D_x;
     }
@@ -1575,7 +1465,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
   }
 
   const size_t N_kinematic_state = vehicle_model_ptr_->getDimX();
-  const Eigen::VectorXd Xex = mpt_mat.Bex * Uex + mpt_mat.Wex;
+  const Eigen::VectorXd Xex = mpt_mat.B * Uex + mpt_mat.W;
 
   for (size_t i = 0; i < non_fixed_ref_points.size(); ++i) {
     const double lat = Xex(i * N_kinematic_state);
@@ -1658,7 +1548,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
   return traj_points;
 }
 
-void MPTOptimizer::calcArcLength(std::vector<ReferencePoint> & ref_points) const
+void MPTOptimizer::updateArcLength(std::vector<ReferencePoint> & ref_points) const
 {
   for (size_t i = 0; i < ref_points.size(); i++) {
     ref_points.at(i).delta_arc_length =
@@ -1720,7 +1610,7 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
 }
 
 void MPTOptimizer::addSteerWeightR(
-  std::vector<Eigen::Triplet<double>> & Rex_triplet_vec,
+  std::vector<Eigen::Triplet<double>> & R_triplet_vec,
   const std::vector<ReferencePoint> & ref_points) const
 {
   const size_t D_x = vehicle_model_ptr_->getDimX();
@@ -1731,75 +1621,42 @@ void MPTOptimizer::addSteerWeightR(
 
   // add steering rate : weight for (u(i) - u(i-1))^2
   for (size_t i = D_x; i < D_v - 1; ++i) {
-    Rex_triplet_vec.push_back(Eigen::Triplet<double>(i, i, mpt_param_.steer_rate_weight));
-    Rex_triplet_vec.push_back(Eigen::Triplet<double>(i + 1, i, -mpt_param_.steer_rate_weight));
-    Rex_triplet_vec.push_back(Eigen::Triplet<double>(i, i + 1, -mpt_param_.steer_rate_weight));
-    Rex_triplet_vec.push_back(Eigen::Triplet<double>(i + 1, i + 1, mpt_param_.steer_rate_weight));
+    R_triplet_vec.push_back(Eigen::Triplet<double>(i, i, mpt_param_.steer_rate_weight));
+    R_triplet_vec.push_back(Eigen::Triplet<double>(i + 1, i, -mpt_param_.steer_rate_weight));
+    R_triplet_vec.push_back(Eigen::Triplet<double>(i, i + 1, -mpt_param_.steer_rate_weight));
+    R_triplet_vec.push_back(Eigen::Triplet<double>(i + 1, i + 1, mpt_param_.steer_rate_weight));
   }
 }
 
-void MPTOptimizer::calcBounds(
+void MPTOptimizer::updateBounds(
   std::vector<ReferencePoint> & ref_points,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
-  if (left_bound.empty() || right_bound.empty()) {
-    std::cerr << "[ObstacleAvoidancePlanner]: Boundary is empty when calculating bounds"
-              << std::endl;
-    return;
-  }
+  const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0;  // TODO(murooka)
 
-  /*
-  const double min_soft_road_clearance = vehicle_param_.width / 2.0 +
-                                         mpt_param_.soft_clearance_from_road +
-                                         mpt_param_.extra_desired_clearance_from_road;
-  */
-  const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0;
-
-  // search bounds candidate for each ref points
+  // calculate distance to left/right bound on each reference point
   debug_data_ptr_->sequential_bounds.clear();
-  for (size_t i = 0; i < ref_points.size() - 1; ++i) {
-    const auto curr_ref_position = ref_points.at(i).getPosition();
-    const auto next_ref_position = ref_points.at(i + 1).getPosition();
-    const Eigen::Vector2d current_ref_point = {curr_ref_position.x, curr_ref_position.y};
-    const Eigen::Vector2d next_ref_point = {next_ref_position.x, next_ref_position.y};
-    const Eigen::Vector2d current_to_next_vec = next_ref_point - current_ref_point;
-    const Eigen::Vector2d left_vertical_vec = {-current_to_next_vec(1), current_to_next_vec(0)};
-    const Eigen::Vector2d right_vertical_vec = {current_to_next_vec(1), -current_to_next_vec(0)};
+  for (auto & ref_point : ref_points) {
+    const auto pose = ref_point.getPose();
 
-    const Eigen::Vector2d left_point = current_ref_point + left_vertical_vec.normalized() * 5.0;
-    const Eigen::Vector2d right_point = current_ref_point + right_vertical_vec.normalized() * 5.0;
-    const double lat_dist_to_left_bound = std::min(
-      calcLateralDistToBound(current_ref_point, left_point, left_bound) - min_soft_road_clearance,
-      5.0);
-    const double lat_dist_to_right_bound = std::max(
-      calcLateralDistToBound(current_ref_point, right_point, right_bound, true) +
-        min_soft_road_clearance,
-      -5.0);
-
-    ref_points.at(i).bounds = Bounds{lat_dist_to_right_bound, lat_dist_to_left_bound};
-    debug_data_ptr_->sequential_bounds.push_back(ref_points.at(i).bounds);
+    const double dist_to_left_bound =
+      calcLateralDistToBound(pose, left_bound, min_soft_road_clearance, true);
+    const double dist_to_right_bound =
+      calcLateralDistToBound(pose, left_bound, min_soft_road_clearance, false);
+    ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+    debug_data_ptr_->sequential_bounds.push_back(ref_point.bounds);
   }
 
-  // Terminal Boundary
-  const double lat_dist_to_left_bound =
-    -motion_utils::calcLateralOffset(left_bound, ref_points.back().getPosition()) -
-    min_soft_road_clearance;
-  const double lat_dist_to_right_bound =
-    -motion_utils::calcLateralOffset(right_bound, ref_points.back().getPosition()) +
-    min_soft_road_clearance;
-  ref_points.back().bounds = Bounds{lat_dist_to_right_bound, lat_dist_to_left_bound};
-  debug_data_ptr_->sequential_bounds.push_back(ref_points.back().bounds);
-
-  debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-
+  debug_data_ptr_->toc(__func__, "          ");
   return;
 }
 
-void MPTOptimizer::calcVehicleBounds(std::vector<ReferencePoint> & ref_points) const
+void MPTOptimizer::updateVehicleBounds(
+  std::vector<ReferencePoint> & ref_points,
+  const SplineInterpolationPoints2d & ref_points_spline) const
 {
   stop_watch_.tic(__func__);
 
@@ -1811,51 +1668,78 @@ void MPTOptimizer::calcVehicleBounds(std::vector<ReferencePoint> & ref_points) c
     return;
   }
 
-  SplineInterpolationPoints2d ref_points_spline_interpolation(ref_points);
-  // trajectory_utils::convertToPoints(ref_points));
-
   for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
     const auto & ref_point = ref_points.at(p_idx);
+    /*
+    // TODO(murooka) remove this
     ref_points.at(p_idx).vehicle_bounds.clear();
     ref_points.at(p_idx).beta.clear();
+    */
 
-    for (const double d : mpt_param_.vehicle_circle_longitudinal_offsets) {
-      geometry_msgs::msg::Pose avoid_traj_pose;
-      avoid_traj_pose.position =
-        ref_points_spline_interpolation.getSplineInterpolatedPoint(p_idx, d);
-      const double vehicle_bounds_pose_yaw =
-        ref_points_spline_interpolation.getSplineInterpolatedYaw(p_idx, d);
-      avoid_traj_pose.orientation =
-        tier4_autoware_utils::createQuaternionFromYaw(vehicle_bounds_pose_yaw);
+    for (const double lon_offset : mpt_param_.vehicle_circle_longitudinal_offsets) {
+      geometry_msgs::msg::Pose collision_check_pose;
+      collision_check_pose.position =
+        ref_points_spline.getSplineInterpolatedPoint(p_idx, lon_offset);
+      const double collision_check_yaw =
+        ref_points_spline.getSplineInterpolatedYaw(p_idx, lon_offset);
+      collision_check_pose.orientation =
+        tier4_autoware_utils::createQuaternionFromYaw(collision_check_yaw);
 
-      const double avoid_yaw = std::atan2(
-        avoid_traj_pose.position.y - ref_point.p.y, avoid_traj_pose.position.x - ref_point.p.x);
-      const double beta = ref_point.yaw - vehicle_bounds_pose_yaw;
+      // calculate beta
+      const double beta = ref_point.yaw - collision_check_yaw;
       ref_points.at(p_idx).beta.push_back(beta);
 
-      const double offset_y = -tier4_autoware_utils::calcDistance2d(ref_point, avoid_traj_pose) *
-                              std::sin(avoid_yaw - vehicle_bounds_pose_yaw);
+      // calculate vehicle_bounds_pose
+      const double tmp_yaw = std::atan2(
+        collision_check_pose.position.y - ref_point.p.y,
+        collision_check_pose.position.x - ref_point.p.x);
+      const double offset_y =
+        -tier4_autoware_utils::calcDistance2d(ref_point, collision_check_pose) *
+        std::sin(tmp_yaw - collision_check_yaw);
 
       const auto vehicle_bounds_pose =
-        tier4_autoware_utils::calcOffsetPose(avoid_traj_pose, 0.0, offset_y, 0.0);
+        tier4_autoware_utils::calcOffsetPose(collision_check_pose, 0.0, offset_y, 0.0);
 
       // interpolate bounds
-      const double avoid_s = ref_points_spline_interpolation.getAccumulatedLength(p_idx) + d;
-      for (size_t cp_idx = 0; cp_idx < ref_points.size(); ++cp_idx) {
-        const double current_s = ref_points_spline_interpolation.getAccumulatedLength(cp_idx);
-        if (avoid_s <= current_s) {
+      const auto bounds = [&]() {
+        const double collision_check_s = ref_points_spline.getAccumulatedLength(p_idx) + lon_offset;
+        const size_t collision_check_idx = ref_points_spline.getOffsetIndex(p_idx, lon_offset);
+
+        const size_t prev_idx = std::clamp(
+          collision_check_idx - 1, static_cast<size_t>(0),
+          static_cast<size_t>(ref_points_spline.getSize() - 2));
+        const size_t next_idx = prev_idx + 1;
+
+        const auto prev_bounds = ref_points.at(prev_idx).bounds;
+        const auto next_bounds = ref_points.at(next_idx).bounds;
+
+        const double prev_s = ref_points_spline.getAccumulatedLength(prev_idx);
+        const double next_s = ref_points_spline.getAccumulatedLength(next_idx);
+        const double ratio = (collision_check_s - prev_s) / (next_s - prev_s);
+
+        auto bounds = Bounds::lerp(prev_bounds, next_bounds, ratio);
+        bounds.translate(offset_y);
+        return bounds;
+      }();
+
+      ref_points.at(p_idx).vehicle_bounds.push_back(bounds);
+      ref_points.at(p_idx).vehicle_bounds_poses.push_back(vehicle_bounds_pose);
+      /*
+      for (size_t r_idx = 0; r_idx < ref_points.size(); ++r_idx) {
+        const double current_s = ref_points_spline.getAccumulatedLength(r_idx);
+        if (collision_check_s <= current_s) {
           double prev_avoid_idx;
-          if (cp_idx == 0) {
-            prev_avoid_idx = cp_idx;
+          if (r_idx == 0) {
+            prev_avoid_idx = r_idx;
           } else {
-            prev_avoid_idx = cp_idx - 1;
+            prev_avoid_idx = r_idx - 1;
           }
 
           const double prev_s =
-            ref_points_spline_interpolation.getAccumulatedLength(prev_avoid_idx);
+            ref_points_spline.getAccumulatedLength(prev_avoid_idx);
           const double next_s =
-            ref_points_spline_interpolation.getAccumulatedLength(prev_avoid_idx + 1);
-          const double ratio = (avoid_s - prev_s) / (next_s - prev_s);
+            ref_points_spline.getAccumulatedLength(prev_avoid_idx + 1);
+          const double ratio = (collision_check_s - prev_s) / (next_s - prev_s);
 
           const auto prev_bounds = ref_points.at(prev_avoid_idx).bounds;
           const auto next_bounds = ref_points.at(prev_avoid_idx + 1).bounds;
@@ -1867,12 +1751,11 @@ void MPTOptimizer::calcVehicleBounds(std::vector<ReferencePoint> & ref_points) c
           break;
         }
 
-        if (cp_idx == ref_points.size() - 1) {
+        if (r_idx == ref_points.size() - 1) {
           ref_points.at(p_idx).vehicle_bounds.push_back(ref_points.back().bounds);
         }
       }
-
-      ref_points.at(p_idx).vehicle_bounds_poses.push_back(vehicle_bounds_pose);
+      */
     }
   }
 

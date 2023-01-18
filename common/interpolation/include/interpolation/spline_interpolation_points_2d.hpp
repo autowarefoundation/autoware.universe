@@ -62,6 +62,10 @@ public:
   // std::vector<geometry_msgs::msg::Point> getSplineInterpolatedPoints(const double width);
   // std::vector<geometry_msgs::msg::Pose> getSplineInterpolatedPoses(const double width);
 
+  // pose (= getSplineInterpolatedPoint + getSplineInterpolatedYaw)
+  geometry_msgs::msg::Pose getSplineInterpolatedPose(const size_t idx, const double s) const;
+
+  // point
   geometry_msgs::msg::Point getSplineInterpolatedPoint(const size_t idx, const double s) const;
 
   // yaw
@@ -72,6 +76,8 @@ public:
   double getSplineInterpolatedCurvature(const size_t idx, const double s) const;
   std::vector<double> getSplineInterpolatedCurvatures() const;
 
+  size_t getSize() const { return base_s_vec_.size(); }
+  size_t getOffsetIndex(const size_t idx, const double offset) const;
   double getAccumulatedLength(const size_t idx) const;
 
 private:

@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point)
 
   ref_point.p = traj_point.pose.position;
   ref_point.yaw = tf2::getYaw(traj_point.pose.orientation);
-  ref_point.v = traj_point.longitudinal_velocity_mps;
+  // ref_point.v = traj_point.longitudinal_velocity_mps;
 
   return ref_point;
 }
