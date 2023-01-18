@@ -211,9 +211,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             obstacle_avoidance_planner_component,
             obstacle_velocity_limiter_component,
-            obstacle_stop_planner_component,
         ],
-        output="both",
     )
 
     obstacle_stop_planner_loader = LoadComposableNodes(
