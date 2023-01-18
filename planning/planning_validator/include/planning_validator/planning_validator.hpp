@@ -92,7 +92,7 @@ private:
 
   // system parameters
   enum class InvalidTrajectoryHandlingType {
-    PUBLISH_AS_IT_IT,
+    PUBLISH_AS_IT_IS,
     STOP_PUBLISHING,
     USE_PREVIOUS_RESULT,
   } invalid_trajectory_handling_type_;

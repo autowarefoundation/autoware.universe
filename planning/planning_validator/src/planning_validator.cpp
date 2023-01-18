@@ -55,7 +55,7 @@ void PlanningValidator::setupParameters()
 {
   const auto type = declare_parameter<int>("invalid_trajectory_handling_type");
   if (type == 0) {
-    invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IT;
+    invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IS;
   } else if (type == 1) {
     invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::STOP_PUBLISHING;
   } else if (type == 2) {
@@ -182,7 +182,7 @@ void PlanningValidator::publishTrajectory()
 
   //  ----- invalid factor is found. Publish previous trajectory. -----
 
-  if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IT) {
+  if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IS) {
     pub_traj_->publish(*current_trajectory_);
     RCLCPP_ERROR(get_logger(), "Caution! Invalid Trajectory published.");
     return;
