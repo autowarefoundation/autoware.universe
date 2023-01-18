@@ -232,6 +232,8 @@ struct PlannerData
 
   Pose current_pose{};
 
+  geometry_msgs::msg::Point closest_point{};
+
   pcl::PointXYZ nearest_collision_point;
 
   pcl::PointXYZ nearest_slow_down_point;
