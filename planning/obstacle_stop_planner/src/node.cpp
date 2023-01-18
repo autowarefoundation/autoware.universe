@@ -89,10 +89,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     // params for detection area
     p.lateral_margin = declare_parameter<double>(ns + "detection_area.lateral_margin");
     p.car_lateral_margin = declare_parameter<double>(ns + "detection_area.car_lateral_margin");
-    p.pedestrian_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
-    p.unknown_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
+    p.pedestrian_lateral_margin = declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
+    p.unknown_lateral_margin = declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
     p.extend_distance = declare_parameter<double>(ns + "detection_area.extend_distance");
     p.step_length = declare_parameter<double>(ns + "detection_area.step_length");
 
@@ -513,10 +511,10 @@ void ObstacleStopPlannerNode::searchObstacle(
           std::deque<Point2d> intersect;
           bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, intersect);
           int idx = 0;
+          geometry_msgs::msg::Point p;
           if (!intersect.empty()) {
             planner_data.found_collision_points = true;
             for (const auto & point : intersect) {
-              geometry_msgs::msg::Point p;
               p.x = point.x();
               p.y = point.y();
               findClosestPointToTrajectory(output, p, planner_data.closest_point, idx);
@@ -571,16 +569,15 @@ void ObstacleStopPlannerNode::searchObstacle(
           std::deque<Point2d> intersect;
           bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, intersect);
           int idx = 0;
+          geometry_msgs::msg::Point p;
           if (!intersect.empty()) {
             planner_data.found_collision_points = true;
             for (const auto & point : intersect) {
-              geometry_msgs::msg::Point p;
               p.x = point.x();
               p.y = point.y();
               findClosestPointToTrajectory(output, p, planner_data.closest_point, idx);
             }
           }
-
           debug_ptr_->pushPolygon(
             one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
             PolygonType::Vehicle);
@@ -628,10 +625,10 @@ void ObstacleStopPlannerNode::searchObstacle(
           std::deque<Point2d> intersect;
           bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, intersect);
           int idx = 0;
+          geometry_msgs::msg::Point p;
           if (!intersect.empty()) {
             planner_data.found_collision_points = true;
             for (const auto & point : intersect) {
-              geometry_msgs::msg::Point p;
               p.x = point.x();
               p.y = point.y();
               findClosestPointToTrajectory(output, p, planner_data.closest_point, idx);
@@ -768,11 +765,18 @@ void ObstacleStopPlannerNode::insertVelocity(
     const auto idx = planner_data.decimate_trajectory_index_map.at(
                        planner_data.decimate_trajectory_collision_index) +
                      planner_data.trajectory_trim_index;
-    std::cout << "closest point " << planner_data.closest_point.x << " "
-              << planner_data.closest_point.y << std::endl;
-    const auto index_with_dist_remain = findNearestFrontIndex(
-      std::min(idx, traj_end_idx), output,
-      createPoint(planner_data.closest_point.x, planner_data.closest_point.y, 0));
+
+    boost::optional<std::pair<size_t, double>> index_with_dist_remain;
+
+    if (node_param_.use_predicted_object){
+      index_with_dist_remain = findNearestFrontIndex(
+        std::min(idx, traj_end_idx), output,
+        createPoint(planner_data.closest_point.x, planner_data.closest_point.y, 0));
+    } else {
+      index_with_dist_remain = findNearestFrontIndex(
+        std::min(idx, traj_end_idx), output,
+        createPoint(planner_data.nearest_collision_point.x, planner_data.nearest_collision_point.y, 0));
+    }
 
     if (index_with_dist_remain) {
       const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
