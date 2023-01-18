@@ -2,6 +2,8 @@
 
 The `planning_validator` is a module that checks the validity of a trajectory before it is published. If an invalid trajectory is detected, the `planning_validator` can either "not publish the trajectory" or "publish the latest valid trajectory" depending on the selected option. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics.
 
+![planning_validator](./image/planning_validator.drawio.svg)
+
 ## Supported features
 
 The following features are supported for trajectory validation and can have thresholds set by parameters:
