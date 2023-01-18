@@ -88,11 +88,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
     // params for detection area
     p.lateral_margin = declare_parameter<double>(ns + "detection_area.lateral_margin");
-    //    p.car_lateral_margin = declare_parameter<double>(ns +
-    //    "detection_area.car_lateral_margin"); p.pedestrian_lateral_margin =
-    //    declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
-    //    p.unknown_lateral_margin = declare_parameter<double>(ns +
-    //    "detection_area.unknown_lateral_margin");
+    p.car_lateral_margin = declare_parameter<double>(ns + "detection_area.car_lateral_margin");
+    p.pedestrian_lateral_margin = declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
+    p.unknown_lateral_margin = declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
     p.extend_distance = declare_parameter<double>(ns + "detection_area.extend_distance");
     p.step_length = declare_parameter<double>(ns + "detection_area.step_length");
 
