@@ -53,9 +53,11 @@ std::pair<double, size_t> getMinLongitudinalAcc(const Trajectory & trajectory);
 
 std::pair<double, size_t> calcMaxRelativeAngles(const Trajectory & trajectory);
 
-std::pair<double, size_t> calcMaxSteeringAngles(const Trajectory & trajectory, const double wheelbase);
+std::pair<double, size_t> calcMaxSteeringAngles(
+  const Trajectory & trajectory, const double wheelbase);
 
-std::pair<double, size_t> calcMaxSteeringRates(const Trajectory & trajectory, const double wheelbase);
+std::pair<double, size_t> calcMaxSteeringRates(
+  const Trajectory & trajectory, const double wheelbase);
 
 bool checkFinite(const TrajectoryPoint & point);
 

@@ -93,7 +93,7 @@ void calcCurvature(const Trajectory & trajectory, std::vector<double> & curvatur
 {
   if (trajectory.points.size() < 3) {
     curvature_arr = std::vector<double>(trajectory.points.size(), 0.0);
-    return ;
+    return;
   }
 
   curvature_arr.push_back(0.0);
@@ -231,7 +231,8 @@ void calcSteeringAngles(
   }
 }
 
-std::pair<double, size_t> calcMaxSteeringAngles(const Trajectory & trajectory, const double wheelbase)
+std::pair<double, size_t> calcMaxSteeringAngles(
+  const Trajectory & trajectory, const double wheelbase)
 {
   std::vector<double> steerings;
   calcSteeringAngles(trajectory, wheelbase, steerings);
@@ -239,7 +240,8 @@ std::pair<double, size_t> calcMaxSteeringAngles(const Trajectory & trajectory, c
   return getAbsMaxValAndIdx(steerings);
 }
 
-std::pair<double, size_t> calcMaxSteeringRates(const Trajectory & trajectory, const double wheelbase)
+std::pair<double, size_t> calcMaxSteeringRates(
+  const Trajectory & trajectory, const double wheelbase)
 {
   if (trajectory.points.size() < 1) {
     return {0.0, 0};

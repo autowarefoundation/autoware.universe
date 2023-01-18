@@ -149,8 +149,6 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
 
   if (!isDataReady()) return;
 
-  
-
   debug_pose_publisher_->clearMarkers();
 
   validate(*current_trajectory_);
