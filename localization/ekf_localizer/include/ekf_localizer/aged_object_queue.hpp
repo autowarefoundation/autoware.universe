@@ -18,24 +18,15 @@
 #include <cstddef>
 #include <queue>
 
-template<typename Object>
+template <typename Object>
 class AgedObjectQueue
 {
 public:
-  explicit AgedObjectQueue(const int max_age)
-  : max_age_(max_age)
-  {
-  }
+  explicit AgedObjectQueue(const int max_age) : max_age_(max_age) {}
 
-  bool empty() const
-  {
-    return this->size() == 0;
-  }
+  bool empty() const { return this->size() == 0; }
 
-  size_t size() const
-  {
-    return objects_.size();
-  }
+  size_t size() const { return objects_.size(); }
 
   void push(const Object & object)
   {

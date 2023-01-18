@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-
 #include "ekf_localizer/aged_object_queue.hpp"
+
+#include <gtest/gtest.h>
 
 TEST(AgedObjectQueue, DisardsObjectWhenAgeReachesMaximum)
 {
