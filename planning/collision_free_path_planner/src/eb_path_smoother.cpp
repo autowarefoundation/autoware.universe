@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/eb_path_optimizer.hpp"
+#include "collision_free_path_planner/eb_path_smoother.hpp"
 
 #include "collision_free_path_planner/type_alias.hpp"
 #include "collision_free_path_planner/utils/geometry_utils.hpp"
@@ -83,7 +83,7 @@ Eigen::MatrixXd makeAMatrix(const int num_points)
 
 namespace collision_free_path_planner
 {
-EBPathOptimizer::EBPathOptimizer(
+EBPathSmoother::EBPathSmoother(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
   const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr)
 : enable_debug_info_(enable_debug_info),
@@ -115,7 +115,7 @@ EBPathOptimizer::EBPathOptimizer(
   debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_trajectory", 1);
 }
 
-void EBPathOptimizer::initializeEBParam(rclcpp::Node * node)
+void EBPathSmoother::initializeEBParam(rclcpp::Node * node)
 {
   eb_param_ = EBParam{};
 
@@ -150,13 +150,13 @@ void EBPathOptimizer::initializeEBParam(rclcpp::Node * node)
   }
 }
 
-void EBPathOptimizer::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
+void EBPathSmoother::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
 }
 
-void EBPathOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
+void EBPathSmoother::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
 
@@ -192,11 +192,11 @@ void EBPathOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 }
 
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-EBPathOptimizer::getEBTrajectory(
+EBPathSmoother::getEBTrajectory(
   const PlannerData & planner_data,
   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   const auto & p = planner_data;
   const auto & path = p.path;
@@ -212,7 +212,7 @@ EBPathOptimizer::getEBTrajectory(
     getCandidatePoints(ego_pose, path.points, prev_eb_traj);
   if (candidate_points.fixed_points.empty() && candidate_points.non_fixed_points.empty()) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
+      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
       "return boost::none since empty candidate points");
     return boost::none;
   }
@@ -222,7 +222,7 @@ EBPathOptimizer::getEBTrajectory(
   const auto eb_traj_points_opt = getOptimizedTrajectory(ego_pose, path);
   if (!eb_traj_points_opt) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
+      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
       "return boost::none since smoothing failed");
     return boost::none;
   }
@@ -235,16 +235,14 @@ EBPathOptimizer::getEBTrajectory(
     debug_eb_traj_pub_->publish(eb_traj);
   }
 
-  debug_data_ptr_->msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "      ");
   return eb_traj_points;
 }
 
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-EBPathOptimizer::getOptimizedTrajectory(
-  const geometry_msgs::msg::Pose & ego_pose, const Path & path)
+EBPathSmoother::getOptimizedTrajectory(const geometry_msgs::msg::Pose & ego_pose, const Path & path)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   // make function: trimPathPoints
 
@@ -287,12 +285,11 @@ EBPathOptimizer::getOptimizedTrajectory(
   const auto traj_points =
     convertOptimizedPointsToTrajectory(optimized_points.get(), pad_start_idx);
 
-  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "        ");
   return traj_points;
 }
 
-std::tuple<std::vector<PathPoint>, size_t> EBPathOptimizer::getPaddedPathPoints(
+std::tuple<std::vector<PathPoint>, size_t> EBPathSmoother::getPaddedPathPoints(
   const std::vector<PathPoint> & path_points)
 {
   const size_t pad_start_idx =
@@ -312,7 +309,7 @@ std::tuple<std::vector<PathPoint>, size_t> EBPathOptimizer::getPaddedPathPoints(
   return {padded_path_points, pad_start_idx};
 }
 
-std::vector<double> EBPathOptimizer::getRectangleSizeVector(
+std::vector<double> EBPathSmoother::getRectangleSizeVector(
   const std::vector<PathPoint> & path_points, const int num_fixed_points)
 {
   std::vector<double> rect_size_vec;
@@ -327,7 +324,7 @@ std::vector<double> EBPathOptimizer::getRectangleSizeVector(
   return rect_size_vec;
 }
 
-void EBPathOptimizer::updateConstrain(
+void EBPathSmoother::updateConstrain(
   const std::vector<PathPoint> & path_points, const std::vector<double> & rect_size_vec)
 {
   const int num_points = eb_param_.num_sampling_points_for_eb;
@@ -358,7 +355,7 @@ void EBPathOptimizer::updateConstrain(
   osqp_solver_ptr_->updateA(A);
 }
 
-EBPathOptimizer::ConstrainLines EBPathOptimizer::getConstrainLinesFromConstrainRectangle(
+EBPathSmoother::ConstrainLines EBPathSmoother::getConstrainLinesFromConstrainRectangle(
   const geometry_msgs::msg::Pose & pose, const double rect_size)
 {
   ConstrainLines constrain;
@@ -395,10 +392,10 @@ EBPathOptimizer::ConstrainLines EBPathOptimizer::getConstrainLinesFromConstrainR
   return constrain;
 }
 
-boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
+boost::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   const std::vector<PathPoint> & path_points)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   // update QP param
   const auto & qp_param = eb_param_.qp_param;
@@ -416,14 +413,12 @@ boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
     return boost::none;
   }
 
-  debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-
+  debug_data_ptr_->toc(__func__, "          ");
   return optimized_points;
 }
 
 // TODO(murooka): velocity
-std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory(
+std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
   const std::vector<double> optimized_points, const size_t pad_start_idx)
 {
   std::vector<TrajectoryPoint> traj_points;
@@ -460,7 +455,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
   return traj_points;
 }
 
-// std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
+// std::vector<geometry_msgs::msg::Pose> EBPathSmoother::getFixedPoints(
 //   const geometry_msgs::msg::Pose & ego_pose,
 //   [[maybe_unused]] const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
 //   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
@@ -502,7 +497,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 //   }
 // }
 //
-// EBPathOptimizer::CandidatePoints EBPathOptimizer::getCandidatePoints(
+// EBPathSmoother::CandidatePoints EBPathSmoother::getCandidatePoints(
 //   const geometry_msgs::msg::Pose & ego_pose,
 //   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
 //   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
@@ -545,7 +540,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 //   return candidate_points;
 // }
 //
-// EBPathOptimizer::CandidatePoints EBPathOptimizer::getDefaultCandidatePoints(
+// EBPathSmoother::CandidatePoints EBPathSmoother::getDefaultCandidatePoints(
 //   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points)
 // {
 //   double accum_arc_length = 0;
@@ -570,7 +565,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 //   return candidate_points;
 // }
 //
-// int EBPathOptimizer::getNumFixedPoints(
+// int EBPathSmoother::getNumFixedPoints(
 //   const std::vector<geometry_msgs::msg::Pose> & fixed_points,
 //   const std::vector<geometry_msgs::msg::Pose> & interpolated_points, const int farthest_idx)
 // {

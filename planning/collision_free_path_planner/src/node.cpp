@@ -104,7 +104,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
 
   // create core algorithm pointers with parameter declaration
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
-  eb_path_optimizer_ptr_ = std::make_shared<EBPathOptimizer>(
+  eb_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
     this, enable_debug_info_, ego_nearest_param_, traj_param_, debug_data_ptr_);
   mpt_optimizer_ptr_ = std::make_shared<MPTOptimizer>(
     this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_, debug_data_ptr_);
@@ -147,7 +147,7 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
 
   {  // core algorithms parameters
     replan_checker_ptr_->onParam(parameters);
-    eb_path_optimizer_ptr_->onParam(parameters);
+    eb_path_smoother_ptr_->onParam(parameters);
     mpt_optimizer_ptr_->onParam(parameters);
   }
 
@@ -165,7 +165,7 @@ void CollisionFreePathPlanner::resetPlanning()
   RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
 
   // NOTE: no need to update replan_checker_ptr_
-  eb_path_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
+  eb_path_smoother_ptr_->reset(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
 
   resetPrevOptimization();
@@ -179,7 +179,7 @@ void CollisionFreePathPlanner::resetPrevOptimization()
 
 void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   // check if data is ready and valid
   if (!isDataReady(*path_ptr)) {
@@ -215,13 +215,13 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   // 5. publish debug data
   publishDebugData(*path_ptr);
 
-  debug_data_ptr_->msg_stream << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n"
-                              << "========================================";
+  debug_data_ptr_->toc(__func__, "");
+  debug_data_ptr_->msg_stream << "========================================";
 
   // publish calculation_time
   // NOTE: This function must be called after measuring onPath calculation time
   const auto calculation_time_msg =
-    createStringStamped(now(), debug_data_ptr_->msg_stream.getString());
+    createStringStamped(now(), debug_data_ptr_->getAccumulatedTimeString());
   debug_calculation_time_pub_->publish(calculation_time_msg);
 
   const auto output_traj_msg =
@@ -263,8 +263,8 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
   // create planner data
   PlannerData planner_data;
   planner_data.path = path;
-  planner_data.right_bound = path.right_bound;
   planner_data.left_bound = path.left_bound;
+  planner_data.right_bound = path.right_bound;
   planner_data.ego_pose = ego_state_ptr_->pose.pose;
   planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
   planner_data.objects = objects_ptr_->objects;
@@ -278,7 +278,7 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajectory(
   const PlannerData & planner_data)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   const auto & path = planner_data.path;
 
@@ -297,15 +297,14 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   // 4. publish debug marker
   publishDebugMarkerInOptimization(planner_data, optimized_traj_points);
 
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, " ");
   return optimized_traj_points;
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   const PlannerData & planner_data)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
   const auto & p = planner_data;
 
   // 1. check if replan (= optimizatoin) is required
@@ -331,7 +330,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
     // TODO(murooka) enable EB
     /*
 if (enable_smoothing_) {
-return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
+return eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
 }
     */
     return trajectory_utils::convertToTrajectoryPoints(p.path.points);
@@ -351,9 +350,7 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
   prev_eb_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj.get());
   prev_mpt_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(mpt_trajs->mpt);
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-
+  debug_data_ptr_->toc(__func__, "    ");
   return mpt_trajs->mpt;
 }
 
@@ -371,7 +368,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
 void CollisionFreePathPlanner::applyPathVelocity(
   std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   for (size_t i = 0; i < traj_points.size(); i++) {
     const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
@@ -391,14 +388,13 @@ void CollisionFreePathPlanner::applyPathVelocity(
     // TODO(murooka) insert stop point explicitly
   }
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "    ");
 }
 
 void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   const PlannerData & planner_data, std::vector<TrajectoryPoint> & mpt_traj_points)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   if (!enable_outside_drivable_area_stop_) {
     return;
@@ -436,8 +432,7 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
     }
   }
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "    ");
 }
 
 void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
@@ -447,22 +442,20 @@ void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
     return;
   }
 
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
   const auto & p = planner_data;
 
   // debug marker
-  stop_watch_.tic("getDebugMarker");
+  debug_data_ptr_->tic("getDebugMarker");
   const auto & debug_marker = getDebugMarker(*debug_data_ptr_, traj_points, vehicle_info_, false);
-  debug_data_ptr_->msg_stream << "      getDebugMarker:= " << stop_watch_.toc("getDebugMarker")
-                              << " [ms]\n";
+  debug_data_ptr_->toc("getDebugMarker", "      ");
 
-  stop_watch_.tic("publishDebugMarker");
+  debug_data_ptr_->tic("publishDebugMarker");
   debug_markers_pub_->publish(debug_marker);
-  debug_data_ptr_->msg_stream << "      publishDebugMarker:= "
-                              << stop_watch_.toc("publishDebugMarker") << " [ms]\n";
+  debug_data_ptr_->toc("publishDebugMarker", "      ");
 
   // debug wall marker
-  stop_watch_.tic("getAndPublishDebugWallMarker");
+  debug_data_ptr_->tic("getAndPublishDebugWallMarker");
   const auto virtual_wall_marker_array = [&]() {
     if (debug_data_ptr_->stop_pose_by_drivable_area) {
       const auto & stop_pose = debug_data_ptr_->stop_pose_by_drivable_area.get();
@@ -473,18 +466,15 @@ void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
   }();
 
   virtual_wall_pub_->publish(virtual_wall_marker_array);
-  debug_data_ptr_->msg_stream << "      getAndPublishDebugWallMarker:= "
-                              << stop_watch_.toc("getAndPublishDebugWallMarker") << " [ms]\n";
-
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc("getAndPublishDebugWallMarker", "      ");
+  debug_data_ptr_->toc(__func__, "    ");
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   const std::vector<PathPoint> & path_points,
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   // guard
   if (path_points.empty()) {
@@ -530,22 +520,20 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   // TODO(murooka) update velocity on joint
 
   debug_data_ptr_->extended_traj_points = forward_traj_points;
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }
 
 void CollisionFreePathPlanner::publishDebugData(const Path & path) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   // publish trajectories
   const auto debug_extended_traj =
     trajectory_utils::createTrajectory(path.header, debug_data_ptr_->extended_traj_points);
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "  ");
 }
 
 void CollisionFreePathPlanner::logInfo(const int duration_sec, const char * msg)

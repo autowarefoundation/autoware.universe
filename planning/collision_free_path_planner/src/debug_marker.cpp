@@ -14,7 +14,7 @@
 
 #include "collision_free_path_planner/debug_marker.hpp"
 
-#include "collision_free_path_planner/eb_path_optimizer.hpp"
+#include "collision_free_path_planner/eb_path_smoother.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "motion_utils/motion_utils.hpp"
 
@@ -272,7 +272,8 @@ MarkerArray getBoundsLineMarkerArray(
     createMarkerColor(0.99, 0.99 + 0.5, 0.2, 0.3));
   ub_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
-  for (size_t bound_idx = 0; bound_idx < ref_points.at(0).vehicle_bounds.size(); ++bound_idx) {
+  for (size_t bound_idx = 0; bound_idx < ref_points.at(0).bounds_on_constraints.size();
+       ++bound_idx) {
     const std::string ns = "base_bounds_" + std::to_string(bound_idx);
 
     {  // lower bound
@@ -284,9 +285,9 @@ MarkerArray getBoundsLineMarkerArray(
           continue;
         }
 
-        const geometry_msgs::msg::Pose & pose = ref_points.at(i).vehicle_bounds_poses.at(bound_idx);
+        const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
         const double lb_y =
-          ref_points.at(i).vehicle_bounds[bound_idx].lower_bound - vehicle_width / 2.0;
+          ref_points.at(i).bounds_on_constraints.at(bound_idx).lower_bound - vehicle_width / 2.0;
         const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
 
         lb_marker.points.push_back(pose.position);
@@ -304,9 +305,9 @@ MarkerArray getBoundsLineMarkerArray(
           continue;
         }
 
-        const geometry_msgs::msg::Pose & pose = ref_points.at(i).vehicle_bounds_poses.at(bound_idx);
+        const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
         const double ub_y =
-          ref_points.at(i).vehicle_bounds[bound_idx].upper_bound + vehicle_width / 2.0;
+          ref_points.at(i).bounds_on_constraints.at(bound_idx).upper_bound + vehicle_width / 2.0;
         const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
 
         ub_marker.points.push_back(pose.position);
@@ -319,10 +320,9 @@ MarkerArray getBoundsLineMarkerArray(
   return marker_array;
 }
 
-MarkerArray getVehicleCircleLineMarkerArray(
+MarkerArray getVehicleCircleLinesMarkerArray(
   const std::vector<std::vector<geometry_msgs::msg::Pose>> & vehicle_circles_pose,
-  const double vehicle_width, const size_t sampling_num, const std::string & ns, const double r,
-  const double g, const double b)
+  const double vehicle_width, const size_t sampling_num, const std::string & ns)
 {
   const auto current_time = rclcpp::Clock().now();
   MarkerArray msg;
@@ -334,7 +334,7 @@ MarkerArray getVehicleCircleLineMarkerArray(
 
     auto marker = createDefaultMarker(
       "map", rclcpp::Clock().now(), ns, i, Marker::LINE_LIST, createMarkerScale(0.1, 0, 0),
-      createMarkerColor(r, g, b, 0.25));
+      createMarkerColor(0.99, 0.99, 0.2, 0.25));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
     for (size_t j = 0; j < vehicle_circles_pose.at(i).size(); ++j) {
@@ -353,23 +353,25 @@ MarkerArray getVehicleCircleLineMarkerArray(
   return msg;
 }
 
-MarkerArray getLateralErrorsLineMarkerArray(
-  const std::vector<geometry_msgs::msg::Pose> mpt_ref_poses, std::vector<double> lateral_errors,
-  const size_t sampling_num, const std::string & ns, const double r, const double g, const double b)
+MarkerArray getLateralErrorLinesMarkerArray(
+  const std::vector<ReferencePoint> & ref_points, const size_t sampling_num, const std::string & ns,
+  const double r, const double g, const double b)
 {
   auto marker = createDefaultMarker(
     "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.1, 0, 0),
     createMarkerColor(r, g, b, 1.0));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
-  for (size_t i = 0; i < mpt_ref_poses.size(); ++i) {
+  for (size_t i = 0; i < ref_points.size(); ++i) {
     if (i % sampling_num != 0) {
       continue;
     }
 
-    const auto vehicle_pose =
-      tier4_autoware_utils::calcOffsetPose(mpt_ref_poses.at(i), 0.0, lateral_errors.at(i), 0.0);
-    marker.points.push_back(mpt_ref_poses.at(i).position);
+    const auto & ref_pose = ref_points.at(i).pose;
+    const double lat_error = ref_points.at(i).optimized_kinematic_state.lat;
+
+    const auto vehicle_pose = tier4_autoware_utils::calcOffsetPose(ref_pose, 0.0, lat_error, 0.0);
+    marker.points.push_back(ref_pose.position);
     marker.points.push_back(vehicle_pose.position);
   }
 
@@ -479,9 +481,9 @@ MarkerArray getDebugMarker(
 
     // lateral error line
     appendMarkerArray(
-      getLateralErrorsLineMarkerArray(
-        debug_data.mpt_ref_poses, debug_data.lateral_errors, debug_data.mpt_visualize_sampling_num,
-        "lateral_errors", 0.1, 0.1, 0.8),
+      getLateralErrorLinesMarkerArray(
+        debug_data.ref_points, debug_data.mpt_visualize_sampling_num, "lateral_errors", 0.1, 0.1,
+        0.8),
       &marker_array);
   }
 
@@ -498,9 +500,9 @@ MarkerArray getDebugMarker(
 
   // vehicle circle line
   appendMarkerArray(
-    getVehicleCircleLineMarkerArray(
+    getVehicleCircleLinesMarkerArray(
       debug_data.vehicle_circles_pose, vehicle_info.vehicle_width_m,
-      debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines", 0.99, 0.99, 0.2),
+      debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines"),
     &marker_array);
 
   // current vehicle circles

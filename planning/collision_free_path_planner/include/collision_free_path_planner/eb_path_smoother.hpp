@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__EB_PATH_OPTIMIZER_HPP_
-#define COLLISION_FREE_PATH_PLANNER__EB_PATH_OPTIMIZER_HPP_
+#ifndef COLLISION_FREE_PATH_PLANNER__EB_PATH_SMOOTHER_HPP_
+#define COLLISION_FREE_PATH_PLANNER__EB_PATH_SMOOTHER_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "osqp_interface/osqp_interface.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "boost/optional.hpp"
 
@@ -30,7 +29,7 @@
 
 namespace collision_free_path_planner
 {
-class EBPathOptimizer
+class EBPathSmoother
 {
 public:
   struct ConstrainLines
@@ -46,7 +45,7 @@ public:
     Constrain y;
   };
 
-  EBPathOptimizer(
+  EBPathSmoother(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
     const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr);
 
@@ -77,10 +76,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   // double current_ego_vel_;
-
-  mutable tier4_autoware_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 
   void initializeEBParam(rclcpp::Node * node);
 
@@ -123,4 +118,4 @@ private:
 };
 }  // namespace collision_free_path_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__EB_PATH_OPTIMIZER_HPP_
+#endif  // COLLISION_FREE_PATH_PLANNER__EB_PATH_SMOOTHER_HPP_

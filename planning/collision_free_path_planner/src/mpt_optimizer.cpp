@@ -16,7 +16,6 @@
 
 #include "collision_free_path_planner/utils/geometry_utils.hpp"
 #include "collision_free_path_planner/utils/trajectory_utils.hpp"
-#include "collision_free_path_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "tf2/utils.h"
@@ -86,8 +85,8 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   Eigen::VectorXd ub_vec(ref_points.size());
   Eigen::VectorXd lb_vec(ref_points.size());
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound + offset;
-    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound - offset;
+    ub_vec(i) = ref_points.at(i).bounds_on_constraints.at(l_idx).upper_bound + offset;
+    lb_vec(i) = ref_points.at(i).bounds_on_constraints.at(l_idx).lower_bound - offset;
   }
   return {ub_vec, lb_vec};
 }
@@ -119,30 +118,9 @@ void trimPoints(std::vector<T> & points)
   }
 }
 
-std::vector<double> eigenVectorToStdVector(const Eigen::VectorXd & eigen_vec)
+std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
 {
   return {eigen_vec.data(), eigen_vec.data() + eigen_vec.rows()};
-}
-
-double calcLateralError(
-  const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Pose ref_pose)
-{
-  const double err_x = target_point.x - ref_pose.position.x;
-  const double err_y = target_point.y - ref_pose.position.y;
-  const double ref_yaw = tf2::getYaw(ref_pose.orientation);
-  const double lat_err = -std::sin(ref_yaw) * err_x + std::cos(ref_yaw) * err_y;
-  return lat_err;
-}
-
-[[maybe_unused]] Eigen::Vector2d getState(
-  const geometry_msgs::msg::Pose & target_pose, const geometry_msgs::msg::Pose & ref_pose)
-{
-  const double lat_error = calcLateralError(target_pose.position, ref_pose);
-  const double yaw_error = tier4_autoware_utils::normalizeRadian(
-    tf2::getYaw(target_pose.orientation) - tf2::getYaw(ref_pose.orientation));
-  Eigen::VectorXd kinematics = Eigen::VectorXd::Zero(2);
-  kinematics << lat_error, yaw_error;
-  return kinematics;
 }
 
 template <class T>
@@ -162,6 +140,28 @@ std::vector<T> createVector(const T & value, const std::vector<T> & vector)
     trajectory_utils::resampleTrajectoryPoints(traj_points, interval);
   return trajectory_utils::convertToReferencePoints(resampled_traj_points);
 }
+
+/*
+boost::optional<geometry_msgs::msg::Point> intersect(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
+  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
+{
+  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
+  if (det == 0.0) {
+    return boost::none;
+  }
+
+  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
+  if (t < 0 || 1 < t) {
+    return boost::none;
+  }
+
+  geometry_msgs::msg::Point intersect_point;
+  intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
+  intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
+  return intersect_point;
+}
+*/
 
 boost::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
@@ -185,15 +185,15 @@ boost::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
-double calcLateralDistToBound(
+double calcLateralDistToBounds(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & bound,
   const double additional_offset, const bool is_left_bound = true)
 {
-  constexpr double max_lat_offset = 5.0;
+  const double max_lat_offset = is_left_bound ? 5.0 : -5.0;
 
   const auto lat_offset_point =
     tier4_autoware_utils::calcOffsetPose(pose, 0.0, max_lat_offset, 0.0).position;
-  double dist_to_bound = is_left_bound ? max_lat_offset : -max_lat_offset;
+  double dist_to_bound = max_lat_offset;
 
   for (size_t i = 0; i < bound.size() - 1; ++i) {
     const auto intersect_point =
@@ -223,9 +223,9 @@ MPTOptimizer::MPTOptimizer(
   // mpt param
   initializeMPTParam(node, vehicle_info);
 
-  // vehicle model
-  vehicle_model_ptr_ =
-    std::make_unique<KinematicsBicycleModel>(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
+  // state equation generator
+  state_equation_generator_ =
+    StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
 
   // osqp solver
   // osqp_solver_.updateEpsAbs(osqp_epsilon_);
@@ -267,10 +267,10 @@ void MPTOptimizer::initializeMPTParam(
 
   // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
   // The 0.8 scale is adopted as it performed the best.
-  constexpr double default_wheelbase_ratio = 0.8;
+  constexpr double default_wheel_base_ratio = 0.8;
   mpt_param_.optimization_center_offset = node->declare_parameter<double>(
     "mpt.kinematics.optimization_center_offset",
-    vehicle_info_.wheel_base_m * default_wheelbase_ratio);
+    vehicle_info_.wheel_base_m * default_wheel_base_ratio);
 
   // bounds search
   mpt_param_.bounds_search_widths =
@@ -506,88 +506,56 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const auto & path_points = p.path.points;
 
   // assert arguments
-  assert(!smoothed_points.empty());
-  assert(!path_points.empty());
+  assert(1 < smoothed_points.size());
+  assert(1 < path_points.size());
 
-  // check if assert is assured
-  if (smoothed_points.empty()) {
-    logInfo("return boost::none since smoothed_points is empty");
-    return boost::none;
-  }
-  if (path_points.empty()) {
-    logInfo("return boost::none since path_points is empty");
-    return boost::none;
-  }
-
-  // calculate reference points
-  std::vector<ReferencePoint> full_ref_points = getReferencePoints(planner_data, smoothed_points);
-  if (full_ref_points.empty()) {
+  // 1. calculate reference points
+  std::vector<ReferencePoint> ref_points = calcReferencePoints(planner_data, smoothed_points);
+  if (ref_points.empty()) {
     logInfo("return boost::none since ref_points is empty");
     return boost::none;
-  } else if (full_ref_points.size() == 1) {
+  } else if (ref_points.size() == 1) {
     logInfo("return boost::none since ref_points.size() == 1");
     return boost::none;
   }
 
-  std::vector<ReferencePoint> fixed_ref_points;
-  std::vector<ReferencePoint> non_fixed_ref_points;
-  bool is_fixing_ref_points = true;
-  for (size_t i = 0; i < full_ref_points.size(); ++i) {
-    if (i == full_ref_points.size() - 1) {
-      if (!full_ref_points.at(i).fix_kinematic_state) {
-        is_fixing_ref_points = false;
-      }
-    } else if (
-      // fix first three points
-      full_ref_points.at(i).fix_kinematic_state && full_ref_points.at(i + 1).fix_kinematic_state &&
-      (i + 2 < full_ref_points.size() && full_ref_points.at(i + 2).fix_kinematic_state) &&
-      (i + 3 < full_ref_points.size() && full_ref_points.at(i + 3).fix_kinematic_state)) {
-    } else {
-      is_fixing_ref_points = false;
-    }
+  // 2. calculate B and W matrices where x = B u + W
+  const auto mpt_mat = state_equation_generator_.calcMatrix(ref_points, *debug_data_ptr_);
 
-    if (is_fixing_ref_points) {
-      fixed_ref_points.push_back(full_ref_points.at(i));
-    } else {
-      non_fixed_ref_points.push_back(full_ref_points.at(i));
-    }
-  }
+  // 3. calculate Q and R matrices where J(x, u) = x^t Q x + u^t R u
+  const auto val_mat = calcValueMatrix(ref_points, path_points);
 
-  // calculate B and W matrices where x = B u + W
-  const auto mpt_matrix = generateMPTMatrix(non_fixed_ref_points);
+  // 4. get objective matrix
+  const auto obj_mat = getObjectiveMatrix(mpt_mat, val_mat, ref_points);
 
-  // calculate Q and R matrices where J(x, u) = x^t Q x + u^t R u
-  const auto value_matrix = generateValueMatrix(non_fixed_ref_points, path_points);
+  // 5. get constraints matrix
+  const auto const_mat = getConstraintMatrix(mpt_mat, ref_points);
 
-  const auto optimized_control_variables =
-    executeOptimization(mpt_matrix, value_matrix, non_fixed_ref_points);
-  if (!optimized_control_variables) {
+  // 6. optimize steer angles
+  const auto optimized_steer_angles = calcOptimizedSteerAngles(ref_points, obj_mat, const_mat);
+  if (!optimized_steer_angles) {
     logInfo("return boost::none since could not solve qp");
     return boost::none;
   }
 
-  const auto mpt_points = getMPTPoints(
-    fixed_ref_points, non_fixed_ref_points, optimized_control_variables.get(), mpt_matrix);
+  // 5. convert to points
+  const auto mpt_points = calcMPTPoints(ref_points, optimized_steer_angles.get(), mpt_mat);
 
-  auto full_optimized_ref_points = fixed_ref_points;
-  full_optimized_ref_points.insert(
-    full_optimized_ref_points.end(), non_fixed_ref_points.begin(), non_fixed_ref_points.end());
-
-  // publish
-  publishDebugTrajectories(p.path.header, full_optimized_ref_points, mpt_points);
+  // 6. publish trajectories for debug
+  publishDebugTrajectories(p.path.header, ref_points, mpt_points);
 
   debug_data_ptr_->toc(__func__, "      ");
 
-  const auto mpt_trajs = MPTTrajs{full_optimized_ref_points, mpt_points};
-  prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(full_optimized_ref_points);
+  const auto mpt_trajs = MPTTrajs{ref_points, mpt_points};
+  prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(ref_points);
 
   return mpt_trajs;
 }
 
-std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
+std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   const auto & p = planner_data;
 
@@ -643,13 +611,13 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   // bounds information is assigned to debug data after truncating reference points
   debug_data_ptr_->ref_points = ref_points;
 
+  debug_data_ptr_->toc(__func__, "        ");
+
   return ref_points;
   if (ref_points.empty()) {
     return std::vector<ReferencePoint>{};
   }
 
-  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
   return ref_points;
 
   // crop with margin
@@ -708,8 +676,6 @@ void MPTOptimizer::updateOrientation(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  assert(ref_points.size() == ref_points_spline.size());  // NOTE: not assured
-
   const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).pose.orientation =
@@ -721,8 +687,6 @@ void MPTOptimizer::updateCurvature(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  assert(ref_points.size() == ref_points_spline.size());  // NOTE: not assured
-
   const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).k = curvature_vec.at(i);
@@ -748,146 +712,14 @@ void MPTOptimizer::calcFixedPoint(std::vector<ReferencePoint> & ref_points) cons
   trajectory_utils::insertFrontReferencePoint(ref_points, prev_ref_front_point);
 }
 
-/*
-std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
-  const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
-  const std::vector<TrajectoryPoint> & points, const std::shared_ptr<MPTTrajs> prev_trajs) const
-{
-  if (
-    !prev_trajs || prev_trajs->mpt.empty() || prev_trajs->ref_points.empty() ||
-    prev_trajs->mpt.size() != prev_trajs->ref_points.size()) {
-    return std::vector<ReferencePoint>();
-  }
-
-  if (!mpt_param_.fix_points_around_ego) {
-    return std::vector<ReferencePoint>();
-  }
-
-  const auto & prev_ref_points = prev_trajs->ref_points;
-  const int nearest_prev_ref_idx =
-    static_cast<int>(motion_utils::findFirstNearestIndexWithSoftConstraints(
-      trajectory_utils::convertToPosesWithYawEstimation(trajectory_utils::convertToPoints(prev_ref_points)),
-      ego_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold));
-
-  // calculate begin_prev_ref_idx
-  const int begin_prev_ref_idx = [&]() {
-    const int backward_fixing_num =
-      traj_param_.output_backward_traj_length / mpt_param_.delta_arc_length;
-
-    return std::max(0, nearest_prev_ref_idx - backward_fixing_num);
-  }();
-
-  // calculate end_prev_ref_idx
-  const int end_prev_ref_idx = [&]() {
-    const double forward_fixed_length = std::max(
-      ego_vel * traj_param_.forward_fixing_min_time, traj_param_.forward_fixing_min_distance);
-
-    const int forward_fixing_num =
-      forward_fixed_length / mpt_param_.delta_arc_length;
-    return std::min(
-      static_cast<int>(prev_ref_points.size()) - 1, nearest_prev_ref_idx + forward_fixing_num);
-  }();
-
-  bool points_reaching_prev_points_flag = false;
-  std::vector<ReferencePoint> fixed_ref_points;
-  for (size_t i = begin_prev_ref_idx; i <= static_cast<size_t>(end_prev_ref_idx); ++i) {
-    const auto & prev_ref_point = prev_ref_points.at(i);
-
-    if (!points_reaching_prev_points_flag) {
-      if (motion_utils::calcSignedArcLength(points, 0, prev_ref_point.p) < 0) {
-        continue;
-      }
-      points_reaching_prev_points_flag = true;
-    }
-
-    ReferencePoint fixed_ref_point;
-    fixed_ref_point = prev_ref_point;
-    fixed_ref_point.fix_kinematic_state = prev_ref_point.optimized_kinematic_state;
-
-    fixed_ref_points.push_back(fixed_ref_point);
-    if (mpt_param_.is_fixed_point_single) {
-      break;
-    }
-  }
-
-  return fixed_ref_points;
-}
-*/
-
-// state equation: x = B u + W (u includes x_0)
-// NOTE: Originaly, x_t+1 = Ad x_t + Bd u + Wd.
-MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
-  const std::vector<ReferencePoint> & ref_points) const
-{
-  stop_watch_.tic(__func__);
-
-  // NOTE: center offset of vehicle is always 0 in this algorithm.
-  // vehicle_model_ptr_->updateCenterOffset(0.0);
-
-  const size_t N_ref = ref_points.size();
-  const size_t D_x = vehicle_model_ptr_->getDimX();
-  const size_t D_u = vehicle_model_ptr_->getDimU();
-  const size_t D_v = D_x + D_u * (N_ref - 1);
-
-  // matrices for whole state equation
-  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(D_x * N_ref, D_v);
-  Eigen::VectorXd W = Eigen::VectorXd::Zero(D_x * N_ref);
-
-  // matrices for one-step state equation
-  Eigen::MatrixXd Ad(D_x, D_x);
-  Eigen::MatrixXd Bd(D_x, D_u);
-  Eigen::MatrixXd Wd(D_x, 1);
-
-  // calculate one-step state equation considering kinematics N_ref times
-  for (size_t i = 0; i < N_ref; ++i) {
-    if (i == 0) {
-      B.block(0, 0, D_x, D_x) = Eigen::MatrixXd::Identity(D_x, D_x);
-      continue;
-    }
-
-    const int idx_x_i = i * D_x;
-    const int idx_x_i_prev = (i - 1) * D_x;
-    const int idx_u_i_prev = (i - 1) * D_u;
-
-    // get discrete kinematics matrix A, B, W
-    const double ds = ref_points.at(i).delta_arc_length;
-    const double ref_k = ref_points.at(std::max(0, static_cast<int>(i) - 1)).k;
-    vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, ref_k, ds);
-
-    B.block(idx_x_i, 0, D_x, D_x) = Ad * B.block(idx_x_i_prev, 0, D_x, D_x);
-    B.block(idx_x_i, D_x + idx_u_i_prev, D_x, D_u) = Bd;
-
-    for (size_t j = 0; j < i - 1; ++j) {
-      size_t idx_u_j = j * D_u;
-      B.block(idx_x_i, D_x + idx_u_j, D_x, D_u) =
-        Ad * B.block(idx_x_i_prev, D_x + idx_u_j, D_x, D_u);
-    }
-
-    W.segment(idx_x_i, D_x) = Ad * W.block(idx_x_i_prev, 0, D_x, 1) + Wd;
-  }
-
-  MPTMatrix mpt_mat;
-  mpt_mat.B = B;
-  mpt_mat.W = W;
-
-  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-  return mpt_mat;
-}
-
 // cost function: J = x' Q x + u' R u
-MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
+MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const std::vector<ReferencePoint> & ref_points, const std::vector<PathPoint> & path_points) const
 {
-  // It can be removed
-  // if (ref_points.empty()) {
-  //   return ValueMatrix{};
-  // }
+  debug_data_ptr_->tic(__func__);
 
-  stop_watch_.tic(__func__);
-
-  const size_t D_x = vehicle_model_ptr_->getDimX();
-  const size_t D_u = vehicle_model_ptr_->getDimU();
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
 
   const size_t D_v = D_x + (N_ref - 1) * D_u;
@@ -944,116 +776,75 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
   m.Q = Q_sparse_mat;
   m.R = R_sparse_mat;
 
-  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "        ");
   return m;
 }
 
-boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
-  const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
-  const std::vector<ReferencePoint> & ref_points)
+boost::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
+  const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
+  const ConstraintMatrix & const_mat)
 {
-  if (ref_points.empty()) {
-    return Eigen::VectorXd{};
-  }
+  debug_data_ptr_->tic(__func__);
 
-  stop_watch_.tic(__func__);
-
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
+  const size_t N_u = (N_ref - 1) * D_u;
+  const size_t N_v = D_x + N_u;
 
-  // get matrix
-  ObjectiveMatrix obj_m = getObjectiveMatrix(mpt_mat, val_mat, ref_points);
-  ConstraintMatrix const_m = getConstraintMatrix(mpt_mat, ref_points);
-
-  // manual warm start
-  Eigen::VectorXd u0 = Eigen::VectorXd::Zero(obj_m.gradient.size());
-
-  if (mpt_param_.enable_manual_warm_start) {
-    const size_t D_x = vehicle_model_ptr_->getDimX();
-
-    if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
-      geometry_msgs::msg::Pose ref_front_point = ref_points.front().pose;
-
-      const size_t seg_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-        *prev_ref_points_ptr_, ref_front_point, ego_nearest_param_.dist_threshold,
-        ego_nearest_param_.yaw_threshold);
-
-      u0(0) = prev_ref_points_ptr_->at(seg_idx).optimized_kinematic_state.lat;
-      u0(1) = prev_ref_points_ptr_->at(seg_idx).optimized_kinematic_state.yaw;
-
-      // set steer angle
-      for (size_t i = 0; i + 1 < N_ref; ++i) {
-        const size_t prev_target_idx = std::min(seg_idx + i, prev_ref_points_ptr_->size() - 1);
-        u0(D_x + i) = prev_ref_points_ptr_->at(prev_target_idx).optimized_input;
+  // for manual warm start, calculate initial solution
+  const auto u0 = [&]() -> boost::optional<Eigen::VectorXd> {
+    if (mpt_param_.enable_manual_warm_start) {
+      if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
+        return calcInitialSolutionForManualWarmStart(ref_points, *prev_ref_points_ptr_);
       }
     }
-  }
+    return boost::none;
+  }();
 
-  const Eigen::MatrixXd & H = obj_m.hessian;
-  const Eigen::MatrixXd & A = const_m.linear;
-  std::vector<double> f;
-  std::vector<double> upper_bound;
-  std::vector<double> lower_bound;
+  // for manual start, update objective and constraint matrix
+  const auto [updated_obj_mat, updated_const_mat] =
+    updateMatrixForManualWarmStart(obj_mat, const_mat, u0);
 
-  if (mpt_param_.enable_manual_warm_start) {
-    f = eigenVectorToStdVector(obj_m.gradient + H * u0);
-    Eigen::VectorXd A_times_u0 = A * u0;
-    upper_bound = eigenVectorToStdVector(const_m.upper_bound - A_times_u0);
-    lower_bound = eigenVectorToStdVector(const_m.lower_bound - A_times_u0);
-  } else {
-    f = eigenVectorToStdVector(obj_m.gradient);
-    upper_bound = eigenVectorToStdVector(const_m.upper_bound);
-    lower_bound = eigenVectorToStdVector(const_m.lower_bound);
-  }
+  // calculate matrices for qp
+  const Eigen::MatrixXd & H = updated_obj_mat.hessian;
+  const Eigen::MatrixXd & A = updated_const_mat.linear;
+  const auto f = toStdVector(updated_obj_mat.gradient);
+  const auto upper_bound = toStdVector(updated_const_mat.upper_bound);
+  const auto lower_bound = toStdVector(updated_const_mat.lower_bound);
 
-  // initialize or update solver with warm start
-  stop_watch_.tic("initOsqp");
-  autoware::common::osqp::CSC_Matrix P_csc = autoware::common::osqp::calCSCMatrixTrapezoidal(H);
-  autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
-  if (mpt_param_.enable_warm_start && prev_mat_n == H.rows() && prev_mat_m == A.rows()) {
+  // initialize or update solver according to warm start
+  debug_data_ptr_->tic("initOsqp");
+
+  const autoware::common::osqp::CSC_Matrix P_csc =
+    autoware::common::osqp::calCSCMatrixTrapezoidal(H);
+  const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
+  if (mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() && prev_mat_m_ == A.rows()) {
     RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "warm start");
-
-    /*
-    osqp_solver_.updateCscP(P_csc);
-    osqp_solver_.updateQ(f);
-    osqp_solver_.updateCscA(A_csc);
-    osqp_solver_.updateL(lower_bound);
-    osqp_solver_.updateU(upper_bound);
-    */
-
     osqp_solver_ptr_->updateCscP(P_csc);
     osqp_solver_ptr_->updateQ(f);
     osqp_solver_ptr_->updateCscA(A_csc);
     osqp_solver_ptr_->updateL(lower_bound);
     osqp_solver_ptr_->updateU(upper_bound);
-
   } else {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "no warm start");
-
     osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-      // obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
   }
-  prev_mat_n = H.rows();
-  prev_mat_m = A.rows();
+  prev_mat_n_ = H.rows();
+  prev_mat_m_ = A.rows();
 
-  debug_data_ptr_->msg_stream << "          "
-                              << "initOsqp"
-                              << ":= " << stop_watch_.toc("initOsqp") << " [ms]\n";
+  debug_data_ptr_->toc("initOsqp", "          ");
 
-  // solve
-  stop_watch_.tic("solveOsqp");
-  // const auto result = osqp_solver_.optimize();
+  // solve qp
+  debug_data_ptr_->tic("solveOsqp");
   const auto result = osqp_solver_ptr_->optimize();
-  debug_data_ptr_->msg_stream << "          "
-                              << "solveOsqp"
-                              << ":= " << stop_watch_.toc("solveOsqp") << " [ms]\n";
+  debug_data_ptr_->toc("solveOsqp", "          ");
 
   // check solution status
   const int solution_status = std::get<3>(result);
   if (solution_status != 1) {
-    // osqp_solver_.logUnsolvedStatus("[MPT]");
     osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
     return boost::none;
   }
@@ -1063,33 +854,88 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "iteration: %d", iteration_status);
 
-  // get result
-  std::vector<double> result_vec = std::get<0>(result);
+  // get optimization result
+  auto optimization_result =
+    std::get<0>(result);  // NOTE: const cannot be added due to the next operation.
+  const Eigen::VectorXd optimized_steer_angles =
+    Eigen::Map<Eigen::VectorXd>(&optimization_result[0], N_v);
 
-  const size_t DIM_U = vehicle_model_ptr_->getDimU();
-  const size_t DIM_X = vehicle_model_ptr_->getDimX();
-  const Eigen::VectorXd optimized_control_variables =
-    Eigen::Map<Eigen::VectorXd>(&result_vec[0], DIM_X + (N_ref - 1) * DIM_U);
+  debug_data_ptr_->toc(__func__, "        ");
 
-  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  if (u0) {  // manual warm start
+    return static_cast<Eigen::VectorXd>(optimized_steer_angles + u0->segment(0, N_v));
+  }
+  return optimized_steer_angles;
+}
 
-  const Eigen::VectorXd optimized_control_variables_with_offset =
-    mpt_param_.enable_manual_warm_start
-      ? optimized_control_variables + u0.segment(0, DIM_X + (N_ref - 1) * DIM_U)
-      : optimized_control_variables;
+Eigen::VectorXd MPTOptimizer::calcInitialSolutionForManualWarmStart(
+  const std::vector<ReferencePoint> & ref_points,
+  const std::vector<ReferencePoint> & prev_ref_points) const
+{
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_ref = ref_points.size();
+  const size_t N_u = (N_ref - 1) * D_u;
+  const size_t N_v = D_x + N_u;
 
-  return optimized_control_variables_with_offset;
+  Eigen::VectorXd u0 = Eigen::VectorXd::Zero(N_v);
+
+  const size_t seg_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    prev_ref_points, ref_points.front().pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
+
+  // set previous lateral and yaw deviaton
+  u0(0) = prev_ref_points.at(seg_idx).optimized_kinematic_state.lat;
+  u0(1) = prev_ref_points.at(seg_idx).optimized_kinematic_state.yaw;
+
+  // set previous steer angles
+  for (size_t i = 0; i < N_u; ++i) {
+    const size_t prev_target_idx = std::min(seg_idx + i, prev_ref_points.size() - 1);
+    u0(D_x + i) = prev_ref_points.at(prev_target_idx).optimized_input;
+  }
+
+  return u0;
+}
+
+std::pair<MPTOptimizer::ObjectiveMatrix, MPTOptimizer::ConstraintMatrix>
+MPTOptimizer::updateMatrixForManualWarmStart(
+  const ObjectiveMatrix & obj_mat, const ConstraintMatrix & const_mat,
+  const boost::optional<Eigen::VectorXd> & u0) const
+{
+  if (!u0) {
+    // not manual warm start
+    return {obj_mat, const_mat};
+  }
+
+  const Eigen::MatrixXd & H = obj_mat.hessian;
+  const Eigen::MatrixXd & A = const_mat.linear;
+
+  auto updated_obj_mat = obj_mat;
+  auto updated_const_mat = const_mat;
+
+  Eigen::VectorXd & f = updated_obj_mat.gradient;
+  Eigen::VectorXd & ub = updated_const_mat.upper_bound;
+  Eigen::VectorXd & lb = updated_const_mat.lower_bound;
+
+  // update gradient
+  f += H * u0.get();
+
+  // update upper_bound and lower_bound
+  const Eigen::VectorXd A_times_u0 = A * u0.get();
+  ub -= A_times_u0;
+  lb -= A_times_u0;
+
+  return {updated_obj_mat, updated_const_mat};
 }
 
 MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
-  const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
+  const StateEquationGenerator::Matrix & mpt_mat, const ValueMatrix & val_mat,
   const std::vector<ReferencePoint> & ref_points) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
-  const size_t D_x = vehicle_model_ptr_->getDimX();
-  const size_t D_u = vehicle_model_ptr_->getDimU();
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
 
   const size_t D_xn = D_x * N_ref;
@@ -1157,9 +1003,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   obj_matrix.hessian = full_H;
   obj_matrix.gradient = full_f;
 
-  debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-
+  debug_data_ptr_->toc(__func__, "          ");
   return obj_matrix;
 }
 
@@ -1168,14 +1012,15 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 // x := [u0, ..., uN-1 | z00, ..., z0N-1 | z10, ..., z1N-1 | z20, ..., z2N-1]
 //   \in \mathbb{R}^{N * (N_vehicle_circle + 1)}
 MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
-  const MPTMatrix & mpt_mat, const std::vector<ReferencePoint> & ref_points) const
+  const StateEquationGenerator::Matrix & mpt_mat,
+  const std::vector<ReferencePoint> & ref_points) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   // NOTE: currently, add additional length to soft bounds approximately
   //       for hard bounds
-  const size_t D_x = vehicle_model_ptr_->getDimX();
-  const size_t D_u = vehicle_model_ptr_->getDimU();
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
 
   const size_t N_u = (N_ref - 1) * D_u;
@@ -1340,63 +1185,43 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   constraint_matrix.lower_bound = lb;
   constraint_matrix.upper_bound = ub;
 
-  debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "          ");
   return constraint_matrix;
 }
 
-std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
-  std::vector<ReferencePoint> & fixed_ref_points,
-  std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
-  const MPTMatrix & mpt_mat)
+std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
+  std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
+  const StateEquationGenerator::Matrix & mpt_mat)
 {
-  const size_t D_x = vehicle_model_ptr_->getDimX();
-  const size_t D_u = vehicle_model_ptr_->getDimU();
-  const size_t N_ref = static_cast<size_t>(Uex.rows() - D_x) + 1;
+  debug_data_ptr_->tic(__func__);
 
-  stop_watch_.tic(__func__);
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_ref =
+    ref_points
+      .size();  // static_cast<size_t>(Uex.rows() - D_x) + 1; // TODO(murooka) remove this comment
 
-  std::vector<KinematicState> deviation_vec;
-  for (const auto & ref_point : fixed_ref_points) {
-    deviation_vec.push_back(ref_point.fix_kinematic_state.get());
-  }
+  // predict time-series states from optimized control inputs
+  const Eigen::VectorXd Xex = state_equation_generator_.predict(mpt_mat, Uex);
 
-  const size_t N_kinematic_state = vehicle_model_ptr_->getDimX();
-  const Eigen::VectorXd Xex = mpt_mat.B * Uex + mpt_mat.W;
-
-  for (size_t i = 0; i < non_fixed_ref_points.size(); ++i) {
-    const double lat = Xex(i * N_kinematic_state);
-    const double yaw = Xex(i * N_kinematic_state + 1);
-    deviation_vec.push_back(KinematicState{lat, yaw});
-  }
-
-  // calculate trajectory from optimization result
+  // calculate trajectory points from optimization result
   std::vector<TrajectoryPoint> traj_points;
-  debug_data_ptr_->vehicle_circles_pose.resize(deviation_vec.size());
-  for (size_t i = 0; i < deviation_vec.size(); ++i) {
-    auto & ref_point = (i < fixed_ref_points.size())
-                         ? fixed_ref_points.at(i)
-                         : non_fixed_ref_points.at(i - fixed_ref_points.size());
-    const auto & deviation = deviation_vec.at(i);
-    const double lat_error = deviation.lat;
-    const double yaw_error = deviation.yaw;
+  for (size_t i = 0; i < N_ref; ++i) {
+    auto & ref_point = ref_points.at(i);
 
-    geometry_msgs::msg::Pose ref_pose = ref_point.pose;
-    debug_data_ptr_->mpt_ref_poses.push_back(ref_pose);
-    debug_data_ptr_->lateral_errors.push_back(lat_error);
+    const double lat_error = Xex(i * D_x);
+    const double yaw_error = Xex(i * D_x + 1);
 
+    // memorize optimization result (optimized_kinematic_state and optimized_input)
     ref_point.optimized_kinematic_state = KinematicState{lat_error, yaw_error};
-    if (fixed_ref_points.size() <= i) {
-      const size_t j = i - fixed_ref_points.size();
-      if (j == N_ref - 1) {
-        ref_point.optimized_input = 0.0;
-      } else {
-        ref_point.optimized_input = Uex(D_x + j * D_u);
-      }
+    if (i == N_ref - 1) {
+      ref_point.optimized_input = 0.0;
+    } else {
+      ref_point.optimized_input = Uex(D_x + i * D_u);
     }
 
     TrajectoryPoint traj_point;
-    traj_point.pose = ref_point.offsetPose(deviation, 0.0);
+    traj_point.pose = ref_point.offsetDeviation(lat_error, yaw_error);
 
     traj_points.push_back(traj_point);
 
@@ -1407,6 +1232,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
       const double base_y = ref_point.pose.position.y + std::cos(ref_yaw) * lat_error;
 
       // NOTE: coordinate of vehicle_circle_longitudinal_offsets is back wheel center
+      std::vector<geometry_msgs::msg::Pose> vehicle_circle_pose_vec;
       for (const double d : mpt_param_.vehicle_circle_longitudinal_offsets) {
         geometry_msgs::msg::Pose vehicle_circle_pose;
 
@@ -1416,8 +1242,9 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
         vehicle_circle_pose.orientation =
           tier4_autoware_utils::createQuaternionFromYaw(ref_yaw + ref_point.alpha);
 
-        debug_data_ptr_->vehicle_circles_pose.at(i).push_back(vehicle_circle_pose);
+        vehicle_circle_pose_vec.push_back(vehicle_circle_pose);
       }
+      debug_data_ptr_->vehicle_circles_pose.push_back(vehicle_circle_pose_vec);
     }
   }
 
@@ -1430,9 +1257,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
   // }
   // motion_utils::insertOrientation(traj_points);
 
-  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-
+  debug_data_ptr_->toc(__func__, "        ");
   return traj_points;
 }
 
@@ -1500,8 +1325,8 @@ void MPTOptimizer::addSteerWeightR(
   std::vector<Eigen::Triplet<double>> & R_triplet_vec,
   const std::vector<ReferencePoint> & ref_points) const
 {
-  const size_t D_x = vehicle_model_ptr_->getDimX();
-  const size_t D_u = vehicle_model_ptr_->getDimU();
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
   const size_t N_u = (N_ref - 1) * D_u;
   const size_t D_v = D_x + N_u;
@@ -1525,14 +1350,12 @@ void MPTOptimizer::updateBounds(
   const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0;  // TODO(murooka)
 
   // calculate distance to left/right bound on each reference point
-  debug_data_ptr_->sequential_bounds.clear();
   for (auto & ref_point : ref_points) {
     const double dist_to_left_bound =
-      calcLateralDistToBound(ref_point.pose, left_bound, min_soft_road_clearance, true);
+      calcLateralDistToBounds(ref_point.pose, left_bound, min_soft_road_clearance, true);
     const double dist_to_right_bound =
-      calcLateralDistToBound(ref_point.pose, left_bound, min_soft_road_clearance, false);
+      calcLateralDistToBounds(ref_point.pose, right_bound, min_soft_road_clearance, false);
     ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
-    debug_data_ptr_->sequential_bounds.push_back(ref_point.bounds);
   }
 
   debug_data_ptr_->toc(__func__, "          ");
@@ -1543,11 +1366,11 @@ void MPTOptimizer::updateVehicleBounds(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  stop_watch_.tic(__func__);
+  debug_data_ptr_->tic(__func__);
 
   if (ref_points.size() == 1) {
     for ([[maybe_unused]] const double d : mpt_param_.vehicle_circle_longitudinal_offsets) {
-      ref_points.at(0).vehicle_bounds.push_back(ref_points.at(0).bounds);
+      ref_points.at(0).bounds_on_constraints.push_back(ref_points.at(0).bounds);
       ref_points.at(0).beta.push_back(0.0);
     }
     return;
@@ -1557,7 +1380,7 @@ void MPTOptimizer::updateVehicleBounds(
     const auto & ref_point = ref_points.at(p_idx);
     // TODO(murooka) this is required.
     // somtimes vehile_bounds has already value with previous value?
-    ref_points.at(p_idx).vehicle_bounds.clear();
+    ref_points.at(p_idx).bounds_on_constraints.clear();
     ref_points.at(p_idx).beta.clear();
 
     for (const double lon_offset : mpt_param_.vehicle_circle_longitudinal_offsets) {
@@ -1606,8 +1429,8 @@ void MPTOptimizer::updateVehicleBounds(
         return bounds;
       }();
 
-      ref_points.at(p_idx).vehicle_bounds.push_back(bounds);
-      ref_points.at(p_idx).vehicle_bounds_poses.push_back(vehicle_bounds_pose);
+      ref_points.at(p_idx).bounds_on_constraints.push_back(bounds);
+      ref_points.at(p_idx).pose_on_constraints.push_back(vehicle_bounds_pose);
       /*
       for (size_t r_idx = 0; r_idx < ref_points.size(); ++r_idx) {
         const double current_s = ref_points_spline.getAccumulatedLength(r_idx);
@@ -1643,8 +1466,7 @@ void MPTOptimizer::updateVehicleBounds(
     }
   }
 
-  debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_ptr_->toc(__func__, "          ");
 }
 
 void MPTOptimizer::publishDebugTrajectories(
@@ -1657,26 +1479,28 @@ void MPTOptimizer::publishDebugTrajectories(
   debug_mpt_ref_traj_pub_->publish(ref_traj);
 
   // fixed reference points
-  const auto mpt_fixed_traj_points = extractMPTFixedPoints(ref_points);
+  const auto mpt_fixed_traj_points = extractFixedPoints(ref_points);
   const auto mpt_fixed_traj = trajectory_utils::createTrajectory(header, mpt_fixed_traj_points);
   debug_mpt_fixed_traj_pub_->publish(mpt_fixed_traj);
 
+  // mpt points
   const auto mpt_traj = trajectory_utils::createTrajectory(header, mpt_traj_points);
   debug_mpt_traj_pub_->publish(mpt_traj);
 }
 
-std::vector<TrajectoryPoint> MPTOptimizer::extractMPTFixedPoints(
+std::vector<TrajectoryPoint> MPTOptimizer::extractFixedPoints(
   const std::vector<ReferencePoint> & ref_points) const
 {
-  std::vector<TrajectoryPoint> mpt_fixed_traj;
+  std::vector<TrajectoryPoint> fixed_traj_points;
   for (const auto & ref_point : ref_points) {
     if (ref_point.fix_kinematic_state) {
       TrajectoryPoint fixed_traj_point;
-      fixed_traj_point.pose = ref_point.offsetPose(ref_point.fix_kinematic_state.get(), 0.0);
-      mpt_fixed_traj.push_back(fixed_traj_point);
+      fixed_traj_point.pose = ref_point.offsetDeviation(
+        ref_point.fix_kinematic_state->lat, ref_point.fix_kinematic_state->yaw);
+      fixed_traj_points.push_back(fixed_traj_point);
     }
   }
 
-  return mpt_fixed_traj;
+  return fixed_traj_points;
 }
 }  // namespace collision_free_path_planner

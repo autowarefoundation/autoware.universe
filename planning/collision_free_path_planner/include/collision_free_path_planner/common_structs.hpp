@@ -27,27 +27,23 @@
 
 namespace collision_free_path_planner
 {
+struct ReferencePoint;
+struct Bounds;
+
 struct PlannerData
 {
   // input
   Path path;
   std::vector<geometry_msgs::msg::Point> left_bound;
   std::vector<geometry_msgs::msg::Point> right_bound;
+
   // external input
-  std::vector<PredictedObject> objects{};
+  std::vector<PredictedObject> objects;
+
   // ego
-  geometry_msgs::msg::Pose ego_pose{};
+  geometry_msgs::msg::Pose ego_pose;
   double ego_vel{};
 };
-
-struct ReferencePoint;
-
-struct Bounds;
-using VehicleBounds = std::vector<Bounds>;
-using SequentialBounds = std::vector<Bounds>;
-
-// using BoundsCandidates = std::vector<Bounds>;
-// using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
 
 struct EBParam
 {
@@ -110,8 +106,6 @@ struct DebugData
       return *this;
     }
 
-    std::string getString() const { return debug_str; }
-
     bool enable_calculation_time_info;
     std::string debug_str = "\n";
     std::stringstream sstream;
@@ -122,6 +116,7 @@ struct DebugData
     msg_stream = StreamWithPrint{};
     msg_stream.enable_calculation_time_info = enable_calculation_time_info;
     stop_pose_by_drivable_area = boost::none;
+    vehicle_circles_pose.clear();
   }
 
   void tic(const std::string & func_name) { stop_watch_.tic(func_name); }
@@ -131,6 +126,8 @@ struct DebugData
     const double elapsed_time = stop_watch_.toc(func_name);
     msg_stream << white_spaces << func_name << ":= " << elapsed_time << " [ms]\n";
   }
+
+  std::string getAccumulatedTimeString() const { return msg_stream.debug_str; }
 
   // string stream for calculation time
   StreamWithPrint msg_stream;
@@ -144,20 +141,14 @@ struct DebugData
   // eb
   std::vector<ConstrainRectangle> constrain_rectangles;
   std::vector<TrajectoryPoint> eb_traj;
+
   // mpt
   std::vector<ReferencePoint> ref_points;
-  std::vector<geometry_msgs::msg::Pose> mpt_ref_poses;
-  SequentialBounds sequential_bounds;
-  std::vector<double> lateral_errors;
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
 
   boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
 
   std::vector<TrajectoryPoint> extended_traj_points;
-
-  // std::vector<TrajectoryPoint> mpt_fixed_traj;
-  // std::vector<TrajectoryPoint> mpt_ref_traj;
-  // std::vector<TrajectoryPoint> mpt_traj;
 
   tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
@@ -168,12 +159,8 @@ struct TrajectoryParam
 {
   TrajectoryParam() = default;
   TrajectoryParam(rclcpp::Node * node, const double vehicle_width)
-  {  // trajectory parameter
+  {
     num_sampling_points = node->declare_parameter<int>("common.num_sampling_points");
-    output_traj_length = node->declare_parameter<double>("common.output_traj_length");
-    forward_fixing_min_distance =
-      node->declare_parameter<double>("common.forward_fixing_min_distance");
-    forward_fixing_min_time = node->declare_parameter<double>("common.forward_fixing_min_time");
     output_backward_traj_length =
       node->declare_parameter<double>("common.output_backward_traj_length");
     output_delta_arc_length = node->declare_parameter<double>("common.output_delta_arc_length");
@@ -195,10 +182,6 @@ struct TrajectoryParam
 
     // common
     updateParam<int>(parameters, "common.num_sampling_points", num_sampling_points);
-    updateParam<double>(parameters, "common.output_traj_length", output_traj_length);
-    updateParam<double>(
-      parameters, "common.forward_fixing_min_distance", forward_fixing_min_distance);
-    updateParam<double>(parameters, "common.forward_fixing_min_time", forward_fixing_min_time);
     updateParam<double>(
       parameters, "common.output_backward_traj_length", output_backward_traj_length);
     updateParam<double>(parameters, "common.output_delta_arc_length", output_delta_arc_length);
@@ -213,8 +196,6 @@ struct TrajectoryParam
       parameters, "common.delta_yaw_threshold_for_straight", delta_yaw_threshold_for_straight);
   }
 
-  // output
-  double output_traj_length;
   double output_delta_arc_length;
   double output_backward_traj_length;
 
@@ -224,8 +205,6 @@ struct TrajectoryParam
   double delta_yaw_threshold_for_closest_point;
   double delta_yaw_threshold_for_straight;
 
-  double forward_fixing_min_distance;
-  double forward_fixing_min_time;
   double center_line_width;
 };
 
@@ -241,8 +220,6 @@ struct EgoNearestParam
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
   {
     using tier4_autoware_utils::updateParam;
-
-    // common
     updateParam<double>(parameters, "ego_nearest_dist_threshold", dist_threshold);
     updateParam<double>(parameters, "ego_nearest_yaw_threshold", yaw_threshold);
   }

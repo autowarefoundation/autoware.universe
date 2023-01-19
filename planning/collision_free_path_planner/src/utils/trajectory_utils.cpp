@@ -14,7 +14,7 @@
 
 #include "collision_free_path_planner/utils/trajectory_utils.hpp"
 
-#include "collision_free_path_planner/eb_path_optimizer.hpp"
+#include "collision_free_path_planner/eb_path_smoother.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "tf2/utils.h"

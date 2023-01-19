@@ -15,7 +15,7 @@
 #define COLLISION_FREE_PATH_PLANNER__NODE_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/eb_path_optimizer.hpp"
+#include "collision_free_path_planner/eb_path_smoother.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/replan_checker.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
@@ -74,18 +74,13 @@ private:
   bool enable_reset_prev_optimization_;
 
   // core algorithm
-  std::shared_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
+  std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_;
   std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_;
   std::shared_ptr<ReplanChecker> replan_checker_ptr_;
 
   // parameters
   TrajectoryParam traj_param_{};
   EgoNearestParam ego_nearest_param_{};
-
-  // variables for debugging
-  mutable tier4_autoware_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 
   // variables for subscribers
   Odometry::SharedPtr ego_state_ptr_;

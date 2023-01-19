@@ -16,8 +16,8 @@
 #define COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
+#include "collision_free_path_planner/state_equation_generator.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
-#include "collision_free_path_planner/vehicle_model/vehicle_model_interface.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Sparse"
 #include "gtest/gtest.h"
@@ -31,6 +31,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace collision_free_path_planner
@@ -67,15 +68,15 @@ struct KinematicState
 
 struct ReferencePoint
 {
-  // these should be calcualted when initialization
   geometry_msgs::msg::Pose pose;
 
   // additional information
   double k{0.0};
   double delta_arc_length{0.0};
   double alpha{0.0};
-  Bounds bounds{};
+  Bounds bounds{};  // bounds on pose
   bool near_objects{false};
+  std::vector<boost::optional<double>> beta{};
 
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
@@ -84,26 +85,18 @@ struct ReferencePoint
   KinematicState optimized_kinematic_state{};
   double optimized_input{};
 
-  //
-  std::vector<boost::optional<double>> beta{};
-  VehicleBounds vehicle_bounds{};
-
-  // for debug visualization
-  std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};
+  // bounds and its local pose on each collision-free constraint
+  std::vector<Bounds> bounds_on_constraints{};
+  std::vector<geometry_msgs::msg::Pose> pose_on_constraints{};
 
   double getYaw() const { return tf2::getYaw(pose.orientation); }
 
-  geometry_msgs::msg::Pose offsetPose(
-    const KinematicState & deviation, const double lon_offset) const
+  geometry_msgs::msg::Pose offsetDeviation(const double lat_dev, const double yaw_dev) const
   {
-    auto pose_with_deviation = tier4_autoware_utils::calcOffsetPose(pose, 0.0, deviation.lat, 0.0);
+    auto pose_with_deviation = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lat_dev, 0.0);
     pose_with_deviation.orientation =
-      tier4_autoware_utils::createQuaternionFromYaw(getYaw() + deviation.yaw);
-
-    const auto pose_with_lon_offset =
-      tier4_autoware_utils::calcOffsetPose(pose_with_deviation, lon_offset, 0.0, 0.0);
-
-    return pose_with_lon_offset;
+      tier4_autoware_utils::createQuaternionFromYaw(getYaw() + yaw_dev);
+    return pose_with_deviation;
   }
 };
 
@@ -130,12 +123,6 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
-  struct MPTMatrix
-  {
-    Eigen::MatrixXd B;
-    Eigen::VectorXd W;
-  };
-
   struct ValueMatrix
   {
     Eigen::SparseMatrix<double> Q;
@@ -213,10 +200,10 @@ private:
   TrajectoryParam traj_param_;
   MPTParam mpt_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  StateEquationGenerator state_equation_generator_;
 
   // autoware::common::osqp::OSQPInterface osqp_solver_;
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
-  std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;
   int mpt_visualize_sampling_num_;
@@ -227,13 +214,9 @@ private:
   std::vector<double> vehicle_circle_radius_ratios_;
 
   // previous information
-  int prev_mat_n = 0;
-  int prev_mat_m = 0;
+  int prev_mat_n_ = 0;
+  int prev_mat_m_ = 0;
   std::shared_ptr<std::vector<ReferencePoint>> prev_ref_points_ptr_{nullptr};
-
-  mutable tier4_autoware_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 
   void initializeMPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
 
@@ -246,7 +229,7 @@ private:
   //   const std::vector<TrajectoryPoint> & smoothed_points,
   //   const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
-  std::vector<ReferencePoint> getReferencePoints(
+  std::vector<ReferencePoint> calcReferencePoints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const;
   void updateCurvature(
     std::vector<ReferencePoint> & ref_points,
@@ -265,36 +248,42 @@ private:
   void updateArcLength(std::vector<ReferencePoint> & ref_points) const;
   void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
 
-  MPTMatrix generateMPTMatrix(const std::vector<ReferencePoint> & reference_points) const;
-  ValueMatrix generateValueMatrix(
+  ValueMatrix calcValueMatrix(
     const std::vector<ReferencePoint> & reference_points,
     const std::vector<PathPoint> & path_points) const;
-  boost::optional<Eigen::VectorXd> executeOptimization(
-    const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
-    const std::vector<ReferencePoint> & ref_points);
+
+  ObjectiveMatrix getObjectiveMatrix(
+    const StateEquationGenerator::Matrix & mpt_mat, const ValueMatrix & obj_mat,
+    const std::vector<ReferencePoint> & ref_points) const;
+
+  ConstraintMatrix getConstraintMatrix(
+    const StateEquationGenerator::Matrix & mpt_mat,
+    const std::vector<ReferencePoint> & ref_points) const;
+
+  boost::optional<Eigen::VectorXd> calcOptimizedSteerAngles(
+    const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
+    const ConstraintMatrix & const_mat);
+  Eigen::VectorXd calcInitialSolutionForManualWarmStart(
+    const std::vector<ReferencePoint> & ref_points,
+    const std::vector<ReferencePoint> & prev_ref_points) const;
+  std::pair<ObjectiveMatrix, ConstraintMatrix> updateMatrixForManualWarmStart(
+    const ObjectiveMatrix & obj_mat, const ConstraintMatrix & const_mat,
+    const boost::optional<Eigen::VectorXd> & u0) const;
 
   void addSteerWeightR(
     std::vector<Eigen::Triplet<double>> & R_triplet_vec,
     const std::vector<ReferencePoint> & ref_points) const;
 
-  std::vector<TrajectoryPoint> getMPTPoints(
-    std::vector<ReferencePoint> & fixed_ref_points,
-    std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
-    const MPTMatrix & mpt_matrix);
-
-  ObjectiveMatrix getObjectiveMatrix(
-    const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
-    const std::vector<ReferencePoint> & ref_points) const;
-
-  ConstraintMatrix getConstraintMatrix(
-    const MPTMatrix & mpt_mat, const std::vector<ReferencePoint> & ref_points) const;
+  std::vector<TrajectoryPoint> calcMPTPoints(
+    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
+    const StateEquationGenerator::Matrix & mpt_matrix);
 
   // functions for debug publish
   void publishDebugTrajectories(
     const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
     const std::vector<TrajectoryPoint> & mpt_traj_points) const;
 
-  std::vector<TrajectoryPoint> extractMPTFixedPoints(
+  std::vector<TrajectoryPoint> extractFixedPoints(
     const std::vector<ReferencePoint> & ref_points) const;
 
   void logInfo(const char * msg) const
