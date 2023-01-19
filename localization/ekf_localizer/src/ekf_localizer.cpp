@@ -19,13 +19,14 @@
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"
 #include "ekf_localizer/numeric.hpp"
-#include "ekf_localizer/rotation.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
 
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
+
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/msg_covariance.hpp>
 
@@ -650,10 +651,7 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
 {
   double z = pose.pose.pose.position.z;
 
-  const Eigen::Vector3d euler = quaternionToEulerXYZ(pose.pose.pose.orientation);
-
-  const double roll = euler(0);
-  const double pitch = euler(1);
+  const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
 
   using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
@@ -661,18 +659,15 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
 
   z_filter_.update(z, z_dev, pose.header.stamp);
-  roll_filter_.update(roll, roll_dev, pose.header.stamp);
-  pitch_filter_.update(pitch, pitch_dev, pose.header.stamp);
+  roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
+  pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
 }
 
 void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
 {
   double z = pose.pose.pose.position.z;
 
-  const Eigen::Vector3d euler = quaternionToEulerXYZ(pose.pose.pose.orientation);
-
-  const double roll = euler(0);
-  const double pitch = euler(1);
+  const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
 
   using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
@@ -680,8 +675,8 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
 
   z_filter_.init(z, z_dev, pose.header.stamp);
-  roll_filter_.init(roll, roll_dev, pose.header.stamp);
-  pitch_filter_.init(pitch, pitch_dev, pose.header.stamp);
+  roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
+  pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
 }
 
 /**
