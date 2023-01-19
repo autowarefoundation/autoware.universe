@@ -99,6 +99,7 @@ void filterObjectIndices(
 
       if (distance < filter_width) {
         current_lane_obj_indices.push_back(i);
+        continue;
       }
     }
 
