@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(AgedObjectQueue, DisardsObjectWhenAgeReachesMaximum)
+TEST(AgedObjectQueue, DiscardsObjectWhenAgeReachesMaximum)
 {
   AgedObjectQueue<std::string> queue(3);
 
