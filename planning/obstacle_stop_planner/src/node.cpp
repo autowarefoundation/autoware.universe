@@ -163,7 +163,6 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
   pub_stop_reason_ = this->create_publisher<DiagnosticStatus>("~/output/stop_reason", 1);
 
-
   pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
     "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
 
@@ -440,7 +439,8 @@ void ObstacleStopPlannerNode::searchObstacle(
         if (node_param_.enable_z_axis_obstacle_filtering) {
           debug_ptr_->pushPolyhedron(
             one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Collision);
-          if ((pub_collision_pointcloud_debug_->get_subscription_count() +
+          if (
+            (pub_collision_pointcloud_debug_->get_subscription_count() +
              pub_collision_pointcloud_debug_->get_intra_process_subscription_count()) > 0) {
             auto obstacle_ros_pointcloud_debug_ptr = std::make_shared<PointCloud2>();
             pcl::toROSMsg(*collision_pointcloud_ptr, *obstacle_ros_pointcloud_debug_ptr);
