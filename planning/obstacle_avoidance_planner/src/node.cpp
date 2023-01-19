@@ -305,7 +305,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     enable_pre_smoothing_ = declare_parameter<bool>("option.enable_pre_smoothing");
     skip_optimization_ = declare_parameter<bool>("option.skip_optimization");
     reset_prev_optimization_ = declare_parameter<bool>("option.reset_prev_optimization");
-    is_considering_footprint_edges_ = declare_parameter<bool>("option.is_considering_footprint_edges");
+    is_considering_footprint_edges_ =
+      declare_parameter<bool>("option.is_considering_footprint_edges");
   }
 
   {  // trajectory parameter
@@ -601,7 +602,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     updateParam<bool>(parameters, "option.enable_pre_smoothing", enable_pre_smoothing_);
     updateParam<bool>(parameters, "option.skip_optimization", skip_optimization_);
     updateParam<bool>(parameters, "option.reset_prev_optimization", reset_prev_optimization_);
-    updateParam<bool>(parameters, "option.is_considering_footprint_edges", is_considering_footprint_edges_);
+    updateParam<bool>(
+      parameters, "option.is_considering_footprint_edges", is_considering_footprint_edges_);
   }
 
   {  // trajectory parameter

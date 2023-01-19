@@ -686,7 +686,8 @@ namespace drivable_area_utils
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound, const VehicleParam & vehicle_param, const bool is_considering_footprint_edges)
+  const std::vector<geometry_msgs::msg::Point> & right_bound, const VehicleParam & vehicle_param,
+  const bool is_considering_footprint_edges)
 {
   if (left_bound.empty() || right_bound.empty()) {
     return false;
@@ -711,8 +712,7 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
     tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -base_to_left, 0.0)
       .position;
 
-  if(is_considering_footprint_edges){
-
+  if (is_considering_footprint_edges) {
     LinearRing2d footprint_polygon;
     LineString2d left_bound_line;
     LineString2d right_bound_line;
@@ -742,7 +742,7 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
       return true;
     }
   }
-  
+
   const bool front_top_left = isFrontDrivableArea(top_left_pos, left_bound, right_bound);
   const bool front_top_right = isFrontDrivableArea(top_right_pos, left_bound, right_bound);
   const bool front_bottom_left = isFrontDrivableArea(bottom_left_pos, left_bound, right_bound);
