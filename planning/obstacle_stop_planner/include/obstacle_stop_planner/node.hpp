@@ -94,8 +94,8 @@ using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
 struct ObstacleWithDetectionTime
 {
-  ObstacleWithDetectionTime() = default;
-  ObstacleWithDetectionTime(const rclcpp::Time & t, pcl::PointXYZ & p) : detection_time(t), point(p)
+  explicit ObstacleWithDetectionTime(const rclcpp::Time & t, pcl::PointXYZ & p)
+  : detection_time(t), point(p)
   {
   }
 
