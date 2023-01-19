@@ -44,7 +44,6 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
   set(TEST_FILES
-    test/test_delay.cpp
     test/test_mahalanobis.cpp
     test/test_measurement.cpp
     test/test_numeric.cpp

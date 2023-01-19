@@ -15,7 +15,6 @@
 #include "ekf_localizer/ekf_localizer.hpp"
 
 #include "ekf_localizer/covariance.hpp"
-#include "ekf_localizer/delay.hpp"
 #include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"
@@ -430,7 +429,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (!delayStepIsSufficientlySmall(delay_step, params_.extend_state_step)) {
+  if (delay_step >= params_.extend_state_step) {
     warning_.warnThrottle(delayStepWarningMessage(delay_step, params_.extend_state_step), 2000);
     return;
   }
@@ -510,7 +509,7 @@ void EKFLocalizer::measurementUpdateTwist(
     delay_time = 0.0;
   }
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (!delayStepIsSufficientlySmall(delay_step, params_.extend_state_step)) {
+  if (delay_step >= params_.extend_state_step) {
     warning_.warnThrottle(delayStepWarningMessage(delay_step, params_.extend_state_step), 2000);
     return;
   }
