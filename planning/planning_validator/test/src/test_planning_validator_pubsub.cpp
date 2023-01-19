@@ -17,6 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <nav_msgs/msg/odometry.hpp>
+
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -29,6 +31,7 @@
 using autoware_auto_planning_msgs::msg::Trajectory;
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
+using nav_msgs::msg::Odometry;
 using planning_validator::PlanningValidator;
 
 class PubSubManager : public rclcpp::Node
@@ -37,12 +40,14 @@ public:
   PubSubManager() : Node("test_pub_sub")
   {
     traj_pub_ = create_publisher<Trajectory>("/planning_validator/input/trajectory", 1);
+    kinematics_pub_ = create_publisher<Odometry>("/planning_validator/input/kinematics", 1);
     diag_sub_ = create_subscription<DiagnosticArray>(
       "/diagnostics", 1,
       [this](const DiagnosticArray::ConstSharedPtr msg) { received_diags_.push_back(msg); });
   }
 
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
+  rclcpp::Publisher<Odometry>::SharedPtr kinematics_pub_;
   rclcpp::Subscription<DiagnosticArray>::SharedPtr diag_sub_;
 
   std::vector<DiagnosticArray::ConstSharedPtr> received_diags_;
@@ -87,6 +92,7 @@ void runWithOKTrajectory(const Trajectory & trajectory)
   EXPECT_GE(manager->traj_pub_->get_subscription_count(), 1U) << "topic is not connected.";
 
   manager->traj_pub_->publish(trajectory);
+  manager->kinematics_pub_->publish(generateDefaultOdometry());
   spinSome(validator);
   spinSome(manager);
 
@@ -101,6 +107,7 @@ void runWithBadTrajectory(const Trajectory & trajectory)
   EXPECT_GE(manager->traj_pub_->get_subscription_count(), 1U) << "topic is not connected.";
 
   manager->traj_pub_->publish(trajectory);
+  manager->kinematics_pub_->publish(generateDefaultOdometry());
   spinSome(validator);
   spinSome(manager);
 
@@ -125,5 +132,6 @@ TEST(PlanningValidator, DiagCheckForInfTrajectory)
 }
 TEST(PlanningValidator, DiagCheckForTooLongIntervalTrajectory)
 {
-  runWithBadTrajectory(generateTrajectory(ERROR_INTERVAL));
+  constexpr double ep = 0.001;
+  runWithBadTrajectory(generateTrajectory(ERROR_INTERVAL + ep));
 }
