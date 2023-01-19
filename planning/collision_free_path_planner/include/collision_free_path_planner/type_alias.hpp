@@ -23,8 +23,6 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/twist.hpp"
-#include "nav_msgs/msg/map_meta_data.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/string_stamped.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -40,7 +38,6 @@ using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 // navigation
-using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 // visualization
 using visualization_msgs::msg::Marker;

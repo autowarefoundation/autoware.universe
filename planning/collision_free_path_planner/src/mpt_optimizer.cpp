@@ -57,26 +57,22 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesByBicycle
   const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
   const double rear_radius_ratio, const double front_radius_ratio)
 {
-  std::vector<double> longitudinal_offsets;
-  std::vector<double> radiuses;
-
   // 1st circle (rear wheel)
-  longitudinal_offsets.push_back(0.0);
-  radiuses.push_back(vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio);
+  const double rear_radius = vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio;
+  const double rear_lon_offset = 0.0;
 
   // 2nd circle (front wheel)
-  const double radius = std::hypot(
-    vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
-    vehicle_info.vehicle_width_m / 2.0);
+  const double front_radius =
+    std::hypot(
+      vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
+      vehicle_info.vehicle_width_m / 2.0) *
+    front_radius_ratio;
 
   const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
-  const double longitudinal_offset =
+  const double front_lon_offset =
     unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_info.rear_overhang_m;
 
-  longitudinal_offsets.push_back(longitudinal_offset);
-  radiuses.push_back(radius * front_radius_ratio);
-
-  return {radiuses, longitudinal_offsets};
+  return {{rear_radius, front_radius}, {rear_lon_offset, front_lon_offset}};
 }
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
@@ -91,45 +87,9 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   return {ub_vec, lb_vec};
 }
 
-template <typename T>
-void trimPoints(std::vector<T> & points)
-{
-  std::vector<T> trimmed_points;
-  constexpr double epsilon = 1e-6;
-
-  auto itr = points.begin();
-  while (itr != points.end() - 1) {
-    bool is_overlapping = false;
-    if (itr != points.begin()) {
-      const auto & p_front = tier4_autoware_utils::getPoint(*itr);
-      const auto & p_back = tier4_autoware_utils::getPoint(*(itr + 1));
-
-      const double dx = p_front.x - p_back.x;
-      const double dy = p_front.y - p_back.y;
-      if (dx * dx + dy * dy < epsilon) {
-        is_overlapping = true;
-      }
-    }
-    if (is_overlapping) {
-      itr = points.erase(itr);
-    } else {
-      ++itr;
-    }
-  }
-}
-
 std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
 {
   return {eigen_vec.data(), eigen_vec.data() + eigen_vec.rows()};
-}
-
-template <class T>
-std::vector<T> createVector(const T & value, const std::vector<T> & vector)
-{
-  std::vector<T> result_vector;
-  result_vector.push_back(value);
-  result_vector.insert(result_vector.end(), vector.begin(), vector.end());
-  return result_vector;
 }
 
 [[maybe_unused]] std::vector<ReferencePoint> resampleRefPoints(
@@ -510,7 +470,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   assert(1 < path_points.size());
 
   // 1. calculate reference points
-  std::vector<ReferencePoint> ref_points = calcReferencePoints(planner_data, smoothed_points);
+  auto ref_points = calcReferencePoints(planner_data, smoothed_points);
   if (ref_points.empty()) {
     logInfo("return boost::none since ref_points is empty");
     return boost::none;
@@ -1224,28 +1184,6 @@ std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
     traj_point.pose = ref_point.offsetDeviation(lat_error, yaw_error);
 
     traj_points.push_back(traj_point);
-
-    {  // for debug visualization
-      const double ref_yaw = ref_point.getYaw();
-
-      const double base_x = ref_point.pose.position.x - std::sin(ref_yaw) * lat_error;
-      const double base_y = ref_point.pose.position.y + std::cos(ref_yaw) * lat_error;
-
-      // NOTE: coordinate of vehicle_circle_longitudinal_offsets is back wheel center
-      std::vector<geometry_msgs::msg::Pose> vehicle_circle_pose_vec;
-      for (const double d : mpt_param_.vehicle_circle_longitudinal_offsets) {
-        geometry_msgs::msg::Pose vehicle_circle_pose;
-
-        vehicle_circle_pose.position.x = base_x + d * std::cos(ref_yaw + yaw_error);
-        vehicle_circle_pose.position.y = base_y + d * std::sin(ref_yaw + yaw_error);
-
-        vehicle_circle_pose.orientation =
-          tier4_autoware_utils::createQuaternionFromYaw(ref_yaw + ref_point.alpha);
-
-        vehicle_circle_pose_vec.push_back(vehicle_circle_pose);
-      }
-      debug_data_ptr_->vehicle_circles_pose.push_back(vehicle_circle_pose_vec);
-    }
   }
 
   // NOTE: If generated trajectory's orientation is not so smooth or kinematically infeasible,

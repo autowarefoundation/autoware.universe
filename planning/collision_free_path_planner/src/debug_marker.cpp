@@ -321,28 +321,43 @@ MarkerArray getBoundsLineMarkerArray(
 }
 
 MarkerArray getVehicleCircleLinesMarkerArray(
-  const std::vector<std::vector<geometry_msgs::msg::Pose>> & vehicle_circles_pose,
-  const double vehicle_width, const size_t sampling_num, const std::string & ns)
+  const std::vector<ReferencePoint> & ref_points,
+  const std::vector<double> & vehicle_circle_longitudinal_offsets, const double vehicle_width,
+  const size_t sampling_num, const std::string & ns)
 {
   const auto current_time = rclcpp::Clock().now();
   MarkerArray msg;
 
-  for (size_t i = 0; i < vehicle_circles_pose.size(); ++i) {
+  for (size_t i = 0; i < ref_points.size(); ++i) {
     if (i % sampling_num != 0) {
       continue;
     }
+    const auto & ref_point = ref_points.at(i);
 
     auto marker = createDefaultMarker(
       "map", rclcpp::Clock().now(), ns, i, Marker::LINE_LIST, createMarkerScale(0.1, 0, 0),
       createMarkerColor(0.99, 0.99, 0.2, 0.25));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
-    for (size_t j = 0; j < vehicle_circles_pose.at(i).size(); ++j) {
-      const geometry_msgs::msg::Pose & pose = vehicle_circles_pose.at(i).at(j);
+    for (const double d : vehicle_circle_longitudinal_offsets) {
+      const double lat_dev = ref_point.optimized_kinematic_state.lat;
+      const double yaw_dev = ref_point.optimized_kinematic_state.yaw;
+
+      // apply lateral and yaw deviation
+      auto pose_with_deviation =
+        tier4_autoware_utils::calcOffsetPose(ref_point.pose, 0.0, lat_dev, 0.0);
+      pose_with_deviation.orientation =
+        tier4_autoware_utils::createQuaternionFromYaw(ref_point.getYaw() + yaw_dev);
+
+      // apply longitudinal offset
+      auto base_pose = tier4_autoware_utils::calcOffsetPose(pose_with_deviation, d, 0.0, 0.0);
+      base_pose.orientation =
+        tier4_autoware_utils::createQuaternionFromYaw(ref_point.getYaw() + ref_point.alpha);
+
       const auto ub =
-        tier4_autoware_utils::calcOffsetPose(pose, 0.0, vehicle_width / 2.0, 0.0).position;
+        tier4_autoware_utils::calcOffsetPose(base_pose, 0.0, vehicle_width / 2.0, 0.0).position;
       const auto lb =
-        tier4_autoware_utils::calcOffsetPose(pose, 0.0, -vehicle_width / 2.0, 0.0).position;
+        tier4_autoware_utils::calcOffsetPose(base_pose, 0.0, -vehicle_width / 2.0, 0.0).position;
 
       marker.points.push_back(ub);
       marker.points.push_back(lb);
@@ -501,8 +516,8 @@ MarkerArray getDebugMarker(
   // vehicle circle line
   appendMarkerArray(
     getVehicleCircleLinesMarkerArray(
-      debug_data.vehicle_circles_pose, vehicle_info.vehicle_width_m,
-      debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines"),
+      debug_data.ref_points, debug_data.vehicle_circle_longitudinal_offsets,
+      vehicle_info.vehicle_width_m, debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines"),
     &marker_array);
 
   // current vehicle circles

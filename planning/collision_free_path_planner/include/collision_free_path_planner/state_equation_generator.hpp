@@ -18,7 +18,6 @@
 #include "collision_free_path_planner/common_structs.hpp"
 #include "collision_free_path_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "collision_free_path_planner/vehicle_model/vehicle_model_interface.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <memory>
 #include <vector>
@@ -37,7 +36,6 @@ public:
   };
 
   StateEquationGenerator() = default;
-
   StateEquationGenerator(const double wheel_base, const double max_steer_rad)
   {
     vehicle_model_ptr_ = std::make_unique<KinematicsBicycleModel>(wheel_base, max_steer_rad);
@@ -54,10 +52,6 @@ public:
 
 private:
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
-
-  mutable tier4_autoware_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 };
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__STATE_EQUATION_GENERATOR_HPP_
