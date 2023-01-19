@@ -60,13 +60,75 @@ struct EBParam
   double clearance_for_fixing;
   double clearance_for_straight_line;
   double clearance_for_joint;
-  double clearance_for_only_smoothing;
+  double clearance_for_smoothing;
 
   int num_joint_buffer_points;
   int num_offset_for_begin_idx;
 
-  double delta_arc_length_for_eb;
-  int num_sampling_points_for_eb;
+  double delta_arc_length;
+  int num_sampling_points;
+
+  EBParam() = default;
+  explicit EBParam(rclcpp::Node * node)
+  {
+    {  // common
+      num_joint_buffer_points =
+        node->declare_parameter<int>("advanced.eb.common.num_joint_buffer_points");
+      num_offset_for_begin_idx =
+        node->declare_parameter<int>("advanced.eb.common.num_offset_for_begin_idx");
+      delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
+      num_sampling_points = node->declare_parameter<int>("advanced.eb.common.num_sampling_points");
+    }
+
+    {  // clearance
+      clearance_for_straight_line =
+        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_straight_line");
+      clearance_for_joint =
+        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
+      clearance_for_smoothing =
+        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smoothing");
+    }
+
+    {  // qp
+      qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
+      qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
+      qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
+    }
+
+    {  // other
+      clearance_for_fixing = 0.0;
+    }
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    using tier4_autoware_utils::updateParam;
+
+    {  // common
+      updateParam<int>(
+        parameters, "advanced.eb.common.num_joint_buffer_points", num_joint_buffer_points);
+      updateParam<int>(
+        parameters, "advanced.eb.common.num_offset_for_begin_idx", num_offset_for_begin_idx);
+      updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
+      updateParam<int>(parameters, "advanced.eb.common.num_sampling_points", num_sampling_points);
+    }
+
+    {  // clearance
+      updateParam<double>(
+        parameters, "advanced.eb.clearance.clearance_for_straight_line",
+        clearance_for_straight_line);
+      updateParam<double>(
+        parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
+      updateParam<double>(
+        parameters, "advanced.eb.clearance.clearance_for_smoothing", clearance_for_smoothing);
+    }
+
+    {  // qp
+      updateParam<int>(parameters, "advanced.eb.qp.max_iteration", qp_param.max_iteration);
+      updateParam<double>(parameters, "advanced.eb.qp.eps_abs", qp_param.eps_abs);
+      updateParam<double>(parameters, "advanced.eb.qp.eps_rel", qp_param.eps_rel);
+    }
+  }
 };
 
 struct ConstrainRectangle
@@ -158,7 +220,6 @@ struct TrajectoryParam
   TrajectoryParam() = default;
   TrajectoryParam(rclcpp::Node * node, const double vehicle_width)
   {
-    num_sampling_points = node->declare_parameter<int>("common.num_sampling_points");
     output_backward_traj_length =
       node->declare_parameter<double>("common.output_backward_traj_length");
     output_delta_arc_length = node->declare_parameter<double>("common.output_delta_arc_length");
@@ -179,7 +240,6 @@ struct TrajectoryParam
     using tier4_autoware_utils::updateParam;
 
     // common
-    updateParam<int>(parameters, "common.num_sampling_points", num_sampling_points);
     updateParam<double>(
       parameters, "common.output_backward_traj_length", output_backward_traj_length);
     updateParam<double>(parameters, "common.output_delta_arc_length", output_delta_arc_length);
@@ -196,8 +256,6 @@ struct TrajectoryParam
 
   double output_delta_arc_length;
   double output_backward_traj_length;
-
-  int num_sampling_points;
 
   double delta_dist_threshold_for_closest_point;
   double delta_yaw_threshold_for_closest_point;

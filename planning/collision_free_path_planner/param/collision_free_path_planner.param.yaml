@@ -82,13 +82,13 @@
         common:
           num_joint_buffer_points: 3 # number of joint buffer points
           num_offset_for_begin_idx: 2 # number of shifting points for beginning non-fix idx
-          delta_arc_length_for_eb: 0.6 # 1.0 # delta arc length when optimizing[m] When the value is around 1.0, overshoot at the corner happens.
-          num_sampling_points_for_eb: 95 # number of optimizing points # must be longer than mpt points
+          delta_arc_length: 0.6 # 1.0 # delta arc length when optimizing[m] When the value is around 1.0, overshoot at the corner happens.
+          num_sampling_points: 95 # number of optimizing points # must be longer than mpt points
 
         clearance:
           clearance_for_straight_line: 1.0 # 0.05 # minimum optimizing range around straight points
           clearance_for_joint: 1.0 # 0.1 # minimum optimizing range around joint points
-          clearance_for_only_smoothing: 1.0 # 0.1 # minimum optimizing range when applying only smoothing
+          clearance_for_smoothing: 1.0 # 0.1 # minimum optimizing range when applying only smoothing
 
         qp:
           max_iteration: 10000 # max iteration when solving QP

@@ -27,40 +27,41 @@ namespace
 {
 // make positive semidefinite matrix for objective function
 // reference: https://ieeexplore.ieee.org/document/7402333
+// NOTE: matrix size is (2 num_points x 2 num_points)
 Eigen::MatrixXd makePMatrix(const int num_points)
 {
   // create P block matrix
-  Eigen::MatrixXd P_block = Eigen::MatrixXd::Zero(num_points, num_points);
+  Eigen::MatrixXd P_quater = Eigen::MatrixXd::Zero(num_points, num_points);
   for (int r = 0; r < num_points; ++r) {
     for (int c = 0; c < num_points; ++c) {
       if (r == c) {
         if (r == 0 || r == num_points - 1) {
-          P_block(r, c) = 1.0;
+          P_quater(r, c) = 1.0;
         } else if (r == 1 || r == num_points - 2) {
-          P_block(r, c) = 5.0;
+          P_quater(r, c) = 5.0;
         } else {
-          P_block(r, c) = 6.0;
+          P_quater(r, c) = 6.0;
         }
       } else if (std::abs(c - r) == 1) {
         if (r == 0 || r == num_points - 1) {
-          P_block(r, c) = -2.0;
+          P_quater(r, c) = -2.0;
         } else if (c == 0 || c == num_points - 1) {
-          P_block(r, c) = -2.0;
+          P_quater(r, c) = -2.0;
         } else {
-          P_block(r, c) = -4.0;
+          P_quater(r, c) = -4.0;
         }
       } else if (std::abs(c - r) == 2) {
-        P_block(r, c) = 1.0;
+        P_quater(r, c) = 1.0;
       } else {
-        P_block(r, c) = 0.0;
+        P_quater(r, c) = 0.0;
       }
     }
   }
 
   // create P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(num_points * 2, num_points * 2);
-  P.block(0, 0, num_points, num_points) = P_block;
-  P.block(num_points, num_points, num_points, num_points) = P_block;
+  P.block(0, 0, num_points, num_points) = P_quater;
+  P.block(num_points, num_points, num_points, num_points) = P_quater;
 
   return P;
 }
@@ -92,15 +93,15 @@ EBPathSmoother::EBPathSmoother(
   debug_data_ptr_(debug_data_ptr)
 {
   // eb param
-  initializeEBParam(node);
+  eb_param_ = EBParam(node);
 
-  {  // osqp_solver_ptr_
+  {  // initialize osqp solver
     const auto & qp_param = eb_param_.qp_param;
 
-    const Eigen::MatrixXd p = makePMatrix(eb_param_.num_sampling_points_for_eb);
-    const Eigen::MatrixXd a = makeAMatrix(eb_param_.num_sampling_points_for_eb);
+    const Eigen::MatrixXd p = makePMatrix(eb_param_.num_sampling_points);
+    const Eigen::MatrixXd a = makeAMatrix(eb_param_.num_sampling_points);
 
-    const int num_points = eb_param_.num_sampling_points_for_eb;
+    const int num_points = eb_param_.num_sampling_points;
     const std::vector<double> q(num_points * 2, 0.0);
     const std::vector<double> lower_bound(num_points * 2, 0.0);
     const std::vector<double> upper_bound(num_points * 2, 0.0);
@@ -115,80 +116,15 @@ EBPathSmoother::EBPathSmoother(
   debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_trajectory", 1);
 }
 
-void EBPathSmoother::initializeEBParam(rclcpp::Node * node)
+void EBPathSmoother::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
-  eb_param_ = EBParam{};
-
-  {  // common
-    eb_param_.num_joint_buffer_points =
-      node->declare_parameter<int>("advanced.eb.common.num_joint_buffer_points");
-    eb_param_.num_offset_for_begin_idx =
-      node->declare_parameter<int>("advanced.eb.common.num_offset_for_begin_idx");
-    eb_param_.delta_arc_length_for_eb =
-      node->declare_parameter<double>("advanced.eb.common.delta_arc_length_for_eb");
-    eb_param_.num_sampling_points_for_eb =
-      node->declare_parameter<int>("advanced.eb.common.num_sampling_points_for_eb");
-  }
-
-  {  // clearance
-    eb_param_.clearance_for_straight_line =
-      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_straight_line");
-    eb_param_.clearance_for_joint =
-      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
-    eb_param_.clearance_for_only_smoothing =
-      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_only_smoothing");
-  }
-
-  {  // qp
-    eb_param_.qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
-    eb_param_.qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
-    eb_param_.qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
-  }
-
-  {  // other
-    eb_param_.clearance_for_fixing = 0.0;
-  }
+  eb_param_.onParam(parameters);
 }
 
 void EBPathSmoother::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
-}
-
-void EBPathSmoother::onParam(const std::vector<rclcpp::Parameter> & parameters)
-{
-  using tier4_autoware_utils::updateParam;
-
-  {  // common
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_joint_buffer_points", eb_param_.num_joint_buffer_points);
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_offset_for_begin_idx",
-      eb_param_.num_offset_for_begin_idx);
-    updateParam<double>(
-      parameters, "advanced.eb.common.delta_arc_length_for_eb", eb_param_.delta_arc_length_for_eb);
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_sampling_points_for_eb",
-      eb_param_.num_sampling_points_for_eb);
-  }
-
-  {  // clearance
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_straight_line",
-      eb_param_.clearance_for_straight_line);
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_joint", eb_param_.clearance_for_joint);
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_only_smoothing",
-      eb_param_.clearance_for_only_smoothing);
-  }
-
-  {  // qp
-    updateParam<int>(parameters, "advanced.eb.qp.max_iteration", eb_param_.qp_param.max_iteration);
-    updateParam<double>(parameters, "advanced.eb.qp.eps_abs", eb_param_.qp_param.eps_abs);
-    updateParam<double>(parameters, "advanced.eb.qp.eps_rel", eb_param_.qp_param.eps_rel);
-  }
 }
 
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
@@ -199,34 +135,45 @@ EBPathSmoother::getEBTrajectory(
   debug_data_ptr_->tic(__func__);
 
   const auto & p = planner_data;
-  const auto & path = p.path;
-  const auto & ego_pose = p.ego_pose;
-  const double ego_vel = p.ego_vel;
 
-  // current_ego_vel_ = ego_vel;
+  // 1. convert path points to trajectory points
+  const auto traj_points = trajectory_utils::convertToTrajectoryPoints(p.path.points);
 
-  /*
-  // get candidate points for optimization
-  // decide fix or non fix, might not required only for smoothing purpose
-  const CandidatePoints candidate_points =
-    getCandidatePoints(ego_pose, path.points, prev_eb_traj);
-  if (candidate_points.fixed_points.empty() && candidate_points.non_fixed_points.empty()) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
-      "return boost::none since empty candidate points");
-    return boost::none;
-  }
-  */
+  // 2. insert fixed point
+  const auto traj_points_with_fixed_point = insertFixedPoint(traj_points, prev_eb_traj);
 
-  // get optimized smooth points with elastic band
-  const auto eb_traj_points_opt = getOptimizedTrajectory(ego_pose, path);
-  if (!eb_traj_points_opt) {
+  // 3. crop trajectory
+  const double forward_traj_length = eb_param_.num_sampling_points * eb_param_.delta_arc_length;
+  const double backward_traj_length = traj_param_.output_backward_traj_length;
+
+  const size_t ego_seg_idx = trajectory_utils::findEgoSegmentIndex(
+    traj_points_with_fixed_point, p.ego_pose, ego_nearest_param_);
+  const auto cropped_traj_points = trajectory_utils::cropPoints(
+    traj_points_with_fixed_point, p.ego_pose.position, ego_seg_idx, forward_traj_length,
+    -backward_traj_length);
+
+  // 4. resample trajectory for logic purpose
+  const auto resampled_traj_points =
+    trajectory_utils::resampleTrajectoryPoints(cropped_traj_points, eb_param_.delta_arc_length);
+
+  // 5. pad trajectory points
+  const auto [padded_traj_points, pad_start_idx] = getPaddedTrajectoryPoints(resampled_traj_points);
+
+  // 6. update constrain for elastic band's QP
+  updateConstrain(padded_traj_points);
+
+  // 7. get optimized smooth points with elastic band
+  const auto optimized_points = optimizeTrajectory(traj_points);
+  if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
       "return boost::none since smoothing failed");
     return boost::none;
   }
-  const auto eb_traj_points = eb_traj_points_opt.get();
+
+  // convert to trajectory
+  const auto eb_traj_points =
+    convertOptimizedPointsToTrajectory(optimized_points.get(), pad_start_idx);
 
   debug_data_ptr_->eb_traj = eb_traj_points;
 
@@ -239,118 +186,75 @@ EBPathSmoother::getEBTrajectory(
   return eb_traj_points;
 }
 
-boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-EBPathSmoother::getOptimizedTrajectory(const geometry_msgs::msg::Pose & ego_pose, const Path & path)
+std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
+  const std::vector<TrajectoryPoint> & traj_points,
+  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
 {
-  debug_data_ptr_->tic(__func__);
-
-  // make function: trimPathPoints
-
-  const double forward_distance = 10;  // 50;
-  // TODO(murooka)    traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
-  const double backward_distance = 10;  // traj_param_.output_backward_traj_length;
-
-  const double tmp_margin = 0;  // 20.0;
-
-  // crop path
-  const size_t ego_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(path.points, ego_pose, ego_nearest_param_);
-  const auto cropped_path_points = trajectory_utils::cropPoints(
-    path.points, ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
-    -backward_distance - tmp_margin);
-
-  // interpolate points for logic purpose
-  Path cropped_path;
-  cropped_path.points = cropped_path_points;
-  const auto resampled_path =
-    motion_utils::resamplePath(cropped_path, eb_param_.delta_arc_length_for_eb);
-
-  // pad path points
-  const auto [padded_path_points, pad_start_idx] = getPaddedPathPoints(resampled_path.points);
-
-  // calculate rectangle size vector
-  const size_t num_fixed_points = 1;
-  const auto rect_size_vec = getRectangleSizeVector(padded_path_points, num_fixed_points);
-
-  // update constrain for elastic band's QP
-  updateConstrain(padded_path_points, rect_size_vec);
-
-  // optimize trajectory by elastic band
-  const auto optimized_points = optimizeTrajectory(padded_path_points);
-  if (!optimized_points) {
-    return boost::none;
+  if (!prev_eb_traj) {
+    return traj_points;
   }
 
-  // convert to trajectory
-  const auto traj_points =
-    convertOptimizedPointsToTrajectory(optimized_points.get(), pad_start_idx);
+  auto traj_points_with_fixed_point = traj_points;
+  const size_t prev_front_seg_idx = trajectory_utils::findEgoSegmentIndex(
+    *prev_eb_traj, traj_points.front().pose, ego_nearest_param_);
+  const size_t prev_front_point_idx = prev_front_seg_idx;
+  const auto & prev_front_point =
+    trajectory_utils::convertToTrajectoryPoint(prev_eb_traj->at(prev_front_point_idx));
 
-  debug_data_ptr_->toc(__func__, "        ");
-  return traj_points;
+  // update front point of ref_points
+  trajectory_utils::insertFrontPoint(traj_points_with_fixed_point, prev_front_point);
+
+  return traj_points_with_fixed_point;
 }
 
-std::tuple<std::vector<PathPoint>, size_t> EBPathSmoother::getPaddedPathPoints(
-  const std::vector<PathPoint> & path_points)
+std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & traj_points)
 {
   const size_t pad_start_idx =
-    std::min(static_cast<size_t>(eb_param_.num_sampling_points_for_eb), path_points.size());
-  std::cerr << path_points.size() << std::endl;
-  std::cerr << pad_start_idx << std::endl;
+    std::min(static_cast<size_t>(eb_param_.num_sampling_points), traj_points.size());
+  // std::cerr << _points.size() << std::endl;
+  // std::cerr << pad_start_idx << std::endl;
 
-  std::vector<PathPoint> padded_path_points;
-  for (int i = 0; i < eb_param_.num_sampling_points_for_eb; ++i) {
+  std::vector<TrajectoryPoint> padded_traj_points;
+  for (int i = 0; i < eb_param_.num_sampling_points; ++i) {
     const size_t point_idx = i < pad_start_idx ? i : pad_start_idx - 1;
-    padded_path_points.push_back(path_points.at(point_idx));
+    padded_traj_points.push_back(traj_points.at(point_idx));
 
-    std::cerr << padded_path_points.back().pose.position.x << " "
-              << padded_path_points.back().pose.position.y << std::endl;
+    // std::cerr << padded_path_points.back().pose.position.x << " "
+    //           << padded_path_points.back().pose.position.y << std::endl;
   }
 
-  return {padded_path_points, pad_start_idx};
+  return {padded_traj_points, pad_start_idx};
 }
 
-std::vector<double> EBPathSmoother::getRectangleSizeVector(
-  const std::vector<PathPoint> & path_points, const int num_fixed_points)
+void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_points)
 {
-  std::vector<double> rect_size_vec;
-  for (int i = 0; i < eb_param_.num_sampling_points_for_eb; ++i) {
-    if (i < num_fixed_points) {
-      rect_size_vec.push_back(eb_param_.clearance_for_fixing);
-    } else {
-      rect_size_vec.push_back(eb_param_.clearance_for_only_smoothing);
-    }
-  }
+  const int num_points = eb_param_.num_sampling_points;
 
-  return rect_size_vec;
-}
-
-void EBPathSmoother::updateConstrain(
-  const std::vector<PathPoint> & path_points, const std::vector<double> & rect_size_vec)
-{
-  const int num_points = eb_param_.num_sampling_points_for_eb;
-
-  Eigen::MatrixXd A = makeAMatrix(eb_param_.num_sampling_points_for_eb);
-  std::vector<double> lower_bound(num_points * 2, 0.0);
+  Eigen::MatrixXd A = makeAMatrix(eb_param_.num_sampling_points);
   std::vector<double> upper_bound(num_points * 2, 0.0);
+  std::vector<double> lower_bound(num_points * 2, 0.0);
   for (int i = 0; i < num_points; ++i) {
+    const double rect_size =
+      (i == 0) ? eb_param_.clearance_for_fixing : eb_param_.clearance_for_smoothing;
+
     const auto constrain =
-      getConstrainLinesFromConstrainRectangle(path_points.at(i).pose, rect_size_vec.at(i));
+      getConstrainLinesFromConstrainRectangle(traj_points.at(i).pose, rect_size);
+
     // constraint for x
     A(i, i) = constrain.x.coef(0);
     A(i, i + num_points) = constrain.x.coef(1);
-    lower_bound[i] = constrain.x.lower_bound;
     upper_bound[i] = constrain.x.upper_bound;
+    lower_bound[i] = constrain.x.lower_bound;
+
     // constraint for y
     A(i + num_points, i) = constrain.y.coef(0);
     A(i + num_points, i + num_points) = constrain.y.coef(1);
-    lower_bound[i + num_points] = constrain.y.lower_bound;
     upper_bound[i + num_points] = constrain.x.upper_bound;
-
-    std::cerr << "[" << constrain.x.lower_bound << "," << constrain.x.upper_bound << "], ["
-              << constrain.y.lower_bound << "," << constrain.x.upper_bound << "]" << std::endl;
+    lower_bound[i + num_points] = constrain.y.lower_bound;
   }
 
-  std::cerr << A << std::endl;
+  // std::cerr << A << std::endl;
   osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
   osqp_solver_ptr_->updateA(A);
 }
@@ -393,7 +297,7 @@ EBPathSmoother::ConstrainLines EBPathSmoother::getConstrainLinesFromConstrainRec
 }
 
 boost::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
-  const std::vector<PathPoint> & path_points)
+  const std::vector<TrajectoryPoint> & traj_points)
 {
   debug_data_ptr_->tic(__func__);
 
@@ -427,7 +331,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
   for (size_t i = 0; i < pad_start_idx; ++i) {
     autoware_auto_planning_msgs::msg::TrajectoryPoint tmp_point;
     tmp_point.pose.position.x = optimized_points.at(i);
-    tmp_point.pose.position.y = optimized_points.at(i + eb_param_.num_sampling_points_for_eb);
+    tmp_point.pose.position.y = optimized_points.at(i + eb_param_.num_sampling_points);
     traj_points.push_back(tmp_point);
 
     // std::cerr << tmp_point.pose.position.x << " " << tmp_point.pose.position.y << std::endl;
@@ -435,7 +339,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
   // std::cerr << optimized_points.size() << " " << pad_start_idx << std::endl;
 
   for (const auto & d : optimized_points) {
-    std::cerr << d << std::endl;
+    // std::cerr << d << std::endl;
   }
 
   // update orientation
@@ -454,129 +358,4 @@ std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
 
   return traj_points;
 }
-
-// std::vector<geometry_msgs::msg::Pose> EBPathSmoother::getFixedPoints(
-//   const geometry_msgs::msg::Pose & ego_pose,
-//   [[maybe_unused]] const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-//   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
-// {
-//   /* use of prev_traj_points(fine resolution) instead of prev_opt_traj(coarse resolution)
-//      stabilize trajectory's yaw*/
-//   if (prev_eb_traj) {
-//     if (prev_eb_traj->empty()) {
-//       std::vector<geometry_msgs::msg::Pose> empty_points;
-//       return empty_points;
-//     }
-//     const size_t begin_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-//       prev_eb_traj, ego_pose, traj_param_.ego_nearest_dist_threshold,
-//       traj_param_.ego_nearest_yaw_threshold);
-//     const int backward_fixing_idx = std::max(
-//       static_cast<int>(
-//         begin_idx -
-//         traj_param_.output_backward_traj_length / traj_param_.output_delta_arc_length),
-//       0);
-//
-//     // NOTE: Fixed length of EB has to be longer than that of MPT.
-//     constexpr double forward_fixed_length_margin = 5.0;
-//     const double forward_fixed_length = std::max(
-//       current_ego_vel_ * traj_param_.forward_fixing_min_time + forward_fixed_length_margin,
-//       traj_param_.forward_fixing_min_distance);
-//
-//     const int forward_fixing_idx = std::min(
-//       static_cast<int>(
-//         begin_idx + forward_fixed_length / traj_param_.output_delta_arc_length),
-//       static_cast<int>(prev_eb_traj->size() - 1));
-//     std::vector<geometry_msgs::msg::Pose> fixed_points;
-//     for (int i = backward_fixing_idx; i <= forward_fixing_idx; i++) {
-//       fixed_points.push_back(prev_eb_traj->at(i).pose);
-//     }
-//     return fixed_points;
-//   } else {
-//     std::vector<geometry_msgs::msg::Pose> empty_points;
-//     return empty_points;
-//   }
-// }
-//
-// EBPathSmoother::CandidatePoints EBPathSmoother::getCandidatePoints(
-//   const geometry_msgs::msg::Pose & ego_pose,
-//   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-//   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
-// {
-//   const std::vector<geometry_msgs::msg::Pose> fixed_points =
-//     getFixedPoints(ego_pose, path_points, prev_eb_traj);
-//   if (fixed_points.empty()) {
-//     CandidatePoints candidate_points = getDefaultCandidatePoints(path_points);
-//     return candidate_points;
-//   }
-//
-//   // try to find non-fix points
-//   const auto opt_begin_idx = motion_utils::findNearestIndex(
-//     path_points, fixed_points.back(), std::numeric_limits<double>::max(),
-//     traj_param_.delta_yaw_threshold_for_closest_point);
-//   if (!opt_begin_idx) {
-//     CandidatePoints candidate_points;
-//     candidate_points.fixed_points = fixed_points;
-//     candidate_points.begin_path_idx = path_points.size();
-//     candidate_points.end_path_idx = path_points.size();
-//     return candidate_points;
-//   }
-//
-//   const int begin_idx = std::min(
-//     static_cast<int>(opt_begin_idx.get()) + eb_param_.num_offset_for_begin_idx,
-//     static_cast<int>(path_points.size()) - 1);
-//
-//   std::vector<geometry_msgs::msg::Pose> non_fixed_points;
-//   for (size_t i = begin_idx; i < path_points.size(); i++) {
-//     non_fixed_points.push_back(path_points[i].pose);
-//   }
-//   CandidatePoints candidate_points;
-//   candidate_points.fixed_points = fixed_points;
-//   candidate_points.non_fixed_points = non_fixed_points;
-//   candidate_points.begin_path_idx = begin_idx;
-//   candidate_points.end_path_idx = path_points.size() - 1;
-//
-//   debug_data_ptr_->fixed_points = candidate_points.fixed_points;
-//   debug_data_ptr_->non_fixed_points = candidate_points.non_fixed_points;
-//   return candidate_points;
-// }
-//
-// EBPathSmoother::CandidatePoints EBPathSmoother::getDefaultCandidatePoints(
-//   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points)
-// {
-//   double accum_arc_length = 0;
-//   int end_path_idx = 0;
-//   std::vector<geometry_msgs::msg::Pose> fixed_points;
-//   for (size_t i = 0; i < path_points.size(); i++) {
-//     if (i > 0) {
-//       accum_arc_length += tier4_autoware_utils::calcDistance2d(
-//         path_points[i].pose.position, path_points[i - 1].pose.position);
-//     }
-//     if (
-//       accum_arc_length > eb_param_.num_sampling_points_for_eb *
-//       eb_param_.delta_arc_length_for_eb) { break;
-//     }
-//     end_path_idx = i;
-//     fixed_points.push_back(path_points[i].pose);
-//   }
-//   CandidatePoints candidate_points;
-//   candidate_points.fixed_points = fixed_points;
-//   candidate_points.begin_path_idx = 0;
-//   candidate_points.end_path_idx = end_path_idx;
-//   return candidate_points;
-// }
-//
-// int EBPathSmoother::getNumFixedPoints(
-//   const std::vector<geometry_msgs::msg::Pose> & fixed_points,
-//   const std::vector<geometry_msgs::msg::Pose> & interpolated_points, const int farthest_idx)
-// {
-//   int num_fixed_points = 0;
-//   if (!fixed_points.empty() && !interpolated_points.empty()) {
-//     std::vector<geometry_msgs::msg::Pose> interpolated_points =
-//     motion_utils::resamplePath(fixed_points, eb_param_.delta_arc_length_for_eb); std::cerr <<
-//     "PO2 " << interpolated_points.size() << std::endl; num_fixed_points =
-//     interpolated_points.size();
-//   }
-//   num_fixed_points = std::min(num_fixed_points, farthest_idx);
-//   return num_fixed_points;
-// }
 }  // namespace collision_free_path_planner

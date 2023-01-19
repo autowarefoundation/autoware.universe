@@ -244,8 +244,9 @@ bool CollisionFreePathPlanner::isDataReady(const Path & path)
     return false;
   }
 
-  if (path.points.empty()) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "Path is empty.");
+  if (path.points.size() < 2) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Path points size is less than 1.");
     return false;
   }
 
@@ -326,15 +327,17 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   }
 
   // 2. Elastic Band: smooth trajectory if enable_smoothing is true
+  const auto eb_traj = enable_smoothing_
+                         ? eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_)
+                         : trajectory_utils::convertToTrajectoryPoints(p.path.points);
+  /*
   const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
-    // TODO(murooka) enable EB
-    /*
-if (enable_smoothing_) {
-return eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
-}
-    */
+    if (enable_smoothing_) {
+      return eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
+    }
     return trajectory_utils::convertToTrajectoryPoints(p.path.points);
   }();
+  */
   if (!eb_traj) {
     return getPrevOptimizedTrajectory(p.path.points);
   }

@@ -188,12 +188,11 @@ MPTOptimizer::MPTOptimizer(
     StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
 
   // osqp solver
-  // osqp_solver_.updateEpsAbs(osqp_epsilon_);
   osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_);
 
   // publisher
-  debug_mpt_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
-  debug_mpt_ref_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_ref_traj", 1);
+  debug_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
+  debug_ref_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_ref_traj", 1);
   debug_mpt_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_traj", 1);
 }
 
@@ -216,9 +215,7 @@ void MPTOptimizer::initializeMPTParam(
   }
 
   {  // common
-    mpt_param_.num_curvature_sampling_points =
-      node->declare_parameter<int>("mpt.common.num_curvature_sampling_points");
-
+    mpt_param_.num_sampling_points = node->declare_parameter<int>("mpt.common.num_sampling_points");
     mpt_param_.delta_arc_length = node->declare_parameter<double>("mpt.common.delta_arc_length");
   }
 
@@ -354,10 +351,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   }
 
   // common
-  updateParam<int>(
-    parameters, "mpt.common.num_curvature_sampling_points",
-    mpt_param_.num_curvature_sampling_points);
-
+  updateParam<int>(parameters, "mpt.common.num_sampling_points", mpt_param_.num_sampling_points);
   updateParam<double>(parameters, "mpt.common.delta_arc_length", mpt_param_.delta_arc_length);
 
   // kinematics
@@ -519,7 +513,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   const auto & p = planner_data;
 
-  const double forward_traj_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
+  const double forward_traj_length = mpt_param_.num_sampling_points * mpt_param_.delta_arc_length;
   const double backward_traj_length = traj_param_.output_backward_traj_length;
 
   // 1. resample and convert smoothed points type from trajectory points to reference points
@@ -565,7 +559,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // NOTE: This must be after bounds calculation and updateOrientation
   calcExtraPoints(ref_points);
 
-  const double ref_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
+  const double ref_length = mpt_param_.num_sampling_points * mpt_param_.delta_arc_length;
   ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length);
 
   // bounds information is assigned to debug data after truncating reference points
@@ -669,7 +663,8 @@ void MPTOptimizer::calcFixedPoint(std::vector<ReferencePoint> & ref_points) cons
   // TODO(murooka) check deviation
 
   // update front point of ref_points
-  trajectory_utils::insertFrontReferencePoint(ref_points, prev_ref_front_point);
+  trajectory_utils::insertFrontPoint(ref_points, prev_ref_front_point);
+  ref_points.front().fix_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
 }
 
 // cost function: J = x' Q x + u' R u
@@ -1352,11 +1347,11 @@ void MPTOptimizer::updateVehicleBounds(
 
         const size_t prev_idx = std::clamp(
           collision_check_idx - 1, static_cast<size_t>(0),
-          static_cast<size_t>(ref_points_spline.getSize() - 2));
+          static_cast<size_t>(ref_points_spline.getSize() - 1));
         const size_t next_idx = prev_idx + 1;
 
-        const auto prev_bounds = ref_points.at(prev_idx).bounds;
-        const auto next_bounds = ref_points.at(next_idx).bounds;
+        const auto & prev_bounds = ref_points.at(prev_idx).bounds;
+        const auto & next_bounds = ref_points.at(next_idx).bounds;
 
         const double prev_s = ref_points_spline.getAccumulatedLength(prev_idx);
         const double next_s = ref_points_spline.getAccumulatedLength(next_idx);
@@ -1369,38 +1364,6 @@ void MPTOptimizer::updateVehicleBounds(
 
       ref_points.at(p_idx).bounds_on_constraints.push_back(bounds);
       ref_points.at(p_idx).pose_on_constraints.push_back(vehicle_bounds_pose);
-      /*
-      for (size_t r_idx = 0; r_idx < ref_points.size(); ++r_idx) {
-        const double current_s = ref_points_spline.getAccumulatedLength(r_idx);
-        if (collision_check_s <= current_s) {
-          double prev_avoid_idx;
-          if (r_idx == 0) {
-            prev_avoid_idx = r_idx;
-          } else {
-            prev_avoid_idx = r_idx - 1;
-          }
-
-          const double prev_s =
-            ref_points_spline.getAccumulatedLength(prev_avoid_idx);
-          const double next_s =
-            ref_points_spline.getAccumulatedLength(prev_avoid_idx + 1);
-          const double ratio = (collision_check_s - prev_s) / (next_s - prev_s);
-
-          const auto prev_bounds = ref_points.at(prev_avoid_idx).bounds;
-          const auto next_bounds = ref_points.at(prev_avoid_idx + 1).bounds;
-
-          auto bounds = Bounds::lerp(prev_bounds, next_bounds, ratio);
-          bounds.translate(offset_y);
-
-          ref_points.at(p_idx).vehicle_bounds.push_back(bounds);
-          break;
-        }
-
-        if (r_idx == ref_points.size() - 1) {
-          ref_points.at(p_idx).vehicle_bounds.push_back(ref_points.back().bounds);
-        }
-      }
-      */
     }
   }
 
@@ -1414,12 +1377,12 @@ void MPTOptimizer::publishDebugTrajectories(
   // reference points
   const auto ref_traj = trajectory_utils::createTrajectory(
     header, trajectory_utils::convertToTrajectoryPoints(ref_points));
-  debug_mpt_ref_traj_pub_->publish(ref_traj);
+  debug_ref_traj_pub_->publish(ref_traj);
 
   // fixed reference points
-  const auto mpt_fixed_traj_points = extractFixedPoints(ref_points);
-  const auto mpt_fixed_traj = trajectory_utils::createTrajectory(header, mpt_fixed_traj_points);
-  debug_mpt_fixed_traj_pub_->publish(mpt_fixed_traj);
+  const auto fixed_traj_points = extractFixedPoints(ref_points);
+  const auto fixed_traj = trajectory_utils::createTrajectory(header, fixed_traj_points);
+  debug_fixed_traj_pub_->publish(fixed_traj);
 
   // mpt points
   const auto mpt_traj = trajectory_utils::createTrajectory(header, mpt_traj_points);

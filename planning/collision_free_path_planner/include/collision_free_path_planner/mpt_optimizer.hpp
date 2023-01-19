@@ -148,13 +148,13 @@ private:
     bool enable_manual_warm_start;
     bool steer_limit_constraint;
     bool fix_points_around_ego;
-    int num_curvature_sampling_points;
     bool is_fixed_point_single;
 
     std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
     std::vector<double> vehicle_circle_radiuses;
 
     double delta_arc_length;
+    int num_sampling_points;
 
     double hard_clearance_from_road;
     double soft_clearance_from_road;
@@ -189,8 +189,8 @@ private:
   };
 
   // publisher
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_fixed_traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_ref_traj_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_fixed_traj_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_ref_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_traj_pub_;
 
   // argument parameter

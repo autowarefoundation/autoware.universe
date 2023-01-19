@@ -311,8 +311,23 @@ Trajectory createTrajectory(
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
 
-void insertFrontReferencePoint(
-  std::vector<ReferencePoint> & points, const ReferencePoint & target_point);
+template <typename T>
+void insertFrontPoint(std::vector<T> & points, const T & target_point)
+{
+  const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_point);
+
+  constexpr double epsilon = 1e-3;
+  if (dist < epsilon) {
+    // update front point (in order to reset member variables)
+    points.front() = T();
+  } else {
+    // add new front point
+    points.insert(points.begin(), T());
+  }
+
+  // only pose is updated
+  points.front().pose = target_point.pose;
+}
 }  // namespace trajectory_utils
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_

@@ -124,25 +124,7 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const auto traj = motion_utils::convertToTrajectory(traj_points);
   const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
   return motion_utils::convertToTrajectoryPointArray(resampled_traj);
-}
-
-void insertFrontReferencePoint(
-  std::vector<ReferencePoint> & points, const ReferencePoint & target_point)
-{
-  const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_point);
-
-  constexpr double epsilon = 1e-3;
-  if (dist < epsilon) {
-    // update front point (in order to reset member variables)
-    points.front() = ReferencePoint();
-  } else {
-    // add new front point
-    points.insert(points.begin(), ReferencePoint());
-  }
-
-  // only pose and fix_kinematic_state is updated
-  points.front().pose = target_point.pose;
-  points.front().fix_kinematic_state = target_point.optimized_kinematic_state;
+  // TODO(murooka) can be replaced with resampled_traj.points;
 }
 }  // namespace trajectory_utils
 }  // namespace collision_free_path_planner

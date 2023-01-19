@@ -57,14 +57,6 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
-  struct CandidatePoints
-  {
-    std::vector<geometry_msgs::msg::Pose> fixed_points;
-    std::vector<geometry_msgs::msg::Pose> non_fixed_points;
-    int begin_path_idx;
-    int end_path_idx;
-  };
-
   bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
   TrajectoryParam traj_param_;
@@ -75,46 +67,23 @@ private:
 
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
-  // double current_ego_vel_;
+  std::vector<TrajectoryPoint> insertFixedPoint(
+    const std::vector<TrajectoryPoint> & traj_point,
+    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
 
-  void initializeEBParam(rclcpp::Node * node);
+  std::tuple<std::vector<TrajectoryPoint>, size_t> getPaddedTrajectoryPoints(
+    const std::vector<TrajectoryPoint> & traj_points);
 
-  std::tuple<std::vector<PathPoint>, size_t> getPaddedPathPoints(
-    const std::vector<PathPoint> & path_points);
-
-  std::vector<double> getRectangleSizeVector(
-    const std::vector<PathPoint> & path_points, const int num_fixed_points = 1);
-
-  void updateConstrain(
-    const std::vector<PathPoint> & path_points, const std::vector<double> & rect_size_vec);
+  void updateConstrain(const std::vector<TrajectoryPoint> & traj_points);
 
   ConstrainLines getConstrainLinesFromConstrainRectangle(
     const geometry_msgs::msg::Pose & pose, const double rect_size);
 
   boost::optional<std::vector<double>> optimizeTrajectory(
-    const std::vector<PathPoint> & path_points);
+    const std::vector<TrajectoryPoint> & traj_points);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
     const std::vector<double> optimized_points, const size_t pad_start_idx);
-
-  boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-  getOptimizedTrajectory(
-    const geometry_msgs::msg::Pose & ego_pose, const autoware_auto_planning_msgs::msg::Path & path);
-
-  /*
-  std::vector<geometry_msgs::msg::Pose> getFixedPoints(
-    const geometry_msgs::msg::Pose & ego_pose,
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
-
-  CandidatePoints getCandidatePoints(
-    const geometry_msgs::msg::Pose & ego_pose,
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
-
-  CandidatePoints getDefaultCandidatePoints(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
-  */
 };
 }  // namespace collision_free_path_planner
 
