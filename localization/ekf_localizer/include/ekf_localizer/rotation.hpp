@@ -17,9 +17,8 @@
 
 #include <Eigen/Core>
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
-
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 Eigen::Vector3d quaternionToEulerXYZ(const tf2::Quaternion & q);
 Eigen::Vector3d quaternionToEulerXYZ(const geometry_msgs::msg::Quaternion & orientation);

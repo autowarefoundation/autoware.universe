@@ -21,8 +21,7 @@ Eigen::Vector3d quaternionToEulerXYZ(const tf2::Quaternion & q)
   return Eigen::Vector3d(roll, pitch, yaw);
 }
 
-Eigen::Vector3d quaternionToEulerXYZ(
-  const geometry_msgs::msg::Quaternion & quaternion)
+Eigen::Vector3d quaternionToEulerXYZ(const geometry_msgs::msg::Quaternion & quaternion)
 {
   tf2::Quaternion q;
   tf2::fromMsg(quaternion, q);

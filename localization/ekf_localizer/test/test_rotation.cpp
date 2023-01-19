@@ -16,7 +16,6 @@
 
 #include <gtest/gtest.h>
 
-
 TEST(QuaternionToEulerXYZ, SmokeTest)
 {
   // >>> from scipy.spatial.transform import Rotation
