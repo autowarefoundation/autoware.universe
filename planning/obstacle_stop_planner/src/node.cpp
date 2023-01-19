@@ -478,6 +478,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             one_step_move_vehicle_polygon2d.outer(),
             Point2d(one_step_move_vehicle_polygon.at(j).x, one_step_move_vehicle_polygon.at(j).y));
         }
+        one_step_move_vehicle_polygon.clear();
         // check collision
         std::deque<Point2d> intersect;
         bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, intersect);
