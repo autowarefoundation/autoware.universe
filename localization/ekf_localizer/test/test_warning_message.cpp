@@ -20,6 +20,5 @@ TEST(MahalanobisWarningMessage, SmokeTest)
 {
   EXPECT_STREQ(
     mahalanobisWarningMessage(1.0, 0.5).c_str(),
-    "The Mahalanobis distance 1.0000 is over the limit 0.5000."
-  );
+    "The Mahalanobis distance 1.0000 is over the limit 0.5000.");
 }

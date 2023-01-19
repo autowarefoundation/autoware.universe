@@ -15,7 +15,6 @@
 #include "ekf_localizer/warning_message.hpp"
 
 #include <fmt/core.h>
-
 #include <gtest/gtest.h>
 
 std::string mahalanobisWarningMessage(const double distance, const double max_distance)
