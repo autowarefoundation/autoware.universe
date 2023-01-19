@@ -19,6 +19,10 @@ The following features are supported for trajectory validation and can have thre
 - **Velocity deviation** : invalid if the planning velocity is too far from the ego velocity
 - **Distance deviation** : invalid if the ego is too far from the trajectory
 
+The following features are to be implemented.
+
+- **(TODO) TTC calculation** : invalid if the expected time-to-collision is too short on the trajectory
+
 ## Inputs/Outputs
 
 ### Inputs
