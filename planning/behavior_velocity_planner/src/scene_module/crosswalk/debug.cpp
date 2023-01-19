@@ -232,14 +232,15 @@ visualization_msgs::msg::MarkerArray CrosswalkModule::createVirtualWallMarkerArr
     stop_poses.push_back(p_front);
   }
   appendMarkerArray(
-    virtual_wall_marker_creator_->createStopVirtualWallMarker(stop_poses, "crosswalk", now, id),
+    virtual_wall_marker_creator_crosswalk_->createStopVirtualWallMarker(
+      stop_poses, "crosswalk", now, id),
     &wall_marker);
   for (const auto & p : debug_data_.slow_poses) {
     const auto p_front = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     slow_down_poses.push_back(p_front);
   }
   appendMarkerArray(
-    virtual_wall_marker_creator_->createSlowDownVirtualWallMarker(
+    virtual_wall_marker_creator_crosswalk_->createSlowDownVirtualWallMarker(
       slow_down_poses, "crosswalk", now, id),
     &wall_marker);
 
@@ -258,7 +259,8 @@ visualization_msgs::msg::MarkerArray WalkwayModule::createVirtualWallMarkerArray
     stop_poses.push_back(p_front);
   }
   appendMarkerArray(
-    virtual_wall_marker_creator_->createStopVirtualWallMarker(stop_poses, "walkway", now, id),
+    virtual_wall_marker_creator_walkway_->createStopVirtualWallMarker(
+      stop_poses, "walkway", now, id),
     &wall_marker);
   return wall_marker;
 }

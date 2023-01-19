@@ -183,14 +183,14 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createStopVirtual
 }
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createSlowDownVirtualWallMarker(
-  const std::vector<Pose> & slow_sown_poses, const std::string & module_name,
+  const std::vector<Pose> & slow_down_poses, const std::string & module_name,
   const rclcpp::Time & now, int32_t id, const double longitudinal_offset)
 {
   create_wall_function f1 = motion_utils::createSlowDownVirtualWallMarker;
   delete_wall_function f2 = motion_utils::createDeletedSlowDownVirtualWallMarker;
 
   return handleVirtualWallMarker(
-    slow_sown_poses, module_name, now, id, f1, f2, previous_slow_down_poses_, longitudinal_offset);
+    slow_down_poses, module_name, now, id, f1, f2, previous_slow_down_poses_, longitudinal_offset);
 }
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createDeadLineVirtualWallMarker(

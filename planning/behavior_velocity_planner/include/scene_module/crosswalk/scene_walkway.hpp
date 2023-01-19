@@ -74,7 +74,8 @@ private:
   // Debug
   DebugData debug_data_;
 
-  std::unique_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_;
+  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_walkway_ =
+    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
 }  // namespace behavior_velocity_planner
 
