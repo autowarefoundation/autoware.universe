@@ -50,11 +50,6 @@ PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWith
 
 bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
-  const double original_lane_length, const lanelet::ConstLanelets & target_lanelets,
-  const double target_lane_length);
-
-bool isPathInLanelets(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets);
 
 double getExpectedVelocityWhenDecelerate(
