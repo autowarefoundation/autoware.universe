@@ -84,30 +84,27 @@ struct DebugData
 {
   struct StreamWithPrint
   {
-    StreamWithPrint & operator<<(const std::string & s)
+    template <typename T>
+    StreamWithPrint & operator<<(const T & msg)
     {
-      sstream << s;
-      if (s.back() == '\n') {
-        std::string tmp_str = sstream.str();
-        debug_str += tmp_str;
-
-        if (enable_calculation_time_info) {
-          tmp_str.pop_back();  // NOTE: remove '\n' which is unnecessary for RCLCPP_INFO_STREAM
-          RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), tmp_str);
-        }
-        sstream.str("");
-      }
+      sstream << msg;
       return *this;
     }
 
-    StreamWithPrint & operator<<(const double d)
+    void endLine()
     {
-      sstream << d;
-      return *this;
+      const auto msg = sstream.str();
+      accumulated_msg += msg + "\n";
+
+      if (enable_calculation_time_info) {
+        // msg.pop_back();  // NOTE: remove '\n' which is unnecessary for RCLCPP_INFO_STREAM
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), msg);
+      }
+      sstream.str("");
     }
 
     bool enable_calculation_time_info;
-    std::string debug_str = "\n";
+    std::string accumulated_msg = "\n";
     std::stringstream sstream;
   };
 
@@ -124,10 +121,11 @@ struct DebugData
   void toc(const std::string & func_name, const std::string & white_spaces)
   {
     const double elapsed_time = stop_watch_.toc(func_name);
-    msg_stream << white_spaces << func_name << ":= " << elapsed_time << " [ms]\n";
+    msg_stream << white_spaces << func_name << ":= " << elapsed_time << " [ms]";
+    msg_stream.endLine();
   }
 
-  std::string getAccumulatedTimeString() const { return msg_stream.debug_str; }
+  std::string getAccumulatedTimeString() const { return msg_stream.accumulated_msg; }
 
   // string stream for calculation time
   StreamWithPrint msg_stream;
