@@ -166,7 +166,7 @@ void findClosestPointToTrajectory(
 
 void findClosestLateralPointToTrajectory(
   const geometry_msgs::msg::Point & point, const TrajectoryPoints & output,
-  geometry_msgs::msg::Point * lateral_nearest_point, double *deviation);
+  geometry_msgs::msg::Point * lateral_nearest_point, double * deviation);
 
 std::string jsonDumpsPose(const Pose & pose);
 

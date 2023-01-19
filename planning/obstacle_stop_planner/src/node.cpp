@@ -413,7 +413,9 @@ void ObstacleStopPlannerNode::searchObstacle(
                 p.x = point.x();
                 p.y = point.y();
                 findClosestPointToTrajectory(output, p, planner_data.closest_slow_down_point, idx);
-                findClosestLateralPointToTrajectory(p, output, &planner_data.closest_slow_down_point, &planner_data.predicted_lateral_deviation);
+                findClosestLateralPointToTrajectory(
+                  p, output, &planner_data.closest_slow_down_point,
+                  &planner_data.predicted_lateral_deviation);
               }
             }
             debug_ptr_->pushObstaclePoint(
@@ -705,7 +707,7 @@ void ObstacleStopPlannerNode::insertVelocity(
         DebugValues::TYPE::SLOWDOWN_OBSTACLE_DISTANCE,
         dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
       SlowDownSection slow_down_section;
-      if(node_param_.use_predicted_object){
+      if (node_param_.use_predicted_object) {
         slow_down_section = createSlowDownSection(
           index_with_dist_remain.get().first, output, planner_data.predicted_lateral_deviation,
           index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
