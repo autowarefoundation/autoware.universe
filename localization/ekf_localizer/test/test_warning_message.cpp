@@ -18,10 +18,6 @@
 
 TEST(DelayTimeWarningMessage, SmokeTest)
 {
-  EXPECT_STREQ(
-    delayTimeWarningMessage(-1.0).c_str(),
-    "Delay time -1 cannot be less than zero.");
-  EXPECT_STREQ(
-    delayTimeWarningMessage(-0.4).c_str(),
-    "Delay time -0.4 cannot be less than zero.");
+  EXPECT_STREQ(delayTimeWarningMessage(-1.0).c_str(), "Delay time -1 cannot be less than zero.");
+  EXPECT_STREQ(delayTimeWarningMessage(-0.4).c_str(), "Delay time -0.4 cannot be less than zero.");
 }
