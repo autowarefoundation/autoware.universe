@@ -421,7 +421,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             //              &planner_data.lateral_deviation);
 
             debug_ptr_->pushObstaclePoint(
-              planner_data.nearest_slow_down_point, PointType::SlowDown);
+              planner_data.closest_slow_down_point, PointType::SlowDown);
             debug_ptr_->pushPolygon(
               one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDown);
 
