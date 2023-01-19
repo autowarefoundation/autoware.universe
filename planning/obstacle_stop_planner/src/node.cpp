@@ -65,7 +65,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     auto & p = node_param_;
     p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
     p.max_velocity = declare_parameter<double>("max_velocity");
-    p.hunting_threshold = declare_parameter<double>("hunting_threshold");
+    p.chattering_threshold = declare_parameter<double>("chattering_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
     p.voxel_grid_x = declare_parameter("voxel_grid_x", 0.05);

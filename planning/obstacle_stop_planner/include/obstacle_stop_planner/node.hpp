@@ -216,7 +216,7 @@ private:
   void updateObstacleHistory(const rclcpp::Time & now)
   {
     for (auto itr = obstacle_history_.begin(); itr != obstacle_history_.end();) {
-      const auto expired = (now - itr->detection_time).seconds() > node_param_.hunting_threshold;
+      const auto expired = (now - itr->detection_time).seconds() > node_param_.chattering_threshold;
 
       if (expired) {
         itr = obstacle_history_.erase(itr);
