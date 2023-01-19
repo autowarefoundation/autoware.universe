@@ -46,19 +46,19 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
 
   const bool reset_required = [&]() {
     // guard for invalid variables
-    if (!prev_path_points_ptr_ || !prev_ego_pose_ptr_) {
+    if (!prev_traj_points_ptr_ || !prev_ego_pose_ptr_) {
       return true;
     }
-    const auto & prev_path_points = *prev_path_points_ptr_;
+    const auto & prev_traj_points = *prev_traj_points_ptr_;
 
     // path shape changes
-    if (isPathShapeChanged(planner_data, prev_path_points)) {
+    if (isPathShapeChanged(planner_data, prev_traj_points)) {
       logInfo("Replan with resetting optimization since path shape was changed.");
       return true;
     }
 
     // path goal changes
-    if (isPathGoalChanged(planner_data, prev_path_points)) {
+    if (isPathGoalChanged(planner_data, prev_traj_points)) {
       logInfo("Replan with resetting optimization since path goal was changed.");
       return true;
     }
@@ -76,7 +76,7 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
   }();
 
   // update previous information required in this function
-  prev_path_points_ptr_ = std::make_shared<std::vector<PathPoint>>(p.path.points);
+  prev_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(p.traj_points);
   prev_ego_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(p.ego_pose);
 
   return reset_required;
@@ -90,7 +90,7 @@ bool ReplanChecker::isReplanRequired(
 
   const bool replan_required = [&]() {
     // guard for invalid variables
-    if (!prev_replanned_time_ptr_ || !prev_path_points_ptr_ /*|| !prev_mpt_traj_ptr*/) {
+    if (!prev_replanned_time_ptr_ || !prev_traj_points_ptr_ /*|| !prev_mpt_traj_ptr*/) {
       return true;
     }
 
@@ -120,7 +120,7 @@ bool ReplanChecker::isReplanRequired(
 }
 
 bool ReplanChecker::isPathShapeChanged(
-  const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const
 {
   const auto & p = planner_data;
 
@@ -128,22 +128,22 @@ bool ReplanChecker::isPathShapeChanged(
 
   // truncate prev points from ego pose to fixed end points
   const auto prev_begin_idx =
-    trajectory_utils::findEgoIndex(prev_path_points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::findEgoIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
   const auto truncated_prev_points =
-    trajectory_utils::clipForwardPoints(prev_path_points, prev_begin_idx, max_path_length);
+    trajectory_utils::clipForwardPoints(prev_traj_points, prev_begin_idx, max_path_length);
 
   // truncate points from ego pose to fixed end points
   const auto begin_idx =
-    trajectory_utils::findEgoIndex(p.path.points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::findEgoIndex(p.traj_points, p.ego_pose, ego_nearest_param_);
   const auto truncated_points =
-    trajectory_utils::clipForwardPoints(p.path.points, begin_idx, max_path_length);
+    trajectory_utils::clipForwardPoints(p.traj_points, begin_idx, max_path_length);
 
   // guard for lateral offset
   if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {
     return false;
   }
 
-  // calculate lateral deviations between truncated path_points and prev_path_points
+  // calculate lateral deviations between truncated path_points and prev_traj_points
   for (const auto & prev_point : truncated_prev_points) {
     const double dist =
       std::abs(motion_utils::calcLateralOffset(truncated_points, prev_point.pose.position));
@@ -156,7 +156,7 @@ bool ReplanChecker::isPathShapeChanged(
 }
 
 bool ReplanChecker::isPathGoalChanged(
-  const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const
 {
   const auto & p = planner_data;
 
@@ -169,7 +169,7 @@ bool ReplanChecker::isPathGoalChanged(
   // Therefore we set a large value to distance threshold.
   constexpr double max_goal_moving_dist = 1.0;
   const double goal_moving_dist =
-    tier4_autoware_utils::calcDistance2d(p.path.points.back(), prev_path_points.back());
+    tier4_autoware_utils::calcDistance2d(p.traj_points.back(), prev_traj_points.back());
   if (goal_moving_dist < max_goal_moving_dist) {
     return false;
   }

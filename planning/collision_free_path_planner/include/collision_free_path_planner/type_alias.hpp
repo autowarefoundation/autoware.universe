@@ -24,11 +24,14 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "std_msgs/msg/header.hpp"
 #include "tier4_debug_msgs/msg/string_stamped.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace collision_free_path_planner
 {
+// std_msgs
+using std_msgs::msg::Header;
 // perception
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;

@@ -250,7 +250,7 @@ private:
 
   ValueMatrix calcValueMatrix(
     const std::vector<ReferencePoint> & reference_points,
-    const std::vector<PathPoint> & path_points) const;
+    const std::vector<TrajectoryPoint> & traj_points) const;
 
   ObjectiveMatrix getObjectiveMatrix(
     const StateEquationGenerator::Matrix & mpt_mat, const ValueMatrix & obj_mat,

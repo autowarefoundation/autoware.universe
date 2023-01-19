@@ -269,18 +269,18 @@ geometry_msgs::msg::Point getNearestPosition(
 
 template <typename T>
 bool isNearLastPathPoint(
-  const T & ref_point, const std::vector<PathPoint> & path_points,
+  const T & ref_point, const std::vector<TrajectoryPoint> & traj_points,
   const double delta_dist_threshold, const double delta_yaw_threshold)
 {
   const geometry_msgs::msg::Pose last_ref_pose = tier4_autoware_utils::getPose(ref_point);
 
   if (
-    tier4_autoware_utils::calcDistance2d(last_ref_pose, path_points.back().pose) >
+    tier4_autoware_utils::calcDistance2d(last_ref_pose, traj_points.back().pose) >
     delta_dist_threshold) {
     return false;
   }
   if (
-    std::fabs(tier4_autoware_utils::calcYawDeviation(last_ref_pose, path_points.back().pose)) >
+    std::fabs(tier4_autoware_utils::calcYawDeviation(last_ref_pose, traj_points.back().pose)) >
     delta_yaw_threshold) {
     return false;
   }

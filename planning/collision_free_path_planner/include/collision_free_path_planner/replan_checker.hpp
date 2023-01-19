@@ -21,9 +21,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-
 #include <memory>
 #include <vector>
 
@@ -43,7 +40,7 @@ public:
 
 private:
   // previous variables for isResetRequired
-  std::shared_ptr<std::vector<PathPoint>> prev_path_points_ptr_{nullptr};
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj_points_ptr_{nullptr};
   std::shared_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_{nullptr};
 
   // previous variable for isReplanRequired
@@ -59,9 +56,9 @@ private:
   double max_delta_time_sec_;
 
   bool isPathShapeChanged(
-    const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const;
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;
   bool isPathGoalChanged(
-    const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const;
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;
 
   void logInfo(const char * msg) const
   {

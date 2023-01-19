@@ -136,11 +136,8 @@ EBPathSmoother::getEBTrajectory(
 
   const auto & p = planner_data;
 
-  // 1. convert path points to trajectory points
-  const auto traj_points = trajectory_utils::convertToTrajectoryPoints(p.path.points);
-
   // 2. insert fixed point
-  const auto traj_points_with_fixed_point = insertFixedPoint(traj_points, prev_eb_traj);
+  const auto traj_points_with_fixed_point = insertFixedPoint(p.traj_points, prev_eb_traj);
 
   // 3. crop trajectory
   const double forward_traj_length = eb_param_.num_sampling_points * eb_param_.delta_arc_length;
@@ -163,7 +160,7 @@ EBPathSmoother::getEBTrajectory(
   updateConstrain(padded_traj_points);
 
   // 7. get optimized smooth points with elastic band
-  const auto optimized_points = optimizeTrajectory(traj_points);
+  const auto optimized_points = optimizeTrajectory(padded_traj_points);
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
@@ -178,7 +175,7 @@ EBPathSmoother::getEBTrajectory(
   debug_data_ptr_->eb_traj = eb_traj_points;
 
   {  // publish eb trajectory
-    const auto eb_traj = trajectory_utils::createTrajectory(p.path.header, eb_traj_points);
+    const auto eb_traj = trajectory_utils::createTrajectory(p.header, eb_traj_points);
     debug_eb_traj_pub_->publish(eb_traj);
   }
 

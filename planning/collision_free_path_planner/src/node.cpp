@@ -207,13 +207,13 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
 
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
-  auto extended_traj_points = extendTrajectory(planner_data.path.points, optimized_traj_points);
+  auto extended_traj_points = extendTrajectory(planner_data.traj_points, optimized_traj_points);
 
   // 4. set zero velocity after stop point
   setZeroVelocityAfterStopPoint(extended_traj_points);
 
   // 5. publish debug data
-  publishDebugData(*path_ptr);
+  publishDebugData(planner_data.header);
 
   debug_data_ptr_->toc(__func__, "");
   debug_data_ptr_->msg_stream << "========================================";
@@ -263,7 +263,8 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
 {
   // create planner data
   PlannerData planner_data;
-  planner_data.path = path;
+  planner_data.header = path.header;
+  planner_data.traj_points = trajectory_utils::convertToTrajectoryPoints(path.points);
   planner_data.left_bound = path.left_bound;
   planner_data.right_bound = path.right_bound;
   planner_data.ego_pose = ego_state_ptr_->pose.pose;
@@ -281,7 +282,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 {
   debug_data_ptr_->tic(__func__);
 
-  const auto & path = planner_data.path;
+  const auto & traj_points = planner_data.traj_points;
 
   // 1. calculate trajectory with EB and MPT
   //    NOTE: This function may return previously optimized trajectory points.
@@ -289,8 +290,9 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 
   // 2. update velocity
   //    Even if optimization is skipped, velocity in trajectory points must be updated
-  //    since velocity in input path may change
-  applyPathVelocity(optimized_traj_points, path.points);
+  //    since velocity in input trajectory (path) may change
+  // TODO(murooka)
+  // applyInputVelocity(optimized_traj_points, traj_points);
 
   // 3. insert zero velocity when trajectory is over drivable area
   insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
@@ -318,18 +320,18 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
     const bool is_replan_required =
       replan_checker_ptr_->isReplanRequired(planner_data, now(), prev_mpt_traj_ptr_);
     if (!is_replan_required) {
-      return getPrevOptimizedTrajectory(p.path.points);
+      return getPrevOptimizedTrajectory(p.traj_points);
     }
   }
 
   if (enable_skip_optimization_) {
-    return trajectory_utils::convertToTrajectoryPoints(p.path.points);
+    return p.traj_points;
   }
 
   // 2. Elastic Band: smooth trajectory if enable_smoothing is true
   const auto eb_traj = enable_smoothing_
                          ? eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_)
-                         : trajectory_utils::convertToTrajectoryPoints(p.path.points);
+                         : p.traj_points;
   /*
   const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
     if (enable_smoothing_) {
@@ -339,14 +341,14 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   }();
   */
   if (!eb_traj) {
-    return getPrevOptimizedTrajectory(p.path.points);
+    return getPrevOptimizedTrajectory(p.traj_points);
   }
 
   // 3. MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs =
     mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, eb_traj.get());
   if (!mpt_trajs) {
-    return getPrevOptimizedTrajectory(p.path.points);
+    return getPrevOptimizedTrajectory(p.traj_points);
   }
 
   // 4. make prev trajectories
@@ -358,41 +360,44 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajectory(
-  const std::vector<PathPoint> & path_points) const
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   if (prev_mpt_traj_ptr_) {
     return *prev_mpt_traj_ptr_;
   }
 
   // TODO(murooka) no need to generate post procesed trajectory?
-  return trajectory_utils::convertToTrajectoryPoints(path_points);
+  return traj_points;
 }
 
-void CollisionFreePathPlanner::applyPathVelocity(
-  std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const
+/*
+void CollisionFreePathPlanner::applyInputVelocity(
+  std::vector<TrajectoryPoint> & traj_points, const std::vector<TrajectoryPoint> & traj_points)
+const
 {
   debug_data_ptr_->tic(__func__);
 
   for (size_t i = 0; i < traj_points.size(); i++) {
     const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path_points, traj_points.at(i).pose, traj_param_.delta_dist_threshold_for_closest_point,
+      traj_points, traj_points.at(i).pose, traj_param_.delta_dist_threshold_for_closest_point,
       traj_param_.delta_yaw_threshold_for_closest_point);
 
     // TODO(murooka)
     // add this line not to exceed max index size
-    const size_t max_idx = std::min(nearest_seg_idx + 1, path_points.size() - 1);
+    const size_t max_idx = std::min(nearest_seg_idx + 1, traj_points.size() - 1);
     // NOTE: std::max, not std::min, is used here since traj_points' sampling width may be longer
     // than path_points' sampling width. A zero velocity point is guaranteed to be inserted in an
     // output trajectory in the alignVelocity function
     traj_points.at(i).longitudinal_velocity_mps = std::max(
-      path_points.at(nearest_seg_idx).longitudinal_velocity_mps,
-      path_points.at(max_idx).longitudinal_velocity_mps);
+      traj_points.at(nearest_seg_idx).longitudinal_velocity_mps,
+      traj_points.at(max_idx).longitudinal_velocity_mps);
 
     // TODO(murooka) insert stop point explicitly
   }
 
   debug_data_ptr_->toc(__func__, "    ");
 }
+*/
 
 void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   const PlannerData & planner_data, std::vector<TrajectoryPoint> & mpt_traj_points)
@@ -474,45 +479,45 @@ void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
-  const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & traj_points,
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   debug_data_ptr_->tic(__func__);
 
   // guard
-  if (path_points.empty()) {
+  if (traj_points.empty()) {
     return optimized_traj_points;
   }
   if (optimized_traj_points.empty()) {
-    return trajectory_utils::convertToTrajectoryPoints(path_points);
+    return traj_points;
   }
 
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
   // calculate end idx of optimized points on path points
-  const auto opt_end_path_seg_idx = motion_utils::findNearestSegmentIndex(
-    path_points, joint_start_pose, traj_param_.delta_dist_threshold_for_closest_point,
+  const auto opt_end_traj_seg_idx = motion_utils::findNearestSegmentIndex(
+    traj_points, joint_start_pose, traj_param_.delta_dist_threshold_for_closest_point,
     traj_param_.delta_yaw_threshold_for_closest_point);
-  if (!opt_end_path_seg_idx) {
+  if (!opt_end_traj_seg_idx) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
       "Not extend trajectory since could not find nearest idx from last opt point");
     return std::vector<TrajectoryPoint>{};
   }
-  const size_t end_path_seg_idx = opt_end_path_seg_idx.get();
+  const size_t end_traj_seg_idx = opt_end_traj_seg_idx.get();
 
   // crop forward trajectory
   const auto forward_traj_points = [&]() -> std::vector<TrajectoryPoint> {
     constexpr double joint_traj_length_for_resampling = 10.0;
-    const auto forward_path_points = trajectory_utils::cropPointsAfterOffsetPoint(
-      path_points, joint_start_pose.position, end_path_seg_idx, joint_traj_length_for_resampling);
+    const auto forward_traj_points = trajectory_utils::cropPointsAfterOffsetPoint(
+      traj_points, joint_start_pose.position, end_traj_seg_idx, joint_traj_length_for_resampling);
 
-    if (forward_path_points.empty()) {  // compensate goal pose
-      // TODO(murooka) optimization last point may be path last point
-      std::vector<TrajectoryPoint>{trajectory_utils::convertToTrajectoryPoint(path_points.back())};
+    if (forward_traj_points.empty()) {  // compensate goal pose
+      // TODO(murooka) optimization last point may be traj last point
+      std::vector<TrajectoryPoint>{traj_points.back()};
     }
 
-    return trajectory_utils::convertToTrajectoryPoints(forward_path_points);
+    return forward_traj_points;
   }();
 
   const auto extended_traj_points = concatVectors(optimized_traj_points, forward_traj_points);
@@ -527,13 +532,13 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   return resampled_traj_points;
 }
 
-void CollisionFreePathPlanner::publishDebugData(const Path & path) const
+void CollisionFreePathPlanner::publishDebugData(const Header & header) const
 {
   debug_data_ptr_->tic(__func__);
 
   // publish trajectories
   const auto debug_extended_traj =
-    trajectory_utils::createTrajectory(path.header, debug_data_ptr_->extended_traj_points);
+    trajectory_utils::createTrajectory(header, debug_data_ptr_->extended_traj_points);
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
   debug_data_ptr_->toc(__func__, "  ");

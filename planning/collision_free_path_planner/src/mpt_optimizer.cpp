@@ -457,11 +457,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   debug_data_ptr_->tic(__func__);
 
   const auto & p = planner_data;
-  const auto & path_points = p.path.points;
-
-  // assert arguments
-  assert(1 < smoothed_points.size());
-  assert(1 < path_points.size());
+  const auto & traj_points = p.traj_points;
 
   // 1. calculate reference points
   auto ref_points = calcReferencePoints(planner_data, smoothed_points);
@@ -477,7 +473,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const auto mpt_mat = state_equation_generator_.calcMatrix(ref_points, *debug_data_ptr_);
 
   // 3. calculate Q and R matrices where J(x, u) = x^t Q x + u^t R u
-  const auto val_mat = calcValueMatrix(ref_points, path_points);
+  const auto val_mat = calcValueMatrix(ref_points, traj_points);
 
   // 4. get objective matrix
   const auto obj_mat = getObjectiveMatrix(mpt_mat, val_mat, ref_points);
@@ -496,7 +492,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const auto mpt_points = calcMPTPoints(ref_points, optimized_steer_angles.get(), mpt_mat);
 
   // 6. publish trajectories for debug
-  publishDebugTrajectories(p.path.header, ref_points, mpt_points);
+  publishDebugTrajectories(p.header, ref_points, mpt_points);
 
   debug_data_ptr_->toc(__func__, "      ");
 
@@ -669,7 +665,8 @@ void MPTOptimizer::calcFixedPoint(std::vector<ReferencePoint> & ref_points) cons
 
 // cost function: J = x' Q x + u' R u
 MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
-  const std::vector<ReferencePoint> & ref_points, const std::vector<PathPoint> & path_points) const
+  const std::vector<ReferencePoint> & ref_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   debug_data_ptr_->tic(__func__);
 
@@ -680,7 +677,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const size_t D_v = D_x + (N_ref - 1) * D_u;
 
   const bool is_containing_path_terminal_point = trajectory_utils::isNearLastPathPoint(
-    ref_points.back(), path_points, 0.0001, traj_param_.delta_yaw_threshold_for_closest_point);
+    ref_points.back(), traj_points, 0.0001, traj_param_.delta_yaw_threshold_for_closest_point);
 
   // update Q
   Eigen::SparseMatrix<double> Q_sparse_mat(D_x * N_ref, D_x * N_ref);

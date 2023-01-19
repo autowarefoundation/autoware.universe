@@ -25,8 +25,6 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "visualization_msgs/msg/marker_array.hpp"
-
 #include "boost/optional.hpp"
 
 #include <algorithm>
@@ -121,16 +119,17 @@ private:
   PlannerData createPlannerData(const Path & path) const;
   std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> extendTrajectory(
-    const std::vector<PathPoint> & path_points,
+    const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & optimized_points);
-  void publishDebugData(const Path & path) const;
+  void publishDebugData(const Header & header) const;
 
   // functions in generateOptimizedTrajectory
   std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
-    const std::vector<PathPoint> & path_points) const;
-  void applyPathVelocity(
-    std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const;
+    const std::vector<TrajectoryPoint> & traj_points) const;
+  // void applyInputVelocity(
+  //   std::vector<TrajectoryPoint> & traj_points, const std::vector<TrajectoryPoint> & traj_points)
+  //   const;
   void insertZeroVelocityOutsideDrivableArea(
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
   void publishDebugMarkerInOptimization(
