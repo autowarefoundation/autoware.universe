@@ -443,7 +443,9 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
     std::cerr << d << std::endl;
   }
 
-  // update orientationn
+  // update orientation
+  motion_utils::insertOrientation(traj_points, true);
+  /*
   for (size_t i = 0; i < pad_start_idx; ++i) {
     if (i == 0) {
       traj_points[i].pose.orientation = geometry_utils::getQuaternionFromPoints(
@@ -453,6 +455,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
         traj_points[i].pose.position, traj_points[i - 1].pose.position);
     }
   }
+  */
 
   return traj_points;
 }

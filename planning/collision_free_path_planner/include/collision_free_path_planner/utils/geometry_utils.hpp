@@ -50,13 +50,6 @@ namespace collision_free_path_planner
 {
 namespace geometry_utils
 {
-geometry_msgs::msg::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root);
-
-geometry_msgs::msg::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
-
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound,

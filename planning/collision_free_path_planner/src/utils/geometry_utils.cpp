@@ -99,24 +99,6 @@ bool isOutsideDrivableArea(
 
 namespace geometry_utils
 {
-geometry_msgs::msg::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root)
-{
-  const double yaw = tier4_autoware_utils::calcAzimuthAngle(a_root, a);
-  return tier4_autoware_utils::createQuaternionFromYaw(yaw);
-}
-
-geometry_msgs::msg::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
-{
-  const double dx = (8.0 * (p3.x - p2.x) - (p4.x - p1.x)) / 12.0;
-  const double dy = (8.0 * (p3.y - p2.y) - (p4.y - p1.y)) / 12.0;
-  const double yaw = std::atan2(dy, dx);
-
-  return tier4_autoware_utils::createQuaternionFromYaw(yaw);
-}
-
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound,

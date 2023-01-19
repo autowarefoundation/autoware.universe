@@ -310,6 +310,9 @@ Trajectory createTrajectory(
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
+
+void insertFrontReferencePoint(
+  std::vector<ReferencePoint> & points, const ReferencePoint & target_point);
 }  // namespace trajectory_utils
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_

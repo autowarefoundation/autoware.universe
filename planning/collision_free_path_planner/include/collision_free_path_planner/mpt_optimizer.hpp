@@ -76,7 +76,6 @@ struct ReferencePoint
   double alpha{0.0};
   Bounds bounds{};
   bool near_objects{false};
-  bool plan_from_ego{false};  // TODO(murooka) previously why true by default?
 
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
@@ -93,6 +92,19 @@ struct ReferencePoint
   std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};
 
   double getYaw() const { return tf2::getYaw(pose.orientation); }
+
+  geometry_msgs::msg::Pose offsetPose(
+    const KinematicState & deviation, const double lon_offset) const
+  {
+    auto pose_with_deviation = tier4_autoware_utils::calcOffsetPose(pose, 0.0, deviation.lat, 0.0);
+    pose_with_deviation.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(getYaw() + deviation.yaw);
+
+    const auto pose_with_lon_offset =
+      tier4_autoware_utils::calcOffsetPose(pose_with_deviation, lon_offset, 0.0, 0.0);
+
+    return pose_with_lon_offset;
+  }
 };
 
 struct MPTTrajs
@@ -187,8 +199,6 @@ private:
     bool soft_constraint;
     bool hard_constraint;
     bool l_inf_norm;
-    bool plan_from_ego;
-    double max_plan_from_ego_length;
   };
 
   // publisher
@@ -251,7 +261,7 @@ private:
   void updateVehicleBounds(
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
-  void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
+  void calcFixedPoint(std::vector<ReferencePoint> & ref_points) const;
   void updateArcLength(std::vector<ReferencePoint> & ref_points) const;
   void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
 
