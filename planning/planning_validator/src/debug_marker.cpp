@@ -48,47 +48,41 @@ void PlanningValidatorDebugMarkerPublisher::pushPoseMarker(
 void PlanningValidatorDebugMarkerPublisher::pushPoseMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & ns, int id)
 {
+  using tier4_autoware_utils::createMarkerColor;
+
   // append arrow marker
-  Marker marker{};
-  marker.header.frame_id = "map";
-  marker.header.stamp = node_->get_clock()->now();
-  marker.ns = ns;
-  marker.id = getMarkerId(ns);
-  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
-  marker.type = Marker::ARROW;
-  marker.action = Marker::ADD;
-  marker.pose = pose;
-  marker.scale = tier4_autoware_utils::createMarkerScale(0.2, 0.1, 0.3);
+  std_msgs::msg::ColorRGBA color;
   if (id == 0)  // Red
   {
-    marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999);
+    color = createMarkerColor(1.0, 0.0, 0.0, 0.999);
   }
   if (id == 1)  // Green
   {
-    marker.color = tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999);
+    color = createMarkerColor(0.0, 1.0, 0.0, 0.999);
   }
   if (id == 2)  // Blue
   {
-    marker.color = tier4_autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.999);
+    color = createMarkerColor(0.0, 0.0, 1.0, 0.999);
   }
+  Marker marker = tier4_autoware_utils::createDefaultMarker(
+    "map", node_->get_clock()->now(), ns, getMarkerId(ns), Marker::ARROW,
+    tier4_autoware_utils::createMarkerScale(0.2, 0.1, 0.3), color);
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker.pose = pose;
+
   marker_array_.markers.push_back(marker);
 }
 
 void PlanningValidatorDebugMarkerPublisher::pushWarningMsg(
   const geometry_msgs::msg::Pose & pose, const std::string & msg)
 {
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "map";
-  marker.header.stamp = node_->get_clock()->now();
-  marker.ns = "warning_msg";
+  visualization_msgs::msg::Marker marker = tier4_autoware_utils::createDefaultMarker(
+    "map", node_->get_clock()->now(), "warning_msg", 0, Marker::TEXT_VIEW_FACING,
+    tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0),
+    tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.999));
   marker.lifetime = rclcpp::Duration::from_seconds(0.2);
   marker.pose = pose;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.id = 0;
-  marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker.text = msg;
-  marker.scale = tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0);
-  marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.999);
   marker_array_virtual_wall_.markers.push_back(marker);
 }
 
