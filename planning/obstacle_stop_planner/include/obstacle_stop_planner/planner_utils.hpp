@@ -164,6 +164,10 @@ void findClosestPointToTrajectory(
   TrajectoryPoints & output, const geometry_msgs::msg::Point & point,
   geometry_msgs::msg::Point & closest_point, int & closest_point_index);
 
+void findClosestLateralPointToTrajectory(
+  const geometry_msgs::msg::Point & point, const TrajectoryPoints & output,
+  geometry_msgs::msg::Point * lateral_nearest_point, double *deviation);
+
 std::string jsonDumpsPose(const Pose & pose);
 
 DiagnosticStatus makeStopReasonDiag(const std::string stop_reason, const Pose & stop_pose);

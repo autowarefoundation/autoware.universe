@@ -804,4 +804,19 @@ void findClosestPointToTrajectory(
     }
   }
 }
+
+void findClosestLateralPointToTrajectory(
+  const geometry_msgs::msg::Point & point, const TrajectoryPoints & output,
+  geometry_msgs::msg::Point * lateral_nearest_point, double *deviation){
+        double min_dist = std::numeric_limits<double>::max();
+        for (size_t i = 0; i < output.size(); ++i) {
+            double dist =
+      std::abs(output.at(i).pose.position.x * point.y - output.at(i).pose.position.y * point.x);
+            if (dist < min_dist) {
+                min_dist = dist;
+                *lateral_nearest_point = output.at(i).pose.position;
+            }
+        }
+        *deviation = min_dist;
+}
 }  // namespace motion_planning

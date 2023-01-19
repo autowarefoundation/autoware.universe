@@ -246,6 +246,8 @@ struct PlannerData
 
   double lateral_deviation{0.0};
 
+  double predicted_lateral_deviation{0.0};
+
   size_t trajectory_trim_index{};
 
   size_t decimate_trajectory_collision_index{};

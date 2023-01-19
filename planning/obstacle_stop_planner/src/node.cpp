@@ -413,13 +413,9 @@ void ObstacleStopPlannerNode::searchObstacle(
                 p.x = point.x();
                 p.y = point.y();
                 findClosestPointToTrajectory(output, p, planner_data.closest_slow_down_point, idx);
+                findClosestLateralPointToTrajectory(p, output, &planner_data.closest_slow_down_point, &planner_data.predicted_lateral_deviation);
               }
             }
-            //            getLateralNearestPoint(
-            //              *slow_down_pointcloud_ptr, p_front,
-            //              &planner_data.lateral_nearest_slow_down_point,
-            //              &planner_data.lateral_deviation);
-
             debug_ptr_->pushObstaclePoint(
               planner_data.closest_slow_down_point, PointType::SlowDown);
             debug_ptr_->pushPolygon(
@@ -708,10 +704,18 @@ void ObstacleStopPlannerNode::insertVelocity(
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::SLOWDOWN_OBSTACLE_DISTANCE,
         dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
-      const auto slow_down_section = createSlowDownSection(
-        index_with_dist_remain.get().first, output, planner_data.lateral_deviation,
-        index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
-        current_vel);
+      SlowDownSection slow_down_section;
+      if(node_param_.use_predicted_object){
+        slow_down_section = createSlowDownSection(
+          index_with_dist_remain.get().first, output, planner_data.predicted_lateral_deviation,
+          index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
+          current_vel);
+      } else {
+        slow_down_section = createSlowDownSection(
+          index_with_dist_remain.get().first, output, planner_data.lateral_deviation,
+          index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
+          current_vel);
+      }
 
       if (
         !latest_slow_down_section_ &&
