@@ -19,6 +19,7 @@
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"
 #include "ekf_localizer/numeric.hpp"
+#include "ekf_localizer/rotation.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
@@ -648,11 +649,11 @@ void EKFLocalizer::publishEstimateResult()
 void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
 {
   double z = pose.pose.pose.position.z;
-  double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
 
-  tf2::Quaternion q_tf;
-  tf2::fromMsg(pose.pose.pose.orientation, q_tf);
-  tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
+  const Eigen::Vector3d euler = quaternionToEulerXYZ(pose.pose.pose.orientation);
+
+  const double roll = euler(0);
+  const double pitch = euler(1);
 
   using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
@@ -667,11 +668,11 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
 void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
 {
   double z = pose.pose.pose.position.z;
-  double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
 
-  tf2::Quaternion q_tf;
-  tf2::fromMsg(pose.pose.pose.orientation, q_tf);
-  tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
+  const Eigen::Vector3d euler = quaternionToEulerXYZ(pose.pose.pose.orientation);
+
+  const double roll = euler(0);
+  const double pitch = euler(1);
 
   using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];

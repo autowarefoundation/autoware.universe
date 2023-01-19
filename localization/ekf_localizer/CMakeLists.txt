@@ -18,6 +18,7 @@ ament_auto_add_library(ekf_localizer_lib SHARED
   src/covariance.cpp
   src/mahalanobis.cpp
   src/measurement.cpp
+  src/rotation.cpp
   src/state_transition.cpp
 )
 
@@ -46,6 +47,7 @@ if(BUILD_TESTING)
     test/test_mahalanobis.cpp
     test/test_measurement.cpp
     test/test_numeric.cpp
+    test/test_rotation.cpp
     test/test_state_transition.cpp)
 
   foreach(filepath ${TEST_FILES})
