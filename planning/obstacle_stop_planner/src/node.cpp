@@ -163,7 +163,6 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
   pub_stop_reason_ = this->create_publisher<DiagnosticStatus>("~/output/stop_reason", 1);
 
-  pub_point_cloud_ = this->create_publisher<PointCloud2>("~/output/point_cloud/debug", 1);
 
   pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
     "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
@@ -173,6 +172,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
+
+  pub_collision_pointcloud_debug_ =
+    this->create_publisher<PointCloud2>("~/debug/collision_pointcloud", 1);
 
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
@@ -419,18 +421,10 @@ void ObstacleStopPlannerNode::searchObstacle(
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
       if (node_param_.enable_z_axis_obstacle_filtering) {
-        auto before_size = collision_pointcloud_ptr->size();
         planner_data.found_collision_points = withinPolyhedron(
           one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
           next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, z_axis_min,
           z_axis_max);
-        auto after_size = collision_pointcloud_ptr->size();
-        if ((after_size - before_size) > 0) {
-          auto obstacle_ros_pointcloud_debug_ptr = std::make_shared<PointCloud2>();
-          pcl::toROSMsg(*collision_pointcloud_ptr, *obstacle_ros_pointcloud_debug_ptr);
-          obstacle_ros_pointcloud_debug_ptr->header.frame_id = trajectory_header.frame_id;
-          pub_point_cloud_->publish(*obstacle_ros_pointcloud_debug_ptr);
-        }
       } else {
         planner_data.found_collision_points = withinPolygon(
           one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
@@ -446,6 +440,13 @@ void ObstacleStopPlannerNode::searchObstacle(
         if (node_param_.enable_z_axis_obstacle_filtering) {
           debug_ptr_->pushPolyhedron(
             one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Collision);
+          if ((pub_collision_pointcloud_debug_->get_subscription_count() +
+             pub_collision_pointcloud_debug_->get_intra_process_subscription_count()) > 0) {
+            auto obstacle_ros_pointcloud_debug_ptr = std::make_shared<PointCloud2>();
+            pcl::toROSMsg(*collision_pointcloud_ptr, *obstacle_ros_pointcloud_debug_ptr);
+            obstacle_ros_pointcloud_debug_ptr->header.frame_id = trajectory_header.frame_id;
+            pub_collision_pointcloud_debug_->publish(*obstacle_ros_pointcloud_debug_ptr);
+          }
         } else {
           debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
           debug_ptr_->pushPolygon(
