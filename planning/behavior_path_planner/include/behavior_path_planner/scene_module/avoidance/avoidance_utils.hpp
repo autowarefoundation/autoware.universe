@@ -93,7 +93,8 @@ void sortPolygonPoints(
   const std::vector<PolygonPoint> & points, std::vector<PolygonPoint> & sorted_points);
 
 std::vector<Point> updateBoundary(
-  const std::vector<Point> & original_bound, const std::vector<Point> & edge_points, const std::vector<PolygonPoint> & sorted_points);
+  const std::vector<Point> & original_bound, const std::vector<Point> & edge_points,
+  const std::vector<PolygonPoint> & sorted_points);
 
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,

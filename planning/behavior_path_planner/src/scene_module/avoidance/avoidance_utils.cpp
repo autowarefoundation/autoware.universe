@@ -602,7 +602,8 @@ void getPointData(
 }
 
 std::vector<Point> updateBoundary(
-  const std::vector<Point> & original_bound, const std::vector<Point> & edge_points, const std::vector<PolygonPoint> & sorted_points)
+  const std::vector<Point> & original_bound, const std::vector<Point> & edge_points,
+  const std::vector<PolygonPoint> & sorted_points)
 {
   if (edge_points.empty() || sorted_points.empty()) {
     return original_bound;
@@ -614,27 +615,35 @@ std::vector<Point> updateBoundary(
   Point start_edge_point = edge_points.front();
   Point end_edge_point = edge_points.back();
   for (const auto & edge_point : edge_points) {
-    const double dist_from_start_point = motion_utils::calcSignedArcLength(original_bound, 0, edge_point);
-    const double dist_from_end_point = std::fabs(motion_utils::calcSignedArcLength(original_bound, bound_size-1, edge_point));
+    const double dist_from_start_point =
+      motion_utils::calcSignedArcLength(original_bound, 0, edge_point);
+    const double dist_from_end_point =
+      std::fabs(motion_utils::calcSignedArcLength(original_bound, bound_size - 1, edge_point));
 
-    if(dist_from_start_point < min_dist_from_start_point) {
+    if (dist_from_start_point < min_dist_from_start_point) {
       start_edge_point = edge_point;
       min_dist_from_start_point = dist_from_start_point;
     }
 
-    if(dist_from_end_point < min_dist_from_end_point) {
+    if (dist_from_end_point < min_dist_from_end_point) {
       end_edge_point = edge_point;
       min_dist_from_end_point = dist_from_end_point;
     }
   }
 
   // get start and end point
-  const size_t start_segment_idx = motion_utils::findNearestSegmentIndex(original_bound, start_edge_point);
-  const double front_offset = motion_utils::calcLongitudinalOffsetToSegment(original_bound, start_segment_idx, start_edge_point);
-  const auto closest_front_point = motion_utils::calcLongitudinalOffsetPoint(original_bound, start_segment_idx, front_offset);
-  const size_t end_segment_idx = motion_utils::findNearestSegmentIndex(original_bound, end_edge_point);
-  const double end_offset = motion_utils::calcLongitudinalOffsetToSegment(original_bound, end_segment_idx, end_edge_point);
-  const auto closest_end_point = motion_utils::calcLongitudinalOffsetPoint(original_bound, end_segment_idx, end_offset);
+  const size_t start_segment_idx =
+    motion_utils::findNearestSegmentIndex(original_bound, start_edge_point);
+  const double front_offset = motion_utils::calcLongitudinalOffsetToSegment(
+    original_bound, start_segment_idx, start_edge_point);
+  const auto closest_front_point =
+    motion_utils::calcLongitudinalOffsetPoint(original_bound, start_segment_idx, front_offset);
+  const size_t end_segment_idx =
+    motion_utils::findNearestSegmentIndex(original_bound, end_edge_point);
+  const double end_offset =
+    motion_utils::calcLongitudinalOffsetToSegment(original_bound, end_segment_idx, end_edge_point);
+  const auto closest_end_point =
+    motion_utils::calcLongitudinalOffsetPoint(original_bound, end_segment_idx, end_offset);
 
   std::vector<Point> updated_bound;
 
@@ -645,25 +654,30 @@ std::vector<Point> updateBoundary(
     std::back_inserter(updated_bound));
 
   // insert closest front point
-  if(closest_front_point && tier4_autoware_utils::calcDistance2d(*closest_front_point, updated_bound.back()) > min_dist) {
+  if (
+    closest_front_point &&
+    tier4_autoware_utils::calcDistance2d(*closest_front_point, updated_bound.back()) > min_dist) {
     updated_bound.push_back(*closest_front_point);
   }
 
   // insert sorted points
-  for(const auto& sorted_point : sorted_points) {
-    if(tier4_autoware_utils::calcDistance2d(sorted_point.point, updated_bound.back()) > min_dist) {
+  for (const auto & sorted_point : sorted_points) {
+    if (tier4_autoware_utils::calcDistance2d(sorted_point.point, updated_bound.back()) > min_dist) {
       updated_bound.push_back(sorted_point.point);
     }
   }
 
   // insert closest end point
-  if(closest_end_point && tier4_autoware_utils::calcDistance2d(*closest_end_point, updated_bound.back()) > min_dist) {
+  if (
+    closest_end_point &&
+    tier4_autoware_utils::calcDistance2d(*closest_end_point, updated_bound.back()) > min_dist) {
     updated_bound.push_back(*closest_end_point);
   }
 
   // copy original points until the end of the original bound
-  for(size_t i=end_segment_idx+1; i < original_bound.size(); ++i) {
-    if(tier4_autoware_utils::calcDistance2d(original_bound.at(i), updated_bound.back()) > min_dist) {
+  for (size_t i = end_segment_idx + 1; i < original_bound.size(); ++i) {
+    if (
+      tier4_autoware_utils::calcDistance2d(original_bound.at(i), updated_bound.back()) > min_dist) {
       updated_bound.push_back(original_bound.at(i));
     }
   }
@@ -696,8 +710,7 @@ void generateDrivableArea(
 
     // get edge points data
     std::vector<PolygonPoint> edge_points_data;
-    getPointData(
-      bound, edge_points, lat_dist_to_path, edge_points_data);
+    getPointData(bound, edge_points, lat_dist_to_path, edge_points_data);
 
     // sort points
     std::vector<PolygonPoint> sorted_points;
