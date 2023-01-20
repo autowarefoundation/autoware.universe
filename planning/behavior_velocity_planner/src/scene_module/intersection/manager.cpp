@@ -63,6 +63,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.min_predicted_path_confidence =
     node.declare_parameter(ns + ".min_predicted_path_confidence", 0.05);
   ip.external_input_timeout = node.declare_parameter(ns + ".walkway.external_input_timeout", 1.0);
+  ip.minimum_ego_predicted_velocity =
+    node.declare_parameter(ns + ".minimum_ego_predicted_velocity", 1.388);
   ip.collision_start_margin_time = node.declare_parameter(ns + ".collision_start_margin_time", 5.0);
   ip.collision_end_margin_time = node.declare_parameter(ns + ".collision_end_margin_time", 2.0);
   ip.use_stuck_stopline = node.declare_parameter(ns + ".use_stuck_stopline", true);

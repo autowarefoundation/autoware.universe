@@ -88,9 +88,10 @@ public:
     double detection_area_angle_thr;     //! threshold in checking the angle of detecting objects
     double min_predicted_path_confidence;
     //! minimum confidence value of predicted path to use for collision detection
-    double external_input_timeout;       //! used to disable external input
-    double collision_start_margin_time;  //! start margin time to check collision
-    double collision_end_margin_time;    //! end margin time to check collision
+    double external_input_timeout;          //! used to disable external input
+    double minimum_ego_predicted_velocity;  //! used to calclate ego's future velocity profile
+    double collision_start_margin_time;     //! start margin time to check collision
+    double collision_end_margin_time;       //! end margin time to check collision
     bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
     double
       assumed_front_car_decel;  //! the expected deceleration of front car when front car as well

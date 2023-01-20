@@ -531,8 +531,6 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const int objective_lane_id, const double time_delay) const
 {
-  static constexpr double k_minimum_velocity = 1e-01;
-
   double dist_sum = 0.0;
   int assigned_lane_found = false;
 
@@ -581,7 +579,9 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
     const double average_velocity =
       (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
     passing_time +=
-      (dist / std::max<double>(k_minimum_velocity, average_velocity));  // to avoid zero-division
+      (dist / std::max<double>(
+                planner_param_.minimum_ego_predicted_velocity,
+                average_velocity));  // to avoid zero-division
 
     time_distance_array.emplace_back(passing_time, dist_sum);
   }
