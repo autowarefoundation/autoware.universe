@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_STAMPED_WITH_UUID__DISPLAY_HPP_
-#define POSE_STAMPED_WITH_UUID__DISPLAY_HPP_
+#ifndef POSE_WITH_UUID_STAMPED__DISPLAY_HPP_
+#define POSE_WITH_UUID_STAMPED__DISPLAY_HPP_
 
 #include <rviz_common/message_filter_display.hpp>
 
-#include <autoware_planning_msgs/msg/pose_stamped_with_uuid.hpp>
+#include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 
 #include <deque>
 #include <memory>
@@ -36,19 +36,19 @@ class TfFrameProperty;
 
 namespace rviz_plugins
 {
-class AutowarePoseStampedWithUuidDisplay
-: public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::PoseStampedWithUuid>
+class AutowarePoseWithUuidStampedDisplay
+: public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::PoseWithUuidStamped>
 {
   Q_OBJECT
 
 public:
-  AutowarePoseStampedWithUuidDisplay();
-  ~AutowarePoseStampedWithUuidDisplay() override;
-  AutowarePoseStampedWithUuidDisplay(const AutowarePoseStampedWithUuidDisplay &) = delete;
-  AutowarePoseStampedWithUuidDisplay(const AutowarePoseStampedWithUuidDisplay &&) = delete;
-  AutowarePoseStampedWithUuidDisplay & operator=(const AutowarePoseStampedWithUuidDisplay &) =
+  AutowarePoseWithUuidStampedDisplay();
+  ~AutowarePoseWithUuidStampedDisplay() override;
+  AutowarePoseWithUuidStampedDisplay(const AutowarePoseWithUuidStampedDisplay &) = delete;
+  AutowarePoseWithUuidStampedDisplay(const AutowarePoseWithUuidStampedDisplay &&) = delete;
+  AutowarePoseWithUuidStampedDisplay & operator=(const AutowarePoseWithUuidStampedDisplay &) =
     delete;
-  AutowarePoseStampedWithUuidDisplay & operator=(const AutowarePoseStampedWithUuidDisplay &&) =
+  AutowarePoseWithUuidStampedDisplay & operator=(const AutowarePoseWithUuidStampedDisplay &&) =
     delete;
 
 protected:
@@ -63,7 +63,7 @@ private:
   void subscribe() override;
   void unsubscribe() override;
   void processMessage(
-    const autoware_planning_msgs::msg::PoseStampedWithUuid::ConstSharedPtr meg_ptr) override;
+    const autoware_planning_msgs::msg::PoseWithUuidStamped::ConstSharedPtr meg_ptr) override;
 
   std::unique_ptr<rviz_rendering::Axes> axes_;
   std::unique_ptr<Ogre::SceneNode> uuid_node_;
@@ -76,9 +76,9 @@ private:
   rviz_common::properties::BoolProperty * uuid_text_view_property_;
   rviz_common::properties::FloatProperty * uuid_text_scale_property_;
 
-  autoware_planning_msgs::msg::PoseStampedWithUuid::ConstSharedPtr last_msg_ptr_;
+  autoware_planning_msgs::msg::PoseWithUuidStamped::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins
 
-#endif  // POSE_STAMPED_WITH_UUID__DISPLAY_HPP_
+#endif  // POSE_WITH_UUID_STAMPED__DISPLAY_HPP_

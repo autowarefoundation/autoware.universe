@@ -14,7 +14,7 @@
 
 #include "rviz_common/properties/tf_frame_property.hpp"
 
-#include <pose_stamped_with_uuid/display.hpp>
+#include <pose_with_uuid_stamped/display.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/validate_floats.hpp>
 #include <rviz_rendering/objects/axes.hpp>
@@ -34,7 +34,7 @@ std::string uuid_to_string(const unique_identifier_msgs::msg::UUID & u)
 
 namespace rviz_plugins
 {
-AutowarePoseStampedWithUuidDisplay::AutowarePoseStampedWithUuidDisplay()
+AutowarePoseWithUuidStampedDisplay::AutowarePoseWithUuidStampedDisplay()
 {
   length_property_ = new rviz_common::properties::FloatProperty(
     "Length", 2.0f, "Length of each axis, in meters.", this, SLOT(updateVisualization()));
@@ -51,9 +51,9 @@ AutowarePoseStampedWithUuidDisplay::AutowarePoseStampedWithUuidDisplay()
     this);
 }
 
-AutowarePoseStampedWithUuidDisplay::~AutowarePoseStampedWithUuidDisplay() = default;
+AutowarePoseWithUuidStampedDisplay::~AutowarePoseWithUuidStampedDisplay() = default;
 
-void AutowarePoseStampedWithUuidDisplay::onInitialize()
+void AutowarePoseWithUuidStampedDisplay::onInitialize()
 {
   MFDClass::onInitialize();
   axes_ = std::make_unique<rviz_rendering::Axes>(
@@ -64,31 +64,31 @@ void AutowarePoseStampedWithUuidDisplay::onInitialize()
   uuid_ = new rviz_rendering::MovableText("not initialized", "Liberation Sans", 0.1);
 }
 
-void AutowarePoseStampedWithUuidDisplay::onEnable()
+void AutowarePoseWithUuidStampedDisplay::onEnable()
 {
   subscribe();
   axes_->getSceneNode()->setVisible(true);
 }
 
-void AutowarePoseStampedWithUuidDisplay::onDisable()
+void AutowarePoseWithUuidStampedDisplay::onDisable()
 {
   unsubscribe();
   axes_->getSceneNode()->setVisible(false);
 }
 
-void AutowarePoseStampedWithUuidDisplay::subscribe() { MFDClass::subscribe(); }
+void AutowarePoseWithUuidStampedDisplay::subscribe() { MFDClass::subscribe(); }
 
-void AutowarePoseStampedWithUuidDisplay::unsubscribe() { MFDClass::unsubscribe(); }
+void AutowarePoseWithUuidStampedDisplay::unsubscribe() { MFDClass::unsubscribe(); }
 
-void AutowarePoseStampedWithUuidDisplay::updateVisualization()
+void AutowarePoseWithUuidStampedDisplay::updateVisualization()
 {
   if (last_msg_ptr_ != nullptr) {
     processMessage(last_msg_ptr_);
   }
 }
 
-void AutowarePoseStampedWithUuidDisplay::processMessage(
-  const autoware_planning_msgs::msg::PoseStampedWithUuid::ConstSharedPtr msg_ptr)
+void AutowarePoseWithUuidStampedDisplay::processMessage(
+  const autoware_planning_msgs::msg::PoseWithUuidStamped::ConstSharedPtr msg_ptr)
 {
   uuid_node_->detachAllObjects();
 
@@ -99,7 +99,7 @@ void AutowarePoseStampedWithUuidDisplay::processMessage(
     if (!context_->getFrameManager()->getTransform(msg_ptr->header, position, orientation)) {
       const auto frame = msg_ptr->header.frame_id.c_str();
       RCLCPP_DEBUG(
-        rclcpp::get_logger("AutowarePoseStampedWithUuidDisplay"),
+        rclcpp::get_logger("AutowarePoseWithUuidStampedDisplay"),
         "Error transforming from frame '%s' to frame '%s'", frame, qPrintable(fixed_frame_));
       axes_->getSceneNode()->setVisible(false);
       uuid_->setVisible(false);
@@ -143,4 +143,4 @@ void AutowarePoseStampedWithUuidDisplay::processMessage(
 }  // namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowarePoseStampedWithUuidDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowarePoseWithUuidStampedDisplay, rviz_common::Display)
