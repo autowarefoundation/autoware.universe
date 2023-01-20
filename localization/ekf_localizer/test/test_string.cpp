@@ -18,9 +18,9 @@
 
 TEST(String, EraseBeginSlash)
 {
-  EXPECT_EQ(EraseBeginSlash("/topic"), "topic");
-  EXPECT_EQ(EraseBeginSlash("topic"), "topic");  // do nothing
+  EXPECT_EQ(eraseBeginSlash("/topic"), "topic");
+  EXPECT_EQ(eraseBeginSlash("topic"), "topic");  // do nothing
 
-  EXPECT_EQ(EraseBeginSlash(""), "");
-  EXPECT_EQ(EraseBeginSlash("/"), "");
+  EXPECT_EQ(eraseBeginSlash(""), "");
+  EXPECT_EQ(eraseBeginSlash("/"), "");
 }
