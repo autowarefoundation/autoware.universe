@@ -37,7 +37,7 @@ namespace rviz_plugins
 AutowarePoseWithUuidStampedDisplay::AutowarePoseWithUuidStampedDisplay()
 {
   length_property_ = new rviz_common::properties::FloatProperty(
-    "Length", 2.0f, "Length of each axis, in meters.", this, SLOT(updateVisualization()));
+    "Length", 1.5f, "Length of each axis, in meters.", this, SLOT(updateVisualization()));
   length_property_->setMin(0.0001f);
 
   radius_property_ = new rviz_common::properties::FloatProperty(
