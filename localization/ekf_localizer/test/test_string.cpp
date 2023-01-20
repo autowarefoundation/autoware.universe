@@ -16,7 +16,7 @@
 
 #include "ekf_localizer/string.hpp"
 
-TEST(String, EraseBeginSlash)
+TEST(EraseBeginSlash, SmokeTest)
 {
   EXPECT_EQ(eraseBeginSlash("/topic"), "topic");
   EXPECT_EQ(eraseBeginSlash("topic"), "topic");  // do nothing
