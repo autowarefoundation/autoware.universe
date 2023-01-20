@@ -14,6 +14,9 @@
 
 #include "autonomous_emergency_braking/node.hpp"
 
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
 
@@ -47,6 +50,11 @@ AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
   // Publisher
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
+
+  // start timer
+  const auto planning_hz = 10.0;  // declare_parameter("planning_hz", 10.0);
+  const auto period_ns = rclcpp::Rate(planning_hz).period();
+  timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&AEB::run, this));
 }
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
@@ -101,6 +109,96 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
   pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
+}
+
+bool AEB::isDataReady()
+{
+  const auto missing = [this](const auto & name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "[AEB] waiting for %s", name);
+    return false;
+  };
+
+  if (!obstacle_ros_pointcloud_ptr_) {
+    return missing("pointcloud");
+  }
+
+  if (!current_velocity_ptr_) {
+    return missing("ego velocity");
+  }
+
+  if (!odometry_ptr_) {
+    return missing("odometry");
+  }
+
+  return true;
+}
+
+void AEB::run()
+{
+  if (!isDataReady()) {
+    return;
+  }
+
+  // create data
+  const double v = current_velocity_ptr_->longitudinal_velocity;
+  const double w = odometry_ptr_->twist.twist.angular.z;
+  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
+  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
+
+  // step1. create predicted path
+  std::vector<geometry_msgs::msg::Pose> predicted_path;
+  double curr_x = 0.0;
+  double curr_y = 0.0;
+  double curr_yaw = 0.0;
+  geometry_msgs::msg::Pose ini_pose;
+  ini_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
+  ini_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
+  predicted_path.push_back(ini_pose);
+
+  constexpr double epsilon = 1e-6;
+  constexpr double dt = 0.1;
+  constexpr double horizon = 3.0;
+  for (double t = 0.0; t < horizon + epsilon; t += dt) {
+    curr_x = curr_x + v * std::cos(curr_yaw) * dt;
+    curr_y = curr_y + v * std::sin(curr_yaw) * dt;
+    curr_yaw = curr_yaw + w * dt;
+    geometry_msgs::msg::Pose current_pose;
+    current_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
+    current_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
+    if (tier4_autoware_utils::calcDistance2d(predicted_path.back(), current_pose) < 1e-3) {
+      continue;
+    }
+    predicted_path.push_back(current_pose);
+  }
+
+  // check if the predicted path has valid number of points
+  if (predicted_path.size() < 2) {
+    std::cerr << "Ego vehicle is stopping" << std::endl;
+    return;
+  }
+
+  // step2. create object
+  std::vector<ObjectData> objects;
+  for (const auto & point : obstacle_points_ptr->points) {
+    ObjectData obj;
+    obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
+    obj.velocity = 0.0;
+    obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
+    const double lat_dist = motion_utils::calcLateralOffset(predicted_path, obj.position);
+    if (lat_dist > 5.0) {
+      continue;
+    }
+    objects.push_back(obj);
+  }
+
+  // step3. check collision with TTC
+  for (const auto & obj : objects) {
+    const double lon_dist = motion_utils::calcSignedArcLength(predicted_path, 0, obj.position);
+    const double collision_time = lon_dist / std::max(v, 1e-6);
+    if (collision_time < 1.0) {
+      std::cerr << "Dangerous" << std::endl;
+    }
+  }
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking

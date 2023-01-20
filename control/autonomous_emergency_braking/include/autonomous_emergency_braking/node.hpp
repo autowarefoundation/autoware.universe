@@ -47,6 +47,13 @@ using sensor_msgs::msg::PointCloud2;
 
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
+struct ObjectData
+{
+  geometry_msgs::msg::Point position;
+  double velocity;
+  rclcpp::Time time;
+};
+
 class AEB : public rclcpp::Node
 {
 public:
@@ -61,11 +68,19 @@ public:
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
 
+  // timer
+  rclcpp::TimerBase::SharedPtr timer_;
+
   // callback
   void onPointCloud(const PointCloud2::ConstSharedPtr input_msg);
   void onVelocity(const VelocityReport::ConstSharedPtr input_msg);
   void onOdometry(const Odometry::ConstSharedPtr input_msg);
   void onImu(const Imu::ConstSharedPtr input_msg);
+
+  bool isDataReady();
+
+  // main function
+  void run();
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
