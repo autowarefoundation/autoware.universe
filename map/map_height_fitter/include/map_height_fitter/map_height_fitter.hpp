@@ -17,41 +17,26 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_map_msgs/srv/get_partial_point_cloud_map.hpp>
 #include <geometry_msgs/msg/point.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <tf2_ros/transform_listener.h>
-
+#include <memory>
 #include <string>
 
 namespace map_height_fitter
 {
 
-using Point = geometry_msgs::msg::Point;
+using geometry_msgs::msg::Point;
 
-class MapHeightFitter : public rclcpp::Node
+class MapHeightFitter final
 {
 public:
-  MapHeightFitter();
+  MapHeightFitter(rclcpp::Node * node);
+  ~MapHeightFitter();
   Point fit(const Point & position, const std::string & frame);
 
 private:
-  tf2::BufferCore tf2_buffer_;
-  tf2_ros::TransformListener tf2_listener_;
-  std::string map_frame_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
-  rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedPtr cli_get_partial_pcd_;
-
-  bool enable_partial_map_load_;
-  rclcpp::CallbackGroup::SharedPtr callback_group_service_;
-
-  void on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void get_partial_point_cloud_map(const Point & point);
-  double get_ground_height(const tf2::Vector3 & point) const;
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace map_height_fitter
