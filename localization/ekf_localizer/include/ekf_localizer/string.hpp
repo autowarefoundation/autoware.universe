@@ -15,6 +15,8 @@
 #ifndef EKF_LOCALIZER__STRING_HPP_
 #define EKF_LOCALIZER__STRING_HPP_
 
+#include <string>
+
 inline std::string eraseBeginSlash(const std::string & s)
 {
   std::string a = s;
