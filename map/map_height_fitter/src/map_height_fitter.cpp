@@ -12,31 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "map_height_fitter_core.hpp"
+#include "map_height_fitter/map_height_fitter.hpp"
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-
-#include <algorithm>
-#include <memory>
+namespace map_height_fitter
+{
 
 MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf2_buffer_)
 {
   enable_partial_map_load_ = declare_parameter<bool>("enable_partial_map_load", false);
 
-  const auto durable_qos = rclcpp::QoS(1).transient_local();
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-
-  srv_fit_ = create_service<RequestHeightFitting>(
-    "fit_map_height", std::bind(&MapHeightFitter::on_fit, this, _1, _2));
-
   if (!enable_partial_map_load_) {
+    const auto durable_qos = rclcpp::QoS(1).transient_local();
+    using std::placeholders::_1;
     sub_map_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       "pointcloud_map", durable_qos, std::bind(&MapHeightFitter::on_map, this, _1));
   } else {
@@ -88,7 +79,7 @@ double MapHeightFitter::get_ground_height(const tf2::Vector3 & point) const
   return std::isfinite(height) ? height : point.getZ();
 }
 
-void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Point & point)
+void MapHeightFitter::get_partial_point_cloud_map(const Point & point)
 {
   if (!cli_get_partial_pcd_) {
     throw std::runtime_error{"Partial map loading in pointcloud_map_loader is not enabled"};
@@ -131,35 +122,32 @@ void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Poin
   pcl::fromROSMsg(pcd_msg, *map_cloud_);
 }
 
-void MapHeightFitter::on_fit(
-  const RequestHeightFitting::Request::SharedPtr req,
-  const RequestHeightFitting::Response::SharedPtr res)
+Point MapHeightFitter::fit(const Point & position, const std::string & frame)
 {
-  const auto & position = req->pose_with_covariance.pose.pose.position;
   tf2::Vector3 point(position.x, position.y, position.z);
-  std::string req_frame = req->pose_with_covariance.header.frame_id;
-  res->success = false;
 
   if (enable_partial_map_load_) {
-    get_partial_point_cloud_map(req->pose_with_covariance.pose.pose.position);
+    get_partial_point_cloud_map(position);
   }
 
   if (map_cloud_) {
     try {
-      const auto stamped = tf2_buffer_.lookupTransform(map_frame_, req_frame, tf2::TimePointZero);
+      const auto stamped = tf2_buffer_.lookupTransform(map_frame_, frame, tf2::TimePointZero);
       tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
       tf2::fromMsg(stamped.transform, transform);
       point = transform * point;
       point.setZ(get_ground_height(point));
       point = transform.inverse() * point;
-      res->success = true;
     } catch (tf2::TransformException & exception) {
       RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
     }
   }
 
-  res->pose_with_covariance = req->pose_with_covariance;
-  res->pose_with_covariance.pose.pose.position.x = point.getX();
-  res->pose_with_covariance.pose.pose.position.y = point.getY();
-  res->pose_with_covariance.pose.pose.position.z = point.getZ();
+  Point result;
+  result.x = point.getX();
+  result.y = point.getY();
+  result.z = point.getZ();
+  return result;
 }
+
+}  // namespace map_height_fitter
