@@ -21,6 +21,7 @@
 #include "ekf_localizer/numeric.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
+#include "ekf_localizer/string.hpp"
 #include "ekf_localizer/warning.hpp"
 
 #include <rclcpp/duration.hpp>
@@ -297,12 +298,9 @@ bool EKFLocalizer::getTransformFromTF(
   tf2::BufferCore tf_buffer;
   tf2_ros::TransformListener tf_listener(tf_buffer);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  if (parent_frame.front() == '/') {
-    parent_frame.erase(0, 1);
-  }
-  if (child_frame.front() == '/') {
-    child_frame.erase(0, 1);
-  }
+
+  parent_frame = eraseBeginSlash(parent_frame);
+  child_frame = eraseBeginSlash(child_frame);
 
   for (int i = 0; i < 50; ++i) {
     try {
