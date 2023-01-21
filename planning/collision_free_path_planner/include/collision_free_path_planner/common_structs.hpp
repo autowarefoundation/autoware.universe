@@ -99,8 +99,7 @@ struct EBParam
 
     {  // clearance
       updateParam<int>(parameters, "advanced.eb.clearance.num_joint_points", num_joint_points);
-      updateParam<double>(
-        parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
+      updateParam<double>(parameters, "advanced.eb.clearance.clearance_for_fix", clearance_for_fix);
       updateParam<double>(
         parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
       updateParam<double>(

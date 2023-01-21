@@ -104,11 +104,10 @@ EBPathSmoother::EBPathSmoother(
   const std::vector<double> lower_bound(num_points * 2, 0.0);
   const std::vector<double> upper_bound(num_points * 2, 0.0);
 
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(1.0e-3);
-  // osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-  //   P, A, q, lower_bound, upper_bound, qp_param.eps_abs);
-  // osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
-  // osqp_solver_ptr_->updateMaxIter(qp_param.max_iteration);
+  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    P, A, q, lower_bound, upper_bound, qp_param.eps_abs);
+  osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
+  osqp_solver_ptr_->updateMaxIter(qp_param.max_iteration);
 
   // publisher
   debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_trajectory", 1);
@@ -250,37 +249,23 @@ void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_p
     const auto constrain =
       getConstrainLinesFromConstrainRectangle(traj_points.at(i).pose, rect_size);
 
-    // constraint for x
+    // longitudinal constraint
     A(i, i) = constrain.lon.coef(0);
     A(i, i + p.num_points) = constrain.lon.coef(1);
     upper_bound.at(i) = constrain.lon.upper_bound;
     lower_bound.at(i) = constrain.lon.lower_bound;
 
-    // constraint for y
+    // lateral constraint
     A(i + p.num_points, i) = constrain.lat.coef(0);
     A(i + p.num_points, i + p.num_points) = constrain.lat.coef(1);
     upper_bound.at(i + p.num_points) = constrain.lat.upper_bound;
     lower_bound.at(i + p.num_points) = constrain.lat.lower_bound;
   }
 
-  // osqp_solver_ptr_->updateA(A);
-  // osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
-
-  const Eigen::MatrixXd P = makePMatrix(p.num_points);
-  const std::vector<double> q(p.num_points * 2, 0.0);
-  /*
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-                                                                             P, A, q, lower_bound,
-  upper_bound, p.qp_param.eps_abs); osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
-  osqp_solver_ptr_->updateMaxIter(p.qp_param.max_iteration);
-  */
-
-  // const Eigen::MatrixXd P = makePMatrix(p.num_points);
-  // const std::vector<double> q(p.num_points * 2, 0.0);
-  // osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-  //   p, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-    P, A, q, lower_bound, upper_bound, 1.0e-3);
+  osqp_solver_ptr_->updateA(A);
+  osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
+  osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
+  osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
 
   debug_data_ptr_->toc(__func__, "        ");
 }
@@ -291,27 +276,25 @@ EBPathSmoother::ConstrainLines EBPathSmoother::getConstrainLinesFromConstrainRec
   ConstrainLines constrain;
   const double theta = tf2::getYaw(pose.orientation);
 
-  {  // longitudinal constraint
-    constrain.lon.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
-    const double lon_bound =
-      constrain.lon.coef.transpose() * Eigen::Vector2d(pose.position.x, pose.position.y);
-    constrain.lon.upper_bound = lon_bound;
-    constrain.lon.lower_bound = lon_bound;
-  }
+  // longitudinal constraint
+  constrain.lon.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
+  const double lon_bound =
+    constrain.lon.coef.transpose() * Eigen::Vector2d(pose.position.x, pose.position.y);
+  constrain.lon.upper_bound = lon_bound;
+  constrain.lon.lower_bound = lon_bound;
 
-  {  // lateral constraint
-    constrain.lat.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
-    const auto lat_bound_pos1 =
-      tier4_autoware_utils::calcOffsetPose(pose, 0.0, -rect_size / 2.0, 0.0).position;
-    const auto lat_bound_pos2 =
-      tier4_autoware_utils::calcOffsetPose(pose, 0.0, rect_size / 2.0, 0.0).position;
-    const double lat_bound1 =
-      constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos1.x, lat_bound_pos1.y);
-    const double lat_bound2 =
-      constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos2.x, lat_bound_pos2.y);
-    constrain.lat.upper_bound = std::max(lat_bound1, lat_bound2);
-    constrain.lat.lower_bound = std::min(lat_bound1, lat_bound2);
-  }
+  // lateral constraint
+  constrain.lat.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
+  const auto lat_bound_pos1 =
+    tier4_autoware_utils::calcOffsetPose(pose, 0.0, -rect_size / 2.0, 0.0).position;
+  const auto lat_bound_pos2 =
+    tier4_autoware_utils::calcOffsetPose(pose, 0.0, rect_size / 2.0, 0.0).position;
+  const double lat_bound1 =
+    constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos1.x, lat_bound_pos1.y);
+  const double lat_bound2 =
+    constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos2.x, lat_bound_pos2.y);
+  constrain.lat.upper_bound = std::max(lat_bound1, lat_bound2);
+  constrain.lat.lower_bound = std::min(lat_bound1, lat_bound2);
 
   return constrain;
 }
@@ -320,11 +303,6 @@ boost::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   const std::vector<TrajectoryPoint> & traj_points)
 {
   debug_data_ptr_->tic(__func__);
-
-  // update QP param
-  const auto & qp_param = eb_param_.qp_param;
-  osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
-  osqp_solver_ptr_->updateEpsAbs(qp_param.eps_abs);
 
   // solve QP
   const auto result = osqp_solver_ptr_->optimize();
