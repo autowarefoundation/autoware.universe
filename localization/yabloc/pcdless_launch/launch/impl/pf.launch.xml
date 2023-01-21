@@ -44,7 +44,7 @@
 
     <arg name="output_scored_cloud" default="scored_cloud"/>
     <arg name="output_cost_map_range" default="cost_map_range"/>
-    <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level info">
+    <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="visualize" value="true"/>
         <remap from="particles_marker_array" to="camera_debug_marker"/>
 

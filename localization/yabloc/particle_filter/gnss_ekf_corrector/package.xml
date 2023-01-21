@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gnss_ekf_corrector</name>
+  <version>0.1.0</version>
+  <description>The GNSS EKF corrector package</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>tf2</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>visualization_msgs</depend>
+
+  <depend>pcdless_common</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
