@@ -166,15 +166,14 @@ EBPathSmoother::getEBTrajectory(
   }
 
   // convert optimization result to trajectory
-  const auto eb_traj_points = convertOptimizedPointsToTrajectory(
-    optimized_points.get(), resampled_traj_points, pad_start_idx);
+  const auto eb_traj_points =
+    convertOptimizedPointsToTrajectory(optimized_points.get(), padded_traj_points, pad_start_idx);
 
   debug_data_ptr_->eb_traj = eb_traj_points;
 
-  {  // publish eb trajectory
-    const auto eb_traj = trajectory_utils::createTrajectory(p.header, eb_traj_points);
-    debug_eb_traj_pub_->publish(eb_traj);
-  }
+  // publish eb trajectory
+  const auto eb_traj = trajectory_utils::createTrajectory(p.header, eb_traj_points);
+  debug_eb_traj_pub_->publish(eb_traj);
 
   debug_data_ptr_->toc(__func__, "      ");
   return eb_traj_points;
@@ -197,12 +196,12 @@ std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
   const auto & prev_front_point =
     trajectory_utils::convertToTrajectoryPoint(prev_eb_traj->at(prev_front_point_idx));
 
-  // update front pose for fix
+  // update front pose for fix with previous point
   const double front_velocity = traj_points_with_fixed_point.front().longitudinal_velocity_mps;
   trajectory_utils::updateFrontPoseForFix(
     traj_points_with_fixed_point, prev_front_point, eb_param_.delta_arc_length);
 
-  // update front velocity
+  // update front velocity with current point
   traj_points_with_fixed_point.front().longitudinal_velocity_mps = front_velocity;
 
   debug_data_ptr_->toc(__func__, "        ");
@@ -240,7 +239,7 @@ void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_p
     const double rect_size = [&]() {
       if (i == 0) {
         return p.clearance_for_fix;
-      } else if (i < p.num_joint_points + 1) {  // 1 is added since index 0 is for fix
+      } else if (i < p.num_joint_points + 1) {  // 1 is added since index 0 is fixed point
         return p.clearance_for_joint;
       }
       return p.clearance_for_smooth;
