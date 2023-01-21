@@ -320,6 +320,7 @@ void updateFrontPoseForFix(std::vector<T> & points, const T & target_point, cons
     points.front().pose = target_point.pose;
   } else {
     // add new front point
+    // NOTE: velocity is 0.
     T new_front_point;
     new_front_point.pose = target_point.pose;
 

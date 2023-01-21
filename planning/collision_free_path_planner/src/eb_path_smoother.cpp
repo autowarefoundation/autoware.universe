@@ -92,25 +92,22 @@ EBPathSmoother::EBPathSmoother(
   // eb param
   eb_param_ = EBParam(node);
 
-  {  // initialize osqp solver
-    const auto & qp_param = eb_param_.qp_param;
-    const int num_points = eb_param_.num_points;
+  // initialize osqp solver
+  const auto & qp_param = eb_param_.qp_param;
+  const int num_points = eb_param_.num_points;
 
-    const Eigen::MatrixXd P = makePMatrix(num_points);
-    const std::vector<double> q(num_points * 2, 0.0);
+  const Eigen::MatrixXd P = makePMatrix(num_points);
+  const std::vector<double> q(num_points * 2, 0.0);
 
-    const Eigen::MatrixXd A = makeAMatrix(num_points);
-    const std::vector<double> lower_bound(num_points * 2, 0.0);
-    const std::vector<double> upper_bound(num_points * 2, 0.0);
+  const Eigen::MatrixXd A = makeAMatrix(num_points);
+  const std::vector<double> lower_bound(num_points * 2, 0.0);
+  const std::vector<double> upper_bound(num_points * 2, 0.0);
 
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(1.0e-3);
-    /*
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-      P, A, q, lower_bound, upper_bound, qp_param.eps_abs);
-    osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
-    osqp_solver_ptr_->updateMaxIter(qp_param.max_iteration);
-    */
-  }
+  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(1.0e-3);
+  // osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+  //   P, A, q, lower_bound, upper_bound, qp_param.eps_abs);
+  // osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
+  // osqp_solver_ptr_->updateMaxIter(qp_param.max_iteration);
 
   // publisher
   debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_trajectory", 1);
@@ -265,8 +262,20 @@ void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_p
     lower_bound.at(i + p.num_points) = constrain.y.lower_bound;
   }
 
+  // osqp_solver_ptr_->updateA(A);
+  // osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
+
   const Eigen::MatrixXd P = makePMatrix(p.num_points);
   const std::vector<double> q(p.num_points * 2, 0.0);
+  /*
+  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+                                                                             P, A, q, lower_bound,
+  upper_bound, p.qp_param.eps_abs); osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
+  osqp_solver_ptr_->updateMaxIter(p.qp_param.max_iteration);
+  */
+
+  // const Eigen::MatrixXd P = makePMatrix(p.num_points);
+  // const std::vector<double> q(p.num_points * 2, 0.0);
   // osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
   //   p, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
   osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(

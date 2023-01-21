@@ -214,9 +214,6 @@ struct TrajectoryParam
       node->declare_parameter<double>("common.delta_yaw_threshold_for_closest_point");
     delta_yaw_threshold_for_straight =
       node->declare_parameter<double>("common.delta_yaw_threshold_for_straight");
-
-    // TODO(murooka) tune this param when avoiding with collision_free_path_planner
-    center_line_width = vehicle_width;
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -244,8 +241,6 @@ struct TrajectoryParam
   double delta_dist_threshold_for_closest_point;
   double delta_yaw_threshold_for_closest_point;
   double delta_yaw_threshold_for_straight;
-
-  double center_line_width;
 };
 
 struct EgoNearestParam
