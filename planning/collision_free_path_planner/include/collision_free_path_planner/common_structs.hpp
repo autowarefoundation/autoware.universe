@@ -19,9 +19,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include <boost/optional.hpp>
-
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -114,7 +113,7 @@ struct EBParam
   }
 };
 
-struct ConstrainRectangle
+struct ConstraintRectangle
 {
   geometry_msgs::msg::Point top_left;
   geometry_msgs::msg::Point top_right;
@@ -157,7 +156,7 @@ struct DebugData
   {
     msg_stream = StreamWithPrint{};
     msg_stream.enable_calculation_time_info = enable_calculation_time_info;
-    stop_pose_by_drivable_area = boost::none;
+    stop_pose_by_drivable_area = {};
     vehicle_circles_pose.clear();
   }
 
@@ -182,14 +181,14 @@ struct DebugData
   std::vector<double> vehicle_circle_longitudinal_offsets;
 
   // eb
-  std::vector<ConstrainRectangle> constrain_rectangles;
+  std::vector<ConstraintRectangle> constraint_rectangles;
   std::vector<TrajectoryPoint> eb_traj;
 
   // mpt
   std::vector<ReferencePoint> ref_points;
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
 
-  boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
+  std::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = {};
 
   std::vector<TrajectoryPoint> extended_traj_points;
 

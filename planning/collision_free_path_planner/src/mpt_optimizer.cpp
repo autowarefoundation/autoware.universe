@@ -22,11 +22,11 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include "boost/assign/list_of.hpp"
-#include "boost/optional.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <limits>
+#include <optional>
 #include <tuple>
 
 namespace collision_free_path_planner
@@ -102,18 +102,18 @@ std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
 }
 
 /*
-boost::optional<geometry_msgs::msg::Point> intersect(
+std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
 {
   const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
   if (det == 0.0) {
-    return boost::none;
+    return {};
   }
 
   const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
   if (t < 0 || 1 < t) {
-    return boost::none;
+    return {};
   }
 
   geometry_msgs::msg::Point intersect_point;
@@ -123,7 +123,7 @@ boost::optional<geometry_msgs::msg::Point> intersect(
 }
 */
 
-boost::optional<geometry_msgs::msg::Point> intersect(
+std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
 {
@@ -469,7 +469,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   debug_data_ptr_->mpt_visualize_sampling_num = mpt_visualize_sampling_num_;
 }
 
-boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
+std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points)
 {
   debug_data_ptr_->tic(__func__);
@@ -480,11 +480,11 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // 1. calculate reference points
   auto ref_points = calcReferencePoints(planner_data, smoothed_points);
   if (ref_points.empty()) {
-    logInfo("return boost::none since ref_points is empty");
-    return boost::none;
+    logInfo("return {} since ref_points is empty");
+    return {};
   } else if (ref_points.size() == 1) {
-    logInfo("return boost::none since ref_points.size() == 1");
-    return boost::none;
+    logInfo("return {} since ref_points.size() == 1");
+    return {};
   }
 
   // 2. calculate B and W matrices where x = B u + W
@@ -502,12 +502,12 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // 6. optimize steer angles
   const auto optimized_steer_angles = calcOptimizedSteerAngles(ref_points, obj_mat, const_mat);
   if (!optimized_steer_angles) {
-    logInfo("return boost::none since could not solve qp");
-    return boost::none;
+    logInfo("return {} since could not solve qp");
+    return {};
   }
 
   // 5. convert to points
-  const auto mpt_points = calcMPTPoints(ref_points, optimized_steer_angles.get(), mpt_mat);
+  const auto mpt_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
 
   // 6. publish trajectories for debug
   publishDebugTrajectories(p.header, ref_points, mpt_points);
@@ -751,7 +751,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   return m;
 }
 
-boost::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
+std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
   const ConstraintMatrix & const_mat)
 {
@@ -764,13 +764,13 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const size_t N_v = D_x + N_u;
 
   // for manual warm start, calculate initial solution
-  const auto u0 = [&]() -> boost::optional<Eigen::VectorXd> {
+  const auto u0 = [&]() -> std::optional<Eigen::VectorXd> {
     if (mpt_param_.enable_manual_warm_start) {
       if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
         return calcInitialSolutionForManualWarmStart(ref_points, *prev_ref_points_ptr_);
       }
     }
-    return boost::none;
+    return {};
   }();
 
   // for manual start, update objective and constraint matrix
@@ -817,7 +817,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const int solution_status = std::get<3>(result);
   if (solution_status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
-    return boost::none;
+    return {};
   }
 
   // print iteration
@@ -871,7 +871,7 @@ Eigen::VectorXd MPTOptimizer::calcInitialSolutionForManualWarmStart(
 std::pair<MPTOptimizer::ObjectiveMatrix, MPTOptimizer::ConstraintMatrix>
 MPTOptimizer::updateMatrixForManualWarmStart(
   const ObjectiveMatrix & obj_mat, const ConstraintMatrix & const_mat,
-  const boost::optional<Eigen::VectorXd> & u0) const
+  const std::optional<Eigen::VectorXd> & u0) const
 {
   if (!u0) {
     // not manual warm start
@@ -889,10 +889,10 @@ MPTOptimizer::updateMatrixForManualWarmStart(
   Eigen::VectorXd & lb = updated_const_mat.lower_bound;
 
   // update gradient
-  f += H * u0.get();
+  f += H * *u0;
 
   // update upper_bound and lower_bound
-  const Eigen::VectorXd A_times_u0 = A * u0.get();
+  const Eigen::VectorXd A_times_u0 = A * *u0;
   ub -= A_times_u0;
   lb -= A_times_u0;
 
@@ -1056,7 +1056,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
     // calculate C mat and vec
     for (size_t i = 0; i < N_ref; ++i) {
-      const double beta = ref_points.at(i).beta.at(l_idx).get();
+      const double beta = *ref_points.at(i).beta.at(l_idx);
       const double avoid_offset = mpt_param_.vehicle_circle_longitudinal_offsets.at(l_idx);
 
       C_triplet_vec.push_back(Eigen::Triplet<double>(i, i * D_x, 1.0 * std::cos(beta)));

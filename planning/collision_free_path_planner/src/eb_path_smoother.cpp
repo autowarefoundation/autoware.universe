@@ -64,7 +64,7 @@ Eigen::MatrixXd makePMatrix(const int num_points)
   return P;
 }
 
-// make default linear constrain matrix
+// make default linear constraint matrix
 Eigen::MatrixXd makeAMatrix(const int num_points)
 {
   // TODO(murooka) check
@@ -122,12 +122,11 @@ void EBPathSmoother::reset(const bool enable_debug_info, const TrajectoryParam &
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
+  prev_eb_traj_points_ptr_ = nullptr;
 }
 
-boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-EBPathSmoother::getEBTrajectory(
-  const PlannerData & planner_data,
-  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
+std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
+EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
 {
   debug_data_ptr_->tic(__func__);
 
@@ -144,7 +143,7 @@ EBPathSmoother::getEBTrajectory(
 
   // 2. insert fixed point
   // NOTE: Should be after crop trajectory so that fixed point will not be cropped.
-  const auto traj_points_with_fixed_point = insertFixedPoint(cropped_traj_points, prev_eb_traj);
+  const auto traj_points_with_fixed_point = insertFixedPoint(cropped_traj_points);
 
   // 3. resample trajectory with delta_arc_length
   const auto resampled_traj_points = trajectory_utils::resampleTrajectoryPoints(
@@ -153,21 +152,21 @@ EBPathSmoother::getEBTrajectory(
   // 4. pad trajectory points
   const auto [padded_traj_points, pad_start_idx] = getPaddedTrajectoryPoints(resampled_traj_points);
 
-  // 5. update constrain for elastic band's QP
-  updateConstrain(padded_traj_points);
+  // 5. update constraint for elastic band's QP
+  updateConstraint(padded_traj_points);
 
   // 6. get optimization result
   const auto optimized_points = optimizeTrajectory(padded_traj_points);
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
-      "return boost::none since smoothing failed");
-    return boost::none;
+      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_, "return {} since smoothing failed");
+    return {};
   }
 
   // convert optimization result to trajectory
   const auto eb_traj_points =
-    convertOptimizedPointsToTrajectory(optimized_points.get(), padded_traj_points, pad_start_idx);
+    convertOptimizedPointsToTrajectory(*optimized_points, padded_traj_points, pad_start_idx);
+  prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj_points);
 
   debug_data_ptr_->eb_traj = eb_traj_points;
 
@@ -180,21 +179,20 @@ EBPathSmoother::getEBTrajectory(
 }
 
 std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
-  const std::vector<TrajectoryPoint> & traj_points,
-  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   debug_data_ptr_->tic(__func__);
 
-  if (!prev_eb_traj) {
+  if (!prev_eb_traj_points_ptr_) {
     return traj_points;
   }
 
   auto traj_points_with_fixed_point = traj_points;
   const size_t prev_front_seg_idx = trajectory_utils::findEgoSegmentIndex(
-    *prev_eb_traj, traj_points.front().pose, ego_nearest_param_);
+    *prev_eb_traj_points_ptr_, traj_points.front().pose, ego_nearest_param_);
   const size_t prev_front_point_idx = prev_front_seg_idx;
   const auto & prev_front_point =
-    trajectory_utils::convertToTrajectoryPoint(prev_eb_traj->at(prev_front_point_idx));
+    trajectory_utils::convertToTrajectoryPoint(prev_eb_traj_points_ptr_->at(prev_front_point_idx));
 
   // update front pose for fix with previous point
   const double front_velocity = traj_points_with_fixed_point.front().longitudinal_velocity_mps;
@@ -209,7 +207,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
 }
 
 std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajectoryPoints(
-  const std::vector<TrajectoryPoint> & traj_points)
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   debug_data_ptr_->tic(__func__);
 
@@ -226,7 +224,7 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
   return {padded_traj_points, pad_start_idx};
 }
 
-void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_points)
+void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_points) const
 {
   debug_data_ptr_->tic(__func__);
 
@@ -245,20 +243,20 @@ void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_p
       return p.clearance_for_smooth;
     }();
 
-    const auto constrain =
-      getConstrainLinesFromConstrainRectangle(traj_points.at(i).pose, rect_size);
+    const auto constraint =
+      getConstraintLinesFromConstraintRectangle(traj_points.at(i).pose, rect_size);
 
     // longitudinal constraint
-    A(i, i) = constrain.lon.coef(0);
-    A(i, i + p.num_points) = constrain.lon.coef(1);
-    upper_bound.at(i) = constrain.lon.upper_bound;
-    lower_bound.at(i) = constrain.lon.lower_bound;
+    A(i, i) = constraint.lon.coef(0);
+    A(i, i + p.num_points) = constraint.lon.coef(1);
+    upper_bound.at(i) = constraint.lon.upper_bound;
+    lower_bound.at(i) = constraint.lon.lower_bound;
 
     // lateral constraint
-    A(i + p.num_points, i) = constrain.lat.coef(0);
-    A(i + p.num_points, i + p.num_points) = constrain.lat.coef(1);
-    upper_bound.at(i + p.num_points) = constrain.lat.upper_bound;
-    lower_bound.at(i + p.num_points) = constrain.lat.lower_bound;
+    A(i + p.num_points, i) = constraint.lat.coef(0);
+    A(i + p.num_points, i + p.num_points) = constraint.lat.coef(1);
+    upper_bound.at(i + p.num_points) = constraint.lat.upper_bound;
+    lower_bound.at(i + p.num_points) = constraint.lat.lower_bound;
   }
 
   osqp_solver_ptr_->updateA(A);
@@ -269,36 +267,36 @@ void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_p
   debug_data_ptr_->toc(__func__, "        ");
 }
 
-EBPathSmoother::ConstrainLines EBPathSmoother::getConstrainLinesFromConstrainRectangle(
-  const geometry_msgs::msg::Pose & pose, const double rect_size)
+EBPathSmoother::ConstraintLines EBPathSmoother::getConstraintLinesFromConstraintRectangle(
+  const geometry_msgs::msg::Pose & pose, const double rect_size) const
 {
-  ConstrainLines constrain;
+  ConstraintLines constraint;
   const double theta = tf2::getYaw(pose.orientation);
 
   // longitudinal constraint
-  constrain.lon.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
+  constraint.lon.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
   const double lon_bound =
-    constrain.lon.coef.transpose() * Eigen::Vector2d(pose.position.x, pose.position.y);
-  constrain.lon.upper_bound = lon_bound;
-  constrain.lon.lower_bound = lon_bound;
+    constraint.lon.coef.transpose() * Eigen::Vector2d(pose.position.x, pose.position.y);
+  constraint.lon.upper_bound = lon_bound;
+  constraint.lon.lower_bound = lon_bound;
 
   // lateral constraint
-  constrain.lat.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
+  constraint.lat.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
   const auto lat_bound_pos1 =
     tier4_autoware_utils::calcOffsetPose(pose, 0.0, -rect_size / 2.0, 0.0).position;
   const auto lat_bound_pos2 =
     tier4_autoware_utils::calcOffsetPose(pose, 0.0, rect_size / 2.0, 0.0).position;
   const double lat_bound1 =
-    constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos1.x, lat_bound_pos1.y);
+    constraint.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos1.x, lat_bound_pos1.y);
   const double lat_bound2 =
-    constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos2.x, lat_bound_pos2.y);
-  constrain.lat.upper_bound = std::max(lat_bound1, lat_bound2);
-  constrain.lat.lower_bound = std::min(lat_bound1, lat_bound2);
+    constraint.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos2.x, lat_bound_pos2.y);
+  constraint.lat.upper_bound = std::max(lat_bound1, lat_bound2);
+  constraint.lat.lower_bound = std::min(lat_bound1, lat_bound2);
 
-  return constrain;
+  return constraint;
 }
 
-boost::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
+std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   const std::vector<TrajectoryPoint> & traj_points)
 {
   debug_data_ptr_->tic(__func__);
@@ -312,7 +310,7 @@ boost::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   // check status
   if (status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[EB]");
-    return boost::none;
+    return {};
   }
 
   debug_data_ptr_->toc(__func__, "        ");

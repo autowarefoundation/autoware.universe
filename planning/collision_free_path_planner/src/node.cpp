@@ -171,8 +171,7 @@ void CollisionFreePathPlanner::resetPlanning()
 
 void CollisionFreePathPlanner::resetPrevOptimization()
 {
-  prev_eb_traj_ptr_ = nullptr;
-  prev_mpt_traj_ptr_ = nullptr;
+  prev_mpt_traj_ptr_ = nullptr;  // rename to prev_optimized_traj_ptr_?
 }
 
 void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
@@ -319,24 +318,21 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
     return p.traj_points;
   }
 
-  // 2. Elastic Band: smooth trajectory if enable_smoothing is true
-  // NOTE: eb_traj's variables except for pose is not calculated.
-  const auto eb_traj = enable_smoothing_
-                         ? eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_)
-                         : p.traj_points;
+  // 2. smooth trajectory with elastic band
+  const auto eb_traj =
+    enable_smoothing_ ? eb_path_smoother_ptr_->getEBTrajectory(planner_data) : p.traj_points;
   if (!eb_traj) {
     return getPrevOptimizedTrajectory(p.traj_points);
   }
 
-  // 3. MPT: optimize trajectory to be kinematically feasible and collision free
-  const auto mpt_trajs =
-    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, eb_traj.get());
+  // 3. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
+  //    with model predictive trajectory
+  const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, *eb_traj);
   if (!mpt_trajs) {
     return getPrevOptimizedTrajectory(p.traj_points);
   }
 
   // 4. make prev trajectories
-  prev_eb_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj.get());
   prev_mpt_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(mpt_trajs->mpt);
 
   debug_data_ptr_->toc(__func__, "    ");
@@ -450,7 +446,7 @@ void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
   debug_data_ptr_->tic("getAndPublishDebugWallMarker");
   const auto virtual_wall_marker_array = [&]() {
     if (debug_data_ptr_->stop_pose_by_drivable_area) {
-      const auto & stop_pose = debug_data_ptr_->stop_pose_by_drivable_area.get();
+      const auto & stop_pose = *debug_data_ptr_->stop_pose_by_drivable_area;
       return motion_utils::createStopVirtualWallMarker(
         stop_pose, "drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
     }

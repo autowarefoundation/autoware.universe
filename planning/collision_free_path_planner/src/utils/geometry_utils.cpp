@@ -24,11 +24,10 @@
 #include "geometry_msgs/msg/point32.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
-#include "boost/optional.hpp"
-
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stack>
 #include <vector>
 

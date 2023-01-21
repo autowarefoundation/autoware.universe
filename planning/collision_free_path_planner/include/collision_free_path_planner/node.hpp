@@ -25,10 +25,9 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "boost/optional.hpp"
-
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -85,7 +84,6 @@ private:
 
   // variables for previous information
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_ptr_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;

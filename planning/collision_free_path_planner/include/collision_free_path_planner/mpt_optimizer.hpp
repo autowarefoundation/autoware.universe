@@ -27,9 +27,8 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "boost/optional.hpp"
-
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -76,12 +75,12 @@ struct ReferencePoint
   double alpha{0.0};
   Bounds bounds{};  // bounds on pose
   bool near_objects{false};
-  std::vector<boost::optional<double>> beta{};
+  std::vector<std::optional<double>> beta{};
 
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
   //       second is fixing current ego pose when no velocity for planning from ego pose
-  boost::optional<KinematicState> fix_kinematic_state{boost::none};
+  std::optional<KinematicState> fix_kinematic_state{std::nullopt};
   KinematicState optimized_kinematic_state{};
   double optimized_input{};
 
@@ -116,7 +115,7 @@ public:
     const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
     const std::shared_ptr<DebugData> debug_data_ptr);
 
-  boost::optional<MPTTrajs> getModelPredictiveTrajectory(
+  std::optional<MPTTrajs> getModelPredictiveTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
@@ -260,7 +259,7 @@ private:
     const StateEquationGenerator::Matrix & mpt_mat,
     const std::vector<ReferencePoint> & ref_points) const;
 
-  boost::optional<Eigen::VectorXd> calcOptimizedSteerAngles(
+  std::optional<Eigen::VectorXd> calcOptimizedSteerAngles(
     const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
     const ConstraintMatrix & const_mat);
   Eigen::VectorXd calcInitialSolutionForManualWarmStart(
@@ -268,7 +267,7 @@ private:
     const std::vector<ReferencePoint> & prev_ref_points) const;
   std::pair<ObjectiveMatrix, ConstraintMatrix> updateMatrixForManualWarmStart(
     const ObjectiveMatrix & obj_mat, const ConstraintMatrix & const_mat,
-    const boost::optional<Eigen::VectorXd> & u0) const;
+    const std::optional<Eigen::VectorXd> & u0) const;
 
   void addSteerWeightR(
     std::vector<Eigen::Triplet<double>> & R_triplet_vec,

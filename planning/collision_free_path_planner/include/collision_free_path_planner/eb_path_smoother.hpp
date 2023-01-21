@@ -20,9 +20,8 @@
 #include "eigen3/Eigen/Core"
 #include "osqp_interface/osqp_interface.hpp"
 
-#include "boost/optional.hpp"
-
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -32,26 +31,25 @@ namespace collision_free_path_planner
 class EBPathSmoother
 {
 public:
-  struct ConstrainLines
+  struct ConstraintLines
   {
-    struct Constrain
+    struct Constraint
     {
       Eigen::Vector2d coef;
       double upper_bound;
       double lower_bound;
     };
 
-    Constrain lon;
-    Constrain lat;
+    Constraint lon;
+    Constraint lat;
   };
 
   EBPathSmoother(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
     const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr);
 
-  boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
-    const PlannerData & planner_data,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
+  std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
+    const PlannerData & planner_data);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
@@ -63,23 +61,24 @@ private:
   EBParam eb_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
+
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   std::vector<TrajectoryPoint> insertFixedPoint(
-    const std::vector<TrajectoryPoint> & traj_point,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
+    const std::vector<TrajectoryPoint> & traj_point) const;
 
   std::tuple<std::vector<TrajectoryPoint>, size_t> getPaddedTrajectoryPoints(
-    const std::vector<TrajectoryPoint> & traj_points);
+    const std::vector<TrajectoryPoint> & traj_points) const;
 
-  void updateConstrain(const std::vector<TrajectoryPoint> & traj_points);
+  void updateConstraint(const std::vector<TrajectoryPoint> & traj_points) const;
 
-  ConstrainLines getConstrainLinesFromConstrainRectangle(
-    const geometry_msgs::msg::Pose & pose, const double rect_size);
+  ConstraintLines getConstraintLinesFromConstraintRectangle(
+    const geometry_msgs::msg::Pose & pose, const double rect_size) const;
 
-  boost::optional<std::vector<double>> optimizeTrajectory(
+  std::optional<std::vector<double>> optimizeTrajectory(
     const std::vector<TrajectoryPoint> & traj_points);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
