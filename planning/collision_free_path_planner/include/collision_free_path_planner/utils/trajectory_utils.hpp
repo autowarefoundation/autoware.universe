@@ -311,21 +311,20 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
 
 template <typename T>
-void insertFrontPoint(std::vector<T> & points, const T & target_point)
+void updateFrontPoseForFix(std::vector<T> & points, const T & target_point, const double epsilon)
 {
   const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_point);
 
-  constexpr double epsilon = 1e-3;
   if (dist < epsilon) {
-    // update front point (in order to reset member variables)
-    points.front() = T();
+    // only pose is updated
+    points.front().pose = target_point.pose;
   } else {
     // add new front point
-    points.insert(points.begin(), T());
-  }
+    T new_front_point;
+    new_front_point.pose = target_point.pose;
 
-  // only pose is updated
-  points.front().pose = target_point.pose;
+    points.insert(points.begin(), new_front_point);
+  }
 }
 }  // namespace trajectory_utils
 }  // namespace collision_free_path_planner

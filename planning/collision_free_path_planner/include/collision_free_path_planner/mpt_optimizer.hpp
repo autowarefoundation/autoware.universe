@@ -154,7 +154,7 @@ private:
     std::vector<double> vehicle_circle_radiuses;
 
     double delta_arc_length;
-    int num_sampling_points;
+    int num_points;
 
     double hard_clearance_from_road;
     double soft_clearance_from_road;

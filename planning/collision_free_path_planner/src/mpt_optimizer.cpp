@@ -215,7 +215,7 @@ void MPTOptimizer::initializeMPTParam(
   }
 
   {  // common
-    mpt_param_.num_sampling_points = node->declare_parameter<int>("mpt.common.num_sampling_points");
+    mpt_param_.num_points = node->declare_parameter<int>("mpt.common.num_points");
     mpt_param_.delta_arc_length = node->declare_parameter<double>("mpt.common.delta_arc_length");
   }
 
@@ -351,7 +351,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   }
 
   // common
-  updateParam<int>(parameters, "mpt.common.num_sampling_points", mpt_param_.num_sampling_points);
+  updateParam<int>(parameters, "mpt.common.num_points", mpt_param_.num_points);
   updateParam<double>(parameters, "mpt.common.delta_arc_length", mpt_param_.delta_arc_length);
 
   // kinematics
@@ -388,9 +388,27 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
         calcVehicleCirclesByUniformModel(
           vehicle_info_, vehicle_circle_num_for_calculation_,
           vehicle_circle_radius_ratios_.front());
+    } else if (vehicle_circle_method_ == "bicycle_model") {
+      updateParam<int>(
+        parameters,
+        "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_calculation",
+        vehicle_circle_num_for_calculation_);
+      updateParam<double>(
+        parameters,
+        "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.rear_radius_ratio",
+        vehicle_circle_radius_ratios_.front());
+      updateParam<double>(
+        parameters,
+        "advanced.mpt.collision_free_constraints.vehicle_circles."
+        "bicycle_model.front_radius_ratio",
+        vehicle_circle_radius_ratios_.back());
+
+      std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+        calcVehicleCirclesByBicycleModel(
+          vehicle_info_, vehicle_circle_num_for_calculation_, vehicle_circle_radius_ratios_.front(),
+          vehicle_circle_radius_ratios_.back());
     } else {
-      throw std::invalid_argument(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
+      throw std::invalid_argument("vehicle_circle_method_ is invalid.");
     }
   }
 
@@ -509,7 +527,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   const auto & p = planner_data;
 
-  const double forward_traj_length = mpt_param_.num_sampling_points * mpt_param_.delta_arc_length;
+  const double forward_traj_length = mpt_param_.num_points * mpt_param_.delta_arc_length;
   const double backward_traj_length = traj_param_.output_backward_traj_length;
 
   // 1. resample and convert smoothed points type from trajectory points to reference points
@@ -555,7 +573,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // NOTE: This must be after bounds calculation and updateOrientation
   calcExtraPoints(ref_points);
 
-  const double ref_length = mpt_param_.num_sampling_points * mpt_param_.delta_arc_length;
+  const double ref_length = mpt_param_.num_points * mpt_param_.delta_arc_length;
   ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length);
 
   // bounds information is assigned to debug data after truncating reference points
@@ -613,7 +631,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   /*
   constexpr double tmp_ref_points_margin = 20.0;
   const double ref_length_with_margin =
-    traj_param_.num_sampling_points * mpt_param_.delta_arc_length + tmp_ref_points_margin;
+    traj_param_.num_points * mpt_param_.delta_arc_length + tmp_ref_points_margin;
   ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
   if (ref_points.empty()) {
     return std::vector<ReferencePoint>{};
@@ -659,7 +677,8 @@ void MPTOptimizer::calcFixedPoint(std::vector<ReferencePoint> & ref_points) cons
   // TODO(murooka) check deviation
 
   // update front point of ref_points
-  trajectory_utils::insertFrontPoint(ref_points, prev_ref_front_point);
+  trajectory_utils::updateFrontPoseForFix(
+    ref_points, prev_ref_front_point, mpt_param_.delta_arc_length);
   ref_points.front().fix_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
 }
 

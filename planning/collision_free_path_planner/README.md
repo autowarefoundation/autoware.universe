@@ -704,7 +704,7 @@ $N_{circle}$ is the number of circles to check collision.
 
 - Loose EB optimization
 
-  - 1. make `eb.common.delta_arc_length` large and `eb.common.num_sampling_points` small
+  - 1. make `eb.common.delta_arc_length` large and `eb.common.num_points` small
     - This makes the number of design variables smaller
     - Be careful about the trajectory length between MPT and EB as shown in Assumptions.
     - However, empirically this causes large turn at the corner (e.g. The vehicle turns a steering wheel to the opposite side (=left) a bit just before the corner turning to right)

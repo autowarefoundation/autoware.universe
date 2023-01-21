@@ -61,14 +61,14 @@ struct EBParam
   double clearance_for_smooth;
 
   double delta_arc_length;
-  int num_sampling_points;
+  int num_points;
 
   EBParam() = default;
   explicit EBParam(rclcpp::Node * node)
   {
     {  // common
       delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
-      num_sampling_points = node->declare_parameter<int>("advanced.eb.common.num_sampling_points");
+      num_points = node->declare_parameter<int>("advanced.eb.common.num_points");
     }
 
     {  // clearance
@@ -94,7 +94,7 @@ struct EBParam
 
     {  // common
       updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
-      updateParam<int>(parameters, "advanced.eb.common.num_sampling_points", num_sampling_points);
+      updateParam<int>(parameters, "advanced.eb.common.num_points", num_points);
     }
 
     {  // clearance
