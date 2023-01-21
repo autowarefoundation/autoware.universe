@@ -58,6 +58,7 @@ struct Param
   double max_lateral_deviation;
   double max_longitudinal_deviation;
   double max_yaw_deviation_deg;
+  double braking_distance_offset;
   // nearest search to ego
   double ego_nearest_dist_threshold;
   double ego_nearest_yaw_threshold;
