@@ -195,12 +195,8 @@ std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
     trajectory_utils::convertToTrajectoryPoint(prev_eb_traj_points_ptr_->at(prev_front_point_idx));
 
   // update front pose for fix with previous point
-  const double front_velocity = traj_points_with_fixed_point.front().longitudinal_velocity_mps;
-  trajectory_utils::updateFrontPoseForFix(
-    traj_points_with_fixed_point, prev_front_point, eb_param_.delta_arc_length);
-
-  // update front velocity with current point
-  traj_points_with_fixed_point.front().longitudinal_velocity_mps = front_velocity;
+  trajectory_utils::updateFrontPointForFix(
+    traj_points_with_fixed_point, prev_front_point.pose, eb_param_.delta_arc_length);
 
   debug_data_ptr_->toc(__func__, "        ");
   return traj_points_with_fixed_point;

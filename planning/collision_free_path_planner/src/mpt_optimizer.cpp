@@ -562,7 +562,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   // must be after backward cropping
   // NOTE: New front point may be added. Resample is required.
-  calcFixedPoint(ref_points);
+  updateFixedPoint(ref_points);
   ref_points_spline = SplineInterpolationPoints2d(ref_points);
 
   // set bounds information
@@ -573,8 +573,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // NOTE: This must be after bounds calculation and updateOrientation
   calcExtraPoints(ref_points);
 
-  const double ref_length = mpt_param_.num_points * mpt_param_.delta_arc_length;
-  ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length);
+  ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, forward_traj_length);
 
   // bounds information is assigned to debug data after truncating reference points
   debug_data_ptr_->ref_points = ref_points;
@@ -582,62 +581,6 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   debug_data_ptr_->toc(__func__, "        ");
 
   return ref_points;
-  if (ref_points.empty()) {
-    return std::vector<ReferencePoint>{};
-  }
-
-  return ref_points;
-
-  // crop with margin
-  /*
-  updateBounds(ref_points, p.left_bound, p.right_bound);
-  updateVehicleBounds(ref_points, ref_points_spline);
-
-  // set extra information (alpha and has_object_collision)
-  // NOTE: This must be after bounds calculation.
-  calcExtraPoints(ref_points);
-  */
-
-  /*
-  // crop forward
-  ref_points = trajectory_utils::cropForwardPoints(
-    ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
-  */
-
-  /*
-  const auto cropped_smoothed_points =
-    [&]() -> std::vector<TrajectoryPoint> {
-      const auto resampled_smoothed_points = resampleTrajectoryPoints(smoothed_points,
-  mpt_param_.delta_arc_length); const size_t ego_seg_idx =
-  findEgoSegmentIndex(resampled_smoothed_points, p.ego_pose, ego_nearest_param_); return
-  trajectory_utils::cropBackwardPoints(resampled_smoothed_points, p.ego_pose.position, ego_seg_idx,
-  traj_param_.output_backward_traj_length);
-    }();
-
-  const auto ref_points = createReferencePoints(cropped_smoothed_points, fixed_ref_points);
-  if (ref_points.empty()) {
-    return std::vector<ReferencePoint>{};
-  }
-  */
-
-  // set some information to reference points considering fix kinematics
-  // trimPoints(ref_points);
-  // calcPlanningFromEgo(
-  // p.ego_pose, p.ego_vel,
-  // ref_points);  // NOTE: fix_kinematic_state will be updated when planning from ego
-
-  // crop trajectory with margin to calculate vehicle bounds at the end point
-  // NOTE: before update bounds
-  /*
-  constexpr double tmp_ref_points_margin = 20.0;
-  const double ref_length_with_margin =
-    traj_param_.num_points * mpt_param_.delta_arc_length + tmp_ref_points_margin;
-  ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
-  if (ref_points.empty()) {
-    return std::vector<ReferencePoint>{};
-  }
-  ref_points_spline = SplineInterpolationPoints2d(ref_points);
-  */
 }
 
 void MPTOptimizer::updateOrientation(
@@ -661,7 +604,7 @@ void MPTOptimizer::updateCurvature(
   }
 }
 
-void MPTOptimizer::calcFixedPoint(std::vector<ReferencePoint> & ref_points) const
+void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) const
 {
   if (!prev_ref_points_ptr_) {
     // no fixed point
@@ -676,9 +619,9 @@ void MPTOptimizer::calcFixedPoint(std::vector<ReferencePoint> & ref_points) cons
 
   // TODO(murooka) check deviation
 
-  // update front point of ref_points
-  trajectory_utils::updateFrontPoseForFix(
-    ref_points, prev_ref_front_point, mpt_param_.delta_arc_length);
+  // update front pose of ref_points
+  trajectory_utils::updateFrontPointForFix(
+    ref_points, prev_ref_front_point.pose, mpt_param_.delta_arc_length);
   ref_points.front().fix_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
 }
 

@@ -68,6 +68,7 @@ struct KinematicState
 struct ReferencePoint
 {
   geometry_msgs::msg::Pose pose;
+  double longitudinal_velocity_mps;
 
   // additional information
   double k{0.0};
@@ -243,7 +244,7 @@ private:
   void updateVehicleBounds(
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
-  void calcFixedPoint(std::vector<ReferencePoint> & ref_points) const;
+  void updateFixedPoint(std::vector<ReferencePoint> & ref_points) const;
   void updateArcLength(std::vector<ReferencePoint> & ref_points) const;
   void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
 

@@ -44,6 +44,12 @@ geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoi
 {
   return p.pose;
 }
+
+template <>
+double getLongitudinalVelocity(const collision_free_path_planner::ReferencePoint & p)
+{
+  return p.longitudinal_velocity_mps;
+}
 }  // namespace tier4_autoware_utils
 
 namespace collision_free_path_planner
@@ -55,6 +61,7 @@ ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point)
   ReferencePoint ref_point;
 
   ref_point.pose = traj_point.pose;
+  ref_point.longitudinal_velocity_mps = traj_point.longitudinal_velocity_mps;
   return ref_point;
 }
 

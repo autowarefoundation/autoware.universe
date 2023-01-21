@@ -41,6 +41,9 @@ geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferenceP
 
 template <>
 geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p);
+
+template <>
+double getLongitudinalVelocity(const collision_free_path_planner::ReferencePoint & p);
 }  // namespace tier4_autoware_utils
 
 namespace collision_free_path_planner
@@ -220,10 +223,11 @@ TrajectoryPoint convertToTrajectoryPoint(const T & point)
 }
 
 template <>
-inline TrajectoryPoint convertToTrajectoryPoint(const ReferencePoint & point)
+inline TrajectoryPoint convertToTrajectoryPoint(const ReferencePoint & ref_point)
 {
   TrajectoryPoint traj_point;
-  traj_point.pose = tier4_autoware_utils::getPose(point);
+  traj_point.pose = tier4_autoware_utils::getPose(ref_point);
+  traj_point.longitudinal_velocity_mps = tier4_autoware_utils::getLongitudinalVelocity(ref_point);
   return traj_point;
 }
 
@@ -311,18 +315,19 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
 
 template <typename T>
-void updateFrontPoseForFix(std::vector<T> & points, const T & target_point, const double epsilon)
+void updateFrontPointForFix(
+  std::vector<T> & points, const geometry_msgs::msg::Pose & target_pose, const double epsilon)
 {
-  const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_point);
+  const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_pose);
 
   if (dist < epsilon) {
     // only pose is updated
-    points.front().pose = target_point.pose;
+    points.front().pose = target_pose;
   } else {
     // add new front point
-    // NOTE: velocity is 0.
     T new_front_point;
-    new_front_point.pose = target_point.pose;
+    new_front_point.pose = target_pose;
+    new_front_point.longitudinal_velocity_mps = points.front().longitudinal_velocity_mps;
 
     points.insert(points.begin(), new_front_point);
   }
