@@ -41,8 +41,8 @@ public:
       double lower_bound;
     };
 
-    Constrain x;
-    Constrain y;
+    Constrain lon;
+    Constrain lat;
   };
 
   EBPathSmoother(

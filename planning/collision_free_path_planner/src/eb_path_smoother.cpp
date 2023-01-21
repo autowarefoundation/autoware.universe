@@ -23,6 +23,7 @@
 #include <chrono>
 #include <limits>
 
+// TODO(murooka) consider fixing goal
 namespace
 {
 Eigen::MatrixXd makePMatrix(const int num_points)
@@ -250,16 +251,16 @@ void EBPathSmoother::updateConstrain(const std::vector<TrajectoryPoint> & traj_p
       getConstrainLinesFromConstrainRectangle(traj_points.at(i).pose, rect_size);
 
     // constraint for x
-    A(i, i) = constrain.x.coef(0);
-    A(i, i + p.num_points) = constrain.x.coef(1);
-    upper_bound.at(i) = constrain.x.upper_bound;
-    lower_bound.at(i) = constrain.x.lower_bound;
+    A(i, i) = constrain.lon.coef(0);
+    A(i, i + p.num_points) = constrain.lon.coef(1);
+    upper_bound.at(i) = constrain.lon.upper_bound;
+    lower_bound.at(i) = constrain.lon.lower_bound;
 
     // constraint for y
-    A(i + p.num_points, i) = constrain.y.coef(0);
-    A(i + p.num_points, i + p.num_points) = constrain.y.coef(1);
-    upper_bound.at(i + p.num_points) = constrain.y.upper_bound;
-    lower_bound.at(i + p.num_points) = constrain.y.lower_bound;
+    A(i + p.num_points, i) = constrain.lat.coef(0);
+    A(i + p.num_points, i + p.num_points) = constrain.lat.coef(1);
+    upper_bound.at(i + p.num_points) = constrain.lat.upper_bound;
+    lower_bound.at(i + p.num_points) = constrain.lat.lower_bound;
   }
 
   // osqp_solver_ptr_->updateA(A);
@@ -292,33 +293,35 @@ EBPathSmoother::ConstrainLines EBPathSmoother::getConstrainLinesFromConstrainRec
 
   // TODO(murooka) x can be removed
   {  // x constrain
-    constrain.x.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
+    constrain.lon.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
     Eigen::Vector2d upper_point(
       pose.position.x - rect_size / 2.0 * std::sin(theta),
       pose.position.y + rect_size / 2.0 * std::cos(theta));
     Eigen::Vector2d lower_point(
       pose.position.x + rect_size / 2.0 * std::sin(theta),
       pose.position.y - rect_size / 2.0 * std::cos(theta));
-    const double upper_bound = constrain.x.coef.transpose() * upper_point;
-    const double lower_bound = constrain.x.coef.transpose() * lower_point;
-    constrain.x.upper_bound = std::max(upper_bound, lower_bound);
-    constrain.x.lower_bound = std::min(upper_bound, lower_bound);
+    // Eigen::Vector2d upper_point(pose.position.x, pose.position.y);
+    // Eigen::Vector2d lower_point(pose.position.x, pose.position.y);
+    const double upper_bound = constrain.lon.coef.transpose() * upper_point;
+    const double lower_bound = constrain.lon.coef.transpose() * lower_point;
+    constrain.lon.upper_bound = std::max(upper_bound, lower_bound);
+    constrain.lon.lower_bound = std::min(upper_bound, lower_bound);
   }
 
   {  // y constrain
-    constrain.y.coef = Eigen::Vector2d(std::cos(theta), -std::sin(theta));
+    // constrain.lat.coef = Eigen::Vector2d(std::cos(theta), -std::sin(theta));
     // TODO(murooka)
-    // constrain.y.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
+    constrain.lat.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
     Eigen::Vector2d upper_point(
       pose.position.x + rect_size / 2.0 * std::cos(theta),
       pose.position.y + rect_size / 2.0 * std::sin(theta));
     Eigen::Vector2d lower_point(
       pose.position.x - rect_size / 2.0 * std::cos(theta),
       pose.position.y - rect_size / 2.0 * std::sin(theta));
-    const double upper_bound = constrain.y.coef.transpose() * upper_point;
-    const double lower_bound = constrain.y.coef.transpose() * lower_point;
-    constrain.y.upper_bound = std::max(upper_bound, lower_bound);
-    constrain.y.lower_bound = std::min(upper_bound, lower_bound);
+    const double upper_bound = constrain.lat.coef.transpose() * upper_point;
+    const double lower_bound = constrain.lat.coef.transpose() * lower_point;
+    constrain.lat.upper_bound = std::max(upper_bound, lower_bound);
+    constrain.lat.lower_bound = std::min(upper_bound, lower_bound);
   }
 
   return constrain;
