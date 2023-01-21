@@ -12,7 +12,7 @@
         <arg name="output_doppler" default="doppler"/>
         <arg name="output_status" default="status"/>
         <arg name="output_doppler_vel" default="doppler_vel"/>
-        <arg name="output_twist_with_cov" default="twist_with_cov"/>
+        <arg name="output_twist_with_cov" default="/localization/twist_estimator/twist_with_covariance"/>
 
         <node name="twist_estimator" pkg="twist_estimator" exec="twist_estimator_node" output="screen" args="--ros-args --log-level warn">
             <param name="use_sim_time" value="$(var use_sim_time)"/>

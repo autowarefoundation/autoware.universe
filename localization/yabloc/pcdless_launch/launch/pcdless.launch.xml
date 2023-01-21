@@ -14,6 +14,9 @@
     <arg name="initialpose_cov_xx_yy" default="[16.0,0.25]"/>
     <arg name="ignore_less_than_float" default="true"/>
 
+    <!-- ekf-->
+    <include file="$(find-pkg-share pcdless_launch)/launch/impl/ekf.launch.xml"/>
+
     <group>
         <push-ros-namespace namespace="localization"/>
 
