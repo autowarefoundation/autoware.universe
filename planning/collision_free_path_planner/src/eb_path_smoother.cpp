@@ -291,37 +291,26 @@ EBPathSmoother::ConstrainLines EBPathSmoother::getConstrainLinesFromConstrainRec
   ConstrainLines constrain;
   const double theta = tf2::getYaw(pose.orientation);
 
-  // TODO(murooka) x can be removed
-  {  // x constrain
-    constrain.lon.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
-    Eigen::Vector2d upper_point(
-      pose.position.x - rect_size / 2.0 * std::sin(theta),
-      pose.position.y + rect_size / 2.0 * std::cos(theta));
-    Eigen::Vector2d lower_point(
-      pose.position.x + rect_size / 2.0 * std::sin(theta),
-      pose.position.y - rect_size / 2.0 * std::cos(theta));
-    // Eigen::Vector2d upper_point(pose.position.x, pose.position.y);
-    // Eigen::Vector2d lower_point(pose.position.x, pose.position.y);
-    const double upper_bound = constrain.lon.coef.transpose() * upper_point;
-    const double lower_bound = constrain.lon.coef.transpose() * lower_point;
-    constrain.lon.upper_bound = std::max(upper_bound, lower_bound);
-    constrain.lon.lower_bound = std::min(upper_bound, lower_bound);
+  {  // longitudinal constraint
+    constrain.lon.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
+    const double lon_bound =
+      constrain.lon.coef.transpose() * Eigen::Vector2d(pose.position.x, pose.position.y);
+    constrain.lon.upper_bound = lon_bound;
+    constrain.lon.lower_bound = lon_bound;
   }
 
-  {  // y constrain
-    // constrain.lat.coef = Eigen::Vector2d(std::cos(theta), -std::sin(theta));
-    // TODO(murooka)
-    constrain.lat.coef = Eigen::Vector2d(std::cos(theta), std::sin(theta));
-    Eigen::Vector2d upper_point(
-      pose.position.x + rect_size / 2.0 * std::cos(theta),
-      pose.position.y + rect_size / 2.0 * std::sin(theta));
-    Eigen::Vector2d lower_point(
-      pose.position.x - rect_size / 2.0 * std::cos(theta),
-      pose.position.y - rect_size / 2.0 * std::sin(theta));
-    const double upper_bound = constrain.lat.coef.transpose() * upper_point;
-    const double lower_bound = constrain.lat.coef.transpose() * lower_point;
-    constrain.lat.upper_bound = std::max(upper_bound, lower_bound);
-    constrain.lat.lower_bound = std::min(upper_bound, lower_bound);
+  {  // lateral constraint
+    constrain.lat.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
+    const auto lat_bound_pos1 =
+      tier4_autoware_utils::calcOffsetPose(pose, 0.0, -rect_size / 2.0, 0.0).position;
+    const auto lat_bound_pos2 =
+      tier4_autoware_utils::calcOffsetPose(pose, 0.0, rect_size / 2.0, 0.0).position;
+    const double lat_bound1 =
+      constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos1.x, lat_bound_pos1.y);
+    const double lat_bound2 =
+      constrain.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos2.x, lat_bound_pos2.y);
+    constrain.lat.upper_bound = std::max(lat_bound1, lat_bound2);
+    constrain.lat.lower_bound = std::min(lat_bound1, lat_bound2);
   }
 
   return constrain;
