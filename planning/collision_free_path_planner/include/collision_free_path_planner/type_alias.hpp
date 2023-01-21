@@ -15,7 +15,6 @@
 #ifndef COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
 #define COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
 
-#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -32,9 +31,6 @@ namespace collision_free_path_planner
 {
 // std_msgs
 using std_msgs::msg::Header;
-// perception
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
 // planning
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;

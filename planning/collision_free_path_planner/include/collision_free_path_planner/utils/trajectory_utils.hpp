@@ -107,7 +107,6 @@ T cropForwardPoints(
 
   double sum_length =
     -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
-  std::cerr << "sum length " << sum_length << std::endl;
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
     sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length) {

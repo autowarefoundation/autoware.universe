@@ -71,8 +71,6 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   odom_sub_ = create_subscription<Odometry>(
     "/localization/kinematic_state", 1,
     [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
-  objects_sub_ = create_subscription<PredictedObjects>(
-    "~/input/objects", 1, [this](const PredictedObjects::SharedPtr msg) { objects_ptr_ = msg; });
 
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
@@ -238,12 +236,6 @@ bool CollisionFreePathPlanner::isDataReady(const Path & path)
     return false;
   }
 
-  if (!objects_ptr_) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Waiting for dynamic objects.");
-    return false;
-  }
-
   if (path.points.size() < 2) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), 5000, "Path points size is less than 1.");
@@ -269,7 +261,6 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
   planner_data.right_bound = path.right_bound;
   planner_data.ego_pose = ego_state_ptr_->pose.pose;
   planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
-  planner_data.objects = objects_ptr_->objects;
 
   // update debug data
   debug_data_ptr_->ego_pose = planner_data.ego_pose;
@@ -329,17 +320,10 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   }
 
   // 2. Elastic Band: smooth trajectory if enable_smoothing is true
+  // NOTE: eb_traj's variables except for pose is not calculated.
   const auto eb_traj = enable_smoothing_
                          ? eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_)
                          : p.traj_points;
-  /*
-  const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
-    if (enable_smoothing_) {
-      return eb_path_smoother_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
-    }
-    return trajectory_utils::convertToTrajectoryPoints(p.path.points);
-  }();
-  */
   if (!eb_traj) {
     return getPrevOptimizedTrajectory(p.traj_points);
   }

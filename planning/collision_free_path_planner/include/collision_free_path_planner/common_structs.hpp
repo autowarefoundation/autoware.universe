@@ -38,9 +38,6 @@ struct PlannerData
   std::vector<geometry_msgs::msg::Point> left_bound;
   std::vector<geometry_msgs::msg::Point> right_bound;
 
-  // external input
-  std::vector<PredictedObject> objects;
-
   // ego
   geometry_msgs::msg::Pose ego_pose;
   double ego_vel{};
@@ -58,13 +55,10 @@ struct EBParam
   QPParam qp_param;
 
   // clearance
-  double clearance_for_fixing;
-  double clearance_for_straight_line;
+  int num_joint_points;
+  double clearance_for_fix;
   double clearance_for_joint;
-  double clearance_for_smoothing;
-
-  int num_joint_buffer_points;
-  int num_offset_for_begin_idx;
+  double clearance_for_smooth;
 
   double delta_arc_length;
   int num_sampling_points;
@@ -73,31 +67,24 @@ struct EBParam
   explicit EBParam(rclcpp::Node * node)
   {
     {  // common
-      num_joint_buffer_points =
-        node->declare_parameter<int>("advanced.eb.common.num_joint_buffer_points");
-      num_offset_for_begin_idx =
-        node->declare_parameter<int>("advanced.eb.common.num_offset_for_begin_idx");
       delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
       num_sampling_points = node->declare_parameter<int>("advanced.eb.common.num_sampling_points");
     }
 
     {  // clearance
-      clearance_for_straight_line =
-        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_straight_line");
+      num_joint_points = node->declare_parameter<int>("advanced.eb.clearance.num_joint_points");
+      clearance_for_fix =
+        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_fix");
       clearance_for_joint =
         node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
-      clearance_for_smoothing =
-        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smoothing");
+      clearance_for_smooth =
+        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smooth");
     }
 
     {  // qp
       qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
       qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
       qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
-    }
-
-    {  // other
-      clearance_for_fixing = 0.0;
     }
   }
 
@@ -106,22 +93,18 @@ struct EBParam
     using tier4_autoware_utils::updateParam;
 
     {  // common
-      updateParam<int>(
-        parameters, "advanced.eb.common.num_joint_buffer_points", num_joint_buffer_points);
-      updateParam<int>(
-        parameters, "advanced.eb.common.num_offset_for_begin_idx", num_offset_for_begin_idx);
       updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
       updateParam<int>(parameters, "advanced.eb.common.num_sampling_points", num_sampling_points);
     }
 
     {  // clearance
-      updateParam<double>(
-        parameters, "advanced.eb.clearance.clearance_for_straight_line",
-        clearance_for_straight_line);
+      updateParam<int>(parameters, "advanced.eb.clearance.num_joint_points", num_joint_points);
       updateParam<double>(
         parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
       updateParam<double>(
-        parameters, "advanced.eb.clearance.clearance_for_smoothing", clearance_for_smoothing);
+        parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
+      updateParam<double>(
+        parameters, "advanced.eb.clearance.clearance_for_smooth", clearance_for_smooth);
     }
 
     {  // qp

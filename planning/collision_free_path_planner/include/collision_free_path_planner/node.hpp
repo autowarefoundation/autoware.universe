@@ -82,7 +82,6 @@ private:
 
   // variables for subscribers
   Odometry::SharedPtr ego_state_ptr_;
-  PredictedObjects::SharedPtr objects_ptr_;
 
   // variables for previous information
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
@@ -95,7 +94,6 @@ private:
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
 
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;

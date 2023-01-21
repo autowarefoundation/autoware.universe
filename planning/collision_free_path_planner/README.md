@@ -1,26 +1,26 @@
 ## Purpose
 
-This package generates a trajectory that is feasible to drive and collision free based on a reference path, drivable area, and static/dynamic obstacles.
-Only position and orientation of trajectory are calculated in this module (velocity is just aligned from the one in the path), and velocity or acceleration will be updated in the latter modules.
+This package generates a trajectory that is kinematically-feasible to drive and collision-free based on the input path, drivable area.
+Only position and orientation of trajectory are updated in this module, and velocity is just aligned from the one in the input path.
 
 ## Feature
 
 This package is able to
 
-- follow the behavior path smoothly
+- make the trajectory smooth
 - make the trajectory inside the drivable area as much as possible
+  - Static obstacles to avoid is removed from the drivable area.
 - insert stop point if its trajectory point is outside the drivable area
 
 ## Inputs / Outputs
 
 ### input
 
-| Name                                                                   | Type                                           | Description                                        |
-| ---------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------- |
-| `~/input/path`                                                         | autoware_auto_planning_msgs/Path               | Reference path and the corresponding drivable area |
-| `~/input/objects`                                                      | autoware_auto_perception_msgs/PredictedObjects | Recognized objects around the vehicle              |
-| `/localization/kinematic_kinematics`                                   | nav_msgs/Odometry                              | Current Velocity of ego vehicle                    |
-| `/planning/scenario_planning/lane_driving/obstacle_avoidance_approval` | tier4_planning_msgs/EnableAvoidance            | Approval to execute obstacle avoidance             |
+| Name                                                                   | Type                                | Description                                        |
+| ---------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------- |
+| `~/input/path`                                                         | autoware_auto_planning_msgs/Path    | Reference path and the corresponding drivable area |
+| `/localization/kinematic_kinematics`                                   | nav_msgs/Odometry                   | Current Velocity of ego vehicle                    |
+| `/planning/scenario_planning/lane_driving/obstacle_avoidance_approval` | tier4_planning_msgs/EnableAvoidance | Approval to execute obstacle avoidance             |
 
 ### output
 
@@ -38,13 +38,6 @@ title pathCallback
 start
 
 :createPlannerData;
-
-group getMaps
-  :getDrivableArea;
-  :getRoadClearanceMap;
-  :drawObstacleOnImage;
-  :getObstacleClearanceMap;
-end group
 
 group generateOptimizedTrajectory
   group optimizeTrajectory
@@ -85,28 +78,6 @@ Otherwise, previously generated (optimized) trajectory is published just with al
 - Ego moves a certain distance compared to the previous ego pose (default: 3.0 [m])
 - Time passes (default: 1.0 [s])
 - Ego is far from the previously generated trajectory
-
-### getRoadClearanceMap
-
-Cost map is generated according to the distance to the road boundaries.
-
-These cost maps are used in the optimization to generate a collision-free trajectory.
-
-### drawObstacleOnImage
-
-Only obstacles that are static and locate in a shoulder lane is decided to avoid.
-In detail, this equals to the following three conditions at the same time, and the red obstacles in the figure (id: 3, 4, 5) is to be avoided.
-
-- Velocity is under a certain value (default: 0.1 [m/s])
-- CoG of the obstacles is not on the center line
-  - so that the ego will not avoid the car in front of the ego in the same lane.
-- At least one point of the obstacle polygon is outside the drivable area.
-
-![obstacle_to_avoid](./media/obstacle_to_avoid.drawio.svg)
-
-### getObstacleClearanceMap
-
-Cost map is generated according to the distance to the target obstacles to be avoided.
 
 ### getEBTrajectory
 

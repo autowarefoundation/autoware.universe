@@ -83,7 +83,7 @@ private:
     const std::vector<TrajectoryPoint> & traj_points);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
-    const std::vector<double> optimized_points, const size_t pad_start_idx);
+    const std::vector<double> & optimized_points, const size_t pad_start_idx);
 };
 }  // namespace collision_free_path_planner
 
