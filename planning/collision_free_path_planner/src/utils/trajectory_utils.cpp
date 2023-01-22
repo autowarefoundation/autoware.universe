@@ -105,10 +105,10 @@ geometry_msgs::msg::Point getNearestPosition(
 {
   double sum_arc_length = 0.0;
   for (size_t i = target_idx; i < points.size(); ++i) {
-    sum_arc_length += points.at(target_idx).delta_arc_length;
+    sum_arc_length += points.at(i).delta_arc_length;
 
     if (offset < sum_arc_length) {
-      return points.at(target_idx).pose.position;
+      return points.at(i).pose.position;
     }
   }
 

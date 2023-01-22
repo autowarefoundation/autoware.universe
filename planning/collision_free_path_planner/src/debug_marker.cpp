@@ -339,16 +339,16 @@ MarkerArray getVehicleCircleLinesMarkerArray(
       createMarkerColor(0.99, 0.99, 0.2, 0.25));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
+    const double lat_dev = ref_point.optimized_kinematic_state.lat;
+    const double yaw_dev = ref_point.optimized_kinematic_state.yaw;
+
+    // apply lateral and yaw deviation
+    auto pose_with_deviation =
+      tier4_autoware_utils::calcOffsetPose(ref_point.pose, 0.0, lat_dev, 0.0);
+    pose_with_deviation.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(ref_point.getYaw() + yaw_dev);
+
     for (const double d : vehicle_circle_longitudinal_offsets) {
-      const double lat_dev = ref_point.optimized_kinematic_state.lat;
-      const double yaw_dev = ref_point.optimized_kinematic_state.yaw;
-
-      // apply lateral and yaw deviation
-      auto pose_with_deviation =
-        tier4_autoware_utils::calcOffsetPose(ref_point.pose, 0.0, lat_dev, 0.0);
-      pose_with_deviation.orientation =
-        tier4_autoware_utils::createQuaternionFromYaw(ref_point.getYaw() + yaw_dev);
-
       // apply longitudinal offset
       auto base_pose = tier4_autoware_utils::calcOffsetPose(pose_with_deviation, d, 0.0, 0.0);
       base_pose.orientation =

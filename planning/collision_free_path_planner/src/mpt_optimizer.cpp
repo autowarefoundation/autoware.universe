@@ -576,8 +576,11 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   updateBounds(ref_points, p.left_bound, p.right_bound);
   updateVehicleBounds(ref_points, ref_points_spline);
 
+  updateArcLength(ref_points);
+
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation and updateOrientation
+  // must be after updateArcLength
   calcExtraPoints(ref_points);
 
   ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, forward_traj_length);
