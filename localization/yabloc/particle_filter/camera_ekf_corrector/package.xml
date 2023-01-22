@@ -17,6 +17,7 @@
   <depend>visualization_msgs</depend>
 
   <depend>pcdless_common</depend>
+  <depend>modularized_particle_filter</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

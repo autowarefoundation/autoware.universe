@@ -38,6 +38,7 @@ ament_auto_add_executable(${TARGET}
   src/filt_lsd.cpp
   src/direct_cost_map.cpp
   src/logit.cpp
+  src/sampling.cpp
   src/camera_ekf_corrector_core.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})

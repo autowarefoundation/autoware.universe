@@ -8,6 +8,7 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -26,11 +27,16 @@ public:
   using LineSegments = pcl::PointCloud<LineSegment>;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
+  using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+
+  using Particle = modularized_particle_filter_msgs::msg::Particle;
+  using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
+
   CameraEkfCorrector();
 
 private:
@@ -41,14 +47,16 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_markers_;
 
   std::list<PoseCovStamped> pose_buffer_;
   std::function<float(float)> score_converter_;
 
-  bool enable_switch_{true};
+  bool enable_switch_{false};
 
   void on_lsd(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
@@ -61,6 +69,8 @@ private:
 
   std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
   std::optional<PoseCovStamped> get_synchronized_pose(const rclcpp::Time & stamp);
+
+  void publish_visualize_markers(const ParticleArray & particles);
 
   PoseCovStamped estimate_pose_with_covariance(
     const PoseCovStamped & init, const LineSegments & lsd_cloud,

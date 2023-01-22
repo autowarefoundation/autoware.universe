@@ -1,7 +1,9 @@
 #include "camera_ekf_corrector/camera_ekf_corrector.hpp"
 #include "camera_ekf_corrector/fast_cos.hpp"
 #include "camera_ekf_corrector/logit.hpp"
+#include "camera_ekf_corrector/sampling.hpp"
 
+#include <modularized_particle_filter/common/mean.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
 #include <pcdless_common/pose_conversions.hpp>
@@ -23,11 +25,10 @@ CameraEkfCorrector::CameraEkfCorrector()
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  enable_switch_ = declare_parameter<bool>("enabled_at_first", true);
-
   // Publication
   pub_image_ = create_publisher<Image>("match_image", 10);
   pub_pose_cov_ = create_publisher<PoseCovStamped>("output/pose_with_covariance", 10);
+  pub_markers_ = create_publisher<MarkerArray>("yielded_marker", 10);
 
   // Subscription
   auto on_lsd = std::bind(&CameraEkfCorrector::on_lsd, this, _1);
@@ -39,6 +40,9 @@ CameraEkfCorrector::CameraEkfCorrector()
   sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
   sub_pose_cov_ =
     create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, on_pose_cov);
+  sub_initialpose_ = create_subscription<PoseCovStamped>(
+    "/localization/initializer/rectified/initialpose", 10,
+    [this](const PoseCovStamped &) -> void { this->enable_switch_ = true; });
 }
 
 void CameraEkfCorrector::on_pose_cov(const PoseCovStamped & msg) { pose_buffer_.push_back(msg); }
@@ -125,6 +129,12 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
     return;
   }
 
+  if (!enable_switch_) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), (1000ms).count(), "skip until first initialpose is published");
+    return;
+  }
+
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   auto opt_synched_pose = get_synchronized_pose(stamp);
 
@@ -144,9 +154,7 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   PoseCovStamped estimated_pose =
     estimate_pose_with_covariance(opt_synched_pose.value(), lsd_cloud, iffy_lsd_cloud);
 
-  if (enable_switch_) {
-    pub_pose_cov_->publish(estimated_pose);
-  }
+  pub_pose_cov_->publish(estimated_pose);
 
   cost_map_.erase_obsolete();  // NOTE: Don't foreget erasing
 
@@ -160,26 +168,92 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
 CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covariance(
   const PoseCovStamped & init, const LineSegments & lsd_cloud, const LineSegments & iffy_lsd_cloud)
 {
+  ParticleArray particles;
+
   // Yield pose candidates from covariance
-  std::vector<Pose> poses;
-  // TODO:
+  Eigen::Matrix2d xy_cov;
+  xy_cov << init.pose.covariance[0], init.pose.covariance[1], init.pose.covariance[6],
+    init.pose.covariance[7];
+  const double theta_cov = init.pose.covariance[35];
+  const double base_theta =
+    2 * std::atan2(init.pose.pose.orientation.z, init.pose.pose.orientation.w);
+
+  constexpr int N = 500;
+  for (int i = 0; i < N; i++) {
+    Eigen::Vector2d xy = nrand_2d(xy_cov);
+    Particle particle;
+    particle.pose = init.pose.pose;
+    particle.pose.position.x += xy.x();
+    particle.pose.position.y += xy.y();
+    particle.pose.orientation.w = 1;
+    double theta = base_theta + nrand(theta_cov);
+    particle.pose.orientation.w = std::cos(theta / 2.);
+    particle.pose.orientation.z = std::sin(theta / 2.);
+    particles.particles.push_back(particle);
+  }
 
   // Find weights for every pose candidates
-  for (auto & pose : poses) {
-    Sophus::SE3f transform = common::pose_to_se3(pose);
+  for (auto & particle : particles.particles) {
+    Sophus::SE3f transform = common::pose_to_se3(particle.pose);
     LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
     LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
     transformed_lsd += transformed_iffy_lsd;
 
     float logit = compute_logit(transformed_lsd, transform.translation());
-    float weight = logit_to_prob(logit, 0.01f);
-    // TODO:
+    particle.weight = logit_to_prob(logit, 0.01f);
   }
 
+  // visualize
+  publish_visualize_markers(particles);
+
   // Compute optimal distribution
-  // TODO:
-  PoseCovStamped output;
+  PoseCovStamped output = init;
+  output.pose.pose = mean_pose(particles);
+  const Eigen::Matrix3f cov = covariance_of_distribution(particles);
+  for (int i = 0; i < 3; ++i) {
+    output.pose.covariance[6 * i + 0] = cov(i, 0);
+    output.pose.covariance[6 * i + 1] = cov(i, 1);
+    output.pose.covariance[6 * i + 2] = cov(i, 2);
+  }
+  output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
+  const float angle_cov = covariance_of_angle_distribution(particles);
+  output.pose.covariance[6 * 5 + 5] = angle_cov;
+
   return output;
+}
+
+void CameraEkfCorrector::publish_visualize_markers(const ParticleArray & particles)
+{
+  visualization_msgs::msg::MarkerArray marker_array;
+  auto minmax_weight = std::minmax_element(
+    particles.particles.begin(), particles.particles.end(),
+    [](const Particle & a, const Particle & b) -> bool { return a.weight < b.weight; });
+
+  float min = minmax_weight.first->weight;
+  float max = minmax_weight.second->weight;
+  max = std::max(max, min + 1e-7f);
+  auto boundWeight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
+
+  int id = 0;
+  for (const Particle & p : particles.particles) {
+    visualization_msgs::msg::Marker marker;
+    marker.frame_locked = true;
+    marker.header.frame_id = "map";
+    marker.id = id++;
+    marker.type = visualization_msgs::msg::Marker::ARROW;
+    marker.scale.x = 0.3;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
+    marker.color = common::color_scale::rainbow(boundWeight(p.weight));
+    marker.color.a = 0.5;
+    marker.pose.orientation = p.pose.orientation;
+    marker.pose.position.x = p.pose.position.x;
+    marker.pose.position.y = p.pose.position.y;
+    marker.pose.position.z = p.pose.position.z;
+    marker_array.markers.push_back(marker);
+  }
+
+  pub_markers_->publish(marker_array);
 }
 
 void CameraEkfCorrector::on_ll2(const PointCloud2 & ll2_msg)
