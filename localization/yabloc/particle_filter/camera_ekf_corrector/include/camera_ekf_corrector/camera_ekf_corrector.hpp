@@ -7,6 +7,7 @@
 #include <std_srvs/srv/set_bool.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -24,10 +25,12 @@ public:
   using LineSegment = pcl::PointXYZLNormal;
   using LineSegments = pcl::PointCloud<LineSegment>;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using PoseStamped = geometry_msgs::msg::PoseStamped;
   using Image = sensor_msgs::msg::Image;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+
   using Pose = geometry_msgs::msg::Pose;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   CameraEkfCorrector();
 
 private:
@@ -37,14 +40,12 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_bounding_box_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
-  rclcpp::Publisher<Image>::SharedPtr pub_map_image_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_;
 
-  Eigen::Vector3f last_mean_position_;
-  std::optional<PoseStamped> latest_pose_{std::nullopt};
+  std::list<PoseCovStamped> pose_buffer_;
   std::function<float(float)> score_converter_;
 
   bool enable_switch_{true};
@@ -52,12 +53,13 @@ private:
   void on_lsd(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
   void on_bounding_box(const PointCloud2 & msg);
-  void on_pose(const PoseStamped & msg);
+  void on_pose_cov(const PoseCovStamped & msg);
 
   std::pair<LineSegments, LineSegments> split_linesegments(const PointCloud2 & msg);
 
   float compute_logit(const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
 
   std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
+  std::optional<PoseCovStamped> get_synchronized_pose(const rclcpp::Time & stamp);
 };
 }  // namespace pcdless::ekf_corrector

@@ -33,7 +33,7 @@
     <arg name="input_ll2_road_marking" default="/localization/map/ll2_road_marking"/>
     <arg name="input_ll2_bounding_box" default="/localization/map/ll2_bounding_box"/>
 
-    <node name="camera_ekf_corrector" pkg="camera_ekf_corrector" exec="camera_ekf_corrector" output="screen" args="--ros-args --log-level warn">
+    <node name="camera_ekf_corrector" pkg="camera_ekf_corrector" exec="camera_ekf_corrector" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
@@ -47,6 +47,7 @@
         <remap from="ll2_bounding_box" to="$(var input_ll2_bounding_box)"/>
         <remap from="scored_cloud" to="$(var output_scored_cloud)"/>
         <remap from="cost_map_range" to="$(var output_cost_map_range)"/>
+        <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
     </node>
 
   </group>

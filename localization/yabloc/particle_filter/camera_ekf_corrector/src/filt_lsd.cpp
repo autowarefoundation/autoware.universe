@@ -36,7 +36,13 @@ std::pair<CameraEkfCorrector::LineSegments, CameraEkfCorrector::LineSegments>
 CameraEkfCorrector::filt(const LineSegments & iffy_lines)
 {
   LineSegments good, bad;
-  const Sophus::SE3f pose = common::pose_to_se3(latest_pose_.value().pose);
+
+  if (pose_buffer_.empty()) {
+    return {good, bad};
+  }
+
+  auto latest_pose = pose_buffer_.back();
+  const Sophus::SE3f pose = common::pose_to_se3(latest_pose.pose.pose);
 
   // pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
   for (const auto & line : iffy_lines) {
