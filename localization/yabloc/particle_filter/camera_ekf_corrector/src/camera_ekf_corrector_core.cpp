@@ -137,30 +137,16 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
     return;
   }
 
-  const auto synched_pose = opt_synched_pose.value();
-
   auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
 
   // TODO: cost_map_.set_height(z);
 
-  // {
-  //   for (auto & particle : weighted_particles.particles) {
-  //     Sophus::SE3f transform = common::pose_to_se3(particle.pose);
-  //     LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
-  //     LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud,
-  //     transform); transformed_lsd += transformed_iffy_lsd;
+  PoseCovStamped estimated_pose =
+    estimate_pose_with_covariance(opt_synched_pose.value(), lsd_cloud, iffy_lsd_cloud);
 
-  //     float logit = compute_logit(transformed_lsd, transform.translation());
-  //     particle.weight = logit_to_prob(logit, 0.01f);
-  //   }
-
-  //   if (enable_switch_) {
-  //     // this->set_weighted_particle_array(weighted_particles);
-  //   }
-  // }
-
-  // TODO: publish pose with covariance
-  pub_pose_cov_->publish(synched_pose);
+  if (enable_switch_) {
+    pub_pose_cov_->publish(estimated_pose);
+  }
 
   cost_map_.erase_obsolete();  // NOTE: Don't foreget erasing
 
@@ -169,6 +155,31 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   } else {
     RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
   }
+}
+
+CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covariance(
+  const PoseCovStamped & init, const LineSegments & lsd_cloud, const LineSegments & iffy_lsd_cloud)
+{
+  // Yield pose candidates from covariance
+  std::vector<Pose> poses;
+  // TODO:
+
+  // Find weights for every pose candidates
+  for (auto & pose : poses) {
+    Sophus::SE3f transform = common::pose_to_se3(pose);
+    LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
+    LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
+    transformed_lsd += transformed_iffy_lsd;
+
+    float logit = compute_logit(transformed_lsd, transform.translation());
+    float weight = logit_to_prob(logit, 0.01f);
+    // TODO:
+  }
+
+  // Compute optimal distribution
+  // TODO:
+  PoseCovStamped output;
+  return output;
 }
 
 void CameraEkfCorrector::on_ll2(const PointCloud2 & ll2_msg)

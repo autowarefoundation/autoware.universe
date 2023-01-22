@@ -61,5 +61,9 @@ private:
 
   std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
   std::optional<PoseCovStamped> get_synchronized_pose(const rclcpp::Time & stamp);
+
+  PoseCovStamped estimate_pose_with_covariance(
+    const PoseCovStamped & init, const LineSegments & lsd_cloud,
+    const LineSegments & iffy_lsd_cloud);
 };
 }  // namespace pcdless::ekf_corrector

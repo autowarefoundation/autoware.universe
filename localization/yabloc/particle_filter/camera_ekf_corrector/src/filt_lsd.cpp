@@ -37,6 +37,7 @@ CameraEkfCorrector::filt(const LineSegments & iffy_lines)
 {
   LineSegments good, bad;
 
+  // TODO: do not use pose_buffer but use synched_pose
   if (pose_buffer_.empty()) {
     return {good, bad};
   }

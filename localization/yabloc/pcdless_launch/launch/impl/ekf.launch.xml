@@ -47,7 +47,9 @@
         <remap from="ll2_bounding_box" to="$(var input_ll2_bounding_box)"/>
         <remap from="scored_cloud" to="$(var output_scored_cloud)"/>
         <remap from="cost_map_range" to="$(var output_cost_map_range)"/>
+
         <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
+        <!-- <remap from="output/pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/> -->
     </node>
 
   </group>
