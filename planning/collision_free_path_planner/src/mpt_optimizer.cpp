@@ -136,7 +136,7 @@ std::optional<geometry_msgs::msg::Point> intersect(
   std::vector<Point> intersect_points;
   boost::geometry::intersection(l1, l2, intersect_points);
   if (intersect_points.empty()) {
-    return {};
+    return std::nullopt;
   }
 
   geometry_msgs::msg::Point intersect_point;
@@ -482,11 +482,11 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // 1. calculate reference points
   auto ref_points = calcReferencePoints(planner_data, smoothed_points);
   if (ref_points.empty()) {
-    logInfo("return {} since ref_points is empty");
-    return {};
+    logInfo("return std::nullopt since ref_points is empty");
+    return std::nullopt;
   } else if (ref_points.size() == 1) {
-    logInfo("return {} since ref_points.size() == 1");
-    return {};
+    logInfo("return std::nullopt since ref_points.size() == 1");
+    return std::nullopt;
   }
 
   // 2. calculate B and W matrices where x = B u + W
@@ -504,8 +504,8 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // 6. optimize steer angles
   const auto optimized_steer_angles = calcOptimizedSteerAngles(ref_points, obj_mat, const_mat);
   if (!optimized_steer_angles) {
-    logInfo("return {} since could not solve qp");
-    return {};
+    logInfo("return std::nullopt since could not solve qp");
+    return std::nullopt;
   }
 
   for (const auto & a : *optimized_steer_angles) {
@@ -767,7 +767,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const int solution_status = std::get<3>(result);
   if (solution_status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
-    return {};
+    return std::nullopt;
   }
 
   // print iteration

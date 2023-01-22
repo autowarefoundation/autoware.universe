@@ -160,8 +160,9 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   const auto optimized_points = optimizeTrajectory(padded_traj_points);
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_, "return {} since smoothing failed");
-    return {};
+      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
+      "return std::nullopt since smoothing failed");
+    return std::nullopt;
   }
 
   // convert optimization result to trajectory
@@ -307,7 +308,7 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   // check status
   if (status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[EB]");
-    return {};
+    return std::nullopt;
   }
 
   debug_data_ptr_->toc(__func__, "        ");
