@@ -64,6 +64,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
+  modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -548,6 +549,7 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.longitudinal_margin = dp("longitudinal_margin", 3.0);
   p.max_lateral_offset = dp("max_lateral_offset", 1.0);
   p.lateral_offset_interval = dp("lateral_offset_interval", 0.25);
+  p.ignore_distance_from_lane_start = dp("ignore_distance_from_lane_start", 15.0);
   // occupancy grid map
   p.use_occupancy_grid = dp("use_occupancy_grid", true);
   p.use_occupancy_grid_for_longitudinal_margin =
@@ -643,6 +645,7 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.deceleration_interval = dp("deceleration_interval", 10.0);
   // geometric pull out
   p.enable_geometric_pull_out = dp("enable_geometric_pull_out", true);
+  p.divide_pull_out_path = dp("divide_pull_out_path", false);
   p.geometric_pull_out_velocity = dp("geometric_pull_out_velocity", 1.0);
   p.arc_path_interval = dp("arc_path_interval", 1.0);
   p.lane_departure_margin = dp("lane_departure_margin", 0.2);
@@ -652,9 +655,10 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.search_priority =
     dp("search_priority", "efficient_path");  // "efficient_path" or "short_back_distance"
   p.enable_back = dp("enable_back", true);
-  p.max_back_distance = dp("max_back_distance", 15.0);
+  p.max_back_distance = dp("max_back_distance", 30.0);
   p.backward_search_resolution = dp("backward_search_resolution", 2.0);
   p.backward_path_update_duration = dp("backward_path_update_duration", 3.0);
+  p.ignore_distance_from_lane_end = dp("ignore_distance_from_lane_end", 15.0);
   // drivable area
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
@@ -798,6 +802,12 @@ void BehaviorPathPlannerNode::run()
   publishPathCandidate(bt_manager_->getSceneModules());
 
   publishSceneModuleDebugMsg();
+
+  if (output.modified_goal) {
+    PoseWithUuidStamped modified_goal = *(output.modified_goal);
+    modified_goal.header.stamp = path->header.stamp;
+    modified_goal_publisher_->publish(modified_goal);
+  }
 
   if (planner_data->parameters.visualize_maximum_drivable_area) {
     const auto maximum_drivable_area =
