@@ -17,8 +17,8 @@
       detection_area_angle_threshold: 0.785 # [rad]
       min_predicted_path_confidence: 0.05
       minimum_ego_predicted_velocity: 1.388 # [m/s]
-      collision_start_margin_time: 6.0 # [s]
-      collision_end_margin_time: 7.0 # [s]
+      collision_start_margin_time: 4.0 # [s]
+      collision_end_margin_time: 2.0 # [s]
       use_stuck_stopline: false # stopline generate before the intersection lanelet when is_stuck
       assumed_front_car_decel: 1.0 # [m/ss] the expected deceleration of front car when front car as well as ego are turning
       enable_front_car_decel_prediction: false # By default this feature is disabled

@@ -198,7 +198,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
 
   /* calculate dynamic collision around detection area */
-  const double time_delay = is_go_out_ ? 0.0 : planner_param_.state_transit_margin_time;
+  const double time_delay =
+    is_go_out_ ? 0.0 : (planner_param_.state_transit_margin_time - state_machine_.duration);
   const bool has_collision = checkCollision(
     lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
     closest_idx, stuck_vehicle_detect_area, time_delay);
