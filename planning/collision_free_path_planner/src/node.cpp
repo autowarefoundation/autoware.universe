@@ -26,6 +26,7 @@
 namespace collision_free_path_planner
 {
 // TODO(murooka) check if velocity is updated while optimization is skipped.
+// TODO(murooka) check if z is updated.
 namespace
 {
 template <class T>
@@ -166,11 +167,14 @@ void CollisionFreePathPlanner::resetPlanning()
   eb_path_smoother_ptr_->reset(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
 
-  resetPrevOptimization();
+  resetPrevData();
 }
 
-void CollisionFreePathPlanner::resetPrevOptimization()
+void CollisionFreePathPlanner::resetPrevData()
 {
+  eb_path_smoother_ptr_->resetPrevData();
+  mpt_optimizer_ptr_->resetPrevData();
+
   prev_mpt_traj_ptr_ = nullptr;  // rename to prev_optimized_traj_ptr_?
 }
 
@@ -304,7 +308,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   const bool reset_prev_optimization = replan_checker_ptr_->isResetRequired(planner_data);
   if (enable_reset_prev_optimization_ || reset_prev_optimization) {
     // NOTE: always replan when resetting previous optimization
-    resetPrevOptimization();
+    resetPrevData();
   } else {
     // check replan when not resetting previous optimization
     const bool is_replan_required =

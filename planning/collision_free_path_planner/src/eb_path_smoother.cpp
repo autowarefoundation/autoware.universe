@@ -122,8 +122,9 @@ void EBPathSmoother::reset(const bool enable_debug_info, const TrajectoryParam &
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
-  prev_eb_traj_points_ptr_ = nullptr;
 }
+
+void EBPathSmoother::resetPrevData() { prev_eb_traj_points_ptr_ = nullptr; }
 
 std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)

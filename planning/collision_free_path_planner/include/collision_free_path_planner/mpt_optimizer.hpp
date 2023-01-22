@@ -120,6 +120,7 @@ public:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
+  void resetPrevData();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:

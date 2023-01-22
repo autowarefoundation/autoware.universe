@@ -52,6 +52,7 @@ public:
     const PlannerData & planner_data);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
+  void resetPrevData();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:

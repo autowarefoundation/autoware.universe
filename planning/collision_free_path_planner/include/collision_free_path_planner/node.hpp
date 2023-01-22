@@ -108,7 +108,7 @@ private:
 
   // reset functions
   void resetPlanning();
-  void resetPrevOptimization();
+  void resetPrevData();
 
   // main functions
   bool isDataReady(const Path & path);

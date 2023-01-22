@@ -108,12 +108,12 @@ std::optional<geometry_msgs::msg::Point> intersect(
 {
   const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
   if (det == 0.0) {
-    return {};
+    return std::nullopt;
   }
 
   const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
   if (t < 0 || 1 < t) {
-    return {};
+    return std::nullopt;
   }
 
   geometry_msgs::msg::Point intersect_point;
@@ -145,28 +145,29 @@ std::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
+// NOTE: left is positive, and right is negative
 double calcLateralDistToBounds(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & bound,
   const double additional_offset, const bool is_left_bound = true)
 {
-  const double max_lat_offset = is_left_bound ? 5.0 : -5.0;
+  const double max_lat_offset = 5.0;
 
+  const double lat_offset = is_left_bound ? max_lat_offset : -max_lat_offset;
   const auto lat_offset_point =
-    tier4_autoware_utils::calcOffsetPose(pose, 0.0, max_lat_offset, 0.0).position;
-  double dist_to_bound = max_lat_offset;
+    tier4_autoware_utils::calcOffsetPose(pose, 0.0, lat_offset, 0.0).position;
 
+  double dist_to_bound = max_lat_offset;
   for (size_t i = 0; i < bound.size() - 1; ++i) {
     const auto intersect_point =
       intersect(pose.position, lat_offset_point, bound.at(i), bound.at(i + 1));
     if (intersect_point) {
       const double tmp_dist =
-        tier4_autoware_utils::calcDistance2d(pose.position, *intersect_point) +
-        (is_left_bound ? -1 : 1) * additional_offset;
+        tier4_autoware_utils::calcDistance2d(pose.position, *intersect_point) - additional_offset;
       dist_to_bound = std::min(tmp_dist, dist_to_bound);
     }
   }
 
-  return dist_to_bound;
+  return is_left_bound ? dist_to_bound : -dist_to_bound;
 }
 }  // namespace
 
@@ -330,8 +331,9 @@ void MPTOptimizer::reset(const bool enable_debug_info, const TrajectoryParam & t
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
-  prev_ref_points_ptr_ = nullptr;
 }
+
+void MPTOptimizer::resetPrevData() { prev_ref_points_ptr_ = nullptr; }
 
 void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
@@ -505,6 +507,11 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
     logInfo("return {} since could not solve qp");
     return {};
   }
+
+  for (const auto & a : *optimized_steer_angles) {
+    std::cerr << a << " ";
+  }
+  std::cerr << std::endl;
 
   // 5. convert to points
   const auto mpt_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
@@ -713,7 +720,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
         return calcInitialSolutionForManualWarmStart(ref_points, *prev_ref_points_ptr_);
       }
     }
-    return {};
+    return std::nullopt;
   }();
 
   // for manual start, update objective and constraint matrix
@@ -1260,14 +1267,6 @@ void MPTOptimizer::updateVehicleBounds(
 {
   debug_data_ptr_->tic(__func__);
 
-  if (ref_points.size() == 1) {
-    for ([[maybe_unused]] const double d : mpt_param_.vehicle_circle_longitudinal_offsets) {
-      ref_points.at(0).bounds_on_constraints.push_back(ref_points.at(0).bounds);
-      ref_points.at(0).beta.push_back(0.0);
-    }
-    return;
-  }
-
   for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
     const auto & ref_point = ref_points.at(p_idx);
     // TODO(murooka) this is required.
@@ -1276,13 +1275,9 @@ void MPTOptimizer::updateVehicleBounds(
     ref_points.at(p_idx).beta.clear();
 
     for (const double lon_offset : mpt_param_.vehicle_circle_longitudinal_offsets) {
-      geometry_msgs::msg::Pose collision_check_pose;
-      collision_check_pose.position =
-        ref_points_spline.getSplineInterpolatedPoint(p_idx, lon_offset);
-      const double collision_check_yaw =
-        ref_points_spline.getSplineInterpolatedYaw(p_idx, lon_offset);
-      collision_check_pose.orientation =
-        tier4_autoware_utils::createQuaternionFromYaw(collision_check_yaw);
+      const auto collision_check_pose =
+        ref_points_spline.getSplineInterpolatedPose(p_idx, lon_offset);
+      const double collision_check_yaw = tf2::getYaw(collision_check_pose.orientation);
 
       // calculate beta
       const double beta = ref_point.getYaw() - collision_check_yaw;
@@ -1314,7 +1309,9 @@ void MPTOptimizer::updateVehicleBounds(
 
         const double prev_s = ref_points_spline.getAccumulatedLength(prev_idx);
         const double next_s = ref_points_spline.getAccumulatedLength(next_idx);
-        const double ratio = (collision_check_s - prev_s) / (next_s - prev_s);
+
+        // TODO(murooka) is this required?
+        const double ratio = std::clamp((collision_check_s - prev_s) / (next_s - prev_s), 0.0, 1.0);
 
         auto bounds = Bounds::lerp(prev_bounds, next_bounds, ratio);
         bounds.translate(offset_y);
