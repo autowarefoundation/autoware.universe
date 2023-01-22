@@ -73,6 +73,7 @@ void ParticleInitializer::publish_rectified_initial_pose(
   const PoseCovStamped & raw_initialpose)
 {
   PoseCovStamped msg = raw_initialpose;
+  msg.header.frame_id = "map";
   msg.pose.pose.position.x = pos.x();
   msg.pose.pose.position.y = pos.y();
   msg.pose.pose.position.z = pos.z();
