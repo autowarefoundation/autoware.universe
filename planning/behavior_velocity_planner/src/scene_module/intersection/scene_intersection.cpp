@@ -129,8 +129,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   /* set stop lines for base_link */
   const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
     lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
-    planner_param_.keep_detection_line_margin, planner_param_.use_stuck_stopline, path, *path,
-    logger_.get_child("util"), clock_);
+    planner_param_.use_stuck_stopline, path, *path, logger_.get_child("util"), clock_);
   if (!stuck_line_idx_opt.has_value()) {
     // returns here if path is not intersecting with conflicting areas
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(
@@ -158,22 +157,13 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   if (stop_lines_idx_opt.has_value()) {
     const auto stop_line_idx = stop_lines_idx_opt.value().stop_line;
     const auto pass_judge_line_idx = stop_lines_idx_opt.value().pass_judge_line;
-    const auto keep_detection_line_idx = stop_lines_idx_opt.value().keep_detection_line;
 
     const bool is_over_pass_judge_line =
-      util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
-    const bool is_before_keep_detection_line =
-      stop_lines_idx_opt.has_value()
-        ? util::isBeforeTargetIndex(*path, closest_idx, current_pose, keep_detection_line_idx)
-        : false;
-    const bool keep_detection = is_before_keep_detection_line &&
-                                std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
+      util::isOverTargetIndex(*path, closest_idx, current_pose.pose, pass_judge_line_idx);
 
-    if (is_over_pass_judge_line && keep_detection) {
-      // in case ego could not stop exactly before the stop line, but with some overshoot,
-      // keep detection within some margin under low velocity threshold
-    } else if (is_over_pass_judge_line && is_go_out_ && !external_stop) {
-      RCLCPP_DEBUG(logger_, "over the keep_detection line and not low speed. no plan needed.");
+    /* if ego is over the pass judge line before collision is detected, keep going */
+    if (is_over_pass_judge_line && is_go_out_ && !external_stop) {
+      RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       setSafe(true);
       setDistance(motion_utils::calcSignedArcLength(
@@ -199,7 +189,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* calculate dynamic collision around detection area */
   const double time_delay =
-    is_go_out_ ? 0.0 : (planner_param_.state_transit_margin_time - state_machine_.duration);
+    is_go_out_ ? 0.0 : (planner_param_.state_transit_margin_time - state_machine_.getDuration());
   const bool has_collision = checkCollision(
     lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
     closest_idx, stuck_vehicle_detect_area, time_delay);
@@ -560,6 +550,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
 
   std::ofstream & ofs = *predicted_velocity_;
   std::string delim = "";
+  ofs << clock_->now().nanoseconds() << ",";
   for (const auto & point : smoothed_reference_path.points) {
     ofs << std::exchange(delim, ",") << point.point.longitudinal_velocity_mps;
   }
