@@ -94,6 +94,7 @@ protected:
   using VoxelGrid<PointT>::max_b_;
   using VoxelGrid<PointT>::inverse_leaf_size_;
   using VoxelGrid<PointT>::div_b_;
+  // cspell: ignore divb
   using VoxelGrid<PointT>::divb_mul_;
 
   typedef typename pcl::traits::fieldList<PointT>::type FieldList;

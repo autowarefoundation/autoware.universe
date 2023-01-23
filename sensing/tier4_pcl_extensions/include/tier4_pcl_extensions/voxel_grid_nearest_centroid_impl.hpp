@@ -126,6 +126,7 @@ void pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   // Clear the leaves
   leaves_.clear();
 
+  // cspell: ignore divb
   // Set up the division multiplier
   divb_mul_ = Eigen::Vector4i(1, div_b_[0], div_b_[0] * div_b_[1], 0);
 
