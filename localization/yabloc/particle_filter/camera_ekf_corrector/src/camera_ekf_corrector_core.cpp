@@ -3,7 +3,6 @@
 #include "camera_ekf_corrector/logit.hpp"
 #include "camera_ekf_corrector/sampling.hpp"
 
-#include <modularized_particle_filter/common/mean.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
 #include <pcdless_common/pose_conversions.hpp>
@@ -20,6 +19,9 @@ FastCosSin fast_math;
 CameraEkfCorrector::CameraEkfCorrector()
 : Node("camera_particle_corrector"),
   far_weight_gain_(declare_parameter<float>("far_weight_gain", 0.001)),
+  logit_gain_(declare_parameter<float>("logit_gain", 0.1)),
+  sampling_cov_gain_(declare_parameter<float>("sampling_cov_gain", 4.0)),
+  sampling_cov_theta_gain_(declare_parameter<float>("sampling_cov_theta_gain", 1.0)),
   cost_map_(this)
 {
   using std::placeholders::_1;
@@ -148,8 +150,9 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   }
 
   auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
+  iffy_lsd_cloud.clear();
 
-  // TODO: cost_map_.set_height(z);
+  cost_map_.set_height(opt_synched_pose->pose.pose.position.z);
 
   PoseCovStamped estimated_pose =
     estimate_pose_with_covariance(opt_synched_pose.value(), lsd_cloud, iffy_lsd_cloud);
@@ -174,9 +177,13 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   Eigen::Matrix2d xy_cov;
   xy_cov << init.pose.covariance[0], init.pose.covariance[1], init.pose.covariance[6],
     init.pose.covariance[7];
-  const double theta_cov = init.pose.covariance[35];
+  double theta_cov = init.pose.covariance[35];
   const double base_theta =
     2 * std::atan2(init.pose.pose.orientation.z, init.pose.pose.orientation.w);
+
+  // TODO:  I am not sure
+  xy_cov = sampling_cov_gain_ * xy_cov;
+  theta_cov = sampling_cov_theta_gain_ * theta_cov;
 
   constexpr int N = 500;
   for (int i = 0; i < N; i++) {
@@ -200,25 +207,30 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
     transformed_lsd += transformed_iffy_lsd;
 
     float logit = compute_logit(transformed_lsd, transform.translation());
-    particle.weight = logit_to_prob(logit, 0.01f);
+    particle.weight = logit_to_prob(logit, logit_gain_);
   }
 
   // visualize
   publish_visualize_markers(particles);
 
   // Compute optimal distribution
+  const MeanResult result = compile_distribution(particles);
   PoseCovStamped output = init;
-  output.pose.pose = mean_pose(particles);
-  const Eigen::Matrix3f cov = covariance_of_distribution(particles);
+  output.pose.pose = result.pose_;
   for (int i = 0; i < 3; ++i) {
-    output.pose.covariance[6 * i + 0] = cov(i, 0);
-    output.pose.covariance[6 * i + 1] = cov(i, 1);
-    output.pose.covariance[6 * i + 2] = cov(i, 2);
+    output.pose.covariance[6 * i + 0] = result.cov_xyz_(i, 0);
+    output.pose.covariance[6 * i + 1] = result.cov_xyz_(i, 1);
+    output.pose.covariance[6 * i + 2] = result.cov_xyz_(i, 2);
   }
   output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
-  const float angle_cov = covariance_of_angle_distribution(particles);
-  output.pose.covariance[6 * 5 + 5] = angle_cov;
+  output.pose.covariance[6 * 5 + 5] = result.cov_theta_;
 
+  {
+    auto in_pos = init.pose.pose.position;
+    auto out_pos = output.pose.pose.position;
+    std::cout << "input: " << in_pos.x << " " << in_pos.y << " " << in_pos.z << std::endl;
+    std::cout << "output: " << out_pos.x << " " << out_pos.y << " " << out_pos.z << std::endl;
+  }
   return output;
 }
 
@@ -245,7 +257,7 @@ void CameraEkfCorrector::publish_visualize_markers(const ParticleArray & particl
     marker.scale.y = 0.1;
     marker.scale.z = 0.1;
     marker.color = common::color_scale::rainbow(boundWeight(p.weight));
-    marker.color.a = 0.5;
+    marker.color.a = 0.8;
     marker.pose.orientation = p.pose.orientation;
     marker.pose.position.x = p.pose.position.x;
     marker.pose.position.y = p.pose.position.y;

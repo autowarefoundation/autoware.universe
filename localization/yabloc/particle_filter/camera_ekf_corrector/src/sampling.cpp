@@ -35,97 +35,69 @@ double mean_radian(const std::vector<double> & angles, const std::vector<double>
   return std::arg(c / cw);
 }
 
-geometry_msgs::msg::Pose mean_pose(
+MeanResult compile_distribution(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
 {
   using Pose = geometry_msgs::msg::Pose;
   using Particle = modularized_particle_filter_msgs::msg::Particle;
 
-  Pose mean_pose;
-
-  double sum_weight{std::accumulate(
+  double sum_weight = std::accumulate(
     particle_array.particles.begin(), particle_array.particles.end(), 0.0,
-    [](double weight, const Particle & particle) { return weight + particle.weight; })};
+    [](double weight, const Particle & particle) { return weight + particle.weight; });
 
   if (std::isinf(sum_weight)) {
     RCLCPP_WARN_STREAM(rclcpp::get_logger("meanPose"), "sum_weight: " << sum_weight);
   }
 
-  std::vector<double> rolls{};
-  std::vector<double> pitches{};
-  std::vector<double> yaws{};
-  std::vector<double> normalized_weights{};
+  // (1) compute mean
+  Pose mean_pose;
+  std::vector<double> yaws;
+  std::vector<double> normalized_weights;
   for (const Particle & particle : particle_array.particles) {
-    double normalized_weight = particle.weight / sum_weight;
+    const double normalized_weight = particle.weight / sum_weight;
 
     mean_pose.position.x += particle.pose.position.x * normalized_weight;
     mean_pose.position.y += particle.pose.position.y * normalized_weight;
     mean_pose.position.z += particle.pose.position.z * normalized_weight;
 
-    double yaw{0.0}, pitch{0.0}, roll{0.0};
+    double yaw, pitch, roll;
     tf2::getEulerYPR(particle.pose.orientation, yaw, pitch, roll);
-
-    rolls.push_back(roll);
-    pitches.push_back(pitch);
     yaws.push_back(yaw);
     normalized_weights.push_back(normalized_weight);
   }
 
-  const double mean_roll{mean_radian(rolls, normalized_weights)};
-  const double mean_pitch{mean_radian(pitches, normalized_weights)};
-  const double mean_yaw{mean_radian(yaws, normalized_weights)};
+  const Eigen::Vector3f mean(mean_pose.position.x, mean_pose.position.y, mean_pose.position.z);
+  const double mean_yaw = mean_radian(yaws, normalized_weights);
 
-  tf2::Quaternion q;
-  q.setRPY(mean_roll, mean_pitch, mean_yaw);
-  mean_pose.orientation = tf2::toMsg(q);
-  return mean_pose;
-}
-
-Eigen::Matrix3f covariance_of_distribution(
-  const modularized_particle_filter_msgs::msg::ParticleArray & array)
-{
-  using Particle = modularized_particle_filter_msgs::msg::Particle;
-  // TODO: Consider prticle weight
-  float invN = 1.f / array.particles.size();
-  Eigen::Vector3f mean = Eigen::Vector3f::Zero();
-  for (const Particle & p : array.particles) {
-    Eigen::Affine3f affine = common::pose_to_affine(p.pose);
-    mean += affine.translation();
-  }
-  mean *= invN;
-
-  Eigen::Matrix3f sigma = Eigen::Matrix3f::Zero();
-  for (const Particle & p : array.particles) {
+  // (2) compute position covariance
+  const int N = particle_array.particles.size();
+  Eigen::Matrix3f cov_xyz = Eigen::Matrix3f::Zero();
+  for (int i = 0; i < N; i++) {
+    const auto p = particle_array.particles.at(i);
     Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     Eigen::Vector3f d = affine.translation() - mean;
-    sigma += (d * d.transpose()) * invN;
+    cov_xyz += normalized_weights.at(i) * (d * d.transpose());
   }
 
-  return sigma;
-}
-
-float covariance_of_angle_distribution(
-  const modularized_particle_filter_msgs::msg::ParticleArray & array)
-{
-  // TODO: Consider prticle weight
-  float invN = 1.f / array.particles.size();
-  std::vector<double> yaws;
-  std::vector<double> weights;
-  for (const auto & particle : array.particles) {
-    double yaw, pitch, roll;
-    tf2::getEulerYPR(particle.pose.orientation, yaw, pitch, roll);
-    yaws.push_back(yaw);
-    weights.push_back(particle.weight);
+  // (3) compute position covariance
+  std::vector<double> diff_yaws;
+  float cov_theta = 0;
+  for (int i = 0; i < N; i++) {
+    double yaw = yaws.at(i);
+    double d = yaw - mean_yaw;  // NOTE: Be careful!
+    cov_theta += normalized_weights.at(i) * (d * d);
   }
 
-  const double meaned_radian = mean_radian(yaws, weights);
-  double cov = 0;
-  for (const double & yaw : yaws) {
-    double tmp = (yaw - meaned_radian);
-    cov += tmp * tmp;
-  }
-
-  return cov * invN;
+  // (4) Assemble all data
+  MeanResult result;
+  result.pose_.position.x = mean.x();
+  result.pose_.position.y = mean.y();
+  result.pose_.position.z = mean.z();
+  result.pose_.orientation.w = std::cos(mean_yaw / 2.0);
+  result.pose_.orientation.z = std::sin(mean_yaw / 2.0);
+  result.cov_xyz_ = cov_xyz;
+  result.cov_theta_ = cov_theta;
+  return result;
 }
 
 }  // namespace pcdless::ekf_corrector

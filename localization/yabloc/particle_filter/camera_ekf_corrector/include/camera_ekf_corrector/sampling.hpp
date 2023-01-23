@@ -20,13 +20,14 @@ T nrand(T cov)
   return dist(engine);
 }
 
-geometry_msgs::msg::Pose mean_pose(
+struct MeanResult
+{
+  geometry_msgs::msg::Pose pose_;
+  Eigen::Matrix3f cov_xyz_;
+  float cov_theta_;
+};
+
+MeanResult compile_distribution(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array);
-
-Eigen::Matrix3f covariance_of_distribution(
-  const modularized_particle_filter_msgs::msg::ParticleArray & array);
-
-float covariance_of_angle_distribution(
-  const modularized_particle_filter_msgs::msg::ParticleArray & array);
 
 }  // namespace pcdless::ekf_corrector

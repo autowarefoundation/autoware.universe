@@ -8,10 +8,9 @@ Panels:
         - /TF1/Frames1
         - /AdditionalVectorMap1/Topic1
         - /AdditionalVectorMap1/Namespaces1
-        - /PoseWithCovariance1/Status1
-        - /PoseWithCovariance1/Topic1
-        - /MarkerArray2
-        - /MarkerArray2/Status1
+        - /PoseWithCovariance1
+        - /PoseWithCovariance1/Covariance1/Position1
+        - /EkfParticles1/Status1
       Splitter Ratio: 0.46451613306999207
     Tree Height: 1226
   - Class: rviz_common/Selection
@@ -214,55 +213,6 @@ Visualization Manager:
         map:
           ekf_link:
             {}
-          particle_filter:
-            base_link:
-              livox_front_left_base_link:
-                livox_front_left:
-                  {}
-              livox_front_right_base_link:
-                livox_front_right:
-                  {}
-              sensor_kit_base_link:
-                camera0/camera_link:
-                  camera0/camera_optical_link:
-                    {}
-                camera1/camera_link:
-                  camera1/camera_optical_link:
-                    {}
-                camera2/camera_link:
-                  camera2/camera_optical_link:
-                    {}
-                camera3/camera_link:
-                  camera3/camera_optical_link:
-                    {}
-                camera4/camera_link:
-                  camera4/camera_optical_link:
-                    {}
-                camera5/camera_link:
-                  camera5/camera_optical_link:
-                    {}
-                gnss_link:
-                  {}
-                tamagawa/imu_link:
-                  {}
-                traffic_light_left_camera/camera_link:
-                  traffic_light_left_camera/camera_optical_link:
-                    {}
-                traffic_light_right_camera/camera_link:
-                  traffic_light_right_camera/camera_optical_link:
-                    {}
-                velodyne_left_base_link:
-                  velodyne_left:
-                    {}
-                velodyne_right_base_link:
-                  velodyne_right:
-                    {}
-                velodyne_top_base_link:
-                  velodyne_top:
-                    {}
-              velodyne_rear_base_link:
-                velodyne_rear:
-                  {}
           viewer:
             {}
       Update Interval: 0
@@ -309,7 +259,7 @@ Visualization Manager:
       Enabled: true
       Name: GnssEffectRange
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -466,7 +416,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 50
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -487,12 +437,12 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /localization/pose_twist_fusion_filter/kinematic_state
-      Value: true
-    - Alpha: 1
+      Value: false
+    - Alpha: 0.5
       Axes Length: 1
       Axes Radius: 0.10000000149011612
       Class: rviz_default_plugins/PoseWithCovariance
-      Color: 255; 25; 0
+      Color: 255; 255; 0
       Covariance:
         Orientation:
           Alpha: 0.5
@@ -503,17 +453,17 @@ Visualization Manager:
           Scale: 1
           Value: true
         Position:
-          Alpha: 0.30000001192092896
-          Color: 204; 51; 204
+          Alpha: 0.800000011920929
+          Color: 255; 255; 0
           Scale: 1
           Value: true
         Value: true
       Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
+      Head Length: 1
+      Head Radius: 1
       Name: PoseWithCovariance
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
+      Shaft Length: 3
+      Shaft Radius: 0.5
       Shape: Arrow
       Topic:
         Depth: 5
@@ -524,17 +474,17 @@ Visualization Manager:
         Value: /localization/output/pose_with_covariance
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: MarkerArray
+      Enabled: false
+      Name: EkfParticles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /localization/yielded_marker
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -580,7 +530,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.6150033473968506
+      Angle: 0.6950034499168396
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -590,7 +540,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 84.82672882080078
+      Scale: 79.56263732910156
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
       X: -0.5608354210853577

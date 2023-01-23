@@ -55,12 +55,12 @@ void GnssEkfCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
   for (auto & e : pose.pose.covariance) e = 0;
 
   if (is_rtk_fixed) {
-    pose.pose.covariance[6 * 0 + 0] = 1;
-    pose.pose.covariance[6 * 1 + 1] = 1;
+    pose.pose.covariance[6 * 0 + 0] = 4;
+    pose.pose.covariance[6 * 1 + 1] = 4;
     pose.pose.covariance[6 * 2 + 2] = 1;
   } else {
-    pose.pose.covariance[6 * 0 + 0] = 5;
-    pose.pose.covariance[6 * 1 + 1] = 5;
+    pose.pose.covariance[6 * 0 + 0] = 16;
+    pose.pose.covariance[6 * 1 + 1] = 16;
     pose.pose.covariance[6 * 2 + 2] = 1;
   }
 
