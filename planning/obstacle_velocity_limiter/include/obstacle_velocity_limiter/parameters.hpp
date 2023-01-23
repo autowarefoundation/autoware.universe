@@ -40,6 +40,7 @@ struct ObstacleParameters
   static constexpr auto RTREE_SEGMENTS_PARAM = "obstacles.rtree_min_segments";
   static constexpr auto RTREE_POINTS_PARAM = "obstacles.rtree_min_points";
 
+  // cspell: ignore OCCUPANCYGRID
   enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
   int8_t occupancy_grid_threshold{};
   Float dynamic_obstacles_buffer{};
