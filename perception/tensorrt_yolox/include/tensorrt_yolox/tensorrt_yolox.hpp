@@ -74,7 +74,7 @@ private:
   void generateYoloxProposals(
     std::vector<GridAndStride> grid_strides, float * feat_blob, float prob_threshold,
     ObjectArray & objects) const;
-  void qsortDescentInplace(ObjectArray & faceo_bjects, int left, int right) const;
+  void qsortDescentInplace(ObjectArray & face_objects, int left, int right) const;
   inline void qsortDescentInplace(ObjectArray & objects) const
   {
     if (objects.empty()) {
