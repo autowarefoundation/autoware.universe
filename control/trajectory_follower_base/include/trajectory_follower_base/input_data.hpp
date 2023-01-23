@@ -15,8 +15,8 @@
 #ifndef TRAJECTORY_FOLLOWER_BASE__INPUT_DATA_HPP_
 #define TRAJECTORY_FOLLOWER_BASE__INPUT_DATA_HPP_
 
+#include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -29,7 +29,7 @@ struct InputData
   nav_msgs::msg::Odometry current_odometry;
   autoware_auto_vehicle_msgs::msg::SteeringReport current_steering;
   geometry_msgs::msg::AccelWithCovarianceStamped current_accel;
-  autoware_auto_vehicle_msgs::msg::ControlModeReport current_control_mode;
+  autoware_adapi_v1_msgs::msg::OperationModeState current_operation_mode;
 };
 }  // namespace autoware::motion::control::trajectory_follower
 

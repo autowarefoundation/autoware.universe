@@ -48,7 +48,7 @@ using trajectory_follower::LongitudinalOutput;
 namespace trajectory_follower_node
 {
 
-using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
@@ -72,7 +72,7 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr sub_steering_;
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
-  rclcpp::Subscription<ControlModeReport>::SharedPtr sub_control_mode_;
+  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     control_cmd_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
@@ -81,7 +81,7 @@ private:
   nav_msgs::msg::Odometry::SharedPtr current_odometry_ptr_;
   autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr current_steering_ptr_;
   geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr current_accel_ptr_;
-  ControlModeReport::SharedPtr current_control_mode_ptr_;
+  OperationModeState::SharedPtr current_operation_mode_ptr_;
 
   enum class LateralControllerMode {
     INVALID = 0,

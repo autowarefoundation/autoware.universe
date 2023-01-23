@@ -69,9 +69,9 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     "~/input/current_odometry", rclcpp::QoS{1}, std::bind(&Controller::onOdometry, this, _1));
   sub_accel_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/current_accel", rclcpp::QoS{1}, std::bind(&Controller::onAccel, this, _1));
-  sub_control_mode_ = create_subscription<ControlModeReport>(
-    "~/input/current_control_mode", rclcpp::QoS{1},
-    [this](const ControlModeReport::SharedPtr msg) { current_control_mode_ptr_ = msg; });
+  sub_operation_mode_ = create_subscription<OperationModeState>(
+    "~/input/current_operation_mode", rclcpp::QoS{1},
+    [this](const OperationModeState::SharedPtr msg) { current_operation_mode_ptr_ = msg; });
   control_cmd_pub_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_cmd", rclcpp::QoS{1}.transient_local());
   debug_marker_pub_ =
@@ -166,8 +166,8 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData(
     return {};
   }
 
-  if (!current_control_mode_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current control mode.");
+  if (!current_operation_mode_ptr_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current operation mode.");
     return {};
   }
 
@@ -176,7 +176,7 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData(
   input_data.current_odometry = *current_odometry_ptr_;
   input_data.current_steering = *current_steering_ptr_;
   input_data.current_accel = *current_accel_ptr_;
-  input_data.current_control_mode = *current_control_mode_ptr_;
+  input_data.current_operation_mode = *current_operation_mode_ptr_;
 
   return input_data;
 }
