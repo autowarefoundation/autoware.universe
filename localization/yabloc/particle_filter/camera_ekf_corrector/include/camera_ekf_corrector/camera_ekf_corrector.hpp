@@ -44,6 +44,7 @@ private:
   const float logit_gain_;
   const float sampling_cov_gain_;
   const float sampling_cov_theta_gain_;
+  const float after_cov_gain_;
 
   HierarchicalCostMap cost_map_;
 
@@ -56,6 +57,7 @@ private:
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_markers_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_scored_cloud_;
 
   std::list<PoseCovStamped> pose_buffer_;
   std::function<float(float)> score_converter_;
@@ -79,5 +81,8 @@ private:
   PoseCovStamped estimate_pose_with_covariance(
     const PoseCovStamped & init, const LineSegments & lsd_cloud,
     const LineSegments & iffy_lsd_cloud);
+
+  pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
+    const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
 };
 }  // namespace pcdless::ekf_corrector

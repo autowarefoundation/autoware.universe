@@ -22,6 +22,7 @@ CameraEkfCorrector::CameraEkfCorrector()
   logit_gain_(declare_parameter<float>("logit_gain", 0.1)),
   sampling_cov_gain_(declare_parameter<float>("sampling_cov_gain", 4.0)),
   sampling_cov_theta_gain_(declare_parameter<float>("sampling_cov_theta_gain", 1.0)),
+  after_cov_gain_(declare_parameter<float>("after_cov_gain", 2.0)),
   cost_map_(this)
 {
   using std::placeholders::_1;
@@ -31,6 +32,7 @@ CameraEkfCorrector::CameraEkfCorrector()
   pub_image_ = create_publisher<Image>("match_image", 10);
   pub_pose_cov_ = create_publisher<PoseCovStamped>("output/pose_with_covariance", 10);
   pub_markers_ = create_publisher<MarkerArray>("yielded_marker", 10);
+  pub_scored_cloud_ = create_publisher<PointCloud2>("debug_scored_cloud", 10);
 
   // Subscription
   auto on_lsd = std::bind(&CameraEkfCorrector::on_lsd, this, _1);
@@ -152,10 +154,26 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
   iffy_lsd_cloud.clear();
 
-  cost_map_.set_height(opt_synched_pose->pose.pose.position.z);
+  // cost_map_.set_height(opt_synched_pose->pose.pose.position.z);
 
   PoseCovStamped estimated_pose =
     estimate_pose_with_covariance(opt_synched_pose.value(), lsd_cloud, iffy_lsd_cloud);
+
+  {
+    Sophus::SE3f transform = common::pose_to_se3(opt_synched_pose->pose.pose);
+    pcl::PointCloud<pcl::PointXYZI> cloud =
+      evaluate_cloud(common::transform_linesegments(lsd_cloud, transform), transform.translation());
+
+    pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
+
+    for (const auto p : cloud) {
+      pcl::PointXYZRGB rgb;
+      rgb.getVector3fMap() = p.getVector3fMap();
+      rgb.rgba = common::color_scale::blue_red(p.intensity);
+      rgb_cloud.push_back(rgb);
+    }
+    common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
+  }
 
   pub_pose_cov_->publish(estimated_pose);
 
@@ -217,10 +235,11 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   const MeanResult result = compile_distribution(particles);
   PoseCovStamped output = init;
   output.pose.pose = result.pose_;
+
   for (int i = 0; i < 3; ++i) {
-    output.pose.covariance[6 * i + 0] = result.cov_xyz_(i, 0);
-    output.pose.covariance[6 * i + 1] = result.cov_xyz_(i, 1);
-    output.pose.covariance[6 * i + 2] = result.cov_xyz_(i, 2);
+    output.pose.covariance[6 * i + 0] = after_cov_gain_ * result.cov_xyz_(i, 0);
+    output.pose.covariance[6 * i + 1] = after_cov_gain_ * result.cov_xyz_(i, 1);
+    output.pose.covariance[6 * i + 2] = after_cov_gain_ * result.cov_xyz_(i, 2);
   }
   output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
   output.pose.covariance[6 * 5 + 5] = result.cov_theta_;
@@ -241,9 +260,11 @@ void CameraEkfCorrector::publish_visualize_markers(const ParticleArray & particl
     particles.particles.begin(), particles.particles.end(),
     [](const Particle & a, const Particle & b) -> bool { return a.weight < b.weight; });
 
-  float min = minmax_weight.first->weight;
-  float max = minmax_weight.second->weight;
-  max = std::max(max, min + 1e-7f);
+  // float min = minmax_weight.first->weight;
+  // float max = minmax_weight.second->weight;
+  // max = std::max(max, min + 1e-7f);
+  float min = 0.f;
+  float max = 1.f;
   auto boundWeight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
 
   int id = 0;
@@ -315,4 +336,32 @@ float CameraEkfCorrector::compute_logit(
   }
   return logit;
 }
+
+pcl::PointCloud<pcl::PointXYZI> CameraEkfCorrector::evaluate_cloud(
+  const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
+{
+  pcl::PointCloud<pcl::PointXYZI> cloud;
+  for (const LineSegment & pn : lsd_cloud) {
+    Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
+    float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
+
+    for (float distance = 0; distance < length; distance += 0.1f) {
+      Eigen::Vector3f p = pn.getVector3fMap() + tangent * distance;
+
+      // NOTE: Close points are prioritized
+      float squared_norm = (p - self_position).topRows(2).squaredNorm();
+      float gain = std::exp(-far_weight_gain_ * squared_norm);
+
+      CostMapValue v3 = cost_map_.at(p.topRows(2));
+      float logit = 0;
+      if (!v3.unmapped) logit = gain * (abs_cos(tangent, v3.angle) * v3.intensity - 0.5f);
+
+      pcl::PointXYZI xyzi(logit_to_prob(logit, 10.f));
+      xyzi.getVector3fMap() = p;
+      cloud.push_back(xyzi);
+    }
+  }
+  return cloud;
+}
+
 }  // namespace pcdless::ekf_corrector
