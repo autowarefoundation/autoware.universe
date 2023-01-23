@@ -186,7 +186,7 @@ if __name__ == "__main__":
     concat = args.concat
 
     dir_name_table: Dict[Tuple[str, int], str] = {}
-    # cspell: ignore fpalgos
+    # cspell: ignore fpalgos, cand
     prefix = "fpalgos"
     for cand_dir in os.listdir("/tmp"):
         if cand_dir.startswith(prefix):
