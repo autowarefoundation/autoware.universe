@@ -243,6 +243,7 @@ Update the offsets by RLS in four grids around newly obtained data. By consideri
 **Advantage** : No data is wasted because updates are performed on the 4 grids around the data with appropriate weighting.
 **Disadvantage** : Accuracy may be degraded due to extreme bias of the data. For example, if data $z(k)$ is biased near $Z_{RR}$ in Fig. 2, updating is performed at the four surrounding points ( $Z_{RR}$, $Z_{RL}$, $Z_{LR}$, and $Z_{LL}$), but accuracy at $Z_{LL}$ is not expected.
 
+<!-- cspell: ignore fourcell -->
 <p align="center">
   <img src="./media/fourcell_RLS.png" width="600">
 </p>
