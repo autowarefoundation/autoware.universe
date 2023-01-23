@@ -181,7 +181,9 @@ def create_concat_png(src_list, dest, is_horizontal):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--concat", action="store_true", help="concat png images (requires imagemagick)")
+    parser.add_argument(
+        "--concat", action="store_true", help="concat png images (requires imagemagick)"
+    )
     args = parser.parse_args()
     concat = args.concat
 
