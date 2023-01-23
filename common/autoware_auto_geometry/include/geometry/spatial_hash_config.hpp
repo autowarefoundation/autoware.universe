@@ -52,7 +52,7 @@ namespace details
 {
 /// \brief Internal struct for packing three indices together
 ///
-/// The use of this struct publically is a violation of our coding standards, but I claim it's
+/// The use of this struct publicly is a violation of our coding standards, but I claim it's
 /// fine because (a) it's details, (b) it is literally three unrelated members packaged together.
 /// This type is needed for conceptual convenience so I don't have massive function parameter
 /// lists
