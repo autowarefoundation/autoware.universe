@@ -2255,10 +2255,10 @@ bool getObjectExpectedPoseAndConvertToPolygon(
 }
 
 std::vector<PredictedPath> getPredictedPathFromObj(
-  const PredictedObject & obj, const bool & is_use_all_predicted_path)
+  const PredictedObject & obj, [[maybe_unused]] const bool & is_use_all_predicted_path)
 {
   std::vector<PredictedPath> predicted_path_vec;
-  if (is_use_all_predicted_path) {
+  if (true) {
     std::copy_if(
       obj.kinematics.predicted_paths.cbegin(), obj.kinematics.predicted_paths.cend(),
       std::back_inserter(predicted_path_vec),
