@@ -113,6 +113,7 @@ protected:
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
   void updateSteeringFactorPtr(
     const CandidateOutput & output, const LaneChangePath & selected_path) const;
+  void calcTurnSignalInfo();
 
   bool isSafe() const;
   bool isValidPath(const PathWithLaneId & path) const;
