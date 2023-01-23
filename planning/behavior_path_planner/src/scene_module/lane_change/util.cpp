@@ -524,8 +524,8 @@ bool isLaneChangePathSafe(
     const auto current_obj_filtering_buffer = lateral_buffer + common_parameters.vehicle_width / 2;
 
     filterObjectIndices(
-      *dynamic_objects, current_lanes, target_lanes, path, current_pose,
-      common_parameters.forward_path_length, current_obj_filtering_buffer,
+      *dynamic_objects, lane_change_path.reference_lanelets, lane_change_path.target_lanelets, path,
+      current_pose, common_parameters.forward_path_length, current_obj_filtering_buffer,
       current_lane_object_indices, target_lane_object_indices, other_lane_object_indices, true);
   }
 
