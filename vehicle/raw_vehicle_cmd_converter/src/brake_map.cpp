@@ -37,6 +37,7 @@ bool BrakeMap::readBrakeMapFromCSV(const std::string & csv_path, const bool vali
   brake_map_ = CSVLoader::getMap(table);
   brake_index_rev_ = brake_index_;
   if (validation && !CSVLoader::validateMap(brake_map_, false)) {
+    return false;
   }
   std::reverse(std::begin(brake_index_rev_), std::end(brake_index_rev_));
 
