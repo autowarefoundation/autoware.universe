@@ -741,6 +741,7 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
       bg::intersects(footprint_polygon, back_bound_line)) {
       return true;
     }
+    return false;
   }
 
   const bool front_top_left = isFrontDrivableArea(top_left_pos, left_bound, right_bound);
