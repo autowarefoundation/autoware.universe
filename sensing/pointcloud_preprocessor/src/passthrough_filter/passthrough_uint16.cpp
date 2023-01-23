@@ -137,6 +137,7 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
       return;
     }
 
+    // cspell: ignore badpt
     std::uint16_t badpt = user_filter_value_;
     // Check whether we need to store filtered valued in place
     if (keep_organized_) {
