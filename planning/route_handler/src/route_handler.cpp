@@ -1126,7 +1126,6 @@ bool RouteHandler::getRightLaneChangeTargetExceptPreferredLane(
         return true;
       }
     }
-    continue;
   }
 
   *target_lanelet = lanelets.front();
@@ -1147,7 +1146,6 @@ bool RouteHandler::getLeftLaneChangeTargetExceptPreferredLane(
         return true;
       }
     }
-    continue;
   }
 
   *target_lanelet = lanelets.front();
