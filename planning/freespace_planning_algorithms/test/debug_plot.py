@@ -181,7 +181,7 @@ def create_concate_png(src_list, dest, is_horizontal):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--concat", action="store_true", help="concat pngs (requires image magick)")
+    parser.add_argument("--concat", action="store_true", help="concat png images (requires image magick)")
     args = parser.parse_args()
     concat = args.concat
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
     for i in range(n_algo):
         algo_name = algo_names[i]
-        algo_pngs = []
+        algo_png_images = []
         for j in range(n_case):
             fig, ax = plt.subplots()
 
@@ -217,10 +217,10 @@ if __name__ == "__main__":
             fig.tight_layout()
 
             file_name = os.path.join("/tmp", "plot-{}.png".format(meta_info))
-            algo_pngs.append(file_name)
+            algo_png_images.append(file_name)
             plt.savefig(file_name)
             print("saved to {}".format(file_name))
 
         algowise_summary_file = os.path.join("/tmp", "summary-{}.png".format(algo_name))
         if concat:
-            create_concate_png(algo_pngs, algowise_summary_file, True)
+            create_concate_png(algo_png_images, algowise_summary_file, True)
