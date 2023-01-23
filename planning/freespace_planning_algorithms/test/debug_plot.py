@@ -170,7 +170,7 @@ def plot_problem(pd: ProblemDescription, ax, meta_info):
     ax.set_ylim([b_min[1], b_max[1]])
 
 
-def create_concate_png(src_list, dest, is_horizontal):
+def create_concat_png(src_list, dest, is_horizontal):
     opt = "+append" if is_horizontal else "-append"
     cmd = ["convert", opt]
     for src in src_list:
@@ -223,4 +223,4 @@ if __name__ == "__main__":
 
         algowise_summary_file = os.path.join("/tmp", "summary-{}.png".format(algo_name))
         if concat:
-            create_concate_png(algo_png_images, algowise_summary_file, True)
+            create_concat_png(algo_png_images, algowise_summary_file, True)
