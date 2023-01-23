@@ -131,7 +131,8 @@ private:
   DebugValues debug_values_;
   AccelReason accel_reason_;
   double height_{0};
-  std::unique_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_;
+  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
+    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
 
 }  // namespace behavior_velocity_planner

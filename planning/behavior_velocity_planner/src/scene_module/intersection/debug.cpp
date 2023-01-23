@@ -193,12 +193,12 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
 
   if (debug_data_.stop_required) {
     appendMarkerArray(
-      virtual_wall_marker_creator_intersection_->createStopVirtualWallMarker(
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
         {debug_data_.stop_wall_pose}, "intersection", now, module_id_),
       &wall_marker, now);
   } else if (state == StateMachine::State::STOP) {
     appendMarkerArray(
-      virtual_wall_marker_creator_intersection_->createStopVirtualWallMarker(
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
         {debug_data_.slow_wall_pose}, "intersection", now, module_id_),
       &wall_marker, now);
   }
