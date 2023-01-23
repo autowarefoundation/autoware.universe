@@ -11,6 +11,7 @@
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -36,6 +37,7 @@ public:
 
   using Particle = modularized_particle_filter_msgs::msg::Particle;
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
+  using Float32 = std_msgs::msg::Float32;
 
   CameraEkfCorrector();
 
@@ -53,6 +55,7 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
+  rclcpp::Subscription<Float32>::SharedPtr sub_height_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_;
@@ -62,6 +65,7 @@ private:
   std::list<PoseCovStamped> pose_buffer_;
   std::function<float(float)> score_converter_;
 
+  Float32 latest_height_;
   bool enable_switch_{false};
 
   void on_lsd(const PointCloud2 & msg);

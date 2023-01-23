@@ -22,7 +22,7 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="inpu/height" to="/localization/map/height"/>
+        <remap from="input/height" to="/localization/map/height"/>
         <remap from="output/pose_cov_stamped" to="/localization/pose_estimator/pose_with_covariance"/>
     </node>
 
@@ -51,6 +51,7 @@
         <remap from="scored_cloud" to="$(var output_scored_cloud)"/>
         <remap from="cost_map_range" to="$(var output_cost_map_range)"/>
 
+        <remap from="input/height" to="/localization/map/height"/>
         <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
         <remap from="output/pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
     </node>

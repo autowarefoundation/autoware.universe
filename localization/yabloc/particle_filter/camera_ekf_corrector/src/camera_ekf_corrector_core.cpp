@@ -47,6 +47,9 @@ CameraEkfCorrector::CameraEkfCorrector()
   sub_initialpose_ = create_subscription<PoseCovStamped>(
     "/localization/initializer/rectified/initialpose", 10,
     [this](const PoseCovStamped &) -> void { this->enable_switch_ = true; });
+
+  auto on_height = [this](const Float32 & height) { this->latest_height_ = height; };
+  sub_height_ = create_subscription<Float32>("input/height", 10, on_height);
 }
 
 void CameraEkfCorrector::on_pose_cov(const PoseCovStamped & msg) { pose_buffer_.push_back(msg); }
@@ -235,6 +238,7 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   const MeanResult result = compile_distribution(particles);
   PoseCovStamped output = init;
   output.pose.pose = result.pose_;
+  output.pose.pose.position.z = latest_height_.data;
 
   for (int i = 0; i < 3; ++i) {
     output.pose.covariance[6 * i + 0] = after_cov_gain_ * result.cov_xyz_(i, 0);
