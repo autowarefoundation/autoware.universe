@@ -17,6 +17,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -416,7 +417,7 @@ bool selectSafePath(
       common_parameters.ego_nearest_yaw_threshold);
     Pose ego_pose_before_collision;
     if (isLaneChangePathSafe(
-          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_seg_idx,
+          path, current_lanes, target_lanes, dynamic_objects, current_pose, current_seg_idx,
           current_twist, common_parameters, ros_parameters,
           common_parameters.expected_front_deceleration,
           common_parameters.expected_rear_deceleration, ego_pose_before_collision, debug_data, true,
@@ -482,7 +483,7 @@ bool hasEnoughDistance(
 }
 
 bool isLaneChangePathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
+  const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const size_t current_seg_idx, const Twist & current_twist,
@@ -496,6 +497,7 @@ bool isLaneChangePathSafe(
     return true;
   }
 
+  const auto & path = lane_change_path.path;
   if (path.points.empty() || target_lanes.empty() || current_lanes.empty()) {
     return false;
   }
