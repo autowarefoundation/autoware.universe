@@ -336,6 +336,8 @@ lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id 
 
 Header RouteHandler::getRouteHeader() const { return route_msg_.header; }
 
+UUID RouteHandler::getRouteUuid() const { return route_msg_.uuid; }
+
 std::vector<lanelet::ConstLanelet> RouteHandler::getLanesBeforePose(
   const geometry_msgs::msg::Pose & pose, const double length) const
 {
@@ -1103,6 +1105,46 @@ bool RouteHandler::getLaneChangeTarget(
         return true;
       }
       continue;
+    }
+  }
+
+  *target_lanelet = lanelets.front();
+  return false;
+}
+
+bool RouteHandler::getRightLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet);
+
+    // Get right lanelet if preferred lane is on the left
+    if (num >= 0) {
+      if (!!routing_graph_ptr_->right(lanelet)) {
+        const auto right_lanelet = routing_graph_ptr_->right(lanelet);
+        *target_lanelet = right_lanelet.get();
+        return true;
+      }
+    }
+  }
+
+  *target_lanelet = lanelets.front();
+  return false;
+}
+
+bool RouteHandler::getLeftLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet);
+
+    // Get left lanelet if preferred lane is on the right
+    if (num <= 0) {
+      if (!!routing_graph_ptr_->left(lanelet)) {
+        const auto left_lanelet = routing_graph_ptr_->left(lanelet);
+        *target_lanelet = left_lanelet.get();
+        return true;
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,4 +34,11 @@ TEST(TwistDelayTimeWarningMessage, SmokeTest)
   EXPECT_STREQ(
     twistDelayTimeWarningMessage(-0.4).c_str(),
     "Twist time stamp is inappropriate, set delay to 0[s]. delay = -0.400");
+}
+
+TEST(MahalanobisWarningMessage, SmokeTest)
+{
+  EXPECT_STREQ(
+    mahalanobisWarningMessage(1.0, 0.5).c_str(),
+    "The Mahalanobis distance 1.0000 is over the limit 0.5000.");
 }

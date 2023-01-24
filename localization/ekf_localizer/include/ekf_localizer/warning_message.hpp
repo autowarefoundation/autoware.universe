@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
 #ifndef EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 #define EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 
-#include <fmt/core.h>
-
 #include <string>
 
 std::string poseDelayTimeWarningMessage(const double delay_time);
 std::string twistDelayTimeWarningMessage(const double delay_time);
+std::string mahalanobisWarningMessage(const double distance, const double max_distance);
 
 #endif  // EKF_LOCALIZER__WARNING_MESSAGE_HPP_

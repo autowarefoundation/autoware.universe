@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #include "ekf_localizer/warning_message.hpp"
 
 #include <string>
+#include <fmt/core.h>
 
 std::string poseDelayTimeWarningMessage(const double delay_time)
 {
@@ -26,4 +27,10 @@ std::string twistDelayTimeWarningMessage(const double delay_time)
 {
   const std::string s = "Twist time stamp is inappropriate, set delay to 0[s]. delay = {:.3f}";
   return fmt::format(s, delay_time);
+}
+
+std::string mahalanobisWarningMessage(const double distance, const double max_distance)
+{
+  const std::string s = "The Mahalanobis distance {:.4f} is over the limit {:.4f}.";
+  return fmt::format(s, distance, max_distance);
 }
