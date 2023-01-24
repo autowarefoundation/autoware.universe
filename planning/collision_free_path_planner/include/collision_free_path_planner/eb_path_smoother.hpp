@@ -44,9 +44,81 @@ public:
     Constraint lat;
   };
 
+  struct EBParam
+  {
+    // qp
+    struct QPParam
+    {
+      int max_iteration;
+      double eps_abs;
+      double eps_rel;
+    };
+    QPParam qp_param;
+
+    // clearance
+    int num_joint_points;
+    double clearance_for_fix;
+    double clearance_for_joint;
+    double clearance_for_smooth;
+
+    double delta_arc_length;
+    int num_points;
+
+    EBParam() = default;
+    explicit EBParam(rclcpp::Node * node)
+    {
+      {  // common
+        delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
+        num_points = node->declare_parameter<int>("advanced.eb.common.num_points");
+      }
+
+      {  // clearance
+        num_joint_points = node->declare_parameter<int>("advanced.eb.clearance.num_joint_points");
+        clearance_for_fix =
+          node->declare_parameter<double>("advanced.eb.clearance.clearance_for_fix");
+        clearance_for_joint =
+          node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
+        clearance_for_smooth =
+          node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smooth");
+      }
+
+      {  // qp
+        qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
+        qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
+        qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
+      }
+    }
+
+    void onParam(const std::vector<rclcpp::Parameter> & parameters)
+    {
+      using tier4_autoware_utils::updateParam;
+
+      {  // common
+        updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
+        updateParam<int>(parameters, "advanced.eb.common.num_points", num_points);
+      }
+
+      {  // clearance
+        updateParam<int>(parameters, "advanced.eb.clearance.num_joint_points", num_joint_points);
+        updateParam<double>(
+          parameters, "advanced.eb.clearance.clearance_for_fix", clearance_for_fix);
+        updateParam<double>(
+          parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
+        updateParam<double>(
+          parameters, "advanced.eb.clearance.clearance_for_smooth", clearance_for_smooth);
+      }
+
+      {  // qp
+        updateParam<int>(parameters, "advanced.eb.qp.max_iteration", qp_param.max_iteration);
+        updateParam<double>(parameters, "advanced.eb.qp.eps_abs", qp_param.eps_abs);
+        updateParam<double>(parameters, "advanced.eb.qp.eps_rel", qp_param.eps_rel);
+      }
+    }
+  };
+
   EBPathSmoother(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-    const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr);
+    const TrajectoryParam & traj_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr);
 
   std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const PlannerData & planner_data);
@@ -60,7 +132,7 @@ private:
   EgoNearestParam ego_nearest_param_;
   TrajectoryParam traj_param_;
   EBParam eb_param_;
-  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
 
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
 

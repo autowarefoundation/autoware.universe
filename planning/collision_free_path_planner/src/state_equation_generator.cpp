@@ -21,9 +21,9 @@ namespace collision_free_path_planner
 // state equation: x = B u + W (u includes x_0)
 // NOTE: Originaly, x_t+1 = Ad x_t + Bd u + Wd.
 StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
-  const std::vector<ReferencePoint> & ref_points, DebugData & debug_data) const
+  const std::vector<ReferencePoint> & ref_points) const
 {
-  debug_data.tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t N_ref = ref_points.size();
   const size_t D_x = vehicle_model_ptr_->getDimX();
@@ -71,7 +71,7 @@ StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
   mat.B = B;
   mat.W = W;
 
-  debug_data.toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return mat;
 }
 

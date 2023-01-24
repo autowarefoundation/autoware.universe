@@ -100,12 +100,6 @@ struct ReferencePoint
   }
 };
 
-struct MPTTrajs
-{
-  std::vector<ReferencePoint> ref_points{};
-  std::vector<TrajectoryPoint> mpt{};
-};
-
 class MPTOptimizer
 {
   FRIEND_TEST(CollisionFreePathPlanner, MPTOptimizer);
@@ -114,9 +108,10 @@ public:
   MPTOptimizer(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
     const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
-    const std::shared_ptr<DebugData> debug_data_ptr);
+    const std::shared_ptr<DebugData> debug_data_ptr,
+    const std::shared_ptr<TimeKeeper> time_keeper_ptr);
 
-  std::optional<MPTTrajs> getModelPredictiveTrajectory(
+  std::optional<std::vector<TrajectoryPoint>> getModelPredictiveTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
 
   void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
@@ -201,6 +196,7 @@ private:
   TrajectoryParam traj_param_;
   MPTParam mpt_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
   rclcpp::Logger logger_;
 
   StateEquationGenerator state_equation_generator_;

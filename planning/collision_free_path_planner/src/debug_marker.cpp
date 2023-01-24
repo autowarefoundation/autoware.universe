@@ -29,153 +29,6 @@ using tier4_autoware_utils::createMarkerScale;
 
 namespace
 {
-template <typename T>
-MarkerArray getPointsMarkerArray(
-  const std::vector<T> & points, const std::string & ns, const double r, const double g,
-  const double b)
-{
-  if (points.empty()) {
-    return MarkerArray{};
-  }
-
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.5, 0.5, 0.5),
-    createMarkerColor(r, g, b, 0.99));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.0);
-
-  for (const auto & point : points) {
-    marker.points.push_back(tier4_autoware_utils::getPoint(point));
-  }
-
-  MarkerArray msg;
-  msg.markers.push_back(marker);
-
-  return msg;
-}
-
-template <typename T>
-MarkerArray getPointsTextMarkerArray(
-  const std::vector<T> & points, const std::string & ns, const double r, const double g,
-  const double b)
-{
-  if (points.empty()) {
-    return MarkerArray{};
-  }
-
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(0.0, 0.0, 0.15), createMarkerColor(r, g, b, 0.99));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-
-  MarkerArray msg;
-  for (size_t i = 0; i < points.size(); i++) {
-    marker.id = i;
-    marker.text = std::to_string(i);
-    marker.pose.position = tier4_autoware_utils::getPoint(points[i]);
-    msg.markers.push_back(marker);
-  }
-
-  return msg;
-}
-
-MarkerArray getDebugConstraintMarkers(
-  const std::vector<ConstraintRectangle> & constraint_ranges, const std::string & ns)
-{
-  MarkerArray marker_array;
-  int unique_id = 0;
-  for (size_t i = 0; i < constraint_ranges.size(); i++) {
-    Marker constraint_rect_marker;
-    constraint_rect_marker.lifetime = rclcpp::Duration::from_seconds(0);
-    constraint_rect_marker.header.frame_id = "map";
-    constraint_rect_marker.header.stamp = rclcpp::Time(0);
-    constraint_rect_marker.ns = ns;
-    constraint_rect_marker.action = Marker::ADD;
-    constraint_rect_marker.pose.orientation.w = 1.0;
-    constraint_rect_marker.id = unique_id;
-    constraint_rect_marker.type = Marker::LINE_STRIP;
-    constraint_rect_marker.scale = createMarkerScale(0.01, 0, 0);
-    constraint_rect_marker.color = createMarkerColor(1.0, 0, 0, 0.99);
-    unique_id++;
-    geometry_msgs::msg::Point top_left_point = constraint_ranges[i].top_left;
-    geometry_msgs::msg::Point top_right_point = constraint_ranges[i].top_right;
-    geometry_msgs::msg::Point bottom_right_point = constraint_ranges[i].bottom_right;
-    geometry_msgs::msg::Point bottom_left_point = constraint_ranges[i].bottom_left;
-    constraint_rect_marker.points.push_back(top_left_point);
-    constraint_rect_marker.points.push_back(top_right_point);
-    constraint_rect_marker.points.push_back(bottom_right_point);
-    constraint_rect_marker.points.push_back(bottom_left_point);
-    constraint_rect_marker.points.push_back(top_left_point);
-    marker_array.markers.push_back(constraint_rect_marker);
-  }
-
-  for (size_t i = 0; i < constraint_ranges.size(); i++) {
-    Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = rclcpp::Time(0);
-    marker.ns = ns + "_text";
-    marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration::from_seconds(0);
-    marker.action = Marker::ADD;
-    marker.pose.orientation.w = 1.0;
-    marker.type = Marker::TEXT_VIEW_FACING;
-    marker.scale = createMarkerScale(0, 0, 0.15);
-    marker.color = createMarkerColor(1.0, 0, 0, 0.99);
-    marker.text = std::to_string(i);
-    marker.pose.position = constraint_ranges[i].top_left;
-    marker_array.markers.push_back(marker);
-  }
-
-  unique_id = 0;
-  for (size_t i = 0; i < constraint_ranges.size(); i++) {
-    Marker constraint_range_text_marker;
-    constraint_range_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
-    constraint_range_text_marker.header.frame_id = "map";
-    constraint_range_text_marker.header.stamp = rclcpp::Time(0);
-    constraint_range_text_marker.ns = ns + "_location";
-    constraint_range_text_marker.action = Marker::ADD;
-    constraint_range_text_marker.pose.orientation.w = 1.0;
-    constraint_range_text_marker.id = unique_id;
-    constraint_range_text_marker.type = Marker::TEXT_VIEW_FACING;
-    constraint_range_text_marker.pose.position = constraint_ranges[i].top_left;
-    constraint_range_text_marker.scale = createMarkerScale(0, 0, 0.1);
-    constraint_range_text_marker.color = createMarkerColor(1.0, 0, 0, 0.99);
-    constraint_range_text_marker.text =
-      std::to_string(i) + std::string(" x ") +
-      std::to_string(constraint_range_text_marker.pose.position.x) + std::string("y ") +
-      std::to_string(constraint_range_text_marker.pose.position.y);
-    unique_id++;
-    marker_array.markers.push_back(constraint_range_text_marker);
-
-    constraint_range_text_marker.id = unique_id;
-    constraint_range_text_marker.pose.position = constraint_ranges[i].top_right;
-    constraint_range_text_marker.text =
-      std::to_string(i) + std::string(" x ") +
-      std::to_string(constraint_range_text_marker.pose.position.x) + std::string("y ") +
-      std::to_string(constraint_range_text_marker.pose.position.y);
-    unique_id++;
-    marker_array.markers.push_back(constraint_range_text_marker);
-
-    constraint_range_text_marker.id = unique_id;
-    constraint_range_text_marker.pose.position = constraint_ranges[i].bottom_left;
-    constraint_range_text_marker.text =
-      std::to_string(i) + std::string(" x ") +
-      std::to_string(constraint_range_text_marker.pose.position.x) + std::string("y ") +
-      std::to_string(constraint_range_text_marker.pose.position.y);
-    unique_id++;
-    marker_array.markers.push_back(constraint_range_text_marker);
-
-    constraint_range_text_marker.id = unique_id;
-    constraint_range_text_marker.pose.position = constraint_ranges[i].bottom_right;
-    constraint_range_text_marker.text =
-      std::to_string(i) + std::string(" x ") +
-      std::to_string(constraint_range_text_marker.pose.position.x) + std::string("y ") +
-      std::to_string(constraint_range_text_marker.pose.position.y);
-    unique_id++;
-    marker_array.markers.push_back(constraint_range_text_marker);
-  }
-  return marker_array;
-}
-
 MarkerArray getFootprintsMarkerArray(
   const std::vector<TrajectoryPoint> & mpt_traj,
   const vehicle_info_util::VehicleInfo & vehicle_info, const size_t sampling_num)
@@ -219,38 +72,6 @@ MarkerArray getFootprintsMarkerArray(
   return marker_array;
 }
 
-MarkerArray getRectanglesNumMarkerArray(
-  const std::vector<TrajectoryPoint> mpt_traj, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const std::string & ns, const double r, const double g, const double b)
-{
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(0.0, 0.0, 0.125), createMarkerColor(r, g, b, 0.99));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-
-  MarkerArray msg;
-  for (size_t i = 0; i < mpt_traj.size(); ++i) {
-    const auto & traj_point = mpt_traj.at(i);
-
-    marker.text = std::to_string(i);
-
-    const double half_width = vehicle_info.vehicle_width_m / 2.0;
-    const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
-
-    const auto top_right_pos =
-      tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, half_width, 0.0)
-        .position;
-    marker.id = i;
-    marker.pose.position = top_right_pos;
-    msg.markers.push_back(marker);
-
-    marker.id = i + mpt_traj.size();
-    marker.pose.position = top_right_pos;
-    msg.markers.push_back(marker);
-  }
-  return msg;
-}
-
 MarkerArray getBoundsLineMarkerArray(
   const std::vector<ReferencePoint> & ref_points, const double vehicle_width,
   const size_t sampling_num)
@@ -287,7 +108,8 @@ MarkerArray getBoundsLineMarkerArray(
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
         const double lb_y =
-          ref_points.at(i).bounds_on_constraints.at(bound_idx).lower_bound - vehicle_width / 2.0;
+          ref_points.at(i).bounds_on_constraints.at(bound_idx).lower_bound;  // - vehicle_width
+                                                                             // / 2.0;
         const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
 
         lb_marker.points.push_back(pose.position);
@@ -307,7 +129,8 @@ MarkerArray getBoundsLineMarkerArray(
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
         const double ub_y =
-          ref_points.at(i).bounds_on_constraints.at(bound_idx).upper_bound + vehicle_width / 2.0;
+          ref_points.at(i).bounds_on_constraints.at(bound_idx).upper_bound;  // + vehicle_width
+                                                                             // / 2.0;
         const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
 
         ub_marker.points.push_back(pose.position);
@@ -364,34 +187,6 @@ MarkerArray getVehicleCircleLinesMarkerArray(
     }
     msg.markers.push_back(marker);
   }
-
-  return msg;
-}
-
-MarkerArray getLateralErrorLinesMarkerArray(
-  const std::vector<ReferencePoint> & ref_points, const size_t sampling_num, const std::string & ns,
-  const double r, const double g, const double b)
-{
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.1, 0, 0),
-    createMarkerColor(r, g, b, 1.0));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-
-  for (size_t i = 0; i < ref_points.size(); ++i) {
-    if (i % sampling_num != 0) {
-      continue;
-    }
-
-    const auto & ref_pose = ref_points.at(i).pose;
-    const double lat_error = ref_points.at(i).optimized_kinematic_state.lat;
-
-    const auto vehicle_pose = tier4_autoware_utils::calcOffsetPose(ref_pose, 0.0, lat_error, 0.0);
-    marker.points.push_back(ref_pose.position);
-    marker.points.push_back(vehicle_pose.position);
-  }
-
-  MarkerArray msg;
-  msg.markers.push_back(marker);
 
   return msg;
 }
@@ -478,30 +273,9 @@ MarkerArray getVehicleCirclesMarkerArray(
 
 MarkerArray getDebugMarker(
   const DebugData & debug_data, const std::vector<TrajectoryPoint> & optimized_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const bool is_showing_debug_detail)
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   MarkerArray marker_array;
-
-  if (is_showing_debug_detail) {
-    appendMarkerArray(
-      getDebugConstraintMarkers(debug_data.constraint_rectangles, "constraint_rect"),
-      &marker_array);
-
-    appendMarkerArray(
-      getRectanglesNumMarkerArray(
-        optimized_points, vehicle_info, "num_vehicle_footprint", 0.99, 0.99, 0.2),
-      &marker_array);
-
-    appendMarkerArray(
-      getPointsTextMarkerArray(debug_data.eb_traj, "eb_traj_text", 0.99, 0.99, 0.2), &marker_array);
-
-    // lateral error line
-    appendMarkerArray(
-      getLateralErrorLinesMarkerArray(
-        debug_data.ref_points, debug_data.mpt_visualize_sampling_num, "lateral_errors", 0.1, 0.1,
-        0.8),
-      &marker_array);
-  }
 
   // mpt footprints
   appendMarkerArray(

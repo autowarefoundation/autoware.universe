@@ -36,9 +36,12 @@ public:
   };
 
   StateEquationGenerator() = default;
-  StateEquationGenerator(const double wheel_base, const double max_steer_rad)
+  StateEquationGenerator(
+    const double wheel_base, const double max_steer_rad,
+    const std::shared_ptr<TimeKeeper> time_keeper_ptr)
+  : vehicle_model_ptr_(std::make_unique<KinematicsBicycleModel>(wheel_base, max_steer_rad)),
+    time_keeper_ptr_(time_keeper_ptr)
   {
-    vehicle_model_ptr_ = std::make_unique<KinematicsBicycleModel>(wheel_base, max_steer_rad);
   }
 
   int getDimX() const { return vehicle_model_ptr_->getDimX(); }
@@ -46,12 +49,13 @@ public:
 
   // time-series state equation: x = B u + W (u includes x_0)
   // NOTE: one-step state equation is x_t+1 = Ad x_t + Bd u + Wd.
-  Matrix calcMatrix(const std::vector<ReferencePoint> & ref_points, DebugData & debug_data) const;
+  Matrix calcMatrix(const std::vector<ReferencePoint> & ref_points) const;
 
   Eigen::VectorXd predict(const Matrix & mat, const Eigen::VectorXd U) const;
 
 private:
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
+  mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
 };
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__STATE_EQUATION_GENERATOR_HPP_

@@ -42,160 +42,59 @@ struct PlannerData
   double ego_vel{};
 };
 
-struct EBParam
+struct TimeKeeper
 {
-  // qp
-  struct QPParam
+  template <typename T>
+  TimeKeeper & operator<<(const T & msg)
   {
-    int max_iteration;
-    double eps_abs;
-    double eps_rel;
-  };
-  QPParam qp_param;
-
-  // clearance
-  int num_joint_points;
-  double clearance_for_fix;
-  double clearance_for_joint;
-  double clearance_for_smooth;
-
-  double delta_arc_length;
-  int num_points;
-
-  EBParam() = default;
-  explicit EBParam(rclcpp::Node * node)
-  {
-    {  // common
-      delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
-      num_points = node->declare_parameter<int>("advanced.eb.common.num_points");
-    }
-
-    {  // clearance
-      num_joint_points = node->declare_parameter<int>("advanced.eb.clearance.num_joint_points");
-      clearance_for_fix =
-        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_fix");
-      clearance_for_joint =
-        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
-      clearance_for_smooth =
-        node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smooth");
-    }
-
-    {  // qp
-      qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
-      qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
-      qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
-    }
+    sstream << msg;
+    return *this;
   }
 
-  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  void endLine()
   {
-    using tier4_autoware_utils::updateParam;
+    const auto msg = sstream.str();
+    accumulated_msg += msg + "\n";
 
-    {  // common
-      updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
-      updateParam<int>(parameters, "advanced.eb.common.num_points", num_points);
+    if (enable_calculation_time_info) {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), msg);
     }
-
-    {  // clearance
-      updateParam<int>(parameters, "advanced.eb.clearance.num_joint_points", num_joint_points);
-      updateParam<double>(parameters, "advanced.eb.clearance.clearance_for_fix", clearance_for_fix);
-      updateParam<double>(
-        parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
-      updateParam<double>(
-        parameters, "advanced.eb.clearance.clearance_for_smooth", clearance_for_smooth);
-    }
-
-    {  // qp
-      updateParam<int>(parameters, "advanced.eb.qp.max_iteration", qp_param.max_iteration);
-      updateParam<double>(parameters, "advanced.eb.qp.eps_abs", qp_param.eps_abs);
-      updateParam<double>(parameters, "advanced.eb.qp.eps_rel", qp_param.eps_rel);
-    }
+    sstream.str("");
   }
-};
 
-struct ConstraintRectangle
-{
-  geometry_msgs::msg::Point top_left;
-  geometry_msgs::msg::Point top_right;
-  geometry_msgs::msg::Point bottom_left;
-  geometry_msgs::msg::Point bottom_right;
-  double velocity;
-  bool is_empty_driveable_area = false;
-  bool is_including_only_smooth_range = true;
-};
-
-struct DebugData
-{
-  // print calculation time for functions
-  struct StreamWithPrint
-  {
-    template <typename T>
-    StreamWithPrint & operator<<(const T & msg)
-    {
-      sstream << msg;
-      return *this;
-    }
-
-    void endLine()
-    {
-      const auto msg = sstream.str();
-      accumulated_msg += msg + "\n";
-
-      if (enable_calculation_time_info) {
-        // msg.pop_back();  // NOTE: remove '\n' which is unnecessary for RCLCPP_INFO_STREAM
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), msg);
-      }
-      sstream.str("");
-    }
-
-    bool enable_calculation_time_info;
-    std::string accumulated_msg = "\n";
-    std::stringstream sstream;
-  };
-
-  void reset(const bool enable_calculation_time_info)
-  {
-    msg_stream = StreamWithPrint{};
-    msg_stream.enable_calculation_time_info = enable_calculation_time_info;
-    stop_pose_by_drivable_area = {};
-    vehicle_circles_pose.clear();
-  }
+  bool enable_calculation_time_info;
+  std::string accumulated_msg = "\n";
+  std::stringstream sstream;
 
   void tic(const std::string & func_name) { stop_watch_.tic(func_name); }
 
   void toc(const std::string & func_name, const std::string & white_spaces)
   {
     const double elapsed_time = stop_watch_.toc(func_name);
-    msg_stream << white_spaces << func_name << ":= " << elapsed_time << " [ms]";
-    msg_stream.endLine();
+    *this << white_spaces << func_name << ":= " << elapsed_time << " [ms]";
+    endLine();
   }
 
-  std::string getAccumulatedTimeString() const { return msg_stream.accumulated_msg; }
+  std::string getAccumulatedTimeString() const { return accumulated_msg; }
 
-  // string stream for calculation time
-  StreamWithPrint msg_stream;
+  tier4_autoware_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;
+};
 
+struct DebugData
+{
   // settting
   size_t mpt_visualize_sampling_num;
   geometry_msgs::msg::Pose ego_pose;
   std::vector<double> vehicle_circle_radiuses;
   std::vector<double> vehicle_circle_longitudinal_offsets;
 
-  // eb
-  std::vector<ConstraintRectangle> constraint_rectangles;
-  std::vector<TrajectoryPoint> eb_traj;
-
   // mpt
   std::vector<ReferencePoint> ref_points;
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
 
-  std::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = {};
-
   std::vector<TrajectoryPoint> extended_traj_points;
-
-  tier4_autoware_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 };
 
 struct TrajectoryParam

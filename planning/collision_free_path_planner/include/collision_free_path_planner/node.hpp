@@ -60,11 +60,11 @@ private:
   // argument variables
   vehicle_info_util::VehicleInfo vehicle_info_{};
   mutable std::shared_ptr<DebugData> debug_data_ptr_{nullptr};
+  mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_{nullptr};
 
   // flags for some functions
   bool enable_pub_debug_marker_;
   bool enable_debug_info_;
-  bool enable_calculation_time_info_;
   bool enable_outside_drivable_area_stop_;
   bool enable_smoothing_;
   bool enable_skip_optimization_;
@@ -128,6 +128,8 @@ private:
   //   const;
   void insertZeroVelocityOutsideDrivableArea(
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
+  void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
+
   void publishDebugMarkerInOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 };

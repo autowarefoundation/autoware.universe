@@ -143,12 +143,14 @@ double calcLateralDistToBounds(
 MPTOptimizer::MPTOptimizer(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
   const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
-  const std::shared_ptr<DebugData> debug_data_ptr)
+  const std::shared_ptr<DebugData> debug_data_ptr,
+  const std::shared_ptr<TimeKeeper> time_keeper_ptr)
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
   traj_param_(traj_param),
   vehicle_info_(vehicle_info),
   debug_data_ptr_(debug_data_ptr),
+  time_keeper_ptr_(time_keeper_ptr),
   logger_(node->get_logger().get_child("mpt_optimizer"))
 {
   // mpt param
@@ -156,7 +158,7 @@ MPTOptimizer::MPTOptimizer(
 
   // state equation generator
   state_equation_generator_ =
-    StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
+    StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad, time_keeper_ptr_);
 
   // osqp solver
   osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_);
@@ -441,10 +443,10 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   debug_data_ptr_->mpt_visualize_sampling_num = mpt_visualize_sampling_num_;
 }
 
-std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
+std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::getModelPredictiveTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points)
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const auto & p = planner_data;
   const auto & traj_points = p.traj_points;
@@ -462,7 +464,7 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   }
 
   // 2. calculate B and W matrices where x = B u + W
-  const auto mpt_mat = state_equation_generator_.calcMatrix(ref_points, *debug_data_ptr_);
+  const auto mpt_mat = state_equation_generator_.calcMatrix(ref_points);
 
   // 3. calculate Q and R matrices where J(x, u) = x^t Q x + u^t R u
   const auto val_mat = calcValueMatrix(ref_points, traj_points);
@@ -482,23 +484,22 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   }
 
   // 5. convert to points
-  const auto mpt_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
+  const auto mpt_traj_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
 
   // 6. publish trajectories for debug
-  publishDebugTrajectories(p.header, ref_points, mpt_points);
+  publishDebugTrajectories(p.header, ref_points, mpt_traj_points);
 
-  debug_data_ptr_->toc(__func__, "      ");
+  time_keeper_ptr_->toc(__func__, "      ");
 
-  const auto mpt_trajs = MPTTrajs{ref_points, mpt_points};
   prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(ref_points);
 
-  return mpt_trajs;
+  return mpt_traj_points;
 }
 
 std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const auto & p = planner_data;
 
@@ -556,7 +557,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // bounds information is assigned to debug data after truncating reference points
   debug_data_ptr_->ref_points = ref_points;
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
 
   return ref_points;
 }
@@ -668,7 +669,7 @@ void MPTOptimizer::updateBounds(
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const double soft_road_clearance = mpt_param_.soft_clearance_from_road;
 
@@ -681,7 +682,7 @@ void MPTOptimizer::updateBounds(
     ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
   }
 
-  debug_data_ptr_->toc(__func__, "          ");
+  time_keeper_ptr_->toc(__func__, "          ");
   return;
 }
 
@@ -689,7 +690,7 @@ void MPTOptimizer::updateVehicleBounds(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
     const auto & ref_point = ref_points.at(p_idx);
@@ -747,7 +748,7 @@ void MPTOptimizer::updateVehicleBounds(
     }
   }
 
-  debug_data_ptr_->toc(__func__, "          ");
+  time_keeper_ptr_->toc(__func__, "          ");
 }
 
 // cost function: J = x' Q x + u' R u
@@ -755,7 +756,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const std::vector<ReferencePoint> & ref_points,
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -814,7 +815,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   m.Q = Q_sparse_mat;
   m.R = R_sparse_mat;
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return m;
 }
 
@@ -822,7 +823,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   const StateEquationGenerator::Matrix & mpt_mat, const ValueMatrix & val_mat,
   const std::vector<ReferencePoint> & ref_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t N_ref = ref_points.size();
   const size_t D_x = state_equation_generator_.getDimX();
@@ -891,7 +892,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   obj_matrix.hessian = extended_H;
   obj_matrix.gradient = extended_g;
 
-  debug_data_ptr_->toc(__func__, "          ");
+  time_keeper_ptr_->toc(__func__, "          ");
   return obj_matrix;
 }
 
@@ -902,7 +903,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   const StateEquationGenerator::Matrix & mpt_mat,
   const std::vector<ReferencePoint> & ref_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -981,7 +982,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.W + C_vec;
 
     // calculate bounds
-    const double bounds_offset = -mpt_param_.vehicle_circle_radiuses.at(l_idx);
+    const double bounds_offset =
+      vehicle_info_.vehicle_width_m / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
@@ -1063,7 +1065,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   constraint_matrix.lower_bound = lb;
   constraint_matrix.upper_bound = ub;
 
-  debug_data_ptr_->toc(__func__, "          ");
+  time_keeper_ptr_->toc(__func__, "          ");
   return constraint_matrix;
 }
 
@@ -1089,7 +1091,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
   const ConstraintMatrix & const_mat)
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1118,7 +1120,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const auto lower_bound = toStdVector(updated_const_mat.lower_bound);
 
   // initialize or update solver according to warm start
-  debug_data_ptr_->tic("initOsqp");
+  time_keeper_ptr_->tic("initOsqp");
 
   const autoware::common::osqp::CSC_Matrix P_csc =
     autoware::common::osqp::calCSCMatrixTrapezoidal(H);
@@ -1138,12 +1140,12 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   prev_mat_n_ = H.rows();
   prev_mat_m_ = A.rows();
 
-  debug_data_ptr_->toc("initOsqp", "          ");
+  time_keeper_ptr_->toc("initOsqp", "          ");
 
   // solve qp
-  debug_data_ptr_->tic("solveOsqp");
+  time_keeper_ptr_->tic("solveOsqp");
   const auto result = osqp_solver_ptr_->optimize();
-  debug_data_ptr_->toc("solveOsqp", "          ");
+  time_keeper_ptr_->toc("solveOsqp", "          ");
 
   // check solution status
   const int solution_status = std::get<3>(result);
@@ -1162,7 +1164,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const Eigen::VectorXd optimized_steer_angles =
     Eigen::Map<Eigen::VectorXd>(&optimization_result[0], N_v);
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
 
   if (u0) {  // manual warm start
     return static_cast<Eigen::VectorXd>(optimized_steer_angles + u0->segment(0, N_v));
@@ -1234,7 +1236,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
   std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
   const StateEquationGenerator::Matrix & mpt_mat) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1267,7 +1269,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
     traj_points.push_back(traj_point);
   }
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return traj_points;
 }
 

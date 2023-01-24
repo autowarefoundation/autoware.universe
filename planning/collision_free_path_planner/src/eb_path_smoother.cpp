@@ -84,11 +84,11 @@ namespace collision_free_path_planner
 {
 EBPathSmoother::EBPathSmoother(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-  const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr)
+  const TrajectoryParam & traj_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr)
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
   traj_param_(traj_param),
-  debug_data_ptr_(debug_data_ptr)
+  time_keeper_ptr_(time_keeper_ptr)
 {
   // eb param
   eb_param_ = EBParam(node);
@@ -129,7 +129,7 @@ void EBPathSmoother::resetPrevData() { prev_eb_traj_points_ptr_ = nullptr; }
 std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const auto & p = planner_data;
 
@@ -170,20 +170,18 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
     convertOptimizedPointsToTrajectory(*optimized_points, padded_traj_points, pad_start_idx);
   prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj_points);
 
-  debug_data_ptr_->eb_traj = eb_traj_points;
-
   // publish eb trajectory
   const auto eb_traj = trajectory_utils::createTrajectory(p.header, eb_traj_points);
   debug_eb_traj_pub_->publish(eb_traj);
 
-  debug_data_ptr_->toc(__func__, "      ");
+  time_keeper_ptr_->toc(__func__, "      ");
   return eb_traj_points;
 }
 
 std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   if (!prev_eb_traj_points_ptr_) {
     return traj_points;
@@ -200,14 +198,14 @@ std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
   trajectory_utils::updateFrontPointForFix(
     traj_points_with_fixed_point, prev_front_point.pose, eb_param_.delta_arc_length);
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return traj_points_with_fixed_point;
 }
 
 std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajectoryPoints(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const size_t pad_start_idx =
     std::min(static_cast<size_t>(eb_param_.num_points), traj_points.size());
@@ -218,13 +216,13 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
     padded_traj_points.push_back(traj_points.at(point_idx));
   }
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return {padded_traj_points, pad_start_idx};
 }
 
 void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_points) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   const auto & p = eb_param_;
 
@@ -262,7 +260,7 @@ void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_
   osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
   osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
 }
 
 EBPathSmoother::ConstraintLines EBPathSmoother::getConstraintLinesFromConstraintRectangle(
@@ -297,7 +295,7 @@ EBPathSmoother::ConstraintLines EBPathSmoother::getConstraintLinesFromConstraint
 std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   const std::vector<TrajectoryPoint> & traj_points)
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   // solve QP
   const auto result = osqp_solver_ptr_->optimize();
@@ -311,7 +309,7 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
     return std::nullopt;
   }
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return optimized_points;
 }
 
@@ -319,7 +317,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
   const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
   const size_t pad_start_idx) const
 {
-  debug_data_ptr_->tic(__func__);
+  time_keeper_ptr_->tic(__func__);
 
   auto eb_traj_points = traj_points;
 
@@ -332,7 +330,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
   // update orientation
   motion_utils::insertOrientation(eb_traj_points, true);
 
-  debug_data_ptr_->toc(__func__, "        ");
+  time_keeper_ptr_->toc(__func__, "        ");
   return eb_traj_points;
 }
 }  // namespace collision_free_path_planner
