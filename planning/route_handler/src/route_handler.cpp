@@ -336,6 +336,8 @@ lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id 
 
 Header RouteHandler::getRouteHeader() const { return route_msg_.header; }
 
+UUID RouteHandler::getRouteUuid() const { return route_msg_.uuid; }
+
 std::vector<lanelet::ConstLanelet> RouteHandler::getLanesBeforePose(
   const geometry_msgs::msg::Pose & pose, const double length) const
 {
@@ -577,20 +579,8 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
 bool RouteHandler::getFollowingShoulderLanelet(
   const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const
 {
-  Pose back_pose;
-  back_pose.position.x = lanelet.centerline2d().back().x();
-  back_pose.position.y = lanelet.centerline2d().back().y();
-  back_pose.position.z = 0;
-
   for (const auto & shoulder_lanelet : shoulder_lanelets_) {
-    Pose front_pose;
-    front_pose.position.x = shoulder_lanelet.centerline2d().front().x();
-    front_pose.position.y = shoulder_lanelet.centerline2d().front().y();
-    front_pose.position.z = 0;
-    if (
-      std::hypot(
-        front_pose.position.x - back_pose.position.x,
-        front_pose.position.y - back_pose.position.y) < 5) {
+    if (lanelet::geometry::follows(lanelet, shoulder_lanelet)) {
       *following_lanelet = shoulder_lanelet;
       return true;
     }
@@ -625,20 +615,8 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceAfter(
 bool RouteHandler::getPreviousShoulderLanelet(
   const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const
 {
-  Pose front_pose;
-  front_pose.position.x = lanelet.centerline2d().front().x();
-  front_pose.position.y = lanelet.centerline2d().front().y();
-  front_pose.position.z = 0;
-
   for (const auto & shoulder_lanelet : shoulder_lanelets_) {
-    Pose back_pose;
-    back_pose.position.x = shoulder_lanelet.centerline2d().back().x();
-    back_pose.position.y = shoulder_lanelet.centerline2d().back().y();
-    back_pose.position.z = 0;
-    if (
-      std::hypot(
-        front_pose.position.x - back_pose.position.x,
-        front_pose.position.y - back_pose.position.y) < 5) {
+    if (lanelet::geometry::follows(shoulder_lanelet, lanelet)) {
       *prev_lanelet = shoulder_lanelet;
       return true;
     }
@@ -1127,6 +1105,46 @@ bool RouteHandler::getLaneChangeTarget(
         return true;
       }
       continue;
+    }
+  }
+
+  *target_lanelet = lanelets.front();
+  return false;
+}
+
+bool RouteHandler::getRightLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet);
+
+    // Get right lanelet if preferred lane is on the left
+    if (num >= 0) {
+      if (!!routing_graph_ptr_->right(lanelet)) {
+        const auto right_lanelet = routing_graph_ptr_->right(lanelet);
+        *target_lanelet = right_lanelet.get();
+        return true;
+      }
+    }
+  }
+
+  *target_lanelet = lanelets.front();
+  return false;
+}
+
+bool RouteHandler::getLeftLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet);
+
+    // Get left lanelet if preferred lane is on the right
+    if (num <= 0) {
+      if (!!routing_graph_ptr_->left(lanelet)) {
+        const auto left_lanelet = routing_graph_ptr_->left(lanelet);
+        *target_lanelet = left_lanelet.get();
+        return true;
+      }
     }
   }
 

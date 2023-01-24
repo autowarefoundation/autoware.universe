@@ -171,18 +171,22 @@ void EKFLocalizer::timerCallback()
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
   /* pose measurement update */
-  if (!current_pose_info_queue_.empty()) {
+  if (!current_pose_queue_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Pose -------------------------");
     stop_watch_.tic();
 
-    int pose_info_queue_size = static_cast<int>(current_pose_info_queue_.size());
-    for (int i = 0; i < pose_info_queue_size; ++i) {
-      PoseInfo pose_info = current_pose_info_queue_.front();
-      current_pose_info_queue_.pop();
-      measurementUpdatePose(*pose_info.pose);
-      ++pose_info.counter;
-      if (pose_info.counter < pose_info.smoothing_steps) {
-        current_pose_info_queue_.push(pose_info);
+    for (size_t i = 0; i < current_pose_queue_.size(); ++i) {
+      const auto pose = current_pose_queue_.front();
+      current_pose_queue_.pop();
+
+      const int count = current_pose_count_queue_.front();
+      current_pose_count_queue_.pop();
+
+      measurementUpdatePose(*pose);
+
+      if (count + 1 < params_.pose_smoothing_steps) {
+        current_pose_queue_.push(pose);
+        current_pose_count_queue_.push(count + 1);
       }
     }
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
@@ -190,18 +194,22 @@ void EKFLocalizer::timerCallback()
   }
 
   /* twist measurement update */
-  if (!current_twist_info_queue_.empty()) {
+  if (!current_twist_queue_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Twist -------------------------");
     stop_watch_.tic();
 
-    int twist_info_queue_size = static_cast<int>(current_twist_info_queue_.size());
-    for (int i = 0; i < twist_info_queue_size; ++i) {
-      TwistInfo twist_info = current_twist_info_queue_.front();
-      current_twist_info_queue_.pop();
-      measurementUpdateTwist(*twist_info.twist);
-      ++twist_info.counter;
-      if (twist_info.counter < twist_info.smoothing_steps) {
-        current_twist_info_queue_.push(twist_info);
+    for (size_t i = 0; i < current_twist_queue_.size(); ++i) {
+      const auto twist = current_twist_queue_.front();
+      current_twist_queue_.pop();
+
+      const int count = current_twist_count_queue_.front();
+      current_twist_count_queue_.pop();
+
+      measurementUpdateTwist(*twist);
+
+      if (count + 1 < params_.twist_smoothing_steps) {
+        current_twist_queue_.push(twist);
+        current_twist_count_queue_.push(count + 1);
       }
     }
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdateTwist calc time = %f [ms]", stop_watch_.toc());
@@ -223,9 +231,7 @@ void EKFLocalizer::timerCallback()
 
   current_ekf_pose_.header.frame_id = params_.pose_frame_id;
   current_ekf_pose_.header.stamp = this->now();
-  current_ekf_pose_.pose.position.x = x;
-  current_ekf_pose_.pose.position.y = y;
-  current_ekf_pose_.pose.position.z = z;
+  current_ekf_pose_.pose.position = tier4_autoware_utils::createPoint(x, y, z);
   current_ekf_pose_.pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
 
@@ -263,20 +269,10 @@ void EKFLocalizer::timerTFCallback()
     return;
   }
 
-  geometry_msgs::msg::TransformStamped transformStamped;
-  transformStamped.header.stamp = this->now();
-  transformStamped.header.frame_id = current_ekf_pose_.header.frame_id;
-  transformStamped.child_frame_id = "base_link";
-  transformStamped.transform.translation.x = current_ekf_pose_.pose.position.x;
-  transformStamped.transform.translation.y = current_ekf_pose_.pose.position.y;
-  transformStamped.transform.translation.z = current_ekf_pose_.pose.position.z;
-
-  transformStamped.transform.rotation.x = current_ekf_pose_.pose.orientation.x;
-  transformStamped.transform.rotation.y = current_ekf_pose_.pose.orientation.y;
-  transformStamped.transform.rotation.z = current_ekf_pose_.pose.orientation.z;
-  transformStamped.transform.rotation.w = current_ekf_pose_.pose.orientation.w;
-
-  tf_br_->sendTransform(transformStamped);
+  geometry_msgs::msg::TransformStamped transform_stamped;
+  transform_stamped = tier4_autoware_utils::pose2transform(current_ekf_pose_, "base_link");
+  transform_stamped.header.stamp = this->now();
+  tf_br_->sendTransform(transform_stamped);
 }
 
 /*
@@ -361,9 +357,9 @@ void EKFLocalizer::callbackPoseWithCovariance(
   if (!is_activated_) {
     return;
   }
-  PoseInfo pose_info = {msg, 0, params_.pose_smoothing_steps};
 
-  current_pose_info_queue_.push(pose_info);
+  current_pose_queue_.push(msg);
+  current_pose_count_queue_.push(0);
 
   updateSimple1DFilters(*msg);
 }
@@ -374,8 +370,8 @@ void EKFLocalizer::callbackPoseWithCovariance(
 void EKFLocalizer::callbackTwistWithCovariance(
   geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
 {
-  TwistInfo twist_info = {msg, 0, params_.twist_smoothing_steps};
-  current_twist_info_queue_.push(twist_info);
+  current_twist_queue_.push(msg);
+  current_twist_count_queue_.push(0);
 }
 
 /*
@@ -616,17 +612,17 @@ void EKFLocalizer::publishEstimateResult()
   pub_odom_->publish(odometry);
 
   /* debug measured pose */
-  if (!current_pose_info_queue_.empty()) {
+  if (!current_pose_queue_.empty()) {
     geometry_msgs::msg::PoseStamped p;
-    p.pose = current_pose_info_queue_.back().pose->pose.pose;
+    p.pose = current_pose_queue_.back()->pose.pose;
     p.header.stamp = current_time;
     pub_measured_pose_->publish(p);
   }
 
   /* debug publish */
   double pose_yaw = 0.0;
-  if (!current_pose_info_queue_.empty()) {
-    pose_yaw = tf2::getYaw(current_pose_info_queue_.back().pose->pose.pose.orientation);
+  if (!current_pose_queue_.empty()) {
+    pose_yaw = tf2::getYaw(current_pose_queue_.back()->pose.pose.orientation);
   }
 
   tier4_debug_msgs::msg::Float64MultiArrayStamped msg;
@@ -683,8 +679,11 @@ void EKFLocalizer::serviceTriggerNode(
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
   if (req->data) {
-    while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
-    while (!current_twist_info_queue_.empty()) current_twist_info_queue_.pop();
+    while (!current_pose_queue_.empty()) current_pose_queue_.pop();
+    while (!current_pose_count_queue_.empty()) current_pose_count_queue_.pop();
+
+    while (!current_twist_queue_.empty()) current_twist_queue_.pop();
+    while (!current_twist_count_queue_.empty()) current_twist_count_queue_.pop();
     is_activated_ = true;
   } else {
     is_activated_ = false;
