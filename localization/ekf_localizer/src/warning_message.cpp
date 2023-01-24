@@ -14,8 +14,9 @@
 
 #include "ekf_localizer/warning_message.hpp"
 
-#include <string>
 #include <fmt/core.h>
+
+#include <string>
 
 std::string poseDelayTimeWarningMessage(const double delay_time)
 {
