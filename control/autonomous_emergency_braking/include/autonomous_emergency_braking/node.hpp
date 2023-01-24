@@ -15,6 +15,7 @@
 #ifndef AUTONOMOUS_EMERGENCY_BRAKING__NODE_HPP_
 #define AUTONOMOUS_EMERGENCY_BRAKING__NODE_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -44,13 +45,16 @@ using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
-
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+using diagnostic_updater::DiagnosticStatusWrapper;
+using diagnostic_updater::Updater;
 
 struct ObjectData
 {
   geometry_msgs::msg::Point position;
   double velocity;
+  double lat_dist;
+  double lon_dist;
   rclcpp::Time time;
 };
 
@@ -76,11 +80,12 @@ public:
   void onVelocity(const VelocityReport::ConstSharedPtr input_msg);
   void onOdometry(const Odometry::ConstSharedPtr input_msg);
   void onImu(const Imu::ConstSharedPtr input_msg);
+  void onTimer();
 
   bool isDataReady();
 
   // main function
-  void run();
+  void onCheckCollision(DiagnosticStatusWrapper & stat);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
@@ -89,6 +94,9 @@ public:
 
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
+
+  // diag
+  Updater updater_{this};
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

@@ -31,6 +31,8 @@
 
 namespace autoware::motion::control::autonomous_emergency_braking
 {
+using diagnostic_msgs::msg::DiagnosticStatus;
+
 AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
 {
   // Subscribers
@@ -51,11 +53,17 @@ AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
 
+  // Diagnostics
+  updater_.setHardwareID("autonomous_emergency_braking");
+  updater_.add("collision_check", this, &AEB::onCheckCollision);
+
   // start timer
-  const auto planning_hz = 10.0;  // declare_parameter("planning_hz", 10.0);
+  const auto planning_hz = 100.0;  // declare_parameter("planning_hz", 10.0);
   const auto period_ns = rclcpp::Rate(planning_hz).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&AEB::run, this));
+  timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
+
+void AEB::onTimer() { updater_.force_update(); }
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
@@ -133,7 +141,7 @@ bool AEB::isDataReady()
   return true;
 }
 
-void AEB::run()
+void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   if (!isDataReady()) {
     return;
@@ -173,7 +181,6 @@ void AEB::run()
 
   // check if the predicted path has valid number of points
   if (predicted_path.size() < 2) {
-    std::cerr << "Ego vehicle is stopping" << std::endl;
     return;
   }
 
@@ -184,20 +191,37 @@ void AEB::run()
     obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
     obj.velocity = 0.0;
     obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
+    const double lon_dist = motion_utils::calcSignedArcLength(predicted_path, 0, obj.position);
     const double lat_dist = motion_utils::calcLateralOffset(predicted_path, obj.position);
-    if (lat_dist > 5.0) {
+    if (lon_dist < 0.0 || lat_dist > 5.0) {
       continue;
     }
+    obj.lon_dist = lon_dist;
+    obj.lat_dist = lat_dist;
     objects.push_back(obj);
   }
 
-  // step3. check collision with TTC
+  // step3. calculate time to collision(TTC)
+  bool collision_flag = false;
   for (const auto & obj : objects) {
-    const double lon_dist = motion_utils::calcSignedArcLength(predicted_path, 0, obj.position);
-    const double collision_time = lon_dist / std::max(v, 1e-6);
-    if (collision_time < 1.0) {
-      std::cerr << "Dangerous" << std::endl;
+    const double rel_vel = v - obj.velocity;
+    if (rel_vel < -1e-6) {
+      // if relative velocity is negative, ignore it (object is faster)
+      continue;
     }
+    const double time_to_collision = obj.lon_dist / std::max(rel_vel, 1e-6);
+    if (time_to_collision < 1.0) {
+      collision_flag = true;
+      break;
+    }
+  }
+
+  // step4. handle the dangerous situation
+  if (collision_flag) {
+    const std::string error_msg = "[AEB]: Emergency Brake";
+    const auto diag_level = DiagnosticStatus::ERROR;
+    std::cerr << "Emergency" << std::endl;
+    stat.summary(diag_level, error_msg);
   }
 }
 
