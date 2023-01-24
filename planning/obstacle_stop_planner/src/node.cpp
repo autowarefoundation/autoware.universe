@@ -394,7 +394,7 @@ void ObstacleStopPlannerNode::searchObstacle(
           }
         }
       } else {
-//        std::cout << "no slow down" << std::endl;
+        //        std::cout << "no slow down" << std::endl;
       }
       // stop module
       {
@@ -419,7 +419,6 @@ void ObstacleStopPlannerNode::searchObstacle(
             if (bg::intersects(one_step_move_vehicle_polygon2d, object_polygon)) {
               std::cout << "pedestrian stop" << std::endl;
               for (const auto & p : collision) {
-                
               }
             }
           } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {

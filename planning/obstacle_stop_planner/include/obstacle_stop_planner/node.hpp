@@ -34,7 +34,6 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -44,6 +43,7 @@
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
