@@ -120,7 +120,7 @@ void TwistEstimator::publish_twist(const Imu & imu)
     TwistCovStamped cov_msg;
     cov_msg.header = msg.header;
     cov_msg.twist.twist = msg.twist;
-    cov_msg.twist.covariance.at(0) = 0.1;
+    cov_msg.twist.covariance.at(0) = 4.0;
     cov_msg.twist.covariance.at(35) = 0.1;
     pub_twist_with_covariance_->publish(cov_msg);
   }

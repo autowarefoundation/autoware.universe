@@ -155,7 +155,7 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   }
 
   auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
-  iffy_lsd_cloud.clear();
+  // iffy_lsd_cloud.clear(); // TODO:
 
   // cost_map_.set_height(opt_synched_pose->pose.pose.position.z);
 
