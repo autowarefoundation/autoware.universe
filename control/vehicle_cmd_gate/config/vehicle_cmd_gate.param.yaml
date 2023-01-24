@@ -15,6 +15,7 @@
       lon_jerk_lim: 5.0
       lat_acc_lim: 5.0
       lat_jerk_lim: 7.0
+      actual_steer_diff_lim: 1.0
     on_transition:
       vel_lim: 50.0
       lon_acc_lim: 1.0
