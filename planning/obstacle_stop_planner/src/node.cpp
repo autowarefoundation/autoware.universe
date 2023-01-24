@@ -450,7 +450,7 @@ void ObstacleStopPlannerNode::searchObstacle(
 
       mutex_.lock();
       const auto object_ptr = object_ptr_;
-      const auto current_velocity_ptr = current_velocity_ptr_;
+      const auto current_odometry_ptr = current_odometry_ptr_;
       mutex_.unlock();
 
       acc_controller_->insertAdaptiveCruiseVelocity(
