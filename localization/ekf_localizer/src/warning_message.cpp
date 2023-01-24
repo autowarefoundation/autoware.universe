@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <fmt/core.h>
+
 std::string poseDelayStepWarningMessage(
   const double delay_time, const double extend_state_step, const double ekf_dt)
 {

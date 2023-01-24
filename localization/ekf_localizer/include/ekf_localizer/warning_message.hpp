@@ -15,8 +15,6 @@
 #ifndef EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 #define EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 
-#include <fmt/core.h>
-
 #include <string>
 
 std::string poseDelayStepWarningMessage(
