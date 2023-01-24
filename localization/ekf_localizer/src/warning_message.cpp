@@ -16,8 +16,18 @@
 
 #include <string>
 
-std::string delayStepWarningMessage(const double delay_step, const double extend_state_step)
+std::string poseDelayStepWarningMessage(
+  const double delay_time, const double extend_state_step, const double ekf_dt)
 {
-  const std::string s = "The delay step {} should be less than the maximum state step {}.";
-  return fmt::format(s, delay_step, extend_state_step);
+  const std::string s = "Pose delay exceeds the compensation limit, ignored. "
+                        "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
+  return fmt::format(s, delay_time, extend_state_step * ekf_dt);
+}
+
+std::string twistDelayStepWarningMessage(
+  const double delay_time, const double extend_state_step, const double ekf_dt)
+{
+  const std::string s = "Twist delay exceeds the compensation limit, ignored. "
+                        "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
+  return fmt::format(s, delay_time, extend_state_step * ekf_dt);
 }

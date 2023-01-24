@@ -19,6 +19,9 @@
 
 #include <string>
 
-std::string delayStepWarningMessage(const double delay_step, const double extend_state_step);
+std::string poseDelayStepWarningMessage(
+  const double delay_step, const double extend_state_step, const double ekf_dt);
+std::string twistDelayStepWarningMessage(
+  const double delay_step, const double extend_state_step, const double ekf_dt);
 
 #endif  // EKF_LOCALIZER__WARNING_MESSAGE_HPP_

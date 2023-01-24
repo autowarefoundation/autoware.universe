@@ -18,9 +18,18 @@
 
 #include <gtest/gtest.h>
 
-TEST(DelayStepWarningMessage, SmokeTest)
+TEST(PoseDelayStepWarningMessage, SmokeTest)
 {
   EXPECT_STREQ(
-    delayStepWarningMessage(4.0, 3.5).c_str(),
-    "The delay step 4 should be less than the maximum state step 3.5.");
+    poseDelayStepWarningMessage(6.0, 2.5, 2.0).c_str(),
+    "Pose delay exceeds the compensation limit, ignored. "
+    "delay: 6.000[s], limit = extend_state_step * ekf_dt : 5.000[s]");
+}
+
+TEST(TwistDelayStepWarningMessage, SmokeTest)
+{
+  EXPECT_STREQ(
+    twistDelayStepWarningMessage(10.0, 3.5, 2.0).c_str(),
+    "Twist delay exceeds the compensation limit, ignored. "
+    "delay: 10.000[s], limit = extend_state_step * ekf_dt : 7.000[s]");
 }
