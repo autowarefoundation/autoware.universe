@@ -64,6 +64,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
+  modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -132,6 +133,22 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     auto lane_following_module =
       std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
     bt_manager_->registerSceneModule(lane_following_module);
+
+    auto ext_request_lane_change_right_module =
+      std::make_shared<ExternalRequestLaneChangeRightModule>(
+        "ExternalRequestLaneChangeRight", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "ExternalRequestLaneChangeRight",
+      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_right", 1));
+    bt_manager_->registerSceneModule(ext_request_lane_change_right_module);
+
+    auto ext_request_lane_change_left_module =
+      std::make_shared<ExternalRequestLaneChangeLeftModule>(
+        "ExternalRequestLaneChangeLeft", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "ExternalRequestLaneChangeLeft",
+      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_left", 1));
+    bt_manager_->registerSceneModule(ext_request_lane_change_left_module);
 
     auto lane_change_module =
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
@@ -654,9 +671,10 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.search_priority =
     dp("search_priority", "efficient_path");  // "efficient_path" or "short_back_distance"
   p.enable_back = dp("enable_back", true);
-  p.max_back_distance = dp("max_back_distance", 15.0);
+  p.max_back_distance = dp("max_back_distance", 30.0);
   p.backward_search_resolution = dp("backward_search_resolution", 2.0);
   p.backward_path_update_duration = dp("backward_path_update_duration", 3.0);
+  p.ignore_distance_from_lane_end = dp("ignore_distance_from_lane_end", 15.0);
   // drivable area
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
@@ -792,6 +810,12 @@ void BehaviorPathPlannerNode::run()
   publishPathCandidate(bt_manager_->getSceneModules());
 
   publishSceneModuleDebugMsg();
+
+  if (output.modified_goal) {
+    PoseWithUuidStamped modified_goal = *(output.modified_goal);
+    modified_goal.header.stamp = path->header.stamp;
+    modified_goal_publisher_->publish(modified_goal);
+  }
 
   if (planner_data->parameters.visualize_maximum_drivable_area) {
     const auto maximum_drivable_area =
