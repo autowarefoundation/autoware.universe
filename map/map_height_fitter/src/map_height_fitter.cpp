@@ -28,6 +28,9 @@ namespace map_height_fitter
 
 struct MapHeightFitter::Impl
 {
+  static constexpr char map_loader_name[] = "/map/pointcloud_map_loader";
+  static constexpr char enable_partial_load[] = "enable_partial_load";
+
   explicit Impl(rclcpp::Node * node);
   void on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void get_partial_point_cloud_map(const Point & point);
@@ -38,36 +41,39 @@ struct MapHeightFitter::Impl
   tf2_ros::TransformListener tf2_listener_;
   std::string map_frame_;
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
-  rclcpp::Logger logger_;
+  rclcpp::Node * node_;
 
-  bool enable_partial_map_load_;
-  rclcpp::CallbackGroup::SharedPtr callback_group_service_;
-  rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedPtr cli_get_partial_pcd_;
+  rclcpp::CallbackGroup::SharedPtr group_;
+  rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedPtr cli_map_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
+  rclcpp::AsyncParametersClient::SharedPtr params_map_loader_;
 };
 
-MapHeightFitter::Impl::Impl(rclcpp::Node * node)
-: tf2_listener_(tf2_buffer_), logger_(node->get_logger())
+MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), node_(node)
 {
-  enable_partial_map_load_ = node->declare_parameter<bool>("enable_partial_map_load", false);
-
-  if (!enable_partial_map_load_) {
-    const auto durable_qos = rclcpp::QoS(1).transient_local();
-    using std::placeholders::_1;
-    sub_map_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "~/pointcloud_map", durable_qos, std::bind(&MapHeightFitter::Impl::on_map, this, _1));
-  } else {
-    callback_group_service_ =
-      node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    cli_get_partial_pcd_ = node->create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
-      "~/partial_map_load", rmw_qos_profile_default, callback_group_service_);
-    while (!cli_get_partial_pcd_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-      RCLCPP_INFO(
-        logger_,
-        "Cannot find partial map loading interface. Please check the setting in "
-        "pointcloud_map_loader to see if the interface is enabled.");
+  const auto callback = [this](const std::shared_future<std::vector<rclcpp::Parameter>> & future) {
+    bool partial_load = false;
+    for (const auto & param : future.get()) {
+      if (param.get_name() == enable_partial_load) {
+        partial_load = param.as_bool();
+      }
     }
-  }
+
+    if (partial_load) {
+      group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+      cli_map_ = node_->create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
+        "~/partial_map_load", rmw_qos_profile_default, group_);
+    } else {
+      const auto durable_qos = rclcpp::QoS(1).transient_local();
+      sub_map_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
+        "~/pointcloud_map", durable_qos,
+        std::bind(&MapHeightFitter::Impl::on_map, this, std::placeholders::_1));
+    }
+  };
+
+  params_map_loader_ = rclcpp::AsyncParametersClient::make_shared(node, map_loader_name);
+  params_map_loader_->wait_for_service();
+  params_map_loader_->get_parameters({enable_partial_load}, callback);
 }
 
 void MapHeightFitter::Impl::on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
@@ -79,32 +85,39 @@ void MapHeightFitter::Impl::on_map(const sensor_msgs::msg::PointCloud2::ConstSha
 
 void MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
 {
-  if (!cli_get_partial_pcd_) {
-    throw std::runtime_error{"Partial map loading in pointcloud_map_loader is not enabled"};
+  const auto logger = node_->get_logger();
+
+  if (!cli_map_) {
+    RCLCPP_WARN_STREAM(logger, "Partial map loading in pointcloud_map_loader is not enabled");
+    return;
   }
+  if (!cli_map_->service_is_ready()) {
+    RCLCPP_WARN_STREAM(logger, "Partial map loading in pointcloud_map_loader is not ready");
+    return;
+  }
+
   const auto req = std::make_shared<autoware_map_msgs::srv::GetPartialPointCloudMap::Request>();
   req->area.center = point;
   req->area.radius = 50;
 
-  RCLCPP_INFO(logger_, "Send request to map_loader");
-  auto res{cli_get_partial_pcd_->async_send_request(
-    req, [](rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedFuture) {})};
-
-  std::future_status status = res.wait_for(std::chrono::seconds(0));
+  RCLCPP_INFO(logger, "Send request to map_loader");
+  auto future = cli_map_->async_send_request(req);
+  auto status = future.wait_for(std::chrono::seconds(1));
   while (status != std::future_status::ready) {
-    RCLCPP_INFO(logger_, "waiting response");
+    RCLCPP_INFO(logger, "waiting response");
     if (!rclcpp::ok()) {
       return;
     }
-    status = res.wait_for(std::chrono::seconds(1));
+    status = future.wait_for(std::chrono::seconds(1));
   }
 
+  const auto res = future.get();
   RCLCPP_INFO(
-    logger_, "Loaded partial pcd map from map_loader (grid size: %d)",
-    static_cast<int>(res.get()->new_pointcloud_with_ids.size()));
+    logger, "Loaded partial pcd map from map_loader (grid size: %lu)",
+    res->new_pointcloud_with_ids.size());
 
   sensor_msgs::msg::PointCloud2 pcd_msg;
-  for (const auto & pcd_with_id : res.get()->new_pointcloud_with_ids) {
+  for (const auto & pcd_with_id : res->new_pointcloud_with_ids) {
     if (pcd_msg.width == 0) {
       pcd_msg = pcd_with_id.pointcloud;
     } else {
@@ -114,8 +127,7 @@ void MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
         pcd_msg.data.end(), pcd_with_id.pointcloud.data.begin(), pcd_with_id.pointcloud.data.end());
     }
   }
-
-  map_frame_ = res.get()->header.frame_id;
+  map_frame_ = res->header.frame_id;
   map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(pcd_msg, *map_cloud_);
 }
@@ -151,9 +163,11 @@ double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point) cons
 
 Point MapHeightFitter::Impl::fit(const Point & position, const std::string & frame)
 {
+  const auto logger = node_->get_logger();
   tf2::Vector3 point(position.x, position.y, position.z);
 
-  if (enable_partial_map_load_) {
+  if (cli_map_) {
+    map_cloud_.reset();
     get_partial_point_cloud_map(position);
   }
 
@@ -166,7 +180,7 @@ Point MapHeightFitter::Impl::fit(const Point & position, const std::string & fra
       point.setZ(get_ground_height(point));
       point = transform.inverse() * point;
     } catch (tf2::TransformException & exception) {
-      RCLCPP_WARN_STREAM(logger_, "failed to lookup transform: " << exception.what());
+      RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
     }
   }
 
