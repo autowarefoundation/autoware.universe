@@ -281,7 +281,6 @@ void SimplePlanningSimulator::on_timer()
 
   current_velocity_ = to_velocity_report(vehicle_model_ptr_);
   current_steer_ = to_steering_report(vehicle_model_ptr_);
-  current_steer_.steering_tire_angle -= 0.0156;
 
   if (add_measurement_noise_) {
     add_measurement_noise(current_odometry_, current_velocity_, current_steer_);
@@ -373,7 +372,7 @@ void SimplePlanningSimulator::set_input(const AckermannControlCommand & cmd)
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED) {
-    input << acc, steer + 0.0156;
+    input << acc, steer;
   }
   vehicle_model_ptr_->setInput(input);
 }
