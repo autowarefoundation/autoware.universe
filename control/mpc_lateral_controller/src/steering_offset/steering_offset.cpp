@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <iostream>
 
 SteeringOffsetEstimator::SteeringOffsetEstimator(
   double wheelbase, double queue_size, double vel_thres, double steer_thres, double offset_limit)

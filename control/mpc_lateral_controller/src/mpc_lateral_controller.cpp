@@ -127,7 +127,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   {
     const std::string ns = "steering_offset.";
     enable_auto_steering_offset_removal_ =
-      node_->declare_parameter<double>(ns + "enable_auto_steering_offset_removal");
+      node_->declare_parameter<bool>(ns + "enable_auto_steering_offset_removal");
     const auto vel_thres = node_->declare_parameter<double>(ns + "update_vel_threshold");
     const auto steer_thres = node_->declare_parameter<double>(ns + "update_steer_threshold");
     const auto limit = node_->declare_parameter<double>(ns + "steering_offset_limit");
@@ -185,6 +185,9 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   setTrajectory(input_data.current_trajectory);
   m_current_kinematic_state = input_data.current_odometry;
   m_current_steering = input_data.current_steering;
+  if (enable_auto_steering_offset_removal_) {
+    m_current_steering.steering_tire_angle -= steering_offset_->getOffset();
+  }
 
   autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd;
   autoware_auto_planning_msgs::msg::Trajectory predicted_traj;
@@ -201,7 +204,8 @@ trajectory_follower::LateralOutput MpcLateralController::run(
 
   if (enable_auto_steering_offset_removal_) {
     steering_offset_->updateOffset(
-      m_current_kinematic_state.twist.twist, m_current_steering.steering_tire_angle);
+      m_current_kinematic_state.twist.twist,
+      input_data.current_steering.steering_tire_angle);  // use unbiased steering
     ctrl_cmd.steering_tire_angle += steering_offset_->getOffset();
   }
 
