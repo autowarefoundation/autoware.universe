@@ -28,7 +28,6 @@ namespace map_height_fitter
 
 struct MapHeightFitter::Impl
 {
-  static constexpr char map_loader_name[] = "/map/pointcloud_map_loader";
   static constexpr char enable_partial_load[] = "enable_partial_load";
 
   explicit Impl(rclcpp::Node * node);
@@ -71,6 +70,7 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
     }
   };
 
+  const auto map_loader_name = node->declare_parameter<std::string>("map_loader_name");
   params_map_loader_ = rclcpp::AsyncParametersClient::make_shared(node, map_loader_name);
   params_map_loader_->wait_for_service();
   params_map_loader_->get_parameters({enable_partial_load}, callback);
