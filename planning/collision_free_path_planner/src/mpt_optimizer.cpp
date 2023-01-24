@@ -92,16 +92,7 @@ std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
   return {eigen_vec.data(), eigen_vec.data() + eigen_vec.rows()};
 }
 
-[[maybe_unused]] std::vector<ReferencePoint> resampleRefPoints(
-  const std::vector<ReferencePoint> & ref_points, const double interval)
-{
-  const auto traj_points = trajectory_utils::convertToTrajectoryPoints(ref_points);
-  const auto resampled_traj_points =
-    trajectory_utils::resampleTrajectoryPoints(traj_points, interval);
-  return trajectory_utils::convertToReferencePoints(resampled_traj_points);
-}
-
-/*
+// NOTE: much faster than boost::geometry::intersection()
 std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
@@ -112,7 +103,8 @@ std::optional<geometry_msgs::msg::Point> intersect(
   }
 
   const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  if (t < 0 || 1 < t) {
+  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p4.x - p3.x) * (p4.y - p2.y)) / det;
+  if (t < 0 || 1 < t || s < 0 || 1 < s) {
     return std::nullopt;
   }
 
@@ -121,36 +113,13 @@ std::optional<geometry_msgs::msg::Point> intersect(
   intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
   return intersect_point;
 }
-*/
 
-std::optional<geometry_msgs::msg::Point> intersect(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
-{
-  using Point = boost::geometry::model::d2::point_xy<double>;
-  using Line = boost::geometry::model::linestring<Point>;
-
-  const Line l1{{p1.x, p1.y}, {p2.x, p2.y}};
-  const Line l2{{p3.x, p3.y}, {p4.x, p4.y}};
-
-  std::vector<Point> intersect_points;
-  boost::geometry::intersection(l1, l2, intersect_points);
-  if (intersect_points.empty()) {
-    return std::nullopt;
-  }
-
-  geometry_msgs::msg::Point intersect_point;
-  intersect_point.x = intersect_points.front().x();
-  intersect_point.y = intersect_points.front().y();
-  return intersect_point;
-}
-
-// NOTE: left is positive, and right is negative
+// NOTE: Regarding boundary's sign, left is positive, and right is negative
 double calcLateralDistToBounds(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & bound,
   const double additional_offset, const bool is_left_bound = true)
 {
-  const double max_lat_offset = 5.0;
+  constexpr double max_lat_offset = 5.0;
 
   const double lat_offset = is_left_bound ? max_lat_offset : -max_lat_offset;
   const auto lat_offset_point =
@@ -179,7 +148,8 @@ MPTOptimizer::MPTOptimizer(
   ego_nearest_param_(ego_nearest_param),
   traj_param_(traj_param),
   vehicle_info_(vehicle_info),
-  debug_data_ptr_(debug_data_ptr)
+  debug_data_ptr_(debug_data_ptr),
+  logger_(node->get_logger().get_child("mpt_optimizer"))
 {
   // mpt param
   initializeMPTParam(node, vehicle_info);
@@ -327,7 +297,7 @@ void MPTOptimizer::initializeMPTParam(
   debug_data_ptr_->mpt_visualize_sampling_num = mpt_visualize_sampling_num_;
 }
 
-void MPTOptimizer::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
+void MPTOptimizer::initialize(const bool enable_debug_info, const TrajectoryParam & traj_param)
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
@@ -482,10 +452,12 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // 1. calculate reference points
   auto ref_points = calcReferencePoints(planner_data, smoothed_points);
   if (ref_points.empty()) {
-    logInfo("return std::nullopt since ref_points is empty");
+    RCLCPP_INFO_EXPRESSION(
+      logger_, enable_debug_info_, "return std::nullopt since ref_points is empty");
     return std::nullopt;
   } else if (ref_points.size() == 1) {
-    logInfo("return std::nullopt since ref_points.size() == 1");
+    RCLCPP_INFO_EXPRESSION(
+      logger_, enable_debug_info_, "return std::nullopt since ref_points.size() == 1");
     return std::nullopt;
   }
 
@@ -504,14 +476,10 @@ std::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   // 6. optimize steer angles
   const auto optimized_steer_angles = calcOptimizedSteerAngles(ref_points, obj_mat, const_mat);
   if (!optimized_steer_angles) {
-    logInfo("return std::nullopt since could not solve qp");
+    RCLCPP_INFO_EXPRESSION(
+      logger_, enable_debug_info_, "return std::nullopt since could not solve qp");
     return std::nullopt;
   }
-
-  for (const auto & a : *optimized_steer_angles) {
-    std::cerr << a << " ";
-  }
-  std::cerr << std::endl;
 
   // 5. convert to points
   const auto mpt_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
@@ -635,6 +603,93 @@ void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) co
   ref_points.front().fix_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
 }
 
+void MPTOptimizer::updateBounds(
+  std::vector<ReferencePoint> & ref_points,
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound) const
+{
+  debug_data_ptr_->tic(__func__);
+
+  const double soft_road_clearance = mpt_param_.soft_clearance_from_road;
+
+  // calculate distance to left/right bound on each reference point
+  for (auto & ref_point : ref_points) {
+    const double dist_to_left_bound =
+      calcLateralDistToBounds(ref_point.pose, left_bound, soft_road_clearance, true);
+    const double dist_to_right_bound =
+      calcLateralDistToBounds(ref_point.pose, right_bound, soft_road_clearance, false);
+    ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+  }
+
+  debug_data_ptr_->toc(__func__, "          ");
+  return;
+}
+
+void MPTOptimizer::updateVehicleBounds(
+  std::vector<ReferencePoint> & ref_points,
+  const SplineInterpolationPoints2d & ref_points_spline) const
+{
+  debug_data_ptr_->tic(__func__);
+
+  for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
+    const auto & ref_point = ref_points.at(p_idx);
+    // TODO(murooka) this is required.
+    // somtimes vehile_bounds has already value with previous value?
+    ref_points.at(p_idx).bounds_on_constraints.clear();
+    ref_points.at(p_idx).beta.clear();
+
+    for (const double lon_offset : mpt_param_.vehicle_circle_longitudinal_offsets) {
+      const auto collision_check_pose =
+        ref_points_spline.getSplineInterpolatedPose(p_idx, lon_offset);
+      const double collision_check_yaw = tf2::getYaw(collision_check_pose.orientation);
+
+      // calculate beta
+      const double beta = ref_point.getYaw() - collision_check_yaw;
+      ref_points.at(p_idx).beta.push_back(beta);
+
+      // calculate vehicle_bounds_pose
+      const double tmp_yaw = std::atan2(
+        collision_check_pose.position.y - ref_point.pose.position.y,
+        collision_check_pose.position.x - ref_point.pose.position.x);
+      const double offset_y =
+        -tier4_autoware_utils::calcDistance2d(ref_point, collision_check_pose) *
+        std::sin(tmp_yaw - collision_check_yaw);
+
+      const auto vehicle_bounds_pose =
+        tier4_autoware_utils::calcOffsetPose(collision_check_pose, 0.0, offset_y, 0.0);
+
+      // interpolate bounds
+      const auto bounds = [&]() {
+        const double collision_check_s = ref_points_spline.getAccumulatedLength(p_idx) + lon_offset;
+        const size_t collision_check_idx = ref_points_spline.getOffsetIndex(p_idx, lon_offset);
+
+        const size_t prev_idx = std::clamp(
+          collision_check_idx - 1, static_cast<size_t>(0),
+          static_cast<size_t>(ref_points_spline.getSize() - 1));
+        const size_t next_idx = prev_idx + 1;
+
+        const auto & prev_bounds = ref_points.at(prev_idx).bounds;
+        const auto & next_bounds = ref_points.at(next_idx).bounds;
+
+        const double prev_s = ref_points_spline.getAccumulatedLength(prev_idx);
+        const double next_s = ref_points_spline.getAccumulatedLength(next_idx);
+
+        // TODO(murooka) is this required?
+        const double ratio = std::clamp((collision_check_s - prev_s) / (next_s - prev_s), 0.0, 1.0);
+
+        auto bounds = Bounds::lerp(prev_bounds, next_bounds, ratio);
+        bounds.translate(offset_y);
+        return bounds;
+      }();
+
+      ref_points.at(p_idx).bounds_on_constraints.push_back(bounds);
+      ref_points.at(p_idx).pose_on_constraints.push_back(vehicle_bounds_pose);
+    }
+  }
+
+  debug_data_ptr_->toc(__func__, "          ");
+}
+
 // cost function: J = x' Q x + u' R u
 MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const std::vector<ReferencePoint> & ref_points,
@@ -702,94 +757,6 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
 
   debug_data_ptr_->toc(__func__, "        ");
   return m;
-}
-
-std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
-  const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
-  const ConstraintMatrix & const_mat)
-{
-  debug_data_ptr_->tic(__func__);
-
-  const size_t D_x = state_equation_generator_.getDimX();
-  const size_t D_u = state_equation_generator_.getDimU();
-  const size_t N_ref = ref_points.size();
-  const size_t N_u = (N_ref - 1) * D_u;
-  const size_t N_v = D_x + N_u;
-
-  // for manual warm start, calculate initial solution
-  const auto u0 = [&]() -> std::optional<Eigen::VectorXd> {
-    if (mpt_param_.enable_manual_warm_start) {
-      if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
-        return calcInitialSolutionForManualWarmStart(ref_points, *prev_ref_points_ptr_);
-      }
-    }
-    return std::nullopt;
-  }();
-
-  // for manual start, update objective and constraint matrix
-  const auto [updated_obj_mat, updated_const_mat] =
-    updateMatrixForManualWarmStart(obj_mat, const_mat, u0);
-
-  // calculate matrices for qp
-  const Eigen::MatrixXd & H = updated_obj_mat.hessian;
-  const Eigen::MatrixXd & A = updated_const_mat.linear;
-  const auto f = toStdVector(updated_obj_mat.gradient);
-  const auto upper_bound = toStdVector(updated_const_mat.upper_bound);
-  const auto lower_bound = toStdVector(updated_const_mat.lower_bound);
-
-  // initialize or update solver according to warm start
-  debug_data_ptr_->tic("initOsqp");
-
-  const autoware::common::osqp::CSC_Matrix P_csc =
-    autoware::common::osqp::calCSCMatrixTrapezoidal(H);
-  const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
-  if (mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() && prev_mat_m_ == A.rows()) {
-    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "warm start");
-    osqp_solver_ptr_->updateCscP(P_csc);
-    osqp_solver_ptr_->updateQ(f);
-    osqp_solver_ptr_->updateCscA(A_csc);
-    osqp_solver_ptr_->updateL(lower_bound);
-    osqp_solver_ptr_->updateU(upper_bound);
-  } else {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "no warm start");
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-      P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
-  }
-  prev_mat_n_ = H.rows();
-  prev_mat_m_ = A.rows();
-
-  debug_data_ptr_->toc("initOsqp", "          ");
-
-  // solve qp
-  debug_data_ptr_->tic("solveOsqp");
-  const auto result = osqp_solver_ptr_->optimize();
-  debug_data_ptr_->toc("solveOsqp", "          ");
-
-  // check solution status
-  const int solution_status = std::get<3>(result);
-  if (solution_status != 1) {
-    osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
-    return std::nullopt;
-  }
-
-  // print iteration
-  const int iteration_status = std::get<4>(result);
-  RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "iteration: %d", iteration_status);
-
-  // get optimization result
-  auto optimization_result =
-    std::get<0>(result);  // NOTE: const cannot be added due to the next operation.
-  const Eigen::VectorXd optimized_steer_angles =
-    Eigen::Map<Eigen::VectorXd>(&optimization_result[0], N_v);
-
-  debug_data_ptr_->toc(__func__, "        ");
-
-  if (u0) {  // manual warm start
-    return static_cast<Eigen::VectorXd>(optimized_steer_angles + u0->segment(0, N_v));
-  }
-  return optimized_steer_angles;
 }
 
 Eigen::VectorXd MPTOptimizer::calcInitialSolutionForManualWarmStart(
@@ -931,46 +898,33 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   return obj_matrix;
 }
 
-// Set constraint: lb <= Ax <= ub
+// Constraint: lb <= A u <= ub
 // decision variable
-// x := [u0, ..., uN-1 | z00, ..., z0N-1 | z10, ..., z1N-1 | z20, ..., z2N-1]
-//   \in \mathbb{R}^{N * (N_vehicle_circle + 1)}
+// u := [initial state, steer angles, soft variables]
 MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   const StateEquationGenerator::Matrix & mpt_mat,
   const std::vector<ReferencePoint> & ref_points) const
 {
   debug_data_ptr_->tic(__func__);
 
-  // NOTE: currently, add additional length to soft bounds approximately
-  //       for hard bounds
+  const size_t N_u = (N_ref - 1) * D_u;
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
-  const size_t N_ref = ref_points.size();
-
-  const size_t N_u = (N_ref - 1) * D_u;
   const size_t D_v = D_x + N_u;
 
-  const size_t N_avoid = mpt_param_.vehicle_circle_longitudinal_offsets.size();
+  const size_t N_ref = ref_points.size();
+  const size_t N_collision_check = mpt_param_.vehicle_circle_longitudinal_offsets.size();
 
-  // number of slack variables for one step
-  const size_t N_first_slack = [&]() -> size_t {
+  // NOTE: The number of one-step slack variables.
+  //       The number of all slack variables will be N_ref * N_slack.
+  const size_t N_slack = [&]() -> size_t {
     if (mpt_param_.soft_constraint) {
       if (mpt_param_.l_inf_norm) {
         return 1;
       }
-      return N_avoid;
+      return N_collision_check;
     }
     return 0;
-  }();
-
-  // number of all slack variables is N_ref * N_slack
-  const size_t N_slack = N_first_slack;
-
-  const size_t A_cols = [&] {
-    if (mpt_param_.soft_constraint) {
-      return D_v + N_ref * N_slack;  // initial_state + steer + soft
-    }
-    return D_v;  // initial state + steer
   }();
 
   // calculate indices of fixed points
@@ -981,19 +935,27 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     }
   }
 
-  // calculate rows of A
+  // calculate rows and cols of A
   size_t A_rows = 0;
   if (mpt_param_.soft_constraint) {
-    // 3 means slack variable constraints to be between lower and upper bounds, and positive.
-    A_rows += 3 * N_ref * N_avoid;
+    // NOTE: 3 means expecting slack variable constraints to be larger than lower bound,
+    //       smaller than upper bound, and positive.
+    A_rows += 3 * N_ref * N_collision_check;
   }
   if (mpt_param_.hard_constraint) {
-    A_rows += N_ref * N_avoid;
+    A_rows += N_ref * N_collision_check;
   }
   A_rows += fixed_points_indices.size() * D_x;
   if (mpt_param_.steer_limit_constraint) {
     A_rows += N_u;
   }
+
+  const size_t A_cols = [&] {
+    if (mpt_param_.soft_constraint) {
+      return D_v + N_ref * N_slack;  // initial state + steer angles + soft variables
+    }
+    return D_v;  // initial state + steer angles
+  }();
 
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, A_cols);
   Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::common::osqp::INF);
@@ -1001,8 +963,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   size_t A_rows_end = 0;
 
   // CX = C(Bv + w) + C \in R^{N_ref, N_ref * D_x}
-  for (size_t l_idx = 0; l_idx < N_avoid; ++l_idx) {
-    // create C := [1 | l | O]
+  for (size_t l_idx = 0; l_idx < N_collision_check; ++l_idx) {
+    // create C := [cos(beta) | l cos(beta)]
     Eigen::SparseMatrix<double> C_sparse_mat(N_ref, N_ref * D_x);
     std::vector<Eigen::Triplet<double>> C_triplet_vec;
     Eigen::VectorXd C_vec = Eigen::VectorXd::Zero(N_ref);
@@ -1010,12 +972,11 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     // calculate C mat and vec
     for (size_t i = 0; i < N_ref; ++i) {
       const double beta = *ref_points.at(i).beta.at(l_idx);
-      const double avoid_offset = mpt_param_.vehicle_circle_longitudinal_offsets.at(l_idx);
+      const double lon_offset = mpt_param_.vehicle_circle_longitudinal_offsets.at(l_idx);
 
       C_triplet_vec.push_back(Eigen::Triplet<double>(i, i * D_x, 1.0 * std::cos(beta)));
-      C_triplet_vec.push_back(
-        Eigen::Triplet<double>(i, i * D_x + 1, avoid_offset * std::cos(beta)));
-      C_vec(i) = avoid_offset * std::sin(beta);
+      C_triplet_vec.push_back(Eigen::Triplet<double>(i, i * D_x + 1, lon_offset * std::cos(beta)));
+      C_vec(i) = lon_offset * std::sin(beta);
     }
     C_sparse_mat.setFromTriplets(C_triplet_vec.begin(), C_triplet_vec.end());
 
@@ -1024,8 +985,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.W + C_vec;
 
     // calculate bounds
-    const double bounds_offset =
-      vehicle_info_.vehicle_width_m / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
+    const double bounds_offset = -mpt_param_.vehicle_circle_radiuses.at(l_idx);
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
@@ -1081,21 +1041,19 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   }
 
   // fixed points constraint
-  // CX = C(B v + w) where C extracts fixed points
-  if (fixed_points_indices.size() > 0) {
-    for (const size_t i : fixed_points_indices) {
-      A.block(A_rows_end, 0, D_x, D_v) = mpt_mat.B.block(i * D_x, 0, D_x, D_v);
+  // X = B v + w where point is fixed
+  for (const size_t i : fixed_points_indices) {
+    A.block(A_rows_end, 0, D_x, D_v) = mpt_mat.B.block(i * D_x, 0, D_x, D_v);
 
-      lb.segment(A_rows_end, D_x) =
-        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
-      ub.segment(A_rows_end, D_x) =
-        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
+    lb.segment(A_rows_end, D_x) =
+      ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
+    ub.segment(A_rows_end, D_x) =
+      ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
 
-      A_rows_end += D_x;
-    }
+    A_rows_end += D_x;
   }
 
-  // steer max limit
+  // steer limit
   if (mpt_param_.steer_limit_constraint) {
     A.block(A_rows_end, D_x, N_u, N_u) = Eigen::MatrixXd::Identity(N_u, N_u);
     lb.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, -mpt_param_.max_steer_rad);
@@ -1111,56 +1069,6 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
   debug_data_ptr_->toc(__func__, "          ");
   return constraint_matrix;
-}
-
-std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
-  std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
-  const StateEquationGenerator::Matrix & mpt_mat)
-{
-  debug_data_ptr_->tic(__func__);
-
-  const size_t D_x = state_equation_generator_.getDimX();
-  const size_t D_u = state_equation_generator_.getDimU();
-  const size_t N_ref =
-    ref_points
-      .size();  // static_cast<size_t>(Uex.rows() - D_x) + 1; // TODO(murooka) remove this comment
-
-  // predict time-series states from optimized control inputs
-  const Eigen::VectorXd Xex = state_equation_generator_.predict(mpt_mat, Uex);
-
-  // calculate trajectory points from optimization result
-  std::vector<TrajectoryPoint> traj_points;
-  for (size_t i = 0; i < N_ref; ++i) {
-    auto & ref_point = ref_points.at(i);
-
-    const double lat_error = Xex(i * D_x);
-    const double yaw_error = Xex(i * D_x + 1);
-
-    // memorize optimization result (optimized_kinematic_state and optimized_input)
-    ref_point.optimized_kinematic_state = KinematicState{lat_error, yaw_error};
-    if (i == N_ref - 1) {
-      ref_point.optimized_input = 0.0;
-    } else {
-      ref_point.optimized_input = Uex(D_x + i * D_u);
-    }
-
-    TrajectoryPoint traj_point;
-    traj_point.pose = ref_point.offsetDeviation(lat_error, yaw_error);
-
-    traj_points.push_back(traj_point);
-  }
-
-  // NOTE: If generated trajectory's orientation is not so smooth or kinematically infeasible,
-  // recalculate orientation here
-  // for (size_t i = 0; i < lat_error_vec.size(); ++i) {
-  //   auto & ref_point = (i < fixed_ref_points.size())
-  //                        ? fixed_ref_points.at(i)
-  //                        : non_fixed_ref_points.at(i - fixed_ref_points.size());
-  // }
-  // motion_utils::insertOrientation(traj_points);
-
-  debug_data_ptr_->toc(__func__, "        ");
-  return traj_points;
 }
 
 void MPTOptimizer::updateArcLength(std::vector<ReferencePoint> & ref_points) const
@@ -1242,91 +1150,131 @@ void MPTOptimizer::addSteerWeightR(
   }
 }
 
-void MPTOptimizer::updateBounds(
-  std::vector<ReferencePoint> & ref_points,
-  const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound) const
+std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
+  const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
+  const ConstraintMatrix & const_mat)
 {
   debug_data_ptr_->tic(__func__);
 
-  const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0;  // TODO(murooka)
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_ref = ref_points.size();
+  const size_t N_u = (N_ref - 1) * D_u;
+  const size_t N_v = D_x + N_u;
 
-  // calculate distance to left/right bound on each reference point
-  for (auto & ref_point : ref_points) {
-    const double dist_to_left_bound =
-      calcLateralDistToBounds(ref_point.pose, left_bound, min_soft_road_clearance, true);
-    const double dist_to_right_bound =
-      calcLateralDistToBounds(ref_point.pose, right_bound, min_soft_road_clearance, false);
-    ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+  // for manual warm start, calculate initial solution
+  const auto u0 = [&]() -> std::optional<Eigen::VectorXd> {
+    if (mpt_param_.enable_manual_warm_start) {
+      if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
+        return calcInitialSolutionForManualWarmStart(ref_points, *prev_ref_points_ptr_);
+      }
+    }
+    return std::nullopt;
+  }();
+
+  // for manual start, update objective and constraint matrix
+  const auto [updated_obj_mat, updated_const_mat] =
+    updateMatrixForManualWarmStart(obj_mat, const_mat, u0);
+
+  // calculate matrices for qp
+  const Eigen::MatrixXd & H = updated_obj_mat.hessian;
+  const Eigen::MatrixXd & A = updated_const_mat.linear;
+  const auto f = toStdVector(updated_obj_mat.gradient);
+  const auto upper_bound = toStdVector(updated_const_mat.upper_bound);
+  const auto lower_bound = toStdVector(updated_const_mat.lower_bound);
+
+  // initialize or update solver according to warm start
+  debug_data_ptr_->tic("initOsqp");
+
+  const autoware::common::osqp::CSC_Matrix P_csc =
+    autoware::common::osqp::calCSCMatrixTrapezoidal(H);
+  const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
+  if (mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() && prev_mat_m_ == A.rows()) {
+    RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "warm start");
+    osqp_solver_ptr_->updateCscP(P_csc);
+    osqp_solver_ptr_->updateQ(f);
+    osqp_solver_ptr_->updateCscA(A_csc);
+    osqp_solver_ptr_->updateL(lower_bound);
+    osqp_solver_ptr_->updateU(upper_bound);
+  } else {
+    RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
+    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+      P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
+  }
+  prev_mat_n_ = H.rows();
+  prev_mat_m_ = A.rows();
+
+  debug_data_ptr_->toc("initOsqp", "          ");
+
+  // solve qp
+  debug_data_ptr_->tic("solveOsqp");
+  const auto result = osqp_solver_ptr_->optimize();
+  debug_data_ptr_->toc("solveOsqp", "          ");
+
+  // check solution status
+  const int solution_status = std::get<3>(result);
+  if (solution_status != 1) {
+    osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
+    return std::nullopt;
   }
 
-  debug_data_ptr_->toc(__func__, "          ");
-  return;
+  // print iteration
+  const int iteration_status = std::get<4>(result);
+  RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "iteration: %d", iteration_status);
+
+  // get optimization result
+  auto optimization_result =
+    std::get<0>(result);  // NOTE: const cannot be added due to the next operation.
+  const Eigen::VectorXd optimized_steer_angles =
+    Eigen::Map<Eigen::VectorXd>(&optimization_result[0], N_v);
+
+  debug_data_ptr_->toc(__func__, "        ");
+
+  if (u0) {  // manual warm start
+    return static_cast<Eigen::VectorXd>(optimized_steer_angles + u0->segment(0, N_v));
+  }
+  return optimized_steer_angles;
 }
 
-void MPTOptimizer::updateVehicleBounds(
-  std::vector<ReferencePoint> & ref_points,
-  const SplineInterpolationPoints2d & ref_points_spline) const
+std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
+  std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
+  const StateEquationGenerator::Matrix & mpt_mat)
 {
   debug_data_ptr_->tic(__func__);
 
-  for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
-    const auto & ref_point = ref_points.at(p_idx);
-    // TODO(murooka) this is required.
-    // somtimes vehile_bounds has already value with previous value?
-    ref_points.at(p_idx).bounds_on_constraints.clear();
-    ref_points.at(p_idx).beta.clear();
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_ref = ref_points.size();
 
-    for (const double lon_offset : mpt_param_.vehicle_circle_longitudinal_offsets) {
-      const auto collision_check_pose =
-        ref_points_spline.getSplineInterpolatedPose(p_idx, lon_offset);
-      const double collision_check_yaw = tf2::getYaw(collision_check_pose.orientation);
+  // predict time-series states from optimized control inputs
+  const Eigen::VectorXd X = state_equation_generator_.predict(mpt_mat, U);
 
-      // calculate beta
-      const double beta = ref_point.getYaw() - collision_check_yaw;
-      ref_points.at(p_idx).beta.push_back(beta);
+  // calculate trajectory points from optimization result
+  std::vector<TrajectoryPoint> traj_points;
+  for (size_t i = 0; i < N_ref; ++i) {
+    auto & ref_point = ref_points.at(i);
 
-      // calculate vehicle_bounds_pose
-      const double tmp_yaw = std::atan2(
-        collision_check_pose.position.y - ref_point.pose.position.y,
-        collision_check_pose.position.x - ref_point.pose.position.x);
-      const double offset_y =
-        -tier4_autoware_utils::calcDistance2d(ref_point, collision_check_pose) *
-        std::sin(tmp_yaw - collision_check_yaw);
+    const double lat_error = X(i * D_x);
+    const double yaw_error = X(i * D_x + 1);
 
-      const auto vehicle_bounds_pose =
-        tier4_autoware_utils::calcOffsetPose(collision_check_pose, 0.0, offset_y, 0.0);
-
-      // interpolate bounds
-      const auto bounds = [&]() {
-        const double collision_check_s = ref_points_spline.getAccumulatedLength(p_idx) + lon_offset;
-        const size_t collision_check_idx = ref_points_spline.getOffsetIndex(p_idx, lon_offset);
-
-        const size_t prev_idx = std::clamp(
-          collision_check_idx - 1, static_cast<size_t>(0),
-          static_cast<size_t>(ref_points_spline.getSize() - 1));
-        const size_t next_idx = prev_idx + 1;
-
-        const auto & prev_bounds = ref_points.at(prev_idx).bounds;
-        const auto & next_bounds = ref_points.at(next_idx).bounds;
-
-        const double prev_s = ref_points_spline.getAccumulatedLength(prev_idx);
-        const double next_s = ref_points_spline.getAccumulatedLength(next_idx);
-
-        // TODO(murooka) is this required?
-        const double ratio = std::clamp((collision_check_s - prev_s) / (next_s - prev_s), 0.0, 1.0);
-
-        auto bounds = Bounds::lerp(prev_bounds, next_bounds, ratio);
-        bounds.translate(offset_y);
-        return bounds;
-      }();
-
-      ref_points.at(p_idx).bounds_on_constraints.push_back(bounds);
-      ref_points.at(p_idx).pose_on_constraints.push_back(vehicle_bounds_pose);
+    // memorize optimization result (optimized_kinematic_state and optimized_input)
+    ref_point.optimized_kinematic_state = KinematicState{lat_error, yaw_error};
+    if (i == N_ref - 1) {
+      ref_point.optimized_input = 0.0;
+    } else {
+      ref_point.optimized_input = U(D_x + i * D_u);
     }
+
+    // update pose and velocity
+    TrajectoryPoint traj_point;
+    traj_point.pose = ref_point.offsetDeviation(lat_error, yaw_error);
+    traj_point.longitudinal_velocity_mps = ref_point.longitudinal_velocity_mps;
+
+    traj_points.push_back(traj_point);
   }
 
-  debug_data_ptr_->toc(__func__, "          ");
+  debug_data_ptr_->toc(__func__, "        ");
+  return traj_points;
 }
 
 void MPTOptimizer::publishDebugTrajectories(

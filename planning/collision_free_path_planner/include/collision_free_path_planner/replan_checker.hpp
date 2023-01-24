@@ -39,14 +39,15 @@ public:
     const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr);
 
 private:
+  EgoNearestParam ego_nearest_param_;
+  rclcpp::Logger logger_;
+
   // previous variables for isResetRequired
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj_points_ptr_{nullptr};
   std::shared_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_{nullptr};
 
   // previous variable for isReplanRequired
   std::shared_ptr<rclcpp::Time> prev_replanned_time_ptr_{nullptr};
-
-  EgoNearestParam ego_nearest_param_;
 
   // bool reset_optimization_{false};
 
@@ -59,11 +60,6 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;
   bool isPathGoalChanged(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;
-
-  void logInfo(const char * msg) const
-  {
-    RCLCPP_INFO(rclcpp::get_logger("CollisionFreePathPlanner::ReplanChecker"), msg);
-  }
 };
 }  // namespace collision_free_path_planner
 

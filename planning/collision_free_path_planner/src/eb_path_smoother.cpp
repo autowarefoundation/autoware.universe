@@ -118,7 +118,7 @@ void EBPathSmoother::onParam(const std::vector<rclcpp::Parameter> & parameters)
   eb_param_.onParam(parameters);
 }
 
-void EBPathSmoother::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
+void EBPathSmoother::initialize(const bool enable_debug_info, const TrajectoryParam & traj_param)
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;

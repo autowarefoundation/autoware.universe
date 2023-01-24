@@ -23,7 +23,7 @@
 namespace collision_free_path_planner
 {
 ReplanChecker::ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_nearest_param)
-: ego_nearest_param_(ego_nearest_param)
+: ego_nearest_param_(ego_nearest_param), logger_(node->get_logger().get_child("replan_checker"))
 {
   max_path_shape_change_dist_ =
     node->declare_parameter<double>("replan.max_path_shape_change_dist");
@@ -53,13 +53,13 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
 
     // path shape changes
     if (isPathShapeChanged(planner_data, prev_traj_points)) {
-      logInfo("Replan with resetting optimization since path shape was changed.");
+      RCLCPP_INFO(logger_, "Replan with resetting optimization since path shape was changed.");
       return true;
     }
 
     // path goal changes
     if (isPathGoalChanged(planner_data, prev_traj_points)) {
-      logInfo("Replan with resetting optimization since path goal was changed.");
+      RCLCPP_INFO(logger_, "Replan with resetting optimization since path goal was changed.");
       return true;
     }
 
@@ -67,7 +67,8 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
     const double delta_dist =
       tier4_autoware_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
     if (max_ego_moving_dist_ < delta_dist) {
-      logInfo(
+      RCLCPP_INFO(
+        logger_,
         "Replan with resetting optimization since current ego pose is far from previous ego pose.");
       return true;
     }

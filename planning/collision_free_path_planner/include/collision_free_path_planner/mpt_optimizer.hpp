@@ -119,7 +119,7 @@ public:
   std::optional<MPTTrajs> getModelPredictiveTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
 
-  void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
+  void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void resetPrevData();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
@@ -201,6 +201,8 @@ private:
   TrajectoryParam traj_param_;
   MPTParam mpt_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  rclcpp::Logger logger_;
+
   StateEquationGenerator state_equation_generator_;
 
   // autoware::common::osqp::OSQPInterface osqp_solver_;
@@ -276,22 +278,14 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   std::vector<TrajectoryPoint> calcMPTPoints(
-    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
+    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
     const StateEquationGenerator::Matrix & mpt_matrix);
 
-  // functions for debug publish
   void publishDebugTrajectories(
     const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
     const std::vector<TrajectoryPoint> & mpt_traj_points) const;
-
   std::vector<TrajectoryPoint> extractFixedPoints(
     const std::vector<ReferencePoint> & ref_points) const;
-
-  void logInfo(const char * msg) const
-  {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("CollisionFreePathPlanner::MPTOptimizer"), enable_debug_info_, msg);
-  }
 };
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_

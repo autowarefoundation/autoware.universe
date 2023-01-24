@@ -51,7 +51,7 @@ public:
   std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const PlannerData & planner_data);
 
-  void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
+  void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void resetPrevData();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 

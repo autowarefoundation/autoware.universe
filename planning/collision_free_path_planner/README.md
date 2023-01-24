@@ -537,7 +537,7 @@ $$
 
 ##### Steer angle limitation
 
-Steer angle has a certain limitation ($\delta_{max}$, $\delta_{min}$).
+Steer angle has a limitation $\delta_{max}$ and $\delta_{min}$.
 Therefore we add linear inequality equations.
 
 $$
@@ -548,18 +548,26 @@ $$
 
 ##### Collision free
 
-To realize collision-free path planning, we have to formulate constraints that the vehicle is inside the road (moreover, a certain meter far from the road boundary) and does not collide with obstacles in linear equations.
-For linearity, we chose a method to approximate the vehicle shape with a set of circles, that is reliable and easy to implement.
+To realize collision-free trajectory planning, we have to formulate constraints that the vehicle is inside the road and also does not collide with obstacles in linear equations.
+For linearity, we implemented some methods to approximate the vehicle shape with a set of circles, that is reliable and easy to implement.
+
+- 1. Bibycle Model
+- 2. Uniform Circles
+- 3. Fitting Uniform Circles
+
+![vehicle_circles](./media/vehicle_circles.svg)
 
 Now we formulate the linear constraints where a set of circles on each trajectory point is collision-free.
-For collision checking, we have a drivable area in the format of an image where walls or obstacles are filled with a color.
-By using this drivable area, we calculate upper (left) and lower (right) boundaries along reference points so that we can interpolate boundaries on any position on the trajectory.
+By using the drivable area, we calculate upper and lower boundaries along reference points, which will be interpolated on any position on the trajectory.
+NOTE that upper and lower boundary is left and right, respectively.
 
 Assuming that upper and lower boundaries are $b_l$, $b_u$ respectively, and $r$ is a radius of a circle, lateral deviation of the circle center $y'$ has to be
 
 $$
 b_l + r \leq y' \leq b_u - r.
 $$
+
+![bounds](./media/bounds.svg)
 
 Based on the following figure, $y'$ can be formulated as follows.
 

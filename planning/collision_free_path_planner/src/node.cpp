@@ -109,7 +109,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_, debug_data_ptr_);
 
   // first, reset planners
-  resetPlanning();
+  initializePlanning();
 
   // set parameter callback
   // NOTE: This function must be called after algorithms (e.g. mpt_optimizer) have been initialized.
@@ -151,7 +151,7 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
   }
 
   // reset planners
-  resetPlanning();
+  initializePlanning();
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -159,7 +159,7 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
   return result;
 }
 
-void CollisionFreePathPlanner::resetPlanning()
+void CollisionFreePathPlanner::initializePlanning()
 {
   RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
 
@@ -193,7 +193,9 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   // TODO(murooka): support backward path
   const auto is_driving_forward = driving_direction_checker_.isDrivingForward(path_ptr->points);
   if (!is_driving_forward) {
-    logWarnThrottle(3000, "Backward path is NOT supported. Just converting path to trajectory");
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
     const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
@@ -484,7 +486,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
     traj_param_.delta_yaw_threshold_for_closest_point);
   if (!opt_end_traj_seg_idx) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
+      get_logger(), enable_debug_info_,
       "Not extend trajectory since could not find nearest idx from last opt point");
     return std::vector<TrajectoryPoint>{};
   }
@@ -526,16 +528,6 @@ void CollisionFreePathPlanner::publishDebugData(const Header & header) const
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
   debug_data_ptr_->toc(__func__, "  ");
-}
-
-void CollisionFreePathPlanner::logInfo(const int duration_sec, const char * msg)
-{
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), duration_sec, msg);
-}
-
-void CollisionFreePathPlanner::logWarnThrottle(const int duration_ms, const char * msg)
-{
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), duration_ms, msg);
 }
 }  // namespace collision_free_path_planner
 
