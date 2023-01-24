@@ -29,7 +29,7 @@ public:
 
   double getOffset() const;
   void updateOffset(const geometry_msgs::msg::Twist & twist, const double steering);
-
+private:
   // parameters
   double wheelbase_ = 3.0;
   size_t queue_size_ = 1000;
