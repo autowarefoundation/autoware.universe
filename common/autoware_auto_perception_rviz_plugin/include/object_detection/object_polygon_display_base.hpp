@@ -83,9 +83,9 @@ public:
       "Polygon Type", "3d", "Type of the polygon to display object.", this, SLOT(updatePalette()));
     // Option values here must correspond to indices in palette_textures_ array in onInitialize()
     // below.
-    m_display_type_property->addOption("3d", 2);
+    m_display_type_property->addOption("3d", 0);
     m_display_type_property->addOption("2d", 1);
-    m_display_type_property->addOption("Disable", 0);
+    m_display_type_property->addOption("Disable", 2);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
@@ -157,12 +157,20 @@ protected:
     const ClassificationContainerT & labels, const double & line_width) const
   {
     const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
-    if (m_display_type_property->getOptionInt()) {
+    if (m_display_type_property->getOptionInt() == 0) {
       return detail::get_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba, line_width);
+    } else if (m_display_type_property->getOptionInt() == 1) {
+      return detail::get_2d_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba, line_width);
     } else {
       return std::nullopt;
     }
   }
+
+  template <typename ClassificationContainerT>
+  visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
+  const autoware_auto_perception_msgs::msg::Shape & shape_msg,
+  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
 
   /// \brief Convert given shape msg into a Marker to visualize label name
   /// \tparam ClassificationContainerT List type with ObjectClassificationMsg
