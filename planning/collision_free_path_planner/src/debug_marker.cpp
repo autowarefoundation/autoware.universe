@@ -108,8 +108,7 @@ MarkerArray getBoundsLineMarkerArray(
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
         const double lb_y =
-          ref_points.at(i).bounds_on_constraints.at(bound_idx).lower_bound;  // - vehicle_width
-                                                                             // / 2.0;
+          ref_points.at(i).bounds_on_constraints.at(bound_idx).lower_bound - vehicle_width / 2.0;
         const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
 
         lb_marker.points.push_back(pose.position);
@@ -129,8 +128,7 @@ MarkerArray getBoundsLineMarkerArray(
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
         const double ub_y =
-          ref_points.at(i).bounds_on_constraints.at(bound_idx).upper_bound;  // + vehicle_width
-                                                                             // / 2.0;
+          ref_points.at(i).bounds_on_constraints.at(bound_idx).upper_bound + vehicle_width / 2.0;
         const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
 
         ub_marker.points.push_back(pose.position);

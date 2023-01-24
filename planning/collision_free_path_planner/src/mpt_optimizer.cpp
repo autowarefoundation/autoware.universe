@@ -671,7 +671,8 @@ void MPTOptimizer::updateBounds(
 {
   time_keeper_ptr_->tic(__func__);
 
-  const double soft_road_clearance = mpt_param_.soft_clearance_from_road;
+  const double soft_road_clearance =
+    mpt_param_.soft_clearance_from_road + vehicle_info_.vehicle_width_m / 2.0;
 
   // calculate distance to left/right bound on each reference point
   for (auto & ref_point : ref_points) {

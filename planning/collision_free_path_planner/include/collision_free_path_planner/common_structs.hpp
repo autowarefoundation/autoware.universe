@@ -110,8 +110,6 @@ struct TrajectoryParam
       node->declare_parameter<double>("common.delta_dist_threshold_for_closest_point");
     delta_yaw_threshold_for_closest_point =
       node->declare_parameter<double>("common.delta_yaw_threshold_for_closest_point");
-    delta_yaw_threshold_for_straight =
-      node->declare_parameter<double>("common.delta_yaw_threshold_for_straight");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -129,8 +127,6 @@ struct TrajectoryParam
     updateParam<double>(
       parameters, "common.delta_yaw_threshold_for_closest_point",
       delta_yaw_threshold_for_closest_point);
-    updateParam<double>(
-      parameters, "common.delta_yaw_threshold_for_straight", delta_yaw_threshold_for_straight);
   }
 
   double output_delta_arc_length;
@@ -138,7 +134,6 @@ struct TrajectoryParam
 
   double delta_dist_threshold_for_closest_point;
   double delta_yaw_threshold_for_closest_point;
-  double delta_yaw_threshold_for_straight;
 };
 
 struct EgoNearestParam
