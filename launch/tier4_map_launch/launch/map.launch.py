@@ -153,7 +153,10 @@ def generate_launch_description():
     ),
     add_launch_arg(
         "lanelet2_map_loader_param_path",
-        None,
+        [
+            FindPackageShare("map_loader"),
+            "/config/lanelet2_map_loader.param.yaml",
+        ],
         "path to lanelet2_map_loader param file",
     ),
     add_launch_arg(
