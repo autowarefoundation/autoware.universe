@@ -45,16 +45,6 @@ StringStamped createStringStamped(const rclcpp::Time & now, const std::string & 
   msg.data = data;
   return msg;
 }
-
-void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
-{
-  const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(traj_points);
-  if (opt_zero_vel_idx) {
-    for (size_t i = opt_zero_vel_idx.get(); i < traj_points.size(); ++i) {
-      traj_points.at(i).longitudinal_velocity_mps = 0.0;
-    }
-  }
-}
 }  // namespace
 
 CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options)
@@ -78,7 +68,8 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   debug_markers_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
   debug_calculation_time_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
 
-  {  // option parameter
+  {  // parameters
+    // parameter for option
     enable_outside_drivable_area_stop_ =
       declare_parameter<bool>("option.enable_outside_drivable_area_stop");
     enable_smoothing_ = declare_parameter<bool>("option.enable_smoothing");
@@ -86,20 +77,20 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     enable_reset_prev_optimization_ =
       declare_parameter<bool>("option.enable_reset_prev_optimization");
 
-    // debug marker
+    // parameter for debug marker
     enable_pub_debug_marker_ = declare_parameter<bool>("option.debug.enable_pub_debug_marker");
 
-    // debug info
+    // parameter for debug info
     enable_debug_info_ = declare_parameter<bool>("option.debug.enable_debug_info");
     enable_calculation_time_info_ =
       declare_parameter<bool>("option.debug.enable_calculation_time_info");
+
+    // ego nearest search parameters declaration
+    ego_nearest_param_ = EgoNearestParam(this);
+
+    // trajectory parameters declaration
+    traj_param_ = TrajectoryParam(this, vehicle_info_.vehicle_width_m);
   }
-
-  // ego nearest search parameters declaration
-  ego_nearest_param_ = EgoNearestParam(this);
-
-  // trajectory parameters declaration
-  traj_param_ = TrajectoryParam(this, vehicle_info_.vehicle_width_m);
 
   // create core algorithm pointers with parameter declaration
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
@@ -164,8 +155,8 @@ void CollisionFreePathPlanner::initializePlanning()
   RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
 
   // NOTE: no need to update replan_checker_ptr_
-  eb_path_smoother_ptr_->reset(enable_debug_info_, traj_param_);
-  mpt_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
+  eb_path_smoother_ptr_->initialize(enable_debug_info_, traj_param_);
+  mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
   resetPrevData();
 }
@@ -213,7 +204,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   auto extended_traj_points = extendTrajectory(planner_data.traj_points, optimized_traj_points);
 
   // 4. set zero velocity after stop point
-  setZeroVelocityAfterStopPoint(extended_traj_points);
+  // setZeroVelocityAfterStopPoint(extended_traj_points);
 
   // 5. publish debug data
   publishDebugData(planner_data.header);
@@ -284,6 +275,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   //    NOTE: This function may return previously optimized trajectory points.
   auto optimized_traj_points = optimizeTrajectory(planner_data);
 
+  // TODO(murooka) plan always so that this implementation can be removed
   // 2. update velocity
   //    Even if optimization is skipped, velocity in trajectory points must be updated
   //    since velocity in input trajectory (path) may change
@@ -386,7 +378,7 @@ const
 */
 
 void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
-  const PlannerData & planner_data, std::vector<TrajectoryPoint> & mpt_traj_points)
+  const PlannerData & planner_data, std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   debug_data_ptr_->tic(__func__);
 
@@ -394,35 +386,40 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
     return;
   }
 
-  if (mpt_traj_points.empty()) {
+  if (optimized_traj_points.empty()) {
     return;
   }
 
-  // 1. calculate ego_index nearest to mpt_traj_points
-  const size_t ego_idx =
-    trajectory_utils::findEgoIndex(mpt_traj_points, planner_data.ego_pose, ego_nearest_param_);
+  // 1. calculate ego_index nearest to optimized_traj_points
+  const size_t ego_idx = trajectory_utils::findEgoIndex(
+    optimized_traj_points, planner_data.ego_pose, ego_nearest_param_);
 
-  // 2. calculate an end point to check being outside the drivable area
-  // NOTE: Some end trajectory points will be ignored to check if outside the drivable area
-  //       since these points might be outside drivable area if only end reference points have high
+  // 2. calculate an end point to check being outside the drivable are
+  // NOTE: Some end trajectory points should be ignored to check if being outside the drivable area
+  //       since these points tend to be outside drivable area when end reference points have high
   //       curvature.
-  const int end_idx = std::max(10, static_cast<int>(mpt_traj_points.size()) - 5);
+  const int end_idx = std::max(10, static_cast<int>(optimized_traj_points.size()) - 5);
 
   // 3. assign zero velocity to the first point being outside the drivable area
-  for (size_t i = ego_idx; i < static_cast<size_t>(end_idx); ++i) {
-    auto & traj_point = mpt_traj_points.at(i);
+  const auto first_outside_idx = [&]() -> std::optional<size_t> {
+    for (size_t i = ego_idx; i < static_cast<size_t>(end_idx); ++i) {
+      auto & traj_point = optimized_traj_points.at(i);
 
-    // check if the footprint is outside the drivable area
-    const bool is_outside = geometry_utils::isOutsideDrivableAreaFromRectangleFootprint(
-      traj_point.pose, planner_data.left_bound, planner_data.right_bound, vehicle_info_);
+      // check if the footprint is outside the drivable area
+      const bool is_outside = geometry_utils::isOutsideDrivableAreaFromRectangleFootprint(
+        traj_point.pose, planner_data.left_bound, planner_data.right_bound, vehicle_info_);
 
-    if (is_outside) {
-      // NOTE: No need to assign zero velocity to following points after being outside the drivable
-      //       area since this trajecotry is only optimized one (= short one) and alignVelocity
-      //       function will assign zero velocity to the points.
-      traj_point.longitudinal_velocity_mps = 0.0;
-      debug_data_ptr_->stop_pose_by_drivable_area = traj_point.pose;
-      break;
+      if (is_outside) {
+        debug_data_ptr_->stop_pose_by_drivable_area = traj_point.pose;
+        return i;
+      }
+    }
+    return std::nullopt;
+  }();
+
+  if (first_outside_idx) {
+    for (size_t i = *first_outside_idx; i < optimized_traj_points.size(); ++i) {
+      optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
 
@@ -454,7 +451,7 @@ void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
     if (debug_data_ptr_->stop_pose_by_drivable_area) {
       const auto & stop_pose = *debug_data_ptr_->stop_pose_by_drivable_area;
       return motion_utils::createStopVirtualWallMarker(
-        stop_pose, "drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
+        stop_pose, "outside drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
     }
     return motion_utils::createDeletedStopVirtualWallMarker(now(), 0);
   }();
@@ -469,14 +466,6 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   debug_data_ptr_->tic(__func__);
-
-  // guard
-  if (traj_points.empty()) {
-    return optimized_traj_points;
-  }
-  if (optimized_traj_points.empty()) {
-    return traj_points;
-  }
 
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 

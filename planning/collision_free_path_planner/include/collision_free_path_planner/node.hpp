@@ -107,7 +107,7 @@ private:
   void onPath(const Path::SharedPtr);
 
   // reset functions
-  void resetPlanning();
+  void initializePlanning();
   void resetPrevData();
 
   // main functions
