@@ -884,8 +884,8 @@ void PullOverModule::setDebugData()
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
       createMarkerColor(1.0, 1.0, 1.0, 0.99));
-    marker.pose = modified_goal_pose_;
-    marker.text = magic_enum::enum_name(status_.planner->getPlannerType());
+    marker.pose = modified_goal_pose_->goal_pose;
+    marker.text = magic_enum::enum_name(status_.pull_over_path.type);
     planner_type_marker_array.markers.push_back(marker);
     add(planner_type_marker_array);
   }
