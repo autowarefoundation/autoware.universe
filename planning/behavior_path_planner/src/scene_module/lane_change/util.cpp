@@ -215,8 +215,11 @@ std::optional<LaneChangePath> constructCandidatePath(
       prepare_distance / std::max(lane_change_param.minimum_lane_change_velocity, speed.prepare);
     return std::min(duration, lane_change_param.lane_change_prepare_duration);
   });
-  candidate_path.duration.lane_changing =
-    std::round((lane_change_distance / lane_changing_speed) * 2.0) / 2.0;
+  candidate_path.duration.lane_changing = std::invoke([&]() {
+    const auto rounding_multiplier = 1.0 / lane_change_param.prediction_time_resolution;
+    return std::ceil((lane_change_distance / lane_changing_speed) * rounding_multiplier) /
+           rounding_multiplier;
+  });
   candidate_path.shift_line = shift_line;
   candidate_path.reference_lanelets = original_lanelets;
   candidate_path.target_lanelets = target_lanelets;
