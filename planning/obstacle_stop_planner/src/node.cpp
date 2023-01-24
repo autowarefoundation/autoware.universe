@@ -456,7 +456,7 @@ void ObstacleStopPlannerNode::searchObstacle(
       acc_controller_->insertAdaptiveCruiseVelocity(
         decimate_trajectory, planner_data.decimate_trajectory_collision_index,
         planner_data.current_pose, planner_data.nearest_collision_point,
-        planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
+        planner_data.nearest_collision_point_time, object_ptr, current_odometry_ptr,
         &planner_data.stop_require, &output, trajectory_header);
 
       if (!planner_data.stop_require) {
