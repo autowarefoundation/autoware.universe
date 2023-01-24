@@ -331,7 +331,6 @@ void ObstacleStopPlannerNode::searchObstacle(
   const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr)
 {
   const auto object_ptr = object_ptr_;
-
   const auto now = this->now();
 
   updateObstacleHistory(now);
@@ -412,11 +411,10 @@ void ObstacleStopPlannerNode::searchObstacle(
               one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
               PolygonType::Vehicle);
             Polygon2d one_step_move_vehicle_polygon2d;
-            for (size_t j = 0; j <= one_step_move_vehicle_polygon.size() - 1; ++j) {
-              bg::append(
-                one_step_move_vehicle_polygon2d.outer(),
-                Point2d(one_step_move_vehicle_polygon.at(j).x, one_step_move_vehicle_polygon.at(j).y));
+            for (const auto & p : one_step_move_vehicle_polygon) {
+              one_step_move_vehicle_polygon2d.outer().emplace_back(p.x, p.y);
             }
+//            bg::assign_points(one_step_move_vehicle_polygon2d, one_step_move_vehicle_polygon);
             visualization_msgs::msg::MarkerArray object_polygon_marker;
             visualization_msgs::msg::Marker obm;
             for (const auto & point : object_polygon.outer()) {
@@ -437,29 +435,36 @@ void ObstacleStopPlannerNode::searchObstacle(
               obm.points.push_back(p);
               object_polygon_marker.markers.push_back(obm);
             }
+            visualization_msgs::msg::MarkerArray detection_polygon_marker;
+            visualization_msgs::msg::Marker dtm;
+            for (const auto & point : one_step_move_vehicle_polygon2d.outer()) {
+              dtm.header.frame_id = "map";
+              dtm.id = i;
+              dtm.scale.x = 0.1;
+              dtm.color.r = 1.0;
+              dtm.color.g = 0.0;
+              dtm.color.b = 0.0;
+              dtm.color.a = 1.0;
+              dtm.lifetime = rclcpp::Duration::from_nanoseconds(100000);
+              dtm.type = visualization_msgs::msg::Marker::LINE_STRIP;
+              dtm.action = visualization_msgs::msg::Marker::ADD;
+
+              geometry_msgs::msg::Point p;
+              p.x = point.x();
+              p.y = point.y();
+              dtm.points.push_back(p);
+              detection_polygon_marker.markers.push_back(dtm);
+            }
+            marker_publisher_->publish(detection_polygon_marker);
             marker_publisher_->publish(object_polygon_marker);
             // check collision
-            std::deque<Point2d> collision_points;
-            bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, collision_points);
-            std::cout << "collision_points.size() = " << collision_points.size() << std::endl;
-            for (const auto & p : one_step_move_vehicle_polygon2d.outer()) {
-              std::cout << "p.x() = " << p.x() << ", p.y() = " << p.y() << std::endl;
-            }
-            
-            int idx = 0;
-            if (!collision_points.empty()) {
-              geometry_msgs::msg::Point collision_point;
-//              const auto found_collision_points = true;
-              for (const auto & point : collision_points) {
-                collision_point.x = point.x();
-                collision_point.y = point.y();
-              }
-              geometry_msgs::msg::Point nearest_collision_point;
-              rclcpp::Time nearest_collision_point_time;
-              findClosestPointToTrajectory(
-                output, collision_point, planner_data.closest_collision_point, idx);
-              break;
-            }
+
+            std::vector<Polygon2d> collision;
+            bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, collision);
+            std::cout << "collision size: " << collision.size() << std::endl;
+
+
+
           } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
             const double & length_m = obj.shape.dimensions.x / 2;
             const double & width_m = obj.shape.dimensions.y / 2;
@@ -500,8 +505,6 @@ void ObstacleStopPlannerNode::searchObstacle(
           trajectory_header, vehicle_info, stop_param)) {
       return;
     }
-
-    const auto now = this->now();
 
     updateObstacleHistory(now);
 
@@ -568,7 +571,6 @@ void ObstacleStopPlannerNode::searchObstacle(
           next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
         if (found_collision_points) {
-
           pcl::PointXYZ nearest_collision_point;
           rclcpp::Time nearest_collision_point_time;
 
@@ -621,13 +623,13 @@ void ObstacleStopPlannerNode::searchObstacle(
         planner_data.stop_require = planner_data.found_collision_points;
 
         mutex_.lock();
-        const auto current_velocity_ptr = current_velocity_ptr_;
+        const auto current_odometry_ptr = current_odometry_ptr_;
         mutex_.unlock();
 
         acc_controller_->insertAdaptiveCruiseVelocity(
           decimate_trajectory, planner_data.decimate_trajectory_collision_index,
           planner_data.current_pose, planner_data.nearest_collision_point,
-          planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
+          planner_data.nearest_collision_point_time, object_ptr, current_odometry_ptr,
           &planner_data.stop_require, &output, trajectory_header);
 
         if (!planner_data.stop_require) {
