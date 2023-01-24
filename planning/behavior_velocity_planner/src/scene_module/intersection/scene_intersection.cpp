@@ -86,7 +86,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* get current pose */
   const geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
-  const double current_vel = planner_data_->current_velocity->twist.linear.x;
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
@@ -154,7 +153,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     const auto pass_judge_line_idx = stop_lines_idx_opt.value().pass_judge_line;
 
     const bool is_over_pass_judge_line =
-      util::isOverTargetIndex(*path, closest_idx, current_pose.pose, pass_judge_line_idx);
+      util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
 
     /* if ego is over the pass judge line before collision is detected, keep going */
     if (is_over_pass_judge_line && is_go_out_ && !external_stop) {
