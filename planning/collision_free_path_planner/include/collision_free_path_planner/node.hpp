@@ -59,7 +59,7 @@ private:
 
   // argument variables
   vehicle_info_util::VehicleInfo vehicle_info_{};
-  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  mutable std::shared_ptr<DebugData> debug_data_ptr_{nullptr};
 
   // flags for some functions
   bool enable_pub_debug_marker_;
@@ -70,10 +70,10 @@ private:
   bool enable_skip_optimization_;
   bool enable_reset_prev_optimization_;
 
-  // core algorithm
-  std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_;
-  std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_;
-  std::shared_ptr<ReplanChecker> replan_checker_ptr_;
+  // core algorithms
+  std::shared_ptr<ReplanChecker> replan_checker_ptr_{nullptr};
+  std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_{nullptr};
+  std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_{nullptr};
 
   // parameters
   TrajectoryParam traj_param_{};
@@ -83,7 +83,7 @@ private:
   Odometry::SharedPtr ego_state_ptr_;
 
   // variables for previous information
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
@@ -111,7 +111,7 @@ private:
   void resetPrevData();
 
   // main functions
-  bool isDataReady(const Path & path);
+  bool isDataReady(const Path & path, rclcpp::Clock clock) const;
   PlannerData createPlannerData(const Path & path) const;
   std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> extendTrajectory(

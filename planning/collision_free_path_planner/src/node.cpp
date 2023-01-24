@@ -100,10 +100,13 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_, debug_data_ptr_);
 
   // first, reset planners
+  // NOTE: This function must be called after core algorithms (e.g. mpt_optimizer_) have been
+  // initialized.
   initializePlanning();
 
   // set parameter callback
-  // NOTE: This function must be called after algorithms (e.g. mpt_optimizer) have been initialized.
+  // NOTE: This function must be called after core algorithms (e.g. mpt_optimizer_) have been
+  // initialized.
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&CollisionFreePathPlanner::onParam, this, std::placeholders::_1));
 }
@@ -152,9 +155,8 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
 
 void CollisionFreePathPlanner::initializePlanning()
 {
-  RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
+  RCLCPP_INFO(get_logger(), "Initialize planning");
 
-  // NOTE: no need to update replan_checker_ptr_
   eb_path_smoother_ptr_->initialize(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
@@ -166,7 +168,7 @@ void CollisionFreePathPlanner::resetPrevData()
   eb_path_smoother_ptr_->resetPrevData();
   mpt_optimizer_ptr_->resetPrevData();
 
-  prev_mpt_traj_ptr_ = nullptr;  // rename to prev_optimized_traj_ptr_?
+  prev_optimized_traj_points_ptr_ = nullptr;
 }
 
 void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
@@ -174,7 +176,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   debug_data_ptr_->tic(__func__);
 
   // check if data is ready and valid
-  if (!isDataReady(*path_ptr)) {
+  if (!isDataReady(*path_ptr, *get_clock())) {
     return;
   }
 
@@ -223,24 +225,21 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   traj_pub_->publish(output_traj_msg);
 }
 
-// TODO(murooka) make isDataReady const by adding clock arguments.
-bool CollisionFreePathPlanner::isDataReady(const Path & path)
+bool CollisionFreePathPlanner::isDataReady(const Path & path, rclcpp::Clock clock) const
 {
   if (!ego_state_ptr_) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Waiting for ego pose and twist.");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for ego pose and twist.");
     return false;
   }
 
   if (path.points.size() < 2) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Path points size is less than 1.");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Path points size is less than 1.");
     return false;
   }
 
   if (path.left_bound.empty() || path.right_bound.empty()) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Left or right bound in path is empty.");
+      get_logger(), clock, 5000, "Left or right bound in path is empty.");
     return false;
   }
 
@@ -306,7 +305,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   } else {
     // check replan when not resetting previous optimization
     const bool is_replan_required =
-      replan_checker_ptr_->isReplanRequired(planner_data, now(), prev_mpt_traj_ptr_);
+      replan_checker_ptr_->isReplanRequired(planner_data, now(), prev_optimized_traj_points_ptr_);
     if (!is_replan_required) {
       return getPrevOptimizedTrajectory(p.traj_points);
     }
@@ -331,7 +330,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   }
 
   // 4. make prev trajectories
-  prev_mpt_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(mpt_trajs->mpt);
+  prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(mpt_trajs->mpt);
 
   debug_data_ptr_->toc(__func__, "    ");
   return mpt_trajs->mpt;
@@ -340,8 +339,8 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_mpt_traj_ptr_) {
-    return *prev_mpt_traj_ptr_;
+  if (prev_optimized_traj_points_ptr_) {
+    return *prev_optimized_traj_points_ptr_;
   }
 
   // TODO(murooka) no need to generate post procesed trajectory?

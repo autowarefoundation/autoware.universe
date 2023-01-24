@@ -126,6 +126,7 @@ struct ConstraintRectangle
 
 struct DebugData
 {
+  // print calculation time for functions
   struct StreamWithPrint
   {
     template <typename T>
