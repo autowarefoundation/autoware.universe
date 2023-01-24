@@ -16,7 +16,14 @@
 
 #include <string>
 
-std::string delayTimeWarningMessage(const double delay_time)
+std::string poseDelayTimeWarningMessage(const double delay_time)
 {
-  return fmt::format("Delay time {} cannot be less than zero.", delay_time);
+  const std::string s = "Pose time stamp is inappropriate, set delay to 0[s]. delay = {:.3f}";
+  return fmt::format(s, delay_time);
+}
+
+std::string twistDelayTimeWarningMessage(const double delay_time)
+{
+  const std::string s = "Twist time stamp is inappropriate, set delay to 0[s]. delay = {:.3f}";
+  return fmt::format(s, delay_time);
 }

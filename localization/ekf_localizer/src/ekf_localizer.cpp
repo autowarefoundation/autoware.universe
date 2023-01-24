@@ -425,7 +425,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   /* Calculate delay step */
   double delay_time = (t_curr - pose.header.stamp).seconds() + params_.pose_additional_delay;
   if (delay_time < 0.0) {
-    warning_.warnThrottle(delayTimeWarningMessage(delay_time), 1000);
+    warning_.warnThrottle(poseDelayTimeWarningMessage(delay_time), 1000);
   }
 
   delay_time = std::max(delay_time, 0.0);
@@ -509,7 +509,7 @@ void EKFLocalizer::measurementUpdateTwist(
   /* Calculate delay step */
   double delay_time = (t_curr - twist.header.stamp).seconds() + params_.twist_additional_delay;
   if (delay_time < 0.0) {
-    warning_.warnThrottle(delayTimeWarningMessage(delay_time), 1000);
+    warning_.warnThrottle(twistDelayTimeWarningMessage(delay_time), 1000);
   }
   delay_time = std::max(delay_time, 0.0);
 

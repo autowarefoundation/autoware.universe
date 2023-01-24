@@ -16,8 +16,22 @@
 
 #include <gtest/gtest.h>
 
-TEST(DelayTimeWarningMessage, SmokeTest)
+TEST(PoseDelayTimeWarningMessage, SmokeTest)
 {
-  EXPECT_STREQ(delayTimeWarningMessage(-1.0).c_str(), "Delay time -1 cannot be less than zero.");
-  EXPECT_STREQ(delayTimeWarningMessage(-0.4).c_str(), "Delay time -0.4 cannot be less than zero.");
+  EXPECT_STREQ(
+    poseDelayTimeWarningMessage(-1.0).c_str(),
+    "Pose time stamp is inappropriate, set delay to 0[s]. delay = -1.000");
+  EXPECT_STREQ(
+    poseDelayTimeWarningMessage(-0.4).c_str(),
+    "Pose time stamp is inappropriate, set delay to 0[s]. delay = -0.400");
+}
+
+TEST(TwistDelayTimeWarningMessage, SmokeTest)
+{
+  EXPECT_STREQ(
+    twistDelayTimeWarningMessage(-1.0).c_str(),
+    "Twist time stamp is inappropriate, set delay to 0[s]. delay = -1.000");
+  EXPECT_STREQ(
+    twistDelayTimeWarningMessage(-0.4).c_str(),
+    "Twist time stamp is inappropriate, set delay to 0[s]. delay = -0.400");
 }

@@ -19,6 +19,7 @@
 
 #include <string>
 
-std::string delayTimeWarningMessage(const double delay_time);
+std::string poseDelayTimeWarningMessage(const double delay_time);
+std::string twistDelayTimeWarningMessage(const double delay_time);
 
 #endif  // EKF_LOCALIZER__WARNING_MESSAGE_HPP_
