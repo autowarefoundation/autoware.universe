@@ -25,6 +25,7 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "mpc_lateral_controller/steering_offset/steering_offset.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
@@ -128,6 +129,10 @@ private:
   // ego nearest index search
   double m_ego_nearest_dist_threshold;
   double m_ego_nearest_yaw_threshold;
+
+  // for steering offset compensation
+  bool enable_auto_steering_offset_removal_;
+  std::shared_ptr<SteeringOffsetEstimator> steering_offset_;
 
   //!< initialize timer to work in real, simulation, and replay
   void initTimer(double period_s);

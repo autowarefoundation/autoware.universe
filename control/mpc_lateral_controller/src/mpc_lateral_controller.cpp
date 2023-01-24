@@ -123,6 +123,19 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     m_mpc.m_input_buffer = std::deque<double>(static_cast<size_t>(delay_step), 0.0);
   }
 
+  /* steering offset compensation */
+  {
+    const std::string ns = "steering_offset.";
+    enable_auto_steering_offset_removal_ =
+      node_->declare_parameter<double>(ns + "enable_auto_steering_offset_removal");
+    const auto vel_thres = node_->declare_parameter<double>(ns + "update_vel_threshold");
+    const auto steer_thres = node_->declare_parameter<double>(ns + "update_steer_threshold");
+    const auto limit = node_->declare_parameter<double>(ns + "steering_offset_limit");
+    const auto size = node_->declare_parameter<int>(ns + "queue_size");
+    steering_offset_ =
+      std::make_shared<SteeringOffsetEstimator>(wheelbase, size, vel_thres, steer_thres, limit);
+  }
+
   /* initialize lowpass filter */
   {
     const double steering_lpf_cutoff_hz =
@@ -185,6 +198,12 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   const bool is_mpc_solved = m_mpc.calculateMPC(
     m_current_steering, m_current_kinematic_state.twist.twist.linear.x,
     m_current_kinematic_state.pose.pose, ctrl_cmd, predicted_traj, debug_values);
+
+  if (enable_auto_steering_offset_removal_) {
+    steering_offset_->updateOffset(
+      m_current_kinematic_state.twist.twist, m_current_steering.steering_tire_angle);
+    ctrl_cmd.steering_tire_angle += steering_offset_->getOffset();
+  }
 
   publishPredictedTraj(predicted_traj);
   publishDebugValues(debug_values);
