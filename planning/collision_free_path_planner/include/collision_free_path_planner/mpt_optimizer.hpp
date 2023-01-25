@@ -140,20 +140,26 @@ private:
 
   struct MPTParam
   {
+    // option
     bool enable_warm_start;
     bool enable_manual_warm_start;
     bool steer_limit_constraint;
+    int mpt_visualize_sampling_num;  // for debug
 
-    std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
-    std::vector<double> vehicle_circle_radiuses;
-
+    // common
     double delta_arc_length;
     int num_points;
 
+    // kinematics
+    double optimization_center_offset;
+    double max_steer_rad;
+
+    // clearance
     double hard_clearance_from_road;
     double soft_clearance_from_road;
     double soft_avoidance_weight;
 
+    // weight
     double lat_error_weight;
     double yaw_error_weight;
     double yaw_error_rate_weight;
@@ -172,14 +178,22 @@ private:
     double obstacle_avoid_yaw_error_weight;
     double obstacle_avoid_steer_input_weight;
 
-    double optimization_center_offset;
-    double max_steer_rad;
-
-    std::vector<double> bounds_search_widths;
-
+    // constraint type
     bool soft_constraint;
     bool hard_constraint;
     bool l_inf_norm;
+
+    // vehicle circles
+    std::string vehicle_circles_method;
+    int vehicle_circles_uniform_circle_num;
+    double vehicle_circles_uniform_circle_radius_ratio;
+    int vehicle_circles_bicycle_model_num;
+    double vehicle_circles_bicycle_model_rear_radius_ratio;
+    double vehicle_circles_bicycle_model_front_radius_ratio;
+
+    explicit MPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
+    MPTParam() = default;
+    void onParam(const std::vector<rclcpp::Parameter> & parameters);
   };
 
   // publisher
@@ -203,28 +217,16 @@ private:
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
   const double osqp_epsilon_ = 1.0e-6;  // TODO(murooka)
-  int mpt_visualize_sampling_num_;
 
-  // vehicle circles info for for mpt constraints
-  std::string vehicle_circle_method_;
-  int vehicle_circle_num_for_calculation_;
-  std::vector<double> vehicle_circle_radius_ratios_;
+  std::vector<double> vehicle_circle_longitudinal_offsets_;  // from base_link
+  std::vector<double> vehicle_circle_radiuses_;
 
   // previous information
   int prev_mat_n_ = 0;
   int prev_mat_m_ = 0;
   std::shared_ptr<std::vector<ReferencePoint>> prev_ref_points_ptr_{nullptr};
 
-  void initializeMPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
-
-  // void calcPlanningFromEgo(
-  //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
-  //   std::vector<ReferencePoint> & ref_points) const;
-
-  // pstd::vector<ReferencePoint> getFixedReferencePoints(
-  //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
-  //   const std::vector<TrajectoryPoint> & smoothed_points,
-  //   const std::shared_ptr<MPTTrajs> prev_trajs) const;
+  void updateVehicleCircles();
 
   std::vector<ReferencePoint> calcReferencePoints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const;
