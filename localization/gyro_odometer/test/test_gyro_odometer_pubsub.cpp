@@ -131,7 +131,7 @@ TEST(GyroOdometer, TestGyroOdometerWithImuAndVelocity)
 
 // IMU-only test
 // Provide gyro_odometer only with IMU data to verify that the gyro_odometer does NOT publish any outputs
-TEST(GyroOdometer, TestGyroOdometerNG)
+TEST(GyroOdometer, TestGyroOdometerImuOnly)
 {
   Imu input_imu = generateSampleImu();
 
