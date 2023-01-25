@@ -59,17 +59,11 @@ def launch_setup(context, *args, **kwargs):
             ("input", LaunchConfiguration("input_pointcloud")),
             ("output", "map_filter/short_range/pointcloud"),
         ],
-        parameters=[
+        parameters=[load_composable_node_param("voxel_grid_based_euclidean_param_path"),
             {
-                "min_x": -70.0,
-                "max_x": 70.0,
-                "min_y": -70.0,
-                "max_y": 70.0,
-                "max_z": 10.0,
-                "min_z": -10.0,
                 "negative": False,
             },
-        ],
+            ],
     )
 
     long_range_crop_box_filter_component = ComposableNode(
@@ -81,16 +75,10 @@ def launch_setup(context, *args, **kwargs):
             ("input", LaunchConfiguration("input_pointcloud")),
             ("output", "map_filter/long_range/pointcloud"),
         ],
-        parameters=[
+        parameters=[load_composable_node_param("voxel_grid_based_euclidean_param_path"),
             {
-                "min_x": -70.0,
-                "max_x": 70.0,
-                "min_y": -70.0,
-                "max_y": 70.0,
-                "max_z": 10.0,
-                "min_z": -10.0,
                 "negative": True,
-            }
+            },
         ],
     )
 
