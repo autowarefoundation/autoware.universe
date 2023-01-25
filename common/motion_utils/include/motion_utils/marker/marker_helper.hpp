@@ -51,17 +51,17 @@ visualization_msgs::msg::MarkerArray createVirtualWallMarkerFromPreviousPoses(
   const std::vector<Pose> & stop_poses, const std::vector<Pose> & previous_poses,
   const rclcpp::Time & now, int32_t id);
 
-using create_wall_function = std::function<visualization_msgs::msg::MarkerArray(
-  const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id, const double longitudinal_offset)>;
-
-using delete_wall_function =
-  std::function<visualization_msgs::msg::MarkerArray(const rclcpp::Time & now, const int32_t id)>;
-
 class VirtualWallMarkerCreator
 {
 public:
   virtual ~VirtualWallMarkerCreator() = default;
+
+  using create_wall_function = std::function<visualization_msgs::msg::MarkerArray(
+    const geometry_msgs::msg::Pose & pose, const std::string & module_name,
+    const rclcpp::Time & now, const int32_t id, const double longitudinal_offset)>;
+
+  using delete_wall_function =
+    std::function<visualization_msgs::msg::MarkerArray(const rclcpp::Time & now, const int32_t id)>;
 
   visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
     const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
