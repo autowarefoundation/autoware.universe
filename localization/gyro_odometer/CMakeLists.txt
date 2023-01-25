@@ -12,7 +12,6 @@ ament_auto_add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} fmt)
 
 ament_auto_add_library(gyro_odometer_node SHARED
-  src/gyro_odometer_node.cpp
   src/gyro_odometer_core.cpp
 )
 
