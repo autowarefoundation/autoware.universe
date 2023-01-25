@@ -299,8 +299,8 @@ bool EKFLocalizer::getTransformFromTF(
   tf2_ros::TransformListener tf_listener(tf_buffer);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
 
-  parent_frame = eraseBeginSlash(parent_frame);
-  child_frame = eraseBeginSlash(child_frame);
+  parent_frame = eraseLeadingSlash(parent_frame);
+  child_frame = eraseLeadingSlash(child_frame);
 
   for (int i = 0; i < 50; ++i) {
     try {

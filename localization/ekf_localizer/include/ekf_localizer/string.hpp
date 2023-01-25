@@ -17,7 +17,7 @@
 
 #include <string>
 
-inline std::string eraseBeginSlash(const std::string & s)
+inline std::string eraseLeadingSlash(const std::string & s)
 {
   std::string a = s;
   if (a.front() == '/') {
