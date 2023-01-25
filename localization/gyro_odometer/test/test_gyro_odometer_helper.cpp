@@ -17,7 +17,6 @@
 using geometry_msgs::msg::TwistWithCovarianceStamped;
 using sensor_msgs::msg::Imu;
 
-
 Imu generateSampleImu()
 {
   Imu imu;

@@ -28,7 +28,6 @@
 using geometry_msgs::msg::TwistWithCovarianceStamped;
 using sensor_msgs::msg::Imu;
 
-
 class ImuGenerator : public rclcpp::Node
 {
 public:
@@ -39,7 +38,12 @@ public:
 class VelocityGenerator : public rclcpp::Node
 {
 public:
-  VelocityGenerator() : Node("velocity_generator"), vehicle_velocity_pub(create_publisher<TwistWithCovarianceStamped>("/vehicle/twist_with_covariance", 1)) {}
+  VelocityGenerator()
+  : Node("velocity_generator"),
+    vehicle_velocity_pub(
+      create_publisher<TwistWithCovarianceStamped>("/vehicle/twist_with_covariance", 1))
+  {
+  }
   rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr vehicle_velocity_pub;
 };
 
@@ -67,8 +71,7 @@ void spinSome(rclcpp::Node::SharedPtr node_ptr)
 }
 
 bool isTwistValid(
-  const TwistWithCovarianceStamped & twist,
-  const TwistWithCovarianceStamped & twist_ground_truth)
+  const TwistWithCovarianceStamped & twist, const TwistWithCovarianceStamped & twist_ground_truth)
 {
   if (twist.twist.twist.linear.x != twist_ground_truth.twist.twist.linear.x) {
     return false;
@@ -108,7 +111,8 @@ bool isTwistValid(
 // }
 
 // OK cases
-// Publish minimal velocity and IMU data to verify that the gyro_odometer successfully publishes the output twist message
+// Publish minimal velocity and IMU data to verify that the gyro_odometer successfully publishes the
+// output twist message
 TEST(GyroOdometer, TestGyroOdometerOK)
 {
   Imu input_imu = generateSampleImu();
@@ -136,12 +140,15 @@ TEST(GyroOdometer, TestGyroOdometerOK)
   // Validator node receives the fused twist data and store in "received_latest_twist_ptr".
   spinSome(gyro_odometer_validator_node);
 
-  EXPECT_FALSE(gyro_odometer_validator_node->received_latest_twist_ptr == nullptr) << "diag has not received!";
-  EXPECT_TRUE(isTwistValid(*(gyro_odometer_validator_node->received_latest_twist_ptr), expected_output_twist));
+  EXPECT_FALSE(gyro_odometer_validator_node->received_latest_twist_ptr == nullptr)
+    << "diag has not received!";
+  EXPECT_TRUE(isTwistValid(
+    *(gyro_odometer_validator_node->received_latest_twist_ptr), expected_output_twist));
 }
 
 // Bad cases
-// Publish minimal velocity and IMU data to see if the gyro_odometer successfully publishes the output twist message
+// Publish minimal velocity and IMU data to see if the gyro_odometer successfully publishes the
+// output twist message
 TEST(GyroOdometer, TestGyroOdometerNG)
 {
   Imu input_imu = generateSampleImu();
