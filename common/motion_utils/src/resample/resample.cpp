@@ -241,7 +241,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
     return interpolation::lerp(input_arclength, input, resampled_arclength);
   };
   
- auto closest_segment_indices = interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+  auto closest_segment_indices = interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   
   const auto zoh = [&](const auto & input) {
     return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
