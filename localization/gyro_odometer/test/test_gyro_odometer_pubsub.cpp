@@ -124,8 +124,7 @@ TEST(GyroOdometer, TestGyroOdometerWithImuAndVelocity)
   // validator node receives the fused twist data and store in "received_latest_twist_ptr".
   spinSome(gyro_odometer_validator_node);
 
-  EXPECT_FALSE(gyro_odometer_validator_node->received_latest_twist_ptr == nullptr)
-    << "diag has not received!";
+  EXPECT_FALSE(gyro_odometer_validator_node->received_latest_twist_ptr == nullptr);
   EXPECT_TRUE(isTwistValid(
     *(gyro_odometer_validator_node->received_latest_twist_ptr), expected_output_twist));
 }
