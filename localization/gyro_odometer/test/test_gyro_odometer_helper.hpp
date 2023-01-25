@@ -23,9 +23,8 @@
 using geometry_msgs::msg::TwistWithCovarianceStamped;
 using sensor_msgs::msg::Imu;
 
-Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth);
-TwistWithCovarianceStamped generateDefaultVelocity(
-  const TwistWithCovarianceStamped & twist_ground_truth);
+Imu generateSampleImu();
+TwistWithCovarianceStamped generateSampleVelocity();
 rclcpp::NodeOptions getNodeOptionsWithDefaultParams();
 
 #endif  // TEST_GYRO_ODOMETER_HELPER_HPP_

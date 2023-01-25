@@ -17,24 +17,22 @@
 using geometry_msgs::msg::TwistWithCovarianceStamped;
 using sensor_msgs::msg::Imu;
 
-Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth)
+
+Imu generateSampleImu()
 {
   Imu imu;
-  imu.header = twist_ground_truth.header;
-
-  imu.angular_velocity.x = twist_ground_truth.twist.twist.angular.x;
-  imu.angular_velocity.y = twist_ground_truth.twist.twist.angular.y;
-  imu.angular_velocity.z = twist_ground_truth.twist.twist.angular.z;
+  imu.header.frame_id = "base_link";
+  imu.angular_velocity.x = 0.1;
+  imu.angular_velocity.y = 0.2;
+  imu.angular_velocity.z = 0.3;
   return imu;
 }
 
-TwistWithCovarianceStamped generateDefaultVelocity(
-  const TwistWithCovarianceStamped & twist_ground_truth)
+TwistWithCovarianceStamped generateSampleVelocity()
 {
   TwistWithCovarianceStamped twist;
-  twist.header = twist_ground_truth.header;
-
-  twist.twist.twist.linear.x = twist_ground_truth.twist.twist.linear.x;
+  twist.header.frame_id = "base_link";
+  twist.twist.twist.linear.x = 1.0;
   return twist;
 }
 
