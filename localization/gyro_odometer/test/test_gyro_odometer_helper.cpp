@@ -17,15 +17,31 @@
 using sensor_msgs::msg::Imu;
 using geometry_msgs::msg::TwistWithCovarianceStamped;
 
-Imu generateDefaultImu()
+Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth)
 {
   Imu imu;
+  imu.header = twist_ground_truth.header;
+
+  imu.angular_velocity.x = twist_ground_truth.twist.twist.angular.x;
+  imu.angular_velocity.y = twist_ground_truth.twist.twist.angular.y;
+  imu.angular_velocity.z = twist_ground_truth.twist.twist.angular.z;
+
+  // rclcpp::Clock ros_clock(rcl_clock_type_t RCL_SYSTEM_TIME);
+  // imu.header.stamp = ros_clock.now();
+
   return imu;
 }
 
-TwistWithCovarianceStamped generateDefaultVelocity()
+TwistWithCovarianceStamped generateDefaultVelocity(const TwistWithCovarianceStamped & twist_ground_truth)
 {
   TwistWithCovarianceStamped twist;
+  twist.header = twist_ground_truth.header;
+
+  twist.twist.twist.linear.x = twist_ground_truth.twist.twist.linear.x;
+
+  // rclcpp::Clock ros_clock(rcl_clock_type_t RCL_SYSTEM_TIME);
+  // twist.header.stamp = ros_clock.now();
+
   return twist;
 }
 
@@ -35,6 +51,6 @@ rclcpp::NodeOptions getNodeOptionsWithDefaultParams()
 
   // for gyro_odometer
   node_options.append_parameter_override("output_frame", "base_link");
-  node_options.append_parameter_override("message_timeout_sec", 0.1);
+  node_options.append_parameter_override("message_timeout_sec", 1e12);
   return node_options;
 }

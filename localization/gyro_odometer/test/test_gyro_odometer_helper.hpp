@@ -17,14 +17,14 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
-#include "sensor_msgs/msg/imu.hpp"
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 
 using sensor_msgs::msg::Imu;
 using geometry_msgs::msg::TwistWithCovarianceStamped;
 
-Imu generateDefaultImu();
-TwistWithCovarianceStamped generateDefaultVelocity();
+Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth);
+TwistWithCovarianceStamped generateDefaultVelocity(const TwistWithCovarianceStamped & twist_ground_truth);
 rclcpp::NodeOptions getNodeOptionsWithDefaultParams();
 
 #endif  // TEST_PLANNING_VALIDATOR_HELPER_HPP_
