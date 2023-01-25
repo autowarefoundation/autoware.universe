@@ -647,21 +647,6 @@ void calc_2d_polygon_line_list(
     geometry_msgs::msg::Point point;
     point.x = shape.footprint.points.at(i).x;
     point.y = shape.footprint.points.at(i).y;
-    point.z = shape.dimensions.z / 2.0;
-    points.push_back(point);
-    point.x = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .x;
-    point.y = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .y;
-    point.z = shape.dimensions.z / 2.0;
-    points.push_back(point);
-  }
-  for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
-    geometry_msgs::msg::Point point;
-    point.x = shape.footprint.points.at(i).x;
-    point.y = shape.footprint.points.at(i).y;
     point.z = -shape.dimensions.z / 2.0;
     points.push_back(point);
     point.x = shape.footprint.points
@@ -670,17 +655,6 @@ void calc_2d_polygon_line_list(
     point.y = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
                 .y;
-    point.z = -shape.dimensions.z / 2.0;
-    points.push_back(point);
-  }
-  for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
-    geometry_msgs::msg::Point point;
-    point.x = shape.footprint.points.at(i).x;
-    point.y = shape.footprint.points.at(i).y;
-    point.z = shape.dimensions.z / 2.0;
-    points.push_back(point);
-    point.x = shape.footprint.points.at(i).x;
-    point.y = shape.footprint.points.at(i).y;
     point.z = -shape.dimensions.z / 2.0;
     points.push_back(point);
   }
