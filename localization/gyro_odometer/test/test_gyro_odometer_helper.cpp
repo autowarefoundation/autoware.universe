@@ -25,10 +25,6 @@ Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth)
   imu.angular_velocity.x = twist_ground_truth.twist.twist.angular.x;
   imu.angular_velocity.y = twist_ground_truth.twist.twist.angular.y;
   imu.angular_velocity.z = twist_ground_truth.twist.twist.angular.z;
-
-  // rclcpp::Clock ros_clock(rcl_clock_type_t RCL_SYSTEM_TIME);
-  // imu.header.stamp = ros_clock.now();
-
   return imu;
 }
 
@@ -38,10 +34,6 @@ TwistWithCovarianceStamped generateDefaultVelocity(const TwistWithCovarianceStam
   twist.header = twist_ground_truth.header;
 
   twist.twist.twist.linear.x = twist_ground_truth.twist.twist.linear.x;
-
-  // rclcpp::Clock ros_clock(rcl_clock_type_t RCL_SYSTEM_TIME);
-  // twist.header.stamp = ros_clock.now();
-
   return twist;
 }
 

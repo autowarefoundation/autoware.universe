@@ -85,10 +85,23 @@ void runWithBothMessages(const Imu & imu, const TwistWithCovarianceStamped & vel
 
   spinSome(gyro_odometer_node);
   spinSome(manager_node);
-  spinSome(gyro_odometer_node);
 
   EXPECT_GE(manager_node->received_twists_.size(), 1U) << "diag has not received!";
   EXPECT_TRUE(isAllOK(manager_node->received_twists_, twist_ground_truth));
+}
+
+void runWithImuMessageOnly(const Imu & imu)
+{
+  auto gyro_odometer_node = std::make_shared<GyroOdometer>(getNodeOptionsWithDefaultParams());
+  auto manager_node = std::make_shared<PubSubManager>();
+  EXPECT_GE(manager_node->imu_pub_->get_subscription_count(), 1U) << "imu is not connected.";
+
+  manager_node->imu_pub_->publish(imu);
+
+  spinSome(gyro_odometer_node);
+  spinSome(manager_node);
+
+  EXPECT_EQ(manager_node->received_twists_.size(), 0U);
 }
 
 // OK cases
@@ -108,9 +121,11 @@ TEST(GyroOdometer, TestGyroOdometerOK)
   );
 }
 
-// // Bad cases
-// TEST(GyroOdometer, TestGyroOdometerNG)
-// {
-//   runWithImuOnly(generateDefaultImu());
-// }
+// Bad cases
+TEST(GyroOdometer, TestGyroOdometerNG)
+{
+  TwistWithCovarianceStamped twist_ground_truth;
+  twist_ground_truth.header.frame_id = "base_link";
+  runWithImuMessageOnly(generateDefaultImu(twist_ground_truth));
+}
 
