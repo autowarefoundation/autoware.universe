@@ -71,6 +71,15 @@ bool isAllOK(
     if (twist->twist.twist.linear.z != twist_ground_truth.twist.twist.linear.z) {
       return false;
     }
+    if (twist->twist.twist.angular.x != twist_ground_truth.twist.twist.angular.x) {
+      return false;
+    }
+    if (twist->twist.twist.angular.y != twist_ground_truth.twist.twist.angular.y) {
+      return false;
+    }
+    if (twist->twist.twist.angular.z != twist_ground_truth.twist.twist.angular.z) {
+      return false;
+    }
   }
   return true;
 }
