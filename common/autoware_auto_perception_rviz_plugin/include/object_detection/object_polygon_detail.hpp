@@ -145,6 +145,11 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_cylinder_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_cylinder_bottom_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_circle_line_list(
   const geometry_msgs::msg::Point center, const double radius,
   std::vector<geometry_msgs::msg::Point> & points, const int n);

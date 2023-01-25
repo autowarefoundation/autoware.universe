@@ -296,7 +296,7 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     // TODO change cylinder to 2d poligon 
     // shoul be: getting cylinder compute projected polygon of it
     // put polygon to calc_polygon_line_list
-    calc_cylinder_line_list(shape_msg, marker_ptr->points);
+    calc_cylinder_bottom_line_list(shape_msg, marker_ptr->points);
   } else if (shape_msg.type == Shape::POLYGON) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_polygon_line_list(shape_msg, marker_ptr->points);
@@ -502,6 +502,37 @@ void calc_cylinder_line_list(
                 radius;
       point.z = shape.dimensions.z * 0.5;
       points.push_back(point);
+      point.x = std::cos(
+                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(n)) *
+                radius;
+      point.y = std::sin(
+                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(n)) *
+                radius;
+      point.z = -shape.dimensions.z * 0.5;
+      points.push_back(point);
+    }
+  }
+}
+
+void calc_cylinder_bottom_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double radius = shape.dimensions.x * 0.5;
+  {
+    constexpr int n = 20;
+    geometry_msgs::msg::Point center;
+    center.x = 0.0;
+    center.y = 0.0;
+    center.z = -shape.dimensions.z * 0.5;
+    calc_circle_line_list(center, radius, points, n);
+  }
+  {
+    constexpr int n = 4;
+    for (int i = 0; i < n; ++i) {
+      geometry_msgs::msg::Point point;
       point.x = std::cos(
                   (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
                   M_PI / static_cast<double>(n)) *
