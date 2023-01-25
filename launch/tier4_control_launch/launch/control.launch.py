@@ -125,6 +125,20 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    # autonomous emergency braking
+    autonomous_emergency_braking = ComposableNode(
+        package="autonomous_emergency_braking",
+        plugin="autoware::motion::control::autonomous_emergency_braking::AEB",
+        name="autonomous_emergency_braking",
+        remappings=[
+            ("~/input/pointcloud", "/perception/obstacle_segmentation/pointcloud"),
+            ("~/input/velocity", "/vehicle/status/velocity_status"),
+            ("~/input/imu", "/sensing/imu/imu_data"),
+            ("~/input/odometry", "/localization/kinematic_state"),
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
     # vehicle cmd gate
     vehicle_cmd_gate_component = ComposableNode(
         package="vehicle_cmd_gate",
@@ -259,6 +273,7 @@ def launch_setup(context, *args, **kwargs):
             controller_component,
             lane_departure_component,
             shift_decider_component,
+            autonomous_emergency_braking,
             vehicle_cmd_gate_component,
             operation_mode_transition_manager_component,
         ],

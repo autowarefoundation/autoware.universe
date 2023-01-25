@@ -55,7 +55,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
 
   // Diagnostics
   updater_.setHardwareID("autonomous_emergency_braking");
-  updater_.add("collision_check", this, &AEB::onCheckCollision);
+  updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
 
   // start timer
   const auto planning_hz = 100.0;  // declare_parameter("planning_hz", 10.0);
@@ -126,10 +126,6 @@ bool AEB::isDataReady()
     return false;
   };
 
-  if (!obstacle_ros_pointcloud_ptr_) {
-    return missing("pointcloud");
-  }
-
   if (!current_velocity_ptr_) {
     return missing("ego velocity");
   }
@@ -144,6 +140,14 @@ bool AEB::isDataReady()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   if (!isDataReady()) {
+    return;
+  }
+
+  const std::string error_msg = "[AEB]: Emergency Brake";
+  const auto diag_level = DiagnosticStatus::ERROR;
+  stat.summary(diag_level, error_msg);
+
+  if (!obstacle_ros_pointcloud_ptr_) {
     return;
   }
 
@@ -218,10 +222,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // step4. handle the dangerous situation
   if (collision_flag) {
-    const std::string error_msg = "[AEB]: Emergency Brake";
-    const auto diag_level = DiagnosticStatus::ERROR;
     std::cerr << "Emergency" << std::endl;
-    stat.summary(diag_level, error_msg);
   }
 }
 
