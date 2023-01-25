@@ -19,7 +19,7 @@
 #include <fmt/core.h>
 
 std::string poseDelayStepWarningMessage(
-  const double delay_time, const double extend_state_step, const double ekf_dt)
+  const double delay_time, const int extend_state_step, const double ekf_dt)
 {
   const std::string s = "Pose delay exceeds the compensation limit, ignored. "
                         "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
@@ -27,7 +27,7 @@ std::string poseDelayStepWarningMessage(
 }
 
 std::string twistDelayStepWarningMessage(
-  const double delay_time, const double extend_state_step, const double ekf_dt)
+  const double delay_time, const int extend_state_step, const double ekf_dt)
 {
   const std::string s = "Twist delay exceeds the compensation limit, ignored. "
                         "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
