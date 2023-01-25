@@ -77,9 +77,8 @@ LaneChangePaths getLaneChangePaths(
 
 LaneChangePaths selectValidPaths(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose);
+  const lanelet::ConstLanelets & target_lanes, const RouteHandler & route_handler,
+  const Pose & current_pose, const Pose & goal_pose, const double minimum_lane_change_length);
 
 bool selectSafePath(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
@@ -91,7 +90,7 @@ bool selectSafePath(
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data);
 
 bool isLaneChangePathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
+  const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const size_t current_seg_idx, const Twist & current_twist,
@@ -103,9 +102,8 @@ bool isLaneChangePathSafe(
 
 bool hasEnoughDistance(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs);
+  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose, const Pose & goal_pose,
+  const RouteHandler & route_handler, const double minimum_lane_change_length);
 
 ShiftLine getLaneChangeShiftLine(
   const PathWithLaneId & path1, const PathWithLaneId & path2,

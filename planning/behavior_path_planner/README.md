@@ -135,6 +135,7 @@ Dynamic objects that satisfy the following conditions are considered to be avoid
 - low speed (default: < `1.0 m/s`)
 - Not being around center line (default: deviation from center > `0.5 m`)
 - Any footprint of the object in on the detection area (driving lane + `1 m` margin for lateral direction).
+- Object is not behind ego(default: > -`2.0 m`) or too far(default: < `150.0 m`) and object is not behind the path goal.
 
 <!-- The target objects are `CAR`, `TRUCK`, or `BUS` type with low speed (default: < `1.0 m/s`). If the object is around the center of lane, it is not considered as a target (default: deviation from center > `0.5 m`). -->
 
@@ -253,16 +254,17 @@ searched for in certain range of the shoulder lane.
 
 ##### Parameters for goal search
 
-| Name                        | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
-| :-------------------------- | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
-| search_priority             | -    | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
-| enable_goal_research        | -    | double | flag whether to search goal                                                                                                                                                                                              | true           |
-| forward_goal_search_length  | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
-| backward_goal_search_length | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
-| goal_search_interval        | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
-| longitudinal_margin         | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
-| max_lateral_offset          | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 3.0            |
-| lateral_offset_interval     | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 3.0            |
+| Name                            | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
+| :------------------------------ | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| search_priority                 | -    | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
+| enable_goal_research            | -    | double | flag whether to search goal                                                                                                                                                                                              | true           |
+| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
+| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
+| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
+| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
+| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 3.0            |
+| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 3.0            |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                      | 15.0           |
 
 #### **Path Generation**
 
@@ -449,9 +451,10 @@ If a safe path cannot be generated from the current position, search backwards f
 | enable_back                                                                | -              | bool   | flag whether to search backward for start_point                                                                       | true          |
 | enable_back                                                                | -              | bool   | In the case of `efficient_path`, use efficient paths even if the back distance is longer.                             |
 | In case of `short_back_distance`, use a path with as short a back distance | efficient_path |
-| max_back_distance                                                          | [m]            | double | maximum back distance                                                                                                 | 15.0          |
+| max_back_distance                                                          | [m]            | double | maximum back distance                                                                                                 | 30.0          |
 | backward_search_resolution                                                 | [m]            | double | distance interval for searching backward pull out start point                                                         | 2.0           |
 | backward_path_update_duration                                              | [s]            | double | time interval for searching backward pull out start point. this prevents chattering between back driving and pull_out | 3.0           |
+| ignore_distance_from_lane_end                                              | [m]            | double | distance from end of pull out lanes for ignoring start candidates                                                     | 15.0          |
 
 #### Unimplemented parts / limitations for pull put
 
