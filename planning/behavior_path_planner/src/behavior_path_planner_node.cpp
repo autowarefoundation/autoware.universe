@@ -133,6 +133,22 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
     bt_manager_->registerSceneModule(lane_following_module);
 
+    auto ext_request_lane_change_right_module =
+      std::make_shared<ExternalRequestLaneChangeRightModule>(
+        "ExternalRequestLaneChangeRight", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "ExternalRequestLaneChangeRight",
+      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_right", 1));
+    bt_manager_->registerSceneModule(ext_request_lane_change_right_module);
+
+    auto ext_request_lane_change_left_module =
+      std::make_shared<ExternalRequestLaneChangeLeftModule>(
+        "ExternalRequestLaneChangeLeft", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "ExternalRequestLaneChangeLeft",
+      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_left", 1));
+    bt_manager_->registerSceneModule(ext_request_lane_change_left_module);
+
     auto lane_change_module =
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
     path_candidate_publishers_.emplace(
@@ -209,14 +225,14 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.backward_path_length = declare_parameter("backward_path_length", 5.0) + backward_offset;
   p.forward_path_length = declare_parameter("forward_path_length", 100.0);
   p.backward_length_buffer_for_end_of_lane =
-    declare_parameter("backward_length_buffer_for_end_of_lane", 5.0);
+    declare_parameter("lane_change.backward_length_buffer_for_end_of_lane", 5.0);
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter("backward_length_buffer_for_end_of_pull_over", 5.0);
   p.backward_length_buffer_for_end_of_pull_out =
     declare_parameter("backward_length_buffer_for_end_of_pull_out", 5.0);
-  p.minimum_lane_change_length = declare_parameter("minimum_lane_change_length", 8.0);
+  p.minimum_lane_change_length = declare_parameter("lane_change.minimum_lane_change_length", 8.0);
   p.minimum_lane_change_prepare_distance =
-    declare_parameter("minimum_lane_change_prepare_distance", 2.0);
+    declare_parameter("lane_change.minimum_lane_change_prepare_distance", 2.0);
 
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
@@ -250,6 +266,11 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 
   p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 2.0);
   p.rear_vehicle_safety_time_margin = declare_parameter("rear_vehicle_safety_time_margin", 2.0);
+
+  if (p.backward_length_buffer_for_end_of_lane < 1.0) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "Lane change buffer must be more than 1 meter. Modifying the buffer.");
+  }
   return p;
 }
 
@@ -266,8 +287,8 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
   p.shifting_lateral_jerk = dp("shifting_lateral_jerk", 0.2);
   p.min_shifting_distance = dp("min_shifting_distance", 5.0);
   p.min_shifting_speed = dp("min_shifting_speed", 5.56);
-  p.shift_request_time_limit = dp("shift_request_time_limit", 1.0);
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.shift_request_time_limit = dp("shift_request_time_limit", 1.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   return p;
@@ -367,25 +388,37 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   };
 
   LaneChangeParameters p{};
+
+  // trajectory generation
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
-  p.lane_changing_duration = dp("lane_changing_duration", 4.0);
+  p.lane_changing_safety_check_duration = dp("lane_changing_safety_check_duration", 4.0);
+  p.lane_changing_lateral_jerk = dp("lane_changing_lateral_jerk", 0.5);
+  p.lane_changing_lateral_acc = dp("lane_changing_lateral_acc", 0.5);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
   p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
-  p.abort_lane_change_velocity_thresh = dp("abort_lane_change_velocity_thresh", 0.5);
-  p.abort_lane_change_angle_thresh =
-    dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
-  p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
-  p.prepare_phase_ignore_target_speed_thresh = dp("prepare_phase_ignore_target_speed_thresh", 0.1);
-  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
+
+  // collision check
   p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.prepare_phase_ignore_target_speed_thresh = dp("prepare_phase_ignore_target_speed_thresh", 0.1);
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
   p.use_all_predicted_path = dp("use_all_predicted_path", true);
-  p.publish_debug_marker = dp("publish_debug_marker", false);
+
+  // abort
+  p.enable_cancel_lane_change = dp("enable_cancel_lane_change", true);
+  p.enable_abort_lane_change = dp("enable_abort_lane_change", false);
+
+  p.abort_delta_time = dp("abort_delta_time", 3.0);
+  p.abort_max_lateral_jerk = dp("abort_max_lateral_jerk", 10.0);
+
+  // drivable area expansion
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
+
+  // debug marker
+  p.publish_debug_marker = dp("publish_debug_marker", false);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -401,6 +434,22 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
                       << p.maximum_deceleration << std::endl
                       << "Terminating the program...");
     exit(EXIT_FAILURE);
+  }
+
+  if (p.abort_delta_time < 1.0) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
+                                         << "Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+
+  const auto lc_buffer =
+    this->get_parameter("lane_change.backward_length_buffer_for_end_of_lane").get_value<double>();
+  if (lc_buffer < p.lane_change_finish_judge_buffer + 1.0) {
+    p.lane_change_finish_judge_buffer = lc_buffer - 1;
+    RCLCPP_WARN_STREAM(
+      get_logger(), "lane change buffer is less than finish buffer. Modifying the value to "
+                      << p.lane_change_finish_judge_buffer << "....");
   }
 
   return p;

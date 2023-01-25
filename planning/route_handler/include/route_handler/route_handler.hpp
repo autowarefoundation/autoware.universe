@@ -102,6 +102,7 @@ public:
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const;
+  lanelet::ConstLanelets getLaneChangeableNeighbors(const lanelet::ConstLanelet & lanelet) const;
 
   /**
    * @brief Check if same-direction lane is available at the right side of the lanelet
@@ -261,6 +262,10 @@ public:
     const lanelet::ConstLanelets & lanelet_sequence, const double s_start, const double s_end,
     bool use_exact = true) const;
   bool getLaneChangeTarget(
+    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
+  bool getRightLaneChangeTargetExceptPreferredLane(
+    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
+  bool getLeftLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
   static bool getPullOverTarget(
     const lanelet::ConstLanelets & lanelets, const Pose & goal_pose,

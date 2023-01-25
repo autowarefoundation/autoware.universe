@@ -197,10 +197,7 @@ PredictedPath convertToPredictedPath(
   double prev_vehicle_speed = vehicle_speed;
 
   // first point
-  const auto pt = lerpByLength(path.points, vehicle_pose_frenet.length);
-  Pose predicted_pose;
-  predicted_pose.position = pt;
-  predicted_path.path.push_back(predicted_pose);
+  predicted_path.path.push_back(lerpPoseByLength(path.points, vehicle_pose_frenet.length));
 
   for (double t = resolution; t < duration; t += resolution) {
     double accelerated_velocity = prev_vehicle_speed + acceleration * t;
@@ -213,10 +210,8 @@ PredictedPath convertToPredictedPath(
     }
 
     length += travel_distance;
-    const auto pt = lerpByLength(path.points, vehicle_pose_frenet.length + length);
-    Pose predicted_pose;
-    predicted_pose.position = pt;
-    predicted_path.path.push_back(predicted_pose);
+    predicted_path.path.push_back(
+      lerpPoseByLength(path.points, vehicle_pose_frenet.length + length));
     prev_vehicle_speed = accelerated_velocity;
   }
   return predicted_path;
@@ -236,21 +231,6 @@ PredictedPath resamplePredictedPath(
   }
 
   return resampled_path;
-}
-
-Pose lerpByPose(const Pose & p1, const Pose & p2, const double t)
-{
-  tf2::Transform tf_transform1, tf_transform2;
-  tf2::fromMsg(p1, tf_transform1);
-  tf2::fromMsg(p2, tf_transform2);
-  const auto & tf_point = tf2::lerp(tf_transform1.getOrigin(), tf_transform2.getOrigin(), t);
-  const auto & tf_quaternion =
-    tf2::slerp(tf_transform1.getRotation(), tf_transform2.getRotation(), t);
-
-  Pose pose{};
-  pose.position = tf2::toMsg(tf_point, pose.position);
-  pose.orientation = tf2::toMsg(tf_quaternion);
-  return pose;
 }
 
 bool lerpByTimeStamp(const PredictedPath & path, const double t_query, Pose * lerped_pt)
@@ -738,30 +718,6 @@ std::vector<double> calcObjectsDistanceToPath(
     distance_array.push_back(distance);
   }
   return distance_array;
-}
-
-std::vector<size_t> filterObjectsIndicesByPath(
-  const PredictedObjects & objects, const std::vector<size_t> & object_indices,
-  const PathWithLaneId & ego_path, const double vehicle_width)
-{
-  std::vector<size_t> indices;
-  const auto ego_path_point_array = convertToGeometryPointArray(ego_path);
-  for (const auto & i : object_indices) {
-    Polygon2d obj_polygon;
-    if (!calcObjectPolygon(objects.objects.at(i), &obj_polygon)) {
-      continue;
-    }
-    LineString2d ego_path_line;
-    ego_path_line.reserve(ego_path_point_array.size());
-    for (const auto & ego_path_point : ego_path_point_array) {
-      boost::geometry::append(ego_path_line, Point2d(ego_path_point.x, ego_path_point.y));
-    }
-    const double distance = boost::geometry::distance(obj_polygon, ego_path_line);
-    if (distance < vehicle_width) {
-      indices.push_back(i);
-    }
-  }
-  return indices;
 }
 
 PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
@@ -2357,13 +2313,12 @@ void getProjectedDistancePointFromPolygons(
 }
 
 bool getEgoExpectedPoseAndConvertToPolygon(
-  const Pose & current_pose, const PredictedPath & pred_path,
+  [[maybe_unused]] const Pose & current_pose, const PredictedPath & pred_path,
   tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
   const VehicleInfo & ego_info, Pose & expected_pose, std::string & failed_reason)
 {
   bool is_lerped =
     util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose, failed_reason);
-  expected_pose.orientation = current_pose.orientation;
 
   const auto & i = ego_info;
   const auto & front_m = i.max_longitudinal_offset_m;
@@ -2382,7 +2337,6 @@ bool getObjectExpectedPoseAndConvertToPolygon(
 {
   bool is_lerped =
     util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose, failed_reason);
-  expected_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
 
   is_lerped = util::calcObjectPolygon(object.shape, expected_pose, &obj_polygon);
   return is_lerped;
@@ -2512,7 +2466,7 @@ bool isSafeInLaneletCollisionCheck(
   const double check_start_time, const double check_end_time, const double check_time_resolution,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
-  const double rear_decel, CollisionCheckDebug & debug)
+  const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug)
 {
   const auto lerp_path_reserve = (check_end_time - check_start_time) / check_time_resolution;
   if (lerp_path_reserve > 1e-3) {
@@ -2552,6 +2506,7 @@ bool isSafeInLaneletCollisionCheck(
       debug.failed_reason = "not_enough_longitudinal";
       return false;
     }
+    ego_pose_before_collision = expected_ego_pose;
   }
   return true;
 }
@@ -2645,19 +2600,19 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
   return true;
 }
 
-double calcTotalLaneChangeDistanceWithBuffer(const BehaviorPathPlannerParameters & common_param)
+double calcTotalLaneChangeDistance(
+  const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
 {
   const double minimum_lane_change_distance =
     common_param.minimum_lane_change_prepare_distance + common_param.minimum_lane_change_length;
   const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
-  return minimum_lane_change_distance + end_of_lane_buffer;
+  return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
 }
 
 double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
   const double length_to_intersection)
 {
-  return num_lane_change * calcTotalLaneChangeDistanceWithBuffer(common_param) +
-         length_to_intersection;
+  return num_lane_change * calcTotalLaneChangeDistance(common_param) + length_to_intersection;
 }
 }  // namespace behavior_path_planner::util
