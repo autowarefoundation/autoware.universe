@@ -216,7 +216,7 @@ private:
   // autoware::common::osqp::OSQPInterface osqp_solver_;
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
-  const double osqp_epsilon_ = 1.0e-6;  // TODO(murooka)
+  const double osqp_epsilon_ = 1.0e-3;  // TODO(murooka)
 
   std::vector<double> vehicle_circle_longitudinal_offsets_;  // from base_link
   std::vector<double> vehicle_circle_radiuses_;
@@ -244,8 +244,8 @@ private:
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
   void updateFixedPoint(std::vector<ReferencePoint> & ref_points) const;
-  void updateArcLength(std::vector<ReferencePoint> & ref_points) const;
-  void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
+  void updateDeltaArcLength(std::vector<ReferencePoint> & ref_points) const;
+  void updateExtraPoints(std::vector<ReferencePoint> & ref_points) const;
 
   ValueMatrix calcValueMatrix(
     const std::vector<ReferencePoint> & reference_points,

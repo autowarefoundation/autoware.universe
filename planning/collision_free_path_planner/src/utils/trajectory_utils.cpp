@@ -130,7 +130,58 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const auto traj = motion_utils::convertToTrajectory(traj_points);
   const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
   return motion_utils::convertToTrajectoryPointArray(resampled_traj);
-  // TODO(murooka) can be replaced with resampled_traj.points;
+}
+
+std::vector<ReferencePoint> resampleReferencePoints(
+  const std::vector<ReferencePoint> ref_points, const double interval)
+{
+  // resample pose and velocity
+  const auto traj_points = convertToTrajectoryPoints(ref_points);
+  const auto resampled_traj_points = resampleTrajectoryPoints(traj_points, interval);
+  const auto resampled_ref_points = convertToReferencePoints(resampled_traj_points);
+
+  // resample curvature
+  std::vector<double> base_keys;
+  std::vector<double> base_values;
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    if (i == 0) {
+      base_keys.push_back(0.0);
+    } else {
+      const double delta_arc_length =
+        tier4_autoware_utils::calcDistance2d(ref_points.at(i), ref_points.at(i - 1));
+      base_keys.push_back(base_keys.back() + delta_arc_length);
+    }
+
+    base_values.push_back(ref_points.at(i).k);
+  }
+
+  std::vector<double> query_keys;
+  for (size_t i = 0; i < resampled_ref_points.size(); ++i) {
+    if (i == 0) {
+      query_keys.push_back(0.0);
+    } else {
+      const double delta_arc_length = tier4_autoware_utils::calcDistance2d(
+        resampled_ref_points.at(i), resampled_ref_points.at(i - 1));
+      const double key = query_keys.back() + delta_arc_length;
+      if (base_keys.back() < key) {
+        break;
+      }
+
+      query_keys.push_back(key);
+    }
+  }
+
+  // const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+  const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
+
+  // create output reference points by updating curvature with resampled one
+  std::vector<ReferencePoint> output_ref_points;
+  for (size_t i = 0; i < query_values.size(); ++i) {
+    output_ref_points.push_back(resampled_ref_points.at(i));
+    output_ref_points.at(i).k = query_values.at(i);
+  }
+
+  return output_ref_points;
 }
 }  // namespace trajectory_utils
 }  // namespace collision_free_path_planner

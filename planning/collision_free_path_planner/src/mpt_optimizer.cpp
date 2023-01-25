@@ -461,59 +461,63 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   const double backward_traj_length = traj_param_.output_backward_traj_length;
 
   // 1. resample and convert smoothed points type from trajectory points to reference points
+  time_keeper_ptr_->tic("resampleReferencePoints");
   auto ref_points = [&]() {
     const auto resampled_smoothed_points =
       trajectory_utils::resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
     return trajectory_utils::convertToReferencePoints(resampled_smoothed_points);
   }();
+  time_keeper_ptr_->toc("resampleReferencePoints", "          ");
 
   // 2. crop forward and backward with margin, and calculate spline interpolation
-  const double tmp_margin = 10.0;
+  // NOTE: Margin is added to calculate orientation, curvature, etc precisely.
+  //       Start point may change. Spline calculation is required.
+  constexpr double tmp_margin = 10.0;
   size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
   ref_points = trajectory_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     -backward_traj_length - tmp_margin);
-  // Updating information for reference points is required here.
   SplineInterpolationPoints2d ref_points_spline(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
   // 3. calculate orientation and curvature
-  // NOTE: Calculating orientation and curvature requirs points
-  // around the target points to be smooth.
-  //       Therefore, crop margin is required.
   updateOrientation(ref_points, ref_points_spline);
   updateCurvature(ref_points, ref_points_spline);
 
-  // crop backward, and calculate spline interpolation
-  // NOTE: After cropped, spline interpolation must be updated.
+  // 4. crop backward
+  // NOTE: Start point may change. Spline calculation is required.
   ref_points = trajectory_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     -backward_traj_length);
-  // Updating information for reference points is required here.
   ref_points_spline = SplineInterpolationPoints2d(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
-  // must be after backward cropping
-  // NOTE: New front point may be added. Resample is required.
+  // 5. update fixed points, and resample
+  // NOTE: This must be after backward cropping.
+  //       New start point may be added and resampled. Spline calculation is required.
   updateFixedPoint(ref_points);
   ref_points_spline = SplineInterpolationPoints2d(ref_points);
 
-  // set bounds information
+  // 6. update bounds
+  // NOTE: After this, resample must not be called since bounds are not interpolated.
   updateBounds(ref_points, p.left_bound, p.right_bound);
   updateVehicleBounds(ref_points, ref_points_spline);
 
-  updateArcLength(ref_points);
+  // 7. update delta arc length
+  updateDeltaArcLength(ref_points);
 
-  // set extra information (alpha and has_object_collision)
-  // NOTE: This must be after bounds calculation and updateOrientation
-  // must be after updateArcLength
-  calcExtraPoints(ref_points);
+  // 8. update extra information (alpha and beta)
+  // NOTE: This must be after calculation of bounds and delta arc length
+  updateExtraPoints(ref_points);
 
-  ref_points = trajectory_utils::cropForwardPoints(
-    ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
+  // 9. crop forward
+  // ref_points = trajectory_utils::cropForwardPoints(
+  //   ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
+  if (mpt_param_.num_points < ref_points.size()) {
+    ref_points.resize(mpt_param_.num_points);
+  }
 
-  // bounds information is assigned to debug data after truncating reference points
   debug_data_ptr_->ref_points = ref_points;
 
   time_keeper_ptr_->toc(__func__, "        ");
@@ -544,6 +548,8 @@ void MPTOptimizer::updateCurvature(
 
 void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) const
 {
+  time_keeper_ptr_->tic(__func__);
+
   if (!prev_ref_points_ptr_) {
     // no fixed point
     return;
@@ -555,13 +561,21 @@ void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) co
 
   const auto & prev_ref_front_point = prev_ref_points_ptr_->at(prev_ref_front_point_idx);
 
-  // update front pose of ref_points
+  // update front pose and curvature of ref_points
   trajectory_utils::updateFrontPointForFix(
     ref_points, prev_ref_front_point.pose, mpt_param_.delta_arc_length);
+  ref_points.front().k = prev_ref_front_point.k;
+
+  // resample to make ref_points' interval constant.
+  // NOTE: Only pose, velocity and curvature will be interpolated.
+  ref_points = trajectory_utils::resampleReferencePoints(ref_points, mpt_param_.delta_arc_length);
+
   ref_points.front().fix_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
+
+  time_keeper_ptr_->toc(__func__, "          ");
 }
 
-void MPTOptimizer::updateArcLength(std::vector<ReferencePoint> & ref_points) const
+void MPTOptimizer::updateDeltaArcLength(std::vector<ReferencePoint> & ref_points) const
 {
   for (size_t i = 0; i < ref_points.size(); i++) {
     ref_points.at(i).delta_arc_length =
@@ -569,7 +583,7 @@ void MPTOptimizer::updateArcLength(std::vector<ReferencePoint> & ref_points) con
   }
 }
 
-void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) const
+void MPTOptimizer::updateExtraPoints(std::vector<ReferencePoint> & ref_points) const
 {
   for (size_t i = 0; i < ref_points.size(); ++i) {
     // alpha
@@ -1093,6 +1107,8 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
     RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
     osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
+    // osqp_solver_ptr_->updateEpsRel(1e-5);
+    // osqp_solver_ptr_->updateEpsAbs(1e-5);
   }
   prev_mat_n_ = H.rows();
   prev_mat_m_ = A.rows();

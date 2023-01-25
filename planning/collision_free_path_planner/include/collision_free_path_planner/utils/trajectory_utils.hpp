@@ -192,7 +192,6 @@ inline TrajectoryPoint convertToTrajectoryPoint(const ReferencePoint & ref_point
   return traj_point;
 }
 
-// functions to convert to another type of points
 template <typename T>
 std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<T> & points)
 {
@@ -238,6 +237,9 @@ Trajectory createTrajectory(
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
+
+std::vector<ReferencePoint> resampleReferencePoints(
+  const std::vector<ReferencePoint> ref_points, const double interval);
 
 template <typename T>
 void updateFrontPointForFix(
