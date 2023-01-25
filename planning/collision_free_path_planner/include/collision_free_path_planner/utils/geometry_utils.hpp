@@ -50,6 +50,19 @@ namespace collision_free_path_planner
 {
 namespace geometry_utils
 {
+template <typename T1, typename T2>
+bool isSamePoint(const T1 & t1, const T2 & t2)
+{
+  const auto p1 = tier4_autoware_utils::getPoint(t1);
+  const auto p2 = tier4_autoware_utils::getPoint(t2);
+
+  constexpr double epsilon = 1e-6;
+  if (epsilon < std::abs(p1.x - p2.x) || epsilon < std::abs(p1.y - p2.y)) {
+    return false;
+  }
+  return true;
+}
+
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound,

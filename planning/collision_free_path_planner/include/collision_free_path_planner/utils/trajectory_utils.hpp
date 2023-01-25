@@ -162,53 +162,14 @@ T cropPoints(
   const auto cropped_points = cropBackwardPoints(
     cropped_forward_points, target_pos, modified_target_seg_idx, backward_length);
 
+  if (cropped_points.size() < 2) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("collision_free_path_planner.trajectory_utils"),
+      ". Return original points since cropped_points size is less than 2.");
+    return points;
+  }
+
   return cropped_points;
-}
-
-template <typename T>
-T clipForwardPoints(const T & points, const size_t begin_idx, const double forward_length)
-{
-  if (points.empty()) {
-    return T{};
-  }
-
-  const size_t end_idx = findForwardIndex(points, begin_idx, forward_length);
-  return T{points.begin() + begin_idx, points.begin() + end_idx};
-}
-
-template <typename T>
-T clipBackwardPoints(
-  const T & points, const size_t target_idx, const double backward_length,
-  const double delta_length)
-{
-  if (points.empty()) {
-    return T{};
-  }
-
-  const int begin_idx =
-    std::max(0, static_cast<int>(target_idx) - static_cast<int>(backward_length / delta_length));
-  return T{points.begin() + begin_idx, points.end()};
-}
-
-template <typename T>
-T clipBackwardPoints(
-  const T & points, const geometry_msgs::msg::Pose pose, const double backward_length,
-  const double delta_length, const double delta_yaw)
-{
-  if (points.empty()) {
-    return T{};
-  }
-
-  const auto target_idx_optional =
-    motion_utils::findNearestIndex(points, pose, std::numeric_limits<double>::max(), delta_yaw);
-
-  const size_t target_idx = target_idx_optional
-                              ? *target_idx_optional
-                              : motion_utils::findNearestIndex(points, pose.position);
-
-  const int begin_idx =
-    std::max(0, static_cast<int>(target_idx) - static_cast<int>(backward_length / delta_length));
-  return T{points.begin() + begin_idx, points.end()};
 }
 
 template <typename T>
@@ -247,48 +208,12 @@ ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point);
 std::vector<ReferencePoint> convertToReferencePoints(
   const std::vector<TrajectoryPoint> & traj_points);
 
-/*
-template <typename T>
-ReferencePoint convertToReferencePoint(const T & point);
-
-template <typename T>
-std::vector<ReferencePoint> convertToReferencePoints(const std::vector<T> & points)
-{
-  std::vector<ReferencePoint> ref_points;
-  for (const auto & point : points) {
-    const auto ref_point = convertToReferencePoint(point);
-    ref_points.push_back(ref_point);
-  }
-  return ref_points;
-}
-*/
-
 void compensateLastPose(
   const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
   const double delta_dist_threshold, const double delta_yaw_threshold);
 
 geometry_msgs::msg::Point getNearestPosition(
   const std::vector<ReferencePoint> & points, const int target_idx, const double offset);
-
-template <typename T>
-bool isNearLastPathPoint(
-  const T & ref_point, const std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold)
-{
-  const geometry_msgs::msg::Pose last_ref_pose = tier4_autoware_utils::getPose(ref_point);
-
-  if (
-    tier4_autoware_utils::calcDistance2d(last_ref_pose, traj_points.back().pose) >
-    delta_dist_threshold) {
-    return false;
-  }
-  if (
-    std::fabs(tier4_autoware_utils::calcYawDeviation(last_ref_pose, traj_points.back().pose)) >
-    delta_yaw_threshold) {
-    return false;
-  }
-  return true;
-}
 
 template <class T>
 size_t findEgoIndex(
@@ -319,6 +244,13 @@ void updateFrontPointForFix(
   std::vector<T> & points, const geometry_msgs::msg::Pose & target_pose, const double epsilon)
 {
   const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_pose);
+
+  // check if deviation is too large
+  if (3.0 < dist) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("collision_free_path_planner.trajectory_utils"),
+      "New Fixed point is too far from points", dist);
+  }
 
   if (dist < epsilon) {
     // only pose is updated

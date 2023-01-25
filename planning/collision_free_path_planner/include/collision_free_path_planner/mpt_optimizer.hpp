@@ -74,9 +74,13 @@ struct ReferencePoint
   double k{0.0};
   double delta_arc_length{0.0};
   double alpha{0.0};
-  Bounds bounds{};  // bounds on pose
+  Bounds bounds{};  // bounds on `pose`
   bool near_objects{false};
   std::vector<std::optional<double>> beta{};
+
+  // bounds and its local pose on each collision-free constraint
+  std::vector<Bounds> bounds_on_constraints{};
+  std::vector<geometry_msgs::msg::Pose> pose_on_constraints{};
 
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
@@ -84,10 +88,6 @@ struct ReferencePoint
   std::optional<KinematicState> fix_kinematic_state{std::nullopt};
   KinematicState optimized_kinematic_state{};
   double optimized_input{};
-
-  // bounds and its local pose on each collision-free constraint
-  std::vector<Bounds> bounds_on_constraints{};
-  std::vector<geometry_msgs::msg::Pose> pose_on_constraints{};
 
   double getYaw() const { return tf2::getYaw(pose.orientation); }
 
@@ -143,8 +143,6 @@ private:
     bool enable_warm_start;
     bool enable_manual_warm_start;
     bool steer_limit_constraint;
-    bool fix_points_around_ego;
-    bool is_fixed_point_single;
 
     std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
     std::vector<double> vehicle_circle_radiuses;
@@ -164,8 +162,8 @@ private:
 
     double terminal_lat_error_weight;
     double terminal_yaw_error_weight;
-    double terminal_path_lat_error_weight;
-    double terminal_path_yaw_error_weight;
+    double goal_lat_error_weight;
+    double goal_yaw_error_weight;
 
     double steer_input_weight;
     double steer_rate_weight;
@@ -204,7 +202,7 @@ private:
   // autoware::common::osqp::OSQPInterface osqp_solver_;
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
-  const double osqp_epsilon_ = 1.0e-3;
+  const double osqp_epsilon_ = 1.0e-6;  // TODO(murooka)
   int mpt_visualize_sampling_num_;
 
   // vehicle circles info for for mpt constraints

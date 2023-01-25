@@ -97,13 +97,14 @@ std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
 {
+  // calculate intersection point
   const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
   if (det == 0.0) {
     return std::nullopt;
   }
 
   const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p4.x - p3.x) * (p4.y - p2.y)) / det;
+  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p1.x - p2.x) * (p4.y - p2.y)) / det;
   if (t < 0 || 1 < t || s < 0 || 1 < s) {
     return std::nullopt;
   }
@@ -177,14 +178,10 @@ void MPTOptimizer::initializeMPTParam(
   {  // option
     mpt_param_.steer_limit_constraint =
       node->declare_parameter<bool>("mpt.option.steer_limit_constraint");
-    mpt_param_.fix_points_around_ego =
-      node->declare_parameter<bool>("mpt.option.fix_points_around_ego");
     mpt_param_.enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
     mpt_param_.enable_manual_warm_start =
       node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
     mpt_visualize_sampling_num_ = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
-    mpt_param_.is_fixed_point_single =
-      node->declare_parameter<bool>("mpt.option.is_fixed_point_single");
   }
 
   {  // common
@@ -286,10 +283,10 @@ void MPTOptimizer::initializeMPTParam(
       node->declare_parameter<double>("advanced.mpt.weight.terminal_lat_error_weight");
     mpt_param_.terminal_yaw_error_weight =
       node->declare_parameter<double>("advanced.mpt.weight.terminal_yaw_error_weight");
-    mpt_param_.terminal_path_lat_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.terminal_path_lat_error_weight");
-    mpt_param_.terminal_path_yaw_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.terminal_path_yaw_error_weight");
+    mpt_param_.goal_lat_error_weight =
+      node->declare_parameter<double>("advanced.mpt.weight.goal_lat_error_weight");
+    mpt_param_.goal_yaw_error_weight =
+      node->declare_parameter<double>("advanced.mpt.weight.goal_yaw_error_weight");
   }
 
   // update debug data
@@ -314,14 +311,10 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   {  // option
     updateParam<bool>(
       parameters, "mpt.option.steer_limit_constraint", mpt_param_.steer_limit_constraint);
-    updateParam<bool>(
-      parameters, "mpt.option.fix_points_around_ego", mpt_param_.fix_points_around_ego);
     updateParam<bool>(parameters, "mpt.option.enable_warm_start", mpt_param_.enable_warm_start);
     updateParam<bool>(
       parameters, "mpt.option.enable_manual_warm_start", mpt_param_.enable_manual_warm_start);
     updateParam<int>(parameters, "mpt.option.visualize_sampling_num", mpt_visualize_sampling_num_);
-    updateParam<bool>(
-      parameters, "mpt.option.option.is_fixed_point_single", mpt_param_.is_fixed_point_single);
   }
 
   // common
@@ -429,11 +422,9 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
       parameters, "advanced.mpt.weight.terminal_yaw_error_weight",
       mpt_param_.terminal_yaw_error_weight);
     updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_path_lat_error_weight",
-      mpt_param_.terminal_path_lat_error_weight);
+      parameters, "advanced.mpt.weight.goal_lat_error_weight", mpt_param_.goal_lat_error_weight);
     updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_path_yaw_error_weight",
-      mpt_param_.terminal_path_yaw_error_weight);
+      parameters, "advanced.mpt.weight.goal_yaw_error_weight", mpt_param_.goal_yaw_error_weight);
   }
 
   // update debug data
@@ -453,13 +444,9 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::getModelPredictiveTraj
 
   // 1. calculate reference points
   auto ref_points = calcReferencePoints(planner_data, smoothed_points);
-  if (ref_points.empty()) {
+  if (ref_points.size() < 2) {
     RCLCPP_INFO_EXPRESSION(
-      logger_, enable_debug_info_, "return std::nullopt since ref_points is empty");
-    return std::nullopt;
-  } else if (ref_points.size() == 1) {
-    RCLCPP_INFO_EXPRESSION(
-      logger_, enable_debug_info_, "return std::nullopt since ref_points.size() == 1");
+      logger_, enable_debug_info_, "return std::nullopt since ref_points size is less than 2.");
     return std::nullopt;
   }
 
@@ -515,12 +502,14 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   // 2. crop forward and backward with margin, and calculate spline interpolation
   const double tmp_margin = 10.0;
-  const size_t ego_seg_idx =
+  size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
   ref_points = trajectory_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     -backward_traj_length - tmp_margin);
+  // Updating information for reference points is required here.
   SplineInterpolationPoints2d ref_points_spline(ref_points);
+  ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
   // 3. calculate orientation and curvature
   // NOTE: Calculating orientation and curvature requirs points
@@ -534,7 +523,9 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   ref_points = trajectory_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     -backward_traj_length);
+  // Updating information for reference points is required here.
   ref_points_spline = SplineInterpolationPoints2d(ref_points);
+  ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
   // must be after backward cropping
   // NOTE: New front point may be added. Resample is required.
@@ -552,7 +543,8 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // must be after updateArcLength
   calcExtraPoints(ref_points);
 
-  ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, forward_traj_length);
+  ref_points = trajectory_utils::cropForwardPoints(
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
 
   // bounds information is assigned to debug data after truncating reference points
   debug_data_ptr_->ref_points = ref_points;
@@ -595,8 +587,6 @@ void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) co
   const size_t prev_ref_front_point_idx = prev_ref_front_seg_idx;
 
   const auto & prev_ref_front_point = prev_ref_points_ptr_->at(prev_ref_front_point_idx);
-
-  // TODO(murooka) check deviation
 
   // update front pose of ref_points
   trajectory_utils::updateFrontPointForFix(
@@ -764,8 +754,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const size_t N_ref = ref_points.size();
   const size_t D_v = D_x + (N_ref - 1) * D_u;
 
-  const bool is_containing_path_terminal_point = trajectory_utils::isNearLastPathPoint(
-    ref_points.back(), traj_points, 0.0001, traj_param_.delta_yaw_threshold_for_closest_point);
+  const bool is_goal_contained = geometry_utils::isSamePoint(ref_points.back(), traj_points.back());
 
   // update Q
   Eigen::SparseMatrix<double> Q_sparse_mat(D_x * N_ref, D_x * N_ref);
@@ -775,10 +764,10 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
       if (ref_points.at(i).near_objects) {
         return {
           mpt_param_.obstacle_avoid_lat_error_weight, mpt_param_.obstacle_avoid_yaw_error_weight};
-      } else if (i == N_ref - 1 && is_containing_path_terminal_point) {
-        return {
-          mpt_param_.terminal_path_lat_error_weight, mpt_param_.terminal_path_yaw_error_weight};
       } else if (i == N_ref - 1) {
+        if (is_goal_contained) {
+          return {mpt_param_.goal_lat_error_weight, mpt_param_.goal_yaw_error_weight};
+        }
         return {mpt_param_.terminal_lat_error_weight, mpt_param_.terminal_yaw_error_weight};
       }
       // NOTE: may be better to add decreasing weights in a narrow and sharp curve

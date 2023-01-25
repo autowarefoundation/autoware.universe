@@ -213,6 +213,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
 
   time_keeper_ptr_->toc(__func__, "");
   *time_keeper_ptr_ << "========================================";
+  time_keeper_ptr_->endLine();
 
   // publish calculation_time
   // NOTE: This function must be called after measuring onPath calculation time

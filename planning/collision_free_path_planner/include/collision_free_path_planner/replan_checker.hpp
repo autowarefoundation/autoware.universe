@@ -49,14 +49,12 @@ private:
   // previous variable for isReplanRequired
   std::shared_ptr<rclcpp::Time> prev_replanned_time_ptr_{nullptr};
 
-  // bool reset_optimization_{false};
-
   // algorithm parameters
-  double max_path_shape_change_dist_;
+  double max_path_shape_around_ego_lat_dist_;
   double max_ego_moving_dist_;
   double max_delta_time_sec_;
 
-  bool isPathShapeChanged(
+  bool isPathAroundEgoChanged(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;
   bool isPathGoalChanged(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;

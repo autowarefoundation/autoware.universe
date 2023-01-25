@@ -23,7 +23,6 @@
 #include <chrono>
 #include <limits>
 
-// TODO(murooka) consider fixing goal
 namespace
 {
 Eigen::MatrixXd makePMatrix(const int num_points)
@@ -65,9 +64,9 @@ Eigen::MatrixXd makePMatrix(const int num_points)
 }
 
 // make default linear constraint matrix
-Eigen::MatrixXd makeAMatrix(const int num_points)
+// NOTE: value (1.0) is not valid. Where non-zero values exis is valid.
+Eigen::MatrixXd makeDefaultAMatrix(const int num_points)
 {
-  // TODO(murooka) check
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_points * 2, num_points * 2);
   for (int i = 0; i < num_points * 2; ++i) {
     if (i < num_points) {
@@ -100,7 +99,7 @@ EBPathSmoother::EBPathSmoother(
   const Eigen::MatrixXd P = makePMatrix(num_points);
   const std::vector<double> q(num_points * 2, 0.0);
 
-  const Eigen::MatrixXd A = makeAMatrix(num_points);
+  const Eigen::MatrixXd A = makeDefaultAMatrix(num_points);
   const std::vector<double> lower_bound(num_points * 2, 0.0);
   const std::vector<double> upper_bound(num_points * 2, 0.0);
 
@@ -142,6 +141,14 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   const auto cropped_traj_points = trajectory_utils::cropPoints(
     p.traj_points, p.ego_pose.position, ego_seg_idx, forward_traj_length, -backward_traj_length);
 
+  // check if goal is contained in cropped_traj_points
+  const bool is_goal_contained =
+    geometry_utils::isSamePoint(cropped_traj_points.back(), planner_data.traj_points.back());
+  if (is_goal_contained) {
+    // TODO(murooka) remove this.
+    std::cerr << "goal is contained " << std::endl;
+  }
+
   // 2. insert fixed point
   // NOTE: Should be after crop trajectory so that fixed point will not be cropped.
   const auto traj_points_with_fixed_point = insertFixedPoint(cropped_traj_points);
@@ -154,7 +161,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   const auto [padded_traj_points, pad_start_idx] = getPaddedTrajectoryPoints(resampled_traj_points);
 
   // 5. update constraint for elastic band's QP
-  updateConstraint(padded_traj_points);
+  updateConstraint(padded_traj_points, is_goal_contained);
 
   // 6. get optimization result
   const auto optimized_points = optimizeTrajectory(padded_traj_points);
@@ -165,12 +172,12 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
     return std::nullopt;
   }
 
-  // convert optimization result to trajectory
+  // 7. convert optimization result to trajectory
   const auto eb_traj_points =
     convertOptimizedPointsToTrajectory(*optimized_points, padded_traj_points, pad_start_idx);
   prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj_points);
 
-  // publish eb trajectory
+  // 8. publish eb trajectory
   const auto eb_traj = trajectory_utils::createTrajectory(p.header, eb_traj_points);
   debug_eb_traj_pub_->publish(eb_traj);
 
@@ -220,7 +227,8 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
   return {padded_traj_points, pad_start_idx};
 }
 
-void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_points) const
+void EBPathSmoother::updateConstraint(
+  const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -230,8 +238,8 @@ void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_
   std::vector<double> upper_bound(p.num_points * 2, 0.0);
   std::vector<double> lower_bound(p.num_points * 2, 0.0);
   for (int i = 0; i < p.num_points; ++i) {
-    const double rect_size = [&]() {
-      if (i == 0) {
+    const double constraint_segment_length = [&]() {
+      if (i == 0 || (is_goal_contained && i == p.num_points - 1)) {
         return p.clearance_for_fix;
       } else if (i < p.num_joint_points + 1) {  // 1 is added since index 0 is fixed point
         return p.clearance_for_joint;
@@ -240,7 +248,7 @@ void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_
     }();
 
     const auto constraint =
-      getConstraintLinesFromConstraintRectangle(traj_points.at(i).pose, rect_size);
+      getConstraint2dFromConstraintSegment(traj_points.at(i).pose, constraint_segment_length);
 
     // longitudinal constraint
     A(i, i) = constraint.lon.coef(0);
@@ -259,14 +267,15 @@ void EBPathSmoother::updateConstraint(const std::vector<TrajectoryPoint> & traj_
   osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
   osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
   osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
+  osqp_solver_ptr_->updateMaxIter(p.qp_param.max_iteration);
 
   time_keeper_ptr_->toc(__func__, "        ");
 }
 
-EBPathSmoother::ConstraintLines EBPathSmoother::getConstraintLinesFromConstraintRectangle(
-  const geometry_msgs::msg::Pose & pose, const double rect_size) const
+EBPathSmoother::Constraint2d EBPathSmoother::getConstraint2dFromConstraintSegment(
+  const geometry_msgs::msg::Pose & pose, const double constraint_segment_length) const
 {
-  ConstraintLines constraint;
+  Constraint2d constraint;
   const double theta = tf2::getYaw(pose.orientation);
 
   // longitudinal constraint
@@ -279,9 +288,9 @@ EBPathSmoother::ConstraintLines EBPathSmoother::getConstraintLinesFromConstraint
   // lateral constraint
   constraint.lat.coef = Eigen::Vector2d(std::sin(theta), -std::cos(theta));
   const auto lat_bound_pos1 =
-    tier4_autoware_utils::calcOffsetPose(pose, 0.0, -rect_size / 2.0, 0.0).position;
+    tier4_autoware_utils::calcOffsetPose(pose, 0.0, -constraint_segment_length / 2.0, 0.0).position;
   const auto lat_bound_pos2 =
-    tier4_autoware_utils::calcOffsetPose(pose, 0.0, rect_size / 2.0, 0.0).position;
+    tier4_autoware_utils::calcOffsetPose(pose, 0.0, constraint_segment_length / 2.0, 0.0).position;
   const double lat_bound1 =
     constraint.lat.coef.transpose() * Eigen::Vector2d(lat_bound_pos1.x, lat_bound_pos1.y);
   const double lat_bound2 =

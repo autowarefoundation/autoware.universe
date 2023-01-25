@@ -25,8 +25,8 @@ namespace collision_free_path_planner
 ReplanChecker::ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_nearest_param)
 : ego_nearest_param_(ego_nearest_param), logger_(node->get_logger().get_child("replan_checker"))
 {
-  max_path_shape_change_dist_ =
-    node->declare_parameter<double>("replan.max_path_shape_change_dist");
+  max_path_shape_around_ego_lat_dist_ =
+    node->declare_parameter<double>("replan.max_path_shape_around_ego_lat_dist");
   max_ego_moving_dist_ = node->declare_parameter<double>("replan.max_ego_moving_dist");
   max_delta_time_sec_ = node->declare_parameter<double>("replan.max_delta_time_sec");
 }
@@ -35,7 +35,8 @@ void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
 
-  updateParam<double>(parameters, "replan.max_path_shape_change_dist", max_path_shape_change_dist_);
+  updateParam<double>(
+    parameters, "replan.max_path_shape_around_ego_lat_dist", max_path_shape_around_ego_lat_dist_);
   updateParam<double>(parameters, "replan.max_ego_moving_dist", max_ego_moving_dist_);
   updateParam<double>(parameters, "replan.max_delta_time_sec", max_delta_time_sec_);
 }
@@ -52,7 +53,7 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
     const auto & prev_traj_points = *prev_traj_points_ptr_;
 
     // path shape changes
-    if (isPathShapeChanged(planner_data, prev_traj_points)) {
+    if (isPathAroundEgoChanged(planner_data, prev_traj_points)) {
       RCLCPP_INFO(logger_, "Replan with resetting optimization since path shape was changed.");
       return true;
     }
@@ -95,14 +96,6 @@ bool ReplanChecker::isReplanRequired(
       return true;
     }
 
-    /*
-    // empty mpt points
-    if (prev_mpt_traj_ptr->empty()) {
-      logInfo("Replan with resetting optimization since previous optimized trajectory is empty.");
-      return true;
-    }
-    */
-
     // time elapses
     const double delta_time_sec = (current_time - *prev_replanned_time_ptr_).seconds();
     if (max_delta_time_sec_ < delta_time_sec) {
@@ -120,40 +113,29 @@ bool ReplanChecker::isReplanRequired(
   return replan_required;
 }
 
-bool ReplanChecker::isPathShapeChanged(
+bool ReplanChecker::isPathAroundEgoChanged(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const
 {
   const auto & p = planner_data;
 
-  const double max_path_length = 50.0;
+  // calculate ego's lateral offset to previous trajectory points
+  const auto prev_ego_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
+  const double prev_ego_lat_offset =
+    motion_utils::calcLateralOffset(prev_traj_points, p.ego_pose.position, prev_ego_seg_idx);
 
-  // truncate prev points from ego pose to fixed end points
-  const auto prev_begin_idx =
-    trajectory_utils::findEgoIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
-  const auto truncated_prev_points =
-    trajectory_utils::clipForwardPoints(prev_traj_points, prev_begin_idx, max_path_length);
+  // calculate ego's lateral offset to current trajectory points
+  const auto ego_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(p.traj_points, p.ego_pose, ego_nearest_param_);
+  const double ego_lat_offset =
+    motion_utils::calcLateralOffset(p.traj_points, p.ego_pose.position, ego_seg_idx);
 
-  // truncate points from ego pose to fixed end points
-  const auto begin_idx =
-    trajectory_utils::findEgoIndex(p.traj_points, p.ego_pose, ego_nearest_param_);
-  const auto truncated_points =
-    trajectory_utils::clipForwardPoints(p.traj_points, begin_idx, max_path_length);
-
-  // guard for lateral offset
-  if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {
+  const double diff_ego_lat_offset = prev_ego_lat_offset - ego_lat_offset;
+  if (std::abs(diff_ego_lat_offset) < max_path_shape_around_ego_lat_dist_) {
     return false;
   }
 
-  // calculate lateral deviations between truncated path_points and prev_traj_points
-  for (const auto & prev_point : truncated_prev_points) {
-    const double dist =
-      std::abs(motion_utils::calcLateralOffset(truncated_points, prev_point.pose.position));
-    if (dist > max_path_shape_change_dist_) {
-      return true;
-    }
-  }
-
-  return false;
+  return true;
 }
 
 bool ReplanChecker::isPathGoalChanged(
@@ -162,7 +144,7 @@ bool ReplanChecker::isPathGoalChanged(
   const auto & p = planner_data;
 
   constexpr double min_vel = 1e-3;
-  if (std::abs(p.ego_vel) > min_vel) {
+  if (min_vel < std::abs(p.ego_vel)) {
     return false;
   }
 

@@ -31,7 +31,7 @@ namespace collision_free_path_planner
 class EBPathSmoother
 {
 public:
-  struct ConstraintLines
+  struct Constraint2d
   {
     struct Constraint
     {
@@ -53,16 +53,6 @@ public:
       double eps_abs;
       double eps_rel;
     };
-    QPParam qp_param;
-
-    // clearance
-    int num_joint_points;
-    double clearance_for_fix;
-    double clearance_for_joint;
-    double clearance_for_smooth;
-
-    double delta_arc_length;
-    int num_points;
 
     EBParam() = default;
     explicit EBParam(rclcpp::Node * node)
@@ -114,6 +104,19 @@ public:
         updateParam<double>(parameters, "advanced.eb.qp.eps_rel", qp_param.eps_rel);
       }
     }
+
+    // common
+    double delta_arc_length;
+    int num_points;
+
+    // clearance
+    int num_joint_points;
+    double clearance_for_fix;
+    double clearance_for_joint;
+    double clearance_for_smooth;
+
+    // qp
+    QPParam qp_param;
   };
 
   EBPathSmoother(
@@ -134,10 +137,9 @@ private:
   EBParam eb_param_;
   mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
 
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
-
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   std::vector<TrajectoryPoint> insertFixedPoint(
@@ -146,10 +148,11 @@ private:
   std::tuple<std::vector<TrajectoryPoint>, size_t> getPaddedTrajectoryPoints(
     const std::vector<TrajectoryPoint> & traj_points) const;
 
-  void updateConstraint(const std::vector<TrajectoryPoint> & traj_points) const;
+  void updateConstraint(
+    const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained) const;
 
-  ConstraintLines getConstraintLinesFromConstraintRectangle(
-    const geometry_msgs::msg::Pose & pose, const double rect_size) const;
+  Constraint2d getConstraint2dFromConstraintSegment(
+    const geometry_msgs::msg::Pose & pose, const double constraint_segment_length) const;
 
   std::optional<std::vector<double>> optimizeTrajectory(
     const std::vector<TrajectoryPoint> & traj_points);

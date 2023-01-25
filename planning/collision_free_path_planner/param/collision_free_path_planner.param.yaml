@@ -117,8 +117,8 @@
 
           terminal_lat_error_weight: 100.0 # weight for lateral error at terminal point
           terminal_yaw_error_weight: 100.0 # weight for yaw error at terminal point
-          terminal_path_lat_error_weight: 1000.0 # weight for lateral error at path end point
-          terminal_path_yaw_error_weight: 1000.0 # weight for yaw error at path end point
+          goal_lat_error_weight: 1000.0 # weight for lateral error at path end point
+          goal_yaw_error_weight: 1000.0 # weight for yaw error at path end point
 
           # obstacle avoidance
           obstacle_avoid_lat_error_weight: 3.0 # weight for lateral error

@@ -60,6 +60,9 @@ struct TimeKeeper
       RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), msg);
     }
     sstream.str("");
+
+    // reset accumulated_msg
+    accumulated_msg = "\n";
   }
 
   bool enable_calculation_time_info;
