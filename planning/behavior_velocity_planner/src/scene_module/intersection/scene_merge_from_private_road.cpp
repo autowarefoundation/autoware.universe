@@ -57,7 +57,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
 
   /* get current pose */
-  geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
+  geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
@@ -82,8 +82,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     extractPathNearExitOfPrivateRoad(*path, planner_data_->vehicle_info_.vehicle_length_m);
   const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
     lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
-    0.0 /* unnecessary in merge_from_private */, false /* same */, path, *path,
-    logger_.get_child("util"), clock_);
+    false /* same */, path, *path, logger_.get_child("util"), clock_);
   if (!stop_lines_idx_opt.has_value()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
@@ -114,10 +113,10 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     planning_utils::appendStopReason(stop_factor, stop_reason);
     const auto & stop_pose = path->points.at(stop_line_idx).point.pose;
     velocity_factor_.set(
-      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
+      path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
 
     const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
-      path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position);
+      path->points, current_pose.position, path->points.at(stop_line_idx).point.pose.position);
 
     constexpr double distance_threshold = 2.0;
     if (
