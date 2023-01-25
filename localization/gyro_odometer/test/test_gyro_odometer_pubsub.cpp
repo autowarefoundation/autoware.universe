@@ -95,7 +95,8 @@ bool isTwistValid(
 }
 
 // IMU & Velocity test
-// Verify that the gyro_odometer successfully publishes the fused twist message when both IMU and velocity data are provided
+// Verify that the gyro_odometer successfully publishes the fused twist message when both IMU and
+// velocity data are provided
 TEST(GyroOdometer, TestGyroOdometerWithImuAndVelocity)
 {
   Imu input_imu = generateSampleImu();
