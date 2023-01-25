@@ -118,10 +118,10 @@ TEST(GyroOdometer, TestGyroOdometerWithImuAndVelocity)
   imu_generator->imu_pub->publish(input_imu);
   velocity_generator->vehicle_velocity_pub->publish(input_velocity);
 
-  // Gyro odometer receives IMU and velocity, and publishes the fused twist data.
+  // gyro_odometer receives IMU and velocity, and publishes the fused twist data.
   spinSome(gyro_odometer_node);
 
-  // Validator node receives the fused twist data and store in "received_latest_twist_ptr".
+  // validator node receives the fused twist data and store in "received_latest_twist_ptr".
   spinSome(gyro_odometer_validator_node);
 
   EXPECT_FALSE(gyro_odometer_validator_node->received_latest_twist_ptr == nullptr)
@@ -142,10 +142,10 @@ TEST(GyroOdometer, TestGyroOdometerImuOnly)
 
   imu_generator->imu_pub->publish(input_imu);
 
-  // Gyro odometer receives IMU and velocity, and publishes the fused twist data.
+  // gyro_odometer receives IMU
   spinSome(gyro_odometer_node);
 
-  // Validator node receives the fused twist data and store in "received_latest_twist_ptr".
+  // validator node waits for the output fused twist from gyro_odometer
   spinSome(gyro_odometer_validator_node);
 
   EXPECT_TRUE(gyro_odometer_validator_node->received_latest_twist_ptr == nullptr);
