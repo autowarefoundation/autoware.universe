@@ -152,7 +152,7 @@ std::vector<ReferencePoint> resampleReferencePoints(
       base_keys.push_back(base_keys.back() + delta_arc_length);
     }
 
-    base_values.push_back(ref_points.at(i).k);
+    base_values.push_back(ref_points.at(i).curvature);
   }
 
   std::vector<double> query_keys;
@@ -171,14 +171,13 @@ std::vector<ReferencePoint> resampleReferencePoints(
     }
   }
 
-  // const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
   const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
 
   // create output reference points by updating curvature with resampled one
   std::vector<ReferencePoint> output_ref_points;
   for (size_t i = 0; i < query_values.size(); ++i) {
     output_ref_points.push_back(resampled_ref_points.at(i));
-    output_ref_points.at(i).k = query_values.at(i);
+    output_ref_points.at(i).curvature = query_values.at(i);
   }
 
   return output_ref_points;

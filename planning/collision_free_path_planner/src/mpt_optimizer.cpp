@@ -542,7 +542,7 @@ void MPTOptimizer::updateCurvature(
 {
   const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ref_points.at(i).k = curvature_vec.at(i);
+    ref_points.at(i).curvature = curvature_vec.at(i);
   }
 }
 
@@ -564,7 +564,7 @@ void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) co
   // update front pose and curvature of ref_points
   trajectory_utils::updateFrontPointForFix(
     ref_points, prev_ref_front_point.pose, mpt_param_.delta_arc_length);
-  ref_points.front().k = prev_ref_front_point.k;
+  ref_points.front().curvature = prev_ref_front_point.curvature;
 
   // resample to make ref_points' interval constant.
   // NOTE: Only pose, velocity and curvature will be interpolated.

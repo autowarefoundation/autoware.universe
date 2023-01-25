@@ -52,7 +52,7 @@ StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
 
     // get discrete kinematics matrix A, B, W
     const double ds = ref_points.at(i).delta_arc_length;
-    const double ref_k = ref_points.at(std::max(0, static_cast<int>(i) - 1)).k;
+    const double ref_k = ref_points.at(std::max(0, static_cast<int>(i) - 1)).curvature;
     vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, ref_k, ds);
 
     B.block(idx_x_i, 0, D_x, D_x) = Ad * B.block(idx_x_i_prev, 0, D_x, D_x);

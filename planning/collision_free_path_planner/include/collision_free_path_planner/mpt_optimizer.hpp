@@ -71,7 +71,7 @@ struct ReferencePoint
   double longitudinal_velocity_mps;
 
   // additional information
-  double k{0.0};
+  double curvature{0.0};
   double delta_arc_length{0.0};
   double alpha{0.0};
   Bounds bounds{};  // bounds on `pose`
