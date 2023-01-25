@@ -14,23 +14,25 @@
 
 #include "ekf_localizer/warning_message.hpp"
 
-#include <string>
-
 #include <fmt/core.h>
+
+#include <string>
 
 std::string poseDelayStepWarningMessage(
   const double delay_time, const int extend_state_step, const double ekf_dt)
 {
-  const std::string s = "Pose delay exceeds the compensation limit, ignored. "
-                        "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
+  const std::string s =
+    "Pose delay exceeds the compensation limit, ignored. "
+    "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
   return fmt::format(s, delay_time, extend_state_step * ekf_dt);
 }
 
 std::string twistDelayStepWarningMessage(
   const double delay_time, const int extend_state_step, const double ekf_dt)
 {
-  const std::string s = "Twist delay exceeds the compensation limit, ignored. "
-                        "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
+  const std::string s =
+    "Twist delay exceeds the compensation limit, ignored. "
+    "delay: {:.3f}[s], limit = extend_state_step * ekf_dt : {:.3f}[s]";
   return fmt::format(s, delay_time, extend_state_step * ekf_dt);
 }
 
