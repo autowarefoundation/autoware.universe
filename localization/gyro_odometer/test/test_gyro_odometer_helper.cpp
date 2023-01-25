@@ -14,8 +14,8 @@
 
 #include "test_gyro_odometer_helper.hpp"
 
-using sensor_msgs::msg::Imu;
 using geometry_msgs::msg::TwistWithCovarianceStamped;
+using sensor_msgs::msg::Imu;
 
 Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth)
 {
@@ -28,7 +28,8 @@ Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth)
   return imu;
 }
 
-TwistWithCovarianceStamped generateDefaultVelocity(const TwistWithCovarianceStamped & twist_ground_truth)
+TwistWithCovarianceStamped generateDefaultVelocity(
+  const TwistWithCovarianceStamped & twist_ground_truth)
 {
   TwistWithCovarianceStamped twist;
   twist.header = twist_ground_truth.header;

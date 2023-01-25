@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEST_PLANNING_VALIDATOR_HELPER_HPP_
-#define TEST_PLANNING_VALIDATOR_HELPER_HPP_
+#ifndef TEST_GYRO_ODOMETER_HELPER_HPP_
+#define TEST_GYRO_ODOMETER_HELPER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 
-using sensor_msgs::msg::Imu;
 using geometry_msgs::msg::TwistWithCovarianceStamped;
+using sensor_msgs::msg::Imu;
 
 Imu generateDefaultImu(const TwistWithCovarianceStamped & twist_ground_truth);
-TwistWithCovarianceStamped generateDefaultVelocity(const TwistWithCovarianceStamped & twist_ground_truth);
+TwistWithCovarianceStamped generateDefaultVelocity(
+  const TwistWithCovarianceStamped & twist_ground_truth);
 rclcpp::NodeOptions getNodeOptionsWithDefaultParams();
 
-#endif  // TEST_PLANNING_VALIDATOR_HELPER_HPP_
+#endif  // TEST_GYRO_ODOMETER_HELPER_HPP_

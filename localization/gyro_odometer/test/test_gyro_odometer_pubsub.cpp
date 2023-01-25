@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "gyro_odometer/gyro_odometer_core.hpp"
-
 #include "test_gyro_odometer_helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -25,8 +25,8 @@
 /*
  * This test checks if twist is published from gyro_odometer
  */
-using sensor_msgs::msg::Imu;
 using geometry_msgs::msg::TwistWithCovarianceStamped;
+using sensor_msgs::msg::Imu;
 
 class PubSubManager : public rclcpp::Node
 {
@@ -34,10 +34,12 @@ public:
   PubSubManager() : Node("test_pub_sub")
   {
     imu_pub_ = create_publisher<Imu>("/imu", 1);
-    vehicle_velocity_pub_ = create_publisher<TwistWithCovarianceStamped>("/vehicle/twist_with_covariance", 1);
+    vehicle_velocity_pub_ =
+      create_publisher<TwistWithCovarianceStamped>("/vehicle/twist_with_covariance", 1);
     twist_sub_ = create_subscription<TwistWithCovarianceStamped>(
-      "/twist_with_covariance", 1,
-      [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) { received_twists_.push_back(msg); });
+      "/twist_with_covariance", 1, [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) {
+        received_twists_.push_back(msg);
+      });
   }
 
   rclcpp::Publisher<Imu>::SharedPtr imu_pub_;
@@ -73,13 +75,16 @@ bool isAllOK(
   return true;
 }
 
-void runWithBothMessages(const Imu & imu, const TwistWithCovarianceStamped & velocity, const TwistWithCovarianceStamped & twist_ground_truth)
+void runWithBothMessages(
+  const Imu & imu, const TwistWithCovarianceStamped & velocity,
+  const TwistWithCovarianceStamped & twist_ground_truth)
 {
   auto gyro_odometer_node = std::make_shared<GyroOdometer>(getNodeOptionsWithDefaultParams());
   auto manager_node = std::make_shared<PubSubManager>();
   EXPECT_GE(manager_node->imu_pub_->get_subscription_count(), 1U) << "imu is not connected.";
 
-  manager_node->vehicle_velocity_pub_->publish(velocity); // need this for now, which should eventually be removed
+  manager_node->vehicle_velocity_pub_->publish(
+    velocity);  // need this for now, which should eventually be removed
   manager_node->vehicle_velocity_pub_->publish(velocity);
   manager_node->imu_pub_->publish(imu);
 
@@ -115,10 +120,8 @@ TEST(GyroOdometer, TestGyroOdometerOK)
   twist_ground_truth.twist.twist.angular.z = 0.3;
 
   runWithBothMessages(
-    generateDefaultImu(twist_ground_truth),
-    generateDefaultVelocity(twist_ground_truth),
-    twist_ground_truth
-  );
+    generateDefaultImu(twist_ground_truth), generateDefaultVelocity(twist_ground_truth),
+    twist_ground_truth);
 }
 
 // Bad cases
@@ -128,4 +131,3 @@ TEST(GyroOdometer, TestGyroOdometerNG)
   twist_ground_truth.header.frame_id = "base_link";
   runWithImuMessageOnly(generateDefaultImu(twist_ground_truth));
 }
-
