@@ -35,7 +35,7 @@ inline std::vector<size_t> calc_closest_segment_indices(
     if (base_keys.back() - overlap_threshold < validated_query_keys.at(i)) {
       closest_segment_idx = base_keys.size() - 1;
     } else {
-      for (size_t j = base_keys.size() - 1; j > closest_segment_idx; --j) { 
+      for (size_t j = base_keys.size() - 1; j > closest_segment_idx; --j) {
         if (
           base_keys.at(j - 1) - overlap_threshold < validated_query_keys.at(i) &&
           validated_query_keys.at(i) < base_keys.at(j)) {
