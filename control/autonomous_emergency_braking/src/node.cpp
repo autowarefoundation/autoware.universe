@@ -57,6 +57,9 @@ AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
   updater_.setHardwareID("autonomous_emergency_braking");
   updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
 
+  // parameter
+  use_imu_data_ = false;
+
   // start timer
   const auto planning_hz = 100.0;  // declare_parameter("planning_hz", 10.0);
   const auto period_ns = rclcpp::Rate(planning_hz).period();
@@ -130,8 +133,16 @@ bool AEB::isDataReady()
     return missing("ego velocity");
   }
 
-  if (!odometry_ptr_) {
+  if (!use_imu_data_ && !odometry_ptr_) {
     return missing("odometry");
+  }
+
+  if (use_imu_data_ && !imu_ptr_) {
+    return missing("imu");
+  }
+
+  if (!obstacle_ros_pointcloud_ptr_) {
+    return missing("object pointcloud");
   }
 
   return true;
@@ -140,20 +151,16 @@ bool AEB::isDataReady()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   if (!isDataReady()) {
-    return;
-  }
-
-  const std::string error_msg = "[AEB]: Emergency Brake";
-  const auto diag_level = DiagnosticStatus::ERROR;
-  stat.summary(diag_level, error_msg);
-
-  if (!obstacle_ros_pointcloud_ptr_) {
+    const std::string error_msg = "[AEB]: Necessary data is unavailable";
+    const auto diag_level = DiagnosticStatus::OK;
+    stat.summary(diag_level, error_msg);
     return;
   }
 
   // create data
   const double v = current_velocity_ptr_->longitudinal_velocity;
-  const double w = odometry_ptr_->twist.twist.angular.z;
+  const double w =
+    use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
 
@@ -185,6 +192,9 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // check if the predicted path has valid number of points
   if (predicted_path.size() < 2) {
+    const std::string error_msg = "[AEB]: Ego is stopping";
+    const auto diag_level = DiagnosticStatus::OK;
+    stat.summary(diag_level, error_msg);
     return;
   }
 
@@ -214,7 +224,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
       continue;
     }
     const double time_to_collision = obj.lon_dist / std::max(rel_vel, 1e-6);
-    if (time_to_collision < 1.0) {
+    if (time_to_collision < 2.0) {
       collision_flag = true;
       break;
     }
@@ -223,7 +233,15 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   // step4. handle the dangerous situation
   if (collision_flag) {
     std::cerr << "Emergency" << std::endl;
+    const std::string error_msg = "[AEB]: Emergency Brake";
+    const auto diag_level = DiagnosticStatus::ERROR;
+    stat.summary(diag_level, error_msg);
+    return;
   }
+
+  const std::string error_msg = "[AEB]: No Dangerous Object";
+  const auto diag_level = DiagnosticStatus::OK;
+  stat.summary(diag_level, error_msg);
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking

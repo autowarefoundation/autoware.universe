@@ -15,7 +15,7 @@
                 emergency_stop:
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: emergency_stop
-                  contains: ["autonomous_emergency_braking: aeb_emergency_stop"]
+                  contains: [": aeb_emergency_stop"]
                   timeout: 1.0
 
         control_command_gate:

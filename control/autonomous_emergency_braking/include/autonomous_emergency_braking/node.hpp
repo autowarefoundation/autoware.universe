@@ -97,6 +97,9 @@ public:
 
   // diag
   Updater updater_{this};
+
+  // member variables
+  bool use_imu_data_{false};
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 
