@@ -6,8 +6,7 @@ class Test11LidarSim(Test11LidarBase):
     def setup_class(cls) -> None:
         super().setup_class()
 
-    def test_get_left_raw(self):
-        self.update_pointcloud_data()
+    def test_lidars(self):
+        result = self.update_pointcloud_data()
         for sensor in self.sensors:
-            result = self.get_data(sensor["topic"])
-            assert len(result) != 0
+            assert len(result[sensor["topic"]]) != 0

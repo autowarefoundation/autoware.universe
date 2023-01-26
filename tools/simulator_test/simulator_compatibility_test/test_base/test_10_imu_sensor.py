@@ -12,7 +12,7 @@ from test_base.configuration_loader import ConfigFileHandler
 
 
 class Test10ImuSensorBase:
-    sensor_msgs_rx = {}
+    rx_msgs = {}
     node = None
     sub_imu = None
     executor = None
@@ -32,15 +32,23 @@ class Test10ImuSensorBase:
         rclpy.init()
         cls.node = rclpy.create_node("test_10_imu_sensor_base")
         for sensor in cls.sensors:
-            cls.sensor_msgs_rx[sensor["topic"]] = []
+            cls.rx_msgs[sensor["topic"]] = []
+            imu_cb = cls.rx_closure(sensor["topic"])
             cls.sub_pose_stamped = cls.node.create_subscription(
                 Imu,
                 sensor["topic"],
-                lambda msg: cls.sensor_msgs_rx.append(msg),
+                imu_cb,
                 QOS_BEKL10V,
             )
         cls.executor = SingleThreadedExecutor()
         cls.executor.add_node(cls.node)
+
+    @classmethod
+    def rx_closure(cls, topic):
+        def rx_callback(msg):
+            cls.rx_msgs[topic].append(msg)
+
+        return rx_callback
 
     @classmethod
     def teardown_class(cls) -> None:
@@ -51,18 +59,20 @@ class Test10ImuSensorBase:
     @pytest.fixture
     def setup_method(self):
         for sensor in self.sensors:
-            self.sensor_msgs_rx[sensor["topic"]].clear()
+            self.rx_msgs[sensor["topic"]].clear()
 
     def update_sensor_data(self):
         time.sleep(1)
+        cnt = 0
         try:
             if rclpy.ok():
-                while len(self.sensor_msgs_rx) <= 2:
+                while cnt <= 3:
                     self.executor.spin_once()
+                    cnt += 1
         except BaseException as e:
             print(e)
         finally:
-            return self.sensor_msgs_rx
+            return self.rx_msgs
 
     def get_data(self, topic):
         return self.sensor_msgs_rx[topic]

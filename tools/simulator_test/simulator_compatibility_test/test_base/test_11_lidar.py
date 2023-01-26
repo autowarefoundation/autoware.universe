@@ -13,7 +13,7 @@ from test_base.configuration_loader import ConfigFileHandler
 
 class Test11LidarBase:
     node = None
-    msgs_rx = {}
+    rx_msgs = {}
     executor = None
 
     @classmethod
@@ -31,15 +31,23 @@ class Test11LidarBase:
         rclpy.init()
         cls.node = rclpy.create_node("test_11_lidar_base")
         for sensor in cls.sensors:
-            cls.msgs_rx[sensor["topic"]] = []
+            cls.rx_msgs[sensor["topic"]] = []
+            lidar_cb = cls.rx_closure(sensor["topic"])
             cls.node.create_subscription(
                 PointCloud2,
                 sensor["topic"],
-                lambda msg: cls.msgs_rx[sensor["topic"]].append(msg),
+                lidar_cb,
                 QOS_BEKL10V,
             )
         cls.executor = MultiThreadedExecutor()
         cls.executor.add_node(cls.node)
+
+    @classmethod
+    def rx_closure(cls, topic):
+        def rx_callback(msg):
+            cls.rx_msgs[topic].append(msg)
+
+        return rx_callback
 
     @classmethod
     def teardown_class(cls) -> None:
@@ -50,7 +58,7 @@ class Test11LidarBase:
     @pytest.fixture
     def setup_method(self):
         for sensor in self.sensors:
-            self.sensor_msgs_rx[sensor["topic"]].clear()
+            self.rx_msgs[sensor["topic"]].clear()
 
     def update_pointcloud_data(self):
         time.sleep(1)
@@ -64,7 +72,4 @@ class Test11LidarBase:
         except BaseException as e:
             print(e)
         finally:
-            return self.msgs_rx
-
-    def get_data(self, topic):
-        return self.msgs_rx[topic]
+            return self.rx_msgs
