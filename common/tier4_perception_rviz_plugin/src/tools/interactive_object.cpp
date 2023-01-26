@@ -252,25 +252,30 @@ void InteractiveObjectTool::onPoseSet(double x, double y, double theta)
     return;
   }
 
-  tf2::Quaternion quat;
-  quat.setRPY(0.0, 0.0, theta);
 
-  auto output_msg = createObjectMsg();
-  output_msg.initial_state.pose_covariance.pose.position.x = x;
-  output_msg.initial_state.pose_covariance.pose.position.y = y;
-  output_msg.initial_state.pose_covariance.pose.position.z = position_z_->getFloat();
-  output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
-  output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
-  output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
-  output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
-  output_msg.initial_state.accel_covariance.accel.linear.x = accel_->getFloat();
-  output_msg.initial_state.accel_covariance.accel.linear.y = 0.0;
-  output_msg.initial_state.accel_covariance.accel.linear.z = 0.0;
-  output_msg.max_velocity = max_velocity_->getFloat();
-  output_msg.min_velocity = min_velocity_->getFloat();
-  output_msg.action = Object::ADD;
+  for (int i = 0; i < 10; i++) {
+    
+    tf2::Quaternion quat;
+    quat.setRPY(0.0, 0.0, theta);
 
-  dummy_object_info_pub_->publish(output_msg);
+    auto output_msg = createObjectMsg();
+    output_msg.initial_state.pose_covariance.pose.position.x = x + i * 4;
+    output_msg.initial_state.pose_covariance.pose.position.y = y + i * 10;
+    output_msg.initial_state.pose_covariance.pose.position.z = position_z_->getFloat();
+    output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
+    output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
+    output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
+    output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
+    output_msg.initial_state.accel_covariance.accel.linear.x = accel_->getFloat();
+    output_msg.initial_state.accel_covariance.accel.linear.y = 0.0;
+    output_msg.initial_state.accel_covariance.accel.linear.z = 0.0;
+    output_msg.max_velocity = max_velocity_->getFloat();
+    output_msg.min_velocity = min_velocity_->getFloat();
+    output_msg.action = Object::ADD;
+
+    dummy_object_info_pub_->publish(output_msg);
+  }
+  // dummy_object_info_pub_->publish(output_msg);
 }
 
 void InteractiveObjectTool::publishObjectMsg(
