@@ -28,6 +28,7 @@ ReplanChecker::ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_ne
   max_path_shape_around_ego_lat_dist_ =
     node->declare_parameter<double>("replan.max_path_shape_around_ego_lat_dist");
   max_ego_moving_dist_ = node->declare_parameter<double>("replan.max_ego_moving_dist");
+  max_goal_moving_dist_ = node->declare_parameter<double>("replan.max_goal_moving_dist");
   max_delta_time_sec_ = node->declare_parameter<double>("replan.max_delta_time_sec");
 }
 
@@ -38,6 +39,7 @@ void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)
   updateParam<double>(
     parameters, "replan.max_path_shape_around_ego_lat_dist", max_path_shape_around_ego_lat_dist_);
   updateParam<double>(parameters, "replan.max_ego_moving_dist", max_ego_moving_dist_);
+  updateParam<double>(parameters, "replan.max_goal_moving_dist", max_goal_moving_dist_);
   updateParam<double>(parameters, "replan.max_delta_time_sec", max_delta_time_sec_);
 }
 
@@ -145,17 +147,15 @@ bool ReplanChecker::isPathGoalChanged(
 {
   const auto & p = planner_data;
 
+  // check if the vehicle is stopping
   constexpr double min_vel = 1e-3;
   if (min_vel < std::abs(p.ego_vel)) {
     return false;
   }
 
-  // NOTE: Path may be cropped and does not contain the goal.
-  // Therefore we set a large value to distance threshold.
-  constexpr double max_goal_moving_dist = 15.0;
   const double goal_moving_dist =
     tier4_autoware_utils::calcDistance2d(p.traj_points.back(), prev_traj_points.back());
-  if (goal_moving_dist < max_goal_moving_dist) {
+  if (goal_moving_dist < max_goal_moving_dist_) {
     return false;
   }
 

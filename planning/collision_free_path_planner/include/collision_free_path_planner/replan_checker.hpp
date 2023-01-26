@@ -52,6 +52,7 @@ private:
   // algorithm parameters
   double max_path_shape_around_ego_lat_dist_;
   double max_ego_moving_dist_;
+  double max_goal_moving_dist_;
   double max_delta_time_sec_;
 
   bool isPathAroundEgoChanged(
