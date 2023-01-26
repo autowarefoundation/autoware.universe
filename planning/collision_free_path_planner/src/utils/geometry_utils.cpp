@@ -51,7 +51,6 @@ geometry_msgs::msg::Point getStartPoint(
   }
 
   const auto first_point = motion_utils::calcLongitudinalOffsetPoint(bound, segment_idx, length);
-
   if (first_point) {
     return *first_point;
   }

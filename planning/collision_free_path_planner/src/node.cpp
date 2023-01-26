@@ -396,11 +396,11 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   // NOTE: Some end trajectory points should be ignored to check if being outside the drivable area
   //       since these points tend to be outside drivable area when end reference points have high
   //       curvature.
-  const int end_idx = std::max(10, static_cast<int>(optimized_traj_points.size()) - 5);
+  // const int end_idx = std::max(10, static_cast<int>(optimized_traj_points.size()) - 5);
 
   // 3. assign zero velocity to the first point being outside the drivable area
   const auto first_outside_idx = [&]() -> std::optional<size_t> {
-    for (size_t i = ego_idx; i < static_cast<size_t>(end_idx); ++i) {
+    for (size_t i = ego_idx; i < optimized_traj_points.size(); ++i) {
       auto & traj_point = optimized_traj_points.at(i);
 
       // check if the footprint is outside the drivable area

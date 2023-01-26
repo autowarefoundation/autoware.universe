@@ -518,6 +518,15 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
     ref_points.resize(mpt_param_.num_points);
   }
 
+  updateCurvature(ref_points, ref_points_spline);
+
+  /*
+  // TODO(murooka)
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    ref_points.at(i).curvature = 0.0;
+  }
+  */
+
   debug_data_ptr_->ref_points = ref_points;
 
   time_keeper_ptr_->toc(__func__, "        ");
@@ -531,6 +540,17 @@ void MPTOptimizer::updateOrientation(
 {
   const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
+    /*
+    if (i == ref_points.size() - 1) {
+      ref_points.at(i).pose.orientation = ref_points.at(i - 1).pose.orientation;
+    } else {
+      const double yaw = tier4_autoware_utils::calcAzimuthAngle(ref_points.at(i).pose.position,
+    ref_points.at(i + 1).pose.position); ref_points.at(i).pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    }
+    */
+
+    // TODO(murooka)
     ref_points.at(i).pose.orientation =
       tier4_autoware_utils::createQuaternionFromYaw(yaw_vec.at(i));
   }
@@ -540,6 +560,31 @@ void MPTOptimizer::updateCurvature(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
+  /*
+  {
+    const size_t num_points = static_cast<int>(ref_points.size());
+
+    // calculate curvature by circle fitting from three points
+    constexpr size_t num_curvature_sampling_points = 5;
+    size_t max_smoothing_num = static_cast<size_t>(std::floor(0.5 * (num_points - 1)));
+    size_t L =
+      std::min(static_cast<size_t>(num_curvature_sampling_points), max_smoothing_num);
+    const auto curvatures = geometry_utils::calcCurvature(
+                                                  ref_points,
+  static_cast<size_t>(num_curvature_sampling_points)); for (size_t i = L; i < num_points - L; ++i) {
+      ref_points.at(i).curvature = curvatures.at(i);
+    }
+    // first and last curvature is copied from next value
+    for (size_t i = 0; i < std::min(L, num_points); ++i) {
+      ref_points.at(i).curvature = ref_points.at(std::min(L, num_points - 1)).curvature;
+      ref_points.at(num_points - i - 1).curvature =
+        ref_points.at(std::max(static_cast<int>(num_points) - static_cast<int>(L) - 1,
+  0)).curvature;
+    }
+  }
+  */
+
+  // TODO(murooka)
   const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).curvature = curvature_vec.at(i);
@@ -1103,6 +1148,8 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
     osqp_solver_ptr_->updateCscA(A_csc);
     osqp_solver_ptr_->updateL(lower_bound);
     osqp_solver_ptr_->updateU(upper_bound);
+    // osqp_solver_ptr_->updateEpsRel(1e-5);
+    // osqp_solver_ptr_->updateEpsAbs(1e-7);
   } else {
     RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
     osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
