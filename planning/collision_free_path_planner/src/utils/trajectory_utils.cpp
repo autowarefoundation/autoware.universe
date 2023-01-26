@@ -171,9 +171,9 @@ std::vector<ReferencePoint> resampleReferencePoints(
     }
   }
 
-  constexpr double epsilon = 1e-6;
-  if (query_keys.back() < base_keys.back() - epsilon) {
+  if (query_keys.size() != resampled_ref_points.size()) {
     // compensate last key
+    constexpr double epsilon = 1e-6;
     query_keys.push_back(base_keys.back() - epsilon);
   }
 

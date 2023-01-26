@@ -232,8 +232,8 @@ MPTOptimizer::MPTParam::MPTParam(
   }
 
   {  // validation
-     // max_validation_lat_error = node->declare_parameter<double>("mpt.validation.max_lat_error");
-     // max_validation_yaw_error = node->declare_parameter<double>("mpt.validation.max_yaw_error");
+    max_validation_lat_error = node->declare_parameter<double>("mpt.validation.max_lat_error");
+    max_validation_yaw_error = node->declare_parameter<double>("mpt.validation.max_yaw_error");
   }
 }
 

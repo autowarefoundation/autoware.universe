@@ -111,7 +111,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_, debug_data_ptr_,
     time_keeper_ptr_);
 
-  // first, reset planners
+  // reset planners
   // NOTE: This function must be called after core algorithms (e.g. mpt_optimizer_) have been
   // initialized.
   initializePlanning();
@@ -352,7 +352,6 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
     return *prev_optimized_traj_points_ptr_;
   }
 
-  // TODO(murooka) no need to generate post procesed trajectory?
   return traj_points;
 }
 
@@ -499,7 +498,9 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   }();
 
   const auto full_traj_points = [&]() {
-    if (!extended_traj_points) {  // compensate goal pose
+    if (!extended_traj_points) {
+      /*
+      // compensate goal pose
       if (geometry_utils::isSamePoint(optimized_traj_points.back(), traj_points.back())) {
         // goal position is contained
         auto full_traj_points = optimized_traj_points;
@@ -507,6 +508,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
         full_traj_points.back() = traj_points.back();
         return full_traj_points;
       }
+      */
       // return concatVectors(optimized_traj_points, {traj_points.back()});
       return optimized_traj_points;
     }
