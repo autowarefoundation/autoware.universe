@@ -170,70 +170,64 @@ MPTOptimizer::MPTParam::MPTParam(
 
   {  // clearance
     hard_clearance_from_road =
-      node->declare_parameter<double>("advanced.mpt.clearance.hard_clearance_from_road");
+      node->declare_parameter<double>("mpt.clearance.hard_clearance_from_road");
     soft_clearance_from_road =
-      node->declare_parameter<double>("advanced.mpt.clearance.soft_clearance_from_road");
+      node->declare_parameter<double>("mpt.clearance.soft_clearance_from_road");
   }
 
   {  // weight
-    soft_avoidance_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.soft_avoidance_weight");
+    soft_avoidance_weight = node->declare_parameter<double>("mpt.weight.soft_avoidance_weight");
 
-    lat_error_weight = node->declare_parameter<double>("advanced.mpt.weight.lat_error_weight");
-    yaw_error_weight = node->declare_parameter<double>("advanced.mpt.weight.yaw_error_weight");
-    yaw_error_rate_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.yaw_error_rate_weight");
-    steer_input_weight = node->declare_parameter<double>("advanced.mpt.weight.steer_input_weight");
-    steer_rate_weight = node->declare_parameter<double>("advanced.mpt.weight.steer_rate_weight");
+    lat_error_weight = node->declare_parameter<double>("mpt.weight.lat_error_weight");
+    yaw_error_weight = node->declare_parameter<double>("mpt.weight.yaw_error_weight");
+    yaw_error_rate_weight = node->declare_parameter<double>("mpt.weight.yaw_error_rate_weight");
+    steer_input_weight = node->declare_parameter<double>("mpt.weight.steer_input_weight");
+    steer_rate_weight = node->declare_parameter<double>("mpt.weight.steer_rate_weight");
 
     obstacle_avoid_lat_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.obstacle_avoid_lat_error_weight");
+      node->declare_parameter<double>("mpt.weight.obstacle_avoid_lat_error_weight");
     obstacle_avoid_yaw_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.obstacle_avoid_yaw_error_weight");
+      node->declare_parameter<double>("mpt.weight.obstacle_avoid_yaw_error_weight");
     obstacle_avoid_steer_input_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.obstacle_avoid_steer_input_weight");
-    near_objects_length =
-      node->declare_parameter<double>("advanced.mpt.weight.near_objects_length");
+      node->declare_parameter<double>("mpt.weight.obstacle_avoid_steer_input_weight");
+    near_objects_length = node->declare_parameter<double>("mpt.weight.near_objects_length");
 
     terminal_lat_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.terminal_lat_error_weight");
+      node->declare_parameter<double>("mpt.weight.terminal_lat_error_weight");
     terminal_yaw_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.terminal_yaw_error_weight");
-    goal_lat_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.goal_lat_error_weight");
-    goal_yaw_error_weight =
-      node->declare_parameter<double>("advanced.mpt.weight.goal_yaw_error_weight");
+      node->declare_parameter<double>("mpt.weight.terminal_yaw_error_weight");
+    goal_lat_error_weight = node->declare_parameter<double>("mpt.weight.goal_lat_error_weight");
+    goal_yaw_error_weight = node->declare_parameter<double>("mpt.weight.goal_yaw_error_weight");
   }
 
   {  // collision free constraints
-    l_inf_norm =
-      node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.l_inf_norm");
-    soft_constraint = node->declare_parameter<bool>(
-      "advanced.mpt.collision_free_constraints.option.soft_constraint");
-    hard_constraint = node->declare_parameter<bool>(
-      "advanced.mpt.collision_free_constraints.option.hard_constraint");
+    l_inf_norm = node->declare_parameter<bool>("mpt.collision_free_constraints.option.l_inf_norm");
+    soft_constraint =
+      node->declare_parameter<bool>("mpt.collision_free_constraints.option.soft_constraint");
+    hard_constraint =
+      node->declare_parameter<bool>("mpt.collision_free_constraints.option.hard_constraint");
   }
 
   {  // vehicle_circles
     // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
-    vehicle_circles_method = node->declare_parameter<std::string>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.method");
+    vehicle_circles_method =
+      node->declare_parameter<std::string>("mpt.collision_free_constraints.vehicle_circles.method");
 
     // uniform circles
     vehicle_circles_uniform_circle_num = node->declare_parameter<int>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num");
+      "mpt.collision_free_constraints.vehicle_circles.uniform_circle.num");
     vehicle_circles_uniform_circle_radius_ratio = node->declare_parameter<double>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio");
+      "mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio");
 
     // bicycle model
     vehicle_circles_bicycle_model_num = node->declare_parameter<int>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
+      "mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
       "calculation");
     vehicle_circles_bicycle_model_rear_radius_ratio = node->declare_parameter<double>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles."
+      "mpt.collision_free_constraints.vehicle_circles."
       "bicycle_model.rear_radius_ratio");
     vehicle_circles_bicycle_model_front_radius_ratio = node->declare_parameter<double>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles."
+      "mpt.collision_free_constraints.vehicle_circles."
       "bicycle_model.front_radius_ratio");
   }
 
@@ -265,79 +259,68 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
     parameters, "mpt.kinematics.optimization_center_offset", optimization_center_offset);
 
   // collision_free_constraints
+  updateParam<bool>(parameters, "mpt.collision_free_constraints.option.l_inf_norm", l_inf_norm);
   updateParam<bool>(
-    parameters, "advanced.mpt.collision_free_constraints.option.l_inf_norm", l_inf_norm);
+    parameters, "mpt.collision_free_constraints.option.soft_constraint", soft_constraint);
   updateParam<bool>(
-    parameters, "advanced.mpt.collision_free_constraints.option.soft_constraint", soft_constraint);
-  updateParam<bool>(
-    parameters, "advanced.mpt.collision_free_constraints.option.hard_constraint", hard_constraint);
+    parameters, "mpt.collision_free_constraints.option.hard_constraint", hard_constraint);
 
   {  // vehicle_circles
     updateParam<std::string>(
-      parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.method",
-      vehicle_circles_method);
+      parameters, "mpt.collision_free_constraints.vehicle_circles.method", vehicle_circles_method);
 
     // uniform circles
     updateParam<int>(
-      parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num",
+      parameters, "mpt.collision_free_constraints.vehicle_circles.uniform_circle.num",
       vehicle_circles_uniform_circle_num);
     updateParam<double>(
-      parameters,
-      "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio",
+      parameters, "mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio",
       vehicle_circles_uniform_circle_radius_ratio);
 
     // bicycle model
     updateParam<int>(
       parameters,
-      "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_calculation",
+      "mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_calculation",
       vehicle_circles_bicycle_model_num);
     updateParam<double>(
-      parameters,
-      "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.rear_radius_ratio",
+      parameters, "mpt.collision_free_constraints.vehicle_circles.bicycle_model.rear_radius_ratio",
       vehicle_circles_bicycle_model_rear_radius_ratio);
     updateParam<double>(
-      parameters,
-      "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.front_radius_ratio",
+      parameters, "mpt.collision_free_constraints.vehicle_circles.bicycle_model.front_radius_ratio",
       vehicle_circles_bicycle_model_front_radius_ratio);
   }
 
   {  // clearance
     updateParam<double>(
-      parameters, "advanced.mpt.clearance.hard_clearance_from_road", hard_clearance_from_road);
+      parameters, "mpt.clearance.hard_clearance_from_road", hard_clearance_from_road);
     updateParam<double>(
-      parameters, "advanced.mpt.clearance.soft_clearance_from_road", soft_clearance_from_road);
+      parameters, "mpt.clearance.soft_clearance_from_road", soft_clearance_from_road);
   }
 
   {  // weight
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.soft_avoidance_weight", soft_avoidance_weight);
+    updateParam<double>(parameters, "mpt.weight.soft_avoidance_weight", soft_avoidance_weight);
 
-    updateParam<double>(parameters, "advanced.mpt.weight.lat_error_weight", lat_error_weight);
-    updateParam<double>(parameters, "advanced.mpt.weight.yaw_error_weight", yaw_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.yaw_error_rate_weight", yaw_error_rate_weight);
-    updateParam<double>(parameters, "advanced.mpt.weight.steer_input_weight", steer_input_weight);
-    updateParam<double>(parameters, "advanced.mpt.weight.steer_rate_weight", steer_rate_weight);
+    updateParam<double>(parameters, "mpt.weight.lat_error_weight", lat_error_weight);
+    updateParam<double>(parameters, "mpt.weight.yaw_error_weight", yaw_error_weight);
+    updateParam<double>(parameters, "mpt.weight.yaw_error_rate_weight", yaw_error_rate_weight);
+    updateParam<double>(parameters, "mpt.weight.steer_input_weight", steer_input_weight);
+    updateParam<double>(parameters, "mpt.weight.steer_rate_weight", steer_rate_weight);
 
     updateParam<double>(
-      parameters, "advanced.mpt.weight.obstacle_avoid_lat_error_weight",
-      obstacle_avoid_lat_error_weight);
+      parameters, "mpt.weight.obstacle_avoid_lat_error_weight", obstacle_avoid_lat_error_weight);
     updateParam<double>(
-      parameters, "advanced.mpt.weight.obstacle_avoid_yaw_error_weight",
-      obstacle_avoid_yaw_error_weight);
+      parameters, "mpt.weight.obstacle_avoid_yaw_error_weight", obstacle_avoid_yaw_error_weight);
     updateParam<double>(
-      parameters, "advanced.mpt.weight.obstacle_avoid_steer_input_weight",
+      parameters, "mpt.weight.obstacle_avoid_steer_input_weight",
       obstacle_avoid_steer_input_weight);
-    updateParam<double>(parameters, "advanced.mpt.weight.near_objects_length", near_objects_length);
+    updateParam<double>(parameters, "mpt.weight.near_objects_length", near_objects_length);
 
     updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_lat_error_weight", terminal_lat_error_weight);
+      parameters, "mpt.weight.terminal_lat_error_weight", terminal_lat_error_weight);
     updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_yaw_error_weight", terminal_yaw_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.goal_lat_error_weight", goal_lat_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.goal_yaw_error_weight", goal_yaw_error_weight);
+      parameters, "mpt.weight.terminal_yaw_error_weight", terminal_yaw_error_weight);
+    updateParam<double>(parameters, "mpt.weight.goal_lat_error_weight", goal_lat_error_weight);
+    updateParam<double>(parameters, "mpt.weight.goal_yaw_error_weight", goal_yaw_error_weight);
   }
 
   {  // validation

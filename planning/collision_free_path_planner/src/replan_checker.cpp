@@ -152,7 +152,7 @@ bool ReplanChecker::isPathGoalChanged(
 
   // NOTE: Path may be cropped and does not contain the goal.
   // Therefore we set a large value to distance threshold.
-  constexpr double max_goal_moving_dist = 1.0;
+  constexpr double max_goal_moving_dist = 15.0;
   const double goal_moving_dist =
     tier4_autoware_utils::calcDistance2d(p.traj_points.back(), prev_traj_points.back());
   if (goal_moving_dist < max_goal_moving_dist) {
