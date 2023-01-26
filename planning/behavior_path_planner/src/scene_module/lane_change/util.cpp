@@ -375,7 +375,7 @@ LaneChangePaths getLaneChangePaths(
       route_handler, target_lanelets, lane_changing_start_pose, target_lane_length, lc_dist,
       required_total_min_distance, forward_path_length, resample_interval, is_goal_in_route);
     if (target_lane_reference_path.points.empty()) {
-      return candidate_paths;
+      continue;
     }
 
     const ShiftLine shift_line = getLaneChangeShiftLine(
