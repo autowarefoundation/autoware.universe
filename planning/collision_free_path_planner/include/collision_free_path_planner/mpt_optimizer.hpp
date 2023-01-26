@@ -143,6 +143,7 @@ private:
     // option
     bool enable_warm_start;
     bool enable_manual_warm_start;
+    bool enable_optimization_validation;
     bool steer_limit_constraint;
     int mpt_visualize_sampling_num;  // for debug
 
@@ -190,6 +191,10 @@ private:
     int vehicle_circles_bicycle_model_num;
     double vehicle_circles_bicycle_model_rear_radius_ratio;
     double vehicle_circles_bicycle_model_front_radius_ratio;
+
+    // validation
+    double max_validation_lat_error;
+    double max_validation_yaw_error;
 
     explicit MPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
     MPTParam() = default;
@@ -273,7 +278,7 @@ private:
     std::vector<Eigen::Triplet<double>> & R_triplet_vec,
     const std::vector<ReferencePoint> & ref_points) const;
 
-  std::vector<TrajectoryPoint> calcMPTPoints(
+  std::optional<std::vector<TrajectoryPoint>> calcMPTPoints(
     std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
     const StateEquationGenerator::Matrix & mpt_matrix) const;
 

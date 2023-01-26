@@ -87,7 +87,8 @@ EBPathSmoother::EBPathSmoother(
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
   traj_param_(traj_param),
-  time_keeper_ptr_(time_keeper_ptr)
+  time_keeper_ptr_(time_keeper_ptr),
+  logger_(node->get_logger().get_child("eb_path_smoother"))
 {
   // eb param
   eb_param_ = EBParam(node);
@@ -167,22 +168,26 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   const auto optimized_points = optimizeTrajectory(padded_traj_points);
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathSmoother"), enable_debug_info_,
-      "return std::nullopt since smoothing failed");
+      logger_, enable_debug_info_, "return std::nullopt since smoothing failed");
     return std::nullopt;
   }
 
   // 7. convert optimization result to trajectory
   const auto eb_traj_points =
     convertOptimizedPointsToTrajectory(*optimized_points, padded_traj_points, pad_start_idx);
-  prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj_points);
+  if (!eb_traj_points) {
+    RCLCPP_WARN(logger_, "return std::nullopt since x or y error is too large");
+    return std::nullopt;
+  }
+
+  prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*eb_traj_points);
 
   // 8. publish eb trajectory
-  const auto eb_traj = trajectory_utils::createTrajectory(p.header, eb_traj_points);
+  const auto eb_traj = trajectory_utils::createTrajectory(p.header, *eb_traj_points);
   debug_eb_traj_pub_->publish(eb_traj);
 
   time_keeper_ptr_->toc(__func__, "      ");
-  return eb_traj_points;
+  return *eb_traj_points;
 }
 
 std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
@@ -322,7 +327,7 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   return optimized_points;
 }
 
-std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
+std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPointsToTrajectory(
   const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
   const size_t pad_start_idx) const
 {
@@ -332,6 +337,18 @@ std::vector<TrajectoryPoint> EBPathSmoother::convertOptimizedPointsToTrajectory(
 
   // update only x and y
   for (size_t i = 0; i < pad_start_idx; ++i) {
+    // validate optimization result
+    if (eb_param_.enable_optimization_validation) {
+      const double diff_x = optimized_points.at(i) - eb_traj_points.at(i).pose.position.x;
+      const double diff_y =
+        optimized_points.at(i + eb_param_.num_points) - eb_traj_points.at(i).pose.position.y;
+      if (
+        eb_param_.max_validation_error < std::abs(diff_x) ||
+        eb_param_.max_validation_error < std::abs(diff_y)) {
+        return std::nullopt;
+      }
+    }
+
     eb_traj_points.at(i).pose.position.x = optimized_points.at(i);
     eb_traj_points.at(i).pose.position.y = optimized_points.at(i + eb_param_.num_points);
   }

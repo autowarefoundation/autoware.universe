@@ -148,6 +148,8 @@ MPTOptimizer::MPTParam::MPTParam(
     steer_limit_constraint = node->declare_parameter<bool>("mpt.option.steer_limit_constraint");
     enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
     enable_manual_warm_start = node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
+    enable_optimization_validation =
+      node->declare_parameter<bool>("mpt.option.enable_optimization_validation");
     mpt_visualize_sampling_num = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
   }
 
@@ -234,6 +236,11 @@ MPTOptimizer::MPTParam::MPTParam(
       "advanced.mpt.collision_free_constraints.vehicle_circles."
       "bicycle_model.front_radius_ratio");
   }
+
+  {  // validation
+     // max_validation_lat_error = node->declare_parameter<double>("mpt.validation.max_lat_error");
+     // max_validation_yaw_error = node->declare_parameter<double>("mpt.validation.max_yaw_error");
+  }
 }
 
 void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -244,6 +251,8 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
     updateParam<bool>(parameters, "mpt.option.steer_limit_constraint", steer_limit_constraint);
     updateParam<bool>(parameters, "mpt.option.enable_warm_start", enable_warm_start);
     updateParam<bool>(parameters, "mpt.option.enable_manual_warm_start", enable_manual_warm_start);
+    updateParam<bool>(
+      parameters, "mpt.option.enable_optimization_validation", enable_optimization_validation);
     updateParam<int>(parameters, "mpt.option.visualize_sampling_num", mpt_visualize_sampling_num);
   }
 
@@ -329,6 +338,11 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
       parameters, "advanced.mpt.weight.goal_lat_error_weight", goal_lat_error_weight);
     updateParam<double>(
       parameters, "advanced.mpt.weight.goal_yaw_error_weight", goal_yaw_error_weight);
+  }
+
+  {  // validation
+    updateParam<double>(parameters, "mpt.validation.max_lat_error", max_validation_lat_error);
+    updateParam<double>(parameters, "mpt.validation.max_yaw_error", max_validation_yaw_error);
   }
 }
 
@@ -437,17 +451,21 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::getModelPredictiveTraj
     return std::nullopt;
   }
 
-  // 5. convert to points
+  // 5. convert to points with validation
   const auto mpt_traj_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
+  if (!mpt_traj_points) {
+    RCLCPP_WARN(logger_, "return std::nullopt since lateral or yaw error is too large.");
+    return std::nullopt;
+  }
 
   // 6. publish trajectories for debug
-  publishDebugTrajectories(p.header, ref_points, mpt_traj_points);
+  publishDebugTrajectories(p.header, ref_points, *mpt_traj_points);
 
   time_keeper_ptr_->toc(__func__, "      ");
 
   prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(ref_points);
 
-  return mpt_traj_points;
+  return *mpt_traj_points;
 }
 
 std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
@@ -1252,7 +1270,7 @@ MPTOptimizer::updateMatrixForManualWarmStart(
   return {updated_obj_mat, updated_const_mat};
 }
 
-std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
+std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::calcMPTPoints(
   std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
   const StateEquationGenerator::Matrix & mpt_mat) const
 {
@@ -1272,6 +1290,15 @@ std::vector<TrajectoryPoint> MPTOptimizer::calcMPTPoints(
 
     const double lat_error = X(i * D_x);
     const double yaw_error = X(i * D_x + 1);
+
+    // validate optimization result
+    if (mpt_param_.enable_optimization_validation) {
+      if (
+        mpt_param_.max_validation_lat_error < std::abs(lat_error) ||
+        mpt_param_.max_validation_yaw_error < std::abs(yaw_error)) {
+        return std::nullopt;
+      }
+    }
 
     // memorize optimization result (optimized_kinematic_state and optimized_input)
     ref_point.optimized_kinematic_state = KinematicState{lat_error, yaw_error};

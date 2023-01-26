@@ -57,6 +57,11 @@ public:
     EBParam() = default;
     explicit EBParam(rclcpp::Node * node)
     {
+      {  // option
+        enable_optimization_validation =
+          node->declare_parameter<bool>("advanced.eb.option.enable_optimization_validation");
+      }
+
       {  // common
         delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
         num_points = node->declare_parameter<int>("advanced.eb.common.num_points");
@@ -77,6 +82,9 @@ public:
         qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
         qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
       }
+
+      // validation
+      max_validation_error = node->declare_parameter<double>("advanced.eb.validation.max_error");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -105,6 +113,9 @@ public:
       }
     }
 
+    // option
+    bool enable_optimization_validation;
+
     // common
     double delta_arc_length;
     int num_points;
@@ -117,6 +128,9 @@ public:
 
     // qp
     QPParam qp_param;
+
+    // validation
+    double max_validation_error;
   };
 
   EBPathSmoother(
@@ -131,16 +145,19 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
+  // arguments
   bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
   TrajectoryParam traj_param_;
   EBParam eb_param_;
   mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
+  rclcpp::Logger logger_;
+
+  // publisher
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
-
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   std::vector<TrajectoryPoint> insertFixedPoint(
     const std::vector<TrajectoryPoint> & traj_point) const;
@@ -157,7 +174,8 @@ private:
   std::optional<std::vector<double>> optimizeTrajectory(
     const std::vector<TrajectoryPoint> & traj_points);
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
+  std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
+  convertOptimizedPointsToTrajectory(
     const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
     const size_t pad_start_idx) const;
 };
