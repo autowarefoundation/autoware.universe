@@ -130,7 +130,7 @@ private:
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
 
-  void publishDebugMarkerInOptimization(
+  void publishDebugMarkerOfOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 };
 }  // namespace collision_free_path_planner

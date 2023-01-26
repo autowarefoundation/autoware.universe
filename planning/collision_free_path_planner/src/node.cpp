@@ -45,6 +45,16 @@ StringStamped createStringStamped(const rclcpp::Time & now, const std::string & 
   msg.data = data;
   return msg;
 }
+
+void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
+{
+  const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(traj_points);
+  if (opt_zero_vel_idx) {
+    for (size_t i = opt_zero_vel_idx.get(); i < traj_points.size(); ++i) {
+      traj_points.at(i).longitudinal_velocity_mps = 0.0;
+    }
+  }
+}
 }  // namespace
 
 CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options)
@@ -203,10 +213,10 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
 
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
-  auto extended_traj_points = extendTrajectory(planner_data.traj_points, optimized_traj_points);
+  auto full_traj_points = extendTrajectory(planner_data.traj_points, optimized_traj_points);
 
   // 4. set zero velocity after stop point
-  // setZeroVelocityAfterStopPoint(extended_traj_points);
+  setZeroVelocityAfterStopPoint(full_traj_points);
 
   // 5. publish debug data
   publishDebugData(planner_data.header);
@@ -222,7 +232,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   debug_calculation_time_pub_->publish(calculation_time_msg);
 
   const auto output_traj_msg =
-    trajectory_utils::createTrajectory(path_ptr->header, extended_traj_points);
+    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
   traj_pub_->publish(output_traj_msg);
 }
 
@@ -284,7 +294,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
 
   // 4. publish debug marker
-  publishDebugMarkerInOptimization(planner_data, optimized_traj_points);
+  publishDebugMarkerOfOptimization(planner_data, optimized_traj_points);
 
   time_keeper_ptr_->toc(__func__, " ");
   return optimized_traj_points;
@@ -435,7 +445,7 @@ void CollisionFreePathPlanner::publishVirtualWall(const geometry_msgs::msg::Pose
   time_keeper_ptr_->toc(__func__, "      ");
 }
 
-void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
+void CollisionFreePathPlanner::publishDebugMarkerOfOptimization(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points)
 {
   if (!enable_pub_debug_marker_) {
@@ -466,39 +476,51 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
   // calculate end idx of optimized points on path points
-  const auto opt_end_traj_seg_idx = motion_utils::findNearestSegmentIndex(
+  const auto end_traj_seg_idx = motion_utils::findNearestSegmentIndex(
     traj_points, joint_start_pose, traj_param_.delta_dist_threshold_for_closest_point,
     traj_param_.delta_yaw_threshold_for_closest_point);
-  if (!opt_end_traj_seg_idx) {
-    RCLCPP_INFO_EXPRESSION(
-      get_logger(), enable_debug_info_,
-      "Not extend trajectory since could not find nearest idx from last opt point");
-    return std::vector<TrajectoryPoint>{};
+  if (!end_traj_seg_idx) {
+    RCLCPP_WARN(get_logger(), "No extend trajectory since nearest segment index was not found.");
+    return optimized_traj_points;
   }
-  const size_t end_traj_seg_idx = opt_end_traj_seg_idx.get();
 
   // crop forward trajectory
-  const auto forward_traj_points = [&]() -> std::vector<TrajectoryPoint> {
-    constexpr double joint_traj_length_for_resampling = 10.0;
-    const auto forward_traj_points = trajectory_utils::cropPointsAfterOffsetPoint(
-      traj_points, joint_start_pose.position, end_traj_seg_idx, joint_traj_length_for_resampling);
+  // NOTE: extended_traj_points size may be less than 2. Be careful to deal with the points.
+  const auto extended_traj_points = [&]() -> std::optional<std::vector<TrajectoryPoint>> {
+    constexpr double joint_traj_length_for_smoothing = 5.0;
+    const auto extended_traj_points = trajectory_utils::cropPointsAfterOffsetPoint(
+      traj_points, joint_start_pose.position, *end_traj_seg_idx, joint_traj_length_for_smoothing);
 
-    if (forward_traj_points.empty()) {  // compensate goal pose
-      // TODO(murooka) optimization last point may be traj last point
-      std::vector<TrajectoryPoint>{traj_points.back()};
+    if (extended_traj_points.empty()) {
+      // No need to extend trajectory
+      return std::nullopt;
     }
-
-    return forward_traj_points;
+    return extended_traj_points;
   }();
 
-  const auto extended_traj_points = concatVectors(optimized_traj_points, forward_traj_points);
+  const auto full_traj_points = [&]() {
+    if (!extended_traj_points) {  // compensate goal pose
+      if (geometry_utils::isSamePoint(optimized_traj_points.back(), traj_points.back())) {
+        // goal position is contained
+        auto full_traj_points = optimized_traj_points;
+        // replace the last point with the goal
+        full_traj_points.back() = traj_points.back();
+        return full_traj_points;
+      }
+      // return concatVectors(optimized_traj_points, {traj_points.back()});
+      return optimized_traj_points;
+    }
+    return concatVectors(optimized_traj_points, *extended_traj_points);
+  }();
 
+  // resample
   const auto resampled_traj_points = trajectory_utils::resampleTrajectoryPoints(
-    extended_traj_points, traj_param_.output_delta_arc_length);
+    full_traj_points, traj_param_.output_delta_arc_length);
 
   // TODO(murooka) update velocity on joint
 
-  debug_data_ptr_->extended_traj_points = forward_traj_points;
+  debug_data_ptr_->extended_traj_points =
+    extended_traj_points ? *extended_traj_points : std::vector<TrajectoryPoint>();
   time_keeper_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }

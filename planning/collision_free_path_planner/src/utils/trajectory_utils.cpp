@@ -171,6 +171,12 @@ std::vector<ReferencePoint> resampleReferencePoints(
     }
   }
 
+  constexpr double epsilon = 1e-6;
+  if (query_keys.back() < base_keys.back() - epsilon) {
+    // compensate last key
+    query_keys.push_back(base_keys.back() - epsilon);
+  }
+
   const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
 
   // create output reference points by updating curvature with resampled one

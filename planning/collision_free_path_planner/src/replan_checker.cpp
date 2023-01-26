@@ -134,8 +134,8 @@ bool ReplanChecker::isPathAroundEgoChanged(
 
   const double diff_ego_lat_offset = prev_ego_lat_offset - ego_lat_offset;
   if (std::abs(diff_ego_lat_offset) < max_path_shape_around_ego_lat_dist_) {
-    std::cerr << prev_ego_lat_offset << " " << ego_lat_offset << " " << diff_ego_lat_offset
-              << std::endl;
+    // std::cerr << prev_ego_lat_offset << " " << ego_lat_offset << " " << diff_ego_lat_offset
+    //           << std::endl;
     return false;
   }
 

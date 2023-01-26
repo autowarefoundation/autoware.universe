@@ -625,7 +625,9 @@ void MPTOptimizer::updateDeltaArcLength(std::vector<ReferencePoint> & ref_points
 {
   for (size_t i = 0; i < ref_points.size(); i++) {
     ref_points.at(i).delta_arc_length =
-      (i == 0) ? 0.0 : tier4_autoware_utils::calcDistance2d(ref_points.at(i), ref_points.at(i - 1));
+      (i == ref_points.size() - 1)
+        ? 0.0
+        : tier4_autoware_utils::calcDistance2d(ref_points.at(i + 1), ref_points.at(i));
   }
 }
 
