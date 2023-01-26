@@ -82,10 +82,7 @@ struct ReferencePoint
   std::vector<Bounds> bounds_on_constraints{};
   std::vector<geometry_msgs::msg::Pose> pose_on_constraints{};
 
-  // NOTE: fix_kinematic_state is used for two purposes
-  //       one is fixing points around ego for stability
-  //       second is fixing current ego pose when no velocity for planning from ego pose
-  std::optional<KinematicState> fix_kinematic_state{std::nullopt};
+  std::optional<KinematicState> fixed_kinematic_state{std::nullopt};
   KinematicState optimized_kinematic_state{};
   double optimized_input{};
 
@@ -140,6 +137,10 @@ private:
 
   struct MPTParam
   {
+    explicit MPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
+    MPTParam() = default;
+    void onParam(const std::vector<rclcpp::Parameter> & parameters);
+
     // option
     bool enable_warm_start;
     bool enable_manual_warm_start;
@@ -195,10 +196,6 @@ private:
     // validation
     double max_validation_lat_error;
     double max_validation_yaw_error;
-
-    explicit MPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
-    MPTParam() = default;
-    void onParam(const std::vector<rclcpp::Parameter> & parameters);
   };
 
   // publisher
@@ -206,7 +203,7 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr debug_ref_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_traj_pub_;
 
-  // argument parameter
+  // argument
   bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -217,16 +214,15 @@ private:
   rclcpp::Logger logger_;
 
   StateEquationGenerator state_equation_generator_;
-
-  // autoware::common::osqp::OSQPInterface osqp_solver_;
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;  // TODO(murooka)
 
+  // vehicle circles
   std::vector<double> vehicle_circle_longitudinal_offsets_;  // from base_link
   std::vector<double> vehicle_circle_radiuses_;
 
-  // previous information
+  // previous data
   int prev_mat_n_ = 0;
   int prev_mat_m_ = 0;
   std::shared_ptr<std::vector<ReferencePoint>> prev_ref_points_ptr_{nullptr};

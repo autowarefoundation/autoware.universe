@@ -633,7 +633,7 @@ void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) co
   // NOTE: Only pose, velocity and curvature will be interpolated.
   ref_points = trajectory_utils::resampleReferencePoints(ref_points, mpt_param_.delta_arc_length);
 
-  ref_points.front().fix_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
+  ref_points.front().fixed_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
 
   time_keeper_ptr_->toc(__func__, "          ");
 }
@@ -961,7 +961,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   // calculate indices of fixed points
   std::vector<size_t> fixed_points_indices;
   for (size_t i = 0; i < N_ref; ++i) {
-    if (ref_points.at(i).fix_kinematic_state) {
+    if (ref_points.at(i).fixed_kinematic_state) {
       fixed_points_indices.push_back(i);
     }
   }
@@ -1078,9 +1078,9 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     A.block(A_rows_end, 0, D_x, N_v) = mpt_mat.B.block(i * D_x, 0, D_x, N_v);
 
     lb.segment(A_rows_end, D_x) =
-      ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
+      ref_points[i].fixed_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
     ub.segment(A_rows_end, D_x) =
-      ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
+      ref_points[i].fixed_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
 
     A_rows_end += D_x;
   }
@@ -1344,10 +1344,10 @@ std::vector<TrajectoryPoint> MPTOptimizer::extractFixedPoints(
 {
   std::vector<TrajectoryPoint> fixed_traj_points;
   for (const auto & ref_point : ref_points) {
-    if (ref_point.fix_kinematic_state) {
+    if (ref_point.fixed_kinematic_state) {
       TrajectoryPoint fixed_traj_point;
       fixed_traj_point.pose = ref_point.offsetDeviation(
-        ref_point.fix_kinematic_state->lat, ref_point.fix_kinematic_state->yaw);
+        ref_point.fixed_kinematic_state->lat, ref_point.fixed_kinematic_state->yaw);
       fixed_traj_points.push_back(fixed_traj_point);
     }
   }

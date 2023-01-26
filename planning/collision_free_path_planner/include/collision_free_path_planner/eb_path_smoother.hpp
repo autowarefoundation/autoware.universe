@@ -31,19 +31,18 @@ namespace collision_free_path_planner
 class EBPathSmoother
 {
 public:
-  struct Constraint2d
-  {
-    struct Constraint
-    {
-      Eigen::Vector2d coef;
-      double upper_bound;
-      double lower_bound;
-    };
+  EBPathSmoother(
+    rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+    const TrajectoryParam & traj_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr);
 
-    Constraint lon;
-    Constraint lat;
-  };
+  std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
+    const PlannerData & planner_data);
 
+  void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
+  void resetPrevData();
+  void onParam(const std::vector<rclcpp::Parameter> & parameters);
+
+private:
   struct EBParam
   {
     // qp
@@ -55,63 +54,8 @@ public:
     };
 
     EBParam() = default;
-    explicit EBParam(rclcpp::Node * node)
-    {
-      {  // option
-        enable_optimization_validation =
-          node->declare_parameter<bool>("advanced.eb.option.enable_optimization_validation");
-      }
-
-      {  // common
-        delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
-        num_points = node->declare_parameter<int>("advanced.eb.common.num_points");
-      }
-
-      {  // clearance
-        num_joint_points = node->declare_parameter<int>("advanced.eb.clearance.num_joint_points");
-        clearance_for_fix =
-          node->declare_parameter<double>("advanced.eb.clearance.clearance_for_fix");
-        clearance_for_joint =
-          node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
-        clearance_for_smooth =
-          node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smooth");
-      }
-
-      {  // qp
-        qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
-        qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
-        qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
-      }
-
-      // validation
-      max_validation_error = node->declare_parameter<double>("advanced.eb.validation.max_error");
-    }
-
-    void onParam(const std::vector<rclcpp::Parameter> & parameters)
-    {
-      using tier4_autoware_utils::updateParam;
-
-      {  // common
-        updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
-        updateParam<int>(parameters, "advanced.eb.common.num_points", num_points);
-      }
-
-      {  // clearance
-        updateParam<int>(parameters, "advanced.eb.clearance.num_joint_points", num_joint_points);
-        updateParam<double>(
-          parameters, "advanced.eb.clearance.clearance_for_fix", clearance_for_fix);
-        updateParam<double>(
-          parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
-        updateParam<double>(
-          parameters, "advanced.eb.clearance.clearance_for_smooth", clearance_for_smooth);
-      }
-
-      {  // qp
-        updateParam<int>(parameters, "advanced.eb.qp.max_iteration", qp_param.max_iteration);
-        updateParam<double>(parameters, "advanced.eb.qp.eps_abs", qp_param.eps_abs);
-        updateParam<double>(parameters, "advanced.eb.qp.eps_rel", qp_param.eps_rel);
-      }
-    }
+    explicit EBParam(rclcpp::Node * node);
+    void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     // option
     bool enable_optimization_validation;
@@ -133,18 +77,19 @@ public:
     double max_validation_error;
   };
 
-  EBPathSmoother(
-    rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-    const TrajectoryParam & traj_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr);
+  struct Constraint2d
+  {
+    struct Constraint
+    {
+      Eigen::Vector2d coef;
+      double upper_bound;
+      double lower_bound;
+    };
 
-  std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
-    const PlannerData & planner_data);
+    Constraint lon;
+    Constraint lat;
+  };
 
-  void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
-  void resetPrevData();
-  void onParam(const std::vector<rclcpp::Parameter> & parameters);
-
-private:
   // arguments
   bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;

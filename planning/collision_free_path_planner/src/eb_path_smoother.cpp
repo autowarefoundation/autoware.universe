@@ -81,6 +81,62 @@ Eigen::MatrixXd makeDefaultAMatrix(const int num_points)
 
 namespace collision_free_path_planner
 {
+EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
+{
+  {  // option
+    enable_optimization_validation =
+      node->declare_parameter<bool>("advanced.eb.option.enable_optimization_validation");
+  }
+
+  {  // common
+    delta_arc_length = node->declare_parameter<double>("advanced.eb.common.delta_arc_length");
+    num_points = node->declare_parameter<int>("advanced.eb.common.num_points");
+  }
+
+  {  // clearance
+    num_joint_points = node->declare_parameter<int>("advanced.eb.clearance.num_joint_points");
+    clearance_for_fix = node->declare_parameter<double>("advanced.eb.clearance.clearance_for_fix");
+    clearance_for_joint =
+      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
+    clearance_for_smooth =
+      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_smooth");
+  }
+
+  {  // qp
+    qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
+    qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
+    qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
+  }
+
+  // validation
+  max_validation_error = node->declare_parameter<double>("advanced.eb.validation.max_error");
+}
+
+void EBPathSmoother::EBParam::onParam(const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  {  // common
+    updateParam<double>(parameters, "advanced.eb.common.delta_arc_length", delta_arc_length);
+    updateParam<int>(parameters, "advanced.eb.common.num_points", num_points);
+  }
+
+  {  // clearance
+    updateParam<int>(parameters, "advanced.eb.clearance.num_joint_points", num_joint_points);
+    updateParam<double>(parameters, "advanced.eb.clearance.clearance_for_fix", clearance_for_fix);
+    updateParam<double>(
+      parameters, "advanced.eb.clearance.clearance_for_joint", clearance_for_joint);
+    updateParam<double>(
+      parameters, "advanced.eb.clearance.clearance_for_smooth", clearance_for_smooth);
+  }
+
+  {  // qp
+    updateParam<int>(parameters, "advanced.eb.qp.max_iteration", qp_param.max_iteration);
+    updateParam<double>(parameters, "advanced.eb.qp.eps_abs", qp_param.eps_abs);
+    updateParam<double>(parameters, "advanced.eb.qp.eps_rel", qp_param.eps_rel);
+  }
+}
+
 EBPathSmoother::EBPathSmoother(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
   const TrajectoryParam & traj_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr)
