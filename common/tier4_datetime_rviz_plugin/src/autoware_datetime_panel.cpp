@@ -44,22 +44,24 @@ AutowareDateTimePanel::AutowareDateTimePanel(QWidget * parent) : rviz_common::Pa
   layout->addWidget(new QLabel("Wall Time:"));
   layout->addWidget(wall_time_label_);
   setLayout(layout);
+}
+
+void AutowareDateTimePanel::onInitialize()
+{
+  rviz_ros_node_ = getDisplayContext()->getRosNodeAbstraction();
 
   auto * timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &AutowareDateTimePanel::update);
   timer->start(60);
 }
 
-void AutowareDateTimePanel::onInitialize()
-{
-  rviz_ros_node_ = getDisplayContext()->getRosNodeAbstraction();
-}
-
 void AutowareDateTimePanel::update()
 {
-  set_format_time(
-    ros_time_label_, rviz_ros_node_.lock()->get_raw_node()->get_clock()->now().seconds());
-  set_format_time(wall_time_label_, rclcpp::Clock().now().seconds());
+  const auto node = rviz_ros_node_.lock();
+  if (node) {
+    set_format_time(ros_time_label_, node->get_raw_node()->get_clock()->now().seconds());
+    set_format_time(wall_time_label_, rclcpp::Clock().now().seconds());
+  }
 }
 
 #include <pluginlib/class_list_macros.hpp>
