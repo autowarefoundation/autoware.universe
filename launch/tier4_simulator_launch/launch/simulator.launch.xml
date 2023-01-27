@@ -103,6 +103,16 @@
     </include>
   </group>
 
+  <!-- Planning Evaluator -->
+  <group if="$(var launch_planning_evaluator)">
+    <let name="launch_diagnostic_converter" value="false" if="$(var scenario_simulation)"/>
+    <let name="launch_diagnostic_converter" value="true" unless="$(var scenario_simulation)"/>
+
+    <include file="$(find-pkg-share planning_evaluator)/launch/planning_evaluator.launch.xml">
+      <arg name="launch_diagnostic_converter" value="$(var launch_diagnostic_converter)"/>
+    </include>
+  </group>
+
   <!-- Simulator model -->
   <group if="$(var launch_dummy_vehicle)">
     <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" description="path to the file of simulator model"/>
