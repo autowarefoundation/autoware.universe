@@ -7,7 +7,34 @@ autoware_package()
 find_package(OpenCV REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
-ament_auto_add_library(behavior_path_planner_node SHARED
+set(BEHAVIOR_PATH_PLANNER_DEPENDENCIES
+  tier4_api_msgs
+  autoware_auto_perception_msgs
+  autoware_auto_planning_msgs
+  tier4_planning_msgs
+  tier4_autoware_utils
+  Boost
+  Eigen3
+  diagnostic_msgs
+  geometry_msgs
+  lanelet2_extension
+  PCL
+  pcl_conversions
+  rclcpp
+  sensor_msgs
+  interpolation
+  tf2
+  tf2_eigen
+  tf2_geometry_msgs
+  tf2_ros
+  vehicle_info_util
+  visualization_msgs
+  nav_msgs
+  grid_map_ros
+)
+
+# Common
+ament_auto_add_library(scene_module_lib SHARED
   src/behavior_path_planner_node.cpp
   src/behavior_tree_manager.cpp
   src/utilities.cpp
@@ -15,6 +42,31 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/debug_utilities.cpp
   src/steering_factor_interface.cpp
   src/turn_signal_decider.cpp
+)
+
+target_include_directories(scene_module_lib SYSTEM PUBLIC
+  ${EIGEN3_INCLUDE_DIR}
+)
+
+target_link_libraries(scene_module_lib
+  ${OpenCV_LIBRARIES}
+)
+
+target_include_directories(scene_module_lib
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(scene_module_lib
+  SYSTEM PUBLIC
+    ${PCL_INCLUDE_DIRS}
+)
+
+ament_target_dependencies(scene_module_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+
+ament_auto_add_library(behavior_path_planner_node SHARED
   src/scene_module/scene_module_bt_node_interface.cpp
   src/scene_module/side_shift/side_shift_module.cpp
   src/scene_module/side_shift/util.cpp
