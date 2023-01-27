@@ -161,6 +161,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     "~/output/predicted_trajectory", 1);
   m_pub_debug_values = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
     "~/output/lateral_diagnostic", 1);
+  m_pub_steer_offset = node_->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+    "~/output/estimated_steer_offset", 1);
 
   // TODO(Frederik.Beaujean) ctor is too long, should factor out parameter declarations
   declareMPCparameters();
@@ -390,6 +392,11 @@ void MpcLateralController::publishDebugValues(
 {
   debug_values.stamp = node_->now();
   m_pub_debug_values->publish(debug_values);
+
+  tier4_debug_msgs::msg::Float32Stamped offset;
+  offset.stamp = node_->now();
+  offset.data = steering_offset_->getOffset();
+  m_pub_steer_offset->publish(offset);
 }
 
 void MpcLateralController::declareMPCparameters()

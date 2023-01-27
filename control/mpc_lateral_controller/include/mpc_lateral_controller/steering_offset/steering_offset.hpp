@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__STEERING_OFFSET_HPP_
-#define MPC_LATERAL_CONTROLLER__STEERING_OFFSET_HPP_
+#ifndef MPC_LATERAL_CONTROLLER__STEERING_OFFSET__STEERING_OFFSET_HPP_
+#define MPC_LATERAL_CONTROLLER__STEERING_OFFSET__STEERING_OFFSET_HPP_
 
 #include <geometry_msgs/msg/twist.hpp>
 
@@ -24,11 +24,14 @@
 class SteeringOffsetEstimator
 {
 public:
-  SteeringOffsetEstimator(double wheelbase, double average_num, double vel_thres, double steer_thres, double offset_limit);
+  SteeringOffsetEstimator(
+    double wheelbase, double average_num, double vel_thres, double steer_thres,
+    double offset_limit);
   ~SteeringOffsetEstimator() = default;
 
   double getOffset() const;
   void updateOffset(const geometry_msgs::msg::Twist & twist, const double steering);
+
 private:
   // parameters
   double wheelbase_ = 3.0;
@@ -42,4 +45,4 @@ private:
   double steering_offset_ = 0.0;
 };
 
-#endif
+#endif  // MPC_LATERAL_CONTROLLER__STEERING_OFFSET__STEERING_OFFSET_HPP_

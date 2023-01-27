@@ -15,8 +15,8 @@
 #include "mpc_lateral_controller/steering_offset/steering_offset.hpp"
 
 #include <algorithm>
-#include <numeric>
 #include <iostream>
+#include <numeric>
 
 SteeringOffsetEstimator::SteeringOffsetEstimator(
   double wheelbase, double average_num, double vel_thres, double steer_thres, double offset_limit)
@@ -25,7 +25,9 @@ SteeringOffsetEstimator::SteeringOffsetEstimator(
   update_vel_threshold_(vel_thres),
   update_steer_threshold_(steer_thres),
   offset_limit_(offset_limit),
-  steering_offset_storage_(average_num, 0.0){};
+  steering_offset_storage_(average_num, 0.0)
+{
+}
 
 void SteeringOffsetEstimator::updateOffset(
   const geometry_msgs::msg::Twist & twist, const double steering)
@@ -51,4 +53,4 @@ void SteeringOffsetEstimator::updateOffset(
 double SteeringOffsetEstimator::getOffset() const
 {
   return std::clamp(steering_offset_, -offset_limit_, offset_limit_);
-};
+}
