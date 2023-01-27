@@ -15,7 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_
 
+#include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
+#include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -31,6 +33,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::lane_change_utils
@@ -53,18 +56,18 @@ double getExpectedVelocityWhenDecelerate(
   const double & current_velocity, const double & expected_acceleration,
   const double & lane_change_prepare_duration);
 
-double getDistanceWhenDecelerate(
-  const double & velocity, const double & expected_acceleration, const double & duration,
-  const double & minimum_distance);
+std::pair<double, double> calcLaneChangingSpeedAndDistanceWhenDecelerate(
+  const double velocity, const double shift_length, const double deceleration,
+  const double min_total_lc_len, const BehaviorPathPlannerParameters & com_param,
+  const LaneChangeParameters & lc_param);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
   const PathWithLaneId & target_lane_reference_path, const ShiftLine & shift_line,
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
-  const double & acceleration, const double & prepare_distance, const double & prepare_duration,
-  const double & prepare_speed, const double & minimum_prepare_distance,
-  const double & lane_change_distance, const double & lane_changing_duration,
-  const double & minimum_lane_change_velocity);
+  const double acceleration, const double prepare_distance, const double prepare_duration,
+  const double prepare_speed, const double lane_change_distance, const double lane_changing_speed,
+  const BehaviorPathPlannerParameters & params, const LaneChangeParameters & lane_change_param);
 
 LaneChangePaths getLaneChangePaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
@@ -74,9 +77,8 @@ LaneChangePaths getLaneChangePaths(
 
 LaneChangePaths selectValidPaths(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose);
+  const lanelet::ConstLanelets & target_lanes, const RouteHandler & route_handler,
+  const Pose & current_pose, const Pose & goal_pose, const double minimum_lane_change_length);
 
 bool selectSafePath(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
@@ -88,21 +90,20 @@ bool selectSafePath(
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data);
 
 bool isLaneChangePathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
+  const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const size_t current_seg_idx, const Twist & current_twist,
   const BehaviorPathPlannerParameters & common_parameters,
   const behavior_path_planner::LaneChangeParameters & lane_change_parameters,
-  const double front_decel, const double rear_decel,
+  const double front_decel, const double rear_decel, Pose & ego_pose_before_collision,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const bool use_buffer = true,
   const double acceleration = 0.0);
 
 bool hasEnoughDistance(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs);
+  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose, const Pose & goal_pose,
+  const RouteHandler & route_handler, const double minimum_lane_change_length);
 
 ShiftLine getLaneChangeShiftLine(
   const PathWithLaneId & path1, const PathWithLaneId & path2,
@@ -110,39 +111,24 @@ ShiftLine getLaneChangeShiftLine(
 
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double prepare_distance,
-  const double lane_changing_distance, const double forward_path_length,
-  const double lane_changing_speed);
-
-PathWithLaneId getReferencePathFromTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & in_target_front_pose, const Pose & in_target_end_pose);
+  const Pose & lane_changing_start_pose, const double target_lane_length,
+  const LaneChangePhaseInfo dist_prepare_to_lc_end, const double min_total_lane_changing_distance,
+  const double forward_path_length, const double resample_interval, const bool is_goal_in_route);
 
 PathWithLaneId getLaneChangePathPrepareSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const Pose & current_pose, const double & backward_path_length, const double & prepare_distance,
-  const double & prepare_duration, const double & minimum_lane_change_velocity);
+  const double arc_length_from_current, const double backward_path_length,
+  const double prepare_distance, const double prepare_speed);
 
 PathWithLaneId getLaneChangePathLaneChangingSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
-  const Pose & current_pose, const double & forward_path_length, const double & prepare_distance,
-  const double & lane_change_distance, const double & minimum_lane_change_length,
-  const double & lane_change_distance_buffer, const double & lane_changing_duration,
-  const double & minimum_lane_change_velocity);
+  const double forward_path_length, const double arc_length_from_target,
+  const double target_lane_length, const LaneChangePhaseInfo dist_prepare_to_lc_end,
+  const double lane_changing_speed, const double total_required_min_dist);
+
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param);
-bool isEgoDistanceNearToCenterline(
-  const lanelet::ConstLanelet & closest_lanelet, const Pose & current_pose,
-  const LaneChangeParameters & lane_change_param);
-bool isEgoHeadingAngleLessThanThreshold(
-  const lanelet::ConstLanelet & closest_lanelet, const Pose & current_pose,
-  const LaneChangeParameters & lane_change_param);
-
-TurnSignalInfo calc_turn_signal_info(
-  const PathWithLaneId & prepare_path, const double prepare_velocity,
-  const double min_prepare_distance, const double prepare_duration, const ShiftLine & shift_line,
-  const ShiftedPath & lane_changing_path);
 
 void get_turn_signal_info(
   const LaneChangePath & lane_change_path, TurnSignalInfo * turn_signal_info);
@@ -150,6 +136,18 @@ void get_turn_signal_info(
 std::vector<DrivableLanes> generateDrivableLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & lane_change_lanes);
+
+std::optional<LaneChangePath> getAbortPaths(
+  const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,
+  const Pose & ego_lerp_pose_before_collision, const BehaviorPathPlannerParameters & common_param,
+  const LaneChangeParameters & lane_change_param);
+
+double getLateralShift(const LaneChangePath & path);
+
+bool hasEnoughDistanceToLaneChangeAfterAbort(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const Pose & curent_pose, const double abort_return_dist,
+  const BehaviorPathPlannerParameters & common_param);
 }  // namespace behavior_path_planner::lane_change_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_

@@ -27,6 +27,7 @@
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
@@ -50,9 +51,11 @@ using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
+using autoware_auto_vehicle_msgs::msg::GearReport;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using std_srvs::srv::Trigger;
 using tier4_control_msgs::msg::GateMode;
 using tier4_external_api_msgs::msg::Emergency;
 using tier4_external_api_msgs::msg::Heartbeat;
@@ -100,6 +103,7 @@ private:
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_sub_;
   rclcpp::Subscription<MrmState>::SharedPtr mrm_state_sub_;
+  rclcpp::Subscription<GearReport>::SharedPtr gear_status_sub_;
 
   void onGateMode(GateMode::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);
@@ -109,9 +113,11 @@ private:
   bool is_engaged_;
   bool is_system_emergency_ = false;
   bool is_external_emergency_stop_ = false;
+  bool is_gate_mode_changed_ = false;
   double current_steer_ = 0;
   GateMode current_gate_mode_;
   MrmState current_mrm_state_;
+  GearReport::ConstSharedPtr current_gear_ptr_;
 
   // Heartbeat
   std::shared_ptr<rclcpp::Time> emergency_state_heartbeat_received_time_;
@@ -131,9 +137,6 @@ private:
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr auto_hazard_light_cmd_sub_;
   rclcpp::Subscription<GearCommand>::SharedPtr auto_gear_cmd_sub_;
   void onAutoCtrlCmd(AckermannControlCommand::ConstSharedPtr msg);
-  void onAutoTurnIndicatorsCmd(TurnIndicatorsCommand::ConstSharedPtr msg);
-  void onAutoHazardLightsCmd(HazardLightsCommand::ConstSharedPtr msg);
-  void onAutoShiftCmd(GearCommand::ConstSharedPtr msg);
 
   // Subscription for external
   Commands remote_commands_;
@@ -142,9 +145,6 @@ private:
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr remote_hazard_light_cmd_sub_;
   rclcpp::Subscription<GearCommand>::SharedPtr remote_gear_cmd_sub_;
   void onRemoteCtrlCmd(AckermannControlCommand::ConstSharedPtr msg);
-  void onRemoteTurnIndicatorsCmd(TurnIndicatorsCommand::ConstSharedPtr msg);
-  void onRemoteHazardLightsCmd(HazardLightsCommand::ConstSharedPtr msg);
-  void onRemoteShiftCmd(GearCommand::ConstSharedPtr msg);
 
   // Subscription for emergency
   Commands emergency_commands_;
@@ -152,12 +152,8 @@ private:
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr emergency_hazard_light_cmd_sub_;
   rclcpp::Subscription<GearCommand>::SharedPtr emergency_gear_cmd_sub_;
   void onEmergencyCtrlCmd(AckermannControlCommand::ConstSharedPtr msg);
-  void onEmergencyTurnIndicatorsCmd(TurnIndicatorsCommand::ConstSharedPtr msg);
-  void onEmergencyHazardLightsCmd(HazardLightsCommand::ConstSharedPtr msg);
-  void onEmergencyShiftCmd(GearCommand::ConstSharedPtr msg);
 
   // Parameter
-  double update_period_;
   bool use_emergency_handling_;
   bool check_external_emergency_heartbeat_;
   double system_emergency_heartbeat_timeout_;
@@ -166,30 +162,27 @@ private:
   double emergency_acceleration_;
 
   // Service
-  rclcpp::Service<tier4_external_api_msgs::srv::Engage>::SharedPtr srv_engage_;
-  rclcpp::Service<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr srv_external_emergency_;
+  rclcpp::Service<EngageSrv>::SharedPtr srv_engage_;
+  rclcpp::Service<SetEmergency>::SharedPtr srv_external_emergency_;
   rclcpp::Publisher<Emergency>::SharedPtr pub_external_emergency_;
   void onEngageService(
-    const tier4_external_api_msgs::srv::Engage::Request::SharedPtr request,
-    const tier4_external_api_msgs::srv::Engage::Response::SharedPtr response);
+    const EngageSrv::Request::SharedPtr request, const EngageSrv::Response::SharedPtr response);
   void onExternalEmergencyStopService(
     const std::shared_ptr<rmw_request_id_t> request_header,
-    const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Request> request,
-    const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Response> response);
+    const SetEmergency::Request::SharedPtr request,
+    const SetEmergency::Response::SharedPtr response);
 
   // TODO(Takagi, Isamu): deprecated
   rclcpp::Subscription<EngageMsg>::SharedPtr engage_sub_;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_external_emergency_stop_;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_clear_external_emergency_stop_;
+  rclcpp::Service<Trigger>::SharedPtr srv_external_emergency_stop_;
+  rclcpp::Service<Trigger>::SharedPtr srv_clear_external_emergency_stop_;
   void onEngage(EngageMsg::ConstSharedPtr msg);
   bool onSetExternalEmergencyStopService(
-    const std::shared_ptr<rmw_request_id_t> req_header,
-    const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
-    const std::shared_ptr<std_srvs::srv::Trigger::Response> res);
+    const std::shared_ptr<rmw_request_id_t> req_header, const Trigger::Request::SharedPtr req,
+    const Trigger::Response::SharedPtr res);
   bool onClearExternalEmergencyStopService(
-    const std::shared_ptr<rmw_request_id_t> req_header,
-    const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
-    const std::shared_ptr<std_srvs::srv::Trigger::Response> res);
+    const std::shared_ptr<rmw_request_id_t> req_header, const Trigger::Request::SharedPtr req,
+    const Trigger::Response::SharedPtr res);
 
   // Timer / Event
   rclcpp::TimerBase::SharedPtr timer_;

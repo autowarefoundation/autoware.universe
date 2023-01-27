@@ -43,7 +43,6 @@ using behavior_path_planner::util::removeOverlappingPoints;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
-using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Transform;
 using geometry_msgs::msg::TransformStamped;
 using lanelet::utils::getArcCoordinates;
@@ -98,31 +97,6 @@ PathWithLaneId GeometricParallelParking::getArcPath() const
 
 bool GeometricParallelParking::isParking() const { return current_path_idx_ > 0; }
 
-bool GeometricParallelParking::isEnoughDistanceToStart(const Pose & start_pose) const
-{
-  const Pose current_pose = planner_data_->self_pose->pose;
-  const Pose current_to_start =
-    inverseTransformPose(start_pose, current_pose);  // todo: arc length is better
-
-  // not enough to stop with max deceleration
-  const double current_vel = util::l2Norm(planner_data_->self_odometry->twist.twist.linear);
-  const double stop_distance = std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
-  if (current_to_start.position.x < stop_distance) {
-    return false;
-  }
-
-  // not enough to restart from stopped
-  constexpr double min_restart_distance = 3.0;
-  if (
-    current_vel < parameters_.th_stopped_velocity &&
-    current_to_start.position.x > parameters_.th_arrived_distance &&
-    current_to_start.position.x < min_restart_distance) {
-    return false;
-  }
-
-  return true;
-}
-
 void GeometricParallelParking::setVelocityToArcPaths(
   std::vector<PathWithLaneId> & arc_paths, const double velocity)
 {
@@ -143,9 +117,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
   const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
   const bool is_forward, const double end_pose_offset, const double velocity)
 {
-  if (!isEnoughDistanceToStart(start_pose)) {
-    return std::vector<PathWithLaneId>{};
-  }
   const double lane_departure_margin = is_forward
                                          ? parameters_.forward_parking_lane_departure_margin
                                          : parameters_.backward_parking_lane_departure_margin;
@@ -350,7 +321,7 @@ PathWithLaneId GeometricParallelParking::generateStraightPath(const Pose & start
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
   const auto start_arc_position = lanelet::utils::getArcCoordinates(current_lanes, start_pose);
 
-  const Pose current_pose = planner_data_->self_pose->pose;
+  const Pose current_pose = planner_data_->self_odometry->pose.pose;
   const auto current_arc_position = lanelet::utils::getArcCoordinates(current_lanes, current_pose);
 
   auto path = planner_data_->route_handler->getCenterLinePath(

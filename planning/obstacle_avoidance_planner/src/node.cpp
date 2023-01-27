@@ -85,6 +85,25 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
   return {radiuses, longitudinal_offsets};
 }
 
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
+  const VehicleParam & vehicle_param, size_t circle_num)
+{
+  circle_num = std::max(circle_num, static_cast<size_t>(2));
+
+  std::vector<double> longitudinal_offsets;
+  std::vector<double> radiuses;
+
+  const double radius = vehicle_param.width / 2.0;
+  const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num - 1);
+
+  for (size_t i = 0; i < circle_num; ++i) {
+    longitudinal_offsets.push_back(unit_lon_length * i - vehicle_param.rear_overhang);
+    radiuses.push_back(radius);
+  }
+
+  return {radiuses, longitudinal_offsets};
+}
+
 std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBicycleModel(
   const VehicleParam & vehicle_param, const size_t circle_num, const double rear_radius_ratio,
   const double front_radius_ratio)
@@ -286,6 +305,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     enable_pre_smoothing_ = declare_parameter<bool>("option.enable_pre_smoothing");
     skip_optimization_ = declare_parameter<bool>("option.skip_optimization");
     reset_prev_optimization_ = declare_parameter<bool>("option.reset_prev_optimization");
+    is_considering_footprint_edges_ =
+      declare_parameter<bool>("option.is_considering_footprint_edges");
   }
 
   {  // trajectory parameter
@@ -443,6 +464,13 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
           calcVehicleCirclesInfo(
             vehicle_param_, vehicle_circle_num_for_calculation_,
             vehicle_circle_radius_ratios_.front());
+      } else if (vehicle_circle_method_ == "fitting_uniform_circle") {
+        vehicle_circle_num_for_calculation_ = declare_parameter<int>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num");
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(vehicle_param_, vehicle_circle_num_for_calculation_);
       } else if (vehicle_circle_method_ == "rear_drive") {
         vehicle_circle_num_for_calculation_ = declare_parameter<int>(
           "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation");
@@ -543,8 +571,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     std::bind(&ObstacleAvoidancePlanner::onParam, this, std::placeholders::_1));
 
   resetPlanning();
-
-  self_pose_listener_.waitForFirstPose();
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
@@ -574,6 +600,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     updateParam<bool>(parameters, "option.enable_pre_smoothing", enable_pre_smoothing_);
     updateParam<bool>(parameters, "option.skip_optimization", skip_optimization_);
     updateParam<bool>(parameters, "option.reset_prev_optimization", reset_prev_optimization_);
+    updateParam<bool>(
+      parameters, "option.is_considering_footprint_edges", is_considering_footprint_edges_);
   }
 
   {  // trajectory parameter
@@ -720,6 +748,15 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
           calcVehicleCirclesInfo(
             vehicle_param_, vehicle_circle_num_for_calculation_,
             vehicle_circle_radius_ratios_.front());
+      } else if (vehicle_circle_method_ == "fitting_uniform_circle") {
+        updateParam<int>(
+          parameters,
+          "advanced.mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num",
+          vehicle_circle_num_for_calculation_);
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(vehicle_param_, vehicle_circle_num_for_calculation_);
       } else if (vehicle_circle_method_ == "rear_drive") {
         updateParam<int>(
           parameters,
@@ -826,9 +863,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
 void ObstacleAvoidancePlanner::onOdometry(const Odometry::SharedPtr msg)
 {
-  current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
-  current_twist_ptr_->header = msg->header;
-  current_twist_ptr_->twist = msg->twist.twist;
+  current_odometry_ptr_ = std::make_unique<Odometry>(*msg);
 }
 
 void ObstacleAvoidancePlanner::onObjects(const PredictedObjects::SharedPtr msg)
@@ -866,7 +901,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
 {
   stop_watch_.tic(__func__);
 
-  if (path_ptr->points.empty() || !current_twist_ptr_ || !objects_ptr_) {
+  if (path_ptr->points.empty() || !current_odometry_ptr_ || !objects_ptr_) {
     return;
   }
 
@@ -877,8 +912,8 @@ void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
   // create planner data
   PlannerData planner_data;
   planner_data.path = *path_ptr;
-  planner_data.ego_pose = self_pose_listener_.getCurrentPose()->pose;
-  planner_data.ego_vel = current_twist_ptr_->twist.linear.x;
+  planner_data.ego_pose = current_odometry_ptr_->pose.pose;
+  planner_data.ego_vel = current_odometry_ptr_->twist.twist.linear.x;
   planner_data.objects = objects_ptr_->objects;
 
   debug_data_ = DebugData();
@@ -1258,7 +1293,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
 
     // calculate the first point being outside drivable area
     const bool is_outside = drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
-      traj_point, left_bound, right_bound, vehicle_param_);
+      traj_point, left_bound, right_bound, vehicle_param_, is_considering_footprint_edges_);
 
     // only insert zero velocity to the first point outside drivable area
     if (is_outside) {
