@@ -22,6 +22,7 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <magic_enum.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -272,7 +273,7 @@ bool PullOverModule::isExecutionRequested() const
     return true;
   }
   const auto & current_lanes = util::getCurrentLanes(planner_data_);
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
   // check if goal_pose is far
@@ -310,7 +311,7 @@ bool PullOverModule::isExecutionRequested() const
 
   // check if self pose is NOT in shoulder lane
   bool self_is_in_shoulder_lane = false;
-  const auto self_pose = planner_data_->self_pose->pose;
+  const auto self_pose = planner_data_->self_odometry->pose.pose;
   if (lanelet::utils::query::getClosestLanelet(
         planner_data_->route_handler->getShoulderLanelets(), self_pose,
         &closest_shoulder_lanelet)) {
@@ -378,7 +379,7 @@ BT::NodeStatus PullOverModule::updateState()
 
 BehaviorModuleOutput PullOverModule::plan()
 {
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
 
   resetPathCandidate();
 
@@ -608,10 +609,10 @@ std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const auto & full_path = status_.pull_over_path.getFullPath();
   const auto dist_to_parking_start_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_pose->pose, status_.pull_over_path.start_pose.position,
-    std::numeric_limits<double>::max(), M_PI_2);
+    full_path.points, planner_data_->self_odometry->pose.pose,
+    status_.pull_over_path.start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
   const double dist_to_parking_finish_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_pose->pose.position,
+    full_path.points, planner_data_->self_odometry->pose.pose.position,
     modified_goal_pose_->goal_pose.position);
   const double start_distance_to_path_change =
     dist_to_parking_start_pose ? *dist_to_parking_start_pose : std::numeric_limits<double>::max();
@@ -626,7 +627,7 @@ void PullOverModule::setParameters(const PullOverParameters & parameters)
 PathWithLaneId PullOverModule::generateStopPath()
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & common_parameters = planner_data_->parameters;
 
   if (status_.current_lanes.empty()) {
@@ -698,7 +699,7 @@ PathWithLaneId PullOverModule::generateStopPath()
 PathWithLaneId PullOverModule::generateEmergencyStopPath()
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & common_parameters = planner_data_->parameters;
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
   constexpr double eps_vel = 0.01;
@@ -789,7 +790,7 @@ bool PullOverModule::isStopped()
 bool PullOverModule::hasFinishedCurrentPath()
 {
   const auto & current_path_end = getCurrentPath().points.back();
-  const auto & self_pose = planner_data_->self_pose->pose;
+  const auto & self_pose = planner_data_->self_odometry->pose.pose;
   const bool is_near_target = tier4_autoware_utils::calcDistance2d(current_path_end, self_pose) <
                               parameters_.th_arrived_distance;
 
@@ -799,7 +800,7 @@ bool PullOverModule::hasFinishedCurrentPath()
 bool PullOverModule::hasFinishedPullOver()
 {
   // check ego car is close enough to goal pose
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const bool car_is_on_goal =
     calcDistance2d(current_pose, modified_goal_pose_->goal_pose) < parameters_.th_arrived_distance;
 
@@ -810,7 +811,7 @@ TurnSignalInfo PullOverModule::calcTurnSignalInfo() const
 {
   TurnSignalInfo turn_signal{};  // output
 
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & start_pose = status_.pull_over_path.start_pose;
   const auto & end_pose = status_.pull_over_path.end_pose;
   const auto full_path = status_.pull_over_path.getFullPath();
@@ -845,7 +846,11 @@ void PullOverModule::setDebugData()
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using motion_utils::createStopVirtualWallMarker;
+  using tier4_autoware_utils::createDefaultMarker;
   using tier4_autoware_utils::createMarkerColor;
+  using tier4_autoware_utils::createMarkerScale;
+
+  const auto header = planner_data_->route_handler->getRouteHeader();
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
@@ -853,7 +858,6 @@ void PullOverModule::setDebugData()
 
   if (parameters_.enable_goal_research) {
     // Visualize pull over areas
-    const auto header = planner_data_->route_handler->getRouteHeader();
     const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)  // yellow
                                                 : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
     const double z = refined_goal_pose_.position.z;
@@ -871,6 +875,19 @@ void PullOverModule::setDebugData()
     add(createPoseMarkerArray(
       status_.pull_over_path.end_pose, "pull_over_end_pose", 0, 0.3, 0.3, 0.9));
     add(createPathMarkerArray(status_.pull_over_path.getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
+  }
+
+  // Visualize planner type text
+  {
+    visualization_msgs::msg::MarkerArray planner_type_marker_array{};
+    auto marker = createDefaultMarker(
+      header.frame_id, header.stamp, "planner_type", 0,
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
+      createMarkerColor(1.0, 1.0, 1.0, 0.99));
+    marker.pose = modified_goal_pose_->goal_pose;
+    marker.text = magic_enum::enum_name(status_.pull_over_path.type);
+    planner_type_marker_array.markers.push_back(marker);
+    add(planner_type_marker_array);
   }
 
   // Visualize debug poses
@@ -910,7 +927,7 @@ bool PullOverModule::checkCollision(const PathWithLaneId & path) const
 
 bool PullOverModule::hasEnoughDistance(const PullOverPath & pull_over_path) const
 {
-  const Pose & current_pose = planner_data_->self_pose->pose;
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
 
   // once stopped, the vehicle cannot start again if start_pose is close.
@@ -937,7 +954,7 @@ bool PullOverModule::hasEnoughDistance(const PullOverPath & pull_over_path) cons
 
 void PullOverModule::printParkingPositionError() const
 {
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const double real_shoulder_to_map_shoulder = 0.0;
 
   const Pose goal_to_ego = inverseTransformPose(current_pose, modified_goal_pose_->goal_pose);

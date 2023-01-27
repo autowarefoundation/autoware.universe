@@ -297,18 +297,12 @@ PathWithLaneId ExternalRequestLaneChangeModule::getReferencePath() const
 
   const int num_lane_change =
     std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
-  double optional_lengths{0.0};
-  const auto isInIntersection = util::checkLaneIsInIntersection(
-    *route_handler, reference_path, current_lanes, common_parameters, num_lane_change,
-    optional_lengths);
-  if (isInIntersection) {
-    reference_path = util::getCenterLinePath(
-      *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
-      common_parameters.forward_path_length, common_parameters, optional_lengths);
-  }
+  reference_path = util::getCenterLinePath(
+    *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
+    common_parameters.forward_path_length, common_parameters, 0.0);
 
   const double lane_change_buffer =
-    util::calcLaneChangeBuffer(common_parameters, num_lane_change, optional_lengths);
+    util::calcLaneChangeBuffer(common_parameters, num_lane_change, 0.0);
 
   reference_path = util::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
@@ -388,8 +382,7 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
     if (!lane_change_paths.empty()) {
       const auto & longest_path = lane_change_paths.front();
       // we want to see check_distance [m] behind vehicle so add lane changing length
-      const double check_distance_with_path =
-        check_distance + longest_path.preparation_length + longest_path.lane_change_length;
+      const double check_distance_with_path = check_distance + longest_path.length.sum();
       check_lanes = route_handler->getCheckTargetLanesFromPath(
         longest_path.path, lane_change_lanes, check_distance_with_path);
     }
@@ -563,9 +556,8 @@ bool ExternalRequestLaneChangeModule::hasFinishedLaneChange() const
   const auto arclength_current =
     lanelet::utils::getArcCoordinates(status_.lane_change_lanes, current_pose);
   const double travel_distance = arclength_current.length - status_.start_distance;
-  const double finish_distance = status_.lane_change_path.preparation_length +
-                                 status_.lane_change_path.lane_change_length +
-                                 parameters_->lane_change_finish_judge_buffer;
+  const double finish_distance =
+    status_.lane_change_path.length.sum() + parameters_->lane_change_finish_judge_buffer;
   return travel_distance > finish_distance;
 }
 
@@ -650,7 +642,10 @@ void ExternalRequestLaneChangeModule::updateSteeringFactorPtr(
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
 }
-Pose ExternalRequestLaneChangeModule::getEgoPose() const { return planner_data_->self_pose->pose; }
+Pose ExternalRequestLaneChangeModule::getEgoPose() const
+{
+  return planner_data_->self_odometry->pose.pose;
+}
 Twist ExternalRequestLaneChangeModule::getEgoTwist() const
 {
   return planner_data_->self_odometry->twist.twist;
@@ -684,8 +679,7 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
 
   constexpr double check_distance = 100.0;
   // get lanes used for detection
-  const double check_distance_with_path =
-    check_distance + path.preparation_length + path.lane_change_length;
+  const double check_distance_with_path = check_distance + path.length.sum();
   const auto check_lanes = route_handler->getCheckTargetLanesFromPath(
     path.path, status_.lane_change_lanes, check_distance_with_path);
 
@@ -695,9 +689,8 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
     path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
     common_parameters.ego_nearest_yaw_threshold);
   return lane_change_utils::isLaneChangePathSafe(
-    path.path, current_lanes, check_lanes, dynamic_objects, current_pose, current_seg_idx,
-    current_twist, common_parameters, *parameters_,
-    common_parameters.expected_front_deceleration_for_abort,
+    path, current_lanes, check_lanes, dynamic_objects, current_pose, current_seg_idx, current_twist,
+    common_parameters, *parameters_, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     false, status_.lane_change_path.acceleration);
 }
@@ -749,7 +742,7 @@ void ExternalRequestLaneChangeModule::calcTurnSignalInfo()
   turn_signal_info.desired_end_point = path.shift_line.end;
 
   turn_signal_info.required_start_point = path.shift_line.start;
-  const auto mid_lane_change_length = path.lane_change_length / 2;
+  const auto mid_lane_change_length = path.length.lane_changing / 2;
   const auto & shifted_path = path.shifted_path.path;
   turn_signal_info.required_end_point =
     get_blinker_pose(shifted_path, path.target_lanelets, mid_lane_change_length);
