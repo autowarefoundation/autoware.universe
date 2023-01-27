@@ -43,6 +43,11 @@ ament_auto_add_library(scene_module_lib SHARED
   src/scene_module/utils/occupancy_grid_based_collision_detector.cpp
   src/scene_module/utils/path_shifter.cpp
   src/scene_module/scene_module_visitor.cpp
+  src/utilities.cpp
+  src/path_utilities.cpp
+  src/debug_utilities.cpp
+  src/steering_factor_interface.cpp
+  src/turn_signal_decider.cpp
 )
 
 target_include_directories(scene_module_lib SYSTEM PUBLIC
@@ -83,7 +88,7 @@ ament_target_dependencies(scene_module_avoidance ${BEHAVIOR_PATH_PLANNER_DEPENDE
 
 target_link_libraries(scene_module_avoidance scene_module_lib)
 
-ament_target_dependencies(scene_module_lib ${BEHAVIOR_PATH_DEPENDENCIES})
+ament_target_dependencies(scene_module_lib ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
 # Scene Module: Lane Change
 ament_auto_add_library(scene_module_lane_change SHARED
@@ -132,7 +137,7 @@ target_include_directories(scene_module_pull_out
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(scene_module_pull_out ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+ament_target_dependencies(scene_module_pull_out ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
 target_link_libraries(scene_module_pull_out scene_module_lib)
 
@@ -151,7 +156,7 @@ target_include_directories(scene_module_pull_over
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(scene_module_pull_over ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+ament_target_dependencies(scene_module_pull_over ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
 target_link_libraries(scene_module_pull_over scene_module_lib)
 
@@ -167,7 +172,7 @@ target_include_directories(scene_module_side_shift
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(scene_module_side_shift ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+ament_target_dependencies(scene_module_side_shift ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
 target_link_libraries(scene_module_side_shift scene_module_lib)
 
@@ -175,11 +180,6 @@ target_link_libraries(scene_module_side_shift scene_module_lib)
 ament_auto_add_library(behavior_path_planner SHARED
   src/behavior_path_planner_node.cpp
   src/behavior_tree_manager.cpp
-  src/utilities.cpp
-  src/path_utilities.cpp
-  src/debug_utilities.cpp
-  src/steering_factor_interface.cpp
-  src/turn_signal_decider.cpp
 )
 
 target_include_directories(behavior_path_planner
@@ -188,7 +188,7 @@ target_include_directories(behavior_path_planner
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(behavior_path_planner ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+ament_target_dependencies(behavior_path_planner ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
 target_link_libraries(behavior_path_planner 
   scene_module_lib
