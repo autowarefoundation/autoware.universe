@@ -214,7 +214,11 @@ To use dynamic map loading feature for `ndt_scan_matcher`, you also need to appr
 Follow the next two instructions.
 
 1. enable dynamic map loading interface in `pointcloud_map_loader` (by setting `enable_differential_load` to true in the package)
-2. split the PCD files into grids (recommended split size: 20[m] x 20[m])
+2. split the PCD files into grids (recommended size: 20[m] x 20[m])
+
+Note that the dynamic map loading may FAIL if the map is split into two or more large size map (e.g. 1000[m] x 1000[m]). Please provide either of
+- one PCD map file
+- multiple PCD map files divided into small size (~20[m])
 
 Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample-map-rosbag_split.zip`](https://github.com/autowarefoundation/autoware.universe/files/10349104/sample-map-rosbag_split.zip)
 
