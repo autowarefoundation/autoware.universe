@@ -198,7 +198,7 @@ std::optional<LaneChangePath> constructCandidatePath(
   path_shifter.setLateralAccelerationLimit(std::abs(lane_change_param.lane_changing_lateral_acc));
 
   if (!path_shifter.generate(&shifted_path, offset_back)) {
-    RCLCPP_ERROR_STREAM(
+    RCLCPP_DEBUG(
       rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
       "failed to generate shifted path.");
   }
@@ -374,6 +374,9 @@ LaneChangePaths getLaneChangePaths(
     const auto target_lane_reference_path = getReferencePathFromTargetLane(
       route_handler, target_lanelets, lane_changing_start_pose, target_lane_length, lc_dist,
       required_total_min_distance, forward_path_length, resample_interval, is_goal_in_route);
+    if (target_lane_reference_path.points.empty()) {
+      continue;
+    }
 
     const ShiftLine shift_line = getLaneChangeShiftLine(
       prepare_segment_reference, lane_changing_segment_reference, target_lanelets,
