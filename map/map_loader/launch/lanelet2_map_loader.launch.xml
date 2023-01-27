@@ -3,7 +3,6 @@
   <arg name="lanelet2_map_path"/>
   <arg name="lanelet2_map_topic" default="vector_map"/>
   <arg name="lanelet2_map_marker_topic" default="vector_map_marker"/>
-  <arg name="center_line_resolution" default="5.0"/>
 
   <node pkg="map_loader" exec="map_hash_generator" name="map_hash_generator">
     <param name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
