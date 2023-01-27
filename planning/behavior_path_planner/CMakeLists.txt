@@ -8,40 +8,41 @@ find_package(OpenCV REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
 set(BEHAVIOR_PATH_PLANNER_DEPENDENCIES
-  tier4_api_msgs
+  autoware_adapi_v1_msgs
   autoware_auto_perception_msgs
   autoware_auto_planning_msgs
-  tier4_planning_msgs
-  tier4_autoware_utils
-  Boost
-  Eigen3
-  diagnostic_msgs
+  autoware_auto_tf2
+  autoware_auto_vehicle_msgs
+  behaviortree_cpp_v3
   geometry_msgs
-  lanelet2_extension
-  PCL
-  pcl_conversions
-  rclcpp
-  sensor_msgs
   interpolation
+  lane_departure_checker
+  lanelet2_extension
+  magic_enum
+  motion_utils
+  rclcpp
+  rclcpp_components
+  route_handler
+  rtc_interface
+  sensor_msgs
   tf2
   tf2_eigen
   tf2_geometry_msgs
   tf2_ros
+  tier4_autoware_utils
+  tier4_planning_msgs
   vehicle_info_util
   visualization_msgs
-  nav_msgs
-  grid_map_ros
 )
+
 
 # Common
 ament_auto_add_library(scene_module_lib SHARED
-  src/behavior_path_planner_node.cpp
-  src/behavior_tree_manager.cpp
-  src/utilities.cpp
-  src/path_utilities.cpp
-  src/debug_utilities.cpp
-  src/steering_factor_interface.cpp
-  src/turn_signal_decider.cpp
+  src/scene_module/scene_module_bt_node_interface.cpp
+  src/scene_module/utils/geometric_parallel_parking.cpp
+  src/scene_module/utils/occupancy_grid_based_collision_detector.cpp
+  src/scene_module/utils/path_shifter.cpp
+  src/scene_module/scene_module_visitor.cpp
 )
 
 target_include_directories(scene_module_lib SYSTEM PUBLIC
@@ -63,47 +64,147 @@ target_include_directories(scene_module_lib
     ${PCL_INCLUDE_DIRS}
 )
 
-ament_target_dependencies(scene_module_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+ament_target_dependencies(scene_module_lib ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
-
-ament_auto_add_library(behavior_path_planner_node SHARED
-  src/scene_module/scene_module_bt_node_interface.cpp
-  src/scene_module/side_shift/side_shift_module.cpp
-  src/scene_module/side_shift/util.cpp
+# Scene Module: Avoidance
+ament_auto_add_library(scene_module_avoidance SHARED
   src/scene_module/avoidance/avoidance_module.cpp
   src/scene_module/avoidance/avoidance_utils.cpp
   src/scene_module/avoidance/debug.cpp
-  src/scene_module/lane_following/lane_following_module.cpp
+)
+
+target_include_directories(scene_module_avoidance
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_avoidance ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_avoidance scene_module_lib)
+
+ament_target_dependencies(scene_module_lib ${BEHAVIOR_PATH_DEPENDENCIES})
+
+# Scene Module: Lane Change
+ament_auto_add_library(scene_module_lane_change SHARED
   src/scene_module/lane_change/external_request_lane_change_module.cpp
   src/scene_module/lane_change/lane_change_module.cpp
   src/scene_module/lane_change/util.cpp
   src/scene_module/lane_change/debug.cpp
+)
+
+target_include_directories(scene_module_lane_change
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_lane_change ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_lane_change scene_module_lib)
+
+# Scene Module: Lane Following
+ament_auto_add_library(scene_module_lane_following SHARED
+  src/scene_module/lane_following/lane_following_module.cpp
+)
+
+target_include_directories(scene_module_lane_following
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_lane_following ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_lane_following scene_module_lib)
+
+# Scene Module: Pull Out
+ament_auto_add_library(scene_module_pull_out SHARED
+  src/scene_module/pull_out/pull_out_module.cpp
+  src/scene_module/pull_out/util.cpp
+  src/scene_module/pull_out/shift_pull_out.cpp
+  src/scene_module/pull_out/geometric_pull_out.cpp
+)
+
+target_include_directories(scene_module_pull_out
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_pull_out ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_pull_out scene_module_lib)
+
+# Scene Module: Pull Over
+ament_auto_add_library(scene_module_pull_over SHARED
   src/scene_module/pull_over/pull_over_module.cpp
   src/scene_module/pull_over/util.cpp
   src/scene_module/pull_over/shift_pull_over.cpp
   src/scene_module/pull_over/geometric_pull_over.cpp
   src/scene_module/pull_over/goal_searcher.cpp
-  src/scene_module/pull_out/pull_out_module.cpp
-  src/scene_module/pull_out/util.cpp
-  src/scene_module/pull_out/shift_pull_out.cpp
-  src/scene_module/pull_out/geometric_pull_out.cpp
-  src/scene_module/utils/geometric_parallel_parking.cpp
-  src/scene_module/utils/occupancy_grid_based_collision_detector.cpp
-  src/scene_module/utils/path_shifter.cpp
-  src/scene_module/scene_module_visitor.cpp
 )
 
-target_include_directories(behavior_path_planner_node SYSTEM PUBLIC
-  ${EIGEN3_INCLUDE_DIR}
+target_include_directories(scene_module_pull_over
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(behavior_path_planner_node
-  ${OpenCV_LIBRARIES}
+ament_target_dependencies(scene_module_pull_over ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_pull_over scene_module_lib)
+
+# Scene Module: Side Shift
+ament_auto_add_library(scene_module_side_shift SHARED
+  src/scene_module/side_shift/side_shift_module.cpp
+  src/scene_module/side_shift/util.cpp
 )
 
-rclcpp_components_register_node(behavior_path_planner_node
+target_include_directories(scene_module_side_shift
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_side_shift ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_side_shift scene_module_lib)
+
+# Node
+ament_auto_add_library(behavior_path_planner SHARED
+  src/behavior_path_planner_node.cpp
+  src/behavior_tree_manager.cpp
+  src/utilities.cpp
+  src/path_utilities.cpp
+  src/debug_utilities.cpp
+  src/steering_factor_interface.cpp
+  src/turn_signal_decider.cpp
+)
+
+target_include_directories(behavior_path_planner
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(behavior_path_planner ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(behavior_path_planner 
+  scene_module_lib
+  scene_module_avoidance
+  scene_module_lane_change
+  scene_module_lane_following
+  scene_module_pull_out
+  scene_module_pull_over
+  scene_module_side_shift  
+  )
+
+ament_export_dependencies(${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
+
+rclcpp_components_register_node(behavior_path_planner
   PLUGIN "behavior_path_planner::BehaviorPathPlannerNode"
-  EXECUTABLE behavior_path_planner
+  EXECUTABLE behavior_path_planner_node
 )
 
 if(BUILD_TESTING)
@@ -112,7 +213,7 @@ if(BUILD_TESTING)
     test/test_utilities.cpp
   )
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_utilities
-    behavior_path_planner_node
+    behavior_path_planner
   )
 
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_avoidance_module
@@ -120,7 +221,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_avoidance_module
-    behavior_path_planner_node
+    behavior_path_planner
   )
 
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_turn_signal
@@ -128,7 +229,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_turn_signal
-    behavior_path_planner_node
+    behavior_path_planner
   )
 
 endif()
