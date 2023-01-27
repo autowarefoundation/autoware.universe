@@ -914,7 +914,6 @@ double PidLongitudinalController::applyVelocityFeedback(
   std::vector<double> pid_contributions(3);
   const double pid_acc =
     m_pid_vel.calculate(error_vel_filtered, dt, enable_integration, pid_contributions);
-  const double feedback_acc = target_motion.acc + pid_acc;
 
   // Feedforward scaling:
   // This is for the coordinate convertion where feedforward is applied, from Time to Arclength.
