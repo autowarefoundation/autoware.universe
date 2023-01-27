@@ -217,6 +217,7 @@ Follow the next two instructions.
 2. split the PCD files into grids (recommended size: 20[m] x 20[m])
 
 Note that the dynamic map loading may FAIL if the map is split into two or more large size map (e.g. 1000[m] x 1000[m]). Please provide either of
+
 - one PCD map file
 - multiple PCD map files divided into small size (~20[m])
 
