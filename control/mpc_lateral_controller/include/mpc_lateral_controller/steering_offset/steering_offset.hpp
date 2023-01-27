@@ -24,7 +24,7 @@
 class SteeringOffsetEstimator
 {
 public:
-  SteeringOffsetEstimator(double wheelbase, double queue_size, double vel_thres, double steer_thres, double offset_limit);
+  SteeringOffsetEstimator(double wheelbase, double average_num, double vel_thres, double steer_thres, double offset_limit);
   ~SteeringOffsetEstimator() = default;
 
   double getOffset() const;
@@ -32,7 +32,7 @@ public:
 private:
   // parameters
   double wheelbase_ = 3.0;
-  size_t queue_size_ = 1000;
+  size_t average_num_ = 1000;
   double update_vel_threshold_ = 8.0;
   double update_steer_threshold_ = 0.05;
   double offset_limit_ = 0.02;

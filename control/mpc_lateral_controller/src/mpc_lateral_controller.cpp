@@ -131,9 +131,9 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     const auto vel_thres = node_->declare_parameter<double>(ns + "update_vel_threshold");
     const auto steer_thres = node_->declare_parameter<double>(ns + "update_steer_threshold");
     const auto limit = node_->declare_parameter<double>(ns + "steering_offset_limit");
-    const auto size = node_->declare_parameter<int>(ns + "queue_size");
+    const auto num = node_->declare_parameter<int>(ns + "average_num");
     steering_offset_ =
-      std::make_shared<SteeringOffsetEstimator>(wheelbase, size, vel_thres, steer_thres, limit);
+      std::make_shared<SteeringOffsetEstimator>(wheelbase, num, vel_thres, steer_thres, limit);
   }
 
   /* initialize lowpass filter */

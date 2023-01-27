@@ -19,12 +19,13 @@
 #include <iostream>
 
 SteeringOffsetEstimator::SteeringOffsetEstimator(
-  double wheelbase, double queue_size, double vel_thres, double steer_thres, double offset_limit)
+  double wheelbase, double average_num, double vel_thres, double steer_thres, double offset_limit)
 : wheelbase_(wheelbase),
-  queue_size_(queue_size),
+  average_num_(average_num),
   update_vel_threshold_(vel_thres),
   update_steer_threshold_(steer_thres),
-  offset_limit_(offset_limit){};
+  offset_limit_(offset_limit),
+  steering_offset_storage_(average_num, 0.0){};
 
 void SteeringOffsetEstimator::updateOffset(
   const geometry_msgs::msg::Twist & twist, const double steering)
@@ -38,7 +39,7 @@ void SteeringOffsetEstimator::updateOffset(
   const auto steer_angvel = std::atan2(twist.angular.z * wheelbase_, twist.linear.x);
   const auto steer_offset = steering - steer_angvel;
   steering_offset_storage_.push_back(steer_offset);
-  if (steering_offset_storage_.size() > queue_size_) {
+  if (steering_offset_storage_.size() > average_num_) {
     steering_offset_storage_.pop_front();
   }
 
