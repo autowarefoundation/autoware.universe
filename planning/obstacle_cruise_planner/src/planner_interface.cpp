@@ -260,19 +260,16 @@ double PlannerInterface::calcDistanceToCollisionPoint(
                           ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                           : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
-  const size_t ego_segment_idx = motion_utils::findNearestSegmentIndex(
+  const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
     planner_data.traj.points, planner_data.current_pose, ego_nearest_param_.dist_threshold,
     ego_nearest_param_.yaw_threshold);
 
-  if (!ego_segment_idx) {
-    return boost::none;
-  }
-
-  const size_t dst_segment_idx = motion_utils::findNearestSegmentIndex(points, dst_point);
+  const size_t dst_segment_idx =
+    motion_utils::findNearestSegmentIndex(planner_data.traj.points, collision_point);
 
   const auto dist_to_collision_point = motion_utils::calcSignedArcLength(
     planner_data.traj.points, planner_data.current_pose, *ego_segment_idx, collision_point,
-    dst_segment_idx, );
+    dst_segment_idx);
 
   if (dist_to_collision_point) {
     return dist_to_collision_point.get() - offset;
