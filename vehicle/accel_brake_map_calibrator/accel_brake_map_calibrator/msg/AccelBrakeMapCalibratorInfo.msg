@@ -1,5 +1,9 @@
 builtin_interfaces/Time stamp
 
+float64 current_map_error
+float64 updated_map_error
+float64 map_error_ratio
+
 # debugs
 float64 current_speed
 float64 current_accel_pedal

@@ -37,7 +37,6 @@
 #include "std_msgs/msg/string.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"
 #include "tier4_external_api_msgs/msg/calibration_status.hpp"
 #include "tier4_external_api_msgs/msg/calibration_status_array.hpp"
 #include "tier4_external_api_msgs/srv/get_accel_brake_map_calibration_data.hpp"
@@ -62,7 +61,6 @@ using nav_msgs::msg::OccupancyGrid;
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
-using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_external_api_msgs::msg::CalibrationStatus;
 using tier4_vehicle_msgs::msg::ActuationStatusStamped;
 using visualization_msgs::msg::MarkerArray;
@@ -87,9 +85,6 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr data_std_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr index_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr update_suggest_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr current_map_error_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr updated_map_error_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
   rclcpp::Publisher<AccelBrakeMapCalibratorInfo>::SharedPtr calib_info_pub_;
 
@@ -237,7 +232,6 @@ private:
   void takeConsistencyOfAccelMap();
   void takeConsistencyOfBrakeMap();
   bool updateAccelBrakeMap();
-  void publishFloat32(const std::string publish_type, const double val);
   void publishUpdateSuggestFlag();
   double getPitchCompensatedAcceleration();
   void executeEvaluation();

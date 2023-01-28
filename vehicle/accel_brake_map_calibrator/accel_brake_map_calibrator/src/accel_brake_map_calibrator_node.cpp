@@ -184,11 +184,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     create_publisher<Float32MultiArrayStamped>("~/output/update_raw_map", durable_qos);
   calib_info_pub_ =
     create_publisher<AccelBrakeMapCalibratorInfo>("~/output/calibration_info", durable_qos);
-  current_map_error_pub_ =
-    create_publisher<Float32Stamped>("~/output/current_map_error", durable_qos);
-  updated_map_error_pub_ =
-    create_publisher<Float32Stamped>("~/output/updated_map_error", durable_qos);
-  map_error_ratio_pub_ = create_publisher<Float32Stamped>("~/output/map_error_ratio", durable_qos);
   offset_covariance_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/offset_covariance", durable_qos);
 
@@ -1278,20 +1273,6 @@ void AccelBrakeMapCalibrator::publishOffsetCovMap(
   offset_covariance_pub_->publish(float_map);
 }
 
-void AccelBrakeMapCalibrator::publishFloat32(const std::string publish_type, const double val)
-{
-  Float32Stamped msg;
-  msg.stamp = this->now();
-  msg.data = val;
-  if (publish_type == "current_map_error") {
-    current_map_error_pub_->publish(msg);
-  } else if (publish_type == "updated_map_error") {
-    updated_map_error_pub_->publish(msg);
-  } else {
-    map_error_ratio_pub_->publish(msg);
-  }
-}
-
 void AccelBrakeMapCalibrator::publishCountMap()
 {
   if (accel_map_value_.at(0).size() != brake_map_value_.at(0).size()) {
@@ -1461,12 +1442,13 @@ void AccelBrakeMapCalibrator::publishAll()
   publishCountMap();
   publishIndex();
   publishUpdateSuggestFlag();
+
+  debug_values_.current_map_error = part_original_accel_rmse_;
+  debug_values_.updated_map_error = new_accel_rmse_;
+  const auto map_error_ratio =
+    part_original_accel_rmse_ != 0.0 ? new_accel_rmse_ / part_original_accel_rmse_ : 1.0;
+  debug_values_.map_error_ratio = map_error_ratio;
   calib_info_pub_->publish(debug_values_);
-  publishFloat32("current_map_error", part_original_accel_rmse_);
-  publishFloat32("updated_map_error", new_accel_rmse_);
-  publishFloat32(
-    "map_error_ratio",
-    part_original_accel_rmse_ != 0.0 ? new_accel_rmse_ / part_original_accel_rmse_ : 1.0);
 }
 
 bool AccelBrakeMapCalibrator::writeMapToCSV(
