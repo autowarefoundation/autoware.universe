@@ -113,4 +113,43 @@ OccupancyGrid getOccMsg(
   return occ;
 }
 
+std::vector<double> getMapColumnFromUnifiedIndex(
+  const Map & accel_map_value, const Map & brake_map_value, const std::size_t index)
+{
+  if (index < brake_map_value.size()) {
+    // input brake map value
+    return brake_map_value.at(brake_map_value.size() - index - 1);
+  } else {
+    // input accel map value
+    return accel_map_value.at(index - brake_map_value.size() + 1);
+  }
+}
+
+Float32MultiArrayStamped getFloatMultiArrayMap(
+  const double h, const double w, const Map & accel_map, const Map & brake_map,
+  const rclcpp::Time & stamp)
+{
+  Float32MultiArrayStamped float_map;
+  float_map.stamp = stamp;
+  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
+  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
+  float_map.layout.dim[0].label = "height";
+  float_map.layout.dim[1].label = "width";
+  float_map.layout.dim[0].size = h;
+  float_map.layout.dim[1].size = w;
+  float_map.layout.dim[0].stride = h * w;
+  float_map.layout.dim[1].stride = w;
+  float_map.layout.data_offset = 0;
+  std::vector<float> vec(h * w, 0);
+  for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+      vec[i * w + j] =
+        static_cast<float>(getMapColumnFromUnifiedIndex(accel_map, brake_map, i).at(j));
+    }
+  }
+  float_map.data = vec;
+
+  return float_map;
+}
+
 }  // namespace accel_brake_map_calibrator

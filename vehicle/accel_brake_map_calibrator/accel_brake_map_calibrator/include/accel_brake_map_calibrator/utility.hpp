@@ -20,6 +20,7 @@
 
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <limits>
 #include <queue>
@@ -29,6 +30,8 @@ namespace accel_brake_map_calibrator
 {
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
+using Map = std::vector<std::vector<double>>;
+using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 
 bool isTimeout(
   const builtin_interfaces::msg::Time & stamp, const double timeout_sec, const rclcpp::Time & now);
@@ -78,6 +81,13 @@ T getNearestTimeDataFromVec(const T base_data, const double back_time, const std
 
 DataStampedPtr getNearestTimeDataFromVec(
   DataStampedPtr base_data, const double back_time, const std::vector<DataStampedPtr> & vec);
+
+std::vector<double> getMapColumnFromUnifiedIndex(
+  const Map & accel_map_value, const Map & brake_map_value, const std::size_t index);
+
+Float32MultiArrayStamped getFloatMultiArrayMap(
+  const double h, const double w, const Map & accel_map, const Map & brake_map,
+  const rclcpp::Time & stamp);
 
 }  // namespace accel_brake_map_calibrator
 

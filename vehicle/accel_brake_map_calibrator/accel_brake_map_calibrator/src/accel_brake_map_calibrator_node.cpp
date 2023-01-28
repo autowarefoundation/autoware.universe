@@ -1016,18 +1016,6 @@ void AccelBrakeMapCalibrator::updateTotalMapOffset(const double measured_acc, co
   }
 }
 
-std::vector<double> AccelBrakeMapCalibrator::getMapColumnFromUnifiedIndex(
-  const Map & accel_map_value, const Map & brake_map_value, const std::size_t index)
-{
-  if (index < brake_map_value.size()) {
-    // input brake map value
-    return brake_map_value.at(brake_map_value.size() - index - 1);
-  } else {
-    // input accel map value
-    return accel_map_value.at(index - brake_map_value.size() + 1);
-  }
-}
-
 double AccelBrakeMapCalibrator::getPedalValueFromUnifiedIndex(const std::size_t index)
 {
   if (index < brake_pedal_index_.size()) {
@@ -1211,25 +1199,7 @@ void AccelBrakeMapCalibrator::publishMap(
   }
 
   // publish raw map
-  Float32MultiArrayStamped float_map;
-  float_map.stamp = this->now();
-  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
-  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
-  float_map.layout.dim[0].label = "height";
-  float_map.layout.dim[1].label = "width";
-  float_map.layout.dim[0].size = h;
-  float_map.layout.dim[1].size = w;
-  float_map.layout.dim[0].stride = h * w;
-  float_map.layout.dim[1].stride = w;
-  float_map.layout.data_offset = 0;
-  std::vector<float> vec(h * w, 0);
-  for (int i = 0; i < h; i++) {
-    for (int j = 0; j < w; j++) {
-      vec[i * w + j] = static_cast<float>(
-        getMapColumnFromUnifiedIndex(accel_map_value_, brake_map_value_, i).at(j));
-    }
-  }
-  float_map.data = vec;
+  const auto float_map = getFloatMultiArrayMap(h, w, accel_map_value_, brake_map_value_, now());
   if (publish_type == "original") {
     original_map_raw_pub_->publish(float_map);
   } else {
@@ -1251,25 +1221,7 @@ void AccelBrakeMapCalibrator::publishOffsetCovMap(
   const double w = accel_map_value.at(0).size();  // velocity
 
   // publish raw map
-  Float32MultiArrayStamped float_map;
-  float_map.stamp = this->now();
-  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
-  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
-  float_map.layout.dim[0].label = "height";
-  float_map.layout.dim[1].label = "width";
-  float_map.layout.dim[0].size = h;
-  float_map.layout.dim[1].size = w;
-  float_map.layout.dim[0].stride = h * w;
-  float_map.layout.dim[1].stride = w;
-  float_map.layout.data_offset = 0;
-  std::vector<float> vec(h * w, 0);
-  for (int i = 0; i < h; i++) {
-    for (int j = 0; j < w; j++) {
-      vec[i * w + j] =
-        static_cast<float>(getMapColumnFromUnifiedIndex(accel_map_value, brake_map_value, i).at(j));
-    }
-  }
-  float_map.data = vec;
+  const auto float_map = getFloatMultiArrayMap(h, w, accel_map_value, brake_map_value, now());
   offset_covariance_pub_->publish(float_map);
 }
 
@@ -1347,23 +1299,10 @@ void AccelBrakeMapCalibrator::publishIndex()
                    1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
   const double w = accel_map_value_.at(0).size();  // velocity
 
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "base_link";
-  marker.header.stamp = this->now();
-  marker.type = marker.TEXT_VIEW_FACING;
-  marker.action = marker.ADD;
-  std_msgs::msg::ColorRGBA color;
-  color.a = 0.999;
-  color.b = 0.1;
-  color.g = 0.1;
-  color.r = 0.1;
-  marker.color = color;
-  marker.frame_locked = true;
-  marker.pose.position.z = 0.0;
-  marker.pose.orientation.x = 0.0;
-  marker.pose.orientation.y = 0.0;
-  marker.pose.orientation.z = 0.0;
-  marker.pose.orientation.w = 1.0;
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "base_link", now(), "", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    tier4_autoware_utils::createMarkerScale(0.0, 0.0, 0.0),
+    tier4_autoware_utils::createMarkerColor(0.1, 0.1, 0.1, 0.999));
 
   // pedal value
   for (int pedal_idx = 0; pedal_idx < h; pedal_idx++) {
