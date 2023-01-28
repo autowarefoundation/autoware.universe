@@ -71,17 +71,6 @@ using tier4_vehicle_msgs::srv::UpdateAccelBrakeMap;
 
 using Map = std::vector<std::vector<double>>;
 
-struct DataStamped
-{
-  DataStamped(const double _data, const rclcpp::Time & _data_time)
-  : data{_data}, data_time{_data_time}
-  {
-  }
-  double data;
-  rclcpp::Time data_time;
-};
-using DataStampedPtr = std::shared_ptr<DataStamped>;
-
 class AccelBrakeMapCalibrator : public rclcpp::Node
 {
 private:
@@ -246,7 +235,6 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     UpdateAccelBrakeMap::Request::SharedPtr req, UpdateAccelBrakeMap::Response::SharedPtr res);
   bool getAccFromMap(const double velocity, const double pedal);
-  double lowpass(const double original, const double current, const double gain = 0.8);
   double getPedalSpeed(
     const DataStampedPtr & prev_pedal, const DataStampedPtr & current_pedal,
     const double prev_pedal_speed);
@@ -280,20 +268,6 @@ private:
     const Map & accel_map_value, const Map & brake_map_value, const std::size_t index);
   double getPedalValueFromUnifiedIndex(const std::size_t index);
   int getUnifiedIndexFromAccelBrakeIndex(const bool accel_map, const std::size_t index);
-  void pushDataToQue(
-    const TwistStamped::ConstSharedPtr & data, const std::size_t max_size,
-    std::queue<TwistStamped::ConstSharedPtr> * que);
-  template <class T>
-  void pushDataToVec(const T data, const std::size_t max_size, std::vector<T> * vec);
-  template <class T>
-  T getNearestTimeDataFromVec(
-    const T base_data, const double back_time, const std::vector<T> & vec);
-  DataStampedPtr getNearestTimeDataFromVec(
-    DataStampedPtr base_data, const double back_time, const std::vector<DataStampedPtr> & vec);
-  double getAverage(const std::vector<double> & vec);
-  double getStandardDeviation(const std::vector<double> & vec);
-  bool isTimeout(const builtin_interfaces::msg::Time & stamp, const double timeout_sec);
-  bool isTimeout(const DataStampedPtr & data_stamped, const double timeout_sec);
 
   /* for covariance calculation */
   // mean value on each cell (counting methoud depends on the update algorithm)
@@ -305,10 +279,6 @@ private:
   // number of data on each cell (counting methoud depends on the update algorithm)
   Eigen::MatrixXd accel_data_num_;
   Eigen::MatrixXd brake_data_num_;
-
-  OccupancyGrid getOccMsg(
-    const std::string frame_id, const double height, const double width, const double resolution,
-    const std::vector<int8_t> & map_value);
 
   /* Diag*/
   void checkUpdateSuggest(diagnostic_updater::DiagnosticStatusWrapper & stat);

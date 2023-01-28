@@ -6,6 +6,7 @@ autoware_package()
 
 ament_auto_add_library(accel_brake_map_calibrator_node
   src/accel_brake_map_calibrator_node.cpp
+  src/utility.cpp
 )
 
 # to use same package defined message

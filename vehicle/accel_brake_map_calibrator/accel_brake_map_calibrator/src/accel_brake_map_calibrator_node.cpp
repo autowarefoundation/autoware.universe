@@ -16,6 +16,7 @@
 
 #include "accel_brake_map_calibrator/accel_brake_map_calibrator_node.hpp"
 
+#include "accel_brake_map_calibrator/utility.hpp"
 #include "rclcpp/logging.hpp"
 
 #include <algorithm>
@@ -290,9 +291,10 @@ void AccelBrakeMapCalibrator::timerCallback()
 
   // data check 2
   if (
-    isTimeout(twist_ptr_->header.stamp, timeout_sec_) ||
-    isTimeout(steer_ptr_->stamp, timeout_sec_) || isTimeout(accel_pedal_ptr_, timeout_sec_) ||
-    isTimeout(brake_pedal_ptr_, timeout_sec_)) {
+    isTimeout(twist_ptr_->header.stamp, timeout_sec_, now()) ||
+    isTimeout(steer_ptr_->stamp, timeout_sec_, now()) ||
+    isTimeout(accel_pedal_ptr_, timeout_sec_, now()) ||
+    isTimeout(brake_pedal_ptr_, timeout_sec_, now())) {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 5000, "timeout of topics (twist, steer, accel, brake)");
     lack_of_data_count_++;
@@ -540,12 +542,6 @@ bool AccelBrakeMapCalibrator::callbackUpdateMapService(
     res->message = "Failed to save data. Maybe invalid path?";
   }
   return true;
-}
-
-double AccelBrakeMapCalibrator::lowpass(
-  const double original, const double current, const double gain)
-{
-  return current * gain + original * (1.0 - gain);
 }
 
 double AccelBrakeMapCalibrator::getPedalSpeed(
@@ -1157,125 +1153,6 @@ double AccelBrakeMapCalibrator::calculateAccelErrorL1Norm(
   return abs(dif_acc);
 }
 
-void AccelBrakeMapCalibrator::pushDataToQue(
-  const TwistStamped::ConstSharedPtr & data, const std::size_t max_size,
-  std::queue<TwistStamped::ConstSharedPtr> * que)
-{
-  que->push(data);
-  while (que->size() > max_size) {
-    que->pop();
-  }
-}
-
-template <class T>
-void AccelBrakeMapCalibrator::pushDataToVec(
-  const T data, const std::size_t max_size, std::vector<T> * vec)
-{
-  vec->emplace_back(data);
-  while (vec->size() > max_size) {
-    vec->erase(vec->begin());
-  }
-}
-
-template <class T>
-T AccelBrakeMapCalibrator::getNearestTimeDataFromVec(
-  const T base_data, const double back_time, const std::vector<T> & vec)
-{
-  double nearest_time = std::numeric_limits<double>::max();
-  const double target_time = rclcpp::Time(base_data->header.stamp).seconds() - back_time;
-  T nearest_time_data;
-  for (const auto & data : vec) {
-    const double data_time = rclcpp::Time(data->header.stamp).seconds();
-    const auto delta_time = std::abs(target_time - data_time);
-    if (nearest_time > delta_time) {
-      nearest_time_data = data;
-      nearest_time = delta_time;
-    }
-  }
-  return nearest_time_data;
-}
-
-DataStampedPtr AccelBrakeMapCalibrator::getNearestTimeDataFromVec(
-  DataStampedPtr base_data, const double back_time, const std::vector<DataStampedPtr> & vec)
-{
-  double nearest_time = std::numeric_limits<double>::max();
-  const double target_time = base_data->data_time.seconds() - back_time;
-  DataStampedPtr nearest_time_data;
-  for (const auto & data : vec) {
-    const double data_time = data->data_time.seconds();
-    const auto delta_time = std::abs(target_time - data_time);
-    if (nearest_time > delta_time) {
-      nearest_time_data = data;
-      nearest_time = delta_time;
-    }
-  }
-  return nearest_time_data;
-}
-
-double AccelBrakeMapCalibrator::getAverage(const std::vector<double> & vec)
-{
-  if (vec.empty()) {
-    return 0.0;
-  }
-
-  double sum = 0.0;
-  for (const auto num : vec) {
-    sum += num;
-  }
-  return sum / vec.size();
-}
-
-double AccelBrakeMapCalibrator::getStandardDeviation(const std::vector<double> & vec)
-{
-  if (vec.empty()) {
-    return 0.0;
-  }
-
-  const double ave = getAverage(vec);
-
-  double sum = 0.0;
-  for (const auto num : vec) {
-    sum += std::pow(num - ave, 2);
-  }
-  return std::sqrt(sum / vec.size());
-}
-
-bool AccelBrakeMapCalibrator::isTimeout(
-  const builtin_interfaces::msg::Time & stamp, const double timeout_sec)
-{
-  const double dt = this->now().seconds() - rclcpp::Time(stamp).seconds();
-  return dt > timeout_sec;
-}
-
-bool AccelBrakeMapCalibrator::isTimeout(
-  const DataStampedPtr & data_stamped, const double timeout_sec)
-{
-  const double dt = (this->now() - data_stamped->data_time).seconds();
-  return dt > timeout_sec;
-}
-
-OccupancyGrid AccelBrakeMapCalibrator::getOccMsg(
-  const std::string frame_id, const double height, const double width, const double resolution,
-  const std::vector<int8_t> & map_value)
-{
-  OccupancyGrid occ;
-  occ.header.frame_id = frame_id;
-  occ.header.stamp = this->now();
-  occ.info.height = height;
-  occ.info.width = width;
-  occ.info.map_load_time = this->now();
-  occ.info.origin.position.x = 0;
-  occ.info.origin.position.y = 0;
-  occ.info.origin.position.z = 0;
-  occ.info.origin.orientation.x = 0;
-  occ.info.origin.orientation.y = 0;
-  occ.info.origin.orientation.z = 0;
-  occ.info.origin.orientation.w = 1;
-  occ.info.resolution = resolution;
-  occ.data = map_value;
-  return occ;
-}
-
 // function for diagnostics
 void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
@@ -1347,9 +1224,11 @@ void AccelBrakeMapCalibrator::publishMap(
   }
 
   if (publish_type == "original") {
-    original_map_occ_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, int_map_value));
+    original_map_occ_pub_->publish(
+      getOccMsg("base_link", h, w, map_resolution_, int_map_value, now()));
   } else {
-    update_map_occ_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, int_map_value));
+    update_map_occ_pub_->publish(
+      getOccMsg("base_link", h, w, map_resolution_, int_map_value, now()));
   }
 
   // publish raw map
@@ -1480,9 +1359,9 @@ void AccelBrakeMapCalibrator::publishCountMap()
   }
 
   // publish average map / standard dev map / count map
-  data_ave_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, ave_map));
-  data_std_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, std_map));
-  data_count_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, count_map));
+  data_ave_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, ave_map, now()));
+  data_std_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, std_map, now()));
+  data_count_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, count_map, now()));
 
   // publish count with self pos map
   int nearest_pedal_idx = nearestPedalSearch();
@@ -1492,7 +1371,8 @@ void AccelBrakeMapCalibrator::publishCountMap()
   update_success_
     ? count_map.at(nearest_pedal_idx * w + nearest_vel_idx) = std::numeric_limits<int8_t>::max()
     : count_map.at(nearest_pedal_idx * w + nearest_vel_idx) = std::numeric_limits<int8_t>::min();
-  data_count_with_self_pose_pub_->publish(getOccMsg("base_link", h, w, map_resolution_, count_map));
+  data_count_with_self_pose_pub_->publish(
+    getOccMsg("base_link", h, w, map_resolution_, count_map, now()));
 }
 
 void AccelBrakeMapCalibrator::publishIndex()
