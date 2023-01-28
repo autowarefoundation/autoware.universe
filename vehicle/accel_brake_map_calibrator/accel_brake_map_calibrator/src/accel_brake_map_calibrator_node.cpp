@@ -162,7 +162,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
 
   // inialize matrix for covariance calculation
   {
-    const auto genConstMat = [](const Map & map, const auto val) {
+    const auto genConstMat = [](const raw_vehicle_cmd_converter::Map & map, const auto val) {
       return Eigen::MatrixXd::Constant(map.size(), map.at(0).size(), val);
     };
     accel_data_mean_mat_ = genConstMat(accel_map_value_, map_offset_);
