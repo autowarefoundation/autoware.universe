@@ -180,8 +180,9 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     create_publisher<OccupancyGrid>("~/debug/data_count_self_pose_occ_map", durable_qos);
   index_pub_ = create_publisher<MarkerArray>("~/debug/occ_index", durable_qos);
   original_map_raw_pub_ =
-    create_publisher<Float32MultiArray>("~/debug/original_raw_map", durable_qos);
-  update_map_raw_pub_ = create_publisher<Float32MultiArray>("~/output/update_raw_map", durable_qos);
+    create_publisher<Float32MultiArrayStamped>("~/debug/original_raw_map", durable_qos);
+  update_map_raw_pub_ =
+    create_publisher<Float32MultiArrayStamped>("~/output/update_raw_map", durable_qos);
   debug_pub_ = create_publisher<Float32MultiArrayStamped>("~/output/debug_values", durable_qos);
   current_map_error_pub_ =
     create_publisher<Float32Stamped>("~/output/current_map_error", durable_qos);
@@ -189,7 +190,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     create_publisher<Float32Stamped>("~/output/updated_map_error", durable_qos);
   map_error_ratio_pub_ = create_publisher<Float32Stamped>("~/output/map_error_ratio", durable_qos);
   offset_covariance_pub_ =
-    create_publisher<Float32MultiArray>("~/debug/offset_covariance", durable_qos);
+    create_publisher<Float32MultiArrayStamped>("~/debug/offset_covariance", durable_qos);
 
   // subscriber
   using std::placeholders::_1;
@@ -1353,10 +1354,10 @@ void AccelBrakeMapCalibrator::publishMap(
   }
 
   // publish raw map
-  Float32MultiArray float_map;
-
-  float_map.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-  float_map.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
+  Float32MultiArrayStamped float_map;
+  float_map.stamp = this->now();
+  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
+  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
   float_map.layout.dim[0].label = "height";
   float_map.layout.dim[1].label = "width";
   float_map.layout.dim[0].size = h;
@@ -1393,10 +1394,10 @@ void AccelBrakeMapCalibrator::publishOffsetCovMap(
   const double w = accel_map_value.at(0).size();  // velocity
 
   // publish raw map
-  Float32MultiArray float_map;
-
-  float_map.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
-  float_map.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
+  Float32MultiArrayStamped float_map;
+  float_map.stamp = this->now();
+  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
+  float_map.layout.dim.push_back(tier4_debug_msgs::msg::MultiArrayDimension());
   float_map.layout.dim[0].label = "height";
   float_map.layout.dim[1].label = "width";
   float_map.layout.dim[0].size = h;

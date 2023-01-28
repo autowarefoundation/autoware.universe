@@ -32,8 +32,6 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "std_msgs/msg/float32_multi_array.hpp"
-#include "std_msgs/msg/multi_array_dimension.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
@@ -60,7 +58,6 @@ using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
-using std_msgs::msg::Float32MultiArray;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_external_api_msgs::msg::CalibrationStatus;
@@ -89,9 +86,9 @@ private:
   std::string csv_default_map_dir_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr original_map_occ_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr update_map_occ_pub_;
-  rclcpp::Publisher<Float32MultiArray>::SharedPtr original_map_raw_pub_;
-  rclcpp::Publisher<Float32MultiArray>::SharedPtr update_map_raw_pub_;
-  rclcpp::Publisher<Float32MultiArray>::SharedPtr offset_covariance_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr original_map_raw_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr update_map_raw_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr offset_covariance_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr data_count_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr data_count_with_self_pose_pub_;
