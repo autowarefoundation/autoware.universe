@@ -293,12 +293,7 @@ private:
     std::vector<double> vel_index, std::vector<double> pedal_index, Map value_map,
     std::string filename);
   void addIndexToCSV(std::ofstream * csv_file);
-  void addLogToCSV(
-    std::ofstream * csv_file, const double & timestamp, const double velocity, const double accel,
-    const double pitched_accel, const double accel_pedal, const double brake_pedal,
-    const double accel_pedal_speed, const double brake_pedal_speed, const double pitch,
-    const double steer, const double jerk, const double full_original_accel_mse,
-    const double part_original_accel_mse, const double new_accel_mse);
+  void addLogToCSV();
 
   mutable AccelBrakeMapCalibratorInfo debug_values_;
 
@@ -309,6 +304,11 @@ private:
     UPDATE_OFFSET_TOTAL = 1,
     UPDATE_OFFSET_FOUR_CELL_AROUND = 2,
   };
+
+  void debugPrint();
+  bool checkData();
+  bool isDataInTargetRange();
+  void publishAll();
 
 public:
   explicit AccelBrakeMapCalibrator(const rclcpp::NodeOptions & node_options);

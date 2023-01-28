@@ -21,7 +21,6 @@
 
 namespace accel_brake_map_calibrator
 {
-
 struct DataStamped
 {
   DataStamped(const double _data, const rclcpp::Time & _data_time)

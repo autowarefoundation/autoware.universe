@@ -261,77 +261,19 @@ void AccelBrakeMapCalibrator::timerCallback()
 {
   update_count_++;
 
-  RCLCPP_DEBUG_STREAM_THROTTLE(
-    get_logger(), *get_clock(), 5000,
-    "map updating... count: " << update_success_count_ << " / " << update_count_ << "\n\t"
-                              << "lack_of_data_count: " << lack_of_data_count_ << "\n\t"
-                              << " failed_to_get_pitch_count: " << failed_to_get_pitch_count_
-                              << "\n\t"
-                              << "too_large_pitch_count: " << too_large_pitch_count_ << "\n\t"
-                              << " too_low_speed_count: " << too_low_speed_count_ << "\n\t"
-                              << "too_large_steer_count: " << too_large_steer_count_ << "\n\t"
-                              << "too_large_jerk_count: " << too_large_jerk_count_ << "\n\t"
-                              << "invalid_acc_brake_count: " << invalid_acc_brake_count_ << "\n\t"
-                              << "too_large_pedal_spd_count: " << too_large_pedal_spd_count_
-                              << "\n\t"
-                              << "update_fail_count_: " << update_fail_count_ << "\n");
+  debugPrint();
 
-  /* valid check */
-
-  // data check
-  if (
-    !twist_ptr_ || !steer_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ ||
-    !delayed_accel_pedal_ptr_ || !delayed_brake_pedal_ptr_) {
-    // lack of data
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 5000, "lack of topics (twist, steer, accel, brake)");
-    lack_of_data_count_++;
-    return;
-  }
-
-  // data check 2
-  if (
-    isTimeout(twist_ptr_->header.stamp, timeout_sec_, now()) ||
-    isTimeout(steer_ptr_->stamp, timeout_sec_, now()) ||
-    isTimeout(accel_pedal_ptr_, timeout_sec_, now()) ||
-    isTimeout(brake_pedal_ptr_, timeout_sec_, now())) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 5000, "timeout of topics (twist, steer, accel, brake)");
-    lack_of_data_count_++;
-    return;
-  }
-
-  // data check 3
-  if (!getCurrentPitchFromTF(&pitch_)) {
-    // cannot get pitch
-    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 5000, "cannot get pitch");
-    failed_to_get_pitch_count_++;
+  if (!checkData()) {
     return;
   }
 
   /* write data to log */
   if (pedal_accel_graph_output_) {
-    addLogToCSV(
-      &output_log_, rclcpp::Time(twist_ptr_->header.stamp).seconds(), twist_ptr_->twist.linear.x,
-      acceleration_, getPitchCompensatedAcceleration(), delayed_accel_pedal_ptr_->data,
-      delayed_brake_pedal_ptr_->data, accel_pedal_speed_, brake_pedal_speed_, pitch_,
-      steer_ptr_->steering_tire_angle, jerk_, full_original_accel_rmse_, part_original_accel_rmse_,
-      new_accel_rmse_);
+    addLogToCSV();
   }
 
   /* publish map  & debug_values*/
-  publishMap(accel_map_value_, brake_map_value_, "original");
-  publishMap(update_accel_map_value_, update_brake_map_value_, "update");
-  publishOffsetCovMap(accel_offset_covariance_value_, brake_offset_covariance_value_);
-  publishCountMap();
-  publishIndex();
-  publishUpdateSuggestFlag();
-  calib_info_pub_->publish(debug_values_);
-  publishFloat32("current_map_error", part_original_accel_rmse_);
-  publishFloat32("updated_map_error", new_accel_rmse_);
-  publishFloat32(
-    "map_error_ratio",
-    part_original_accel_rmse_ != 0.0 ? new_accel_rmse_ / part_original_accel_rmse_ : 1.0);
+  publishAll();
 
   // -- processing start --
 
@@ -341,53 +283,15 @@ void AccelBrakeMapCalibrator::timerCallback()
 
   // twist check
   if (twist_ptr_->twist.linear.x < velocity_min_threshold_) {
-    // too low speed ( or backward velocity)
-    too_low_speed_count_++;
+    too_low_speed_count_++;  // too low speed ( or backward velocity)
     return;
   }
 
   // accel / brake map evaluation (do not evaluate when the car stops)
   executeEvaluation();
 
-  // pitch check
-  if (std::fabs(pitch_) > max_pitch_threshold_) {
-    // too large pitch
-    too_large_pitch_count_++;
-    return;
-  }
-
-  // steer check
-  if (std::fabs(steer_ptr_->steering_tire_angle) > max_steer_threshold_) {
-    // too large steer
-    too_large_steer_count_++;
-    return;
-  }
-
-  // jerk check
-  if (std::fabs(jerk_) > max_jerk_threshold_) {
-    // too large jerk
-    too_large_jerk_count_++;
-    return;
-  }
-
-  // pedal check
-  if (
-    delayed_accel_pedal_ptr_->data > std::numeric_limits<double>::epsilon() &&
-    delayed_brake_pedal_ptr_->data > std::numeric_limits<double>::epsilon()) {
-    // both (accel/brake) output
-    RCLCPP_DEBUG_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "invalid pedal value (Both of accel output and brake output area not zero. )");
-    invalid_acc_brake_count_++;
-    return;
-  }
-
-  // pedal speed check
-  if (
-    std::fabs(accel_pedal_speed_) > pedal_velocity_thresh_ ||
-    std::fabs(brake_pedal_speed_) > pedal_velocity_thresh_) {
-    // too large pedal speed
-    too_large_pedal_spd_count_++;
+  // check data is in target range for map update
+  if (!isDataInTargetRange()) {
     return;
   }
 
@@ -401,23 +305,103 @@ void AccelBrakeMapCalibrator::timerCallback()
   }
 }
 
+bool AccelBrakeMapCalibrator::checkData()
+{
+  // data check
+  if (
+    !twist_ptr_ || !steer_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ ||
+    !delayed_accel_pedal_ptr_ || !delayed_brake_pedal_ptr_) {
+    // lack of data
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 5000, "lack of topics (twist, steer, accel, brake)");
+    lack_of_data_count_++;
+    return false;
+  }
+
+  // data check 2
+  const auto is_timeout = [&](const auto stamp) {
+    return isTimeout(stamp, timeout_sec_, this->now());
+  };
+  if (
+    is_timeout(twist_ptr_->header.stamp) || is_timeout(steer_ptr_->stamp) ||
+    is_timeout(accel_pedal_ptr_) || is_timeout(brake_pedal_ptr_)) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 5000, "timeout of topics (twist, steer, accel, brake)");
+    lack_of_data_count_++;
+    return false;
+  }
+
+  // data check 3
+  if (!getCurrentPitchFromTF(&pitch_)) {
+    // cannot get pitch
+    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 5000, "cannot get pitch");
+    failed_to_get_pitch_count_++;
+    return false;
+  }
+
+  return true;
+}
+
+bool AccelBrakeMapCalibrator::isDataInTargetRange()
+{
+  // pitch check
+  if (std::fabs(pitch_) > max_pitch_threshold_) {
+    too_large_pitch_count_++;  // too large pitch
+    return false;
+  }
+
+  // steer check
+  if (std::fabs(steer_ptr_->steering_tire_angle) > max_steer_threshold_) {
+    too_large_steer_count_++;  // too large steer
+    return false;
+  }
+
+  // jerk check
+  if (std::fabs(jerk_) > max_jerk_threshold_) {
+    too_large_jerk_count_++;  // too large jerk
+    return false;
+  }
+
+  // pedal check
+  if (
+    delayed_accel_pedal_ptr_->data > std::numeric_limits<double>::epsilon() &&
+    delayed_brake_pedal_ptr_->data > std::numeric_limits<double>::epsilon()) {
+    // both (accel/brake) output
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "invalid pedal value (Both of accel output and brake output area not zero. )");
+    invalid_acc_brake_count_++;
+    return false;
+  }
+
+  // pedal speed check
+  if (
+    std::fabs(accel_pedal_speed_) > pedal_velocity_thresh_ ||
+    std::fabs(brake_pedal_speed_) > pedal_velocity_thresh_) {
+    too_large_pedal_spd_count_++;  // too large pedal speed
+    return false;
+  }
+
+  return true;
+}
+
 void AccelBrakeMapCalibrator::timerCallbackOutputCSV()
 {
   // write accel/ brake map to file
   const auto ros_time = std::to_string(this->now().seconds());
-  writeMapToCSV(accel_vel_index_, accel_pedal_index_, update_accel_map_value_, output_accel_file_);
-  writeMapToCSV(brake_vel_index_, brake_pedal_index_, update_brake_map_value_, output_brake_file_);
+  const auto writeAccel = [&](const auto & value, const auto & file) {
+    writeMapToCSV(accel_vel_index_, accel_pedal_index_, value, file);
+  };
+  const auto writeBrake = [&](const auto & value, const auto & file) {
+    writeMapToCSV(brake_vel_index_, brake_pedal_index_, value, file);
+  };
+  writeAccel(update_accel_map_value_, output_accel_file_);
+  writeBrake(update_brake_map_value_, output_brake_file_);
   if (progress_file_output_) {
-    writeMapToCSV(
-      accel_vel_index_, accel_pedal_index_, update_accel_map_value_,
-      output_accel_file_ + "_" + ros_time);
-    writeMapToCSV(
-      brake_vel_index_, brake_pedal_index_, update_brake_map_value_,
-      output_brake_file_ + "_" + ros_time);
-    writeMapToCSV(
-      accel_vel_index_, accel_pedal_index_, accel_map_value_, output_accel_file_ + "_original");
-    writeMapToCSV(
-      brake_vel_index_, brake_pedal_index_, brake_map_value_, output_brake_file_ + "_original");
+    writeAccel(update_accel_map_value_, output_accel_file_ + "_" + ros_time);
+    writeBrake(update_brake_map_value_, output_brake_file_ + "_" + ros_time);
+    writeAccel(accel_map_value_, output_accel_file_ + "_original");
+    writeBrake(brake_map_value_, output_brake_file_ + "_original");
   }
 
   // update newest accel / brake map
@@ -1469,6 +1453,22 @@ void AccelBrakeMapCalibrator::publishUpdateSuggestFlag()
   update_suggest_pub_->publish(update_suggest);
 }
 
+void AccelBrakeMapCalibrator::publishAll()
+{
+  publishMap(accel_map_value_, brake_map_value_, "original");
+  publishMap(update_accel_map_value_, update_brake_map_value_, "update");
+  publishOffsetCovMap(accel_offset_covariance_value_, brake_offset_covariance_value_);
+  publishCountMap();
+  publishIndex();
+  publishUpdateSuggestFlag();
+  calib_info_pub_->publish(debug_values_);
+  publishFloat32("current_map_error", part_original_accel_rmse_);
+  publishFloat32("updated_map_error", new_accel_rmse_);
+  publishFloat32(
+    "map_error_ratio",
+    part_original_accel_rmse_ != 0.0 ? new_accel_rmse_ / part_original_accel_rmse_ : 1.0);
+}
+
 bool AccelBrakeMapCalibrator::writeMapToCSV(
   std::vector<double> vel_index, std::vector<double> pedal_index, Map value_map,
   std::string filename)
@@ -1516,20 +1516,41 @@ void AccelBrakeMapCalibrator::addIndexToCSV(std::ofstream * csv_file)
             << std::endl;
 }
 
-void AccelBrakeMapCalibrator::addLogToCSV(
-  std::ofstream * csv_file, const double & timestamp, const double velocity, const double accel,
-  const double pitched_accel, const double accel_pedal, const double brake_pedal,
-  const double accel_pedal_speed, const double brake_pedal_speed, const double pitch,
-  const double steer, const double jerk, const double full_original_accel_mse,
-  const double part_original_accel_mse, const double new_accel_mse)
+void AccelBrakeMapCalibrator::addLogToCSV()
 {
+  const double timestamp = rclcpp::Time(twist_ptr_->header.stamp).seconds();
+  const auto velocity = twist_ptr_->twist.linear.x;
+  const auto pitched_accel = getPitchCompensatedAcceleration();
+  const auto accel_pedal = delayed_accel_pedal_ptr_->data;
+  const auto brake_pedal = delayed_brake_pedal_ptr_->data;
+  const auto steer = steer_ptr_->steering_tire_angle;
+
   const double rmse_rate =
-    part_original_accel_mse == 0.0 ? 1.0 : (new_accel_mse / part_original_accel_mse);
-  *csv_file << timestamp << ", " << velocity << ", " << accel << ", " << pitched_accel << ", "
-            << accel - pitched_accel << ", " << accel_pedal << ", " << brake_pedal << ", "
-            << accel_pedal_speed << ", " << brake_pedal_speed << ", " << pitch << ", " << steer
-            << ", " << jerk << ", " << full_original_accel_mse << ", " << part_original_accel_mse
-            << ", " << new_accel_mse << "," << rmse_rate << std::endl;
+    part_original_accel_rmse_ == 0.0 ? 1.0 : (new_accel_rmse_ / part_original_accel_rmse_);
+  output_log_ << timestamp << ", " << velocity << ", " << acceleration_ << ", " << pitched_accel
+              << ", " << acceleration_ - pitched_accel << ", " << accel_pedal << ", " << brake_pedal
+              << ", " << accel_pedal_speed_ << ", " << brake_pedal_speed_ << ", " << pitch_ << ", "
+              << steer << ", " << jerk_ << ", " << full_original_accel_rmse_ << ", "
+              << part_original_accel_rmse_ << ", " << new_accel_rmse_ << "," << rmse_rate
+              << std::endl;
+}
+
+void AccelBrakeMapCalibrator::debugPrint()
+{
+  RCLCPP_DEBUG_STREAM_THROTTLE(
+    get_logger(), *get_clock(), 5000,
+    "map updating... count: " << update_success_count_ << " / " << update_count_ << "\n\t"
+                              << "lack_of_data_count: " << lack_of_data_count_ << "\n\t"
+                              << " failed_to_get_pitch_count: " << failed_to_get_pitch_count_
+                              << "\n\t"
+                              << "too_large_pitch_count: " << too_large_pitch_count_ << "\n\t"
+                              << " too_low_speed_count: " << too_low_speed_count_ << "\n\t"
+                              << "too_large_steer_count: " << too_large_steer_count_ << "\n\t"
+                              << "too_large_jerk_count: " << too_large_jerk_count_ << "\n\t"
+                              << "invalid_acc_brake_count: " << invalid_acc_brake_count_ << "\n\t"
+                              << "too_large_pedal_spd_count: " << too_large_pedal_spd_count_
+                              << "\n\t"
+                              << "update_fail_count_: " << update_fail_count_ << "\n");
 }
 
 }  // namespace accel_brake_map_calibrator
