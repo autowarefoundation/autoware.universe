@@ -1,0 +1,17 @@
+builtin_interfaces/Time stamp
+
+# debugs
+float64 current_speed
+float64 current_accel_pedal
+float64 current_brake_pedal
+float64 current_raw_accel
+float64 current_accel
+float64 current_raw_accel_speed
+float64 current_accel_speed
+float64 current_raw_brake_speed
+float64 current_brake_speed
+float64 current_raw_pitch
+float64 current_pitch
+float64 current_steer
+float64 success_to_update
+float64 current_jerk

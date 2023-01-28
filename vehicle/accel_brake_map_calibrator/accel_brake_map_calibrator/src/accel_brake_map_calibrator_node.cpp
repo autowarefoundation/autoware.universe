@@ -122,8 +122,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   output_log_.open(output_log_file);
   addIndexToCSV(&output_log_);
 
-  debug_values_.data.resize(num_debug_values_);
-
   // input map info
   accel_map_value_ = accel_map_.getAccelMap();
   brake_map_value_ = brake_map_.getBrakeMap();
@@ -183,7 +181,8 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     create_publisher<Float32MultiArrayStamped>("~/debug/original_raw_map", durable_qos);
   update_map_raw_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/output/update_raw_map", durable_qos);
-  debug_pub_ = create_publisher<Float32MultiArrayStamped>("~/output/debug_values", durable_qos);
+  calib_info_pub_ =
+    create_publisher<AccelBrakeMapCalibratorInfo>("~/output/calibration_info", durable_qos);
   current_map_error_pub_ =
     create_publisher<Float32Stamped>("~/output/current_map_error", durable_qos);
   updated_map_error_pub_ =
@@ -251,9 +250,9 @@ bool AccelBrakeMapCalibrator::getCurrentPitchFromTF(double * pitch)
   }
   double roll, raw_pitch, yaw;
   tf2::getEulerYPR(transform->transform.rotation, roll, raw_pitch, yaw);
-  debug_values_.data.at(CURRENT_RAW_PITCH) = raw_pitch;
+  debug_values_.current_raw_pitch = raw_pitch;
   *pitch = lowpass(*pitch, raw_pitch, 0.2);
-  debug_values_.data.at(CURRENT_PITCH) = *pitch;
+  debug_values_.current_pitch = *pitch;
   return true;
 }
 
@@ -325,7 +324,7 @@ void AccelBrakeMapCalibrator::timerCallback()
   publishCountMap();
   publishIndex();
   publishUpdateSuggestFlag();
-  debug_pub_->publish(debug_values_);
+  calib_info_pub_->publish(debug_values_);
   publishFloat32("current_map_error", part_original_accel_rmse_);
   publishFloat32("updated_map_error", new_accel_rmse_);
   publishFloat32(
@@ -335,7 +334,7 @@ void AccelBrakeMapCalibrator::timerCallback()
   // -- processing start --
 
   /* initialize */
-  debug_values_.data.at(SUCCESS_TO_UPDATE) = false;
+  debug_values_.success_to_update = false;
   update_success_ = false;
 
   // twist check
@@ -393,7 +392,7 @@ void AccelBrakeMapCalibrator::timerCallback()
   /* update map */
   if (updateAccelBrakeMap()) {
     update_success_count_++;
-    debug_values_.data.at(SUCCESS_TO_UPDATE) = true;
+    debug_values_.success_to_update = true;
     update_success_ = true;
   } else {
     update_fail_count_++;
@@ -452,8 +451,8 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
     const double raw_acceleration = getAccel(past_msg, twist_msg);
     acceleration_ = lowpass(acceleration_, raw_acceleration, 0.25);
     acceleration_time_ = rclcpp::Time(msg->header.stamp).seconds();
-    debug_values_.data.at(CURRENT_RAW_ACCEL) = raw_acceleration;
-    debug_values_.data.at(CURRENT_ACCEL) = acceleration_;
+    debug_values_.current_raw_accel = raw_acceleration;
+    debug_values_.current_accel = acceleration_;
 
     // calculate jerk
     if (
@@ -466,19 +465,19 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
       // to avoid to get delayed jerk, set high gain
       jerk_ = lowpass(jerk_, raw_jerk, 0.5);
     }
-    debug_values_.data.at(CURRENT_JERK) = jerk_;
+    debug_values_.current_jerk = jerk_;
     pre_acceleration_ = acceleration_;
     pre_acceleration_time_ = acceleration_time_;
   }
 
-  debug_values_.data.at(CURRENT_SPEED) = twist_msg->twist.linear.x;
+  debug_values_.current_speed = twist_msg->twist.linear.x;
   twist_ptr_ = twist_msg;
   pushDataToVec(twist_msg, twist_vec_max_size_, &twist_vec_);
 }
 
 void AccelBrakeMapCalibrator::callbackSteer(const SteeringReport::ConstSharedPtr msg)
 {
-  debug_values_.data.at(CURRENT_STEER) = msg->steering_tire_angle;
+  debug_values_.current_steer = msg->steering_tire_angle;
   steer_ptr_ = msg;
 }
 
@@ -494,10 +493,10 @@ void AccelBrakeMapCalibrator::callbackActuationStatus(
     const double raw_accel_pedal_speed =
       getPedalSpeed(past_accel_ptr, accel_pedal_ptr_, accel_pedal_speed_);
     accel_pedal_speed_ = lowpass(accel_pedal_speed_, raw_accel_pedal_speed, 0.5);
-    debug_values_.data.at(CURRENT_RAW_ACCEL_SPEED) = raw_accel_pedal_speed;
-    debug_values_.data.at(CURRENT_ACCEL_SPEED) = accel_pedal_speed_;
+    debug_values_.current_raw_accel_speed = raw_accel_pedal_speed;
+    debug_values_.current_accel_speed = accel_pedal_speed_;
   }
-  debug_values_.data.at(CURRENT_ACCEL_PEDAL) = accel_pedal_ptr_->data;
+  debug_values_.current_accel_pedal = accel_pedal_ptr_->data;
   pushDataToVec(accel_pedal_ptr_, pedal_vec_max_size_, &accel_pedal_vec_);
   delayed_accel_pedal_ptr_ =
     getNearestTimeDataFromVec(accel_pedal_ptr_, pedal_to_accel_delay_, accel_pedal_vec_);
@@ -511,10 +510,10 @@ void AccelBrakeMapCalibrator::callbackActuationStatus(
     const double raw_brake_pedal_speed =
       getPedalSpeed(past_brake_ptr, brake_pedal_ptr_, brake_pedal_speed_);
     brake_pedal_speed_ = lowpass(brake_pedal_speed_, raw_brake_pedal_speed, 0.5);
-    debug_values_.data.at(CURRENT_RAW_BRAKE_SPEED) = raw_brake_pedal_speed;
-    debug_values_.data.at(CURRENT_BRAKE_SPEED) = brake_pedal_speed_;
+    debug_values_.current_raw_brake_speed = raw_brake_pedal_speed;
+    debug_values_.current_brake_speed = brake_pedal_speed_;
   }
-  debug_values_.data.at(CURRENT_BRAKE_PEDAL) = brake_pedal_ptr_->data;
+  debug_values_.current_brake_pedal = brake_pedal_ptr_->data;
   pushDataToVec(brake_pedal_ptr_, pedal_vec_max_size_, &brake_pedal_vec_);
   delayed_brake_pedal_ptr_ =
     getNearestTimeDataFromVec(brake_pedal_ptr_, pedal_to_accel_delay_, brake_pedal_vec_);

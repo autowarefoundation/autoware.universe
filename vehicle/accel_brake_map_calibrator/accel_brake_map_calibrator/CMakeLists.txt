@@ -8,6 +8,16 @@ ament_auto_add_library(accel_brake_map_calibrator_node
   src/accel_brake_map_calibrator_node.cpp
 )
 
+# to use same package defined message
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}
+  "msg/AccelBrakeMapCalibratorInfo.msg"
+  DEPENDENCIES builtin_interfaces
+)
+rosidl_get_typesupport_target(
+        cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_link_libraries(accel_brake_map_calibrator_node "${cpp_typesupport_target}")
+
 rclcpp_components_register_node(accel_brake_map_calibrator_node
   PLUGIN "accel_brake_map_calibrator::AccelBrakeMapCalibrator"
   EXECUTABLE accel_brake_map_calibrator_exe

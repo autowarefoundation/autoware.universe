@@ -17,6 +17,8 @@
 #ifndef ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
 #define ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
 
+#include "accel_brake_map_calibrator/data.hpp"
+#include "accel_brake_map_calibrator/msg/accel_brake_map_calibrator_info.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
@@ -52,6 +54,7 @@
 namespace accel_brake_map_calibrator
 {
 
+using accel_brake_map_calibrator::msg::AccelBrakeMapCalibratorInfo;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using geometry_msgs::msg::TwistStamped;
@@ -89,7 +92,6 @@ private:
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr original_map_raw_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr update_map_raw_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr offset_covariance_pub_;
-  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr data_count_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr data_count_with_self_pose_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr data_ave_pub_;
@@ -100,6 +102,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr updated_map_error_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
+  rclcpp::Publisher<AccelBrakeMapCalibratorInfo>::SharedPtr calib_info_pub_;
 
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
@@ -327,24 +330,7 @@ private:
     const double steer, const double jerk, const double full_original_accel_mse,
     const double part_original_accel_mse, const double new_accel_mse);
 
-  mutable Float32MultiArrayStamped debug_values_;
-  enum DBGVAL {
-    CURRENT_SPEED = 0,
-    CURRENT_ACCEL_PEDAL = 1,
-    CURRENT_BRAKE_PEDAL = 2,
-    CURRENT_RAW_ACCEL = 3,
-    CURRENT_ACCEL = 4,
-    CURRENT_RAW_ACCEL_SPEED = 5,
-    CURRENT_ACCEL_SPEED = 6,
-    CURRENT_RAW_BRAKE_SPEED = 7,
-    CURRENT_BRAKE_SPEED = 8,
-    CURRENT_RAW_PITCH = 9,
-    CURRENT_PITCH = 10,
-    CURRENT_STEER = 11,
-    SUCCESS_TO_UPDATE = 12,
-    CURRENT_JERK = 13,
-  };
-  static constexpr unsigned int num_debug_values_ = 14;
+  mutable AccelBrakeMapCalibratorInfo debug_values_;
 
   enum GET_PITCH_METHOD { TF = 0, FILE = 1, NONE = 2 };
 
