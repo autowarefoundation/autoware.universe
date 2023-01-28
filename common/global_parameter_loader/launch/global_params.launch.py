@@ -40,9 +40,19 @@ def launch_setup(context, *args, **kwargs):
         }.items(),
     )
 
+    load_vehicle_mirror_info = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [FindPackageShare("vehicle_info_util"), "/launch/vehicle_info.launch.py"]
+        ),
+        launch_arguments={
+            "vehicle_info_param_file": [vehicle_description_pkg, "/config/mirror.param.yaml"]
+        }.items(),
+    )
+
     return [
         set_use_sim_time,
         load_vehicle_info,
+        load_vehicle_mirror_info,
     ]
 
 
