@@ -32,6 +32,21 @@ struct DataStamped
 };
 using DataStampedPtr = std::shared_ptr<DataStamped>;
 
+struct Counts
+{
+  int update_success = 0;
+  int update = 0;
+  int lack_of_data = 0;
+  int failed_to_get_pitch = 0;
+  int too_large_pitch = 0;
+  int too_low_speed = 0;
+  int too_large_steer = 0;
+  int too_large_jerk = 0;
+  int invalid_acc_brake = 0;
+  int too_large_pedal_spd = 0;
+  int update_fail = 0;
+};
+
 }  // namespace accel_brake_map_calibrator
 
 #endif  // ACCEL_BRAKE_MAP_CALIBRATOR__DATA_HPP_

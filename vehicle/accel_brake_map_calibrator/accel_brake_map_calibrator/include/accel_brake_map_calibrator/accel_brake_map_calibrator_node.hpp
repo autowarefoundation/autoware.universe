@@ -192,17 +192,7 @@ private:
   std::vector<double> accel_pedal_index_;
   std::vector<double> brake_pedal_index_;
   bool update_success_;
-  int update_success_count_ = 0;
-  int update_count_ = 0;
-  int lack_of_data_count_ = 0;
-  int failed_to_get_pitch_count_ = 0;
-  int too_large_pitch_count_ = 0;
-  int too_low_speed_count_ = 0;
-  int too_large_steer_count_ = 0;
-  int too_large_jerk_count_ = 0;
-  int invalid_acc_brake_count_ = 0;
-  int too_large_pedal_spd_count_ = 0;
-  int update_fail_count_ = 0;
+  Counts counts_;
 
   // for map update
   double map_offset_ = 0.0;
