@@ -37,13 +37,13 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   // get parameter
   update_hz_ = declare_parameter<double>("update_hz", 10.0);
   covariance_ = declare_parameter<double>("initial_covariance", 0.05);
-  velocity_min_threshold_ = declare_parameter<double>("velocity_min_threshold", 0.1);
-  velocity_diff_threshold_ = declare_parameter<double>("velocity_diff_threshold", 0.556);
-  pedal_diff_threshold_ = declare_parameter<double>("pedal_diff_threshold", 0.03);
-  max_steer_threshold_ = declare_parameter<double>("max_steer_threshold", 0.2);
-  max_pitch_threshold_ = declare_parameter<double>("max_pitch_threshold", 0.02);
-  max_jerk_threshold_ = declare_parameter<double>("max_jerk_threshold", 0.7);
-  pedal_velocity_thresh_ = declare_parameter<double>("pedal_velocity_thresh", 0.15);
+  thresholds_.velocity_min = declare_parameter<double>("velocity_min_threshold", 0.1);
+  thresholds_.velocity_diff = declare_parameter<double>("velocity_diff_threshold", 0.556);
+  thresholds_.pedal_diff = declare_parameter<double>("pedal_diff_threshold", 0.03);
+  thresholds_.max_steer = declare_parameter<double>("max_steer_threshold", 0.2);
+  thresholds_.max_pitch = declare_parameter<double>("max_pitch_threshold", 0.02);
+  thresholds_.max_jerk = declare_parameter<double>("max_jerk_threshold", 0.7);
+  thresholds_.pedal_velocity = declare_parameter<double>("pedal_velocity_thresh", 0.15);
   max_accel_ = declare_parameter<double>("max_accel", 5.0);
   min_accel_ = declare_parameter<double>("min_accel", -5.0);
   pedal_to_accel_delay_ = declare_parameter<double>("pedal_to_accel_delay", 0.3);
@@ -282,7 +282,7 @@ void AccelBrakeMapCalibrator::timerCallback()
   update_success_ = false;
 
   // twist check
-  if (twist_ptr_->twist.linear.x < velocity_min_threshold_) {
+  if (twist_ptr_->twist.linear.x < thresholds_.velocity_min) {
     counts_.too_low_speed++;  // too low speed ( or backward velocity)
     return;
   }
@@ -345,19 +345,19 @@ bool AccelBrakeMapCalibrator::checkData()
 bool AccelBrakeMapCalibrator::isDataInTargetRange()
 {
   // pitch check
-  if (std::fabs(pitch_) > max_pitch_threshold_) {
+  if (std::fabs(pitch_) > thresholds_.max_pitch) {
     counts_.too_large_pitch++;  // too large pitch
     return false;
   }
 
   // steer check
-  if (std::fabs(steer_ptr_->steering_tire_angle) > max_steer_threshold_) {
+  if (std::fabs(steer_ptr_->steering_tire_angle) > thresholds_.max_steer) {
     counts_.too_large_steer++;  // too large steer
     return false;
   }
 
   // jerk check
-  if (std::fabs(jerk_) > max_jerk_threshold_) {
+  if (std::fabs(jerk_) > thresholds_.max_jerk) {
     counts_.too_large_jerk++;  // too large jerk
     return false;
   }
@@ -376,8 +376,8 @@ bool AccelBrakeMapCalibrator::isDataInTargetRange()
 
   // pedal speed check
   if (
-    std::fabs(accel_pedal_speed_) > pedal_velocity_thresh_ ||
-    std::fabs(brake_pedal_speed_) > pedal_velocity_thresh_) {
+    std::fabs(accel_pedal_speed_) > thresholds_.pedal_velocity ||
+    std::fabs(brake_pedal_speed_) > thresholds_.pedal_velocity) {
     counts_.too_large_pedal_spd++;  // too large pedal speed
     return false;
   }
@@ -703,7 +703,7 @@ bool AccelBrakeMapCalibrator::updateAccelBrakeMap()
 
   if (
     accel_mode && !indexValueSearch(
-                    accel_pedal_index_, delayed_accel_pedal_ptr_->data, pedal_diff_threshold_,
+                    accel_pedal_index_, delayed_accel_pedal_ptr_->data, thresholds_.pedal_diff,
                     &accel_pedal_index)) {
     // not match accel pedal output to pedal value in index
     return false;
@@ -711,7 +711,7 @@ bool AccelBrakeMapCalibrator::updateAccelBrakeMap()
 
   if (
     !accel_mode && !indexValueSearch(
-                     brake_pedal_index_, delayed_brake_pedal_ptr_->data, pedal_diff_threshold_,
+                     brake_pedal_index_, delayed_brake_pedal_ptr_->data, thresholds_.pedal_diff,
                      &brake_pedal_index)) {
     // not match accel pedal output to pedal value in index
     return false;
@@ -720,7 +720,7 @@ bool AccelBrakeMapCalibrator::updateAccelBrakeMap()
   if (
     accel_mode &&
     !indexValueSearch(
-      accel_vel_index_, twist_ptr_->twist.linear.x, velocity_diff_threshold_, &accel_vel_index)) {
+      accel_vel_index_, twist_ptr_->twist.linear.x, thresholds_.velocity_diff, &accel_vel_index)) {
     // not match current velocity to velocity value in index
     return false;
   }
@@ -728,7 +728,7 @@ bool AccelBrakeMapCalibrator::updateAccelBrakeMap()
   if (
     !accel_mode &&
     !indexValueSearch(
-      brake_vel_index_, twist_ptr_->twist.linear.x, velocity_diff_threshold_, &brake_vel_index)) {
+      brake_vel_index_, twist_ptr_->twist.linear.x, thresholds_.velocity_diff, &brake_vel_index)) {
     // not match current velocity to velocity value in index
     return false;
   }

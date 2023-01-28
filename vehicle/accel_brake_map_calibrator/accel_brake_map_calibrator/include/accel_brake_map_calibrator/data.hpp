@@ -47,6 +47,17 @@ struct Counts
   int update_fail = 0;
 };
 
+struct ThresholdParameters
+{
+  double velocity_min;
+  double velocity_diff;
+  double pedal_diff;
+  double max_steer;
+  double max_pitch;
+  double max_jerk;
+  double pedal_velocity;
+};
+
 }  // namespace accel_brake_map_calibrator
 
 #endif  // ACCEL_BRAKE_MAP_CALIBRATOR__DATA_HPP_

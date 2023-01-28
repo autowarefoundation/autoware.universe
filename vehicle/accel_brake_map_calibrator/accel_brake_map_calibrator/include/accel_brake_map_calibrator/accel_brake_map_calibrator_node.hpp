@@ -130,13 +130,9 @@ private:
   double brake_pedal_speed_ = 0.0;
   double pitch_ = 0.0;
   double update_hz_;
-  double velocity_min_threshold_;
-  double velocity_diff_threshold_;
-  double pedal_diff_threshold_;
-  double max_steer_threshold_;
-  double max_pitch_threshold_;
-  double max_jerk_threshold_;
-  double pedal_velocity_thresh_;
+
+  ThresholdParameters thresholds_;
+
   double max_accel_;
   double min_accel_;
   double pedal_to_accel_delay_;
