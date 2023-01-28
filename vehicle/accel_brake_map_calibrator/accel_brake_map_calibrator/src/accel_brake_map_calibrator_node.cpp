@@ -1654,3 +1654,6 @@ void AccelBrakeMapCalibrator::addLogToCSV(
 }
 
 }  // namespace accel_brake_map_calibrator
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(accel_brake_map_calibrator::AccelBrakeMapCalibrator)

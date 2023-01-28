@@ -4,11 +4,14 @@ project(accel_brake_map_calibrator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_executable(accel_brake_map_calibrator
+ament_auto_add_library(accel_brake_map_calibrator_node
   src/accel_brake_map_calibrator_node.cpp
-  src/main.cpp
 )
-ament_target_dependencies(accel_brake_map_calibrator)
+
+rclcpp_components_register_node(accel_brake_map_calibrator_node
+  PLUGIN "accel_brake_map_calibrator::AccelBrakeMapCalibrator"
+  EXECUTABLE accel_brake_map_calibrator_exe
+)
 
 install(
   PROGRAMS
