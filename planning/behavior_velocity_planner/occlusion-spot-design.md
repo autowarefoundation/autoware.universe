@@ -10,9 +10,15 @@ This module plans safe velocity to slow down before reaching collision point tha
 
 This module is activated if `launch_occlusion_spot` becomes true. To make pedestrian first zone map tag is one of the TODOs.
 
-### Limitation
+### Limitation and TODOs
 
-This module is prototype implementation to care occlusion spot. To solve the excessive deceleration due to false positive of the perception, the logic of detection method can be selectable. This point has not been discussed in detail and needs to be improved (see the description below).
+This module is prototype implementation to care occlusion spot. To solve the excessive deceleration due to false positive of the perception, the logic of detection method can be selectable. This point has not been discussed in detail and needs to be improved.
+
+- Make occupancy grid for planning.
+- Make map tag for occlusion spot.
+- About the best safe motion.
+
+TODOs are written in each Inner-workings / Algorithms (see the description below).
 
 ### Inner-workings / Algorithms
 
@@ -34,6 +40,8 @@ To compute fast this module only consider occlusion spot whose TTV is less than 
 
 This module considers any occlusion spot around ego path computed from the occupancy grid.
 Due to the computational cost occupancy grid is not high resolution and this will make occupancy grid noisy so this module add information of occupancy to occupancy grid map.
+
+TODO: consider hight of obstacle point cloud to generate occupancy grid.
 
 ##### Collision Free Judgement
 
@@ -57,9 +65,11 @@ obstacle that can run out from occlusion is interrupted by moving vehicle.
 
 ![brief](./docs/occlusion_spot/raycast_shadow.drawio.svg)
 
-#### Occlusion Spot Common
+#### About safe motion
 
-##### The Concept of Safe Velocity
+![brief](./docs/occlusion_spot/velocity_planning.drawio.svg)
+
+##### The Concept of Safe Velocity and Margin
 
 The safe slowdown velocity is calculated from the below parameters of ego emergency braking system and time to collision.
 Below calculation is included but change velocity dynamically is not recommended for planner.
@@ -72,6 +82,20 @@ Below calculation is included but change velocity dynamically is not recommended
 
   ![occupancy_grid](./docs/occlusion_spot/safe_motion.drawio.svg)
 
+This module defines safe margin to consider ego distance to stop and collision path point geometrically.
+While ego is cruising from safe margin to collision path point, ego vehicle keeps the same velocity as occlusion spot safe velocity.
+
+![brief](./docs/occlusion_spot/behavior_after_safe_margin.drawio.svg)
+
+Note: This logic assumes high-precision vehicle speed tracking and margin for decel point might not be the best solution, and override with manual driver is considered if pedestrian really run out from occlusion spot.
+
+TODO: consider one of the best choices
+
+1. stop in front of occlusion spot
+2. insert 1km/h velocity in front of occlusion spot
+3. slowdown this way
+4. etc... .
+
 ##### Maximum Slowdown Velocity
 
 The maximum slowdown velocity is calculated from the below parameters of ego current velocity and acceleration with maximum slowdown jerk and maximum slowdown acceleration in order not to slowdown too much.
@@ -82,13 +106,6 @@ The maximum slowdown velocity is calculated from the below parameters of ego cur
 - $a_{0}$ current acceleration[m/s]
 
 ![brief](./docs/occlusion_spot/maximum_slowdown_velocity.drawio.svg)
-
-##### Safe Behavior After Passing Safe Margin Point
-
-This module defines safe margin to consider ego distance to stop and collision path point geometrically.
-While ego is cruising from safe margin to collision path point, ego vehicle keeps the same velocity as occlusion spot safe velocity.
-
-![brief](./docs/occlusion_spot/behavior_after_safe_margin.drawio.svg)
 
 #### Module Parameters
 
@@ -322,9 +339,3 @@ partition handle_possible_collision {
 stop
 @enduml
 ```
-
-### TODO
-
-- make occupancy grid for planning.
-- make map tag for occlusion spot.
-- remove emergency brake calculation and insert stop velocity instead.
