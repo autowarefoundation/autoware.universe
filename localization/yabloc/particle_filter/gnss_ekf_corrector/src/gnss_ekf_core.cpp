@@ -17,7 +17,11 @@ GnssEkfCorrector::GnssEkfCorrector()
   auto on_ublox = std::bind(&GnssEkfCorrector::on_ublox, this, _1);
   sub_ublox_ = create_subscription<NavPVT>("input/navpvt", 10, on_ublox);
   auto on_height = [this](const Float32 & height) { this->latest_height_ = height; };
-  height_sub_ = create_subscription<Float32>("input/height", 10, on_height);
+  sub_height_ = create_subscription<Float32>("input/height", 10, on_height);
+  auto on_pose = [this](const PoseCovStamped & pose) {
+    this->current_position_ = common::pose_to_se3(pose.pose.pose).translation();
+  };
+  sub_pose_ = create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, on_pose);
 
   // Publisher
   pub_pose_ = create_publisher<PoseCovStamped>("output/pose_cov_stamped", 10);
@@ -82,10 +86,21 @@ void GnssEkfCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     pose.pose.covariance[6 * 5 + 5] = 1.0;   // 60[deg]
   }
 
-  pub_pose_->publish(pose);
-
   // NOTE: Removed: checking validity of GNSS measurement by mahalanobis distance
-  // NOTE: Removed: skiping update due to little travel distance
+
+  // Compute travel distance from last update position
+  // If the distance is too short, skip weighting
+  {
+    static Eigen::Vector3f last_position = Eigen::Vector3f::Zero();
+    const float travel_distance = (current_position_ - last_position).norm();
+    if (travel_distance > 1) {
+      pub_pose_->publish(pose);
+      last_position = current_position_;
+    } else {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
+    }
+  }
 }
 
 }  // namespace pcdless::ekf_corrector

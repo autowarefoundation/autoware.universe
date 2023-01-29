@@ -23,6 +23,7 @@
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/map/height"/>
+        <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
         <remap from="output/pose_cov_stamped" to="/localization/pose_estimator/pose_with_covariance"/>
     </node>
 

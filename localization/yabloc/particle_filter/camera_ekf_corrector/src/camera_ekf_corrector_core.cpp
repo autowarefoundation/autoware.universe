@@ -176,8 +176,20 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
   }
 
-  pub_pose_cov_->publish(estimated_pose);
-  pub_debug_pose_cov_->publish(estimated_pose);
+  // NOTE: Skip weighting if travel distance is too small
+  {
+    Eigen::Vector3f position = common::pose_to_se3(opt_synched_pose->pose.pose).translation();
+    static Eigen::Vector3f last_position = Eigen::Vector3f::Zero();
+    const float travel_distance = (position - last_position).norm();
+    if (travel_distance > 1) {
+      pub_pose_cov_->publish(estimated_pose);
+      pub_debug_pose_cov_->publish(estimated_pose);
+      last_position = position;
+    } else {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
+    }
+  }
 
   cost_map_.erase_obsolete();  // NOTE: Don't foreget erasing
 

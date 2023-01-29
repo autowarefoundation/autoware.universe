@@ -24,11 +24,12 @@ public:
 private:
   const bool ignore_less_than_float_;
 
-  rclcpp::Subscription<NavPVT>::SharedPtr sub_ublox_;
-  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_;
-  rclcpp::Subscription<Float32>::SharedPtr height_sub_;
+  rclcpp::Subscription<NavPVT>::SharedPtr sub_ublox_;
+  rclcpp::Subscription<Float32>::SharedPtr sub_height_;
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_;
   Float32 latest_height_;
+  Eigen::Vector3f current_position_;
 
   void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
   void publish_marker(const Eigen::Vector3f & position, bool fixed);
