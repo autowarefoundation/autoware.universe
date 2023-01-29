@@ -683,9 +683,18 @@ bool LaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) cons
 
   constexpr double check_distance = 100.0;
   // get lanes used for detection
-  const double check_distance_with_path = check_distance + path.length.sum();
-  const auto check_lanes = route_handler->getCheckTargetLanesFromPath(
-    path.path, status_.lane_change_lanes, check_distance_with_path);
+  // const double check_distance_with_path = check_distance + path.length.sum();
+  const auto check_lanes = std::invoke([&]() {
+    const auto & target_lanes = path.target_lanelets;
+    const auto & target_lane = target_lanes.front();
+    const auto & basic_pt = target_lane.centerline().front();
+    Pose pose;
+    pose.position = lanelet::utils::conversion::toGeomMsgPt(basic_pt);
+
+    auto backward_lanes = route_handler->getLaneletSequence(target_lane, pose, check_distance, 0.0);
+    backward_lanes.insert(backward_lanes.end(), target_lanes.begin(), target_lanes.end());
+    return backward_lanes;
+  });
 
   std::unordered_map<std::string, CollisionCheckDebug> debug_data;
 
