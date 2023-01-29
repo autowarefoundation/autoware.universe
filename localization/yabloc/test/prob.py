@@ -99,7 +99,29 @@ def draw_particle_distribution(ax, x):
     weighted_partilces = weights * prior_particles
 
     count, bins, ignored = ax.hist(
-        prior_particles, 50, density=True, alpha=0.2)
+        prior_particles, 50, density=True, alpha=0.2, color='b')
+
+    def resample():
+        resampled = np.zeros(N)
+        thresh = 1. / N
+        sum_w = 0
+        next_id = 0
+        normalize = np.sum(weights)
+        for (p, w) in zip(prior_particles, weights):
+            sum_w += w / normalize
+            while sum_w > thresh:
+                resampled[next_id] = p
+                next_id += 1
+                thresh = (next_id + 1) / N
+                if next_id == N:
+                    break
+            if next_id == N:
+                break
+        return resampled
+
+    resampled = resample()
+    count, bins, ignored = ax.hist(
+        resampled, 30, density=True, alpha=0.2, color='g')
 
     # Conventional computation
     mu = np.sum(weighted_partilces) / np.sum(weights)
@@ -110,34 +132,69 @@ def draw_particle_distribution(ax, x):
             label='Monte Carlo: posterior PDF(normal approx)', color='g', linestyle='dotted')
 
     # Proposed computation
-    tmp = np.vectorize(dist1.prob)(prior_particles)
-    tmp[tmp < 1e-3] = 1e-3
-    inv_gains = 1. / tmp
+    def proposed():
+        tmp = np.vectorize(dist1.prob)(prior_particles)
+        tmp[tmp < 1e-3] = 1e-3
+        inv_gains = 1. / tmp
 
-    regularized_particles = inv_gains * weighted_partilces
-    mu = np.sum(regularized_particles) / np.sum(weights * inv_gains)
-    tmp = inv_gains * weights * (prior_particles - mu) ** 2
-    var = np.sum(tmp) / np.sum(weights * inv_gains)
-    sigma = np.sqrt(var)
-    print('monte carlo mean=', mu, "std=", sigma)
-    ax.plot(x, normal_distribution(x, mu, sigma),
-            label='Monte Carlo: measurement PDF(normal approx)', color='r', linestyle='dotted')
+        regularized_particles = inv_gains * weighted_partilces
+        mu = np.sum(regularized_particles) / np.sum(weights * inv_gains)
+        tmp = inv_gains * weights * (prior_particles - mu) ** 2
+        var = np.sum(tmp) / np.sum(weights * inv_gains)
+        sigma = np.sqrt(var)
+        print('monte carlo mean=', mu, "std=", sigma)
+        ax.plot(x, normal_distribution(x, mu, sigma),
+                label='Monte Carlo: measurement PDF(normal approx)', color='r', linestyle='dotted')
+
+    def new_proposed():
+        tmp = np.vectorize(dist1.prob)(resampled)
+        tmp[tmp < 1e-3] = 1e-3
+        weights = 1. / tmp
+
+        def reresample():
+            reresampled = np.zeros(N)
+            thresh = 1. / N
+            sum_w = 0
+            next_id = 0
+            normalize = np.sum(weights)
+            for (p, w) in zip(resampled, weights):
+                sum_w += w / normalize
+                while sum_w > thresh:
+                    reresampled[next_id] = p
+                    next_id += 1
+                    thresh = (next_id + 1) / N
+                    if next_id == N:
+                        break
+                if next_id == N:
+                    break
+            return reresampled
+
+        reresampled_particles = reresample()
+        count, bins, ignored = ax.hist(
+            reresampled_particles, 30, density=True, alpha=0.2, color='r')
+
+        mu = np.mean(reresampled_particles)
+        sigma = np.std(reresampled_particles)
+        ax.plot(x, normal_distribution(x, mu, sigma),
+                label='Monte Carlo: measurement PDF(normal approx)', color='r', linestyle='dotted')
+    new_proposed()
 
 
 def main():
     resolution = np.linspace(-5., 5., 101)
     fig = plt.figure(figsize=(15, 6))
-    ax = fig.subplots()
+    ax = fig.subplots(1, 2)
 
-    ax.clear()
-    ax.grid(True)
-    draw_theoretical_distribution(ax, resolution)
-    # draw_particle_distribution(ax, resolution)
+    ax[0].grid(True)
+    ax[1].grid(True)
+    draw_theoretical_distribution(ax[0], resolution)
+    draw_particle_distribution(ax[1], resolution)
 
-    ax.set_title('multi lane situation')
-    ax.set_xlim([-5, 5])
-    ax.set_ylim([-0.1, 1.3])
-    ax.legend(loc='upper right')
+    for a in ax:
+        a.set_title('multi lane situation')
+        a.set_xlim([-5, 5])
+        a.set_ylim([-0.1, 1.3])
+        a.legend(loc='upper right')
     plt.pause(1.0)
     plt.show()
 

@@ -11,6 +11,83 @@ namespace pcdless::ekf_corrector
 std::random_device seed_gen;
 std::default_random_engine engine(seed_gen());
 
+geometry_msgs::msg::PoseWithCovariance debayes_distribution(
+  const geometry_msgs::msg::PoseWithCovariance & post,
+  const geometry_msgs::msg::PoseWithCovariance & prior)
+{
+  // Infer measurement distribution
+  Eigen::Vector2f post_pos, prior_pos;
+  Eigen::Matrix2f post_cov, prior_cov;
+  {
+    auto x1 = prior.pose.position;
+    auto x2 = post.pose.position;
+    prior_pos << x1.x, x1.y;
+    post_pos << x2.x, x2.y;
+
+    auto c1 = prior.covariance;
+    auto c2 = post.covariance;
+    prior_cov << c1[6 * 0 + 0], c1[6 * 0 + 1], c1[6 * 1 + 0], c1[6 * 1 + 1];
+    post_cov << c2[6 * 0 + 0], c2[6 * 0 + 1], c2[6 * 1 + 0], c2[6 * 1 + 1];
+  }
+
+  const Eigen::Matrix2f epsilon = 1e-3f * Eigen::Matrix2f::Identity();
+  const Eigen::Matrix2f post_info = (post_cov).inverse();    // TODO: Is this enough stable?
+  const Eigen::Matrix2f prior_info = (prior_cov).inverse();  // TODO: Is this enough stable?
+
+  const Eigen::Vector2f post_vec = post_info * post_pos;
+  const Eigen::Vector2f prior_vec = prior_info * prior_pos;
+  Eigen::Matrix2f measure_info = post_info - prior_info;
+  Eigen::Vector2f measure_vec = post_vec - prior_vec;
+
+  // Check whether info matrix is positive semi-definite or not
+  float det = measure_info.determinant();
+  while (det < 1e-4f) {
+    measure_info += 0.1 * prior_info;
+    std::cout << "avoiding non positive semi-definite " << det << std::endl;
+    det = measure_info.determinant();
+  }
+  if (measure_info(0, 0) < 1e-3f || measure_info(1, 1) < 1e-3f) {
+    geometry_msgs::msg::PoseWithCovariance measure = prior;
+    measure.covariance[6 * 0 + 0] = 100;
+    measure.covariance[6 * 0 + 1] = 0;
+    measure.covariance[6 * 1 + 0] = 0;
+    measure.covariance[6 * 1 + 1] = 100;
+    return measure;
+  }
+
+  Eigen::Matrix2f measure_cov = (measure_info).inverse();
+  // Eigen::Vector2f measure_pos = measure_cov * measure_vec;
+  // NOTE:
+  Eigen::Vector2f measure_pos;
+
+  Eigen::Matrix2f A = prior_cov * (prior_cov + measure_cov).inverse();
+  Eigen::Vector2f b = post_pos + (A - Eigen::Matrix2f::Identity()) * prior_pos;
+  measure_pos = A.inverse() * b;
+
+  geometry_msgs::msg::PoseWithCovariance measure = post;
+  measure.pose.position.x = measure_pos.x();
+  measure.pose.position.y = measure_pos.y();
+  measure.covariance[6 * 0 + 0] = measure_cov(0, 0);
+  measure.covariance[6 * 0 + 1] = measure_cov(0, 1);
+  measure.covariance[6 * 1 + 0] = measure_cov(1, 0);
+  measure.covariance[6 * 1 + 1] = measure_cov(1, 1);
+  std::cout << "post_cov\n" << post_cov << std::endl;
+  std::cout << "measure_cov\n" << measure_cov << std::endl;
+  std::cout << "post_pos: " << post_pos.transpose() << std::endl;
+  std::cout << "measure_pos: " << measure_pos.transpose() << std::endl;
+
+  if ((measure_pos - prior_pos).norm() > 10) {
+    std::cout << "\033[35m";
+    std::cout << "too far measurement!!!!!\n";
+    std::cout << A;
+    std::cout << "\n";
+    std::cout << b.transpose();
+    std::cout << "\033[0m" << std::endl;
+  }
+
+  return measure;
+}
+
 Eigen::Vector2d nrand_2d(const Eigen::Matrix2d & cov)
 {
   Eigen::JacobiSVD<Eigen::Matrix2d> svd;
@@ -23,6 +100,28 @@ Eigen::Vector2d nrand_2d(const Eigen::Matrix2d & cov)
   xy.x() = std::sqrt(std.x()) * dist(engine);
   xy.y() = std::sqrt(std.y()) * dist(engine);
   return svd.matrixU() * xy;
+}
+
+NormalDistribution2d::NormalDistribution2d(const Eigen::Matrix2d & cov)
+{
+  Eigen::JacobiSVD<Eigen::Matrix2d> svd;
+  svd.compute(cov, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  std_ = svd.singularValues().cwiseMax(0.01).cwiseSqrt();
+  rotation_ = svd.matrixU();
+}
+
+std::pair<double, Eigen::Vector2d> NormalDistribution2d::operator()() const
+{
+  std::normal_distribution<> dist(0.0, 1.0);
+  const float x = dist(engine);
+  const float y = dist(engine);
+
+  float prob = 1 / (2 * M_PI) * std::exp(-0.5 * (x * x + y * y));
+
+  Eigen::Vector2d xy;
+  xy.x() = std_.x() * x;
+  xy.y() = std_.y() * y;
+  return {prob, rotation_ * xy};
 }
 
 double mean_radian(const std::vector<double> & angles, const std::vector<double> & weights)

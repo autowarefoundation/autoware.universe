@@ -31,6 +31,7 @@ CameraEkfCorrector::CameraEkfCorrector()
   // Publication
   pub_image_ = create_publisher<Image>("match_image", 10);
   pub_pose_cov_ = create_publisher<PoseCovStamped>("output/pose_with_covariance", 10);
+  pub_debug_pose_cov_ = create_publisher<PoseCovStamped>("debug/pose_with_covariance", 10);
   pub_markers_ = create_publisher<MarkerArray>("yielded_marker", 10);
   pub_scored_cloud_ = create_publisher<PointCloud2>("debug_scored_cloud", 10);
 
@@ -179,6 +180,7 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   }
 
   pub_pose_cov_->publish(estimated_pose);
+  pub_debug_pose_cov_->publish(estimated_pose);
 
   cost_map_.erase_obsolete();  // NOTE: Don't foreget erasing
 
@@ -206,9 +208,11 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   xy_cov = sampling_cov_gain_ * xy_cov;
   theta_cov = sampling_cov_theta_gain_ * theta_cov;
 
+  NormalDistribution2d nrand2d(xy_cov);
+
   constexpr int N = 500;
   for (int i = 0; i < N; i++) {
-    Eigen::Vector2d xy = nrand_2d(xy_cov);
+    auto [prob, xy] = nrand2d();
     Particle particle;
     particle.pose = init.pose.pose;
     particle.pose.position.x += xy.x();
@@ -217,6 +221,8 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
     double theta = base_theta + nrand(theta_cov);
     particle.pose.orientation.w = std::cos(theta / 2.);
     particle.pose.orientation.z = std::sin(theta / 2.);
+    particle.pose.orientation.x = 0;
+    particle.pose.orientation.y = 0;
     particles.particles.push_back(particle);
   }
 
@@ -248,11 +254,17 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
   output.pose.covariance[6 * 5 + 5] = result.cov_theta_;
 
+  output.pose = debayes_distribution(output.pose, init.pose);
+
   {
     auto in_pos = init.pose.pose.position;
     auto out_pos = output.pose.pose.position;
+    auto out_ori = output.pose.pose.orientation;
     std::cout << "input: " << in_pos.x << " " << in_pos.y << " " << in_pos.z << std::endl;
     std::cout << "output: " << out_pos.x << " " << out_pos.y << " " << out_pos.z << std::endl;
+    // std::cout << "output: " << out_ori.w << " " << out_ori.x << " " << out_ori.y << " " <<
+    // out_ori.z
+    //           << std::endl;
   }
   return output;
 }

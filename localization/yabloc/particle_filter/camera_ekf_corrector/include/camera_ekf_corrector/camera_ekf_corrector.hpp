@@ -59,6 +59,7 @@ private:
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_debug_pose_cov_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_markers_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_scored_cloud_;
 
