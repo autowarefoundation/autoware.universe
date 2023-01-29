@@ -44,9 +44,6 @@ public:
 private:
   const float far_weight_gain_;
   const float logit_gain_;
-  const float sampling_cov_gain_;
-  const float sampling_cov_theta_gain_;
-  const float after_cov_gain_;
 
   HierarchicalCostMap cost_map_;
 

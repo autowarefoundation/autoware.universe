@@ -20,9 +20,6 @@ CameraEkfCorrector::CameraEkfCorrector()
 : Node("camera_particle_corrector"),
   far_weight_gain_(declare_parameter<float>("far_weight_gain", 0.001)),
   logit_gain_(declare_parameter<float>("logit_gain", 0.1)),
-  sampling_cov_gain_(declare_parameter<float>("sampling_cov_gain", 4.0)),
-  sampling_cov_theta_gain_(declare_parameter<float>("sampling_cov_theta_gain", 1.0)),
-  after_cov_gain_(declare_parameter<float>("after_cov_gain", 2.0)),
   cost_map_(this)
 {
   using std::placeholders::_1;
@@ -204,10 +201,6 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   const double base_theta =
     2 * std::atan2(init.pose.pose.orientation.z, init.pose.pose.orientation.w);
 
-  // TODO:  I am not sure
-  xy_cov = sampling_cov_gain_ * xy_cov;
-  theta_cov = sampling_cov_theta_gain_ * theta_cov;
-
   NormalDistribution2d nrand2d(xy_cov);
 
   constexpr int N = 500;
@@ -247,14 +240,14 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   output.pose.pose.position.z = latest_height_.data;
 
   for (int i = 0; i < 3; ++i) {
-    output.pose.covariance[6 * i + 0] = after_cov_gain_ * result.cov_xyz_(i, 0);
-    output.pose.covariance[6 * i + 1] = after_cov_gain_ * result.cov_xyz_(i, 1);
-    output.pose.covariance[6 * i + 2] = after_cov_gain_ * result.cov_xyz_(i, 2);
+    output.pose.covariance[6 * i + 0] = result.cov_xyz_(i, 0);
+    output.pose.covariance[6 * i + 1] = result.cov_xyz_(i, 1);
+    output.pose.covariance[6 * i + 2] = result.cov_xyz_(i, 2);
   }
+  output.pose = debayes_distribution(output.pose, init.pose);
+
   output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
   output.pose.covariance[6 * 5 + 5] = result.cov_theta_;
-
-  output.pose = debayes_distribution(output.pose, init.pose);
 
   {
     auto in_pos = init.pose.pose.position;
@@ -262,9 +255,6 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
     auto out_ori = output.pose.pose.orientation;
     std::cout << "input: " << in_pos.x << " " << in_pos.y << " " << in_pos.z << std::endl;
     std::cout << "output: " << out_pos.x << " " << out_pos.y << " " << out_pos.z << std::endl;
-    // std::cout << "output: " << out_ori.w << " " << out_ori.x << " " << out_ori.y << " " <<
-    // out_ori.z
-    //           << std::endl;
   }
   return output;
 }

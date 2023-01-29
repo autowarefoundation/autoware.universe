@@ -30,14 +30,11 @@ geometry_msgs::msg::PoseWithCovariance debayes_distribution(
     post_cov << c2[6 * 0 + 0], c2[6 * 0 + 1], c2[6 * 1 + 0], c2[6 * 1 + 1];
   }
 
-  const Eigen::Matrix2f epsilon = 1e-3f * Eigen::Matrix2f::Identity();
-  const Eigen::Matrix2f post_info = (post_cov).inverse();    // TODO: Is this enough stable?
-  const Eigen::Matrix2f prior_info = (prior_cov).inverse();  // TODO: Is this enough stable?
+  const Eigen::Matrix2f epsilon = 1e-4f * Eigen::Matrix2f::Identity();
+  const Eigen::Matrix2f post_info = (post_cov + epsilon).inverse();
+  const Eigen::Matrix2f prior_info = (prior_cov + epsilon).inverse();
 
-  const Eigen::Vector2f post_vec = post_info * post_pos;
-  const Eigen::Vector2f prior_vec = prior_info * prior_pos;
   Eigen::Matrix2f measure_info = post_info - prior_info;
-  Eigen::Vector2f measure_vec = post_vec - prior_vec;
 
   // Check whether info matrix is positive semi-definite or not
   float det = measure_info.determinant();
@@ -55,14 +52,11 @@ geometry_msgs::msg::PoseWithCovariance debayes_distribution(
     return measure;
   }
 
-  Eigen::Matrix2f measure_cov = (measure_info).inverse();
-  // Eigen::Vector2f measure_pos = measure_cov * measure_vec;
-  // NOTE:
-  Eigen::Vector2f measure_pos;
+  const Eigen::Matrix2f measure_cov = (measure_info).inverse();
+  const Eigen::Vector2f measure_pos =
+    prior_pos + (prior_cov + measure_cov) * prior_info * (post_pos - prior_pos);
 
-  Eigen::Matrix2f A = prior_cov * (prior_cov + measure_cov).inverse();
-  Eigen::Vector2f b = post_pos + (A - Eigen::Matrix2f::Identity()) * prior_pos;
-  measure_pos = A.inverse() * b;
+  // TODO: De-bayesing for orientation
 
   geometry_msgs::msg::PoseWithCovariance measure = post;
   measure.pose.position.x = measure_pos.x();
@@ -76,12 +70,9 @@ geometry_msgs::msg::PoseWithCovariance debayes_distribution(
   std::cout << "post_pos: " << post_pos.transpose() << std::endl;
   std::cout << "measure_pos: " << measure_pos.transpose() << std::endl;
 
-  if ((measure_pos - prior_pos).norm() > 10) {
+  if ((measure_pos - prior_pos).norm() > 5) {
     std::cout << "\033[35m";
     std::cout << "too far measurement!!!!!\n";
-    std::cout << A;
-    std::cout << "\n";
-    std::cout << b.transpose();
     std::cout << "\033[0m" << std::endl;
   }
 
