@@ -1129,15 +1129,6 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_RIGHT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_right_offset);
     update_param(
-      parameters, DrivableAreaExpansionParameters::EGO_USE_CIRCLE_FOOTPRINT,
-      planner_data_->drivable_area_expansion_parameters.ego_use_circle_footprint);
-    update_param(
-      parameters, DrivableAreaExpansionParameters::EGO_COMPENSATE,
-      planner_data_->drivable_area_expansion_parameters.ego_compensate);
-    update_param(
-      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_COMPENSATE_SHIFT,
-      planner_data_->drivable_area_expansion_parameters.ego_extra_compensate_shift);
-    update_param(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_front_offset);
     update_param(

@@ -36,9 +36,6 @@ struct DrivableAreaExpansionParameters
   static constexpr auto EGO_EXTRA_OFFSET_LEFT = "dynamic_expansion.ego.extra_footprint_offset.left";
   static constexpr auto EGO_EXTRA_OFFSET_RIGHT =
     "dynamic_expansion.ego.extra_footprint_offset.right";
-  static constexpr auto EGO_USE_CIRCLE_FOOTPRINT = "dynamic_expansion.ego.use_circle_footprint";
-  static constexpr auto EGO_COMPENSATE = "dynamic_expansion.ego.compensate";
-  static constexpr auto EGO_EXTRA_COMPENSATE_SHIFT = "dynamic_expansion.ego.extra_compensate_shift";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_FRONT =
     "dynamic_expansion.dynamic_objects.extra_footprint_offset.front";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_REAR =
@@ -64,9 +61,6 @@ struct DrivableAreaExpansionParameters
   double ego_extra_right_offset;
   double ego_extra_rear_offset;
   double ego_extra_front_offset;
-  bool ego_use_circle_footprint;
-  bool ego_compensate;
-  double ego_extra_compensate_shift;
   double dynamic_objects_extra_left_offset;
   double dynamic_objects_extra_right_offset;
   double dynamic_objects_extra_rear_offset;
@@ -83,9 +77,6 @@ struct DrivableAreaExpansionParameters
     ego_extra_rear_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_REAR);
     ego_extra_left_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_LEFT);
     ego_extra_right_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_RIGHT);
-    ego_use_circle_footprint = node.declare_parameter<bool>(EGO_USE_CIRCLE_FOOTPRINT);
-    ego_compensate = node.declare_parameter<bool>(EGO_COMPENSATE);
-    ego_extra_compensate_shift = node.declare_parameter<double>(EGO_EXTRA_COMPENSATE_SHIFT);
     dynamic_objects_extra_front_offset =
       node.declare_parameter<double>(DYN_OBJECTS_EXTRA_OFFSET_FRONT);
     dynamic_objects_extra_rear_offset =

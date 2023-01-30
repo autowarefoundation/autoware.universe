@@ -27,53 +27,12 @@
 
 namespace drivable_area_expansion
 {
-void compensateOutFootprints(
-  std::vector<Footprint> & path_footprints, const multilinestring_t & uncrossable_lines,
-  const double extra_compensate_distance)
-{
-  multipoint_t intersections;
-  linestring_t ls;
-  std::vector<Footprint> compensate_footprints;
-  for (auto & footprint : path_footprints) {
-    ls = {footprint.origin, footprint.origin};
-    point_t translation;
-    auto translation_dist = 0.0;
-    boost::geometry::for_each_point(footprint.footprint, [&](const point_t & p) {
-      ls[1] = p;
-      intersections.clear();
-      boost::geometry::intersection(ls, uncrossable_lines, intersections);
-      if (!intersections.empty()) {
-        for (const auto & intersection : intersections) {
-          const auto dist = boost::geometry::distance(p, intersection);
-          if (dist > translation_dist) {
-            translation_dist = dist;
-            translation = intersection;
-            boost::geometry::subtract_point(translation, p);
-          }
-        }
-      }
-    });
-    if (translation_dist > 0) {
-      const auto new_length = translation_dist + extra_compensate_distance;
-      translation *= (new_length / translation_dist);
-      Footprint compensate_footprint(
-        translatePolygon(footprint.footprint, translation.x(), translation.y()), footprint.origin);
-      boost::geometry::add_point(compensate_footprint.origin, translation);
-      compensate_footprints.push_back(compensate_footprint);
-    }
-  }
-  path_footprints.insert(
-    path_footprints.end(), compensate_footprints.begin(), compensate_footprints.end());
-}
-
 bool expandDrivableArea(
   PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
   multilinestring_t uncrossable_lines,
   const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects)
 {
   auto path_footprints = createPathFootprints(path, params);
-  if (params.ego_compensate)
-    compensateOutFootprints(path_footprints, uncrossable_lines, params.ego_extra_compensate_shift);
   uncrossable_lines.push_back(createMaxExpansionLine(path, params.max_expansion_distance));
   const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
   const auto filtered_footprint = filterFootprint(
@@ -220,6 +179,24 @@ bool expandDrivableArea(
   left_bound = extended_left_bound;
   right_bound = extended_right_bound;
   return true;
+}
+
+std::vector<Footprint> createPathFootprints(
+  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params)
+{
+  const auto left = params.ego_left_offset + params.ego_extra_left_offset;
+  const auto right = params.ego_right_offset - params.ego_extra_right_offset;
+  const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
+  const auto front = params.ego_front_offset + params.ego_extra_front_offset;
+  polygon_t base_footprint;
+  base_footprint.outer() = {
+    point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
+    point_t{front, left}};
+  std::vector<Footprint> footprints;
+  footprints.reserve(path.points.size());
+  for (const auto & point : path.points)
+    footprints.push_back(createFootprint(point.point.pose, base_footprint));
+  return footprints;
 }
 
 linestring_t createMaxExpansionLine(

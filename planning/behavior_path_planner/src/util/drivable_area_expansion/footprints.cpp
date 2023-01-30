@@ -51,47 +51,6 @@ Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t
   return Footprint(polygon, point_t{pose.position.x, pose.position.y});
 }
 
-std::vector<Footprint> createPathFootprints(
-  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params)
-{
-  std::vector<Footprint> footprints;
-  footprints.reserve(path.points.size());
-
-  const auto left = params.ego_left_offset + params.ego_extra_left_offset;
-  const auto right = params.ego_right_offset - params.ego_extra_right_offset;
-  const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
-  const auto front = params.ego_front_offset + params.ego_extra_front_offset;
-  polygon_t base_footprint;
-  base_footprint.outer() = {
-    point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
-    point_t{front, left}};
-  if (params.ego_use_circle_footprint) {
-    point_t centroid;
-    boost::geometry::centroid(base_footprint, centroid);
-    std::cout << centroid.x() << " , " << centroid.y() << std::endl;
-    auto radius = 0.0;
-    for (const auto & p : base_footprint.outer())
-      radius = std::max(radius, boost::geometry::distance(centroid, p));
-    boost::geometry::strategy::buffer::point_circle point_strat(18);
-    boost::geometry::strategy::buffer::distance_symmetric<double> dist_strat(radius);
-    boost::geometry::strategy::buffer::join_round join_strat;
-    boost::geometry::strategy::buffer::end_round end_strat;
-    boost::geometry::strategy::buffer::side_straight side_strat;
-    for (const auto & p : path.points) {
-      point_t center{p.point.pose.position.x, p.point.pose.position.y};
-      boost::geometry::add_point(center, centroid);
-      multipolygon_t buffer;
-      boost::geometry::buffer(
-        center, buffer, dist_strat, side_strat, join_strat, end_strat, point_strat);
-      footprints.emplace_back(buffer.front(), center);
-    }
-  } else {
-    for (const auto & point : path.points)
-      footprints.push_back(createFootprint(point.point.pose, base_footprint));
-  }
-  return footprints;
-}
-
 std::vector<Footprint> createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const DrivableAreaExpansionParameters & params)

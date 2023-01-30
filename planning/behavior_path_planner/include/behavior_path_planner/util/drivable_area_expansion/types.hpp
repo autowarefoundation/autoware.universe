@@ -39,8 +39,8 @@ using multilinestring_t = tier4_autoware_utils::MultiLineString2d;
 
 struct Footprint
 {
-  polygon_t footprint;
-  point_t origin;
+  const polygon_t footprint;
+  const point_t origin;
 
   Footprint(polygon_t footprint_, point_t origin_) : footprint{footprint_}, origin{origin_} {}
 };
