@@ -19,6 +19,7 @@
 #include <qt5/QtWidgets/QHBoxLayout>
 #include <qt5/QtWidgets/QLabel>
 #include <qt5/QtWidgets/QWidget>
+#include <rclcpp/version.h>
 #include <rviz_common/display_context.hpp>
 
 namespace rviz_plugins
@@ -66,10 +67,21 @@ BagTimeManagerPanel::BagTimeManagerPanel(QWidget * parent) : rviz_common::Panel(
 void BagTimeManagerPanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-  client_pause_ = raw_node_->create_client<Pause>("/rosbag2_player/pause", rclcpp::ServicesQoS);
-  client_resume_ = raw_node_->create_client<Resume>("/rosbag2_player/resume", rclcpp::ServicesQoS);
+// APIs taking rclcpp::QoS objects are only available in ROS 2 Iron and higher
+#if RCLCPP_VERSION_MAJOR >= 18
+  client_pause_ = raw_node_->create_client<Pause>("/rosbag2_player/pause", rclcpp::ServicesQoS());
+  client_resume_ =
+    raw_node_->create_client<Resume>("/rosbag2_player/resume", rclcpp::ServicesQoS());
   client_set_rate_ =
-    raw_node_->create_client<SetRate>("/rosbag2_player/set_rate", rclcpp::ServicesQoS);
+    raw_node_->create_client<SetRate>("/rosbag2_player/set_rate", rclcpp::ServicesQoS());
+#else
+  client_pause_ =
+    raw_node_->create_client<Pause>("/rosbag2_player/pause", rmw_qos_profile_services_default);
+  client_resume_ =
+    raw_node_->create_client<Resume>("/rosbag2_player/resume", rmw_qos_profile_services_default);
+  client_set_rate_ =
+    raw_node_->create_client<SetRate>("/rosbag2_player/set_rate", rmw_qos_profile_services_default);
+#endif
 }
 
 void BagTimeManagerPanel::onPauseClicked()
