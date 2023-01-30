@@ -52,10 +52,11 @@ using tier4_autoware_utils::Polygon2d;
 
 void filterObjectIndices(
   const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const PathWithLaneId & ego_path,
-  const Pose & current_pose, const double forward_path_length, const double filter_width,
-  std::vector<size_t> & current_lane_obj_indices, std::vector<size_t> & target_lane_obj_indices,
-  std::vector<size_t> & others_obj_indices, const bool ignore_unknown_obj = false)
+  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
+  const PathWithLaneId & ego_path, const Pose & current_pose, const double forward_path_length,
+  const double filter_width, std::vector<size_t> & current_lane_obj_indices,
+  std::vector<size_t> & target_lane_obj_indices, std::vector<size_t> & others_obj_indices,
+  const bool ignore_unknown_obj = false)
 {
   // Reserve maximum amount possible
   current_lane_obj_indices.reserve(objects.objects.size());
@@ -109,7 +110,22 @@ void filterObjectIndices(
     const bool is_intersect_with_target = boost::geometry::intersects(target_polygon, obj_polygon);
     if (is_intersect_with_target) {
       target_lane_obj_indices.push_back(i);
-    } else {
+      continue;
+    }
+
+    const bool is_intersect_with_backward = std::invoke([&]() {
+      for (const auto & ll : target_backward_lanes) {
+        const bool is_intersect_with_backward =
+          boost::geometry::intersects(ll.polygon2d().basicPolygon(), obj_polygon);
+        if (is_intersect_with_backward) {
+          target_lane_obj_indices.push_back(i);
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (!is_intersect_with_backward) {
       others_obj_indices.push_back(i);
     }
   }
@@ -593,12 +609,13 @@ bool isLaneChangePathSafe(
     const auto current_obj_filtering_buffer = lateral_buffer + common_parameters.vehicle_width / 2;
 
     filterObjectIndices(
-      *dynamic_objects, lane_change_path.reference_lanelets, target_lanes, path, current_pose,
-      common_parameters.forward_path_length, current_obj_filtering_buffer,
-      current_lane_object_indices, target_lane_object_indices, other_lane_object_indices, true);
+      *dynamic_objects, lane_change_path.reference_lanelets, lane_change_path.target_lanelets,
+      target_lanes, path, current_pose, common_parameters.forward_path_length,
+      current_obj_filtering_buffer, current_lane_object_indices, target_lane_object_indices,
+      other_lane_object_indices, true);
   }
 
-  RCLCPP_DEBUG(
+  RCLCPP_INFO(
     rclcpp::get_logger("lane_change"), "number of object in current: %lu, target: %lu, others: %lu",
     current_lane_object_indices.size(), target_lane_object_indices.size(),
     other_lane_object_indices.size());
@@ -1084,17 +1101,30 @@ bool hasEnoughDistanceToLaneChangeAfterAbort(
   return true;
 }
 
+// TODO(Azu): In the future, get back lanelet within `to_back_dist` [m] from queried lane
 lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const double to_back_dist)
+  const RouteHandler & route_handler, const lanelet::ConstLanelet & target_lane,
+  const double backward_length)
 {
-  const auto & target_lane = target_lanes.front();
-  const auto & basic_pt = target_lane.centerline().front();
-  Pose pose;
-  pose.position = lanelet::utils::conversion::toGeomMsgPt(basic_pt);
+  const auto preceeding_lanes =
+    route_handler.getPrecedingLaneletSequence(target_lane, backward_length, {target_lane});
 
-  auto backward_lanes = route_handler.getLaneletSequence(target_lane, pose, to_back_dist, 0.0);
-  backward_lanes.insert(backward_lanes.end(), target_lanes.begin(), target_lanes.end());
+  lanelet::ConstLanelets backward_lanes{};
+  const auto num_of_lanes = std::invoke([&preceeding_lanes]() {
+    size_t sum{0};
+    for (const auto & lanes : preceeding_lanes) {
+      sum += lanes.size();
+    }
+    return sum;
+  });
+
+  backward_lanes.reserve(num_of_lanes);
+
+  for (const auto & lanes : preceeding_lanes) {
+    backward_lanes.insert(backward_lanes.end(), lanes.begin(), lanes.end());
+  }
+
   return backward_lanes;
 }
+
 }  // namespace behavior_path_planner::lane_change_utils

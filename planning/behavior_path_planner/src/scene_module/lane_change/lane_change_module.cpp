@@ -384,13 +384,10 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
     return std::make_pair(false, false);
   }
 
-  // get lanes used for detection
-  const auto check_lanes = lane_change_utils::getExtendedTargetLanesForCollisionCheck(
-    *route_handler, lane_change_lanes, check_distance);
-
   // select valid path
+  const auto & target_lanes = lane_change_paths.front().target_lanelets;
   const LaneChangePaths valid_paths = lane_change_utils::selectValidPaths(
-    lane_change_paths, current_lanes, check_lanes, *route_handler, current_pose,
+    lane_change_paths, current_lanes, target_lanes, *route_handler, current_pose,
     route_handler->getGoalPose(),
     common_parameters.minimum_lane_change_length +
       common_parameters.backward_length_buffer_for_end_of_lane +
@@ -400,6 +397,10 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
     return std::make_pair(false, false);
   }
   debug_valid_path_ = valid_paths;
+
+  // get lanes used for detection
+  const auto check_lanes = lane_change_utils::getExtendedTargetLanesForCollisionCheck(
+    *route_handler, lane_change_paths.front().target_lanelets.front(), check_distance);
 
   // select safe path
   const bool found_safe_path = lane_change_utils::selectSafePath(
@@ -672,11 +673,9 @@ bool LaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) cons
   const auto & route_handler = planner_data_->route_handler;
   const auto & path = status_.lane_change_path;
 
-  constexpr double check_distance = 100.0;
   // get lanes used for detection
-  // const double check_distance_with_path = check_distance + path.length.sum();
   const auto check_lanes = lane_change_utils::getExtendedTargetLanesForCollisionCheck(
-    *route_handler, path.target_lanelets, check_distance);
+    *route_handler, path.target_lanelets.front(), check_distance_);
 
   std::unordered_map<std::string, CollisionCheckDebug> debug_data;
 
