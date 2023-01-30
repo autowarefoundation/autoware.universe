@@ -197,10 +197,6 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   // check if goal is contained in cropped_traj_points
   const bool is_goal_contained =
     geometry_utils::isSamePoint(cropped_traj_points.back(), planner_data.traj_points.back());
-  if (is_goal_contained) {
-    // TODO(murooka) remove this.
-    std::cerr << "goal is contained " << std::endl;
-  }
 
   // 2. insert fixed point
   // NOTE: Should be after crop trajectory so that fixed point will not be cropped.
@@ -214,7 +210,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   const auto [padded_traj_points, pad_start_idx] = getPaddedTrajectoryPoints(resampled_traj_points);
 
   // 5. update constraint for elastic band's QP
-  updateConstraint(padded_traj_points, is_goal_contained);
+  updateConstraint(padded_traj_points, is_goal_contained, pad_start_idx);
 
   // 6. get optimization result
   const auto optimized_points = optimizeTrajectory(padded_traj_points);
@@ -285,7 +281,8 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
 }
 
 void EBPathSmoother::updateConstraint(
-  const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained) const
+  const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained,
+  const size_t pad_start_idx) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -296,9 +293,17 @@ void EBPathSmoother::updateConstraint(
   std::vector<double> lower_bound(p.num_points * 2, 0.0);
   for (int i = 0; i < p.num_points; ++i) {
     const double constraint_segment_length = [&]() {
-      if (i == 0 || (is_goal_contained && i == p.num_points - 1)) {
+      // NOTE: fix first and second pose to keep start orientation
+      if (i < 2) {
         return p.clearance_for_fix;
-      } else if (i < p.num_joint_points + 1) {  // 1 is added since index 0 is fixed point
+      }
+      if (is_goal_contained) {
+        // NOTE: fix goal and its previous pose to keep goal orientation
+        if (p.num_points - 2 <= i || pad_start_idx - 2 <= i) {
+          return p.clearance_for_fix;
+        }
+      }
+      if (i < p.num_joint_points + 1) {  // 1 is added since index 0 is fixed point
         return p.clearance_for_joint;
       }
       return p.clearance_for_smooth;
@@ -385,7 +390,7 @@ std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPoin
 {
   time_keeper_ptr_->tic(__func__);
 
-  auto eb_traj_points = traj_points;
+  std::vector<TrajectoryPoint> eb_traj_points;
 
   // update only x and y
   for (size_t i = 0; i < pad_start_idx; ++i) {
@@ -401,8 +406,11 @@ std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPoin
       }
     }
 
-    eb_traj_points.at(i).pose.position.x = optimized_points.at(i);
-    eb_traj_points.at(i).pose.position.y = optimized_points.at(i + eb_param_.num_points);
+    auto eb_traj_point = traj_points.at(i);
+    eb_traj_point.pose.position.x = optimized_points.at(i);
+    eb_traj_point.pose.position.y = optimized_points.at(i + eb_param_.num_points);
+
+    eb_traj_points.push_back(eb_traj_point);
   }
 
   // update orientation

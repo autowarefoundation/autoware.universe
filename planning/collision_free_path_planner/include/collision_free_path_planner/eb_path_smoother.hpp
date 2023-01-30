@@ -111,7 +111,8 @@ private:
     const std::vector<TrajectoryPoint> & traj_points) const;
 
   void updateConstraint(
-    const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained) const;
+    const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained,
+    const size_t pad_start_idx) const;
 
   Constraint2d getConstraint2dFromConstraintSegment(
     const geometry_msgs::msg::Pose & pose, const double constraint_segment_length) const;
