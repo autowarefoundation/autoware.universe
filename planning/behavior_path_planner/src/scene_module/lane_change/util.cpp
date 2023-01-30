@@ -567,7 +567,7 @@ bool hasEnoughDistance(
 
 bool isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
+  const lanelet::ConstLanelets & backward_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const size_t current_seg_idx, const Twist & current_twist,
   const BehaviorPathPlannerParameters & common_parameters,
@@ -581,6 +581,7 @@ bool isLaneChangePathSafe(
   }
 
   const auto & path = lane_change_path.path;
+  const auto & target_lanes = lane_change_path.target_lanelets;
   if (path.points.empty() || current_lanes.empty()) {
     return false;
   }
@@ -609,10 +610,9 @@ bool isLaneChangePathSafe(
     const auto current_obj_filtering_buffer = lateral_buffer + common_parameters.vehicle_width / 2;
 
     filterObjectIndices(
-      *dynamic_objects, lane_change_path.reference_lanelets, lane_change_path.target_lanelets,
-      target_lanes, path, current_pose, common_parameters.forward_path_length,
-      current_obj_filtering_buffer, current_lane_object_indices, target_lane_object_indices,
-      other_lane_object_indices, true);
+      *dynamic_objects, lane_change_path.reference_lanelets, target_lanes, backward_lanes, path,
+      current_pose, common_parameters.forward_path_length, current_obj_filtering_buffer,
+      current_lane_object_indices, target_lane_object_indices, other_lane_object_indices, true);
   }
 
   RCLCPP_DEBUG(
@@ -668,16 +668,6 @@ bool isLaneChangePathSafe(
     const auto & obj = dynamic_objects->objects.at(i);
     auto current_debug_data = assignDebugData(obj);
     current_debug_data.second.ego_predicted_path.push_back(vehicle_predicted_path);
-    bool is_object_in_target = false;
-    if (lane_change_parameters.use_predicted_path_outside_lanelet) {
-      is_object_in_target = true;
-    } else {
-      for (const auto & llt : target_lanes) {
-        if (lanelet::utils::isInLanelet(obj.kinematics.initial_pose_with_covariance.pose, llt)) {
-          is_object_in_target = true;
-        }
-      }
-    }
 
     const auto predicted_paths =
       util::getPredictedPathFromObj(obj, lane_change_parameters.use_all_predicted_path);
@@ -688,24 +678,42 @@ bool isLaneChangePathSafe(
                                      (object_speed > prepare_phase_ignore_target_speed_thresh))
                                       ? 0.0
                                       : lane_change_prepare_duration;
-    if (is_object_in_target) {
-      for (const auto & obj_path : predicted_paths) {
-        if (!util::isSafeInLaneletCollisionCheck(
-              current_pose, current_twist, vehicle_predicted_path, vehicle_info, check_start_time,
-              check_end_time, time_resolution, obj, obj_path, common_parameters, front_decel,
-              rear_decel, ego_pose_before_collision, current_debug_data.second)) {
-          appendDebugInfo(current_debug_data, false);
-          return false;
-        }
-      }
-    } else {
-      if (!util::isSafeInFreeSpaceCollisionCheck(
+    for (const auto & obj_path : predicted_paths) {
+      if (!util::isSafeInLaneletCollisionCheck(
             current_pose, current_twist, vehicle_predicted_path, vehicle_info, check_start_time,
-            check_end_time, time_resolution, obj, common_parameters, front_decel, rear_decel,
-            current_debug_data.second)) {
+            check_end_time, time_resolution, obj, obj_path, common_parameters, front_decel,
+            rear_decel, ego_pose_before_collision, current_debug_data.second)) {
         appendDebugInfo(current_debug_data, false);
         return false;
       }
+    }
+    appendDebugInfo(current_debug_data, true);
+  }
+
+  if (!lane_change_parameters.use_predicted_path_outside_lanelet) {
+    return true;
+  }
+
+  for (const auto & i : other_lane_object_indices) {
+    const auto & obj = dynamic_objects->objects.at(i);
+    auto current_debug_data = assignDebugData(obj);
+    current_debug_data.second.ego_predicted_path.push_back(vehicle_predicted_path);
+
+    const auto predicted_paths =
+      util::getPredictedPathFromObj(obj, lane_change_parameters.use_all_predicted_path);
+
+    const auto object_speed =
+      util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear);
+    const double check_start_time = (enable_collision_check_at_prepare_phase &&
+                                     (object_speed > prepare_phase_ignore_target_speed_thresh))
+                                      ? 0.0
+                                      : lane_change_prepare_duration;
+    if (!util::isSafeInFreeSpaceCollisionCheck(
+          current_pose, current_twist, vehicle_predicted_path, vehicle_info, check_start_time,
+          check_end_time, time_resolution, obj, common_parameters, front_decel, rear_decel,
+          current_debug_data.second)) {
+      appendDebugInfo(current_debug_data, false);
+      return false;
     }
     appendDebugInfo(current_debug_data, true);
   }
