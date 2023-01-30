@@ -1143,6 +1143,15 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     update_param(
       parameters, DrivableAreaExpansionParameters::MAX_EXP_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_expansion_distance);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::MIN_EXP_DIST_PARAM,
+      planner_data_->drivable_area_expansion_parameters.min_expansion_distance);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
+      planner_data_->drivable_area_expansion_parameters.extra_arc_length);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();

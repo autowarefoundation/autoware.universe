@@ -61,6 +61,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_utilities
     test/input.cpp
     test/test_utilities.cpp
+    test/test_drivable_area_expansion.cpp
   )
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_utilities
     behavior_path_planner_node

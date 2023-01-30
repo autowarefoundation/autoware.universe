@@ -44,5 +44,16 @@ struct Footprint
 
   Footprint(polygon_t footprint_, point_t origin_) : footprint{footprint_}, origin{origin_} {}
 };
+struct PointDistance
+{
+  point_t point;
+  double distance;
+};
+struct Projection
+{
+  point_t projected_point;
+  double distance;
+  double arc_length;
+};
 }  // namespace drivable_area_expansion
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__TYPES_HPP_

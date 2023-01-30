@@ -28,28 +28,8 @@ namespace drivable_area_expansion
 {
 bool expandDrivableArea(
   PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  multilinestring_t uncrossable_lines,
+  const multilinestring_t & uncrossable_lines,
   const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects);
-/// @brief filter the footprints such that it does not cross the given predicted paths and
-/// uncrossable lines
-/// @param[in] footprints ego footprints to filter
-/// @param[in] predicted_paths predicted footprints of dynamic objects
-/// @param[in] uncrossable_lines lines that should not be crossed by the ego footprint
-/// @param[in] dist_from_uncrossable_lines extra distance to keep away from the uncrossable lines
-/// @return the filtered footprint polygons
-multipolygon_t filterFootprint(
-  const std::vector<Footprint> & footprints, const std::vector<Footprint> & predicted_paths,
-  const multilinestring_t & uncrossable_lines, const double dist_from_uncrossable_lines);
-
-/// @brief expand the given drivable area with the given footprint
-/// @param[inout] left_bound left drivable area bound to expand
-/// @param[inout] right_bound right drivable area bound to expand
-/// @param[in] footprint polygon to make drivable
-/// @param[in] path reference path
-/// @return false if the algorithm failed
-bool expandDrivableArea(
-  std::vector<Point> & left_bound, std::vector<Point> & right_bound,
-  const multipolygon_t & footprint, const PathWithLaneId & path);
 
 /// @brief create the footprint polygon from a path
 /// @param[in] path the path for which to create a footprint
@@ -65,13 +45,6 @@ std::vector<Footprint> createPathFootprints(
 std::vector<Footprint> createPredictedPathFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
   const DrivableAreaExpansionParameters & params);
-
-/// @brief create lines around the path
-/// @param[in] path input path
-/// @param[in] max_expansion_distance maximum distance from the path
-/// @return line around the path with the given distance
-linestring_t createMaxExpansionLine(
-  const PathWithLaneId & path, const double max_expansion_distance);
 }  // namespace drivable_area_expansion
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_
