@@ -14,10 +14,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-// #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
-#include "autoware_auto_perception_msgs/msg/object_classification.hpp"
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
 #include <memory>
 #include <utility>
@@ -28,59 +25,25 @@ public:
   EmptyObjectsPublisher() : Node("empty_objects_publisher")
   {
     empty_objects_pub_ =
-      this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+      this->create_publisher<autoware_auto_perception_msgs::msg::PredictedObjects>(
         "~/output/objects", 1);
 
     using std::chrono_literals::operator""ms;
     timer_ = rclcpp::create_timer(
       this, get_clock(), 100ms, std::bind(&EmptyObjectsPublisher::timerCallback, this));
-    
-    srand(time(NULL));
-    initObjs();
   }
 
 private:
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     empty_objects_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
-  autoware_auto_perception_msgs::msg::DetectedObjects empty_objects;
-  
 
   void timerCallback()
   {
-    
+    autoware_auto_perception_msgs::msg::PredictedObjects empty_objects;
     empty_objects.header.frame_id = "map";
     empty_objects.header.stamp = this->now();
-    
-    for (auto obj : empty_objects.objects){
-      obj.kinematics.pose_with_covariance.pose.position.x += 1;
-      obj.kinematics.pose_with_covariance.pose.position.y += 0.5;
-    }
-    
     empty_objects_pub_->publish(empty_objects);
-  }
-  void initObjs()
-  {
-    empty_objects.header.frame_id = "map";
-    empty_objects.header.stamp = this->now();
-    
-    for (int i = 0; i < 500; i ++){
-      float magic_num = (float)(rand()) / (float)(RAND_MAX); // random from 0 to 1
-      autoware_auto_perception_msgs::msg::DetectedObject empty_object;
-      empty_object.existence_probability = 1.0;
-      autoware_auto_perception_msgs::msg::ObjectClassification classification;
-      classification.probability = 1.0f;
-      classification.label = 7;
-      empty_object.classification.emplace_back(classification);
-      empty_object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-      empty_object.shape.dimensions.x = 40.0 * magic_num; 
-      empty_object.shape.dimensions.y = 1.8 * magic_num; 
-      empty_object.shape.dimensions.z = 2.0 * magic_num;
-      empty_object.kinematics.pose_with_covariance.pose.position.x = 100. * (float)(rand()) / (float)(RAND_MAX);
-      empty_object.kinematics.pose_with_covariance.pose.position.y = 100. * (float)(rand()) / (float)(RAND_MAX);
-      empty_objects.objects.push_back(empty_object);
-    }
-
   }
 };
 
