@@ -581,7 +581,7 @@ bool isLaneChangePathSafe(
   }
 
   const auto & path = lane_change_path.path;
-  if (path.points.empty() || target_lanes.empty() || current_lanes.empty()) {
+  if (path.points.empty() || current_lanes.empty()) {
     return false;
   }
 
