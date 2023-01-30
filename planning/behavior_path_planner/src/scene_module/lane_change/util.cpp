@@ -615,10 +615,11 @@ bool isLaneChangePathSafe(
       other_lane_object_indices, true);
   }
 
-  RCLCPP_INFO(
-    rclcpp::get_logger("lane_change"), "number of object in current: %lu, target: %lu, others: %lu",
-    current_lane_object_indices.size(), target_lane_object_indices.size(),
-    other_lane_object_indices.size());
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("lane_change"),
+    "number of object -> total: %lu, in current: %lu, target: %lu, others: %lu",
+    dynamic_objects->objects.size(), current_lane_object_indices.size(),
+    target_lane_object_indices.size(), other_lane_object_indices.size());
 
   const auto assignDebugData = [](const PredictedObject & obj) {
     CollisionCheckDebug debug;
