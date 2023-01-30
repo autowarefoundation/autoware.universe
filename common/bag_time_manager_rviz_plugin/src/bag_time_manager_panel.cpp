@@ -67,11 +67,11 @@ void BagTimeManagerPanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
   client_pause_ =
-    raw_node_->create_client<Pause>("/rosbag2_player/pause", rmw_qos_profile_services_default);
+    raw_node_->create_client<Pause>("/rosbag2_player/pause", rclcpp::ServicesQoS);
   client_resume_ =
-    raw_node_->create_client<Resume>("/rosbag2_player/resume", rmw_qos_profile_services_default);
+    raw_node_->create_client<Resume>("/rosbag2_player/resume", rclcpp::ServicesQoS);
   client_set_rate_ =
-    raw_node_->create_client<SetRate>("/rosbag2_player/set_rate", rmw_qos_profile_services_default);
+    raw_node_->create_client<SetRate>("/rosbag2_player/set_rate", rclcpp::ServicesQoS);
 }
 
 void BagTimeManagerPanel::onPauseClicked()
