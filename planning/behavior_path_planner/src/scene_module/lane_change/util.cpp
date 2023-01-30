@@ -1105,10 +1105,16 @@ bool hasEnoughDistanceToLaneChangeAfterAbort(
 // TODO(Azu): In the future, get back lanelet within `to_back_dist` [m] from queried lane
 lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
   const RouteHandler & route_handler, const lanelet::ConstLanelet & target_lane,
-  const double backward_length)
+  const Pose & current_pose, const double backward_length)
 {
-  const auto preceeding_lanes =
-    route_handler.getPrecedingLaneletSequence(target_lane, backward_length, {target_lane});
+  const auto arc_length = lanelet::utils::getArcCoordinates({target_lane}, current_pose);
+
+  if (arc_length.length >= backward_length) {
+    return {};
+  }
+
+  const auto preceeding_lanes = route_handler.getPrecedingLaneletSequence(
+    target_lane, std::abs(backward_length - arc_length.length), {target_lane});
 
   lanelet::ConstLanelets backward_lanes{};
   const auto num_of_lanes = std::invoke([&preceeding_lanes]() {

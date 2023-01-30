@@ -400,7 +400,7 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
 
   // get lanes used for detection
   const auto check_lanes = lane_change_utils::getExtendedTargetLanesForCollisionCheck(
-    *route_handler, lane_change_lanes.front(), check_distance);
+    *route_handler, lane_change_lanes.front(), current_pose, check_distance);
 
   // select safe path
   const bool found_safe_path = lane_change_utils::selectSafePath(
@@ -679,7 +679,7 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
   constexpr double check_distance = 100.0;
   // get lanes used for detection
   const auto check_lanes = lane_change_utils::getExtendedTargetLanesForCollisionCheck(
-    *route_handler, path.target_lanelets.front(), check_distance);
+    *route_handler, path.target_lanelets.front(), current_pose, check_distance);
 
   std::unordered_map<std::string, CollisionCheckDebug> debug_data;
 

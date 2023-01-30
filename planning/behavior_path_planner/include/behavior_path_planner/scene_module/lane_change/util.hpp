@@ -151,6 +151,6 @@ bool hasEnoughDistanceToLaneChangeAfterAbort(
 
 lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
   const RouteHandler & route_handler, const lanelet::ConstLanelet & target_lanes,
-  const double backward_length);
+  const Pose & current_pose, const double backward_length);
 }  // namespace behavior_path_planner::lane_change_utils
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_
