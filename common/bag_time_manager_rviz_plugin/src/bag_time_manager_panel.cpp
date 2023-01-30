@@ -19,8 +19,9 @@
 #include <qt5/QtWidgets/QHBoxLayout>
 #include <qt5/QtWidgets/QLabel>
 #include <qt5/QtWidgets/QWidget>
-#include <rclcpp/version.h>
 #include <rviz_common/display_context.hpp>
+
+#include <rclcpp/version.h>
 
 namespace rviz_plugins
 {
