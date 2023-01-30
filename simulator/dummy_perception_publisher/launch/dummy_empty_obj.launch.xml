@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- dummy detection and sensor data -->
+      <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+        <remap from="~/output/objects" to="/perception/object_recognition/detection/objects"/>
+      </node>  
+</launch>
