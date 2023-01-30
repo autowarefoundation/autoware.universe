@@ -18,6 +18,7 @@
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/scene_module/lane_change/external_request_lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
@@ -25,8 +26,6 @@
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/steering_factor_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
-
-#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -112,7 +111,6 @@ private:
   std::shared_ptr<PlannerData> planner_data_;
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   Scenario::SharedPtr current_scenario_{nullptr};
 
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};
@@ -145,7 +143,7 @@ private:
   PullOutParameters getPullOutParam();
 
   // callback
-  void onVelocity(const Odometry::ConstSharedPtr msg);
+  void onOdometry(const Odometry::SharedPtr msg);
   void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
@@ -225,7 +223,7 @@ private:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 
@@ -234,7 +232,7 @@ private:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 };

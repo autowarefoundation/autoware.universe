@@ -44,7 +44,6 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
-using geometry_msgs::msg::PoseStamped;
 
 struct ParallelParkingParameters
 {
@@ -119,7 +118,8 @@ private:
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
     const bool is_forward, const double end_pose_offset, const double velocity);
   PathWithLaneId generateStraightPath(const Pose & start_pose);
-  void setVelocityToArcPaths(std::vector<PathWithLaneId> & arc_paths, const double velocity);
+  void setVelocityToArcPaths(
+    std::vector<PathWithLaneId> & arc_paths, const double velocity, const bool set_stop_end);
 
   // debug
   Pose Cr_;
