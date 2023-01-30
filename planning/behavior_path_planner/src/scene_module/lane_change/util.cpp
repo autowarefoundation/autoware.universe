@@ -21,6 +21,7 @@
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -1081,5 +1082,19 @@ bool hasEnoughDistanceToLaneChangeAfterAbort(
   }
 
   return true;
+}
+
+lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
+  const double to_back_dist)
+{
+  const auto & target_lane = target_lanes.front();
+  const auto & basic_pt = target_lane.centerline().front();
+  Pose pose;
+  pose.position = lanelet::utils::conversion::toGeomMsgPt(basic_pt);
+
+  auto backward_lanes = route_handler.getLaneletSequence(target_lane, pose, to_back_dist, 0.0);
+  backward_lanes.insert(backward_lanes.end(), target_lanes.begin(), target_lanes.end());
+  return backward_lanes;
 }
 }  // namespace behavior_path_planner::lane_change_utils
