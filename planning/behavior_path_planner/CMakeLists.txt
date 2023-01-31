@@ -157,14 +157,14 @@ target_include_directories(behavior_path_planner
 
 ament_target_dependencies(behavior_path_planner ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
-target_link_libraries(behavior_path_planner 
+target_link_libraries(behavior_path_planner
   scene_module_lib
   scene_module_avoidance
   scene_module_lane_change
   scene_module_lane_following
   scene_module_pull_out
   scene_module_pull_over
-  scene_module_side_shift  
+  scene_module_side_shift
   )
 
 ament_export_dependencies(${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
