@@ -1,5 +1,4 @@
-//
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2018 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-#include "accel_brake_map_calibrator/accel_brake_map_calibrator_node.hpp"
+#include "shape_estimation/filter/trailer_filter.hpp"
 
-#include <memory>
-
-int main(int argc, char ** argv)
+bool TrailerFilter::filter(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  [[maybe_unused]] const geometry_msgs::msg::Pose & pose)
 {
-  rclcpp::init(argc, argv);
-  rclcpp::NodeOptions node_options;
-  rclcpp::spin(std::make_shared<accel_brake_map_calibrator::AccelBrakeMapCalibrator>(node_options));
-  rclcpp::shutdown();
-  return 0;
+  constexpr float min_width = 1.5;
+  constexpr float max_width = 3.2;
+  constexpr float max_length = 25.0;  // maximum Full-TRAILER size in JAPAN(normally upto 18m)
+  return utils::filterVehicleBoundingBox(shape, min_width, max_width, max_length);
 }
