@@ -97,7 +97,7 @@ bool AvoidanceModule::isExecutionRequested() const
   const auto current_lanes = util::getCurrentLanes(planner_data_);
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(
-    current_lanes, planner_data_->self_pose->pose, &current_lane);
+    current_lanes, planner_data_->self_odometry->pose.pose, &current_lane);
   const auto num = planner_data_->route_handler->getNumLaneToPreferredLane(current_lane);
 
   if (num != 0) {
