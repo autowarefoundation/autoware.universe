@@ -60,6 +60,12 @@ struct ObjectData
 
 class AEB : public rclcpp::Node
 {
+private:
+  enum class State {
+    SAFE = 0,
+    EMERGENCY = 1,
+  };
+
 public:
   explicit AEB(const rclcpp::NodeOptions & node_options);
 
@@ -100,6 +106,7 @@ public:
 
   // member variables
   bool use_imu_data_{false};
+  State current_state_{State::SAFE};
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 
