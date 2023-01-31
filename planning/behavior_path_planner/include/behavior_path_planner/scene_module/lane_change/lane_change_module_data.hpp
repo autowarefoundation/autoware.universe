@@ -14,11 +14,11 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "lanelet2_core/geometry/Lanelet.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
 
+#include <string>
 #include <vector>
 
 namespace behavior_path_planner
@@ -52,21 +52,10 @@ struct LaneChangeParameters
   // drivable area expansion
   double drivable_area_right_bound_offset{0.0};
   double drivable_area_left_bound_offset{0.0};
+  std::vector<std::string> drivable_area_types_to_skip{};
 
   // debug marker
   bool publish_debug_marker{false};
-};
-
-struct LaneChangeStatus
-{
-  PathWithLaneId lane_follow_path;
-  LaneChangePath lane_change_path;
-  lanelet::ConstLanelets current_lanes;
-  lanelet::ConstLanelets lane_change_lanes;
-  std::vector<uint64_t> lane_follow_lane_ids;
-  std::vector<uint64_t> lane_change_lane_ids;
-  bool is_safe;
-  double start_distance;
 };
 
 enum class LaneChangeStates {
@@ -76,6 +65,13 @@ enum class LaneChangeStates {
   Stop,
 };
 
+struct LaneChangePhaseInfo
+{
+  double prepare{0.0};
+  double lane_changing{0.0};
+
+  [[nodiscard]] double sum() const { return prepare + lane_changing; }
+};
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_

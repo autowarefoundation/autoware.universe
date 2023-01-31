@@ -63,13 +63,22 @@ struct NodeParam
   double max_velocity;
 
   // keep slow down or stop state if obstacle vanished [s]
-  double hunting_threshold;
+  double chattering_threshold;
 
   // dist threshold for ego's nearest index
   double ego_nearest_dist_threshold;
 
   // yaw threshold for ego's nearest index
   double ego_nearest_yaw_threshold;
+
+  // voxel grid x parameter for filtering pointcloud [m]
+  double voxel_grid_x;
+
+  // voxel grid y parameter for filtering pointcloud [m]
+  double voxel_grid_y;
+
+  // voxel grid z parameter for filtering pointcloud [m]
+  double voxel_grid_z;
 };
 
 struct StopParam

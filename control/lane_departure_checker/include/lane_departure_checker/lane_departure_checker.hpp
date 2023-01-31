@@ -58,6 +58,7 @@ struct Param
   double max_lateral_deviation;
   double max_longitudinal_deviation;
   double max_yaw_deviation_deg;
+  double min_braking_distance;
   // nearest search to ego
   double ego_nearest_dist_threshold;
   double ego_nearest_yaw_threshold;
@@ -70,6 +71,7 @@ struct Input
   lanelet::LaneletMapPtr lanelet_map{};
   LaneletRoute::ConstSharedPtr route{};
   lanelet::ConstLanelets route_lanelets{};
+  lanelet::ConstLanelets shoulder_lanelets{};
   Trajectory::ConstSharedPtr reference_trajectory{};
   Trajectory::ConstSharedPtr predicted_trajectory{};
 };

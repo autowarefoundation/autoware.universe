@@ -64,7 +64,6 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
-using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
 using route_handler::RouteHandler;
@@ -155,8 +154,21 @@ double getArcLengthToTargetLanelet(
   const Pose & pose);
 
 // object collision check
+inline Pose lerpByPose(const Pose & p1, const Pose & p2, const double t)
+{
+  tf2::Transform tf_transform1;
+  tf2::Transform tf_transform2;
+  tf2::fromMsg(p1, tf_transform1);
+  tf2::fromMsg(p2, tf_transform2);
+  const auto & tf_point = tf2::lerp(tf_transform1.getOrigin(), tf_transform2.getOrigin(), t);
+  const auto & tf_quaternion =
+    tf2::slerp(tf_transform1.getRotation(), tf_transform2.getRotation(), t);
 
-Pose lerpByPose(const Pose & p1, const Pose & p2, const double t);
+  Pose pose{};
+  pose.position = tf2::toMsg(tf_point, pose.position);
+  pose.orientation = tf2::toMsg(tf_quaternion);
+  return pose;
+}
 
 inline Point lerpByPoint(const Point & p1, const Point & p2, const double t)
 {
@@ -193,6 +205,28 @@ Point lerpByLength(const std::vector<T> & point_array, const double length)
   }
 
   return tier4_autoware_utils::getPoint(point_array.back());
+}
+
+template <class T>
+Pose lerpPoseByLength(const std::vector<T> & point_array, const double length)
+{
+  Pose lerped_pose;
+  if (point_array.empty()) {
+    return lerped_pose;
+  }
+  Pose prev_geom_pose = tier4_autoware_utils::getPose(point_array.front());
+  double accumulated_length = 0;
+  for (const auto & pt : point_array) {
+    const auto & geom_pose = tier4_autoware_utils::getPose(pt);
+    const double distance = tier4_autoware_utils::calcDistance3d(prev_geom_pose, geom_pose);
+    if (accumulated_length + distance > length) {
+      return lerpByPose(prev_geom_pose, geom_pose, (length - accumulated_length) / distance);
+    }
+    accumulated_length += distance;
+    prev_geom_pose = geom_pose;
+  }
+
+  return tier4_autoware_utils::getPose(point_array.back());
 }
 
 bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_pt);
@@ -256,14 +290,6 @@ double calcLongitudinalDistanceFromEgoToObjects(
   const PredictedObjects & dynamic_objects);
 
 /**
- * @brief Get index of the obstacles inside the lanelets with start and end length
- * @return Indices corresponding to the obstacle inside the lanelets
- */
-std::vector<size_t> filterObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & lanelets,
-  const double start_arc_length, const double end_arc_length);
-
-/**
  * @brief Separate index of the obstacles into two part based on whether the object is within
  * lanelet.
  * @return Indices of objects pair. first objects are in the lanelet, and second others are out of
@@ -278,10 +304,6 @@ std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanel
  */
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-std::vector<size_t> filterObjectsIndicesByPath(
-  const PredictedObjects & objects, const std::vector<size_t> & object_indices,
-  const PathWithLaneId & ego_path, const double vehicle_width);
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
 

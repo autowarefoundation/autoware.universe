@@ -59,7 +59,16 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     return {};
   }
 
-  output.partial_paths = planner_.getPaths();
+  if (parameters_.divide_pull_out_path) {
+    output.partial_paths = planner_.getPaths();
+  } else {
+    auto partial_paths = planner_.getPaths();
+    // remove stop velocity of first arc path
+    partial_paths.front().points.back().point.longitudinal_velocity_mps =
+      parameters_.geometric_pull_out_velocity;
+    const auto combined_path = combineReferencePath(partial_paths.at(0), partial_paths.at(1));
+    output.partial_paths.push_back(combined_path);
+  }
   output.start_pose = planner_.getArcPaths().at(0).points.back().point.pose;
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
 

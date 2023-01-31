@@ -26,6 +26,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -50,6 +51,7 @@ struct SideShiftParameters
   // drivable area expansion
   double drivable_area_right_bound_offset;
   double drivable_area_left_bound_offset;
+  std::vector<std::string> drivable_area_types_to_skip;
 };
 
 class SideShiftModule : public SceneModuleInterface
@@ -126,10 +128,10 @@ private:
   ShiftLine prev_shift_line_;
 
   // NOTE: this function is ported from avoidance.
-  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  inline PoseStamped getEgoPose() const { return *(planner_data_->self_pose); }
+  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+  inline Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
   PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
+    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
 };

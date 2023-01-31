@@ -77,9 +77,8 @@ LaneChangePaths getLaneChangePaths(
 
 LaneChangePaths selectValidPaths(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose);
+  const lanelet::ConstLanelets & target_lanes, const RouteHandler & route_handler,
+  const Pose & current_pose, const Pose & goal_pose, const double minimum_lane_change_length);
 
 bool selectSafePath(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
@@ -91,7 +90,7 @@ bool selectSafePath(
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data);
 
 bool isLaneChangePathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
+  const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const size_t current_seg_idx, const Twist & current_twist,
@@ -103,9 +102,8 @@ bool isLaneChangePathSafe(
 
 bool hasEnoughDistance(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs);
+  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose, const Pose & goal_pose,
+  const RouteHandler & route_handler, const double minimum_lane_change_length);
 
 ShiftLine getLaneChangeShiftLine(
   const PathWithLaneId & path1, const PathWithLaneId & path2,
@@ -113,31 +111,24 @@ ShiftLine getLaneChangeShiftLine(
 
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double prepare_distance,
-  const double lane_changing_distance, const double forward_path_length,
-  const double lane_changing_speed);
-
-PathWithLaneId getReferencePathFromTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & in_target_front_pose, const Pose & in_target_end_pose);
+  const Pose & lane_changing_start_pose, const double target_lane_length,
+  const LaneChangePhaseInfo dist_prepare_to_lc_end, const double min_total_lane_changing_distance,
+  const double forward_path_length, const double resample_interval, const bool is_goal_in_route);
 
 PathWithLaneId getLaneChangePathPrepareSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const Pose & current_pose, const double & backward_path_length, const double & prepare_distance,
-  const double & prepare_duration, const double & minimum_lane_change_velocity);
+  const double arc_length_from_current, const double backward_path_length,
+  const double prepare_distance, const double prepare_speed);
 
 PathWithLaneId getLaneChangePathLaneChangingSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
-  const Pose & current_pose, const double prepare_distance, const double lane_change_distance,
-  const double lane_changing_speed, const BehaviorPathPlannerParameters & common_param);
+  const double forward_path_length, const double arc_length_from_target,
+  const double target_lane_length, const LaneChangePhaseInfo dist_prepare_to_lc_end,
+  const double lane_changing_speed, const double total_required_min_dist);
+
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param);
-
-TurnSignalInfo calc_turn_signal_info(
-  const PathWithLaneId & prepare_path, const double prepare_velocity,
-  const double min_prepare_distance, const double prepare_duration, const ShiftLine & shift_line,
-  const ShiftedPath & lane_changing_path);
 
 void get_turn_signal_info(
   const LaneChangePath & lane_change_path, TurnSignalInfo * turn_signal_info);

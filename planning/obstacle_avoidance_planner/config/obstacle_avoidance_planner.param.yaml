@@ -18,6 +18,7 @@
       enable_pre_smoothing: true # enable EB
       skip_optimization: false # skip MPT and EB
       reset_prev_optimization: false
+      is_considering_footprint_edges: false # consider ego footprint edges to decide whether footprint is outside drivable area
 
     common:
       # sampling
@@ -147,6 +148,9 @@
             uniform_circle:
               num: 3
               radius_ratio: 0.8
+
+            fitting_uniform_circle:
+              num: 3  # must be greater than 1
 
             rear_drive:
               num_for_calculation: 3
