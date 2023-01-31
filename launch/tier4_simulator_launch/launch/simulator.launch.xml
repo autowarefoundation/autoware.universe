@@ -6,7 +6,7 @@
   <arg name="launch_dummy_perception"/>
   <arg name="launch_dummy_vehicle"/>
   <arg name="launch_dummy_localization"/>
-  <arg name="launch_planning_evaluator"/>  
+  <arg name="launch_planning_evaluator"/>
   <arg name="vehicle_info_param_file"/>
 
   <arg name="perception/enable_detection_failure" default="true" description="enable to simulate detection failure when using dummy perception"/>
