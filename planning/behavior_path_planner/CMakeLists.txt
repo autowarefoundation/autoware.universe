@@ -7,35 +7,6 @@ autoware_package()
 find_package(OpenCV REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
-set(BEHAVIOR_PATH_PLANNER_DEPENDENCIES
-  autoware_adapi_v1_msgs
-  autoware_auto_perception_msgs
-  autoware_auto_planning_msgs
-  autoware_auto_tf2
-  autoware_auto_vehicle_msgs
-  behaviortree_cpp_v3
-  geometry_msgs
-  interpolation
-  lane_departure_checker
-  lanelet2_extension
-  magic_enum
-  motion_utils
-  rclcpp
-  rclcpp_components
-  route_handler
-  rtc_interface
-  sensor_msgs
-  tf2
-  tf2_eigen
-  tf2_geometry_msgs
-  tf2_ros
-  tier4_autoware_utils
-  tier4_planning_msgs
-  vehicle_info_util
-  visualization_msgs
-)
-
-
 # Common
 ament_auto_add_library(scene_module_lib SHARED
   src/scene_module/scene_module_bt_node_interface.cpp
@@ -85,10 +56,6 @@ target_include_directories(scene_module_avoidance
 )
 
 ament_target_dependencies(scene_module_avoidance ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_avoidance scene_module_lib)
-
-ament_target_dependencies(scene_module_lib ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
 # Scene Module: Lane Change
 ament_auto_add_library(scene_module_lane_change SHARED
@@ -202,9 +169,9 @@ target_link_libraries(behavior_path_planner
 
 ament_export_dependencies(${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
-rclcpp_components_register_node(behavior_path_planner
+rclcpp_components_register_node(behavior_path_planner_node
   PLUGIN "behavior_path_planner::BehaviorPathPlannerNode"
-  EXECUTABLE behavior_path_planner_node
+  EXECUTABLE behavior_path_planner
 )
 
 if(BUILD_TESTING)
@@ -213,7 +180,7 @@ if(BUILD_TESTING)
     test/test_utilities.cpp
   )
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_utilities
-    behavior_path_planner
+    behavior_path_planner_node
   )
 
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_avoidance_module
@@ -221,7 +188,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_avoidance_module
-    behavior_path_planner
+    behavior_path_planner_node
   )
 
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_turn_signal
@@ -229,7 +196,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_turn_signal
-    behavior_path_planner
+    behavior_path_planner_node
   )
 
 endif()
