@@ -146,7 +146,7 @@ private:
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
   std::vector<ObstacleWithDetectionTime> obstacle_history_{};
-        std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
+  std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};

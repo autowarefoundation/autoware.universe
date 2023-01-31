@@ -698,7 +698,8 @@ void getLateralNearestPoint(
 
 void getNearestPointForPredictedObject(
   const PoseArray & object, const Pose & base_pose, Pose * nearest_collision_point,
-  rclcpp::Time * nearest_collision_point_time){
+  rclcpp::Time * nearest_collision_point_time)
+{
   double min_norm = 0.0;
   bool is_init = false;
 
@@ -715,8 +716,8 @@ void getNearestPointForPredictedObject(
 
 void getLateralNearestPointForPredictedObject(
   const PoseArray & object, const Pose & base_pose, Pose * lateral_nearest_point,
-  double * deviation){
-
+  double * deviation)
+{
   double min_norm = std::numeric_limits<double>::max();
   for (size_t i = 0; i < object.poses.size(); ++i) {
     double norm = calcDistance2d(object.poses.at(i), base_pose);
