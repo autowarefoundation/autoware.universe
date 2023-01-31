@@ -14,10 +14,11 @@
 #ifndef OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
 #define OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
 
+#include "rviz_common/properties/enum_property.hpp"
+
 #include <common/color_alpha_property.hpp>
 #include <object_detection/object_polygon_detail.hpp>
 #include <rviz_common/display.hpp>
-#include "rviz_common/properties/enum_property.hpp"
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_default_plugins/displays/marker/marker_common.hpp>
@@ -160,7 +161,8 @@ protected:
     if (m_display_type_property->getOptionInt() == 0) {
       return detail::get_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba, line_width);
     } else if (m_display_type_property->getOptionInt() == 1) {
-      return detail::get_2d_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba, line_width);
+      return detail::get_2d_shape_marker_ptr(
+        shape_msg, centroid, orientation, color_rgba, line_width);
     } else {
       return std::nullopt;
     }
@@ -168,9 +170,9 @@ protected:
 
   template <typename ClassificationContainerT>
   visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
-  const autoware_auto_perception_msgs::msg::Shape & shape_msg,
-  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
+    const autoware_auto_perception_msgs::msg::Shape & shape_msg,
+    const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+    const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
 
   /// \brief Convert given shape msg into a Marker to visualize label name
   /// \tparam ClassificationContainerT List type with ObjectClassificationMsg
