@@ -382,9 +382,7 @@ private:
   std::list<rviz_common::properties::Property> m_class_group_properties;
   // Map to store class labels and its corresponding properties
   PolygonPropertyMap m_polygon_properties;
-  // Property to enable/disable height visualization of the polygon
-  // rviz_common::properties::BoolProperty m_display_3d_property;
-  // Property to choose type of vizualization poligon
+  // Property to choose type of visualization polygon
   rviz_common::properties::EnumProperty * m_display_type_property;
   // Property to enable/disable label visualization
   rviz_common::properties::BoolProperty m_display_label_property;
