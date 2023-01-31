@@ -144,20 +144,20 @@ ament_target_dependencies(scene_module_side_shift ${BEHAVIOR_PATH_PLANNER_DEPEND
 target_link_libraries(scene_module_side_shift scene_module_lib)
 
 # Node
-ament_auto_add_library(behavior_path_planner SHARED
+ament_auto_add_library(behavior_path_planner_node SHARED
   src/behavior_path_planner_node.cpp
   src/behavior_tree_manager.cpp
 )
 
-target_include_directories(behavior_path_planner
+target_include_directories(behavior_path_planner_node
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(behavior_path_planner ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
+ament_target_dependencies(behavior_path_planner_node ${BEHAVIOR_PATH_PLANNER_DEPENDENCIES})
 
-target_link_libraries(behavior_path_planner
+target_link_libraries(behavior_path_planner_node
   scene_module_lib
   scene_module_avoidance
   scene_module_lane_change
