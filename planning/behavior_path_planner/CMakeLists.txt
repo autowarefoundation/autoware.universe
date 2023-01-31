@@ -30,6 +30,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/util/pull_over/util.cpp
   src/util/pull_over/shift_pull_over.cpp
   src/util/pull_over/geometric_pull_over.cpp
+  src/util/pull_over/freespace_pull_over.cpp
   src/util/pull_over/goal_searcher.cpp
   src/util/pull_out/util.cpp
   src/util/pull_out/shift_pull_out.cpp
