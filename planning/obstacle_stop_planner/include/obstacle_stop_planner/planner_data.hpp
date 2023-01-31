@@ -240,6 +240,12 @@ struct PlannerData
 
   pcl::PointXYZ lateral_nearest_slow_down_point;
 
+  Pose nearest_collision_point_pose{};
+
+  Pose nearest_slow_down_point_pose{};
+
+  Pose lateral_nearest_slow_down_point_pose{};
+
   rclcpp::Time nearest_collision_point_time{};
 
   double lateral_deviation{0.0};
