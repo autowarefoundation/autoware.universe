@@ -308,7 +308,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     is_considering_footprint_edges_ =
       declare_parameter<bool>("option.is_considering_footprint_edges");
 
-    vehicle_stop_margin_ = declare_parameter<double>("common.vehicle_stop_margin");
+    vehicle_stop_margin_outside_drivable_area_ = declare_parameter<double>("common.vehicle_stop_margin_outside_drivable_area");
   }
 
   {  // trajectory parameter
@@ -605,7 +605,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     updateParam<bool>(
       parameters, "option.is_considering_footprint_edges", is_considering_footprint_edges_);
     
-    updateParam<double>(parameters, "common.vehicle_stop_margin", vehicle_stop_margin_);
+    updateParam<double>(parameters, "common.vehicle_stop_margin_outside_drivable_area", vehicle_stop_margin_outside_drivable_area_);
   }
 
   
@@ -1304,13 +1304,13 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     // only insert zero velocity to the first point outside drivable area (minus stop margin)
     if (is_outside) {
       size_t stop_idx = i;
-      const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(traj_points, traj_point.pose.position, -1.0 * vehicle_stop_margin_);
+      const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(traj_points, traj_point.pose.position, -1.0 * vehicle_stop_margin_outside_drivable_area_);
       
       if(op_target_point){
         const auto target_point = op_target_point.get();
         stop_idx = motion_utils::findNearestSegmentIndex(traj_points, target_point);
       }
-      
+
       traj_points[stop_idx].longitudinal_velocity_mps = 0.0;
       debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
       debug_data_.stop_pose_by_drivable_area_with_margin = traj_points[stop_idx].pose;
