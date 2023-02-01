@@ -699,13 +699,12 @@ void ObstacleStopPlannerNode::searchObstacle(
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
             one_step_move_vehicle_polygon.clear();
-            if (node_param_.publish_obstacle_polygon){
+            if (node_param_.publish_obstacle_polygon) {
               std::vector<cv::Point2d> obstacle_polygon;
               for (const auto & point : object_polygon.outer()) {
                 obstacle_polygon.emplace_back(point.x(), point.y());
               }
-              debug_ptr_->pushPolygon(
-                obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
+              debug_ptr_->pushPolygon(obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
             }
             planner_data.stop_require = planner_data.found_collision_points;
             mutex_.lock();
@@ -761,13 +760,12 @@ void ObstacleStopPlannerNode::searchObstacle(
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
             one_step_move_vehicle_polygon.clear();
-            if (node_param_.publish_obstacle_polygon){
+            if (node_param_.publish_obstacle_polygon) {
               std::vector<cv::Point2d> obstacle_polygon;
               for (const auto & point : object_polygon.outer()) {
                 obstacle_polygon.emplace_back(point.x(), point.y());
               }
-              debug_ptr_->pushPolygon(
-                obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
+              debug_ptr_->pushPolygon(obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
             }
 
             planner_data.stop_require = planner_data.found_collision_points;
