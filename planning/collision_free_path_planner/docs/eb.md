@@ -12,31 +12,31 @@ Therefore the output path may have a collision with road boundaries or obstacles
 
 We formulate a quadratic problem minimizing the distance between the previous point and the next point on each point.
 
-![eb](./media/eb.svg)
+![eb](../media/eb.svg)
 
 Assuming that $k$'th point is $\boldsymbol{p}_k = (x_k, y_k)$, the objective function is as follows.
 
 $$
 \begin{align}
-\ J & = \min \sum_{k=1}^{n-1} ||(\boldsymbol{p}_{k+1} - \boldsymbol{p}_{k}) - (\boldsymbol{p}_{k} - \boldsymbol{p}_{k-1})||^2 \\
-\ & = \min \sum_{k=1}^{n-1} ||\boldsymbol{p}_{k+1} - 2 \boldsymbol{p}_{k} + \boldsymbol{p}_{k-1}||^2 \\
-\ & = \min \sum_{k=1}^{n-1} \{(x_{k+1} - x_k + x_{k-1})^2 + (y_{k+1} - y_k + y_{k-1})^2\} \\
+\ J & = \min \sum_{k=1}^{n-2} ||(\boldsymbol{p}_{k+1} - \boldsymbol{p}_{k}) - (\boldsymbol{p}_{k} - \boldsymbol{p}_{k-1})||^2 \\
+\ & = \min \sum_{k=1}^{n-2} ||\boldsymbol{p}_{k+1} - 2 \boldsymbol{p}_{k} + \boldsymbol{p}_{k-1}||^2 \\
+\ & = \min \sum_{k=1}^{n-2} \{(x_{k+1} - x_k + x_{k-1})^2 + (y_{k+1} - y_k + y_{k-1})^2\} \\
 \ & = \min
     \begin{pmatrix}
         \ x_0 \\
         \ x_1 \\
         \ x_2 \\
         \vdots \\
-        \ x_{n-2}\\
+        \ x_{n-3}\\
+        \ x_{n-2} \\
         \ x_{n-1} \\
-        \ x_{n} \\
         \ y_0 \\
         \ y_1 \\
         \ y_2 \\
         \vdots \\
-        \ y_{n-2}\\
+        \ y_{n-3}\\
+        \ y_{n-2} \\
         \ y_{n-1} \\
-        \ y_{n} \\
     \end{pmatrix}^T
     \begin{pmatrix}
       1 & -2 & 1 & 0 & \dots& \\
@@ -63,20 +63,37 @@ $$
         \ x_1 \\
         \ x_2 \\
         \vdots \\
-        \ x_{n-2}\\
+        \ x_{n-3}\\
+        \ x_{n-2} \\
         \ x_{n-1} \\
-        \ x_{n} \\
         \ y_0 \\
         \ y_1 \\
         \ y_2 \\
         \vdots \\
-        \ y_{n-2}\\
+        \ y_{n-3}\\
+        \ y_{n-2} \\
         \ y_{n-1} \\
-        \ y_{n} \\
     \end{pmatrix}
 \end{align}
 $$
 
 Regarding the constraint, the distance that each point can move is limited so that the path will not changed a lot but will be smoother.
 
+![eb_constraint](../media/eb_constraint.svg)
+
+$$
+C_k^l \leq C_k \leq C_k^u
+$$
+
 In addition, the beginning point is fixed and the end point as well if the end point is considered as the goal.
+Assume that $(x_0^{start}, y_0^{start})$ and $(x_0^{goal}, y_0^{goal})$ are the input start and goal point.
+
+$$
+x_0 = x_0^{start} \\
+y_0 = y_0^{start}
+$$
+
+$$
+x_{n-1} = x_{n-1}^{goal} \\
+y_{n-1}= y_{n-1}^[goal}
+$$
