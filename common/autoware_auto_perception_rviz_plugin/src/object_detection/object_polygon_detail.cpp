@@ -56,7 +56,7 @@ visualization_msgs::msg::Marker::SharedPtr get_path_confidence_marker_ptr(
   marker_ptr->type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker_ptr->ns = std::string("path confidence");
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->scale.x = 0.5;
   marker_ptr->scale.y = 0.5;
   marker_ptr->scale.z = 0.5;
@@ -78,7 +78,7 @@ visualization_msgs::msg::Marker::SharedPtr get_predicted_path_marker_ptr(
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
   marker_ptr->ns = std::string("path");
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->pose = initPose();
   marker_ptr->color = predicted_path_color;
   marker_ptr->color.a = std::max(
@@ -114,7 +114,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
   pt_e.z = twist_with_covariance.twist.linear.z;
   marker_ptr->points.push_back(pt_e);
 
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->color.a = 0.999;
   marker_ptr->color.r = 1.0;
   marker_ptr->color.g = 0.0;
@@ -139,7 +139,7 @@ visualization_msgs::msg::Marker::SharedPtr get_velocity_text_marker_ptr(
   marker_ptr->text = std::to_string(static_cast<int>(vel * 3.6)) + std::string("[km/h]");
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose.position = vis_pos;
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->color = color_rgba;
   return marker_ptr;
 }
@@ -160,7 +160,7 @@ visualization_msgs::msg::Marker::SharedPtr get_acceleration_text_marker_ptr(
   marker_ptr->text = getRoundedDoubleString(acc) + std::string("[m/s^2]");
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose.position = vis_pos;
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->color = color_rgba;
   return marker_ptr;
 }
@@ -204,7 +204,7 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
   point.y = e2.y() * sigma2;
   point.z = 0;
   marker_ptr->points.push_back(point);
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->color.a = 0.999;
   marker_ptr->color.r = 1.0;
   marker_ptr->color.g = 1.0;
@@ -239,7 +239,7 @@ visualization_msgs::msg::Marker::SharedPtr get_label_marker_ptr(
   marker_ptr->text = label;
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = marker_ptr->pose = to_pose(centroid, orientation);
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->color = color_rgba;
   return marker_ptr;
 }
@@ -269,7 +269,7 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
 
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = to_pose(centroid, orientation);
-  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(1.0);
   marker_ptr->scale.x = line_width;
   marker_ptr->color = color_rgba;
 
