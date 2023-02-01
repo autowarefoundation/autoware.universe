@@ -200,21 +200,20 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return
-    [this, lane_set]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
-      for (const auto & lane : lane_set) {
-        const std::string turn_direction = lane.attributeOr("turn_direction", "else");
-        const auto is_intersection =
-          turn_direction == "right" || turn_direction == "left" || turn_direction == "straight";
-        if (!is_intersection) {
-          continue;
-        }
-        if (hasSameParentLanelet(lane)) {
-          return false;
-        }
+  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    for (const auto & lane : lane_set) {
+      const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+      const auto is_intersection =
+        turn_direction == "right" || turn_direction == "left" || turn_direction == "straight";
+      if (!is_intersection) {
+        continue;
       }
-      return true;
-    };
+      if (hasSameParentLaneletWith(lane, scene_module->getModuleId())) {
+        return false;
+      }
+    }
+    return true;
+  };
 }
 
 bool IntersectionModuleManager::hasSameParentLaneletWith(
@@ -255,20 +254,19 @@ bool IntersectionModuleManager::hasSameParentLaneletWithRegistered(
   return false;
 }
 
-bool MergeFromPrivateModuleManager::hasSameParentLanelet(const lanelet::ConstLanelet & lane) const
+bool MergeFromPrivateModuleManager::hasSameParentLaneletWith(
+  const lanelet::ConstLanelet & lane, const size_t module_id) const
 {
   lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
 
-  for (const auto & id : registered_module_id_set_) {
-    const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(id);
-    lanelet::ConstLanelets registered_parents =
-      planner_data_->route_handler_->getPreviousLanelets(registered_lane);
-    for (const auto & ll : registered_parents) {
-      auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
-      neighbor_lanes.push_back(ll);
-      if (hasSameLanelet(parents, neighbor_lanes)) {
-        return true;
-      }
+  const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(module_id);
+  lanelet::ConstLanelets registered_parents =
+    planner_data_->route_handler_->getPreviousLanelets(registered_lane);
+  for (const auto & ll : registered_parents) {
+    auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
+    neighbor_lanes.push_back(ll);
+    if (hasSameLanelet(parents, neighbor_lanes)) {
+      return true;
     }
   }
   return false;

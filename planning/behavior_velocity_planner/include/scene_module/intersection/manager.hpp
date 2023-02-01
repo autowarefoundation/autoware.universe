@@ -63,7 +63,7 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
-  bool hasSameParentLanelet(const lanelet::ConstLanelet & lane) const;
+  bool hasSameParentLaneletWith(const lanelet::ConstLanelet & lane, const size_t module_id) const;
 };
 }  // namespace behavior_velocity_planner
 
