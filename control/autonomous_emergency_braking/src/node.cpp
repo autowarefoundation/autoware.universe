@@ -208,19 +208,18 @@ bool AEB::checkCollision()
   }
 
   // step2. create object
+  constexpr double lateral_dist_threshold = 5.0;
   std::vector<ObjectData> objects;
   for (const auto & point : obstacle_points_ptr->points) {
     ObjectData obj;
     obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
     obj.velocity = 0.0;
     obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
-    const double lon_dist = motion_utils::calcSignedArcLength(predicted_path, 0, obj.position);
-    const double lat_dist = motion_utils::calcLateralOffset(predicted_path, obj.position);
-    if (lon_dist < 0.0 || lat_dist > 5.0) {
+    obj.lon_dist = motion_utils::calcSignedArcLength(predicted_path, 0, obj.position);
+    obj.lat_dist = motion_utils::calcLateralOffset(predicted_path, obj.position);
+    if (obj.lon_dist < 0.0 || obj.lat_dist > lateral_dist_threshold) {
       continue;
     }
-    obj.lon_dist = lon_dist;
-    obj.lat_dist = lat_dist;
     objects.push_back(obj);
   }
 
