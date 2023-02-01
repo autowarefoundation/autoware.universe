@@ -270,7 +270,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     return;
   }
 
-  const auto current_vel = current_velocity_ptr->twist.twist.linear.x;
+  const auto current_vel = current_odometry_ptr->twist.twist.linear.x;
   const auto current_acc = current_acceleration_ptr->accel.accel.linear.x;
 
   // TODO(someone): support backward path
