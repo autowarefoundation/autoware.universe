@@ -64,9 +64,6 @@ AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
   const auto planning_hz = 10.0;  // declare_parameter("planning_hz", 10.0);
   const auto period_ns = rclcpp::Rate(planning_hz).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&AEB::onTimer, this));
-
-  // initialize state
-  current_state_ = State::SAFE;
 }
 
 void AEB::onTimer() { updater_.force_update(); }
@@ -157,7 +154,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const std::string error_msg = "[AEB]: Necessary data is unavailable";
     const auto diag_level = DiagnosticStatus::OK;
     stat.summary(diag_level, error_msg);
-    current_state_ = State::SAFE;
     return;
   }
 
@@ -196,14 +192,10 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // check if the predicted path has valid number of points
   if (predicted_path.size() < 2) {
-    if (current_state_ == State::SAFE) {
-      const std::string error_msg = "[AEB]: Ego is stopping";
-      const auto diag_level = DiagnosticStatus::OK;
-      stat.summary(diag_level, error_msg);
-      return;
-    }
-
-    // TODO(yutaka): Check the movement when the current sate is in dangerous
+    const std::string error_msg = "[AEB]: Ego is stopping";
+    const auto diag_level = DiagnosticStatus::OK;
+    stat.summary(diag_level, error_msg);
+    return;
   }
 
   // step2. create object
@@ -227,7 +219,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const std::string error_msg = "[AEB]: No Dangerous Objects";
     const auto diag_level = DiagnosticStatus::OK;
     stat.summary(diag_level, error_msg);
-    current_state_ = State::SAFE;
     return;
   }
 
@@ -236,18 +227,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     return a.lon_dist < b.lon_dist;
   });
   const auto closest_obj = objects.front();
-  std::cerr << "closest_dist: " << closest_obj.lon_dist << std::endl;
-
-  // check if the closest object is still on the path
-  const double safe_dist_threshold = 10.0;
-  if (current_state_ == State::EMERGENCY && closest_obj.lon_dist < safe_dist_threshold) {
-    std::cerr << "Still on the Path" << std::endl;
-    const std::string error_msg =
-      "[AEB]: Emergency Brake since the closest object is still on the ego path";
-    const auto diag_level = DiagnosticStatus::ERROR;
-    stat.summary(diag_level, error_msg);
-    return;
-  }
 
   // step3. calculate time to collision(RSS)
   const double t_rss = 5.0;
@@ -255,7 +234,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   const double a_obj_min = -1.0;
   const double & obj_v = closest_obj.velocity;
   const double rss_dist =
-    v * t_rss + v * v / (2 * std::fabs(a_min)) - obj_v * obj_v / (2 * std::fabs(a_obj_min));
+    v * t_rss + v * v / (2 * std::fabs(a_min)) - obj_v * obj_v / (2 * std::fabs(a_obj_min)) + 2.0;
 
   // step4. handle the dangerous situation
   if (closest_obj.lon_dist < rss_dist) {
@@ -263,7 +242,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const std::string error_msg = "[AEB]: Emergency Brake";
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
-    current_state_ = State::EMERGENCY;
     return;
   }
 
@@ -271,7 +249,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   const std::string error_msg = "[AEB]: No Collision";
   const auto diag_level = DiagnosticStatus::OK;
   stat.summary(diag_level, error_msg);
-  current_state_ = State::SAFE;
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking
