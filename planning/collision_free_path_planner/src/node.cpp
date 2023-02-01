@@ -193,7 +193,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
     return;
   }
 
-  // 0. return if backward path
+  // 0. return if path is backward
   // TODO(murooka): support backward path
   const auto is_driving_forward = driving_direction_checker_.isDrivingForward(path_ptr->points);
   if (!is_driving_forward) {
@@ -283,12 +283,10 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   //    NOTE: This function may return previously optimized trajectory points.
   auto optimized_traj_points = optimizeTrajectory(planner_data);
 
-  // TODO(murooka) plan always so that this implementation can be removed
   // 2. update velocity
-  //    Even if optimization is skipped, velocity in trajectory points must be updated
-  //    since velocity in input trajectory (path) may change
-  // TODO(murooka)
-  // applyInputVelocity(optimized_traj_points, traj_points);
+  //    NOTE: When optimization failed, velocity in trajectory points must be
+  //          updated since velocity in input trajectory (path) may change
+  applyInputVelocity(optimized_traj_points, traj_points);
 
   // 3. insert zero velocity when trajectory is over drivable area
   insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
@@ -355,10 +353,9 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
   return traj_points;
 }
 
-/*
 void CollisionFreePathPlanner::applyInputVelocity(
-  std::vector<TrajectoryPoint> & traj_points, const std::vector<TrajectoryPoint> & traj_points)
-const
+  std::vector<TrajectoryPoint> & traj_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -382,7 +379,6 @@ const
 
   time_keeper_ptr_->toc(__func__, "    ");
 }
-*/
 
 void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   const PlannerData & planner_data, std::vector<TrajectoryPoint> & optimized_traj_points)

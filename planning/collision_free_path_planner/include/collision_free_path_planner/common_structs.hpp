@@ -33,7 +33,7 @@ struct PlannerData
 {
   // input
   Header header;
-  std::vector<TrajectoryPoint> traj_points;
+  std::vector<TrajectoryPoint> traj_points;  // converted from input path
   std::vector<geometry_msgs::msg::Point> left_bound;
   std::vector<geometry_msgs::msg::Point> right_bound;
 
