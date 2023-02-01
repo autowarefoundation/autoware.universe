@@ -43,9 +43,13 @@
       enable_clipping_fixed_traj: false
       non_fixed_trajectory_length: 5.0 # length of the trajectory merging optimized mpt trajectory to original(not optimized) trajectory
 
+      vehicle_stop_margin: 1.5 # vehicle stop margin to let the vehicle stop before the calculated stop point [m]
+      
+
     object:  # avoiding object
       max_avoiding_objects_velocity_ms: 0.5 # maximum velocity for avoiding objects [m/s]
       max_avoiding_ego_velocity_ms: 6.0 # maximum ego velocity when avoiding objects [m/s]
+
 
       avoiding_object_type:
         unknown: true

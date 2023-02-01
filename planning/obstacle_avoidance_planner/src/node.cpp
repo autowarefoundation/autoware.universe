@@ -307,6 +307,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     reset_prev_optimization_ = declare_parameter<bool>("option.reset_prev_optimization");
     is_considering_footprint_edges_ =
       declare_parameter<bool>("option.is_considering_footprint_edges");
+
+    vehicle_stop_margin_ = declare_parameter<double>("common.vehicle_stop_margin");
   }
 
   {  // trajectory parameter
@@ -602,7 +604,11 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     updateParam<bool>(parameters, "option.reset_prev_optimization", reset_prev_optimization_);
     updateParam<bool>(
       parameters, "option.is_considering_footprint_edges", is_considering_footprint_edges_);
+    
+    updateParam<double>(parameters, "common.vehicle_stop_margin", vehicle_stop_margin_);
   }
+
+  
 
   {  // trajectory parameter
     // common
@@ -1295,17 +1301,35 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     const bool is_outside = drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
       traj_point, left_bound, right_bound, vehicle_param_, is_considering_footprint_edges_);
 
-    // only insert zero velocity to the first point outside drivable area
+    // only insert zero velocity to the first point outside drivable area (minus stop margin)
     if (is_outside) {
-      traj_points[i].longitudinal_velocity_mps = 0.0;
+      auto position_outside_drv_area_arc_length = motion_utils::calcSignedArcLength(traj_points, 0, i);
+      size_t stop_idx = i;
+      for(size_t j = i-1 ; i > 0 ; --j){
+        auto stop_position_arc_length = motion_utils::calcSignedArcLength(traj_points, 0, j);
+        if(stop_position_arc_length < (position_outside_drv_area_arc_length - vehicle_stop_margin_)){
+          stop_idx = j;
+          break;
+        }
+      }
+      traj_points[stop_idx].longitudinal_velocity_mps = 0.0;
       debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
-
+      debug_data_.stop_pose_by_drivable_area_with_margin = traj_points[stop_idx].pose;
+      
       // NOTE: traj_points does not have valid z for efficient calculation of trajectory
       if (!planner_data.path.points.empty()) {
-        const size_t path_idx =
+        const size_t path_idx_1 =
           motion_utils::findNearestIndex(planner_data.path.points, traj_points[i].pose.position);
+        
         debug_data_.stop_pose_by_drivable_area->position.z =
-          planner_data.path.points.at(path_idx).pose.position.z;
+          planner_data.path.points.at(path_idx_1).pose.position.z;
+
+        const size_t path_idx_2 =
+          motion_utils::findNearestIndex(planner_data.path.points, traj_points[stop_idx].pose.position);
+        
+        debug_data_.stop_pose_by_drivable_area_with_margin->position.z =
+          planner_data.path.points.at(path_idx_2).pose.position.z;
+
       }
       break;
     }
