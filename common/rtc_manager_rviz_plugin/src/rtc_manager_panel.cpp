@@ -159,12 +159,8 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
   }
   v_layout->addWidget(auto_mode_table_);
 
-  auto * status_num_layout = new QHBoxLayout;
-  {
-    num_rtc_status_ptr_ = new QLabel("Init");
-    status_num_layout->addWidget(num_rtc_status_ptr_);
-  }
-  v_layout->addLayout(status_num_layout);
+  num_rtc_status_ptr_ = new QLabel("Init");
+  v_layout->addWidget(num_rtc_status_ptr_);
 
   // lateral execution
   auto * exe_path_change_layout = new QHBoxLayout;
