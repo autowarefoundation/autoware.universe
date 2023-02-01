@@ -159,6 +159,13 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
   }
   v_layout->addWidget(auto_mode_table_);
 
+  auto * status_num_layout = new QHBoxLayout;
+  {
+    num_rtc_status_ptr_ = new QLabel("Init");
+    status_num_layout->addWidget(num_rtc_status_ptr_);
+  }
+  v_layout->addLayout(status_num_layout);
+
   // lateral execution
   auto * exe_path_change_layout = new QHBoxLayout;
   {
@@ -327,6 +334,8 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
 {
   cooperate_statuses_ptr_ = std::make_shared<CooperateStatusArray>(*msg);
   rtc_table_->clearContents();
+  num_rtc_status_ptr_->setText(
+    QString::fromStdString("The Number of RTC Statuses: " + std::to_string(msg->statuses.size())));
   if (msg->statuses.empty()) return;
   // this is to stable rtc display not to occupy too much
   size_t min_display_size{5};
