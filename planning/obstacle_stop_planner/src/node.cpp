@@ -264,12 +264,6 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     }
   }
 
-  const auto tmp_flag = true;
-  if (tmp_flag) {
-    pub_trajectory_->publish(*input_msg);
-    return;
-  }
-
   const auto current_vel = current_odometry_ptr->twist.twist.linear.x;
   const auto current_acc = current_acceleration_ptr->accel.accel.linear.x;
 

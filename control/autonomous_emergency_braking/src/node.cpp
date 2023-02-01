@@ -33,7 +33,9 @@ namespace autoware::motion::control::autonomous_emergency_braking
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
 
-AEB::AEB(const rclcpp::NodeOptions & node_options) : Node("AEB", node_options)
+AEB::AEB(const rclcpp::NodeOptions & node_options)
+: Node("AEB", node_options),
+  vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
@@ -237,7 +239,7 @@ void AEB::generateEgoTrajectory(
 void AEB::createObjectData(
   const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects)
 {
-  constexpr double lateral_dist_threshold = 5.0;
+  const double lateral_dist_threshold = vehicle_info_.vehicle_width_m / 2.0 + 1.0;
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
   for (const auto & point : obstacle_points_ptr->points) {

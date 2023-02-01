@@ -18,6 +18,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -48,6 +49,7 @@ using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
+using vehicle_info_util::VehicleInfo;
 
 struct ObjectData
 {
@@ -100,6 +102,9 @@ public:
 
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
+
+  // vehicle info
+  VehicleInfo vehicle_info_;
 
   // diag
   Updater updater_{this};
