@@ -150,11 +150,23 @@ bool AEB::isDataReady()
 
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
-  if (!isDataReady()) {
-    const std::string error_msg = "[AEB]: Necessary data is unavailable";
-    const auto diag_level = DiagnosticStatus::OK;
+  if (checkCollision()) {
+    std::cerr << "Emergency" << std::endl;
+    const std::string error_msg = "[AEB]: Emergency Brake";
+    const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
     return;
+  }
+
+  const std::string error_msg = "[AEB]: No Collision";
+  const auto diag_level = DiagnosticStatus::OK;
+  stat.summary(diag_level, error_msg);
+}
+
+bool AEB::checkCollision()
+{
+  if (!isDataReady()) {
+    return false;
   }
 
   // create data
@@ -192,10 +204,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // check if the predicted path has valid number of points
   if (predicted_path.size() < 2) {
-    const std::string error_msg = "[AEB]: Ego is stopping";
-    const auto diag_level = DiagnosticStatus::OK;
-    stat.summary(diag_level, error_msg);
-    return;
+    return false;
   }
 
   // step2. create object
@@ -216,39 +225,26 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   }
 
   if (objects.empty()) {
-    const std::string error_msg = "[AEB]: No Dangerous Objects";
-    const auto diag_level = DiagnosticStatus::OK;
-    stat.summary(diag_level, error_msg);
-    return;
+    return false;
   }
-
-  // sort object based on longitudinal distance
-  std::sort(objects.begin(), objects.end(), [](ObjectData a, ObjectData b) {
-    return a.lon_dist < b.lon_dist;
-  });
-  const auto closest_obj = objects.front();
 
   // step3. calculate time to collision(RSS)
   const double t_rss = 5.0;
   const double a_min = -3.0;
   const double a_obj_min = -1.0;
-  const double & obj_v = closest_obj.velocity;
-  const double rss_dist =
-    v * t_rss + v * v / (2 * std::fabs(a_min)) - obj_v * obj_v / (2 * std::fabs(a_obj_min)) + 2.0;
-
-  // step4. handle the dangerous situation
-  if (closest_obj.lon_dist < rss_dist) {
-    std::cerr << "Emergency" << std::endl;
-    const std::string error_msg = "[AEB]: Emergency Brake";
-    const auto diag_level = DiagnosticStatus::ERROR;
-    stat.summary(diag_level, error_msg);
-    return;
+  const double safe_buffer = 2.0;
+  for (const auto & obj : objects) {
+    const double & obj_v = obj.velocity;
+    const double rss_dist = v * t_rss + v * v / (2 * std::fabs(a_min)) -
+                            obj_v * obj_v / (2 * std::fabs(a_obj_min)) + safe_buffer;
+    if (obj.lon_dist < rss_dist) {
+      // collision happens
+      return true;
+    }
   }
 
-  // safe
-  const std::string error_msg = "[AEB]: No Collision";
-  const auto diag_level = DiagnosticStatus::OK;
-  stat.summary(diag_level, error_msg);
+  // no collision
+  return false;
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking

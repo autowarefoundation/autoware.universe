@@ -86,6 +86,7 @@ public:
 
   // main function
   void onCheckCollision(DiagnosticStatusWrapper & stat);
+  bool checkCollision();
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
