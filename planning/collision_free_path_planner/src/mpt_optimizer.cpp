@@ -529,10 +529,12 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   }
   */
 
+  /*
   std::cerr << "=========================================" << std::endl;
   for (size_t i = 0; i < ref_points.size(); ++i) {
     std::cerr << i << " " << ref_points.at(i).curvature << std::endl;
   }
+  */
 
   debug_data_ptr_->ref_points = ref_points;
 
