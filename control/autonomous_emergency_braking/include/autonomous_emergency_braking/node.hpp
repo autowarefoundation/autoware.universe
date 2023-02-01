@@ -88,6 +88,11 @@ public:
   void onCheckCollision(DiagnosticStatusWrapper & stat);
   bool checkCollision();
 
+  void generateEgoTrajectory(
+    const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & trajectory);
+  void createObjectData(
+    const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects);
+
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Odometry::ConstSharedPtr odometry_ptr_{nullptr};

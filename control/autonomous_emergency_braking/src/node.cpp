@@ -165,65 +165,30 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
 bool AEB::checkCollision()
 {
+  // step1. check data
   if (!isDataReady()) {
     return false;
   }
 
-  // create data
+  // step2. create data
   const double v = current_velocity_ptr_->longitudinal_velocity;
   const double w =
     use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
-  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
 
-  // step1. create predicted path
-  std::vector<geometry_msgs::msg::Pose> predicted_path;
-  double curr_x = 0.0;
-  double curr_y = 0.0;
-  double curr_yaw = 0.0;
-  geometry_msgs::msg::Pose ini_pose;
-  ini_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
-  ini_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
-  predicted_path.push_back(ini_pose);
-
-  constexpr double epsilon = 1e-6;
-  constexpr double dt = 0.1;
-  constexpr double horizon = 3.0;
-  for (double t = 0.0; t < horizon + epsilon; t += dt) {
-    curr_x = curr_x + v * std::cos(curr_yaw) * dt;
-    curr_y = curr_y + v * std::sin(curr_yaw) * dt;
-    curr_yaw = curr_yaw + w * dt;
-    geometry_msgs::msg::Pose current_pose;
-    current_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
-    current_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
-    if (tier4_autoware_utils::calcDistance2d(predicted_path.back(), current_pose) < 1e-3) {
-      continue;
-    }
-    predicted_path.push_back(current_pose);
-  }
+  // step3. create ego trajectory
+  std::vector<geometry_msgs::msg::Pose> ego_traj;
+  generateEgoTrajectory(v, w, ego_traj);
 
   // check if the predicted path has valid number of points
-  if (predicted_path.size() < 2) {
+  if (ego_traj.size() < 2) {
     return false;
   }
 
-  // step2. create object
-  constexpr double lateral_dist_threshold = 5.0;
+  // step4. create object
   std::vector<ObjectData> objects;
-  for (const auto & point : obstacle_points_ptr->points) {
-    ObjectData obj;
-    obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
-    obj.velocity = 0.0;
-    obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
-    obj.lon_dist = motion_utils::calcSignedArcLength(predicted_path, 0, obj.position);
-    obj.lat_dist = motion_utils::calcLateralOffset(predicted_path, obj.position);
-    if (obj.lon_dist < 0.0 || obj.lat_dist > lateral_dist_threshold) {
-      continue;
-    }
-    objects.push_back(obj);
-  }
+  createObjectData(ego_traj, objects);
 
-  // step3. calculate time to collision(RSS)
+  // step5. calculate time to collision(RSS)
   const double t_rss = 5.0;
   const double a_min = -3.0;
   const double a_obj_min = -1.0;
@@ -238,8 +203,55 @@ bool AEB::checkCollision()
     }
   }
 
-  // no collision
   return false;
+}
+
+void AEB::generateEgoTrajectory(
+  const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & trajectory)
+{
+  double curr_x = 0.0;
+  double curr_y = 0.0;
+  double curr_yaw = 0.0;
+  geometry_msgs::msg::Pose ini_pose;
+  ini_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
+  ini_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
+  trajectory.push_back(ini_pose);
+
+  constexpr double epsilon = 1e-6;
+  constexpr double dt = 0.1;
+  constexpr double horizon = 3.0;
+  for (double t = 0.0; t < horizon + epsilon; t += dt) {
+    curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
+    curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
+    curr_yaw = curr_yaw + curr_w * dt;
+    geometry_msgs::msg::Pose current_pose;
+    current_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
+    current_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
+    if (tier4_autoware_utils::calcDistance2d(trajectory.back(), current_pose) < 1e-3) {
+      continue;
+    }
+    trajectory.push_back(current_pose);
+  }
+}
+
+void AEB::createObjectData(
+  const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects)
+{
+  constexpr double lateral_dist_threshold = 5.0;
+  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
+  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
+  for (const auto & point : obstacle_points_ptr->points) {
+    ObjectData obj;
+    obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
+    obj.velocity = 0.0;
+    obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
+    obj.lon_dist = motion_utils::calcSignedArcLength(ego_traj, 0, obj.position);
+    obj.lat_dist = motion_utils::calcLateralOffset(ego_traj, obj.position);
+    if (obj.lon_dist < 0.0 || obj.lat_dist > lateral_dist_threshold) {
+      continue;
+    }
+    objects.push_back(obj);
+  }
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking
