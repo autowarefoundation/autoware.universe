@@ -43,7 +43,7 @@
       enable_clipping_fixed_traj: false
       non_fixed_trajectory_length: 5.0 # length of the trajectory merging optimized mpt trajectory to original(not optimized) trajectory
 
-      vehicle_stop_margin: 1.5 # vehicle stop margin to let the vehicle stop before the calculated stop point [m]
+      vehicle_stop_margin: 1.5 # vehicle stop margin to let the vehicle stop before the calculated stop point [m]. This margin will be realized with delta_arc_length_for_mpt_points m precision.
       
 
     object:  # avoiding object

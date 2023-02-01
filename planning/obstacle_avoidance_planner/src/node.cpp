@@ -1303,15 +1303,14 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
 
     // only insert zero velocity to the first point outside drivable area (minus stop margin)
     if (is_outside) {
-      auto position_outside_drv_area_arc_length = motion_utils::calcSignedArcLength(traj_points, 0, i);
       size_t stop_idx = i;
-      for(size_t j = i-1 ; i > 0 ; --j){
-        auto stop_position_arc_length = motion_utils::calcSignedArcLength(traj_points, 0, j);
-        if(stop_position_arc_length < (position_outside_drv_area_arc_length - vehicle_stop_margin_)){
-          stop_idx = j;
-          break;
-        }
+      const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(traj_points, traj_point.pose.position, -1.0 * vehicle_stop_margin_);
+      
+      if(op_target_point){
+        const auto target_point = op_target_point.get();
+        stop_idx = motion_utils::findNearestSegmentIndex(traj_points, target_point);
       }
+      
       traj_points[stop_idx].longitudinal_velocity_mps = 0.0;
       debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
       debug_data_.stop_pose_by_drivable_area_with_margin = traj_points[stop_idx].pose;
