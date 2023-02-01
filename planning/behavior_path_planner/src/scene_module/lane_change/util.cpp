@@ -1121,13 +1121,13 @@ lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
     return {};
   }
 
-  const auto preceeding_lanes = route_handler.getPrecedingLaneletSequence(
+  const auto preceding_lanes = route_handler.getPrecedingLaneletSequence(
     target_lane, std::abs(backward_length - arc_length.length), {target_lane});
 
   lanelet::ConstLanelets backward_lanes{};
-  const auto num_of_lanes = std::invoke([&preceeding_lanes]() {
+  const auto num_of_lanes = std::invoke([&preceding_lanes]() {
     size_t sum{0};
-    for (const auto & lanes : preceeding_lanes) {
+    for (const auto & lanes : preceding_lanes) {
       sum += lanes.size();
     }
     return sum;
@@ -1135,7 +1135,7 @@ lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
 
   backward_lanes.reserve(num_of_lanes);
 
-  for (const auto & lanes : preceeding_lanes) {
+  for (const auto & lanes : preceding_lanes) {
     backward_lanes.insert(backward_lanes.end(), lanes.begin(), lanes.end());
   }
 
