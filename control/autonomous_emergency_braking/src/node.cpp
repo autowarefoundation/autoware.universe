@@ -224,10 +224,6 @@ bool AEB::checkCollision()
     objects.push_back(obj);
   }
 
-  if (objects.empty()) {
-    return false;
-  }
-
   // step3. calculate time to collision(RSS)
   const double t_rss = 5.0;
   const double a_min = -3.0;
