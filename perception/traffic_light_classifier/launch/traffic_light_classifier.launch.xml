@@ -22,6 +22,8 @@
     <param name="mean" value="[0.242, 0.193, 0.201]"/>
     <param name="std" value="[1.0, 1.0, 1.0]"/>
     <param name="precision" value="fp16"/>
+    <param name="input_name" value="input_0"/>
+    <param name="output_name" value="output_0"/>
     <param name="input_c" value="3"/>
     <param name="input_h" value="224"/>
     <param name="input_w" value="224"/>
