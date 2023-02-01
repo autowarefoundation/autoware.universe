@@ -44,30 +44,25 @@ struct PlannerData
 
 struct TimeKeeper
 {
+  void init() { accumulated_msg = "\n"; }
+
   template <typename T>
   TimeKeeper & operator<<(const T & msg)
   {
-    sstream << msg;
+    latest_stream << msg;
     return *this;
   }
 
   void endLine()
   {
-    const auto msg = sstream.str();
+    const auto msg = latest_stream.str();
     accumulated_msg += msg + "\n";
+    latest_stream.str("");
 
     if (enable_calculation_time_info) {
       RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), msg);
     }
-    sstream.str("");
-
-    // reset accumulated_msg
-    accumulated_msg = "\n";
   }
-
-  bool enable_calculation_time_info;
-  std::string accumulated_msg = "\n";
-  std::stringstream sstream;
 
   void tic(const std::string & func_name) { stop_watch_.tic(func_name); }
 
@@ -78,7 +73,11 @@ struct TimeKeeper
     endLine();
   }
 
-  std::string getAccumulatedTimeString() const { return accumulated_msg; }
+  std::string getLog() const { return accumulated_msg; }
+
+  bool enable_calculation_time_info;
+  std::string accumulated_msg = "\n";
+  std::stringstream latest_stream;
 
   tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>

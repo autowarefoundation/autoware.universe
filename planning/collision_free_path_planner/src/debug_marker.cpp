@@ -267,6 +267,33 @@ MarkerArray getVehicleCirclesMarkerArray(
   }
   return msg;
 }
+
+visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
+  const std::vector<ReferencePoint> & ref_points)
+{
+  if (ref_points.empty()) {
+    return visualization_msgs::msg::MarkerArray{};
+  }
+
+  auto marker = createDefaultMarker(
+    "map", rclcpp::Clock().now(), "text", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    createMarkerScale(0.0, 0.0, 0.15), createMarkerColor(1.0, 1.0, 0.0, 0.99));
+  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+
+  visualization_msgs::msg::MarkerArray msg;
+  for (size_t i = 0; i < ref_points.size(); i++) {
+    marker.id = i;
+    // marker.text = std::to_string(tf2::getYaw(ref_points[i].pose.orientation)) + "\n" +
+    // std::to_string(ref_points[i].delta_arc_length); marker.text =
+    // std::to_string(ref_points[i].alpha) + "\n" + std::to_string(ref_points[i].beta); marker.text
+    // = std::to_string(ref_points[i].curvature);
+    marker.text = std::to_string(ref_points[i].optimized_input);
+    marker.pose.position = ref_points.at(i).pose.position;
+    msg.markers.push_back(marker);
+  }
+
+  return msg;
+}
 }  // namespace
 
 MarkerArray getDebugMarker(
@@ -307,6 +334,9 @@ MarkerArray getDebugMarker(
       debug_data.vehicle_circle_radiuses, debug_data.mpt_visualize_sampling_num, "vehicle_circles",
       1.0, 0.3, 0.3),
     &marker_array);
+
+  // debug text
+  appendMarkerArray(getPointsTextMarkerArray(debug_data.ref_points), &marker_array);
 
   return marker_array;
 }

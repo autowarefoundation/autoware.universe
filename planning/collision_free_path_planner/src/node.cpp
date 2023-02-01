@@ -185,6 +185,7 @@ void CollisionFreePathPlanner::resetPrevData()
 
 void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
 {
+  time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
 
   // check if data is ready and valid
@@ -227,8 +228,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
 
   // publish calculation_time
   // NOTE: This function must be called after measuring onPath calculation time
-  const auto calculation_time_msg =
-    createStringStamped(now(), time_keeper_ptr_->getAccumulatedTimeString());
+  const auto calculation_time_msg = createStringStamped(now(), time_keeper_ptr_->getLog());
   debug_calculation_time_pub_->publish(calculation_time_msg);
 
   const auto output_traj_msg =

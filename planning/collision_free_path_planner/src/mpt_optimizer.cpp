@@ -446,6 +446,7 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::getModelPredictiveTraj
 
   time_keeper_ptr_->toc(__func__, "      ");
 
+  debug_data_ptr_->ref_points = ref_points;
   prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(ref_points);
 
   return *mpt_traj_points;
@@ -522,12 +523,10 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // TODO(murooka) remove this temporary implementation
   updateCurvature(ref_points, ref_points_spline);
 
-  /*
   // TODO(murooka)
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).curvature = 0.0;
   }
-  */
 
   /*
   std::cerr << "=========================================" << std::endl;
@@ -535,8 +534,6 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
     std::cerr << i << " " << ref_points.at(i).curvature << std::endl;
   }
   */
-
-  debug_data_ptr_->ref_points = ref_points;
 
   time_keeper_ptr_->toc(__func__, "        ");
 
@@ -569,6 +566,7 @@ void MPTOptimizer::updateCurvature(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
+  /*
   {
     const size_t num_points = static_cast<int>(ref_points.size());
 
@@ -589,14 +587,13 @@ void MPTOptimizer::updateCurvature(
           .curvature;
     }
   }
+  */
 
   // TODO(murooka)
-  /*
   const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).curvature = curvature_vec.at(i);
   }
-  */
 }
 
 void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) const
