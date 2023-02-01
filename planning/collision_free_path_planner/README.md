@@ -38,6 +38,8 @@ Flowchart of functions is explained here.
 title pathCallback
 start
 
+:isDataReady;
+
 :createPlannerData;
 
 group generateOptimizedTrajectory
@@ -73,14 +75,14 @@ stop
 
 ### createPlannerData
 
-The data for planning is created whose structure is as follows.
+The following data for planning is created.
 
 ```cpp
 struct PlannerData
 {
   // input
   Header header;
-  std::vector<TrajectoryPoint> traj_points; // converted from input path
+  std::vector<TrajectoryPoint> traj_points; // converted from the input path
   std::vector<geometry_msgs::msg::Point> left_bound;
   std::vector<geometry_msgs::msg::Point> right_bound;
 
@@ -107,11 +109,10 @@ max_path_shape_around_ego_lat_dist
 
 ### getEBTrajectory
 
-The latter optimization (MPT) assumes that the reference path is smooth enough.
-Therefore the path from behavior is made smooth here, and send to the optimization as a format of trajectory.
-Obstacles are ignored in this function.
+The latter optimization (model predictive trajectory) assumes that the reference path is smooth enough.
+This function makes the input path smooth by elastic band.
 
-More details can be seen [here](docs/eb.md).
+More details about elastic band can be seen [here](docs/eb.md).
 
 ### getModelPredictiveTrajectory
 

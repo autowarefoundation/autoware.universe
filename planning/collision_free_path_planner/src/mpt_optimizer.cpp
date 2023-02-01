@@ -389,7 +389,7 @@ void MPTOptimizer::initialize(const bool enable_debug_info, const TrajectoryPara
   traj_param_ = traj_param;
 }
 
-void MPTOptimizer::resetPrevData() { prev_ref_points_ptr_ = nullptr; }
+void MPTOptimizer::resetPreviousData() { prev_ref_points_ptr_ = nullptr; }
 
 void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {

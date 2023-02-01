@@ -2,19 +2,19 @@
 
 ## Abstract
 
-Elastic band smooths the path generated in the behavior.
-Since the latter process of optimization uses the curvature and normal vector of the reference path, smoothing should be applied here so that the optimization will be stable.
+Elastic band smooths the input path.
+Since the latter optimization (model predictive trajectory) uses the curvature and normal vector of the reference path, path smoothing is applied here so that the latter optimization will be stable.
 
-This smoothing process does not consider collision.
+Note that this smoothing process does not consider collision checking.
 Therefore the output path may have a collision with road boundaries or obstacles.
 
 ## Formulation
 
-We formulate a QP problem minimizing the distance between the previous point and the next point for each point.
-Conditions that each point can move to a certain extent are used so that the path will not changed a lot but will be smoother.
+We formulate a quadratic problem minimizing the distance between the previous point and the next point on each point.
 
-For $k$'th point ($\boldsymbol{p}_k = (x_k, y_k)$), the objective function is as follows.
-The beginning and end point are fixed during the optimization.
+![eb](./media/eb.svg)
+
+Assuming that $k$'th point is $\boldsymbol{p}_k = (x_k, y_k)$, the objective function is as follows.
 
 $$
 \begin{align}
@@ -76,3 +76,7 @@ $$
     \end{pmatrix}
 \end{align}
 $$
+
+Regarding the constraint, the distance that each point can move is limited so that the path will not changed a lot but will be smoother.
+
+In addition, the beginning point is fixed and the end point as well if the end point is considered as the goal.

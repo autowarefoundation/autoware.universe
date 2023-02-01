@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #ifndef COLLISION_FREE_PATH_PLANNER__NODE_HPP_
 #define COLLISION_FREE_PATH_PLANNER__NODE_HPP_
 
@@ -20,7 +21,6 @@
 #include "collision_free_path_planner/replan_checker.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -108,7 +108,7 @@ private:
 
   // reset functions
   void initializePlanning();
-  void resetPrevData();
+  void resetPreviousData();
 
   // main functions
   bool isDataReady(const Path & path, rclcpp::Clock clock) const;
@@ -123,13 +123,12 @@ private:
   std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
     const std::vector<TrajectoryPoint> & traj_points) const;
-  // void applyInputVelocity(
-  //   std::vector<TrajectoryPoint> & traj_points, const std::vector<TrajectoryPoint> & traj_points)
-  //   const;
+  void applyInputVelocity(
+    std::vector<TrajectoryPoint> & output_traj_points,
+    const std::vector<TrajectoryPoint> & input_traj_points) const;
   void insertZeroVelocityOutsideDrivableArea(
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
-
   void publishDebugMarkerOfOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 };

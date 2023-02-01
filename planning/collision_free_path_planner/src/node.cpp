@@ -96,10 +96,10 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     time_keeper_ptr_->enable_calculation_time_info =
       declare_parameter<bool>("option.debug.enable_calculation_time_info");
 
-    // ego nearest search parameters declaration
+    // parameters for ego nearest search
     ego_nearest_param_ = EgoNearestParam(this);
 
-    // trajectory parameters declaration
+    // parameters for trajectory
     traj_param_ = TrajectoryParam(this, vehicle_info_.vehicle_width_m);
   }
 
@@ -128,33 +128,33 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
 {
   using tier4_autoware_utils::updateParam;
 
-  {  // parameters
-    // option parameter
-    updateParam<bool>(
-      parameters, "option.enable_outside_drivable_area_stop", enable_outside_drivable_area_stop_);
-    updateParam<bool>(parameters, "option.enable_smoothing", enable_smoothing_);
-    updateParam<bool>(parameters, "option.enable_skip_optimization", enable_skip_optimization_);
-    updateParam<bool>(
-      parameters, "option.enable_reset_prev_optimization", enable_reset_prev_optimization_);
+  // parameters for option
+  updateParam<bool>(
+    parameters, "option.enable_outside_drivable_area_stop", enable_outside_drivable_area_stop_);
+  updateParam<bool>(parameters, "option.enable_smoothing", enable_smoothing_);
+  updateParam<bool>(parameters, "option.enable_skip_optimization", enable_skip_optimization_);
+  updateParam<bool>(
+    parameters, "option.enable_reset_prev_optimization", enable_reset_prev_optimization_);
 
-    // debug marker
-    updateParam<bool>(parameters, "option.debug.enable_pub_debug_marker", enable_pub_debug_marker_);
+  // parameters for debug marker
+  updateParam<bool>(parameters, "option.debug.enable_pub_debug_marker", enable_pub_debug_marker_);
 
-    // debug info
-    updateParam<bool>(parameters, "option.debug.enable_debug_info", enable_debug_info_);
-    updateParam<bool>(
-      parameters, "option.debug.enable_calculation_time_info",
-      time_keeper_ptr_->enable_calculation_time_info);
-  }
+  // parameters for debug info
+  updateParam<bool>(parameters, "option.debug.enable_debug_info", enable_debug_info_);
+  updateParam<bool>(
+    parameters, "option.debug.enable_calculation_time_info",
+    time_keeper_ptr_->enable_calculation_time_info);
 
+  // parameters for ego nearest search
   ego_nearest_param_.onParam(parameters);
+
+  // parameters for trajectory
   traj_param_.onParam(parameters);
 
-  {  // core algorithms parameters
-    replan_checker_ptr_->onParam(parameters);
-    eb_path_smoother_ptr_->onParam(parameters);
-    mpt_optimizer_ptr_->onParam(parameters);
-  }
+  // parameters for core algorithms
+  replan_checker_ptr_->onParam(parameters);
+  eb_path_smoother_ptr_->onParam(parameters);
+  mpt_optimizer_ptr_->onParam(parameters);
 
   // reset planners
   initializePlanning();
@@ -172,13 +172,13 @@ void CollisionFreePathPlanner::initializePlanning()
   eb_path_smoother_ptr_->initialize(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
-  resetPrevData();
+  resetPreviousData();
 }
 
-void CollisionFreePathPlanner::resetPrevData()
+void CollisionFreePathPlanner::resetPreviousData()
 {
-  eb_path_smoother_ptr_->resetPrevData();
-  mpt_optimizer_ptr_->resetPrevData();
+  eb_path_smoother_ptr_->resetPreviousData();
+  mpt_optimizer_ptr_->resetPreviousData();
 
   prev_optimized_traj_points_ptr_ = nullptr;
 }
@@ -308,7 +308,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   const bool reset_prev_optimization = replan_checker_ptr_->isResetRequired(planner_data);
   if (enable_reset_prev_optimization_ || reset_prev_optimization) {
     // NOTE: always replan when resetting previous optimization
-    resetPrevData();
+    resetPreviousData();
   } else {
     // check replan when not resetting previous optimization
     const bool is_replan_required =
@@ -354,25 +354,26 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
 }
 
 void CollisionFreePathPlanner::applyInputVelocity(
-  std::vector<TrajectoryPoint> & traj_points,
-  const std::vector<TrajectoryPoint> & traj_points) const
+  std::vector<TrajectoryPoint> & output_traj_points,
+  const std::vector<TrajectoryPoint> & input_traj_points) const
 {
   time_keeper_ptr_->tic(__func__);
 
-  for (size_t i = 0; i < traj_points.size(); i++) {
+  for (size_t i = 0; i < output_traj_points.size(); i++) {
     const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      traj_points, traj_points.at(i).pose, traj_param_.delta_dist_threshold_for_closest_point,
+      input_traj_points, output_traj_points.at(i).pose,
+      traj_param_.delta_dist_threshold_for_closest_point,
       traj_param_.delta_yaw_threshold_for_closest_point);
 
     // TODO(murooka)
     // add this line not to exceed max index size
-    const size_t max_idx = std::min(nearest_seg_idx + 1, traj_points.size() - 1);
+    const size_t max_idx = std::min(nearest_seg_idx + 1, input_traj_points.size() - 1);
     // NOTE: std::max, not std::min, is used here since traj_points' sampling width may be longer
     // than path_points' sampling width. A zero velocity point is guaranteed to be inserted in an
     // output trajectory in the alignVelocity function
-    traj_points.at(i).longitudinal_velocity_mps = std::max(
-      traj_points.at(nearest_seg_idx).longitudinal_velocity_mps,
-      traj_points.at(max_idx).longitudinal_velocity_mps);
+    output_traj_points.at(i).longitudinal_velocity_mps = std::max(
+      input_traj_points.at(nearest_seg_idx).longitudinal_velocity_mps,
+      input_traj_points.at(max_idx).longitudinal_velocity_mps);
 
     // TODO(murooka) insert stop point explicitly
   }
