@@ -239,6 +239,20 @@ private:
     }
   }
 
+  void updatePredictedObstacleHistory(const rclcpp::Time & now)
+  {
+    for (auto itr = predicted_object_history_.begin(); itr != predicted_object_history_.end();) {
+      const auto expired = (now - itr->detection_time).seconds() > node_param_.chattering_threshold;
+
+      if (expired) {
+        itr = predicted_object_history_.erase(itr);
+        continue;
+      }
+
+      itr++;
+    }
+  }
+
   PointCloud::Ptr getOldPointCloudPtr() const
   {
     PointCloud::Ptr ret(new PointCloud);

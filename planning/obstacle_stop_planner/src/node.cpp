@@ -342,7 +342,7 @@ void ObstacleStopPlannerNode::searchObstacle(
     }
     const auto now = this->now();
 
-    updateObstacleHistory(now);
+    updatePredictedObstacleHistory(now);
     for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
       // create one step circle center for vehicle
       const auto & p_front = decimate_trajectory.at(i).pose;
@@ -554,7 +554,6 @@ void ObstacleStopPlannerNode::searchObstacle(
               predicted_object_history_.emplace_back(now, nearest_collision_point_pose);
               break;
             }
-
           } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
             const double & length_m = obj.shape.dimensions.x / 2;
             const double & width_m = obj.shape.dimensions.y / 2;
@@ -567,7 +566,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             // create one step polygon for vehicle
             createOneStepPolygon(
               p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-              stop_param.pedestrian_lateral_margin);
+              stop_param.vehicle_lateral_margin);
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
               PolygonType::Vehicle);
@@ -608,7 +607,7 @@ void ObstacleStopPlannerNode::searchObstacle(
             // create one step polygon for vehicle
             createOneStepPolygon(
               p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-              stop_param.pedestrian_lateral_margin);
+              stop_param.unknown_lateral_margin);
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
               PolygonType::Vehicle);
@@ -685,21 +684,15 @@ void ObstacleStopPlannerNode::searchObstacle(
             std::vector<Point2d> collision_point;
             geometry_msgs::msg::PoseArray collision_points;
             bg::intersection(one_step_move_vehicle_polygon2d, object_polygon, collision_point);
-
             for (const auto & point : collision_point) {
               geometry_msgs::msg::Pose pose;
               pose.position.x = point.x();
               pose.position.y = point.y();
               collision_points.poses.push_back(pose);
-              std::cout << "collision point x: " << point.x() << " y: " << point.y() << std::endl;
             }
             getNearestPointForPredictedObject(
               collision_points, p_front, &planner_data.nearest_collision_point_pose,
               &nearest_collision_point_time);
-
-            std::cout << "nearest point x: " << planner_data.nearest_collision_point_pose.position.x
-                      << " y: " << planner_data.nearest_collision_point_pose.position.y
-                      << std::endl;
 
             debug_ptr_->pushObstaclePoint(
               planner_data.nearest_collision_point_pose.position, PointType::Stop);
@@ -721,7 +714,6 @@ void ObstacleStopPlannerNode::searchObstacle(
             if (!planner_data.stop_require) {
               predicted_object_history_.clear();
             }
-
             break;
           }
         } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -730,13 +722,12 @@ void ObstacleStopPlannerNode::searchObstacle(
           Polygon2d object_polygon{};
           object_polygon = convertBoundingBoxObjectToGeometryPolygon(
             obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
-
           std::vector<cv::Point2d> one_step_move_vehicle_polygon;
           Polygon2d one_step_move_vehicle_polygon2d;
           // create one step polygon for vehicle
           createOneStepPolygon(
             p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-            stop_param.vehicle_lateral_margin);
+            stop_param.unknown_lateral_margin);
           debug_ptr_->pushPolygon(
             one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
             PolygonType::Vehicle);
@@ -786,7 +777,6 @@ void ObstacleStopPlannerNode::searchObstacle(
             if (!planner_data.stop_require) {
               predicted_object_history_.clear();
             }
-
             break;
           }
         } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
@@ -799,7 +789,7 @@ void ObstacleStopPlannerNode::searchObstacle(
           // create one step polygon for vehicle
           createOneStepPolygon(
             p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-            stop_param.unknown_lateral_margin);
+            stop_param.vehicle_lateral_margin);
           debug_ptr_->pushPolygon(
             one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
             PolygonType::Vehicle);
