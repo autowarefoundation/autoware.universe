@@ -173,13 +173,13 @@ bool AEB::checkCollision()
   }
 
   // step2. create data
-  const double v = current_velocity_ptr_->longitudinal_velocity;
-  const double w =
+  const double current_v = current_velocity_ptr_->longitudinal_velocity;
+  const double current_w =
     use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
 
   // step3. create ego trajectory
   std::vector<geometry_msgs::msg::Pose> ego_traj;
-  generateEgoTrajectory(v, w, ego_traj);
+  generateEgoTrajectory(current_v, current_w, ego_traj);
 
   // check if the predicted path has valid number of points
   if (ego_traj.size() < 2) {
@@ -197,7 +197,7 @@ bool AEB::checkCollision()
   const double safe_buffer = 2.0;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
-    const double rss_dist = v * t_rss + v * v / (2 * std::fabs(a_min)) -
+    const double rss_dist = current_v * t_rss + current_v * current_v / (2 * std::fabs(a_min)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min)) + safe_buffer;
     if (obj.lon_dist < rss_dist) {
       // collision happens
