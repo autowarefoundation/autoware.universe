@@ -72,6 +72,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.voxel_grid_y = declare_parameter("voxel_grid_y", 0.05);
     p.voxel_grid_z = declare_parameter("voxel_grid_z", 100000.0);
     p.use_predicted_objects = declare_parameter<bool>("use_predicted_objects");
+    p.publish_obstacle_polygon = declare_parameter<bool>("publish_obstacle_polygon");
   }
 
   {
@@ -704,6 +705,15 @@ void ObstacleStopPlannerNode::searchObstacle(
               planner_data.nearest_collision_point_pose.position, PointType::Stop);
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+            one_step_move_vehicle_polygon.clear();
+            if (node_param_.publish_obstacle_polygon){
+              std::vector<cv::Point2d> obstacle_polygon;
+              for (const auto & point : object_polygon.outer()) {
+                obstacle_polygon.emplace_back(point.x(), point.y());
+              }
+              debug_ptr_->pushPolygon(
+                obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
+            }
             planner_data.stop_require = planner_data.found_collision_points;
             mutex_.lock();
             const auto current_odometry_ptr = current_odometry_ptr_;
@@ -759,6 +769,16 @@ void ObstacleStopPlannerNode::searchObstacle(
               planner_data.nearest_collision_point_pose.position, PointType::Stop);
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+            one_step_move_vehicle_polygon.clear();
+            if (node_param_.publish_obstacle_polygon){
+              std::vector<cv::Point2d> obstacle_polygon;
+              for (const auto & point : object_polygon.outer()) {
+                obstacle_polygon.emplace_back(point.x(), point.y());
+              }
+              debug_ptr_->pushPolygon(
+                obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
+            }
+
             planner_data.stop_require = planner_data.found_collision_points;
             mutex_.lock();
             const auto current_odometry_ptr = current_odometry_ptr_;
@@ -812,6 +832,14 @@ void ObstacleStopPlannerNode::searchObstacle(
               planner_data.nearest_collision_point_pose.position, PointType::Stop);
             debug_ptr_->pushPolygon(
               one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+            one_step_move_vehicle_polygon.clear();
+            if (node_param_.publish_obstacle_polygon) {
+              std::vector<cv::Point2d> obstacle_polygon;
+              for (const auto & point : object_polygon.outer()) {
+                obstacle_polygon.emplace_back(point.x(), point.y());
+              }
+              debug_ptr_->pushPolygon(obstacle_polygon, p_front.position.z, PolygonType::Obstacle);
+            }
             planner_data.stop_require = planner_data.found_collision_points;
             mutex_.lock();
             const auto current_odometry_ptr = current_odometry_ptr_;

@@ -81,6 +81,8 @@ struct NodeParam
   double voxel_grid_z;
 
   bool use_predicted_objects;
+
+  bool publish_obstacle_polygon;
 };
 
 struct StopParam
