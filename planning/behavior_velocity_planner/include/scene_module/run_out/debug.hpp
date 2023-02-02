@@ -22,6 +22,7 @@
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
+using sensor_msgs::msg::PointCloud2;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Int32Stamped;
 
@@ -102,11 +103,15 @@ public:
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
+  void pushDebugPointCloud(
+    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header);
+  void pushDebugPointCloud(const PointCloud2 & pointcloud);
   void pushTravelTimeTexts(
     const double travel_time, const geometry_msgs::msg::Pose pose, const float lateral_offset);
   void setAccelReason(const AccelReason & accel_reason);
   void publishDebugValue();
   void publishDebugTrajectory(const Trajectory & trajectory);
+  void publishDebugPointCloud();
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
   void setHeight(const double height);
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray();
@@ -120,6 +125,7 @@ private:
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   rclcpp::Publisher<Int32Stamped>::SharedPtr pub_accel_reason_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_debug_trajectory_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_debug_pointcloud_;
   std::vector<geometry_msgs::msg::Point> collision_points_;
   std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
@@ -128,6 +134,7 @@ private:
   std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
   std::vector<TextWithPosition> travel_time_texts_;
+  PointCloud2 debug_pointcloud_;
   DebugValues debug_values_;
   AccelReason accel_reason_;
   double height_{0};

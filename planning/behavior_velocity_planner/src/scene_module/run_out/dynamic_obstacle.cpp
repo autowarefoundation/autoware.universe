@@ -508,6 +508,8 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   const auto lateral_nearest_points =
     extractLateralNearestPoints(concat_points_no_overlap, path, param_.points_interval);
 
+  debug_ptr_->pushDebugPointCloud(lateral_nearest_points, concat_points.header);
+
   std::lock_guard<std::mutex> lock(mutex_);
   obstacle_points_map_filtered_ = lateral_nearest_points;
 }

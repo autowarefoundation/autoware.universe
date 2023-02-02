@@ -75,6 +75,8 @@ RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
     node.create_publisher<Float32MultiArrayStamped>("~/debug/run_out/debug_values", 1);
   pub_accel_reason_ = node.create_publisher<Int32Stamped>("~/debug/run_out/accel_reason", 1);
   pub_debug_trajectory_ = node.create_publisher<Trajectory>("~/debug/run_out/trajectory", 1);
+  pub_debug_pointcloud_ = node.create_publisher<PointCloud2>(
+    "~/debug/run_out/filtered_pointcloud", rclcpp::SensorDataQoS().keep_last(1));
 }
 
 void RunOutDebug::pushCollisionPoints(const geometry_msgs::msg::Point & point)
@@ -137,6 +139,18 @@ void RunOutDebug::pushTravelTimeTexts(
   travel_time_texts_.push_back(createDebugText(sstream.str(), pose, lateral_offset));
 }
 
+void RunOutDebug::pushDebugPointCloud(
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header)
+{
+  pcl::toROSMsg(pointcloud, debug_pointcloud_);
+  debug_pointcloud_.header = header;
+}
+
+void RunOutDebug::pushDebugPointCloud(const PointCloud2 & pointcloud)
+{
+  debug_pointcloud_ = pointcloud;
+}
+
 void RunOutDebug::clearDebugMarker()
 {
   collision_points_.clear();
@@ -146,6 +160,7 @@ void RunOutDebug::clearDebugMarker()
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
   travel_time_texts_.clear();
+  debug_pointcloud_ = PointCloud2();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -285,6 +300,8 @@ void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
 {
   pub_debug_trajectory_->publish(trajectory);
 }
+
+void RunOutDebug::publishDebugPointCloud() { pub_debug_pointcloud_->publish(debug_pointcloud_); }
 
 void RunOutDebug::setHeight(const double height) { height_ = height; }
 
