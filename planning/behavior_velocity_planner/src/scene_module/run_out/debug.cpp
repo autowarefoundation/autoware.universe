@@ -160,7 +160,7 @@ void RunOutDebug::clearDebugMarker()
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
   travel_time_texts_.clear();
-  debug_pointcloud_ = PointCloud2();
+  debug_pointcloud_.data.clear();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -301,7 +301,13 @@ void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
   pub_debug_trajectory_->publish(trajectory);
 }
 
-void RunOutDebug::publishDebugPointCloud() { pub_debug_pointcloud_->publish(debug_pointcloud_); }
+void RunOutDebug::publishDebugPointCloud()
+{
+  if (debug_pointcloud_.header.frame_id == "") {
+    return;
+  }
+  pub_debug_pointcloud_->publish(debug_pointcloud_);
+}
 
 void RunOutDebug::setHeight(const double height) { height_ = height; }
 
