@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
-#define COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/state_equation_generator.hpp"
-#include "collision_free_path_planner/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Sparse"
 #include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/state_equation_generator.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 struct Bounds
 {
@@ -99,7 +99,7 @@ struct ReferencePoint
 
 class MPTOptimizer
 {
-  FRIEND_TEST(CollisionFreePathPlanner, MPTOptimizer);
+  FRIEND_TEST(ObstacleAvoidancePlanner, MPTOptimizer);
 
 public:
   MPTOptimizer(
@@ -286,5 +286,5 @@ private:
   std::vector<TrajectoryPoint> extractFixedPoints(
     const std::vector<ReferencePoint> & ref_points) const;
 };
-}  // namespace collision_free_path_planner
-#endif  // COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
+}  // namespace obstacle_avoidance_planner
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_

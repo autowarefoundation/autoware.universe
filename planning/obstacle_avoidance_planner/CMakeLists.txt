@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(collision_free_path_planner)
+project(obstacle_avoidance_planner)
 
 include(CheckCXXCompilerFlag)
 
@@ -15,7 +15,7 @@ autoware_package()
 
 find_package(Eigen3 REQUIRED)
 
-ament_auto_add_library(collision_free_path_planner SHARED
+ament_auto_add_library(obstacle_avoidance_planner SHARED
   # node
   src/node.cpp
   # core algorithms
@@ -33,29 +33,29 @@ ament_auto_add_library(collision_free_path_planner SHARED
   src/utils/geometry_utils.cpp
 )
 
-target_include_directories(collision_free_path_planner
+target_include_directories(obstacle_avoidance_planner
   SYSTEM PUBLIC
     ${EIGEN3_INCLUDE_DIR}
 )
 
 # register node
-rclcpp_components_register_node(collision_free_path_planner
-  PLUGIN "collision_free_path_planner::CollisionFreePathPlanner"
-  EXECUTABLE collision_free_path_planner_node
+rclcpp_components_register_node(obstacle_avoidance_planner
+  PLUGIN "obstacle_avoidance_planner::ObstacleAvoidancePlanner"
+  EXECUTABLE obstacle_avoidance_planner_node
 )
 
 # unit test
 # if(BUILD_TESTING)
-#   ament_add_ros_isolated_gtest(test_collision_free_path_planner
+#   ament_add_ros_isolated_gtest(test_obstacle_avoidance_planner
 #     test/test_mpt_optimizer.cpp
 #   )
-#   ament_target_dependencies(test_collision_free_path_planner fake_test_node)
+#   ament_target_dependencies(test_obstacle_avoidance_planner fake_test_node)
 #   target_link_libraries(
-#     test_collision_free_path_planner collision_free_path_planner)
+#     test_obstacle_avoidance_planner obstacle_avoidance_planner)
 #
 #   find_package(autoware_testing REQUIRED)
-#   add_smoke_test(collision_free_path_planner collision_free_path_planner_node
-#     PARAM_FILENAMES "collision_free_path_planner.param.yaml test_vehicle_info.param.yaml test_nearest_search.param.yaml"
+#   add_smoke_test(obstacle_avoidance_planner obstacle_avoidance_planner_node
+#     PARAM_FILENAMES "obstacle_avoidance_planner.param.yaml test_vehicle_info.param.yaml test_nearest_search.param.yaml"
 #   )
 # endif()
 

@@ -13,15 +13,15 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "collision_free_path_planner/node.hpp"
 #include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
+#include "obstacle_avoidance_planner/node.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-// #include "collision_free_path_planner/mpt_optimizer.hpp"
+// #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 
 namespace
@@ -38,24 +38,23 @@ ReferencePoint createRefPoint(const double x, const double y, const double z, co
 }
 }  // namespace
 
-TEST(CollisionFreePathPlanner, MPTOptimizer)
+TEST(ObstacleAvoidancePlanner, MPTOptimizer)
 {
   rclcpp::init(0, nullptr);
 
   // Pass default parameter file to the node
-  const auto share_dir =
-    ament_index_cpp::get_package_share_directory("collision_free_path_planner");
+  const auto share_dir = ament_index_cpp::get_package_share_directory("obstacle_avoidance_planner");
   rclcpp::NodeOptions node_options;
   node_options.arguments(
-    {"--ros-args",                                                                  //
-     "--params-file", share_dir + "/param/collision_free_path_planner.param.yaml",  //
-     "--params-file", share_dir + "/param/test_vehicle_info.param.yaml",            //
+    {"--ros-args",                                                                 //
+     "--params-file", share_dir + "/param/obstacle_avoidance_planner.param.yaml",  //
+     "--params-file", share_dir + "/param/test_vehicle_info.param.yaml",           //
      "--params-file", share_dir + "/param/test_nearest_search.param.yaml"});
 
   // create node
-  // std::shared_ptr<CollisionFreePathPlanner> node =
-  // std::make_shared<CollisionFreePathPlanner>(node_options);
-  auto node = CollisionFreePathPlanner(node_options);
+  // std::shared_ptr<ObstacleAvoidancePlanner> node =
+  // std::make_shared<ObstacleAvoidancePlanner>(node_options);
+  auto node = ObstacleAvoidancePlanner(node_options);
   const auto & mpt = *node.mpt_optimizer_ptr_;
 
   ReferencePoint ref_point1 = createRefPoint(1, 0, 0, 1);
@@ -91,4 +90,4 @@ TEST(CollisionFreePathPlanner, MPTOptimizer)
   // vehicle_param_);
   EXPECT_EQ(0, 0);
 }
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner

@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__REPLAN_CHECKER_HPP_
-#define COLLISION_FREE_PATH_PLANNER__REPLAN_CHECKER_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__REPLAN_CHECKER_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__REPLAN_CHECKER_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/mpt_optimizer.hpp"
-#include "collision_free_path_planner/type_alias.hpp"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 class ReplanChecker
 {
@@ -60,6 +60,6 @@ private:
   bool isPathGoalChanged(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const;
 };
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__REPLAN_CHECKER_HPP_
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__REPLAN_CHECKER_HPP_

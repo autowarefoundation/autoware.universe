@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/utils/geometry_utils.hpp"
+#include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 
-#include "collision_free_path_planner/eb_path_smoother.hpp"
-#include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/eb_path_smoother.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "tf2/utils.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -31,7 +31,7 @@
 #include <stack>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 namespace
 {
@@ -131,4 +131,4 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   return false;
 }
 }  // namespace geometry_utils
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner

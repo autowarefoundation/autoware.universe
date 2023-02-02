@@ -11,11 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_
-#define COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__DEBUG_MARKER_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__DEBUG_MARKER_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/type_alias.hpp"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/clock.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
@@ -25,11 +25,11 @@
 #include <string>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 MarkerArray getDebugMarker(
   const DebugData & debug_data,
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   const vehicle_info_util::VehicleInfo & vehicle_info);
-}  // namespace collision_free_path_planner
-#endif  // COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_
+}  // namespace obstacle_avoidance_planner
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__DEBUG_MARKER_HPP_

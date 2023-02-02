@@ -32,7 +32,7 @@ class CalculationCostAnalyzer(Node):
         self.calculation_cost_hist = []
         self.sub_calculation_cost = self.create_subscription(
             StringStamped,
-            "/planning/scenario_planning/lane_driving/motion_planning/collision_free_path_planner/debug/calculation_time",
+            "/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/calculation_time",
             self.CallbackCalculationCost,
             1,
         )

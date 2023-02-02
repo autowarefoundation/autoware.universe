@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__NODE_HPP_
-#define COLLISION_FREE_PATH_PLANNER__NODE_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/eb_path_smoother.hpp"
-#include "collision_free_path_planner/mpt_optimizer.hpp"
-#include "collision_free_path_planner/replan_checker.hpp"
-#include "collision_free_path_planner/type_alias.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/eb_path_smoother.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/replan_checker.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -31,14 +31,14 @@
 #include <string>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
-class CollisionFreePathPlanner : public rclcpp::Node
+class ObstacleAvoidancePlanner : public rclcpp::Node
 {
-  FRIEND_TEST(CollisionFreePathPlanner, MPTOptimizer);
+  FRIEND_TEST(ObstacleAvoidancePlanner, MPTOptimizer);
 
 public:
-  explicit CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options);
+  explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
 private:
   // TODO(murooka) move this node to common
@@ -133,6 +133,6 @@ private:
   void publishDebugMarkerOfOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 };
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__NODE_HPP_
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_

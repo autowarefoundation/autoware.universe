@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/eb_path_smoother.hpp"
+#include "obstacle_avoidance_planner/eb_path_smoother.hpp"
 
-#include "collision_free_path_planner/type_alias.hpp"
-#include "collision_free_path_planner/utils/geometry_utils.hpp"
-#include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
+#include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
+#include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -79,7 +79,7 @@ Eigen::MatrixXd makeDefaultAMatrix(const int num_points)
 }
 }  // namespace
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
 {
@@ -419,4 +419,4 @@ std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPoin
   time_keeper_ptr_->toc(__func__, "        ");
   return eb_traj_points;
 }
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner

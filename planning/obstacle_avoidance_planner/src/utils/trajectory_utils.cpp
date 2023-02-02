@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/utils/trajectory_utils.hpp"
+#include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
 
-#include "collision_free_path_planner/eb_path_smoother.hpp"
-#include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/eb_path_smoother.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "tf2/utils.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -34,25 +34,25 @@
 namespace tier4_autoware_utils
 {
 template <>
-geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p)
+geometry_msgs::msg::Point getPoint(const obstacle_avoidance_planner::ReferencePoint & p)
 {
   return p.pose.position;
 }
 
 template <>
-geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p)
+geometry_msgs::msg::Pose getPose(const obstacle_avoidance_planner::ReferencePoint & p)
 {
   return p.pose;
 }
 
 template <>
-double getLongitudinalVelocity(const collision_free_path_planner::ReferencePoint & p)
+double getLongitudinalVelocity(const obstacle_avoidance_planner::ReferencePoint & p)
 {
   return p.longitudinal_velocity_mps;
 }
 }  // namespace tier4_autoware_utils
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 namespace trajectory_utils
 {
@@ -189,4 +189,4 @@ std::vector<ReferencePoint> resampleReferencePoints(
   return output_ref_points;
 }
 }  // namespace trajectory_utils
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner

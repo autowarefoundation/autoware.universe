@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_
-#define COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__COMMON_STRUCTS_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__COMMON_STRUCTS_HPP_
 
-#include "collision_free_path_planner/type_alias.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 struct ReferencePoint;
 struct Bounds;
@@ -60,7 +60,7 @@ struct TimeKeeper
     latest_stream.str("");
 
     if (enable_calculation_time_info) {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), msg);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("obstacle_avoidance_planner.time"), msg);
     }
   }
 
@@ -157,6 +157,6 @@ struct EgoNearestParam
   double dist_threshold{0.0};
   double yaw_threshold{0.0};
 };
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__COMMON_STRUCTS_HPP_

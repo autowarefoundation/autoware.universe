@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__UTILS__GEOMETRY_UTILS_HPP_
-#define COLLISION_FREE_PATH_PLANNER__UTILS__GEOMETRY_UTILS_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__UTILS__GEOMETRY_UTILS_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__UTILS__GEOMETRY_UTILS_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -35,18 +35,18 @@
 #include <string>
 #include <vector>
 
-struct collision_free_path_planner::ReferencePoint;
+struct obstacle_avoidance_planner::ReferencePoint;
 
 namespace tier4_autoware_utils
 {
 template <>
-geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p);
+geometry_msgs::msg::Point getPoint(const obstacle_avoidance_planner::ReferencePoint & p);
 
 template <>
-geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p);
+geometry_msgs::msg::Pose getPose(const obstacle_avoidance_planner::ReferencePoint & p);
 }  // namespace tier4_autoware_utils
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 namespace geometry_utils
 {
@@ -100,5 +100,5 @@ std::vector<double> calcCurvature(const T & points, const size_t num_sampling_po
   return res;
 }
 }  // namespace geometry_utils
-}  // namespace collision_free_path_planner
-#endif  // COLLISION_FREE_PATH_PLANNER__UTILS__GEOMETRY_UTILS_HPP_
+}  // namespace obstacle_avoidance_planner
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__UTILS__GEOMETRY_UTILS_HPP_

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__EB_PATH_SMOOTHER_HPP_
-#define COLLISION_FREE_PATH_PLANNER__EB_PATH_SMOOTHER_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_SMOOTHER_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_SMOOTHER_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/type_alias.hpp"
 #include "eigen3/Eigen/Core"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/type_alias.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 
 #include <memory>
@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 class EBPathSmoother
 {
@@ -125,6 +125,6 @@ private:
     const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
     const size_t pad_start_idx) const;
 };
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__EB_PATH_SMOOTHER_HPP_
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_SMOOTHER_HPP_

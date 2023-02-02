@@ -165,7 +165,7 @@ The shapes of the trajectory and the path are different, therefore the each near
 - When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
 - Computation cost is sometimes high.
 - Because of the approximation such as linearlization, some narrow roads cannot be run by the planner.
-- Roles of planning for `behavior_path_planner` and `collision_free_path_planner` are not decided clearly. Both can avoid obstacles.
+- Roles of planning for `behavior_path_planner` and `obstacle_avoidance_planner` are not decided clearly. Both can avoid obstacles.
 
 ## Comparison to other methods
 

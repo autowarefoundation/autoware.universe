@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 
-#include "collision_free_path_planner/utils/geometry_utils.hpp"
-#include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
+#include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -29,7 +29,7 @@
 #include <optional>
 #include <tuple>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 namespace
 {
@@ -1307,4 +1307,4 @@ double MPTOptimizer::getTrajectoryLength() const
   const double backward_traj_length = traj_param_.output_backward_traj_length;
   return forward_traj_length + backward_traj_length;
 }
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner

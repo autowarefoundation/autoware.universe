@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
-#define COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__TYPE_ALIAS_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__TYPE_ALIAS_HPP_
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -27,7 +27,7 @@
 #include "tier4_debug_msgs/msg/string_stamped.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 // std_msgs
 using std_msgs::msg::Header;
@@ -43,6 +43,6 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 // debug
 using tier4_debug_msgs::msg::StringStamped;
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__TYPE_ALIAS_HPP_

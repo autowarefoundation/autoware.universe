@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/node.hpp"
+#include "obstacle_avoidance_planner/node.hpp"
 
-#include "collision_free_path_planner/debug_marker.hpp"
-#include "collision_free_path_planner/utils/geometry_utils.hpp"
-#include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
+#include "obstacle_avoidance_planner/debug_marker.hpp"
+#include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
+#include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
 #include "rclcpp/time.hpp"
 
 #include <chrono>
 #include <limits>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 // TODO(murooka) check if velocity is updated while optimization is skipped.
 // TODO(murooka) check if z is updated.
@@ -57,8 +57,8 @@ void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
 }
 }  // namespace
 
-CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options)
-: Node("collision_free_path_planner", node_options),
+ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options)
+: Node("obstacle_avoidance_planner", node_options),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()),
   debug_data_ptr_(std::make_shared<DebugData>()),
   time_keeper_ptr_(std::make_shared<TimeKeeper>())
@@ -69,7 +69,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
 
   // interface subscriber
   path_sub_ = create_subscription<Path>(
-    "~/input/path", 1, std::bind(&CollisionFreePathPlanner::onPath, this, std::placeholders::_1));
+    "~/input/path", 1, std::bind(&ObstacleAvoidancePlanner::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(
     "/localization/kinematic_state", 1,
     [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
@@ -120,10 +120,10 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   // NOTE: This function must be called after core algorithms (e.g. mpt_optimizer_) have been
   // initialized.
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&CollisionFreePathPlanner::onParam, this, std::placeholders::_1));
+    std::bind(&ObstacleAvoidancePlanner::onParam, this, std::placeholders::_1));
 }
 
-rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
+rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
@@ -165,7 +165,7 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
   return result;
 }
 
-void CollisionFreePathPlanner::initializePlanning()
+void ObstacleAvoidancePlanner::initializePlanning()
 {
   RCLCPP_INFO(get_logger(), "Initialize planning");
 
@@ -175,7 +175,7 @@ void CollisionFreePathPlanner::initializePlanning()
   resetPreviousData();
 }
 
-void CollisionFreePathPlanner::resetPreviousData()
+void ObstacleAvoidancePlanner::resetPreviousData()
 {
   eb_path_smoother_ptr_->resetPreviousData();
   mpt_optimizer_ptr_->resetPreviousData();
@@ -183,7 +183,7 @@ void CollisionFreePathPlanner::resetPreviousData()
   prev_optimized_traj_points_ptr_ = nullptr;
 }
 
-void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
+void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
 {
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
@@ -236,7 +236,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   traj_pub_->publish(output_traj_msg);
 }
 
-bool CollisionFreePathPlanner::isDataReady(const Path & path, rclcpp::Clock clock) const
+bool ObstacleAvoidancePlanner::isDataReady(const Path & path, rclcpp::Clock clock) const
 {
   if (!ego_state_ptr_) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for ego pose and twist.");
@@ -257,7 +257,7 @@ bool CollisionFreePathPlanner::isDataReady(const Path & path, rclcpp::Clock cloc
   return true;
 }
 
-PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
+PlannerData ObstacleAvoidancePlanner::createPlannerData(const Path & path) const
 {
   // create planner data
   PlannerData planner_data;
@@ -272,7 +272,7 @@ PlannerData CollisionFreePathPlanner::createPlannerData(const Path & path) const
   return planner_data;
 }
 
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajectory(
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateOptimizedTrajectory(
   const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
@@ -298,7 +298,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   return optimized_traj_points;
 }
 
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
   const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
@@ -343,7 +343,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   return *mpt_traj;
 }
 
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajectory(
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
   if (prev_optimized_traj_points_ptr_) {
@@ -353,7 +353,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
   return traj_points;
 }
 
-void CollisionFreePathPlanner::applyInputVelocity(
+void ObstacleAvoidancePlanner::applyInputVelocity(
   std::vector<TrajectoryPoint> & output_traj_points,
   const std::vector<TrajectoryPoint> & input_traj_points,
   const geometry_msgs::msg::Pose & ego_pose) const
@@ -425,7 +425,7 @@ void CollisionFreePathPlanner::applyInputVelocity(
   time_keeper_ptr_->toc(__func__, "    ");
 }
 
-void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
+void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   const PlannerData & planner_data, std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   time_keeper_ptr_->tic(__func__);
@@ -474,7 +474,7 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   time_keeper_ptr_->toc(__func__, "    ");
 }
 
-void CollisionFreePathPlanner::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const
+void ObstacleAvoidancePlanner::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -485,7 +485,7 @@ void CollisionFreePathPlanner::publishVirtualWall(const geometry_msgs::msg::Pose
   time_keeper_ptr_->toc(__func__, "      ");
 }
 
-void CollisionFreePathPlanner::publishDebugMarkerOfOptimization(
+void ObstacleAvoidancePlanner::publishDebugMarkerOfOptimization(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points)
 {
   if (!enable_pub_debug_marker_) {
@@ -507,7 +507,7 @@ void CollisionFreePathPlanner::publishDebugMarkerOfOptimization(
   time_keeper_ptr_->toc(__func__, "    ");
 }
 
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
   const std::vector<TrajectoryPoint> & traj_points,
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
@@ -568,7 +568,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   return resampled_traj_points;
 }
 
-void CollisionFreePathPlanner::publishDebugData(const Header & header) const
+void ObstacleAvoidancePlanner::publishDebugData(const Header & header) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -579,7 +579,7 @@ void CollisionFreePathPlanner::publishDebugData(const Header & header) const
 
   time_keeper_ptr_->toc(__func__, "  ");
 }
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(collision_free_path_planner::CollisionFreePathPlanner)
+RCLCPP_COMPONENTS_REGISTER_NODE(obstacle_avoidance_planner::ObstacleAvoidancePlanner)

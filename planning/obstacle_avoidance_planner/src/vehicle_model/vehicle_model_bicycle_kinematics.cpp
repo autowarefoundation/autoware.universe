@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 
 #include <iostream>
 #include <limits>

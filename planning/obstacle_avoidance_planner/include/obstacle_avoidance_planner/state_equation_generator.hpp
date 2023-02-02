@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__STATE_EQUATION_GENERATOR_HPP_
-#define COLLISION_FREE_PATH_PLANNER__STATE_EQUATION_GENERATOR_HPP_
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__STATE_EQUATION_GENERATOR_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__STATE_EQUATION_GENERATOR_HPP_
 
-#include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "collision_free_path_planner/vehicle_model/vehicle_model_interface.hpp"
+#include "obstacle_avoidance_planner/common_structs.hpp"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
 #include <memory>
 #include <vector>
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 struct ReferencePoint;
 
@@ -57,5 +57,5 @@ private:
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
   mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
 };
-}  // namespace collision_free_path_planner
-#endif  // COLLISION_FREE_PATH_PLANNER__STATE_EQUATION_GENERATOR_HPP_
+}  // namespace obstacle_avoidance_planner
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__STATE_EQUATION_GENERATOR_HPP_

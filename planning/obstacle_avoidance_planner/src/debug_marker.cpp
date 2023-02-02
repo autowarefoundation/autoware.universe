@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/debug_marker.hpp"
+#include "obstacle_avoidance_planner/debug_marker.hpp"
 
-#include "collision_free_path_planner/eb_path_smoother.hpp"
-#include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/eb_path_smoother.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 
 #include "visualization_msgs/msg/marker_array.hpp"
 
-namespace collision_free_path_planner
+namespace obstacle_avoidance_planner
 {
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createDefaultMarker;
@@ -340,4 +340,4 @@ MarkerArray getDebugMarker(
 
   return marker_array;
 }
-}  // namespace collision_free_path_planner
+}  // namespace obstacle_avoidance_planner
