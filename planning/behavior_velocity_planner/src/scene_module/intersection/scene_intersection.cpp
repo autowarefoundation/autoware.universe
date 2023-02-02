@@ -96,7 +96,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* get detection area*/
   /* dynamically change detection area based on tl_arrow_solid_on */
-  [[maybe_unused]] const bool has_tl = util::hasAssociatedTrafficLight(assigned_lanelet);
   const bool tl_arrow_solid_on =
     util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
   auto && [detection_lanelets, conflicting_lanelets] = util::getObjectiveLanelets(
@@ -120,20 +119,35 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     util::extendedAdjacentDirectionLanes(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
   debug_data_.adjacent_area = util::getPolygon3dFromLanelets(adjacent_lanelets);
 
-  /* set stop lines for base_link */
-  const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
-    lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
-    planner_param_.use_stuck_stopline, path, *path, logger_.get_child("util"), clock_);
-  if (!stuck_line_idx_opt.has_value()) {
-    // returns here if path is not intersecting with conflicting areas
-    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(
-      logger_, *clock_, 1000 /* ms */, "setStopLineIdx for stuck line fail");
+  /* spline interpolation */
+  constexpr double interval = 0.2;
+  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
+  if (!splineInterpolate(*path, interval, path_ip, logger_)) {
+    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
+  const auto lane_interval_ip_opt = util::findLaneIdInterval(path_ip, lane_id_);
+  if (!lane_interval_ip_opt.has_value()) {
+    RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
+    RCLCPP_DEBUG(logger_, "===== plan end =====");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
+    return false;
+  }
+
+  const auto stuck_line_idx_opt = util::generateStuckStopLine(
+    lane_id_, conflicting_area, planner_data_, planner_param_.stop_line_margin,
+    planner_param_.use_stuck_stopline, path, path_ip, interval, lane_interval_ip_opt.value(),
+    logger_.get_child("util"));
   const auto stuck_line_idx = stuck_line_idx_opt.value();
+
+  /* set stop lines for base_link */
+  const auto stop_lines_idx_opt = util::generateStopLine(
+    lane_id_, detection_area, planner_data_, planner_param_.stop_line_margin, path, path_ip,
+    interval, lane_interval_ip_opt.value(), logger_.get_child("util"));
 
   /* calc closest index */
   const auto closest_idx_opt =
