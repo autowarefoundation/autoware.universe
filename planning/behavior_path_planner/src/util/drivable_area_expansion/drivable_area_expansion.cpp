@@ -102,6 +102,7 @@ multipolygon_t createExpansionPolygons(
     path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
   for (const auto & p : path.left_bound) left_ls.emplace_back(p.x, p.y);
   for (const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
+  const auto path_length = static_cast<double>(boost::geometry::length(path_ls));
 
   // TODO(Maxime): make it a function
   const auto calculate_arc_length_range_and_distance = [&](
@@ -115,11 +116,15 @@ multipolygon_t createExpansionPolygons(
     if (!intersections.empty()) {
       for (const auto & intersection : intersections) {
         const auto projection = point_to_linestring_projection(intersection, path_ls);
+        // TODO(Maxime): tmp fix for points before/after the path
+        if (projection.arc_length == 0.0 || projection.arc_length == path_length) continue;
         from_arc_length = std::min(from_arc_length, projection.arc_length);
         to_arc_length = std::max(to_arc_length, projection.arc_length);
       }
       for (const auto & p : footprint.footprint.outer()) {
         const auto projection = point_to_linestring_projection(p, path_ls);
+        // TODO(Maxime): tmp fix for points before/after the path
+        if (projection.arc_length == 0.0 || projection.arc_length == path_length) continue;
         // we make sure the footprint point is on the correct side
         if (is_left == projection.distance > 0 && std::abs(projection.distance) > expansion_dist) {
           expansion_dist = std::abs(projection.distance);
@@ -141,8 +146,7 @@ multipolygon_t createExpansionPolygons(
         from_arc_length -= params.extra_arc_length;
         to_arc_length += params.extra_arc_length;
         from_arc_length = std::max(0.0, from_arc_length);
-        to_arc_length =
-          std::min(static_cast<double>(boost::geometry::length(path_ls)), to_arc_length);
+        to_arc_length = std::min(path_length, to_arc_length);
         const auto base_ls = sub_linestring(path_ls, from_arc_length, to_arc_length);
         const auto expansion_dist = params.max_expansion_distance != 0.0
                                       ? std::min(params.max_expansion_distance, footprint_dist)
@@ -341,24 +345,71 @@ bool expandDrivableArea(
 
     for (const auto & p : path_footprints) mapper.add(p.footprint);
     for (const auto & p : expansion_polygons) mapper.add(p);
-    mapper.add(expanded_drivable_area);
     for (const auto & l : uncrossable_lines) mapper.add(l);
     // blue path footprints
     for (const auto & p : path_footprints)
       mapper.map(
-        p.footprint, "fill-opacity:0.2;stroke-opacity:0.2;fill:blue;stroke:blue;stroke-width:2", 1);
+        p.footprint, "fill-opacity:0.1;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
     // red expansion polygons
     for (const auto & p : expansion_polygons)
-      mapper.map(p, "fill-opacity:0.2;stroke-opacity:0.2;fill:red;stroke:red;stroke-width:2", 1);
-    // green expanded drivable area
-    mapper.map(
-      expanded_drivable_area, "fill-opacity:0.2;stroke-opacity:1.0;stroke:green;stroke-width:2", 1);
+      mapper.map(p, "fill-opacity:0.2;stroke-opacity:0.2;fill:red;stroke:red;stroke-width:1", 1);
     // black uncrossable line
     for (const auto & l : uncrossable_lines)
       mapper.map(
         l, "fill-opacity:0.2;stroke-opacity:0.2;fill:black;stroke:black;stroke-width:2", 1);
   }
+  {
+    std::ofstream svg_inputs("/home/mclement/Pictures/inputs.svg");
+    boost::geometry::svg_mapper<point_t> mapper(svg_inputs, 400, 400);
+    linestring_t left;
+    linestring_t right;
+    for (const auto & p : path.left_bound) left.emplace_back(p.x, p.y);
+    for (const auto & p : path.right_bound) right.emplace_back(p.x, p.y);
+    mapper.add(left);
+    mapper.add(right);
+    for (const auto & p : path.points)
+      mapper.add(point_t(p.point.pose.position.x, p.point.pose.position.y));
+    for (const auto & l : uncrossable_lines) mapper.add(l);
+    // blue bounds
+    mapper.map(left, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
+    // black path points
+    mapper.map(
+      right, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
+    for (const auto & p : path.points)
+      mapper.map(
+        point_t(p.point.pose.position.x, p.point.pose.position.y),
+        "fill-opacity:0.2;stroke-opacity:1.0;fill:black;stroke:black;stroke-width:1", 1);
+    // grey uncrossable line
+    for (const auto & l : uncrossable_lines)
+      mapper.map(l, "fill-opacity:0.2;stroke-opacity:0.5;fill:grey;stroke:black;stroke-width:2", 1);
+  }
 
-  return updateDrivableAreaBounds(path, expanded_drivable_area);
+  const auto return_bool = updateDrivableAreaBounds(path, expanded_drivable_area);
+
+  {
+    std::ofstream svg_outputs("/home/mclement/Pictures/outputs.svg");
+    boost::geometry::svg_mapper<point_t> mapper(svg_outputs, 400, 400);
+    linestring_t left;
+    linestring_t right;
+    for (const auto & p : path.left_bound) left.emplace_back(p.x, p.y);
+    for (const auto & p : path.right_bound) right.emplace_back(p.x, p.y);
+    for (const auto & l : uncrossable_lines) mapper.add(l);
+    mapper.add(left);
+    mapper.add(right);
+    for (const auto & p : path.points)
+      mapper.add(point_t(p.point.pose.position.x, p.point.pose.position.y));
+    mapper.map(left, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
+    mapper.map(
+      right, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
+    for (const auto & p : path.points)
+      mapper.map(
+        point_t(p.point.pose.position.x, p.point.pose.position.y),
+        "fill-opacity:0.2;stroke-opacity:1.0;fill:black;stroke:black;stroke-width:1", 1);
+    // grey uncrossable line
+    // for (const auto & l : uncrossable_lines)
+    //   mapper.map(
+    //     l, "fill-opacity:0.2;stroke-opacity:0.5;fill:grey;stroke:black;stroke-width:2", 1);
+  }
+  return return_bool;
 }
 }  // namespace drivable_area_expansion
