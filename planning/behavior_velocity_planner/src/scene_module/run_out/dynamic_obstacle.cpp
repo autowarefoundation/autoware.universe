@@ -335,7 +335,7 @@ DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(
 {
   using std::placeholders::_1;
   sub_compare_map_filtered_pointcloud_ = node.create_subscription<sensor_msgs::msg::PointCloud2>(
-    "~/input/compare_map_filtered_pointcloud", rclcpp::SensorDataQoS(),
+    "~/input/vector_map_inside_area_filtered_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
 
   // Subscribe the input using message filter
@@ -420,7 +420,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
 
   // these variables are written in another callback
   mutex_.lock();
-  const auto detection_area_polygon = dynamic_obstacle_data_.mandatory_detection_area;
+  const auto detection_area_polygon = dynamic_obstacle_data_.detection_area;
   const auto path = dynamic_obstacle_data_.path;
   mutex_.unlock();
 
