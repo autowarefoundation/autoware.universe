@@ -450,15 +450,13 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
     return;
   }
 
-  // transform pointcloud to map frame
+  // transform pointcloud and convert to pcl points for easier handling
   const auto transform_matrix = getTransformMatrix(
     tf_buffer_, "map", compare_map_filtered_points->header.frame_id,
     compare_map_filtered_points->header.stamp);
   if (!transform_matrix) {
     return;
   }
-
-  // transform and convert to pcl points for easier handling
   const pcl::PointCloud<pcl::PointXYZ> compare_map_filtered_points_transformed =
     transformPointCloud(*compare_map_filtered_points, *transform_matrix);
   const pcl::PointCloud<pcl::PointXYZ> vector_map_filtered_points_transformed =
@@ -483,7 +481,7 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   const auto detection_area_filtered_vector_map_points =
     extractObstaclePointsWithinPolygon(voxel_grid_filtered_vector_map_points, detection_area);
 
-  // publish points for debug
+  // convert to ROS pointcloud to concatenate points
   PointCloud2 detection_area_filtered_compare_map_points_ros;
   PointCloud2 detection_area_filtered_vector_map_points_ros;
   pcl::toROSMsg(
@@ -495,6 +493,7 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   detection_area_filtered_compare_map_points_ros.header.frame_id = "map";
   detection_area_filtered_vector_map_points_ros.header.frame_id = "map";
 
+  // concatenate two filtered clouds
   PointCloud2 concat_points;
   pcl::concatenatePointCloud(
     detection_area_filtered_compare_map_points_ros, detection_area_filtered_vector_map_points_ros,
