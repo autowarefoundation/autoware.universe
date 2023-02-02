@@ -4,7 +4,7 @@
   <arg name="output/traffic_signals" default="~/traffic_signals"/>
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
-  <arg name="use_gpu" default="false"/>
+  <arg name="use_gpu" default="true"/>
   <!-- classifier_type {hsv_filter: 0, cnn: 1} -->
   <arg name="classifier_type" default="1" if="$(var use_gpu)"/>
   <arg name="classifier_type" default="0" unless="$(var use_gpu)"/>

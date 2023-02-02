@@ -106,8 +106,6 @@ private:
   int input_c_;
   int input_h_;
   int input_w_;
-  std::string input_name_;
-  std::string output_name_;
 };
 
 }  // namespace traffic_light
