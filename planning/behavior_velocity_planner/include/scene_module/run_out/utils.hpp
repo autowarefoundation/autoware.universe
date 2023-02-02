@@ -110,6 +110,8 @@ struct Smoother
 
 struct DynamicObstacleParam
 {
+  bool use_mandatory_area;
+
   float min_vel_kmph;
   float max_vel_kmph;
 

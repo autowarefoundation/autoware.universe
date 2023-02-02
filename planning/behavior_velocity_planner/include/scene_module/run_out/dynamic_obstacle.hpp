@@ -64,13 +64,14 @@ public:
   using ExactTimeSyncPolicy = message_filters::sync_policies::ExactTime<PointCloud2, PointCloud2>;
   using ExactTimeSynchronizer = message_filters::Synchronizer<ExactTimeSyncPolicy>;
 
-  explicit DynamicObstacleCreator(rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
-  : node_(node), debug_ptr_(debug_ptr)
+  explicit DynamicObstacleCreator(
+    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr,
+    const DynamicObstacleParam & param)
+  : node_(node), debug_ptr_(debug_ptr), param_(param)
   {
   }
   virtual ~DynamicObstacleCreator() = default;
   virtual std::vector<DynamicObstacle> createDynamicObstacles() = 0;
-  void setParam(const DynamicObstacleParam & param) { param_ = param; }
   void setData(
     const PlannerData & planner_data, const PlannerParam & planner_param,
     const PathWithLaneId & path, const PathWithLaneId & smoothed_path)
@@ -80,26 +81,29 @@ public:
     dynamic_obstacle_data_.predicted_objects = *planner_data.predicted_objects;
     dynamic_obstacle_data_.path = path;
 
+    // detection area is used only when detection target is Points
     if (planner_param.run_out.detection_method == "Points") {
       dynamic_obstacle_data_.detection_area =
         createDetectionAreaPolygon(smoothed_path, planner_data, planner_param);
-      dynamic_obstacle_data_.mandatory_detection_area =
-        createMandatoryDetectionAreaPolygon(smoothed_path, planner_data, planner_param);
-
       for (const auto & poly : dynamic_obstacle_data_.detection_area) {
         debug_ptr_->pushDetectionAreaPolygons(poly);
       }
-      for (const auto & poly : dynamic_obstacle_data_.mandatory_detection_area) {
-        debug_ptr_->pushDetectionAreaPolygons(poly);
+
+      if (param_.use_mandatory_area) {
+        dynamic_obstacle_data_.mandatory_detection_area =
+          createMandatoryDetectionAreaPolygon(smoothed_path, planner_data, planner_param);
+        for (const auto & poly : dynamic_obstacle_data_.mandatory_detection_area) {
+          debug_ptr_->pushDetectionAreaPolygons(poly);
+        }
       }
     }
   }
 
 protected:
-  DynamicObstacleParam param_;
   rclcpp::Node & node_;
-  DynamicObstacleData dynamic_obstacle_data_;
   std::shared_ptr<RunOutDebug> debug_ptr_;
+  DynamicObstacleParam param_;
+  DynamicObstacleData dynamic_obstacle_data_;
 
   // mutex for dynamic_obstacle_data_
   std::mutex mutex_;
@@ -112,7 +116,8 @@ class DynamicObstacleCreatorForObject : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForObject(
-    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr);
+    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr,
+    const DynamicObstacleParam & param);
   std::vector<DynamicObstacle> createDynamicObstacles() override;
 };
 
@@ -124,7 +129,8 @@ class DynamicObstacleCreatorForObjectWithoutPath : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForObjectWithoutPath(
-    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr);
+    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr,
+    const DynamicObstacleParam & param);
   std::vector<DynamicObstacle> createDynamicObstacles() override;
 };
 
@@ -136,7 +142,8 @@ class DynamicObstacleCreatorForPoints : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForPoints(
-    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr);
+    rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr,
+    const DynamicObstacleParam & param);
   std::vector<DynamicObstacle> createDynamicObstacles() override;
 
 private:

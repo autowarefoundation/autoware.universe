@@ -258,8 +258,8 @@ pcl::PointCloud<pcl::PointXYZ> transformPointCloud(
 }  // namespace
 
 DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(
-  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
-: DynamicObstacleCreator(node, debug_ptr)
+  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr, const DynamicObstacleParam & param)
+: DynamicObstacleCreator(node, debug_ptr, param)
 {
 }
 
@@ -294,8 +294,8 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObsta
 }
 
 DynamicObstacleCreatorForObjectWithoutPath::DynamicObstacleCreatorForObjectWithoutPath(
-  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
-: DynamicObstacleCreator(node, debug_ptr)
+  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr, const DynamicObstacleParam & param)
+: DynamicObstacleCreator(node, debug_ptr, param)
 {
 }
 
@@ -330,30 +330,34 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createD
 }
 
 DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(
-  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
-: DynamicObstacleCreator(node, debug_ptr), tf_buffer_(node.get_clock()), tf_listener_(tf_buffer_)
+  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr, const DynamicObstacleParam & param)
+: DynamicObstacleCreator(node, debug_ptr, param),
+  tf_buffer_(node.get_clock()),
+  tf_listener_(tf_buffer_)
 {
-  using std::placeholders::_1;
-  sub_compare_map_filtered_pointcloud_ = node.create_subscription<sensor_msgs::msg::PointCloud2>(
-    "~/input/vector_map_inside_area_filtered_pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
+  if (param_.use_mandatory_area) {
+    // Subscribe the input using message filter
+    const size_t max_queue_size = 10;
+    sub_compare_map_filtered_pointcloud_sync_.subscribe(
+      &node, "~/input/compare_map_filtered_pointcloud",
+      rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
+    sub_vector_map_inside_area_filtered_pointcloud_sync_.subscribe(
+      &node, "~/input/vector_map_inside_area_filtered_pointcloud",
+      rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
 
-  // Subscribe the input using message filter
-  const size_t max_queue_size = 10;
-  sub_compare_map_filtered_pointcloud_sync_.subscribe(
-    &node, "~/input/compare_map_filtered_pointcloud",
-    rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
-  sub_vector_map_inside_area_filtered_pointcloud_sync_.subscribe(
-    &node, "~/input/vector_map_inside_area_filtered_pointcloud",
-    rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
-
-  // sync subscribers with ExactTime Sync Policy
-  exact_time_synchronizer_ = std::make_unique<ExactTimeSynchronizer>(max_queue_size);
-  exact_time_synchronizer_->connectInput(
-    sub_compare_map_filtered_pointcloud_sync_,
-    sub_vector_map_inside_area_filtered_pointcloud_sync_);
-  exact_time_synchronizer_->registerCallback(
-    &DynamicObstacleCreatorForPoints::onSynchronizedPointCloud, this);
+    // sync subscribers with ExactTime Sync Policy
+    exact_time_synchronizer_ = std::make_unique<ExactTimeSynchronizer>(max_queue_size);
+    exact_time_synchronizer_->connectInput(
+      sub_compare_map_filtered_pointcloud_sync_,
+      sub_vector_map_inside_area_filtered_pointcloud_sync_);
+    exact_time_synchronizer_->registerCallback(
+      &DynamicObstacleCreatorForPoints::onSynchronizedPointCloud, this);
+  } else {
+    using std::placeholders::_1;
+    sub_compare_map_filtered_pointcloud_ = node.create_subscription<sensor_msgs::msg::PointCloud2>(
+      "~/input/vector_map_inside_area_filtered_pointcloud", rclcpp::SensorDataQoS(),
+      std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
+  }
 }
 
 std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles()
