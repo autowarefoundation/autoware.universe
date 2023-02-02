@@ -238,7 +238,7 @@ void updateFrontPointForFix(
   if (3.0 < dist) {
     RCLCPP_WARN(
       rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
-      "New Fixed point is too far from points", dist);
+      "New Fixed point is too far from points %f [m]", dist);
   }
 
   if (dist < epsilon) {

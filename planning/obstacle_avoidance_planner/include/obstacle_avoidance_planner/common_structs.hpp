@@ -102,7 +102,7 @@ struct DebugData
 struct TrajectoryParam
 {
   TrajectoryParam() = default;
-  TrajectoryParam(rclcpp::Node * node, const double vehicle_width)
+  explicit TrajectoryParam(rclcpp::Node * node)
   {
     output_backward_traj_length =
       node->declare_parameter<double>("common.output_backward_traj_length");

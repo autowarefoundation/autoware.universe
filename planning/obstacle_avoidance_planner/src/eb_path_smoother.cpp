@@ -65,10 +65,10 @@ Eigen::MatrixXd makePMatrix(const int num_points)
 
 // make default linear constraint matrix
 // NOTE: value (1.0) is not valid. Where non-zero values exis is valid.
-Eigen::MatrixXd makeDefaultAMatrix(const int num_points)
+Eigen::MatrixXd makeDefaultAMatrix(const size_t num_points)
 {
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_points * 2, num_points * 2);
-  for (int i = 0; i < num_points * 2; ++i) {
+  for (size_t i = 0; i < num_points * 2; ++i) {
     if (i < num_points) {
       A(i, i + num_points) = 1.0;
     } else {
@@ -213,7 +213,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   updateConstraint(padded_traj_points, is_goal_contained, pad_start_idx);
 
   // 6. get optimization result
-  const auto optimized_points = optimizeTrajectory(padded_traj_points);
+  const auto optimized_points = optimizeTrajectory();
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
       logger_, enable_debug_info_, "return std::nullopt since smoothing failed");
@@ -271,7 +271,7 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
     std::min(static_cast<size_t>(eb_param_.num_points), traj_points.size());
 
   std::vector<TrajectoryPoint> padded_traj_points;
-  for (int i = 0; i < eb_param_.num_points; ++i) {
+  for (size_t i = 0; i < static_cast<size_t>(eb_param_.num_points); ++i) {
     const size_t point_idx = i < pad_start_idx ? i : pad_start_idx - 1;
     padded_traj_points.push_back(traj_points.at(point_idx));
   }
@@ -282,7 +282,7 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
 
 void EBPathSmoother::updateConstraint(
   const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained,
-  const size_t pad_start_idx) const
+  const int pad_start_idx) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -291,7 +291,7 @@ void EBPathSmoother::updateConstraint(
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(p.num_points * 2, p.num_points * 2);
   std::vector<double> upper_bound(p.num_points * 2, 0.0);
   std::vector<double> lower_bound(p.num_points * 2, 0.0);
-  for (int i = 0; i < p.num_points; ++i) {
+  for (size_t i = 0; i < static_cast<size_t>(p.num_points); ++i) {
     const double constraint_segment_length = [&]() {
       // NOTE: fix first and second pose to keep start orientation
       if (i < 2) {
@@ -299,11 +299,12 @@ void EBPathSmoother::updateConstraint(
       }
       if (is_goal_contained) {
         // NOTE: fix goal and its previous pose to keep goal orientation
-        if (p.num_points - 2 <= i || pad_start_idx - 2 <= i) {
+        if (p.num_points - 2 <= static_cast<int>(i) || pad_start_idx - 2 <= static_cast<int>(i)) {
           return p.clearance_for_fix;
         }
       }
-      if (i < p.num_joint_points + 1) {  // 1 is added since index 0 is fixed point
+      if (i < static_cast<size_t>(p.num_joint_points) + 1) {  // 1 is added since index 0 is fixed
+                                                              // point
         return p.clearance_for_joint;
       }
       return p.clearance_for_smooth;
@@ -363,8 +364,7 @@ EBPathSmoother::Constraint2d EBPathSmoother::getConstraint2dFromConstraintSegmen
   return constraint;
 }
 
-std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points)
+std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -386,14 +386,14 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
 
 std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPointsToTrajectory(
   const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
-  const size_t pad_start_idx) const
+  const int pad_start_idx) const
 {
   time_keeper_ptr_->tic(__func__);
 
   std::vector<TrajectoryPoint> eb_traj_points;
 
   // update only x and y
-  for (size_t i = 0; i < pad_start_idx; ++i) {
+  for (size_t i = 0; i < static_cast<size_t>(pad_start_idx); ++i) {
     // validate optimization result
     if (eb_param_.enable_optimization_validation) {
       const double diff_x = optimized_points.at(i) - eb_traj_points.at(i).pose.position.x;

@@ -34,9 +34,7 @@ public:
 
   bool isResetRequired(const PlannerData & planner_data);
 
-  bool isReplanRequired(
-    const PlannerData & planner_data, const rclcpp::Time & current_time,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr);
+  bool isReplanRequired(const rclcpp::Time & current_time);
 
 private:
   EgoNearestParam ego_nearest_param_;

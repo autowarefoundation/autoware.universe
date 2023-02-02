@@ -100,7 +100,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     ego_nearest_param_ = EgoNearestParam(this);
 
     // parameters for trajectory
-    traj_param_ = TrajectoryParam(this, vehicle_info_.vehicle_width_m);
+    traj_param_ = TrajectoryParam(this);
   }
 
   // create core algorithm pointers with parameter declaration
@@ -311,8 +311,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
     resetPreviousData();
   } else {
     // check replan when not resetting previous optimization
-    const bool is_replan_required =
-      replan_checker_ptr_->isReplanRequired(planner_data, now(), prev_optimized_traj_points_ptr_);
+    const bool is_replan_required = replan_checker_ptr_->isReplanRequired(now());
     if (!is_replan_required) {
       return getPrevOptimizedTrajectory(p.traj_points);
     }
@@ -486,18 +485,18 @@ void ObstacleAvoidancePlanner::publishVirtualWall(const geometry_msgs::msg::Pose
 }
 
 void ObstacleAvoidancePlanner::publishDebugMarkerOfOptimization(
-  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points)
+  [[maybe_unused]] const PlannerData & planner_data,
+  const std::vector<TrajectoryPoint> & traj_points)
 {
   if (!enable_pub_debug_marker_) {
     return;
   }
 
   time_keeper_ptr_->tic(__func__);
-  const auto & p = planner_data;
 
   // debug marker
   time_keeper_ptr_->tic("getDebugMarker");
-  const auto & debug_marker = getDebugMarker(*debug_data_ptr_, traj_points, vehicle_info_);
+  const auto debug_marker = getDebugMarker(*debug_data_ptr_, traj_points, vehicle_info_);
   time_keeper_ptr_->toc("getDebugMarker", "      ");
 
   time_keeper_ptr_->tic("publishDebugMarker");

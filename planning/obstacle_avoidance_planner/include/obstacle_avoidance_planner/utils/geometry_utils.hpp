@@ -35,8 +35,6 @@
 #include <string>
 #include <vector>
 
-struct obstacle_avoidance_planner::ReferencePoint;
-
 namespace tier4_autoware_utils
 {
 template <>

@@ -210,10 +210,10 @@ private:
   EgoNearestParam ego_nearest_param_;
   vehicle_info_util::VehicleInfo vehicle_info_;
   TrajectoryParam traj_param_;
-  MPTParam mpt_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
   mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
   rclcpp::Logger logger_;
+  MPTParam mpt_param_;
 
   StateEquationGenerator state_equation_generator_;
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;

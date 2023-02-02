@@ -86,15 +86,11 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
   return reset_required;
 }
 
-bool ReplanChecker::isReplanRequired(
-  const PlannerData & planner_data, const rclcpp::Time & current_time,
-  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr)
+bool ReplanChecker::isReplanRequired(const rclcpp::Time & current_time)
 {
-  const auto & p = planner_data;
-
   const bool replan_required = [&]() {
     // guard for invalid variables
-    if (!prev_replanned_time_ptr_ || !prev_traj_points_ptr_ /*|| !prev_mpt_traj_ptr*/) {
+    if (!prev_replanned_time_ptr_ || !prev_traj_points_ptr_) {
       return true;
     }
 

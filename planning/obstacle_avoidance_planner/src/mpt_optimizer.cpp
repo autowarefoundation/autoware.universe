@@ -336,8 +336,8 @@ MPTOptimizer::MPTOptimizer(
   const std::shared_ptr<TimeKeeper> time_keeper_ptr)
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
-  traj_param_(traj_param),
   vehicle_info_(vehicle_info),
+  traj_param_(traj_param),
   debug_data_ptr_(debug_data_ptr),
   time_keeper_ptr_(time_keeper_ptr),
   logger_(node->get_logger().get_child("mpt_optimizer"))
@@ -516,7 +516,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // 9. crop forward
   // ref_points = trajectory_utils::cropForwardPoints(
   //   ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
-  if (mpt_param_.num_points < ref_points.size()) {
+  if (static_cast<size_t>(mpt_param_.num_points) < ref_points.size()) {
     ref_points.resize(mpt_param_.num_points);
   }
 

@@ -112,18 +112,17 @@ private:
 
   void updateConstraint(
     const std::vector<TrajectoryPoint> & traj_points, const bool is_goal_contained,
-    const size_t pad_start_idx) const;
+    const int pad_start_idx) const;
 
   Constraint2d getConstraint2dFromConstraintSegment(
     const geometry_msgs::msg::Pose & pose, const double constraint_segment_length) const;
 
-  std::optional<std::vector<double>> optimizeTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points);
+  std::optional<std::vector<double>> optimizeTrajectory();
 
   std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
   convertOptimizedPointsToTrajectory(
     const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
-    const size_t pad_start_idx) const;
+    const int pad_start_idx) const;
 };
 }  // namespace obstacle_avoidance_planner
 
