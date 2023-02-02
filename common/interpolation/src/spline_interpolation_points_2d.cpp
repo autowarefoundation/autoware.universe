@@ -185,7 +185,7 @@ double SplineInterpolationPoints2d::getSplineInterpolatedCurvature(
   const double quad_diff_x = spline_x_.getSplineInterpolatedQuadDiffValues({whole_s}).at(0);
   const double quad_diff_y = spline_y_.getSplineInterpolatedQuadDiffValues({whole_s}).at(0);
 
-  return std::abs(diff_x * quad_diff_y - quad_diff_x * diff_y) /
+  return (diff_x * quad_diff_y - quad_diff_x * diff_y) /
          std::pow(std::pow(diff_x, 2) + std::pow(diff_y, 2), 1.5);
 }
 
