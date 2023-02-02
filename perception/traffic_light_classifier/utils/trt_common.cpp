@@ -37,7 +37,8 @@ void check_error(const ::cudaError_t e, decltype(__FILE__) f, decltype(__LINE__)
   }
 }
 
-TrtCommon::TrtCommon(std::string model_path, std::string precision,std::string input_name,std::string output_name)
+TrtCommon::TrtCommon(
+  std::string model_path, std::string precision, std::string input_name, std::string output_name)
 : model_file_path_(model_path),
   precision_(precision),
 
