@@ -273,7 +273,6 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
 
   const auto & a = multi_spline_coef_.a;
   const auto & b = multi_spline_coef_.b;
-  const auto & c = multi_spline_coef_.c;
 
   std::vector<double> res;
   size_t j = 0;

@@ -95,7 +95,7 @@ public:
   std::vector<double> getSplineInterpolatedQuadDiffValues(
     const std::vector<double> & query_keys) const;
 
-  int getSize() const { return base_keys_.size(); }
+  size_t getSize() const { return base_keys_.size(); }
 
 private:
   std::vector<double> base_keys_;
