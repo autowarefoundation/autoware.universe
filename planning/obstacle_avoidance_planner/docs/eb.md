@@ -12,7 +12,7 @@ Therefore the output path may have a collision with road boundaries or obstacles
 
 We formulate a quadratic problem minimizing the distance between the previous point and the next point on each point.
 
-![eb](../media/eb.svg){width=1000}
+![eb](../media/eb.svg){: style="width:700px"}
 
 Assuming that $k$'th point is $\boldsymbol{p}_k = (x_k, y_k)$, the objective function is as follows.
 
@@ -79,7 +79,7 @@ $$
 
 Regarding the constraint, the distance that each point can move is limited so that the path will not changed a lot but will be smoother.
 
-![eb_constraint](../media/eb_constraint.svg){width=500}
+![eb_constraint](../media/eb_constraint.svg){: style="width:700px"}
 
 $$
 C_k^l \leq C_k \leq C_k^u
@@ -89,11 +89,11 @@ In addition, the beginning point is fixed and the end point as well if the end p
 Assume that $(x_0^{start}, y_0^{start})$ and $(x_0^{goal}, y_0^{goal})$ are the input start and goal point.
 
 $$
-x_0 = x_0^{start} \\
-y_0 = y_0^{start}
+x_0 = x_0^{\mathrm{start}} \\
+y_0 = y_0^{\mathrm{start}}
 $$
 
 $$
-x_{n-1} = x_{n-1}^{goal} \\
-y_{n-1}= y_{n-1}^[goal}
+x_{n-1} = x_{n-1}^{\mathrm{goal}} \\
+y_{n-1} = y_{n-1}^{\mathrm{goal}}
 $$
