@@ -71,6 +71,31 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
   return output_points;
 }
 
+pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
+  const sensor_msgs::msg::PointCloud2 & input_points)
+{
+  if (input_points.data.empty()) {
+    return pcl::PointCloud<pcl::PointXYZ>();
+  }
+
+  pcl::PointCloud<pcl::PointXYZ> input_points_pcl;
+  pcl::fromROSMsg(input_points, input_points_pcl);
+
+  auto no_height_points = input_points_pcl;
+  for (auto & p : no_height_points) {
+    p.z = 0.0;
+  }
+
+  pcl::VoxelGrid<pcl::PointXYZ> filter;
+  filter.setInputCloud(pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
+  filter.setLeafSize(0.05f, 0.05f, 100000.0f);
+
+  pcl::PointCloud<pcl::PointXYZ> output_points;
+  filter.filter(output_points);
+
+  return output_points;
+}
+
 bool isAheadOf(
   const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Pose & base_pose)
 {
@@ -200,8 +225,9 @@ pcl::PointCloud<pcl::PointXYZ> extractLateralNearestPoints(
 }
 }  // namespace
 
-DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(rclcpp::Node & node)
-: DynamicObstacleCreator(node)
+DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(
+  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
+: DynamicObstacleCreator(node, debug_ptr)
 {
 }
 
@@ -236,8 +262,8 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObsta
 }
 
 DynamicObstacleCreatorForObjectWithoutPath::DynamicObstacleCreatorForObjectWithoutPath(
-  rclcpp::Node & node)
-: DynamicObstacleCreator(node)
+  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
+: DynamicObstacleCreator(node, debug_ptr)
 {
 }
 
@@ -271,20 +297,38 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createD
   return dynamic_obstacles;
 }
 
-DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(rclcpp::Node & node)
-: DynamicObstacleCreator(node), tf_buffer_(node.get_clock()), tf_listener_(tf_buffer_)
+DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(
+  rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
+: DynamicObstacleCreator(node, debug_ptr), tf_buffer_(node.get_clock()), tf_listener_(tf_buffer_)
 {
   using std::placeholders::_1;
   sub_compare_map_filtered_pointcloud_ = node.create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/compare_map_filtered_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
+
+  // Subscribe the input using message filter
+  const size_t max_queue_size = 10;
+  sub_compare_map_filtered_pointcloud_sync_.subscribe(
+    &node, "~/input/compare_map_filtered_pointcloud",
+    rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
+  sub_vector_map_inside_area_filtered_pointcloud_sync_.subscribe(
+    &node, "~/input/vector_map_inside_area_filtered_pointcloud",
+    rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
+
+  // sync subscribers with ExactTime Sync Policy
+  exact_time_synchronizer_ = std::make_unique<ExactTimeSynchronizer>(max_queue_size);
+  exact_time_synchronizer_->connectInput(
+    sub_compare_map_filtered_pointcloud_sync_,
+    sub_vector_map_inside_area_filtered_pointcloud_sync_);
+  exact_time_synchronizer_->registerCallback(
+    &DynamicObstacleCreatorForPoints::onSynchronizedPointCloud, this);
 }
 
 std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   std::vector<DynamicObstacle> dynamic_obstacles;
-  for (const auto & point : dynamic_obstacle_data_.obstacle_points) {
+  for (const auto & point : obstacle_points_map_filtered_) {
     DynamicObstacle dynamic_obstacle;
 
     // create pose facing the direction of the lane
@@ -326,7 +370,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
 {
   if (msg->data.empty()) {
     std::lock_guard<std::mutex> lock(mutex_);
-    dynamic_obstacle_data_.obstacle_points.clear();
+    obstacle_points_map_filtered_.clear();
     return;
   }
 
@@ -351,7 +395,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
 
   // these variables are written in another callback
   mutex_.lock();
-  const auto detection_area_polygon = dynamic_obstacle_data_.detection_area_polygon;
+  const auto detection_area_polygon = dynamic_obstacle_data_.mandatory_detection_area;
   const auto path = dynamic_obstacle_data_.path;
   mutex_.unlock();
 
@@ -364,6 +408,92 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
     extractLateralNearestPoints(detection_area_filtered_points, path, param_.points_interval);
 
   std::lock_guard<std::mutex> lock(mutex_);
-  dynamic_obstacle_data_.obstacle_points = lateral_nearest_points;
+  obstacle_points_map_filtered_ = lateral_nearest_points;
+}
+
+void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
+  const PointCloud2::ConstSharedPtr compare_map_filtered_points,
+  const PointCloud2::ConstSharedPtr vector_map_filtered_points)
+{
+  if (compare_map_filtered_points->data.empty() && vector_map_filtered_points->data.empty()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    obstacle_points_map_filtered_.clear();
+    return;
+  }
+
+  // transform pointcloud
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf_buffer_.lookupTransform(
+      "map", compare_map_filtered_points->header.frame_id,
+      compare_map_filtered_points->header.stamp);
+  } catch (tf2::TransformException & e) {
+    RCLCPP_WARN(node_.get_logger(), "no transform found: %s", e.what());
+    return;
+  }
+  Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
+
+  pcl::PointCloud<pcl::PointXYZ> pc_compare_map;
+  pcl::fromROSMsg(*compare_map_filtered_points, pc_compare_map);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pc_compare_map_transformed(
+    new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::transformPointCloud(pc_compare_map, *pc_compare_map_transformed, affine);
+
+  pcl::PointCloud<pcl::PointXYZ> pc_vector_map;
+  pcl::fromROSMsg(*vector_map_filtered_points, pc_vector_map);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pc_vector_map_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+  // vector map filtered points may be empty if the obstacle is in the vector map area
+  if (!pc_vector_map.points.empty()) {
+    pcl::transformPointCloud(pc_vector_map, *pc_vector_map_transformed, affine);
+  }
+
+  // apply voxel grid filter to reduce calculation cost
+  const auto voxel_grid_filtered_compare_map_points =
+    applyVoxelGridFilter(pc_compare_map_transformed);
+  const auto voxel_grid_filtered_vector_map_points =
+    applyVoxelGridFilter(pc_vector_map_transformed);
+
+  // these variables are written in another callback
+  mutex_.lock();
+  const auto mandatory_detection_area = dynamic_obstacle_data_.mandatory_detection_area;
+  const auto detection_area = dynamic_obstacle_data_.detection_area;
+  const auto path = dynamic_obstacle_data_.path;
+  mutex_.unlock();
+
+  // filter obstacle points within detection area polygon
+  const auto detection_area_filtered_compare_map_points = extractObstaclePointsWithinPolygon(
+    voxel_grid_filtered_compare_map_points, mandatory_detection_area);
+  const auto detection_area_filtered_vector_map_points =
+    extractObstaclePointsWithinPolygon(voxel_grid_filtered_vector_map_points, detection_area);
+
+  // publish points for debug
+  PointCloud2 detection_area_filtered_compare_map_points_ros;
+  PointCloud2 detection_area_filtered_vector_map_points_ros;
+  pcl::toROSMsg(
+    detection_area_filtered_compare_map_points, detection_area_filtered_compare_map_points_ros);
+  pcl::toROSMsg(
+    detection_area_filtered_vector_map_points, detection_area_filtered_vector_map_points_ros);
+  detection_area_filtered_compare_map_points_ros.header = compare_map_filtered_points->header;
+  detection_area_filtered_vector_map_points_ros.header = vector_map_filtered_points->header;
+  detection_area_filtered_compare_map_points_ros.header.frame_id = "map";
+  detection_area_filtered_vector_map_points_ros.header.frame_id = "map";
+
+  PointCloud2 concat_points;
+  pcl::concatenatePointCloud(
+    detection_area_filtered_compare_map_points_ros, detection_area_filtered_vector_map_points_ros,
+    concat_points);
+  concat_points.header = detection_area_filtered_compare_map_points_ros.header;
+
+  // remove overlap points
+  const auto concat_points_no_overlap = applyVoxelGridFilter(concat_points);
+  PointCloud2 concat_points_no_overlap_ros;
+  pcl::toROSMsg(concat_points_no_overlap, concat_points_no_overlap_ros);
+
+  // filter points that have lateral nearest distance
+  const auto lateral_nearest_points =
+    extractLateralNearestPoints(concat_points_no_overlap, path, param_.points_interval);
+
+  //   std::lock_guard<std::mutex> lock(mutex_);
+  obstacle_points_map_filtered_ = lateral_nearest_points;
 }
 }  // namespace behavior_velocity_planner

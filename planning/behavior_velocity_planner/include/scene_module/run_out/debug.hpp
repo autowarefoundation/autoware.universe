@@ -14,7 +14,7 @@
 #ifndef SCENE_MODULE__RUN_OUT__DEBUG_HPP_
 #define SCENE_MODULE__RUN_OUT__DEBUG_HPP_
 
-#include "scene_module/run_out/dynamic_obstacle.hpp"
+#include "scene_module/run_out/utils.hpp"
 
 #include <memory>
 #include <string>
