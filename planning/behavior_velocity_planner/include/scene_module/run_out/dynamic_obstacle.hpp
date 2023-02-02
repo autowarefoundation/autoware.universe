@@ -77,7 +77,6 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    // compare map filtered points are subscribed in derived class that needs points
     dynamic_obstacle_data_.predicted_objects = *planner_data.predicted_objects;
     dynamic_obstacle_data_.path = path;
 
