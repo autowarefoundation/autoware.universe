@@ -277,7 +277,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 {
   time_keeper_ptr_->tic(__func__);
 
-  const auto & traj_points = planner_data.traj_points;
+  const auto & input_traj_points = planner_data.traj_points;
 
   // 1. calculate trajectory with EB and MPT
   //    NOTE: This function may return previously optimized trajectory points.
@@ -286,7 +286,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   // 2. update velocity
   //    NOTE: When optimization failed, velocity in trajectory points must be
   //          updated since velocity in input trajectory (path) may change
-  applyInputVelocity(optimized_traj_points, traj_points);
+  applyInputVelocity(optimized_traj_points, input_traj_points, planner_data.ego_pose);
 
   // 3. insert zero velocity when trajectory is over drivable area
   insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
@@ -355,27 +355,71 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
 
 void CollisionFreePathPlanner::applyInputVelocity(
   std::vector<TrajectoryPoint> & output_traj_points,
-  const std::vector<TrajectoryPoint> & input_traj_points) const
+  const std::vector<TrajectoryPoint> & input_traj_points,
+  const geometry_msgs::msg::Pose & ego_pose) const
 {
   time_keeper_ptr_->tic(__func__);
 
+  const double optimized_traj_length = mpt_optimizer_ptr_->getTrajectoryLength();
+  constexpr double margin_traj_length = 20.0;
+
+  // crop forward for faster calculation
+  const auto forward_cropped_input_traj_points = [&]() {
+    const size_t ego_seg_idx =
+      trajectory_utils::findEgoSegmentIndex(input_traj_points, ego_pose, ego_nearest_param_);
+    return trajectory_utils::cropForwardPoints(
+      input_traj_points, ego_pose.position, ego_seg_idx,
+      optimized_traj_length + margin_traj_length);
+  }();
+
+  size_t input_traj_start_idx = 0;
   for (size_t i = 0; i < output_traj_points.size(); i++) {
-    const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      input_traj_points, output_traj_points.at(i).pose,
-      traj_param_.delta_dist_threshold_for_closest_point,
-      traj_param_.delta_yaw_threshold_for_closest_point);
+    // crop backward for faster calculation
+    const auto cropped_input_traj_points = std::vector<TrajectoryPoint>{
+      forward_cropped_input_traj_points.begin() + input_traj_start_idx,
+      forward_cropped_input_traj_points.end()};
 
-    // TODO(murooka)
-    // add this line not to exceed max index size
-    const size_t max_idx = std::min(nearest_seg_idx + 1, input_traj_points.size() - 1);
-    // NOTE: std::max, not std::min, is used here since traj_points' sampling width may be longer
-    // than path_points' sampling width. A zero velocity point is guaranteed to be inserted in an
-    // output trajectory in the alignVelocity function
-    output_traj_points.at(i).longitudinal_velocity_mps = std::max(
-      input_traj_points.at(nearest_seg_idx).longitudinal_velocity_mps,
-      input_traj_points.at(max_idx).longitudinal_velocity_mps);
+    const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
+      cropped_input_traj_points, output_traj_points.at(i).pose, ego_nearest_param_);
+    input_traj_start_idx = nearest_seg_idx;
 
-    // TODO(murooka) insert stop point explicitly
+    // lerp velocity
+    const double ratio = trajectory_utils::calcRatio(
+      cropped_input_traj_points, nearest_seg_idx, output_traj_points.at(i).pose.position, true);
+    const double velocity =
+      (1 - ratio) * cropped_input_traj_points.at(nearest_seg_idx).longitudinal_velocity_mps +
+      ratio * cropped_input_traj_points.at(nearest_seg_idx + 1).longitudinal_velocity_mps;
+    output_traj_points.at(i).longitudinal_velocity_mps = velocity;
+  }
+
+  // insert stop point explicitly
+  const auto zero_vel_idx =
+    motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
+  if (zero_vel_idx) {
+    const auto zero_vel_traj_pose = forward_cropped_input_traj_points.at(zero_vel_idx.get()).pose;
+    const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
+      output_traj_points, zero_vel_traj_pose, ego_nearest_param_);
+    const double ratio = trajectory_utils::calcRatio(
+      output_traj_points, nearest_seg_idx, zero_vel_traj_pose.position, false);
+
+    // ignore external ratio
+    if (0.0 <= ratio && ratio <= 1.0) {
+      const auto & prev_pose = output_traj_points.at(nearest_seg_idx).pose;
+      const auto & next_pose = output_traj_points.at(nearest_seg_idx + 1).pose;
+
+      TrajectoryPoint additional_traj_point;
+      additional_traj_point.pose.position.x =
+        interpolation::lerp(prev_pose.position.x, next_pose.position.x, ratio);
+      additional_traj_point.pose.position.y =
+        interpolation::lerp(prev_pose.position.y, next_pose.position.y, ratio);
+      additional_traj_point.pose.position.z =
+        interpolation::lerp(prev_pose.position.z, next_pose.position.z, ratio);
+      additional_traj_point.pose.orientation = prev_pose.orientation;
+      additional_traj_point.longitudinal_velocity_mps = 0.0;
+
+      output_traj_points.insert(
+        output_traj_points.begin() + nearest_seg_idx + 1, additional_traj_point);
+    }
   }
 
   time_keeper_ptr_->toc(__func__, "    ");

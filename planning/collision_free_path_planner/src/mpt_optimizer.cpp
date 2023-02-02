@@ -1343,4 +1343,11 @@ std::vector<TrajectoryPoint> MPTOptimizer::extractFixedPoints(
 
   return fixed_traj_points;
 }
+
+double MPTOptimizer::getTrajectoryLength() const
+{
+  const double forward_traj_length = mpt_param_.num_points * mpt_param_.delta_arc_length;
+  const double backward_traj_length = traj_param_.output_backward_traj_length;
+  return forward_traj_length + backward_traj_length;
+}
 }  // namespace collision_free_path_planner

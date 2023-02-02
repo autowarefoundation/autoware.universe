@@ -160,7 +160,36 @@ Therefore, we have to make sure that the optimized trajectory is inside the driv
 Velocity is assigned in the result trajectory from the velocity in the behavior path.
 The shapes of the trajectory and the path are different, therefore the each nearest trajectory point to the path is searched and interpolated linearly.
 
-## Parameter Tuning
+## Limitation
+
+- When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
+- Computation cost is sometimes high.
+- Because of the approximation such as linearlization, some narrow roads cannot be run by the planner.
+- Roles of planning for `behavior_path_planner` and `collision_free_path_planner` are not decided clearly. Both can avoid obstacles.
+
+## Comparison to other methods
+
+Trajectory planning problem that satisfies kinematically-feasibility and collision-free has two main characteristics that makes hard to be solved: one is non-convex and the other is high dimension.
+Based on the characteristics, we investigate pros/cons of the typical planning methods: optimization-based, sampling-based, and learning-based method.
+
+### Optimization-based method
+
+- pros: comparatively fast against high dimension by leveraging the gradient descent
+- cons: often converge to the local minima in the non-convex problem
+
+### Sampling-based method
+
+- pros: realize global optimization
+- cons: high computation cost especially in the complex case
+
+### Learning-based method
+
+- under research yet
+
+Based on these pros/cons, we chose the optimization-based planner first.
+Although it has a cons to converge to the local minima, it can get a good solution by the preprocessing to approximate the problem to convex that almost equals to the original non-convex problem.
+
+## How to Tune Parameters
 
 ### Assumptions
 
@@ -227,35 +256,6 @@ The shapes of the trajectory and the path are different, therefore the each near
 - `mpt.option.two_step_soft_constraint` enables two step of soft constraints for collision free
   - `mpt.option.soft_clearance_from_road` and `mpt.option.soft_second_clearance_from_road` are the weight.
 
-## Limitation
-
-- When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
-- Computation cost is sometimes high.
-- Because of the approximation such as linearlization, some narrow roads cannot be run by the planner.
-- Roles of planning for `behavior_path_planner` and `collision_free_path_planner` are not decided clearly. Both can avoid obstacles.
-
-## Comparison to other methods
-
-Trajectory planning problem that satisfies kinematically-feasibility and collision-free has two main characteristics that makes hard to be solved: one is non-convex and the other is high dimension.
-Based on the characteristics, we investigate pros/cons of the typical planning methods: optimization-based, sampling-based, and learning-based method.
-
-### Optimization-based method
-
-- pros: comparatively fast against high dimension by leveraging the gradient descent
-- cons: often converge to the local minima in the non-convex problem
-
-### Sampling-based method
-
-- pros: realize global optimization
-- cons: high computation cost especially in the complex case
-
-### Learning-based method
-
-- under research yet
-
-Based on these pros/cons, we chose the optimization-based planner first.
-Although it has a cons to converge to the local minima, it can get a good solution by the preprocessing to approximate the problem to convex that almost equals to the original non-convex problem.
-
-# Debug
+## How To Debug
 
 How to debug can be seen [here](docs/debug.md).

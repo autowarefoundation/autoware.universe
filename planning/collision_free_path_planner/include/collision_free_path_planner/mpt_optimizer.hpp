@@ -115,6 +115,8 @@ public:
   void resetPreviousData();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
+  double getTrajectoryLength() const;
+
 private:
   struct ValueMatrix
   {

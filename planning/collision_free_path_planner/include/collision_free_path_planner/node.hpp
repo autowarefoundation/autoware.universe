@@ -125,7 +125,8 @@ private:
     const std::vector<TrajectoryPoint> & traj_points) const;
   void applyInputVelocity(
     std::vector<TrajectoryPoint> & output_traj_points,
-    const std::vector<TrajectoryPoint> & input_traj_points) const;
+    const std::vector<TrajectoryPoint> & input_traj_points,
+    const geometry_msgs::msg::Pose & ego_pose) const;
   void insertZeroVelocityOutsideDrivableArea(
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;

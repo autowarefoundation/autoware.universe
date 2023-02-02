@@ -51,19 +51,6 @@ namespace collision_free_path_planner
 namespace trajectory_utils
 {
 template <typename T>
-size_t findForwardIndex(const T & points, const size_t begin_idx, const double forward_length)
-{
-  double sum_length = 0.0;
-  for (size_t i = begin_idx; i < points.size() - 1; ++i) {
-    sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
-    if (sum_length > forward_length) {
-      return i;
-    }
-  }
-  return points.size() - 1;
-}
-
-template <typename T>
 T cropPointsAfterOffsetPoint(
   const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
   const double offset)
@@ -266,6 +253,24 @@ void updateFrontPointForFix(
     points.insert(points.begin(), new_front_point);
   }
 }
+
+template <typename T>
+double calcRatio(
+  const T & points, const size_t target_seg_idx, const geometry_msgs::msg::Point & target_pos,
+  const bool enable_clamp = false)
+{
+  const double offset_to_segment =
+    motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  const double segment_length =
+    tier4_autoware_utils::calcDistance2d(points.at(target_seg_idx), points.at(target_seg_idx + 1));
+  const double ratio = offset_to_segment / segment_length;
+
+  if (enable_clamp) {
+    return std::clamp(ratio, 0.0, 1.0);
+  }
+  return ratio;
+}
+
 }  // namespace trajectory_utils
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_
