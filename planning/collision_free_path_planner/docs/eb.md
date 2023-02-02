@@ -12,7 +12,7 @@ Therefore the output path may have a collision with road boundaries or obstacles
 
 We formulate a quadratic problem minimizing the distance between the previous point and the next point on each point.
 
-![eb](../media/eb.svg)
+![eb](../media/eb.svg){width=1000}
 
 Assuming that $k$'th point is $\boldsymbol{p}_k = (x_k, y_k)$, the objective function is as follows.
 
@@ -79,7 +79,7 @@ $$
 
 Regarding the constraint, the distance that each point can move is limited so that the path will not changed a lot but will be smoother.
 
-![eb_constraint](../media/eb_constraint.svg)
+![eb_constraint](../media/eb_constraint.svg){width=500}
 
 $$
 C_k^l \leq C_k \leq C_k^u
