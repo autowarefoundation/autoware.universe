@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/intersection/util_type.hpp>
 
 #include <geometry_msgs/msg/point.hpp>
 
@@ -52,15 +53,9 @@ std::optional<size_t> getDuplicatedPointIdx(
 /**
  * @brief get objective polygons for detection area
  */
-std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
+IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on = false);
-
-struct StopLineIdx
-{
-  size_t pass_judge_line = 0;
-  size_t stop_line = 0;
-};
 
 /**
  * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
@@ -149,7 +144,7 @@ bool isBeforeTargetIndex(
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
 
 lanelet::ConstLanelets extendedAdjacentDirectionLanes(
-  const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
+  lanelet::LaneletMapConstPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
   lanelet::ConstLanelet lane);
 
 std::optional<Polygon2d> getIntersectionArea(

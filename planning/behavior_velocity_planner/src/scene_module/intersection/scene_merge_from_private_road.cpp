@@ -64,16 +64,12 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* get detection area */
-  auto && [detection_lanelets, conflicting_lanelets] = util::getObjectiveLanelets(
-    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    false /* tl_arrow_solid on does not matter here*/);
-  if (detection_lanelets.empty()) {
-    RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
-    return true;
+  if (!intersection_lanelets_.has_value()) {
+    intersection_lanelets_ = util::getObjectiveLanelets(
+      lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
+      false /* tl_arrow_solid on does not matter here*/);
   }
-  const auto detection_area =
-    util::getPolygon3dFromLanelets(detection_lanelets, planner_param_.detection_area_length);
-  debug_data_.detection_area = detection_area;
+  const auto & detection_area = intersection_lanelets_.value().attention_area;
 
   /* set stop-line and stop-judgement-line for base_link */
   /* spline interpolation */
@@ -103,8 +99,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     return false;
   }
 
-  const auto & stop_lines_idx = stop_lines_idx_opt.value();
-  const size_t stop_line_idx = stop_lines_idx.stop_line;
+  const size_t stop_line_idx = stop_lines_idx_opt.value().collision_stop_line;
   if (stop_line_idx == 0) {
     RCLCPP_DEBUG(logger_, "stop line is at path[0], ignore planning.");
     return true;

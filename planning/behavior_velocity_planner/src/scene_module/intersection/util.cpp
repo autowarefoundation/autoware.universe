@@ -204,19 +204,19 @@ std::optional<StopLineIdx> generateStopLine(
     const auto duplicate_idx_opt =
       util::getDuplicatedPointIdx(*original_path, insert_point.position);
     if (duplicate_idx_opt.has_value()) {
-      idxs.stop_line = duplicate_idx_opt.value();
+      idxs.collision_stop_line = duplicate_idx_opt.value();
     } else {
       const auto insert_idx_opt = util::insertPoint(insert_point, original_path);
       if (!insert_idx_opt.has_value()) {
         RCLCPP_WARN(logger, "insertPoint failed for stop line");
         return std::nullopt;
       }
-      idxs.stop_line = insert_idx_opt.value();
+      idxs.collision_stop_line = insert_idx_opt.value();
     }
   }
 
   const bool has_prior_stopline = std::any_of(
-    original_path->points.begin(), original_path->points.begin() + idxs.stop_line,
+    original_path->points.begin(), original_path->points.begin() + idxs.collision_stop_line,
     [](const auto & p) { return std::fabs(p.point.longitudinal_velocity_mps) < 0.1; });
 
   /* insert judge point */
@@ -225,7 +225,7 @@ std::optional<StopLineIdx> generateStopLine(
     std::max<int>(static_cast<int>(stop_idx_ip) - pass_judge_idx_dist, 0)));
   /* if another stop point exist before intersection stop_line, disable judge_line. */
   if (has_prior_stopline || pass_judge_idx_ip == stop_idx_ip) {
-    idxs.pass_judge_line = idxs.stop_line;
+    idxs.pass_judge_line = idxs.collision_stop_line;
   } else {
     const auto & insert_point = path_ip.points.at(pass_judge_idx_ip).point.pose;
     const auto duplicate_idx_opt =
@@ -239,7 +239,8 @@ std::optional<StopLineIdx> generateStopLine(
         return std::nullopt;
       }
       idxs.pass_judge_line = insert_idx_opt.value();
-      idxs.stop_line = std::min<size_t>(idxs.stop_line + 1, original_path->points.size() - 1);
+      idxs.collision_stop_line =
+        std::min<size_t>(idxs.collision_stop_line + 1, original_path->points.size() - 1);
     }
   }
 
@@ -247,7 +248,7 @@ std::optional<StopLineIdx> generateStopLine(
     logger,
     "generateStopLine() : stop_idx = %ld, pass_judge_idx = %ld"
     ", has_prior_stopline = %d",
-    idxs.stop_line, idxs.pass_judge_line, has_prior_stopline);
+    idxs.collision_stop_line, idxs.pass_judge_line, has_prior_stopline);
 
   return std::make_optional<StopLineIdx>(idxs);
 }
@@ -363,7 +364,7 @@ bool getStopLineIndexFromMap(
   return true;
 }
 
-std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
+IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on)
 {
@@ -437,9 +438,9 @@ std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
 
   // get possible lanelet path that reaches conflicting_lane longer than given length
   // if traffic light arrow is active, this process is unnecessary
+  lanelet::ConstLanelets detection_and_preceding_lanelets;
   if (!tl_arrow_solid_on) {
     const double length = detection_area_length;
-    lanelet::ConstLanelets detection_and_preceding_lanelets;
     std::set<lanelet::Id> detection_ids;
     for (const auto & ll : detection_lanelets) {
       // Preceding lanes does not include detection_lane so add them at the end
@@ -456,10 +457,22 @@ std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
         }
       }
     }
-    return {std::move(detection_and_preceding_lanelets), std::move(conflicting_ex_ego_lanelets)};
-  } else {
-    return {std::move(detection_lanelets), std::move(conflicting_ex_ego_lanelets)};
   }
+
+  IntersectionLanelets result;
+  if (!tl_arrow_solid_on) {
+    result.attention = std::move(detection_and_preceding_lanelets);
+  } else {
+    result.attention = std::move(detection_lanelets);
+  }
+  result.conflicting = std::move(conflicting_ex_ego_lanelets);
+  result.adjacent =
+    extendedAdjacentDirectionLanes(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
+  // compoundPolygon3d
+  result.attention_area = getPolygon3dFromLanelets(result.attention);
+  result.conflicting_area = getPolygon3dFromLanelets(result.conflicting);
+  result.adjacent_area = getPolygon3dFromLanelets(result.adjacent);
+  return result;
 }
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
@@ -550,7 +563,7 @@ static std::vector<int> getAllAdjacentLanelets(
 }
 
 lanelet::ConstLanelets extendedAdjacentDirectionLanes(
-  const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
+  lanelet::LaneletMapConstPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
   lanelet::ConstLanelet lane)
 {
   // some of the intersections are not well-formed, and "adjacent" turning
