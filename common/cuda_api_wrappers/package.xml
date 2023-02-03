@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>cuda_api_wrappers</name>
+  <version>0.6.1</version>
+  <description>The vendor package for cuda api wrappers</description>
+
+  <url type="website">https://github.com/eyalroz/cuda-api-wrappers</url>
+  <author email="daisuke.nishimatsu@tier4.jp">Daisuke Nishimatsu</author>
+  <maintainer email="daisuke.nishimatsu@tier4.jp">Daisuke Nishimatsu</maintainer>
+  <maintainer email="manato.hirabayashi@tier4.jp">Manato Hirabayashi</maintainer>
+
+  <!-- license of cuda api wrappers -->
+  <license>BSD-3-Clause</license>
+
+  <!-- license of vendor package -->
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+  <buildtool_depend>git</buildtool_depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

@@ -15,8 +15,7 @@
 #ifndef TENSORRT_YOLOX__TENSORRT_YOLOX_HPP_
 #define TENSORRT_YOLOX__TENSORRT_YOLOX_HPP_
 
-#include <cuda_utils/cuda_unique_ptr.hpp>
-#include <cuda_utils/stream_unique_ptr.hpp>
+#include <cuda/api.hpp>
 #include <opencv2/opencv.hpp>
 #include <tensorrt_common/tensorrt_common.hpp>
 
@@ -26,11 +25,6 @@
 
 namespace tensorrt_yolox
 {
-using cuda_utils::CudaUniquePtr;
-using cuda_utils::CudaUniquePtrHost;
-using cuda_utils::makeCudaStream;
-using cuda_utils::StreamUniquePtr;
-
 struct Object
 {
   int32_t x_offset;
@@ -95,18 +89,18 @@ private:
   std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
 
   std::vector<float> input_h_;
-  CudaUniquePtr<float[]> input_d_;
-  CudaUniquePtr<int32_t[]> out_num_detections_d_;
-  CudaUniquePtr<float[]> out_boxes_d_;
-  CudaUniquePtr<float[]> out_scores_d_;
-  CudaUniquePtr<int32_t[]> out_classes_d_;
+  cuda::memory::device::unique_ptr<float[]> input_d_;
+  cuda::memory::device::unique_ptr<int32_t[]> out_num_detections_d_;
+  cuda::memory::device::unique_ptr<float[]> out_boxes_d_;
+  cuda::memory::device::unique_ptr<float[]> out_scores_d_;
+  cuda::memory::device::unique_ptr<int32_t[]> out_classes_d_;
 
   bool needs_output_decode_;
   size_t out_elem_num_;
   size_t out_elem_num_per_batch_;
-  CudaUniquePtr<float[]> out_prob_d_;
+  cuda::memory::device::unique_ptr<float[]> out_prob_d_;
 
-  StreamUniquePtr stream_{makeCudaStream()};
+  cuda::stream_t stream_{cuda::device::current::get().create_stream(cuda::stream::async)};
 
   int32_t max_detections_;
   std::vector<float> scales_;
@@ -115,7 +109,7 @@ private:
   float score_threshold_;
   float nms_threshold_;
 
-  CudaUniquePtrHost<float[]> out_prob_h_;
+  cuda::memory::host::unique_ptr<float[]> out_prob_h_;
 };
 
 }  // namespace tensorrt_yolox

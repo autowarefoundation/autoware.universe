@@ -10,6 +10,8 @@ endif()
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(cuda-api-wrappers REQUIRED)
+
 find_package(OpenCV REQUIRED)
 find_package(OpenMP)
 if(OpenMP_FOUND)
@@ -70,6 +72,7 @@ ament_target_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   ${tensorrt_common_LIBRARIES}
+  cuda-api-wrappers::runtime-and-driver
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE

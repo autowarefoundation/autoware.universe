@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuda_utils/cuda_check_error.hpp"
-#include "cuda_utils/cuda_unique_ptr.hpp"
-
 #include <tensorrt_yolox/tensorrt_yolox.hpp>
 
 #include <algorithm>
@@ -71,20 +68,22 @@ TrtYoloX::TrtYoloX(
     std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
   if (needs_output_decode_) {
     const auto output_dims = trt_common_->getBindingDimensions(1);
-    input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
+    input_d_ = cuda::memory::device::make_unique<float[]>(batch_config[2] * input_size);
     out_elem_num_ = std::accumulate(
       output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
     out_elem_num_per_batch_ = static_cast<int>(out_elem_num_ / batch_config[2]);
-    out_prob_d_ = cuda_utils::make_unique<float[]>(out_elem_num_);
-    out_prob_h_ = cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
+    out_prob_d_ = cuda::memory::device::make_unique<float[]>(out_elem_num_);
+    out_prob_h_ = cuda::memory::host::make_unique<float[]>(out_elem_num_);
   } else {
     const auto out_scores_dims = trt_common_->getBindingDimensions(3);
     max_detections_ = out_scores_dims.d[1];
-    input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
-    out_num_detections_d_ = cuda_utils::make_unique<int32_t[]>(batch_config[2]);
-    out_boxes_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_ * 4);
-    out_scores_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_);
-    out_classes_d_ = cuda_utils::make_unique<int32_t[]>(batch_config[2] * max_detections_);
+    input_d_ = cuda::memory::device::make_unique<float[]>(batch_config[2] * input_size);
+    out_num_detections_d_ = cuda::memory::device::make_unique<int32_t[]>(batch_config[2]);
+    out_boxes_d_ =
+      cuda::memory::device::make_unique<float[]>(batch_config[2] * max_detections_ * 4);
+    out_scores_d_ = cuda::memory::device::make_unique<float[]>(batch_config[2] * max_detections_);
+    out_classes_d_ =
+      cuda::memory::device::make_unique<int32_t[]>(batch_config[2] * max_detections_);
   }
 }
 
@@ -126,8 +125,7 @@ bool TrtYoloX::doInference(const std::vector<cv::Mat> & images, ObjectArrays & o
 
   preprocess(images);
 
-  CHECK_CUDA_ERROR(cudaMemcpy(
-    input_d_.get(), input_h_.data(), input_h_.size() * sizeof(float), cudaMemcpyHostToDevice));
+  cuda::memory::copy(input_d_.get(), input_h_.data(), input_h_.size() * sizeof(float));
 
   if (needs_output_decode_) {
     return feedforwardAndDecode(images, objects);
@@ -144,7 +142,7 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
     input_d_.get(), out_num_detections_d_.get(), out_boxes_d_.get(), out_scores_d_.get(),
     out_classes_d_.get()};
 
-  trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
+  trt_common_->enqueueV2(buffers.data(), stream_.handle(), nullptr);
 
   const auto batch_size = images.size();
   auto out_num_detections = std::make_unique<int32_t[]>(batch_size);
@@ -152,19 +150,16 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
   auto out_scores = std::make_unique<float[]>(batch_size * max_detections_);
   auto out_classes = std::make_unique<int32_t[]>(batch_size * max_detections_);
 
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_num_detections.get(), out_num_detections_d_.get(), sizeof(int32_t) * batch_size,
-    cudaMemcpyDeviceToHost, *stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_boxes.get(), out_boxes_d_.get(), sizeof(float) * 4 * batch_size * max_detections_,
-    cudaMemcpyDeviceToHost, *stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_scores.get(), out_scores_d_.get(), sizeof(float) * batch_size * max_detections_,
-    cudaMemcpyDeviceToHost, *stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+  cuda::memory::async::copy(
+    out_num_detections.get(), out_num_detections_d_.get(), sizeof(int32_t) * batch_size, stream_);
+  cuda::memory::async::copy(
+    out_boxes.get(), out_boxes_d_.get(), sizeof(float) * 4 * batch_size * max_detections_, stream_);
+  cuda::memory::async::copy(
+    out_scores.get(), out_scores_d_.get(), sizeof(float) * batch_size * max_detections_, stream_);
+  cuda::memory::async::copy(
     out_classes.get(), out_classes_d_.get(), sizeof(int32_t) * batch_size * max_detections_,
-    cudaMemcpyDeviceToHost, *stream_));
-  cudaStreamSynchronize(*stream_);
+    stream_);
+  stream_.synchronize();
   objects.clear();
   for (size_t i = 0; i < batch_size; ++i) {
     const size_t num_detection = static_cast<size_t>(out_num_detections[i]);
@@ -192,14 +187,13 @@ bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectA
 {
   std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
 
-  trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
+  trt_common_->enqueueV2(buffers.data(), stream_.handle(), nullptr);
 
   const auto batch_size = images.size();
 
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_prob_h_.get(), out_prob_d_.get(), sizeof(float) * out_elem_num_, cudaMemcpyDeviceToHost,
-    *stream_));
-  cudaStreamSynchronize(*stream_);
+  cuda::memory::async::copy(
+    out_prob_h_.get(), out_prob_d_.get(), sizeof(float) * out_elem_num_, stream_);
+  stream_.synchronize();
   objects.clear();
 
   for (size_t i = 0; i < batch_size; ++i) {
