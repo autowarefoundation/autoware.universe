@@ -93,6 +93,18 @@ bool AvoidanceModule::isExecutionRequested() const
     return true;
   }
 
+  // Check ego is in preferred lane
+  const auto current_lanes = util::getCurrentLanes(planner_data_);
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(
+    current_lanes, planner_data_->self_odometry->pose.pose, &current_lane);
+  const auto num = planner_data_->route_handler->getNumLaneToPreferredLane(current_lane);
+
+  if (num != 0) {
+    return false;
+  }
+
+  // Check avoidance targets exist
   const auto avoid_data = calcAvoidancePlanningData(debug_data_);
 
   if (parameters_->publish_debug_marker) {
@@ -3413,7 +3425,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   if (ego_front_to_shift_start > 0.0) {
-    turn_signal_info.desired_start_point = planner_data_->self_pose->pose;
+    turn_signal_info.desired_start_point = planner_data_->self_odometry->pose.pose;
   } else {
     turn_signal_info.desired_start_point = blinker_start_pose;
   }

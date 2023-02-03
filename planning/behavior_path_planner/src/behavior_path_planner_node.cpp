@@ -79,7 +79,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
+    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
   acceleration_subscriber_ = create_subscription<AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorPathPlannerNode::onAcceleration, this, _1),
@@ -87,10 +87,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   perception_subscriber_ = create_subscription<PredictedObjects>(
     "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1),
     createSubscriptionOptions(this));
-  // todo: change to ~/input
   occupancy_grid_subscriber_ = create_subscription<OccupancyGrid>(
-    "/perception/occupancy_grid_map/map", 1,
-    std::bind(&BehaviorPathPlannerNode::onOccupancyGrid, this, _1),
+    "~/input/occupancy_grid_map", 1, std::bind(&BehaviorPathPlannerNode::onOccupancyGrid, this, _1),
     createSubscriptionOptions(this));
   scenario_subscriber_ = create_subscription<Scenario>(
     "~/input/scenario", 1,
@@ -133,6 +131,22 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     auto lane_following_module =
       std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
     bt_manager_->registerSceneModule(lane_following_module);
+
+    auto ext_request_lane_change_right_module =
+      std::make_shared<ExternalRequestLaneChangeRightModule>(
+        "ExternalRequestLaneChangeRight", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "ExternalRequestLaneChangeRight",
+      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_right", 1));
+    bt_manager_->registerSceneModule(ext_request_lane_change_right_module);
+
+    auto ext_request_lane_change_left_module =
+      std::make_shared<ExternalRequestLaneChangeLeftModule>(
+        "ExternalRequestLaneChangeLeft", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "ExternalRequestLaneChangeLeft",
+      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_left", 1));
+    bt_manager_->registerSceneModule(ext_request_lane_change_left_module);
 
     auto lane_change_module =
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
@@ -718,20 +732,12 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("self_acceleration");
   }
 
-  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
-  if (!planner_data_->self_pose) {
-    return missing("self_pose");
-  }
-
   return true;
 }
 
 std::shared_ptr<PlannerData> BehaviorPathPlannerNode::createLatestPlannerData()
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
-
-  // update self
-  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 
   // update map
   if (has_received_map_) {
@@ -1011,7 +1017,7 @@ bool BehaviorPathPlannerNode::keepInputPoints(
   return false;
 }
 
-void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onOdometry(const Odometry::SharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_odometry = msg;
