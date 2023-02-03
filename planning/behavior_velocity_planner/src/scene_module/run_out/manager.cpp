@@ -75,7 +75,6 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     auto & p = planner_param_.mandatory_area;
     const std::string ns_da = ns + ".mandatory_area";
     p.decel_jerk = node.declare_parameter(ns_da + ".decel_jerk", -1.2);
-    p.stop_margin = node.declare_parameter(ns_da + ".stop_margin", 0.5);
   }
 
   {

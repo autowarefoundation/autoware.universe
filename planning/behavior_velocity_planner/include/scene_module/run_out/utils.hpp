@@ -78,7 +78,6 @@ struct MandatoryArea
 {
   bool enable;
   float decel_jerk;
-  float stop_margin;
 };
 
 struct ApproachingParam

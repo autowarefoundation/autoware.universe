@@ -557,7 +557,7 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   const double obstacle_vel_mps = pp.dynamic_obstacle.max_vel_kmph / 3.6;
   da_range.interval = pp.run_out.detection_distance;
   da_range.min_longitudinal_distance = pp.vehicle_param.base_to_front;
-  da_range.max_longitudinal_distance = *stop_dist + pp.mandatory_area.stop_margin;
+  da_range.max_longitudinal_distance = *stop_dist + pp.run_out.stop_margin;
   da_range.wheel_tread = pp.vehicle_param.wheel_tread;
   da_range.right_overhang = pp.vehicle_param.right_overhang;
   da_range.left_overhang = pp.vehicle_param.left_overhang;
