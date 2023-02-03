@@ -104,11 +104,6 @@ std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
 
 PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
 
-PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const double nearest_seg_idx, const double duration, const double resolution,
-  const double acceleration, const double min_speed = 1.0);
-
 template <class T>
 FrenetCoordinate3d convertToFrenetCoordinate3d(
   const std::vector<T> & pose_array, const Point & search_point_geom, const size_t seg_idx)

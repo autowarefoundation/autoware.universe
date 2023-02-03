@@ -40,9 +40,13 @@ namespace
 
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::util::calcObjectPolygon;
+using behavior_path_planner::util::convertToFrenetCoordinate3d;
+using behavior_path_planner::util::FrenetCoordinate3d;
 using behavior_path_planner::util::getHighestProbLabel;
+using behavior_path_planner::util::lerpPoseByLength;
 using geometry_msgs::msg::Pose;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
@@ -172,6 +176,52 @@ std::vector<int64_t> replaceWithSortedIds(
     }
   }
   return original_lane_ids;
+}
+
+PredictedPath convertToPredictedPath(
+  const behavior_path_planner::LaneChangePath & lc_path,
+  const geometry_msgs::msg::Twist & vehicle_twist, const Pose & vehicle_pose,
+  const size_t nearest_seg_idx, const double resolution, const double acceleration)
+{
+  PredictedPath predicted_path{};
+  const auto & path = lc_path.path;
+  predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
+  predicted_path.path.reserve(std::min(path.points.size(), static_cast<size_t>(100)));
+  if (path.points.empty()) {
+    return predicted_path;
+  }
+
+  const auto vehicle_pose_frenet =
+    convertToFrenetCoordinate3d(path.points, vehicle_pose.position, nearest_seg_idx);
+  double length = 0;
+  double prev_vehicle_speed = std::abs(vehicle_twist.linear.x);
+
+  // first point
+  predicted_path.path.push_back(lerpPoseByLength(path.points, vehicle_pose_frenet.length));
+
+  const auto duration = lc_path.duration.sum();
+  for (double t = resolution; t < duration; t += resolution) {
+    const auto accelerated_velocity = prev_vehicle_speed + acceleration * t;
+    const auto min_speed = std::invoke([&]() {
+      if (length <= lc_path.length.prepare) {
+        return lc_path.length.prepare / lc_path.duration.prepare;
+      }
+      return lc_path.length.lane_changing / lc_path.duration.lane_changing;
+    });
+
+    const auto travel_distance = std::invoke([&]() {
+      if (accelerated_velocity < min_speed) {
+        return min_speed * resolution;
+      }
+      return prev_vehicle_speed * resolution + 0.5 * acceleration * resolution * resolution;
+    });
+
+    length += travel_distance;
+    predicted_path.path.push_back(
+      lerpPoseByLength(path.points, vehicle_pose_frenet.length + length));
+    prev_vehicle_speed = accelerated_velocity;
+  }
+  return predicted_path;
 }
 }  // namespace
 
@@ -576,11 +626,9 @@ bool isLaneChangePathSafe(
     lane_change_parameters.enable_collision_check_at_prepare_phase;
   const auto & lane_changing_safety_check_duration = lane_change_path.duration.lane_changing;
   const double check_end_time = lane_change_prepare_duration + lane_changing_safety_check_duration;
-  const double min_lc_speed{lane_change_parameters.minimum_lane_change_velocity};
 
-  const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, static_cast<double>(current_seg_idx), check_end_time,
-    time_resolution, acceleration, min_lc_speed);
+  const auto vehicle_predicted_path = convertToPredictedPath(
+    lane_change_path, current_twist, current_pose, current_seg_idx, time_resolution, acceleration);
   const auto prepare_phase_ignore_target_speed_thresh =
     lane_change_parameters.prepare_phase_ignore_target_speed_thresh;
 

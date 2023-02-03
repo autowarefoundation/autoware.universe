@@ -168,55 +168,6 @@ PoseArray convertToGeometryPoseArray(const PathWithLaneId & path)
   return converted_array;
 }
 
-PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const double nearest_seg_idx, const double duration, const double resolution,
-  const double acceleration, const double min_speed)
-{
-  PredictedPath predicted_path{};
-  predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
-  predicted_path.path.reserve(std::min(path.points.size(), static_cast<size_t>(100)));
-  if (path.points.empty()) {
-    return predicted_path;
-  }
-
-  FrenetCoordinate3d vehicle_pose_frenet =
-    convertToFrenetCoordinate3d(path.points, vehicle_pose.position, nearest_seg_idx);
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  rclcpp::Time start_time = clock.now();
-  double vehicle_speed = std::abs(vehicle_twist.linear.x);
-  if (vehicle_speed < min_speed) {
-    vehicle_speed = min_speed;
-    RCLCPP_DEBUG_STREAM_THROTTLE(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), clock, 1000,
-      "cannot convert PathWithLaneId with zero velocity, using minimum value " << min_speed
-                                                                               << " [m/s] instead");
-  }
-
-  double length = 0;
-  double prev_vehicle_speed = vehicle_speed;
-
-  // first point
-  predicted_path.path.push_back(lerpPoseByLength(path.points, vehicle_pose_frenet.length));
-
-  for (double t = resolution; t < duration; t += resolution) {
-    double accelerated_velocity = prev_vehicle_speed + acceleration * t;
-    double travel_distance = 0;
-    if (accelerated_velocity < min_speed) {
-      travel_distance = min_speed * resolution;
-    } else {
-      travel_distance =
-        prev_vehicle_speed * resolution + 0.5 * acceleration * resolution * resolution;
-    }
-
-    length += travel_distance;
-    predicted_path.path.push_back(
-      lerpPoseByLength(path.points, vehicle_pose_frenet.length + length));
-    prev_vehicle_speed = accelerated_velocity;
-  }
-  return predicted_path;
-}
-
 PredictedPath resamplePredictedPath(
   const PredictedPath & input_path, const double resolution, const double duration)
 {
