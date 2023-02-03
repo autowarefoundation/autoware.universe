@@ -337,13 +337,13 @@ DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(
 {
   if (param_.use_mandatory_area) {
     // Subscribe the input using message filter
-    const size_t max_queue_size = 10;
+    const size_t max_queue_size = 1;
     sub_compare_map_filtered_pointcloud_sync_.subscribe(
       &node, "~/input/compare_map_filtered_pointcloud",
-      rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
+      rclcpp::SensorDataQoS().keep_last(max_queue_size).get_rmw_qos_profile());
     sub_vector_map_inside_area_filtered_pointcloud_sync_.subscribe(
       &node, "~/input/vector_map_inside_area_filtered_pointcloud",
-      rclcpp::SensorDataQoS().keep_last(10).get_rmw_qos_profile());
+      rclcpp::SensorDataQoS().keep_last(max_queue_size).get_rmw_qos_profile());
 
     // sync subscribers with ExactTime Sync Policy
     exact_time_synchronizer_ = std::make_unique<ExactTimeSynchronizer>(max_queue_size);
