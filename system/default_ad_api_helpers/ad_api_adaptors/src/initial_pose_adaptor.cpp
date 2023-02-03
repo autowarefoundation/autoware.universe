@@ -47,15 +47,22 @@ InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor"), fitter_
 
 void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
+  const auto logger = get_logger();
+
+  RCLCPP_INFO_STREAM(logger, "[map fit] initial pose: A");
   const auto & point = msg->pose.pose.position;
   const auto & frame = msg->header.frame_id;
   auto pose = *msg;
+  RCLCPP_INFO_STREAM(logger, "[map fit] initial pose: B");
   pose.pose.pose.position = fitter_.fit(point, frame);
   pose.pose.covariance = rviz_particle_covariance_;
 
+  RCLCPP_INFO_STREAM(logger, "[map fit] initial pose: C");
   const auto req = std::make_shared<Initialize::Service::Request>();
   req->pose.push_back(pose);
+  RCLCPP_INFO_STREAM(logger, "[map fit] initial pose: D");
   cli_initialize_->async_send_request(req);
+  RCLCPP_INFO_STREAM(logger, "[map fit] initial pose: E");
 }
 
 }  // namespace ad_api_adaptors

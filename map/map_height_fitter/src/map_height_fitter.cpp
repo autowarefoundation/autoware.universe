@@ -166,24 +166,31 @@ Point MapHeightFitter::Impl::fit(const Point & position, const std::string & fra
   const auto logger = node_->get_logger();
   tf2::Vector3 point(position.x, position.y, position.z);
 
+  RCLCPP_INFO_STREAM(logger, "[map fit] fit: A");
   if (cli_map_) {
+    RCLCPP_INFO_STREAM(logger, "[map fit] fit: B");
     map_cloud_.reset();
     get_partial_point_cloud_map(position);
   }
 
+  RCLCPP_INFO_STREAM(logger, "[map fit] fit: C");
   if (map_cloud_) {
     try {
+      RCLCPP_INFO_STREAM(logger, "[map fit] fit: D");
       const auto stamped = tf2_buffer_.lookupTransform(map_frame_, frame, tf2::TimePointZero);
       tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
       tf2::fromMsg(stamped.transform, transform);
+      RCLCPP_INFO_STREAM(logger, "[map fit] fit: E");
       point = transform * point;
       point.setZ(get_ground_height(point));
       point = transform.inverse() * point;
+      RCLCPP_INFO_STREAM(logger, "[map fit] fit: F");
     } catch (tf2::TransformException & exception) {
       RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
     }
   }
 
+  RCLCPP_INFO_STREAM(logger, "[map fit] fit: G");
   Point result;
   result.x = point.getX();
   result.y = point.getY();
