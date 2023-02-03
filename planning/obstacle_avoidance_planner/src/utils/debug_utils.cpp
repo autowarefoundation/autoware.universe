@@ -834,14 +834,6 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
       &vis_marker_array);
   }
 
-  if (debug_data.stop_pose_by_drivable_area_with_margin) {
-    appendMarkerArray(
-      getFootprintByDrivableAreaMarkerArray(
-        *debug_data.stop_pose_by_drivable_area_with_margin, vehicle_param, "footprint_by_drivable_area_with_margin", 0.0,
-        1.0, 0.0),
-      &vis_marker_array);
-  }
-
   return vis_marker_array;
 }
 
@@ -858,19 +850,6 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
       getVirtualWallTextMarkerArray(virtual_wall_pose, "virtual_wall_text", 1.0, 1.0, 1.0),
       &vis_marker_array);
   }
-
-  if (debug_data.stop_pose_by_drivable_area_with_margin) {
-    const auto virtual_wall_pose_with_margin =
-      getVirtualWallPose(debug_data.stop_pose_by_drivable_area_with_margin.get(), vehicle_param);
-
-    appendMarkerArray(
-      getVirtualWallMarkerArray(virtual_wall_pose_with_margin, "virtual_wall_with_margin", 0.0, 1.0, 0), &vis_marker_array);
-      
-    appendMarkerArray(
-      getVirtualWallTextMarkerArray(virtual_wall_pose_with_margin, "virtual_wall_text_with_margin", 0.0, 0.0, 1.0),
-      &vis_marker_array);
-  }
-
   return vis_marker_array;
 }
 }  // namespace debug_utils

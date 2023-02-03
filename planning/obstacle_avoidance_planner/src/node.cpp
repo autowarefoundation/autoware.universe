@@ -1301,34 +1301,31 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     const bool is_outside = drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
       traj_point, left_bound, right_bound, vehicle_param_, is_considering_footprint_edges_);
 
-    // only insert zero velocity to the first point outside drivable area (minus stop margin)
+    // only insert zero velocity to the point with longitudinal offset margin from the first point outside drivable area
     if (is_outside) {
       size_t stop_idx = i;
       const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(traj_points, traj_point.pose.position, -1.0 * vehicle_stop_margin_outside_drivable_area_);
       
       if(op_target_point){
         const auto target_point = op_target_point.get();
-        stop_idx = motion_utils::findNearestSegmentIndex(traj_points, target_point);
+        // confirm that target point doesn't overlap with the stop point outside drivable area
+        const auto dist = tier4_autoware_utils::calcDistance2d(traj_point, target_point);
+        const double overlap_threshold = 1e-3;
+        if (dist > overlap_threshold) {
+          stop_idx = motion_utils::findNearestSegmentIndex(traj_points, target_point);
+        }
       }
 
       traj_points[stop_idx].longitudinal_velocity_mps = 0.0;
-      debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
-      debug_data_.stop_pose_by_drivable_area_with_margin = traj_points[stop_idx].pose;
+      debug_data_.stop_pose_by_drivable_area = traj_points[stop_idx].pose;
       
       // NOTE: traj_points does not have valid z for efficient calculation of trajectory
       if (!planner_data.path.points.empty()) {
-        const size_t path_idx_1 =
-          motion_utils::findNearestIndex(planner_data.path.points, traj_points[i].pose.position);
-        
-        debug_data_.stop_pose_by_drivable_area->position.z =
-          planner_data.path.points.at(path_idx_1).pose.position.z;
-
-        const size_t path_idx_2 =
+        const size_t path_idx =
           motion_utils::findNearestIndex(planner_data.path.points, traj_points[stop_idx].pose.position);
         
-        debug_data_.stop_pose_by_drivable_area_with_margin->position.z =
-          planner_data.path.points.at(path_idx_2).pose.position.z;
-
+        debug_data_.stop_pose_by_drivable_area->position.z =
+          planner_data.path.points.at(path_idx).pose.position.z;
       }
       break;
     }

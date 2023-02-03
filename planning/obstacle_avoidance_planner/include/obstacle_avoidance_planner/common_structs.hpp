@@ -136,7 +136,6 @@ struct DebugData
   std::vector<double> vehicle_circle_longitudinal_offsets;
 
   boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
-  boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area_with_margin = boost::none;
   std::vector<geometry_msgs::msg::Point> interpolated_points;
   std::vector<geometry_msgs::msg::Point> straight_points;
   std::vector<geometry_msgs::msg::Pose> fixed_points;
