@@ -180,7 +180,7 @@ private:
   bool reset_prev_optimization_;
   bool is_considering_footprint_edges_;
 
-  //vehicle stop margin
+  // vehicle stop margin
   double vehicle_stop_margin_outside_drivable_area_;
 
   // vehicle circles info for for mpt constraints
