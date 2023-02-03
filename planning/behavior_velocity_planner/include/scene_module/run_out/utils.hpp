@@ -76,7 +76,6 @@ struct DetectionArea
 
 struct MandatoryArea
 {
-  bool enable;
   float decel_jerk;
 };
 
