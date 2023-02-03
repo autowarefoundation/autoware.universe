@@ -131,6 +131,16 @@ void RunOutDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
   detection_area_polygons_.push_back(ros_points);
 }
 
+void RunOutDebug::pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon)
+{
+  std::vector<geometry_msgs::msg::Point> ros_points;
+  for (const auto & p : debug_polygon.outer()) {
+    ros_points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0));
+  }
+
+  mandatory_detection_area_polygons_.push_back(ros_points);
+}
+
 void RunOutDebug::pushTravelTimeTexts(
   const double travel_time, const geometry_msgs::msg::Pose pose, const float lateral_offset)
 {
@@ -156,6 +166,7 @@ void RunOutDebug::clearDebugMarker()
   collision_points_.clear();
   nearest_collision_point_.clear();
   detection_area_polygons_.clear();
+  mandatory_detection_area_polygons_.clear();
   predicted_vehicle_polygons_.clear();
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
@@ -256,6 +267,14 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
       createPolygonMarkerArray(
         detection_area_polygons_, current_time, "detection_area_polygons",
         createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999), height_),
+      &msg);
+  }
+
+  if (!mandatory_detection_area_polygons_.empty()) {
+    appendMarkerArray(
+      createPolygonMarkerArray(
+        mandatory_detection_area_polygons_, current_time, "mandatory_detection_area_polygons",
+        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999), height_),
       &msg);
   }
 

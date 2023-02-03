@@ -93,7 +93,7 @@ public:
         dynamic_obstacle_data_.mandatory_detection_area =
           createMandatoryDetectionAreaPolygon(smoothed_path, planner_data, planner_param);
         for (const auto & poly : dynamic_obstacle_data_.mandatory_detection_area) {
-          debug_ptr_->pushDetectionAreaPolygons(poly);
+          debug_ptr_->pushMandatoryDetectionAreaPolygons(poly);
         }
       }
     }

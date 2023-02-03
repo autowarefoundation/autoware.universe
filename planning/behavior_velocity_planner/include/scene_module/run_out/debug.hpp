@@ -103,6 +103,7 @@ public:
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
+  void pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushDebugPointCloud(
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header);
   void pushDebugPointCloud(const PointCloud2 & pointcloud);
@@ -133,6 +134,7 @@ private:
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> mandatory_detection_area_polygons_;
   std::vector<TextWithPosition> travel_time_texts_;
   PointCloud2 debug_pointcloud_;
   DebugValues debug_values_;
