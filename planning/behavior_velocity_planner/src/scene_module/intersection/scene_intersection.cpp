@@ -191,8 +191,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   /* calculate final stop lines */
   int stop_line_idx_final =
     stop_lines_idx_opt.has_value() ? stop_lines_idx_opt.value().stop_line : -1;
-  int pass_judge_line_idx_final =
-    stop_lines_idx_opt.has_value() ? stop_lines_idx_opt.value().pass_judge_line : -1;
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
@@ -202,17 +200,14 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     const double dist_stuck_stopline = motion_utils::calcSignedArcLength(
       path->points, path->points.at(stuck_line_idx).point.pose.position,
       path->points.at(closest_idx).point.pose.position);
-    const double eps = 1e-1;  // NOTE: check if sufficiently over the stuck stopline
     const bool is_over_stuck_stopline =
       util::isOverTargetIndex(*path, closest_idx, current_pose, stuck_line_idx) &&
-      dist_stuck_stopline > eps;
+      dist_stuck_stopline > planner_param_.stop_overshoot_margin;
     if (is_stuck && !is_over_stuck_stopline) {
       stop_line_idx_final = stuck_line_idx;
-      pass_judge_line_idx_final = stuck_line_idx;
     } else if (
       ((is_stuck && is_over_stuck_stopline) || has_collision) && stop_lines_idx_opt.has_value()) {
       stop_line_idx_final = stop_lines_idx_opt.value().stop_line;
-      pass_judge_line_idx_final = stop_lines_idx_opt.value().pass_judge_line;
     }
   }
 
@@ -243,13 +238,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
     debug_data_.stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx_final, base_link2front, *path);
-    debug_data_.stop_point_pose = path->points.at(stop_line_idx_final).point.pose;
-    debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx_final).point.pose;
 
     // Get stop point and stop factor
     {
       tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = debug_data_.stop_point_pose;
+      stop_factor.stop_pose = path->points.at(stop_line_idx_final).point.pose;
       const auto stop_factor_conflict =
         planning_utils::toRosPoints(debug_data_.conflicting_targets);
       const auto stop_factor_stuck = planning_utils::toRosPoints(debug_data_.stuck_targets);
@@ -317,8 +310,6 @@ bool IntersectionModule::checkCollision(
   lanelet::utils::query::getClosestLanelet(
     ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point),
     &closest_lanelet);
-
-  debug_data_.ego_lane_polygon = toGeomPoly(ego_poly);
 
   /* extract target objects */
   autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
