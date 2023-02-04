@@ -16,6 +16,7 @@
     - source: .github/workflows/sync-files.yaml
     - source: .clang-format
     - source: .clang-tidy
+    - source: .fdignore
     - source: .gitignore
     - source: .markdownlint.yaml
     - source: .pre-commit-config.yaml
@@ -23,6 +24,7 @@
     - source: .pre-commit-config-optional.yaml
     - source: .prettierignore
     - source: .prettierrc.yaml
+    - source: .rgignore
     - source: .shellcheckrc
     - source: .yamllint.yaml
     - source: CPPLINT.cfg
