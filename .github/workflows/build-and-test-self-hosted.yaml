@@ -32,6 +32,11 @@ jobs:
         id: get-self-packages
         uses: autowarefoundation/autoware-github-actions/get-self-packages@v1
 
+      - name: Set CUDA path
+        id: set-cuda-path
+        if: matrix.container-suffix == '-cuda'
+        uses: autowarefoundation/autoware-github-actions/set-cuda-path@v1
+
       - name: Build
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/colcon-build@v1
