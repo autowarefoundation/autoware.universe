@@ -38,6 +38,30 @@
 
 namespace map_based_prediction
 {
+
+/**
+ * @brief First order Low pass filtering
+ *
+ * @param prev_y previous filtered value
+ * @param prev_x previous input value
+ * @param x current input value
+ * @param cutoff_freq  cutoff frequency in Hz not rad/s (1/s)
+ * @param sampling_time  sampling time of discrete system (s)
+ *
+ * @return double current filtered value
+ */
+double FirstOrderLowpassFilter(
+  const double prev_y, const double prev_x, const double x, const double cutoff_freq = 0.1,
+  const double sampling_time = 0.1)
+{
+  // Eq:  yn = a yn-1 + b (xn-1 + xn)
+  const double wt = 2.0 * M_PI * cutoff_freq * sampling_time;
+  const double a = (2.0 - wt) / (2.0 + wt);
+  const double b = wt / (2.0 + wt);
+
+  return a * prev_y + b * (prev_x + x);
+}
+
 lanelet::ConstLanelets getLanelets(const map_based_prediction::LaneletsData & data)
 {
   lanelet::ConstLanelets lanelets;
@@ -254,13 +278,8 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter("sigma_yaw_angle_deg", 5.0);
   object_buffer_time_length_ = declare_parameter("object_buffer_time_length", 2.0);
   history_time_length_ = declare_parameter("history_time_length", 1.0);
-  dist_ratio_threshold_to_left_bound_ =
-    declare_parameter("dist_ratio_threshold_to_left_bound", -0.5);
-  dist_ratio_threshold_to_right_bound_ =
-    declare_parameter("dist_ratio_threshold_to_right_bound", 0.5);
-  diff_dist_threshold_to_left_bound_ = declare_parameter("diff_dist_threshold_to_left_bound", 0.29);
-  diff_dist_threshold_to_right_bound_ =
-    declare_parameter("diff_dist_threshold_to_right_bound", -0.29);
+  dist_threshold_to_bound_ = 1.0;  // 1m
+  time_threshold_to_bound_ = 5.0;  // 5 sec
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
 
   path_generator_ = std::make_shared<PathGenerator>(
@@ -822,6 +841,12 @@ void MapBasedPredictionNode::updateObjectsHistory(
   single_object_data.time_delay = std::fabs((this->get_clock()->now() - header.stamp).seconds());
   single_object_data.twist = object.kinematics.twist_with_covariance.twist;
 
+  // These values are initialized later
+  single_object_data.left_lateral_velocity = 0.0;
+  single_object_data.right_lateral_velocity = 0.0;
+  single_object_data.filtered_left_lateral_velocity = 0.0;
+  single_object_data.filtered_right_lateral_velocity = 0.0;
+
   if (objects_history_.count(object_id) == 0) {
     // New Object(Create a new object in object histories)
     std::deque<ObjectData> object_data = {single_object_data};
@@ -901,11 +926,12 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
     return Maneuver::LANE_FOLLOW;
   }
 
-  const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
+  std::deque<ObjectData> & object_info = objects_history_.at(object_id);
   const double current_time = (this->get_clock()->now()).seconds();
 
   // Step2. Get the previous id
-  int prev_id = static_cast<int>(object_info.size()) - 1;
+  const int current_id = static_cast<int>(object_info.size());
+  int prev_id = current_id - 1;
   while (prev_id >= 0) {
     const double prev_time_delay = object_info.at(prev_id).time_delay;
     const double prev_time =
@@ -960,8 +986,15 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
     }
   }
 
+  // update current_info to calc filtered lateral velocity
+  auto & current_info = object_info.at(static_cast<size_t>(current_id));
   if (has_lane_changed) {
     return Maneuver::LANE_FOLLOW;
+    // do not update velocity and skip filtering
+    current_info.left_lateral_velocity = prev_info.left_lateral_velocity;
+    current_info.right_lateral_velocity = prev_info.right_lateral_velocity;
+    current_info.filtered_left_lateral_velocity = prev_info.filtered_left_lateral_velocity;
+    current_info.filtered_right_lateral_velocity = prev_info.filtered_right_lateral_velocity;
   }
 
   // Step5. Lane Change Detection
@@ -969,29 +1002,55 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const lanelet::ConstLineString2d prev_right_bound = prev_lanelet.rightBound2d();
   const lanelet::ConstLineString2d current_left_bound = current_lanelet.leftBound2d();
   const lanelet::ConstLineString2d current_right_bound = current_lanelet.rightBound2d();
-  const double prev_left_dist = calcLeftLateralOffset(prev_left_bound, prev_pose);
-  const double prev_right_dist = calcRightLateralOffset(prev_right_bound, prev_pose);
-  const double current_left_dist = calcLeftLateralOffset(current_left_bound, current_pose);
-  const double current_right_dist = calcRightLateralOffset(current_right_bound, current_pose);
-  const double prev_lane_width = std::fabs(prev_left_dist) + std::fabs(prev_right_dist);
-  const double current_lane_width = std::fabs(current_left_dist) + std::fabs(current_right_dist);
+  const double prev_left_dist = std::fabs(calcLeftLateralOffset(prev_left_bound, prev_pose));
+  const double prev_right_dist = std::fabs(calcRightLateralOffset(prev_right_bound, prev_pose));
+  const double current_left_dist =
+    std::fabs(calcLeftLateralOffset(current_left_bound, current_pose));
+  const double current_right_dist =
+    std::fabs(calcRightLateralOffset(current_right_bound, current_pose));
+  const double prev_lane_width = prev_left_dist + prev_right_dist;
+  const double current_lane_width = current_left_dist + current_right_dist;
   if (prev_lane_width < 1e-3 || current_lane_width < 1e-3) {
     RCLCPP_ERROR(get_logger(), "[Map Based Prediction]: Lane Width is too small");
     return Maneuver::LANE_FOLLOW;
+    // do not update velocity and skip filtering
+    current_info.left_lateral_velocity = prev_info.left_lateral_velocity;
+    current_info.right_lateral_velocity = prev_info.right_lateral_velocity;
+    current_info.filtered_left_lateral_velocity = prev_info.filtered_left_lateral_velocity;
+    current_info.filtered_right_lateral_velocity = prev_info.filtered_right_lateral_velocity;
   }
 
-  const double current_left_dist_ratio = current_left_dist / current_lane_width;
-  const double current_right_dist_ratio = current_right_dist / current_lane_width;
-  const double diff_left_current_prev = current_left_dist - prev_left_dist;
-  const double diff_right_current_prev = current_right_dist - prev_right_dist;
+  // 5-1. calc lateral velocity
+  const double epsilon = 1e-9;
+  const double dt = current_info.header.stamp.sec - prev_info.header.stamp.sec + epsilon;
+  current_info.left_lateral_velocity = (current_left_dist - prev_left_dist) / dt;
+  current_info.right_lateral_velocity = (current_right_dist - prev_right_dist) / dt;
+  // low pass filtering with 0.1 Hz cutoff and 10Hz sampling
+  current_info.filtered_left_lateral_velocity = FirstOrderLowpassFilter(
+    prev_info.filtered_left_lateral_velocity, prev_info.left_lateral_velocity,
+    current_info.left_lateral_velocity);
+  current_info.filtered_right_lateral_velocity = FirstOrderLowpassFilter(
+    prev_info.filtered_right_lateral_velocity, prev_info.right_lateral_velocity,
+    current_info.right_lateral_velocity);
 
+  // 5-2. check time to reach left/right bound
+  const double margin_to_reach_left_bound =
+    std::fabs(current_left_dist / current_info.filtered_left_lateral_velocity);
+  const double margin_to_reach_right_bound =
+    std::fabs(current_right_dist / current_info.filtered_right_lateral_velocity);
+
+  // 5-3. detect lane change
   if (
-    current_left_dist_ratio > dist_ratio_threshold_to_left_bound_ &&
-    diff_left_current_prev > diff_dist_threshold_to_left_bound_) {
+    current_left_dist < current_right_dist &&              // in left side
+    current_left_dist < dist_threshold_to_bound_ &&        // close to boundary
+    margin_to_reach_left_bound < time_threshold_to_bound_  // will soon arrive to left bound
+  ) {
     return Maneuver::LEFT_LANE_CHANGE;
   } else if (
-    current_right_dist_ratio < dist_ratio_threshold_to_right_bound_ &&
-    diff_right_current_prev < diff_dist_threshold_to_right_bound_) {
+    current_right_dist < current_left_dist &&               // in right side
+    current_right_dist < dist_threshold_to_bound_ &&        // close to boundary
+    margin_to_reach_right_bound < time_threshold_to_bound_  // will soon arrive to left bound
+  ) {
     return Maneuver::RIGHT_LANE_CHANGE;
   }
 

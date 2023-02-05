@@ -57,6 +57,11 @@ struct ObjectData
   geometry_msgs::msg::Pose pose;
   geometry_msgs::msg::Twist twist;
   double time_delay;
+  // for lane change prediction
+  double filtered_left_lateral_velocity;
+  double filtered_right_lateral_velocity;
+  double left_lateral_velocity;
+  double right_lateral_velocity;
 };
 
 enum class Maneuver {
@@ -133,10 +138,8 @@ private:
   double sigma_yaw_angle_deg_;
   double object_buffer_time_length_;
   double history_time_length_;
-  double dist_ratio_threshold_to_left_bound_;
-  double dist_ratio_threshold_to_right_bound_;
-  double diff_dist_threshold_to_left_bound_;
-  double diff_dist_threshold_to_right_bound_;
+  double dist_threshold_to_bound_;
+  double time_threshold_to_bound_;
   double reference_path_resolution_;
 
   // Stop watch
