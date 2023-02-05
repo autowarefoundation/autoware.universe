@@ -32,6 +32,9 @@ private:
   void on_pvtgeodetic(const PVTGeodetic & src)
   {
     auto rad_to_deg = [](double rad) -> double { return rad * 180 / M_PI; };
+    if (src.mode == 0) {
+      return;
+    }
 
     NavPVT dst = common::stamp_to_ublox_time(src.header.stamp);
     dst.vel_n = src.vn;
@@ -39,7 +42,18 @@ private:
     dst.vel_d = -src.vu;
     dst.lat = rad_to_deg(src.latitude) * 1e7;
     dst.lon = rad_to_deg(src.longitude) * 1e7;
-    dst.flags = NavPVT::FLAGS_GNSS_FIX_OK;
+
+    // NOTE:
+    // https://github.com/tier4/septentrio_gnss_driver/blob/tier4/ros2/septentrio_gnss_driver/src/septentrio_gnss_driver/communication/rx_message.cpp#L53-L65
+    // https://github.com/KumarRobotics/ublox/blob/4f107f3b82135160a1aca3ef0689fd119199bbef/ublox_msgs/msg/NavPVT.msg#L45-L62
+    if (src.mode == 4) {
+      dst.flags = NavPVT::FLAGS_GNSS_FIX_OK + NavPVT::CARRIER_PHASE_FIXED;
+    } else if (src.mode == 5) {
+      dst.flags = NavPVT::FLAGS_GNSS_FIX_OK + NavPVT::CARRIER_PHASE_FLOAT;
+    } else {
+      dst.flags = NavPVT::FLAGS_GNSS_FIX_OK;
+    }
+
     dst.height = src.height;
     pub_navpvt_->publish(dst);
   }
