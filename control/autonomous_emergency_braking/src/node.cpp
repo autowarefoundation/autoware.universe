@@ -54,6 +54,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   // Publisher
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
+  debug_ego_predicted_path_publisher_ =
+    this->create_publisher<Marker>("~/debug/ego_predicted_path", 1);
 
   // Diagnostics
   updater_.setHardwareID("autonomous_emergency_braking");
@@ -69,6 +71,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   t_response_ = declare_parameter<double>("t_response", 1.0);
   a_ego_min_ = declare_parameter<double>("a_ego_min", -3.0);
   a_obj_min_ = declare_parameter<double>("a_obj_min", -1.0);
+  prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon", 1.0);
+  prediction_time_interval_ = declare_parameter<double>("prediction_time_interval", 0.1);
 
   // start time
   const double aeb_hz = declare_parameter<double>("aeb_hz", 10.0);
@@ -182,18 +186,19 @@ bool AEB::checkCollision()
   const double current_w =
     use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
 
-  // step3. create ego trajectory
-  std::vector<geometry_msgs::msg::Pose> ego_traj;
-  generateEgoTrajectory(current_v, current_w, ego_traj);
+  // step3. create ego path
+  std::vector<geometry_msgs::msg::Pose> ego_path;
+  generateEgoPath(current_v, current_w, ego_path);
+  publishEgoPath(ego_path);
 
   // check if the predicted path has valid number of points
-  if (ego_traj.size() < 2) {
+  if (ego_path.size() < 2) {
     return false;
   }
 
   // step4. create object
   std::vector<ObjectData> objects;
-  createObjectData(ego_traj, objects);
+  createObjectData(ego_path, objects);
 
   // step5. calculate time to collision(RSS)
   const double & t = t_response_;
@@ -211,8 +216,8 @@ bool AEB::checkCollision()
   return false;
 }
 
-void AEB::generateEgoTrajectory(
-  const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & trajectory)
+void AEB::generateEgoPath(
+  const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path)
 {
   double curr_x = 0.0;
   double curr_y = 0.0;
@@ -220,11 +225,11 @@ void AEB::generateEgoTrajectory(
   geometry_msgs::msg::Pose ini_pose;
   ini_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
   ini_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
-  trajectory.push_back(ini_pose);
+  path.push_back(ini_pose);
 
   constexpr double epsilon = 1e-6;
-  constexpr double dt = 0.1;
-  constexpr double horizon = 3.0;
+  const double & dt = prediction_time_interval_;
+  const double & horizon = prediction_time_horizon_;
   for (double t = 0.0; t < horizon + epsilon; t += dt) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
@@ -232,15 +237,15 @@ void AEB::generateEgoTrajectory(
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
-    if (tier4_autoware_utils::calcDistance2d(trajectory.back(), current_pose) < 1e-3) {
+    if (tier4_autoware_utils::calcDistance2d(path.back(), current_pose) < 1e-3) {
       continue;
     }
-    trajectory.push_back(current_pose);
+    path.push_back(current_pose);
   }
 }
 
 void AEB::createObjectData(
-  const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects)
+  const std::vector<geometry_msgs::msg::Pose> & ego_path, std::vector<ObjectData> & objects)
 {
   const double lateral_dist_threshold = vehicle_info_.vehicle_width_m / 2.0 + lateral_offset_;
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
@@ -250,13 +255,51 @@ void AEB::createObjectData(
     obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
     obj.velocity = 0.0;
     obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
-    obj.lon_dist = motion_utils::calcSignedArcLength(ego_traj, 0, obj.position);
-    obj.lat_dist = motion_utils::calcLateralOffset(ego_traj, obj.position);
+    obj.lon_dist = motion_utils::calcSignedArcLength(ego_path, 0, obj.position);
+    obj.lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
     if (obj.lon_dist < 0.0 || obj.lat_dist > lateral_dist_threshold) {
       continue;
     }
     objects.push_back(obj);
   }
+}
+
+void AEB::publishEgoPath(const std::vector<geometry_msgs::msg::Pose> & path)
+{
+  // marker parameter
+  constexpr double scale_x = 0.2;
+  constexpr double scale_y = 0.2;
+  constexpr double scale_z = 0.2;
+  constexpr double color_r = 0.0 / 256.0;
+  constexpr double color_g = 148.0 / 256.0;
+  constexpr double color_b = 205.0 / 256.0;
+  constexpr double color_a = 0.999;
+
+  const auto current_time = this->get_clock()->now();
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, "ego_predicted_path", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  marker.points.resize(path.size());
+
+  // transform to map
+  geometry_msgs::msg::TransformStamped transform_stamped{};
+  try {
+    transform_stamped = tf_buffer_.lookupTransform(
+      "map", "base_link", current_time, rclcpp::Duration::from_seconds(0.5));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
+    return;
+  }
+
+  for (size_t i = 0; i < path.size(); ++i) {
+    const auto & pose = path.at(i);
+    geometry_msgs::msg::Pose map_pose;
+    tf2::doTransform(pose, map_pose, transform_stamped);
+    marker.points.at(i) = map_pose.position;
+  }
+
+  debug_ego_predicted_path_publisher_->publish(marker);
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking

@@ -24,6 +24,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/optional.hpp>
 
@@ -50,6 +51,8 @@ using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using vehicle_info_util::VehicleInfo;
+using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
 
 struct ObjectData
 {
@@ -73,6 +76,7 @@ public:
 
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
+  rclcpp::Publisher<Marker>::SharedPtr debug_ego_predicted_path_publisher_;  // debug
 
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -90,10 +94,12 @@ public:
   void onCheckCollision(DiagnosticStatusWrapper & stat);
   bool checkCollision();
 
-  void generateEgoTrajectory(
-    const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & trajectory);
+  void generateEgoPath(
+    const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path);
   void createObjectData(
     const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects);
+
+  void publishEgoPath(const std::vector<geometry_msgs::msg::Pose> & path);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
@@ -119,6 +125,8 @@ public:
   double t_response_{0.0};
   double a_ego_min_{0.0};
   double a_obj_min_{0.0};
+  double prediction_time_horizon_;
+  double prediction_time_interval_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

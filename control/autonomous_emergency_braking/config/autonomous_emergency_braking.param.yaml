@@ -9,3 +9,5 @@
     t_response: 1.0
     a_ego_min: -3.0
     a_obj_min: -1.0
+    prediction_time_horizon: 1.0
+    prediction_time_interval: 0.1
