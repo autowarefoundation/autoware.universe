@@ -111,6 +111,14 @@ public:
 
   // member variables
   bool use_imu_data_{false};
+  double voxel_grid_x_{0.0};
+  double voxel_grid_y_{0.0};
+  double voxel_grid_z_{0.0};
+  double lateral_offset_{0.0};
+  double longitudinal_offset_{0.0};
+  double t_response_{0.0};
+  double a_ego_min_{0.0};
+  double a_obj_min_{0.0};
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

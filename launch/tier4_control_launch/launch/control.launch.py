@@ -59,6 +59,8 @@ def launch_setup(context, *args, **kwargs):
         LaunchConfiguration("obstacle_collision_checker_param_path").perform(context), "r"
     ) as f:
         obstacle_collision_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("aeb_param_path").perform(context), "r") as f:
+        aeb_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     controller_component = ComposableNode(
         package="trajectory_follower_node",
@@ -136,6 +138,9 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/velocity", "/vehicle/status/velocity_status"),
             ("~/input/imu", "/sensing/imu/imu_data"),
             ("~/input/odometry", "/localization/kinematic_state"),
+        ],
+        parameters=[
+            aeb_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -319,6 +324,7 @@ def generate_launch_description():
     add_launch_arg("shift_decider_param_path")
     add_launch_arg("obstacle_collision_checker_param_path")
     add_launch_arg("external_cmd_selector_param_path")
+    add_launch_arg("aeb_param_path")
 
     # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")

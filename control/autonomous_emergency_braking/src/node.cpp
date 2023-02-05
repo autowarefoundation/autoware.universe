@@ -60,11 +60,19 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
 
   // parameter
-  use_imu_data_ = false;
+  use_imu_data_ = declare_parameter<bool>("use_imu_data", false);
+  voxel_grid_x_ = declare_parameter<double>("voxel_grid_x", 0.05);
+  voxel_grid_y_ = declare_parameter<double>("voxel_grid_y", 0.05);
+  voxel_grid_z_ = declare_parameter<double>("voxel_grid_z", 100000.0);
+  lateral_offset_ = declare_parameter<double>("lateral_offset", 1.0);
+  longitudinal_offset_ = declare_parameter<double>("longitudinal_offset", 1.0);
+  t_response_ = declare_parameter<double>("t_response", 1.0);
+  a_ego_min_ = declare_parameter<double>("a_ego_min", -3.0);
+  a_obj_min_ = declare_parameter<double>("a_obj_min", -1.0);
 
-  // start timer
-  const auto planning_hz = 10.0;  // declare_parameter("planning_hz", 10.0);
-  const auto period_ns = rclcpp::Rate(planning_hz).period();
+  // start time
+  const double aeb_hz = declare_parameter<double>("aeb_hz", 10.0);
+  const auto period_ns = rclcpp::Rate(aeb_hz).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
 
@@ -109,13 +117,10 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
     pcl::fromROSMsg(transformed_points, *pointcloud_ptr);
   }
 
-  constexpr double voxel_grid_x = 0.05;
-  constexpr double voxel_grid_y = 0.05;
-  constexpr double voxel_grid_z = 100000.0;
   pcl::VoxelGrid<pcl::PointXYZ> filter;
   PointCloud::Ptr no_height_filtered_pointcloud_ptr(new PointCloud);
   filter.setInputCloud(pointcloud_ptr);
-  filter.setLeafSize(voxel_grid_x, voxel_grid_y, voxel_grid_z);
+  filter.setLeafSize(voxel_grid_x_, voxel_grid_y_, voxel_grid_z_);
   filter.filter(*no_height_filtered_pointcloud_ptr);
 
   obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
@@ -191,15 +196,13 @@ bool AEB::checkCollision()
   createObjectData(ego_traj, objects);
 
   // step5. calculate time to collision(RSS)
-  const double t_rss = 5.0;
-  const double a_min = -3.0;
-  const double a_obj_min = -1.0;
-  const double safe_buffer = 2.0;
+  const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
-    const double rss_dist = current_v * t_rss + current_v * current_v / (2 * std::fabs(a_min)) -
-                            obj_v * obj_v / (2 * std::fabs(a_obj_min)) + safe_buffer;
-    if (obj.lon_dist < rss_dist) {
+    const double rss_dist = current_v * t + current_v * current_v / (2 * std::fabs(a_ego_min_)) -
+                            obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
+    const double dist_ego_to_object = obj.lon_dist - vehicle_info_.max_longitudinal_offset_m;
+    if (dist_ego_to_object < rss_dist) {
       // collision happens
       return true;
     }
@@ -239,7 +242,7 @@ void AEB::generateEgoTrajectory(
 void AEB::createObjectData(
   const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects)
 {
-  const double lateral_dist_threshold = vehicle_info_.vehicle_width_m / 2.0 + 1.0;
+  const double lateral_dist_threshold = vehicle_info_.vehicle_width_m / 2.0 + lateral_offset_;
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
   for (const auto & point : obstacle_points_ptr->points) {
