@@ -248,6 +248,7 @@ void AEB::createObjectData(
   const std::vector<geometry_msgs::msg::Pose> & ego_path, std::vector<ObjectData> & objects)
 {
   const double lateral_dist_threshold = vehicle_info_.vehicle_width_m / 2.0 + lateral_offset_;
+  const double path_length = motion_utils::calcArcLength(ego_path);
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
   for (const auto & point : obstacle_points_ptr->points) {
@@ -257,7 +258,9 @@ void AEB::createObjectData(
     obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
     obj.lon_dist = motion_utils::calcSignedArcLength(ego_path, 0, obj.position);
     obj.lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
-    if (obj.lon_dist < 0.0 || obj.lat_dist > lateral_dist_threshold) {
+    if (obj.lon_dist < 0.0 || obj.lon_dist > path_length || obj.lat_dist > lateral_dist_threshold) {
+      // ignore objects that are behind the base link and ahead of the end point of the path
+      // or outside of the lateral distance
       continue;
     }
     objects.push_back(obj);
