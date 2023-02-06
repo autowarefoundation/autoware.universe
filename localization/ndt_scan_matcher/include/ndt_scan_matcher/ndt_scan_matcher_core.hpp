@@ -18,6 +18,7 @@
 #define FMT_HEADER_ONLY
 
 #include "ndt_scan_matcher/map_module.hpp"
+#include "ndt_scan_matcher/map_update_module.hpp"
 #include "ndt_scan_matcher/pose_initialization_module.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 
@@ -34,8 +35,8 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
+#include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
-#include <pclomp/ndt_omp.h>
 #include <tf2/transform_datatypes.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -71,7 +72,7 @@ class NDTScanMatcher : public rclcpp::Node
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
-    pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
 
 public:
   NDTScanMatcher();
@@ -107,7 +108,7 @@ private:
     const bool is_converged);
   void publish_point_cloud(
     const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
-    const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr);
+    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr);
   void publish_marker(
     const rclcpp::Time & sensor_ros_time, const std::vector<geometry_msgs::msg::Pose> & pose_array);
   void publish_initial_to_result_distances(
@@ -134,6 +135,7 @@ private:
     regularization_pose_sub_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr no_ground_points_aligned_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_covariance_pub_;
@@ -143,6 +145,10 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     nearest_voxel_transformation_likelihood_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
+    no_ground_transform_probability_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
+    no_ground_nearest_voxel_transformation_likelihood_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     initial_to_result_distance_pub_;
@@ -195,6 +201,10 @@ private:
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
+  std::unique_ptr<MapUpdateModule> map_update_module_;
+
+  bool estimate_scores_for_degrounded_scan_;
+  double z_margin_for_ground_removal_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

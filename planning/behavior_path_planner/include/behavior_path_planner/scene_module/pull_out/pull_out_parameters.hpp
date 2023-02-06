@@ -17,6 +17,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_PARAMETERS_HPP_
 
 #include <string>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -26,18 +27,18 @@ struct PullOutParameters
   double th_stopped_velocity;
   double th_stopped_time;
   double collision_check_margin;
-  double pull_out_finish_judge_buffer;
+  double collision_check_distance_from_end;
   // shift pull out
   bool enable_shift_pull_out;
   double shift_pull_out_velocity;
   int pull_out_sampling_num;
-  double before_pull_out_straight_distance;
   double minimum_shift_pull_out_distance;
   double maximum_lateral_jerk;
   double minimum_lateral_jerk;
   double deceleration_interval;
   // geometric pull out
   bool enable_geometric_pull_out;
+  bool divide_pull_out_path;
   double geometric_pull_out_velocity;
   double arc_path_interval;
   double lane_departure_margin;
@@ -49,9 +50,11 @@ struct PullOutParameters
   double max_back_distance;
   double backward_search_resolution;
   double backward_path_update_duration;
+  double ignore_distance_from_lane_end;
   // drivable area expansion
   double drivable_area_right_bound_offset;
   double drivable_area_left_bound_offset;
+  std::vector<std::string> drivable_area_types_to_skip;
 };
 
 }  // namespace behavior_path_planner

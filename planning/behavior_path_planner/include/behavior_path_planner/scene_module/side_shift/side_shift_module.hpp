@@ -26,6 +26,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -33,6 +34,8 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_planning_msgs::msg::LateralOffset;
+
+enum class SideShiftStatus { STOP = 0, BEFORE_SHIFT, SHIFTING, AFTER_SHIFT };
 
 struct SideShiftParameters
 {
@@ -48,6 +51,7 @@ struct SideShiftParameters
   // drivable area expansion
   double drivable_area_right_bound_offset;
   double drivable_area_left_bound_offset;
+  std::vector<std::string> drivable_area_types_to_skip;
 };
 
 class SideShiftModule : public SceneModuleInterface
@@ -87,7 +91,7 @@ private:
 
   ShiftLine calcShiftLine() const;
 
-  bool addShiftLine();
+  void replaceShiftLine();
 
   // const methods
   void publishPath(const PathWithLaneId & path) const;
@@ -100,8 +104,17 @@ private:
   lanelet::ConstLanelets current_lanelets_;
   SideShiftParameters parameters_;
 
-  // Current lateral offset to shift the reference path.
-  double lateral_offset_{0.0};
+  // Requested lateral offset to shift the reference path.
+  double requested_lateral_offset_{0.0};
+
+  // Inserted lateral offset to shift the reference path.
+  double inserted_lateral_offset_{0.0};
+
+  // Inserted shift lines in the path
+  ShiftLine inserted_shift_line_;
+
+  // Shift status
+  SideShiftStatus shift_status_;
 
   // Flag to check lateral offset change is requested
   bool lateral_offset_change_request_{false};
@@ -115,10 +128,10 @@ private:
   ShiftLine prev_shift_line_;
 
   // NOTE: this function is ported from avoidance.
-  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  inline PoseStamped getEgoPose() const { return *(planner_data_->self_pose); }
+  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+  inline Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
   PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
+    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
 };

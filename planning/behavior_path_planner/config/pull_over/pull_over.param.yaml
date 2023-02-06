@@ -19,6 +19,7 @@
       longitudinal_margin: 3.0
       max_lateral_offset: 1.0
       lateral_offset_interval: 0.25
+      ignore_distance_from_lane_start: 15.0
       # occupancy grid map
       use_occupancy_grid: true
       use_occupancy_grid_for_longitudinal_margin: false
@@ -35,7 +36,6 @@
       minimum_lateral_jerk: 0.5
       deceleration_interval: 15.0
       after_pull_over_straight_distance: 5.0
-      before_pull_over_straight_distance: 5.0
       # parallel parking path
       enable_arc_forward_parking: true
       enable_arc_backward_parking: true

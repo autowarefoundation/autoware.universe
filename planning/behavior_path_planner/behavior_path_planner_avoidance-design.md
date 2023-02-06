@@ -181,6 +181,7 @@ The avoidance target should be limited to stationary objects (you should not avo
   - User can limit avoidance targets (e.g. do not avoid unknown-class targets).
 - It is not being in the center of the route
   - This means that the vehicle is parked on the edge of the lane. This prevents the vehicle from avoiding a vehicle waiting at a traffic light in the middle of the lane. However, this is not an appropriate implementation for the purpose. Even if a vehicle is in the center of the lane, it should be avoided if it has its hazard lights on, and this is a point that should be improved in the future as the recognition performance improves.
+- Object is not behind ego(default: > -`2.0 m`) or too far(default: < `150.0 m`) and object is not behind the path goal.
 
 ![fig1](./image/avoidance_design/target_vehicle_selection.drawio.svg)
 
@@ -193,11 +194,20 @@ In order to prevent chattering of recognition results, once an obstacle is targe
 The lateral shift length is affected by 4 variables, namely `lateral_collision_safety_buffer`, `lateral_collision_margin`, `vehicle_width` and `overhang_distance`. The equation is as follows
 
 ```C++
-max_allowable_lateral_distance = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
-shift_length = max_allowable_lateral_distance - overhang_distance
+avoid_margin = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
+max_allowable_lateral_distance = to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width
+if(isOnRight(o))
+{
+  shift_length = avoid_margin + overhang_distance
+}
+else
+{
+  shift_length = avoid_margin - overhang_distance
+}
 ```
 
-The following figure illustrates these variables.
+The following figure illustrates these variables(This figure just shows the max value of lateral shift length).
+
 ![shift_point_and_its_constraints](./image/avoidance_design/avoidance_module-shift_point_and_its_constraints.drawio.png)
 
 ##### Rationale of having safety buffer and safety margin
@@ -222,11 +232,28 @@ These elements are used to compute the distance from the object to the road's sh
 
 ![obstacle_to_road_shoulder_distance](./image/avoidance_design/obstacle_to_road_shoulder_distance.drawio.svg)
 
-If the following condition is `false`, then the shift point will not be generated.
+If one of the following conditions is `false`, then the shift point will not be generated.
+
+- The distance to shoulder of road is enough
 
 ```C++
-max_allowable_lateral_distance <= (to_road_shoulder_distance - 0.5 * vehicle_width - road_shoulder_safety_margin)
+avoid_margin = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
+avoid_margin <= (to_road_shoulder_distance - 0.5 * vehicle_width - road_shoulder_safety_margin)
 ```
+
+- The obstacle intrudes into the current driving path.
+
+  - when the object is on right of the path
+
+    ```C++
+    -overhang_dist<(lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width)
+    ```
+
+  - when the object is on left of the path
+
+    ```C++
+    overhang_dist<(lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width)
+    ```
 
 ##### Flow-chart of the process
 
@@ -275,7 +302,7 @@ distance from overhang_pose
 to left most linestring
 end note
 else(\n no)
-partition getrightMostLineString() {
+partition getRightMostLineString() {
 repeat
 repeat
 :getRightLanelet;
@@ -322,6 +349,8 @@ if(isOnRight(object)?) then (yes)
 else (\n No)
 :shift_length = std::max(object.overhang_dist - avoid_margin);
 endif
+if(isSameDirectionShift(isOnRight(object),shift_length)?) then (no)
+stop
 endif
 }
 stop
@@ -422,6 +451,7 @@ The avoidance specific parameter configuration file can be located at `src/autow
 | enable_avoidance_over_same_direction       | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.                          | true          |
 | enable_avoidance_over_opposite_direction   | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has opposite direction. `enable_avoidance_over_same_direction` must be `true` to take effects | true          |
 | enable_update_path_when_object_is_gone     | [-]    | bool   | Reset trajectory when avoided objects are gone. If false, shifted path points remain same even though the avoided objects are gone.              | false         |
+| enable_bound_clipping                      | `true` | bool   | Enable clipping left and right bound of drivable area when obstacles are in the drivable area                                                    | false         |
 
 (\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 
@@ -512,25 +542,3 @@ To print the debug message, just run the following
 ```bash
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
 ```
-
-### Visualizing drivable area boundary
-
-Sometimes, the developers might get a different result between two maps that may look identical during visual inspection.
-
-For example, in the same area, one can perform avoidance and another cannot. This might be related to the drivable area issues due to the non-compliance vector map design from the user.
-
-To debug the issue, the drivable area boundary can be visualized.
-
-![drivable_area_boundary_marker1](./image/avoidance_design/drivable_area_boundary_marker_example1.png)
-
-![drivable_area_boundary_marker2](./image/avoidance_design/drivable_area_boundary_marker_example2.png)
-
-The boundary can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_boundary`
-
-### Visualizing drivable area
-
-The drivable area can be visualize by adding the drivable area plugin
-
-![drivable_area_plugin](./image/drivable_area_plugin.png)
-
-and then add `/planning/scenario_planning/lane_driving/behavior_planning/path` as the topic.

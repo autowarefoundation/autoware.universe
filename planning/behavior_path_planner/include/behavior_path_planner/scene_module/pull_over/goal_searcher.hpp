@@ -18,12 +18,16 @@
 #include "behavior_path_planner/scene_module/pull_over/goal_searcher_base.hpp"
 #include "behavior_path_planner/scene_module/utils/occupancy_grid_based_collision_detector.hpp"
 
+#include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
+
 #include <memory>
 #include <vector>
 
 namespace behavior_path_planner
 {
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using tier4_autoware_utils::LinearRing2d;
+using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
 class GoalSearcher : public GoalSearcherBase
 {
@@ -32,12 +36,17 @@ public:
     const PullOverParameters & parameters, const LinearRing2d & vehicle_footprint,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map);
 
-  std::vector<GoalCandidate> search(const Pose & original_goal_pose) override;
+  GoalCandidates search(const Pose & original_goal_pose) override;
+  void update(GoalCandidates & goal_candidates) const override;
+
+private:
+  void createAreaPolygons(std::vector<Pose> original_search_poses);
   bool checkCollision(const Pose & pose) const;
   bool checkCollisionWithLongitudinalDistance(
     const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
+  BasicPolygons2d getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
+  bool isInAreas(const LinearRing2d & footprint, const BasicPolygons2d & areas) const;
 
-private:
   LinearRing2d vehicle_footprint_{};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_{};
 };

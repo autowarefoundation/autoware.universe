@@ -36,6 +36,8 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
     node.declare_parameter(ns + ".ignore_width_from_center_line", 1.0);
   planner_param_.max_future_movement_time =
     node.declare_parameter(ns + ".max_future_movement_time", 10.0);
+  planner_param_.threshold_yaw_diff =
+    node.declare_parameter(ns + ".threshold_yaw_diff", M_PI / 6.0);
 }
 
 void BlindSpotModuleManager::launchNewModules(
@@ -43,7 +45,7 @@ void BlindSpotModuleManager::launchNewModules(
 {
   for (const auto & ll : planning_utils::getLaneletsOnPath(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
-         planner_data_->current_pose.pose)) {
+         planner_data_->current_odometry->pose)) {
     const auto lane_id = ll.id();
     const auto module_id = lane_id;
 
@@ -71,7 +73,7 @@ BlindSpotModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return lane_id_set.count(scene_module->getModuleId()) == 0;

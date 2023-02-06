@@ -39,6 +39,12 @@ std::string getModuleName(const uint8_t module_type)
     case Module::LANE_CHANGE_RIGHT: {
       return "lane_change_right";
     }
+    case Module::EXT_REQUEST_LANE_CHANGE_LEFT: {
+      return "ext_request_lane_change_left";
+    }
+    case Module::EXT_REQUEST_LANE_CHANGE_RIGHT: {
+      return "ext_request_lane_change_right";
+    }
     case Module::AVOIDANCE_LEFT: {
       return "avoidance_left";
     }
@@ -80,8 +86,10 @@ bool isPathChangeModule(const uint8_t module_type)
 {
   if (
     module_type == Module::LANE_CHANGE_LEFT || module_type == Module::LANE_CHANGE_RIGHT ||
-    module_type == Module::AVOIDANCE_LEFT || module_type == Module::AVOIDANCE_RIGHT ||
-    module_type == Module::PULL_OVER || module_type == Module::PULL_OUT) {
+    module_type == Module::EXT_REQUEST_LANE_CHANGE_LEFT ||
+    module_type == Module::EXT_REQUEST_LANE_CHANGE_RIGHT || module_type == Module::AVOIDANCE_LEFT ||
+    module_type == Module::AVOIDANCE_RIGHT || module_type == Module::PULL_OVER ||
+    module_type == Module::PULL_OUT) {
     return true;
   }
   return false;
@@ -150,6 +158,9 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     auto_modes_.emplace_back(rtc_auto_mode);
   }
   v_layout->addWidget(auto_mode_table_);
+
+  num_rtc_status_ptr_ = new QLabel("Init");
+  v_layout->addWidget(num_rtc_status_ptr_);
 
   // lateral execution
   auto * exe_path_change_layout = new QHBoxLayout;
@@ -319,6 +330,8 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
 {
   cooperate_statuses_ptr_ = std::make_shared<CooperateStatusArray>(*msg);
   rtc_table_->clearContents();
+  num_rtc_status_ptr_->setText(
+    QString::fromStdString("The Number of RTC Statuses: " + std::to_string(msg->statuses.size())));
   if (msg->statuses.empty()) return;
   // this is to stable rtc display not to occupy too much
   size_t min_display_size{5};

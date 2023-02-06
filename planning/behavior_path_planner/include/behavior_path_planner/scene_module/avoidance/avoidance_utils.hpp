@@ -85,22 +85,38 @@ Polygon2d createEnvelopePolygon(
 void getEdgePoints(
   const Polygon2d & object_polygon, const double threshold, std::vector<Point> & edge_points);
 
-void getEdgePoints(
+void getPointData(
   const std::vector<Point> & bound, const std::vector<Point> & edge_points,
-  const double lat_dist_to_path, std::vector<PolygonPoint> & edge_points_data,
-  size_t & start_segment_idx, size_t & end_segment_idx);
+  const double lat_dist_to_path, std::vector<PolygonPoint> & edge_points_data);
 
 void sortPolygonPoints(
   const std::vector<PolygonPoint> & points, std::vector<PolygonPoint> & sorted_points);
 
 std::vector<Point> updateBoundary(
-  const std::vector<Point> & original_bound, const std::vector<PolygonPoint> & points,
-  const size_t start_segment_idx, const size_t end_segment_idx);
+  const std::vector<Point> & original_bound, const std::vector<Point> & edge_points,
+  const std::vector<PolygonPoint> & sorted_points);
 
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects,
   const bool enable_bound_clipping);
+
+double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
+
+bool isCentroidWithinLanelets(
+  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
+
+lanelet::ConstLanelets getTargetLanelets(
+  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
+  const double left_offset, const double right_offset);
+
+double calcDecelDistWithJerkAndAccConstraints(
+  const double current_vel, const double target_vel, const double current_acc, const double acc_min,
+  const double jerk_acc, const double jerk_dec);
+
+void insertDecelPoint(
+  const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
+  boost::optional<Pose> & p_out);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_

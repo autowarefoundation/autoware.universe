@@ -26,6 +26,18 @@
 
 namespace behavior_velocity_planner
 {
+bool hasSameLanelet(const lanelet::ConstLanelets & lanes1, const lanelet::ConstLanelets & lanes2)
+{
+  for (const auto & lane1 : lanes1) {
+    for (const auto & lane2 : lanes2) {
+      if (lane1.id() == lane2.id()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
@@ -34,8 +46,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   ip.state_transit_margin_time = node.declare_parameter(ns + ".state_transit_margin_time", 2.0);
   ip.stop_line_margin = node.declare_parameter(ns + ".stop_line_margin", 1.0);
-  ip.keep_detection_line_margin = node.declare_parameter(ns + ".keep_detection_line_margin", 1.0);
-  ip.keep_detection_vel_thr = node.declare_parameter(ns + ".keep_detection_vel_thr", 0.833);
   ip.stuck_vehicle_detect_dist = node.declare_parameter(ns + ".stuck_vehicle_detect_dist", 3.0);
   ip.stuck_vehicle_ignore_dist = node.declare_parameter(ns + ".stuck_vehicle_ignore_dist", 5.0) +
                                  vehicle_info.max_longitudinal_offset_m;
@@ -51,12 +61,15 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.min_predicted_path_confidence =
     node.declare_parameter(ns + ".min_predicted_path_confidence", 0.05);
   ip.external_input_timeout = node.declare_parameter(ns + ".walkway.external_input_timeout", 1.0);
+  ip.minimum_ego_predicted_velocity =
+    node.declare_parameter(ns + ".minimum_ego_predicted_velocity", 1.388);
   ip.collision_start_margin_time = node.declare_parameter(ns + ".collision_start_margin_time", 5.0);
   ip.collision_end_margin_time = node.declare_parameter(ns + ".collision_end_margin_time", 2.0);
   ip.use_stuck_stopline = node.declare_parameter(ns + ".use_stuck_stopline", true);
   ip.assumed_front_car_decel = node.declare_parameter(ns + ".assumed_front_car_decel", 1.0);
   ip.enable_front_car_decel_prediction =
     node.declare_parameter(ns + ".enable_front_car_decel_prediction", false);
+  ip.stop_overshoot_margin = node.declare_parameter(ns + ".stop_overshoot_margin", 0.5);
 }
 
 MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node)
@@ -78,13 +91,13 @@ void IntersectionModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lanelets = planning_utils::getLaneletsOnPath(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
     const auto module_id = lane_id;
 
-    if (isModuleRegistered(module_id)) {
+    if (hasSameParentLaneletWithRegistered(ll)) {
       continue;
     }
 
@@ -108,7 +121,7 @@ void MergeFromPrivateModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lanelets = planning_utils::getLaneletsOnPath(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -161,23 +174,102 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 IntersectionModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
+  const auto lane_set = planning_utils::getLaneletsOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return lane_id_set.count(scene_module->getModuleId()) == 0;
+  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    for (const auto & lane : lane_set) {
+      const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+      const auto is_intersection =
+        turn_direction == "right" || turn_direction == "left" || turn_direction == "straight";
+      if (!is_intersection) {
+        continue;
+      }
+      if (hasSameParentLaneletWith(lane, scene_module->getModuleId())) {
+        return false;
+      }
+    }
+    return true;
   };
 }
+
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 MergeFromPrivateModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
+  const auto lane_set = planning_utils::getLaneletsOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return lane_id_set.count(scene_module->getModuleId()) == 0;
+  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    for (const auto & lane : lane_set) {
+      const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+      const auto is_intersection =
+        turn_direction == "right" || turn_direction == "left" || turn_direction == "straight";
+      if (!is_intersection) {
+        continue;
+      }
+      if (hasSameParentLaneletWith(lane, scene_module->getModuleId())) {
+        return false;
+      }
+    }
+    return true;
   };
+}
+
+bool IntersectionModuleManager::hasSameParentLaneletWith(
+  const lanelet::ConstLanelet & lane, const size_t module_id) const
+{
+  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
+
+  const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(module_id);
+  lanelet::ConstLanelets registered_parents =
+    planner_data_->route_handler_->getPreviousLanelets(registered_lane);
+  for (const auto & ll : registered_parents) {
+    auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
+    neighbor_lanes.push_back(ll);
+    if (hasSameLanelet(parents, neighbor_lanes)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IntersectionModuleManager::hasSameParentLaneletWithRegistered(
+  const lanelet::ConstLanelet & lane) const
+{
+  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
+
+  for (const auto & id : registered_module_id_set_) {
+    const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(id);
+    lanelet::ConstLanelets registered_parents =
+      planner_data_->route_handler_->getPreviousLanelets(registered_lane);
+    for (const auto & ll : registered_parents) {
+      auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
+      neighbor_lanes.push_back(ll);
+      if (hasSameLanelet(parents, neighbor_lanes)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool MergeFromPrivateModuleManager::hasSameParentLaneletWith(
+  const lanelet::ConstLanelet & lane, const size_t module_id) const
+{
+  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
+
+  const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(module_id);
+  lanelet::ConstLanelets registered_parents =
+    planner_data_->route_handler_->getPreviousLanelets(registered_lane);
+  for (const auto & ll : registered_parents) {
+    auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
+    neighbor_lanes.push_back(ll);
+    if (hasSameLanelet(parents, neighbor_lanes)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace behavior_velocity_planner

@@ -100,7 +100,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
         planner_data_->delay_response_time) +
       param_.detection_area_offset;  // To fill difference between planned and measured acc
   }
-  const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
+  const geometry_msgs::msg::Pose ego_pose = planner_data_->current_odometry->pose;
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId path_interpolated;
@@ -183,7 +183,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // Note: Consider offset from path start to ego here
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego);
   // apply safe velocity using ebs and pbs deceleration
-  utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
+  utils::applySafeVelocityConsideringPossibleCollision(
+    path, possible_collisions, debug_data_.debug_poses, param_);
+  debug_data_.baselink_to_front = param_.baselink_to_front;
   // these debug topics needs computation resource
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;

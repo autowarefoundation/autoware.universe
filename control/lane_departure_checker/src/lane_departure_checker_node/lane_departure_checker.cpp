@@ -109,8 +109,9 @@ Output LaneDepartureChecker::update(const Input & input)
     const auto & raw_abs_velocity = std::abs(input.current_odom->twist.twist.linear.x);
     const auto abs_velocity = raw_abs_velocity < min_velocity ? 0.0 : raw_abs_velocity;
 
-    const auto braking_distance =
-      calcBrakingDistance(abs_velocity, param_.max_deceleration, param_.delay_time);
+    const auto braking_distance = std::max(
+      param_.min_braking_distance,
+      calcBrakingDistance(abs_velocity, param_.max_deceleration, param_.delay_time));
 
     output.resampled_trajectory = cutTrajectory(
       resampleTrajectory(*input.predicted_trajectory, param_.resample_interval), braking_distance);
@@ -123,7 +124,15 @@ Output LaneDepartureChecker::update(const Input & input)
   output.vehicle_passing_areas = createVehiclePassingAreas(output.vehicle_footprints);
   output.processing_time_map["createVehiclePassingAreas"] = stop_watch.toc(true);
 
-  output.candidate_lanelets = getCandidateLanelets(input.route_lanelets, output.vehicle_footprints);
+  const auto candidate_road_lanelets =
+    getCandidateLanelets(input.route_lanelets, output.vehicle_footprints);
+  const auto candidate_shoulder_lanelets =
+    getCandidateLanelets(input.shoulder_lanelets, output.vehicle_footprints);
+  output.candidate_lanelets = candidate_road_lanelets;
+  output.candidate_lanelets.insert(
+    output.candidate_lanelets.end(), candidate_shoulder_lanelets.begin(),
+    candidate_shoulder_lanelets.end());
+
   output.processing_time_map["getCandidateLanelets"] = stop_watch.toc(true);
 
   output.will_leave_lane = willLeaveLane(output.candidate_lanelets, output.vehicle_footprints);

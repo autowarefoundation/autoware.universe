@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -31,18 +29,11 @@ import yaml
 
 def launch_setup(context, *args, **kwargs):
 
-    vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
+    vehicle_info_param_path = LaunchConfiguration("vehicle_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    freespace_planner_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "parking",
-        "freespace_planner",
-        "freespace_planner.param.yaml",
-    )
-    with open(freespace_planner_param_path, "r") as f:
+    with open(LaunchConfiguration("freespace_planner_param_path").perform(context), "r") as f:
         freespace_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     container = ComposableNodeContainer(
@@ -72,10 +63,7 @@ def launch_setup(context, *args, **kwargs):
                         "vehicle_frame": "base_link",
                         "map_frame": "map",
                         "update_rate": 10.0,
-                        "use_wayarea": True,
-                        "use_parkinglot": True,
-                        "use_objects": True,
-                        "use_points": True,
+                        "activate_by_scenario": True,
                         "grid_min_value": 0.0,
                         "grid_max_value": 1.0,
                         "grid_resolution": 0.2,
@@ -85,6 +73,10 @@ def launch_setup(context, *args, **kwargs):
                         "grid_position_y": 0.0,
                         "maximum_lidar_height_thres": 0.3,
                         "minimum_lidar_height_thres": -2.2,
+                        "use_wayarea": True,
+                        "use_parkinglot": True,
+                        "use_objects": True,
+                        "use_points": True,
                         "expand_polygon_size": 1.0,
                         "size_of_expansion_kernel": 9,
                     },
@@ -136,7 +128,7 @@ def generate_launch_description():
         )
 
     add_launch_arg(
-        "vehicle_info_param_file",
+        "vehicle_param_file",
         [
             FindPackageShare("vehicle_info_util"),
             "/config/vehicle_info.param.yaml",

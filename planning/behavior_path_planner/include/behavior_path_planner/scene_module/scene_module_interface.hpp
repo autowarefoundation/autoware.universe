@@ -29,6 +29,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -48,6 +49,7 @@ using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
@@ -62,10 +64,9 @@ struct BehaviorModuleOutput
   // path planed by module
   PlanResult path{};
 
-  // path candidate planed by module
-  PlanResult path_candidate{};
-
   TurnSignalInfo turn_signal_info{};
+
+  std::optional<PoseWithUuidStamped> modified_goal{};
 };
 
 struct CandidateOutput
@@ -107,6 +108,15 @@ public:
   virtual BT::NodeStatus updateState() = 0;
 
   /**
+   * @brief If the module plan customized reference path while waiting approval, it should output
+   * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
+   */
+  virtual BT::NodeStatus getNodeStatusWhileWaitingApproval() const
+  {
+    return BT::NodeStatus::FAILURE;
+  }
+
+  /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
    */
   virtual bool isExecutionRequested() const = 0;
@@ -130,7 +140,7 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
   }
 
@@ -228,6 +238,10 @@ public:
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
+  PlanResult getPathCandidate() const { return path_candidate_; }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
   virtual void lockRTCCommand()
   {
     if (!rtc_interface_ptr_) {
@@ -258,6 +272,7 @@ protected:
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
+  PlanResult path_candidate_;
 
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {
@@ -296,7 +311,7 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 
@@ -305,7 +320,7 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 

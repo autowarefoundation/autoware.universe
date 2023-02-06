@@ -14,6 +14,8 @@
 
 #include "state.hpp"
 
+#include "util.hpp"
+
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -43,6 +45,10 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
     "trajectory", 1, [this](const Trajectory::SharedPtr msg) { trajectory_ = *msg; });
 
   check_engage_condition_ = node->declare_parameter<bool>("check_engage_condition");
+  nearest_dist_deviation_threshold_ =
+    node->declare_parameter<double>("nearest_dist_deviation_threshold");
+  nearest_yaw_deviation_threshold_ =
+    node->declare_parameter<double>("nearest_yaw_deviation_threshold");
 
   // params for mode change available
   {
@@ -86,9 +92,6 @@ bool AutonomousMode::isModeChangeCompleted()
     return true;
   }
 
-  constexpr auto dist_max = 5.0;
-  constexpr auto yaw_max = M_PI_4;
-
   const auto current_speed = kinematics_.twist.twist.linear.x;
   const auto & param = engage_acceptable_param_;
 
@@ -107,8 +110,9 @@ bool AutonomousMode::isModeChangeCompleted()
     return unstable();
   }
 
-  const auto closest_idx =
-    findNearestIndex(trajectory_.points, kinematics_.pose.pose, dist_max, yaw_max);
+  const auto closest_idx = findNearestIndex(
+    trajectory_.points, kinematics_.pose.pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
   if (!closest_idx) {
     RCLCPP_INFO(logger_, "Not stable yet: closest point not found");
     return unstable();
@@ -195,12 +199,9 @@ std::pair<bool, bool> AutonomousMode::hasDangerLateralAcceleration()
 bool AutonomousMode::isModeChangeAvailable()
 {
   if (!check_engage_condition_) {
-    debug_info_.is_all_ok = true;
+    setAllOk(debug_info_);
     return true;
   }
-
-  constexpr auto dist_max = 100.0;
-  constexpr auto yaw_max = M_PI_4;
 
   const auto current_speed = kinematics_.twist.twist.linear.x;
   const auto target_control_speed = control_cmd_.longitudinal.speed;
@@ -213,8 +214,9 @@ bool AutonomousMode::isModeChangeAvailable()
     return false;
   }
 
-  const auto closest_idx =
-    findNearestIndex(trajectory_.points, kinematics_.pose.pose, dist_max, yaw_max);
+  const auto closest_idx = findNearestIndex(
+    trajectory_.points, kinematics_.pose.pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
   if (!closest_idx) {
     RCLCPP_INFO(logger_, "Engage unavailable: closest point not found");
     debug_info_ = DebugInfo{};  // all false

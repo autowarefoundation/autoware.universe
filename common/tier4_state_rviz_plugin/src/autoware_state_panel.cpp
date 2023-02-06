@@ -18,6 +18,7 @@
 
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
@@ -64,8 +65,11 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
     h_layout->addWidget(makeRoutingGroup());
     h_layout->addWidget(makeLocalizationGroup());
     h_layout->addWidget(makeMotionGroup());
+    h_layout->addWidget(makeFailSafeGroup());
     v_layout->addLayout(h_layout);
   }
+  v_layout->addWidget(makeVelocityFactorsGroup());
+  v_layout->addWidget(makeSteeringFactorsGroup());
 
   v_layout->addLayout(gear_layout);
   velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
@@ -186,6 +190,70 @@ QGroupBox * AutowareStatePanel::makeMotionGroup()
   return group;
 }
 
+QGroupBox * AutowareStatePanel::makeFailSafeGroup()
+{
+  auto * group = new QGroupBox("FalSafe");
+  auto * grid = new QGridLayout;
+
+  mrm_state_label_ptr_ = new QLabel("INIT");
+  mrm_state_label_ptr_->setAlignment(Qt::AlignCenter);
+  mrm_state_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(mrm_state_label_ptr_, 0, 0);
+
+  mrm_behavior_label_ptr_ = new QLabel("INIT");
+  mrm_behavior_label_ptr_->setAlignment(Qt::AlignCenter);
+  mrm_behavior_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(mrm_behavior_label_ptr_, 1, 0);
+
+  group->setLayout(grid);
+  return group;
+}
+
+QGroupBox * AutowareStatePanel::makeVelocityFactorsGroup()
+{
+  auto * group = new QGroupBox("VelocityFactors");
+  auto * grid = new QGridLayout;
+
+  auto vertical_header = new QHeaderView(Qt::Vertical);
+  vertical_header->hide();
+  auto horizontal_header = new QHeaderView(Qt::Horizontal);
+  horizontal_header->setSectionResizeMode(QHeaderView::Stretch);
+
+  auto header_labels = QStringList({"Type", "Status", "Distance [m]", "Detail"});
+  velocity_factors_table_ = new QTableWidget();
+  velocity_factors_table_->setColumnCount(header_labels.size());
+  velocity_factors_table_->setHorizontalHeaderLabels(header_labels);
+  velocity_factors_table_->setVerticalHeader(vertical_header);
+  velocity_factors_table_->setHorizontalHeader(horizontal_header);
+  grid->addWidget(velocity_factors_table_, 0, 0);
+
+  group->setLayout(grid);
+  return group;
+}
+
+QGroupBox * AutowareStatePanel::makeSteeringFactorsGroup()
+{
+  auto * group = new QGroupBox("SteeringFactors");
+  auto * grid = new QGridLayout;
+
+  auto vertical_header = new QHeaderView(Qt::Vertical);
+  vertical_header->hide();
+  auto horizontal_header = new QHeaderView(Qt::Horizontal);
+  horizontal_header->setSectionResizeMode(QHeaderView::Stretch);
+
+  auto header_labels =
+    QStringList({"Type", "Status", "Distance.1 [m]", "Distance.2 [m]", "Direction", "Detail"});
+  steering_factors_table_ = new QTableWidget();
+  steering_factors_table_->setColumnCount(header_labels.size());
+  steering_factors_table_->setHorizontalHeaderLabels(header_labels);
+  steering_factors_table_->setVerticalHeader(vertical_header);
+  steering_factors_table_->setHorizontalHeader(horizontal_header);
+  grid->addWidget(steering_factors_table_, 1, 0);
+
+  group->setLayout(grid);
+  return group;
+}
+
 void AutowareStatePanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
@@ -234,6 +302,21 @@ void AutowareStatePanel::onInitialize()
   client_accept_start_ = raw_node_->create_client<AcceptStart>(
     "/api/motion/accept_start", rmw_qos_profile_services_default);
 
+  // FailSafe
+  sub_mrm_ = raw_node_->create_subscription<MRMState>(
+    "/api/fail_safe/mrm_state", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onMRMState, this, _1));
+
+  // Planning
+  sub_velocity_factors_ = raw_node_->create_subscription<VelocityFactorArray>(
+    "/api/planning/velocity_factors", 10,
+    std::bind(&AutowareStatePanel::onVelocityFactors, this, _1));
+
+  sub_steering_factors_ = raw_node_->create_subscription<SteeringFactorArray>(
+    "/api/planning/steering_factors", 10,
+    std::bind(&AutowareStatePanel::onSteeringFactors, this, _1));
+
+  // Others
   sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
@@ -418,6 +501,292 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
     activateButton(accept_start_button_ptr_);
   } else {
     deactivateButton(accept_start_button_ptr_);
+  }
+}
+
+void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
+{
+  // state
+  {
+    QString text = "";
+    QString style_sheet = "";
+    switch (msg->state) {
+      case MRMState::NONE:
+        text = "NONE";
+        style_sheet = "background-color: #00FF00;";  // green
+        break;
+
+      case MRMState::MRM_OPERATING:
+        text = "MRM_OPERATING";
+        style_sheet = "background-color: #FFA500;";  // orange
+        break;
+
+      case MRMState::MRM_SUCCEEDED:
+        text = "MRM_SUCCEEDED";
+        style_sheet = "background-color: #FFFF00;";  // yellow
+        break;
+
+      case MRMState::MRM_FAILED:
+        text = "MRM_FAILED";
+        style_sheet = "background-color: #FF0000;";  // red
+        break;
+
+      default:
+        text = "UNKNOWN";
+        style_sheet = "background-color: #FF0000;";  // red
+        break;
+    }
+
+    updateLabel(mrm_state_label_ptr_, text, style_sheet);
+  }
+
+  // behavior
+  {
+    QString text = "";
+    QString style_sheet = "";
+    switch (msg->state) {
+      case MRMState::NONE:
+        text = "NONE";
+        style_sheet = "background-color: #00FF00;";  // green
+        break;
+
+      case MRMState::COMFORTABLE_STOP:
+        text = "COMFORTABLE_STOP";
+        style_sheet = "background-color: #FFFF00;";  // yellow
+        break;
+
+      case MRMState::EMERGENCY_STOP:
+        text = "EMERGENCY_STOP";
+        style_sheet = "background-color: #FFA500;";  // orange
+        break;
+
+      default:
+        text = "UNKNOWN";
+        style_sheet = "background-color: #FF0000;";  // red
+        break;
+    }
+
+    updateLabel(mrm_behavior_label_ptr_, text, style_sheet);
+  }
+}
+
+void AutowareStatePanel::onVelocityFactors(const VelocityFactorArray::ConstSharedPtr msg)
+{
+  velocity_factors_table_->clearContents();
+  velocity_factors_table_->setRowCount(msg->factors.size());
+
+  for (std::size_t i = 0; i < msg->factors.size(); i++) {
+    const auto & e = msg->factors.at(i);
+
+    // type
+    {
+      auto label = new QLabel();
+      switch (e.type) {
+        case VelocityFactor::SURROUNDING_OBSTACLE:
+          label->setText("SURROUNDING_OBSTACLE");
+          break;
+        case VelocityFactor::ROUTE_OBSTACLE:
+          label->setText("ROUTE_OBSTACLE");
+          break;
+        case VelocityFactor::INTERSECTION:
+          label->setText("INTERSECTION");
+          break;
+        case VelocityFactor::CROSSWALK:
+          label->setText("CROSSWALK");
+          break;
+        case VelocityFactor::REAR_CHECK:
+          label->setText("REAR_CHECK");
+          break;
+        case VelocityFactor::USER_DEFINED_DETECTION_AREA:
+          label->setText("USER_DEFINED_DETECTION_AREA");
+          break;
+        case VelocityFactor::NO_STOPPING_AREA:
+          label->setText("NO_STOPPING_AREA");
+          break;
+        case VelocityFactor::STOP_SIGN:
+          label->setText("STOP_SIGN");
+          break;
+        case VelocityFactor::TRAFFIC_SIGNAL:
+          label->setText("TRAFFIC_SIGNAL");
+          break;
+        case VelocityFactor::V2I_GATE_CONTROL_ENTER:
+          label->setText("V2I_GATE_CONTROL_ENTER");
+          break;
+        case VelocityFactor::V2I_GATE_CONTROL_LEAVE:
+          label->setText("V2I_GATE_CONTROL_LEAVE");
+          break;
+        case VelocityFactor::MERGE:
+          label->setText("MERGE");
+          break;
+        case VelocityFactor::SIDEWALK:
+          label->setText("SIDEWALK");
+          break;
+        case VelocityFactor::LANE_CHANGE:
+          label->setText("LANE_CHANGE");
+          break;
+        case VelocityFactor::AVOIDANCE:
+          label->setText("AVOIDANCE");
+          break;
+        case VelocityFactor::EMERGENCY_STOP_OPERATION:
+          label->setText("EMERGENCY_STOP_OPERATION");
+          break;
+        default:
+          label->setText("UNKNOWN");
+          break;
+      }
+      label->setAlignment(Qt::AlignCenter);
+      velocity_factors_table_->setCellWidget(i, 0, label);
+    }
+
+    // status
+    {
+      auto label = new QLabel();
+      switch (e.status) {
+        case VelocityFactor::APPROACHING:
+          label->setText("APPROACHING");
+          break;
+        case VelocityFactor::STOPPED:
+          label->setText("STOPPED");
+          break;
+        default:
+          label->setText("UNKNOWN");
+          break;
+      }
+      label->setAlignment(Qt::AlignCenter);
+      velocity_factors_table_->setCellWidget(i, 1, label);
+    }
+
+    // distance
+    {
+      auto label = new QLabel();
+      std::stringstream ss;
+      ss << std::fixed << std::setprecision(2) << e.distance;
+      label->setText(QString::fromStdString(ss.str()));
+      label->setAlignment(Qt::AlignCenter);
+      velocity_factors_table_->setCellWidget(i, 2, label);
+    }
+
+    // detail
+    {
+      auto label = new QLabel(QString::fromStdString(e.detail));
+      label->setAlignment(Qt::AlignCenter);
+      velocity_factors_table_->setCellWidget(i, 3, label);
+    }
+  }
+}
+
+void AutowareStatePanel::onSteeringFactors(const SteeringFactorArray::ConstSharedPtr msg)
+{
+  steering_factors_table_->clearContents();
+  steering_factors_table_->setRowCount(msg->factors.size());
+
+  for (std::size_t i = 0; i < msg->factors.size(); i++) {
+    const auto & e = msg->factors.at(i);
+
+    // type
+    {
+      auto label = new QLabel();
+      switch (e.type) {
+        case SteeringFactor::INTERSECTION:
+          label->setText("INTERSECTION");
+          break;
+        case SteeringFactor::LANE_CHANGE:
+          label->setText("LANE_CHANGE");
+          break;
+        case SteeringFactor::AVOIDANCE_PATH_CHANGE:
+          label->setText("AVOIDANCE_PATH_CHANGE");
+          break;
+        case SteeringFactor::AVOIDANCE_PATH_RETURN:
+          label->setText("AVOIDANCE_PATH_RETURN");
+          break;
+        case SteeringFactor::STATION:
+          label->setText("STATION");
+          break;
+        case SteeringFactor::PULL_OUT:
+          label->setText("PULL_OUT");
+          break;
+        case SteeringFactor::PULL_OVER:
+          label->setText("PULL_OVER");
+          break;
+        case SteeringFactor::EMERGENCY_OPERATION:
+          label->setText("EMERGENCY_OPERATION");
+          break;
+        default:
+          label->setText("UNKNOWN");
+          break;
+      }
+      label->setAlignment(Qt::AlignCenter);
+      steering_factors_table_->setCellWidget(i, 0, label);
+    }
+
+    // status
+    {
+      auto label = new QLabel();
+      switch (e.status) {
+        case SteeringFactor::APPROACHING:
+          label->setText("APPROACHING");
+          break;
+        case SteeringFactor::TRYING:
+          label->setText("TRYING");
+          break;
+        case SteeringFactor::TURNING:
+          label->setText("TURNING");
+          break;
+        default:
+          label->setText("UNKNOWN");
+          break;
+      }
+      label->setAlignment(Qt::AlignCenter);
+      steering_factors_table_->setCellWidget(i, 1, label);
+    }
+
+    // distance.1
+    {
+      auto label = new QLabel();
+      std::stringstream ss;
+      ss << std::fixed << std::setprecision(2) << e.distance.front();
+      label->setText(QString::fromStdString(ss.str()));
+      label->setAlignment(Qt::AlignCenter);
+      steering_factors_table_->setCellWidget(i, 2, label);
+    }
+
+    // distance.2
+    {
+      auto label = new QLabel();
+      std::stringstream ss;
+      ss << std::fixed << std::setprecision(2) << e.distance.back();
+      label->setText(QString::fromStdString(ss.str()));
+      label->setAlignment(Qt::AlignCenter);
+      steering_factors_table_->setCellWidget(i, 3, label);
+    }
+
+    // Direction
+    {
+      auto label = new QLabel();
+      switch (e.direction) {
+        case SteeringFactor::LEFT:
+          label->setText("LEFT");
+          break;
+        case SteeringFactor::RIGHT:
+          label->setText("RIGHT");
+          break;
+        case SteeringFactor::STRAIGHT:
+          label->setText("STRAIGHT");
+          break;
+        default:
+          label->setText("UNKNOWN");
+          break;
+      }
+      label->setAlignment(Qt::AlignCenter);
+      steering_factors_table_->setCellWidget(i, 4, label);
+    }
+
+    // detail
+    {
+      auto label = new QLabel(QString::fromStdString(e.detail));
+      label->setAlignment(Qt::AlignCenter);
+      steering_factors_table_->setCellWidget(i, 5, label);
+    }
   }
 }
 
