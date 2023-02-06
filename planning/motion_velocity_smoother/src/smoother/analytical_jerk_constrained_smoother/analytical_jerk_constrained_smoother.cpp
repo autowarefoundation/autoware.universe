@@ -290,8 +290,8 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
   const double points_interval = use_resampling ? input_points_interval : 0.1;  // [m]
 
   TrajectoryPoints output;
-  if (use_resampling) {  // since the resampling takes a long time, omit the resampling when it is
-                         // not requested
+  // since the resampling takes a long time, omit the resampling when it is not requested
+  if (use_resampling) {
     std::vector<double> out_arclength;
     const std::vector<double> in_arclength = trajectory_utils::calcArclengthArray(input);
     for (double s = 0; s < in_arclength.back(); s += points_interval) {

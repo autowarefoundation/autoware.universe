@@ -84,8 +84,8 @@ TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
   TrajectoryPoints output;
   const double points_interval =
     use_resampling ? base_param_.sample_ds : input_points_interval;  // [m]
-  if (use_resampling) {  // since the resampling takes a long time, omit the resampling when it is
-                         // not requested
+  // since the resampling takes a long time, omit the resampling when it is not requested
+  if (use_resampling) {
     std::vector<double> out_arclength;
     const auto traj_length = motion_utils::calcArcLength(input);
     for (double s = 0; s < traj_length; s += points_interval) {
@@ -151,8 +151,8 @@ TrajectoryPoints SmootherBase::applySteeringRateLimit(
   // Interpolate with constant interval distance for lateral acceleration calculation.
   const double points_interval = use_resampling ? base_param_.sample_ds : input_points_interval;
   TrajectoryPoints output;
-  if (use_resampling) {  // since the resampling takes a long time, omit the resampling when it is
-                         // not requested
+  // since the resampling takes a long time, omit the resampling when it is not requested
+  if (use_resampling) {
     std::vector<double> out_arclength;
     const auto traj_length = motion_utils::calcArcLength(input);
     for (double s = 0; s < traj_length; s += points_interval) {
