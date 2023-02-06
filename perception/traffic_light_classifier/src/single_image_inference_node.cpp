@@ -24,6 +24,42 @@
 #include <memory>
 #include <string>
 
+namespace
+{
+std::string toString(const uint8_t state)
+{
+  if (state == autoware_auto_perception_msgs::msg::TrafficLight::RED) {
+    return "red";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::AMBER) {
+    return "yellow";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::GREEN) {
+    return "green";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::WHITE) {
+    return "white";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::CIRCLE) {
+    return "circle";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW) {
+    return "left";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW) {
+    return "right";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW) {
+    return "straight";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::DOWN_ARROW) {
+    return "down";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::DOWN_LEFT_ARROW) {
+    return "down_left";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::DOWN_RIGHT_ARROW) {
+    return "down_right";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::CROSS) {
+    return "cross";
+  } else if (state == autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN) {
+    return "unknown";
+  } else {
+    return "";
+  }
+}
+}  // namespace
+
 namespace traffic_light
 {
 class SingleImageInferenceNode : public rclcpp::Node
@@ -80,7 +116,6 @@ private:
     } else if (action == cv::EVENT_LBUTTONUP) {
       bottom_right_corner_ = cv::Point(x, y);
       cv::Mat tmp = image_.clone();
-      cv::rectangle(tmp, top_left_corner_, bottom_right_corner_, cv::Scalar(0, 255, 0), 2, 8);
       cv::Mat crop = image_(cv::Rect{top_left_corner_, bottom_right_corner_}).clone();
       if (crop.empty()) {
         RCLCPP_ERROR(get_logger(), "crop image is empty");
@@ -92,11 +127,27 @@ private:
         RCLCPP_ERROR(get_logger(), "failed to classify image");
         return;
       }
-      for (const auto & v : traffic_signal.lights) {
-        std::cout << int(v.color) << std::endl;
-        std::cout << "conf: " << v.confidence << std::endl;
+      auto color_str = toString(traffic_signal.lights.front().color);
+      cv::Scalar color;
+      if (color_str == "red") {
+        color = cv::Scalar(0, 0, 255);
+      } else if (color_str == "green") {
+        color = cv::Scalar(0, 255, 0);
+      } else if (color_str == "yellow") {
+        color = cv::Scalar(0, 255, 255);
+      } else if (color_str == "white") {
+        color = cv::Scalar(0, 0, 0);
+      } else {
+        color = cv::Scalar(255, 255, 255);
       }
+      auto shape_str = toString(traffic_signal.lights.front().shape);
+      auto confidence_str = std::to_string(traffic_signal.lights.front().confidence);
+      cv::putText(
+        tmp, color_str + " " + shape_str + " " + confidence_str, top_left_corner_,
+        cv::FONT_HERSHEY_SIMPLEX, 1.0, color, 2, cv::LINE_AA);
+      cv::rectangle(tmp, top_left_corner_, bottom_right_corner_, color, 2, 8);
       cv::imshow("inference image", tmp);
+      RCLCPP_INFO_STREAM(get_logger(), color_str << " " << shape_str << " " << confidence_str);
     }
   }
 

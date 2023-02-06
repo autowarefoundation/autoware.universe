@@ -173,7 +173,6 @@ bool CNNClassifier::postProcess(
   std::string match_label = labels_[max_indice];
   float probability = apply_softmax ? probs[max_indice] : output_tensor[max_indice];
 
-
   // label names are assumed to be comma-separated to represent each lamp
   // e.g.
   // match_label: "red","red-cross","right"
