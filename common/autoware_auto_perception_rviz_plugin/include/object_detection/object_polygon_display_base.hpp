@@ -88,7 +88,7 @@ public:
     m_display_type_property->addOption("2d", 1);
     m_display_type_property->addOption("Disable", 2);
     m_simple_visualize_mode_property = new rviz_common::properties::EnumProperty(
-      "Vislualization Type", "Normal", "Simplicity of the polygon to display object.", this,
+      "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this,
       SLOT(updatePalette()));
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
