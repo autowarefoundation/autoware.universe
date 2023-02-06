@@ -41,6 +41,7 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   input_w_ = node_ptr_->declare_parameter("input_w", 224);
   auto input_name = node_ptr_->declare_parameter("input_name", "input");
   auto output_name = node_ptr_->declare_parameter("output_name", "output");
+  apply_softmax_ = node_ptr_->declare_parameter("apply_softmax", false);
 
   readLabelfile(label_file_path, labels_);
 
@@ -81,7 +82,7 @@ bool CNNClassifier::getTrafficSignal(
     output_data_host.data(), output_data_device.get(), num_output * sizeof(float),
     cudaMemcpyDeviceToHost);
 
-  postProcess(output_data_host, traffic_signal);
+  postProcess(output_data_host, traffic_signal, apply_softmax_);
 
   /* debug */
   if (0 < image_pub_.getNumSubscribers()) {
@@ -170,7 +171,6 @@ bool CNNClassifier::postProcess(
 
   size_t max_indice = sorted_indices.front();
   std::string match_label = labels_[max_indice];
-  std::cout << match_label << std::endl;  
   float probability = apply_softmax ? probs[max_indice] : output_tensor[max_indice];
 
 
