@@ -95,7 +95,7 @@ public:
 
     // loop until q character is pressed
     while (cv::waitKey(0) != 113) {
-    };
+    }
     cv::destroyAllWindows();
     rclcpp::shutdown();
   }
