@@ -37,13 +37,6 @@ using segment_t = tier4_autoware_utils::Segment2d;
 using linestring_t = tier4_autoware_utils::LineString2d;
 using multilinestring_t = tier4_autoware_utils::MultiLineString2d;
 
-struct Footprint
-{
-  const polygon_t footprint;
-  const point_t origin;
-
-  Footprint(polygon_t footprint_, point_t origin_) : footprint{footprint_}, origin{origin_} {}
-};
 struct PointDistance
 {
   point_t point;

@@ -54,14 +54,14 @@ polygon_t translatePolygon(const polygon_t & polygon, const double x, const doub
 /// @brief create the footprint of a pose and its base footprint
 /// @param[in] pose the origin pose of the footprint
 /// @param[in] base_footprint the base axis-aligned footprint
-/// @return footprint
-Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t base_footprint);
+/// @return footprint polygon
+polygon_t createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t base_footprint);
 
 /// @brief create footprints of the predicted paths of an object
 /// @param [in] objects objects from which to create polygons
 /// @param[in] params expansion parameters containing extra offsets to add to the dynamic objects
-/// @return footprints of the object's predicted paths
-std::vector<Footprint> createObjectFootprints(
+/// @return footprint polygons of the object's predicted paths
+multipolygon_t createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const DrivableAreaExpansionParameters & params);
 }  // namespace drivable_area_expansion

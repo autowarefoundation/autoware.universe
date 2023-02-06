@@ -49,7 +49,9 @@ struct DrivableAreaExpansionParameters
   static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "dynamic_expansion.avoid_linestring_types";
   static constexpr auto AVOID_LINESTRING_DIST_PARAM = "dynamic_expansion.avoid_linestring_distance";
   static constexpr auto EXTRA_ARC_LENGTH_PARAM = "dynamic_expansion.extra_arc_length";
-  static constexpr auto COMPENSATE_PARAM = "dynamic_expansion.compensate_uncrossable_lines";
+  static constexpr auto COMPENSATE_PARAM = "dynamic_expansion.compensate_uncrossable_lines.enable";
+  static constexpr auto EXTRA_COMPENSATE_PARAM =
+    "dynamic_expansion.compensate_uncrossable_lines.extra_distance";
 
   bool enabled = false;
   double max_expansion_distance{};
@@ -57,20 +59,21 @@ struct DrivableAreaExpansionParameters
   std::vector<std::string> avoid_linestring_types{};
   bool avoid_dynamic_objects{};
   double avoid_linestring_dist{};
-  double ego_left_offset;
-  double ego_right_offset;
-  double ego_rear_offset;
-  double ego_front_offset;
-  double ego_extra_left_offset;
-  double ego_extra_right_offset;
-  double ego_extra_rear_offset;
-  double ego_extra_front_offset;
-  double dynamic_objects_extra_left_offset;
-  double dynamic_objects_extra_right_offset;
-  double dynamic_objects_extra_rear_offset;
-  double dynamic_objects_extra_front_offset;
-  double extra_arc_length;
-  bool compensate_uncrossable_lines;
+  double ego_left_offset{};
+  double ego_right_offset{};
+  double ego_rear_offset{};
+  double ego_front_offset{};
+  double ego_extra_left_offset{};
+  double ego_extra_right_offset{};
+  double ego_extra_rear_offset{};
+  double ego_extra_front_offset{};
+  double dynamic_objects_extra_left_offset{};
+  double dynamic_objects_extra_right_offset{};
+  double dynamic_objects_extra_rear_offset{};
+  double dynamic_objects_extra_front_offset{};
+  double extra_arc_length{};
+  bool compensate_uncrossable_lines = false;
+  double compensate_extra_dist{};
 
   DrivableAreaExpansionParameters() = default;
   explicit DrivableAreaExpansionParameters(rclcpp::Node & node) { init(node); }
@@ -98,12 +101,13 @@ struct DrivableAreaExpansionParameters
     avoid_linestring_dist = node.declare_parameter<double>(AVOID_LINESTRING_DIST_PARAM);
     extra_arc_length = node.declare_parameter<double>(EXTRA_ARC_LENGTH_PARAM);
     compensate_uncrossable_lines = node.declare_parameter<bool>(COMPENSATE_PARAM);
+    compensate_extra_dist = node.declare_parameter<double>(EXTRA_COMPENSATE_PARAM);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-    ego_left_offset = vehicle_info.vehicle_width_m / 2.0;
-    ego_right_offset = -vehicle_info.vehicle_width_m / 2.0;
-    ego_rear_offset = -vehicle_info.rear_overhang_m;
-    ego_front_offset = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
+    ego_left_offset = vehicle_info.max_lateral_offset_m;
+    ego_right_offset = vehicle_info.min_lateral_offset_m;
+    ego_rear_offset = vehicle_info.min_longitudinal_offset_m;
+    ego_front_offset = vehicle_info.max_longitudinal_offset_m;
   }
 };
 

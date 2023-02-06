@@ -43,19 +43,17 @@ polygon_t translatePolygon(const polygon_t & polygon, const double x, const doub
   return translated_polygon;
 }
 
-Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t base_footprint)
+polygon_t createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t base_footprint)
 {
   const auto angle = tf2::getYaw(pose.orientation);
-  const auto polygon =
-    translatePolygon(rotatePolygon(base_footprint, angle), pose.position.x, pose.position.y);
-  return Footprint(polygon, point_t{pose.position.x, pose.position.y});
+  return translatePolygon(rotatePolygon(base_footprint, angle), pose.position.x, pose.position.y);
 }
 
-std::vector<Footprint> createObjectFootprints(
+multipolygon_t createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const DrivableAreaExpansionParameters & params)
 {
-  std::vector<Footprint> footprints;
+  multipolygon_t footprints;
   if (params.avoid_dynamic_objects) {
     for (const auto & object : objects.objects) {
       const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;

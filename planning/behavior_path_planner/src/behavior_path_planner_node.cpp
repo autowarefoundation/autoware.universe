@@ -1152,6 +1152,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     update_param(
       parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXTRA_COMPENSATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.compensate_extra_dist);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();

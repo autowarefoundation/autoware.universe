@@ -34,15 +34,15 @@ bool expandDrivableArea(
 /// @brief create the footprint polygon from a path
 /// @param[in] path the path for which to create a footprint
 /// @param[in] params expansion parameters defining how to create the footprint
-/// @return footprints of the path
-std::vector<Footprint> createPathFootprints(
+/// @return footprint polygons of the path
+multipolygon_t createPathFootprints(
   const PathWithLaneId & path, const DrivableAreaExpansionParameters & params);
 
 /// @brief create footprints from the predicted paths of the given objects
 /// @param[in] predicted_objects predicted objects
 /// @param[in] params expansion parameters
-/// @return the objects' predicted path footprints
-std::vector<Footprint> createPredictedPathFootprints(
+/// @return the objects' predicted path footprint polygons
+multipolygon_t createPredictedPathFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
   const DrivableAreaExpansionParameters & params);
 }  // namespace drivable_area_expansion
