@@ -1959,13 +1959,10 @@ PathWithLaneId getCenterLinePath(
     s_forward = std::min(s_forward, goal_arc_coordinates.length - lane_change_buffer);
   }
 
-  const bool use_akima_spline = true;
-  const auto raw_path_with_lane_id = route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
-  if (use_akima_spline) {
-    const auto resampled_path_with_lane_id = motion_utils::resamplePath(raw_path_with_lane_id, 1.0, true);
-    return resampled_path_with_lane_id;
-  }
-
+  const auto raw_path_with_lane_id =
+    route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
+  const auto resampled_path_with_lane_id = motion_utils::resamplePath(
+    raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
   return raw_path_with_lane_id;
 }
 

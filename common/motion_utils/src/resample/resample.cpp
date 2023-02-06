@@ -434,8 +434,8 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
 
 autoware_auto_planning_msgs::msg::Path resamplePath(
   const autoware_auto_planning_msgs::msg::Path & input_path, const double resample_interval,
-  const bool use_akima_spline_for_xy, const bool use_lerp_for_z, const bool use_zero_order_hold_for_twist,
-  const bool resample_input_path_stop_point)
+  const bool use_akima_spline_for_xy, const bool use_lerp_for_z,
+  const bool use_zero_order_hold_for_twist, const bool resample_input_path_stop_point)
 {
   // validate arguments
   if (!resample_utils::validate_arguments(input_path.points, resample_interval)) {
