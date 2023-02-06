@@ -2339,13 +2339,13 @@ bool hasEnoughDistance(
       util::l2Norm(ego_current_twist.linear), util::l2Norm(object_current_twist.linear));
   });
 
-  const auto is_unsafe_intervehicle_dist = std::invoke([&]() {
+  const auto is_unsafe_dist_between_vehicle = std::invoke([&]() {
     // ignore this for parked vehicle.
     if (l2Norm(object_current_twist.linear) < 0.1) {
       return false;
     }
 
-    // the value guarantee intervehicle distance is always more than dist
+    // the value guarantee distance between vehicles are always more than dist
     const auto max_vel = std::max(front_vehicle_velocity, rear_vehicle_velocity);
     constexpr auto scale = 0.8;
     const auto dist = scale * std::abs(max_vel) + param.longitudinal_distance_min_threshold;
@@ -2354,7 +2354,7 @@ bool hasEnoughDistance(
     return std::abs(front_vehicle_pose.position.x) < dist;
   });
 
-  if (is_unsafe_intervehicle_dist) {
+  if (is_unsafe_dist_between_vehicle) {
     return false;
   }
 
