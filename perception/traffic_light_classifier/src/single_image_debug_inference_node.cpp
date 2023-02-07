@@ -62,10 +62,10 @@ std::string toString(const uint8_t state)
 
 namespace traffic_light
 {
-class SingleImageInferenceNode : public rclcpp::Node
+class SingleImageDebugInferenceNode : public rclcpp::Node
 {
 public:
-  explicit SingleImageInferenceNode(const rclcpp::NodeOptions & node_options)
+  explicit SingleImageDebugInferenceNode(const rclcpp::NodeOptions & node_options)
   : Node("single_image_inference", node_options)
   {
     const auto image_path = declare_parameter("image_path", "");
@@ -89,7 +89,7 @@ public:
       return;
     }
     cv::namedWindow("inference image", cv::WINDOW_NORMAL);
-    cv::setMouseCallback("inference image", SingleImageInferenceNode::onMouse, this);
+    cv::setMouseCallback("inference image", SingleImageDebugInferenceNode::onMouse, this);
 
     cv::imshow("inference image", image_);
 
@@ -103,7 +103,7 @@ public:
 private:
   static void onMouse(int event, int x, int y, int flags, void * param)
   {
-    SingleImageInferenceNode * node = static_cast<SingleImageInferenceNode *>(param);
+    SingleImageDebugInferenceNode * node = static_cast<SingleImageDebugInferenceNode *>(param);
     if (node) {
       node->inferWithCrop(event, x, y, flags);
     }
@@ -159,4 +159,4 @@ private:
 }  // namespace traffic_light
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::SingleImageInferenceNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::SingleImageDebugInferenceNode)
