@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-  <group>
+  <arg name="localization_mode" default="lidar" description="select localization mode. lidar, gnss"/>
+  <group if="$(eval &quot;'$(var localization_mode)'=='lidar'&quot;)">
     <include file="$(find-pkg-share ndt_scan_matcher)/launch/ndt_scan_matcher.launch.xml">
       <arg name="input_map_points_topic" value="/map/pointcloud_map"/>
       <arg name="input/pointcloud" value="/localization/util/downsample/pointcloud"/>
@@ -10,6 +11,11 @@
       <arg name="output_pose_with_covariance_topic" value="/localization/pose_estimator/pose_with_covariance"/>
 
       <arg name="param_file" value="$(var ndt_scan_matcher_param_path)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)">
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
     </include>
   </group>
 </launch>
