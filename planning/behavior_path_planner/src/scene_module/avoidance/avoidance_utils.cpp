@@ -253,7 +253,6 @@ tier4_autoware_utils::Polygon2d expandPolygon(
     const Eigen::Vector2d offset_vector = (-current_to_next - current_to_prev).normalized();
     const double theta = std::acos(offset_vector.dot(current_to_next));
     const double scaled_offset = offset / std::sin(theta);
-    std::cerr << theta << " " << std::sin(theta) << " " << scaled_offset << std::endl;
     const Eigen::Vector2d offset_point =
       Eigen::Vector2d(curr_p.x(), curr_p.y()) + offset_vector * scaled_offset;
 
