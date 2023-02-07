@@ -299,7 +299,7 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
     }
     const auto output_traj =
       motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
-    auto output = motion_utils::convertToTrajectoryPointArray(output_traj);
+    output = motion_utils::convertToTrajectoryPointArray(output_traj);
     output.back() = input.back();  // keep the final speed.
   } else {
     output = input;
