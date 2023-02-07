@@ -19,7 +19,11 @@
 #include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
+#include <route_handler/route_handler.hpp>
+
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+
+#include <lanelet2_core/Forward.h>
 
 #include <string>
 #include <vector>
@@ -28,8 +32,8 @@ namespace drivable_area_expansion
 {
 bool expandDrivableArea(
   PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  const multilinestring_t & uncrossable_lines,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects);
+  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects,
+  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelets & path_lanes);
 
 /// @brief create the footprint polygon from a path
 /// @param[in] path the path for which to create a footprint

@@ -15,6 +15,7 @@
 #include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
 
 #include "behavior_path_planner/util/drivable_area_expansion/footprints.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/path_projection.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
@@ -88,6 +89,51 @@ polygon_t createExpansionPolygon(
     base_ls, polygons, distance_strategy, strategy::side_straight(), strategy::join_miter(),
     strategy::end_flat(), strategy::point_square());
   return polygons.front();
+}
+
+multipolygon_t createExpansionLaneletPolygons(
+  const PathWithLaneId & path, const lanelet::ConstLanelets & path_lanes,
+  const route_handler::RouteHandler & route_handler, const multipolygon_t & path_footprints,
+  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
+  const DrivableAreaExpansionParameters & params)
+{
+  multipolygon_t expansion_polygons;
+  lanelet::ConstLanelets candidates;
+  const auto already_added = [&](const auto & ll) {
+    return std::find_if(candidates.begin(), candidates.end(), [&](const auto & l) {
+             return ll.id() == l.id();
+           }) != candidates.end();
+  };
+  const auto add_if_valid = [&](const auto & ll, const auto is_left) {
+    const auto bound_to_check = is_left ? ll.rightBound() : ll.leftBound();
+    if (!already_added(ll) && !hasTypes(bound_to_check, params.avoid_linestring_types))
+      candidates.push_back(ll);
+  };
+  std::cout << path_lanes.size() << std::endl;
+  for (const auto & current_ll : path_lanes) {
+    const auto left_ll = route_handler.getLeftLanelet(current_ll);
+    if (left_ll) add_if_valid(left_ll.get(), true);
+    for (const auto & ll : route_handler.getRoutingGraphPtr()->lefts(current_ll))
+      add_if_valid(ll, true);
+    const auto right_ll = route_handler.getRightLanelet(current_ll);
+    if (right_ll) add_if_valid(right_ll.get(), false);
+    for (const auto & ll : route_handler.getRoutingGraphPtr()->rights(current_ll))
+      add_if_valid(ll, false);
+  }
+  std::cout << candidates.size() << std::endl;
+  for (const auto & footprint : path_footprints) {
+    for (auto it = candidates.begin(); it != candidates.end(); ++it) {
+      polygon_t poly;
+      for (const auto & p : it->polygon2d()) poly.outer().emplace_back(p.x(), p.y());
+      boost::geometry::correct(poly);
+      if (boost::geometry::intersects(footprint, poly)) {
+        expansion_polygons.push_back(poly);
+        candidates.erase(it);
+        --it;
+      }
+    }
+  }
+  return expansion_polygons;
 }
 
 multipolygon_t createExpansionPolygons(
@@ -328,18 +374,23 @@ linestring_t createMaxExpansionLine(
 
 bool expandDrivableArea(
   PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  const multilinestring_t & uncrossable_lines,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects,
+  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelets & path_lanes)
 {
   const auto start = std::chrono::high_resolution_clock::now();
+  const auto uncrossable_lines =
+    extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
   const auto path_footprints = createPathFootprints(path, params);
   const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
   const auto expansion_polygons =
-    createExpansionPolygons(path, path_footprints, predicted_paths, uncrossable_lines, params);
+    params.expansion_method == "lanelet"
+      ? createExpansionLaneletPolygons(
+          path, path_lanes, route_handler, path_footprints, predicted_paths, uncrossable_lines,
+          params)
+      : createExpansionPolygons(path, path_footprints, predicted_paths, uncrossable_lines, params);
   const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
-  const auto end = std::chrono::high_resolution_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us\n";
-  {
+  const auto debug_svg = false;
+  if (debug_svg) {
     // Declare a stream and an SVG mapper
     std::ofstream svg("/home/mclement/Pictures/debug.svg");
     boost::geometry::svg_mapper<point_t> mapper(svg, 400, 400);
@@ -358,7 +409,7 @@ bool expandDrivableArea(
       mapper.map(
         l, "fill-opacity:0.2;stroke-opacity:0.2;fill:black;stroke:black;stroke-width:2", 1);
   }
-  {
+  if (debug_svg) {
     std::ofstream svg_inputs("/home/mclement/Pictures/inputs.svg");
     boost::geometry::svg_mapper<point_t> mapper(svg_inputs, 400, 400);
     linestring_t left;
@@ -389,7 +440,7 @@ bool expandDrivableArea(
 
   const auto return_bool = updateDrivableAreaBounds(path, expanded_drivable_area);
 
-  {
+  if (debug_svg) {
     std::ofstream svg_outputs("/home/mclement/Pictures/outputs.svg");
     boost::geometry::svg_mapper<point_t> mapper(svg_outputs, 400, 400);
     linestring_t left;
@@ -412,6 +463,8 @@ bool expandDrivableArea(
     //   mapper.map(
     //     l, "fill-opacity:0.2;stroke-opacity:0.5;fill:grey;stroke:black;stroke-width:2", 1);
   }
+  const auto end = std::chrono::high_resolution_clock::now();
+  std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us\n";
   return return_bool;
 }
 }  // namespace drivable_area_expansion

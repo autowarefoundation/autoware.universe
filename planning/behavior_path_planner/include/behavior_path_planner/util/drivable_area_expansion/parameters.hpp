@@ -29,8 +29,6 @@ namespace drivable_area_expansion
 struct DrivableAreaExpansionParameters
 {
   static constexpr auto ENABLED_PARAM = "dynamic_expansion.enabled";
-  static constexpr auto MAX_EXP_DIST_PARAM = "dynamic_expansion.max_distance";
-  static constexpr auto MIN_EXP_DIST_PARAM = "dynamic_expansion.min_distance";
   static constexpr auto EGO_EXTRA_OFFSET_FRONT =
     "dynamic_expansion.ego.extra_footprint_offset.front";
   static constexpr auto EGO_EXTRA_OFFSET_REAR = "dynamic_expansion.ego.extra_footprint_offset.rear";
@@ -45,19 +43,18 @@ struct DrivableAreaExpansionParameters
     "dynamic_expansion.dynamic_objects.extra_footprint_offset.left";
   static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_RIGHT =
     "dynamic_expansion.dynamic_objects.extra_footprint_offset.right";
+  static constexpr auto EXPANSION_METHOD_PARAM = "dynamic_expansion.expansion.method";
+  static constexpr auto MAX_EXP_DIST_PARAM = "dynamic_expansion.expansion.max_distance";
+  static constexpr auto EXTRA_ARC_LENGTH_PARAM = "dynamic_expansion.expansion.extra_arc_length";
   static constexpr auto AVOID_DYN_OBJECTS_PARAM = "dynamic_expansion.dynamic_objects.avoid";
-  static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "dynamic_expansion.avoid_linestring_types";
-  static constexpr auto AVOID_LINESTRING_DIST_PARAM = "dynamic_expansion.avoid_linestring_distance";
-  static constexpr auto EXTRA_ARC_LENGTH_PARAM = "dynamic_expansion.extra_arc_length";
-  static constexpr auto COMPENSATE_PARAM = "dynamic_expansion.compensate_uncrossable_lines.enable";
+  static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "dynamic_expansion.avoid_linestring.types";
+  static constexpr auto AVOID_LINESTRING_DIST_PARAM = "dynamic_expansion.avoid_linestring.distance";
+  static constexpr auto COMPENSATE_PARAM = "dynamic_expansion.avoid_linestring.compensate.enable";
   static constexpr auto EXTRA_COMPENSATE_PARAM =
-    "dynamic_expansion.compensate_uncrossable_lines.extra_distance";
+    "dynamic_expansion.avoid_linestring.compensate.extra_distance";
 
   bool enabled = false;
-  double max_expansion_distance{};
-  double min_expansion_distance{};
-  std::vector<std::string> avoid_linestring_types{};
-  bool avoid_dynamic_objects{};
+  std::string expansion_method{};
   double avoid_linestring_dist{};
   double ego_left_offset{};
   double ego_right_offset{};
@@ -71,7 +68,10 @@ struct DrivableAreaExpansionParameters
   double dynamic_objects_extra_right_offset{};
   double dynamic_objects_extra_rear_offset{};
   double dynamic_objects_extra_front_offset{};
+  double max_expansion_distance{};
   double extra_arc_length{};
+  bool avoid_dynamic_objects{};
+  std::vector<std::string> avoid_linestring_types{};
   bool compensate_uncrossable_lines = false;
   double compensate_extra_dist{};
 
@@ -82,7 +82,6 @@ struct DrivableAreaExpansionParameters
   {
     enabled = node.declare_parameter<bool>(ENABLED_PARAM);
     max_expansion_distance = node.declare_parameter<double>(MAX_EXP_DIST_PARAM);
-    min_expansion_distance = node.declare_parameter<double>(MIN_EXP_DIST_PARAM);
     ego_extra_front_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_FRONT);
     ego_extra_rear_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_REAR);
     ego_extra_left_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_LEFT);
@@ -102,6 +101,7 @@ struct DrivableAreaExpansionParameters
     extra_arc_length = node.declare_parameter<double>(EXTRA_ARC_LENGTH_PARAM);
     compensate_uncrossable_lines = node.declare_parameter<bool>(COMPENSATE_PARAM);
     compensate_extra_dist = node.declare_parameter<double>(EXTRA_COMPENSATE_PARAM);
+    expansion_method = node.declare_parameter<std::string>(EXPANSION_METHOD_PARAM);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
     ego_left_offset = vehicle_info.max_lateral_offset_m;

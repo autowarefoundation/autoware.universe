@@ -1106,6 +1106,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     const auto prev_values =
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_types;
     update_param(
+      parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
+      planner_data_->drivable_area_expansion_parameters.expansion_method);
+    update_param(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
     if (prev_values != planner_data_->drivable_area_expansion_parameters.avoid_linestring_types)
@@ -1143,9 +1146,6 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     update_param(
       parameters, DrivableAreaExpansionParameters::MAX_EXP_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_expansion_distance);
-    update_param(
-      parameters, DrivableAreaExpansionParameters::MIN_EXP_DIST_PARAM,
-      planner_data_->drivable_area_expansion_parameters.min_expansion_distance);
     update_param(
       parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.extra_arc_length);
