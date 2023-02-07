@@ -493,9 +493,8 @@ bool isLateralDistanceEnough(
   const double & relative_lateral_distance, const double & lateral_distance_threshold);
 
 bool isSafeInLaneletCollisionCheck(
-  const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
+  const Twist & ego_current_twist, const std::vector<double> & check_duration,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
