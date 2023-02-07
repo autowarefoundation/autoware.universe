@@ -236,15 +236,18 @@ std::optional<LaneChangePath> constructCandidatePath(
   const Pose & lane_changing_end_pose = lane_changing_end_point.point.pose;
   const auto lanechange_end_idx =
     motion_utils::findNearestIndex(shifted_path.path.points, lane_changing_end_pose);
-  const auto insertLaneIDs = [](auto & target, const auto src) {
+  const auto insertLaneIDsToBegin = [](auto & target, const auto src) {
+    target.lane_ids.insert(target.lane_ids.begin(), src.lane_ids.begin(), src.lane_ids.end());
+  };
+  const auto insertLaneIDsToEnd = [](auto & target, const auto src) {
     target.lane_ids.insert(target.lane_ids.end(), src.lane_ids.begin(), src.lane_ids.end());
   };
   if (lanechange_end_idx) {
     for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
       auto & point = shifted_path.path.points.at(i);
       if (i < *lanechange_end_idx) {
-        insertLaneIDs(point, lane_changing_start_point);
-        insertLaneIDs(point, lane_changing_end_point);
+        insertLaneIDsToBegin(point, lane_changing_start_point);
+        insertLaneIDsToEnd(point, lane_changing_end_point);
         point.point.longitudinal_velocity_mps = std::min(
           point.point.longitudinal_velocity_mps,
           lane_changing_start_point.point.longitudinal_velocity_mps);
