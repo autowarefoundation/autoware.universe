@@ -280,7 +280,6 @@ bool GeometricParallelParking::planPullOut(
     const double yaw_diff = tier4_autoware_utils::normalizeRadian(
       tf2::getYaw(road_path_first_pose.orientation), tf2::getYaw(arc_path_last_pose.orientation));
     const double distance = calcDistance2d(road_path_first_pose, arc_path_last_pose);
-    std::cout << "yaw_diff: " << yaw_diff << ", distance: " << distance << std::endl;
     if (yaw_diff > tier4_autoware_utils::deg2rad(5.0) || distance > 0.1) {
       continue;
     }
