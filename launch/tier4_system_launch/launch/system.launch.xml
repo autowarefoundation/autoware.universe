@@ -7,6 +7,7 @@
   <arg name="mrm_emergency_stop_operator_param_path"/>
   <arg name="system_error_monitor_param_path"/>
   <arg name="system_error_monitor_planning_simulator_param_path"/>
+  <arg name="diagnostic_aggregator_localization_param_path"/>
   <arg name="diagnostic_aggregator_vehicle_param_path"/>
   <arg name="system_monitor_cpu_monitor_param_path"/>
   <arg name="system_monitor_gpu_monitor_param_path"/>
@@ -61,6 +62,7 @@
       <include file="$(find-pkg-share system_error_monitor)/launch/system_error_monitor.launch.xml">
         <arg name="config_file" value="$(var config_file)"/>
         <arg name="extra_agg_config_file_sensing" value="$(var sensor_launch_pkg)/config/diagnostic_aggregator/sensor_kit.param.yaml"/>
+        <arg name="extra_agg_config_file_localization" value="$(var diagnostic_aggregator_localization_param_path)"/>
         <arg name="extra_agg_config_file_vehicle" value="$(var diagnostic_aggregator_vehicle_param_path)"/>
         <arg name="use_emergency_hold" value="false"/>
       </include>
