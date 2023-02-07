@@ -227,10 +227,32 @@ void AEB::generateEgoPath(
   ini_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
   path.push_back(ini_pose);
 
+  if (curr_v < 0.1) {
+    // if current velocity is too small, assume it stops at the same point
+    return;
+  }
+
   constexpr double epsilon = 1e-6;
   const double & dt = prediction_time_interval_;
   const double & horizon = prediction_time_horizon_;
   for (double t = 0.0; t < horizon + epsilon; t += dt) {
+    curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
+    curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
+    curr_yaw = curr_yaw + curr_w * dt;
+    geometry_msgs::msg::Pose current_pose;
+    current_pose.position = tier4_autoware_utils::createPoint(curr_x, curr_y, 0.0);
+    current_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
+    if (tier4_autoware_utils::calcDistance2d(path.back(), current_pose) < 1e-3) {
+      continue;
+    }
+    path.push_back(current_pose);
+  }
+
+  // If path is shorter than minimum path length
+  const double min_path_length = vehicle_info_.max_longitudinal_offset_m + curr_v * t_response_ +
+                                 curr_v * curr_v / (2 * std::fabs(a_ego_min_)) +
+                                 longitudinal_offset_ + 1.0;
+  while (motion_utils::calcArcLength(path) < min_path_length) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
@@ -257,7 +279,7 @@ void AEB::createObjectData(
     obj.velocity = 0.0;
     obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
     obj.lon_dist = motion_utils::calcSignedArcLength(ego_path, 0, obj.position);
-    obj.lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
+    obj.lat_dist = std::fabs(motion_utils::calcLateralOffset(ego_path, obj.position));
     if (obj.lon_dist < 0.0 || obj.lon_dist > path_length || obj.lat_dist > lateral_dist_threshold) {
       // ignore objects that are behind the base link and ahead of the end point of the path
       // or outside of the lateral distance
