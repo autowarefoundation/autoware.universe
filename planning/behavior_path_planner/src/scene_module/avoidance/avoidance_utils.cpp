@@ -636,7 +636,6 @@ std::vector<Point> updateBoundary(
     motion_utils::findNearestSegmentIndex(original_bound, start_edge_point);
   const double front_offset = motion_utils::calcLongitudinalOffsetToSegment(
     original_bound, start_segment_idx, start_edge_point);
-  std::cerr << start_segment_idx << " " << front_offset << std::endl;
   const auto closest_front_point =
     motion_utils::calcLongitudinalOffsetPoint(original_bound, start_segment_idx, front_offset);
   const size_t end_segment_idx =
