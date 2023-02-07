@@ -696,7 +696,6 @@ void generateDrivableArea(
   for (const auto & object : objects) {
     const auto & obj_pose = object.object.kinematics.initial_pose_with_covariance.pose;
     const auto & obj_poly = object.envelope_poly;
-    constexpr double threshold = 0.01;
 
     // get edge points of the object
     std::vector<Point> edge_points;
