@@ -239,15 +239,11 @@ std::optional<LaneChangePath> constructCandidatePath(
   const auto insertLaneIDsToBegin = [](auto & target, const auto src) {
     target.lane_ids.insert(target.lane_ids.begin(), src.lane_ids.begin(), src.lane_ids.end());
   };
-  const auto insertLaneIDsToEnd = [](auto & target, const auto src) {
-    target.lane_ids.insert(target.lane_ids.end(), src.lane_ids.begin(), src.lane_ids.end());
-  };
   if (lanechange_end_idx) {
     for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
       auto & point = shifted_path.path.points.at(i);
       if (i < *lanechange_end_idx) {
         insertLaneIDsToBegin(point, lane_changing_start_point);
-        insertLaneIDsToEnd(point, lane_changing_end_point);
         point.point.longitudinal_velocity_mps = std::min(
           point.point.longitudinal_velocity_mps,
           lane_changing_start_point.point.longitudinal_velocity_mps);
