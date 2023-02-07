@@ -1,187 +1,186 @@
 <launch>
   <!-- option -->
-  <arg name="vehicle_param_file" />
-  <arg name="vehicle_id" />
-  <arg name="enable_obstacle_collision_checker" />
-  <arg name="lateral_controller_mode" />
-  <arg name="longitudinal_controller_mode" />
+  <arg name="vehicle_param_file"/>
+  <arg name="vehicle_id"/>
+  <arg name="enable_obstacle_collision_checker"/>
+  <arg name="lateral_controller_mode"/>
+  <arg name="longitudinal_controller_mode"/>
 
   <!-- common param path -->
-  <arg name="nearest_search_param_path" />
+  <arg name="nearest_search_param_path"/>
 
   <!-- package param path -->
-  <arg name="trajectory_follower_node_param_path" />
-  <arg name="lat_controller_param_path" />
-  <arg name="lon_controller_param_path" />
-  <arg name="vehicle_cmd_gate_param_path" />
-  <arg name="lane_departure_checker_param_path" />
-  <arg name="operation_mode_transition_manager_param_path" />
-  <arg name="shift_decider_param_path" />
-  <arg name="obstacle_collision_checker_param_path" />
-  <arg name="external_cmd_selector_param_path" />
+  <arg name="trajectory_follower_node_param_path"/>
+  <arg name="lat_controller_param_path"/>
+  <arg name="lon_controller_param_path"/>
+  <arg name="vehicle_cmd_gate_param_path"/>
+  <arg name="lane_departure_checker_param_path"/>
+  <arg name="operation_mode_transition_manager_param_path"/>
+  <arg name="shift_decider_param_path"/>
+  <arg name="obstacle_collision_checker_param_path"/>
+  <arg name="external_cmd_selector_param_path"/>
 
   <!-- component -->
-  <arg name="use_intra_process" default="false" description="use ROS2 component container intra process communication" />
-  <arg name="use_multithread" default="false" description="use multithread executor" />
+  <arg name="use_intra_process" default="false" description="use ROS2 component container intra process communication"/>
+  <arg name="use_multithread" default="false" description="use multithread executor"/>
 
   <group>
-    <push-ros-namespace namespace="control" />
+    <push-ros-namespace namespace="control"/>
 
-    <let name="container_executable" value="component_container" unless="$(var use_multithread)" />
-    <let name="container_executable" value="component_container_mt" if="$(var use_multithread)" />
+    <let name="container_executable" value="component_container" unless="$(var use_multithread)"/>
+    <let name="container_executable" value="component_container_mt" if="$(var use_multithread)"/>
 
     <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_container" namespace="">
       <!-- trajectory follower -->
       <composable_node pkg="trajectory_follower_node" plugin="autoware::motion::control::trajectory_follower_node::Controller" name="controller_node_exe" namespace="trajectory_follower">
-        <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory" />
-        <remap from="~/input/current_odometry" to="/localization/kinematic_state" />
-        <remap from="~/input/current_steering" to="/vehicle/status/steering_status" />
-        <remap from="~/input/current_accel" to="/localization/acceleration" />
-        <remap from="~/input/current_operation_mode" to="/system/operation_mode/state" />
-        <remap from="~/output/predicted_trajectory" to="lateral/predicted_trajectory" />
-        <remap from="~/output/lateral_diagnostic" to="lateral/diagnostic" />
-        <remap from="~/output/slope_angle" to="longitudinal/slope_angle" />
-        <remap from="~/output/longitudinal_diagnostic" to="longitudinal/diagnostic" />
-        <remap from="~/output/control_cmd" to="control_cmd" />
-        <param from="$(var nearest_search_param_path)" />
-        <param from="$(var trajectory_follower_node_param_path)" />
-        <param from="$(var lon_controller_param_path)" />
-        <param from="$(var lat_controller_param_path)" />
-        <param from="$(var vehicle_param_file)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+        <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
+        <remap from="~/input/current_steering" to="/vehicle/status/steering_status"/>
+        <remap from="~/input/current_accel" to="/localization/acceleration"/>
+        <remap from="~/input/current_operation_mode" to="/system/operation_mode/state"/>
+        <remap from="~/output/predicted_trajectory" to="lateral/predicted_trajectory"/>
+        <remap from="~/output/lateral_diagnostic" to="lateral/diagnostic"/>
+        <remap from="~/output/slope_angle" to="longitudinal/slope_angle"/>
+        <remap from="~/output/longitudinal_diagnostic" to="longitudinal/diagnostic"/>
+        <remap from="~/output/control_cmd" to="control_cmd"/>
+        <param from="$(var nearest_search_param_path)"/>
+        <param from="$(var trajectory_follower_node_param_path)"/>
+        <param from="$(var lon_controller_param_path)"/>
+        <param from="$(var lat_controller_param_path)"/>
+        <param from="$(var vehicle_param_file)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
       <!-- lane departure checker -->
       <composable_node pkg="lane_departure_checker" plugin="lane_departure_checker::LaneDepartureCheckerNode" name="lane_departure_checker_node" namespace="trajectory_follower">
-        <remap from="~/input/odometry" to="/localization/kinematic_state" />
-        <remap from="~/input/lanelet_map_bin" to="/map/vector_map" />
-        <remap from="~/input/route" to="/planning/mission_planning/route" />
-        <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory" />
-        <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory" />
-        <param from="$(var nearest_search_param_path)" />
-        <param from="$(var lane_departure_checker_param_path)" />
-        <param from="$(var vehicle_param_file)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+        <remap from="~/input/lanelet_map_bin" to="/map/vector_map"/>
+        <remap from="~/input/route" to="/planning/mission_planning/route"/>
+        <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+        <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+        <param from="$(var nearest_search_param_path)"/>
+        <param from="$(var lane_departure_checker_param_path)"/>
+        <param from="$(var vehicle_param_file)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
       <!-- shift decider -->
       <composable_node pkg="shift_decider" plugin="ShiftDecider" name="shift_decider">
-        <remap from="input/control_cmd" to="/control/trajectory_follower/control_cmd" />
-        <remap from="input/state" to="/autoware/state" />
-        <remap from="output/gear_cmd" to="/control/shift_decider/gear_cmd" />
-        <param from="$(var shift_decider_param_path)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+        <remap from="input/state" to="/autoware/state"/>
+        <remap from="output/gear_cmd" to="/control/shift_decider/gear_cmd"/>
+        <param from="$(var shift_decider_param_path)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
       <!-- vehicle cmd gate -->
       <composable_node pkg="vehicle_cmd_gate" plugin="vehicle_cmd_gate::VehicleCmdGate" name="vehicle_cmd_gate">
-        <remap from="input/steering" to="/vehicle/status/steering_status" />
-        <remap from="input/operation_mode" to="/system/operation_mode/state" />
-        <remap from="input/auto/control_cmd" to="/control/trajectory_follower/control_cmd" />
-        <remap from="input/auto/turn_indicators_cmd" to="/planning/turn_indicators_cmd" />
-        <remap from="input/auto/hazard_lights_cmd" to="/planning/hazard_lights_cmd" />
-        <remap from="input/auto/gear_cmd" to="/control/shift_decider/gear_cmd" />
-        <remap from="input/external/control_cmd" to="/external/selected/control_cmd" />
-        <remap from="input/external/turn_indicators_cmd" to="/external/selected/turn_indicators_cmd" />
-        <remap from="input/external/hazard_lights_cmd" to="/external/selected/hazard_lights_cmd" />
-        <remap from="input/external/gear_cmd" to="/external/selected/gear_cmd" />
-        <remap from="input/external_emergency_stop_heartbeat" to="/external/selected/heartbeat" />
-        <remap from="input/gate_mode" to="/control/gate_mode_cmd" />
-        <remap from="input/emergency/control_cmd" to="/system/emergency/control_cmd" />
-        <remap from="input/emergency/hazard_lights_cmd" to="/system/emergency/hazard_lights_cmd" />
-        <remap from="input/emergency/gear_cmd" to="/system/emergency/gear_cmd" />
-        <remap from="input/mrm_state" to="/system/fail_safe/mrm_state" />
-        <remap from="input/gear_status" to="/vehicle/status/gear_status" />
-        <remap from="output/vehicle_cmd_emergency" to="/control/command/emergency_cmd" />
-        <remap from="output/control_cmd" to="/control/command/control_cmd" />
-        <remap from="output/gear_cmd" to="/control/command/gear_cmd" />
-        <remap from="output/turn_indicators_cmd" to="/control/command/turn_indicators_cmd" />
-        <remap from="output/hazard_lights_cmd" to="/control/command/hazard_lights_cmd" />
-        <remap from="output/gate_mode" to="/control/current_gate_mode" />
-        <remap from="output/engage" to="/api/autoware/get/engage" />
-        <remap from="output/external_emergency" to="/api/autoware/get/emergency" />
-        <remap from="output/operation_mode" to="/control/vehicle_cmd_gate/operation_mode" />
-        <remap from="~/service/engage" to="/api/autoware/set/engage" />
-        <remap from="~/service/external_emergency" to="/api/autoware/set/emergency" />
+        <remap from="input/steering" to="/vehicle/status/steering_status"/>
+        <remap from="input/operation_mode" to="/system/operation_mode/state"/>
+        <remap from="input/auto/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+        <remap from="input/auto/turn_indicators_cmd" to="/planning/turn_indicators_cmd"/>
+        <remap from="input/auto/hazard_lights_cmd" to="/planning/hazard_lights_cmd"/>
+        <remap from="input/auto/gear_cmd" to="/control/shift_decider/gear_cmd"/>
+        <remap from="input/external/control_cmd" to="/external/selected/control_cmd"/>
+        <remap from="input/external/turn_indicators_cmd" to="/external/selected/turn_indicators_cmd"/>
+        <remap from="input/external/hazard_lights_cmd" to="/external/selected/hazard_lights_cmd"/>
+        <remap from="input/external/gear_cmd" to="/external/selected/gear_cmd"/>
+        <remap from="input/external_emergency_stop_heartbeat" to="/external/selected/heartbeat"/>
+        <remap from="input/gate_mode" to="/control/gate_mode_cmd"/>
+        <remap from="input/emergency/control_cmd" to="/system/emergency/control_cmd"/>
+        <remap from="input/emergency/hazard_lights_cmd" to="/system/emergency/hazard_lights_cmd"/>
+        <remap from="input/emergency/gear_cmd" to="/system/emergency/gear_cmd"/>
+        <remap from="input/mrm_state" to="/system/fail_safe/mrm_state"/>
+        <remap from="input/gear_status" to="/vehicle/status/gear_status"/>
+        <remap from="output/vehicle_cmd_emergency" to="/control/command/emergency_cmd"/>
+        <remap from="output/control_cmd" to="/control/command/control_cmd"/>
+        <remap from="output/gear_cmd" to="/control/command/gear_cmd"/>
+        <remap from="output/turn_indicators_cmd" to="/control/command/turn_indicators_cmd"/>
+        <remap from="output/hazard_lights_cmd" to="/control/command/hazard_lights_cmd"/>
+        <remap from="output/gate_mode" to="/control/current_gate_mode"/>
+        <remap from="output/engage" to="/api/autoware/get/engage"/>
+        <remap from="output/external_emergency" to="/api/autoware/get/emergency"/>
+        <remap from="output/operation_mode" to="/control/vehicle_cmd_gate/operation_mode"/>
+        <remap from="~/service/engage" to="/api/autoware/set/engage"/>
+        <remap from="~/service/external_emergency" to="/api/autoware/set/emergency"/>
         <!-- TODO(Takagi, Isamu): deprecated -->
-        <remap from="input/engage" to="/autoware/engage" />
-        <remap from="~/service/external_emergency_stop" to="~/external_emergency_stop" />
-        <remap from="~/service/clear_external_emergency_stop" to="~/clear_external_emergency_stop" />
-        <param from="$(var vehicle_cmd_gate_param_path)" />
-        <param from="$(var vehicle_param_file)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="input/engage" to="/autoware/engage"/>
+        <remap from="~/service/external_emergency_stop" to="~/external_emergency_stop"/>
+        <remap from="~/service/clear_external_emergency_stop" to="~/clear_external_emergency_stop"/>
+        <param from="$(var vehicle_cmd_gate_param_path)"/>
+        <param from="$(var vehicle_param_file)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
       <!-- operation mode transition manager -->
       <composable_node pkg="operation_mode_transition_manager" plugin="operation_mode_transition_manager::OperationModeTransitionManager" name="operation_mode_transition_manager">
         <!-- input -->
-        <remap from="kinematics" to="/localization/kinematic_state" />
-        <remap from="steering" to="/vehicle/status/steering_status" />
-        <remap from="trajectory" to="/planning/scenario_planning/trajectory" />
-        <remap from="control_cmd" to="/control/command/control_cmd" />
-        <remap from="control_mode_report" to="/vehicle/status/control_mode" />
-        <remap from="gate_operation_mode" to="/control/vehicle_cmd_gate/operation_mode" />
+        <remap from="kinematics" to="/localization/kinematic_state"/>
+        <remap from="steering" to="/vehicle/status/steering_status"/>
+        <remap from="trajectory" to="/planning/scenario_planning/trajectory"/>
+        <remap from="control_cmd" to="/control/command/control_cmd"/>
+        <remap from="control_mode_report" to="/vehicle/status/control_mode"/>
+        <remap from="gate_operation_mode" to="/control/vehicle_cmd_gate/operation_mode"/>
         <!-- output -->
-        <remap from="is_autonomous_available" to="/control/is_autonomous_available" />
-        <remap from="control_mode_request" to="/control/control_mode_request" />
-        <param from="$(var nearest_search_param_path)" />
-        <param from="$(var operation_mode_transition_manager_param_path)" />
-        <param from="$(var vehicle_param_file)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="is_autonomous_available" to="/control/is_autonomous_available"/>
+        <remap from="control_mode_request" to="/control/control_mode_request"/>
+        <param from="$(var nearest_search_param_path)"/>
+        <param from="$(var operation_mode_transition_manager_param_path)"/>
+        <param from="$(var vehicle_param_file)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
       <!-- external cmd selector -->
       <composable_node pkg="external_cmd_selector" plugin="ExternalCmdSelector" name="external_cmd_selector">
-        <remap from="~/service/select_external_command" to="~/select_external_command" />
-        <remap from="~/input/local/control_cmd" to="/api/external/set/command/local/control" />
-        <remap from="~/input/local/shift_cmd" to="/api/external/set/command/local/shift" />
-        <remap from="~/input/local/turn_signal_cmd" to="/api/external/set/command/local/turn_signal" />
-        <remap from="~/input/local/heartbeat" to="/api/external/set/command/local/heartbeat" />
-        <remap from="~/input/remote/control_cmd" to="/api/external/set/command/remote/control" />
-        <remap from="~/input/remote/shift_cmd" to="/api/external/set/command/remote/shift" />
-        <remap from="~/input/remote/turn_signal_cmd" to="/api/external/set/command/remote/turn_signal" />
-        <remap from="~/input/remote/heartbeat" to="/api/external/set/command/remote/heartbeat" />
-        <remap from="~/output/control_cmd" to="/external/selected/external_control_cmd" />
-        <remap from="~/output/gear_cmd" to="/external/selected/gear_cmd" />
-        <remap from="~/output/turn_indicators_cmd" to="/external/selected/turn_indicators_cmd" />
-        <remap from="~/output/hazard_lights_cmd" to="/external/selected/hazard_lights_cmd" />
-        <remap from="~/output/heartbeat" to="/external/selected/heartbeat" />
-        <remap from="~/output/current_selector_mode" to="~/current_selector_mode" />
-        <param from="$(var external_cmd_selector_param_path)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="~/service/select_external_command" to="~/select_external_command"/>
+        <remap from="~/input/local/control_cmd" to="/api/external/set/command/local/control"/>
+        <remap from="~/input/local/shift_cmd" to="/api/external/set/command/local/shift"/>
+        <remap from="~/input/local/turn_signal_cmd" to="/api/external/set/command/local/turn_signal"/>
+        <remap from="~/input/local/heartbeat" to="/api/external/set/command/local/heartbeat"/>
+        <remap from="~/input/remote/control_cmd" to="/api/external/set/command/remote/control"/>
+        <remap from="~/input/remote/shift_cmd" to="/api/external/set/command/remote/shift"/>
+        <remap from="~/input/remote/turn_signal_cmd" to="/api/external/set/command/remote/turn_signal"/>
+        <remap from="~/input/remote/heartbeat" to="/api/external/set/command/remote/heartbeat"/>
+        <remap from="~/output/control_cmd" to="/external/selected/external_control_cmd"/>
+        <remap from="~/output/gear_cmd" to="/external/selected/gear_cmd"/>
+        <remap from="~/output/turn_indicators_cmd" to="/external/selected/turn_indicators_cmd"/>
+        <remap from="~/output/hazard_lights_cmd" to="/external/selected/hazard_lights_cmd"/>
+        <remap from="~/output/heartbeat" to="/external/selected/heartbeat"/>
+        <remap from="~/output/current_selector_mode" to="~/current_selector_mode"/>
+        <param from="$(var external_cmd_selector_param_path)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
       <!-- external cmd converter -->
       <composable_node pkg="external_cmd_converter" plugin="external_cmd_converter::ExternalCmdConverterNode" name="external_cmd_converter">
-        <param from="in/external_control_cmd" to="/external/selected/external_control_cmd" />
-        <param from="in/shift_cmd" to="/external/selected/gear_cmd" />
-        <param from="in/emergency_stop" to="/external/selected/heartbeat" />
-        <param from="in/current_gate_mode" to="/control/current_gate_mode" />
-        <param from="in/odometry" to="/localization/kinematic_state" />
-        <param from="out/control_cmd" to="/external/selected/control_cmd" />
-        <param from="out/latest_external_control_cmd" to="/api/external/get/command/selected/control" />
-        <param name="csv_path_accel_map" value="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/accel_map.csv" />
-        <param name="csv_path_brake_map" value="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/brake_map.csv" />
-        <param name="ref_vel_gain" value="3.0" />
-        <param name="wait_for_first_topic" value="true" />
-        <param name="control_command_timeout" value="1.0" />
-        <param name="emergency_stop_timeout" value="3.0" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <param from="in/external_control_cmd" to="/external/selected/external_control_cmd"/>
+        <param from="in/shift_cmd" to="/external/selected/gear_cmd"/>
+        <param from="in/emergency_stop" to="/external/selected/heartbeat"/>
+        <param from="in/current_gate_mode" to="/control/current_gate_mode"/>
+        <param from="in/odometry" to="/localization/kinematic_state"/>
+        <param from="out/control_cmd" to="/external/selected/control_cmd"/>
+        <param from="out/latest_external_control_cmd" to="/api/external/get/command/selected/control"/>
+        <param name="csv_path_accel_map" value="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/accel_map.csv"/>
+        <param name="csv_path_brake_map" value="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/brake_map.csv"/>
+        <param name="ref_vel_gain" value="3.0"/>
+        <param name="wait_for_first_topic" value="true"/>
+        <param name="control_command_timeout" value="1.0"/>
+        <param name="emergency_stop_timeout" value="3.0"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
     </node_container>
 
     <load_composable_node target="/control/control_container" if="$(var enable_obstacle_collision_checker)">
       <composable_node pkg="obstacle_collision_checker" plugin="obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
-        <remap from="input/lanelet_map_bin" to="/map/vector_map" />
-        <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud" />
-        <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory" />
-        <remap from="input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory" />
-        <remap from="input/odometry" to="/localization/kinematic_state" />
-        <param from="$(var obstacle_collision_checker_param_path)" />
-        <param from="$(var vehicle_param_file)" />
-        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
+        <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
+        <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+        <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+        <remap from="input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+        <remap from="input/odometry" to="/localization/kinematic_state"/>
+        <param from="$(var obstacle_collision_checker_param_path)"/>
+        <param from="$(var vehicle_param_file)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
     </load_composable_node>
   </group>
-
 </launch>
