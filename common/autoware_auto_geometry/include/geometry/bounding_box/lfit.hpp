@@ -19,7 +19,7 @@
 ///        bounding box
 
 // cspell: ignore LFIT, lfit
-
+// LFIT means "L-Shape Fitting"
 #ifndef GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 #define GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 
