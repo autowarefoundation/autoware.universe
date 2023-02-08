@@ -166,11 +166,7 @@ std::vector<int64_t> replaceWithSortedIds(
 {
   for (const auto original_id : original_lane_ids) {
     for (const auto & sorted_id : sorted_lane_ids) {
-      const auto find_id = std::find_if(
-        sorted_id.cbegin(), sorted_id.cend(),
-        [&original_id](const int64_t id) { return original_id == id; });
-
-      if (find_id != sorted_id.cend()) {
+      if (std::find(sorted_id.cbegin(), sorted_id.cend(), original_id) != sorted_id.cend()) {
         return sorted_id;
       }
     }
