@@ -87,6 +87,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   sub_imu_ = this->create_subscription<Imu>(
     "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
+  sub_predicted_traj_ = this->create_subscription<Trajectory>(
+    "/control/trajectory_follower/lateral/predicted_trajectory", rclcpp::QoS{1},
+    std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
+
   // Publisher
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
@@ -125,6 +129,12 @@ void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 void AEB::onOdometry(const Odometry::ConstSharedPtr input_msg) { odometry_ptr_ = input_msg; }
 
 void AEB::onImu(const Imu::ConstSharedPtr input_msg) { imu_ptr_ = input_msg; }
+
+void AEB::onPredictedTrajectory(
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
+{
+  predicted_traj_ptr_ = input_msg;
+}
 
 void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
 {
