@@ -38,6 +38,9 @@ typedef bg::model::polygon<bg_point> bg_polygon;
 
 namespace
 {
+namespace bg = boost::geometry;
+using tier4_autoware_utils::LinearRing2d;
+using tier4_autoware_utils::LineString2d;
 std::vector<double> convertEulerAngleToMonotonic(const std::vector<double> & angle)
 {
   if (angle.empty()) {
@@ -661,16 +664,16 @@ bg_polygon createDrivablePolygon(
 {
   bg_polygon drivable_area_poly;
 
-  // right bound
-  for (const auto rp : right_bound) {
-    drivable_area_poly.outer().push_back(bg_point(rp.x, rp.y));
+  // left bound
+  for (const auto lp : left_bound) {
+    drivable_area_poly.outer().push_back(bg_point(lp.x, lp.y));
   }
 
-  // left bound
-  auto reversed_left_bound = left_bound;
-  std::reverse(reversed_left_bound.begin(), reversed_left_bound.end());
-  for (const auto lp : reversed_left_bound) {
-    drivable_area_poly.outer().push_back(bg_point(lp.x, lp.y));
+  // right bound
+  auto reversed_right_bound = right_bound;
+  std::reverse(reversed_right_bound.begin(), reversed_right_bound.end());
+  for (const auto rp : reversed_right_bound) {
+    drivable_area_poly.outer().push_back(bg_point(rp.x, rp.y));
   }
 
   drivable_area_poly.outer().push_back(drivable_area_poly.outer().front());
@@ -683,7 +686,8 @@ namespace drivable_area_utils
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound, const VehicleParam & vehicle_param)
+  const std::vector<geometry_msgs::msg::Point> & right_bound, const VehicleParam & vehicle_param,
+  const bool is_considering_footprint_edges)
 {
   if (left_bound.empty() || right_bound.empty()) {
     return false;
@@ -696,17 +700,49 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   const double base_to_rear = vehicle_param.rear_overhang;
 
   const auto top_left_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -base_to_left, 0.0)
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, base_to_left, 0.0)
       .position;
   const auto top_right_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, base_to_right, 0.0)
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -base_to_right, 0.0)
       .position;
   const auto bottom_right_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, base_to_right, 0.0)
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -base_to_right, 0.0)
       .position;
   const auto bottom_left_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -base_to_left, 0.0)
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, base_to_left, 0.0)
       .position;
+
+  if (is_considering_footprint_edges) {
+    LinearRing2d footprint_polygon;
+    LineString2d left_bound_line;
+    LineString2d right_bound_line;
+    LineString2d back_bound_line;
+
+    footprint_polygon.push_back({top_left_pos.x, top_left_pos.y});
+    footprint_polygon.push_back({top_right_pos.x, top_right_pos.y});
+    footprint_polygon.push_back({bottom_right_pos.x, bottom_right_pos.y});
+    footprint_polygon.push_back({bottom_left_pos.x, bottom_left_pos.y});
+
+    bg::correct(footprint_polygon);
+
+    for (const auto & p : left_bound) {
+      left_bound_line.push_back({p.x, p.y});
+    }
+
+    for (const auto & p : right_bound) {
+      right_bound_line.push_back({p.x, p.y});
+    }
+
+    back_bound_line = {left_bound_line.back(), right_bound_line.back()};
+
+    if (
+      bg::intersects(footprint_polygon, left_bound_line) ||
+      bg::intersects(footprint_polygon, right_bound_line) ||
+      bg::intersects(footprint_polygon, back_bound_line)) {
+      return true;
+    }
+    return false;
+  }
 
   const bool front_top_left = isFrontDrivableArea(top_left_pos, left_bound, right_bound);
   const bool front_top_right = isFrontDrivableArea(top_right_pos, left_bound, right_bound);

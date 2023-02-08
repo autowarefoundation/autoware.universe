@@ -15,7 +15,9 @@
 #ifndef SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 #define SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 
+#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <scene_module/intersection/util_type.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
@@ -49,9 +51,6 @@ public:
 
     geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
-    geometry_msgs::msg::Pose stop_point_pose;
-    geometry_msgs::msg::Pose judge_point_pose;
-    geometry_msgs::msg::Polygon ego_lane_polygon;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
@@ -69,10 +68,6 @@ public:
   {
     double state_transit_margin_time;
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
-    double keep_detection_line_margin;  //! distance (toward path end) from generated stop line.
-                                        //! keep detection if ego is before this line and ego.vel <
-                                        //! keep_detection_vel_thr
-    double keep_detection_vel_thr;
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
       stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
@@ -88,13 +83,15 @@ public:
     double detection_area_angle_thr;     //! threshold in checking the angle of detecting objects
     double min_predicted_path_confidence;
     //! minimum confidence value of predicted path to use for collision detection
-    double external_input_timeout;       //! used to disable external input
-    double collision_start_margin_time;  //! start margin time to check collision
-    double collision_end_margin_time;    //! end margin time to check collision
+    double external_input_timeout;          //! used to disable external input
+    double minimum_ego_predicted_velocity;  //! used to calclate ego's future velocity profile
+    double collision_start_margin_time;     //! start margin time to check collision
+    double collision_end_margin_time;       //! end margin time to check collision
     bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
     double
       assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
     bool enable_front_car_decel_prediction;  //! flag for using above feature
+    double stop_overshoot_margin;            //! overshoot margin for stuck, collsion detection
   };
 
   IntersectionModule(
@@ -116,9 +113,9 @@ private:
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
-
   // Parameter
   PlannerParam planner_param_;
+  std::optional<util::IntersectionLanelets> intersection_lanelets_;
 
   /**
    * @brief check collision for all lanelet area & predicted objects (call checkPathCollision() as
@@ -139,7 +136,7 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const std::optional<Polygon2d> & intersection_area,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
+    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area, const double time_delay);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -186,7 +183,7 @@ private:
    */
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int objective_lane_id) const;
+    const int objective_lane_id, const double time_delay) const;
 
   /**
    * @brief check if the object has a target type for collision check
@@ -260,6 +257,9 @@ private:
 
   // Debug
   mutable DebugData debug_data_;
+
+  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
+    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
 }  // namespace behavior_velocity_planner
 

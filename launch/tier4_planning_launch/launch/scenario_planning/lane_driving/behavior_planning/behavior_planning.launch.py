@@ -30,7 +30,6 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-
     # vehicle information parameter
     vehicle_param_path = LaunchConfiguration("vehicle_param_file").perform(context)
     with open(vehicle_param_path, "r") as f:
@@ -67,12 +66,14 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/route", LaunchConfiguration("input_route_topic_name")),
             ("~/input/vector_map", LaunchConfiguration("map_topic_name")),
             ("~/input/perception", "/perception/object_recognition/objects"),
+            ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/accel", "/localization/acceleration"),
             ("~/input/scenario", "/planning/scenario_planning/scenario"),
             ("~/output/path", "path_with_lane_id"),
             ("~/output/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("~/output/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
+            ("~/output/modified_goal", "/planning/scenario_planning/modified_goal"),
         ],
         parameters=[
             nearest_search_param,

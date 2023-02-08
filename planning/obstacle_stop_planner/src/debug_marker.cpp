@@ -202,6 +202,7 @@ void ObstacleStopPlannerDebugNode::publish()
   vehicle_polyhedrons_.clear();
   collision_polyhedrons_.clear();
   stop_pose_ptr_ = nullptr;
+  target_stop_pose_ptr_ = nullptr;
   slow_down_start_pose_ptr_ = nullptr;
   slow_down_end_pose_ptr_ = nullptr;
   stop_obstacle_point_ptr_ = nullptr;
