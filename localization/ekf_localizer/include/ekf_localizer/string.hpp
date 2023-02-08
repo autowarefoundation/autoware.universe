@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_LOCALIZER__WARNING_MESSAGE_HPP_
-#define EKF_LOCALIZER__WARNING_MESSAGE_HPP_
+#ifndef EKF_LOCALIZER__STRING_HPP_
+#define EKF_LOCALIZER__STRING_HPP_
 
 #include <string>
 
-std::string poseDelayStepWarningMessage(
-  const double delay_time, const int extend_state_step, const double ekf_dt);
-std::string twistDelayStepWarningMessage(
-  const double delay_time, const int extend_state_step, const double ekf_dt);
-std::string poseDelayTimeWarningMessage(const double delay_time);
-std::string twistDelayTimeWarningMessage(const double delay_time);
-std::string mahalanobisWarningMessage(const double distance, const double max_distance);
+inline std::string eraseLeadingSlash(const std::string & s)
+{
+  std::string a = s;
+  if (a.front() == '/') {
+    a.erase(0, 1);
+  }
+  return a;
+}
 
-#endif  // EKF_LOCALIZER__WARNING_MESSAGE_HPP_
+#endif  // EKF_LOCALIZER__STRING_HPP_

@@ -21,6 +21,7 @@
 #include "ekf_localizer/numeric.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
+#include "ekf_localizer/string.hpp"
 #include "ekf_localizer/warning.hpp"
 #include "ekf_localizer/warning_message.hpp"
 
@@ -273,12 +274,9 @@ bool EKFLocalizer::getTransformFromTF(
   tf2::BufferCore tf_buffer;
   tf2_ros::TransformListener tf_listener(tf_buffer);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  if (parent_frame.front() == '/') {
-    parent_frame.erase(0, 1);
-  }
-  if (child_frame.front() == '/') {
-    child_frame.erase(0, 1);
-  }
+
+  parent_frame = eraseLeadingSlash(parent_frame);
+  child_frame = eraseLeadingSlash(child_frame);
 
   for (int i = 0; i < 50; ++i) {
     try {
@@ -404,13 +402,9 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (delay_step > params_.extend_state_step - 1) {
+  if (delay_step >= params_.extend_state_step) {
     warning_.warnThrottle(
-      fmt::format(
-        "Pose delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
-        "extend_state_step * ekf_dt : %f [s]",
-        delay_time, params_.extend_state_step * ekf_dt_),
-      1000);
+      poseDelayStepWarningMessage(delay_time, params_.extend_state_step, ekf_dt_), 2000);
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
@@ -487,13 +481,9 @@ void EKFLocalizer::measurementUpdateTwist(
   delay_time = std::max(delay_time, 0.0);
 
   int delay_step = std::roundf(delay_time / ekf_dt_);
-  if (delay_step > params_.extend_state_step - 1) {
+  if (delay_step >= params_.extend_state_step) {
     warning_.warnThrottle(
-      fmt::format(
-        "Twist delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
-        "extend_state_step * ekf_dt : %f [s]",
-        delay_time, params_.extend_state_step * ekf_dt_),
-      1000);
+      twistDelayStepWarningMessage(delay_time, params_.extend_state_step, ekf_dt_), 2000);
     return;
   }
   DEBUG_INFO(get_logger(), "delay_time: %f [s]", delay_time);
