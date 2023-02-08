@@ -416,13 +416,15 @@ void ObstacleStopPlannerNode::searchObstacle(
       PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
-      const auto found_collision_points = node_param_.enable_z_axis_obstacle_filtering ? 
-          withinPolyhedron(
-          one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-          next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, z_axis_min,
-          z_axis_max) : withinPolygon(
-        one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-        next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
+      const auto found_collision_points =
+        node_param_.enable_z_axis_obstacle_filtering
+          ? withinPolyhedron(
+              one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+              next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, z_axis_min,
+              z_axis_max)
+          : withinPolygon(
+              one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+              next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
       if (found_collision_points) {
         pcl::PointXYZ nearest_collision_point;
