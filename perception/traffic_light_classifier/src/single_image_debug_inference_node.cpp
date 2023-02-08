@@ -127,27 +127,29 @@ private:
         RCLCPP_ERROR(get_logger(), "failed to classify image");
         return;
       }
-      auto color_str = toString(traffic_signal.lights.front().color);
       cv::Scalar color;
-      if (color_str == "red") {
-        color = cv::Scalar(0, 0, 255);
-      } else if (color_str == "green") {
-        color = cv::Scalar(0, 255, 0);
-      } else if (color_str == "yellow") {
-        color = cv::Scalar(0, 255, 255);
-      } else if (color_str == "white") {
-        color = cv::Scalar(0, 0, 0);
-      } else {
-        color = cv::Scalar(255, 255, 255);
+      cv::Scalar text_color;
+      for (const auto & light : traffic_signal.lights) {
+        auto color_str = toString(light.color);
+        auto shape_str = toString(light.shape);
+        auto confidence_str = std::to_string(light.confidence);
+        if (shape_str == "circle") {
+          if (color_str == "red") {
+            color = cv::Scalar(0, 0, 255);
+          } else if (color_str == "green") {
+            color = cv::Scalar(0, 255, 0);
+          } else if (color_str == "yellow") {
+            color = cv::Scalar(0, 255, 255);
+          } else if (color_str == "white") {
+            color = cv::Scalar(0, 0, 0);
+          } else {
+            color = cv::Scalar(255, 255, 255);
+          }
+        }
+        RCLCPP_INFO_STREAM(get_logger(), color_str << " " << shape_str << " " << confidence_str);
       }
-      auto shape_str = toString(traffic_signal.lights.front().shape);
-      auto confidence_str = std::to_string(traffic_signal.lights.front().confidence);
-      cv::putText(
-        tmp, color_str + " " + shape_str + " " + confidence_str, top_left_corner_,
-        cv::FONT_HERSHEY_SIMPLEX, 1.0, color, 2, cv::LINE_AA);
       cv::rectangle(tmp, top_left_corner_, bottom_right_corner_, color, 2, 8);
       cv::imshow("inference image", tmp);
-      RCLCPP_INFO_STREAM(get_logger(), color_str << " " << shape_str << " " << confidence_str);
     }
   }
 
