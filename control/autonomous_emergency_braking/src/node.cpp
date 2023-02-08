@@ -66,6 +66,7 @@ Polygon2d createPolygon(
   appendPointToPolygon(
     polygon, tier4_autoware_utils::calcOffsetPose(base_pose, -rear_overhang, width, 0.0).position);
 
+  boost::geometry::correct(polygon);
   return polygon;
 }
 
