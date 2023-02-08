@@ -286,7 +286,7 @@ void AEB::generateEgoPath(
   }
 
   // If path is shorter than minimum path length
-  const double min_path_length = 1.0;
+  const double min_path_length = 0.5;
   while (motion_utils::calcArcLength(path) < min_path_length) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
