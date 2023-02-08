@@ -222,7 +222,7 @@ $$
 \begin{align}
     \theta[n]=&
     \theta[n-1]+\frac{p[n-1]x^{(n)}}{\lambda+p[n-1](x^{(n)})^2}(y^{(n)}-\theta[n-1]x^{(n)})\\
-    p[n]=&\frac{p[n-1]}{\lambda+p[n-1](x^{(n)})^2}
+    p[n]=&\frac{p[n-1]}{\lambda+p[n-1]{(x^{(n)})}^2}
 \end{align}
 $$
 
