@@ -66,7 +66,7 @@ class SingleImageDebugInferenceNode : public rclcpp::Node
 {
 public:
   explicit SingleImageDebugInferenceNode(const rclcpp::NodeOptions & node_options)
-  : Node("single_image_inference", node_options)
+  : Node("single_image_debug_inference", node_options)
   {
     const auto image_path = declare_parameter("image_path", "");
 
