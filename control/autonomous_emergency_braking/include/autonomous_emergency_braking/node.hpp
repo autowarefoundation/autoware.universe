@@ -58,9 +58,7 @@ struct ObjectData
 {
   geometry_msgs::msg::Point position;
   double velocity;
-  double lat_dist;
   double lon_dist;
-  rclcpp::Time time;
 };
 
 class AEB : public rclcpp::Node
@@ -76,7 +74,7 @@ public:
 
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
-  rclcpp::Publisher<Marker>::SharedPtr debug_ego_predicted_path_publisher_;  // debug
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_ego_path_publisher_;  // debug
 
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -95,11 +93,16 @@ public:
   bool checkCollision();
 
   void generateEgoPath(
-    const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path);
+    const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path,
+    std::vector<tier4_autoware_utils::Polygon2d> & polygons);
   void createObjectData(
-    const std::vector<geometry_msgs::msg::Pose> & ego_traj, std::vector<ObjectData> & objects);
+    std::vector<geometry_msgs::msg::Pose> & ego_path,
+    const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys,
+    std::vector<ObjectData> & objects);
 
-  void publishEgoPath(const std::vector<geometry_msgs::msg::Pose> & path);
+  void publishEgoPath(
+    const std::vector<geometry_msgs::msg::Pose> & path,
+    const std::vector<tier4_autoware_utils::Polygon2d> & polygons);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};

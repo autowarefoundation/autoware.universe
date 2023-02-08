@@ -32,6 +32,42 @@
 namespace autoware::motion::control::autonomous_emergency_braking
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
+namespace bg = boost::geometry;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
+
+void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point)
+{
+  Point2d point;
+  point.x() = geom_point.x;
+  point.y() = geom_point.y;
+
+  bg::append(polygon.outer(), point);
+}
+
+Polygon2d createPolygon(
+  const geometry_msgs::msg::Pose & base_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const double expand_width)
+{
+  Polygon2d polygon;
+
+  const double longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
+  const double width = vehicle_info.vehicle_width_m / 2.0 + expand_width;
+  const double rear_overhang = vehicle_info.rear_overhang_m;
+
+  appendPointToPolygon(
+    polygon,
+    tier4_autoware_utils::calcOffsetPose(base_pose, longitudinal_offset, width, 0.0).position);
+  appendPointToPolygon(
+    polygon,
+    tier4_autoware_utils::calcOffsetPose(base_pose, longitudinal_offset, -width, 0.0).position);
+  appendPointToPolygon(
+    polygon, tier4_autoware_utils::calcOffsetPose(base_pose, -rear_overhang, -width, 0.0).position);
+  appendPointToPolygon(
+    polygon, tier4_autoware_utils::calcOffsetPose(base_pose, -rear_overhang, width, 0.0).position);
+
+  return polygon;
+}
 
 AEB::AEB(const rclcpp::NodeOptions & node_options)
 : Node("AEB", node_options),
@@ -54,8 +90,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   // Publisher
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
-  debug_ego_predicted_path_publisher_ =
-    this->create_publisher<Marker>("~/debug/ego_predicted_path", 1);
+  debug_ego_path_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
 
   // Diagnostics
   updater_.setHardwareID("autonomous_emergency_braking");
@@ -188,8 +223,9 @@ bool AEB::checkCollision()
 
   // step3. create ego path
   std::vector<geometry_msgs::msg::Pose> ego_path;
-  generateEgoPath(current_v, current_w, ego_path);
-  publishEgoPath(ego_path);
+  std::vector<Polygon2d> ego_polys;
+  generateEgoPath(current_v, current_w, ego_path, ego_polys);
+  publishEgoPath(ego_path, ego_polys);
 
   // check if the predicted path has valid number of points
   if (ego_path.size() < 2) {
@@ -198,9 +234,9 @@ bool AEB::checkCollision()
 
   // step4. create object
   std::vector<ObjectData> objects;
-  createObjectData(ego_path, objects);
+  createObjectData(ego_path, ego_polys, objects);
 
-  // step5. calculate time to collision(RSS)
+  // step5. calculate RSS
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
@@ -217,7 +253,8 @@ bool AEB::checkCollision()
 }
 
 void AEB::generateEgoPath(
-  const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path)
+  const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path,
+  std::vector<Polygon2d> & polygons)
 {
   double curr_x = 0.0;
   double curr_y = 0.0;
@@ -249,9 +286,7 @@ void AEB::generateEgoPath(
   }
 
   // If path is shorter than minimum path length
-  const double min_path_length = vehicle_info_.max_longitudinal_offset_m + curr_v * t_response_ +
-                                 curr_v * curr_v / (2 * std::fabs(a_ego_min_)) +
-                                 longitudinal_offset_ + 1.0;
+  const double min_path_length = 1.0;
   while (motion_utils::calcArcLength(path) < min_path_length) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
@@ -264,50 +299,43 @@ void AEB::generateEgoPath(
     }
     path.push_back(current_pose);
   }
-}
 
-void AEB::createObjectData(
-  const std::vector<geometry_msgs::msg::Pose> & ego_path, std::vector<ObjectData> & objects)
-{
-  const double lateral_dist_threshold = vehicle_info_.vehicle_width_m / 2.0 + lateral_offset_;
-  const double path_length = motion_utils::calcArcLength(ego_path);
-  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
-  for (const auto & point : obstacle_points_ptr->points) {
-    ObjectData obj;
-    obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
-    obj.velocity = 0.0;
-    obj.time = pcl_conversions::fromPCL(obstacle_points_ptr->header).stamp;
-    obj.lon_dist = motion_utils::calcSignedArcLength(ego_path, 0, obj.position);
-    obj.lat_dist = std::fabs(motion_utils::calcLateralOffset(ego_path, obj.position));
-    if (obj.lon_dist < 0.0 || obj.lon_dist > path_length || obj.lat_dist > lateral_dist_threshold) {
-      // ignore objects that are behind the base link and ahead of the end point of the path
-      // or outside of the lateral distance
-      continue;
-    }
-    objects.push_back(obj);
+  // generate ego polygons
+  polygons.resize(path.size());
+  for (size_t i = 0; i < path.size(); ++i) {
+    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, lateral_offset_);
   }
 }
 
-void AEB::publishEgoPath(const std::vector<geometry_msgs::msg::Pose> & path)
+void AEB::createObjectData(
+  std::vector<geometry_msgs::msg::Pose> & ego_path,
+  const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys, std::vector<ObjectData> & objects)
 {
-  // marker parameter
-  constexpr double scale_x = 0.2;
-  constexpr double scale_y = 0.2;
-  constexpr double scale_z = 0.2;
-  constexpr double color_r = 0.0 / 256.0;
-  constexpr double color_g = 148.0 / 256.0;
-  constexpr double color_b = 205.0 / 256.0;
-  constexpr double color_a = 0.999;
+  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
+  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
+  for (const auto & point : obstacle_points_ptr->points) {
+    Point2d obj_point(point.x, point.y);
+    for (const auto & ego_poly : ego_polys) {
+      if (bg::within(obj_point, ego_poly)) {
+        ObjectData obj;
+        obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
+        obj.velocity = 0.0;
+        obj.lon_dist = motion_utils::calcSignedArcLength(ego_path, 0, obj.position);
+        objects.push_back(obj);
+        break;
+      }
+    }
+  }
+}
 
-  const auto current_time = this->get_clock()->now();
-  auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "ego_predicted_path", 0L, Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
-    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
-  marker.points.resize(path.size());
+void AEB::publishEgoPath(
+  const std::vector<geometry_msgs::msg::Pose> & path,
+  const std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+{
+  MarkerArray debug_markers;
 
   // transform to map
+  const auto current_time = this->get_clock()->now();
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -317,14 +345,53 @@ void AEB::publishEgoPath(const std::vector<geometry_msgs::msg::Pose> & path)
     return;
   }
 
-  for (size_t i = 0; i < path.size(); ++i) {
-    const auto & pose = path.at(i);
-    geometry_msgs::msg::Pose map_pose;
-    tf2::doTransform(pose, map_pose, transform_stamped);
-    marker.points.at(i) = map_pose.position;
+  {
+    // marker parameter
+    constexpr double color_r = 0.0 / 256.0;
+    constexpr double color_g = 148.0 / 256.0;
+    constexpr double color_b = 205.0 / 256.0;
+    auto marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "ego_predicted_path", 0L, Marker::LINE_STRIP,
+      tier4_autoware_utils::createMarkerScale(0.2, 0.2, 0.2),
+      tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, 0.999));
+    marker.points.resize(path.size());
+
+    for (size_t i = 0; i < path.size(); ++i) {
+      const auto & pose = path.at(i);
+      geometry_msgs::msg::Pose map_pose;
+      tf2::doTransform(pose, map_pose, transform_stamped);
+      marker.points.at(i) = map_pose.position;
+    }
+    debug_markers.markers.push_back(marker);
   }
 
-  debug_ego_predicted_path_publisher_->publish(marker);
+  {
+    auto marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "ego_predicted_polygons", 0, Marker::LINE_LIST,
+      tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
+      tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
+
+    for (const auto & poly : polygons) {
+      for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
+        const auto & boost_current_point = poly.outer().at(dp_idx);
+        const auto & boost_next_point = poly.outer().at((dp_idx + 1) % poly.outer().size());
+        const auto curr_point =
+          tier4_autoware_utils::createPoint(boost_current_point.x(), boost_current_point.y(), 0.0);
+        const auto next_point =
+          tier4_autoware_utils::createPoint(boost_next_point.x(), boost_next_point.y(), 0.0);
+
+        geometry_msgs::msg::Point map_curr_point;
+        geometry_msgs::msg::Point map_next_point;
+        tf2::doTransform(curr_point, map_curr_point, transform_stamped);
+        tf2::doTransform(next_point, map_next_point, transform_stamped);
+        marker.points.push_back(map_curr_point);
+        marker.points.push_back(map_next_point);
+      }
+    }
+    debug_markers.markers.push_back(marker);
+  }
+
+  debug_ego_path_publisher_->publish(debug_markers);
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking
