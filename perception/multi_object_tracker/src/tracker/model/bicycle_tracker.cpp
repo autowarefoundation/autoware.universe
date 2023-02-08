@@ -168,7 +168,7 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
    * y_{k+1}   = y_k + vx_k * sin(yaw_k + slip_k) * dt
    * yaw_{k+1} = yaw_k + vx_k / l_r * sin(slip_k) * dt
    * vx_{k+1}  = vx_k + ax_k * dt
-   * ax_{k+1} = ax_k
+   * ax_{k+1} = choose_abs_min(ea * ax_k, -vx_k/dt)
    * slip_{k+1}  = slip_k
    *
    */
@@ -192,7 +192,7 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   const double sin_slip = std::sin(X_t(IDX::SLIP));
   const double vx = X_t(IDX::VX);
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
-  const double acc_attenuate_rate = 1.0;
+  const double acc_attenuate_rate = 0.8;
 
   // X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                 // predicted state
@@ -200,8 +200,14 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   X_next_t(IDX::Y) = X_t(IDX::Y) + vx * sin_yaw * dt;             // dy = v * sin(yaw)
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;  // dyaw = omega
   X_next_t(IDX::VX) = X_t(IDX::VX) + X_t(IDX::AX) * dt;
-  X_next_t(IDX::AX) = acc_attenuate_rate * X_t(IDX::AX);
   X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
+  const double a1 = acc_attenuate_rate * X_t(IDX::AX);
+  const double a2 = -X_t(IDX::VX) / dt;
+  if (std::fabs(a1) > std::fabs(a2)) {
+    X_next_t(IDX::AX) = a2;
+  } else {
+    X_next_t(IDX::AX) = a1;
+  }
 
   // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -214,7 +220,12 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   A(IDX::YAW, IDX::VX) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
   A(IDX::VX, IDX::AX) = dt;
-  A(IDX::AX, IDX::AX) = acc_attenuate_rate;
+  if (std::fabs(a1) > std::fabs(a2)) {
+    A(IDX::AX, IDX::AX) = 0;
+    A(IDX::AX, IDX::VX) = -1.0 / dt;
+  } else {
+    A(IDX::AX, IDX::AX) = acc_attenuate_rate;
+  }
 
   // Q
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
