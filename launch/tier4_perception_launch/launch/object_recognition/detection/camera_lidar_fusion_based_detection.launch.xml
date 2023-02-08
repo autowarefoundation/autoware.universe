@@ -114,7 +114,6 @@
           <arg name="input/image7" value="$(var image_raw7)"/>
           <arg name="output/clusters" value="clusters"/>
           <arg name="thrust_distance" value="30.0"/>
-
         </include>
       </group>
 
@@ -131,7 +130,6 @@
           <arg name="output" value="objects"/>
         </include>
       </group>
-
     </group>
   </group>
 
