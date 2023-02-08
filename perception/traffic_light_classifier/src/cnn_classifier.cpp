@@ -39,8 +39,8 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   input_c_ = node_ptr_->declare_parameter("input_c", 3);
   input_h_ = node_ptr_->declare_parameter("input_h", 224);
   input_w_ = node_ptr_->declare_parameter("input_w", 224);
-  auto input_name = node_ptr_->declare_parameter("input_name", "input");
-  auto output_name = node_ptr_->declare_parameter("output_name", "output");
+  auto input_name = node_ptr_->declare_parameter("input_name", "input_0");
+  auto output_name = node_ptr_->declare_parameter("output_name", "output_0");
   apply_softmax_ = node_ptr_->declare_parameter("apply_softmax", false);
 
   readLabelfile(label_file_path, labels_);
