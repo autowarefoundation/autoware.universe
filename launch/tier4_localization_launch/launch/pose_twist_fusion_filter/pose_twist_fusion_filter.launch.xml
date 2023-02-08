@@ -2,10 +2,12 @@
 <launch>
   <arg name="localization_mode" default="lidar" description="select localization mode. lidar, gnss"/>
   <arg name="use_eagleye_twist" default="false" description="Mode to correct wheel speed and IMU by GNSS Doppler velocity"/>
+  <let name="use_eagleye_pose" value="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)"/>
   <let name="input_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance" if="$(eval &quot;'$(var localization_mode)'=='lidar'&quot;)"/>
   <let name="input_pose_with_cov_name" value="/localization/pose_estimator/eagleye/pose_with_covariance" if="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)"/>
   <let name="input_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance" unless="$(var use_eagleye_twist)"/>
-  <let name="input_twist_with_cov_name" value="/localization/pose_estimator/eagleye/twist_with_covariance" if="$(var use_eagleye_twist)"/>
+  <let name="input_twist_with_cov_name" value="/localization/pose_estimator/eagleye/twist_with_covariance" if="$(var use_eagleye_pose)"/>
+  <let name="input_twist_with_cov_name" value="/localization/twist_estimator/eagleye/twist_with_covariance" if="$(and $(var use_eagleye_twist) $(not $(var use_eagleye_pose)))"/>
   <group>
     <include file="$(find-pkg-share ekf_localizer)/launch/ekf_localizer.launch.xml">
       <arg name="enable_yaw_bias_estimation" value="true"/>
