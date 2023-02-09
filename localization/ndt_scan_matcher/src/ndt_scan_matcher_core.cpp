@@ -209,9 +209,9 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("ndt_marker", 10);
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
-  for_tilde_interpolator_mtt_pub_ =
-    this->create_publisher<tilde_msg::msg::MessageTrackingTag>(
-      "for_tilde_interpolator_mtt", 10);
+  pose_consumption_notifier_ =
+      std::make_unique<tier4_timing_violation_monitor_utils::MessageConsumptionNotifier>(
+          this, "for_tilde_interpolator_mtt", 10);
 
   service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
@@ -370,23 +370,8 @@ void NDTScanMatcher::callback_sensor_points(
     return;
   }
   // publish mtt at interpolation
-  auto new_interpolator = interpolator.get_new_pose();
-  auto mtt_msg = tilde_msg::msg::MessageTrackingTag();
-  auto input = tilde_msg::msg::SubTopicTimeInfo();
-  auto output = tilde_msg::msg::PubTopicTimeInfo();
-  // input_info <- new interpolator 
-  input.topic_name = "/localization/pose_twist_fusion_filter/biased_pose_with_covariance";
-  input.has_header_stamp = true;
-  input.header_stamp = new_interpolator.header.stamp;
-  mtt_msg.input_infos.push_back(input);
-  auto stamp = this->now();
-  mtt_msg.header.stamp = stamp;
-  output.topic_name = "/localization/pose_estimator/for_tilde_interpolator_mtt";
-  output.pub_time = stamp;
-  output.has_header_stamp = true;
-  output.header_stamp = stamp;
-  mtt_msg.output_info = output;
-  for_tilde_interpolator_mtt_pub_->publish(mtt_msg);
+  pose_consumption_notifier_->notify(
+      interpolator.get_new_pose().header.stamp);
 
   // perform ndt scan matching
   (*state_ptr_)["state"] = "Aligning";
