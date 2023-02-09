@@ -92,8 +92,7 @@ double calcAbsLateralOffset(
 LateralKinematicsToLanelet initLateralKinematics(
   const lanelet::ConstLanelet & lanelet, geometry_msgs::msg::Pose pose)
 {
-  LateralKinematicsToLanelet lateral_kinematics;
-  lateral_kinematics.current_lanelet = lanelet;
+  LateralKinematicsToLanelet lateral_kinematics(lanelet);
 
   const lanelet::ConstLineString2d left_bound = lanelet.leftBound2d();
   const lanelet::ConstLineString2d right_bound = lanelet.rightBound2d();
@@ -109,6 +108,38 @@ LateralKinematicsToLanelet initLateralKinematics(
   lateral_kinematics.filtered_left_lateral_velocity = 0;
   lateral_kinematics.filtered_right_lateral_velocity = 0;
   return lateral_kinematics;
+}
+
+/**
+ * @brief calc lateral velocity and filtered velocity of object in a lanelet
+ *
+ * @param prev_lateral_kinematics previous lateral lanelet kinematics
+ * @param current_lateral_kinematics current lateral lanelet kinematics
+ * @param dt sampling time [s]
+ */
+void calcLateralKinematics(
+  const LateralKinematicsToLanelet & prev_lateral_kinematics,
+  LateralKinematicsToLanelet & current_lateral_kinematics, const double dt)
+{
+  // calc velocity via backward difference
+  current_lateral_kinematics.left_lateral_velocity =
+    (current_lateral_kinematics.dist_from_left_boundary -
+     prev_lateral_kinematics.dist_from_left_boundary) /
+    dt;
+  current_lateral_kinematics.right_lateral_velocity =
+    (current_lateral_kinematics.dist_from_right_boundary -
+     prev_lateral_kinematics.dist_from_right_boundary) /
+    dt;
+
+  // low pass filtering left velocity: default cut_off is 0.6 Hz
+  current_lateral_kinematics.filtered_left_lateral_velocity = FirstOrderLowpassFilter(
+    prev_lateral_kinematics.filtered_left_lateral_velocity,
+    prev_lateral_kinematics.left_lateral_velocity, current_lateral_kinematics.left_lateral_velocity,
+    dt);
+  current_lateral_kinematics.filtered_right_lateral_velocity = FirstOrderLowpassFilter(
+    prev_lateral_kinematics.filtered_right_lateral_velocity,
+    prev_lateral_kinematics.right_lateral_velocity,
+    current_lateral_kinematics.right_lateral_velocity, dt);
 }
 
 /**
@@ -141,37 +172,6 @@ void updateLateralKinematicsVector(
       }
     }
   }
-}
-
-/**
- * @brief calc lateral velocity and filtered velocity of object in a lanelet
- *
- * @param prev_lateral_kinematics previous lateral lanelet kinematics
- * @param current_lateral_kinematics current lateral lanelet kinematics
- * @param dt sampling time [s]
- */
-void calcLateralKinematics(
-  const LateralKinematicsToLanelet & prev_lateral_kinematics,
-  LateralKinematicsToLanelet & current_lateral_kinematics, const double dt)
-{
-  current_lateral_kinematics.left_lateral_velocity =
-    (current_lateral_kinematics.dist_from_left_boundary -
-     prev_lateral_kinematics.dist_from_left_boundary) /
-    dt;
-  current_lateral_kinematics.right_lateral_velocity =
-    (current_lateral_kinematics.dist_from_right_boundary -
-     prev_lateral_kinematics.dist_from_right_boundary) /
-    dt;
-
-  // low pass filtering
-  current_lateral_kinematics.filtered_left_lateral_velocity = FirstOrderLowpassFilter(
-    prev_lateral_kinematics.filtered_left_lateral_velocity,
-    prev_lateral_kinematics.left_lateral_velocity, current_lateral_kinematics.left_lateral_velocity,
-    dt);
-  current_lateral_kinematics.filtered_right_lateral_velocity = FirstOrderLowpassFilter(
-    prev_lateral_kinematics.filtered_right_lateral_velocity,
-    prev_lateral_kinematics.right_lateral_velocity,
-    current_lateral_kinematics.right_lateral_velocity, dt);
 }
 
 lanelet::ConstLanelets getLanelets(const map_based_prediction::LaneletsData & data)
@@ -1035,7 +1035,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
-  const double object_detected_time)
+  const double /*object_detected_time*/)
 {
   // Step1. Check if we have the object in the buffer
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
@@ -1043,121 +1043,76 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
     return Maneuver::LANE_FOLLOW;
   }
 
-  std::deque<ObjectData> & object_info = objects_history_.at(object_id);
+  const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
   const double current_time = (this->get_clock()->now()).seconds();
 
-  // Step2. Get the previous id
-  const int current_id = static_cast<int>(object_info.size()) - 1;
-  int prev_id = current_id;
-  while (prev_id >= 0) {
-    const double prev_time_delay = object_info.at(prev_id).time_delay;
+  // Step2. Check if object history length longer than history_time_length
+  const int latest_id = static_cast<int>(object_info.size()) - 1;
+  int penultimate_id = latest_id;
+  while (penultimate_id >= 0) {
+    const double prev_time_delay = object_info.at(penultimate_id).time_delay;
     const double prev_time =
-      rclcpp::Time(object_info.at(prev_id).header.stamp).seconds() + prev_time_delay;
+      rclcpp::Time(object_info.at(penultimate_id).header.stamp).seconds() + prev_time_delay;
     // if (object_detected_time - prev_time > history_time_length_) {
     if (current_time - prev_time > history_time_length_) {
       break;
     }
-    --prev_id;
+    --penultimate_id;
   }
 
-  if (prev_id < 0) {
+  // object history is not long enough
+  if (penultimate_id < 0) {
+    return Maneuver::LANE_FOLLOW;
+  } else if (latest_id == 0) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  // Step3. Get closest previous lanelet ID
-  const auto & prev_info = object_info.at(static_cast<size_t>(prev_id));
-  const auto prev_pose = compensateTimeDelay(prev_info.pose, prev_info.twist, prev_info.time_delay);
-  const lanelet::ConstLanelets prev_lanelets =
-    object_info.at(static_cast<size_t>(prev_id)).current_lanelets;
-  if (prev_lanelets.empty()) {
-    return Maneuver::LANE_FOLLOW;
-  }
-  lanelet::ConstLanelet prev_lanelet = prev_lanelets.front();
-  double closest_prev_yaw = std::numeric_limits<double>::max();
-  for (const auto & lanelet : prev_lanelets) {
-    const double lane_yaw = lanelet::utils::getLaneletAngle(lanelet, prev_pose.position);
-    const double delta_yaw = tf2::getYaw(prev_pose.orientation) - lane_yaw;
-    const double normalized_delta_yaw = tier4_autoware_utils::normalizeRadian(delta_yaw);
-    if (normalized_delta_yaw < closest_prev_yaw) {
-      closest_prev_yaw = normalized_delta_yaw;
-      prev_lanelet = lanelet;
+  // Step3. get object lateral kinematics
+  const auto & latest_info = object_info.at(static_cast<size_t>(latest_id));
+
+  bool not_found_corresponding_lanelet = true;
+  double left_dist, right_dist;
+  double v_left_filtered, v_right_filtered;
+  for (const auto lateral_kinematics : latest_info.lateral_kinematics_vector) {
+    if (lateral_kinematics.current_lanelet == current_lanelet_data.lanelet) {
+      left_dist = lateral_kinematics.dist_from_left_boundary;
+      right_dist = lateral_kinematics.dist_from_right_boundary;
+      v_left_filtered = lateral_kinematics.filtered_left_lateral_velocity;
+      v_right_filtered = lateral_kinematics.filtered_right_lateral_velocity;
+      not_found_corresponding_lanelet = false;
+      break;
     }
   }
 
-  // Step4. Check if the vehicle has changed lane
-  const auto current_lanelet = current_lanelet_data.lanelet;
-  const double current_time_delay = std::max(current_time - object_detected_time, 0.0);
-  const auto current_pose = compensateTimeDelay(
-    object.kinematics.pose_with_covariance.pose, object.kinematics.twist_with_covariance.twist,
-    current_time_delay);
-  const double dist = tier4_autoware_utils::calcDistance2d(prev_pose, current_pose);
-  lanelet::routing::LaneletPaths possible_paths =
-    routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
-  bool has_lane_changed = true;
-  for (const auto & path : possible_paths) {
-    for (const auto & lanelet : path) {
-      if (lanelet == current_lanelet) {
-        has_lane_changed = false;
-        break;
-      }
-    }
-  }
-
-  // update current_info to calc filtered lateral velocity
-  auto & latest_info = object_info.at(static_cast<size_t>(current_id));
-  if (has_lane_changed) {
+  // return lane follow when catch exception
+  if (not_found_corresponding_lanelet) {
     return Maneuver::LANE_FOLLOW;
   }
-  auto & penultimate_info = object_info.at(static_cast<size_t>(current_id - 1));
 
-  // Step5. Lane Change Detection
-  const lanelet::ConstLineString2d prev_left_bound = prev_lanelet.leftBound2d();
-  const lanelet::ConstLineString2d prev_right_bound = prev_lanelet.rightBound2d();
-  const lanelet::ConstLineString2d current_left_bound = current_lanelet.leftBound2d();
-  const lanelet::ConstLineString2d current_right_bound = current_lanelet.rightBound2d();
-  const double prev_left_dist = std::fabs(calcLeftLateralOffset(prev_left_bound, prev_pose));
-  const double prev_right_dist = std::fabs(calcRightLateralOffset(prev_right_bound, prev_pose));
-  const double current_left_dist =
-    std::fabs(calcLeftLateralOffset(current_left_bound, current_pose));
-  const double current_right_dist =
-    std::fabs(calcRightLateralOffset(current_right_bound, current_pose));
-  const double prev_lane_width = prev_left_dist + prev_right_dist;
-  const double current_lane_width = current_left_dist + current_right_dist;
-  if (prev_lane_width < 1e-3 || current_lane_width < 1e-3) {
+  const double latest_lane_width = left_dist + right_dist;
+  if (latest_lane_width < 1e-3) {
     RCLCPP_ERROR(get_logger(), "[Map Based Prediction]: Lane Width is too small");
     return Maneuver::LANE_FOLLOW;
   }
 
-  // 5-1. calc lateral velocity
+  // Step 4. check time to reach left/right bound
   const double epsilon = 1e-9;
-  const double dt = current_info.header.stamp.sec - prev_info.header.stamp.sec + epsilon;
-  current_info.left_lateral_velocity = (current_left_dist - prev_left_dist) / dt;
-  current_info.right_lateral_velocity = (current_right_dist - prev_right_dist) / dt;
-  // low pass filtering with 0.1 Hz cutoff and 10Hz sampling
-  current_info.filtered_left_lateral_velocity = FirstOrderLowpassFilter(
-    prev_info.filtered_left_lateral_velocity, prev_info.left_lateral_velocity,
-    current_info.left_lateral_velocity);
-  current_info.filtered_right_lateral_velocity = FirstOrderLowpassFilter(
-    prev_info.filtered_right_lateral_velocity, prev_info.right_lateral_velocity,
-    current_info.right_lateral_velocity);
+  const double margin_to_reach_left_bound = left_dist / (std::fabs(v_left_filtered) + epsilon);
+  const double margin_to_reach_right_bound = right_dist / (std::fabs(v_right_filtered) + epsilon);
 
-  // 5-2. check time to reach left/right bound
-  const double margin_to_reach_left_bound =
-    std::fabs(current_left_dist / current_info.filtered_left_lateral_velocity);
-  const double margin_to_reach_right_bound =
-    std::fabs(current_right_dist / current_info.filtered_right_lateral_velocity);
-
-  // 5-3. detect lane change
+  // Step 5. detect lane change
   if (
-    current_left_dist < current_right_dist &&              // in left side
-    current_left_dist < dist_threshold_to_bound_ &&        // close to boundary
+    left_dist < right_dist &&                              // in left side,
+    left_dist < dist_threshold_to_bound_ &&                // close to boundary,
+    v_left_filtered < 0 &&                                 // approaching,
     margin_to_reach_left_bound < time_threshold_to_bound_  // will soon arrive to left bound
   ) {
     return Maneuver::LEFT_LANE_CHANGE;
   } else if (
-    current_right_dist < current_left_dist &&               // in right side
-    current_right_dist < dist_threshold_to_bound_ &&        // close to boundary
-    margin_to_reach_right_bound < time_threshold_to_bound_  // will soon arrive to left bound
+    right_dist < left_dist &&                               // in right side,
+    right_dist < dist_threshold_to_bound_ &&                // close to boundary,
+    v_right_filtered < 0 &&                                 // approaching,
+    margin_to_reach_right_bound < time_threshold_to_bound_  // will soon arrive to right bound
   ) {
     return Maneuver::RIGHT_LANE_CHANGE;
   }

@@ -51,13 +51,19 @@ namespace map_based_prediction
 {
 struct LateralKinematicsToLanelet
 {
-  lanelet::ConstLanelet & current_lanelet;
+  const lanelet::ConstLanelet & current_lanelet;
   double dist_from_left_boundary;
   double dist_from_right_boundary;
   double left_lateral_velocity;
   double right_lateral_velocity;
   double filtered_left_lateral_velocity;
   double filtered_right_lateral_velocity;
+
+public:
+  explicit LateralKinematicsToLanelet(const lanelet::ConstLanelet & lanelet)
+  : current_lanelet(lanelet)
+  {
+  }
 };
 
 struct ObjectData
