@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,40 +15,38 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_
 
-#include "behavior_path_planner/util/drivable_area_expansion/footprints.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
 #include <route_handler/route_handler.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-
 #include <lanelet2_core/Forward.h>
-
-#include <string>
-#include <vector>
 
 namespace drivable_area_expansion
 {
-bool expandDrivableArea(
-  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects,
-  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelets & path_lanes);
-
-/// @brief create the footprint polygon from a path
-/// @param[in] path the path for which to create a footprint
-/// @param[in] params expansion parameters defining how to create the footprint
-/// @return footprint polygons of the path
-multipolygon_t createPathFootprints(
-  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params);
-
-/// @brief create footprints from the predicted paths of the given objects
-/// @param[in] predicted_objects predicted objects
+/// @brief Expand the drivable area based on the projected ego footprint along the path
+/// @param[in] path path whose drivable area will be expanded
 /// @param[in] params expansion parameters
-/// @return the objects' predicted path footprint polygons
-multipolygon_t createPredictedPathFootprints(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const DrivableAreaExpansionParameters & params);
+/// @param[in] dynamic_objects dynamic objects
+/// @param[in] route_handler route handler
+/// @param[in] path_lanes lanelets of the path
+void expandDrivableArea(
+  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
+  const PredictedObjects & dynamic_objects, const route_handler::RouteHandler & route_handler,
+  const lanelet::ConstLanelets & path_lanes);
+
+/// @brief Create a polygon combining the drivable area of a path and some expansion polygons
+/// @param[in] path path and its drivable area
+/// @param[in] expansion_polygons polygons to add to the drivable area
+/// @return expanded drivable area polygon
+polygon_t createExpandedDrivableAreaPolygon(
+  const PathWithLaneId & path, const multipolygon_t & expansion_polygons);
+
+/// @brief Update the drivable area of the given path with the given polygon
+/// @details this function splits the polygon into a left and right bound and sets it in the path
+/// @param[in] path path whose drivable area will be expanded
+/// @param[in] expanded_drivable_area polygon of the new drivable area
+void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area);
 }  // namespace drivable_area_expansion
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_

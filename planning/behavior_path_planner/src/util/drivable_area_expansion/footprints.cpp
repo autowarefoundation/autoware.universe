@@ -25,16 +25,6 @@
 
 namespace drivable_area_expansion
 {
-polygon_t rotatePolygon(const polygon_t & polygon, const double angle)
-{
-  polygon_t rotated_polygon;
-  const boost::geometry::strategy::transform::rotate_transformer<
-    boost::geometry::radian, double, 2, 2>
-    rotation(-angle);
-  boost::geometry::transform(polygon, rotated_polygon, rotation);
-  return rotated_polygon;
-}
-
 polygon_t translatePolygon(const polygon_t & polygon, const double x, const double y)
 {
   polygon_t translated_polygon;
@@ -67,6 +57,31 @@ multipolygon_t createObjectFootprints(
       for (const auto & path : object.kinematics.predicted_paths)
         for (const auto & pose : path.path)
           footprints.push_back(createFootprint(pose, base_footprint));
+    }
+  }
+  return footprints;
+}
+
+multipolygon_t createPathFootprints(
+  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params)
+{
+  const auto left = params.ego_left_offset + params.ego_extra_left_offset;
+  const auto right = params.ego_right_offset - params.ego_extra_right_offset;
+  const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
+  const auto front = params.ego_front_offset + params.ego_extra_front_offset;
+  polygon_t base_footprint;
+  base_footprint.outer() = {
+    point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
+    point_t{front, left}};
+  multipolygon_t footprints;
+  // skip the last footprint as its orientation is usually wrong
+  footprints.reserve(path.points.size() - 1);
+  double arc_length = 0.0;
+  for (auto it = path.points.begin(); std::next(it) != path.points.end(); ++it) {
+    footprints.push_back(createFootprint(it->point.pose, base_footprint));
+    if (params.max_path_arc_length > 0.0) {
+      arc_length += tier4_autoware_utils::calcDistance2d(it->point.pose, std::next(it)->point.pose);
+      if (arc_length > params.max_path_arc_length) break;
     }
   }
   return footprints;

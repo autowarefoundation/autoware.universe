@@ -42,6 +42,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/util/drivable_area_expansion/drivable_area_expansion.cpp
   src/util/drivable_area_expansion/map_utils.cpp
   src/util/drivable_area_expansion/footprints.cpp
+  src/util/drivable_area_expansion/expansion.cpp
 )
 
 target_include_directories(behavior_path_planner_node SYSTEM PUBLIC

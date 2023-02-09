@@ -14,10 +14,10 @@
 
 #include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
 
+#include "behavior_path_planner/util/drivable_area_expansion/expansion.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/footprints.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
-#include "behavior_path_planner/util/drivable_area_expansion/path_projection.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -27,208 +27,25 @@
 #include <boost/geometry/algorithms/transform.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
-#include <fstream>
-#include <iostream>
-
 namespace drivable_area_expansion
 {
 
-double calculateDistanceLimit(
-  const linestring_t & base_ls, const polygon_t & expansion_polygon,
-  const multilinestring_t & limit_lines)
+void expandDrivableArea(
+  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
+  const PredictedObjects & dynamic_objects, const route_handler::RouteHandler & route_handler,
+  const lanelet::ConstLanelets & path_lanes)
 {
-  auto dist_limit = std::numeric_limits<double>::max();
-  for (const auto & line : limit_lines) {
-    for (const auto & p : line) {
-      if (boost::geometry::within(p, expansion_polygon)) {
-        dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-      }
-    }
-  }
-  multipoint_t intersections;
-  boost::geometry::intersection(expansion_polygon, limit_lines, intersections);
-  for (const auto & p : intersections) {
-    dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-  }
-  return dist_limit;
-}
-
-double calculateDistanceLimit(
-  const linestring_t & base_ls, const polygon_t & expansion_polygon,
-  const multipolygon_t & limit_polygons)
-{
-  auto dist_limit = std::numeric_limits<double>::max();
-  for (const auto & polygon : limit_polygons) {
-    for (const auto & p : polygon.outer()) {
-      if (boost::geometry::within(p, expansion_polygon)) {
-        dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-      }
-    }
-  }
-  for (const auto & polygon : limit_polygons) {
-    multipoint_t intersections;
-    boost::geometry::intersection(expansion_polygon, polygon, intersections);
-    for (const auto & p : intersections) {
-      dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-    }
-  }
-  return dist_limit;
-}
-
-polygon_t createExpansionPolygon(
-  const linestring_t & base_ls, const double dist, const bool is_left_side)
-{
-  namespace strategy = boost::geometry::strategy::buffer;
-  multipolygon_t polygons;
-  // when setting 0.0 on one side the bg::buffer function may not return anything
-  constexpr auto zero = 0.1;
-  const auto left_dist = is_left_side ? dist : zero;
-  const auto right_dist = !is_left_side ? dist : zero;
-  const auto distance_strategy = strategy::distance_asymmetric<double>(left_dist, right_dist);
-  boost::geometry::buffer(
-    base_ls, polygons, distance_strategy, strategy::side_straight(), strategy::join_miter(),
-    strategy::end_flat(), strategy::point_square());
-  return polygons.front();
-}
-
-multipolygon_t createExpansionLaneletPolygons(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & path_lanes,
-  const route_handler::RouteHandler & route_handler, const multipolygon_t & path_footprints,
-  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
-  const DrivableAreaExpansionParameters & params)
-{
-  multipolygon_t expansion_polygons;
-  lanelet::ConstLanelets candidates;
-  const auto already_added = [&](const auto & ll) {
-    return std::find_if(candidates.begin(), candidates.end(), [&](const auto & l) {
-             return ll.id() == l.id();
-           }) != candidates.end();
-  };
-  const auto add_if_valid = [&](const auto & ll, const auto is_left) {
-    const auto bound_to_check = is_left ? ll.rightBound() : ll.leftBound();
-    if (std::find_if(path_lanes.begin(), path_lanes.end(), [&](const auto & l) {
-          return ll.id() == l.id();
-        }) == path_lanes.end())
-      if (!already_added(ll) && !hasTypes(bound_to_check, params.avoid_linestring_types))
-        candidates.push_back(ll);
-  };
-  for (const auto & current_ll : path_lanes) {
-    for (const auto left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().front()))
-      add_if_valid(left_ll, true);
-    for (const auto left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().back()))
-      add_if_valid(left_ll, true);
-    for (const auto right_ll :
-         route_handler.getLaneletsFromPoint(current_ll.rightBound3d().front()))
-      add_if_valid(right_ll, false);
-    for (const auto right_ll : route_handler.getLaneletsFromPoint(current_ll.rightBound3d().back()))
-      add_if_valid(right_ll, false);
-  }
-  for (const auto & candidate : candidates) {
-    polygon_t candidate_poly;
-    for (const auto & p : candidate.polygon2d()) candidate_poly.outer().emplace_back(p.x(), p.y());
-    boost::geometry::correct(candidate_poly);
-    if (
-      !boost::geometry::overlaps(candidate_poly, predicted_paths) &&
-      boost::geometry::overlaps(path_footprints, candidate_poly))
-      expansion_polygons.push_back(candidate_poly);
-  }
-  return expansion_polygons;
-}
-
-multipolygon_t createExpansionPolygons(
-  const PathWithLaneId & path, const multipolygon_t & path_footprints,
-  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
-  const DrivableAreaExpansionParameters & params)
-{
-  linestring_t path_ls;
-  linestring_t left_ls;
-  linestring_t right_ls;
-  for (const auto & p : path.points)
-    path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
-  for (const auto & p : path.left_bound) left_ls.emplace_back(p.x, p.y);
-  for (const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
-  const auto path_length = static_cast<double>(boost::geometry::length(path_ls));
-
-  // TODO(Maxime): make it a function
-  const auto calculate_arc_length_range_and_distance = [&](
-                                                         const auto & footprint, const auto & bound,
-                                                         const bool is_left) {
-    multipoint_t intersections;
-    double expansion_dist = 0.0;
-    double from_arc_length = std::numeric_limits<double>::max();
-    double to_arc_length = std::numeric_limits<double>::min();
-    boost::geometry::intersection(footprint, bound, intersections);
-    if (!intersections.empty()) {
-      for (const auto & intersection : intersections) {
-        const auto projection = point_to_linestring_projection(intersection, path_ls);
-        // TODO(Maxime): tmp fix for points before/after the path
-        if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
-        from_arc_length = std::min(from_arc_length, projection.arc_length);
-        to_arc_length = std::max(to_arc_length, projection.arc_length);
-      }
-      for (const auto & p : footprint.outer()) {
-        const auto projection = point_to_linestring_projection(p, path_ls);
-        // TODO(Maxime): tmp fix for points before/after the path
-        if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
-        // we make sure the footprint point is on the correct side
-        if (is_left == projection.distance > 0 && std::abs(projection.distance) > expansion_dist) {
-          expansion_dist = std::abs(projection.distance);
-          from_arc_length = std::min(from_arc_length, projection.arc_length);
-          to_arc_length = std::max(to_arc_length, projection.arc_length);
-        }
-      }
-    }
-    return std::array<double, 3>({from_arc_length, to_arc_length, expansion_dist});
-  };
-
-  multipolygon_t expansion_polygons;
-  for (const auto & footprint : path_footprints) {
-    bool is_left = true;
-    for (const auto & bound : {left_ls, right_ls}) {
-      auto [from_arc_length, to_arc_length, footprint_dist] =
-        calculate_arc_length_range_and_distance(footprint, bound, is_left);
-      if (footprint_dist > 0.0) {
-        from_arc_length -= params.extra_arc_length;
-        to_arc_length += params.extra_arc_length;
-        from_arc_length = std::max(0.0, from_arc_length);
-        to_arc_length = std::min(path_length, to_arc_length);
-        const auto base_ls = sub_linestring(path_ls, from_arc_length, to_arc_length);
-        const auto expansion_dist = params.max_expansion_distance != 0.0
-                                      ? std::min(params.max_expansion_distance, footprint_dist)
-                                      : footprint_dist;
-        auto expansion_polygon = createExpansionPolygon(base_ls, expansion_dist, is_left);
-        auto limited_dist = expansion_dist;
-        const auto uncrossable_dist_limit =
-          calculateDistanceLimit(base_ls, expansion_polygon, uncrossable_lines);
-        if (uncrossable_dist_limit < limited_dist) {
-          limited_dist = uncrossable_dist_limit;
-          if (params.compensate_uncrossable_lines) {
-            const auto compensation_dist =
-              footprint_dist - limited_dist + params.compensate_extra_dist;
-            polygon_t compensation_polygon =
-              createExpansionPolygon(base_ls, compensation_dist, !is_left);
-            double dist_limit = std::min(
-              compensation_dist,
-              calculateDistanceLimit(base_ls, compensation_polygon, uncrossable_lines));
-            if (params.avoid_dynamic_objects)
-              dist_limit = std::min(
-                dist_limit, calculateDistanceLimit(base_ls, compensation_polygon, predicted_paths));
-            if (dist_limit < compensation_dist)
-              compensation_polygon = createExpansionPolygon(base_ls, dist_limit, !is_left);
-            expansion_polygons.push_back(compensation_polygon);
-          }
-        }
-        if (params.avoid_dynamic_objects)
-          limited_dist = std::min(
-            limited_dist, calculateDistanceLimit(base_ls, expansion_polygon, predicted_paths));
-        if (limited_dist < expansion_dist)
-          expansion_polygon = createExpansionPolygon(base_ls, limited_dist, is_left);
-        expansion_polygons.push_back(expansion_polygon);
-      }
-      is_left = false;
-    }
-  }
-  return expansion_polygons;
+  const auto uncrossable_lines =
+    extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
+  const auto path_footprints = createPathFootprints(path, params);
+  const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
+  const auto expansion_polygons =
+    params.expansion_method == "lanelet"
+      ? createExpansionLaneletPolygons(
+          path_lanes, route_handler, path_footprints, predicted_paths, params)
+      : createExpansionPolygons(path, path_footprints, predicted_paths, uncrossable_lines, params);
+  const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
+  updateDrivableAreaBounds(path, expanded_drivable_area);
 }
 
 polygon_t createExpandedDrivableAreaPolygon(
@@ -255,7 +72,7 @@ polygon_t createExpandedDrivableAreaPolygon(
   return expanded_da_poly;
 }
 
-bool updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area)
+void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area)
 {
   const auto to_point_t = [](const auto & p) { return point_t{p.x, p.y}; };
   const auto to_point = [](const auto & p) { return Point().set__x(p.x()).set__y(p.y()); };
@@ -326,150 +143,6 @@ bool updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   }
   path.left_bound = expanded_left_bound;
   path.right_bound = expanded_right_bound;
-  return true;
 }
 
-multipolygon_t createPathFootprints(
-  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params)
-{
-  const auto left = params.ego_left_offset + params.ego_extra_left_offset;
-  const auto right = params.ego_right_offset - params.ego_extra_right_offset;
-  const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
-  const auto front = params.ego_front_offset + params.ego_extra_front_offset;
-  polygon_t base_footprint;
-  base_footprint.outer() = {
-    point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
-    point_t{front, left}};
-  multipolygon_t footprints;
-  // skip the last footprint as its orientation is usually wrong
-  footprints.reserve(path.points.size() - 1);
-  double arc_length = 0.0;
-  for (auto it = path.points.begin(); std::next(it) != path.points.end(); ++it) {
-    footprints.push_back(createFootprint(it->point.pose, base_footprint));
-    if (params.max_path_arc_length > 0.0) {
-      arc_length += tier4_autoware_utils::calcDistance2d(it->point.pose, std::next(it)->point.pose);
-      if (arc_length > params.max_path_arc_length) break;
-    }
-  }
-  return footprints;
-}
-
-linestring_t createMaxExpansionLine(
-  const PathWithLaneId & path, const double max_expansion_distance)
-{
-  namespace strategy = boost::geometry::strategy::buffer;
-  linestring_t max_expansion_line;
-  if (max_expansion_distance > 0.0) {
-    multipolygon_t polygons;
-    linestring_t path_ls;
-    for (const auto & p : path.points)
-      path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
-    boost::geometry::buffer(
-      path_ls, polygons, strategy::distance_symmetric<double>(max_expansion_distance),
-      strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
-      strategy::point_square());
-    if (!polygons.empty()) {
-      const auto & polygon = polygons.front();
-      max_expansion_line.insert(
-        max_expansion_line.end(), polygon.outer().begin(), polygon.outer().end());
-    }
-  }
-  return max_expansion_line;
-}
-
-bool expandDrivableArea(
-  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_objects,
-  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelets & path_lanes)
-{
-  const auto start = std::chrono::high_resolution_clock::now();
-  const auto uncrossable_lines =
-    extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
-  const auto path_footprints = createPathFootprints(path, params);
-  const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
-  const auto expansion_polygons =
-    params.expansion_method == "lanelet"
-      ? createExpansionLaneletPolygons(
-          path, path_lanes, route_handler, path_footprints, predicted_paths, uncrossable_lines,
-          params)
-      : createExpansionPolygons(path, path_footprints, predicted_paths, uncrossable_lines, params);
-  const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
-  const auto debug_svg = false;
-  if (debug_svg) {
-    // Declare a stream and an SVG mapper
-    std::ofstream svg("/home/mclement/Pictures/debug.svg");
-    boost::geometry::svg_mapper<point_t> mapper(svg, 400, 400);
-
-    for (const auto & p : path_footprints) mapper.add(p);
-    for (const auto & p : expansion_polygons) mapper.add(p);
-    for (const auto & l : uncrossable_lines) mapper.add(l);
-    // blue path footprints
-    for (const auto & p : path_footprints)
-      mapper.map(p, "fill-opacity:0.1;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
-    // red expansion polygons
-    for (const auto & p : expansion_polygons)
-      mapper.map(p, "fill-opacity:0.2;stroke-opacity:0.2;fill:red;stroke:red;stroke-width:1", 1);
-    // black uncrossable line
-    for (const auto & l : uncrossable_lines)
-      mapper.map(
-        l, "fill-opacity:0.2;stroke-opacity:0.2;fill:black;stroke:black;stroke-width:2", 1);
-  }
-  if (debug_svg) {
-    std::ofstream svg_inputs("/home/mclement/Pictures/inputs.svg");
-    boost::geometry::svg_mapper<point_t> mapper(svg_inputs, 400, 400);
-    linestring_t left;
-    linestring_t right;
-    for (const auto & p : path.left_bound) left.emplace_back(p.x, p.y);
-    for (const auto & p : path.right_bound) right.emplace_back(p.x, p.y);
-    mapper.add(left);
-    mapper.add(right);
-    for (const auto & p : path.points)
-      mapper.add(point_t(p.point.pose.position.x, p.point.pose.position.y));
-    for (const auto & l : uncrossable_lines) mapper.add(l);
-    mapper.map(left, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
-    mapper.map(
-      right, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
-    for (const auto & p : path.points)
-      mapper.map(
-        point_t(p.point.pose.position.x, p.point.pose.position.y),
-        "fill-opacity:0.2;stroke-opacity:1.0;fill:black;stroke:black;stroke-width:1", 1);
-    for (const auto & l : uncrossable_lines)
-      mapper.map(l, "fill-opacity:0.2;stroke-opacity:0.5;fill:grey;stroke:black;stroke-width:2", 1);
-    if (!path_footprints.empty()) {
-      mapper.add(path_footprints.front());
-      mapper.map(
-        path_footprints.front(),
-        "fill-opacity:0.1;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
-    }
-  }
-
-  const auto return_bool = updateDrivableAreaBounds(path, expanded_drivable_area);
-
-  if (debug_svg) {
-    std::ofstream svg_outputs("/home/mclement/Pictures/outputs.svg");
-    boost::geometry::svg_mapper<point_t> mapper(svg_outputs, 400, 400);
-    linestring_t left;
-    linestring_t right;
-    for (const auto & p : path.left_bound) left.emplace_back(p.x, p.y);
-    for (const auto & p : path.right_bound) right.emplace_back(p.x, p.y);
-    for (const auto & l : uncrossable_lines) mapper.add(l);
-    mapper.add(left);
-    mapper.add(right);
-    for (const auto & p : path.points)
-      mapper.add(point_t(p.point.pose.position.x, p.point.pose.position.y));
-    mapper.map(left, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
-    mapper.map(
-      right, "fill-opacity:0.2;stroke-opacity:0.5;fill:blue;stroke:blue;stroke-width:1", 1);
-    for (const auto & p : path.points)
-      mapper.map(
-        point_t(p.point.pose.position.x, p.point.pose.position.y),
-        "fill-opacity:0.2;stroke-opacity:1.0;fill:black;stroke:black;stroke-width:1", 1);
-    // for (const auto & l : uncrossable_lines)
-    //   mapper.map(
-    //     l, "fill-opacity:0.2;stroke-opacity:0.5;fill:grey;stroke:black;stroke-width:2", 1);
-  }
-  const auto end = std::chrono::high_resolution_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us\n";
-  return return_bool;
-}
 }  // namespace drivable_area_expansion

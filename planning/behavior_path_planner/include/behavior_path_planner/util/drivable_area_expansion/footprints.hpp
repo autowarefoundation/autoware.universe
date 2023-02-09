@@ -38,12 +38,6 @@
 
 namespace drivable_area_expansion
 {
-/// @brief rotate a polygon by some angle around (0,0)
-/// @param[in] polygon input polygon
-/// @param[in] angle angle of rotation
-/// @return rotated polygon
-polygon_t rotatePolygon(const polygon_t & polygon, const double angle);
-
 /// @brief translate a polygon by some (x,y) vector
 /// @param[in] polygon input polygon
 /// @param[in] x translation distance on the x axis
@@ -64,5 +58,12 @@ polygon_t createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t
 multipolygon_t createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const DrivableAreaExpansionParameters & params);
+
+/// @brief create the footprint polygon from a path
+/// @param[in] path the path for which to create a footprint
+/// @param[in] params expansion parameters defining how to create the footprint
+/// @return footprint polygons of the path
+multipolygon_t createPathFootprints(
+  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params);
 }  // namespace drivable_area_expansion
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__DRIVABLE_AREA_EXPANSION__FOOTPRINTS_HPP_
