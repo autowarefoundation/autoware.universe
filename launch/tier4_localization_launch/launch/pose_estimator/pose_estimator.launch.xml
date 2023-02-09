@@ -15,7 +15,6 @@
   </group>
 
   <group if="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)">
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
-    </include>
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml"/>
   </group>
 </launch>
