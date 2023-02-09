@@ -218,6 +218,7 @@ std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
   auto make_circle_3 = [&](
                          const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2,
                          const lanelet::BasicPoint2d & p3) -> void {
+    // reference for circumcenter vector https://en.wikipedia.org/wiki/Circumscribed_circle
     const double A = (p2 - p3).squaredNorm();
     const double B = (p3 - p1).squaredNorm();
     const double C = (p1 - p2).squaredNorm();
