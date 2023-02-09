@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <arg name="use_tf" default="false"/>
+
   <arg name="config_yaml" default="eagleye_config.param.yaml"/>
+  <arg name="config_path" default="$(find-pkg-share autoware_launch)/config/localization/$(var config_yaml)"/>
+  <arg name="localization_mode" default="lidar" description="select localization mode. lidar, gnss"/>
+  <arg name="use_eagleye_twist" default="false" description="Mode to correct wheel speed and IMU by GNSS Doppler velocity"/>
+  <arg name="output_pose_with_cov_name" default="/localization/pose_estimator/pose_with_covariance"/>
+  <arg name="output_twist_with_cov_name" default="/localization/twist_estimator/twist_with_covariance"/>
+  <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/eagleye"/>
+
+  <arg name="use_tf" default="false"/>
   <arg name="enable_additional_rolling" default="false"/>
   <arg name="use_multi_antenna_mode" default="false"/>
-  <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/eagleye"/>
-  <arg name="config_path" default="$(find-pkg-share autoware_launch)/config/localization/$(var config_yaml)"/>
 
   <group>
     <push-ros-namespace namespace="eagleye"/>
+
+    <group if="$(var use_eagleye_twist)">
+      <node pkg="topic_tools" exec="relay" name="eagleye_output_twist_relay" args="twist_with_covariance $(var output_twist_with_cov_name)"/>
+    </group>
 
     <arg name="use_rtk_dead_reckoning" default="false"/>
     <arg name="use_rtk_heading" default="false"/>
@@ -134,9 +144,15 @@
     <include file="$(var directory_with_related_launches)/gnss_converter.xml">
       <arg name="config_path" value="$(var config_path)"/>
     </include>
+
   </group>
 
   <include file="$(find-pkg-share eagleye_tf)/launch/tf.xml" if="$(var use_tf)"/>
 
-  <include file="$(var directory_with_related_launches)/fix2pose.xml"/>
+  <group if="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)">
+    <include file="$(var directory_with_related_launches)/fix2pose.xml">
+      <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
+    </include>
+  </group>
+
 </launch>
