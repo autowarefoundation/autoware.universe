@@ -153,13 +153,17 @@ void updateLateralKinematicsVector(
   const ObjectData & prev_obj, ObjectData & current_obj,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr_)
 {
-  const double dt = current_obj.header.stamp.sec - prev_obj.header.stamp.sec;
+  const double dt = (current_obj.header.stamp.sec - prev_obj.header.stamp.sec) +
+                    (current_obj.header.stamp.nanosec - prev_obj.header.stamp.nanosec) / 1e9;
+  if (dt < 1e6) {
+    return;  // do not update
+  }
 
   // look for matching lanelet between current and previous kinematics
   for (auto & current_lateral_kinematics : current_obj.lateral_kinematics_vector) {
     for (auto & prev_lateral_kinematics : prev_obj.lateral_kinematics_vector) {
-      const bool same_lanelet =
-        current_lateral_kinematics.current_lanelet == prev_lateral_kinematics.current_lanelet;
+      const bool same_lanelet = current_lateral_kinematics.current_lanelet.id() ==
+                                prev_lateral_kinematics.current_lanelet.id();
       const bool successive_lanelet =
         routing_graph_ptr_->routingRelation(
           prev_lateral_kinematics.current_lanelet, current_lateral_kinematics.current_lanelet) ==
@@ -1074,7 +1078,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   double left_dist, right_dist;
   double v_left_filtered, v_right_filtered;
   for (const auto lateral_kinematics : latest_info.lateral_kinematics_vector) {
-    if (lateral_kinematics.current_lanelet == current_lanelet_data.lanelet) {
+    if (lateral_kinematics.current_lanelet.id() == current_lanelet_data.lanelet.id()) {
       left_dist = lateral_kinematics.dist_from_left_boundary;
       right_dist = lateral_kinematics.dist_from_right_boundary;
       v_left_filtered = lateral_kinematics.filtered_left_lateral_velocity;
