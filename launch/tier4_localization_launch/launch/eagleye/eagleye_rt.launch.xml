@@ -4,6 +4,7 @@
   <arg name="config_yaml" default="eagleye_config.param.yaml"/>
   <arg name="enable_additional_rolling" default="false"/>
   <arg name="use_multi_antenna_mode" default="false"/>
+  <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/eagleye"/>
   <arg name="config_path" default="$(find-pkg-share autoware_launch)/config/localization/$(var config_yaml)"/>
 
   <group>
@@ -130,12 +131,12 @@
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
     </node>
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/gnss_converter.xml">
+    <include file="$(var directory_with_related_launches)/gnss_converter.xml">
       <arg name="config_path" value="$(var config_path)"/>
     </include>
   </group>
 
   <include file="$(find-pkg-share eagleye_tf)/launch/tf.xml" if="$(var use_tf)"/>
 
-  <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/fix2pose.xml"/>
+  <include file="$(var directory_with_related_launches)/fix2pose.xml"/>
 </launch>
