@@ -106,32 +106,31 @@ multipolygon_t createExpansionLaneletPolygons(
   };
   const auto add_if_valid = [&](const auto & ll, const auto is_left) {
     const auto bound_to_check = is_left ? ll.rightBound() : ll.leftBound();
-    if (!already_added(ll) && !hasTypes(bound_to_check, params.avoid_linestring_types))
-      candidates.push_back(ll);
+    if (std::find_if(path_lanes.begin(), path_lanes.end(), [&](const auto & l) {
+          return ll.id() == l.id();
+        }) == path_lanes.end())
+      if (!already_added(ll) && !hasTypes(bound_to_check, params.avoid_linestring_types))
+        candidates.push_back(ll);
   };
-  std::cout << path_lanes.size() << std::endl;
   for (const auto & current_ll : path_lanes) {
-    const auto left_ll = route_handler.getLeftLanelet(current_ll);
-    if (left_ll) add_if_valid(left_ll.get(), true);
-    for (const auto & ll : route_handler.getRoutingGraphPtr()->lefts(current_ll))
-      add_if_valid(ll, true);
-    const auto right_ll = route_handler.getRightLanelet(current_ll);
-    if (right_ll) add_if_valid(right_ll.get(), false);
-    for (const auto & ll : route_handler.getRoutingGraphPtr()->rights(current_ll))
-      add_if_valid(ll, false);
+    for (const auto left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().front()))
+      add_if_valid(left_ll, true);
+    for (const auto left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().back()))
+      add_if_valid(left_ll, true);
+    for (const auto right_ll :
+         route_handler.getLaneletsFromPoint(current_ll.rightBound3d().front()))
+      add_if_valid(right_ll, false);
+    for (const auto right_ll : route_handler.getLaneletsFromPoint(current_ll.rightBound3d().back()))
+      add_if_valid(right_ll, false);
   }
-  std::cout << candidates.size() << std::endl;
-  for (const auto & footprint : path_footprints) {
-    for (auto it = candidates.begin(); it != candidates.end(); ++it) {
-      polygon_t poly;
-      for (const auto & p : it->polygon2d()) poly.outer().emplace_back(p.x(), p.y());
-      boost::geometry::correct(poly);
-      if (boost::geometry::intersects(footprint, poly)) {
-        expansion_polygons.push_back(poly);
-        candidates.erase(it);
-        --it;
-      }
-    }
+  for (const auto & candidate : candidates) {
+    polygon_t candidate_poly;
+    for (const auto & p : candidate.polygon2d()) candidate_poly.outer().emplace_back(p.x(), p.y());
+    boost::geometry::correct(candidate_poly);
+    if (
+      !boost::geometry::overlaps(candidate_poly, predicted_paths) &&
+      boost::geometry::overlaps(path_footprints, candidate_poly))
+      expansion_polygons.push_back(candidate_poly);
   }
   return expansion_polygons;
 }
