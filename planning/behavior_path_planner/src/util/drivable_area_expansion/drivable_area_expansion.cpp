@@ -344,8 +344,14 @@ multipolygon_t createPathFootprints(
   multipolygon_t footprints;
   // skip the last footprint as its orientation is usually wrong
   footprints.reserve(path.points.size() - 1);
-  for (auto it = path.points.begin(); std::next(it) != path.points.end(); ++it)
+  double arc_length = 0.0;
+  for (auto it = path.points.begin(); std::next(it) != path.points.end(); ++it) {
     footprints.push_back(createFootprint(it->point.pose, base_footprint));
+    if (params.max_path_arc_length > 0.0) {
+      arc_length += tier4_autoware_utils::calcDistance2d(it->point.pose, std::next(it)->point.pose);
+      if (arc_length > params.max_path_arc_length) break;
+    }
+  }
   return footprints;
 }
 
