@@ -1088,7 +1088,7 @@ void generateDrivableArea(
     };
 
   const auto has_overlap =
-    [&](const lanelet::ConstLanelet & lane, const lanelet::ConstLanelets& ignore_lanelets = {}) {
+    [&](const lanelet::ConstLanelet & lane, const lanelet::ConstLanelets & ignore_lanelets = {}) {
       for (const auto & transformed_lane : transformed_lanes) {
         if (checkHasSameLane(ignore_lanelets, transformed_lane)) {
           continue;
@@ -1117,10 +1117,10 @@ void generateDrivableArea(
     const auto goal_left_lanelet = route_handler->getLeftLanelet(goal_lanelet);
     const auto goal_right_lanelet = route_handler->getRightLanelet(goal_lanelet);
     lanelet::ConstLanelets goal_lanelets = {goal_lanelet};
-    if(goal_left_lanelet) {
+    if (goal_left_lanelet) {
       goal_lanelets.push_back(*goal_left_lanelet);
     }
-    if(goal_right_lanelet) {
+    if (goal_right_lanelet) {
       goal_lanelets.push_back(*goal_right_lanelet);
     }
 
@@ -1131,9 +1131,8 @@ void generateDrivableArea(
       }
       // Check if overlapped
       const bool is_overlapped =
-        (checkHasSameLane(next_lanes_after_goal, lane)
-          ? has_overlap(lane, goal_lanelets)
-          : has_overlap(lane));
+        (checkHasSameLane(next_lanes_after_goal, lane) ? has_overlap(lane, goal_lanelets)
+                                                       : has_overlap(lane));
       if (is_overlapped) {
         continue;
       }
