@@ -33,8 +33,6 @@ namespace autoware::motion::control::autonomous_emergency_braking
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
 namespace bg = boost::geometry;
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
 
 void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point)
 {
@@ -232,22 +230,44 @@ bool AEB::checkCollision()
   const double current_w =
     use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
 
-  // step3. create ego path
-  std::vector<geometry_msgs::msg::Pose> ego_path;
+  MarkerArray debug_markers;
+
+  // step3. create ego path based on sensor data
+  Path ego_path;
   std::vector<Polygon2d> ego_polys;
   generateEgoPath(current_v, current_w, ego_path, ego_polys);
-  publishEgoPath(ego_path, ego_polys);
+  addMarker(get_clock()->now(), ego_path, ego_polys, "ego_path", "ego_polygons", debug_markers);
 
+  // step4. transform predicted trajectory from control module
+  Path predicted_path;
+  std::vector<Polygon2d> predicted_polys;
+  if (predicted_traj_ptr_) {
+    generateEgoPath(*predicted_traj_ptr_, predicted_path, predicted_polys);
+    addMarker(
+      predicted_traj_ptr_->header.stamp, predicted_path, predicted_polys, "predicted_path",
+      "predicted_polygons", debug_markers);
+  }
+
+  // publish debug markers
+  debug_ego_path_publisher_->publish(debug_markers);
+
+  return hasCollision(current_v, ego_path, ego_polys) ||
+         hasCollision(current_v, predicted_path, predicted_polys);
+}
+
+bool AEB::hasCollision(
+  const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys)
+{
   // check if the predicted path has valid number of points
   if (ego_path.size() < 2) {
     return false;
   }
 
-  // step4. create object
+  // step1. create object
   std::vector<ObjectData> objects;
   createObjectData(ego_path, ego_polys, objects);
 
-  // step5. calculate RSS
+  // step2. calculate RSS
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
@@ -264,8 +284,7 @@ bool AEB::checkCollision()
 }
 
 void AEB::generateEgoPath(
-  const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path,
-  std::vector<Polygon2d> & polygons)
+  const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons)
 {
   double curr_x = 0.0;
   double curr_y = 0.0;
@@ -318,9 +337,38 @@ void AEB::generateEgoPath(
   }
 }
 
+void AEB::generateEgoPath(
+  const Trajectory & predicted_traj, Path & path,
+  std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+{
+  geometry_msgs::msg::TransformStamped transform_stamped{};
+  try {
+    transform_stamped = tf_buffer_.lookupTransform(
+      "base_link", predicted_traj.header.frame_id, predicted_traj.header.stamp,
+      rclcpp::Duration::from_seconds(0.5));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
+    return;
+  }
+
+  // create path
+  path.resize(predicted_traj.points.size());
+  for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
+    geometry_msgs::msg::Pose map_pose;
+    tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped);
+    path.at(i) = map_pose;
+  }
+
+  // create polygon
+  polygons.resize(path.size());
+  for (size_t i = 0; i < path.size(); ++i) {
+    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, lateral_offset_);
+  }
+}
+
 void AEB::createObjectData(
-  std::vector<geometry_msgs::msg::Pose> & ego_path,
-  const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys, std::vector<ObjectData> & objects)
+  const Path & ego_path, const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys,
+  std::vector<ObjectData> & objects)
 {
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
@@ -339,14 +387,11 @@ void AEB::createObjectData(
   }
 }
 
-void AEB::publishEgoPath(
-  const std::vector<geometry_msgs::msg::Pose> & path,
-  const std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+void AEB::addMarker(
+  const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
+  const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers)
 {
-  MarkerArray debug_markers;
-
   // transform to map
-  const auto current_time = this->get_clock()->now();
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -356,55 +401,46 @@ void AEB::publishEgoPath(
     return;
   }
 
-  {
-    // marker parameter
-    constexpr double color_r = 0.0 / 256.0;
-    constexpr double color_g = 148.0 / 256.0;
-    constexpr double color_b = 205.0 / 256.0;
-    auto marker = tier4_autoware_utils::createDefaultMarker(
-      "map", current_time, "ego_predicted_path", 0L, Marker::LINE_STRIP,
-      tier4_autoware_utils::createMarkerScale(0.2, 0.2, 0.2),
-      tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, 0.999));
-    marker.points.resize(path.size());
+  // marker parameter
+  constexpr double color_r = 0.0 / 256.0;
+  constexpr double color_g = 148.0 / 256.0;
+  constexpr double color_b = 205.0 / 256.0;
+  constexpr double color_a = 0.999;
 
-    for (size_t i = 0; i < path.size(); ++i) {
-      const auto & pose = path.at(i);
-      geometry_msgs::msg::Pose map_pose;
-      tf2::doTransform(pose, map_pose, transform_stamped);
-      marker.points.at(i) = map_pose.position;
-    }
-    debug_markers.markers.push_back(marker);
+  auto path_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, path_ns, 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.2, 0.2, 0.2),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  path_marker.points.resize(path.size());
+  for (size_t i = 0; i < path.size(); ++i) {
+    const auto & pose = path.at(i);
+    geometry_msgs::msg::Pose map_pose;
+    tf2::doTransform(pose, map_pose, transform_stamped);
+    path_marker.points.at(i) = map_pose.position;
   }
+  debug_markers.markers.push_back(path_marker);
 
-  {
-    auto marker = tier4_autoware_utils::createDefaultMarker(
-      "map", current_time, "ego_predicted_polygons", 0, Marker::LINE_LIST,
-      tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
-      tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
+  auto polygon_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, poly_ns, 0, Marker::LINE_LIST,
+    tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto & poly : polygons) {
+    for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
+      const auto & boost_cp = poly.outer().at(dp_idx);
+      const auto & boost_np = poly.outer().at((dp_idx + 1) % poly.outer().size());
+      const auto curr_point = tier4_autoware_utils::createPoint(boost_cp.x(), boost_cp.y(), 0.0);
+      const auto next_point = tier4_autoware_utils::createPoint(boost_np.x(), boost_np.y(), 0.0);
 
-    for (const auto & poly : polygons) {
-      for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
-        const auto & boost_current_point = poly.outer().at(dp_idx);
-        const auto & boost_next_point = poly.outer().at((dp_idx + 1) % poly.outer().size());
-        const auto curr_point =
-          tier4_autoware_utils::createPoint(boost_current_point.x(), boost_current_point.y(), 0.0);
-        const auto next_point =
-          tier4_autoware_utils::createPoint(boost_next_point.x(), boost_next_point.y(), 0.0);
-
-        geometry_msgs::msg::Point map_curr_point;
-        geometry_msgs::msg::Point map_next_point;
-        tf2::doTransform(curr_point, map_curr_point, transform_stamped);
-        tf2::doTransform(next_point, map_next_point, transform_stamped);
-        marker.points.push_back(map_curr_point);
-        marker.points.push_back(map_next_point);
-      }
+      geometry_msgs::msg::Point map_curr_point;
+      geometry_msgs::msg::Point map_next_point;
+      tf2::doTransform(curr_point, map_curr_point, transform_stamped);
+      tf2::doTransform(next_point, map_next_point, transform_stamped);
+      polygon_marker.points.push_back(map_curr_point);
+      polygon_marker.points.push_back(map_next_point);
     }
-    debug_markers.markers.push_back(marker);
   }
-
-  debug_ego_path_publisher_->publish(debug_markers);
+  debug_markers.markers.push_back(polygon_marker);
 }
-
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 
 #include <rclcpp_components/register_node_macro.hpp>

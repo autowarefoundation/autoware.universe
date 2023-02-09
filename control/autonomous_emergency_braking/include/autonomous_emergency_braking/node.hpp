@@ -52,9 +52,12 @@ using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using Path = std::vector<geometry_msgs::msg::Pose>;
 
 struct ObjectData
 {
@@ -95,18 +98,20 @@ public:
   // main function
   void onCheckCollision(DiagnosticStatusWrapper & stat);
   bool checkCollision();
+  bool hasCollision(
+    const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys);
 
   void generateEgoPath(
-    const double curr_v, const double curr_w, std::vector<geometry_msgs::msg::Pose> & path,
-    std::vector<tier4_autoware_utils::Polygon2d> & polygons);
+    const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons);
+  void generateEgoPath(
+    const Trajectory & predicted_traj, Path & path, std::vector<Polygon2d> & polygons);
   void createObjectData(
-    std::vector<geometry_msgs::msg::Pose> & ego_path,
-    const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys,
+    const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
     std::vector<ObjectData> & objects);
 
-  void publishEgoPath(
-    const std::vector<geometry_msgs::msg::Pose> & path,
-    const std::vector<tier4_autoware_utils::Polygon2d> & polygons);
+  void addMarker(
+    const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
+    const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
