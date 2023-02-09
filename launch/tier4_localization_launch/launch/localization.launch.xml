@@ -12,7 +12,7 @@
   <arg name="use_pointcloud_container" default="true" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
   <arg name="localization_mode" default="lidar" description="select localization mode. lidar, gnss"/>
-  <arg name="use_eagleye_twist" default="true" description="Mode to correct wheel speed and IMU by GNSS Doppler velocity"/>
+  <arg name="use_eagleye_twist" default="false" description="Mode to correct wheel speed and IMU by GNSS Doppler velocity"/>
 
   <!-- localization module -->
   <group>
