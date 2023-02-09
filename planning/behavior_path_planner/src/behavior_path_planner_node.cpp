@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -744,10 +744,6 @@ std::shared_ptr<PlannerData> BehaviorPathPlannerNode::createLatestPlannerData()
   // update map
   if (has_received_map_) {
     planner_data_->route_handler->setMap(*map_ptr_);
-    planner_data_->drivable_area_uncrossable_lines =
-      drivable_area_expansion::extractUncrossableLines(
-        *planner_data_->route_handler->getLaneletMapPtr(),
-        planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
     has_received_map_ = false;
   }
 
@@ -1103,19 +1099,12 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     update_param(
       parameters, DrivableAreaExpansionParameters::AVOID_DYN_OBJECTS_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_dynamic_objects);
-    const auto prev_values =
-      planner_data_->drivable_area_expansion_parameters.avoid_linestring_types;
     update_param(
       parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
       planner_data_->drivable_area_expansion_parameters.expansion_method);
     update_param(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
-    if (prev_values != planner_data_->drivable_area_expansion_parameters.avoid_linestring_types)
-      planner_data_->drivable_area_uncrossable_lines =
-        drivable_area_expansion::extractUncrossableLines(
-          *planner_data_->route_handler->getLaneletMapPtr(),
-          planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
     update_param(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_dist);

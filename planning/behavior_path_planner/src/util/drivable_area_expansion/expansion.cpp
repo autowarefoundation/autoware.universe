@@ -25,18 +25,14 @@ double calculateDistanceLimit(
   const multilinestring_t & limit_lines)
 {
   auto dist_limit = std::numeric_limits<double>::max();
-  for (const auto & line : limit_lines) {
-    for (const auto & p : line) {
-      if (boost::geometry::within(p, expansion_polygon)) {
-        dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-      }
-    }
-  }
+  boost::geometry::for_each_point(limit_lines, [&](const auto & point) {
+    if (boost::geometry::within(point, expansion_polygon))
+      dist_limit = std::min(dist_limit, boost::geometry::distance(point, base_ls));
+  });
   multipoint_t intersections;
   boost::geometry::intersection(expansion_polygon, limit_lines, intersections);
-  for (const auto & p : intersections) {
+  for (const auto & p : intersections)
     dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-  }
   return dist_limit;
 }
 
@@ -110,7 +106,8 @@ multipolygon_t createExpansionPolygons(
       for (const auto & p : footprint.outer()) {
         const auto projection = point_to_linestring_projection(p, path_ls);
         if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
-        if (is_left == projection.distance > 0 && std::abs(projection.distance) > expansion_dist) {
+        if (
+          is_left == (projection.distance > 0) && std::abs(projection.distance) > expansion_dist) {
           expansion_dist = std::abs(projection.distance);
           from_arc_length = std::min(from_arc_length, projection.arc_length);
           to_arc_length = std::max(to_arc_length, projection.arc_length);
@@ -191,14 +188,16 @@ multipolygon_t createExpansionLaneletPolygons(
         candidates.push_back(ll);
   };
   for (const auto & current_ll : path_lanes) {
-    for (const auto left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().front()))
+    for (const auto & left_ll :
+         route_handler.getLaneletsFromPoint(current_ll.leftBound3d().front()))
       add_if_valid(left_ll, true);
-    for (const auto left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().back()))
+    for (const auto & left_ll : route_handler.getLaneletsFromPoint(current_ll.leftBound3d().back()))
       add_if_valid(left_ll, true);
-    for (const auto right_ll :
+    for (const auto & right_ll :
          route_handler.getLaneletsFromPoint(current_ll.rightBound3d().front()))
       add_if_valid(right_ll, false);
-    for (const auto right_ll : route_handler.getLaneletsFromPoint(current_ll.rightBound3d().back()))
+    for (const auto & right_ll :
+         route_handler.getLaneletsFromPoint(current_ll.rightBound3d().back()))
       add_if_valid(right_ll, false);
   }
   for (const auto & candidate : candidates) {

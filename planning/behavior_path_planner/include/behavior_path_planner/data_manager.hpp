@@ -80,7 +80,6 @@ struct PlannerData
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
-  drivable_area_expansion::multilinestring_t drivable_area_uncrossable_lines{};
   Approval approval{};
 };
 
