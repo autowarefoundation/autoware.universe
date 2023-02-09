@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="localization_mode" default="lidar" description="select localization mode. lidar, gnss"/>
+  <arg name="use_eagleye_twist" default="false" description="Mode to correct wheel speed and IMU by GNSS Doppler velocity"/>
   <group if="$(eval &quot;'$(var localization_mode)'=='lidar'&quot;)">
     <include file="$(find-pkg-share ndt_scan_matcher)/launch/ndt_scan_matcher.launch.xml">
       <arg name="input_map_points_topic" value="/map/pointcloud_map"/>
@@ -15,6 +16,10 @@
   </group>
 
   <group if="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)">
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml"/>
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
+      <arg name="localization_mode" value="$(var localization_mode)"/>
+      <arg name="use_eagleye_twist" value="$(var use_eagleye_twist)"/>
+      <arg name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
+    </include>
   </group>
 </launch>

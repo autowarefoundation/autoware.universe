@@ -32,6 +32,7 @@
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml">
         <arg name="localization_mode" value="$(var localization_mode)"/>
+        <arg name="use_eagleye_twist" value="$(var use_eagleye_twist)"/>
       </include>
     </group>
     <!-- twist_estimator module -->
@@ -46,8 +47,6 @@
     <group>
       <push-ros-namespace namespace="pose_twist_fusion_filter"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml">
-        <arg name="localization_mode" value="$(var localization_mode)"/>
-        <arg name="use_eagleye_twist" value="$(var use_eagleye_twist)"/>
       </include>
     </group>
     <!-- localization_error_monitor_module -->
