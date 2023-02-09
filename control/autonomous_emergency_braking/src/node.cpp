@@ -44,8 +44,8 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
 }
 
 Polygon2d createPolygon(
-  const geometry_msgs::msg::Pose & base_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double expand_width)
+  const geometry_msgs::msg::Pose & base_pose, const geometry_msgs::msg::Pose & next_pose,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double expand_width)
 {
   Polygon2d polygon;
 
@@ -64,8 +64,25 @@ Polygon2d createPolygon(
   appendPointToPolygon(
     polygon, tier4_autoware_utils::calcOffsetPose(base_pose, -rear_overhang, width, 0.0).position);
 
-  boost::geometry::correct(polygon);
-  return polygon;
+  appendPointToPolygon(
+    polygon,
+    tier4_autoware_utils::calcOffsetPose(next_pose, longitudinal_offset, width, 0.0).position);
+  appendPointToPolygon(
+    polygon,
+    tier4_autoware_utils::calcOffsetPose(next_pose, longitudinal_offset, -width, 0.0).position);
+  appendPointToPolygon(
+    polygon, tier4_autoware_utils::calcOffsetPose(next_pose, -rear_overhang, -width, 0.0).position);
+  appendPointToPolygon(
+    polygon, tier4_autoware_utils::calcOffsetPose(next_pose, -rear_overhang, width, 0.0).position);
+
+  polygon = tier4_autoware_utils::isClockwise(polygon)
+              ? polygon
+              : tier4_autoware_utils::inverseClockwise(polygon);
+
+  Polygon2d hull_polygon;
+  bg::convex_hull(polygon, hull_polygon);
+
+  return hull_polygon;
 }
 
 AEB::AEB(const rclcpp::NodeOptions & node_options)
@@ -101,9 +118,12 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
 
   // parameter
   use_imu_data_ = declare_parameter<bool>("use_imu_data", false);
+  use_predicted_path_ = declare_parameter<bool>("use_predicted_path", true);
+  use_generated_path_ = declare_parameter<bool>("use_generated_path", true);
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x", 0.05);
   voxel_grid_y_ = declare_parameter<double>("voxel_grid_y", 0.05);
   voxel_grid_z_ = declare_parameter<double>("voxel_grid_z", 100000.0);
+  min_generated_path_length_ = declare_parameter<double>("min_generated_path_length", 0.5);
   expand_width_ = declare_parameter<double>("expand_width", 0.1);
   longitudinal_offset_ = declare_parameter<double>("longitudinal_offset", 1.0);
   t_response_ = declare_parameter<double>("t_response", 1.0);
@@ -207,6 +227,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   if (checkCollision()) {
     std::cerr << "Emergency" << std::endl;
+    std::cerr << "curr_v: " << current_velocity_ptr_->longitudinal_velocity << std::endl;
     const std::string error_msg = "[AEB]: Emergency Brake";
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
@@ -229,14 +250,14 @@ bool AEB::checkCollision()
   const double current_v = current_velocity_ptr_->longitudinal_velocity;
   const double current_w =
     use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
+  const auto predicted_traj_ptr = predicted_traj_ptr_;
 
   MarkerArray debug_markers;
 
   // step3. create ego path based on sensor data
   Path ego_path;
   std::vector<Polygon2d> ego_polys;
-  {
-    // marker parameter
+  if (use_generated_path_) {
     constexpr double color_r = 0.0 / 256.0;
     constexpr double color_g = 148.0 / 256.0;
     constexpr double color_b = 205.0 / 256.0;
@@ -251,13 +272,13 @@ bool AEB::checkCollision()
   // step4. transform predicted trajectory from control module
   Path predicted_path;
   std::vector<Polygon2d> predicted_polys;
-  if (predicted_traj_ptr_) {
+  if (use_predicted_path_ && predicted_traj_ptr) {
     constexpr double color_r = 0.0;
     constexpr double color_g = 100.0 / 256.0;
     constexpr double color_b = 0.0;
     constexpr double color_a = 0.999;
-    const auto current_time = predicted_traj_ptr_->header.stamp;
-    generateEgoPath(*predicted_traj_ptr_, predicted_path, predicted_polys);
+    const auto current_time = predicted_traj_ptr->header.stamp;
+    generateEgoPath(*predicted_traj_ptr, predicted_path, predicted_polys);
     addMarker(
       current_time, predicted_path, predicted_polys, color_r, color_g, color_b, color_a,
       "predicted_path", "predicted_polygons", debug_markers);
@@ -274,7 +295,7 @@ bool AEB::hasCollision(
   const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys)
 {
   // check if the predicted path has valid number of points
-  if (ego_path.size() < 2) {
+  if (ego_path.size() < 2 || ego_polys.empty()) {
     return false;
   }
 
@@ -283,17 +304,23 @@ bool AEB::hasCollision(
   createObjectData(ego_path, ego_polys, objects);
 
   // step2. calculate RSS
+  const auto current_p = tier4_autoware_utils::createPoint(0.0, 0.0, 0.0);
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
     const double rss_dist = current_v * t + current_v * current_v / (2 * std::fabs(a_ego_min_)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
-    const double dist_ego_to_object = obj.lon_dist - vehicle_info_.max_longitudinal_offset_m;
+    const double dist_ego_to_object =
+      motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
+      vehicle_info_.max_longitudinal_offset_m;
+    std::cerr << "rss_dist: " << rss_dist << std::endl;
+    std::cerr << "dist_ego_to_object: " << dist_ego_to_object << std::endl;
     if (dist_ego_to_object < rss_dist) {
       // collision happens
       return true;
     }
   }
+  std::cerr << "------------" << std::endl;
 
   return false;
 }
@@ -331,8 +358,7 @@ void AEB::generateEgoPath(
   }
 
   // If path is shorter than minimum path length
-  const double min_path_length = 0.5;
-  while (motion_utils::calcArcLength(path) < min_path_length) {
+  while (motion_utils::calcArcLength(path) < min_generated_path_length_) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
@@ -346,9 +372,9 @@ void AEB::generateEgoPath(
   }
 
   // generate ego polygons
-  polygons.resize(path.size());
-  for (size_t i = 0; i < path.size(); ++i) {
-    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, expand_width_);
+  polygons.resize(path.size() - 1);
+  for (size_t i = 0; i < path.size() - 1; ++i) {
+    polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
 }
 
@@ -376,8 +402,8 @@ void AEB::generateEgoPath(
 
   // create polygon
   polygons.resize(path.size());
-  for (size_t i = 0; i < path.size(); ++i) {
-    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, expand_width_);
+  for (size_t i = 0; i < path.size() - 1; ++i) {
+    polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
 }
 
@@ -388,13 +414,16 @@ void AEB::createObjectData(
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
   for (const auto & point : obstacle_points_ptr->points) {
-    Point2d obj_point(point.x, point.y);
+    ObjectData obj;
+    obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
+    obj.velocity = 0.0;
+    const Point2d obj_point(point.x, point.y);
+    const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
+    if (lat_dist > 5.0) {
+      continue;
+    }
     for (const auto & ego_poly : ego_polys) {
       if (bg::within(obj_point, ego_poly)) {
-        ObjectData obj;
-        obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
-        obj.velocity = 0.0;
-        obj.lon_dist = motion_utils::calcSignedArcLength(ego_path, 0, obj.position);
         objects.push_back(obj);
         break;
       }

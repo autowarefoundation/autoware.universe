@@ -63,7 +63,6 @@ struct ObjectData
 {
   geometry_msgs::msg::Point position;
   double velocity;
-  double lon_dist;
 };
 
 class AEB : public rclcpp::Node
@@ -130,10 +129,13 @@ public:
   Updater updater_{this};
 
   // member variables
+  bool use_predicted_path_{true};
+  bool use_generated_path_{true};
   bool use_imu_data_{false};
   double voxel_grid_x_{0.0};
   double voxel_grid_y_{0.0};
   double voxel_grid_z_{0.0};
+  double min_generated_path_length_{0.0};
   double expand_width_{0.0};
   double longitudinal_offset_{0.0};
   double t_response_{0.0};
