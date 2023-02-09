@@ -69,7 +69,7 @@ struct ObjectData
   geometry_msgs::msg::Twist twist;
   double time_delay;
   // for lane change prediction
-  std::vector<LateralKinematicsToLanelet> lateral_kinematics;
+  std::vector<LateralKinematicsToLanelet> lateral_kinematics_vector;
 };
 
 enum class Maneuver {
