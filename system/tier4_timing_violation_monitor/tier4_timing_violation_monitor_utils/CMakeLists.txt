@@ -16,6 +16,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   include/tier4_timing_violation_monitor_utils/message_consumption_notifier.hpp)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
@@ -25,6 +26,11 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_message_consumption_notifier
+    test/test_message_consumption_notifier.cpp)
+  target_link_libraries(test_message_consumption_notifier
+    ${PROJECT_NAME})
 endif()
 
 ament_auto_package()

@@ -11,12 +11,12 @@ namespace tier4_timing_violation_monitor_utils
 {
 class MessageConsumptionNotifier
 {
+public:
   using MttMsg = builtin_interfaces::msg::Time;
   using MTTPublisher = rclcpp::Publisher<MttMsg>;
 
-public:
   RCLCPP_PUBLIC
-  explicit MessageConsumptionNotifier(
+  MessageConsumptionNotifier(
     rclcpp::Node * node,
     const std::string & notification_topic,
     const rclcpp::QoS & notification_qos);
