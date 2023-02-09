@@ -22,28 +22,34 @@ Currently, when clipping left bound or right bound, it can clip the bound more t
 
 ## Parameters for drivable area generation
 
-| Name                                         | Unit | Type                                                  | Description                                                                                            | Default value             |
-| :------------------------------------------- | :--- | :---------------------------------------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------ |
-| enabled                                      |      | boolean                                               | whether to dynamically the drivable area using the ego footprint                                       | false                     |
-| ego.extra_footprint_offset.front             | [m]  | double                                                | extra length to add to the front of the ego footprint                                                  | 0.0                       |
-| ego.extra_footprint_offset.rear              | [m]  | double                                                | extra length to add to the rear of the ego footprint                                                   | 0.0                       |
-| ego.extra_footprint_offset.left              | [m]  | double                                                | extra length to add to the left of the ego footprint                                                   | 0.0                       |
-| ego.extra_footprint_offset.right             | [m]  | double                                                | extra length to add to the rear of the ego footprint                                                   | 0.0                       |
-| dynamic_objects.avoid                        |      | boolean                                               | if true, the drivable area is not expanded in the predicted path of dynamic objects                    | true                      |
-| dynamic_objects.extra_footprint_offset.front | [m]  | extra length to add to the front of the ego footprint | 0.5                                                                                                    |
-| dynamic_objects.extra_footprint_offset.rear  | [m]  | extra length to add to the rear of the ego footprint  | 0.5                                                                                                    |
-| dynamic_objects.extra_footprint_offset.left  | [m]  | extra length to add to the left of the ego footprint  | 0.5                                                                                                    |
-| dynamic_objects.extra_footprint_offset.right | [m]  | extra length to add to the rear of the ego footprint  | 0.5                                                                                                    |
-| max_distance                                 | [m]  | double                                                | maximum distance by which the drivable area can be expended. A value of 0.0 means no maximum distance. | 0.0                       |
-| avoid_linestring_types                       |      | string array                                          | linestring types in the lanelet maps that will not be crossed when expanding the drivable area         | [guard_rail, road_border] |
-| avoid_linestring_distance                    | [m]  | double                                                | distance to keep between the drivable area and the linestrings to avoid                                | 0.0                       |
+| Name                                         | Unit | Type         | Description                                                                                                                                                                              | Default value             |
+| :------------------------------------------- | :--- | :----------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------ |
+| enabled                                      | [-]  | boolean      | whether to dynamically the drivable area using the ego footprint                                                                                                                         | false                     |
+| ego.extra_footprint_offset.front             | [m]  | double       | extra length to add to the front of the ego footprint                                                                                                                                    | 0.0                       |
+| ego.extra_footprint_offset.rear              | [m]  | double       | extra length to add to the rear of the ego footprint                                                                                                                                     | 0.0                       |
+| ego.extra_footprint_offset.left              | [m]  | double       | extra length to add to the left of the ego footprint                                                                                                                                     | 0.0                       |
+| ego.extra_footprint_offset.right             | [m]  | double       | extra length to add to the rear of the ego footprint                                                                                                                                     | 0.0                       |
+| dynamic_objects.avoid                        | [-]  | boolean      | if true, the drivable area is not expanded in the predicted path of dynamic objects                                                                                                      | true                      |
+| dynamic_objects.extra_footprint_offset.front | [m]  | double       | extra length to add to the front of the ego footprint                                                                                                                                    | 0.5                       |
+| dynamic_objects.extra_footprint_offset.rear  | [m]  | double       | extra length to add to the rear of the ego footprint                                                                                                                                     | 0.5                       |
+| dynamic_objects.extra_footprint_offset.left  | [m]  | double       | extra length to add to the left of the ego footprint                                                                                                                                     | 0.5                       |
+| dynamic_objects.extra_footprint_offset.right | [m]  | double       | extra length to add to the rear of the ego footprint                                                                                                                                     | 0.5                       |
+| max_distance                                 | [m]  | double       | maximum distance by which the drivable area can be expended. A value of 0.0 means no maximum distance.                                                                                   | 0.0                       |
+| expansion.method                             | [-]  | string       | method to use for the expansion: "polygon" will expand the drivable area around the ego footprint polygons; "lanelet" will expand to the whole lanelets overlapped by the ego footprints | "polygon"                 |
+| expansion.max_arc_path_length                | [m]  | double       | maximum length along the path where the ego footprint is projected                                                                                                                       | 50.0                      |
+| expansion.extra_arc_length                   | [m]  | double       | extra arc length (relative to the path) around ego footprints where the drivable area is expanded                                                                                        | 0.5                       |
+| expansion.avoid_linestring.types             | [-]  | string array | linestring types in the lanelet maps that will not be crossed when expanding the drivable area                                                                                           | [guard_rail, road_border] |
+| avoid_linestring.distance                    | [m]  | double       | distance to keep between the drivable area and the linestrings to avoid                                                                                                                  | 0.0                       |
+| avoid_linestring.compensate.enable           | [-]  | bool         | if true, when the expansion is blocked by a linestring on one side of the path, we try to compensate and expand on the other side                                                        | true                      |
+| avoid_linestring.compensate.extra_distance   | [m]  | double       | extra distance added to the expansion when compensating                                                                                                                                  | 3.0                       |
 
 The following parameters are defined for each module. Please refer to the `config/drivable_area_expansion.yaml` file.
 
-| Name                             | Unit | Type   | Description                                 | Default value |
-| :------------------------------- | :--- | :----- | :------------------------------------------ | :------------ |
-| drivable_area_right_bound_offset | [m]  | double | right offset length to expand drivable area | 5.0           |
-| drivable_area_left_bound_offset  | [m]  | double | left offset length to expand drivable area  | 5.0           |
+| Name                             | Unit | Type   | Description                                                                | Default value |
+| :------------------------------- | :--- | :----- | :------------------------------------------------------------------------- | :------------ |
+| drivable_area_right_bound_offset | [m]  | double | right offset length to expand drivable area                                | 5.0           |
+| drivable_area_left_bound_offset  | [m]  | double | left offset length to expand drivable area                                 | 5.0           |
+| drivable_area_types_to_skip      | [-]  | string | linestring types (as defined in the lanelet map) that will not be expanded | road_border   |
 
 ## Inner-workings / Algorithms
 
@@ -113,8 +119,7 @@ This expansion can be summarized with the following steps:
 | Footprints and uncrossable lines | ![drivable_area_expansion_footprints](./image/drivable_area/drivable_area_expansion_footprints.png) |
 | Expanded drivable area           | ![drivable_area_expansion_result](./image/drivable_area/drivable_area_expansion_result.png)         |
 
-Please note that this dynamic expansion cannot reduce the drivable area that was previously generated and statically expanded.
-The drivable area can only increase in size.
+Please note that the dynamic expansion can only increase the size of the drivable area and cannot remove any part from the original drivable area.
 
 ### Visualizing maximum drivable area (Debug)
 
