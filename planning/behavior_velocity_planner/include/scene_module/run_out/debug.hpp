@@ -104,15 +104,15 @@ public:
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon);
-  void pushDebugPointCloud(
-    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header);
-  void pushDebugPointCloud(const PointCloud2 & pointcloud);
   void pushTravelTimeTexts(
     const double travel_time, const geometry_msgs::msg::Pose pose, const float lateral_offset);
   void setAccelReason(const AccelReason & accel_reason);
   void publishDebugValue();
   void publishDebugTrajectory(const Trajectory & trajectory);
-  void publishDebugPointCloud();
+  void publishFilteredPointCloud(const PointCloud2 & pointcloud);
+  void publishFilteredPointCloud(
+    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header);
+  void publishEmptyPointCloud();
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
   void setHeight(const double height);
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray();
@@ -136,7 +136,6 @@ private:
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> mandatory_detection_area_polygons_;
   std::vector<TextWithPosition> travel_time_texts_;
-  PointCloud2 debug_pointcloud_;
   DebugValues debug_values_;
   AccelReason accel_reason_;
   double height_{0};

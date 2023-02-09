@@ -451,6 +451,7 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   }
 
   if (compare_map_filtered_points->data.empty() && vector_map_filtered_points->data.empty()) {
+    debug_ptr_->publishEmptyPointCloud();
     return;
   }
 
@@ -511,7 +512,8 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   const auto lateral_nearest_points =
     extractLateralNearestPoints(concat_points_no_overlap, path, param_.points_interval);
 
-  debug_ptr_->pushDebugPointCloud(lateral_nearest_points, concat_points.header);
+  // publish filtered pointcloud for debug
+  debug_ptr_->publishFilteredPointCloud(lateral_nearest_points, concat_points.header);
 
   std::lock_guard<std::mutex> lock(mutex_);
   obstacle_points_map_filtered_ = lateral_nearest_points;

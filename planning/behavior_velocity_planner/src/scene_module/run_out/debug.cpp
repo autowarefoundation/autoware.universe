@@ -149,18 +149,6 @@ void RunOutDebug::pushTravelTimeTexts(
   travel_time_texts_.push_back(createDebugText(sstream.str(), pose, lateral_offset));
 }
 
-void RunOutDebug::pushDebugPointCloud(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header)
-{
-  pcl::toROSMsg(pointcloud, debug_pointcloud_);
-  debug_pointcloud_.header = header;
-}
-
-void RunOutDebug::pushDebugPointCloud(const PointCloud2 & pointcloud)
-{
-  debug_pointcloud_ = pointcloud;
-}
-
 void RunOutDebug::clearDebugMarker()
 {
   collision_points_.clear();
@@ -171,7 +159,6 @@ void RunOutDebug::clearDebugMarker()
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
   travel_time_texts_.clear();
-  debug_pointcloud_.data.clear();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -320,12 +307,30 @@ void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
   pub_debug_trajectory_->publish(trajectory);
 }
 
-void RunOutDebug::publishDebugPointCloud()
+void RunOutDebug::publishFilteredPointCloud(
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const std_msgs::msg::Header header)
 {
-  if (debug_pointcloud_.header.frame_id == "") {
-    return;
-  }
-  pub_debug_pointcloud_->publish(debug_pointcloud_);
+  PointCloud2 pc;
+  pcl::toROSMsg(pointcloud, pc);
+  pc.header = header;
+
+  pub_debug_pointcloud_->publish(pc);
+}
+
+void RunOutDebug::publishFilteredPointCloud(const PointCloud2 & pointcloud)
+{
+  pub_debug_pointcloud_->publish(pointcloud);
+}
+
+void RunOutDebug::publishEmptyPointCloud()
+{
+  PointCloud2 pc;
+  pcl::toROSMsg(pcl::PointCloud<pcl::PointXYZ>(), pc);
+  // set arbitrary frame id to avoid warning
+  pc.header.frame_id = "map";
+  pc.header.stamp = node_.now();
+
+  pub_debug_pointcloud_->publish(pc);
 }
 
 void RunOutDebug::setHeight(const double height) { height_ = height; }
