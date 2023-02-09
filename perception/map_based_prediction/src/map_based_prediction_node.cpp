@@ -101,10 +101,10 @@ LateralKinematicsToLanelet initLateralKinematics(
 
   // calc boundary distance
   lateral_kinematics.dist_from_left_boundary = left_dist;
-  lateral_kinematics.dist_from_left_boundary = right_dist;
+  lateral_kinematics.dist_from_right_boundary = right_dist;
   // velocities are not init in the first step
-  lateral_kinematics.filtered_left_lateral_velocity = 0;
-  lateral_kinematics.filtered_right_lateral_velocity = 0;
+  lateral_kinematics.left_lateral_velocity = 0;
+  lateral_kinematics.right_lateral_velocity = 0;
   lateral_kinematics.filtered_left_lateral_velocity = 0;
   lateral_kinematics.filtered_right_lateral_velocity = 0;
   return lateral_kinematics;
