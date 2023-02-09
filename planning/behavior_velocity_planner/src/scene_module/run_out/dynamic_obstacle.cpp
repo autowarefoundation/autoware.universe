@@ -67,6 +67,7 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
 
   pcl::PointCloud<pcl::PointXYZ> output_points;
   filter.filter(output_points);
+  output_points.header = input_points.header;
 
   return output_points;
 }
@@ -119,6 +120,7 @@ pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(
   }
 
   pcl::PointCloud<pcl::PointXYZ> output_points;
+  output_points.header = input_points.header;
   for (const auto & poly : polys) {
     const auto bounding_box = bg::return_envelope<tier4_autoware_utils::Box2d>(poly);
     for (const auto & p : input_points) {
@@ -253,6 +255,23 @@ pcl::PointCloud<pcl::PointXYZ> transformPointCloud(
   pcl::transformPointCloud(pointcloud_pcl, pointcloud_pcl_transformed, transform_matrix);
 
   return pointcloud_pcl_transformed;
+}
+
+PointCloud2 concatPointCloud(
+  const pcl::PointCloud<pcl::PointXYZ> & cloud1, const pcl::PointCloud<pcl::PointXYZ> & cloud2)
+{
+  // convert to ROS pointcloud to concatenate points
+  PointCloud2 cloud1_ros;
+  PointCloud2 cloud2_ros;
+  pcl::toROSMsg(cloud1, cloud1_ros);
+  pcl::toROSMsg(cloud2, cloud2_ros);
+
+  // concatenate two clouds
+  PointCloud2 concat_points;
+  pcl::concatenatePointCloud(cloud1_ros, cloud2_ros, concat_points);
+  concat_points.header = cloud1_ros.header;
+
+  return concat_points;
 }
 
 }  // namespace
@@ -462,10 +481,12 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   if (!transform_matrix) {
     return;
   }
-  const pcl::PointCloud<pcl::PointXYZ> compare_map_filtered_points_transformed =
+  pcl::PointCloud<pcl::PointXYZ> compare_map_filtered_points_transformed =
     transformPointCloud(*compare_map_filtered_points, *transform_matrix);
-  const pcl::PointCloud<pcl::PointXYZ> vector_map_filtered_points_transformed =
+  pcl::PointCloud<pcl::PointXYZ> vector_map_filtered_points_transformed =
     transformPointCloud(*vector_map_filtered_points, *transform_matrix);
+  compare_map_filtered_points_transformed.header.frame_id = "map";
+  vector_map_filtered_points_transformed.header.frame_id = "map";
 
   // apply voxel grid filter to reduce calculation cost
   const auto voxel_grid_filtered_compare_map_points =
@@ -486,24 +507,9 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   const auto detection_area_filtered_vector_map_points =
     extractObstaclePointsWithinPolygon(voxel_grid_filtered_vector_map_points, detection_area);
 
-  // convert to ROS pointcloud to concatenate points
-  PointCloud2 detection_area_filtered_compare_map_points_ros;
-  PointCloud2 detection_area_filtered_vector_map_points_ros;
-  pcl::toROSMsg(
-    detection_area_filtered_compare_map_points, detection_area_filtered_compare_map_points_ros);
-  pcl::toROSMsg(
-    detection_area_filtered_vector_map_points, detection_area_filtered_vector_map_points_ros);
-  detection_area_filtered_compare_map_points_ros.header = compare_map_filtered_points->header;
-  detection_area_filtered_vector_map_points_ros.header = vector_map_filtered_points->header;
-  detection_area_filtered_compare_map_points_ros.header.frame_id = "map";
-  detection_area_filtered_vector_map_points_ros.header.frame_id = "map";
-
-  // concatenate two filtered clouds
-  PointCloud2 concat_points;
-  pcl::concatenatePointCloud(
-    detection_area_filtered_compare_map_points_ros, detection_area_filtered_vector_map_points_ros,
-    concat_points);
-  concat_points.header = detection_area_filtered_compare_map_points_ros.header;
+  // concatenate two filtered pointclouds
+  const auto concat_points = concatPointCloud(
+    detection_area_filtered_compare_map_points, detection_area_filtered_vector_map_points);
 
   // remove overlap points
   const auto concat_points_no_overlap = applyVoxelGridFilter(concat_points);
