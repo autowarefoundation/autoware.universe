@@ -111,6 +111,7 @@ public:
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
+    const double color_r, const double color_g, const double color_b, const double color_a,
     const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
@@ -133,7 +134,7 @@ public:
   double voxel_grid_x_{0.0};
   double voxel_grid_y_{0.0};
   double voxel_grid_z_{0.0};
-  double lateral_offset_{0.0};
+  double expand_width_{0.0};
   double longitudinal_offset_{0.0};
   double t_response_{0.0};
   double a_ego_min_{0.0};

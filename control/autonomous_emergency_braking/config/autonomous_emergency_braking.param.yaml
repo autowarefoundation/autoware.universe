@@ -1,10 +1,10 @@
 /**:
   ros__parameters:
-    use_imu_data_: false
+    use_imu_data_: true
     voxel_grid_x_: 0.05
     voxel_grid_y_: 0.05
     voxel_grid_z_: 100000.0
-    lateral_offset: 1.0
+    expand_width: 0.1
     longitudinal_offset: 1.5
     t_response: 1.0
     a_ego_min: -3.0

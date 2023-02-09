@@ -87,7 +87,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
   sub_predicted_traj_ = this->create_subscription<Trajectory>(
-    "/control/trajectory_follower/lateral/predicted_trajectory", rclcpp::QoS{1},
+    "~/input/predicted_trajectory", rclcpp::QoS{1},
     std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
 
   // Publisher
@@ -104,7 +104,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x", 0.05);
   voxel_grid_y_ = declare_parameter<double>("voxel_grid_y", 0.05);
   voxel_grid_z_ = declare_parameter<double>("voxel_grid_z", 100000.0);
-  lateral_offset_ = declare_parameter<double>("lateral_offset", 1.0);
+  expand_width_ = declare_parameter<double>("expand_width", 0.1);
   longitudinal_offset_ = declare_parameter<double>("longitudinal_offset", 1.0);
   t_response_ = declare_parameter<double>("t_response", 1.0);
   a_ego_min_ = declare_parameter<double>("a_ego_min", -3.0);
@@ -235,17 +235,32 @@ bool AEB::checkCollision()
   // step3. create ego path based on sensor data
   Path ego_path;
   std::vector<Polygon2d> ego_polys;
-  generateEgoPath(current_v, current_w, ego_path, ego_polys);
-  addMarker(get_clock()->now(), ego_path, ego_polys, "ego_path", "ego_polygons", debug_markers);
+  {
+    // marker parameter
+    constexpr double color_r = 0.0 / 256.0;
+    constexpr double color_g = 148.0 / 256.0;
+    constexpr double color_b = 205.0 / 256.0;
+    constexpr double color_a = 0.999;
+    const auto current_time = get_clock()->now();
+    generateEgoPath(current_v, current_w, ego_path, ego_polys);
+    addMarker(
+      current_time, ego_path, ego_polys, color_r, color_g, color_b, color_a, "ego_path",
+      "ego_polygons", debug_markers);
+  }
 
   // step4. transform predicted trajectory from control module
   Path predicted_path;
   std::vector<Polygon2d> predicted_polys;
   if (predicted_traj_ptr_) {
+    constexpr double color_r = 0.0;
+    constexpr double color_g = 100.0 / 256.0;
+    constexpr double color_b = 0.0;
+    constexpr double color_a = 0.999;
+    const auto current_time = predicted_traj_ptr_->header.stamp;
     generateEgoPath(*predicted_traj_ptr_, predicted_path, predicted_polys);
     addMarker(
-      predicted_traj_ptr_->header.stamp, predicted_path, predicted_polys, "predicted_path",
-      "predicted_polygons", debug_markers);
+      current_time, predicted_path, predicted_polys, color_r, color_g, color_b, color_a,
+      "predicted_path", "predicted_polygons", debug_markers);
   }
 
   // publish debug markers
@@ -333,7 +348,7 @@ void AEB::generateEgoPath(
   // generate ego polygons
   polygons.resize(path.size());
   for (size_t i = 0; i < path.size(); ++i) {
-    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, lateral_offset_);
+    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, expand_width_);
   }
 }
 
@@ -362,7 +377,7 @@ void AEB::generateEgoPath(
   // create polygon
   polygons.resize(path.size());
   for (size_t i = 0; i < path.size(); ++i) {
-    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, lateral_offset_);
+    polygons.at(i) = createPolygon(path.at(i), vehicle_info_, expand_width_);
   }
 }
 
@@ -389,6 +404,7 @@ void AEB::createObjectData(
 
 void AEB::addMarker(
   const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
+  const double color_r, const double color_g, const double color_b, const double color_a,
   const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers)
 {
   // transform to map
@@ -400,12 +416,6 @@ void AEB::addMarker(
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
     return;
   }
-
-  // marker parameter
-  constexpr double color_r = 0.0 / 256.0;
-  constexpr double color_g = 148.0 / 256.0;
-  constexpr double color_b = 205.0 / 256.0;
-  constexpr double color_a = 0.999;
 
   auto path_marker = tier4_autoware_utils::createDefaultMarker(
     "map", current_time, path_ns, 0L, Marker::LINE_STRIP,
@@ -422,7 +432,7 @@ void AEB::addMarker(
 
   auto polygon_marker = tier4_autoware_utils::createDefaultMarker(
     "map", current_time, poly_ns, 0, Marker::LINE_LIST,
-    tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
+    tier4_autoware_utils::createMarkerScale(0.03, 0.0, 0.0),
     tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
   for (const auto & poly : polygons) {
     for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
