@@ -211,7 +211,7 @@ std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
   lanelet::BasicPoint2d center(0.0, 0.0);
   double radius_squared = 0.0;
 
-  auto cross = [](lanelet::BasicPoint2d p1, lanelet::BasicPoint2d p2) -> double {
+  auto cross = [](const lanelet::BasicPoint2d &p1, const lanelet::BasicPoint2d &p2) -> double {
     return p1.x() * p2.y() - p1.y() * p2.x();
   };
 
