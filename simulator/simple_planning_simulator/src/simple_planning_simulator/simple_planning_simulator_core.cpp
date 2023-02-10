@@ -567,22 +567,24 @@ void SimplePlanningSimulator::publish_acceleration()
 
 void SimplePlanningSimulator::publish_imu()
 {
+  using COV_IDX = tier4_autoware_utils::xyz_covariance_index::XYZ_COV_IDX;
+
   sensor_msgs::msg::Imu imu;
-  imu.header.frame_id = "/base_link";
+  imu.header.frame_id = "base_link";
   imu.header.stamp = now();
   imu.linear_acceleration.x = vehicle_model_ptr_->getAx();
   constexpr auto COV = 0.001;
-  imu.linear_acceleration_covariance.at(0) = COV;
-  imu.linear_acceleration_covariance.at(3) = COV;
-  imu.linear_acceleration_covariance.at(6) = COV;
+  imu.linear_acceleration_covariance.at(COV_IDX::X_X) = COV;
+  imu.linear_acceleration_covariance.at(COV_IDX::Y_Y) = COV;
+  imu.linear_acceleration_covariance.at(COV_IDX::Z_Z) = COV;
   imu.angular_velocity = current_odometry_.twist.twist.angular;
-  imu.angular_velocity_covariance.at(0) = COV;
-  imu.angular_velocity_covariance.at(3) = COV;
-  imu.angular_velocity_covariance.at(6) = COV;
+  imu.angular_velocity_covariance.at(COV_IDX::X_X) = COV;
+  imu.angular_velocity_covariance.at(COV_IDX::Y_Y) = COV;
+  imu.angular_velocity_covariance.at(COV_IDX::Z_Z) = COV;
   imu.orientation = current_odometry_.pose.pose.orientation;
-  imu.orientation_covariance.at(0) = COV;
-  imu.orientation_covariance.at(3) = COV;
-  imu.orientation_covariance.at(6) = COV;
+  imu.orientation_covariance.at(COV_IDX::X_X) = COV;
+  imu.orientation_covariance.at(COV_IDX::Y_Y) = COV;
+  imu.orientation_covariance.at(COV_IDX::Z_Z) = COV;
   pub_imu_->publish(imu);
 }
 
