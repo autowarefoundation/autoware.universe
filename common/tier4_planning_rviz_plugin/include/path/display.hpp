@@ -19,11 +19,13 @@
 #include <rviz_common/display_context.hpp>
 #include <rviz_common/frame_manager_iface.hpp>
 #include <rviz_common/message_filter_display.hpp>
+#include <rviz_common/msg_conversions.hpp>
 #include <rviz_common/properties/bool_property.hpp>
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/parse_color.hpp>
 #include <rviz_common/validate_floats.hpp>
+#include <rviz_rendering/objects/billboard_line.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 
@@ -60,17 +62,27 @@ protected:
     const double vel_max, const double cmd_vel);
   static std::unique_ptr<Ogre::ColourValue> gradation(
     const QColor & color_min, const QColor & color_max, const double ratio);
+
   Ogre::ManualObject * path_manual_object_{nullptr};
   Ogre::ManualObject * velocity_manual_object_{nullptr};
+  rviz_rendering::BillboardLine * left_bound_line_{nullptr};
+  rviz_rendering::BillboardLine * right_bound_line_{nullptr};
+
   rviz_common::properties::BoolProperty * property_path_view_;
-  rviz_common::properties::BoolProperty * property_velocity_view_;
   rviz_common::properties::FloatProperty * property_path_width_;
   rviz_common::properties::ColorProperty * property_path_color_;
-  rviz_common::properties::ColorProperty * property_velocity_color_;
   rviz_common::properties::FloatProperty * property_path_alpha_;
+  rviz_common::properties::BoolProperty * property_path_color_view_;
+
+  rviz_common::properties::BoolProperty * property_drivable_area_view_;
+  rviz_common::properties::ColorProperty * property_drivable_area_color_;
+  rviz_common::properties::FloatProperty * property_drivable_area_alpha_;
+  rviz_common::properties::FloatProperty * property_drivable_area_width_;
+
+  rviz_common::properties::BoolProperty * property_velocity_view_;
+  rviz_common::properties::ColorProperty * property_velocity_color_;
   rviz_common::properties::FloatProperty * property_velocity_alpha_;
   rviz_common::properties::FloatProperty * property_velocity_scale_;
-  rviz_common::properties::BoolProperty * property_path_color_view_;
   rviz_common::properties::BoolProperty * property_velocity_color_view_;
   rviz_common::properties::FloatProperty * property_vel_max_;
 

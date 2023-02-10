@@ -72,6 +72,18 @@ AutowarePathDisplay::AutowarePathDisplay()
   property_path_color_ = new rviz_common::properties::ColorProperty(
     "Color", Qt::black, "", property_path_view_, SLOT(updateVisualization()), this);
 
+  property_drivable_area_view_ = new rviz_common::properties::BoolProperty(
+    "View Drivable Area", true, "", this, SLOT(updateVisualization()));
+  property_drivable_area_alpha_ = new rviz_common::properties::FloatProperty(
+    "Alpha", 0.999, "", property_drivable_area_view_, SLOT(updateVisualization()), this);
+  property_drivable_area_alpha_->setMin(0.0);
+  property_drivable_area_alpha_->setMax(1.0);
+  property_drivable_area_color_ = new rviz_common::properties::ColorProperty(
+    "Color", Qt::blue, "", property_drivable_area_view_, SLOT(updateVisualization()), this);
+  property_drivable_area_width_ = new rviz_common::properties::FloatProperty(
+    "Width", 0.3f, "", property_drivable_area_view_, SLOT(updateVisualization()), this);
+  property_drivable_area_width_->setMin(0.001);
+
   property_velocity_view_ = new rviz_common::properties::BoolProperty(
     "View Velocity", true, "", this, SLOT(updateVisualization()), this);
   property_velocity_alpha_ = new rviz_common::properties::FloatProperty(
@@ -98,6 +110,15 @@ AutowarePathDisplay::~AutowarePathDisplay()
     scene_manager_->destroyManualObject(path_manual_object_);
     scene_manager_->destroyManualObject(velocity_manual_object_);
   }
+
+  if (left_bound_line_) {
+    left_bound_line_->clear();
+    delete left_bound_line_;
+  }
+  if (right_bound_line_) {
+    right_bound_line_->clear();
+    delete right_bound_line_;
+  }
 }
 
 void AutowarePathDisplay::onInitialize()
@@ -110,6 +131,9 @@ void AutowarePathDisplay::onInitialize()
   velocity_manual_object_->setDynamic(true);
   scene_node_->attachObject(path_manual_object_);
   scene_node_->attachObject(velocity_manual_object_);
+
+  left_bound_line_ = new rviz_rendering::BillboardLine(scene_manager_, scene_node_);
+  right_bound_line_ = new rviz_rendering::BillboardLine(scene_manager_, scene_node_);
 }
 
 void AutowarePathDisplay::reset()
@@ -117,6 +141,8 @@ void AutowarePathDisplay::reset()
   MFDClass::reset();
   path_manual_object_->clear();
   velocity_manual_object_->clear();
+  left_bound_line_->clear();
+  right_bound_line_->clear();
 }
 
 bool AutowarePathDisplay::validateFloats(
@@ -129,6 +155,19 @@ bool AutowarePathDisplay::validateFloats(
       return false;
     }
   }
+
+  for (auto && bound_point : msg_ptr->left_bound) {
+    if (!rviz_common::validateFloats(bound_point)) {
+      return false;
+    }
+  }
+
+  for (auto && bound_point : msg_ptr->right_bound) {
+    if (!rviz_common::validateFloats(bound_point)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -155,6 +194,8 @@ void AutowarePathDisplay::processMessage(
 
   path_manual_object_->clear();
   velocity_manual_object_->clear();
+  left_bound_line_->clear();
+  right_bound_line_->clear();
 
   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
     "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -244,6 +285,29 @@ void AutowarePathDisplay::processMessage(
     path_manual_object_->end();
     velocity_manual_object_->end();
   }
+
+  if (property_drivable_area_view_->getBool()) {
+    Ogre::ColourValue color =
+      rviz_common::properties::qtToOgre(property_drivable_area_color_->getColor());
+    color.a = property_drivable_area_alpha_->getFloat();
+
+    left_bound_line_->setNumLines(1);
+    left_bound_line_->setMaxPointsPerLine(static_cast<uint32_t>(msg_ptr->left_bound.size()));
+    left_bound_line_->setLineWidth(property_drivable_area_width_->getFloat());
+    right_bound_line_->setNumLines(1);
+    right_bound_line_->setMaxPointsPerLine(static_cast<uint32_t>(msg_ptr->right_bound.size()));
+    right_bound_line_->setLineWidth(property_drivable_area_width_->getFloat());
+
+    for (const auto & lb : msg_ptr->left_bound) {
+      Ogre::Vector3 xpos = rviz_common::pointMsgToOgre(lb);
+      left_bound_line_->addPoint(xpos, color);
+    }
+    for (const auto & rb : msg_ptr->right_bound) {
+      Ogre::Vector3 xpos = rviz_common::pointMsgToOgre(rb);
+      right_bound_line_->addPoint(xpos, color);
+    }
+  }
+
   last_msg_ptr_ = msg_ptr;
 }
 
