@@ -160,6 +160,28 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
   const size_t closest_idx = closest_idx_opt.get();
 
+  if (stop_lines_idx_opt.has_value()) {
+    const auto stop_line_idx = stop_lines_idx_opt.value().collision_stop_line;
+    const auto pass_judge_line_idx = stop_lines_idx_opt.value().pass_judge_line;
+
+    const bool is_over_pass_judge_line =
+      util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
+
+    /* if ego is over the pass judge line before collision is detected, keep going */
+    const double current_velocity = planner_data_->current_velocity->twist.linear.x;
+    if (
+      is_over_pass_judge_line && is_go_out_ &&
+      current_velocity > planner_param_.keep_detection_vel_thr) {
+      RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
+      RCLCPP_DEBUG(logger_, "===== plan end =====");
+      setSafe(true);
+      setDistance(motion_utils::calcSignedArcLength(
+        path->points, planner_data_->current_odometry->pose.position,
+        path->points.at(stop_line_idx).point.pose.position));
+      return true;
+    }
+  }
+
   /* collision checking */
   bool is_entry_prohibited = false;
 
@@ -215,25 +237,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     is_entry_prohibited ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
   setSafe(state_machine_.getState() == StateMachine::State::GO);
-
-  if (stop_lines_idx_opt.has_value()) {
-    const auto stop_line_idx = stop_lines_idx_opt.value().collision_stop_line;
-    const auto pass_judge_line_idx = stop_lines_idx_opt.value().pass_judge_line;
-
-    const bool is_over_pass_judge_line =
-      util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
-
-    /* if ego is over the pass judge line before collision is detected, keep going */
-    if (is_over_pass_judge_line && !is_entry_prohibited) {
-      RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
-      RCLCPP_DEBUG(logger_, "===== plan end =====");
-      setSafe(true);
-      setDistance(motion_utils::calcSignedArcLength(
-        path->points, planner_data_->current_odometry->pose.position,
-        path->points.at(stop_line_idx).point.pose.position));
-      return true;
-    }
-  }
 
   if (!stop_line_idx.has_value()) {
     RCLCPP_DEBUG(logger_, "detection_area is empty, no plan needed");
