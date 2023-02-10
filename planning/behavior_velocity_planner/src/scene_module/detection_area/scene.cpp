@@ -210,7 +210,8 @@ std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
   const lanelet::ConstPolygon2d & poly)
 {
   // The `eps` is used to avoid precision bugs in circle inclusion checkings.
-  // If the value of `eps` is too small, this function doesn't work well. More than 1e-10 is recommended.
+  // If the value of `eps` is too small, this function doesn't work well. More than 1e-10 is
+  // recommended.
   const double eps = 1e-5;
   lanelet::BasicPoint2d center(0.0, 0.0);
   double radius_squared = 0.0;
