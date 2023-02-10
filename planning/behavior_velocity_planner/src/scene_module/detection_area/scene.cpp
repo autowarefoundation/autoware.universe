@@ -230,7 +230,7 @@ std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
 
   auto make_circle_2 =
     [&](const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2) -> void {
-    center = (p1 + p2) / 2.0;
+    center = (p1 + p2) * 0.5;
     radius_squared = (center - p1).squaredNorm() + eps;
   };
 
