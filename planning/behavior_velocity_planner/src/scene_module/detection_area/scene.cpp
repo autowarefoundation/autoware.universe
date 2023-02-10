@@ -223,7 +223,7 @@ std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
     const double B = (p3 - p1).squaredNorm();
     const double C = (p1 - p2).squaredNorm();
     const double S = cross(p2 - p1, p3 - p1);
-    if (S < eps) return;
+    if (std::abs(S) < eps) return;
     center = (A * (B + C - A) * p1 + B * (C + A - B) * p2 + C * (A + B - C) * p3) / (4 * S * S);
     radius_squared = (center - p1).squaredNorm() + eps;
   };
