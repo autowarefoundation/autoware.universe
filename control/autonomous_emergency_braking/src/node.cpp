@@ -252,6 +252,11 @@ bool AEB::checkCollision()
     use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
   const auto predicted_traj_ptr = predicted_traj_ptr_;
 
+  // if the vehicle stops, we assume no collision happens
+  if (current_v < 0.1) {
+    return false;
+  }
+
   MarkerArray debug_markers;
 
   // step3. create ego path based on sensor data
@@ -308,7 +313,7 @@ bool AEB::hasCollision(
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
-    const double rss_dist = current_v * t + current_v * current_v / (2 * std::fabs(a_ego_min_)) -
+    const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
     const double dist_ego_to_object =
       motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
