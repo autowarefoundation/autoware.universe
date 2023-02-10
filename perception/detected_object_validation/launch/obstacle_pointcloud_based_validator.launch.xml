@@ -10,6 +10,6 @@
     <remap from="~/input/obstacle_pointcloud" to="$(var input/obstacle_pointcloud)"/>
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param name="enable_debugger" value="false"/>
-	<param from="$(var filtering_param)"/>
+    <param from="$(var filtering_param)"/>
   </node>
 </launch>
