@@ -13,10 +13,8 @@
   <depend>autoware_auto_control_msgs</depend>
 
   <!--imgproc-->
-  <depend>dynamic_remover</depend>
   <depend>graph_segment</depend>
   <depend>lsd</depend>
-  <depend>segment_accumulator</depend>
   <depend>segment_filter</depend>
   <depend>undistort</depend>
   <!--map-->
@@ -32,14 +30,12 @@
   <depend>overlay_monitor</depend>
   <depend>path_monitor</depend>
   <!--particle filter-->
-  <depend>antishadow_corrector</depend>
   <depend>camera_particle_corrector</depend>
   <depend>gnss_particle_corrector</depend>
   <depend>particle_initializer</depend>
   <!--rviz plugin-->
   <depend>rviz2_initialpose_plugins</depend>
   <depend>rviz2_overlay_plugins</depend>
-
 
   <export>
     <build_type>ament_cmake</build_type>
