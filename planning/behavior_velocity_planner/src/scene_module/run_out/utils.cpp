@@ -523,9 +523,10 @@ Polygons2d createDetectionAreaPolygon(
   da_range.max_lateral_distance = obstacle_vel_mps * pp.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
   const size_t ego_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, pd.current_pose.pose, pd.ego_nearest_dist_threshold, pd.ego_nearest_yaw_threshold);
+    path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
+    pd.ego_nearest_yaw_threshold);
   planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, path, pd.current_pose.pose, ego_seg_idx, da_range,
+    detection_area_poly, path, pd.current_odometry->pose, ego_seg_idx, da_range,
     pp.dynamic_obstacle.max_vel_kmph / 3.6);
 
   return detection_area_poly;
@@ -564,9 +565,10 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   da_range.max_lateral_distance = obstacle_vel_mps * pp.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
   const size_t ego_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, pd.current_pose.pose, pd.ego_nearest_dist_threshold, pd.ego_nearest_yaw_threshold);
+    path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
+    pd.ego_nearest_yaw_threshold);
   planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, path, pd.current_pose.pose, ego_seg_idx, da_range,
+    detection_area_poly, path, pd.current_odometry->pose, ego_seg_idx, da_range,
     pp.dynamic_obstacle.max_vel_kmph / 3.6);
 
   return detection_area_poly;
