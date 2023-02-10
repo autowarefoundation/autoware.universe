@@ -92,7 +92,32 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
   objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
 
-  min_pointcloud_num_ = declare_parameter<int>("min_pointcloud_num", 10);
+  min_pointcloud_num_.UNKNOWN =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.UNKNOWN", 10));
+  min_pointcloud_num_.CAR =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.CAR", 10));
+  min_pointcloud_num_.TRUCK =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.TRUCK", 10));
+  min_pointcloud_num_.BUS =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.BUS", 10));
+  min_pointcloud_num_.TRAILER =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.TRAILER", 10));
+  min_pointcloud_num_.MOTORCYCLE =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.MOTORCYCLE", 10));
+  min_pointcloud_num_.BICYCLE =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.BICYCLE", 10));
+  min_pointcloud_num_.PEDESTRIAN =
+    static_cast<unsigned int>(declare_parameter<int>("min_pointcloud_num.PEDESTRIAN", 10));
+
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  class2min_pointcloud_num_[Label::UNKNOWN] = min_pointcloud_num_.UNKNOWN;
+  class2min_pointcloud_num_[Label::CAR] = min_pointcloud_num_.CAR;
+  class2min_pointcloud_num_[Label::TRUCK] = min_pointcloud_num_.TRUCK;
+  class2min_pointcloud_num_[Label::BUS] = min_pointcloud_num_.BUS;
+  class2min_pointcloud_num_[Label::TRAILER] = min_pointcloud_num_.TRAILER;
+  class2min_pointcloud_num_[Label::MOTORCYCLE] = min_pointcloud_num_.MOTORCYCLE;
+  class2min_pointcloud_num_[Label::BICYCLE] = min_pointcloud_num_.BICYCLE;
+  class2min_pointcloud_num_[Label::PEDESTRIAN] = min_pointcloud_num_.PEDESTRIAN;
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
@@ -152,9 +177,11 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
 
     // Filter object that have few pointcloud in them.
     const auto num = getPointCloudNumWithinPolygon(transformed_object, neighbor_pointcloud);
+    const auto classification = object.classification.at(0);
     if (num) {
-      (min_pointcloud_num_ <= num.value()) ? output.objects.push_back(object)
-                                           : removed_objects.objects.push_back(object);
+      (class2min_pointcloud_num_[classification.label] <= num.value())
+        ? output.objects.push_back(object)
+        : removed_objects.objects.push_back(object);
     } else {
       output.objects.push_back(object);
     }

@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    min_pointcloud_num:
+      UNKNOWN: 10
+      CAR : 10
+      TRUCK : 10
+      BUS : 10
+      TRAILER : 10
+      MOTORCYCLE : 5
+      BICYCLE : 5
+      PEDESTRIAN : 8

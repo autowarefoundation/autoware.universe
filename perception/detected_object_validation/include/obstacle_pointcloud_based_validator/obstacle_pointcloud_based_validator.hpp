@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <message_filters/subscriber.h>
@@ -32,9 +33,23 @@
 
 #include <memory>
 #include <optional>
+#include <unordered_map>
 
 namespace obstacle_pointcloud_based_validator
 {
+
+struct Min_pointcloud_num
+{
+  unsigned int UNKNOWN;
+  unsigned int CAR;
+  unsigned int TRUCK;
+  unsigned int BUS;
+  unsigned int TRAILER;
+  unsigned int MOTORCYCLE;
+  unsigned int BICYCLE;
+  unsigned int PEDESTRIAN;
+};
+
 class ObstaclePointCloudBasedValidator : public rclcpp::Node
 {
 public:
@@ -52,8 +67,8 @@ private:
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
-  size_t min_pointcloud_num_;
-
+  Min_pointcloud_num min_pointcloud_num_;
+  std::unordered_map<uint8_t, unsigned int> class2min_pointcloud_num_;
   std::shared_ptr<Debugger> debugger_;
 
 private:
