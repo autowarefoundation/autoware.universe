@@ -204,6 +204,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
 }
 
 // calc smallest enclosing circle with average O(N) algorithm
+// reference: https://erickimphotography.com/blog/wp-content/uploads/2018/09/Computational-Geometry-Algorithms-and-Applications-3rd-Ed.pdf
 std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
   const lanelet::ConstPolygon2d & poly)
 {
