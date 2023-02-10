@@ -309,8 +309,6 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
       } else {
         low_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
       }
-    } else {
-      high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
     }
   }
 }
