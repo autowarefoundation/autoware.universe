@@ -9,13 +9,11 @@
     <arg name="output_twist_with_covariance_raw_topic" value="/localization/twist_estimator/twist_with_covariance_raw"/>
   </include>
 
-  <group unless="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
-    <group if="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_gnss_fusion'&quot;)">
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
-        <arg name="pose_estimator_mode" value="$(var pose_estimator_mode)"/>
-        <arg name="twist_estimator_mode" value="$(var twist_estimator_mode)"/>
-        <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
-      </include>
-    </group>
+  <group if="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_gnss_fusion'&quot;)">
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
+      <arg name="eagleye_mode" value="twist_estimator"/>
+      <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
+    </include>
   </group>
+
 </launch>

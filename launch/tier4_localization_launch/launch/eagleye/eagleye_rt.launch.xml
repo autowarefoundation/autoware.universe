@@ -3,20 +3,18 @@
 
   <arg name="config_yaml" default="eagleye_config.param.yaml"/>
   <arg name="config_path" default="$(find-pkg-share autoware_launch)/config/localization/$(var config_yaml)"/>
-  <arg name="pose_estimator_mode" default="lidar" description="select localization mode. lidar, gnss"/>
-  <arg name="twist_estimator_mode" default="gyro_odom_fusion" description="select twist_estimator mode (option: gyro_odom_fusion, gyro_odom_gnss_fusion)"/>
   <arg name="output_pose_with_cov_name" default="/localization/pose_estimator/pose_with_covariance"/>
   <arg name="output_twist_with_cov_name" default="/localization/twist_estimator/twist_with_covariance"/>
   <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/eagleye"/>
+  <arg name="eagleye_mode" default="pose_estimator" description="select localization mode. pose_estimator, twist_estimator"/>
 
-  <arg name="use_tf" default="false"/>
   <arg name="enable_additional_rolling" default="false"/>
   <arg name="use_multi_antenna_mode" default="false"/>
 
   <group>
     <push-ros-namespace namespace="eagleye"/>
 
-    <group if="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_gnss_fusion'&quot;)">
+    <group if="$(eval &quot;'$(var eagleye_mode)'=='twist_estimator'&quot;)">
       <node pkg="topic_tools" exec="relay" name="eagleye_output_twist_relay" args="twist_with_covariance $(var output_twist_with_cov_name)"/>
     </group>
 
@@ -88,43 +86,6 @@
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
     </node>
-    <node pkg="eagleye_rt" name="position_node" exec="position" if="$(eval &quot;'$(var use_rtk_dead_reckoning)'=='false'&quot;)">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="position_interpolate_node" exec="position_interpolate" if="$(eval &quot;'$(var use_rtk_dead_reckoning)'=='false'&quot;)">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="smoothing_node" exec="smoothing">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="height_node" exec="height">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="angular_velocity_offset_stop_node" exec="angular_velocity_offset_stop">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="correction_imu" exec="correction_imu">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="rolling" exec="rolling">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="enable_additional_rolling" exec="enable_additional_rolling" if="$(eval &quot;'$(var enable_additional_rolling)'=='true'&quot;)">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-    <node pkg="eagleye_rt" name="monitor" exec="monitor">
-      <param from="$(var config_path)"/>
-      <param name="yaml_file" value="$(var config_path)"/>
-    </node>
-
     <node pkg="eagleye_rt" name="rtk_dead_reckoning" exec="rtk_dead_reckoning" if="$(var use_rtk_dead_reckoning)">
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
@@ -137,7 +98,46 @@
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
     </node>
-    <node pkg="eagleye_rt" name="rtk_heading_node_3rd" exec="rtk_heading" args="3rd" if="$(var use_rtk_heading)">
+    <group if="$(eval &quot;'$(var eagleye_mode)'=='pose_estimator'&quot;)">
+      <node pkg="eagleye_rt" name="position_node" exec="position" if="$(eval &quot;'$(var use_rtk_dead_reckoning)'=='false'&quot;)">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="position_interpolate_node" exec="position_interpolate" if="$(eval &quot;'$(var use_rtk_dead_reckoning)'=='false'&quot;)">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="smoothing_node" exec="smoothing">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="height_node" exec="height">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="angular_velocity_offset_stop_node" exec="angular_velocity_offset_stop">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="correction_imu" exec="correction_imu">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="rolling" exec="rolling">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="enable_additional_rolling" exec="enable_additional_rolling" if="$(eval &quot;'$(var enable_additional_rolling)'=='true'&quot;)">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+      <node pkg="eagleye_rt" name="rtk_heading_node_3rd" exec="rtk_heading" args="3rd" if="$(var use_rtk_heading)">
+        <param from="$(var config_path)"/>
+        <param name="yaml_file" value="$(var config_path)"/>
+      </node>
+    </group>
+
+    <node pkg="eagleye_rt" name="monitor" exec="monitor">
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
     </node>
@@ -147,9 +147,7 @@
 
   </group>
 
-  <include file="$(find-pkg-share eagleye_tf)/launch/tf.xml" if="$(var use_tf)"/>
-
-  <group if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
+  <group if="$(eval &quot;'$(var eagleye_mode)'=='pose_estimator'&quot;)">
     <include file="$(var directory_with_related_launches)/fix2pose.xml">
       <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
     </include>
