@@ -166,6 +166,8 @@ Point MapHeightFitter::Impl::fit(const Point & position, const std::string & fra
   const auto logger = node_->get_logger();
   tf2::Vector3 point(position.x, position.y, position.z);
 
+  RCLCPP_INFO(logger, "map fit1: %.3f %.3f %.3f", point.getX(), point.getY(), point.getZ());
+
   if (cli_map_) {
     map_cloud_.reset();
     get_partial_point_cloud_map(position);
@@ -183,6 +185,8 @@ Point MapHeightFitter::Impl::fit(const Point & position, const std::string & fra
       RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
     }
   }
+
+  RCLCPP_INFO(logger, "map fit2: %.3f %.3f %.3f", point.getX(), point.getY(), point.getZ());
 
   Point result;
   result.x = point.getX();
