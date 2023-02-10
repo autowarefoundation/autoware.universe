@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="localization_mode" default="lidar" description="select localization mode. lidar, gnss"/>
-  <arg name="use_eagleye_twist" default="false" description="Mode to correct wheel speed and IMU by GNSS Doppler velocity"/>
+  <arg name="pose_estimator_mode" default="lidar" description="select localization mode. lidar, gnss"/>
+  <arg name="twist_estimator_mode" default="gyro_odometer" description="select twist_estimator mode (option: gyro_odometer, eagleye)"/>
 
-  <include file="$(find-pkg-share gyro_odometer)/launch/gyro_odometer.launch.xml" unless="$(var use_eagleye_twist)">
+  <include file="$(find-pkg-share gyro_odometer)/launch/gyro_odometer.launch.xml" unless="$(eval &quot;'$(var twist_estimator_mode)'=='eagleye'&quot;)">
     <arg name="input_vehicle_twist_with_covariance_topic" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
     <arg name="output_twist_with_covariance_topic" value="/localization/twist_estimator/twist_with_covariance"/>
     <arg name="output_twist_with_covariance_raw_topic" value="/localization/twist_estimator/twist_with_covariance_raw"/>
   </include>
 
-  <group unless="$(eval &quot;'$(var localization_mode)'=='gnss'&quot;)">
-    <group if="$(var use_eagleye_twist)">
+  <group unless="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
+    <group if="$(eval &quot;'$(var twist_estimator_mode)'=='eagleye'&quot;)">
       <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
-        <arg name="localization_mode" value="$(var localization_mode)"/>
-        <arg name="use_eagleye_twist" value="$(var use_eagleye_twist)"/>
+        <arg name="pose_estimator_mode" value="$(var pose_estimator_mode)"/>
+        <arg name="twist_estimator_mode" value="$(var twist_estimator_mode)"/>
         <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
       </include>
     </group>
