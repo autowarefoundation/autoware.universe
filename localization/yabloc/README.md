@@ -49,13 +49,13 @@ This localizer requires following topics to work.
 
 #### about tf_static
 
-* It requires `/base_link` to `traffic_light_left_camera/camera_optical_link`
-  * 厳密にはsubscribeしているcamera_infoの`frame_id`を使って座標変換している
+* XX1のデータだと `/base_link` から `/traffic_light_left_camera/camera_optical_link` のtf_staticがいる。
+  * 厳密にはsubscribeしているcamera_infoの`frame_id`を参照して座標変換している
   * `/sensing/camera/traffic_light` 以外のカメラを使う場合は、それのcamera_infoの`frame_id`へのtf_staticがpublishされているかに注意
-* You can check if it exist by `ros2 run tf2_ros tf2_echo base_link traffic_light_left_camera/camera_optical_link`
+  * `ros2 run tf2_ros tf2_echo base_link traffic_light_left_camera/camera_optical_link`
 
-* 実験用車両とかだと、pilot-auto側でも容易できないことがあるので、回避策を用意している。
-* `override_extrinsic`をtrueにすると、undistort_nodeの中でcamera_infoのframe_idを書き換えて、いい感じにできる。
+* 実験用車両とかだと、pilot-auto側でもtf_staticを簡単に流せないことがあるので、回避策を用意している。
+* `override_extrinsic`をtrueにすると、undistort_nodeの中でcamera_infoのframe_idを書き換えて、別の外部パラメータを使える。
   * デフォルトでは`override_extrinsic=false`
   * `override_extrinsic=true`だと`impl/imgproc.launch.xml`の中で上書き用のtf_statcがpublishされる
 
@@ -85,6 +85,7 @@ The link contains *rosbag* and *lanelet2* but *pointcloud*.
 
 ```bash
 ros2 launch pcdless_launch odaiba_launch.xml 
+
 ros2 launch autoware_launch logging_simulator.launch.xml \
   system:=false \
   localizaton:=false \
@@ -97,6 +98,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
   sensor_model:=aip_xx1 \
   vehicle_id:=5 \
   map_path:=$HOME/Maps/odaiba
+
 ros2 bag play sample_odaiba --clock 100
 ```
 
