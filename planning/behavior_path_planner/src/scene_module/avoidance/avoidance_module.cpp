@@ -70,6 +70,15 @@ AvoidLine getNonStraightShiftLine(const AvoidLineArray & shift_lines)
   return {};
 }
 
+bool isEndPointsConnected(
+  const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane)
+{
+  const auto & left_back_point_2d = right_lane.leftBound2d().back().basicPoint();
+  const auto & right_back_point_2d = left_lane.rightBound2d().back().basicPoint();
+
+  constexpr double epsilon = 1e-5;
+  return (right_back_point_2d - left_back_point_2d).norm() < epsilon;
+}
 }  // namespace
 
 AvoidanceModule::AvoidanceModule(
@@ -2571,9 +2580,8 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
       }
     }
 
-    // 2. when there are multiple turning lanes whose previous lanelet is the same in
-    // intersection
-    const lanelet::ConstLanelets next_lanes = std::invoke(
+    // 2. when there are multiple lanes whose previous lanelet is the same
+    const auto get_next_lanes_from_same_previous_lane =
       [&route_handler](const lanelet::ConstLanelet & lane) {
         // get previous lane, and return false if previous lane does not exist
         lanelet::ConstLanelets prev_lanes;
@@ -2584,42 +2592,62 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
         lanelet::ConstLanelets next_lanes;
         for (const auto & prev_lane : prev_lanes) {
           const auto next_lanes_from_prev = route_handler->getNextLanelets(prev_lane);
-          next_lanes.reserve(next_lanes.size() + next_lanes_from_prev.size());
-          next_lanes.insert(
-            next_lanes.end(), next_lanes_from_prev.begin(), next_lanes_from_prev.end());
+          for (const auto & next_lane : next_lanes_from_prev) {
+            if (next_lane.id() != lane.id()) {
+              next_lanes.push_back(next_lane);
+            }
+          }
         }
         return next_lanes;
-      },
-      current_lane);
+      };
+
+    const auto next_lanes_for_right =
+      get_next_lanes_from_same_previous_lane(current_drivable_lanes.right_lane);
+    const auto next_lanes_for_left =
+      get_next_lanes_from_same_previous_lane(current_drivable_lanes.left_lane);
 
     // 2.1 look for neighbour lane, where end line of the lane is connected to end line of the
     // original lane
-    for (const auto & next_lane : next_lanes) {
-      if (current_lane.id() == next_lane.id()) {
-        continue;
-      }
-      constexpr double epsilon = 1e-5;
-      const auto & next_left_back_point_2d = next_lane.leftBound2d().back().basicPoint();
-      const auto & next_right_back_point_2d = next_lane.rightBound2d().back().basicPoint();
-      const auto & orig_left_back_point_2d = current_lane.leftBound2d().back().basicPoint();
-      const auto & orig_right_back_point_2d = current_lane.rightBound2d().back().basicPoint();
+    const auto update_drivable_lanes =
+      [&](const lanelet::ConstLanelets & next_lanes, const bool is_left) {
+        for (const auto & next_lane : next_lanes) {
+          const auto & edge_lane =
+            is_left ? current_drivable_lanes.left_lane : current_drivable_lanes.right_lane;
+          if (next_lane.id() == edge_lane.id()) {
+            continue;
+          }
 
-      if ((next_right_back_point_2d - orig_left_back_point_2d).norm() < epsilon) {
-        current_drivable_lanes.left_lane = next_lane;
-        if (
-          current_drivable_lanes.right_lane.id() != current_lane.id() &&
-          !has_same_lane(current_drivable_lanes.middle_lanes, current_lane)) {
-          current_drivable_lanes.middle_lanes.push_back(current_lane);
+          const auto & left_lane = is_left ? next_lane : edge_lane;
+          const auto & right_lane = is_left ? edge_lane : next_lane;
+          if (!isEndPointsConnected(left_lane, right_lane)) {
+            continue;
+          }
+
+          if (is_left) {
+            current_drivable_lanes.left_lane = next_lane;
+            if (
+              current_drivable_lanes.right_lane.id() != edge_lane.id() &&
+              !has_same_lane(current_drivable_lanes.middle_lanes, edge_lane)) {
+              current_drivable_lanes.middle_lanes.push_back(edge_lane);
+            }
+          } else {
+            current_drivable_lanes.right_lane = next_lane;
+            if (!has_same_lane(current_drivable_lanes.middle_lanes, edge_lane)) {  // TODO(murooka)
+              if (current_drivable_lanes.left_lane.id() != edge_lane.id()) {
+                current_drivable_lanes.middle_lanes.push_back(edge_lane);
+              }
+            }
+          }
+          return true;
         }
-      } else if (
-        (next_left_back_point_2d - orig_right_back_point_2d).norm() < epsilon &&
-        !has_same_lane(current_drivable_lanes.middle_lanes, current_lane)) {
-        current_drivable_lanes.right_lane = next_lane;
-        if (current_drivable_lanes.left_lane.id() != current_lane.id()) {
-          current_drivable_lanes.middle_lanes.push_back(current_lane);
-        }
-      }
-    }
+        return false;
+      };
+
+    while (update_drivable_lanes(next_lanes_for_right, false))
+      ;
+    while (update_drivable_lanes(next_lanes_for_left, true))
+      ;
+
     drivable_lanes.push_back(current_drivable_lanes);
   }
 
