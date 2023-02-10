@@ -230,7 +230,21 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
-  if (!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
+  PointCloud2 input_infront_pc{};
+  PclPointCloud tmp_pc;
+  pcl::fromROSMsg(*input_pc,tmp_pc);
+  pcl::PointIndices tmp_indices;
+  for (size_t i = 0; i != tmp_pc.points.size(); ++i)
+  {
+    if (tmp_pc.points[i].x > 0){
+      tmp_indices.indices.push_back(i);
+    }
+  }
+  PclPointCloud tmp_infront_pc;
+  pcl::copyPointCloud(tmp_pc,tmp_indices,tmp_infront_pc);
+  pcl::toROSMsg(tmp_infront_pc,input_infront_pc);
+  input_infront_pc.header = input_pc->header;
+  if (!transformPointcloud(input_infront_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
     return;
   }
   // Occupancy grid map based filter
