@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="pose_estimator_mode" default="lidar" description="select localization mode. lidar, gnss"/>
-  <arg name="twist_estimator_mode" default="gyro_odometer" description="select twist_estimator mode (option: gyro_odometer, eagleye)"/>
+  <arg name="twist_estimator_mode" default="gyro_odom_fusion" description="select twist_estimator mode (option: gyro_odom_fusion, gyro_odom_gnss_fusion)"/>
   <group if="$(eval &quot;'$(var pose_estimator_mode)'=='lidar'&quot;)">
     <include file="$(find-pkg-share ndt_scan_matcher)/launch/ndt_scan_matcher.launch.xml">
       <arg name="input_map_points_topic" value="/map/pointcloud_map"/>

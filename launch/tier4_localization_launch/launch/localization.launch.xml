@@ -12,7 +12,7 @@
   <arg name="use_pointcloud_container" default="true" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
   <arg name="pose_estimator_mode" default="lidar" description="select localization mode. lidar, gnss"/>
-  <arg name="twist_estimator_mode" default="gyro_odometer" description="select twist_estimator mode (option: gyro_odometer, eagleye)"/>
+  <arg name="twist_estimator_mode" default="gyro_odom_fusion" description="select twist_estimator mode (option: gyro_odom_fusion, gyro_odom_gnss_fusion)"/>
 
   <!-- localization module -->
   <group>

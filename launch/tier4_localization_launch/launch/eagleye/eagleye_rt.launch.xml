@@ -4,7 +4,7 @@
   <arg name="config_yaml" default="eagleye_config.param.yaml"/>
   <arg name="config_path" default="$(find-pkg-share autoware_launch)/config/localization/$(var config_yaml)"/>
   <arg name="pose_estimator_mode" default="lidar" description="select localization mode. lidar, gnss"/>
-  <arg name="twist_estimator_mode" default="gyro_odometer" description="select twist_estimator mode (option: gyro_odometer, eagleye)"/>
+  <arg name="twist_estimator_mode" default="gyro_odom_fusion" description="select twist_estimator mode (option: gyro_odom_fusion, gyro_odom_gnss_fusion)"/>
   <arg name="output_pose_with_cov_name" default="/localization/pose_estimator/pose_with_covariance"/>
   <arg name="output_twist_with_cov_name" default="/localization/twist_estimator/twist_with_covariance"/>
   <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/eagleye"/>
@@ -16,7 +16,7 @@
   <group>
     <push-ros-namespace namespace="eagleye"/>
 
-    <group if="$(eval &quot;'$(var twist_estimator_mode)'=='eagleye'&quot;)">
+    <group if="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_gnss_fusion'&quot;)">
       <node pkg="topic_tools" exec="relay" name="eagleye_output_twist_relay" args="twist_with_covariance $(var output_twist_with_cov_name)"/>
     </group>
 
