@@ -63,6 +63,7 @@ private:
   float min_points_and_distance_ratio_;
   int min_points_;
   int max_points_;
+  int max_filter_points_nb_;
   pcl::search::Search<pcl::PointXY>::Ptr kd_tree_;
 };
 

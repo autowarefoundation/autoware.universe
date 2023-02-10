@@ -108,6 +108,7 @@ RadiusSearch2dfilter::RadiusSearch2dfilter(rclcpp::Node & node)
     node.declare_parameter("radius_search_2d_filter.min_points_and_distance_ratio", 400.0f);
   min_points_ = node.declare_parameter("radius_search_2d_filter.min_points", 4);
   max_points_ = node.declare_parameter("radius_search_2d_filter.max_points", 70);
+  max_filter_points_nb_ = node.declare_parameter("radius_search_2d_filter.max_filter_points_nb", 200000);
   kd_tree_ = pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
 }
 
@@ -124,6 +125,13 @@ void RadiusSearch2dfilter::filter(
 
   std::vector<int> k_indices(xy_cloud->points.size());
   std::vector<float> k_dists(xy_cloud->points.size());
+  if (xy_cloud->points.size() > max_filter_points_nb_) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("OccupancyGridMapOutlierFilterComponent"),
+      "Skip outlier filter since input pointcloud number is too large");
+    return;
+  }
+
   kd_tree_->setInputCloud(xy_cloud);
   for (size_t i = 0; i < xy_cloud->points.size(); ++i) {
     const float distance =
