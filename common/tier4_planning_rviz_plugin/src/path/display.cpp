@@ -79,9 +79,10 @@ AutowarePathDisplay::AutowarePathDisplay()
   property_drivable_area_alpha_->setMin(0.0);
   property_drivable_area_alpha_->setMax(1.0);
   property_drivable_area_color_ = new rviz_common::properties::ColorProperty(
-    "Color", Qt::blue, "", property_drivable_area_view_, SLOT(updateVisualization()), this);
+    "Color", QColor(0, 148, 205), "", property_drivable_area_view_, SLOT(updateVisualization()),
+    this);
   property_drivable_area_width_ = new rviz_common::properties::FloatProperty(
-    "Width", 0.3f, "", property_drivable_area_view_, SLOT(updateVisualization()), this);
+    "Width", 0.2f, "", property_drivable_area_view_, SLOT(updateVisualization()), this);
   property_drivable_area_width_->setMin(0.001);
 
   property_velocity_view_ = new rviz_common::properties::BoolProperty(
