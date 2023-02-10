@@ -1,3 +1,18 @@
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "tier4_system_msgs/msg/message_tracking_tag.hpp"
 #include "tier4_timing_violation_monitor_utils/message_consumption_notifier.hpp"
 
 using tier4_timing_violation_monitor_utils::MessageConsumptionNotifier;
@@ -7,11 +22,12 @@ MessageConsumptionNotifier::MessageConsumptionNotifier(
   const std::string & notification_topic,
   const rclcpp::QoS & notification_qos)
 {
-  pub_ = node->create_publisher<MttMsg>(notification_topic, notification_qos);
+  pub_ = node->create_publisher<MessageTrackingTag>(notification_topic, notification_qos);
 }
 
 void MessageConsumptionNotifier::notify(const builtin_interfaces::msg::Time & consumed_msg_stamp)
 {
-  // TODO(y-okumura-isp): construct message
-  pub_->publish(consumed_msg_stamp);
+  auto message = MessageTrackingTag();
+  message.header.stamp = consumed_msg_stamp;
+  pub_->publish(message);
 }
