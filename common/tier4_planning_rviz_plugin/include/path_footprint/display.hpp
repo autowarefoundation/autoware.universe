@@ -25,7 +25,7 @@
 namespace rviz_plugins
 {
 class AutowarePathWithLaneIdFootprintDisplay
-: public AutowareFootprintDisplay<autoware_auto_planning_msgs::msg::PathWithLaneId>
+: public AutowarePathFootBaseprintDisplay<autoware_auto_planning_msgs::msg::PathWithLaneId>
 {
   Q_OBJECT
 
@@ -48,13 +48,13 @@ private:
   std::vector<LaneIdObject> lane_id_obj_ptrs_;
 };
 class AutowarePathFootprintDisplay
-: public AutowareFootprintDisplay<autoware_auto_planning_msgs::msg::Path>
+: public AutowarePathFootBaseprintDisplay<autoware_auto_planning_msgs::msg::Path>
 {
   Q_OBJECT
 };
 
 class AutowareTrajectoryFootprintDisplay
-: public AutowareFootprintDisplay<autoware_auto_planning_msgs::msg::Trajectory>
+: public AutowarePathFootBaseprintDisplay<autoware_auto_planning_msgs::msg::Trajectory>
 {
   Q_OBJECT
 };

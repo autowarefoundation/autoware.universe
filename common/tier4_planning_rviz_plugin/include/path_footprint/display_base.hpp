@@ -40,10 +40,10 @@ using vehicle_info_util::VehicleInfo;
 using vehicle_info_util::VehicleInfoUtil;
 
 template <typename T>
-class AutowareFootprintDisplay : public rviz_common::MessageFilterDisplay<T>
+class AutowarePathFootBaseprintDisplay : public rviz_common::MessageFilterDisplay<T>
 {
 public:
-  AutowareFootprintDisplay()
+  AutowarePathFootBaseprintDisplay()
   :  // footprint
     property_footprint_view_{"View Footprint", true, "", this},
     property_footprint_alpha_{"Alpha", 1.0, "", &property_footprint_view_},
@@ -72,7 +72,7 @@ public:
     updateVehicleInfo();
   }
 
-  virtual ~AutowareFootprintDisplay()
+  virtual ~AutowarePathFootBaseprintDisplay()
   {
     if (this->initialized()) {
       this->scene_manager_->destroyManualObject(footprint_manual_object_);
@@ -270,7 +270,7 @@ private:
           }
         }
 
-         // point
+        // point
         if (property_point_view_.getBool()) {
           Ogre::ColourValue color;
           color = rviz_common::properties::qtToOgre(property_point_color_.getColor());
