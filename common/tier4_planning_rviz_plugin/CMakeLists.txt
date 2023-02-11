@@ -29,8 +29,6 @@ ament_auto_add_library(tier4_planning_rviz_plugin SHARED
   src/path_footprint/display.cpp
   include/pose_with_uuid_stamped/display.hpp
   src/pose_with_uuid_stamped/display.cpp
-  include/trajectory/display.hpp
-  src/trajectory/display.cpp
   include/mission_checkpoint/mission_checkpoint.hpp
   src/mission_checkpoint/mission_checkpoint.cpp
   src/tools/jsk_overlay_utils.cpp
