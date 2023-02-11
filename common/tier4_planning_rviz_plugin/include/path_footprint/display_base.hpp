@@ -103,30 +103,6 @@ public:
   }
 
 protected:
-  void updateVisualization()
-  {
-    if (last_msg_ptr_ != nullptr) {
-      processMessage(last_msg_ptr_);
-    }
-  }
-
-  void updateVehicleInfo()
-  {
-    if (vehicle_info_) {
-      vehicle_footprint_info_ = std::make_shared<VehicleFootprintInfo>(
-        vehicle_info_->vehicle_length_m, vehicle_info_->vehicle_width_m,
-        vehicle_info_->rear_overhang_m);
-    } else {
-      const float length{property_vehicle_length_.getFloat()};
-      const float width{property_vehicle_width_.getFloat()};
-      const float rear_overhang{property_rear_overhang_.getFloat()};
-
-      vehicle_footprint_info_ =
-        std::make_shared<VehicleFootprintInfo>(length, width, rear_overhang);
-    }
-  }
-
-  virtual void initializeDetail() { std::cerr << "aaa" << std::endl; }
   virtual void resetDetail() {}
   virtual void preprocessMessageDetail([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
   virtual void processMessageDetail(
@@ -150,6 +126,14 @@ protected:
   rviz_common::properties::FloatProperty property_point_radius_;
   rviz_common::properties::FloatProperty property_point_offset_;
 
+  void updateVisualization()
+  {
+    if (last_msg_ptr_ != nullptr) {
+      processMessage(last_msg_ptr_);
+    }
+  }
+
+private:
   struct VehicleFootprintInfo
   {
     VehicleFootprintInfo(const float l, const float w, const float r)
@@ -162,7 +146,22 @@ protected:
   std::shared_ptr<VehicleInfo> vehicle_info_;
   std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
 
-private:
+  void updateVehicleInfo()
+  {
+    if (vehicle_info_) {
+      vehicle_footprint_info_ = std::make_shared<VehicleFootprintInfo>(
+        vehicle_info_->vehicle_length_m, vehicle_info_->vehicle_width_m,
+        vehicle_info_->rear_overhang_m);
+    } else {
+      const float length{property_vehicle_length_.getFloat()};
+      const float width{property_vehicle_width_.getFloat()};
+      const float rear_overhang{property_rear_overhang_.getFloat()};
+
+      vehicle_footprint_info_ =
+        std::make_shared<VehicleFootprintInfo>(length, width, rear_overhang);
+    }
+  }
+
   typename T::ConstSharedPtr last_msg_ptr_;
   bool validateFloats(const typename T::ConstSharedPtr & msg_ptr)
   {
