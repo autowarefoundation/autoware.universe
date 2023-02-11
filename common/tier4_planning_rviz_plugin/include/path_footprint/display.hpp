@@ -16,6 +16,7 @@
 #define PATH_FOOTPRINT__DISPLAY_HPP_
 
 #include <path_footprint/display_base.hpp>
+#include <rviz_rendering/objects/movable_text.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -27,8 +28,25 @@ class AutowarePathWithLaneIdFootprintDisplay
 : public AutowareFootprintDisplay<autoware_auto_planning_msgs::msg::PathWithLaneId>
 {
   Q_OBJECT
-};
 
+public:
+  AutowarePathWithLaneIdFootprintDisplay();
+
+private:
+  void resetDetail() override;
+  void preprocessMessageDetail(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr) override;
+  void processMessageDetail(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr,
+    const size_t p_idx) override;
+
+  rviz_common::properties::BoolProperty property_lane_id_view_;
+  rviz_common::properties::FloatProperty property_lane_id_scale_;
+
+  using LaneIdObject =
+    std::pair<std::unique_ptr<Ogre::SceneNode>, std::unique_ptr<rviz_rendering::MovableText>>;
+  std::vector<LaneIdObject> lane_id_obj_ptrs_;
+};
 class AutowarePathFootprintDisplay
 : public AutowareFootprintDisplay<autoware_auto_planning_msgs::msg::Path>
 {

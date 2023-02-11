@@ -44,42 +44,30 @@ class AutowareFootprintDisplay : public rviz_common::MessageFilterDisplay<T>
 {
 public:
   AutowareFootprintDisplay()
-  {
-    // footprint
-    property_footprint_view_ = new rviz_common::properties::BoolProperty(
-      "View Footprint", true, "", this, SLOT(updateVisualization()), this);
-    property_footprint_alpha_ = new rviz_common::properties::FloatProperty(
-      "Alpha", 1.0, "", property_footprint_view_, SLOT(updateVisualization()), this);
-    property_footprint_alpha_->setMin(0.0);
-    property_footprint_alpha_->setMax(1.0);
-    property_footprint_color_ = new rviz_common::properties::ColorProperty(
-      "Color", QColor(230, 230, 50), "", property_footprint_view_, SLOT(updateVisualization()),
-      this);
-    property_vehicle_length_ = new rviz_common::properties::FloatProperty(
-      "Vehicle Length", 4.77, "", property_footprint_view_, SLOT(updateVehicleInfo()), this);
-    property_vehicle_width_ = new rviz_common::properties::FloatProperty(
-      "Vehicle Width", 1.83, "", property_footprint_view_, SLOT(updateVehicleInfo()), this);
-    property_rear_overhang_ = new rviz_common::properties::FloatProperty(
-      "Rear Overhang", 1.03, "", property_footprint_view_, SLOT(updateVehicleInfo()), this);
-    property_offset_ = new rviz_common::properties::FloatProperty(
-      "Offset from BaseLink", 0.0, "", property_footprint_view_, SLOT(updateVehicleInfo()), this);
-    property_vehicle_length_->setMin(0.0);
-    property_vehicle_width_->setMin(0.0);
-    property_rear_overhang_->setMin(0.0);
-
+  :  // footprint
+    property_footprint_view_{"View Footprint", true, "", this},
+    property_footprint_alpha_{"Alpha", 1.0, "", &property_footprint_view_},
+    property_footprint_color_{"Color", QColor(230, 230, 50), "", &property_footprint_view_},
+    property_vehicle_length_{"Vehicle Length", 4.77, "", &property_footprint_view_},
+    property_vehicle_width_{"Vehicle Width", 1.83, "", &property_footprint_view_},
+    property_rear_overhang_{"Rear Overhang", 1.03, "", &property_footprint_view_},
+    property_offset_{"Offset from BaseLink", 0.0, "", &property_footprint_view_},
     // point
-    property_point_view_ = new rviz_common::properties::BoolProperty(
-      "View Point", false, "", this, SLOT(updateVisualization()), this);
-    property_point_alpha_ = new rviz_common::properties::FloatProperty(
-      "Alpha", 1.0, "", property_point_view_, SLOT(updateVisualization()), this);
-    property_point_alpha_->setMin(0.0);
-    property_point_alpha_->setMax(1.0);
-    property_point_color_ = new rviz_common::properties::ColorProperty(
-      "Color", QColor(0, 60, 255), "", property_point_view_, SLOT(updateVisualization()), this);
-    property_point_radius_ = new rviz_common::properties::FloatProperty(
-      "Radius", 0.1, "", property_point_view_, SLOT(updateVisualization()), this);
-    property_point_offset_ = new rviz_common::properties::FloatProperty(
-      "Offset", 0.0, "", property_point_view_, SLOT(updateVisualization()), this);
+    property_point_view_{"View Point", false, "", this},
+    property_point_alpha_{"Alpha", 1.0, "", &property_point_view_},
+    property_point_color_{"Color", QColor(0, 60, 255), "", &property_point_view_},
+    property_point_radius_{"Radius", 0.1, "", &property_point_view_},
+    property_point_offset_{"Offset", 0.0, "", &property_point_view_}
+  {
+    // initialize footprint
+    property_footprint_alpha_.setMin(0.0);
+    property_footprint_alpha_.setMax(1.0);
+    property_vehicle_length_.setMin(0.0);
+    property_vehicle_width_.setMin(0.0);
+    property_rear_overhang_.setMin(0.0);
+    // initialize point
+    property_point_alpha_.setMin(0.0);
+    property_point_alpha_.setMax(1.0);
 
     updateVehicleInfo();
   }
@@ -110,15 +98,18 @@ public:
     rviz_common::MessageFilterDisplay<T>::MFDClass::reset();
     footprint_manual_object_->clear();
     point_manual_object_->clear();
+
+    resetDetail();
   }
 
-private:
+protected:
   void updateVisualization()
   {
     if (last_msg_ptr_ != nullptr) {
       processMessage(last_msg_ptr_);
     }
   }
+
   void updateVehicleInfo()
   {
     if (vehicle_info_) {
@@ -126,16 +117,63 @@ private:
         vehicle_info_->vehicle_length_m, vehicle_info_->vehicle_width_m,
         vehicle_info_->rear_overhang_m);
     } else {
-      const float length{property_vehicle_length_->getFloat()};
-      const float width{property_vehicle_width_->getFloat()};
-      const float rear_overhang{property_rear_overhang_->getFloat()};
+      const float length{property_vehicle_length_.getFloat()};
+      const float width{property_vehicle_width_.getFloat()};
+      const float rear_overhang{property_rear_overhang_.getFloat()};
 
       vehicle_footprint_info_ =
         std::make_shared<VehicleFootprintInfo>(length, width, rear_overhang);
     }
   }
 
-protected:
+  virtual void initializeDetail() { std::cerr << "aaa" << std::endl; }
+  virtual void resetDetail() {}
+  virtual void preprocessMessageDetail([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
+  virtual void processMessageDetail(
+    [[maybe_unused]] const typename T::ConstSharedPtr msg_ptr, [[maybe_unused]] const size_t p_idx)
+  {
+  }
+
+  Ogre::ManualObject * footprint_manual_object_;
+  rviz_common::properties::BoolProperty property_footprint_view_;
+  rviz_common::properties::FloatProperty property_footprint_alpha_;
+  rviz_common::properties::ColorProperty property_footprint_color_;
+  rviz_common::properties::FloatProperty property_vehicle_length_;
+  rviz_common::properties::FloatProperty property_vehicle_width_;
+  rviz_common::properties::FloatProperty property_rear_overhang_;
+  rviz_common::properties::FloatProperty property_offset_;
+
+  Ogre::ManualObject * point_manual_object_;
+  rviz_common::properties::BoolProperty property_point_view_;
+  rviz_common::properties::FloatProperty property_point_alpha_;
+  rviz_common::properties::ColorProperty property_point_color_;
+  rviz_common::properties::FloatProperty property_point_radius_;
+  rviz_common::properties::FloatProperty property_point_offset_;
+
+  struct VehicleFootprintInfo
+  {
+    VehicleFootprintInfo(const float l, const float w, const float r)
+    : length(l), width(w), rear_overhang(r)
+    {
+    }
+    float length, width, rear_overhang;
+  };
+
+  std::shared_ptr<VehicleInfo> vehicle_info_;
+  std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
+
+private:
+  typename T::ConstSharedPtr last_msg_ptr_;
+  bool validateFloats(const typename T::ConstSharedPtr & msg_ptr)
+  {
+    for (auto && point : msg_ptr->points) {
+      if (!rviz_common::validateFloats(tier4_autoware_utils::getPose(point))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void processMessage(const typename T::ConstSharedPtr msg_ptr) override
   {
     if (!validateFloats(msg_ptr)) {
@@ -186,17 +224,18 @@ protected:
       point_manual_object_->estimateVertexCount(msg_ptr->points.size() * 3 * 8);
       point_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-      const float offset_from_baselink = property_offset_->getFloat();
+      const float offset_from_baselink = property_offset_.getFloat();
 
-      for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
-        const auto & path_pose = tier4_autoware_utils::getPose(msg_ptr->points.at(point_idx));
-        /*
-         * Footprint
-         */
-        if (property_footprint_view_->getBool()) {
+      preprocessMessageDetail(msg_ptr);
+
+      for (size_t p_idx = 0; p_idx < msg_ptr->points.size(); p_idx++) {
+        const auto & point = msg_ptr->points.at(p_idx);
+        const auto & pose = tier4_autoware_utils::getPose(point);
+        // footprint
+        if (property_footprint_view_.getBool()) {
           Ogre::ColourValue color;
-          color = rviz_common::properties::qtToOgre(property_footprint_color_->getColor());
-          color.a = property_footprint_alpha_->getFloat();
+          color = rviz_common::properties::qtToOgre(property_footprint_color_.getColor());
+          color.a = property_footprint_alpha_.getFloat();
 
           const auto info = vehicle_footprint_info_;
           const float top = info->length - info->rear_overhang - offset_from_baselink;
@@ -209,16 +248,15 @@ protected:
 
           for (int f_idx = 0; f_idx < 4; ++f_idx) {
             const Eigen::Quaternionf quat(
-              path_pose.orientation.w, path_pose.orientation.x, path_pose.orientation.y,
-              path_pose.orientation.z);
+              pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
 
             {
               const Eigen::Vector3f offset_vec{
                 lon_offset_vec.at(f_idx), lat_offset_vec.at(f_idx), 0.0};
               const auto offset_to_edge = quat * offset_vec;
               footprint_manual_object_->position(
-                path_pose.position.x + offset_to_edge.x(),
-                path_pose.position.y + offset_to_edge.y(), path_pose.position.z);
+                pose.position.x + offset_to_edge.x(), pose.position.y + offset_to_edge.y(),
+                pose.position.z);
               footprint_manual_object_->colour(color);
             }
             {
@@ -226,28 +264,26 @@ protected:
                 lon_offset_vec.at((f_idx + 1) % 4), lat_offset_vec.at((f_idx + 1) % 4), 0.0};
               const auto offset_to_edge = quat * offset_vec;
               footprint_manual_object_->position(
-                path_pose.position.x + offset_to_edge.x(),
-                path_pose.position.y + offset_to_edge.y(), path_pose.position.z);
+                pose.position.x + offset_to_edge.x(), pose.position.y + offset_to_edge.y(),
+                pose.position.z);
               footprint_manual_object_->colour(color);
             }
           }
         }
 
-        /*
-         * Point
-         */
-        if (property_point_view_->getBool()) {
+         // point
+        if (property_point_view_.getBool()) {
           Ogre::ColourValue color;
-          color = rviz_common::properties::qtToOgre(property_point_color_->getColor());
-          color.a = property_point_alpha_->getFloat();
+          color = rviz_common::properties::qtToOgre(property_point_color_.getColor());
+          color.a = property_point_alpha_.getFloat();
 
-          const double offset = property_point_offset_->getFloat();
-          const double yaw = tf2::getYaw(path_pose.orientation);
-          const double base_x = path_pose.position.x + offset * std::cos(yaw);
-          const double base_y = path_pose.position.y + offset * std::sin(yaw);
-          const double base_z = path_pose.position.z;
+          const double offset = property_point_offset_.getFloat();
+          const double yaw = tf2::getYaw(pose.orientation);
+          const double base_x = pose.position.x + offset * std::cos(yaw);
+          const double base_y = pose.position.y + offset * std::sin(yaw);
+          const double base_z = pose.position.z;
 
-          const double radius = property_point_radius_->getFloat();
+          const double radius = property_point_radius_.getFloat();
           for (size_t s_idx = 0; s_idx < 8; ++s_idx) {
             const double current_angle = static_cast<double>(s_idx) / 8.0 * 2.0 * M_PI;
             const double next_angle = static_cast<double>(s_idx + 1) / 8.0 * 2.0 * M_PI;
@@ -265,52 +301,14 @@ protected:
             point_manual_object_->colour(color);
           }
         }
+
+        processMessageDetail(msg_ptr, p_idx);
       }
 
       footprint_manual_object_->end();
       point_manual_object_->end();
     }
     last_msg_ptr_ = msg_ptr;
-  }
-
-  Ogre::ManualObject * footprint_manual_object_;
-  rviz_common::properties::BoolProperty * property_footprint_view_;
-  rviz_common::properties::ColorProperty * property_footprint_color_;
-  rviz_common::properties::FloatProperty * property_footprint_alpha_;
-  rviz_common::properties::FloatProperty * property_vehicle_length_;
-  rviz_common::properties::FloatProperty * property_vehicle_width_;
-  rviz_common::properties::FloatProperty * property_rear_overhang_;
-  rviz_common::properties::FloatProperty * property_offset_;
-
-  Ogre::ManualObject * point_manual_object_;
-  rviz_common::properties::BoolProperty * property_point_view_;
-  rviz_common::properties::ColorProperty * property_point_color_;
-  rviz_common::properties::FloatProperty * property_point_alpha_;
-  rviz_common::properties::FloatProperty * property_point_radius_;
-  rviz_common::properties::FloatProperty * property_point_offset_;
-
-  struct VehicleFootprintInfo
-  {
-    VehicleFootprintInfo(const float l, const float w, const float r)
-    : length(l), width(w), rear_overhang(r)
-    {
-    }
-    float length, width, rear_overhang;
-  };
-
-  std::shared_ptr<VehicleInfo> vehicle_info_;
-  std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
-
-private:
-  typename T::ConstSharedPtr last_msg_ptr_;
-  bool validateFloats(const typename T::ConstSharedPtr & msg_ptr)
-  {
-    for (auto && point : msg_ptr->points) {
-      if (!rviz_common::validateFloats(tier4_autoware_utils::getPose(point))) {
-        return false;
-      }
-    }
-    return true;
   }
 };
 }  // namespace rviz_plugins
