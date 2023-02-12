@@ -25,7 +25,7 @@ source install/setup.bash
 
 ## Architecture
 
-* **TODO:** I will put nice figure here later.
+![node_diagram](docs/node_diagram.png)
 
 ### Input topics from sesnors
 
