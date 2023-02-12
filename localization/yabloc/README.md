@@ -65,7 +65,7 @@ This localizer requires following topics to work.
 
 |  topic name  |  msg type  | description |
 | ---- | ---- | -- |
-|  `/localicazation/pf/overlay_image`              | `sensor_msgs/msg/Image`  | Really nice image for demonstration  |
+|  `/localicazation/validation/overlay_image`      | `sensor_msgs/msg/Image`  | Really nice image for demonstration  |
 |  `/localicazation/pf/cost_map_image`             | `sensor_msgs/msg/Image`  | Visualization of cost map for debug  |
 |  `/localicazation/pf/predicted_particles_marker` | `visualization_msgs/msg/MarkerArray`  | Particles of particle filter |
 |  `/localicazation/imgproc/lsd_image`             | `sensor_msgs/msg/Image`  | image |
@@ -116,8 +116,22 @@ ros2 launch autoware_launch autoware.launch.xml \
 
 ### Rviz
 
+**NOTE:** This project contains original rviz plugins.
+
 ```bash
 ros2 launch pcdless_launch rviz.launch.xml
 ```
 
-**NOTE:** This project contains original rviz plugins.
+![how_to_launch_with_rosbag](docs/rviz_description.png)
+
+|  index | topic name | description |
+| ---- | ---- | -- |
+| 1  |  `/localicazation/validation/overlay_image`     | **Really nice image for demonstration**  |
+| 2  |  `/localicazation/imgproc/segmented_image`      | グラフセグメンテーションの結果。黄色い領域が路面判定されている。 |
+| 3  |  `/localicazation/pf/cost_map_image`            | LL2から生成されたコストマップ。明るさが強度、色相が方位を表す。 |
+| 4  |  `/localicazation/imgproc/lsd_image`            | 線分抽出の結果 |
+| 5  |  `/localicazation/map/ground_status`            | 地面高さ・勾配推定(どうでもいい) |
+| 6  |  `/localicazation/twist/kalman/status`          | RTKの状態やwheelなど。バイアス推定の結果も。 |
+| 7  |  `/localicazation/pf/predicted_particle_marker` | パーティクルの分布。赤が嬉しい、青は嫌い。 |
+| 8  |  `/localicazation/pf/gnss/range_marker`         | GNSSの観測。RTKがFIXだと円が小さくなる。 |
+| 9  |  `/localicazation/pf/scored_cloud`              | 観測した線分を推定結果で逆投影した分布。赤がLL2とよくマッチ。青は嫌い。 |
