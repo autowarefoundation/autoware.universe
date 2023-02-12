@@ -77,11 +77,13 @@ This localizer requires following topics to work.
 
 The link contains *rosbag* and *lanelet2* but *pointcloud*.
 
-## How to execution
+## How to execute
 
 **NOTE:** `use_sim_time` is TRUE as default.
 
 ### with ROSBAG
+
+![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
 
 ```bash
 ros2 launch pcdless_launch odaiba_launch.xml 
@@ -103,6 +105,8 @@ ros2 bag play sample_odaiba --clock 100
 ```
 
 ### in real world
+
+![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
 
 ```bash
 ros2 launch pcdless_launch odaiba_launch.xml use_sim_time:=false
