@@ -419,11 +419,11 @@ visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
 
     marker.text = std::to_string(i);
 
-    const double half_width = vehicle_param.width / 2.0;
+    const double base_to_right = (vehicle_param.wheel_tread / 2.0) + vehicle_param.right_overhang;
     const double base_to_front = vehicle_param.length - vehicle_param.rear_overhang;
 
     const auto top_right_pos =
-      tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, half_width, 0.0)
+      tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -base_to_right, 0.0)
         .position;
     marker.id = i;
     marker.pose.position = top_right_pos;
@@ -477,13 +477,15 @@ visualization_msgs::msg::MarkerArray getBoundsCandidatesLineMarkerArray(
 }
 
 visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
-  const std::vector<ReferencePoint> & ref_points, const double r, const double g, const double b,
-  const double vehicle_width, const size_t sampling_num)
+  const std::vector<ReferencePoint> & ref_points, const VehicleParam & vehicle_param,
+  const double r, const double g, const double b, const size_t sampling_num)
 {
   const auto current_time = rclcpp::Clock().now();
   visualization_msgs::msg::MarkerArray msg;
 
   if (ref_points.empty()) return msg;
+  const double base_to_right = (vehicle_param.wheel_tread / 2.0) + vehicle_param.right_overhang;
+  const double base_to_left = (vehicle_param.wheel_tread / 2.0) + vehicle_param.left_overhang;
 
   for (size_t bound_idx = 0; bound_idx < ref_points.at(0).vehicle_bounds.size(); ++bound_idx) {
     const std::string ns = "base_bounds_" + std::to_string(bound_idx);
@@ -500,8 +502,7 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
         }
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).vehicle_bounds_poses.at(bound_idx);
-        const double lb_y =
-          ref_points.at(i).vehicle_bounds[bound_idx].lower_bound - vehicle_width / 2.0;
+        const double lb_y = ref_points.at(i).vehicle_bounds[bound_idx].lower_bound - base_to_right;
         const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
 
         marker.points.push_back(pose.position);
@@ -522,8 +523,7 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
         }
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).vehicle_bounds_poses.at(bound_idx);
-        const double ub_y =
-          ref_points.at(i).vehicle_bounds[bound_idx].upper_bound + vehicle_width / 2.0;
+        const double ub_y = ref_points.at(i).vehicle_bounds[bound_idx].upper_bound + base_to_left;
         const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
 
         marker.points.push_back(pose.position);
@@ -538,12 +538,13 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
 
 visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
   const std::vector<std::vector<geometry_msgs::msg::Pose>> & vehicle_circles_pose,
-  const double vehicle_width, const size_t sampling_num, const std::string & ns, const double r,
-  const double g, const double b)
+  const VehicleParam & vehicle_param, const size_t sampling_num, const std::string & ns,
+  const double r, const double g, const double b)
 {
   const auto current_time = rclcpp::Clock().now();
   visualization_msgs::msg::MarkerArray msg;
-
+  const double base_to_right = (vehicle_param.wheel_tread / 2.0) + vehicle_param.right_overhang;
+  const double base_to_left = (vehicle_param.wheel_tread / 2.0) + vehicle_param.left_overhang;
   for (size_t i = 0; i < vehicle_circles_pose.size(); ++i) {
     if (i % sampling_num != 0) {
       continue;
@@ -557,9 +558,8 @@ visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
     for (size_t j = 0; j < vehicle_circles_pose.at(i).size(); ++j) {
       const geometry_msgs::msg::Pose & pose = vehicle_circles_pose.at(i).at(j);
       const auto ub =
-        tier4_autoware_utils::calcOffsetPose(pose, 0.0, vehicle_width / 2.0, 0.0).position;
-      const auto lb =
-        tier4_autoware_utils::calcOffsetPose(pose, 0.0, -vehicle_width / 2.0, 0.0).position;
+        tier4_autoware_utils::calcOffsetPose(pose, 0.0, base_to_left, 0.0).position;
+      const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, -base_to_right, 0.0).position;
 
       marker.points.push_back(ub);
       marker.points.push_back(lb);
@@ -785,8 +785,7 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   // bounds
   appendMarkerArray(
     getBoundsLineMarkerArray(
-      debug_data.ref_points, 0.99, 0.99, 0.2, vehicle_param.width,
-      debug_data.mpt_visualize_sampling_num),
+      debug_data.ref_points, vehicle_param, 0.99, 0.99, 0.2, debug_data.mpt_visualize_sampling_num),
     &vis_marker_array);
 
   // bounds candidates
@@ -799,7 +798,7 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   // vehicle circle line
   appendMarkerArray(
     getVehicleCircleLineMarkerArray(
-      debug_data.vehicle_circles_pose, vehicle_param.width, debug_data.mpt_visualize_sampling_num,
+      debug_data.vehicle_circles_pose, vehicle_param, debug_data.mpt_visualize_sampling_num,
       "vehicle_circle_lines", 0.99, 0.99, 0.2),
     &vis_marker_array);
 
