@@ -44,7 +44,6 @@ using tier4_autoware_utils::pose2transform;
 
 namespace
 {
-
 geometry_msgs::msg::Point32 createPoint32(const double x, const double y, const double z)
 {
   geometry_msgs::msg::Point32 p;
@@ -263,14 +262,301 @@ tier4_autoware_utils::Polygon2d expandPolygon(
   return expanded_polygon;
 }
 
-PolygonPoint2 transformBoundFrenetCoordinate(
+boost::optional<geometry_msgs::msg::Point> intersect(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
+  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
+{
+  // calculate intersection point
+  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
+  if (det == 0.0) {
+    return {};
+  }
+
+  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
+  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p1.x - p2.x) * (p4.y - p2.y)) / det;
+  if (t < 0 || 1 < t || s < 0 || 1 < s) {
+    return {};
+  }
+
+  geometry_msgs::msg::Point intersect_point;
+  intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
+  intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
+  return intersect_point;
+}
+
+boost::optional<std::pair<size_t, geometry_msgs::msg::Point>> intersectBound(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
+  const std::vector<geometry_msgs::msg::Point> & bound, const size_t seg_idx1,
+  const size_t seg_idx2)
+{
+  const size_t start_idx =
+    static_cast<size_t>(std::max(0, static_cast<int>(std::min(seg_idx1, seg_idx2)) - 5));
+  const size_t end_idx = static_cast<size_t>(std::min(
+    static_cast<int>(bound.size()) - 1, static_cast<int>(std::max(seg_idx1, seg_idx2)) + 1 + 5));
+  for (int i = start_idx; i < static_cast<int>(end_idx); ++i) {
+    const auto intersect_point = intersect(p1, p2, bound.at(i), bound.at(i + 1));
+    if (intersect_point) {
+      std::pair<size_t, geometry_msgs::msg::Point> result;
+      result.first = static_cast<size_t>(i);
+      result.second = intersect_point.get();
+      return result;
+    }
+  }
+  return boost::none;
+}
+
+PolygonPoint transformBoundFrenetCoordinate(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Point & point)
 {
   const size_t seg_idx = motion_utils::findNearestSegmentIndex(points, point);
   const double lon_dist_to_segment =
     motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, point);
   const double lat_dist = motion_utils::calcLateralOffset(points, point, seg_idx);
-  return PolygonPoint2{point, seg_idx, lon_dist_to_segment, lat_dist};
+  return PolygonPoint{point, seg_idx, lon_dist_to_segment, lat_dist};
+}
+
+std::vector<PolygonPoint> generatePolygonInsideBounds(
+  const std::vector<Point> & bound, const std::vector<Point> & edge_points,
+  const bool is_object_right)
+{
+  std::vector<PolygonPoint> full_polygon;
+  for (size_t i = 0; i < edge_points.size(); ++i) {
+    const auto polygon_point = transformBoundFrenetCoordinate(bound, edge_points.at(i));
+    full_polygon.push_back(polygon_point);
+  }
+
+  std::vector<PolygonPoint> inside_poly;
+  for (int i = 0; i < static_cast<int>(full_polygon.size()); ++i) {
+    const auto & curr_poly = full_polygon.at(i);
+    const auto & prev_poly = full_polygon.at(i == 0 ? full_polygon.size() - 1 : i - 1);
+
+    const bool is_curr_outside = curr_poly.is_outside_bounds(is_object_right);
+    const bool is_prev_outside = prev_poly.is_outside_bounds(is_object_right);
+
+    if (is_curr_outside && is_prev_outside) {
+      continue;
+    }
+    if (!is_curr_outside && !is_prev_outside) {
+      inside_poly.push_back(curr_poly);
+      continue;
+    }
+
+    const auto intersection = intersectBound(
+      prev_poly.point, curr_poly.point, bound, prev_poly.bound_seg_idx, curr_poly.bound_seg_idx);
+    if (!intersection) {
+      continue;
+    }
+    const double lon_dist = motion_utils::calcLongitudinalOffsetToSegment(
+      bound, intersection->first, intersection->second);
+    const auto intersect_point =
+      PolygonPoint{intersection->second, intersection->first, lon_dist, 0.0};
+
+    if (is_prev_outside && !is_curr_outside) {
+      inside_poly.push_back(intersect_point);
+      inside_poly.push_back(curr_poly);
+      continue;
+    }
+    // Here is if (!is_prev_outside && is_curr_outside).
+    inside_poly.push_back(prev_poly);
+    inside_poly.push_back(intersect_point);
+    continue;
+  }
+
+  return inside_poly;
+}
+
+std::vector<geometry_msgs::msg::Point> convertToPoints(
+  const std::vector<PolygonPoint> & polygon_points)
+{
+  std::vector<geometry_msgs::msg::Point> points;
+  for (const auto & polygon_point : polygon_points) {
+    points.push_back(polygon_point.point);
+  }
+  return points;
+}
+
+std::vector<PolygonPoint> concatenateTwoPolygons(
+  const std::vector<PolygonPoint> & front_polygon, const std::vector<PolygonPoint> & back_polygon)
+{
+  // At first, the front polygon is the outside polygon
+  bool is_front_polygon_outside = true;
+  size_t outside_idx = 0;
+
+  const auto get_out_poly = [&]() {
+    return is_front_polygon_outside ? front_polygon : back_polygon;
+  };
+  const auto get_in_poly = [&]() {
+    return is_front_polygon_outside ? back_polygon : front_polygon;
+  };
+
+  std::vector<PolygonPoint> concatenated_polygon;
+  while (rclcpp::ok()) {
+    concatenated_polygon.push_back(get_out_poly().at(outside_idx));
+    if (outside_idx == get_out_poly().size() - 1) {
+      break;
+    }
+    const size_t curr_idx = outside_idx;
+    const size_t next_idx = outside_idx + 1;
+
+    for (size_t i = 0; i < get_in_poly().size() - 1; ++i) {
+      const auto intersection = intersect(
+        get_out_poly().at(curr_idx).point, get_out_poly().at(next_idx).point,
+        get_in_poly().at(i).point, get_in_poly().at(i + 1).point);
+      if (intersection) {
+        const auto intersect_point = PolygonPoint{intersection.get(), 0, 0.0, 0.0};
+        concatenated_polygon.push_back(intersect_point);
+
+        is_front_polygon_outside = !is_front_polygon_outside;
+        outside_idx = i;
+        break;
+      }
+    }
+    outside_idx += 1;
+  }
+
+  return concatenated_polygon;
+}
+
+std::vector<std::vector<PolygonPoint>> concatenatePolygons(
+  const std::vector<std::vector<PolygonPoint>> & polygons)
+{
+  auto unique_polygons = polygons;
+
+  while (rclcpp::ok()) {
+    bool is_updated = false;
+
+    for (size_t i = 0; i < unique_polygons.size(); ++i) {
+      for (size_t j = 0; j < i; ++j) {
+        const auto & p1 = unique_polygons.at(i);
+        const auto & p2 = unique_polygons.at(j);
+
+        // if p1 and p2 overlaps
+        if (p1.back().is_after(p2.front()) && p2.back().is_after(p1.front())) {
+          is_updated = true;
+
+          const auto concatenated_polygon = [&]() {
+            if (p2.front().is_after(p1.front())) {
+              return concatenateTwoPolygons(p1, p2);
+            }
+            return concatenateTwoPolygons(p2, p1);
+          }();
+
+          // NOTE: remove i's element first since is larger than j.
+          unique_polygons.erase(unique_polygons.begin() + i);
+          unique_polygons.erase(unique_polygons.begin() + j);
+
+          unique_polygons.push_back(concatenated_polygon);
+          break;
+        }
+      }
+      if (is_updated) {
+        break;
+      }
+    }
+
+    if (!is_updated) {
+      break;
+    }
+  }
+  return unique_polygons;
+}
+
+std::vector<PolygonPoint> getPolygonPointsInsideBounds(
+  const std::vector<Point> & bound, const std::vector<Point> & edge_points,
+  const bool is_object_right)
+{
+  // NOTE: Polygon is defined at lest by three points.
+  if (edge_points.size() < 3) {
+    return std::vector<PolygonPoint>();
+  }
+
+  // convert to vector of PolygonPoint
+  const auto inside_polygon = [&]() {
+    auto tmp_polygon = generatePolygonInsideBounds(bound, edge_points, is_object_right);
+
+    // In order to make the order of points the same as the order of lon_dist_to_segment.
+    // The order of points is clockwise.
+    if (!is_object_right) {
+      std::reverse(tmp_polygon.begin(), tmp_polygon.end());
+    }
+    return tmp_polygon;
+  }();
+  if (inside_polygon.empty()) {
+    return std::vector<PolygonPoint>();
+  }
+
+  // search start and end index by longitudinal distance
+  std::vector<int> polygon_indices(inside_polygon.size());
+  std::iota(polygon_indices.begin(), polygon_indices.end(), 0);
+  std::sort(polygon_indices.begin(), polygon_indices.end(), [&](int i1, int i2) {
+    return inside_polygon.at(i2).is_after(inside_polygon.at(i1));
+  });
+  const size_t start_idx = polygon_indices.front();
+  const size_t end_idx = polygon_indices.back();
+
+  // calculate valid inside polygon
+  std::vector<PolygonPoint> valid_inside_polygon;
+  for (int i = 0; i < (end_idx - start_idx + 1 + polygon_indices.size()) % polygon_indices.size();
+       ++i) {
+    const int poly_idx = (start_idx + i) % inside_polygon.size();
+    valid_inside_polygon.push_back(inside_polygon.at(poly_idx));
+  }
+
+  // add start and end points projected to bound if necessary
+  if (inside_polygon.at(start_idx).lat_dist_to_bound != 0.0) {  // not on bound
+    auto start_point = inside_polygon.at(start_idx);
+    const auto start_point_on_bound = motion_utils::calcLongitudinalOffsetPoint(
+      bound, start_point.bound_seg_idx, start_point.lon_dist_to_segment);
+    if (start_point_on_bound) {
+      start_point.point = start_point_on_bound.get();
+      valid_inside_polygon.insert(valid_inside_polygon.begin(), start_point);
+    }
+  }
+  if (inside_polygon.at(end_idx).lat_dist_to_bound != 0.0) {  // not on bound
+    auto end_point = inside_polygon.at(end_idx);
+    const auto end_point_on_bound = motion_utils::calcLongitudinalOffsetPoint(
+      bound, end_point.bound_seg_idx, end_point.lon_dist_to_segment);
+    if (end_point_on_bound) {
+      end_point.point = end_point_on_bound.get();
+      valid_inside_polygon.insert(valid_inside_polygon.end(), end_point);
+    }
+  }
+  return valid_inside_polygon;
+}
+
+std::vector<Point> updateBoundary(
+  const std::vector<Point> & original_bound,
+  const std::vector<std::vector<PolygonPoint>> & sorted_polygons)
+{
+  if (sorted_polygons.empty()) {
+    return original_bound;
+  }
+
+  auto reversed_polygons = sorted_polygons;
+  std::reverse(reversed_polygons.begin(), reversed_polygons.end());
+
+  auto updated_bound = original_bound;
+
+  // NOTE: Further obstacle is applied first since a part of the updated_bound is erased.
+  for (const auto & polygon : reversed_polygons) {
+    const auto & start_poly = polygon.front();
+    const auto & end_poly = polygon.back();
+
+    const double front_offset = motion_utils::calcLongitudinalOffsetToSegment(
+      updated_bound, start_poly.bound_seg_idx, start_poly.point);
+
+    const size_t removed_start_idx =
+      0 < front_offset ? start_poly.bound_seg_idx + 1 : start_poly.bound_seg_idx;
+    const size_t removed_end_idx = end_poly.bound_seg_idx;
+
+    updated_bound.erase(
+      updated_bound.begin() + removed_start_idx, updated_bound.begin() + removed_end_idx + 1);
+
+    const auto obj_points = convertToPoints(polygon);
+    updated_bound.insert(
+      updated_bound.begin() + removed_start_idx, obj_points.begin(), obj_points.end());
+  }
+  return updated_bound;
 }
 }  // namespace
 
@@ -547,282 +833,6 @@ Polygon2d createEnvelopePolygon(
   return expanded_polygon;
 }
 
-void sortPolygonPoints(
-  const std::vector<PolygonPoint> & points, std::vector<PolygonPoint> & sorted_points)
-{
-  sorted_points = points;
-  if (points.size() <= 2) {
-    // sort data based on longitudinal distance to the boundary
-    std::sort(
-      sorted_points.begin(), sorted_points.end(),
-      [](const PolygonPoint & a, const PolygonPoint & b) { return a.lon_dist < b.lon_dist; });
-    return;
-  }
-
-  // sort data based on lateral distance to the boundary
-  std::sort(
-    sorted_points.begin(), sorted_points.end(), [](const PolygonPoint & a, const PolygonPoint & b) {
-      return std::fabs(a.lat_dist_to_bound) > std::fabs(b.lat_dist_to_bound);
-    });
-  PolygonPoint first_point;
-  PolygonPoint second_point;
-  if (sorted_points.at(0).lon_dist < sorted_points.at(1).lon_dist) {
-    first_point = sorted_points.at(0);
-    second_point = sorted_points.at(1);
-  } else {
-    first_point = sorted_points.at(1);
-    second_point = sorted_points.at(0);
-  }
-
-  for (size_t i = 2; i < sorted_points.size(); ++i) {
-    const auto & next_point = sorted_points.at(i);
-    if (next_point.lon_dist < first_point.lon_dist) {
-      sorted_points = {next_point, first_point, second_point};
-      return;
-    } else if (second_point.lon_dist < next_point.lon_dist) {
-      sorted_points = {first_point, second_point, next_point};
-      return;
-    }
-  }
-
-  sorted_points = {first_point, second_point};
-}
-
-std::vector<geometry_msgs::msg::Point> convertToPoints(
-  const std::vector<PolygonPoint2> & polygon_points)
-{
-  std::vector<geometry_msgs::msg::Point> points;
-  for (const auto & polygon_point : polygon_points) {
-    points.push_back(polygon_point.point);
-  }
-  return points;
-}
-
-boost::optional<geometry_msgs::msg::Point> intersect(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
-{
-  // calculate intersection point
-  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
-  if (det == 0.0) {
-    return {};
-  }
-
-  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p1.x - p2.x) * (p4.y - p2.y)) / det;
-  if (t < 0 || 1 < t || s < 0 || 1 < s) {
-    return {};
-  }
-
-  geometry_msgs::msg::Point intersect_point;
-  intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
-  intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
-  return intersect_point;
-}
-
-std::vector<PolygonPoint2> concatenateTwoPolygons(
-  const std::vector<PolygonPoint2> & front_polygon, const std::vector<PolygonPoint2> & back_polygon)
-{
-  // At first, the front polygon is the outside polygon
-  bool is_front_polygon_outside = true;
-  size_t outside_idx = 0;
-
-  const auto get_out_poly = [&]() {
-    return is_front_polygon_outside ? front_polygon : back_polygon;
-  };
-  const auto get_in_poly = [&]() {
-    return is_front_polygon_outside ? back_polygon : front_polygon;
-  };
-
-  std::vector<PolygonPoint2> concatenated_polygon;
-  while (rclcpp::ok()) {
-    concatenated_polygon.push_back(get_out_poly().at(outside_idx));
-    if (outside_idx == get_out_poly().size() - 1) {
-      break;
-    }
-    const size_t curr_idx = outside_idx;
-    const size_t next_idx = outside_idx + 1;
-
-    for (size_t i = 0; i < get_in_poly().size() - 1; ++i) {
-      const auto intersection = intersect(
-        get_out_poly().at(curr_idx).point, get_out_poly().at(next_idx).point,
-        get_in_poly().at(i).point, get_in_poly().at(i + 1).point);
-      if (intersection) {
-        const auto intersect_point = PolygonPoint2{intersection.get(), 0, 0.0, 0.0};
-        concatenated_polygon.push_back(intersect_point);
-
-        is_front_polygon_outside = !is_front_polygon_outside;
-        outside_idx = i;
-        break;
-      }
-    }
-    outside_idx += 1;
-  }
-
-  return concatenated_polygon;
-}
-
-std::vector<std::vector<PolygonPoint2>> concatenatePolygons(
-  const std::vector<std::vector<PolygonPoint2>> & polygons)
-{
-  auto unique_polygons = polygons;
-
-  while (rclcpp::ok()) {
-    bool is_updated = false;
-
-    for (size_t i = 0; i < unique_polygons.size(); ++i) {
-      for (size_t j = 0; j < i; ++j) {
-        const auto & p1 = unique_polygons.at(i);
-        const auto & p2 = unique_polygons.at(j);
-
-        // if p1 and p2 overlaps
-        if (p1.back().is_after(p2.front()) && p2.back().is_after(p1.front())) {
-          is_updated = true;
-
-          const auto concatenated_polygon = [&]() {
-            if (p2.front().is_after(p1.front())) {
-              return concatenateTwoPolygons(p1, p2);
-            }
-            return concatenateTwoPolygons(p2, p1);
-          }();
-
-          // NOTE: remove i's element first since is larger than j.
-          unique_polygons.erase(unique_polygons.begin() + i);
-          unique_polygons.erase(unique_polygons.begin() + j);
-
-          unique_polygons.push_back(concatenated_polygon);
-          break;
-        }
-      }
-      if (is_updated) {
-        break;
-      }
-    }
-
-    if (!is_updated) {
-      break;
-    }
-  }
-  return unique_polygons;
-}
-
-std::vector<PolygonPoint2> getPolygonPointsInsideBounds(
-  const std::vector<Point> & bound, const std::vector<Point> & edge_points,
-  const bool is_object_right)
-{
-  if (edge_points.size() < 3) {
-    return std::vector<PolygonPoint2>();
-  }
-
-  // convert to vector of PolygonPoint2
-  std::vector<PolygonPoint2> all_polygon_points;
-  for (size_t i = 0; i < edge_points.size(); ++i) {
-    const auto polygon_point = transformBoundFrenetCoordinate(bound, edge_points.at(i));
-    all_polygon_points.push_back(polygon_point);
-  }
-
-  // search start and end index inside the bound
-  const auto is_outside_bounds = [&](const PolygonPoint2 & polygon_point) {
-    if (is_object_right) {
-      return polygon_point.lat_dist_to_bound < 0.0;
-    }
-    return 0.0 < polygon_point.lat_dist_to_bound;
-  };
-  int start_idx = 0;
-  int end_idx = 0;
-  for (int i = 0; i < all_polygon_points.size(); ++i) {
-    const int prev_idx = i == 0 ? static_cast<int>(all_polygon_points.size()) - 1 : i - 1;
-    const int curr_idx = i;
-
-    if (
-      is_outside_bounds(all_polygon_points.at(prev_idx)) &&
-      !is_outside_bounds(all_polygon_points.at(curr_idx))) {
-      start_idx = curr_idx;
-    }
-    if (
-      !is_outside_bounds(all_polygon_points.at(prev_idx)) &&
-      is_outside_bounds(all_polygon_points.at(curr_idx))) {
-      end_idx = prev_idx;
-    }
-  }
-
-  // get results by validating points from start to end index
-  std::vector<PolygonPoint2> inside_polygon_points;
-  for (int i = 0;
-       i < (end_idx - start_idx + 1 + all_polygon_points.size()) % all_polygon_points.size(); ++i) {
-    const int poly_idx = (start_idx + i) % all_polygon_points.size();
-    if (is_outside_bounds(all_polygon_points.at(poly_idx))) {
-      RCLCPP_WARN(
-        rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
-        "Bound calculation with static obstacles has some error.");
-      return std::vector<PolygonPoint2>();
-    }
-    inside_polygon_points.push_back(all_polygon_points.at(poly_idx));
-  }
-
-  if (inside_polygon_points.empty()) {
-    return std::vector<PolygonPoint2>();
-  }
-
-  // add start and end points projected to bound
-  auto start_point_on_bound = inside_polygon_points.front();
-  const auto start_point = motion_utils::calcLongitudinalOffsetPoint(
-    bound, start_point_on_bound.bound_seg_idx, start_point_on_bound.lon_dist_to_segment);
-  if (start_point) {
-    start_point_on_bound.point = start_point.get();
-    inside_polygon_points.insert(inside_polygon_points.begin(), start_point_on_bound);
-  }
-  auto end_point_on_bound = inside_polygon_points.back();
-  const auto end_point = motion_utils::calcLongitudinalOffsetPoint(
-    bound, end_point_on_bound.bound_seg_idx, end_point_on_bound.lon_dist_to_segment);
-  if (end_point) {
-    end_point_on_bound.point = end_point.get();
-    inside_polygon_points.insert(inside_polygon_points.end(), end_point_on_bound);
-  }
-
-  if (!is_object_right) {
-    // In order to make the order of points the same as the order of lon_dist_to_segment.
-    // The order of points is clockwise.
-    std::reverse(inside_polygon_points.begin(), inside_polygon_points.end());
-  }
-  return inside_polygon_points;
-}
-
-std::vector<Point> updateBoundary(
-  const std::vector<Point> & original_bound,
-  const std::vector<std::vector<PolygonPoint2>> & sorted_polygons)
-{
-  if (sorted_polygons.empty()) {
-    return original_bound;
-  }
-
-  auto reversed_polygons = sorted_polygons;
-  std::reverse(reversed_polygons.begin(), reversed_polygons.end());
-
-  auto updated_bound = original_bound;
-
-  // NOTE: Further obstacle is applied first since a part of the updated_bound is erased.
-  for (const auto & polygon : reversed_polygons) {
-    const auto & start_poly = polygon.front();
-    const auto & end_poly = polygon.back();
-
-    const double front_offset = motion_utils::calcLongitudinalOffsetToSegment(
-      updated_bound, start_poly.bound_seg_idx, start_poly.point);
-
-    const size_t removed_start_idx =
-      0 < front_offset ? start_poly.bound_seg_idx + 1 : start_poly.bound_seg_idx;
-    const size_t removed_end_idx = end_poly.bound_seg_idx;
-
-    updated_bound.erase(
-      updated_bound.begin() + removed_start_idx, updated_bound.begin() + removed_end_idx + 1);
-
-    const auto obj_points = convertToPoints(polygon);
-    updated_bound.insert(
-      updated_bound.begin() + removed_start_idx, obj_points.begin(), obj_points.end());
-  }
-  return updated_bound;
-}
-
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects,
@@ -834,8 +844,8 @@ void generateDrivableArea(
     return;
   }
 
-  std::vector<std::vector<PolygonPoint2>> right_polygons;
-  std::vector<std::vector<PolygonPoint2>> left_polygons;
+  std::vector<std::vector<PolygonPoint>> right_polygons;
+  std::vector<std::vector<PolygonPoint>> left_polygons;
   for (const auto & object : objects) {
     // If avoidance is executed by both behavior and motion, only non-avoidable object will be
     // extracted from the drivable area.
@@ -873,13 +883,12 @@ void generateDrivableArea(
     const auto & bound = is_object_right ? path.right_bound : path.left_bound;
 
     // get polygon points inside the bounds
-    const auto inside_polygon_points =
-      getPolygonPointsInsideBounds(bound, edge_points, is_object_right);
-    if (not inside_polygon_points.empty()) {
+    const auto inside_polygon = getPolygonPointsInsideBounds(bound, edge_points, is_object_right);
+    if (!inside_polygon.empty()) {
       if (is_object_right) {
-        right_polygons.push_back(inside_polygon_points);
+        right_polygons.push_back(inside_polygon);
       } else {
-        left_polygons.push_back(inside_polygon_points);
+        left_polygons.push_back(inside_polygon);
       }
     }
   }
@@ -897,7 +906,7 @@ void generateDrivableArea(
     // sort bounds longitduinally
     std::sort(
       unique_polygons.begin(), unique_polygons.end(),
-      [](const std::vector<PolygonPoint2> & p1, const std::vector<PolygonPoint2> & p2) {
+      [](const std::vector<PolygonPoint> & p1, const std::vector<PolygonPoint> & p2) {
         return p2.front().is_after(p1.front());
       });
 
