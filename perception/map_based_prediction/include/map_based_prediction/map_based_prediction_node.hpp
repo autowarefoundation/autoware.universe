@@ -51,7 +51,7 @@ namespace map_based_prediction
 {
 struct LateralKinematicsToLanelet
 {
-  const lanelet::ConstLanelet & current_lanelet;
+  const lanelet::ConstLanelet current_lanelet;
   double dist_from_left_boundary;
   double dist_from_right_boundary;
   double left_lateral_velocity;

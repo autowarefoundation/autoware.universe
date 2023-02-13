@@ -154,8 +154,8 @@ void updateLateralKinematicsVector(
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr_)
 {
   const double dt = (current_obj.header.stamp.sec - prev_obj.header.stamp.sec) +
-                    (current_obj.header.stamp.nanosec - prev_obj.header.stamp.nanosec) / 1e9;
-  if (dt < 1e6) {
+                    (current_obj.header.stamp.nanosec - prev_obj.header.stamp.nanosec) * 1e-9;
+  if (dt < 1e-6) {
     return;  // do not update
   }
 
@@ -1077,7 +1077,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   bool not_found_corresponding_lanelet = true;
   double left_dist, right_dist;
   double v_left_filtered, v_right_filtered;
-  for (const auto lateral_kinematics : latest_info.lateral_kinematics_vector) {
+  for (const auto & lateral_kinematics : latest_info.lateral_kinematics_vector) {
     if (lateral_kinematics.current_lanelet.id() == current_lanelet_data.lanelet.id()) {
       left_dist = lateral_kinematics.dist_from_left_boundary;
       right_dist = lateral_kinematics.dist_from_right_boundary;
