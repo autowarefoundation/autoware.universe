@@ -32,6 +32,7 @@ using geometry_msgs::msg::Point;
 using point_t = tier4_autoware_utils::Point2d;
 using multipoint_t = tier4_autoware_utils::MultiPoint2d;
 using polygon_t = tier4_autoware_utils::Polygon2d;
+using ring_t = tier4_autoware_utils::LinearRing2d;
 using multipolygon_t = tier4_autoware_utils::MultiPolygon2d;
 using segment_t = tier4_autoware_utils::Segment2d;
 using linestring_t = tier4_autoware_utils::LineString2d;

@@ -48,15 +48,18 @@ void expandDrivableArea(
   updateDrivableAreaBounds(path, expanded_drivable_area);
 }
 
+point_t convert_point(const Point & p) { return point_t{p.x, p.y}; }
+
+Point convert_point(const point_t & p) { return Point().set__x(p.x()).set__y(p.y()); }
+
 polygon_t createExpandedDrivableAreaPolygon(
   const PathWithLaneId & path, const multipolygon_t & expansion_polygons)
 {
-  const auto to_point_t = [](const auto & p) { return point_t{p.x, p.y}; };
   polygon_t original_da_poly;
   original_da_poly.outer().reserve(path.left_bound.size() + path.right_bound.size() + 1);
-  for (const auto & p : path.left_bound) original_da_poly.outer().push_back(to_point_t(p));
+  for (const auto & p : path.left_bound) original_da_poly.outer().push_back(convert_point(p));
   for (auto it = path.right_bound.rbegin(); it != path.right_bound.rend(); ++it)
-    original_da_poly.outer().push_back(to_point_t(*it));
+    original_da_poly.outer().push_back(convert_point(*it));
   original_da_poly.outer().push_back(original_da_poly.outer().front());
 
   multipolygon_t unions;
@@ -72,77 +75,85 @@ polygon_t createExpandedDrivableAreaPolygon(
   return expanded_da_poly;
 }
 
-void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area)
+std::array<ring_t::const_iterator, 4> findLeftRightRanges(
+  const PathWithLaneId & path, const ring_t & expanded_drivable_area)
 {
-  const auto to_point_t = [](const auto & p) { return point_t{p.x, p.y}; };
-  const auto to_point = [](const auto & p) { return Point().set__x(p.x()).set__y(p.y()); };
-  // extract left and right bounds: find the transitions between left and right side closest to the
-  // start and end of the path
   const auto is_left_of_segment = [](const point_t & a, const point_t & b, const point_t & p) {
     return (b.x() - a.x()) * (p.y() - a.y()) - (b.y() - a.y()) * (p.x() - a.x()) > 0;
   };
   const auto is_left_of_path_start = [&](const point_t & p) {
     return is_left_of_segment(
-      to_point_t(path.points[0].point.pose.position),
-      to_point_t(path.points[1].point.pose.position), p);
+      convert_point(path.points[0].point.pose.position),
+      convert_point(path.points[1].point.pose.position), p);
   };
   const auto is_left_of_path_end = [&, size = path.points.size()](const point_t & p) {
     return is_left_of_segment(
-      to_point_t(path.points[size - 2].point.pose.position),
-      to_point_t(path.points[size - 1].point.pose.position), p);
+      convert_point(path.points[size - 2].point.pose.position),
+      convert_point(path.points[size - 1].point.pose.position), p);
   };
-  const auto dist_to_path_start = [start = to_point_t(path.points.front().point.pose.position)](
+  const auto dist_to_path_start = [start = convert_point(path.points.front().point.pose.position)](
                                     const auto & p) { return boost::geometry::distance(start, p); };
-  const auto dist_to_path_end = [end = to_point_t(path.points.back().point.pose.position)](
+  const auto dist_to_path_end = [end = convert_point(path.points.back().point.pose.position)](
                                   const auto & p) { return boost::geometry::distance(end, p); };
-  const auto begin = expanded_drivable_area.outer().begin();
-  const auto end = expanded_drivable_area.outer().end();
+
   double min_start_dist = std::numeric_limits<double>::max();
-  auto start_it = end;
+  auto start_transition = expanded_drivable_area.end();
   double min_end_dist = std::numeric_limits<double>::max();
-  auto end_it = end;
-  for (auto it = begin; std::next(it) != end; ++it) {
+  auto end_transition = expanded_drivable_area.end();
+  for (auto it = expanded_drivable_area.begin(); std::next(it) != expanded_drivable_area.end();
+       ++it) {
     if (is_left_of_path_start(*it) != is_left_of_path_start(*std::next(it))) {
       const auto dist = dist_to_path_start(*it);
       if (dist < min_start_dist) {
-        start_it = it;
+        start_transition = it;
         min_start_dist = dist;
       }
     }
     if (is_left_of_path_end(*it) != is_left_of_path_end(*std::next(it))) {
       const auto dist = dist_to_path_end(*it);
       if (dist < min_end_dist) {
-        end_it = it;
+        end_transition = it;
         min_end_dist = dist;
       }
     }
   }
-  std::vector<Point> expanded_left_bound;
-  std::vector<Point> expanded_right_bound;
-  const auto left_start = is_left_of_path_start(*start_it) ? start_it : std::next(start_it);
-  const auto right_start = is_left_of_path_start(*start_it) ? std::next(start_it) : start_it;
-  const auto left_end = is_left_of_path_end(*end_it) ? end_it : std::next(end_it);
-  const auto right_end = is_left_of_path_end(*end_it) ? std::next(end_it) : end_it;
+  const auto left_start =
+    is_left_of_path_start(*start_transition) ? start_transition : std::next(start_transition);
+  const auto right_start =
+    is_left_of_path_start(*start_transition) ? std::next(start_transition) : start_transition;
+  const auto left_end =
+    is_left_of_path_end(*end_transition) ? end_transition : std::next(end_transition);
+  const auto right_end =
+    is_left_of_path_end(*end_transition) ? std::next(end_transition) : end_transition;
+  return {left_start, left_end, right_start, right_end};
+}
+
+void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area)
+{
+  path.left_bound.clear();
+  path.right_bound.clear();
+  const auto begin = expanded_drivable_area.outer().begin();
+  const auto end = expanded_drivable_area.outer().end();
+  const auto & [left_start, left_end, right_start, right_end] =
+    findLeftRightRanges(path, expanded_drivable_area.outer());
   // NOTE: clockwise ordering -> positive increment for left bound, negative for right bound
   if (left_start < left_end) {
-    expanded_left_bound.reserve(std::distance(left_start, left_end));
-    for (auto it = left_start; it <= left_end; ++it) expanded_left_bound.push_back(to_point(*it));
+    path.left_bound.reserve(std::distance(left_start, left_end));
+    for (auto it = left_start; it <= left_end; ++it) path.left_bound.push_back(convert_point(*it));
   } else {  // loop back
-    expanded_left_bound.reserve(std::distance(left_start, end) + std::distance(begin, left_end));
-    for (auto it = left_start; it != end; ++it) expanded_left_bound.push_back(to_point(*it));
-    for (auto it = begin; it <= left_end; ++it) expanded_left_bound.push_back(to_point(*it));
+    path.left_bound.reserve(std::distance(left_start, end) + std::distance(begin, left_end));
+    for (auto it = left_start; it != end; ++it) path.left_bound.push_back(convert_point(*it));
+    for (auto it = begin; it <= left_end; ++it) path.left_bound.push_back(convert_point(*it));
   }
   if (right_start > right_end) {
-    expanded_right_bound.reserve(std::distance(right_end, right_start));
+    path.right_bound.reserve(std::distance(right_end, right_start));
     for (auto it = right_start; it >= right_end; --it)
-      expanded_right_bound.push_back(to_point(*it));
+      path.right_bound.push_back(convert_point(*it));
   } else {  // loop back
-    expanded_right_bound.reserve(std::distance(begin, right_start) + std::distance(right_end, end));
-    for (auto it = right_start; it >= begin; --it) expanded_right_bound.push_back(to_point(*it));
-    for (auto it = end - 1; it >= right_end; --it) expanded_right_bound.push_back(to_point(*it));
+    path.right_bound.reserve(std::distance(begin, right_start) + std::distance(right_end, end));
+    for (auto it = right_start; it >= begin; --it) path.right_bound.push_back(convert_point(*it));
+    for (auto it = end - 1; it >= right_end; --it) path.right_bound.push_back(convert_point(*it));
   }
-  path.left_bound = expanded_left_bound;
-  path.right_bound = expanded_right_bound;
 }
 
 }  // namespace drivable_area_expansion
