@@ -557,8 +557,7 @@ visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
 
     for (size_t j = 0; j < vehicle_circles_pose.at(i).size(); ++j) {
       const geometry_msgs::msg::Pose & pose = vehicle_circles_pose.at(i).at(j);
-      const auto ub =
-        tier4_autoware_utils::calcOffsetPose(pose, 0.0, base_to_left, 0.0).position;
+      const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, base_to_left, 0.0).position;
       const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, -base_to_right, 0.0).position;
 
       marker.points.push_back(ub);
