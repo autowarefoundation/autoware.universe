@@ -65,8 +65,8 @@ protected:
 
   Ogre::ManualObject * path_manual_object_{nullptr};
   Ogre::ManualObject * velocity_manual_object_{nullptr};
-  rviz_rendering::BillboardLine * left_bound_line_{nullptr};
-  rviz_rendering::BillboardLine * right_bound_line_{nullptr};
+  Ogre::ManualObject * left_bound_object_{nullptr};
+  Ogre::ManualObject * right_bound_object_{nullptr};
 
   rviz_common::properties::BoolProperty * property_path_view_;
   rviz_common::properties::FloatProperty * property_path_width_;

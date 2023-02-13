@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <path/display.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utils.hpp>
 
 #include <memory>
@@ -110,15 +111,8 @@ AutowarePathDisplay::~AutowarePathDisplay()
   if (initialized()) {
     scene_manager_->destroyManualObject(path_manual_object_);
     scene_manager_->destroyManualObject(velocity_manual_object_);
-  }
-
-  if (left_bound_line_) {
-    left_bound_line_->clear();
-    delete left_bound_line_;
-  }
-  if (right_bound_line_) {
-    right_bound_line_->clear();
-    delete right_bound_line_;
+    scene_manager_->destroyManualObject(left_bound_object_);
+    scene_manager_->destroyManualObject(right_bound_object_);
   }
 }
 
@@ -128,13 +122,16 @@ void AutowarePathDisplay::onInitialize()
 
   path_manual_object_ = scene_manager_->createManualObject();
   velocity_manual_object_ = scene_manager_->createManualObject();
+  left_bound_object_ = scene_manager_->createManualObject();
+  right_bound_object_ = scene_manager_->createManualObject();
   path_manual_object_->setDynamic(true);
   velocity_manual_object_->setDynamic(true);
+  left_bound_object_->setDynamic(true);
+  right_bound_object_->setDynamic(true);
   scene_node_->attachObject(path_manual_object_);
   scene_node_->attachObject(velocity_manual_object_);
-
-  left_bound_line_ = new rviz_rendering::BillboardLine(scene_manager_, scene_node_);
-  right_bound_line_ = new rviz_rendering::BillboardLine(scene_manager_, scene_node_);
+  scene_node_->attachObject(left_bound_object_);
+  scene_node_->attachObject(right_bound_object_);
 }
 
 void AutowarePathDisplay::reset()
@@ -142,8 +139,8 @@ void AutowarePathDisplay::reset()
   MFDClass::reset();
   path_manual_object_->clear();
   velocity_manual_object_->clear();
-  left_bound_line_->clear();
-  right_bound_line_->clear();
+  left_bound_object_->clear();
+  right_bound_object_->clear();
 }
 
 bool AutowarePathDisplay::validateFloats(
@@ -195,8 +192,8 @@ void AutowarePathDisplay::processMessage(
 
   path_manual_object_->clear();
   velocity_manual_object_->clear();
-  left_bound_line_->clear();
-  right_bound_line_->clear();
+  left_bound_object_->clear();
+  right_bound_object_->clear();
 
   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
     "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -207,7 +204,6 @@ void AutowarePathDisplay::processMessage(
     path_manual_object_->estimateVertexCount(msg_ptr->points.size() * 2);
     velocity_manual_object_->estimateVertexCount(msg_ptr->points.size());
     path_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
-    // path_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
     velocity_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 
     for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
@@ -288,25 +284,64 @@ void AutowarePathDisplay::processMessage(
   }
 
   if (property_drivable_area_view_->getBool()) {
+    const auto & left_bound = msg_ptr->left_bound;
+    const auto & right_bound = msg_ptr->right_bound;
+    left_bound_object_->estimateVertexCount(left_bound.size() * 2);
+    left_bound_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
+    right_bound_object_->estimateVertexCount(right_bound.size() * 2);
+    right_bound_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
     Ogre::ColourValue color =
       rviz_common::properties::qtToOgre(property_drivable_area_color_->getColor());
     color.a = property_drivable_area_alpha_->getFloat();
 
-    left_bound_line_->setNumLines(1);
-    left_bound_line_->setMaxPointsPerLine(static_cast<uint32_t>(msg_ptr->left_bound.size()));
-    left_bound_line_->setLineWidth(property_drivable_area_width_->getFloat());
-    right_bound_line_->setNumLines(1);
-    right_bound_line_->setMaxPointsPerLine(static_cast<uint32_t>(msg_ptr->right_bound.size()));
-    right_bound_line_->setLineWidth(property_drivable_area_width_->getFloat());
+    const auto line_width = property_drivable_area_width_->getFloat();
+    if (left_bound.size() > 1) {
+      for (size_t i = 0; i < left_bound.size(); ++i) {
+        const auto & curr_p = i == left_bound.size() - 1 ? left_bound.at(i - 1) : left_bound.at(i);
+        const auto & next_p = i == left_bound.size() - 1 ? left_bound.at(i) : left_bound.at(i + 1);
+        const auto yaw = tier4_autoware_utils::calcAzimuthAngle(curr_p, next_p);
+        const auto x_offset = static_cast<float>(line_width * 0.5 * std::sin(yaw));
+        const auto y_offset = static_cast<float>(line_width * 0.5 * std::cos(yaw));
+        auto target_lp = left_bound.at(i);
+        target_lp.x = target_lp.x - x_offset;
+        target_lp.y = target_lp.y + y_offset;
+        target_lp.z = target_lp.z + 0.5;
+        left_bound_object_->position(target_lp.x, target_lp.y, target_lp.z);
+        left_bound_object_->colour(color);
+        auto target_rp = left_bound.at(i);
+        target_rp.x = target_rp.x + x_offset;
+        target_rp.y = target_rp.y - y_offset;
+        target_rp.z = target_rp.z + 0.5;
+        left_bound_object_->position(target_rp.x, target_rp.y, target_rp.z);
+        left_bound_object_->colour(color);
+      }
+    }
+    if (right_bound.size() > 1) {
+      for (size_t i = 0; i < right_bound.size(); ++i) {
+        const auto & curr_p =
+          i == right_bound.size() - 1 ? right_bound.at(i - 1) : right_bound.at(i);
+        const auto & next_p =
+          i == right_bound.size() - 1 ? right_bound.at(i) : right_bound.at(i + 1);
+        const auto yaw = tier4_autoware_utils::calcAzimuthAngle(curr_p, next_p);
+        const auto x_offset = static_cast<float>(line_width * 0.5 * std::sin(yaw));
+        const auto y_offset = static_cast<float>(line_width * 0.5 * std::cos(yaw));
+        auto target_lp = right_bound.at(i);
+        target_lp.x = target_lp.x - x_offset;
+        target_lp.y = target_lp.y + y_offset;
+        target_lp.z = target_lp.z + 0.5;
+        right_bound_object_->position(rviz_common::pointMsgToOgre(target_lp));
+        right_bound_object_->colour(color);
+        auto target_rp = right_bound.at(i);
+        target_rp.x = target_rp.x + x_offset;
+        target_rp.y = target_rp.y - y_offset;
+        target_rp.z = target_rp.z + 0.5;
+        right_bound_object_->position(rviz_common::pointMsgToOgre(target_rp));
+        right_bound_object_->colour(color);
+      }
+    }
 
-    for (const auto & lb : msg_ptr->left_bound) {
-      Ogre::Vector3 xpos = rviz_common::pointMsgToOgre(lb);
-      left_bound_line_->addPoint(xpos, color);
-    }
-    for (const auto & rb : msg_ptr->right_bound) {
-      Ogre::Vector3 xpos = rviz_common::pointMsgToOgre(rb);
-      right_bound_line_->addPoint(xpos, color);
-    }
+    left_bound_object_->end();
+    right_bound_object_->end();
   }
 
   last_msg_ptr_ = msg_ptr;
