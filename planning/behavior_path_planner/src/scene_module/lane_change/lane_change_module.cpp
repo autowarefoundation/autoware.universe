@@ -380,7 +380,7 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
     *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     common_parameters, *parameters_);
 
-  if (!lane_change_paths.empty()) {
+  if (lane_change_paths.empty()) {
     return std::make_pair(false, false);
   }
   // get lanes used for detection
