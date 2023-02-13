@@ -497,7 +497,7 @@ LaneChangePaths selectValidPaths(
 
 bool selectSafePath(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
+  const lanelet::ConstLanelets & backward_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & ros_parameters, LaneChangePath * selected_path,
@@ -510,7 +510,7 @@ bool selectSafePath(
       common_parameters.ego_nearest_yaw_threshold);
     Pose ego_pose_before_collision;
     if (isLaneChangePathSafe(
-          path, current_lanes, target_lanes, dynamic_objects, current_pose, current_seg_idx,
+          path, current_lanes, backward_lanes, dynamic_objects, current_pose, current_seg_idx,
           current_twist, common_parameters, ros_parameters,
           common_parameters.expected_front_deceleration,
           common_parameters.expected_rear_deceleration, ego_pose_before_collision, debug_data, true,
