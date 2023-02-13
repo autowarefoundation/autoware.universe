@@ -47,8 +47,6 @@ double calculateDistanceLimit(
         dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
       }
     }
-  }
-  for (const auto & polygon : limit_polygons) {
     multipoint_t intersections;
     boost::geometry::intersection(expansion_polygon, polygon, intersections);
     for (const auto & p : intersections) {
@@ -74,6 +72,50 @@ polygon_t createExpansionPolygon(
   return polygons.front();
 }
 
+std::array<double, 3> calculate_arc_length_range_and_distance(
+  const linestring_t & path_ls, const polygon_t & footprint, const linestring_t & bound,
+  const bool is_left, const double path_length)
+{
+  multipoint_t intersections;
+  double expansion_dist = 0.0;
+  double from_arc_length = std::numeric_limits<double>::max();
+  double to_arc_length = std::numeric_limits<double>::min();
+  boost::geometry::intersection(footprint, bound, intersections);
+  if (!intersections.empty()) {
+    for (const auto & intersection : intersections) {
+      const auto projection = point_to_linestring_projection(intersection, path_ls);
+      if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
+      from_arc_length = std::min(from_arc_length, projection.arc_length);
+      to_arc_length = std::max(to_arc_length, projection.arc_length);
+    }
+    for (const auto & p : footprint.outer()) {
+      const auto projection = point_to_linestring_projection(p, path_ls);
+      if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
+      if (is_left == (projection.distance > 0) && std::abs(projection.distance) > expansion_dist) {
+        expansion_dist = std::abs(projection.distance);
+        from_arc_length = std::min(from_arc_length, projection.arc_length);
+        to_arc_length = std::max(to_arc_length, projection.arc_length);
+      }
+    }
+  }
+  return std::array<double, 3>({from_arc_length, to_arc_length, expansion_dist});
+}
+
+polygon_t create_compensation_polygon(
+  const linestring_t & base_ls, const double compensation_dist, const bool is_left,
+  const multilinestring_t uncrossable_lines, const multipolygon_t & predicted_paths)
+{
+  polygon_t compensation_polygon = createExpansionPolygon(base_ls, compensation_dist, !is_left);
+  double dist_limit = std::min(
+    compensation_dist, calculateDistanceLimit(base_ls, compensation_polygon, uncrossable_lines));
+  if (!predicted_paths.empty())
+    dist_limit =
+      std::min(dist_limit, calculateDistanceLimit(base_ls, compensation_polygon, predicted_paths));
+  if (dist_limit < compensation_dist)
+    compensation_polygon = createExpansionPolygon(base_ls, dist_limit, !is_left);
+  return compensation_polygon;
+}
+
 multipolygon_t createExpansionPolygons(
   const PathWithLaneId & path, const multipolygon_t & path_footprints,
   const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
@@ -88,41 +130,12 @@ multipolygon_t createExpansionPolygons(
   for (const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
   const auto path_length = static_cast<double>(boost::geometry::length(path_ls));
 
-  const auto calculate_arc_length_range_and_distance = [&](
-                                                         const auto & footprint, const auto & bound,
-                                                         const bool is_left) {
-    multipoint_t intersections;
-    double expansion_dist = 0.0;
-    double from_arc_length = std::numeric_limits<double>::max();
-    double to_arc_length = std::numeric_limits<double>::min();
-    boost::geometry::intersection(footprint, bound, intersections);
-    if (!intersections.empty()) {
-      for (const auto & intersection : intersections) {
-        const auto projection = point_to_linestring_projection(intersection, path_ls);
-        if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
-        from_arc_length = std::min(from_arc_length, projection.arc_length);
-        to_arc_length = std::max(to_arc_length, projection.arc_length);
-      }
-      for (const auto & p : footprint.outer()) {
-        const auto projection = point_to_linestring_projection(p, path_ls);
-        if (projection.arc_length <= 0.0 || projection.arc_length >= path_length) continue;
-        if (
-          is_left == (projection.distance > 0) && std::abs(projection.distance) > expansion_dist) {
-          expansion_dist = std::abs(projection.distance);
-          from_arc_length = std::min(from_arc_length, projection.arc_length);
-          to_arc_length = std::max(to_arc_length, projection.arc_length);
-        }
-      }
-    }
-    return std::array<double, 3>({from_arc_length, to_arc_length, expansion_dist});
-  };
-
   multipolygon_t expansion_polygons;
   for (const auto & footprint : path_footprints) {
     bool is_left = true;
     for (const auto & bound : {left_ls, right_ls}) {
       auto [from_arc_length, to_arc_length, footprint_dist] =
-        calculate_arc_length_range_and_distance(footprint, bound, is_left);
+        calculate_arc_length_range_and_distance(path_ls, footprint, bound, is_left, path_length);
       if (footprint_dist > 0.0) {
         from_arc_length -= params.extra_arc_length;
         to_arc_length += params.extra_arc_length;
@@ -141,22 +154,12 @@ multipolygon_t createExpansionPolygons(
           if (params.compensate_uncrossable_lines) {
             const auto compensation_dist =
               footprint_dist - limited_dist + params.compensate_extra_dist;
-            polygon_t compensation_polygon =
-              createExpansionPolygon(base_ls, compensation_dist, !is_left);
-            double dist_limit = std::min(
-              compensation_dist,
-              calculateDistanceLimit(base_ls, compensation_polygon, uncrossable_lines));
-            if (params.avoid_dynamic_objects)
-              dist_limit = std::min(
-                dist_limit, calculateDistanceLimit(base_ls, compensation_polygon, predicted_paths));
-            if (dist_limit < compensation_dist)
-              compensation_polygon = createExpansionPolygon(base_ls, dist_limit, !is_left);
-            expansion_polygons.push_back(compensation_polygon);
+            expansion_polygons.push_back(create_compensation_polygon(
+              base_ls, compensation_dist, is_left, uncrossable_lines, predicted_paths));
           }
         }
-        if (params.avoid_dynamic_objects)
-          limited_dist = std::min(
-            limited_dist, calculateDistanceLimit(base_ls, expansion_polygon, predicted_paths));
+        limited_dist = std::min(
+          limited_dist, calculateDistanceLimit(base_ls, expansion_polygon, predicted_paths));
         if (limited_dist < expansion_dist)
           expansion_polygon = createExpansionPolygon(base_ls, limited_dist, is_left);
         expansion_polygons.push_back(expansion_polygon);
