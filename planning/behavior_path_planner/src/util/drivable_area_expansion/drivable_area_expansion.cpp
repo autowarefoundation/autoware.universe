@@ -20,12 +20,7 @@
 #include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-
 #include <boost/geometry.hpp>
-#include <boost/geometry/algorithms/correct.hpp>
-#include <boost/geometry/algorithms/transform.hpp>
-#include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
 namespace drivable_area_expansion
 {
@@ -133,7 +128,7 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   path.left_bound.clear();
   path.right_bound.clear();
   const auto begin = expanded_drivable_area.outer().begin();
-  const auto end = expanded_drivable_area.outer().end();
+  const auto end = std::prev(expanded_drivable_area.outer().end());
   const auto & [left_start, left_end, right_start, right_end] =
     findLeftRightRanges(path, expanded_drivable_area.outer());
   // NOTE: clockwise ordering -> positive increment for left bound, negative for right bound
