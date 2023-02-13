@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/path_projection.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/types.hpp"
+#include "lanelet2_extension/utility/message_conversion.hpp"
 
 #include <gtest/gtest.h>
 
@@ -206,4 +208,83 @@ TEST(DrivableAreaExpansionProjection, InverseProjection)
       EXPECT_NEAR(inverse.second.y(), p.y(), eps);
     }
   }
+}
+
+TEST(DrivableAreaExpansionProjection, expandDrivableArea)
+{
+  drivable_area_expansion::DrivableAreaExpansionParameters params;
+  drivable_area_expansion::PredictedObjects dynamic_objects;
+  autoware_auto_mapping_msgs::msg::HADMapBin map;
+  lanelet::LaneletMapPtr empty_lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
+  lanelet::utils::conversion::toBinMsg(empty_lanelet_map_ptr, &map);
+  route_handler::RouteHandler route_handler(map);
+  lanelet::ConstLanelets path_lanes = {};
+  drivable_area_expansion::PathWithLaneId path;
+  {  // Simple path with Y=0 and X = 0, 1, 2
+    drivable_area_expansion::PathWithLaneId::_points_type::value_type p;
+    p.point.pose.position.x = 0.0;
+    p.point.pose.position.y = 0.0;
+    path.points.push_back(p);
+    p.point.pose.position.x = 1.0;
+    path.points.push_back(p);
+    p.point.pose.position.x = 2.0;
+    path.points.push_back(p);
+  }
+  {  // Left bound at Y = 1, Right bound at Y = -1
+    drivable_area_expansion::Point pl;
+    drivable_area_expansion::Point pr;
+    pl.y = 1.0;
+    pr.y = -1.0;
+    pl.x = 0.0;
+    pr.x = 0.0;
+    path.left_bound.push_back(pl);
+    path.right_bound.push_back(pr);
+    pl.x = 1.0;
+    pr.x = 1.0;
+    path.left_bound.push_back(pl);
+    path.right_bound.push_back(pr);
+    pl.x = 2.0;
+    pr.x = 2.0;
+    path.left_bound.push_back(pl);
+    path.right_bound.push_back(pr);
+  }
+  {  // parameters
+    params.enabled = true;
+    params.avoid_dynamic_objects = false;
+    params.avoid_linestring_dist = 0.0;
+    params.avoid_linestring_types = {};
+    params.compensate_extra_dist = false;
+    params.max_expansion_distance = 0.0;  // means no limit
+    params.max_path_arc_length = 0.0;     // means no limit
+    params.extra_arc_length = 1.0;
+    params.expansion_method = "polygon";
+    // 4m x 4m ego footprint
+    params.ego_front_offset = 1.0;
+    params.ego_rear_offset = -1.0;
+    params.ego_left_offset = 2.0;
+    params.ego_right_offset = -2.0;
+  }
+  // we expect the expand the drivable area by 1m on each side
+  drivable_area_expansion::expandDrivableArea(
+    path, params, dynamic_objects, route_handler, path_lanes);
+  // unchanged path points
+  ASSERT_EQ(path.points.size(), 3ul);
+  for (auto i = 0.0; i < path.points.size(); ++i) {
+    EXPECT_EQ(path.points[i].point.pose.position.x, i);
+    EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+  }
+  // expanded left bound
+  ASSERT_EQ(path.left_bound.size(), 2ul);
+  EXPECT_EQ(path.left_bound[0].x, 0.0);
+  EXPECT_EQ(path.left_bound[0].y, 2.0);
+  EXPECT_EQ(path.left_bound[1].x, 2.0);
+  EXPECT_EQ(path.left_bound[1].y, 2.0);
+  // expanded right bound
+  ASSERT_EQ(path.right_bound.size(), 3ul);
+  EXPECT_EQ(path.right_bound[0].x, 0.0);
+  EXPECT_EQ(path.right_bound[0].y, -2.0);
+  EXPECT_EQ(path.right_bound[1].x, 2.0);
+  EXPECT_EQ(path.right_bound[1].y, -2.0);
+  EXPECT_EQ(path.right_bound[2].x, 2.0);
+  EXPECT_EQ(path.right_bound[2].y, -1.0);
 }
