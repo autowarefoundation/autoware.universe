@@ -332,7 +332,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     // object is behind ego or too far.
     if (object_data.longitudinal < -parameters_->object_check_backward_distance) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::OBJECT_IS_BEHIND_THRESHOLD);
-      object_data.reason = AvoidanceDebugFactor::OBJECT_BEHIND_PATH_GOAL;
+      object_data.reason = AvoidanceDebugFactor::OBJECT_IS_BEHIND_THRESHOLD;
       data.other_objects.push_back(object_data);
       continue;
     }
@@ -2573,12 +2573,8 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
 
     // 2. when there are multiple turning lanes whose previous lanelet is the same in
     // intersection
-    const lanelet::ConstLanelets next_lanes_from_intersection = std::invoke(
+    const lanelet::ConstLanelets next_lanes = std::invoke(
       [&route_handler](const lanelet::ConstLanelet & lane) {
-        if (!lane.hasAttribute("turn_direction")) {
-          return lanelet::ConstLanelets{};
-        }
-
         // get previous lane, and return false if previous lane does not exist
         lanelet::ConstLanelets prev_lanes;
         if (!route_handler->getPreviousLaneletsWithinRoute(lane, &prev_lanes)) {
@@ -2598,7 +2594,7 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
 
     // 2.1 look for neighbour lane, where end line of the lane is connected to end line of the
     // original lane
-    for (const auto & next_lane : next_lanes_from_intersection) {
+    for (const auto & next_lane : next_lanes) {
       if (current_lane.id() == next_lane.id()) {
         continue;
       }
@@ -2863,7 +2859,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
     } else {
       RCLCPP_WARN_STREAM(getLogger(), "Direction is UNKNOWN");
     }
-    addShiftLineIfApproved(data.safe_new_sl);
+    if (!parameters_->disable_path_update) {
+      addShiftLineIfApproved(data.safe_new_sl);
+    }
   } else if (isWaitingApproval()) {
     clearWaitingApproval();
     removeCandidateRTCStatus();
@@ -2894,7 +2892,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
 
   avoidance_data_.state = updateEgoState(data);
-  updateEgoBehavior(data, avoidance_path);
+  if (!parameters_->disable_path_update) {
+    updateEgoBehavior(data, avoidance_path);
+  }
 
   if (parameters_->publish_debug_marker) {
     setDebugData(avoidance_data_, path_shifter_, debug_data_);
