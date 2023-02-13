@@ -46,6 +46,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   ip.state_transit_margin_time = node.declare_parameter(ns + ".state_transit_margin_time", 2.0);
   ip.stop_line_margin = node.declare_parameter(ns + ".stop_line_margin", 1.0);
+  ip.keep_detection_vel_thr = node.declare_parameter(ns + ".keep_detection_vel_thr", 0.833);
   ip.stuck_vehicle_detect_dist = node.declare_parameter(ns + ".stuck_vehicle_detect_dist", 3.0);
   ip.stuck_vehicle_ignore_dist = node.declare_parameter(ns + ".stuck_vehicle_ignore_dist", 5.0) +
                                  vehicle_info.max_longitudinal_offset_m;
@@ -97,10 +98,6 @@ void IntersectionModuleManager::launchNewModules(
     const auto lane_id = ll.id();
     const auto module_id = lane_id;
 
-    if (hasSameParentLaneletWithRegistered(ll)) {
-      continue;
-    }
-
     // Is intersection?
     const std::string turn_direction = ll.attributeOr("turn_direction", "else");
     const auto is_intersection =
@@ -108,6 +105,11 @@ void IntersectionModuleManager::launchNewModules(
     if (!is_intersection) {
       continue;
     }
+
+    if (hasSameParentLaneletAndTurnDirectionWithRegistered(ll, turn_direction)) {
+      continue;
+    }
+
     registerModule(std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_,
       logger_.get_child("intersection_module"), clock_));
@@ -142,28 +144,30 @@ void MergeFromPrivateModuleManager::launchNewModules(
     // Is merging from private road?
     // In case the goal is in private road, check if this lanelet is conflicting with urban lanelet
     const std::string lane_location = ll.attributeOr("location", "else");
-    if (lane_location == "private") {
-      if (i + 1 < lanelets.size()) {
-        const auto next_lane = lanelets.at(i + 1);
-        const std::string next_lane_location = next_lane.attributeOr("location", "else");
-        if (next_lane_location != "private") {
+    if (lane_location != "private") {
+      continue;
+    }
+
+    if (i + 1 < lanelets.size()) {
+      const auto next_lane = lanelets.at(i + 1);
+      const std::string next_lane_location = next_lane.attributeOr("location", "else");
+      if (next_lane_location != "private") {
+        registerModule(std::make_shared<MergeFromPrivateRoadModule>(
+          module_id, lane_id, planner_data_, merge_from_private_area_param_,
+          logger_.get_child("merge_from_private_road_module"), clock_));
+        continue;
+      }
+    } else {
+      const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
+      const auto conflicting_lanelets =
+        lanelet::utils::getConflictingLanelets(routing_graph_ptr, ll);
+      for (auto && conflicting_lanelet : conflicting_lanelets) {
+        const std::string conflicting_attr = conflicting_lanelet.attributeOr("location", "else");
+        if (conflicting_attr == "urban") {
           registerModule(std::make_shared<MergeFromPrivateRoadModule>(
             module_id, lane_id, planner_data_, merge_from_private_area_param_,
             logger_.get_child("merge_from_private_road_module"), clock_));
           continue;
-        }
-      } else {
-        const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
-        const auto conflicting_lanelets =
-          lanelet::utils::getConflictingLanelets(routing_graph_ptr, ll);
-        for (auto && conflicting_lanelet : conflicting_lanelets) {
-          const std::string conflicting_attr = conflicting_lanelet.attributeOr("location", "else");
-          if (conflicting_attr == "urban") {
-            registerModule(std::make_shared<MergeFromPrivateRoadModule>(
-              module_id, lane_id, planner_data_, merge_from_private_area_param_,
-              logger_.get_child("merge_from_private_road_module"), clock_));
-            continue;
-          }
         }
       }
     }
@@ -185,7 +189,8 @@ IntersectionModuleManager::getModuleExpiredFunction(
       if (!is_intersection) {
         continue;
       }
-      if (hasSameParentLaneletWith(lane, scene_module->getModuleId())) {
+      if (hasSameParentLaneletAndTurnDirectionWith(
+            lane, scene_module->getModuleId(), turn_direction)) {
         return false;
       }
     }
@@ -208,7 +213,8 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
       if (!is_intersection) {
         continue;
       }
-      if (hasSameParentLaneletWith(lane, scene_module->getModuleId())) {
+      if (hasSameParentLaneletAndTurnDirectionWith(
+            lane, scene_module->getModuleId(), turn_direction)) {
         return false;
       }
     }
@@ -216,14 +222,18 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
   };
 }
 
-bool IntersectionModuleManager::hasSameParentLaneletWith(
-  const lanelet::ConstLanelet & lane, const size_t module_id) const
+bool IntersectionModuleManager::hasSameParentLaneletAndTurnDirectionWith(
+  const lanelet::ConstLanelet & lane, const size_t module_id,
+  const std::string & turn_direction_lane) const
 {
-  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
-
   const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(module_id);
+  const auto turn_direction_registered = registered_lane.attributeOr("turn_direction", "else");
+  if (turn_direction_registered != turn_direction_lane) {
+    return false;
+  }
   lanelet::ConstLanelets registered_parents =
     planner_data_->route_handler_->getPreviousLanelets(registered_lane);
+  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
   for (const auto & ll : registered_parents) {
     auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
     neighbor_lanes.push_back(ll);
@@ -234,13 +244,17 @@ bool IntersectionModuleManager::hasSameParentLaneletWith(
   return false;
 }
 
-bool IntersectionModuleManager::hasSameParentLaneletWithRegistered(
-  const lanelet::ConstLanelet & lane) const
+bool IntersectionModuleManager::hasSameParentLaneletAndTurnDirectionWithRegistered(
+  const lanelet::ConstLanelet & lane, const std::string & turn_direction) const
 {
   lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
 
   for (const auto & id : registered_module_id_set_) {
     const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(id);
+    const auto turn_direction_registered = registered_lane.attributeOr("turn_direction", "else");
+    if (turn_direction_registered != turn_direction) {
+      continue;
+    }
     lanelet::ConstLanelets registered_parents =
       planner_data_->route_handler_->getPreviousLanelets(registered_lane);
     for (const auto & ll : registered_parents) {
@@ -254,14 +268,18 @@ bool IntersectionModuleManager::hasSameParentLaneletWithRegistered(
   return false;
 }
 
-bool MergeFromPrivateModuleManager::hasSameParentLaneletWith(
-  const lanelet::ConstLanelet & lane, const size_t module_id) const
+bool MergeFromPrivateModuleManager::hasSameParentLaneletAndTurnDirectionWith(
+  const lanelet::ConstLanelet & lane, const size_t module_id,
+  const std::string & turn_direction) const
 {
-  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
-
   const auto registered_lane = planner_data_->route_handler_->getLaneletsFromId(module_id);
+  const auto turn_direction_registered = registered_lane.attributeOr("turn_direction", "else");
+  if (turn_direction_registered != turn_direction) {
+    return false;
+  }
   lanelet::ConstLanelets registered_parents =
     planner_data_->route_handler_->getPreviousLanelets(registered_lane);
+  lanelet::ConstLanelets parents = planner_data_->route_handler_->getPreviousLanelets(lane);
   for (const auto & ll : registered_parents) {
     auto neighbor_lanes = planner_data_->route_handler_->getLaneChangeableNeighbors(ll);
     neighbor_lanes.push_back(ll);
