@@ -33,6 +33,22 @@ struct PolygonPoint
   double lon_dist;
 };
 
+struct PolygonPoint2
+{
+  geometry_msgs::msg::Point point;
+  size_t bound_seg_idx;
+  double lon_dist_to_segment;
+  double lat_dist_to_bound;
+
+  bool is_after(const PolygonPoint2 & other_point) const
+  {
+    if (bound_seg_idx == other_point.bound_seg_idx) {
+      return other_point.lon_dist_to_segment < lon_dist_to_segment;
+    }
+    return other_point.bound_seg_idx < bound_seg_idx;
+  }
+};
+
 bool isOnRight(const ObjectData & obj);
 
 double calcShiftLength(
