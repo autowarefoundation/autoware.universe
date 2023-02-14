@@ -16,9 +16,6 @@
       enable_safety_check: false
       enable_yield_maneuver: false
 
-      # bound clipping for objects
-      enable_bound_clipping: false
-
       # for debug
       publish_debug_marker: false
       print_debug_info: false
