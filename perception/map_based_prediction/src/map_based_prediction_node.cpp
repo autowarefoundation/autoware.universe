@@ -1037,6 +1037,10 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   return all_ref_paths;
 }
 
+/**
+ * @brief Do lane change prediction
+ * @return predicted manuever (lane follow, left/right lane change)
+ */
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
   const double /*object_detected_time*/)
@@ -1048,26 +1052,11 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   }
 
   const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
-  const double current_time = (this->get_clock()->now()).seconds();
 
   // Step2. Check if object history length longer than history_time_length
   const int latest_id = static_cast<int>(object_info.size()) - 1;
-  int penultimate_id = latest_id;
-  while (penultimate_id >= 0) {
-    const double prev_time_delay = object_info.at(penultimate_id).time_delay;
-    const double prev_time =
-      rclcpp::Time(object_info.at(penultimate_id).header.stamp).seconds() + prev_time_delay;
-    // if (object_detected_time - prev_time > history_time_length_) {
-    if (current_time - prev_time > history_time_length_) {
-      break;
-    }
-    --penultimate_id;
-  }
-
   // object history is not long enough
-  if (penultimate_id < 0) {
-    return Maneuver::LANE_FOLLOW;
-  } else if (latest_id == 0) {
+  if (latest_id < 1) {
     return Maneuver::LANE_FOLLOW;
   }
 
