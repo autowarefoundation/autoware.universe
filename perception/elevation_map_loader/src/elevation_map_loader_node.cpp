@@ -14,6 +14,7 @@
 
 #include "elevation_map_loader/elevation_map_loader_node.hpp"
 
+#include <grid_map_core/iterators/PolygonIterator.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_cv/InpaintFilter.hpp>
 #include <grid_map_pcl/GridMapPclLoader.hpp>
@@ -215,9 +216,16 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
   elevation_map_.add("inpaint_mask", 0.0);
 
   elevation_map_.setBasicLayers(std::vector<std::string>());
-  for (grid_map::GridMapIterator iterator(elevation_map_); !iterator.isPastEnd(); ++iterator) {
-    if (!elevation_map_.isValid(*iterator, layer_name_)) {
-      elevation_map_.at("inpaint_mask", *iterator) = 1.0;
+  for (const auto & lanelet : lane_filter_.road_lanelets_) {
+    auto lane_polygon = lanelet.polygon2d().basicPolygon();
+    grid_map::Polygon polygon;
+    for (const auto & p : lane_polygon) {
+      polygon.addVertex(grid_map::Position(p[0], p[1]));
+    }
+    for (grid_map::PolygonIterator iterator(elevation_map_, polygon); !iterator.isPastEnd(); ++iterator) {
+      if (!elevation_map_.isValid(*iterator, layer_name_)) {
+        elevation_map_.at("inpaint_mask", *iterator) = 1.0;
+      }
     }
   }
   cv::Mat original_image;
