@@ -496,7 +496,7 @@ std::vector<PolygonPoint> getPolygonPointsInsideBounds(
 
   // calculate valid inside polygon
   std::vector<PolygonPoint> valid_inside_polygon;
-  for (int i = 0; i < (end_idx - start_idx + 1 + polygon_indices.size()) % polygon_indices.size();
+  for (int i = 0; i < (end_idx - start_idx + polygon_indices.size()) % polygon_indices.size() + 1;
        ++i) {
     const int poly_idx = (start_idx + i) % inside_polygon.size();
     valid_inside_polygon.push_back(inside_polygon.at(poly_idx));
