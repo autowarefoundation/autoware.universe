@@ -176,6 +176,7 @@ void ElevationMapLoaderNode::onVectorMap(
 void ElevationMapLoaderNode::createElevationMap()
 {
   auto grid_map_logger = rclcpp::get_logger("grid_map_logger");
+  grid_map_logger.set_level(rclcpp::Logger::Level::Error);
   pcl::shared_ptr<grid_map::GridMapPclLoader> grid_map_pcl_loader =
     pcl::make_shared<grid_map::GridMapPclLoader>(grid_map_logger);
   grid_map_pcl_loader->loadParameters(param_file_path_);
@@ -215,14 +216,22 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
   elevation_map_.add("inpaint_mask", 0.0);
 
   elevation_map_.setBasicLayers(std::vector<std::string>());
-  for (const auto & lanelet : lane_filter_.road_lanelets_) {
-    auto lane_polygon = lanelet.polygon2d().basicPolygon();
-    grid_map::Polygon polygon;
-    for (const auto & p : lane_polygon) {
-      polygon.addVertex(grid_map::Position(p[0], p[1]));
+  if (lane_filter_.use_lane_filter_) {
+    for (const auto & lanelet : lane_filter_.road_lanelets_) {
+      auto lane_polygon = lanelet.polygon2d().basicPolygon();
+      grid_map::Polygon polygon;
+      for (const auto & p : lane_polygon) {
+        polygon.addVertex(grid_map::Position(p[0], p[1]));
+      }
+      for (grid_map::PolygonIterator iterator(elevation_map_, polygon); !iterator.isPastEnd();
+           ++iterator) {
+        if (!elevation_map_.isValid(*iterator, layer_name_)) {
+          elevation_map_.at("inpaint_mask", *iterator) = 1.0;
+        }
+      }
     }
-    for (grid_map::PolygonIterator iterator(elevation_map_, polygon); !iterator.isPastEnd();
-         ++iterator) {
+  } else {
+    for (grid_map::GridMapIterator iterator(elevation_map_); !iterator.isPastEnd(); ++iterator) {
       if (!elevation_map_.isValid(*iterator, layer_name_)) {
         elevation_map_.at("inpaint_mask", *iterator) = 1.0;
       }
