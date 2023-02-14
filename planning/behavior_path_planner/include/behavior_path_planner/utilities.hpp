@@ -496,17 +496,18 @@ bool isLateralDistanceEnough(
 bool isSafeInLaneletCollisionCheck(
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
   const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const PredictedObject & target_object, const PredictedPath & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const double front_decel,
+  const double prepare_duration, const PredictedObject & target_object,
+  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
+  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
-  const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double check_start_time, const double check_end_time, const double check_time_resolution,
-  const PredictedObject & target_object, const BehaviorPathPlannerParameters & common_parameters,
-  const double front_decel, const double rear_decel, CollisionCheckDebug & debug);
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
+  const Twist & ego_current_twist, const std::vector<double> & check_duration,
+  const double prepare_duration, const PredictedObject & target_object,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
+  const double rear_decel, CollisionCheckDebug & debug);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 

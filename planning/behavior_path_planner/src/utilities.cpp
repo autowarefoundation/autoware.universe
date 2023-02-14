@@ -2292,9 +2292,9 @@ bool isLateralDistanceEnough(
 bool isSafeInLaneletCollisionCheck(
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
   const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const PredictedObject & target_object, const PredictedPath & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const double front_decel,
+  const double prepare_duration, const PredictedObject & target_object,
+  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
+  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug)
 {
   debug.lerped_path.reserve(check_duration.size());
@@ -2304,8 +2304,8 @@ bool isSafeInLaneletCollisionCheck(
   const auto object_speed = l2Norm(object_twist.linear);
   const auto ignore_check_at_time = [&](const double current_time) {
     return (
-      (current_time < lane_change_parameters.lane_change_prepare_duration) &&
-      (object_speed < lane_change_parameters.prepare_phase_ignore_target_speed_thresh));
+      (current_time < prepare_duration) &&
+      (object_speed < prepare_phase_ignore_target_speed_thresh));
   };
 
   for (size_t i = 0; i < check_duration.size(); ++i) {
@@ -2349,22 +2349,34 @@ bool isSafeInLaneletCollisionCheck(
 }
 
 bool isSafeInFreeSpaceCollisionCheck(
-  const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double check_start_time, const double check_end_time, const double check_time_resolution,
-  const PredictedObject & target_object, const BehaviorPathPlannerParameters & common_parameters,
-  const double front_decel, const double rear_decel, CollisionCheckDebug & debug)
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
+  const Twist & ego_current_twist, const std::vector<double> & check_duration,
+  const double prepare_duration, const PredictedObject & target_object,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
+  const double rear_decel, CollisionCheckDebug & debug)
 {
   tier4_autoware_utils::Polygon2d obj_polygon;
   if (!util::calcObjectPolygon(target_object, &obj_polygon)) {
     return false;
   }
-  Pose expected_ego_pose = ego_current_pose;
-  for (double t = check_start_time; t < check_end_time; t += check_time_resolution) {
-    tier4_autoware_utils::Polygon2d ego_polygon;
-    [[maybe_unused]] const auto get_ego_info = util::getEgoExpectedPoseAndConvertToPolygon(
-      ego_current_pose, ego_predicted_path, ego_polygon, t, ego_info, expected_ego_pose,
-      debug.failed_reason);
+
+  const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
+  const auto object_speed = l2Norm(object_twist.linear);
+  const auto ignore_check_at_time = [&](const double current_time) {
+    return (
+      (current_time < prepare_duration) &&
+      (object_speed < prepare_phase_ignore_target_speed_thresh));
+  };
+  for (size_t i = 0; i < check_duration.size(); ++i) {
+    const auto current_time = check_duration.at(i);
+
+    if (ignore_check_at_time(current_time)) {
+      continue;
+    }
+    const auto & ego_info = interpolated_ego.at(i);
+    auto expected_ego_pose = ego_info.first;
+    const auto & ego_polygon = ego_info.second;
 
     debug.ego_polygon = ego_polygon;
     debug.obj_polygon = obj_polygon;
