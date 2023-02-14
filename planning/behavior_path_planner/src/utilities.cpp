@@ -2293,16 +2293,31 @@ bool isSafeInLaneletCollisionCheck(
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
   const Twist & ego_current_twist, const std::vector<double> & check_duration,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const LaneChangeParameters & lane_change_parameters, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug)
 {
   debug.lerped_path.reserve(check_duration.size());
 
   Pose expected_obj_pose = target_object.kinematics.initial_pose_with_covariance.pose;
+  const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
+  const auto object_speed = l2Norm(object_twist.linear);
+  const auto ignore_check_at_time = [&](const double current_time) {
+    return (
+      (current_time < lane_change_parameters.lane_change_prepare_duration) &&
+      (object_speed < lane_change_parameters.prepare_phase_ignore_target_speed_thresh));
+  };
+
   for (size_t i = 0; i < check_duration.size(); ++i) {
+    const auto current_time = check_duration.at(i);
+
+    if (ignore_check_at_time(current_time)) {
+      continue;
+    }
+
     tier4_autoware_utils::Polygon2d obj_polygon;
     [[maybe_unused]] const auto get_obj_info = util::getObjectExpectedPoseAndConvertToPolygon(
-      target_object_path, target_object, obj_polygon, check_duration.at(i), expected_obj_pose,
+      target_object_path, target_object, obj_polygon, current_time, expected_obj_pose,
       debug.failed_reason);
     const auto & ego_info = interpolated_ego.at(i);
     auto expected_ego_pose = ego_info.first;
@@ -2322,7 +2337,6 @@ bool isSafeInLaneletCollisionCheck(
     debug.expected_ego_pose = expected_ego_pose;
     debug.expected_obj_pose = expected_obj_pose;
 
-    const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
     if (!util::hasEnoughDistance(
           expected_ego_pose, ego_current_twist, expected_obj_pose, object_twist, common_parameters,
           front_decel, rear_decel, debug)) {

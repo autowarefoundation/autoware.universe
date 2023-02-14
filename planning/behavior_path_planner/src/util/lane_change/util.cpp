@@ -576,7 +576,8 @@ bool isLaneChangePathSafe(
     for (const auto & obj_path : predicted_paths) {
       if (!util::isSafeInLaneletCollisionCheck(
             interpolated_ego, current_twist, check_durations, obj, obj_path, common_parameters,
-            front_decel, rear_decel, ego_pose_before_collision, current_debug_data.second)) {
+            lane_change_parameters, front_decel, rear_decel, ego_pose_before_collision,
+            current_debug_data.second)) {
         appendDebugInfo(current_debug_data, false);
         return false;
       }

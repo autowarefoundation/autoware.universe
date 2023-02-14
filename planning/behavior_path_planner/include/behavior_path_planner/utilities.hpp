@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/pull_out/pull_out_path.hpp"
 
 #include <opencv2/opencv.hpp>
@@ -496,7 +497,8 @@ bool isSafeInLaneletCollisionCheck(
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
   const Twist & ego_current_twist, const std::vector<double> & check_duration,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const LaneChangeParameters & lane_change_parameters, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
