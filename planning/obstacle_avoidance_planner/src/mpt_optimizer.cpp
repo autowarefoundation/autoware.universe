@@ -43,7 +43,8 @@ geometry_msgs::msg::Pose convertRefPointsToPose(const ReferencePoint & ref_point
 }
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
-  const std::vector<ReferencePoint> & ref_points, const size_t l_idx, const VehicleParam & vehicle_param_)
+  const std::vector<ReferencePoint> & ref_points, const size_t l_idx,
+  const VehicleParam & vehicle_param_)
 {
   const double base_to_right = (vehicle_param_.wheel_tread / 2.0) + vehicle_param_.right_overhang;
   const double base_to_left = (vehicle_param_.wheel_tread / 2.0) + vehicle_param_.left_overhang;
@@ -55,7 +56,6 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   }
   return {ub_vec, lb_vec};
 }
-
 
 /*
 Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
@@ -1429,11 +1429,9 @@ void MPTOptimizer::calcBounds(
     const Eigen::Vector2d left_point = current_ref_point + left_vertical_vec.normalized() * 5.0;
     const Eigen::Vector2d right_point = current_ref_point + right_vertical_vec.normalized() * 5.0;
     const double lat_dist_to_left_bound = std::min(
-      calcLateralDistToBound(current_ref_point, left_point, left_bound) - base_to_left,
-      5.0);
+      calcLateralDistToBound(current_ref_point, left_point, left_bound) - base_to_left, 5.0);
     const double lat_dist_to_right_bound = std::max(
-      calcLateralDistToBound(current_ref_point, right_point, right_bound, true) +
-        base_to_right,
+      calcLateralDistToBound(current_ref_point, right_point, right_bound, true) + base_to_right,
       -5.0);
 
     ref_points.at(i).bounds = Bounds{
