@@ -305,8 +305,8 @@ PosePath PathGenerator::interpolateReferencePath(
     base_path_y.at(i) = base_path.at(i).position.y;
     base_path_z.at(i) = base_path.at(i).position.z;
     if (i > 0) {
-      base_path_s.at(i) = base_path_s.at(i - 1)
-        + tier4_autoware_utils::calcDistance2d(base_path.at(i - 1), base_path.at(i));
+      base_path_s.at(i) = base_path_s.at(i - 1) + tier4_autoware_utils::calcDistance2d(
+                                                    base_path.at(i - 1), base_path.at(i));
     }
   }
 
