@@ -252,9 +252,6 @@ struct AvoidanceParameters
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
 
-  // clip left and right bounds for objects
-  bool enable_bound_clipping{false};
-
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;
