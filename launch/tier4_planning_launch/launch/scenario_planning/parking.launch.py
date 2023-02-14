@@ -28,7 +28,6 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-
     vehicle_info_param_path = LaunchConfiguration("vehicle_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -63,10 +62,7 @@ def launch_setup(context, *args, **kwargs):
                         "vehicle_frame": "base_link",
                         "map_frame": "map",
                         "update_rate": 10.0,
-                        "use_wayarea": True,
-                        "use_parkinglot": True,
-                        "use_objects": True,
-                        "use_points": True,
+                        "activate_by_scenario": True,
                         "grid_min_value": 0.0,
                         "grid_max_value": 1.0,
                         "grid_resolution": 0.2,
@@ -76,6 +72,10 @@ def launch_setup(context, *args, **kwargs):
                         "grid_position_y": 0.0,
                         "maximum_lidar_height_thres": 0.3,
                         "minimum_lidar_height_thres": -2.2,
+                        "use_wayarea": True,
+                        "use_parkinglot": True,
+                        "use_objects": True,
+                        "use_points": True,
                         "expand_polygon_size": 1.0,
                         "size_of_expansion_kernel": 9,
                     },

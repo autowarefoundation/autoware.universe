@@ -17,6 +17,7 @@
 
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <scene_module/intersection/util_type.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
@@ -67,6 +68,7 @@ public:
   {
     double state_transit_margin_time;
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
+    double keep_detection_vel_thr;     //! keep detection if ego is ego.vel < keep_detection_vel_thr
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
       stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
@@ -114,6 +116,7 @@ private:
   bool is_go_out_;
   // Parameter
   PlannerParam planner_param_;
+  std::optional<util::IntersectionLanelets> intersection_lanelets_;
 
   /**
    * @brief check collision for all lanelet area & predicted objects (call checkPathCollision() as
