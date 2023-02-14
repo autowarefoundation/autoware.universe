@@ -173,6 +173,10 @@ private:
     PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
     const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr);
 
+  void searchPredictedObject(
+    const TrajectoryPoints & decimate_trajectory, PlannerData & planner_data,
+    const VehicleInfo & vehicle_info, const StopParam & stop_param);
+
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
