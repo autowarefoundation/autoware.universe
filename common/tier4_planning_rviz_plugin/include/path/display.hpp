@@ -21,6 +21,8 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
+#include <vector>
+
 namespace rviz_plugins
 {
 class AutowarePathWithLaneIdDisplay
@@ -32,6 +34,26 @@ class AutowarePathWithLaneIdDisplay
 class AutowarePathDisplay : public AutowarePathBaseDisplay<autoware_auto_planning_msgs::msg::Path>
 {
   Q_OBJECT
+public:
+  AutowarePathDisplay();
+  ~AutowarePathDisplay();
+  void onInitialize() override;
+  void reset() override;
+
+protected:
+  void visualizeDrivableArea(
+    autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg_ptr) override;
+  void visualizeBound(
+    const std::vector<geometry_msgs::msg::Point> & bound, Ogre::ManualObject * bound_object);
+
+private:
+  Ogre::ManualObject * left_bound_object_{nullptr};
+  Ogre::ManualObject * right_bound_object_{nullptr};
+
+  rviz_common::properties::BoolProperty * property_drivable_area_view_;
+  rviz_common::properties::ColorProperty * property_drivable_area_color_;
+  rviz_common::properties::FloatProperty * property_drivable_area_alpha_;
+  rviz_common::properties::FloatProperty * property_drivable_area_width_;
 };
 
 class AutowareTrajectoryDisplay
