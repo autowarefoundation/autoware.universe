@@ -606,7 +606,8 @@ visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
   size_t id = 0;
   for (size_t v_idx = 0; v_idx < vehicle_circle_longitudinal_offsets.size(); ++v_idx) {
     const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
-    const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
+    const double lateral_offset =
+      abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
     auto marker = createDefaultMarker(
       "map", rclcpp::Clock().now(), ns, id, visualization_msgs::msg::Marker::LINE_STRIP,
@@ -650,7 +651,8 @@ visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
 
     for (size_t v_idx = 0; v_idx < vehicle_circle_longitudinal_offsets.size(); ++v_idx) {
       const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
-      const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
+      const double lateral_offset =
+        abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
       auto marker = createDefaultMarker(
         "map", rclcpp::Clock().now(), ns, id, visualization_msgs::msg::Marker::LINE_STRIP,
