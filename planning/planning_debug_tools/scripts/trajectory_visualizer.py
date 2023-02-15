@@ -28,9 +28,10 @@ from nav_msgs.msg import Odometry
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
 from tier4_planning_msgs.msg import VelocityLimit
+
+import logging
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s %(asctime)s]: %(message)s")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--length", help="max arclength in plot")
@@ -48,7 +49,7 @@ if args.length is None:
     PLOT_MAX_ARCLENGTH = 200
 else:
     PLOT_MAX_ARCLENGTH = int(args.length)
-print("max arclength = " + str(PLOT_MAX_ARCLENGTH))
+logging.info("max arclength = " + str(PLOT_MAX_ARCLENGTH))
 
 if args.type is None:
     PLOT_TYPE = "VEL"
@@ -57,9 +58,9 @@ elif args.type == "VEL":
 elif args.type == "VEL_ACC_JERK":
     PLOT_TYPE = "VEL_ACC_JERK"
 else:
-    print("invalid type. set default VEL.")
+    logging.info("invalid type. set default VEL.")
     PLOT_TYPE = "VEL"
-print("plot type = " + PLOT_TYPE)
+logging.info("plot type = " + PLOT_TYPE)
 
 
 class TrajectoryVisualizer(Node):
@@ -86,9 +87,6 @@ class TrajectoryVisualizer(Node):
         self.update_behavior_velocity_planner_path = False
         self.update_traj_ob_avoid = False
         self.update_traj_ob_stop = False
-
-        self.tf_buffer = Buffer(node=self)
-        self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)
 
         self.self_pose = Pose()
         self.self_pose_received = False
@@ -173,11 +171,10 @@ class TrajectoryVisualizer(Node):
             )
             self.setPlotTrajectoryVelocity()
 
-        plt.show()
-
         return
 
     def CallbackLocalizationTwist(self, cmd):
+        logging.info("received ego_odometry")
         self.localization_vx = cmd.twist.twist.linear.x
         self.self_pose = cmd.pose.pose
         self.self_pose_received = True
@@ -189,12 +186,13 @@ class TrajectoryVisualizer(Node):
         self.velocity_limit = cmd.max_velocity
 
     def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4, cmd5):
-        print("CallbackMotionVelOptTraj called")
+        logging.info("received motion_trajectory")
         self.CallBackTrajExVelLim(cmd1)
         self.CallBackTrajLatAccFiltered(cmd2)
         self.CallBackTrajRaw(cmd3)
         self.CallBackTrajTimeResampled(cmd4)
         self.CallBackTrajSteerRateFiltered(cmd5)
+        plt.pause(0.001)
 
     def CallBackTrajExVelLim(self, cmd):
         self.trajectory_external_velocity_limited = cmd
@@ -221,12 +219,13 @@ class TrajectoryVisualizer(Node):
         self.update_traj_final = True
 
     def CallBackLaneDrivingTraj(self, cmd5, cmd6, cmd7, cmd8, cmd9):
-        print("CallBackLaneDrivingTraj called")
+        logging.info("received lane_driving_trajectory")
         self.CallBackTrajFinal(cmd5)
         self.CallBackLBehaviorPathPlannerPath(cmd6)
         self.CallBackBehaviorVelocityPlannerPath(cmd7)
         self.CallbackObstacleAvoidTraj(cmd8)
         self.CallbackObstacleStopTraj(cmd9)
+        plt.pause(0.001)
 
     def CallBackLBehaviorPathPlannerPath(self, cmd):
         self.behavior_path_planner_path = cmd
@@ -293,9 +292,10 @@ class TrajectoryVisualizer(Node):
         )
 
     def plotTrajectoryVelocity(self, data):
+        logging.info("-- on plotTrajectoryVelocity --")
         # self.updatePose(PATH_ORIGIN_FRAME, SELF_POSE_FRAME)
         if self.self_pose_received is False:
-            print("plot start but self pose is not received")
+            logging.info("plot start but self pose is not received")
             return (
                 self.im1,
                 self.im2,
@@ -311,7 +311,6 @@ class TrajectoryVisualizer(Node):
                 self.im11,
                 self.im12,
             )
-        print("plot start")
 
         # copy
         behavior_path_planner_path = self.behavior_path_planner_path
@@ -593,7 +592,7 @@ class TrajectoryVisualizer(Node):
         return self.im0, self.im1, self.im2, self.im3, self.im4
 
     def plotTrajectory(self, data):
-        print("plot called")
+        logging.info("plot called")
         # self.updatePose(PATH_ORIGIN_FRAME, SELF_POSE_FRAME)
 
         # copy
