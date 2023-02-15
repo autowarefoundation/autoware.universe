@@ -17,6 +17,8 @@
 
 #include <autoware_ad_api_specs/perception.hpp>
 #include <component_interface_specs/perception.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <autoware_adapi_v1_msgs/msg/object_classification.hpp>
 #include <autoware_adapi_v1_msgs/msg/predicted_object.hpp>
 #include <autoware_adapi_v1_msgs/msg/predicted_object_kinematics.hpp>
@@ -24,10 +26,8 @@
 #include <autoware_adapi_v1_msgs/msg/shape.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 // This file should be included after messages.
 #include "utils/types.hpp"
@@ -58,7 +58,8 @@ private:
   Pub<PredictedObjects> pub_object_recognized_;
   Sub<perception_interface::ObjectRecognition> sub_object_recognized_;
   void object_recognize(const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg);
-  uint8_t mapping(std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
+  uint8_t mapping(
+    std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
 };
 
 }  // namespace default_ad_api
