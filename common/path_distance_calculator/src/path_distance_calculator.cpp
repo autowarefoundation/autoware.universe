@@ -46,10 +46,12 @@ PathDistanceCalculator::PathDistanceCalculator(const rclcpp::NodeOptions & optio
     }
     if (path->points.empty()) {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "path empty");
+      return;
     }
 
     if (path->points.size() == 1) {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "too short path");
+      return;
     }
 
     const double distance =
