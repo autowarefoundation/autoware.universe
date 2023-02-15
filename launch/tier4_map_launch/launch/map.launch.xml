@@ -11,12 +11,12 @@
     <push-ros-namespace namespace="map"/>
     <include file="$(find-pkg-share map_loader)/launch/lanelet2_map_loader.launch.xml">
       <arg name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
+      <arg name="lanelet2_map_loader_param_path" value="$(var lanelet2_map_loader_param_path)"/>
     </include>
 
     <include file="$(find-pkg-share map_loader)/launch/pointcloud_map_loader.launch.xml">
       <arg name="pointcloud_map_path" value="$(var pointcloud_map_path)"/>
       <arg name="pointcloud_map_loader_param_path" value="$(var pointcloud_map_loader_param_path)"/>
-      <arg name="lanelet2_map_loader_param_path" value="$(var lanelet2_map_loader_param_path)"/>
     </include>
 
     <include file="$(find-pkg-share map_tf_generator)/launch/map_tf_generator.launch.xml">
