@@ -172,12 +172,14 @@ void ElevationMapLoaderNode::createElevationMap()
 {
   auto grid_map_logger = rclcpp::get_logger("grid_map_logger");
   grid_map_logger.set_level(rclcpp::Logger::Level::Error);
-  pcl::shared_ptr<grid_map::GridMapPclLoader> grid_map_pcl_loader =
-    pcl::make_shared<grid_map::GridMapPclLoader>(grid_map_logger);
-  grid_map_pcl_loader->loadParameters(param_file_path_);
-  grid_map_pcl_loader->setInputCloud(data_manager_.map_pcl_ptr_);
-  createElevationMapFromPointcloud(grid_map_pcl_loader);
-  elevation_map_ = grid_map_pcl_loader->getGridMap();
+  {
+    pcl::shared_ptr<grid_map::GridMapPclLoader> grid_map_pcl_loader =
+      pcl::make_shared<grid_map::GridMapPclLoader>(grid_map_logger);
+    grid_map_pcl_loader->loadParameters(param_file_path_);
+    grid_map_pcl_loader->setInputCloud(data_manager_.map_pcl_ptr_);
+    createElevationMapFromPointcloud(grid_map_pcl_loader);
+    elevation_map_ = grid_map_pcl_loader->getGridMap();
+  }
   if (use_inpaint_) {
     inpaintElevationMap(inpaint_radius_);
   }

@@ -324,7 +324,7 @@ class GroundSegmentationPipeline:
                 ],
                 parameters=[
                     {
-                        "use_lane_filter": False,
+                        "use_lane_filter": True,
                         "use_inpaint": True,
                         "inpaint_radius": 1.0,
                         "param_file_path": PathJoinSubstitution(
