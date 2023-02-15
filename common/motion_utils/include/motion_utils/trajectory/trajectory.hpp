@@ -590,8 +590,8 @@ double calcSignedArcLength(
  * @param points points of trajectory, path, ...
  * @param src_pose start pose
  * @param dst_idx index of end point
- * @param max_dist max distance, used to search for nearest sgement index to start pose
- * @param max_yaw max yaw, used to search for nearest sgement index to start pose
+ * @param max_dist max distance, used to search for nearest segment index to start pose
+ * @param max_yaw max yaw, used to search for nearest segment index to start pose
  * @return length of distance between two points
  */
 template <class T>
@@ -676,8 +676,8 @@ double calcSignedArcLength(
  * @param points points of trajectory, path, ...
  * @param src_pose start pose
  * @param dst_point end point
- * @param max_dist max distance, used to search for nearest sgement index to start pose
- * @param max_yaw max yaw, used to search for nearest sgement index to start pose
+ * @param max_dist max distance, used to search for nearest segment index to start pose
+ * @param max_yaw max yaw, used to search for nearest segment index to start pose
  * @return length of distance between two points
  */
 template <class T>
@@ -754,13 +754,13 @@ inline std::vector<double> calcCurvature(const T & points)
 }
 
 /**
- * @brief calculate curvature through points container and length of 2d distance for segment used for curvature calcualtion.
+ * @brief calculate curvature through points container and length of 2d distance for segment used for curvature calculation.
  * The method used for calculating the curvature is using 3 consecutive points through the points container. 
  * Then the curvature is the reciprocal of the radius of the circle that passes through these three points. 
  * Then length of 2D distance of these points is calculated
  * @param points points of trajectory, path, ...
  * @return Container of pairs, calculated curvature and length of 2D distance for segment used for
- * curvature calcualtion
+ * curvature calculation
  */
 template <class T>
 inline std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T & points)
@@ -785,7 +785,7 @@ inline std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T 
 /**
  * @brief calculate length of 2D distance between given start point index in points container and first point in container with zero longitudinal velocity
  * @param points_with_twist points of trajectory, path, ... (with velocity)
- * @return Length of 2D distance betweem start point index in points container and first point in container with zero longitudinal velocity
+ * @return Length of 2D distance between start point index in points container and first point in container with zero longitudinal velocity
  */
 template <class T>
 boost::optional<double> calcDistanceToForwardStopPoint(
@@ -811,9 +811,9 @@ boost::optional<double> calcDistanceToForwardStopPoint(
  * @brief calculate length of 2D distance between given pose and first point in container with zero longitudinal velocity
  * @param points_with_twist points of trajectory, path, ... (with velocity)
  * @param pose given pose to start the distance calculation from
- * @param max_dist max distance, used to search for nearest sgement index in points container to the given pose
- * @param max_yaw max yaw, used to search for nearest sgement index in points container to the given pose
- * @return Length of 2D distance betweem given pose and first point in container with zero longitudinal velocity
+ * @param max_dist max distance, used to search for nearest segment index in points container to the given pose
+ * @param max_yaw max yaw, used to search for nearest segment index in points container to the given pose
+ * @return Length of 2D distance between given pose and first point in container with zero longitudinal velocity
  */
 template <class T>
 boost::optional<double> calcDistanceToForwardStopPoint(
@@ -1226,8 +1226,8 @@ inline boost::optional<size_t> insertTargetPoint(
  * @param src_pose source pose on the trajectory
  * @param insert_point_length length to insert point from the beginning of the points
  * @param points output points of trajectory, path, ...
- * @param max_dist max distance, used to search for nearest sgement index in points container to the given source pose
- * @param max_yaw max yaw, used to search for nearest sgement index in points container to the given source pose
+ * @param max_dist max distance, used to search for nearest segment index in points container to the given source pose
+ * @param max_yaw max yaw, used to search for nearest segment index in points container to the given source pose
  * @param overlap_threshold distance threshold, used to check if the inserted point is between start and end of nominated segment to be added in.
  * @return index of insert point
  */
@@ -1292,8 +1292,8 @@ inline boost::optional<size_t> insertStopPoint(
  * @param src_pose source pose
  * @param distance_to_stop_point  distance to stop point from the src point
  * @param points_with_twist output points of trajectory, path, ... (with velocity)
- * @param max_dist max distance, used to search for nearest sgement index in points container to the given source pose
- * @param max_yaw max yaw, used to search for nearest sgement index in points container to the given source pose
+ * @param max_dist max distance, used to search for nearest segment index in points container to the given source pose
+ * @param max_yaw max yaw, used to search for nearest segment index in points container to the given source pose
  * @param overlap_threshold distance threshold, used to check if the inserted point is between start and end of nominated segment to be added in.
  * @return index of stop point
  */
@@ -1409,7 +1409,7 @@ double calcSignedArcLength(
 }
 
 /**
- * @brief calculate length of 2D distance between two points, specified by start piont index in points container and end point and its segment index in points container
+ * @brief calculate length of 2D distance between two points, specified by start point index in points container and end point and its segment index in points container
  * @param points points of trajectory, path, ...
  * @param src_idx index of start point start point
  * @param dst_point end point
@@ -1431,7 +1431,7 @@ double calcSignedArcLength(
 }
 
 /**
- * @brief find first nearest point index through points container for a given pose with soft distance and yaw contraints.
+ * @brief find first nearest point index through points container for a given pose with soft distance and yaw constraints.
  * Finding nearest point is determined by looping through the points container, and finding the nearest point to the given pose 
  * in terms of squared 2D distance and yaw deviation. 
  * The index of the point with minimum distance and yaw deviation comparing to the given pose will be returned.
