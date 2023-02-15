@@ -43,22 +43,25 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
   {  // 1st circle (rear)
+    const double radius = (vehicle_param.width / 2.0 + lateral_offset) * rear_radius_ratio;
+
     longitudinal_offsets.push_back(-vehicle_param.rear_overhang);
-    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   {  // 2nd circle (front)
-    const double radius = std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+    const double radius = (std::hypot(
+      vehicle_param.length / static_cast<double>(circle_num) / 2.0, (vehicle_param.width / 2.0 + lateral_offset)) * front_radius_ratio);
 
     const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
     const double longitudinal_offset =
       unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
 
     longitudinal_offsets.push_back(longitudinal_offset);
-    radiuses.push_back(radius * front_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   return {radiuses, longitudinal_offsets};
@@ -69,10 +72,11 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
   const double radius =
-    std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0) *
+   std::hypot(
+   vehicle_param.length / static_cast<double>(circle_num) / 2.0, (vehicle_param.width / 2.0 + lateral_offset)) *
     radius_ratio;
   const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
 
@@ -92,8 +96,9 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
-  const double radius = vehicle_param.width / 2.0;
+  const double radius = (vehicle_param.width / 2.0 + lateral_offset);
   const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num - 1);
 
   for (size_t i = 0; i < circle_num; ++i) {
@@ -110,22 +115,24 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBic
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
   {  // 1st circle (rear wheel)
+    const double radius = (vehicle_param.width / 2.0 + lateral_offset) * rear_radius_ratio;
     longitudinal_offsets.push_back(0.0);
-    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   {  // 2nd circle (front wheel)
     const double radius = std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+      vehicle_param.length / static_cast<double>(circle_num) / 2.0, (vehicle_param.width / 2.0 + lateral_offset)) * front_radius_ratio;
 
     const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
     const double longitudinal_offset =
       unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
 
     longitudinal_offsets.push_back(longitudinal_offset);
-    radiuses.push_back(radius * front_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   return {radiuses, longitudinal_offsets};

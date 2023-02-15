@@ -596,7 +596,7 @@ visualization_msgs::msg::MarkerArray getLateralErrorsLineMarkerArray(
 }
 
 visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
-  const geometry_msgs::msg::Pose & current_ego_pose,
+  const geometry_msgs::msg::Pose & current_ego_pose, const VehicleParam & vehicle_param,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
   const std::vector<double> & vehicle_circle_radiuses, const std::string & ns, const double r,
   const double g, const double b)
@@ -606,6 +606,7 @@ visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
   size_t id = 0;
   for (size_t v_idx = 0; v_idx < vehicle_circle_longitudinal_offsets.size(); ++v_idx) {
     const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
+    const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
     auto marker = createDefaultMarker(
       "map", rclcpp::Clock().now(), ns, id, visualization_msgs::msg::Marker::LINE_STRIP,
@@ -619,8 +620,8 @@ visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
 
       const double edge_angle =
         static_cast<double>(e_idx) / static_cast<double>(circle_dividing_num) * 2.0 * M_PI;
-      edge_pos.x = vehicle_circle_radiuses.at(v_idx) * std::cos(edge_angle);
-      edge_pos.y = vehicle_circle_radiuses.at(v_idx) * std::sin(edge_angle);
+      edge_pos.x = vehicle_circle_radiuses.at(v_idx) * std::cos(edge_angle) + lateral_offset;
+      edge_pos.y = vehicle_circle_radiuses.at(v_idx) * std::sin(edge_angle) - lateral_offset;
 
       marker.points.push_back(edge_pos);
     }
@@ -633,6 +634,7 @@ visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
 
 visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & mpt_traj_points,
+  [[maybe_unused]] const VehicleParam & vehicle_param,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
   const std::vector<double> & vehicle_circle_radiuses, const size_t sampling_num,
   const std::string & ns, const double r, const double g, const double b)
@@ -648,6 +650,7 @@ visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
 
     for (size_t v_idx = 0; v_idx < vehicle_circle_longitudinal_offsets.size(); ++v_idx) {
       const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
+      const double lateral_offset = abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
       auto marker = createDefaultMarker(
         "map", rclcpp::Clock().now(), ns, id, visualization_msgs::msg::Marker::LINE_STRIP,
@@ -661,8 +664,8 @@ visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
 
         const double edge_angle =
           static_cast<double>(e_idx) / static_cast<double>(circle_dividing_num) * 2.0 * M_PI;
-        edge_pos.x = vehicle_circle_radiuses.at(v_idx) * std::cos(edge_angle);
-        edge_pos.y = vehicle_circle_radiuses.at(v_idx) * std::sin(edge_angle);
+        edge_pos.x = vehicle_circle_radiuses.at(v_idx) * std::cos(edge_angle) + lateral_offset;
+        edge_pos.y = vehicle_circle_radiuses.at(v_idx) * std::sin(edge_angle) - lateral_offset;
 
         marker.points.push_back(edge_pos);
       }
@@ -811,14 +814,14 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   // current vehicle circles
   appendMarkerArray(
     getCurrentVehicleCirclesMarkerArray(
-      debug_data.current_ego_pose, debug_data.vehicle_circle_longitudinal_offsets,
+      debug_data.current_ego_pose, vehicle_param, debug_data.vehicle_circle_longitudinal_offsets,
       debug_data.vehicle_circle_radiuses, "current_vehicle_circles", 1.0, 0.3, 0.3),
     &vis_marker_array);
 
   // vehicle circles
   appendMarkerArray(
     getVehicleCirclesMarkerArray(
-      debug_data.mpt_traj, debug_data.vehicle_circle_longitudinal_offsets,
+      debug_data.mpt_traj, vehicle_param, debug_data.vehicle_circle_longitudinal_offsets,
       debug_data.vehicle_circle_radiuses, debug_data.mpt_visualize_sampling_num, "vehicle_circles",
       1.0, 0.3, 0.3),
     &vis_marker_array);
