@@ -185,9 +185,16 @@ double PurePursuitLateralController::calcCurvature(const size_t closest_idx)
 
   if (static_cast<size_t>(closest_idx) >= idx_dist) {
     prev_idx = closest_idx - idx_dist;
+  } else {
+    // return zero curvature because prev_idx can't be found
+    return 0.0;
   }
+
   if (trajectory_resampled_->points.size() - 1 >= closest_idx + idx_dist) {
     next_idx = closest_idx + idx_dist;
+  } else {
+    // return zero curvature because next_idx can't be found
+    return 0.0;
   }
 
   // Calculate curvature assuming the trajectory points interval is constant
