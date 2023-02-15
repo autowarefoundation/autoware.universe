@@ -750,6 +750,8 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
       insertYieldVelocity(path);
       insertWaitPoint(parameters_->use_constraints_for_decel, path);
       removeAllRegisteredShiftPoints(path_shifter_);
+      clearWaitingApproval();
+      removeRTCStatus();
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
@@ -2458,7 +2460,7 @@ double AvoidanceModule::getRSSLongitudinalDistance(
    * =======================================
    */
   if (!is_front_object && !opposite_lane_vehicle) {
-    return v_obj * idling_time + 0.5 * accel_for_rss * std::pow(v_obj, 2.0) +
+    return v_obj * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
            std::pow(v_obj + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) -
            std::pow(v_ego, 2.0) / (2.0 * accel_for_rss);
   }
