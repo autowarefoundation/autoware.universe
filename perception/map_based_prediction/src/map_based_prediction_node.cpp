@@ -92,7 +92,7 @@ double calcAbsLateralOffset(
 LateralKinematicsToLanelet initLateralKinematics(
   const lanelet::ConstLanelet & lanelet, geometry_msgs::msg::Pose pose)
 {
-  LateralKinematicsToLanelet lateral_kinematics(lanelet);
+  LateralKinematicsToLanelet lateral_kinematics;
 
   const lanelet::ConstLineString2d left_bound = lanelet.leftBound2d();
   const lanelet::ConstLineString2d right_bound = lanelet.rightBound2d();
@@ -160,16 +160,25 @@ void updateLateralKinematicsVector(
   }
 
   // look for matching lanelet between current and previous kinematics
-  for (auto & current_lateral_kinematics : current_obj.lateral_kinematics_vector) {
-    for (auto & prev_lateral_kinematics : prev_obj.lateral_kinematics_vector) {
-      const bool same_lanelet = current_lateral_kinematics.current_lanelet.id() ==
-                                prev_lateral_kinematics.current_lanelet.id();
-      const bool successive_lanelet =
-        routing_graph_ptr_->routingRelation(
-          prev_lateral_kinematics.current_lanelet, current_lateral_kinematics.current_lanelet) ==
-        lanelet::routing::RelationType::Successor;
+  for (auto & current_set : current_obj.lateral_kinematics_set) {
+    const auto & current_lane = current_set.first;
+    auto & current_lateral_kinematics = current_set.second;
 
-      if (same_lanelet || successive_lanelet) {  // lanelet can be connected
+    // 1. has same lanelet
+    if (prev_obj.lateral_kinematics_set.count(current_lane) != 0) {
+      const auto & prev_lateral_kinematics = prev_obj.lateral_kinematics_set.at(current_lane);
+      calcLateralKinematics(
+        prev_lateral_kinematics, current_lateral_kinematics, dt, lowpass_cutoff);
+      break;
+    }
+    // 2. successive lanelet
+    for (auto & prev_set : prev_obj.lateral_kinematics_set) {
+      const auto & prev_lane = prev_set.first;
+      const auto & prev_lateral_kinematics = prev_set.second;
+      const bool successive_lanelet =
+        routing_graph_ptr_->routingRelation(prev_lane, current_lane) ==
+        lanelet::routing::RelationType::Successor;
+      if (successive_lanelet) {  // lanelet can be connected
         calcLateralKinematics(
           prev_lateral_kinematics, current_lateral_kinematics, dt,
           lowpass_cutoff);  // calc velocity
@@ -966,7 +975,7 @@ void MapBasedPredictionNode::updateObjectsHistory(
   for (const auto & current_lane : current_lanelets) {
     const LateralKinematicsToLanelet lateral_kinematics =
       initLateralKinematics(current_lane, single_object_data.pose);
-    single_object_data.lateral_kinematics_vector.push_back(lateral_kinematics);
+    single_object_data.lateral_kinematics_set[current_lane] = lateral_kinematics;
   }
 
   if (objects_history_.count(object_id) == 0) {
@@ -1072,15 +1081,14 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   bool not_found_corresponding_lanelet = true;
   double left_dist, right_dist;
   double v_left_filtered, v_right_filtered;
-  for (const auto & lateral_kinematics : latest_info.lateral_kinematics_vector) {
-    if (lateral_kinematics.current_lanelet.id() == current_lanelet_data.lanelet.id()) {
-      left_dist = lateral_kinematics.dist_from_left_boundary;
-      right_dist = lateral_kinematics.dist_from_right_boundary;
-      v_left_filtered = lateral_kinematics.filtered_left_lateral_velocity;
-      v_right_filtered = lateral_kinematics.filtered_right_lateral_velocity;
-      not_found_corresponding_lanelet = false;
-      break;
-    }
+  if (latest_info.lateral_kinematics_set.count(current_lanelet_data.lanelet) != 0) {
+    const auto & lateral_kinematics =
+      latest_info.lateral_kinematics_set.at(current_lanelet_data.lanelet);
+    left_dist = lateral_kinematics.dist_from_left_boundary;
+    right_dist = lateral_kinematics.dist_from_right_boundary;
+    v_left_filtered = lateral_kinematics.filtered_left_lateral_velocity;
+    v_right_filtered = lateral_kinematics.filtered_right_lateral_velocity;
+    not_found_corresponding_lanelet = false;
   }
 
   // return lane follow when catch exception

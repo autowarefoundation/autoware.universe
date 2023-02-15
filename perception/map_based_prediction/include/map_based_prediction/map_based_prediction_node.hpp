@@ -51,19 +51,12 @@ namespace map_based_prediction
 {
 struct LateralKinematicsToLanelet
 {
-  const lanelet::ConstLanelet current_lanelet;
   double dist_from_left_boundary;
   double dist_from_right_boundary;
   double left_lateral_velocity;
   double right_lateral_velocity;
   double filtered_left_lateral_velocity;
   double filtered_right_lateral_velocity;
-
-public:
-  explicit LateralKinematicsToLanelet(const lanelet::ConstLanelet & lanelet)
-  : current_lanelet(lanelet)
-  {
-  }
 };
 
 struct ObjectData
@@ -75,7 +68,7 @@ struct ObjectData
   geometry_msgs::msg::Twist twist;
   double time_delay;
   // for lane change prediction
-  std::vector<LateralKinematicsToLanelet> lateral_kinematics_vector;
+  std::unordered_map<lanelet::ConstLanelet, LateralKinematicsToLanelet> lateral_kinematics_set;
 };
 
 enum class Maneuver {
