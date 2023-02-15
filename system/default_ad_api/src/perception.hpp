@@ -22,10 +22,12 @@
 #include <autoware_adapi_v1_msgs/msg/predicted_object_kinematics.hpp>
 #include <autoware_adapi_v1_msgs/msg/predicted_path.hpp>
 #include <autoware_adapi_v1_msgs/msg/shape.hpp>
+#include <autoware_auto_perception_msgs/msg/shape.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <vector>
+#include <unordered_map>
 
 // This file should be included after messages.
 #include "utils/types.hpp"
@@ -44,11 +46,19 @@ private:
   using PredictedObject = autoware_adapi_v1_msgs::msg::PredictedObject;
   using PredictedObjectKinematics = autoware_adapi_v1_msgs::msg::PredictedObjectKinematics;
   using PredictedPath = autoware_adapi_v1_msgs::msg::PredictedPath;
-  using Shape = autoware_adapi_v1_msgs::msg::Shape;
+  using API_Shape = autoware_adapi_v1_msgs::msg::Shape;
+  using Shape = autoware_auto_perception_msgs::msg::Shape;
+
+  std::unordered_map<uint8_t, uint8_t> shape_type_ = {
+    {Shape::BOUNDING_BOX, API_Shape::BOUNDING_BOX},
+    {Shape::CYLINDER, API_Shape::CYLINDER},
+    {Shape::POLYGON, API_Shape::POLYGON},
+  };
 
   Pub<PredictedObjects> pub_object_recognized_;
   Sub<perception_interface::ObjectRecognition> sub_object_recognized_;
   void object_recognize(const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg);
+  uint8_t mapping(std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
 };
 
 }  // namespace default_ad_api

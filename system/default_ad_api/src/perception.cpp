@@ -26,6 +26,14 @@ PerceptionNode::PerceptionNode(const rclcpp::NodeOptions & options) : Node("perc
   adaptor.init_sub(sub_object_recognized_, this, &PerceptionNode::object_recognize);
 }
 
+uint8_t PerceptionNode::mapping(std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value){
+  if (hash_map.find(input) == hash_map.end()){
+    return default_value;
+  } else {
+    return hash_map[input];
+  }
+}
+
 void PerceptionNode::object_recognize(const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg)
 {
   PredictedObjects::Message objects;
@@ -51,7 +59,7 @@ void PerceptionNode::object_recognize(const perception_interface::ObjectRecognit
       predicted_path.confidence = msg_predicted_path.confidence;
       object.kinematics.predicted_paths.insert(object.kinematics.predicted_paths.begin(), predicted_path);
     }
-    object.shape.type = msg_object.shape.type;
+    object.shape.type = mapping(shape_type_, msg_object.shape.type, API_Shape::UNKNOWN);
     object.shape.dimensions = msg_object.shape.dimensions;
     object.shape.footprint = msg_object.shape.footprint;
     objects.objects.insert(objects.objects.begin(), object);
