@@ -52,7 +52,7 @@ namespace map_based_prediction
  */
 double FirstOrderLowpassFilter(
   const double prev_y, const double prev_x, const double x, const double sampling_time = 0.1,
-  const double cutoff_freq = 0.6)
+  const double cutoff_freq = 0.1)
 {
   // Eq:  yn = a yn-1 + b (xn-1 + xn)
   const double wt = 2.0 * M_PI * cutoff_freq * sampling_time;
@@ -119,7 +119,7 @@ LateralKinematicsToLanelet initLateralKinematics(
  */
 void calcLateralKinematics(
   const LateralKinematicsToLanelet & prev_lateral_kinematics,
-  LateralKinematicsToLanelet & current_lateral_kinematics, const double dt)
+  LateralKinematicsToLanelet & current_lateral_kinematics, const double dt, const double cutoff)
 {
   // calc velocity via backward difference
   current_lateral_kinematics.left_lateral_velocity =
@@ -135,11 +135,11 @@ void calcLateralKinematics(
   current_lateral_kinematics.filtered_left_lateral_velocity = FirstOrderLowpassFilter(
     prev_lateral_kinematics.filtered_left_lateral_velocity,
     prev_lateral_kinematics.left_lateral_velocity, current_lateral_kinematics.left_lateral_velocity,
-    dt);
+    dt, cutoff);
   current_lateral_kinematics.filtered_right_lateral_velocity = FirstOrderLowpassFilter(
     prev_lateral_kinematics.filtered_right_lateral_velocity,
     prev_lateral_kinematics.right_lateral_velocity,
-    current_lateral_kinematics.right_lateral_velocity, dt);
+    current_lateral_kinematics.right_lateral_velocity, dt, cutoff);
 }
 
 /**
@@ -151,7 +151,7 @@ void calcLateralKinematics(
  */
 void updateLateralKinematicsVector(
   const ObjectData & prev_obj, ObjectData & current_obj,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr_)
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr_, const double lowpass_cutoff)
 {
   const double dt = (current_obj.header.stamp.sec - prev_obj.header.stamp.sec) +
                     (current_obj.header.stamp.nanosec - prev_obj.header.stamp.nanosec) * 1e-9;
@@ -171,7 +171,8 @@ void updateLateralKinematicsVector(
 
       if (same_lanelet || successive_lanelet) {  // lanelet can be connected
         calcLateralKinematics(
-          prev_lateral_kinematics, current_lateral_kinematics, dt);  // calc velocity
+          prev_lateral_kinematics, current_lateral_kinematics, dt,
+          lowpass_cutoff);  // calc velocity
         break;
       }
     }
@@ -977,7 +978,8 @@ void MapBasedPredictionNode::updateObjectsHistory(
     std::deque<ObjectData> & object_data = objects_history_.at(object_id);
     // get previous object data and update
     const auto prev_object_data = object_data.back();
-    updateLateralKinematicsVector(prev_object_data, single_object_data, routing_graph_ptr_);
+    updateLateralKinematicsVector(
+      prev_object_data, single_object_data, routing_graph_ptr_, cutoff_freq_of_velocity_lpf_);
 
     object_data.push_back(single_object_data);
   }
