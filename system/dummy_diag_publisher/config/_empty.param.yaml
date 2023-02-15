@@ -11,4 +11,5 @@
 ---
 /**:
   ros__parameters:
-    required_diags: {}
+    required_diags:
+      dummy_diag_empty: default
