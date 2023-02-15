@@ -154,6 +154,7 @@ private:
   double history_time_length_;
   double dist_threshold_to_bound_;
   double time_threshold_to_bound_;
+  double cutoff_freq_of_velocity_lpf_;
   double reference_path_resolution_;
 
   // Stop watch

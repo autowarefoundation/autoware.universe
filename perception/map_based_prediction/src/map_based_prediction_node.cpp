@@ -394,8 +394,12 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter("sigma_yaw_angle_deg", 5.0);
   object_buffer_time_length_ = declare_parameter("object_buffer_time_length", 2.0);
   history_time_length_ = declare_parameter("history_time_length", 1.0);
-  dist_threshold_to_bound_ = 1.0;  // 1m
-  time_threshold_to_bound_ = 5.0;  // 5 sec
+  dist_threshold_to_bound_ =
+    declare_parameter("dist_threshold_for_lane_change_detection", 1.0);  // 1m
+  time_threshold_to_bound_ =
+    declare_parameter("time_threshold_for_lane_change_detection", 5.0);  // 5 sec
+  cutoff_freq_of_velocity_lpf_ =
+    declare_parameter("cutoff_freq_of_velocity_for_lane_change_detection", 0.1);  // 0.1Hz
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
 
   path_generator_ = std::make_shared<PathGenerator>(
