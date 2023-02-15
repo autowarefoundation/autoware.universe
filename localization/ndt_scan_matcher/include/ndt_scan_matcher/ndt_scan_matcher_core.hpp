@@ -33,7 +33,7 @@
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <tier4_timing_violation_monitor_utils/message_consumption_notifier.hpp>
+#include <timing_violation_monitor_utils/message_consumption_notifier.hpp>
 
 #include <fmt/format.h>
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
@@ -161,7 +161,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     ndt_monte_carlo_initial_pose_marker_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
-  std::unique_ptr<tier4_timing_violation_monitor_utils::MessageConsumptionNotifier> pose_consumption_notifier_;
+  std::unique_ptr<timing_violation_monitor_utils::MessageConsumptionNotifier> pose_consumption_notifier_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;

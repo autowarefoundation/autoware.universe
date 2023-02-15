@@ -16,9 +16,9 @@
 
 #include <gtest/gtest.h>
 
-#include "tier4_timing_violation_monitor_utils/message_consumption_notifier.hpp"
+#include "timing_violation_monitor_utils/message_consumption_notifier.hpp"
 
-using tier4_timing_violation_monitor_utils::MessageConsumptionNotifier;
+using timing_violation_monitor_utils::MessageConsumptionNotifier;
 using MessageTrackingTag = MessageConsumptionNotifier::MessageTrackingTag;
 
 class NodeWithNotifier : public rclcpp::Node

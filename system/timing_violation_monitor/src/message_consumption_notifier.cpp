@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "tier4_system_msgs/msg/message_tracking_tag.hpp"
-#include "tier4_timing_violation_monitor_utils/message_consumption_notifier.hpp"
+#include "timing_violation_monitor_utils/message_consumption_notifier.hpp"
 
-using tier4_timing_violation_monitor_utils::MessageConsumptionNotifier;
+using timing_violation_monitor_utils::MessageConsumptionNotifier;
 
 MessageConsumptionNotifier::MessageConsumptionNotifier(
   rclcpp::Node * node,

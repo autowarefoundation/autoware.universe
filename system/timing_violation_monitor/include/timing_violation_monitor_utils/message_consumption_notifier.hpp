@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
-#define TIER4_TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
+#ifndef _TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
+#define _TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
 
 #include <memory>
 
@@ -22,7 +22,7 @@
 
 #include "tier4_system_msgs/msg/message_tracking_tag.hpp"
 
-namespace tier4_timing_violation_monitor_utils
+namespace timing_violation_monitor_utils
 {
 class MessageConsumptionNotifier
 {
@@ -42,6 +42,6 @@ private:
   std::shared_ptr<MTTPublisher> pub_;
 };
 
-}   // namespace tier4_timing_violation_monitor_utils
+}   // namespace timing_violation_monitor_utils
 
-#endif  // TIER4_TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
+#endif  // _TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
