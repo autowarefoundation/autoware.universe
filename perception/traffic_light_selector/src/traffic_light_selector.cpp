@@ -43,8 +43,10 @@ std::vector<TrafficLightConstPtr> filter_traffic_signals(const LaneletMapConstPt
 namespace utils
 {
 
-using Input = autoware_auto_perception_msgs::msg::TrafficLight;
-using Output = autoware_perception_msgs::msg::TrafficLightElement;
+using OldData = autoware_auto_perception_msgs::msg::TrafficSignal;
+using OldElem = autoware_auto_perception_msgs::msg::TrafficLight;
+using NewData = autoware_perception_msgs::msg::TrafficLight;
+using NewElem = autoware_perception_msgs::msg::TrafficLightElement;
 
 template <class K, class V>
 V at_or(const std::unordered_map<K, V> & map, const K & key, const V & value)
@@ -52,37 +54,47 @@ V at_or(const std::unordered_map<K, V> & map, const K & key, const V & value)
   return map.count(key) ? map.at(key) : value;
 }
 
-Output convert(const Input & input)
+NewElem convert(const OldElem & input)
 {
   // clang-format off
-  static const std::unordered_map<Input::_color_type, Output::_color_type> color_map({
-    {Input::RED, Output::RED},
-    {Input::AMBER, Output::AMBER},
-    {Input::GREEN, Output::GREEN},
-    {Input::WHITE, Output::WHITE}
+  static const std::unordered_map<OldElem::_color_type, NewElem::_color_type> color_map({
+    {OldElem::RED, NewElem::RED},
+    {OldElem::AMBER, NewElem::AMBER},
+    {OldElem::GREEN, NewElem::GREEN},
+    {OldElem::WHITE, NewElem::WHITE}
   });
-  static const std::unordered_map<Input::_shape_type, Output::_shape_type> shape_map({
-    {Input::CIRCLE, Output::CIRCLE},
-    {Input::LEFT_ARROW, Output::LEFT_ARROW},
-    {Input::RIGHT_ARROW, Output::RIGHT_ARROW},
-    {Input::UP_ARROW, Output::UP_ARROW},
-    {Input::DOWN_ARROW, Output::DOWN_ARROW},
-    {Input::DOWN_LEFT_ARROW, Output::DOWN_LEFT_ARROW},
-    {Input::DOWN_RIGHT_ARROW, Output::DOWN_RIGHT_ARROW},
-    {Input::CROSS, Output::CROSS}
+  static const std::unordered_map<OldElem::_shape_type, NewElem::_shape_type> shape_map({
+    {OldElem::CIRCLE, NewElem::CIRCLE},
+    {OldElem::LEFT_ARROW, NewElem::LEFT_ARROW},
+    {OldElem::RIGHT_ARROW, NewElem::RIGHT_ARROW},
+    {OldElem::UP_ARROW, NewElem::UP_ARROW},
+    {OldElem::DOWN_ARROW, NewElem::DOWN_ARROW},
+    {OldElem::DOWN_LEFT_ARROW, NewElem::DOWN_LEFT_ARROW},
+    {OldElem::DOWN_RIGHT_ARROW, NewElem::DOWN_RIGHT_ARROW},
+    {OldElem::CROSS, NewElem::CROSS}
   });
-  static const std::unordered_map<Input::_status_type, Output::_status_type> status_map({
-    {Input::SOLID_OFF, Output::SOLID_OFF},
-    {Input::SOLID_ON, Output::SOLID_ON},
-    {Input::FLASHING, Output::FLASHING}
+  static const std::unordered_map<OldElem::_status_type, NewElem::_status_type> status_map({
+    {OldElem::SOLID_OFF, NewElem::SOLID_OFF},
+    {OldElem::SOLID_ON, NewElem::SOLID_ON},
+    {OldElem::FLASHING, NewElem::FLASHING}
   });
   // clang-format on
 
-  Output output;
-  output.color = at_or(color_map, input.color, Output::UNKNOWN);
-  output.shape = at_or(shape_map, input.shape, Output::UNKNOWN);
-  output.color = at_or(status_map, input.status, Output::UNKNOWN);
+  NewElem output;
+  output.color = at_or(color_map, input.color, NewElem::UNKNOWN);
+  output.shape = at_or(shape_map, input.shape, NewElem::UNKNOWN);
+  output.color = at_or(status_map, input.status, NewElem::UNKNOWN);
   output.confidence = input.confidence;
+  return output;
+}
+
+NewData convert(const OldData & input)
+{
+  NewData output;
+  output.traffic_light_id = input.map_primitive_id;
+  for (const auto & light : input.lights) {
+    output.elements.push_back(convert(light));
+  }
   return output;
 }
 
@@ -94,10 +106,17 @@ TrafficLightSelector::TrafficLightSelector(const rclcpp::NodeOptions & options)
   sub_map_ = create_subscription<LaneletMapBin>(
     "~/sub/vector_map", rclcpp::QoS(1).transient_local(),
     std::bind(&TrafficLightSelector::on_map, this, std::placeholders::_1));
-  sub_lights_ = create_subscription<TrafficLightArray>(
+  sub_v2x_ = create_subscription<TrafficSignalArray>(
+    "~/sub/traffic_signals", rclcpp::QoS(1),
+    std::bind(&TrafficLightSelector::on_v2x, this, std::placeholders::_1));
+  sub_perception_ = create_subscription<TrafficLightArray2>(
     "~/sub/traffic_lights", rclcpp::QoS(1),
-    std::bind(&TrafficLightSelector::on_lights, this, std::placeholders::_1));
-  pub_signals_ = create_publisher<TrafficSignalArray>("~/pub/traffic_signals", rclcpp::QoS(1));
+    std::bind(&TrafficLightSelector::on_perception, this, std::placeholders::_1));
+
+  pub_ = create_publisher<TrafficSignalArray>("~/pub/traffic_signals", rclcpp::QoS(1));
+
+  const auto rate = rclcpp::Rate(1.0);
+  timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 }
 
 void TrafficLightSelector::on_map(const LaneletMapBin::ConstSharedPtr msg)
@@ -114,8 +133,22 @@ void TrafficLightSelector::on_map(const LaneletMapBin::ConstSharedPtr msg)
   }
 }
 
-void TrafficLightSelector::on_lights(const TrafficLightArray::ConstSharedPtr msg)
+void TrafficLightSelector::on_v2x(const TrafficSignalArray::ConstSharedPtr msg) { data_v2x_ = msg; }
+
+void TrafficLightSelector::on_perception(const TrafficLightArray2::ConstSharedPtr msg)
 {
+  const auto data = std::make_shared<TrafficLightArray>();
+  data->stamp = msg->header.stamp;
+  data->lights.reserve(msg->signals.size());
+  for (const auto & light : msg->signals) {
+    data->lights.push_back(utils::convert(light));
+  }
+  data_perception_ = data;
+}
+
+void TrafficLightSelector::on_timer()
+{
+  /*
   using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
   using TrafficLightElement = autoware_perception_msgs::msg::TrafficLightElement;
 
@@ -136,6 +169,7 @@ void TrafficLightSelector::on_lights(const TrafficLightArray::ConstSharedPtr msg
     array.signals.push_back(signal);
   }
   pub_signals_->publish(array);
+  */
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
