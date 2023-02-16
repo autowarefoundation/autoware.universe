@@ -196,9 +196,9 @@ double PurePursuitLateralController::calcCurvature(const size_t closest_idx)
     // return zero curvature when forward distance is not long enough in the trajectory
     return 0.0;
   }
-  // TODO: shift the center point of the curvature calculation to allow sufficient distance,
-  // because if sufficient distance cannot be obtained in front or behind, the curvature will be
-  // zero in the current implementation.
+  // TODO(k.sugahara): shift the center point of the curvature calculation to allow sufficient
+  // distance, because if sufficient distance cannot be obtained in front or behind, the curvature
+  // will be zero in the current implementation.
 
   // Calculate curvature assuming the trajectory points interval is constant
   double current_curvature = 0.0;
