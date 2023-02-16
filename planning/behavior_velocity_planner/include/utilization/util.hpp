@@ -302,6 +302,7 @@ std::set<int> getAssociativeIntersectionLanelets(
   lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::routing::RoutingGraphPtr routing_graph);
 
+<<<<<<< HEAD
 template <template <class> class Container>
 lanelet::ConstLanelets getConstLaneletsFromIds(
   lanelet::LaneletMapConstPtr map, const Container<int> & ids)
@@ -314,6 +315,8 @@ lanelet::ConstLanelets getConstLaneletsFromIds(
   return ret;
 }
 
+=======
+>>>>>>> 700f7a931 (has assoc_ids memeber)
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 
