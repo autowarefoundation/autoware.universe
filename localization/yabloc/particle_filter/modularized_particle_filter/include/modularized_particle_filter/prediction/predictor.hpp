@@ -43,6 +43,7 @@ private:
   // Publisher
   rclcpp::Publisher<ParticleArray>::SharedPtr predicted_particles_pub_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pose_pub_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pose_cov_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_;
 
   rclcpp::TimerBase::SharedPtr timer_;

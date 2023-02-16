@@ -31,7 +31,8 @@ Predictor::Predictor()
 
   // Publishers
   predicted_particles_pub_ = create_publisher<ParticleArray>("predicted_particles", 10);
-  pose_pub_ = create_publisher<PoseStamped>("particle_pose", 10);
+  pose_pub_ = create_publisher<PoseStamped>("pose", 10);
+  pose_cov_pub_ = create_publisher<PoseCovStamped>("pose_with_covariance", 10);
 
   // Subscribers
   using std::placeholders::_1;
@@ -298,6 +299,18 @@ void Predictor::publish_mean_pose(
 
   pose_stamped.pose = mean_pose;
   pose_pub_->publish(pose_stamped);
+
+  PoseCovStamped pose_cov_stamped;
+  pose_cov_stamped.header = pose_stamped.header;
+  pose_cov_stamped.pose.pose = mean_pose;
+  pose_cov_stamped.pose.covariance[6 * 0 + 0] = 0.0255;
+  pose_cov_stamped.pose.covariance[6 * 1 + 1] = 0.0255;
+  pose_cov_stamped.pose.covariance[6 * 2 + 2] = 0.0255;
+  pose_cov_stamped.pose.covariance[6 * 3 + 3] = 0.000625;
+  pose_cov_stamped.pose.covariance[6 * 4 + 4] = 0.000625;
+  pose_cov_stamped.pose.covariance[6 * 5 + 5] = 0.000625;
+
+  pose_cov_pub_->publish(pose_cov_stamped);
 
   geometry_msgs::msg::TransformStamped transform{};
   transform.header.stamp = particle_array_opt_->header.stamp;

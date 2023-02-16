@@ -42,7 +42,7 @@ CameraParticleCorrector::CameraParticleCorrector()
   sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
-  sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
+  sub_pose_ = create_subscription<PoseStamped>("pose", 10, on_pose);
 
   auto on_service = std::bind(&CameraParticleCorrector::on_service, this, _1, _2);
   switch_service_ = create_service<SetBool>("/switch", on_service);

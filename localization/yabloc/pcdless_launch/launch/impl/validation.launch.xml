@@ -2,7 +2,7 @@
     <arg name="reference_bags_path" default=""/>
 
     <!-- overlay monitor -->
-    <arg name="input_particle_pose" default="/localization/pf/particle_pose"/>
+    <arg name="input_particle_pose" default="/localization/pf/pose"/>
     <arg name="input_ground" default="/localization/map/ground"/>
     <arg name="input_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
     <arg name="input_ll2_sign_board" default="/localization/map/ll2_sign_board"/>

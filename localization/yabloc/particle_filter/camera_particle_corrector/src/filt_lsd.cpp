@@ -36,6 +36,10 @@ std::pair<CameraParticleCorrector::LineSegments, CameraParticleCorrector::LineSe
 CameraParticleCorrector::filt(const LineSegments & iffy_lines)
 {
   LineSegments good, bad;
+  if (!latest_pose_.has_value()) {
+    throw std::runtime_error("latest_pose_ is nullopt");
+  }
+
   const Sophus::SE3f pose = common::pose_to_se3(latest_pose_.value().pose);
 
   // pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;

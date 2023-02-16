@@ -3,8 +3,10 @@
 
     <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
-    <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
-    <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
+    <let name="resized_image" value="/sensing/camera/undistorted/image_raw"/>
+    <let name="resized_info" value="/sensing/camera/undistorted/camera_info"/>
+    
+    <arg name="connect_tf_base_link" default="true" description="broadcast TF of particle_filter->base_link"/>
 
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="50.0"/>
@@ -69,10 +71,10 @@
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/map.launch.xml"/>
         </group>
 
-        <!-- control/command/control_cmd visualizer -->
-        <node name="command_publisher" pkg="pcdless_launch" exec="control_command_publisher.py" output="screen" args="--ros-args --log-level info"/>
-
         <!-- static tf -->
-        <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
+        <group if="$(var connect_tf_base_link)"> 
+            <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
+        </group>
+
     </group>
 </launch>
