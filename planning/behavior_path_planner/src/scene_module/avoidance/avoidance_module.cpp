@@ -946,7 +946,6 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
   // To be consistent with changes in the ego position, the current shift length is considered.
   const auto current_ego_shift = getCurrentShift();
   // // implement lane detection here.
-  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
   AvoidLineArray avoid_lines;
   std::vector<AvoidanceDebugMsg> avoidance_debug_msg_array;
