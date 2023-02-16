@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
-#define _TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
-
-#include <memory>
+#ifndef TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
+#define TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/visibility_control.hpp"
 
 #include "tier4_system_msgs/msg/message_tracking_tag.hpp"
+
+#include <memory>
+#include <string>
 
 namespace timing_violation_monitor_utils
 {
@@ -32,8 +33,7 @@ public:
 
   RCLCPP_PUBLIC
   MessageConsumptionNotifier(
-    rclcpp::Node * node,
-    const std::string & notification_topic,
+    rclcpp::Node * node, const std::string & notification_topic,
     const rclcpp::QoS & notification_qos);
 
   void notify(const builtin_interfaces::msg::Time & consumed_msg_stamp);
@@ -42,6 +42,6 @@ private:
   std::shared_ptr<MTTPublisher> pub_;
 };
 
-}   // namespace timing_violation_monitor_utils
+}  // namespace timing_violation_monitor_utils
 
-#endif  // _TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_
+#endif  // TIMING_VIOLATION_MONITOR_UTILS__MESSAGE_CONSUMPTION_NOTIFIER_HPP_

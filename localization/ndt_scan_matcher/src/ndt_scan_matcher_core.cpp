@@ -210,8 +210,8 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
   pose_consumption_notifier_ =
-      std::make_unique<timing_violation_monitor_utils::MessageConsumptionNotifier>(
-          this, "for_tilde_interpolator_mtt", 10);
+    std::make_unique<timing_violation_monitor_utils::MessageConsumptionNotifier>(
+      this, "for_tilde_interpolator_mtt", 10);
 
   service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
@@ -370,8 +370,7 @@ void NDTScanMatcher::callback_sensor_points(
     return;
   }
   // publish mtt at interpolation
-  pose_consumption_notifier_->notify(
-      interpolator.get_new_pose().header.stamp);
+  pose_consumption_notifier_->notify(interpolator.get_new_pose().header.stamp);
 
   // perform ndt scan matching
   (*state_ptr_)["state"] = "Aligning";

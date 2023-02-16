@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_system_msgs/msg/message_tracking_tag.hpp"
 #include "timing_violation_monitor_utils/message_consumption_notifier.hpp"
+
+#include "tier4_system_msgs/msg/message_tracking_tag.hpp"
 
 using timing_violation_monitor_utils::MessageConsumptionNotifier;
 
 MessageConsumptionNotifier::MessageConsumptionNotifier(
-  rclcpp::Node * node,
-  const std::string & notification_topic,
-  const rclcpp::QoS & notification_qos)
+  rclcpp::Node * node, const std::string & notification_topic, const rclcpp::QoS & notification_qos)
 {
   pub_ = node->create_publisher<MessageTrackingTag>(notification_topic, notification_qos);
 }

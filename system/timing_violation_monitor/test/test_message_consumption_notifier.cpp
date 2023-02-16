@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "timing_violation_monitor_utils/message_consumption_notifier.hpp"
+
 #include "tier4_system_msgs/msg/message_tracking_tag.hpp"
 
 #include <gtest/gtest.h>
-
-#include "timing_violation_monitor_utils/message_consumption_notifier.hpp"
 
 using timing_violation_monitor_utils::MessageConsumptionNotifier;
 using MessageTrackingTag = MessageConsumptionNotifier::MessageTrackingTag;
@@ -24,16 +24,12 @@ using MessageTrackingTag = MessageConsumptionNotifier::MessageTrackingTag;
 class NodeWithNotifier : public rclcpp::Node
 {
 public:
-  explicit NodeWithNotifier(const std::string & node_name)
-  : rclcpp::Node(node_name)
+  explicit NodeWithNotifier(const std::string & node_name) : rclcpp::Node(node_name)
   {
     notifier_ = std::make_unique<MessageConsumptionNotifier>(this, "/test_notify", 1);
   }
 
-  void notify(const builtin_interfaces::msg::Time & t)
-  {
-    notifier_->notify(t);
-  }
+  void notify(const builtin_interfaces::msg::Time & t) { notifier_->notify(t); }
 
 private:
   std::unique_ptr<MessageConsumptionNotifier> notifier_;
@@ -42,27 +38,20 @@ private:
 class TestMessageConsumptionNotifier : public ::testing::Test
 {
 public:
-  void SetUp() override
-  {
-    rclcpp::init(0, nullptr);
-  }
+  void SetUp() override { rclcpp::init(0, nullptr); }
 
-  void TearDown() override
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() override { rclcpp::shutdown(); }
 };
 
-TEST_F(TestMessageConsumptionNotifier, simple_case) {
+TEST_F(TestMessageConsumptionNotifier, simple_case)
+{
   auto node = std::make_shared<NodeWithNotifier>("node");
   auto checker_node = std::make_shared<rclcpp::Node>("checker_node");
 
   bool checker_sub_called = false;
   auto checker_sub = checker_node->create_subscription<MessageTrackingTag>(
-    "/test_notify", 1,
-    [&checker_sub_called](MessageTrackingTag::UniquePtr msg) -> void
-    {
-      (void) msg;
+    "/test_notify", 1, [&checker_sub_called](MessageTrackingTag::UniquePtr msg) -> void {
+      (void)msg;
       checker_sub_called = true;
     });
 
