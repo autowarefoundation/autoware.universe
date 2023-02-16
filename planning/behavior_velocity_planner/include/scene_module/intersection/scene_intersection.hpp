@@ -190,7 +190,7 @@ private:
    */
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int objective_lane_id, const double time_delay) const;
+    const double time_delay) const;
 
   /**
    * @brief check if the object has a target type for collision check

@@ -131,7 +131,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
-  const auto lane_interval_ip_opt = util::findLaneIdInterval(path_ip, lane_id_);
+  const auto lane_interval_ip_opt = util::findLaneIdsInterval(path_ip, assoc_ids_);
   if (!lane_interval_ip_opt.has_value()) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");
@@ -385,8 +385,7 @@ bool IntersectionModule::checkCollision(
   /* check collision between target_objects predicted path and ego lane */
 
   // cut the predicted path at passing_time
-  const auto time_distance_array =
-    calcIntersectionPassingTime(path, closest_idx, lane_id_, time_delay);
+  const auto time_distance_array = calcIntersectionPassingTime(path, closest_idx, time_delay);
   const double passing_time = time_distance_array.back().first;
   cutPredictPathWithDuration(&target_objects, passing_time);
 
@@ -530,7 +529,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
 
 TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const int objective_lane_id, const double time_delay) const
+  const double time_delay) const
 {
   double dist_sum = 0.0;
   int assigned_lane_found = false;
@@ -542,7 +541,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
     auto reference_point = path.points.at(i);
     reference_point.point.longitudinal_velocity_mps = planner_param_.intersection_velocity;
     reference_path.points.push_back(reference_point);
-    bool has_objective_lane_id = util::hasLaneId(path.points.at(i), objective_lane_id);
+    bool has_objective_lane_id = util::hasLaneIds(path.points.at(i), assoc_ids_);
     if (assigned_lane_found && !has_objective_lane_id) {
       break;
     }

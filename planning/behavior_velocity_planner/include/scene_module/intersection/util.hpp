@@ -30,6 +30,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -43,9 +44,10 @@ std::optional<size_t> insertPoint(
   const geometry_msgs::msg::Pose & in_pose,
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
-bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id);
-std::optional<std::pair<size_t, size_t>> findLaneIdInterval(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const int lane_id);
+bool hasLaneIds(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids);
+std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids);
 std::optional<size_t> getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & point);

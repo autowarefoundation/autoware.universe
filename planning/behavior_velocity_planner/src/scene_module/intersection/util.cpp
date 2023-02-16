@@ -68,24 +68,25 @@ std::optional<size_t> insertPoint(
   return insert_idx;
 }
 
-bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id)
+bool hasLaneIds(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids)
 {
   for (const auto & pid : p.lane_ids) {
-    if (pid == id) {
+    if (ids.find(pid) != ids.end()) {
       return true;
     }
   }
   return false;
 }
 
-std::optional<std::pair<size_t, size_t>> findLaneIdInterval(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const int lane_id)
+std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids)
 {
   bool found = false;
   size_t start = 0;
   size_t end = p.points.size() > 0 ? p.points.size() - 1 : 0;
   for (size_t i = 0; i < p.points.size(); ++i) {
-    if (hasLaneId(p.points.at(i), lane_id)) {
+    if (hasLaneIds(p.points.at(i), ids)) {
       if (!found) {
         // found interval for the first time
         found = true;

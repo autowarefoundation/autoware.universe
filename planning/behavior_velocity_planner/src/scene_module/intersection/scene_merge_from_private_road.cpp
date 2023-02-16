@@ -82,7 +82,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
-  const auto lane_interval_ip_opt = util::findLaneIdInterval(path_ip, lane_id_);
+  const auto lane_interval_ip_opt = util::findLaneIdsInterval(path_ip, assoc_ids_);
   if (!lane_interval_ip_opt.has_value()) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");
