@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -57,6 +58,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   {
     planner_data_ = std::make_shared<PlannerData>();
     planner_data_->parameters = getCommonParam();
+    planner_data_->drivable_area_expansion_parameters.init(*this);
   }
 
   // publisher
@@ -324,6 +326,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       declare_parameter<bool>(ns + "enable_update_path_when_object_is_gone");
     p.enable_safety_check = declare_parameter<bool>(ns + "enable_safety_check");
     p.enable_yield_maneuver = declare_parameter<bool>(ns + "enable_yield_maneuver");
+    p.disable_path_update = declare_parameter<bool>(ns + "disable_path_update");
     p.publish_debug_marker = declare_parameter<bool>(ns + "publish_debug_marker");
     p.print_debug_info = declare_parameter<bool>(ns + "print_debug_info");
   }
@@ -1089,6 +1092,62 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, "avoidance.publish_debug_marker", avoidance_param_ptr->publish_debug_marker);
     update_param(
       parameters, "lane_change.publish_debug_marker", lane_change_param_ptr->publish_debug_marker);
+    // Drivable area expansion parameters
+    using drivable_area_expansion::DrivableAreaExpansionParameters;
+    update_param(
+      parameters, DrivableAreaExpansionParameters::ENABLED_PARAM,
+      planner_data_->drivable_area_expansion_parameters.enabled);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::AVOID_DYN_OBJECTS_PARAM,
+      planner_data_->drivable_area_expansion_parameters.avoid_dynamic_objects);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
+      planner_data_->drivable_area_expansion_parameters.expansion_method);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
+      planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_DIST_PARAM,
+      planner_data_->drivable_area_expansion_parameters.avoid_linestring_dist);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_FRONT,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_front_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_REAR,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_rear_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_LEFT,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_left_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_RIGHT,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_right_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_front_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_REAR,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_rear_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_LEFT,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_left_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_RIGHT,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_right_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::MAX_EXP_DIST_PARAM,
+      planner_data_->drivable_area_expansion_parameters.max_expansion_distance);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::MAX_PATH_ARC_LENGTH_PARAM,
+      planner_data_->drivable_area_expansion_parameters.max_path_arc_length);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
+      planner_data_->drivable_area_expansion_parameters.extra_arc_length);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXTRA_COMPENSATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.compensate_extra_dist);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
