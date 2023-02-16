@@ -27,10 +27,10 @@
 
 namespace
 {
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_autoware_utils::transformPoint;
@@ -100,8 +100,8 @@ PathPointWithLaneId generateTestPathPoint(
 template <class T>
 T generateTestPath(
   const size_t num_points, const double point_interval, const double vel_lon = 0.0,
-  const double vel_lat = 0.0, const double heading_rate_rps = 0.0,
-  const double init_theta = 0.0, const double delta_theta = 0.0)
+  const double vel_lat = 0.0, const double heading_rate_rps = 0.0, const double init_theta = 0.0,
+  const double delta_theta = 0.0)
 {
   using Point = typename T::_points_type::value_type;
 
@@ -354,8 +354,7 @@ TEST(Interpolation, interpolate_path_for_path)
     autoware_auto_planning_msgs::msg::PathWithLaneId path;
     path.points.resize(10);
     for (size_t i = 0; i < 10; ++i) {
-      path.points.at(i) =
-        generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+      path.points.at(i) = generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
     }
 
     // Same points as the path point
@@ -519,8 +518,7 @@ TEST(Interpolation, interpolate_path_for_path)
     autoware_auto_planning_msgs::msg::PathWithLaneId path;
     path.points.resize(10);
     for (size_t i = 0; i < 10; ++i) {
-      path.points.at(i) =
-        generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+      path.points.at(i) = generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
     }
     path.points.at(4) = path.points.at(3);
 

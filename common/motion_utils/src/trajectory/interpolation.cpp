@@ -16,13 +16,13 @@
 
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/zero_order_hold.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 
 namespace motion_utils
 {
@@ -133,14 +133,15 @@ PathPointWithLaneId calcInterpolatedPoint(
     interpolated_point.point.lateral_velocity_mps = curr_pt.point.lateral_velocity_mps;
   } else {
     interpolated_point.point.longitudinal_velocity_mps = interpolation::lerp(
-      curr_pt.point.longitudinal_velocity_mps, next_pt.point.longitudinal_velocity_mps, clamped_ratio);
+      curr_pt.point.longitudinal_velocity_mps, next_pt.point.longitudinal_velocity_mps,
+      clamped_ratio);
     interpolated_point.point.lateral_velocity_mps = interpolation::lerp(
       curr_pt.point.lateral_velocity_mps, next_pt.point.lateral_velocity_mps, clamped_ratio);
   }
 
   // heading rate interpolation
-  interpolated_point.point.heading_rate_rps =
-    interpolation::lerp(curr_pt.point.heading_rate_rps, next_pt.point.heading_rate_rps, clamped_ratio);
+  interpolated_point.point.heading_rate_rps = interpolation::lerp(
+    curr_pt.point.heading_rate_rps, next_pt.point.heading_rate_rps, clamped_ratio);
 
   return interpolated_point;
 }
