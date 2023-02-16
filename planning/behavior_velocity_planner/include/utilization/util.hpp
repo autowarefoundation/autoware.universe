@@ -292,6 +292,15 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output);
 boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output);
+
+/*
+  @brief return 'associatvie' lanes in the intersection. 'associative' means that a lane shares same
+  or lane-changeable parent lanes with `lane` and has same turn_direction value.
+ */
+std::set<int> getAssociativeIntersectionLanelets(
+  lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
+  const lanelet::routing::RoutingGraphPtr routing_graph);
+
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 

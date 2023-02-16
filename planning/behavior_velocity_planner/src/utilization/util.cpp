@@ -668,5 +668,34 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
 
   return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
 }
+
+std::set<int> getAssociativeIntersectionLanelets(
+  lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
+  const lanelet::routing::RoutingGraphPtr routing_graph)
+{
+  const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+  if (turn_direction.compare("else") == 0) {
+    return {};
+  }
+
+  const auto parents = routing_graph->previous(lane);
+  std::set<int> parent_neighbors;
+  for (const auto & parent : parents) {
+    const auto neighbors = routing_graph->besides(parent);
+    for (const auto & neighbor : neighbors) parent_neighbors.insert(neighbor.id());
+  }
+  std::set<int> assocs;
+  for (const auto & parent_neighbor_id : parent_neighbors) {
+    const auto parent_neighbor = lanelet_map->laneletLayer.get(parent_neighbor_id);
+    const auto followings = routing_graph->following(parent_neighbor);
+    for (const auto & following : followings) {
+      if (following.attributeOr("turn_direction", "else") == turn_direction) {
+        assocs.insert(following.id());
+      }
+    }
+  }
+  return assocs;
+}
+
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner

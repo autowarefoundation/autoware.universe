@@ -35,9 +35,9 @@ namespace bg = boost::geometry;
 MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const PlannerParam & planner_param, const std::set<int> & assoc_ids, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
+: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id), assoc_ids_(assoc_ids)
 {
   velocity_factor_.init(VelocityFactor::MERGE);
   planner_param_ = planner_param;

@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -97,8 +98,8 @@ public:
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const PlannerParam & planner_param, const std::set<int> & assoc_ids,
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -109,14 +110,19 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
+  const std::set<int> & getAssocIds() const { return assoc_ids_; }
+
 private:
-  int64_t lane_id_;
+  const int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
   // Parameter
   PlannerParam planner_param_;
   std::optional<util::IntersectionLanelets> intersection_lanelets_;
+  // for an intersection lane l1, its associative lanes are those that share same parent lanelet and
+  // have same turn_direction
+  const std::set<int> assoc_ids_;
 
   /**
    * @brief check collision for all lanelet area & predicted objects (call checkPathCollision() as
