@@ -62,6 +62,7 @@ void PerceptionNode::object_recognize(
       for (const auto & msg_path : msg_predicted_path.path) {
         predicted_path.path.insert(predicted_path.path.begin(), msg_path);
       }
+      predicted_path.time_step = msg_predicted_path.time_step;
       predicted_path.confidence = msg_predicted_path.confidence;
       object.kinematics.predicted_paths.insert(
         object.kinematics.predicted_paths.begin(), predicted_path);
