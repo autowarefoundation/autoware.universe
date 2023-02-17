@@ -289,7 +289,6 @@ boost::optional<size_t> findNearestIndex(
 
 /**
  * @brief calculate longitudinal offset (length along trajectory from seg_idx point to nearest point to p_target on trajectory). 
- * If seg_idx point is after that nearest point, length is negative.
  * Segment is straight path between two continuous points of trajectory.
  * @param points points of trajectory, path, ...
  * @param seg_idx segment index of point at beginning of length
@@ -459,7 +458,6 @@ double calcLateralOffset(
 /**
  * @brief calculate lateral offset from p_target (length from p_target to trajectory).
  * The function gets the nearest segment index between the points of trajectory and the given target point, then uses that segment index to calculate lateral offset. 
- * If seg_idx point is after that nearest point, length is negative. 
  * Segment is straight path between two continuous points of trajectory.
  * @param points points of trajectory, path, ...
  * @param p_target target point
@@ -501,7 +499,8 @@ double calcLateralOffset(
  * @param points points of trajectory, path, ...
  * @param src_idx index of start point
  * @param dst_idx index of end point
- * @return length of distance between two points
+ * @return length of distance between two points.
+ * Length is positive if dst_idx is greater that src_idx (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 double calcSignedArcLength(const T & points, const size_t src_idx, const size_t dst_idx)
@@ -563,7 +562,8 @@ std::vector<double> calcSignedArcLengthPartialSum(
  * @param points points of trajectory, path, ...
  * @param src_point start point
  * @param dst_idx index of end point
- * @return length of distance between two points
+ * @return length of distance between two points.
+ * Length is positive if destination point associated to dst_idx is greater that src_idx (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 double calcSignedArcLength(
@@ -592,7 +592,9 @@ double calcSignedArcLength(
  * @param dst_idx index of end point
  * @param max_dist max distance, used to search for nearest segment index to start pose
  * @param max_yaw max yaw, used to search for nearest segment index to start pose
- * @return length of distance between two points
+ * @return length of distance between two points.
+ * Length is positive if destination point associated to dst_idx is greater that point associated to src_pose 
+ * (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 boost::optional<double> calcSignedArcLength(
@@ -625,6 +627,7 @@ boost::optional<double> calcSignedArcLength(
  * @param src_idx index of start point
  * @param dst_point end point
  * @return length of distance between two points
+ * Length is positive if destination point is greater that source point associated to src_idx (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 double calcSignedArcLength(
@@ -645,7 +648,9 @@ double calcSignedArcLength(
  * @param points points of trajectory, path, ...
  * @param src_point start point
  * @param dst_point end point
- * @return length of distance between two points
+ * @return length of distance between two points.
+ * Length is positive if destination point is greater that source point (i.e. after it in trajectory, path, ...) and negative otherwise.
+ * 
  */
 template <class T>
 double calcSignedArcLength(
@@ -678,7 +683,8 @@ double calcSignedArcLength(
  * @param dst_point end point
  * @param max_dist max distance, used to search for nearest segment index to start pose
  * @param max_yaw max yaw, used to search for nearest segment index to start pose
- * @return length of distance between two points
+ * @return length of distance between two points.
+ * Length is positive if destination point is greater that source point associated to src_pose (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 boost::optional<double> calcSignedArcLength(
@@ -1368,7 +1374,8 @@ void insertOrientation(T & points, const bool is_driving_forward)
  * @param src_seg_idx index of start point segment
  * @param dst_point end point
  * @param dst_seg_idx index of end point segment
- * @return length of distance between two points
+ * @return length of distance between two points.
+ * Length is positive if destination point is greater that source point (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 double calcSignedArcLength(
@@ -1393,6 +1400,7 @@ double calcSignedArcLength(
  * @param src_seg_idx index of start point segment
  * @param dst_idx index of end point
  * @return length of distance between two points
+ * Length is positive if destination point associated to dst_idx is greater that source point (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 double calcSignedArcLength(
@@ -1415,6 +1423,7 @@ double calcSignedArcLength(
  * @param dst_point end point
  * @param dst_seg_idx index of end point segment
  * @return length of distance between two points
+ * Length is positive if destination point is greater that source point associated to src_idx (i.e. after it in trajectory, path, ...) and negative otherwise.
  */
 template <class T>
 double calcSignedArcLength(
