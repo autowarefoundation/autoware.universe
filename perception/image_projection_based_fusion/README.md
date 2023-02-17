@@ -23,17 +23,20 @@ The subscription status of the message is signed with 'O'.
 | | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
 | subscription status | | O | O | O |  
+
 If the roi msgs can be matched, fuse them and postprocess the pointcloud message.
 Otherwise, fuse the matched roi msgs and cache the pointcloud.
 2.if a pointcloud message is subscribed under the below condition:
 | | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
 | subscription status | | O | O | |
+
 if the roi msgs can be matched, fuse them and cache the pointcloud.
 3.if a pointcloud message is subscribed under the below condition:
 | | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
 | subscription status | O | O | O | |
+
 If the roi msg 3 is subscribed before the next pointcloud messge coming or timeout, fuse it if matched, otherwise wait for the next roi msg 3.
 If the roi msg 3 is not subscribed before the next pointcloud messge coming or timeout, postprocess the pointcloud messege as it is.
 
