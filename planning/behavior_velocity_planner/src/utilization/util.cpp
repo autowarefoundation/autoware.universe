@@ -295,6 +295,30 @@ Polygon2d generatePathPolygon(
   return ego_area;
 }
 
+lanelet::ConstLanelet generatePathLanelet(
+  const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width)
+{
+  lanelet::Points3d lefts;
+  for (size_t i = start_idx; i <= end_idx; ++i) {
+    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
+    const double x = path.points.at(i).point.pose.position.x + width * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y - width * std::cos(yaw);
+    lefts.emplace_back(x, y, path.points.at(i).point.pose.position.z);
+  }
+  lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, lefts);
+
+  lanelet::Points3d rights;
+  for (size_t i = start_idx; i <= end_idx; ++i) {
+    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
+    const double x = path.points.at(i).point.pose.position.x - width * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
+    rights.emplace_back(x, y, path.points.at(i).point.pose.position.z);
+  }
+  lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, rights);
+
+  return lanelet::Lanelet(lanelet::InvalId, left, right);
+}
+
 geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
 {
