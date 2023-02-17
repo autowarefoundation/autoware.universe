@@ -85,7 +85,7 @@ std::optional<StopLineIdx> generateStopLine(
  " @param use_stuck_stopline if true, a stop line is generated at the beginning of intersection lane
  */
 std::optional<size_t> generateStuckStopLine(
-  const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double ip_interval,
@@ -101,8 +101,7 @@ std::optional<size_t> generateStuckStopLine(
  */
 std::optional<size_t> getFirstPointInsidePolygons(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
-  const size_t lane_interval_end, const int lane_id,
-  const std::vector<lanelet::CompoundPolygon3d> & polygons);
+  const size_t lane_interval_end, const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
 /**
  * @brief Get stop point from map if exists

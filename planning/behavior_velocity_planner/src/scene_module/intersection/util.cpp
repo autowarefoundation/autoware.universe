@@ -120,8 +120,7 @@ std::optional<size_t> getDuplicatedPointIdx(
 
 std::optional<size_t> getFirstPointInsidePolygons(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
-  const size_t lane_interval_end, [[maybe_unused]] const int lane_id,
-  const std::vector<lanelet::CompoundPolygon3d> & polygons)
+  const size_t lane_interval_end, const std::vector<lanelet::CompoundPolygon3d> & polygons)
 {
   std::optional<size_t> first_idx_inside_lanelet = std::nullopt;
   for (size_t i = lane_interval_start; i <= lane_interval_end; ++i) {
@@ -180,7 +179,7 @@ std::optional<StopLineIdx> generateStopLine(
   } else {
     // find the index of the first point that intersects with detection_areas
     const auto first_inside_detection_idx_ip_opt = getFirstPointInsidePolygons(
-      path_ip, lane_interval_ip_start, lane_interval_ip_end, lane_id, detection_areas);
+      path_ip, lane_interval_ip_start, lane_interval_ip_end, detection_areas);
     // if path is not intersecting with detection_area, skip
     if (!first_inside_detection_idx_ip_opt.has_value()) {
       RCLCPP_DEBUG(
@@ -255,7 +254,7 @@ std::optional<StopLineIdx> generateStopLine(
 }
 
 std::optional<size_t> generateStuckStopLine(
-  const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double interval,
@@ -267,7 +266,7 @@ std::optional<size_t> generateStuckStopLine(
     stuck_stop_line_idx_ip = lane_interval_ip_start;
   } else {
     const auto stuck_stop_line_idx_ip_opt = util::getFirstPointInsidePolygons(
-      path_ip, lane_interval_ip_start, lane_interval_ip_end, lane_id, conflicting_areas);
+      path_ip, lane_interval_ip_start, lane_interval_ip_end, conflicting_areas);
     if (!stuck_stop_line_idx_ip_opt.has_value()) {
       RCLCPP_DEBUG(
         logger,

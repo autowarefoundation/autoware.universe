@@ -141,7 +141,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
 
   const auto stuck_line_idx_opt = util::generateStuckStopLine(
-    lane_id_, conflicting_area, planner_data_, planner_param_.stop_line_margin,
+    conflicting_area, planner_data_, planner_param_.stop_line_margin,
     planner_param_.use_stuck_stopline, path, path_ip, interval, lane_interval_ip_opt.value(),
     logger_.get_child("util"));
 
@@ -192,20 +192,17 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const auto objects_ptr = planner_data_->predicted_objects;
 
   /* check stuck vehicle */
-  const double ignore_length =
-    planner_param_.stuck_vehicle_ignore_dist + planner_data_->vehicle_info_.vehicle_length_m;
-  const double detect_dist =
-    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
-  const auto stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
-    lanelet_map_ptr, *path, closest_idx, detect_dist, ignore_length);
+  const auto stuck_vehicle_detect_area =
+    generateStuckVehicleDetectAreaPolygon(lanelet_map_ptr, *path, closest_idx);
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
 
   /* calculate dynamic collision around detection area */
   const double time_delay =
     is_go_out_ ? 0.0 : (planner_param_.state_transit_margin_time - state_machine_.getDuration());
+  const auto ego_poly = getIntersectionSegmentPolygon(*path, 0.0);
   const bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
-    closest_idx, stuck_vehicle_detect_area, time_delay);
+    lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, ego_poly,
+    objects_ptr, closest_idx, time_delay);
 
   /* calculate final stop lines */
   std::optional<size_t> stop_line_idx = std::nullopt;
@@ -317,24 +314,12 @@ bool IntersectionModule::checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::ConstLanelets & detection_area_lanelets,
   const lanelet::ConstLanelets & adjacent_lanelets,
-  const std::optional<Polygon2d> & intersection_area,
+  const std::optional<Polygon2d> & intersection_area, const Polygon2d & ego_poly,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const int closest_idx, const Polygon2d & stuck_vehicle_detect_area, const double time_delay)
+  const int closest_idx, const double time_delay)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
-
-  /* generate ego-lane polygon */
-  const auto ego_lane_poly = lanelet_map_ptr->laneletLayer.get(module_id_).polygon2d();
-  Polygon2d ego_poly{};
-  for (const auto & p : ego_lane_poly) {
-    ego_poly.outer().emplace_back(p.x(), p.y());
-  }
-  lanelet::ConstLanelets ego_lane_with_next_lane = getEgoLaneWithNextLane(lanelet_map_ptr, path);
-  lanelet::ConstLanelet closest_lanelet;
-  lanelet::utils::query::getClosestLanelet(
-    ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point),
-    &closest_lanelet);
 
   /* extract target objects */
   autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
@@ -345,29 +330,18 @@ bool IntersectionModule::checkCollision(
       continue;
     }
 
-    // ignore vehicle in ego-lane && behind ego
-    const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
-    const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);
-    if (is_in_ego_lane) {
-      if (!planning_utils::isAheadOf(object_pose, planner_data_->current_odometry->pose)) {
-        continue;
-      }
-      if (
-        planner_param_.enable_front_car_decel_prediction &&
-        checkFrontVehicleDeceleration(
-          ego_lane_with_next_lane, closest_lanelet, stuck_vehicle_detect_area, object))
-        return true;
-    }
-
     // check direction of objects
     const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
+    const auto is_in_adjacent_lanelets = checkAngleForTargetLanelets(
+      object_direction, adjacent_lanelets, planner_param_.detection_area_margin);
+    if (is_in_adjacent_lanelets) {
+      continue;
+    }
+
     if (intersection_area) {
       const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
       const auto intersection_area_2d = intersection_area.value();
       const auto is_in_intersection_area = bg::within(obj_poly, intersection_area_2d);
-      const auto is_in_adjacent_lanelets = checkAngleForTargetLanelets(
-        object_direction, adjacent_lanelets, planner_param_.detection_area_margin);
-      if (is_in_adjacent_lanelets) continue;
       if (is_in_intersection_area) {
         target_objects.objects.push_back(object);
       } else if (checkAngleForTargetLanelets(
@@ -484,16 +458,19 @@ bool IntersectionModule::checkCollision(
   return collision_detected;
 }
 
-Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
+Polygon2d IntersectionModule::generateStuckVehicleDetectAreaPolygon(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const double extra_dist, const double ignore_dist) const
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getLaneletLength3d;
   using lanelet::utils::getPolygonFromArcLength;
   using lanelet::utils::to2D;
 
+  const double extra_dist =
+    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
+  const double ignore_dist =
+    planner_param_.stuck_vehicle_ignore_dist + planner_data_->vehicle_info_.vehicle_length_m;
   lanelet::ConstLanelets ego_lane_with_next_lane = getEgoLaneWithNextLane(lanelet_map_ptr, path);
 
   const double intersection_exit_length = getLaneletLength3d(ego_lane_with_next_lane.front());
@@ -675,6 +652,40 @@ bool IntersectionModule::checkAngleForTargetLanelets(
     }
   }
   return false;
+}
+
+Polygon2d IntersectionModule::getIntersectionAndNextSegmentPolygon(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const
+{
+  // NOTE: findLaneIdsInterval returns (start, end) of assoc_ids
+  const auto ego_lane_interval_opt = util::findLaneIdsInterval(path, assoc_ids_);
+  if (!ego_lane_interval_opt.has_value()) {
+    return {};
+  }
+  const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
+  const int start = ego_start;
+  int end = ego_end;
+  if (ego_end + 1 < path.points.size()) {
+    const int next_id = path.points.at(ego_end).lane_ids.at(0);
+    const auto next_lane_interval_opt = util::findLaneIdsInterval(path, {next_id});
+    if (next_lane_interval_opt.has_value()) {
+      const auto [next_start, next_end] = next_lane_interval_opt.value();
+      end = next_end;
+    }
+  }
+  return planning_utils::generatePathPolygon(path, start, end, width);
+}
+
+Polygon2d IntersectionModule::getIntersectionSegmentPolygon(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const
+{
+  // NOTE: findLaneIdsInterval returns (start, end) of assoc_ids
+  const auto ego_lane_interval_opt = util::findLaneIdsInterval(path, assoc_ids_);
+  if (!ego_lane_interval_opt.has_value()) {
+    return {};
+  }
+  const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
+  return planning_utils::generatePathPolygon(path, ego_start, ego_end, width);
 }
 
 lanelet::ConstLanelets IntersectionModule::getEgoLaneWithNextLane(

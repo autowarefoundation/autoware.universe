@@ -141,9 +141,9 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & detection_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
-    const std::optional<Polygon2d> & intersection_area,
+    const std::optional<Polygon2d> & intersection_area, const Polygon2d & ego_poly,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area, const double time_delay);
+    const int closest_idx, const double time_delay);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -167,10 +167,9 @@ private:
    * @param ignore_dist     ignore distance from the start point of the ego-intersection lane
    * @return generated polygon
    */
-  Polygon2d generateEgoIntersectionLanePolygon(
+  Polygon2d generateStuckVehicleDetectAreaPolygon(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const double extra_dist, const double ignore_dist) const;
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
@@ -227,11 +226,19 @@ private:
     const double margin = 0);
 
   /**
-   * @brief Get lanes including ego lanelet and next lanelet
-   * @param lanelet_map_ptr lanelet map
-   * @param path            ego-car lane
-   * @return ego lanelet and next lanelet
+   * @brief Get path polygon of intersection part and next lane part
+   * @return trimmed path polygon
    */
+  Polygon2d getIntersectionAndNextSegmentPolygon(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
+
+  /**
+   * @brief Get path polygon of intersetion part
+   * @return trimmed path polygon
+   */
+  Polygon2d getIntersectionSegmentPolygon(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
+
   lanelet::ConstLanelets getEgoLaneWithNextLane(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) const;
