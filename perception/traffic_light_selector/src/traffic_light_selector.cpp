@@ -161,7 +161,7 @@ void TrafficLightSelector::on_timer()
     }
   }
 
-  if (data_perception_) {
+  if (data_perception_ && !light_to_signal_.empty()) {
     for (const auto & light : data_perception_->lights) {
       auto & elements = intersections[light_to_signal_[light.traffic_light_id]];
       for (const auto & element : light.elements) {
