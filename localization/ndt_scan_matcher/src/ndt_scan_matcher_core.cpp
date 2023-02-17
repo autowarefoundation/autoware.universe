@@ -369,7 +369,7 @@ void NDTScanMatcher::callback_sensor_points(
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No MAP!");
     return;
   }
-  // publish mtt at interpolation
+  // publish message tracking tag at interpolation
   pose_consumption_notifier_->notify(interpolator.get_new_pose().header.stamp);
 
   // perform ndt scan matching
