@@ -12,12 +12,12 @@ The `image_projection_based_fusion` is a package to fuse detected obstacles (bou
 
 The offset between each camera and the lidar is set according to their shutter timing.
 After applying the offset to the timestamp, if the interval between the timestamp of pointcloud topic and the roi message is less than the match threshold, the two messages are matched.
-![roi_sync_image](./images/roi_sync_1.png)
+![roi_sync_image](./docs/images/roi_sync_1.png)
 current default value at autoware.universe for TIER IV Robotaxi are: - input_offset_ms: [61.67, 111.67, 45.0, 28.33, 78.33, 95.0] - match_threshold_ms: 30.0
 
 #### fusion and timer
 
-![roi_sync_image](./images/roi_sync_2.png)
+![roi_sync_image](./docs/images/roi_sync_2.png)
 The subscription status of the message is signed with 'O'.
 1.if a pointcloud message is subscribed under the below condition:
 | | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
