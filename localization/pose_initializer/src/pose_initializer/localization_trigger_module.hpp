@@ -25,7 +25,7 @@ private:
   using SetBool = std_srvs::srv::SetBool;
 
 public:
-  explicit LocalizationTriggerModule(rclcpp::Node * node);
+  explicit LocalizationTriggerModule(rclcpp::Node * node, bool ndt_enabled);
   void deactivate() const;
   void activate() const;
 
@@ -33,6 +33,8 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Client<SetBool>::SharedPtr client_ekf_trigger_;
   rclcpp::Client<SetBool>::SharedPtr client_ndt_trigger_;
+
+  bool ndt_enabled_;
 };
 
 #endif  // POSE_INITIALIZER__LOCALIZATION_TRIGGER_MODULE_HPP_
