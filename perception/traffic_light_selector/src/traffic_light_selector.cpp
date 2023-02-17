@@ -121,6 +121,7 @@ TrafficLightSelector::TrafficLightSelector(const rclcpp::NodeOptions & options)
 
 void TrafficLightSelector::on_map(const LaneletMapBin::ConstSharedPtr msg)
 {
+  // TODO(Takagi, Isamu): Remove conversion when perception uses new message type.
   const auto map = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, map);
 
@@ -148,28 +149,37 @@ void TrafficLightSelector::on_perception(const TrafficLightArray2::ConstSharedPt
 
 void TrafficLightSelector::on_timer()
 {
-  /*
-  using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
   using TrafficLightElement = autoware_perception_msgs::msg::TrafficLightElement;
+  std::unordered_map<lanelet::Id, std::vector<TrafficLightElement>> intersections;
 
-  std::unordered_map<lanelet::Id, std::vector<TrafficLightElement>> elements;
-  for (const auto & light : msg->signals) {
-    const auto id = light_to_signal_[light.map_primitive_id];
-    for (const auto & element : light.lights) {
-      elements[id].push_back(utils::convert(element));
+  if (data_v2x_) {
+    for (const auto & signal : data_v2x_->signals) {
+      auto & elements = intersections[signal.traffic_signal_id];
+      for (const auto & element : signal.elements) {
+        elements.push_back(element);
+      }
     }
   }
 
+  if (data_perception_) {
+    for (const auto & light : data_perception_->lights) {
+      auto & elements = intersections[light_to_signal_[light.traffic_light_id]];
+      for (const auto & element : light.elements) {
+        elements.push_back(element);
+      }
+    }
+  }
+
+  using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
   TrafficSignalArray array;
   array.stamp = now();
-  for (const auto & [id, elements] : elements) {
+  for (const auto & [id, elements] : intersections) {
     TrafficSignal signal;
     signal.traffic_signal_id = id;
     signal.elements = elements;
     array.signals.push_back(signal);
   }
-  pub_signals_->publish(array);
-  */
+  pub_->publish(array);
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
