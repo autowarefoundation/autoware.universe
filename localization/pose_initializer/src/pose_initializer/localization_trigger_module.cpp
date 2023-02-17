@@ -25,7 +25,7 @@ LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node, bool n
 : logger_(node->get_logger())
 {
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
-  if(ndt_enabled) client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
+  if (ndt_enabled) client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 
   ndt_enabled_ = ndt_enabled;
 }
@@ -45,13 +45,10 @@ void LocalizationTriggerModule::deactivate() const
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
 
   bool is_succeeded = false;
-  if(ndt_enabled_)
-  {
+  if (ndt_enabled_) {
     auto future_ndt = client_ndt_trigger_->async_send_request(req);
-    is_succeeded = (future_ekf.get()->success  && future_ndt.get()->success);
-  }
-  else
-  {
+    is_succeeded = (future_ekf.get()->success && future_ndt.get()->success);
+  } else {
     is_succeeded = future_ekf.get()->success;
   }
 
@@ -78,13 +75,10 @@ void LocalizationTriggerModule::activate() const
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
 
   bool is_succeeded = false;
-  if(ndt_enabled_)
-  {
+  if (ndt_enabled_) {
     auto future_ndt = client_ndt_trigger_->async_send_request(req);
-    is_succeeded = (future_ekf.get()->success  && future_ndt.get()->success);
-  }
-  else
-  {
+    is_succeeded = (future_ekf.get()->success && future_ndt.get()->success);
+  } else {
     is_succeeded = future_ekf.get()->success;
   }
 
