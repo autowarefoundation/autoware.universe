@@ -17,6 +17,7 @@
 
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
+#include <random>
 #include <string>
 
 namespace tier4_autoware_utils
