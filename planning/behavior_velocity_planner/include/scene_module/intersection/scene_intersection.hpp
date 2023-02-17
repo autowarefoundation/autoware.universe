@@ -141,8 +141,12 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & detection_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
+<<<<<<< HEAD
     const std::optional<Polygon2d> & intersection_area, const lanelet::ConstLanelet & ego_lane,
     const lanelet::ConstLanelets & ego_lane_with_next_lane,
+=======
+    const std::optional<Polygon2d> & intersection_area, const Polygon2d & ego_poly,
+>>>>>>> 2398e3331 (getIntersectionSegmentPolygon should return it as a lanelet object)
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const double time_delay);
 
@@ -169,8 +173,13 @@ private:
    * @return generated polygon
    */
   Polygon2d generateStuckVehicleDetectAreaPolygon(
+<<<<<<< HEAD
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx) const;
+=======
+    lanelet::LaneletMapConstPtr lanelet_map_ptr,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx) const;
+>>>>>>> 2398e3331 (getIntersectionSegmentPolygon should return it as a lanelet object)
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
@@ -230,6 +239,16 @@ private:
    * @brief Get path polygon of intersection part and next lane part
    * @return trimmed path polygon
    */
+  Polygon2d getIntersectionAndNextSegmentPolygon(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
+
+  /**
+   * @brief Get path polygon of intersetion part
+   * @return trimmed path polygon
+   */
+  Polygon2d getIntersectionSegmentPolygon(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
+
   lanelet::ConstLanelets getEgoLaneWithNextLane(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
 
