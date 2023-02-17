@@ -288,7 +288,8 @@ boost::optional<size_t> findNearestIndex(
 }
 
 /**
- * @brief calculate longitudinal offset (length along trajectory from seg_idx point to nearest point to p_target on trajectory). 
+ * @brief calculate longitudinal offset (length along trajectory from seg_idx point to nearest point to p_target on trajectory).
+ * If seg_idx point is after that nearest point, length is negative.  
  * Segment is straight path between two continuous points of trajectory.
  * @param points points of trajectory, path, ...
  * @param seg_idx segment index of point at beginning of length
@@ -410,7 +411,6 @@ boost::optional<size_t> findNearestSegmentIndex(
 
 /**
  * @brief calculate lateral offset from p_target (length from p_target to trajectory) using given segment index. 
- * If seg_idx point is after that nearest point, length is negative. 
  * Segment is straight path between two continuous points of trajectory.
  * @param points points of trajectory, path, ...
  * @param p_target target point
