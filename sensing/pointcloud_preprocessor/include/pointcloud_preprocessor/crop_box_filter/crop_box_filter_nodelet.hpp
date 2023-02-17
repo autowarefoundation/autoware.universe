@@ -69,6 +69,11 @@ protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
+  // Temporary Implementation: Remove this interface when all the filter nodes conform to new API
+  virtual void faster_filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+    const Eigen::Matrix4f &eigen_transform, bool need_transform);
+
   void publishCropBoxPolygon();
 
 private:
