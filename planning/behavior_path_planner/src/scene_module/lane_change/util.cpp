@@ -610,8 +610,7 @@ bool isLaneChangePathSafe(
   }
 
   RCLCPP_DEBUG(
-    rclcpp::get_logger("lane_change"),
-    "number of object -> total: %lu, in lane: %lu, others: %lu",
+    rclcpp::get_logger("lane_change"), "number of object -> total: %lu, in lane: %lu, others: %lu",
     dynamic_objects->objects.size(), in_lane_object_indices.size(),
     other_lane_object_indices.size());
 
