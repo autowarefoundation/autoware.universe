@@ -411,8 +411,8 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
 
   // select safe path
   const bool found_safe_path = lane_change_utils::selectSafePath(
-    valid_paths, current_lanes, backward_lanes, planner_data_->dynamic_object, current_pose,
-    current_twist, common_parameters, *parameters_, &safe_path, object_debug_);
+    valid_paths, backward_lanes, planner_data_->dynamic_object, current_pose, current_twist,
+    common_parameters, *parameters_, &safe_path, object_debug_);
 
   if (parameters_->publish_debug_marker) {
     setObjectDebugVisualization();
@@ -678,7 +678,6 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
   const auto current_pose = getEgoPose();
   const auto current_twist = getEgoTwist();
   const auto & dynamic_objects = planner_data_->dynamic_object;
-  const auto & current_lanes = status_.current_lanes;
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
   const auto path = status_.lane_change_path;
@@ -694,7 +693,7 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
     path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
     common_parameters.ego_nearest_yaw_threshold);
   return lane_change_utils::isLaneChangePathSafe(
-    path, current_lanes, check_lanes, dynamic_objects, current_pose, current_seg_idx, current_twist,
+    path, check_lanes, dynamic_objects, current_pose, current_seg_idx, current_twist,
     common_parameters, *parameters_, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     false, status_.lane_change_path.acceleration);

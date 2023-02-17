@@ -54,13 +54,11 @@ void filterObjectIndices(
   const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
   const PathWithLaneId & ego_path, const Pose & current_pose, const double forward_path_length,
-  const double filter_width, std::vector<size_t> & current_lane_obj_indices,
-  std::vector<size_t> & target_lane_obj_indices, std::vector<size_t> & others_obj_indices,
-  const bool ignore_unknown_obj = false)
+  const double filter_width, std::vector<size_t> & in_lane_obj_indices,
+  std::vector<size_t> & others_obj_indices, const bool ignore_unknown_obj = false)
 {
   // Reserve maximum amount possible
-  current_lane_obj_indices.reserve(objects.objects.size());
-  target_lane_obj_indices.reserve(objects.objects.size());
+  in_lane_obj_indices.reserve(objects.objects.size());
   others_obj_indices.reserve(objects.objects.size());
 
   const auto get_basic_polygon =
@@ -102,14 +100,14 @@ void filterObjectIndices(
       const double distance = boost::geometry::distance(obj_polygon, ego_path_linestring);
 
       if (distance < filter_width) {
-        current_lane_obj_indices.push_back(i);
+        in_lane_obj_indices.push_back(i);
         continue;
       }
     }
 
     const bool is_intersect_with_target = boost::geometry::intersects(target_polygon, obj_polygon);
     if (is_intersect_with_target) {
-      target_lane_obj_indices.push_back(i);
+      in_lane_obj_indices.push_back(i);
       continue;
     }
 
@@ -118,7 +116,7 @@ void filterObjectIndices(
         const bool is_intersect_with_backward =
           boost::geometry::intersects(ll.polygon2d().basicPolygon(), obj_polygon);
         if (is_intersect_with_backward) {
-          target_lane_obj_indices.push_back(i);
+          in_lane_obj_indices.push_back(i);
           return true;
         }
       }
@@ -496,8 +494,7 @@ LaneChangePaths selectValidPaths(
 }
 
 bool selectSafePath(
-  const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & backward_lanes,
+  const LaneChangePaths & paths, const lanelet::ConstLanelets & backward_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & ros_parameters, LaneChangePath * selected_path,
@@ -510,9 +507,8 @@ bool selectSafePath(
       common_parameters.ego_nearest_yaw_threshold);
     Pose ego_pose_before_collision;
     if (isLaneChangePathSafe(
-          path, current_lanes, backward_lanes, dynamic_objects, current_pose, current_seg_idx,
-          current_twist, common_parameters, ros_parameters,
-          common_parameters.expected_front_deceleration,
+          path, backward_lanes, dynamic_objects, current_pose, current_seg_idx, current_twist,
+          common_parameters, ros_parameters, common_parameters.expected_front_deceleration,
           common_parameters.expected_rear_deceleration, ego_pose_before_collision, debug_data, true,
           path.acceleration)) {
       *selected_path = path;
@@ -566,8 +562,7 @@ bool hasEnoughDistance(
 }
 
 bool isLaneChangePathSafe(
-  const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & backward_lanes,
+  const LaneChangePath & lane_change_path, const lanelet::ConstLanelets & backward_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const size_t current_seg_idx, const Twist & current_twist,
   const BehaviorPathPlannerParameters & common_parameters,
@@ -582,7 +577,7 @@ bool isLaneChangePathSafe(
 
   const auto & path = lane_change_path.path;
   const auto & target_lanes = lane_change_path.target_lanelets;
-  if (path.points.empty() || current_lanes.empty()) {
+  if (path.points.empty()) {
     return false;
   }
 
@@ -602,8 +597,7 @@ bool isLaneChangePathSafe(
 
   const auto & vehicle_info = common_parameters.vehicle_info;
 
-  std::vector<size_t> current_lane_object_indices{};
-  std::vector<size_t> target_lane_object_indices{};
+  std::vector<size_t> in_lane_object_indices{};
   std::vector<size_t> other_lane_object_indices{};
   {
     const auto lateral_buffer = (use_buffer) ? 0.5 : 0.0;
@@ -612,14 +606,14 @@ bool isLaneChangePathSafe(
     filterObjectIndices(
       *dynamic_objects, lane_change_path.reference_lanelets, target_lanes, backward_lanes, path,
       current_pose, common_parameters.forward_path_length, current_obj_filtering_buffer,
-      current_lane_object_indices, target_lane_object_indices, other_lane_object_indices, true);
+      in_lane_object_indices, other_lane_object_indices, true);
   }
 
   RCLCPP_DEBUG(
     rclcpp::get_logger("lane_change"),
-    "number of object -> total: %lu, in current: %lu, target: %lu, others: %lu",
-    dynamic_objects->objects.size(), current_lane_object_indices.size(),
-    target_lane_object_indices.size(), other_lane_object_indices.size());
+    "number of object -> total: %lu, in lane: %lu, others: %lu",
+    dynamic_objects->objects.size(), in_lane_object_indices.size(),
+    other_lane_object_indices.size());
 
   const auto assignDebugData = [](const PredictedObject & obj) {
     CollisionCheckDebug debug;
@@ -641,7 +635,7 @@ bool isLaneChangePathSafe(
       }
     };
 
-  for (const auto & i : current_lane_object_indices) {
+  for (const auto & i : in_lane_object_indices) {
     const auto & obj = dynamic_objects->objects.at(i);
     const auto object_speed =
       util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear);
@@ -664,7 +658,7 @@ bool isLaneChangePathSafe(
   }
 
   // Collision check for objects in lane change target lane
-  for (const auto & i : target_lane_object_indices) {
+  for (const auto & i : in_lane_object_indices) {
     const auto & obj = dynamic_objects->objects.at(i);
     auto current_debug_data = assignDebugData(obj);
     current_debug_data.second.ego_predicted_path.push_back(vehicle_predicted_path);
