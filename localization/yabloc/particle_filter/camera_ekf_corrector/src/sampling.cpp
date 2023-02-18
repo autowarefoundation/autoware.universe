@@ -49,12 +49,14 @@ geometry_msgs::msg::PoseWithCovariance debayes_distribution(
     measure.covariance[6 * 0 + 1] = 0;
     measure.covariance[6 * 1 + 0] = 0;
     measure.covariance[6 * 1 + 1] = 100;
+    measure.covariance[6 * 5 + 5] = 0.25;
     return measure;
   }
 
   const Eigen::Matrix2f measure_cov = (measure_info).inverse();
-  const Eigen::Vector2f measure_pos =
-    prior_pos + (prior_cov + measure_cov) * prior_info * (post_pos - prior_pos);
+  const Eigen::Vector2f measure_pos = post_pos;
+  // const Eigen::Vector2f measure_pos =
+  //   prior_pos + (prior_cov + measure_cov) * prior_info * (post_pos - prior_pos);
 
   // TODO: De-bayesing for orientation
 
@@ -65,6 +67,7 @@ geometry_msgs::msg::PoseWithCovariance debayes_distribution(
   measure.covariance[6 * 0 + 1] = measure_cov(0, 1);
   measure.covariance[6 * 1 + 0] = measure_cov(1, 0);
   measure.covariance[6 * 1 + 1] = measure_cov(1, 1);
+  std::cout << "prior_cov\n" << prior_cov << std::endl;
   std::cout << "post_cov\n" << post_cov << std::endl;
   std::cout << "measure_cov\n" << measure_cov << std::endl;
   std::cout << "post_pos: " << post_pos.transpose() << std::endl;
