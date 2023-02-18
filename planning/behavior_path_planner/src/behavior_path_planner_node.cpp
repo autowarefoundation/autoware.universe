@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -57,6 +58,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   {
     planner_data_ = std::make_shared<PlannerData>();
     planner_data_->parameters = getCommonParam();
+    planner_data_->drivable_area_expansion_parameters.init(*this);
   }
 
   // publisher
@@ -1038,26 +1040,6 @@ void BehaviorPathPlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPt
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->occupancy_grid = msg;
 }
-void BehaviorPathPlannerNode::onExternalApproval(const ApprovalMsg::ConstSharedPtr msg)
-{
-  const std::lock_guard<std::mutex> lock(mutex_pd_);
-  planner_data_->approval.is_approved.data = msg->approval;
-  // TODO(wep21): Replace msg stamp after {stamp: now} is implemented in ros2 topic pub
-  planner_data_->approval.is_approved.stamp = this->now();
-}
-void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
-{
-  const std::lock_guard<std::mutex> lock(mutex_pd_);
-  auto getModuleName = [](PathChangeModuleId module) {
-    if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
-      return "ForceLaneChange";
-    } else {
-      return "NONE";
-    }
-  };
-  planner_data_->approval.is_force_approved.module_name = getModuleName(msg->module);
-  planner_data_->approval.is_force_approved.stamp = msg->header.stamp;
-}
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
@@ -1090,6 +1072,62 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, "avoidance.publish_debug_marker", avoidance_param_ptr->publish_debug_marker);
     update_param(
       parameters, "lane_change.publish_debug_marker", lane_change_param_ptr->publish_debug_marker);
+    // Drivable area expansion parameters
+    using drivable_area_expansion::DrivableAreaExpansionParameters;
+    update_param(
+      parameters, DrivableAreaExpansionParameters::ENABLED_PARAM,
+      planner_data_->drivable_area_expansion_parameters.enabled);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::AVOID_DYN_OBJECTS_PARAM,
+      planner_data_->drivable_area_expansion_parameters.avoid_dynamic_objects);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
+      planner_data_->drivable_area_expansion_parameters.expansion_method);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
+      planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_DIST_PARAM,
+      planner_data_->drivable_area_expansion_parameters.avoid_linestring_dist);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_FRONT,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_front_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_REAR,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_rear_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_LEFT,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_left_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_RIGHT,
+      planner_data_->drivable_area_expansion_parameters.ego_extra_right_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_front_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_REAR,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_rear_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_LEFT,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_left_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_RIGHT,
+      planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_right_offset);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::MAX_EXP_DIST_PARAM,
+      planner_data_->drivable_area_expansion_parameters.max_expansion_distance);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::MAX_PATH_ARC_LENGTH_PARAM,
+      planner_data_->drivable_area_expansion_parameters.max_path_arc_length);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
+      planner_data_->drivable_area_expansion_parameters.extra_arc_length);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
+    update_param(
+      parameters, DrivableAreaExpansionParameters::EXTRA_COMPENSATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.compensate_extra_dist);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();

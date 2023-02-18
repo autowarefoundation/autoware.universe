@@ -750,6 +750,8 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
       insertYieldVelocity(path);
       insertWaitPoint(parameters_->use_constraints_for_decel, path);
       removeAllRegisteredShiftPoints(path_shifter_);
+      clearWaitingApproval();
+      removeRTCStatus();
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
@@ -2458,7 +2460,7 @@ double AvoidanceModule::getRSSLongitudinalDistance(
    * =======================================
    */
   if (!is_front_object && !opposite_lane_vehicle) {
-    return v_obj * idling_time + 0.5 * accel_for_rss * std::pow(v_obj, 2.0) +
+    return v_obj * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
            std::pow(v_obj + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) -
            std::pow(v_ego, 2.0) / (2.0 * accel_for_rss);
   }
@@ -3197,8 +3199,9 @@ Pose AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
   // un-shifted fot current ideal pose
   const auto closest = findNearestIndex(prev_path.path.points, ego_pose.position);
 
-  Pose unshifted_pose = ego_pose;
-  unshifted_pose.orientation = prev_path.path.points.at(closest).point.pose.orientation;
+  // NOTE: Considering avoidance by motion, we set unshifted_pose as previous path instead of
+  // ego_pose.
+  Pose unshifted_pose = motion_utils::calcInterpolatedPoint(prev_path.path, ego_pose).point.pose;
 
   util::shiftPose(&unshifted_pose, -prev_path.shift_length.at(closest));
   unshifted_pose.orientation = ego_pose.orientation;
@@ -3214,7 +3217,7 @@ ShiftedPath AvoidanceModule::generateAvoidancePath(PathShifter & path_shifter) c
   ShiftedPath shifted_path;
   if (!path_shifter.generate(&shifted_path)) {
     RCLCPP_ERROR(getLogger(), "failed to generate shifted path.");
-    return toShiftedPath(avoidance_data_.reference_path);
+    return prev_output_;
   }
 
   return shifted_path;

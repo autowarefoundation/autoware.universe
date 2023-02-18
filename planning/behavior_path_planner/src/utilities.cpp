@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/utilities.hpp"
 
+#include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
+
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -1213,6 +1215,12 @@ void generateDrivableArea(
     overlap_threshold) {
     path.right_bound.push_back(right_goal_point);
   }
+  const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
+  if (expansion_params.enabled) {
+    drivable_area_expansion::expandDrivableArea(
+      path, expansion_params, *planner_data->dynamic_object, *planner_data->route_handler,
+      transformed_lanes);
+  }
 }
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
@@ -1789,117 +1797,6 @@ PathWithLaneId getCenterLinePath(
   return route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
 }
 
-bool checkLaneIsInIntersection(
-  const RouteHandler & route_handler, const PathWithLaneId & reference_path,
-  const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameter,
-  const int num_lane_change, double & additional_length_to_add)
-{
-  if (num_lane_change == 0) {
-    return false;
-  }
-
-  if (lanelet_sequence.size() < 2 || reference_path.points.empty()) {
-    return false;
-  }
-
-  const auto goal_pose = route_handler.getGoalPose();
-  lanelet::ConstLanelet goal_lanelet;
-  if (!route_handler.getGoalLanelet(&goal_lanelet)) {
-    std::cerr << "fail to get goal lanelet for intersection check.\n";
-    return false;
-  }
-  const auto goal_lanelet_point = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
-
-  const auto min_lane_change_distance =
-    num_lane_change *
-    (parameter.minimum_lane_change_length + parameter.backward_length_buffer_for_end_of_lane);
-  const double goal_distance_in_goal_lanelet = std::invoke([&goal_lanelet_point, &goal_lanelet]() {
-    const auto goal_centerline = goal_lanelet.centerline2d();
-    const auto arc_coordinate =
-      lanelet::geometry::toArcCoordinates(goal_centerline, goal_lanelet_point.basicPoint2d());
-    return arc_coordinate.length;
-  });
-
-  if (goal_distance_in_goal_lanelet > min_lane_change_distance) {
-    return false;
-  }
-
-  const auto & path_points = reference_path.points;
-  const auto & end_of_route_pose = path_points.back().point.pose;
-
-  if (lanelet_sequence.back().id() != goal_lanelet.id()) {
-    const auto get_signed_distance =
-      getSignedDistance(end_of_route_pose, goal_pose, lanelet_sequence);
-
-    if (get_signed_distance > min_lane_change_distance) {
-      return false;
-    }
-  }
-  // if you come to here, basically either back lane is goal, or back lane to goal is not enough
-  // distance
-  auto prev_lane = lanelet_sequence.crbegin();
-  auto find_intersection_iter = lanelet_sequence.crbegin();
-  for (; find_intersection_iter != lanelet_sequence.crend(); ++find_intersection_iter) {
-    prev_lane = std::next(find_intersection_iter);
-    if (prev_lane == lanelet_sequence.crend()) {
-      return false;
-    }
-    const auto lanes = route_handler.getNextLanelets(*prev_lane);
-    const auto is_neighbor_with_turn_direction = std::any_of(
-      lanes.cbegin(), lanes.cend(),
-      [](const lanelet::ConstLanelet & lane) { return lane.hasAttribute("turn_direction"); });
-
-    if (is_neighbor_with_turn_direction) {
-      const auto & intersection_back = find_intersection_iter->centerline2d().back();
-      geometry_msgs::msg::Pose intersection_back_pose;
-      intersection_back_pose.position.x = intersection_back.x();
-      intersection_back_pose.position.y = intersection_back.y();
-      intersection_back_pose.position.z = 0.0;
-      const auto get_signed_distance =
-        getSignedDistance(intersection_back_pose, goal_pose, lanelet_sequence);
-
-      if (get_signed_distance > min_lane_change_distance) {
-        return false;
-      }
-      break;
-    }
-  }
-
-  const auto checkAttribute = [](const lanelet::ConstLineString3d & linestring) noexcept {
-    const auto & attribute_name = lanelet::AttributeNamesString::LaneChange;
-    if (linestring.hasAttribute(attribute_name)) {
-      const auto attr = linestring.attribute(attribute_name);
-      if (attr.value() == std::string("yes")) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const auto isLaneChangeAttributeYes =
-    [checkAttribute](const lanelet::ConstLanelet & lanelet) noexcept {
-      return (checkAttribute(lanelet.rightBound()) || checkAttribute(lanelet.leftBound()));
-    };
-
-  lanelet::ConstLanelets lane_change_prohibited_lanes{*find_intersection_iter};
-  for (auto prev_ll_itr = prev_lane; prev_ll_itr != lanelet_sequence.crend(); ++prev_ll_itr) {
-    if (isLaneChangeAttributeYes(*prev_ll_itr)) {
-      break;
-    }
-    lane_change_prohibited_lanes.push_back(*prev_ll_itr);
-  }
-
-  std::reverse(lane_change_prohibited_lanes.begin(), lane_change_prohibited_lanes.end());
-  const auto prohibited_arc_coordinate =
-    lanelet::utils::getArcCoordinates(lane_change_prohibited_lanes, goal_pose);
-
-  additional_length_to_add =
-    (num_lane_change > 0 ? 1 : -1) *
-    (parameter.backward_length_buffer_for_end_of_lane + prohibited_arc_coordinate.length);
-
-  return true;
-}
-
 // for lane following
 PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
@@ -2248,20 +2145,20 @@ bool getObjectExpectedPoseAndConvertToPolygon(
 std::vector<PredictedPath> getPredictedPathFromObj(
   const PredictedObject & obj, const bool & is_use_all_predicted_path)
 {
-  std::vector<PredictedPath> predicted_path_vec;
-  if (is_use_all_predicted_path) {
-    std::copy_if(
-      obj.kinematics.predicted_paths.cbegin(), obj.kinematics.predicted_paths.cend(),
-      std::back_inserter(predicted_path_vec),
-      [](const PredictedPath & path) { return !path.path.empty(); });
-  } else {
+  if (!is_use_all_predicted_path) {
     const auto max_confidence_path = std::max_element(
       obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
-      [](const auto & path1, const auto & path2) { return path1.confidence > path2.confidence; });
+      [](const auto & path1, const auto & path2) { return path1.confidence < path2.confidence; });
     if (max_confidence_path != obj.kinematics.predicted_paths.end()) {
-      predicted_path_vec.push_back(*max_confidence_path);
+      return {*max_confidence_path};
     }
   }
+
+  std::vector<PredictedPath> predicted_path_vec;
+  std::copy_if(
+    obj.kinematics.predicted_paths.cbegin(), obj.kinematics.predicted_paths.cend(),
+    std::back_inserter(predicted_path_vec),
+    [](const PredictedPath & path) { return !path.path.empty(); });
   return predicted_path_vec;
 }
 
