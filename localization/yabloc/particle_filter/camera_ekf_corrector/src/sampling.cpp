@@ -38,12 +38,16 @@ geometry_msgs::msg::PoseWithCovariance debayes_distribution(
 
   // Check whether info matrix is positive semi-definite or not
   float det = measure_info.determinant();
-  while (det < 1e-4f) {
+  while (det < 1e-4f || measure_info(0, 0) < 1e-3f || measure_info(1, 1) < 1e-3f) {
     measure_info += 0.1 * prior_info;
     std::cout << "avoiding non positive semi-definite " << det << std::endl;
     det = measure_info.determinant();
   }
   if (measure_info(0, 0) < 1e-3f || measure_info(1, 1) < 1e-3f) {
+    std::cerr << "measure_info is weird" << std::endl;
+    std::cerr << post_info << std::endl;
+    std::cerr << measure_info << std::endl;
+    std::cerr << prior_info << std::endl;
     geometry_msgs::msg::PoseWithCovariance measure = prior;
     measure.covariance[6 * 0 + 0] = 100;
     measure.covariance[6 * 0 + 1] = 0;

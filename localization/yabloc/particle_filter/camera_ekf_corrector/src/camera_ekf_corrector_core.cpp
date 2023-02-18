@@ -134,11 +134,11 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
     return;
   }
 
-  if (!enable_switch_) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(), "skip until first initialpose is published");
-    return;
-  }
+  // if (!enable_switch_) {
+  //   RCLCPP_WARN_STREAM_THROTTLE(
+  //     get_logger(), *get_clock(), (1000ms).count(), "skip until first initialpose is published");
+  //   return;
+  // }
 
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   auto opt_synched_pose = get_synchronized_pose(stamp);

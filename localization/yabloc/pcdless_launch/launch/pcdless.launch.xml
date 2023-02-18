@@ -1,7 +1,7 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
 
-    <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
+    <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed/relay"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
     <let name="resized_image" value="/sensing/camera/undistorted/image_raw"/>
     <let name="resized_info" value="/sensing/camera/undistorted/camera_info"/>
@@ -36,10 +36,10 @@
 
         <!-- particle filter -->
         <group>
-            <push-ros-namespace namespace="pf"/>
+            <!-- <push-ros-namespace namespace="pf"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/pf.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
-            </include>
+            </include> -->
         </group>
 
         <!-- image processing -->
@@ -56,10 +56,10 @@
 
         <!-- twist -->
         <group>
-            <push-ros-namespace namespace="twist"/>
+            <!-- <push-ros-namespace namespace="twist"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/twist.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
-            </include>
+            </include> -->
         </group>
 
         <!-- validation -->
