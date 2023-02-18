@@ -96,19 +96,21 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
   }
 }
 
-// Temporary Implementation: Delete this function definition when all the filter nodes conform to new API.
+// Temporary Implementation: Delete this function definition when all the filter nodes conform to
+// new API.
 void CropBoxFilterComponent::filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) {
-  (void) input;
-  (void) indices;
-  (void) output;
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+{
+  (void)input;
+  (void)indices;
+  (void)output;
 }
 
-// Temporary Implementation: Rename this function to `filter()` when all the filter nodes conform to new API.
-// Then delete the old `filter()` defined above.
+// Temporary Implementation: Rename this function to `filter()` when all the filter nodes conform to
+// new API. Then delete the old `filter()` defined above.
 void CropBoxFilterComponent::faster_filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
-  PointCloud2 & output, const Eigen::Matrix4f &eigen_transform, bool need_transform)
+  PointCloud2 & output, const Eigen::Matrix4f & eigen_transform, bool need_transform)
 {
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
@@ -121,10 +123,11 @@ void CropBoxFilterComponent::faster_filter(
   size_t output_size = 0;
 
   for (size_t global_offset = 0; global_offset + input->point_step < input->data.size();
-      global_offset += input->point_step) {
-    Eigen::Vector4f point(*reinterpret_cast<const float*>(&input->data[global_offset + x_offset]),
-        *reinterpret_cast<const float*>(&input->data[global_offset + y_offset]),
-        *reinterpret_cast<const float*>(&input->data[global_offset + z_offset]), 1);
+       global_offset += input->point_step) {
+    Eigen::Vector4f point(
+      *reinterpret_cast<const float *>(&input->data[global_offset + x_offset]),
+      *reinterpret_cast<const float *>(&input->data[global_offset + y_offset]),
+      *reinterpret_cast<const float *>(&input->data[global_offset + z_offset]), 1);
 
     if (need_transform) {
       if (std::isfinite(point[0]) && std::isfinite(point[1]), std::isfinite(point[2])) {
@@ -136,8 +139,9 @@ void CropBoxFilterComponent::faster_filter(
       }
     }
 
-    bool point_is_inside = point[2] > param_.min_z && point[2] < param_.max_z && point[1] > param_.min_y &&
-      point[1] < param_.max_y && point[0] > param_.min_x && point[0] < param_.max_x;
+    bool point_is_inside = point[2] > param_.min_z && point[2] < param_.max_z &&
+                           point[1] > param_.min_y && point[1] < param_.max_y &&
+                           point[0] > param_.min_x && point[0] < param_.max_x;
     if ((!param_.negative && point_is_inside) || (param_.negative && !point_is_inside)) {
       memcpy(&output.data[output_size], &input->data[global_offset], input->point_step);
       output_size += input->point_step;
@@ -145,7 +149,8 @@ void CropBoxFilterComponent::faster_filter(
   }
 
   output.data.resize(output_size);
-  output.header.frame_id = tf_input_frame_; // Note that `input->header.frame_id` is data before converted
+  output.header.frame_id =
+    tf_input_frame_;  // Note that `input->header.frame_id` is data before converted
   output.height = 1;
   output.fields = input->fields;
   output.is_bigendian = input->is_bigendian;

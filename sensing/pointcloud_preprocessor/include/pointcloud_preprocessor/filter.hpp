@@ -189,10 +189,10 @@ protected:
   // It's not pure virtual function so that a child class does not have to implement this function.
   virtual void faster_filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
-    const Eigen::Matrix4f &eigen_transform, bool need_transform); // != 0
+    const Eigen::Matrix4f & eigen_transform, bool need_transform);  // != 0
 
   /** \brief Lazy transport subscribe routine. */
-  virtual void subscribe(const std::string &filter_name);
+  virtual void subscribe(const std::string & filter_name);
 
   /** \brief Lazy transport unsubscribe routine. */
   virtual void unsubscribe();
@@ -279,11 +279,13 @@ private:
   void input_indices_callback(const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
 
   /** \brief Get a matrix for conversion from the original frame to the target frame */
-  bool getTransformMatrix(const std::string target_frame, const sensor_msgs::msg::PointCloud2 &from,
-      const tf2_ros::Buffer &tf_buffer, Eigen::Matrix4f &eigen_transform /*output*/);
+  bool getTransformMatrix(
+    const std::string target_frame, const sensor_msgs::msg::PointCloud2 & from,
+    const tf2_ros::Buffer & tf_buffer, Eigen::Matrix4f & eigen_transform /*output*/);
 
   // Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
-  void faster_input_indices_callback(const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
+  void faster_input_indices_callback(
+    const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
 
   void setupTF();
 };
