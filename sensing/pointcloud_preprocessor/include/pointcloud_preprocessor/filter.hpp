@@ -299,6 +299,8 @@ private:
     const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
     const tf2_ros::Buffer & tf_buffer, Eigen::Matrix4f & eigen_transform /*output*/);
 
+  bool convert_output_costly(std::unique_ptr<PointCloud2> & output);
+
   // Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
   void faster_input_indices_callback(
     const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
