@@ -41,7 +41,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   }
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
-    if(!ndt_) localization_trigger_ = std::make_unique<LocalizationTriggerModule>(this);
+    if (!ndt_) localization_trigger_ = std::make_unique<LocalizationTriggerModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
