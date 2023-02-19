@@ -315,7 +315,7 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
 // The implementation is based on the one shown in the URL below.
 // https://github.com/ros-perception/perception_pcl/blob/628aaec1dc73ef4adea01e9d28f11eb417b948fd/pcl_ros/src/transforms.cpp#L61-L94
 bool pointcloud_preprocessor::Filter::_calculate_transform_matrix(
-  const std::string &target_frame, const sensor_msgs::msg::PointCloud2 & from,
+  const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
   const tf2_ros::Buffer & tf_buffer, Eigen::Matrix4f & eigen_transform /*output*/)
 {
   if (from.header.frame_id == target_frame) {
@@ -342,8 +342,9 @@ bool pointcloud_preprocessor::Filter::_calculate_transform_matrix(
 
 // Returns false in error cases
 bool pointcloud_preprocessor::Filter::calculate_transform_matrix(
-    const std::string &target_frame, const sensor_msgs::msg::PointCloud2 &from,
-    TransformInfo & transform_info /*output*/) {
+  const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
+  TransformInfo & transform_info /*output*/)
+{
   transform_info.need_transform = false;
 
   if (target_frame.empty() || from.header.frame_id == target_frame) return true;
@@ -353,15 +354,15 @@ bool pointcloud_preprocessor::Filter::calculate_transform_matrix(
     from.header.frame_id.c_str(), target_frame.c_str());
 
   if (!tf_buffer_->canTransform(
-        target_frame, from.header.frame_id, this->now(),
-        rclcpp::Duration::from_seconds(1.0))) {
+        target_frame, from.header.frame_id, this->now(), rclcpp::Duration::from_seconds(1.0))) {
     RCLCPP_ERROR_STREAM(
-      this->get_logger(), "[get_transform_matrix] timeout tf: " << from.header.frame_id
-                                                                  << "->" << target_frame);
+      this->get_logger(),
+      "[get_transform_matrix] timeout tf: " << from.header.frame_id << "->" << target_frame);
     return false;
   }
 
-  if (!_calculate_transform_matrix(target_frame, from, *tf_buffer_, transform_info.eigen_transform /*output*/)) {
+  if (!_calculate_transform_matrix(
+        target_frame, from, *tf_buffer_, transform_info.eigen_transform /*output*/)) {
     RCLCPP_ERROR(
       this->get_logger(),
       "[calculate_transform_matrix] Error converting input dataset from %s to %s.",
@@ -372,7 +373,6 @@ bool pointcloud_preprocessor::Filter::calculate_transform_matrix(
   transform_info.need_transform = true;
   return true;
 }
-
 
 // Temporary Implementation: Rename this function to `input_indices_callback()` when all the filter
 // nodes conform to new API. Then delete the old `input_indices_callback()` defined above.
@@ -436,7 +436,8 @@ void pointcloud_preprocessor::Filter::faster_input_indices_callback(
     auto cloud_transformed = std::make_unique<PointCloud2>();
     if (!pcl_ros::transformPointCloud(tf_output_frame_, *output, *cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
-        this->get_logger(), "[input_indices_callback] Error converting output dataset from %s to %s.",
+        this->get_logger(),
+        "[input_indices_callback] Error converting output dataset from %s to %s.",
         output->header.frame_id.c_str(), tf_output_frame_.c_str());
       return;
     }
@@ -448,14 +449,16 @@ void pointcloud_preprocessor::Filter::faster_input_indices_callback(
   if (tf_output_frame_.empty() && output->header.frame_id != tf_input_orig_frame_) {
     // No tf_output_frame given, transform the dataset to its original frame
     RCLCPP_DEBUG(
-      this->get_logger(), "[input_indices_callback] Transforming output dataset from %s back to %s.",
+      this->get_logger(),
+      "[input_indices_callback] Transforming output dataset from %s back to %s.",
       output->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
 
     auto cloud_transformed = std::make_unique<PointCloud2>();
     if (!pcl_ros::transformPointCloud(
           tf_input_orig_frame_, *output, *cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
-        this->get_logger(), "[input_indices_callback] Error converting output dataset from %s back to %s.",
+        this->get_logger(),
+        "[input_indices_callback] Error converting output dataset from %s back to %s.",
         output->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
       return;
     }
@@ -470,7 +473,8 @@ void pointcloud_preprocessor::Filter::faster_input_indices_callback(
 // Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
 // It's not a pure virtual function so that a child class does not have to implement this function.
 void pointcloud_preprocessor::Filter::faster_filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output, const TransformInfo & transform_info)
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+  const TransformInfo & transform_info)
 {
   (void)input;
   (void)indices;
