@@ -133,7 +133,7 @@ void CropBoxFilterComponent::faster_filter(
       if (std::isfinite(point[0]) && std::isfinite(point[1]), std::isfinite(point[2])) {
         point = transform_info.eigen_transform * point;
       } else {
-        // TODO: Implement the appropriate logic for `max range point` and `invalid point`.
+        // TODO(sykwer): Implement the appropriate logic for `max range point` and `invalid point`.
         // https://github.com/ros-perception/perception_pcl/blob/628aaec1dc73ef4adea01e9d28f11eb417b948fd/pcl_ros/src/transforms.cpp#L185-L201
         RCLCPP_ERROR(this->get_logger(), "Not implemented logic");
       }
