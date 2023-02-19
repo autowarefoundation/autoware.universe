@@ -17,6 +17,7 @@
 #include "copy_vector_to_array.hpp"
 #include "gnss_module.hpp"
 #include "localization_trigger_module.hpp"
+#include "ndt_localization_trigger_module.hpp"
 #include "ndt_module.hpp"
 #include "stop_check_module.hpp"
 
@@ -34,12 +35,13 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   output_pose_covariance_ = get_covariance_parameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = get_covariance_parameter(this, "gnss_particle_covariance");
 
-  if (declare_parameter<bool>("gnss_enabled")) {
-    gnss_ = std::make_unique<GnssModule>(this);
-  }
   if (declare_parameter<bool>("ndt_enabled")) {
     ndt_ = std::make_unique<NdtModule>(this);
-    localization_trigger_ = std::make_unique<LocalizationTriggerModule>(this);
+    ndt_localization_trigger_ = std::make_unique<NdtLocalizationTriggerModule>(this);
+  }
+  if (declare_parameter<bool>("gnss_enabled")) {
+    gnss_ = std::make_unique<GnssModule>(this);
+    if(!ndt_) localization_trigger_ = std::make_unique<LocalizationTriggerModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
@@ -76,6 +78,9 @@ void PoseInitializer::on_initialize(
     if (localization_trigger_) {
       localization_trigger_->deactivate();
     }
+    if (ndt_localization_trigger_) {
+      ndt_localization_trigger_->deactivate();
+    }
     auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
     if (ndt_) {
       pose = ndt_->align_pose(pose);
@@ -84,6 +89,9 @@ void PoseInitializer::on_initialize(
     pub_reset_->publish(pose);
     if (localization_trigger_) {
       localization_trigger_->activate();
+    }
+    if (ndt_localization_trigger_) {
+      ndt_localization_trigger_->activate();
     }
     res->status.success = true;
     change_state(State::Message::INITIALIZED);
@@ -97,7 +105,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
 {
   if (gnss_) {
     PoseWithCovarianceStamped pose = gnss_->get_pose();
-    pose.pose.covariance = gnss_particle_covariance_;
+    if (ndt_) pose.pose.covariance = gnss_particle_covariance_;
     return pose;
   }
   throw ServiceException(
