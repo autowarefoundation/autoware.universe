@@ -345,7 +345,8 @@ bool pointcloud_preprocessor::Filter::calculate_transform_matrix(
 }
 
 // Returns false in error cases
-bool pointcloud_preprocessor::Filter::convert_output_costly(std::unique_ptr<PointCloud2> & output) {
+bool pointcloud_preprocessor::Filter::convert_output_costly(std::unique_ptr<PointCloud2> & output)
+{
   // In terms of performance, we should avoid using pcl_ros library function,
   // but this code path isn't reached in the main use case of Autoware, so it's left as is for now.
   if (!tf_output_frame_.empty() && output->header.frame_id != tf_output_frame_) {
@@ -370,8 +371,7 @@ bool pointcloud_preprocessor::Filter::convert_output_costly(std::unique_ptr<Poin
   if (tf_output_frame_.empty() && output->header.frame_id != tf_input_orig_frame_) {
     // No tf_output_frame given, transform the dataset to its original frame
     RCLCPP_DEBUG(
-      this->get_logger(),
-      "[convert_output_costly] Transforming output dataset from %s back to %s.",
+      this->get_logger(), "[convert_output_costly] Transforming output dataset from %s back to %s.",
       output->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
 
     auto cloud_transformed = std::make_unique<PointCloud2>();
