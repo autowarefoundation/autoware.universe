@@ -112,6 +112,11 @@ void pointcloud_preprocessor::Filter::setupTF()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void pointcloud_preprocessor::Filter::subscribe() {
+  std::string filter_name = "";
+  subscribe(filter_name);
+}
+
 void pointcloud_preprocessor::Filter::subscribe(const std::string & filter_name)
 {
   // Change the corresponding node to subscribe to `faster_input_indices_callback`

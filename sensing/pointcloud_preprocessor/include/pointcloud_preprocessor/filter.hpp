@@ -205,6 +205,7 @@ protected:
 
   /** \brief Lazy transport subscribe routine. */
   virtual void subscribe(const std::string & filter_name);
+  virtual void subscribe();
 
   /** \brief Lazy transport unsubscribe routine. */
   virtual void unsubscribe();
