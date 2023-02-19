@@ -16,6 +16,8 @@ ParticleInitializer::ParticleInitializer()
   auto on_initialpose = std::bind(&ParticleInitializer::on_initial_pose, this, _1);
   sub_initialpose_ =
     create_subscription<PoseCovStamped>("initialpose", 10, std::move(on_initialpose));
+
+  client_ekf_trigger_ = create_client<SetBool>("ekf_trigger_node");
 }
 
 void ParticleInitializer::on_initial_pose(const PoseCovStamped & initialpose)
@@ -97,6 +99,10 @@ void ParticleInitializer::publish_rectified_initial_pose(
   msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
 
   pub_initialpose_->publish(msg);
+
+  const auto req = std::make_shared<SetBool::Request>();
+  req->data = true;
+  client_ekf_trigger_->async_send_request(req);
 }
 
 }  // namespace pcdless::modularized_particle_filter
