@@ -112,7 +112,8 @@ void pointcloud_preprocessor::Filter::setupTF()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void pointcloud_preprocessor::Filter::subscribe() {
+void pointcloud_preprocessor::Filter::subscribe()
+{
   std::string filter_name = "";
   subscribe(filter_name);
 }
