@@ -21,13 +21,11 @@
 using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
 
-LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node, bool ndt_enabled)
+LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node)
 : logger_(node->get_logger())
 {
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
-  if (ndt_enabled) client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
-
-  ndt_enabled_ = ndt_enabled;
+  client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 }
 
 void LocalizationTriggerModule::deactivate() const
@@ -38,21 +36,14 @@ void LocalizationTriggerModule::deactivate() const
   if (!client_ekf_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
   }
-  if (ndt_enabled_ && !client_ndt_trigger_->service_is_ready()) {
+  if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
 
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
+  auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
-  bool is_succeeded = false;
-  if (ndt_enabled_) {
-    auto future_ndt = client_ndt_trigger_->async_send_request(req);
-    is_succeeded = (future_ekf.get()->success && future_ndt.get()->success);
-  } else {
-    is_succeeded = future_ekf.get()->success;
-  }
-
-  if (is_succeeded) {
+  if (future_ekf.get()->success & future_ndt.get()->success) {
     RCLCPP_INFO(logger_, "Deactivation succeeded");
   } else {
     RCLCPP_INFO(logger_, "Deactivation failed");
@@ -68,21 +59,14 @@ void LocalizationTriggerModule::activate() const
   if (!client_ekf_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
   }
-  if (ndt_enabled_ && !client_ndt_trigger_->service_is_ready()) {
+  if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
 
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
+  auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
-  bool is_succeeded = false;
-  if (ndt_enabled_) {
-    auto future_ndt = client_ndt_trigger_->async_send_request(req);
-    is_succeeded = (future_ekf.get()->success && future_ndt.get()->success);
-  } else {
-    is_succeeded = future_ekf.get()->success;
-  }
-
-  if (is_succeeded) {
+  if (future_ekf.get()->success & future_ndt.get()->success) {
     RCLCPP_INFO(logger_, "Activation succeeded");
   } else {
     RCLCPP_INFO(logger_, "Activation failed");
