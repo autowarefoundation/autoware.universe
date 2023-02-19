@@ -110,7 +110,7 @@ void CropBoxFilterComponent::filter(
 // new API. Then delete the old `filter()` defined above.
 void CropBoxFilterComponent::faster_filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
-  PointCloud2 & output, const Eigen::Matrix4f & eigen_transform, bool need_transform)
+  PointCloud2 & output, const TransformInfo & transform_info)
 {
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
@@ -129,11 +129,11 @@ void CropBoxFilterComponent::faster_filter(
       *reinterpret_cast<const float *>(&input->data[global_offset + y_offset]),
       *reinterpret_cast<const float *>(&input->data[global_offset + z_offset]), 1);
 
-    if (need_transform) {
+    if (transform_info.need_transform) {
       if (std::isfinite(point[0]) && std::isfinite(point[1]), std::isfinite(point[2])) {
-        point = eigen_transform * point;
+        point = transform_info.eigen_transform * point;
       } else {
-        // TODO: Implement the appropreate logic for `max range point` and `invalid point`.
+        // TODO: Implement the appropriate logic for `max range point` and `invalid point`.
         // https://github.com/ros-perception/perception_pcl/blob/628aaec1dc73ef4adea01e9d28f11eb417b948fd/pcl_ros/src/transforms.cpp#L185-L201
         RCLCPP_ERROR(this->get_logger(), "Not implemented logic");
       }
@@ -143,7 +143,7 @@ void CropBoxFilterComponent::faster_filter(
                            point[1] > param_.min_y && point[1] < param_.max_y &&
                            point[0] > param_.min_x && point[0] < param_.max_x;
     if ((!param_.negative && point_is_inside) || (param_.negative && !point_is_inside)) {
-      memcpy(&output.data[output_size], &input->data[global_offset], input->point_step);
+      memcpy(&output.data[output_size], &point, input->point_step);
       output_size += input->point_step;
     }
   }
