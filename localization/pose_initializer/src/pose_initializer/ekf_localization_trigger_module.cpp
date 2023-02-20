@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.S
 #include "ekf_localization_trigger_module.hpp"
+#include "command.hpp"
 
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
@@ -27,10 +28,24 @@ EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node)
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
 }
 
-void EkfLocalizationTriggerModule::deactivate() const
+void EkfLocalizationTriggerModule::sendRequest(int request_commant) const
 {
   const auto req = std::make_shared<SetBool::Request>();
-  req->data = false;
+  std::string command_name;
+  if (request_commant == COMMAND::DEACTIVATE)
+  {
+    req->data = false;
+    command_name = "Deactivation";
+  }
+  else if (request_commant == COMMAND::ACTIVATE)
+  {
+    req->data = true;
+    command_name = "Activation";
+  }
+  else
+  {
+   throw std::logic_error("pose_initializer[ekf_localization_trigger_module]: invalid if clause");
+  }
 
   if (!client_ekf_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
@@ -39,28 +54,9 @@ void EkfLocalizationTriggerModule::deactivate() const
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
 
   if (future_ekf.get()->success) {
-    RCLCPP_INFO(logger_, "EKF Deactivation succeeded");
+    RCLCPP_INFO(logger_, "EKF %s succeeded", command_name.c_str());
   } else {
-    RCLCPP_INFO(logger_, "EKF Deactivation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "EKF Deactivation failed");
-  }
-}
-
-void EkfLocalizationTriggerModule::activate() const
-{
-  const auto req = std::make_shared<SetBool::Request>();
-  req->data = true;
-
-  if (!client_ekf_trigger_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
-  }
-
-  auto future_ekf = client_ekf_trigger_->async_send_request(req);
-
-  if (future_ekf.get()->success) {
-    RCLCPP_INFO(logger_, "EKF Activation succeeded");
-  } else {
-    RCLCPP_INFO(logger_, "EKF Activation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "EKF Activation failed");
+    RCLCPP_INFO(logger_, "EKF %s failed", command_name.c_str());
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "EKF " + command_name + " failed");
   }
 }

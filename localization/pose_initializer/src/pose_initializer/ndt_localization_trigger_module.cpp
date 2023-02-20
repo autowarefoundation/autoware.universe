@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.S
 #include "ndt_localization_trigger_module.hpp"
+#include "command.hpp"
 
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
@@ -27,10 +28,24 @@ NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node)
   client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 }
 
-void NdtLocalizationTriggerModule::deactivate() const
+void NdtLocalizationTriggerModule::sendRequest(int request_commant) const
 {
   const auto req = std::make_shared<SetBool::Request>();
-  req->data = false;
+  std::string command_name;
+  if (request_commant == COMMAND::DEACTIVATE)
+  {
+    req->data = false;
+    command_name = "Deactivation";
+  }
+  else if (request_commant == COMMAND::ACTIVATE)
+  {
+    req->data = true;
+    command_name = "Activation";
+  }
+  else
+  {
+   throw std::logic_error("pose_initializer[ndt_localization_trigger_module]: invalid if clause");
+  }
 
   if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
@@ -39,28 +54,9 @@ void NdtLocalizationTriggerModule::deactivate() const
   auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
   if (future_ndt.get()->success) {
-    RCLCPP_INFO(logger_, "NDT Deactivation succeeded");
+    RCLCPP_INFO(logger_, "NDT %s succeeded", command_name.c_str());
   } else {
-    RCLCPP_INFO(logger_, "NDT Deactivation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT Deactivation failed");
-  }
-}
-
-void NdtLocalizationTriggerModule::activate() const
-{
-  const auto req = std::make_shared<SetBool::Request>();
-  req->data = true;
-
-  if (!client_ndt_trigger_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
-  }
-
-  auto future_ndt = client_ndt_trigger_->async_send_request(req);
-
-  if (future_ndt.get()->success) {
-    RCLCPP_INFO(logger_, "NDT Activation succeeded");
-  } else {
-    RCLCPP_INFO(logger_, "NDT Activation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT Activation failed");
+    RCLCPP_INFO(logger_, "NDT %s failed", command_name.c_str());
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT " + command_name + " failed");
   }
 }
