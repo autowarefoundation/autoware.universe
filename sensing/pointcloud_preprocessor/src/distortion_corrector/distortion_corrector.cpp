@@ -218,7 +218,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
-
     double twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
     double imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
 
