@@ -234,6 +234,25 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   }
 }
 
+void OccupancyGridMapOutlierFilterComponent::splitFontBackPcl(
+  const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc)
+{
+  PclPointCloud tmp_behind_pc;
+  PclPointCloud tmp_front_pc;
+  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"), y(*input_pc, "y"),
+       z(*input_pc, "z");
+       x != x.end(); ++x, ++y, ++z) {
+    if (*x < 0.0) {
+      tmp_behind_pc.push_back(pcl::PointXYZ(*x, *y, *z));
+    } else {
+      tmp_front_pc.push_back(pcl::PointXYZ(*x, *y, *z));
+    }
+  }
+  pcl::toROSMsg(tmp_front_pc, front_pc);
+  pcl::toROSMsg(tmp_behind_pc, behind_pc);
+  front_pc.header = input_pc->header;
+  behind_pc.header = input_pc->header;
+}
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
 {
@@ -243,22 +262,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   PointCloud2 input_infront_pc{};
   PointCloud2 input_behind_pc{};
   PointCloud2 ogm_frame_input_behind_pc{};
-  PclPointCloud tmp_behind_pc;
-  PclPointCloud tmp_infront_pc;
-
-  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"), y(*input_pc, "y"),
-       z(*input_pc, "z");
-       x != x.end(); ++x, ++y, ++z) {
-    if (*x < 0.0) {
-      tmp_behind_pc.push_back(pcl::PointXYZ(*x, *y, *z));
-    } else {
-      tmp_infront_pc.push_back(pcl::PointXYZ(*x, *y, *z));
-    }
-  }
-  pcl::toROSMsg(tmp_infront_pc, input_infront_pc);
-  pcl::toROSMsg(tmp_behind_pc, input_behind_pc);
-  input_infront_pc.header = input_pc->header;
-  input_behind_pc.header = input_pc->header;
+  splitFontBackPcl(input_pc, input_infront_pc, input_behind_pc);
   if (
     !transformPointcloud(input_infront_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc) ||
     !transformPointcloud(
