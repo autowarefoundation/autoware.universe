@@ -218,16 +218,19 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
-    for (;
-         (twist_it != std::end(twist_queue_) - 1 &&
-          *it_time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
-         ++twist_it) {
+
+    double twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
+    double imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
+
+    while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
+      ++twist_it;
+      twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
     }
 
     float v{static_cast<float>(twist_it->twist.linear.x)};
     float w{static_cast<float>(twist_it->twist.angular.z)};
 
-    if (std::abs(*it_time_stamp - rclcpp::Time(twist_it->header.stamp).seconds()) > 0.1) {
+    if (std::abs(*it_time_stamp - twist_stamp > 0.1)) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
         "twist time_stamp is too late. Could not interpolate.");
@@ -241,7 +244,13 @@ bool DistortionCorrectorComponent::undistortPointCloud(
             *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
            ++imu_it) {
       }
-      if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
+
+      while (imu_it != std::end(angular_velocity_queue_) - 1 && *it_time_stamp > imu_stamp) {
+        ++imu_it;
+        imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
+      }
+
+      if (std::abs(*it_time_stamp - imu_stamp > 0.1)) {
         RCLCPP_WARN_STREAM_THROTTLE(
           get_logger(), *get_clock(), 10000 /* ms */,
           "imu time_stamp is too late. Could not interpolate.");
