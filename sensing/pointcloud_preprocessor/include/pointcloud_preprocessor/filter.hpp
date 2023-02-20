@@ -197,7 +197,7 @@ protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) = 0;
 
-  // Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
+  // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
   // It's not pure virtual function so that a child class does not have to implement this function.
   virtual void faster_filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
@@ -302,7 +302,7 @@ private:
 
   bool convert_output_costly(std::unique_ptr<PointCloud2> & output);
 
-  // Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
+  // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
   void faster_input_indices_callback(
     const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
 

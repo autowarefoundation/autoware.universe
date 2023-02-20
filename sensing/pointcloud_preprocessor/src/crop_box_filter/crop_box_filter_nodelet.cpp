@@ -96,8 +96,8 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
   }
 }
 
-// Temporary Implementation: Delete this function definition when all the filter nodes conform to
-// new API.
+// TODO(sykwer): Temporary Implementation: Delete this function definition when all the filter nodes
+// conform to new API.
 void CropBoxFilterComponent::filter(
   const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
@@ -106,8 +106,8 @@ void CropBoxFilterComponent::filter(
   (void)output;
 }
 
-// Temporary Implementation: Rename this function to `filter()` when all the filter nodes conform to
-// new API. Then delete the old `filter()` defined above.
+// TODO(sykwer): Temporary Implementation: Rename this function to `filter()` when all the filter nodes
+// conform to new API. Then delete the old `filter()` defined above.
 void CropBoxFilterComponent::faster_filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output, const TransformInfo & transform_info)

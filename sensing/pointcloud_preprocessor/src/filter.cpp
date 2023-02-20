@@ -120,7 +120,7 @@ void pointcloud_preprocessor::Filter::subscribe()
 
 void pointcloud_preprocessor::Filter::subscribe(const std::string & filter_name)
 {
-  // Change the corresponding node to subscribe to `faster_input_indices_callback`
+  // TODO(sykwer): Change the corresponding node to subscribe to `faster_input_indices_callback`
   // each time a child class supports the faster version.
   // When all the child classes support the faster version, this workaround is deleted.
   auto callback = filter_name == "CropBoxFilter" ? &Filter::faster_input_indices_callback
@@ -171,8 +171,8 @@ void pointcloud_preprocessor::Filter::unsubscribe()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Temporary Implementation: Delete this function definition when all the filter nodes conform to
-// new API.
+// TODO(sykwer): Temporary Implementation: Delete this function definition when all the filter nodes
+// conform to new API.
 void pointcloud_preprocessor::Filter::computePublish(
   const PointCloud2ConstPtr & input, const IndicesPtr & indices)
 {
@@ -211,8 +211,8 @@ rcl_interfaces::msg::SetParametersResult pointcloud_preprocessor::Filter::filter
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-// Temporary Implementation: Delete this function definition when all the filter nodes conform to
-// new API.
+// TODO(sykwer): Temporary Implementation: Delete this function definition when all the filter nodes
+// conform to new API.
 void pointcloud_preprocessor::Filter::input_indices_callback(
   const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices)
 {
@@ -396,7 +396,7 @@ bool pointcloud_preprocessor::Filter::convert_output_costly(std::unique_ptr<Poin
   return true;
 }
 
-// Temporary Implementation: Rename this function to `input_indices_callback()` when all the filter
+// TODO(sykwer): Temporary Implementation: Rename this function to `input_indices_callback()` when all the filter
 // nodes conform to new API. Then delete the old `input_indices_callback()` defined above.
 void pointcloud_preprocessor::Filter::faster_input_indices_callback(
   const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices)
@@ -444,7 +444,7 @@ void pointcloud_preprocessor::Filter::faster_input_indices_callback(
 
   auto output = std::make_unique<PointCloud2>();
 
-  // Change to `filter()` call after when the filter nodes conform to new API.
+  // TODO(sykwer): Change to `filter()` call after when the filter nodes conform to new API.
   faster_filter(cloud, vindices, *output, transform_info);
 
   if (!convert_output_costly(output)) return;
@@ -453,7 +453,7 @@ void pointcloud_preprocessor::Filter::faster_input_indices_callback(
   pub_output_->publish(std::move(output));
 }
 
-// Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
+// TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform to new API.
 // It's not a pure virtual function so that a child class does not have to implement this function.
 void pointcloud_preprocessor::Filter::faster_filter(
   const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
