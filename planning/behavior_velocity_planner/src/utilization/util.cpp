@@ -301,8 +301,8 @@ lanelet::ConstLanelet generatePathLanelet(
   lanelet::Points3d lefts;
   for (size_t i = start_idx; i <= end_idx; ++i) {
     const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
-    const double x = path.points.at(i).point.pose.position.x + width * std::sin(yaw);
-    const double y = path.points.at(i).point.pose.position.y - width * std::cos(yaw);
+    const double x = path.points.at(i).point.pose.position.x + width / 2 * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y - width / 2 * std::cos(yaw);
     const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
     lefts.emplace_back(p);
   }
@@ -311,8 +311,8 @@ lanelet::ConstLanelet generatePathLanelet(
   lanelet::Points3d rights;
   for (size_t i = start_idx; i <= end_idx; ++i) {
     const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
-    const double x = path.points.at(i).point.pose.position.x - width * std::sin(yaw);
-    const double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
+    const double x = path.points.at(i).point.pose.position.x - width / 2 * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y + width / 2 * std::cos(yaw);
     const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
     rights.emplace_back(p);
   }
