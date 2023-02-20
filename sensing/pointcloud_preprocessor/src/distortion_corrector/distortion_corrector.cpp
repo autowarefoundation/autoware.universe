@@ -225,10 +225,11 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   // For performance, instantiate outside of the for-loop
   tf2::Quaternion baselink_quat{};
   tf2::Transform baselinkTF_odom{};
-  tf2::Vector3 sensorTF_point{};
-  tf2::Vector3 base_linkTF_point{};
-  tf2::Vector3 base_linkTF_trans_point{};
-  tf2::Vector3 sensorTF_trans_point{};
+  tf2::Vector3 point{};
+  tf2::Vector3 undistorted_point{};
+
+  // For performance, avoid transform computation if unnecessary
+  bool need_transform = points.header.frame_id != base_link_frame_;
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
@@ -270,11 +271,13 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     const float time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
 
-    sensorTF_point.setValue(*it_x, *it_y, *it_z); // needed
-    base_linkTF_point = tf2_base_link_to_sensor_inv * sensorTF_point; // not needed
+    point.setValue(*it_x, *it_y, *it_z);
+
+    if (need_transform) {
+      point = tf2_base_link_to_sensor_inv * point;
+    }
 
     theta += w * time_offset;
-
     baselink_quat.setRPY(0.0, 0.0, theta);
     const float dis = v * time_offset;
     x += dis * std::cos(theta);
@@ -283,12 +286,15 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     baselinkTF_odom.setOrigin(tf2::Vector3(x, y, 0.0));
     baselinkTF_odom.setRotation(baselink_quat);
 
-    base_linkTF_trans_point = baselinkTF_odom * base_linkTF_point; // needed
-    sensorTF_trans_point = tf2_base_link_to_sensor * base_linkTF_trans_point; // not needed
+    undistorted_point = baselinkTF_odom * point;
 
-    *it_x = sensorTF_trans_point.getX();
-    *it_y = sensorTF_trans_point.getY();
-    *it_z = sensorTF_trans_point.getZ();
+    if (need_transform) {
+      undistorted_point = tf2_base_link_to_sensor * undistorted_point;
+    }
+
+    *it_x = undistorted_point.getX();
+    *it_y = undistorted_point.getY();
+    *it_z = undistorted_point.getZ();
 
     prev_time_stamp_sec = *it_time_stamp;
   }
