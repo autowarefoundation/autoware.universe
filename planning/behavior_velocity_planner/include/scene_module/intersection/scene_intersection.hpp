@@ -234,13 +234,6 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
 
   /**
-   * @brief Get path polygon of intersetion part
-   * @return trimmed path polygon
-   */
-  lanelet::ConstLanelet getEgoLane(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
-
-  /**
    * @brief Calculate distance between closest path point and intersection lanelet along path
    * @param lanelet_map_ptr lanelet map
    * @param path            ego-car lane
