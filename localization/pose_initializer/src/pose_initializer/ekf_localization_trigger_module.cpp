@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.S
-#include "localization_trigger_module.hpp"
+#include "ekf_localization_trigger_module.hpp"
 
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
@@ -21,13 +21,13 @@
 using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
 
-LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node)
+EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node)
 : logger_(node->get_logger())
 {
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
 }
 
-void LocalizationTriggerModule::deactivate() const
+void EkfLocalizationTriggerModule::deactivate() const
 {
   const auto req = std::make_shared<SetBool::Request>();
   req->data = false;
@@ -39,14 +39,14 @@ void LocalizationTriggerModule::deactivate() const
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
 
   if (future_ekf.get()->success) {
-    RCLCPP_INFO(logger_, "Deactivation succeeded");
+    RCLCPP_INFO(logger_, "EKF Deactivation succeeded");
   } else {
-    RCLCPP_INFO(logger_, "Deactivation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "Deactivation failed");
+    RCLCPP_INFO(logger_, "EKF Deactivation failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "EKF Deactivation failed");
   }
 }
 
-void LocalizationTriggerModule::activate() const
+void EkfLocalizationTriggerModule::activate() const
 {
   const auto req = std::make_shared<SetBool::Request>();
   req->data = true;
@@ -58,9 +58,9 @@ void LocalizationTriggerModule::activate() const
   auto future_ekf = client_ekf_trigger_->async_send_request(req);
 
   if (future_ekf.get()->success) {
-    RCLCPP_INFO(logger_, "Activation succeeded");
+    RCLCPP_INFO(logger_, "EKF Activation succeeded");
   } else {
-    RCLCPP_INFO(logger_, "Activation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "Activation failed");
+    RCLCPP_INFO(logger_, "EKF Activation failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "EKF Activation failed");
   }
 }

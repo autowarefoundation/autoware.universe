@@ -16,7 +16,7 @@
 
 #include "copy_vector_to_array.hpp"
 #include "gnss_module.hpp"
-#include "localization_trigger_module.hpp"
+#include "ekf_localization_trigger_module.hpp"
 #include "ndt_localization_trigger_module.hpp"
 #include "ndt_module.hpp"
 #include "stop_check_module.hpp"
@@ -35,13 +35,14 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   output_pose_covariance_ = get_covariance_parameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = get_covariance_parameter(this, "gnss_particle_covariance");
 
+  ekf_localization_trigger_ = std::make_unique<EkfLocalizationTriggerModule>(this);
+
+  if (declare_parameter<bool>("gnss_enabled")) {
+    gnss_ = std::make_unique<GnssModule>(this);
+  }
   if (declare_parameter<bool>("ndt_enabled")) {
     ndt_ = std::make_unique<NdtModule>(this);
     ndt_localization_trigger_ = std::make_unique<NdtLocalizationTriggerModule>(this);
-  }
-  if (declare_parameter<bool>("gnss_enabled")) {
-    gnss_ = std::make_unique<GnssModule>(this);
-    if (!ndt_) localization_trigger_ = std::make_unique<LocalizationTriggerModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
@@ -75,8 +76,8 @@ void PoseInitializer::on_initialize(
   }
   try {
     change_state(State::Message::INITIALIZING);
-    if (localization_trigger_) {
-      localization_trigger_->deactivate();
+    if (ekf_localization_trigger_) {
+      ekf_localization_trigger_->deactivate();
     }
     if (ndt_localization_trigger_) {
       ndt_localization_trigger_->deactivate();
@@ -87,8 +88,8 @@ void PoseInitializer::on_initialize(
     }
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
-    if (localization_trigger_) {
-      localization_trigger_->activate();
+    if (ekf_localization_trigger_) {
+      ekf_localization_trigger_->activate();
     }
     if (ndt_localization_trigger_) {
       ndt_localization_trigger_->activate();

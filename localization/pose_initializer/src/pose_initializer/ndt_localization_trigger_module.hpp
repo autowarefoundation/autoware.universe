@@ -31,7 +31,6 @@ public:
 
 private:
   rclcpp::Logger logger_;
-  rclcpp::Client<SetBool>::SharedPtr client_ekf_trigger_;
   rclcpp::Client<SetBool>::SharedPtr client_ndt_trigger_;
 };
 

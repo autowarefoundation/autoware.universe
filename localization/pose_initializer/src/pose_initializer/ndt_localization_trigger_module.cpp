@@ -24,7 +24,6 @@ using Initialize = localization_interface::Initialize;
 NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node)
 : logger_(node->get_logger())
 {
-  client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
   client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 }
 
@@ -33,21 +32,17 @@ void NdtLocalizationTriggerModule::deactivate() const
   const auto req = std::make_shared<SetBool::Request>();
   req->data = false;
 
-  if (!client_ekf_trigger_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
-  }
   if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
 
-  auto future_ekf = client_ekf_trigger_->async_send_request(req);
   auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
-  if (future_ekf.get()->success & future_ndt.get()->success) {
-    RCLCPP_INFO(logger_, "Deactivation succeeded");
+  if (future_ndt.get()->success) {
+    RCLCPP_INFO(logger_, "NDT Deactivation succeeded");
   } else {
-    RCLCPP_INFO(logger_, "Deactivation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "Deactivation failed");
+    RCLCPP_INFO(logger_, "NDT Deactivation failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT Deactivation failed");
   }
 }
 
@@ -56,20 +51,16 @@ void NdtLocalizationTriggerModule::activate() const
   const auto req = std::make_shared<SetBool::Request>();
   req->data = true;
 
-  if (!client_ekf_trigger_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
-  }
   if (!client_ndt_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
 
-  auto future_ekf = client_ekf_trigger_->async_send_request(req);
   auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
-  if (future_ekf.get()->success & future_ndt.get()->success) {
-    RCLCPP_INFO(logger_, "Activation succeeded");
+  if (future_ndt.get()->success) {
+    RCLCPP_INFO(logger_, "NDT Activation succeeded");
   } else {
-    RCLCPP_INFO(logger_, "Activation failed");
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "Activation failed");
+    RCLCPP_INFO(logger_, "NDT Activation failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT Activation failed");
   }
 }
