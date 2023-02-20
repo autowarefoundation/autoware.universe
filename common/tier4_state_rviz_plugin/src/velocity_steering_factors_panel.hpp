@@ -14,8 +14,8 @@
 //  limitations under the License.
 //
 
-#ifndef VELOCITY_STEERING_FACTORS_STATE_PANEL_HPP_
-#define VELOCITY_STEERING_FACTORS_STATE_PANEL_HPP_
+#ifndef VELOCITY_STEERING_FACTORS_PANEL_HPP_
+#define VELOCITY_STEERING_FACTORS_PANEL_HPP_
 
 #include <QGroupBox>
 #include <QLabel>
@@ -65,4 +65,4 @@ protected:
 };
 }  // namespace rviz_plugins
 
-#endif  // AUTOWARE_STATE_PANEL_HPP_
+#endif  // VELOCITY_STEERING_FACTORS_PANEL_HPP_
