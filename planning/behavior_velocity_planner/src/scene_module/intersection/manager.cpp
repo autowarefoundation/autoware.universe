@@ -213,7 +213,7 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
 
   return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto merge_from_private_module =
-      std::dynamic_pointer_cast<IntersectionModule>(scene_module);
+      std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
     const auto & assoc_ids = merge_from_private_module->getAssocIds();
     for (const auto & lane : lane_set) {
       const std::string turn_direction = lane.attributeOr("turn_direction", "else");
