@@ -678,20 +678,18 @@ lanelet::ConstLanelets IntersectionModule::getEgoLaneWithNextLane(
     return lanelet::ConstLanelets({});
   }
   const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
-  std::cout << "getEgoLaneWithNextLane: ego_start = " << ego_start << ", ego_end = " << ego_end
-            << std::endl;
-  if (ego_end + 1 < path.points.size()) {
-    const int next_id = path.points.at(ego_end + 1).lane_ids.at(0);
+  if (ego_end < path.points.size() - 1) {
+    std::cout << std::endl;
+    const int next_id = path.points.at(ego_end).lane_ids.at(0);
     const auto next_lane_interval_opt = util::findLaneIdsInterval(path, {next_id});
     if (next_lane_interval_opt.has_value()) {
       const auto [next_start, next_end] = next_lane_interval_opt.value();
-      std::cout << "next_start = " << next_start << ", next_end = " << next_end << std::endl;
       return {
-        planning_utils::generatePathLanelet(path, ego_start, ego_end, width),
+        planning_utils::generatePathLanelet(path, ego_start, next_start - 1, width),
         planning_utils::generatePathLanelet(path, next_start, next_end, width)};
     }
   }
-  return {planning_utils::generatePathLanelet(path, ego_start, ego_end, width)};
+  return {planning_utils::generatePathLanelet(path, ego_start - 1, ego_end, width)};
 }
 
 lanelet::ConstLanelet IntersectionModule::getEgoLane(
@@ -704,8 +702,7 @@ lanelet::ConstLanelet IntersectionModule::getEgoLane(
   }
 
   const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
-  std::cout << "getEgoLane: ego_start = " << ego_start << ", ego_end = " << ego_end << std::endl;
-  return planning_utils::generatePathLanelet(path, ego_start, ego_end, width);
+  return planning_utils::generatePathLanelet(path, ego_start, ego_end - 1, width);
 }
 
 double IntersectionModule::calcDistanceUntilIntersectionLanelet(
