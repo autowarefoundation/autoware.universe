@@ -85,6 +85,10 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
   bool found = false;
   size_t start = 0;
   size_t end = p.points.size() > 0 ? p.points.size() - 1 : 0;
+  if (start == end) {
+    // there is only one point in the path
+    return std::nullopt;
+  }
   for (size_t i = 0; i < p.points.size(); ++i) {
     if (hasLaneIds(p.points.at(i), ids)) {
       if (!found) {

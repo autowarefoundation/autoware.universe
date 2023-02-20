@@ -303,7 +303,8 @@ lanelet::ConstLanelet generatePathLanelet(
     const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
     const double x = path.points.at(i).point.pose.position.x + width * std::sin(yaw);
     const double y = path.points.at(i).point.pose.position.y - width * std::cos(yaw);
-    lefts.emplace_back(x, y, path.points.at(i).point.pose.position.z);
+    const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
+    lefts.emplace_back(p);
   }
   lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, lefts);
 
@@ -312,7 +313,8 @@ lanelet::ConstLanelet generatePathLanelet(
     const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
     const double x = path.points.at(i).point.pose.position.x - width * std::sin(yaw);
     const double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
-    rights.emplace_back(x, y, path.points.at(i).point.pose.position.z);
+    const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
+    rights.emplace_back(p);
   }
   lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, rights);
 
