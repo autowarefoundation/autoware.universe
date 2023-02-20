@@ -234,7 +234,7 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   }
 }
 
-void OccupancyGridMapOutlierFilterComponent::splitFontBackPcl(
+void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
   const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc)
 {
   PclPointCloud tmp_behind_pc;
@@ -259,12 +259,12 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
-  PointCloud2 input_infront_pc{};
+  PointCloud2 input_front_pc{};
   PointCloud2 input_behind_pc{};
   PointCloud2 ogm_frame_input_behind_pc{};
-  splitFontBackPcl(input_pc, input_infront_pc, input_behind_pc);
+  splitPointCloudFrontBack(input_pc, input_front_pc, input_behind_pc);
   if (
-    !transformPointcloud(input_infront_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc) ||
+    !transformPointcloud(input_front_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc) ||
     !transformPointcloud(
       input_behind_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_input_behind_pc)) {
     return;
