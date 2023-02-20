@@ -57,7 +57,8 @@ std::optional<size_t> getDuplicatedPointIdx(
  */
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on = false);
+  const int lane_id, const std::set<int> & assoc_ids, const double detection_area_length,
+  const bool tl_arrow_solid_on = false);
 
 /**
  * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,

@@ -66,8 +66,8 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   /* get detection area */
   if (!intersection_lanelets_.has_value()) {
     intersection_lanelets_ = util::getObjectiveLanelets(
-      lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-      false /* tl_arrow_solid on does not matter here*/);
+      lanelet_map_ptr, routing_graph_ptr, lane_id_, {} /* not used here */,
+      planner_param_.detection_area_length, false /* tl_arrow_solid on does not matter here*/);
   }
   const auto & detection_area = intersection_lanelets_.value().attention_area;
 

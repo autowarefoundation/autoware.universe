@@ -50,7 +50,6 @@ public:
   {
     bool stop_required;
 
-    geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
@@ -58,6 +57,7 @@ public:
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     geometry_msgs::msg::Polygon intersection_area;
+    lanelet::CompoundPolygon3d ego_lane;
     std::vector<lanelet::CompoundPolygon3d> adjacent_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;

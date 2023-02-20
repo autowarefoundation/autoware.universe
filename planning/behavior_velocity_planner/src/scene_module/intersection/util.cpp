@@ -366,7 +366,8 @@ bool getStopLineIndexFromMap(
 
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on)
+  const int lane_id, const std::set<int> & assoc_ids, const double detection_area_length,
+  const bool tl_arrow_solid_on)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
   const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
@@ -466,8 +467,7 @@ IntersectionLanelets getObjectiveLanelets(
     result.attention = std::move(detection_lanelets);
   }
   result.conflicting = std::move(conflicting_ex_ego_lanelets);
-  result.adjacent =
-    extendedAdjacentDirectionLanes(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
+  result.adjacent = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, assoc_ids);
   // compoundPolygon3d
   result.attention_area = getPolygon3dFromLanelets(result.attention);
   result.conflicting_area = getPolygon3dFromLanelets(result.conflicting);
