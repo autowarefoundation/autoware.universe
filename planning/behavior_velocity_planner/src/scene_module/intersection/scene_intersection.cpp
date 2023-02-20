@@ -202,6 +202,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const auto stuck_vehicle_detect_area =
     generateStuckVehicleDetectAreaPolygon(*path, ego_lane_with_next_lane, closest_idx);
   const auto ego_lane = getEgoLane(*path, planner_data_->vehicle_info_.vehicle_width_m);
+  debug_data_.ego_lane = ego_lane.polygon3d();
+
   const auto ego_lane_with_next_lane =
     getEgoLaneWithNextLane(*path, planner_data_->vehicle_info_.vehicle_width_m);
 
@@ -676,11 +678,14 @@ lanelet::ConstLanelets IntersectionModule::getEgoLaneWithNextLane(
     return lanelet::ConstLanelets({});
   }
   const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
+  std::cout << "getEgoLaneWithNextLane: ego_start = " << ego_start << ", ego_end = " << ego_end
+            << std::endl;
   if (ego_end + 1 < path.points.size()) {
-    const int next_id = path.points.at(ego_end).lane_ids.at(0);
+    const int next_id = path.points.at(ego_end + 1).lane_ids.at(0);
     const auto next_lane_interval_opt = util::findLaneIdsInterval(path, {next_id});
     if (next_lane_interval_opt.has_value()) {
       const auto [next_start, next_end] = next_lane_interval_opt.value();
+      std::cout << "next_start = " << next_start << ", next_end = " << next_end << std::endl;
       return {
         planning_utils::generatePathLanelet(path, ego_start, ego_end, width),
         planning_utils::generatePathLanelet(path, next_start, next_end, width)};
@@ -697,7 +702,9 @@ lanelet::ConstLanelet IntersectionModule::getEgoLane(
   if (!ego_lane_interval_opt.has_value()) {
     return lanelet::ConstLanelet();
   }
+
   const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
+  std::cout << "getEgoLane: ego_start = " << ego_start << ", ego_end = " << ego_end << std::endl;
   return planning_utils::generatePathLanelet(path, ego_start, ego_end, width);
 }
 
