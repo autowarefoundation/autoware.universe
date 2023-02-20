@@ -88,7 +88,8 @@ private:
   float cos_table[SINCOS_TABLE_SIZE];
   const float PI = std::acos(-1);
 
-  void prepare_sincos() {
+  void prepare_sincos()
+  {
     for (int i = 0; i < SINCOS_TABLE_SIZE; i++) {
       float degree = 360.f * i / SINCOS_TABLE_SIZE;
       float radian = degree * (PI / 180.f);
@@ -97,14 +98,18 @@ private:
     }
   }
 
-  inline float cached_sin(float radian) {
+  inline float cached_sin(float radian)
+  {
     float degree = radian * (180.f / PI) * (SINCOS_TABLE_SIZE / 360.f);
-    return sin_table[(std::lround(degree) % SINCOS_TABLE_SIZE + SINCOS_TABLE_SIZE) % SINCOS_TABLE_SIZE];
+    return sin_table
+      [(std::lround(degree) % SINCOS_TABLE_SIZE + SINCOS_TABLE_SIZE) % SINCOS_TABLE_SIZE];
   }
 
-  inline float cached_cos(float radian) {
+  inline float cached_cos(float radian)
+  {
     float degree = radian * (180.f / PI) * (SINCOS_TABLE_SIZE / 360.f);
-    return cos_table[(std::lround(degree) % SINCOS_TABLE_SIZE + SINCOS_TABLE_SIZE) % SINCOS_TABLE_SIZE];
+    return cos_table
+      [(std::lround(degree) % SINCOS_TABLE_SIZE + SINCOS_TABLE_SIZE) % SINCOS_TABLE_SIZE];
   }
 };
 

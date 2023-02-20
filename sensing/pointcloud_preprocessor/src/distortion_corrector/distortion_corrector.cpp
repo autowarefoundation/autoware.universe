@@ -281,7 +281,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     }
 
     theta += w * time_offset;
-    baselink_quat.setValue(0, 0, cached_sin(theta * 0.5f), cached_cos(theta * 0.5f)); // baselink_quat.setRPY(0.0, 0.0, theta);
+    baselink_quat.setValue(
+      0, 0, cached_sin(theta * 0.5f),
+      cached_cos(theta * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
     const float dis = v * time_offset;
     x += dis * cached_cos(theta);
     y += dis * cached_sin(theta);
