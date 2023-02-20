@@ -48,6 +48,8 @@ namespace pointcloud_preprocessor
 using rcl_interfaces::msg::SetParametersResult;
 using sensor_msgs::msg::PointCloud2;
 
+static const int SINCOS_TABLE_SIZE = 36000;
+
 class DistortionCorrectorComponent : public rclcpp::Node
 {
 public:
@@ -81,6 +83,29 @@ private:
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
   bool use_imu_;
+
+  float sin_table[SINCOS_TABLE_SIZE];
+  float cos_table[SINCOS_TABLE_SIZE];
+  const float PI = std::acos(-1);
+
+  void prepare_sincos() {
+    for (int i = 0; i < SINCOS_TABLE_SIZE; i++) {
+      float degree = 360.f * i / SINCOS_TABLE_SIZE;
+      float radian = degree * (PI / 180.f);
+      sin_table[i] = std::sin(radian);
+      cos_table[i] = std::cos(radian);
+    }
+  }
+
+  inline float cached_sin(float radian) {
+    float degree = radian * (180.f / PI) * (SINCOS_TABLE_SIZE / 360.f);
+    return sin_table[(std::lround(degree) % SINCOS_TABLE_SIZE + SINCOS_TABLE_SIZE) % SINCOS_TABLE_SIZE];
+  }
+
+  inline float cached_cos(float radian) {
+    float degree = radian * (180.f / PI) * (SINCOS_TABLE_SIZE / 360.f);
+    return cos_table[(std::lround(degree) % SINCOS_TABLE_SIZE + SINCOS_TABLE_SIZE) % SINCOS_TABLE_SIZE];
+  }
 };
 
 }  // namespace pointcloud_preprocessor
