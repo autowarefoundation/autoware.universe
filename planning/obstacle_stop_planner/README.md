@@ -98,10 +98,10 @@ This module has parameter `hold_stop_margin_distance` in order to prevent from t
 #### Obstacle detection area
 
 | Parameter                              | Type   | Description                                                                         |
-| -------------------------------------- | ------ |-------------------------------------------------------------------------------------|
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
 | `lateral_margin`                       | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
 | `step_length`                          | double | step length for pointcloud search range [m]                                         |
-| `enable_stop_behind_goal_for_obstacle` | bool   | enabling extend trajectory after goal lane for obstacle detection                     |     
+| `enable_stop_behind_goal_for_obstacle` | bool   | enabling extend trajectory after goal lane for obstacle detection                   |
 
 ### Flowchart
 
