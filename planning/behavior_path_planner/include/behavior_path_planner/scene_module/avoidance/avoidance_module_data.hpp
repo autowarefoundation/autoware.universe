@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
+#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -75,6 +75,9 @@ struct AvoidanceParameters
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
+
+  // disable path update
+  bool disable_path_update{false};
 
   // constrains
   bool use_constraints_for_decel{false};

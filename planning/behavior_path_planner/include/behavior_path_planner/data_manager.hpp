@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__DATA_MANAGER_HPP_
 
 #include "behavior_path_planner/parameters.hpp"
+#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -31,6 +32,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -54,12 +56,6 @@ struct ModuleNameStamped
   rclcpp::Time stamp{0, 0, RCL_ROS_TIME};
 };
 
-struct Approval
-{
-  BoolStamped is_approved{false};
-  ModuleNameStamped is_force_approved{};
-};
-
 struct DrivableLanes
 {
   lanelet::ConstLanelet right_lane;
@@ -78,7 +74,23 @@ struct PlannerData
   lanelet::ConstLanelets current_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
-  Approval approval{};
+  drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,
+      parameters.ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,
+      parameters.ego_nearest_yaw_threshold);
+  }
 };
 
 }  // namespace behavior_path_planner
