@@ -106,7 +106,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
 {
   if (gnss_) {
     PoseWithCovarianceStamped pose = gnss_->get_pose();
-    if (ndt_) pose.pose.covariance = gnss_particle_covariance_;
+    pose.pose.covariance = gnss_particle_covariance_;
     return pose;
   }
   throw ServiceException(
