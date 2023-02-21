@@ -26,7 +26,7 @@ private:
 
 public:
   explicit NdtLocalizationTriggerModule(rclcpp::Node * node);
-  void sendRequest(int request_commant) const;
+  void sendRequest(bool flag) const;
 
 private:
   rclcpp::Logger logger_;

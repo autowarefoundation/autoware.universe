@@ -13,8 +13,6 @@
 // limitations under the License.S
 #include "ekf_localization_trigger_module.hpp"
 
-#include "command.hpp"
-
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 
@@ -29,18 +27,22 @@ EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node)
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
 }
 
-void EkfLocalizationTriggerModule::sendRequest(int request_commant) const
+void EkfLocalizationTriggerModule::sendRequest(bool flag) const
 {
   const auto req = std::make_shared<SetBool::Request>();
   std::string command_name;
-  if (request_commant == COMMAND::DEACTIVATE) {
-    req->data = false;
+  req->data = flag;
+  if (flag)
+  {
     command_name = "Deactivation";
-  } else if (request_commant == COMMAND::ACTIVATE) {
-    req->data = true;
+  }
+  else if (flag)
+  {
     command_name = "Activation";
-  } else {
-    throw std::logic_error("pose_initializer[ekf_localization_trigger_module]: invalid if clause");
+  }
+  else
+  {
+   throw std::logic_error("pose_initializer[ekf_localization_trigger_module]: invalid if clause");
   }
 
   if (!client_ekf_trigger_->service_is_ready()) {
@@ -53,7 +55,6 @@ void EkfLocalizationTriggerModule::sendRequest(int request_commant) const
     RCLCPP_INFO(logger_, "EKF %s succeeded", command_name.c_str());
   } else {
     RCLCPP_INFO(logger_, "EKF %s failed", command_name.c_str());
-    throw ServiceException(
-      Initialize::Service::Response::ERROR_ESTIMATION, "EKF " + command_name + " failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "EKF " + command_name + " failed");
   }
 }

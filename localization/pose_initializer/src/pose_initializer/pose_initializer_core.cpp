@@ -14,7 +14,6 @@
 
 #include "pose_initializer_core.hpp"
 
-#include "command.hpp"
 #include "copy_vector_to_array.hpp"
 #include "ekf_localization_trigger_module.hpp"
 #include "gnss_module.hpp"
@@ -78,10 +77,10 @@ void PoseInitializer::on_initialize(
   try {
     change_state(State::Message::INITIALIZING);
     if (ekf_localization_trigger_) {
-      ekf_localization_trigger_->sendRequest(COMMAND::DEACTIVATE);
+      ekf_localization_trigger_->sendRequest(false);
     }
     if (ndt_localization_trigger_) {
-      ndt_localization_trigger_->sendRequest(COMMAND::DEACTIVATE);
+      ndt_localization_trigger_->sendRequest(false);
     }
     auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
     if (ndt_) {
@@ -90,10 +89,10 @@ void PoseInitializer::on_initialize(
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
     if (ekf_localization_trigger_) {
-      ekf_localization_trigger_->sendRequest(COMMAND::ACTIVATE);
+      ekf_localization_trigger_->sendRequest(true);
     }
     if (ndt_localization_trigger_) {
-      ndt_localization_trigger_->sendRequest(COMMAND::ACTIVATE);
+      ndt_localization_trigger_->sendRequest(true);
     }
     res->status.success = true;
     change_state(State::Message::INITIALIZED);

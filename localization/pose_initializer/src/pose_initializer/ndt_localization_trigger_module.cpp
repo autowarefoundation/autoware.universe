@@ -13,8 +13,6 @@
 // limitations under the License.S
 #include "ndt_localization_trigger_module.hpp"
 
-#include "command.hpp"
-
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 
@@ -29,18 +27,18 @@ NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node)
   client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 }
 
-void NdtLocalizationTriggerModule::sendRequest(int request_commant) const
+void NdtLocalizationTriggerModule::sendRequest(bool flag) const
 {
   const auto req = std::make_shared<SetBool::Request>();
   std::string command_name;
-  if (request_commant == COMMAND::DEACTIVATE) {
-    req->data = false;
+  req->data = flag;
+  if (flag)
+  {
     command_name = "Deactivation";
-  } else if (request_commant == COMMAND::ACTIVATE) {
-    req->data = true;
+  }
+  else
+  {
     command_name = "Activation";
-  } else {
-    throw std::logic_error("pose_initializer[ndt_localization_trigger_module]: invalid if clause");
   }
 
   if (!client_ndt_trigger_->service_is_ready()) {
@@ -53,7 +51,6 @@ void NdtLocalizationTriggerModule::sendRequest(int request_commant) const
     RCLCPP_INFO(logger_, "NDT %s succeeded", command_name.c_str());
   } else {
     RCLCPP_INFO(logger_, "NDT %s failed", command_name.c_str());
-    throw ServiceException(
-      Initialize::Service::Response::ERROR_ESTIMATION, "NDT " + command_name + " failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT " + command_name + " failed");
   }
 }
