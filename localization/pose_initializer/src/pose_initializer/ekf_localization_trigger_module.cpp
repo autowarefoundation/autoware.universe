@@ -34,10 +34,8 @@ void EkfLocalizationTriggerModule::sendRequest(bool flag) const
   req->data = flag;
   if (flag) {
     command_name = "Deactivation";
-  } else if (flag) {
-    command_name = "Activation";
   } else {
-    throw std::logic_error("pose_initializer[ekf_localization_trigger_module]: invalid if clause");
+    command_name = "Activation";
   }
 
   if (!client_ekf_trigger_->service_is_ready()) {
