@@ -95,7 +95,7 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
   points_num_threshold_param_.min_points_num = declare_parameter<int>("min_points_num", 10);
   points_num_threshold_param_.max_points_num = declare_parameter<int>("max_points_num", 10);
   points_num_threshold_param_.min_points_and_distance_ratio =
-    declare_parameter<float>("min_points_and_distance_ratio", 500.0);
+    declare_parameter<float>("min_points_and_distance_ratio", 800.0);
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
