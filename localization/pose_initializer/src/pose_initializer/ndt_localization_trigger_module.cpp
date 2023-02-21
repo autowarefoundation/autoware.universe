@@ -27,7 +27,7 @@ NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node)
   client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 }
 
-void NdtLocalizationTriggerModule::sendRequest(bool flag) const
+void NdtLocalizationTriggerModule::send_request(bool flag) const
 {
   const auto req = std::make_shared<SetBool::Request>();
   std::string command_name;

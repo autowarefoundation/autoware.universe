@@ -77,10 +77,10 @@ void PoseInitializer::on_initialize(
   try {
     change_state(State::Message::INITIALIZING);
     if (ekf_localization_trigger_) {
-      ekf_localization_trigger_->sendRequest(false);
+      ekf_localization_trigger_->send_request(false);
     }
     if (ndt_localization_trigger_) {
-      ndt_localization_trigger_->sendRequest(false);
+      ndt_localization_trigger_->send_request(false);
     }
     auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
     if (ndt_) {
@@ -89,10 +89,10 @@ void PoseInitializer::on_initialize(
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
     if (ekf_localization_trigger_) {
-      ekf_localization_trigger_->sendRequest(true);
+      ekf_localization_trigger_->send_request(true);
     }
     if (ndt_localization_trigger_) {
-      ndt_localization_trigger_->sendRequest(true);
+      ndt_localization_trigger_->send_request(true);
     }
     res->status.success = true;
     change_state(State::Message::INITIALIZED);

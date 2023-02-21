@@ -26,7 +26,7 @@ private:
 
 public:
   explicit EkfLocalizationTriggerModule(rclcpp::Node * node);
-  void sendRequest(bool flag) const;
+  void send_request(bool flag) const;
 
 private:
   rclcpp::Logger logger_;

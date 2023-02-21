@@ -27,7 +27,7 @@ EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node)
   client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
 }
 
-void EkfLocalizationTriggerModule::sendRequest(bool flag) const
+void EkfLocalizationTriggerModule::send_request(bool flag) const
 {
   const auto req = std::make_shared<SetBool::Request>();
   std::string command_name;
