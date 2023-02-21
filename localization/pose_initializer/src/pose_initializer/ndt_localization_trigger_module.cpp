@@ -32,12 +32,9 @@ void NdtLocalizationTriggerModule::sendRequest(bool flag) const
   const auto req = std::make_shared<SetBool::Request>();
   std::string command_name;
   req->data = flag;
-  if (flag)
-  {
+  if (flag) {
     command_name = "Deactivation";
-  }
-  else
-  {
+  } else {
     command_name = "Activation";
   }
 
@@ -51,6 +48,7 @@ void NdtLocalizationTriggerModule::sendRequest(bool flag) const
     RCLCPP_INFO(logger_, "NDT %s succeeded", command_name.c_str());
   } else {
     RCLCPP_INFO(logger_, "NDT %s failed", command_name.c_str());
-    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "NDT " + command_name + " failed");
+    throw ServiceException(
+      Initialize::Service::Response::ERROR_ESTIMATION, "NDT " + command_name + " failed");
   }
 }
