@@ -42,8 +42,8 @@ The resulting topics to publish the `UserDefinedValue` are as follows:
 
 ## Parameters
 
-| Name                | Type             | Description                                                       |
-| :------------------ | :--------------- | :---------------------------------------------------------------- |
+| Name                | Type             | Description                                                   |
+| :------------------ | :--------------- | :------------------------------------------------------------ |
 | `diagnostic_topics` | list of `string` | list of DiagnosticArray topics to convert to UserDefinedValue |
 
 ## Assumptions / Known limits
