@@ -2,7 +2,6 @@
   <arg name="input/trajectory" default="/planning/scenario_planning/trajectory"/>
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory"/>
   <arg name="input/objects" default="/perception/object_recognition/objects"/>
-  <arg name="launch_diagnostic_converter" default="false"/>
 
   <!-- planning evaluator -->
   <group>
@@ -13,10 +12,5 @@
       <remap from="~/input/objects" to="$(var input/objects)"/>
       <remap from="~/metrics" to="/diagnostic/planning_evaluator/metrics"/>
     </node>
-  </group>
-
-  <!-- diagnostic converter -->
-  <group if="$(var launch_diagnostic_converter)">
-    <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen"/>
   </group>
 </launch>
