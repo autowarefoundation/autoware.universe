@@ -18,18 +18,21 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
+#include <tier4_simulation_msgs/msg/user_defined_value.hpp>
+#include <tier4_simulation_msgs/msg/user_defined_value_type.hpp>
 
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace diagnostic_converter
 {
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
-using scenario_simulator_v2_msgs::msg::UserDefinedValue;
+using tier4_simulation_msgs::msg::UserDefinedValue;
+using tier4_simulation_msgs::msg::UserDefinedValueType;
 
 /**
  * @brief Node for converting from DiagnosticArray to UserDefinedValue

@@ -7,14 +7,16 @@
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>diagnostic_msgs</depend>
   <depend>openscenario_interpreter</depend>
   <depend>openscenario_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>scenario_simulator_v2_msgs</depend>
+  <depend>tier4_simulation_msgs</depend>
 
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_copyright</test_depend>

@@ -18,7 +18,7 @@
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "diagnostic_msgs/msg/key_value.hpp"
-#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
+#include <tier4_simulation_msgs/msg/user_defined_value.hpp>
 
 #include <gtest/gtest.h>
 
@@ -30,7 +30,7 @@ using ConverterNode = diagnostic_converter::DiagnosticConverter;
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
-using scenario_simulator_v2_msgs::msg::UserDefinedValue;
+using tier4_simulation_msgs::msg::UserDefinedValue;
 
 void waitForMsg(
   bool & flag, const rclcpp::Node::SharedPtr node1, const rclcpp::Node::SharedPtr node2)

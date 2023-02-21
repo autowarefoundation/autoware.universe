@@ -48,7 +48,7 @@ void DiagnosticConverter::onDiagnostic(
 UserDefinedValue DiagnosticConverter::createUserDefinedValue(const KeyValue & key_value) const
 {
   UserDefinedValue param_msg;
-  param_msg.type.data = scenario_simulator_v2_msgs::msg::UserDefinedValueType::DOUBLE;
+  param_msg.type.data = UserDefinedValueType::DOUBLE;
   param_msg.value = key_value.value;
   return param_msg;
 }
