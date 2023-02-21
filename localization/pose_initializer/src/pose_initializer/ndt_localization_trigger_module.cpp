@@ -33,9 +33,9 @@ void NdtLocalizationTriggerModule::send_request(bool flag) const
   std::string command_name;
   req->data = flag;
   if (flag) {
-    command_name = "Acctivation";
+    command_name = "Activation";
   } else {
-    command_name = "Dectivation";
+    command_name = "Deactivation";
   }
 
   if (!client_ndt_trigger_->service_is_ready()) {
