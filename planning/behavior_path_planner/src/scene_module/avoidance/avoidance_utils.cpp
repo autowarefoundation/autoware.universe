@@ -370,6 +370,8 @@ std::vector<geometry_msgs::msg::Point> convertToGeometryPoints(
   const std::vector<PolygonPoint> & polygon_points)
 {
   std::vector<geometry_msgs::msg::Point> points;
+  points.reserve(polygon_points.size());
+
   for (const auto & polygon_point : polygon_points) {
     points.push_back(polygon_point.point);
   }
