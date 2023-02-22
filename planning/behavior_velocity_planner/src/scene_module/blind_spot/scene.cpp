@@ -133,8 +133,13 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const double pass_judge_line_dist =
     planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
   const auto stop_point_pose = path->points.at(stop_line_idx).point.pose;
-  const auto distance_until_stop =
-    motion_utils::calcSignedArcLength(input_path.points, current_pose, stop_point_pose.position);
+  const auto ego_segment_idx =
+    motion_utils::findNearestSegmentIndex(input_path.points, current_pose);
+  const size_t stop_point_segment_idx =
+    motion_utils::findNearestSegmentIndex(input_path.points, stop_point_pose.position);
+  const auto distance_until_stop = motion_utils::calcSignedArcLength(
+    input_path.points, current_pose, *ego_segment_idx, stop_point_pose.position,
+    stop_point_segment_idx);
   if (distance_until_stop == boost::none) return true;
 
   /* get debug info */
