@@ -507,7 +507,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
     object_data.last_seen = clock_->now();
 
-    // calculate avoid_margin dynamicslly
+    // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
     const double max_avoid_margin = parameters_->lateral_collision_safety_buffer +
                                     parameters_->lateral_collision_margin + 0.5 * vehicle_width;
