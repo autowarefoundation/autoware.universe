@@ -42,8 +42,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
   wheelbase_ = vehicle_info.wheel_base_m;
   initCommonParam();
-  over_stop_velocity_warn_thr_ =
-    declare_parameter<double>("over_stop_velocity_warn_thr");
+  over_stop_velocity_warn_thr_ = declare_parameter<double>("over_stop_velocity_warn_thr");
 
   // create smoother
   switch (node_param_.algorithm_type) {
@@ -251,8 +250,7 @@ void MotionVelocitySmootherNode::initCommonParam()
   p.engage_acceleration = declare_parameter<double>("engage_acceleration");
   p.engage_exit_ratio = declare_parameter<double>("engage_exit_ratio");
   p.engage_exit_ratio = std::min(std::max(p.engage_exit_ratio, 0.0), 1.0);
-  p.stopping_velocity =
-    declare_parameter<double>("stopping_velocity");
+  p.stopping_velocity = declare_parameter<double>("stopping_velocity");
   p.stopping_distance = declare_parameter<double>("stopping_distance");
   p.extract_ahead_dist = declare_parameter<double>("extract_ahead_dist");
   p.extract_behind_dist = declare_parameter<double>("extract_behind_dist");

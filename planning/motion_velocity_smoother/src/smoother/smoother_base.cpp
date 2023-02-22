@@ -42,7 +42,8 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
   p.sample_ds = node.declare_parameter<double>("resample_ds");
   p.curvature_threshold = node.declare_parameter<double>("curvature_threshold");
   p.max_steering_angle_rate = node.declare_parameter<double>("max_steering_angle_rate");
-  p.curvature_calculation_distance = node.declare_parameter<double>("curvature_calculation_distance");
+  p.curvature_calculation_distance =
+    node.declare_parameter<double>("curvature_calculation_distance");
   p.decel_distance_before_curve = node.declare_parameter<double>("decel_distance_before_curve");
   p.decel_distance_after_curve = node.declare_parameter<double>("decel_distance_after_curve");
   p.min_curve_velocity = node.declare_parameter<double>("min_curve_velocity");
