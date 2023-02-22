@@ -20,12 +20,13 @@ set(${PROJECT_NAME}_INCLUDE_DIRS
   ${EIGEN3_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
+list(REMOVE_DUPLICATES ${PROJECT_NAME}_INCLUDE_DIRS)
 
 # concatenate link libraries
 set(${PROJECT_NAME}_LINK_LIBRARIESw ${${PROJECT_NAME}_FOUND_LIBRARIES} ${PCL_LIBRARIES})
 list(REMOVE_DUPLICATES ${PROJECT_NAME}_LINK_LIBRARIES)
 
-# utilization
+# utilization library
 add_library(behavior_velocity_planner_utilization
   SHARED
   src/utilization/path_utilization.cpp
@@ -38,7 +39,7 @@ target_include_directories(behavior_velocity_planner_utilization
 )
 target_link_libraries(behavior_velocity_planner_utilization ${${PROJECT_NAME}_LINK_LIBRARIES})
 
-# scene modules
+# scene modules libraries
 set(scene_modules
   detection_area
   blind_spot
@@ -67,7 +68,7 @@ foreach(scene_module IN LISTS scene_modules)
   list(APPEND behavior_velocity_planner_scene_modules behavior_velocity_planner_${scene_module})
 endforeach()
 
-# node
+# node library
 add_library(behavior_velocity_planner SHARED
   src/node.cpp
   src/planner_manager.cpp
@@ -82,6 +83,32 @@ rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
   EXECUTABLE behavior_velocity_planner_node
 )
+
+if(BUILD_TESTING)
+  # Gtest for utilization
+  ament_add_ros_isolated_gtest(utilization-test
+    test/src/test_state_machine.cpp
+    test/src/test_arc_lane_util.cpp
+    test/src/test_utilization.cpp
+  )
+  target_link_libraries(utilization-test
+    gtest_main
+    behavior_velocity_planner
+    ${${PROJECT_NAME}_LINK_LIBRARIES} ${behavior_velocity_planner_scene_modules}
+  )
+
+  # Gtest for occlusion spot
+  ament_add_ros_isolated_gtest(occlusion_spot-test
+    test/src/test_occlusion_spot_utils.cpp
+    test/src/test_risk_predictive_braking.cpp
+    test/src/test_grid_utils.cpp
+  )
+  target_link_libraries(occlusion_spot-test
+    gtest_main
+    behavior_velocity_planner
+    ${${PROJECT_NAME}_LINK_LIBRARIES} ${behavior_velocity_planner_scene_modules}
+  )
+endif()
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
