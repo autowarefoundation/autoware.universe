@@ -17,6 +17,7 @@
 
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <scene_module/intersection/util_type.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
@@ -32,6 +33,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -48,17 +50,14 @@ public:
   {
     bool stop_required;
 
-    geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
-    geometry_msgs::msg::Pose stop_point_pose;
-    geometry_msgs::msg::Pose judge_point_pose;
-    geometry_msgs::msg::Polygon ego_lane_polygon;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     geometry_msgs::msg::Polygon intersection_area;
+    lanelet::CompoundPolygon3d ego_lane;
     std::vector<lanelet::CompoundPolygon3d> adjacent_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
@@ -70,6 +69,7 @@ public:
   {
     double state_transit_margin_time;
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
+    double keep_detection_vel_thr;     //! keep detection if ego is ego.vel < keep_detection_vel_thr
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
       stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
@@ -93,12 +93,13 @@ public:
     double
       assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
     bool enable_front_car_decel_prediction;  //! flag for using above feature
+    double stop_overshoot_margin;            //! overshoot margin for stuck, collsion detection
   };
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const PlannerParam & planner_param, const std::set<int> & assoc_ids,
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -109,13 +110,19 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
+  const std::set<int> & getAssocIds() const { return assoc_ids_; }
+
 private:
-  int64_t lane_id_;
+  const int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
   // Parameter
   PlannerParam planner_param_;
+  std::optional<util::IntersectionLanelets> intersection_lanelets_;
+  // for an intersection lane l1, its associative lanes are those that share same parent lanelet and
+  // have same turn_direction
+  const std::set<int> assoc_ids_;
 
   /**
    * @brief check collision for all lanelet area & predicted objects (call checkPathCollision() as
@@ -134,9 +141,10 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & detection_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
-    const std::optional<Polygon2d> & intersection_area,
+    const std::optional<Polygon2d> & intersection_area, const lanelet::ConstLanelet & ego_lane,
+    const lanelet::ConstLanelets & ego_lane_with_next_lane,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area, const double time_delay);
+    const int closest_idx, const double time_delay);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -160,10 +168,9 @@ private:
    * @param ignore_dist     ignore distance from the start point of the ego-intersection lane
    * @return generated polygon
    */
-  Polygon2d generateEgoIntersectionLanePolygon(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const double extra_dist, const double ignore_dist) const;
+  Polygon2d generateStuckVehicleDetectAreaPolygon(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
@@ -183,7 +190,7 @@ private:
    */
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int objective_lane_id, const double time_delay) const;
+    const double time_delay) const;
 
   /**
    * @brief check if the object has a target type for collision check
@@ -220,14 +227,11 @@ private:
     const double margin = 0);
 
   /**
-   * @brief Get lanes including ego lanelet and next lanelet
-   * @param lanelet_map_ptr lanelet map
-   * @param path            ego-car lane
-   * @return ego lanelet and next lanelet
+   * @brief Get path polygon of intersection part and next lane part
+   * @return trimmed path polygon
    */
   lanelet::ConstLanelets getEgoLaneWithNextLane(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) const;
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
 
   /**
    * @brief Calculate distance between closest path point and intersection lanelet along path

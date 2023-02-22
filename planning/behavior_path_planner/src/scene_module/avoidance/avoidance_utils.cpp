@@ -15,7 +15,6 @@
 #include "behavior_path_planner/scene_module/avoidance/avoidance_utils.hpp"
 
 #include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -230,6 +229,38 @@ double calcDecelDistPlanType3(const double v0, const double a0, const double ja)
   const auto [x1, v1, a1] = update(0.0, v0, a0, ja, t1);
 
   return x1;
+}
+
+tier4_autoware_utils::Polygon2d expandPolygon(
+  const tier4_autoware_utils::Polygon2d & input_polygon, const double offset)
+{
+  // NOTE: There is a duplicated point.
+  const size_t num_points = input_polygon.outer().size() - 1;
+
+  tier4_autoware_utils::Polygon2d expanded_polygon;
+  for (size_t i = 0; i < num_points; ++i) {
+    const auto & curr_p = input_polygon.outer().at(i);
+    const auto & next_p = input_polygon.outer().at(i + 1);
+    const auto & prev_p =
+      i == 0 ? input_polygon.outer().at(num_points - 1) : input_polygon.outer().at(i - 1);
+
+    Eigen::Vector2d current_to_next(next_p.x() - curr_p.x(), next_p.y() - curr_p.y());
+    Eigen::Vector2d current_to_prev(prev_p.x() - curr_p.x(), prev_p.y() - curr_p.y());
+    current_to_next.normalize();
+    current_to_prev.normalize();
+
+    const Eigen::Vector2d offset_vector = (-current_to_next - current_to_prev).normalized();
+    const double theta = std::acos(offset_vector.dot(current_to_next));
+    const double scaled_offset = offset / std::sin(theta);
+    const Eigen::Vector2d offset_point =
+      Eigen::Vector2d(curr_p.x(), curr_p.y()) + offset_vector * scaled_offset;
+
+    expanded_polygon.outer().push_back(
+      tier4_autoware_utils::Point2d(offset_point.x(), offset_point.y()));
+  }
+
+  boost::geometry::correct(expanded_polygon);
+  return expanded_polygon;
 }
 
 }  // namespace
@@ -503,42 +534,8 @@ Polygon2d createEnvelopePolygon(
   tf2::doTransform(
     toMsg(envelope_poly, closest_pose.position.z), envelope_ros_polygon, geometry_tf);
 
-  std::vector<Polygon2d> offset_polygons{};
-  bg::strategy::buffer::distance_symmetric<double> distance_strategy(envelope_buffer);
-  bg::strategy::buffer::join_miter join_strategy;
-  bg::strategy::buffer::end_flat end_strategy;
-  bg::strategy::buffer::side_straight side_strategy;
-  bg::strategy::buffer::point_circle point_strategy;
-  bg::buffer(
-    toPolygon2d(envelope_ros_polygon), offset_polygons, distance_strategy, side_strategy,
-    join_strategy, end_strategy, point_strategy);
-
-  return offset_polygons.front();
-}
-
-void getEdgePoints(
-  const Polygon2d & object_polygon, const double threshold, std::vector<Point> & edge_points)
-{
-  if (object_polygon.outer().size() < 2) {
-    return;
-  }
-
-  const size_t num_points = object_polygon.outer().size();
-  for (size_t i = 0; i < num_points - 1; ++i) {
-    const auto & curr_p = object_polygon.outer().at(i);
-    const auto & next_p = object_polygon.outer().at(i + 1);
-    const auto & prev_p =
-      i == 0 ? object_polygon.outer().at(num_points - 2) : object_polygon.outer().at(i - 1);
-    const Eigen::Vector2d current_to_next(next_p.x() - curr_p.x(), next_p.y() - curr_p.y());
-    const Eigen::Vector2d current_to_prev(prev_p.x() - curr_p.x(), prev_p.y() - curr_p.y());
-    const double inner_val = current_to_next.dot(current_to_prev);
-    if (std::fabs(inner_val) > threshold) {
-      continue;
-    }
-
-    const auto edge_point = tier4_autoware_utils::createPoint(curr_p.x(), curr_p.y(), 0.0);
-    edge_points.push_back(edge_point);
-  }
+  const auto expanded_polygon = expandPolygon(toPolygon2d(envelope_ros_polygon), envelope_buffer);
+  return expanded_polygon;
 }
 
 void sortPolygonPoints(
@@ -645,24 +642,28 @@ std::vector<Point> updateBoundary(
   const auto closest_end_point =
     motion_utils::calcLongitudinalOffsetPoint(original_bound, end_segment_idx, end_offset);
 
-  std::vector<Point> updated_bound;
-
   const double min_dist = 1e-3;
-  // copy original points until front point
-  std::copy(
-    original_bound.begin(), original_bound.begin() + start_segment_idx + 1,
-    std::back_inserter(updated_bound));
 
-  // insert closest front point
-  if (
-    closest_front_point &&
-    tier4_autoware_utils::calcDistance2d(*closest_front_point, updated_bound.back()) > min_dist) {
-    updated_bound.push_back(*closest_front_point);
+  std::vector<Point> updated_bound;
+  if (0 < front_offset) {
+    // copy original points until front point
+    std::copy(
+      original_bound.begin(), original_bound.begin() + start_segment_idx + 1,
+      std::back_inserter(updated_bound));
+
+    // insert closest front point
+    if (
+      closest_front_point &&
+      tier4_autoware_utils::calcDistance2d(*closest_front_point, updated_bound.back()) > min_dist) {
+      updated_bound.push_back(*closest_front_point);
+    }
   }
 
   // insert sorted points
   for (const auto & sorted_point : sorted_points) {
-    if (tier4_autoware_utils::calcDistance2d(sorted_point.point, updated_bound.back()) > min_dist) {
+    if (
+      updated_bound.empty() ||
+      tier4_autoware_utils::calcDistance2d(sorted_point.point, updated_bound.back()) > min_dist) {
       updated_bound.push_back(sorted_point.point);
     }
   }
@@ -670,13 +671,15 @@ std::vector<Point> updateBoundary(
   // insert closest end point
   if (
     closest_end_point &&
-    tier4_autoware_utils::calcDistance2d(*closest_end_point, updated_bound.back()) > min_dist) {
+    (updated_bound.empty() ||
+     tier4_autoware_utils::calcDistance2d(*closest_end_point, updated_bound.back()) > min_dist)) {
     updated_bound.push_back(*closest_end_point);
   }
 
   // copy original points until the end of the original bound
   for (size_t i = end_segment_idx + 1; i < original_bound.size(); ++i) {
     if (
+      updated_bound.empty() ||
       tier4_autoware_utils::calcDistance2d(original_bound.at(i), updated_bound.back()) > min_dist) {
       updated_bound.push_back(original_bound.at(i));
     }
@@ -688,7 +691,8 @@ std::vector<Point> updateBoundary(
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects,
-  const bool enable_bound_clipping)
+  const bool enable_bound_clipping, const bool disable_path_update,
+  const double original_object_buffer)
 {
   util::generateDrivableArea(path, lanes, vehicle_length, planner_data);
   if (objects.empty() || !enable_bound_clipping) {
@@ -696,13 +700,34 @@ void generateDrivableArea(
   }
 
   for (const auto & object : objects) {
+    // If avoidance is executed by both behavior and motion, only non-avoidable object will be
+    // extracted from the drivable area.
+    if (!disable_path_update) {
+      if (object.is_avoidable) {
+        continue;
+      }
+    }
+
+    // check if avoid marin is calculated
+    if (!object.avoid_margin) {
+      continue;
+    }
+
     const auto & obj_pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    const auto & obj_poly = object.envelope_poly;
-    constexpr double threshold = 0.01;
+    const double diff_poly_buffer = object.avoid_margin.get() - original_object_buffer -
+                                    planner_data->parameters.vehicle_width / 2.0;
+    const auto obj_poly = expandPolygon(object.envelope_poly, diff_poly_buffer);
 
     // get edge points of the object
+    const size_t nearest_path_idx = motion_utils::findNearestIndex(
+      path.points, obj_pose.position);  // to get z for object polygon
     std::vector<Point> edge_points;
-    getEdgePoints(obj_poly, threshold, edge_points);
+    for (size_t i = 0; i < obj_poly.outer().size() - 1;
+         ++i) {  // NOTE: There is a duplicated points
+      edge_points.push_back(tier4_autoware_utils::createPoint(
+        obj_poly.outer().at(i).x(), obj_poly.outer().at(i).y(),
+        path.points.at(nearest_path_idx).point.pose.position.z));
+    }
 
     // get a boundary that we have to change
     const double lat_dist_to_path = motion_utils::calcLateralOffset(path.points, obj_pose.position);

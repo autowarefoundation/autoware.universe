@@ -136,8 +136,7 @@ bool PullOutModule::isExecutionRequested() const
   // Check if any of the footprint points are in the shoulder lane
   lanelet::Lanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        planner_data_->route_handler->getShoulderLanelets(),
-        planner_data_->self_odometry->pose.pose, &closest_shoulder_lanelet)) {
+        pull_out_lanes, planner_data_->self_odometry->pose.pose, &closest_shoulder_lanelet)) {
     return false;
   }
   if (!isOverlappedWithLane(closest_shoulder_lanelet, vehicle_footprint)) {
@@ -390,13 +389,13 @@ void PullOutModule::planWithPriorityOnEfficientPath(
   status_.planner_type = PlannerType::NONE;
 
   // check if start pose candidates are valid
-  if (start_pose_candidates.size() < 2) {
+  if (start_pose_candidates.empty()) {
     return;
   }
 
   // plan with each planner
   for (const auto & planner : pull_out_planners_) {
-    for (size_t i = 0; i < start_pose_candidates.size() - 1; i++) {
+    for (size_t i = 0; i < start_pose_candidates.size(); i++) {
       status_.back_finished = i == 0;
       const auto & pull_out_start_pose = start_pose_candidates.at(i);
       planner->setPlannerData(planner_data_);
@@ -413,6 +412,9 @@ void PullOutModule::planWithPriorityOnEfficientPath(
         status_.planner_type = planner->getPlannerType();
         break;
       }
+
+      if (i == start_pose_candidates.size() - 1) continue;
+
       //  check next path if back is needed
       const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
       const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
@@ -440,11 +442,11 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
   status_.planner_type = PlannerType::NONE;
 
   // check if start pose candidates are valid
-  if (start_pose_candidates.size() < 2) {
+  if (start_pose_candidates.empty()) {
     return;
   }
 
-  for (size_t i = 0; i < start_pose_candidates.size() - 1; i++) {
+  for (size_t i = 0; i < start_pose_candidates.size(); i++) {
     status_.back_finished = i == 0;
     const auto & pull_out_start_pose = start_pose_candidates.at(i);
     // plan with each planner
@@ -463,6 +465,9 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
         status_.planner_type = planner->getPlannerType();
         break;
       }
+
+      if (i == start_pose_candidates.size() - 1) continue;
+
       //  check next path if back is needed
       const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
       const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
@@ -495,7 +500,7 @@ PathWithLaneId PullOutModule::generateStopPath() const
     p.point.longitudinal_velocity_mps = 0.0;
     lanelet::Lanelet closest_shoulder_lanelet;
     lanelet::utils::query::getClosestLanelet(
-      planner_data_->route_handler->getShoulderLanelets(), pose, &closest_shoulder_lanelet);
+      status_.pull_out_lanes, pose, &closest_shoulder_lanelet);
     p.lane_ids.push_back(closest_shoulder_lanelet.id());
     return p;
   };
@@ -529,16 +534,7 @@ void PullOutModule::updatePullOutStatus()
     util::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_out_lanes);
 
   // search pull out start candidates backward
-  std::vector<Pose> start_pose_candidates;
-  {
-    if (parameters_.enable_back) {
-      // the first element is current_pose
-      start_pose_candidates = searchBackedPoses();
-    } else {
-      // pull_out_start candidate is only current pose
-      start_pose_candidates.push_back(current_pose);
-    }
-  }
+  std::vector<Pose> start_pose_candidates = searchPullOutStartPoses();
 
   if (parameters_.search_priority == "efficient_path") {
     planWithPriorityOnEfficientPath(start_pose_candidates, goal_pose);
@@ -575,8 +571,10 @@ void PullOutModule::updatePullOutStatus()
 }
 
 // make this class?
-std::vector<Pose> PullOutModule::searchBackedPoses()
+std::vector<Pose> PullOutModule::searchPullOutStartPoses()
 {
+  std::vector<Pose> pull_out_start_pose{};
+
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
 
   // get backward shoulder path
@@ -593,9 +591,18 @@ std::vector<Pose> PullOutModule::searchBackedPoses()
     p.point.pose = calcOffsetPose(p.point.pose, 0, distance_from_center_line, 0);
   }
 
+  // if backward driving is disable, just refine current pose to the lanes
+  if (!parameters_.enable_back) {
+    const auto refined_pose =
+      calcLongitudinalOffsetPose(backward_shoulder_path.points, current_pose.position, 0);
+    if (refined_pose) {
+      pull_out_start_pose.push_back(*refined_pose);
+    }
+    return pull_out_start_pose;
+  }
+
   // check collision between footprint and object at the backed pose
   const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
-  std::vector<Pose> backed_poses;
   for (double back_distance = 0.0; back_distance <= parameters_.max_back_distance;
        back_distance += parameters_.backward_search_resolution) {
     const auto backed_pose = calcLongitudinalOffsetPose(
@@ -625,9 +632,9 @@ std::vector<Pose> PullOutModule::searchBackedPoses()
       break;  // poses behind this has a collision, so break.
     }
 
-    backed_poses.push_back(*backed_pose);
+    pull_out_start_pose.push_back(*backed_pose);
   }
-  return backed_poses;
+  return pull_out_start_pose;
 }
 
 bool PullOutModule::isOverlappedWithLane(

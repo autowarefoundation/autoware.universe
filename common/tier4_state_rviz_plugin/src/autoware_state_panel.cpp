@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2020 TIER IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
@@ -26,8 +27,6 @@
 #include <string>
 
 inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
-
-using std::placeholders::_1;
 
 namespace rviz_plugins
 {
@@ -208,6 +207,8 @@ QGroupBox * AutowareStatePanel::makeFailSafeGroup()
 
 void AutowareStatePanel::onInitialize()
 {
+  using std::placeholders::_1;
+
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   // Operation Mode
