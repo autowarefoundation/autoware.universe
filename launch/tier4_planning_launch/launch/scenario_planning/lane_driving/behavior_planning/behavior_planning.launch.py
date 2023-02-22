@@ -30,7 +30,6 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-
     # vehicle information parameter
     vehicle_param_path = LaunchConfiguration("vehicle_param_file").perform(context)
     with open(vehicle_param_path, "r") as f:
@@ -164,6 +163,10 @@ def launch_setup(context, *args, **kwargs):
             (
                 "~/input/compare_map_filtered_pointcloud",
                 "compare_map_filtered/pointcloud",
+            ),
+            (
+                "~/input/vector_map_inside_area_filtered_pointcloud",
+                "vector_map_inside_area_filtered/pointcloud",
             ),
             (
                 "~/input/traffic_signals",

@@ -25,6 +25,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace behavior_velocity_planner
 {
@@ -43,9 +44,7 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
-  bool hasSameParentLaneletWith(const lanelet::ConstLanelet & lane, const size_t module_id) const;
-
-  bool hasSameParentLaneletWithRegistered(const lanelet::ConstLanelet & lane) const;
+  bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface
@@ -63,7 +62,7 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
-  bool hasSameParentLaneletWith(const lanelet::ConstLanelet & lane, const size_t module_id) const;
+  bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };
 }  // namespace behavior_velocity_planner
 
