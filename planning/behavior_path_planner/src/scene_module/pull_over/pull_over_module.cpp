@@ -390,9 +390,15 @@ BehaviorModuleOutput PullOverModule::plan()
 
   // Check if it needs to decide path
   if (status_.is_safe) {
+    const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
+      getCurrentPath().points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
+
+    const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
+      getCurrentPath().points, status_.pull_over_path.start_pose.position);
+
     const auto dist_to_parking_start_pose = calcSignedArcLength(
-      getCurrentPath().points, current_pose, status_.pull_over_path.start_pose.position,
-      std::numeric_limits<double>::max(), M_PI_2);
+      getCurrentPath().points, current_pose, *ego_segment_idx,
+      status_.pull_over_path.start_pose.position, start_pose_segment_idx);
 
     if (*dist_to_parking_start_pose < parameters_.decide_path_distance) {
       status_.has_decided_path = true;
@@ -608,9 +614,18 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const auto & full_path = status_.pull_over_path.getFullPath();
+
+  const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
+    full_path.points, planner_data_->self_odometry->pose.pose, std::numeric_limits<double>::max(),
+    M_PI_2);
+
+  const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
+    full_path.points, status_.pull_over_path.start_pose.position);
+
   const auto dist_to_parking_start_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_odometry->pose.pose,
-    status_.pull_over_path.start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
+    full_path.points, planner_data_->self_odometry->pose.pose, *ego_segment_idx,
+    status_.pull_over_path.start_pose.position, start_pose_segment_idx);
+
   const double dist_to_parking_finish_pose = calcSignedArcLength(
     full_path.points, planner_data_->self_odometry->pose.pose.position,
     modified_goal_pose_->goal_pose.position);
