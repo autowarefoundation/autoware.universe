@@ -327,6 +327,7 @@ void TrajectorySamplerNode::pathCallback(
     params_.preprocessing.desired_traj_behind_length);
   auto reusable_trajectories = sampler_common::calculateReusableTrajectories(
     updated_prev_traj, params_.preprocessing.reuse_times);
+  gui_.setReusableTrajectories(reusable_trajectories);
   auto trajectories =
     generateCandidateTrajectories(planning_configuration, {}, path_spline, *msg, gui_, params_);
   for (auto & reusable_traj : reusable_trajectories) {

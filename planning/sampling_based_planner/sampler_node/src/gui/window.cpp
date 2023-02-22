@@ -116,6 +116,24 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
     plotCandidate(candidates_[id]);
   });
 
+  // Reusable trajectories tab
+  ui_->reusable_table->setColumnCount(4);
+  ui_->reusable_table->setHorizontalHeaderLabels({"id", "valid", "cost", "tag"});
+  ui_->reuse_pos->addGraph();
+  ui_->reuse_pos->xAxis->setScaleRatio(ui_->reuse_pos->yAxis);
+  reuse_pos_curve_ = new QCPCurve(ui_->reuse_pos->xAxis, ui_->reuse_pos->yAxis);
+  reuse_path_curve_ = new QCPCurve(ui_->reuse_pos->xAxis, ui_->reuse_pos->yAxis);
+  reuse_path_curve_->setPen(QPen(ref_path_color));
+  ui_->reuse_vel->addGraph();
+  ui_->reuse_acc->addGraph();
+  ui_->reuse_jerk->addGraph();
+  connect(ui_->reusable_table, &QTableWidget::cellClicked, [&](int row, int col) {
+    (void)col;
+    const auto id = ui_->reusable_table->item(row, 0)->text().toInt();
+    plotReusableTrajectory(reusable_trajectories_[id]);
+  });
+  reuse_arrow_ = new QCPItemLine(ui_->reuse_pos);
+  reuse_arrow_->setHead(QCPLineEnding::esSpikeArrow);
   // Frenet tab
   /*
   ui_->frenet_table->setColumnCount(3);
@@ -274,6 +292,7 @@ void MainWindow::plotInputs(
   ui_->output_vel->graph()->setData({0.0}, {current_configuration.velocity});
   ui_->output_acc->graph()->setData({0.0}, {current_configuration.acceleration});
   ui_->input_curvature->graph()->setData({0.0}, {current_configuration.curvature});
+
   ui_->input_path->rescaleAxes();
   ui_->input_path->replot();
   ui_->output_pos->rescaleAxes();
@@ -300,6 +319,28 @@ void MainWindow::fillCandidatesTable(const std::vector<sampler_common::Trajector
     item->setData(Qt::ItemDataRole::DisplayRole, qVariantFromValue(candidate.cost));
     table->setItem(i, 2, item);
     table->setItem(i, 3, new QTableWidgetItem(tr("%1").arg(QString::fromStdString(candidate.tag))));
+  }
+  table->setSortingEnabled(true);
+}
+
+void MainWindow::fillReusableTrajectoriesTable(
+  const std::vector<sampler_common::ReusableTrajectory> & reusable_trajectories)
+{
+  reusable_trajectories_ = reusable_trajectories;
+  auto * table = ui_->reusable_table;
+  table->setSortingEnabled(false);
+  table->clearContents();
+  table->setRowCount(reusable_trajectories.size());
+  for (auto i = 0lu; i < reusable_trajectories.size(); ++i) {
+    const auto candidate = reusable_trajectories[i];
+    table->setItem(i, 0, new QTableWidgetItem(tr("%1").arg(i)));
+    table->setItem(
+      i, 1, new QTableWidgetItem(tr("%1").arg(candidate.trajectory.constraint_results.isValid())));
+    auto * item = new QTableWidgetItem();
+    item->setData(Qt::ItemDataRole::DisplayRole, QVariant::fromValue(candidate.trajectory.cost));
+    table->setItem(i, 2, item);
+    table->setItem(
+      i, 3, new QTableWidgetItem(tr("%1").arg(QString::fromStdString(candidate.trajectory.tag))));
   }
   table->setSortingEnabled(true);
 }
@@ -354,6 +395,61 @@ void MainWindow::plotCandidate(const sampler_common::Trajectory & trajectory)
   ui_->cand_acc->replot();
   ui_->cand_jerk->rescaleAxes();
   ui_->cand_jerk->replot();
+}
+
+void MainWindow::plotReusableTrajectory(const sampler_common::ReusableTrajectory & reusable_traj)
+{
+  QVector<double> xs;
+  QVector<double> ys;
+  xs.reserve(static_cast<int>(reusable_traj.trajectory.points.size()));
+  ys.reserve(static_cast<int>(reusable_traj.trajectory.points.size()));
+  for (const auto & p : reusable_traj.trajectory.points) {
+    xs.push_back(p.x());
+    ys.push_back(p.y());
+  }
+  reuse_pos_curve_->setData(xs, ys);
+  ui_->reuse_vel->graph(0)->setData(
+    QVector<double>(reusable_traj.trajectory.times.begin(), reusable_traj.trajectory.times.end()),
+    QVector<double>(
+      reusable_traj.trajectory.longitudinal_velocities.begin(),
+      reusable_traj.trajectory.longitudinal_velocities.end()));
+  ui_->reuse_acc->graph(0)->setData(
+    QVector<double>(reusable_traj.trajectory.times.begin(), reusable_traj.trajectory.times.end()),
+    QVector<double>(
+      reusable_traj.trajectory.longitudinal_accelerations.begin(),
+      reusable_traj.trajectory.longitudinal_accelerations.end()));
+  ui_->reuse_jerk->graph(0)->setData(
+    QVector<double>(
+      reusable_traj.trajectory.lengths.begin(), reusable_traj.trajectory.lengths.end()),
+    QVector<double>(
+      reusable_traj.trajectory.curvatures.begin(), reusable_traj.trajectory.curvatures.end()));
+
+  // Arrow
+  const auto end_x = std::cos(reusable_traj.planning_configuration.heading) *
+                       reusable_traj.planning_configuration.velocity +
+                     reusable_traj.planning_configuration.pose.x();
+  const auto end_y = std::sin(reusable_traj.planning_configuration.heading) *
+                       reusable_traj.planning_configuration.velocity +
+                     reusable_traj.planning_configuration.pose.y();
+  reuse_arrow_->start->setCoords(
+    reusable_traj.planning_configuration.pose.x(), reusable_traj.planning_configuration.pose.y());
+  reuse_arrow_->end->setCoords(end_x, end_y);
+  // Current config
+  ui_->output_pos->graph()->setData(
+    {reusable_traj.planning_configuration.pose.x()},
+    {reusable_traj.planning_configuration.pose.y()});
+  ui_->output_vel->graph()->setData({0.0}, {reusable_traj.planning_configuration.velocity});
+  ui_->output_acc->graph()->setData({0.0}, {reusable_traj.planning_configuration.acceleration});
+  ui_->input_curvature->graph()->setData({0.0}, {reusable_traj.planning_configuration.curvature});
+
+  ui_->reuse_pos->rescaleAxes();
+  ui_->reuse_pos->replot();
+  ui_->reuse_vel->rescaleAxes();
+  ui_->reuse_vel->replot();
+  ui_->reuse_acc->rescaleAxes();
+  ui_->reuse_acc->replot();
+  ui_->reuse_jerk->rescaleAxes();
+  ui_->reuse_jerk->replot();
 }
 
 void MainWindow::plotObstacles(const sampler_common::Constraints & constraints)

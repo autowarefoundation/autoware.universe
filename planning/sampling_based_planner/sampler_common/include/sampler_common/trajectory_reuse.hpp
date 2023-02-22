@@ -24,12 +24,6 @@
 
 namespace sampler_common
 {
-struct ReusableTrajectory
-{
-  Trajectory trajectory;                 // base trajectory
-  Configuration planning_configuration;  // planning configuration at the end of the trajectory
-};
-
 inline std::vector<ReusableTrajectory> calculateReusableTrajectories(
   const Trajectory & trajectory, const std::vector<double> & target_times)
 {

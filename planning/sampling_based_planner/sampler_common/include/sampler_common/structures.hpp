@@ -371,6 +371,13 @@ struct Constraints
   double collision_distance_buffer;
   double static_dynamic_obstacle_velocity_threshold;
 };
+
+struct ReusableTrajectory
+{
+  Trajectory trajectory;                 // base trajectory
+  Configuration planning_configuration;  // planning configuration at the end of the trajectory
+};
+
 }  // namespace sampler_common
 
 #endif  // SAMPLER_COMMON__STRUCTURES_HPP_

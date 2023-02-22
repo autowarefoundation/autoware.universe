@@ -46,6 +46,7 @@ class GUI
   std::vector<frenet_planner::Trajectory> frenet_candidates_;
   std::optional<size_t> selected_id_;
   std::optional<sampler_common::Trajectory> previous_selected_;
+  std::vector<sampler_common::ReusableTrajectory> reusable_trajectories_;
   //
   std::array<bool, MainWindow::Tab::SIZE> to_update_{};
 
@@ -96,6 +97,13 @@ public:
     window_.setStatus(nb_trajs, compute_time_ms, plot_time_ms);
   }
 
+  void setReusableTrajectories(
+    const std::vector<sampler_common::ReusableTrajectory> & reusable_trajs)
+  {
+    reusable_trajectories_ = reusable_trajs;
+    to_update_[Tab::reusable] = true;
+  }
+
   void unsetFocus() { to_update_[Tab::candidates]; }
   void update()
   {
@@ -120,6 +128,10 @@ public:
     }
     if (to_update_[Tab::pruning]) {
       window_.plotObstacles(constraints_);
+      to_update_[Tab::pruning] = false;
+    }
+    if (to_update_[Tab::reusable]) {
+      window_.fillReusableTrajectoriesTable(reusable_trajectories_);
       to_update_[Tab::pruning] = false;
     }
     window_.update();

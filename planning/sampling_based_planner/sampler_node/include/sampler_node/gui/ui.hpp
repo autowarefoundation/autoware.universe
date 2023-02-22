@@ -55,17 +55,29 @@ public:
   QCustomPlot * input_curvature;
   QLabel * input_occ_grid;
   QWidget * candidates_tab;
-  QVBoxLayout * verticalLayout_9;
+  QVBoxLayout * candidates_tab_layout;
   QWidget * candidates_tab_widget;
-  QVBoxLayout * verticalLayout_10;
-  QSplitter * splitter;
+  QVBoxLayout * candidates_tab_widget_layout;
+  QSplitter * candidates_splitter;
   QTableWidget * candidates_table;
-  QWidget * widget;
-  QVBoxLayout * verticalLayout_11;
+  QWidget * candidates_widget;
+  QVBoxLayout * cand_layout;
   QCustomPlot * cand_pos;
   QCustomPlot * cand_vel;
   QCustomPlot * cand_acc;
   QCustomPlot * cand_jerk;
+  QWidget * reusable_tab;
+  QVBoxLayout * reusable_tab_layout;
+  QWidget * reusable_tab_widget;
+  QVBoxLayout * reusable_tab_widget_layout;
+  QSplitter * reusable_splitter;
+  QTableWidget * reusable_table;
+  QWidget * reusable_widget;
+  QVBoxLayout * reuse_layout;
+  QCustomPlot * reuse_pos;
+  QCustomPlot * reuse_vel;
+  QCustomPlot * reuse_acc;
+  QCustomPlot * reuse_jerk;
   QWidget * frenet_tab;
   QVBoxLayout * frenet_tab_layout;
   QCustomPlot * frenet_s;
@@ -151,48 +163,94 @@ public:
     // Candidates tab
     candidates_tab = new QWidget();
     candidates_tab->setObjectName(QString::fromUtf8("candidates_tab"));
-    verticalLayout_9 = new QVBoxLayout(candidates_tab);
-    verticalLayout_9->setObjectName(QString::fromUtf8("verticalLayout_9"));
+    candidates_tab_layout = new QVBoxLayout(candidates_tab);
+    candidates_tab_layout->setObjectName(QString::fromUtf8("candidates_tab_layout"));
     candidates_tab_widget = new QWidget(candidates_tab);
     candidates_tab_widget->setObjectName(QString::fromUtf8("candidates_tab_widget"));
-    verticalLayout_10 = new QVBoxLayout(candidates_tab_widget);
-    verticalLayout_10->setObjectName(QString::fromUtf8("verticalLayout_10"));
-    splitter = new QSplitter(candidates_tab_widget);
-    splitter->setObjectName(QString::fromUtf8("splitter"));
-    splitter->setOrientation(Qt::Horizontal);
-    candidates_table = new QTableWidget(splitter);
+    candidates_tab_widget_layout = new QVBoxLayout(candidates_tab_widget);
+    candidates_tab_widget_layout->setObjectName(QString::fromUtf8("candidates_tab_widget_layout"));
+    candidates_splitter = new QSplitter(candidates_tab_widget);
+    candidates_splitter->setObjectName(QString::fromUtf8("candidates_splitter"));
+    candidates_splitter->setOrientation(Qt::Horizontal);
+    candidates_table = new QTableWidget(candidates_splitter);
     candidates_table->setObjectName(QString::fromUtf8("candidates_table"));
-    splitter->addWidget(candidates_table);
-    widget = new QWidget(splitter);
-    widget->setObjectName(QString::fromUtf8("widget"));
-    verticalLayout_11 = new QVBoxLayout(widget);
-    verticalLayout_11->setObjectName(QString::fromUtf8("verticalLayout_11"));
-    cand_pos = new QCustomPlot(widget);
+    candidates_splitter->addWidget(candidates_table);
+    candidates_widget = new QWidget(candidates_splitter);
+    candidates_widget->setObjectName(QString::fromUtf8("candidates_widget"));
+    cand_layout = new QVBoxLayout(candidates_widget);
+    cand_layout->setObjectName(QString::fromUtf8("cand_layout"));
+    cand_pos = new QCustomPlot(candidates_widget);
     cand_pos->setObjectName(QString::fromUtf8("cand_pos"));
 
-    verticalLayout_11->addWidget(cand_pos);
+    cand_layout->addWidget(cand_pos);
 
-    cand_vel = new QCustomPlot(widget);
+    cand_vel = new QCustomPlot(candidates_widget);
     cand_vel->setObjectName(QString::fromUtf8("cand_vel"));
 
-    verticalLayout_11->addWidget(cand_vel);
+    cand_layout->addWidget(cand_vel);
 
-    cand_acc = new QCustomPlot(widget);
+    cand_acc = new QCustomPlot(candidates_widget);
     cand_acc->setObjectName(QString::fromUtf8("cand_acc"));
 
-    verticalLayout_11->addWidget(cand_acc);
+    cand_layout->addWidget(cand_acc);
 
-    cand_jerk = new QCustomPlot(widget);
+    cand_jerk = new QCustomPlot(candidates_widget);
     cand_jerk->setObjectName(QString::fromUtf8("cand_jerk"));
 
-    verticalLayout_11->addWidget(cand_jerk);
+    cand_layout->addWidget(cand_jerk);
 
-    splitter->addWidget(widget);
+    candidates_splitter->addWidget(candidates_widget);
 
-    verticalLayout_10->addWidget(splitter);
+    candidates_tab_widget_layout->addWidget(candidates_splitter);
 
-    verticalLayout_9->addWidget(candidates_tab_widget);
+    candidates_tab_layout->addWidget(candidates_tab_widget);
     tabWidget->addTab(candidates_tab, QString());
+
+    // Reusables tab
+    reusable_tab = new QWidget();
+    reusable_tab->setObjectName(QString::fromUtf8("reusable_tab"));
+    reusable_tab_layout = new QVBoxLayout(reusable_tab);
+    reusable_tab_layout->setObjectName(QString::fromUtf8("reusable_tab_layout"));
+    reusable_tab_widget = new QWidget(reusable_tab);
+    reusable_tab_widget->setObjectName(QString::fromUtf8("reusable_tab_widget"));
+    reusable_tab_widget_layout = new QVBoxLayout(reusable_tab_widget);
+    reusable_tab_widget_layout->setObjectName(QString::fromUtf8("reusable_tab_widget_layout"));
+    reusable_splitter = new QSplitter(reusable_tab_widget);
+    reusable_splitter->setObjectName(QString::fromUtf8("reusable_splitter"));
+    reusable_splitter->setOrientation(Qt::Horizontal);
+    reusable_table = new QTableWidget(reusable_splitter);
+    reusable_table->setObjectName(QString::fromUtf8("reusable_table"));
+    reusable_splitter->addWidget(reusable_table);
+    reusable_widget = new QWidget(reusable_splitter);
+    reusable_widget->setObjectName(QString::fromUtf8("reusable_widget"));
+    reuse_layout = new QVBoxLayout(reusable_widget);
+    reuse_layout->setObjectName(QString::fromUtf8("reuse_layout"));
+    reuse_pos = new QCustomPlot(reusable_widget);
+    reuse_pos->setObjectName(QString::fromUtf8("reuse_pos"));
+
+    reuse_layout->addWidget(reuse_pos);
+
+    reuse_vel = new QCustomPlot(reusable_widget);
+    reuse_vel->setObjectName(QString::fromUtf8("reuse_vel"));
+
+    reuse_layout->addWidget(reuse_vel);
+
+    reuse_acc = new QCustomPlot(reusable_widget);
+    reuse_acc->setObjectName(QString::fromUtf8("reuse_acc"));
+
+    reuse_layout->addWidget(reuse_acc);
+
+    reuse_jerk = new QCustomPlot(reusable_widget);
+    reuse_jerk->setObjectName(QString::fromUtf8("reuse_jerk"));
+
+    reuse_layout->addWidget(reuse_jerk);
+
+    reusable_splitter->addWidget(reusable_widget);
+
+    reusable_tab_widget_layout->addWidget(reusable_splitter);
+
+    reusable_tab_layout->addWidget(reusable_tab_widget);
+    tabWidget->addTab(reusable_tab, QString());
 
     // Frenet tab
     frenet_tab = new QWidget();
@@ -272,6 +330,9 @@ public:
     tabWidget->setTabText(
       tabWidget->indexOf(candidates_tab),
       QApplication::translate("MainWindow", "All Candidates", nullptr));
+    tabWidget->setTabText(
+      tabWidget->indexOf(reusable_tab),
+      QApplication::translate("MainWindow", "Reusable Trajectories", nullptr));
     tabWidget->setTabText(
       tabWidget->indexOf(frenet_tab),
       QApplication::translate("MainWindow", "Frenet Sampler", nullptr));

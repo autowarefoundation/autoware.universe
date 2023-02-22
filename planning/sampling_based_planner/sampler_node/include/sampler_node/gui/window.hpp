@@ -53,6 +53,10 @@ private:
   //// Candidate tab
   QCPCurve * cand_pos_curve_;
   QCPCurve * cand_path_curve_;
+  //// Reuse trajectories tab
+  QCPCurve * reuse_pos_curve_;
+  QCPCurve * reuse_path_curve_;
+  QCPItemLine * reuse_arrow_;
   //// Frenet tab
   //// Pruning tab
   QCPBars * pruning_nb_violations_bars_;
@@ -61,10 +65,22 @@ private:
   std::vector<QCPCurve *> obstacle_polygons_;
   // Cached data
   std::vector<sampler_common::Trajectory> candidates_;
+  std::vector<sampler_common::ReusableTrajectory> reusable_trajectories_;
   std::vector<frenet_planner::Trajectory> frenet_candidates_;
 
 public:
-  enum Tab { selected = 0, inputs, candidates, frenet, bezier, pruning, selection, perf, SIZE };
+  enum Tab {
+    selected = 0,
+    inputs,
+    candidates,
+    frenet,
+    bezier,
+    pruning,
+    selection,
+    perf,
+    reusable,
+    SIZE
+  };
   explicit MainWindow(QWidget * parent = nullptr);
   ~MainWindow() override;
 
@@ -80,8 +96,11 @@ public:
     const sampler_common::transform::Spline2D & spline_path_,
     const sampler_common::Configuration & current_configuration_);
   void fillCandidatesTable(const std::vector<sampler_common::Trajectory> & candidates);
-  void plotNbViolatedConstraints(const std::vector<sampler_common::Trajectory> & candidates);
   void plotCandidate(const sampler_common::Trajectory & trajectory);
+  void fillReusableTrajectoriesTable(
+    const std::vector<sampler_common::ReusableTrajectory> & reuse_trajectories);
+  void plotReusableTrajectory(const sampler_common::ReusableTrajectory & reusable_traj);
+  void plotNbViolatedConstraints(const std::vector<sampler_common::Trajectory> & candidates);
   void plotObstacles(const sampler_common::Constraints & constraints);
   void plotFrenetCandidates(const std::vector<frenet_planner::Trajectory> & frenet_candidates);
 
