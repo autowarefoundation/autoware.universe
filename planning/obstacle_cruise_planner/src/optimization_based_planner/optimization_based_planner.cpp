@@ -599,7 +599,7 @@ boost::optional<double> OptimizationBasedPlanner::calcTrajectoryLengthFromCurren
     traj.points, current_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
 
   const auto traj_length = motion_utils::calcSignedArcLength(
-    traj.points, current_pose, *ego_segment_idx, traj.points.size() - 1);
+    traj.points, current_pose.position, *ego_segment_idx, traj.points.size() - 1);
 
   if (!traj_length) {
     return {};

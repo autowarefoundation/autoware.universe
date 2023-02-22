@@ -135,12 +135,12 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto stop_point_pose = path->points.at(stop_line_idx).point.pose;
   const auto ego_segment_idx =
     motion_utils::findNearestSegmentIndex(input_path.points, current_pose);
+  if (ego_segment_idx == boost::none) return true;
   const size_t stop_point_segment_idx =
     motion_utils::findNearestSegmentIndex(input_path.points, stop_point_pose.position);
   const auto distance_until_stop = motion_utils::calcSignedArcLength(
-    input_path.points, current_pose, *ego_segment_idx, stop_point_pose.position,
+    input_path.points, current_pose.position, *ego_segment_idx, stop_point_pose.position,
     stop_point_segment_idx);
-  if (distance_until_stop == boost::none) return true;
 
   /* get debug info */
   const auto stop_line_pose = planning_utils::getAheadPose(
@@ -157,7 +157,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     const double eps = 1e-1;  // to prevent hunting
     if (
       current_state == StateMachine::State::GO &&
-      *distance_until_stop + eps < pass_judge_line_dist) {
+      distance_until_stop + eps < pass_judge_line_dist) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       *path = input_path;  // reset path
       setSafe(true);

@@ -109,12 +109,13 @@ bool OcclusionSpotModule::modifyPathVelocity(
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
   const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
     path_interpolated.points, ego_pose, param_.dist_thr, param_.angle_thr);
+  if (ego_segment_idx == boost::none) return true;
   const size_t start_point_segment_idx =
     motion_utils::findNearestSegmentIndex(path_interpolated.points, start_point);
   const auto offset = motion_utils::calcSignedArcLength(
-    path_interpolated.points, ego_pose, *ego_segment_idx, start_point, start_point_segment_idx);
-  if (offset == boost::none) return true;
-  const double offset_from_start_to_ego = -offset.get();
+    path_interpolated.points, ego_pose.position, *ego_segment_idx, start_point,
+    start_point_segment_idx);
+  const double offset_from_start_to_ego = -offset;
   const bool show_time = param_.is_show_processing_time;
   if (show_time) stop_watch_.tic("processing_time");
   PathWithLaneId predicted_path;
