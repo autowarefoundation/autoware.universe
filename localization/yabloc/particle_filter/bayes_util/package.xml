@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>bayes_util</name>
+  <version>0.1.0</version>
+  <description>Library for bayes estimation</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+
