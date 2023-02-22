@@ -118,7 +118,8 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
     motion_utils::findNearestIndex(convertCenterlineToPoints(closest_lanelet), point.position);
   const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
 
-  // update y coordinate according to the asymmetric vehicle margin
+  // shift nearest point on its local y axis so that vehicle's right and left edges
+  // would have approx the same clearance from road border
   const auto shift_length = (vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
   const auto delta_x = -1 * shift_length * sin(lane_yaw);
   const auto delta_y = shift_length * cos(lane_yaw);
@@ -147,7 +148,7 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
   param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
-  param_.correct_goal_pose = node_->declare_parameter("correct_goal_pose", false);
+  param_.enable_correct_goal_pose = node_->declare_parameter("enable_correct_goal_pose", false);
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -412,7 +413,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
   }
   geometry_msgs::msg::Pose goal_pose;
   goal_pose = points.back();
-  if (param_.correct_goal_pose) {
+  if (param_.enable_correct_goal_pose) {
     goal_pose = get_closest_centerline_pose(road_lanelets_, goal_pose, vehicle_info_);
   }
 
