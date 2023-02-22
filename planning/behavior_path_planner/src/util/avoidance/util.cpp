@@ -865,7 +865,7 @@ void generateDrivableArea(
       continue;
     }
 
-    // generate obstale polygon
+    // generate obstacle polygon
     const auto & obj_pose = object.object.kinematics.initial_pose_with_covariance.pose;
     const double diff_poly_buffer = object.avoid_margin.get() - original_object_buffer -
                                     planner_data->parameters.vehicle_width / 2.0;
@@ -908,7 +908,7 @@ void generateDrivableArea(
     // concatenate polygons if they are longitudinal overlapped.
     auto unique_polygons = concatenatePolygons(polygons);
 
-    // sort bounds longitduinally
+    // sort bounds longitudinally
     std::sort(
       unique_polygons.begin(), unique_polygons.end(),
       [](const std::vector<PolygonPoint> & p1, const std::vector<PolygonPoint> & p2) {
