@@ -321,8 +321,8 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
   const bool is_object_right)
 {
   std::vector<PolygonPoint> full_polygon;
-  for (size_t i = 0; i < edge_points.size(); ++i) {
-    const auto polygon_point = transformBoundFrenetCoordinate(bound, edge_points.at(i));
+  for (const auto & edge_point : edge_points) {
+    const auto polygon_point = transformBoundFrenetCoordinate(bound, edge_point);
     full_polygon.push_back(polygon_point);
   }
 
@@ -366,7 +366,7 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
   return inside_poly;
 }
 
-std::vector<geometry_msgs::msg::Point> convertToPoints(
+std::vector<geometry_msgs::msg::Point> convertToGeometryPoints(
   const std::vector<PolygonPoint> & polygon_points)
 {
   std::vector<geometry_msgs::msg::Point> points;
@@ -555,7 +555,7 @@ std::vector<Point> updateBoundary(
     updated_bound.erase(
       updated_bound.begin() + removed_start_idx, updated_bound.begin() + removed_end_idx + 1);
 
-    const auto obj_points = convertToPoints(polygon);
+    const auto obj_points = convertToGeometryPoints(polygon);
     updated_bound.insert(
       updated_bound.begin() + removed_start_idx, obj_points.begin(), obj_points.end());
   }
