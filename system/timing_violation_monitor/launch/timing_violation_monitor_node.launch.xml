@@ -1,0 +1,13 @@
+<launch>
+  <arg name="config_file" default="$(find-pkg-share timing_violation_monitor)/config/timing_violation_monitor_path_info.yaml"/>
+  <arg name="debug" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+
+  <node pkg="timing_violation_monitor" exec="timing_violation_monitor" name="timing_violation_monitor" output="screen">
+    <remap from="~/output/timing_violation_monitor" to="/timing_violation_monitor"/>
+
+    <param from="$(var config_file)"/>
+    <param name="debug" value="$(var debug)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+</launch>

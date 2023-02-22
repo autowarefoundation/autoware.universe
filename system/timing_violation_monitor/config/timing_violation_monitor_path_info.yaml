@@ -1,0 +1,19 @@
+/**:
+  ros__parameters:
+    diag_period_sec: 5.0 # frequency of report
+    target_paths:
+      ekf-to-ndt: # path name
+        topic: /localization/pose_estimator/for_tilde_interpolator_mtt # topic name
+        message_type: tier4_system_msgs/msg/MessageTrackingTag # message type
+        severity: warn # severity
+        period: 100.0 # execution frequency of path
+        deadline: 200.0 # deadline of response time
+        violation_count_threshold: 2 # threshold to judge warn or not.
+
+      pointcloudPreprocessor-to-ndt: # path name
+        topic: /localization/pose_estimator/pose_with_covariance # topic name
+        message_type: geometry_msgs/msg/PoseWithCovarianceStamped # message type
+        severity: error # severity
+        period: 100.0 # execution frequency of path
+        deadline: 150.0 # deadline of response time
+        violation_count_threshold: 1 # threshold to judge error or not.
