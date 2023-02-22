@@ -11,10 +11,12 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common filters)
 find_package(OpenCV REQUIRED)
 
-ament_auto_add_library(behavior_velocity_planner_utilization SHARED
+ament_auto_add_library(behavior_velocity_planner_utilization
+  SHARED
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
   src/utilization/debug.cpp
+  NO_TARGET_LINK_LIBRARIES
 )
 target_include_directories(behavior_velocity_planner_utilization
   SYSTEM PUBLIC
@@ -38,23 +40,21 @@ set(scene_modules
   run_out
   speed_bump
 )
+
 foreach(scene_module IN LISTS scene_modules)
   file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
-  list(APPEND scene_modules_src ${scene_module_src})
-endforeach()
-
-ament_auto_add_library(behavior_velocity_planner_scene_modules SHARED
-  ${scene_modules_src}
-)
-target_include_directories(behavior_velocity_planner_scene_modules
-  SYSTEM PUBLIC
+  ament_auto_add_library(behavior_velocity_planner_${scene_module}
+    SHARED ${scene_module_src}
+    NO_TARGET_LINK_LIBRARIES)
+  target_include_directories(behavior_velocity_planner_${scene_module}
+    SYSTEM PUBLIC
     ${BOOST_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${tf2_geometry_msgs_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
-)
-target_link_libraries(behavior_velocity_planner_scene_modules ${PCL_LIBRARIES} behavior_velocity_planner_utilization)
-
+  )
+  target_link_libraries(behavior_velocity_planner_${scene_module} ${PCL_LIBRARIES} behavior_velocity_planner_utilization)
+endforeach()
 
 ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
@@ -73,7 +73,7 @@ ament_target_dependencies(behavior_velocity_planner
   PCL
   message_filters
 )
-target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES} behavior_velocity_planner_utilization behavior_velocity_planner_scene_modules)
+target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
 
 rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
@@ -100,9 +100,7 @@ if(BUILD_TESTING)
   )
   target_link_libraries(occlusion_spot-test
     gtest_main
-    behavior_velocity_planner
-    behavior_velocity_planner_utilization
-    behavior_velocity_planner_scene_modules
+    ${PROJECT_NAME}_LIBRARIES
   )
 endif()
 
