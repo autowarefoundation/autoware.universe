@@ -596,8 +596,7 @@ boost::optional<double> OptimizationBasedPlanner::calcTrajectoryLengthFromCurren
   const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose)
 {
   const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
-    traj.points, current_pose, ego_nearest_param_.dist_threshold,
-    ego_nearest_param_.yaw_threshold);
+    traj.points, current_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
 
   const auto traj_length = motion_utils::calcSignedArcLength(
     traj.points, current_pose, *ego_segment_idx, traj.points.size() - 1);
