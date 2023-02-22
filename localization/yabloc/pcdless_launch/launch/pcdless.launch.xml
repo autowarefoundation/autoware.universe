@@ -1,7 +1,7 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
 
-    <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed/relay"/>
+    <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
     <let name="resized_image" value="/sensing/camera/undistorted/image_raw"/>
     <let name="resized_info" value="/sensing/camera/undistorted/camera_info"/>
@@ -26,6 +26,7 @@
             <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
                 <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>
                 <remap from="initialpose" to="/initialpose"/>
+                <remap from="rectified/initialpose" to="/initialpose3d"/>
                 <remap from="map/vector_map" to="/map/vector_map"/>
             </node>
             <node name="gnss_based_pose_initializer" pkg="particle_initializer" exec="gnss_based_pose_initializer" output="screen" args="--ros-args --log-level info">
@@ -56,10 +57,10 @@
 
         <!-- twist -->
         <group>
-            <!-- <push-ros-namespace namespace="twist"/>
+            <push-ros-namespace namespace="twist"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/twist.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
-            </include> -->
+            </include>
         </group>
 
         <!-- validation -->

@@ -11,17 +11,17 @@
     <push-ros-namespace namespace="localization"/>
 
     <!-- EKF -->
-    <!-- <group>
+    <group>
       <push-ros-namespace namespace="pose_twist_fusion_filter"/>
       <include file="$(find-pkg-share localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml" if="$(var ekf)">
       </include>
-    </group> -->
+    </group>
 
     <!-- GNSS based corrector -->
     <node pkg="gnss_ekf_corrector" exec="gnss_ekf_corrector" name="gnss_ekf_corrector" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
 
-        <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt/relay"/>
+        <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/map/height"/>
         <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
         <remap from="output/pose_cov_stamped" to="/localization/pose_estimator/pose_with_covariance"/>

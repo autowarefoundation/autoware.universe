@@ -11,7 +11,7 @@
     <arg name="output_overlay_image" default="overlay_image"/>
 
     <node name="overlay" pkg="overlay_monitor" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="src_image" to="$(var resized_image)"/>
+        <remap from="src_image" to="/sensing/camera/undistorted/image_raw"/>
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="$(var input_particle_pose)"/>
 
