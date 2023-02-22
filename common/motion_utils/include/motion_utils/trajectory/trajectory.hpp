@@ -1397,6 +1397,38 @@ double calcSignedArcLength(
 }
 
 /**
+ * @brief calculate length of 2D distance between two points, specified by start pose and end point.
+ * @param points points of trajectory, path, ...
+ * @param src_pose start pose
+ * @param src_seg_idx index of start point segment
+ * @param dst_point end point
+ * @param dst_seg_idx index of start point segment
+ * @return length of distance between two points.
+ * Length is positive if destination point is greater that source point associated to src_pose (i.e.
+ * after it in trajectory, path, ...) and negative otherwise.
+ */
+template <class T>
+boost::optional<double> calcSignedArcLength(
+  const T & points, const geometry_msgs::msg::Pose & src_pose, const size_t src_seg_idx,
+  const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx)
+{
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
+
+  const double signed_length_on_traj = calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
+  const double signed_length_src_offset =
+    calcLongitudinalOffsetToSegment(points, src_seg_idx, src_pose.position);
+  const double signed_length_dst_offset =
+    calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
+
+  return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
+}
+
+/**
  * @brief find first nearest point index through points container for a given pose with soft
  * distance and yaw constraints. Finding nearest point is determined by looping through the points
  * container, and finding the nearest point to the given pose in terms of squared 2D distance and
