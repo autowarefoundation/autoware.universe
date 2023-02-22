@@ -8,6 +8,7 @@
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 namespace pcdless::ekf_corrector
 {
@@ -18,12 +19,15 @@ public:
   using NavSatFix = sensor_msgs::msg::NavSatFix;
   using NavPVT = ublox_msgs::msg::NavPVT;
   using Float32 = std_msgs::msg::Float32;
+  using Marker = visualization_msgs::msg::Marker;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
 
   GnssEkfCorrector();
 
 private:
   const bool ignore_less_than_float_;
 
+  rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_;
   rclcpp::Subscription<NavPVT>::SharedPtr sub_ublox_;
   rclcpp::Subscription<Float32>::SharedPtr sub_height_;

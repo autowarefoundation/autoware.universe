@@ -25,6 +25,7 @@ GnssEkfCorrector::GnssEkfCorrector()
 
   // Publisher
   pub_pose_ = create_publisher<PoseCovStamped>("output/pose_cov_stamped", 10);
+  marker_pub_ = create_publisher<MarkerArray>("gnss/range_marker", 10);
 }
 
 Eigen::Vector3f extract_enu_vel(const GnssEkfCorrector::NavPVT & msg)
@@ -43,6 +44,9 @@ void GnssEkfCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
   const int FIX_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FIXED;
   const int FLOAT_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FLOAT;
   const bool is_rtk_fixed = (ublox_msg->flags & FIX_FLAG);
+
+  publish_marker(gnss_position, is_rtk_fixed);
+
   if (ignore_less_than_float_) {
     if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) {
       return;
@@ -59,12 +63,12 @@ void GnssEkfCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
   for (auto & e : pose.pose.covariance) e = 0;
 
   if (is_rtk_fixed) {
-    pose.pose.covariance[6 * 0 + 0] = 4;
-    pose.pose.covariance[6 * 1 + 1] = 4;
+    pose.pose.covariance[6 * 0 + 0] = 1;
+    pose.pose.covariance[6 * 1 + 1] = 1;
     pose.pose.covariance[6 * 2 + 2] = 1;
   } else {
-    pose.pose.covariance[6 * 0 + 0] = 16;
-    pose.pose.covariance[6 * 1 + 1] = 16;
+    pose.pose.covariance[6 * 0 + 0] = 36;
+    pose.pose.covariance[6 * 1 + 1] = 36;
     pose.pose.covariance[6 * 2 + 2] = 1;
   }
 
@@ -101,6 +105,46 @@ void GnssEkfCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
         get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
     }
   }
+}
+
+void GnssEkfCorrector::publish_marker(const Eigen::Vector3f & position, bool is_rtk_fixed)
+{
+  using namespace std::literals::chrono_literals;
+  using Point = geometry_msgs::msg::Point;
+
+  auto drawCircle = [](std::vector<Point> & points, float radius) -> void {
+    const int N = 10;
+    for (int theta = 0; theta < 2 * N + 1; theta++) {
+      geometry_msgs::msg::Point pt;
+      pt.x = radius * std::cos(theta * M_PI / N);
+      pt.y = radius * std::sin(theta * M_PI / N);
+      points.push_back(pt);
+    }
+  };
+
+  MarkerArray array_msg;
+  for (int i = 0; i < 5; i++) {
+    Marker marker;
+    marker.header.stamp = get_clock()->now();
+    marker.header.frame_id = "/map";
+    marker.id = i;
+    marker.type = Marker::LINE_STRIP;
+    marker.lifetime = rclcpp::Duration(500ms);
+    marker.pose.position.x = position.x();
+    marker.pose.position.y = position.y();
+    marker.pose.position.z = latest_height_.data;
+
+    float prob = i / 4.0f;
+    marker.color = common::color_scale::rainbow(prob);
+    marker.color.a = 0.5f;
+    marker.scale.x = 0.1;
+    if (is_rtk_fixed)
+      drawCircle(marker.points, 1 + i);
+    else
+      drawCircle(marker.points, 4 + i);
+    array_msg.markers.push_back(marker);
+  }
+  marker_pub_->publish(array_msg);
 }
 
 }  // namespace pcdless::ekf_corrector

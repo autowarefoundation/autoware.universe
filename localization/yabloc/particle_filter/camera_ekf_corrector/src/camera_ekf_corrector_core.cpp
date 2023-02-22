@@ -207,8 +207,10 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
 
   // Yield pose candidates from covariance
   Eigen::Matrix2d xy_cov;
-  xy_cov << init.pose.covariance[0], init.pose.covariance[1], init.pose.covariance[6],
-    init.pose.covariance[7];
+  // TODO: DEBUG:
+  // xy_cov << init.pose.covariance[0], init.pose.covariance[1], init.pose.covariance[6],
+  //   init.pose.covariance[7];
+  xy_cov << 1., 0., 0., 1.;
 
   // TODO:DEBUG:
   // double theta_cov = init.pose.covariance[35];
@@ -260,6 +262,8 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   //   output.pose.covariance[6 * i + 1] = result.cov_xyz_(i, 1);
   //   output.pose.covariance[6 * i + 2] = result.cov_xyz_(i, 2);
   // }
+  // output.pose = debayes_distribution(output.pose, init.pose);
+
   output.pose.covariance[6 * 0 + 0] = 0.25;
   output.pose.covariance[6 * 0 + 1] = 0.;
   output.pose.covariance[6 * 0 + 2] = 0.;
@@ -269,8 +273,6 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   output.pose.covariance[6 * 2 + 0] = 0.;
   output.pose.covariance[6 * 2 + 1] = 0.;
   output.pose.covariance[6 * 2 + 2] = 0.;
-
-  output.pose = debayes_distribution(output.pose, init.pose);
 
   output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
   output.pose.covariance[6 * 5 + 5] = result.cov_theta_;
