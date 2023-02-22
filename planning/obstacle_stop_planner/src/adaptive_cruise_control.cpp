@@ -161,7 +161,8 @@ AdaptiveCruiseController::AdaptiveCruiseController(
     node_->declare_parameter<double>(acc_ns + "margin_rate_to_change_vel");
   param_.use_time_compensation_to_dist =
     node_->declare_parameter<bool>(acc_ns + "use_time_compensation_to_calc_distance");
-  param_.lowpass_gain_ = node_->declare_parameter<double>(acc_ns + "lowpass_gain_of_upper_velocity");
+  param_.lowpass_gain_ =
+    node_->declare_parameter<double>(acc_ns + "lowpass_gain_of_upper_velocity");
 
   /* parameter for pid in acc */
   param_.p_coeff_pos = node_->declare_parameter<double>(acc_ns + "p_coefficient_positive");
