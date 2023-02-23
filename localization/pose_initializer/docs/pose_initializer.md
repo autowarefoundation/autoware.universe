@@ -13,6 +13,7 @@ Finally, it publishes the initial pose to `ekf_localizer`.
 
 | Name                  | Type | Description                                                                              |
 | --------------------- | ---- | ---------------------------------------------------------------------------------------- |
+| `ekf_enabled`         | bool | If true, EKF localizar is activated.                                                     |
 | `ndt_enabled`         | bool | If true, the pose will be estimated by NDT scan matcher, otherwise it is passed through. |
 | `stop_check_enabled`  | bool | If true, initialization is accepted only when the vehicle is stopped.                    |
 | `stop_check_duration` | bool | The duration used for the stop check above.                                              |

@@ -35,8 +35,9 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   output_pose_covariance_ = get_covariance_parameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = get_covariance_parameter(this, "gnss_particle_covariance");
 
-  ekf_localization_trigger_ = std::make_unique<EkfLocalizationTriggerModule>(this);
-
+  if (declare_parameter<bool>("ekf_enabled")) {
+    ekf_localization_trigger_ = std::make_unique<EkfLocalizationTriggerModule>(this);
+  }
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
   }
