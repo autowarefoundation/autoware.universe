@@ -116,7 +116,6 @@ private:
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
   std::unique_ptr<PullOverPlannerBase> freespace_planner_;
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
-  // std::unique_ptr<AbstractPlanningAlgorithm> freespace_planner_;
   PullOverPath shift_parking_path_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
