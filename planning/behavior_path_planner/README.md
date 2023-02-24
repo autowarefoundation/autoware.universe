@@ -341,14 +341,6 @@ Generate two backward arc paths.
 | backward_parking_velocity                | [m/s] | double | velocity when backward parking                                            | -1.38         |
 | backward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front right corner of ego-vehicle when backward | 0.0           |
 
-###### Parameters freespace parking
-
-| Name                     | Unit | Type | Description                                                                                                          | Default value |
-| :----------------------- | :--- | :--- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_freespace_parking | [-]  | bool | This flag enables freespace parking, which runs when the vehicle is stuck due to e.g. obstacles in the parking area. | true          |
-
-See [reespace_planner](../freespace_planner/README.md) for other parameters.
-
 #### Unimplemented parts / limitations for pull over
 
 - parking on the right shoulder is not allowed
