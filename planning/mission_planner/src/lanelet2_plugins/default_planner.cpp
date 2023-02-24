@@ -121,15 +121,13 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
   // shift nearest point on its local y axis so that vehicle's right and left edges
   // would have approx the same clearance from road border
   const auto shift_length = (vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
-  const auto delta_x = -1 * shift_length * sin(lane_yaw);
-  const auto delta_y = shift_length * cos(lane_yaw);
+  const auto delta_x = -shift_length * std::sin(lane_yaw);
+  const auto delta_y = shift_length * std::cos(lane_yaw);
 
   lanelet::BasicPoint3d refined_point(
     nearest_point.x() + delta_x, nearest_point.y() + delta_y, nearest_point.z());
 
-  auto closest_pose = convertBasicPoint3dToPose(refined_point, lane_yaw);
-
-  return closest_pose;
+  return convertBasicPoint3dToPose(refined_point, lane_yaw);
 }
 
 }  // anonymous namespace
@@ -411,10 +409,11 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
-  geometry_msgs::msg::Pose goal_pose;
-  goal_pose = points.back();
+
+  auto goal_pose = points.back();
   if (param_.enable_correct_goal_pose) {
-    goal_pose = get_closest_centerline_pose(road_lanelets_, goal_pose, vehicle_info_);
+    goal_pose = get_closest_centerline_pose(
+      lanelet::utils::query::laneletLayer(lanelet_map_ptr_), goal_pose, vehicle_info_);
   }
 
   if (!is_goal_valid(goal_pose, all_route_lanelets)) {
