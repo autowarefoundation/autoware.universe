@@ -343,9 +343,9 @@ Generate two backward arc paths.
 
 ###### Parameters freespace parking
 
-| Name                     | Unit | Type | Description                              | Default value |
-| :----------------------- | :--- | :--- | :--------------------------------------- | :------------ |
-| enable_freespace_parking | [-]  | bool | flag whether to enable freespace parking | true          |
+| Name                     | Unit | Type | Description                                                                                                          | Default value |
+| :----------------------- | :--- | :--- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_freespace_parking | [-]  | bool | This flag enables freespace parking, which runs when the vehicle is stuck due to e.g. obstacles in the parking area. | true          |
 
 See [reespace_planner](../freespace_planner/README.md) for other parameters.
 
