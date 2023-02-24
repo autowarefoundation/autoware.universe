@@ -67,7 +67,7 @@ struct PUllOverStatus
   std::shared_ptr<PullOverPath> pull_over_path{};
   std::shared_ptr<PullOverPath> lane_parking_pull_over_path{};
   size_t current_path_idx{0};
-  bool require_increment_{true};
+  bool require_increment_{true};  // if false, keep current path idx.
   std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
@@ -147,6 +147,7 @@ private:
   std::pair<double, double> calcDistanceToPathChange() const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateEmergencyStopPath();
+  void keepStoppedWithCurrentPath(PathWithLaneId & path);
 
   bool isStopped();
   bool isStopped(

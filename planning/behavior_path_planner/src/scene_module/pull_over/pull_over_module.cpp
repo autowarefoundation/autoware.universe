@@ -586,25 +586,10 @@ BehaviorModuleOutput PullOverModule::plan()
     // safe: use pull over path
     status_.stop_pose.reset();
 
+    // keep stop if not enough time passed,
+    // because it takes time for the trajectory to be reflected
     auto current_path = getCurrentPath();
-
-    // keep stop if not enough time passed
-    constexpr double keep_stop_time = 2.0;
-    constexpr double keep_current_idx_buffer_time = 2.0;
-    if (last_increment_time_) {
-      const auto time_diff = (clock_->now() - *last_increment_time_).seconds();
-      if (time_diff < keep_stop_time) {
-        status_.require_increment_ = false;
-        for (auto & p : current_path.points) {
-          p.point.longitudinal_velocity_mps = 0.0;
-        }
-      } else if (time_diff > keep_stop_time + keep_current_idx_buffer_time) {
-        // require incremnet only when the time passed is enough
-        // to prevent immediate increment before driving
-        // when the end of the next path is close to the current pose
-        status_.require_increment_ = true;
-      }
-    }
+    keepStoppedWithCurrentPath(current_path);
 
     output.path = std::make_shared<PathWithLaneId>(current_path);
     path_candidate_ = std::make_shared<PathWithLaneId>(status_.pull_over_path->getFullPath());
@@ -1107,6 +1092,26 @@ bool PullOverModule::hasEnoughDistance(const PullOverPath & pull_over_path) cons
   }
 
   return true;
+}
+
+void PullOverModule::keepStoppedWithCurrentPath(PathWithLaneId & path)
+{
+  constexpr double keep_stop_time = 2.0;
+  constexpr double keep_current_idx_buffer_time = 2.0;
+  if (last_increment_time_) {
+    const auto time_diff = (clock_->now() - *last_increment_time_).seconds();
+    if (time_diff < keep_stop_time) {
+      status_.require_increment_ = false;
+      for (auto & p : path.points) {
+        p.point.longitudinal_velocity_mps = 0.0;
+      }
+    } else if (time_diff > keep_stop_time + keep_current_idx_buffer_time) {
+      // require increment only when the time passed is enough
+      // to prevent increment before driving
+      // when the end of the current path is close to the current pose
+      status_.require_increment_ = true;
+    }
+  }
 }
 
 void PullOverModule::printParkingPositionError() const
