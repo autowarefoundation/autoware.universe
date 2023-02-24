@@ -25,8 +25,6 @@
 
 namespace obstacle_avoidance_planner
 {
-// TODO(murooka) check if velocity is updated while optimization is skipped.
-// TODO(murooka) check if z is updated.
 namespace
 {
 template <class T>
@@ -54,6 +52,12 @@ void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
       traj_points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
+}
+
+bool hasZeroVelocity(const TrajectoryPoint & traj_point)
+{
+  constexpr double zero_vel = 0.0001;
+  return std::abs(traj_point.longitudinal_velocity_mps) < zero_vel;
 }
 }  // namespace
 
@@ -396,31 +400,12 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
   // insert stop point explicitly
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
   if (stop_idx) {
-    // calculate stop pose on output trajectory
     const auto input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
-    const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
+    const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
       output_traj_points, input_stop_pose, ego_nearest_param_);
-    const double offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
-      output_traj_points, nearest_seg_idx, input_stop_pose.position);
 
-    const auto output_traj_spline = SplineInterpolationPoints2d(output_traj_points);
-    const auto output_stop_pose =
-      output_traj_spline.getSplineInterpolatedPose(nearest_seg_idx, offset_to_segment);
-
-    // insert stop pose in output trajectory
-    if (geometry_utils::isSamePoint(output_traj_points.at(nearest_seg_idx), output_stop_pose)) {
-      output_traj_points.at(nearest_seg_idx).longitudinal_velocity_mps = 0.0;
-    } else if (geometry_utils::isSamePoint(
-                 output_traj_points.at(nearest_seg_idx + 1), output_stop_pose)) {
-      output_traj_points.at(nearest_seg_idx + 1).longitudinal_velocity_mps = 0.0;
-    } else {
-      TrajectoryPoint additional_traj_point;
-      additional_traj_point.pose = output_stop_pose;
-      additional_traj_point.longitudinal_velocity_mps = 0.0;
-
-      output_traj_points.insert(
-        output_traj_points.begin() + nearest_seg_idx + 1, additional_traj_point);
-    }
+    // calculate and insert stop pose on output trajectory
+    trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, stop_seg_idx);
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
@@ -443,15 +428,18 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   const size_t ego_idx = trajectory_utils::findEgoIndex(
     optimized_traj_points, planner_data.ego_pose, ego_nearest_param_);
 
-  // 2. calculate an end point to check being outside the drivable are
-  // NOTE: Some end trajectory points should be ignored to check if being outside the drivable area
-  //       since these points tend to be outside drivable area when end reference points have high
-  //       curvature.
-  // const int end_idx = std::max(10, static_cast<int>(optimized_traj_points.size()) - 5);
+  // 2. calculate an end point to check being outside the drivable area
+  // NOTE: Some terminal trajectory points tend to be outside the drivable area when
+  //       they have high curvature.
+  //       Therefore, these points should be ignored to check if being outside the drivable area
+  constexpr int num_points_ignore_drivable_area = 5;
+  const int end_idx = std::min(
+    static_cast<int>(optimized_traj_points.size()) - 1,
+    mpt_optimizer_ptr_->getNumberOfPoints() - num_points_ignore_drivable_area);
 
   // 3. assign zero velocity to the first point being outside the drivable area
   const auto first_outside_idx = [&]() -> std::optional<size_t> {
-    for (size_t i = ego_idx; i < optimized_traj_points.size(); ++i) {
+    for (size_t i = ego_idx; i < static_cast<size_t>(end_idx); ++i) {
       auto & traj_point = optimized_traj_points.at(i);
 
       // check if the footprint is outside the drivable area
@@ -518,56 +506,53 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
   // calculate end idx of optimized points on path points
-  const auto end_traj_seg_idx = motion_utils::findNearestSegmentIndex(
+  const auto joint_start_traj_seg_idx = motion_utils::findNearestSegmentIndex(
     traj_points, joint_start_pose, traj_param_.delta_dist_threshold_for_closest_point,
     traj_param_.delta_yaw_threshold_for_closest_point);
-  if (!end_traj_seg_idx) {
+  if (!joint_start_traj_seg_idx) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "No extend trajectory since nearest segment index was not found.");
     return optimized_traj_points;
   }
 
-  // crop forward trajectory
-  // NOTE: extended_traj_points size may be less than 2. Be careful to deal with the points.
-  const auto extended_traj_points = [&]() -> std::optional<std::vector<TrajectoryPoint>> {
-    constexpr double joint_traj_length_for_smoothing = 5.0;
-    const auto extended_traj_points = trajectory_utils::cropPointsAfterOffsetPoint(
-      traj_points, joint_start_pose.position, *end_traj_seg_idx, joint_traj_length_for_smoothing);
+  // crop trajectory for extension
+  constexpr double joint_traj_length_for_smoothing = 5.0;
+  const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
+    traj_points, joint_start_pose.position, *joint_start_traj_seg_idx,
+    joint_traj_length_for_smoothing);
 
-    if (extended_traj_points.empty()) {
-      // No need to extend trajectory
-      return std::nullopt;
-    }
-    return extended_traj_points;
-  }();
-
+  // calculate full trajectory points
   const auto full_traj_points = [&]() {
-    if (!extended_traj_points) {
-      /*
-      // compensate goal pose
-      if (geometry_utils::isSamePoint(optimized_traj_points.back(), traj_points.back())) {
-        // goal position is contained
-        auto full_traj_points = optimized_traj_points;
-        // replace the last point with the goal
-        full_traj_points.back() = traj_points.back();
-        return full_traj_points;
-      }
-      */
-      // return concatVectors(optimized_traj_points, {traj_points.back()});
+    if (!joint_end_traj_point_idx) {
       return optimized_traj_points;
     }
-    return concatVectors(optimized_traj_points, *extended_traj_points);
+    const auto extended_traj_points = std::vector<TrajectoryPoint>{
+      traj_points.begin() + *joint_end_traj_point_idx, traj_points.end()};
+    return concatVectors(optimized_traj_points, extended_traj_points);
   }();
 
-  // resample
-  const auto resampled_traj_points = trajectory_utils::resampleTrajectoryPoints(
+  // resample trajectory points
+  auto resampled_traj_points = trajectory_utils::resampleTrajectoryPoints(
     full_traj_points, traj_param_.output_delta_arc_length);
 
-  // TODO(murooka) update velocity on joint
+  // update velocity on joint
+  for (size_t i = *joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+    if (hasZeroVelocity(traj_points.at(i))) {
+      if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
+        // Here is when current point is 0 velocity, but previous point is not 0 velocity.
+        const auto & input_stop_pose = traj_points.at(i).pose;
+        const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
+          resampled_traj_points, input_stop_pose, ego_nearest_param_);
 
-  debug_data_ptr_->extended_traj_points =
-    extended_traj_points ? *extended_traj_points : std::vector<TrajectoryPoint>();
+        // calculate and insert stop pose on output trajectory
+        trajectory_utils::insertStopPoint(resampled_traj_points, input_stop_pose, stop_seg_idx);
+      }
+    }
+  }
+
+  // debug_data_ptr_->extended_traj_points =
+  //   extended_traj_points ? *extended_traj_points : std::vector<TrajectoryPoint>();
   time_keeper_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }

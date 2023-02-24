@@ -118,6 +118,7 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
   double getTrajectoryLength() const;
+  int getNumberOfPoints() const;
 
 private:
   struct ValueMatrix

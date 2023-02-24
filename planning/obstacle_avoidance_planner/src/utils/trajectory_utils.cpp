@@ -17,6 +17,7 @@
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/eb_path_smoother.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "tf2/utils.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -203,6 +204,32 @@ std::vector<ReferencePoint> resampleReferencePoints(
   }
 
   return output_ref_points;
+}
+
+void insertStopPoint(
+  std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & input_stop_pose,
+  const size_t stop_seg_idx)
+{
+  const double offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
+    traj_points, stop_seg_idx, input_stop_pose.position);
+
+  const auto traj_spline = SplineInterpolationPoints2d(traj_points);
+  const auto stop_pose = traj_spline.getSplineInterpolatedPose(stop_seg_idx, offset_to_segment);
+
+  if (geometry_utils::isSamePoint(traj_points.at(stop_seg_idx), stop_pose)) {
+    traj_points.at(stop_seg_idx).longitudinal_velocity_mps = 0.0;
+    return;
+  }
+  if (geometry_utils::isSamePoint(traj_points.at(stop_seg_idx + 1), stop_pose)) {
+    traj_points.at(stop_seg_idx + 1).longitudinal_velocity_mps = 0.0;
+    return;
+  }
+
+  TrajectoryPoint additional_traj_point;
+  additional_traj_point.pose = stop_pose;
+  additional_traj_point.longitudinal_velocity_mps = 0.0;
+
+  traj_points.insert(traj_points.begin() + stop_seg_idx + 1, additional_traj_point);
 }
 }  // namespace trajectory_utils
 }  // namespace obstacle_avoidance_planner

@@ -51,12 +51,12 @@ namespace obstacle_avoidance_planner
 namespace trajectory_utils
 {
 template <typename T>
-T cropPointsAfterOffsetPoint(
+std::optional<size_t> getPointIndexAfter(
   const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
   const double offset)
 {
   if (points.empty()) {
-    return T{};
+    return std::nullopt;
   }
 
   double sum_length =
@@ -67,11 +67,11 @@ T cropPointsAfterOffsetPoint(
     for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
       sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
       if (offset < sum_length) {
-        return T{points.begin() + i - 1, points.end()};
+        return i - 1;
       }
     }
 
-    return T{};
+    return std::nullopt;
   }
 
   // search backward
@@ -79,11 +79,11 @@ T cropPointsAfterOffsetPoint(
        --i) {  // NOTE: use size_t since i is always positive value
     sum_length -= tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
     if (sum_length < offset) {
-      return T{points.begin() + i - 1, points.end()};
+      return i - 1;
     }
   }
 
-  return points;
+  return 0;
 }
 
 template <typename T>
@@ -257,6 +257,10 @@ void updateFrontPointForFix(
     points.insert(points.begin(), new_front_point);
   }
 }
+
+void insertStopPoint(
+  std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & input_stop_pose,
+  const size_t stop_seg_idx);
 }  // namespace trajectory_utils
 }  // namespace obstacle_avoidance_planner
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_

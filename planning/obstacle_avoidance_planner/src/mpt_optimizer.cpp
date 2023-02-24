@@ -798,7 +798,7 @@ void MPTOptimizer::updateBounds(
   }
 
   /*
-  // TODO(murooka)
+  // TODO(murooka) deal with filling data between obstacles
   // fill between obstacles
   constexpr double max_longitudinal_length_to_fill_drivable_area = 20;
   const int edge_fill_index = std::ceil(max_longitudinal_length_to_fill_drivable_area /
@@ -1463,6 +1463,12 @@ double MPTOptimizer::getTrajectoryLength() const
   const double forward_traj_length = mpt_param_.num_points * mpt_param_.delta_arc_length;
   const double backward_traj_length = traj_param_.output_backward_traj_length;
   return forward_traj_length + backward_traj_length;
+}
+
+int MPTOptimizer::getNumberOfPoints() const
+{
+  return mpt_param_.num_points +
+         std::round(traj_param_.output_backward_traj_length / mpt_param_.delta_arc_length);
 }
 
 size_t MPTOptimizer::getNumberOfSlackVariables() const
