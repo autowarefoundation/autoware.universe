@@ -143,6 +143,9 @@ void PullOverModule::onTimer()
   if (goal_candidates_.empty()) {
     return;
   }
+  mutex_.lock();
+  const auto goal_candidates = goal_candidates_;
+  mutex_.unlock();
 
   // generate valid pull over path candidates and calculate closest start pose
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
@@ -171,12 +174,12 @@ void PullOverModule::onTimer()
   // plan candidate paths and set them to the member variable
   if (parameters_.search_priority == "efficient_path") {
     for (const auto & planner : pull_over_planners_) {
-      for (const auto & goal_candidate : goal_candidates_) {
+      for (const auto & goal_candidate : goal_candidates) {
         planCandidatePaths(planner, goal_candidate);
       }
     }
   } else if (parameters_.search_priority == "close_goal") {
-    for (const auto & goal_candidate : goal_candidates_) {
+    for (const auto & goal_candidate : goal_candidates) {
       for (const auto & planner : pull_over_planners_) {
         planCandidatePaths(planner, goal_candidate);
       }
@@ -406,8 +409,12 @@ BT::NodeStatus PullOverModule::updateState()
 
 bool PullOverModule::planFreespacePath()
 {
+  mutex_.lock();
   goal_searcher_->update(goal_candidates_);
-  for (const auto & goal_candidate : goal_candidates_) {
+  const auto goal_candidates = goal_candidates_;
+  mutex_.unlock();
+
+  for (const auto & goal_candidate : goal_candidates) {
     if (!goal_candidate.is_safe) {
       continue;
     }
