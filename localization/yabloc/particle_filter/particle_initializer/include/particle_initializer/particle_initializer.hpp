@@ -22,6 +22,7 @@ private:
   const Eigen::Vector2d cov_xx_yy_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_ekf_;
   rclcpp::Publisher<Marker>::SharedPtr pub_marker_;
 
   rclcpp::Client<SetBool>::SharedPtr client_ekf_trigger_;

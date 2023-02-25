@@ -10,6 +10,7 @@ ParticleInitializer::ParticleInitializer()
 
   // Publisher
   pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
+  pub_initialpose_ekf_ = create_publisher<PoseCovStamped>("ekf/initialpose", 10);
   pub_marker_ = create_publisher<Marker>("init/marker", 10);
 
   // Subscriber
@@ -99,6 +100,7 @@ void ParticleInitializer::publish_rectified_initial_pose(
   msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
 
   pub_initialpose_->publish(msg);
+  pub_initialpose_ekf_->publish(msg);
 
   const auto req = std::make_shared<SetBool::Request>();
   req->data = true;
