@@ -35,6 +35,7 @@
         <remap from="particles_marker_array" to="$(var output_particles_marker_array)"/>
         <remap from="height" to="/localization/map/height"/>
         <remap from="twist_cov" to="/localization/twist/disabled/twist_with_cov"/>
+        <remap from="pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
     </node>
 
     <!-- camera  correction -->

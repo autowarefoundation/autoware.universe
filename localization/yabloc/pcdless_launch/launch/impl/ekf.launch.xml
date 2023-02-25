@@ -18,13 +18,14 @@
     </group>
 
     <!-- GNSS based corrector -->
-    <node pkg="gnss_ekf_corrector" exec="gnss_ekf_corrector" name="gnss_ekf_corrector" output="screen" args="--ros-args --log-level info">
+    <node if="false" pkg="gnss_ekf_corrector" exec="gnss_ekf_corrector" name="gnss_ekf_corrector" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/map/height"/>
         <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
         <remap from="output/pose_cov_stamped" to="/localization/pose_estimator/pose_with_covariance"/>
+        <remap from="output/debug/pose_cov_stamped" to="/localization/gnss_pose_estimator/pose_with_covariance"/>
     </node>
 
     <!-- Camera based corrector -->
@@ -34,7 +35,7 @@
     <arg name="input_ll2_road_marking" default="/localization/map/ll2_road_marking"/>
     <arg name="input_ll2_bounding_box" default="/localization/map/ll2_bounding_box"/>
 
-    <node name="camera_ekf_corrector" pkg="camera_ekf_corrector" exec="camera_ekf_corrector" output="screen" args="--ros-args --log-level warn">
+    <node if="false" name="camera_ekf_corrector" pkg="camera_ekf_corrector" exec="camera_ekf_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>

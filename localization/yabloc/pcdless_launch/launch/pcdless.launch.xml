@@ -37,10 +37,10 @@
 
         <!-- particle filter -->
         <group>
-            <!-- <push-ros-namespace namespace="pf"/>
+            <push-ros-namespace namespace="pf"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/pf.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
-            </include> -->
+            </include>
         </group>
 
         <!-- image processing -->
