@@ -11,6 +11,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
+#include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/float32.hpp>
 
 #include <tf2_ros/transform_broadcaster.h>
@@ -28,6 +29,7 @@ public:
   using TwistCovStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   using OptParticleArray = std::optional<ParticleArray>;
+  using Image = sensor_msgs::msg::Image;
 
   Predictor();
 
@@ -75,6 +77,25 @@ private:
   void update_with_dynamic_noise(ParticleArray & particle_array, const TwistCovStamped & twist);
 
   void publish_mean_pose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
+
+  struct SwapModeAdaptor
+  {
+    SwapModeAdaptor(rclcpp::Node * node);
+    std::optional<rclcpp::Time> stamp_opt_{std::nullopt};
+    std::optional<PoseCovStamped> init_pose_opt_{std::nullopt};
+    rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_;
+    rclcpp::Subscription<Image>::SharedPtr sub_image_;
+    rclcpp::Clock::SharedPtr clock_;
+
+    bool state_is_active;
+    bool state_is_activating;
+
+    bool should_keep_update();
+    bool should_call_initialize();
+    PoseCovStamped init_pose() { return init_pose_opt_.value(); }
+  };
+
+  std::unique_ptr<SwapModeAdaptor> swap_mode_adaptor_{nullptr};
 };
 
 }  // namespace pcdless::modularized_particle_filter

@@ -52,6 +52,10 @@ Predictor::Predictor()
 
   if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 
+  if (declare_parameter("is_swap_mode", false)) {
+    swap_mode_adaptor_ = std::make_unique<SwapModeAdaptor>(this);
+  }
+
   // Timer callback
   auto cb_timer = std::bind(&Predictor::on_timer, this);
   timer_ = rclcpp::create_timer(
@@ -79,7 +83,7 @@ void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose
 
 void Predictor::initialize_particles(const PoseCovStamped & initialpose)
 {
-  RCLCPP_INFO_STREAM(this->get_logger(), "initiposeCallback");
+  RCLCPP_INFO_STREAM(this->get_logger(), "initialize_particles");
   modularized_particle_filter_msgs::msg::ParticleArray particle_array{};
   particle_array.header = initialpose.header;
   particle_array.id = 0;
@@ -184,23 +188,12 @@ void Predictor::update_with_dynamic_noise(
 
   using util::nrand;
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
-    // geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
-    // float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    // float vx{linear_x + nrand(truncated_linear_std)};
-    // float wz{angular_z + nrand(std_angular_z * truncated_gain)};
-
     Sophus::SE3f se3_pose = pose_msg_to_se3(particle_array.particles[i].pose);
     Eigen::Matrix<float, 6, 1> noised_xi;
     noised_xi.setZero();
     noised_xi(0) = linear_x + nrand(truncated_linear_std);
     noised_xi(5) = angular_z + nrand(std_angular_z * truncated_gain);
     se3_pose *= Sophus::SE3f::exp(noised_xi * dt);
-
-    // tf2::Quaternion q;
-    // q.setRPY(0, 0, yaw + wz * dt);
-    // pose.orientation = tf2::toMsg(q);
-    // pose.position.x += vx * std::cos(yaw) * dt;
-    // pose.position.y += vx * std::sin(yaw) * dt;
 
     geometry_msgs::msg::Pose pose = se3_to_pose_msg(se3_pose);
     pose.position.z = ground_height_;
@@ -245,8 +238,19 @@ void Predictor::update_with_static_noise(
 
 void Predictor::on_timer()
 {
+  // TODO: Refactor
+  if (swap_mode_adaptor_) {
+    if (swap_mode_adaptor_->should_keep_update() == false) {
+      return;
+    }
+    if (swap_mode_adaptor_->should_call_initialize()) {
+      initialize_particles(swap_mode_adaptor_->init_pose());
+    }
+  }
+
   if (!particle_array_opt_.has_value()) return;
   if (!twist_opt_.has_value()) return;
+
   ParticleArray particle_array = particle_array_opt_.value();
   TwistCovStamped twist{twist_opt_.value()};
 
@@ -269,7 +273,7 @@ void Predictor::on_timer()
 
 void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
-  RCLCPP_INFO_STREAM(this->get_logger(), "weightedParticleCallback is called");
+  RCLCPP_INFO_STREAM(this->get_logger(), "on_weighted_particle start");
 
   // Since the weighted_particles is generated from messages published from this node,
   // the particle_array must have an entity in this function.
@@ -293,34 +297,91 @@ void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weight
 void Predictor::publish_mean_pose(
   const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp)
 {
-  PoseStamped pose_stamped;
-  pose_stamped.header.stamp = stamp;
-  pose_stamped.header.frame_id = "map";
+  // Publish pose
+  {
+    PoseStamped pose_stamped;
+    pose_stamped.header.stamp = stamp;
+    pose_stamped.header.frame_id = "map";
+    pose_stamped.pose = mean_pose;
+    pose_pub_->publish(pose_stamped);
+  }
 
-  pose_stamped.pose = mean_pose;
-  pose_pub_->publish(pose_stamped);
+  // Publish pose with covariance
+  {
+    // TODO: Use particle distribution
+    PoseCovStamped pose_cov_stamped;
+    pose_cov_stamped.header.stamp = stamp;
+    pose_cov_stamped.header.frame_id = "map";
+    pose_cov_stamped.pose.pose = mean_pose;
+    pose_cov_stamped.pose.covariance[6 * 0 + 0] = 0.255;
+    pose_cov_stamped.pose.covariance[6 * 1 + 1] = 0.255;
+    pose_cov_stamped.pose.covariance[6 * 2 + 2] = 0.255;
+    pose_cov_stamped.pose.covariance[6 * 3 + 3] = 0.00625;
+    pose_cov_stamped.pose.covariance[6 * 4 + 4] = 0.00625;
+    pose_cov_stamped.pose.covariance[6 * 5 + 5] = 0.00625;
 
-  PoseCovStamped pose_cov_stamped;
-  pose_cov_stamped.header = pose_stamped.header;
-  pose_cov_stamped.pose.pose = mean_pose;
-  pose_cov_stamped.pose.covariance[6 * 0 + 0] = 0.255;
-  pose_cov_stamped.pose.covariance[6 * 1 + 1] = 0.255;
-  pose_cov_stamped.pose.covariance[6 * 2 + 2] = 0.255;
-  pose_cov_stamped.pose.covariance[6 * 3 + 3] = 0.00625;
-  pose_cov_stamped.pose.covariance[6 * 4 + 4] = 0.00625;
-  pose_cov_stamped.pose.covariance[6 * 5 + 5] = 0.00625;
+    pose_cov_pub_->publish(pose_cov_stamped);
+  }
 
-  pose_cov_pub_->publish(pose_cov_stamped);
+  // Publish TF
+  {
+    geometry_msgs::msg::TransformStamped transform;
+    transform.header.stamp = particle_array_opt_->header.stamp;
+    transform.header.frame_id = "map";
+    transform.child_frame_id = "particle_filter";
+    transform.transform.translation.x = mean_pose.position.x;
+    transform.transform.translation.y = mean_pose.position.y;
+    transform.transform.translation.z = mean_pose.position.z;
+    transform.transform.rotation = mean_pose.orientation;
+    tf2_broadcaster_->sendTransform(transform);
+  }
+}
 
-  geometry_msgs::msg::TransformStamped transform{};
-  transform.header.stamp = particle_array_opt_->header.stamp;
-  transform.header.frame_id = "map";
-  transform.child_frame_id = "particle_filter";
-  transform.transform.translation.x = mean_pose.position.x;
-  transform.transform.translation.y = mean_pose.position.y;
-  transform.transform.translation.z = mean_pose.position.z;
-  transform.transform.rotation = mean_pose.orientation;
-  tf2_broadcaster_->sendTransform(transform);
+Predictor::SwapModeAdaptor::SwapModeAdaptor(rclcpp::Node * node)
+{
+  auto on_ekf_pose = [this](const PoseCovStamped & pose) -> void { init_pose_opt_ = pose; };
+  auto on_image = [this](const Image & msg) -> void {
+    stamp_opt_ = rclcpp::Time(msg.header.stamp);
+  };
+
+  sub_image_ = node->create_subscription<Image>("image", 1, on_image);
+  sub_pose_ = node->create_subscription<PoseCovStamped>("pose_cov", 1, on_ekf_pose);
+  clock_ = node->get_clock();
+
+  state_is_active = false;
+  state_is_activating = false;
+}
+
+bool Predictor::SwapModeAdaptor::should_keep_update()
+{
+  if (!stamp_opt_.has_value()) {
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should stop");
+    state_is_active = false;
+    return false;
+  }
+
+  double dt = (clock_->now() - stamp_opt_.value()).seconds();
+  if (dt > 3) {
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should stop");
+    state_is_active = false;
+    return true;
+  } else {
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should keep estimation");
+    state_is_activating = true;
+    return true;
+  }
+}
+
+bool Predictor::SwapModeAdaptor::should_call_initialize()
+{
+  if (state_is_activating) {
+    if (!state_is_active) {
+      state_is_active = true;
+      state_is_activating = false;
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace pcdless::modularized_particle_filter

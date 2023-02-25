@@ -16,7 +16,7 @@
     <!-- predict update -->
     <arg name="input_initialpose" default="/localization/initializer/rectified/initialpose"/>
 
-    <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level warn">
+    <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level info">
         <remap from="twist" to="$(var predict_twist)" />
 
         <remap from="initialpose" to="$(var input_initialpose)" />
@@ -37,6 +37,10 @@
         <remap from="height" to="/localization/map/height"/>
         <remap from="twist_cov" to="/localization/twist/disabled/twist_with_cov"/>
         <remap from="pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
+
+        <param name="is_swap_mode" value="true" />
+        <remap from="image" to="$(var resized_image)"/>
+        <remap from="pose_cov" to="/localization/pose_with_covariance"/>
     </node>
 
     <!-- camera  correction -->
