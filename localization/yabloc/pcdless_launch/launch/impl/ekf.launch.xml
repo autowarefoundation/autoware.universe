@@ -1,59 +1,11 @@
 <launch>
-  <!-- EKF -->
-  <arg name="ekf" default="true"/>
-
   <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
     <arg name="use_sim_time" value="true" />
     <arg name="vehicle_model" value="jpntaxi"/>
   </include>
 
   <group>
-    <push-ros-namespace namespace="localization"/>
-
-    <!-- EKF -->
-    <group>
-      <push-ros-namespace namespace="pose_twist_fusion_filter"/>
-      <include file="$(find-pkg-share localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml" if="$(var ekf)">
-      </include>
-    </group>
-
-    <!-- GNSS based corrector -->
-    <node if="false" pkg="gnss_ekf_corrector" exec="gnss_ekf_corrector" name="gnss_ekf_corrector" output="screen" args="--ros-args --log-level info">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-
-        <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="input/height" to="/localization/map/height"/>
-        <remap from="input/pose_with_covariance" to="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
-        <remap from="output/pose_cov_stamped" to="/localization/pose_estimator/pose_with_covariance"/>
-        <remap from="output/debug/pose_cov_stamped" to="/localization/gnss_pose_estimator/pose_with_covariance"/>
-    </node>
-
-    <!-- Camera based corrector -->
-    <arg name="output_scored_cloud" default="scored_cloud"/>
-    <arg name="output_cost_map_range" default="cost_map_range"/>
-    <arg name="input_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
-    <arg name="input_ll2_road_marking" default="/localization/map/ll2_road_marking"/>
-    <arg name="input_ll2_bounding_box" default="/localization/map/ll2_bounding_box"/>
-
-    <node if="false" name="camera_ekf_corrector" pkg="camera_ekf_corrector" exec="camera_ekf_corrector" output="screen" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="image_size" value="800"/>
-        <param name="max_range" value="40.0"/>
-        <param name="gamma" value="5.0"/>
-        <param name="far_weight_gain" value="0.001"/>
-        <param name="enabled_at_first" value="true"/>
-        <param name="logit_gain" value="0.05"/>
-
-        <remap from="lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
-        <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
-        <remap from="ll2_bounding_box" to="$(var input_ll2_bounding_box)"/>
-        <remap from="scored_cloud" to="$(var output_scored_cloud)"/>
-        <remap from="cost_map_range" to="$(var output_cost_map_range)"/>
-
-        <remap from="input/height" to="/localization/map/height"/>
-        <remap from="input/pose_with_covariance" to="/localization/pose_with_covariance"/>
-        <remap from="output/pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
-    </node>
-
+    <push-ros-namespace namespace="pose_twist_fusion_filter"/>
+    <include file="$(find-pkg-share localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml"/>
   </group>
 </launch>

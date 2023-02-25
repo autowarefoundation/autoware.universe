@@ -1,21 +1,24 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
 
+    <!-- source camera image topics -->
     <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
     <let name="resized_image" value="/sensing/camera/undistorted/image_raw"/>
     <let name="resized_info" value="/sensing/camera/undistorted/camera_info"/>
     
-    <arg name="connect_tf_base_link" default="true" description="broadcast TF of particle_filter->base_link"/>
 
-    <arg name="min_segment_length" default="-1.0"/>
-    <arg name="max_segment_distance" default="50.0"/>
-    <arg name="max_lateral_distance" default="10.0"/>
-    <arg name="initialpose_cov_xx_yy" default="[16.0,0.25]"/>
-    <arg name="ignore_less_than_float" default="true"/>
+    <!-- flags to launch -->
+    <arg name="mode" default="pekf" description="[pekf, ekf, pf]"/>
+    <let name="launch_ekf" value="false"/>
+    <let name="launch_ekf_corrector" value="false"/>
+    <let name="launch_pf" value="false"/>
+    <let name="connect_base_link_to_particle_pose" value="false"/>
 
-    <!-- ekf-->
-    <include file="$(find-pkg-share pcdless_launch)/launch/impl/ekf.launch.xml"/>
+    <let name="launch_ekf" value="true" if="$(eval &quot;'$(var mode)'=='pekf' or '$(var mode)'=='ekf'&quot;)"/>
+    <let name="launch_ekf_corrector" value="true" if="$(eval &quot;'$(var mode)'=='ekf'&quot;)"/>
+    <let name="launch_pf" value="true" if="$(eval &quot;'$(var mode)'=='pekf' or '$(var mode)'=='pf'&quot;)"/>
+    <let name="connect_base_link_to_particle_pose" value="true" if="$(eval &quot;'$(var mode)'=='pf'&quot;)"/>
 
     <group>
         <push-ros-namespace namespace="localization"/>
@@ -23,24 +26,28 @@
         <!-- initializer -->
         <group>
             <push-ros-namespace namespace="initializer"/>
-            <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
-                <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>
-                <remap from="initialpose" to="/initialpose"/>
-                <remap from="rectified/initialpose" to="/initialpose3d"/>
-                <remap from="map/vector_map" to="/map/vector_map"/>
-            </node>
-            <node name="gnss_based_pose_initializer" pkg="particle_initializer" exec="gnss_based_pose_initializer" output="screen" args="--ros-args --log-level info">
-                <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
-                <remap from="pose" to="/localization/pf/initial_gnss_pose"/>
-            </node>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/initializer.launch.xml"/>
+        </group>
+
+        <!-- kalman filter-->
+        <group if="$(var launch_ekf)">
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/ekf.launch.xml"/>
+        </group>
+
+        <!-- pose estimator for ekf-->
+        <group if="$(var launch_ekf_corrector)">
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/ekf_corrector.launch.xml"/>
         </group>
 
         <!-- particle filter -->
-        <group>
+        <group if="$(var launch_pf)">
             <push-ros-namespace namespace="pf"/>
-            <include file="$(find-pkg-share pcdless_launch)/launch/impl/pf.launch.xml">
-                <arg name="use_sim_time" value="$(var use_sim_time)" />
-            </include>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/pf.launch.xml"/>
+        </group>
+
+        <!-- static tf -->
+        <group if="$(var connect_base_link_to_particle_pose)"> 
+            <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
         </group>
 
         <!-- image processing -->
@@ -58,26 +65,27 @@
         <!-- twist -->
         <group>
             <push-ros-namespace namespace="twist"/>
-            <include file="$(find-pkg-share pcdless_launch)/launch/impl/twist.launch.xml">
-                <arg name="use_sim_time" value="$(var use_sim_time)" />
-            </include>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/twist.launch.xml"/>
         </group>
+
+
+        <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose"/>
+        <let name="input_pose" value="/localization/pf/pose" unless="$(var launch_ekf)"/>
 
         <!-- validation -->
         <group>
             <push-ros-namespace namespace="validation"/>
-            <include file="$(find-pkg-share pcdless_launch)/launch/impl/validation.launch.xml"/>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/validation.launch.xml">
+                <arg name="input_particle_pose" value="$(var input_pose)"/>
+            </include>
         </group>
 
         <!-- map -->
         <group>
             <push-ros-namespace namespace="map"/>
-            <include file="$(find-pkg-share pcdless_launch)/launch/impl/map.launch.xml"/>
-        </group>
-
-        <!-- static tf -->
-        <group if="$(var connect_tf_base_link)"> 
-            <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/map.launch.xml">
+                <arg name="input_particle_pose" value="$(var input_pose)"/>
+            </include>
         </group>
 
     </group>

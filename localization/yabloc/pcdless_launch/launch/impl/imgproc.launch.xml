@@ -6,6 +6,9 @@
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw/relay"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
+    <arg name="max_segment_distance" default="50.0"/>
+    <arg name="max_lateral_distance" default="10.0"/>
+
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="-1.0"/>
     <arg name="max_lateral_distance" default="-1.0"/>
