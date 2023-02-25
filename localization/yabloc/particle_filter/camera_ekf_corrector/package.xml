@@ -18,6 +18,7 @@
 
   <depend>pcdless_common</depend>
   <depend>modularized_particle_filter</depend>
+  <depend>bayes_util</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

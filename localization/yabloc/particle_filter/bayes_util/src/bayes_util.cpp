@@ -58,9 +58,10 @@ Eigen::Matrix2d approximate_by_spd(const Eigen::Matrix2d & target, bool verbose)
   CostFunction * cost_function =
     new AutoDiffCostFunction<CostFunctor, 4, 3>(new CostFunctor(target));
   Eigen::Vector3d x = Eigen::Vector3d::Zero();
+  constexpr double epsilon = 0.04;
   problem.AddResidualBlock(cost_function, nullptr, x.data());
-  problem.SetParameterLowerBound(x.data(), 0, 0);
-  problem.SetParameterLowerBound(x.data(), 1, 0);
+  problem.SetParameterLowerBound(x.data(), 0, epsilon);
+  problem.SetParameterLowerBound(x.data(), 1, epsilon);
 
   Solver::Options options;
   Solver::Summary summary;
@@ -75,12 +76,26 @@ Eigen::Matrix2d approximate_by_spd(const Eigen::Matrix2d & target, bool verbose)
 Eigen::Matrix2f debayes_covariance(
   const Eigen::Matrix2f & prior_covariance, const Eigen::Matrix2f & post_covariance)
 {
-  std::cout << "prior:" << std::endl;
+  std::cout << "prior_cov:" << std::endl;
   std::cout << prior_covariance << std::endl;
-  std::cout << "post:" << std::endl;
+  std::cout << "post_cov:" << std::endl;
   std::cout << post_covariance << std::endl;
 
-  return post_covariance;
+  // DEBUG:
+  const Eigen::Matrix2f epsilon = 1e-4f * Eigen::Matrix2f::Identity();
+  const Eigen::Matrix2f post_info = (post_covariance + epsilon).inverse();
+  const Eigen::Matrix2f prior_info = (prior_covariance + epsilon).inverse();
+
+  Eigen::Matrix2d likelihood_info_d = (post_info - prior_info).cast<double>();
+  Eigen::Matrix2f likelihood_info = approximate_by_spd(likelihood_info_d).cast<float>();
+
+  std::cout << "likelihood_cov:" << std::endl;
+  std::cout << likelihood_info.inverse() << std::endl;
+
+  std::cout << "debug post_cov:" << std::endl;
+  std::cout << (likelihood_info + prior_info).inverse() << std::endl;
+
+  return likelihood_info;
 }
 
 }  // namespace pcdless::bayes_util

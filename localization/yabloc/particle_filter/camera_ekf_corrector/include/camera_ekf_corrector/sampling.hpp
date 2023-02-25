@@ -32,6 +32,10 @@ T nrand(T cov)
   return dist(engine);
 }
 
+geometry_msgs::msg::PoseWithCovariance debug_debayes_distribution(
+  const geometry_msgs::msg::PoseWithCovariance & post,
+  const geometry_msgs::msg::PoseWithCovariance & prior);
+
 geometry_msgs::msg::PoseWithCovariance debayes_distribution(
   const geometry_msgs::msg::PoseWithCovariance & post,
   const geometry_msgs::msg::PoseWithCovariance & prior);

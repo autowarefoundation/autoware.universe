@@ -303,12 +303,12 @@ void Predictor::publish_mean_pose(
   PoseCovStamped pose_cov_stamped;
   pose_cov_stamped.header = pose_stamped.header;
   pose_cov_stamped.pose.pose = mean_pose;
-  pose_cov_stamped.pose.covariance[6 * 0 + 0] = 0.0255;
-  pose_cov_stamped.pose.covariance[6 * 1 + 1] = 0.0255;
-  pose_cov_stamped.pose.covariance[6 * 2 + 2] = 0.0255;
-  pose_cov_stamped.pose.covariance[6 * 3 + 3] = 0.000625;
-  pose_cov_stamped.pose.covariance[6 * 4 + 4] = 0.000625;
-  pose_cov_stamped.pose.covariance[6 * 5 + 5] = 0.000625;
+  pose_cov_stamped.pose.covariance[6 * 0 + 0] = 0.255;
+  pose_cov_stamped.pose.covariance[6 * 1 + 1] = 0.255;
+  pose_cov_stamped.pose.covariance[6 * 2 + 2] = 0.255;
+  pose_cov_stamped.pose.covariance[6 * 3 + 3] = 0.00625;
+  pose_cov_stamped.pose.covariance[6 * 4 + 4] = 0.00625;
+  pose_cov_stamped.pose.covariance[6 * 5 + 5] = 0.00625;
 
   pose_cov_pub_->publish(pose_cov_stamped);
 

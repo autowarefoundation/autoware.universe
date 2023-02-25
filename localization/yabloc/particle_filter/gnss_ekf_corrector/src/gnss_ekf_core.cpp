@@ -25,6 +25,7 @@ GnssEkfCorrector::GnssEkfCorrector()
 
   // Publisher
   pub_pose_ = create_publisher<PoseCovStamped>("output/pose_cov_stamped", 10);
+  pub_debug_pose_ = create_publisher<PoseCovStamped>("output/debug/pose_cov_stamped", 10);
   marker_pub_ = create_publisher<MarkerArray>("gnss/range_marker", 10);
 }
 
@@ -99,6 +100,7 @@ void GnssEkfCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     const float travel_distance = (current_position_ - last_position).norm();
     if (travel_distance > 1) {
       pub_pose_->publish(pose);
+      pub_debug_pose_->publish(pose);
       last_position = current_position_;
     } else {
       RCLCPP_WARN_STREAM_THROTTLE(

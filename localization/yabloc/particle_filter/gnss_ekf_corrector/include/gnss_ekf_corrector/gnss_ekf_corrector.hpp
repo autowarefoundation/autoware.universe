@@ -29,6 +29,7 @@ private:
 
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_debug_pose_;
   rclcpp::Subscription<NavPVT>::SharedPtr sub_ublox_;
   rclcpp::Subscription<Float32>::SharedPtr sub_height_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_;

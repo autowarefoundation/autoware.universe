@@ -157,6 +157,9 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
 
   // cost_map_.set_height(opt_synched_pose->pose.pose.position.z);
 
+  // TODO:
+  if (opt_synched_pose->pose.covariance[0] > 1000) return;
+
   PoseCovStamped estimated_pose =
     estimate_pose_with_covariance(opt_synched_pose.value(), lsd_cloud, iffy_lsd_cloud);
 
@@ -208,9 +211,10 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   // Yield pose candidates from covariance
   Eigen::Matrix2d xy_cov;
   // TODO: DEBUG:
-  // xy_cov << init.pose.covariance[0], init.pose.covariance[1], init.pose.covariance[6],
-  //   init.pose.covariance[7];
-  xy_cov << 1., 0., 0., 1.;
+  xy_cov << init.pose.covariance[0], init.pose.covariance[1], init.pose.covariance[6],
+    init.pose.covariance[7];
+  xy_cov *= 1.3;
+  // xy_cov << 1., 0., 0., 1.;
 
   // TODO:DEBUG:
   // double theta_cov = init.pose.covariance[35];
@@ -257,22 +261,24 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   output.pose.pose.position.z = latest_height_.data;
 
   // DEBUG: TODO:
-  // for (int i = 0; i < 3; ++i) {
-  //   output.pose.covariance[6 * i + 0] = result.cov_xyz_(i, 0);
-  //   output.pose.covariance[6 * i + 1] = result.cov_xyz_(i, 1);
-  //   output.pose.covariance[6 * i + 2] = result.cov_xyz_(i, 2);
-  // }
+  for (int i = 0; i < 3; ++i) {
+    output.pose.covariance[6 * i + 0] = result.cov_xyz_(i, 0);
+    output.pose.covariance[6 * i + 1] = result.cov_xyz_(i, 1);
+    output.pose.covariance[6 * i + 2] = result.cov_xyz_(i, 2);
+  }
+  // DEBUG:
+  output.pose = debug_debayes_distribution(output.pose, init.pose);
   // output.pose = debayes_distribution(output.pose, init.pose);
 
-  output.pose.covariance[6 * 0 + 0] = 0.25;
-  output.pose.covariance[6 * 0 + 1] = 0.;
-  output.pose.covariance[6 * 0 + 2] = 0.;
-  output.pose.covariance[6 * 1 + 0] = 0.;
-  output.pose.covariance[6 * 1 + 1] = 0.25;
-  output.pose.covariance[6 * 1 + 2] = 0.;
-  output.pose.covariance[6 * 2 + 0] = 0.;
-  output.pose.covariance[6 * 2 + 1] = 0.;
-  output.pose.covariance[6 * 2 + 2] = 0.;
+  // output.pose.covariance[6 * 0 + 0] = 0.25;
+  // output.pose.covariance[6 * 0 + 1] = 0.;
+  // output.pose.covariance[6 * 0 + 2] = 0.;
+  // output.pose.covariance[6 * 1 + 0] = 0.;
+  // output.pose.covariance[6 * 1 + 1] = 0.25;
+  // output.pose.covariance[6 * 1 + 2] = 0.;
+  // output.pose.covariance[6 * 2 + 0] = 0.;
+  // output.pose.covariance[6 * 2 + 1] = 0.;
+  // output.pose.covariance[6 * 2 + 2] = 0.;
 
   output.pose.covariance[6 * 2 + 2] = 0.04;  // Var(z)
   output.pose.covariance[6 * 5 + 5] = result.cov_theta_;

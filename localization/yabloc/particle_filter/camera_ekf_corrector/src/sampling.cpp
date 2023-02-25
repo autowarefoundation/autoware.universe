@@ -1,5 +1,6 @@
 #include "camera_ekf_corrector/sampling.hpp"
 
+#include <bayes_util/bayes_util.hpp>
 #include <pcdless_common/pose_conversions.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -10,6 +11,28 @@ namespace pcdless::ekf_corrector
 {
 std::random_device seed_gen;
 std::default_random_engine engine(seed_gen());
+
+geometry_msgs::msg::PoseWithCovariance debug_debayes_distribution(
+  const geometry_msgs::msg::PoseWithCovariance & post,
+  const geometry_msgs::msg::PoseWithCovariance & prior)
+{
+  // Infer measurement distribution
+  Eigen::Matrix2f post_cov, prior_cov;
+  {
+    auto c1 = prior.covariance;
+    auto c2 = post.covariance;
+    prior_cov << c1[6 * 0 + 0], c1[6 * 0 + 1], c1[6 * 1 + 0], c1[6 * 1 + 1];
+    post_cov << c2[6 * 0 + 0], c2[6 * 0 + 1], c2[6 * 1 + 0], c2[6 * 1 + 1];
+  }
+
+  geometry_msgs::msg::PoseWithCovariance likelihood = post;
+  Eigen::Matrix2f like_cov = bayes_util::debayes_covariance(post_cov, prior_cov);
+  likelihood.covariance[0 * 6 + 0] = like_cov(0, 0);
+  likelihood.covariance[0 * 6 + 1] = like_cov(0, 1);
+  likelihood.covariance[1 * 6 + 0] = like_cov(1, 0);
+  likelihood.covariance[1 * 6 + 1] = like_cov(1, 1);
+  return likelihood;
+}
 
 geometry_msgs::msg::PoseWithCovariance debayes_distribution(
   const geometry_msgs::msg::PoseWithCovariance & post,
