@@ -18,7 +18,8 @@ ParticleInitializer::ParticleInitializer()
   sub_initialpose_ =
     create_subscription<PoseCovStamped>("initialpose", 10, std::move(on_initialpose));
 
-  client_ekf_trigger_ = create_client<SetBool>("ekf_trigger_node");
+  client_ekf_trigger_ =
+    create_client<SetBool>("/localization/pose_twist_fusion_filter/trigger_node");
 }
 
 void ParticleInitializer::on_initial_pose(const PoseCovStamped & initialpose)

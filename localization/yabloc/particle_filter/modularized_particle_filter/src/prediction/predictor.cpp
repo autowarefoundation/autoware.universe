@@ -374,7 +374,7 @@ bool Predictor::SwapModeAdaptor::should_keep_update()
 
 bool Predictor::SwapModeAdaptor::should_call_initialize()
 {
-  if (state_is_activating) {
+  if (state_is_activating && init_pose_opt_.has_value()) {
     if (!state_is_active) {
       state_is_active = true;
       state_is_activating = false;
