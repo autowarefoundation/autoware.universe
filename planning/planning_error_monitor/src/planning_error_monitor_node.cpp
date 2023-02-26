@@ -54,10 +54,10 @@ PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & n
     this, get_clock(), 100ms, std::bind(&PlanningErrorMonitorNode::onTimer, this));
 
   // Parameter
-  error_interval_ = declare_parameter("error_interval", 100.0);
-  error_curvature_ = declare_parameter("error_curvature", 1.0);
-  error_sharp_angle_ = declare_parameter("error_sharp_angle", M_PI_4);
-  ignore_too_close_points_ = declare_parameter("ignore_too_close_points", 0.05);
+  error_interval_ = declare_parameter<double>("error_interval");
+  error_curvature_ = declare_parameter<double>("error_curvature");
+  error_sharp_angle_ = declare_parameter<double>("error_sharp_angle");
+  ignore_too_close_points_ = declare_parameter<double>("ignore_too_close_points");
 }
 
 void PlanningErrorMonitorNode::onTimer()
