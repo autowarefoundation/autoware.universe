@@ -364,7 +364,7 @@ bool Predictor::SwapModeAdaptor::should_keep_update()
   if (dt > 3) {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should stop");
     state_is_active = false;
-    return true;
+    return false;
   } else {
     RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should keep estimation");
     state_is_activating = true;
