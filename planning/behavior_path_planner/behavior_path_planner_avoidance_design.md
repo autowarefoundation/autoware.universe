@@ -453,7 +453,60 @@ The shift points are modified by a filtering process in order to get the expecte
 
 ### Safety check
 
+The avoidance module has a safety check logic. The result of safe check is used for yield maneuver. It is enable by setting `enable_safety_check` as `true`.
+
+```yaml
+enable_safety_check: false
+
+# For safety check
+safety_check_backward_distance: 50.0 # [m]
+safety_check_time_horizon: 10.0 # [s]
+safety_check_idling_time: 1.5 # [s]
+safety_check_accel_for_rss: 2.5 # [m/ss]
+```
+
+`safety_check_backward_distance` is the parameter related to the safety check area. The module checks a collision risk for all vehicle that is within shift side lane and between object `object_check_forward_distance` ahead and `safety_check_backward_distance` behind.
+
+![fig1](./image/avoidance/safety_check_step_1.svg)
+
+**NOTE**: Even if a part of an object polygon overlaps the detection area, if the center of gravity of the object does not exist on the lane, the vehicle is excluded from the safety check target.
+
+---
+
+Judge the risk of collision based on ego future position and object prediction path. The module calculates Ego's future position in the time horizon (`safety_check_time_horizon`), and use object's prediction path as object future position.
+
+![fig1](./image/avoidance/safety_check_step_2.svg)
+
+After calculating the future position of Ego and object, the module calculates the lateral/longitudinal deviation of Ego and the object. The module also calculates the lateral/longitudinal margin necessary to determine that it is safe to execute avoidance maneuver, and if both the lateral and longitudinal distances are less than the margins, it determines that there is a risk of a collision at that time.
+
+![fig1](./image/avoidance/safety_check_margin.svg)
+
+The value of the longitudinal margin is calculated based on Responsibility-Sensitive Safety theory ([RSS](https://newsroom.intel.com/articles/rss-explained-five-rules-autonomous-vehicle-safety/#gs.ljzofv)). The `safety_check_idling_time` represents $T_{idle}$, and `safety_check_accel_for_rss` represents $a_{max}$.
+
+```math
+D_{lon} = V_{ego}T_{idle} + \frac{1}{2}a_{max}T_{idle}^2 + \frac{(V_{ego} + a_{max}T_{idle})^2}{2a_{max}} - \frac{V_{obj}^2}{2a_{max}}
+```
+
+The lateral margin is changeable based on ego longitudinal velocity. If the vehicle is driving at a high speed, the lateral margin should be larger, and if the vehicle is driving at a low speed, the value of the lateral margin should be set to a smaller value. Thus, the lateral margin for each vehicle speed is set as a parameter, and the module determines the lateral margin from the current vehicle speed as shown in the following figure.
+
+![fig1](./image/avoidance/dynamic_lateral_margin.svg)
+
+```yaml
+target_velocity_matrix:
+  col_size: 5
+  matrix: [
+      2.78,
+      5.56 ... 16.7, # target velocity [m/s]
+      0.50,
+      0.75 ... 1.50,
+    ] # margin [m]
+```
+
 ### Yield maneuver
+
+#### Overview
+
+#### Limitation
 
 ### Avoidance cancelling maneuver
 
