@@ -59,14 +59,16 @@ In the step, you have to check if the framework is applied to target path.
 
 ### Add `MessageTrackingNotifier` to the end of path
 
-The second step is to add `MessageTrackingNotifier` which is mentioned as the add-on in [the design page](./docs/internal_design.md). `MessageTrackingNotifier` notifies when the topic data is consumed. It is needed if you apply the framework to the path which does not publish any message.
+You can skip this step if the end node publishes message topic and this topic is specified as the end of the path. If so, skip this step and specify the information for the last message topic to be output in the configuration file in the next step.
+
+The second step is to add `MessageTrackingNotifier` which is mentioned as the add-on in [the design page](./docs/internal_design.md). `MessageTrackingNotifier` notifies when the topic data is consumed. It is needed if you apply the framework to the path which does not publish any message topic.
 
 If you want to add `MessageTrackingNotifier` to a path, you need to change files as below.
 
-1. Add `timing_violation_monitor_utils` to your package.xml
+1. Add `timing_violation_monitor` to your package.xml
 
    ```xml
-     <depend>timing_violation_monitor_utils</depend>
+     <depend>timing_violation_monitor</depend>
    ```
 
 2. Change the header file of end node as below
@@ -131,19 +133,24 @@ The sample configuration file is shown as below. If you add a new path, append t
 ros__parameters:
   diag_period_sec: 5.0 # frequency of report
   target_paths:
-    ekf-to-ndt: # node name
-      topic: /localization/pose_estimator/for_tilde_interpolator_mtt # topic name
+    ekf-to-ndt: # path name. Can be set to any name.
+      topic: /localization/pose_estimator/for_tilde_interpolator_mtt # topic name published by MessageConsumptionNotifier.
       message_type: tilde_msg/msg/MessageTrackingTag # message type
       severity: warn # severity
       period: 100.0 # execution frequency of path
       deadline: 200.0 # deadline of response time
       violation_count_threshold: 5 # threshold to judge warn or not.
+
+    pointcloudPreprocessor-to-ndt: # path name
+      topic: /localization/pose_estimator/pose_with_covariance # topic name
+      message_type: geometry_msgs/msg/PoseWithCovarianceStamped # message type
+      severity: error # severity
+      period: 100.0 # execution frequency of path
+      deadline: 150.0 # deadline of response time
+      violation_count_threshold: 1 # threshold to judge error or not.
 ```
 
-<!-- prettier-ignore-start -->
-!!! Note
-    What this section describes is tentative.
-<!-- prettier-ignore-end -->
+In this sample, path `ekf-to-ndt` uses MessageConsumptionNotifier to notify when the topic data is consumed. On the other hand, path `pointcloudPreprocessor-to-ndt` need no code changes.
 
 ## Output Message
 
