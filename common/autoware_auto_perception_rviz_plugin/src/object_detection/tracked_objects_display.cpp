@@ -24,7 +24,7 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-TrackedObjectsDisplay::TrackedObjectsDisplay() : ObjectPolygonDisplayBase("tracks") {}
+TrackedObjectsDisplay::TrackedObjectsDisplay() : ObjectPolygonDisplayBase("tracks", "/perception/obstacle_segmentation/pointcloud") {}
 
 void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 {
