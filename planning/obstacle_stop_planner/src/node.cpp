@@ -319,9 +319,6 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     motion_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
     planner_data.trajectory_trim_index);
 
-  // get goal pose for margin after goal
-  const Pose goal_pose = base_trajectory.back().pose;
-
   // extend trajectory to consider obstacles after the goal
   if (stop_param.enable_stop_behind_goal_for_obstacle) {
     base_trajectory = extendTrajectory(base_trajectory, stop_param.max_longitudinal_margin);
@@ -342,7 +339,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   // insert slow-down-section/stop-point
   insertVelocity(
     output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
-    current_vel, stop_param, goal_pose);
+    current_vel, stop_param);
 
   const auto no_slow_down_section = !planner_data.slow_down_require && !latest_slow_down_section_;
   if (node_param_.enable_slow_down && no_slow_down_section && set_velocity_limit_) {
@@ -1085,8 +1082,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
 void ObstacleStopPlannerNode::insertVelocity(
   TrajectoryPoints & output, PlannerData & planner_data,
   [[maybe_unused]] const Header & trajectory_header, const VehicleInfo & vehicle_info,
-  const double current_acc, const double current_vel, const StopParam & stop_param,
-  const Pose & goal_pose)
+  const double current_acc, const double current_vel, const StopParam & stop_param)
 {
   const auto & base_link2front = vehicle_info.max_longitudinal_offset_m;
 
@@ -1120,8 +1116,8 @@ void ObstacleStopPlannerNode::insertVelocity(
         dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
 
       const auto stop_point = searchInsertPoint(
-        index_with_dist_remain.get().first, output, index_with_dist_remain.get().second, stop_param,
-        goal_pose);
+        index_with_dist_remain.get().first, output, index_with_dist_remain.get().second,
+        stop_param);
 
       const auto & ego_pose = planner_data.current_pose;
       const size_t ego_seg_idx = findFirstNearestIndexWithSoftConstraints(
@@ -1302,12 +1298,10 @@ void ObstacleStopPlannerNode::onExpandStopRange(const ExpandStopRange::ConstShar
 
 StopPoint ObstacleStopPlannerNode::searchInsertPoint(
   const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain,
-  const StopParam & stop_param, const Pose & goal_pose)
+  const StopParam & stop_param)
 {
-  const int goal_idx = findFirstNearestIndexWithSoftConstraints(
-    base_trajectory, goal_pose, node_param_.ego_nearest_dist_threshold,
-    node_param_.ego_nearest_yaw_threshold);
-  const double max_longitudinal_margin = idx > goal_idx
+  const bool is_behind_goal = static_cast<size_t>(idx) == base_trajectory.size() - 1;
+  const double max_longitudinal_margin = is_behind_goal
                                            ? stop_param.max_longitudinal_margin_behind_goal
                                            : stop_param.max_longitudinal_margin;
 
