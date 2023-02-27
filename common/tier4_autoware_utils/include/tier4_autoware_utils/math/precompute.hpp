@@ -21,7 +21,8 @@
 namespace tier4_autoware_utils
 {
 
-class PrecomputedTrigFunc {
+class PrecomputedTrigFunc
+{
   const float PI = std::acos(-1);
 
   size_t table_size_;
@@ -29,7 +30,8 @@ class PrecomputedTrigFunc {
   std::vector<float> cos_table_;
 
 public:
-  PrecomputedTrigFunc(size_t table_size) : table_size_(table_size) {
+  PrecomputedTrigFunc(size_t table_size) : table_size_(table_size)
+  {
     sin_table_.resize(table_size_);
     cos_table_.resize(table_size_);
 
@@ -44,15 +46,13 @@ public:
   float sin(float radian)
   {
     float degree = radian * (180.f / PI) * (table_size_ / 360.f);
-    return sin_table_
-      [(std::lround(degree) % table_size_ + table_size_) % table_size_];
+    return sin_table_[(std::lround(degree) % table_size_ + table_size_) % table_size_];
   }
 
   inline float cos(float radian)
   {
     float degree = radian * (180.f / PI) * (table_size_ / 360.f);
-    return cos_table_
-      [(std::lround(degree) % table_size_ + table_size_) % table_size_];
+    return cos_table_[(std::lround(degree) % table_size_ + table_size_) % table_size_];
   }
 };
 
