@@ -182,7 +182,7 @@ private:
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
-    const StopParam & stop_param);
+    const StopParam & stop_param, const Pose & goal_pose);
 
   bool searchPointcloudNearTrajectory(
     const TrajectoryPoints & trajectory, const PointCloud2::ConstSharedPtr & input_points_ptr,
@@ -195,7 +195,7 @@ private:
 
   StopPoint searchInsertPoint(
     const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain,
-    const StopParam & stop_param);
+    const StopParam & stop_param, const Pose & goal_pose);
 
   SlowDownSection createSlowDownSection(
     const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
