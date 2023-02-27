@@ -168,7 +168,7 @@ stop
 @enduml
 ```
 
-## Details of algorithm for target object filtering
+## Overview of algorithm for target object filtering
 
 ### How to decide the target obstacles
 
@@ -193,13 +193,13 @@ Not only the length from the centerline, but also the length from the road shoul
 
 ```math
 l_D = l_a - \frac{width}{2}
-ratio =  {l_d \over l_D}
+ratio =  \frac{l_d}{l_D}
 ```
 
-$l_d$ : actual shift length
-$l_D$ : shiftable length
-$l_a$ : distance between centerline and most left boundary.
-$width$ : object width
+- $l_d$ : actual shift length
+- $l_D$ : shiftable length
+- $l_a$ : distance between centerline and most left boundary.
+- $width$ : object width
 
 The closer the object is to the shoulder, the larger the value of $ratio$ (theoretical max value is 1.0), and it compares the value and `object_check_shiftable_ratio` to determine whether the object is a parked-car.
 
@@ -496,12 +496,8 @@ The lateral margin is changeable based on ego longitudinal velocity. If the vehi
 ```yaml
 target_velocity_matrix:
   col_size: 5
-  matrix: [
-      2.78,
-      5.56 ... 16.7, # target velocity [m/s]
-      0.50,
-      0.75 ... 1.50,
-    ] # margin [m]
+  matrix: [2.78 5.56 ... 16.7  # target velocity [m/s]
+           0.50 0.75 ... 1.50] # margin [m]
 ```
 
 ---
