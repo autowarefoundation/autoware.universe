@@ -206,12 +206,12 @@
               <div
                 style="display: inline-block; font-size: 16px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; font-weight: bold; white-space: normal; overflow-wrap: normal;"
               >
-                pass throught the side of the target object
+                pass through the side of the target object
               </div>
             </div>
           </div>
         </foreignObject>
-        <text x="121" y="586" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="16px" text-anchor="middle" font-weight="bold">pass throught the side of the...</text>
+        <text x="121" y="586" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="16px" text-anchor="middle" font-weight="bold">pass through the side of the t...</text>
       </switch>
     </g>
     <rect x="841" y="521" width="240" height="120" rx="7" ry="7" fill="#e6ffcc" stroke="rgb(0, 0, 0)" stroke-width="2" pointer-events="all"/>
