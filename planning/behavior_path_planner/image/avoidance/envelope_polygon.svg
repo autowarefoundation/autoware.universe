@@ -153,22 +153,22 @@
         <text x="207" y="663" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="20px" text-anchor="middle">Step:T</text>
       </switch>
     </g>
-    <rect x="707" y="642" width="130" height="30" fill="none" stroke="none" pointer-events="all"/>
+    <rect x="692" y="642" width="145" height="30" fill="none" stroke="none" pointer-events="all"/>
     <g transform="translate(-0.5 -0.5)">
       <switch>
         <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
           <div
             xmlns="http://www.w3.org/1999/xhtml"
-            style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 128px; height: 1px; padding-top: 657px; margin-left: 708px;"
+            style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 143px; height: 1px; padding-top: 657px; margin-left: 693px;"
           >
             <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
               <div style="display: inline-block; font-size: 20px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">
-                Step:T+1 (befor update)
+                Step:T+1 (before update)
               </div>
             </div>
           </div>
         </foreignObject>
-        <text x="772" y="663" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="20px" text-anchor="middle">Step:T+1 (bef...</text>
+        <text x="765" y="663" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="20px" text-anchor="middle">Step:T+1 (befor...</text>
       </switch>
     </g>
     <rect x="1287" y="642" width="130" height="30" fill="none" stroke="none" pointer-events="all"/>

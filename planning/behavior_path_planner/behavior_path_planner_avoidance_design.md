@@ -211,7 +211,7 @@ In order to prevent chattering of recognition results, once an obstacle is targe
 
 ## Overview of algorithm for avoidance path generation
 
-### How to pervent shift line chattering that is caused by perception noise
+### How to prevent shift line chattering that is caused by perception noise
 
 Since object recognition results contain noise related to position ,orientation and boundary size, if the raw object recognition results are used in path generation, the avoidance path will be directly affected by the noise.
 
@@ -465,6 +465,8 @@ safety_check_idling_time: 1.5 # [s]
 safety_check_accel_for_rss: 2.5 # [m/ss]
 ```
 
+![fig1](./image/avoidance/safety_check_flowchart.svg)
+
 `safety_check_backward_distance` is the parameter related to the safety check area. The module checks a collision risk for all vehicle that is within shift side lane and between object `object_check_forward_distance` ahead and `safety_check_backward_distance` behind.
 
 ![fig1](./image/avoidance/safety_check_step_1.svg)
@@ -502,11 +504,65 @@ target_velocity_matrix:
     ] # margin [m]
 ```
 
+---
+
 ### Yield maneuver
 
 #### Overview
 
+If an avoidance path can be generated and it is determined that avoidance maneuver should not be executed due to surrounding traffic conditions, the module executes YIELD maneuver. In yield maneuver, the vehicle slows down to the target vehicle velocity (`yield_velocity`) and keep that speed until the module judge that avoidance path is safe. If the YIELD condition goes on and the vehicle approaches the avoidance target, it stops at the avoidable position and waits until the safety is confirmed.
+
+```yaml
+# For yield maneuver
+yield_velocity: 2.78 # [m/s]
+```
+
+![fig1](./image/avoidance/yield_maneuver.svg)
+
+**NOTE**: In yield maneuver, the vehicle decelerates target velocity under constraints.
+
+```yaml
+nominal_deceleration: -1.0 # [m/ss]
+nominal_jerk: 0.5 # [m/sss]
+```
+
+If it satisfies following all of three conditions, the module inserts stop point in front of the avoidance target with an avoidable interval.
+
+- Can't pass through the side of target object without avoidance.
+- There is enough lane width to avoid target object.
+- In waiting approval or yield maneuver.
+
+The module determines that it is NOT passable without avoidance if the object overhang is less than the threshold.
+
+```yaml
+lateral_passable_collision_margin: 0.5 # [-]
+```
+
+```math
+L_{overhang} < \frac{W}{2} + L_{margin} (not passable)
+```
+
+The $W$ represents vehicle width, and $L_{margin}$ represents `lateral_passable_collision_margin`.
+
 #### Limitation
+
+**Limitation1**
+
+The current behavior in unsafe condition is just slow down and it is so conservative. It is difficult to achieve aggresive behavior in the current architecture because of modulatiry. There are many modules in autoware that change the vehicle speed, and the avoidance module cannot know what speed planning they will output, so it is forced to choose a behavior that is as independent of other modules' processing as possible.
+
+**Limitation2**
+
+The YIELD maneuver is executed **ONLY** when the vehicle has **NOT** initiated avoidance maneuver. The module has a threshold parameter (`avoidance_initiate_threshold`) for the amount of shifting and determines that the vehicle is initiating avoidance if the vehicle current shift exceeds the threshold.
+
+```math
+SHIFT_{current} > L_{threshold}
+```
+
+![fig1](./image/avoidance/yield_limitation.svg)
+
+![fig1](./image/avoidance/yield_maneuver_flowchart.svg)
+
+---
 
 ### Avoidance cancelling maneuver
 
@@ -585,7 +641,7 @@ namespace: `avoidance.safety_check.`
 | Name                           | Unit   | Type   | Description                                                                       | Default value |
 | :----------------------------- | ------ | ------ | --------------------------------------------------------------------------------- | ------------- |
 | safety_check_backward_distance | [m]    | double | Backward distance to search the dynamic objects.                                  | 50.0          |
-| safety_check_time_horizon      | [s]    | double | Time holizon to check lateral/longitudinal margin is enough or not.               | 10.0          |
+| safety_check_time_horizon      | [s]    | double | Time horizon to check lateral/longitudinal margin is enough or not.               | 10.0          |
 | safety_check_idling_time       | [t]    | double | Time delay constant that be use for longitudinal margin calculation based on RSS. | 1.5           |
 | safety_check_accel_for_rss     | [m/ss] | double | Accel constant that be used for longitudinal margin calculation based on RSS.     | 2.5           |
 | safety_check_hysteresis_factor | [-]    | double | Hysteresis factor that be used for chattering prevention.                         | 2.0           |
