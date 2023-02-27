@@ -199,7 +199,7 @@ void TimingViolationMonitor::onGenTopic(
   if (pinfo_ptr->status == e_stat::ST_NONE) {
     pinfo_ptr->status = e_stat::ST_INIT;
   }
-  dbg_info_->cbStatisEnter(__func__);
+  dbg_info_->cbStatisticsEnter(__func__);
 
   std_msgs::msg::Header header_msg;
   try {
@@ -219,7 +219,7 @@ void TimingViolationMonitor::onGenTopic(
   auto response_time = cur_ros - pinfo_ptr->r_i_j_1;
   topicCallback(*pinfo_ptr, pub_time, cur_ros, response_time);
 
-  dbg_info_->cbStatisExit(__func__);
+  dbg_info_->cbStatisticsExit(__func__);
 }
 
 // all topic process
@@ -249,7 +249,7 @@ bool TimingViolationMonitor::isOverDeadline(
   TimingViolationMonitorPathConfig & pinfo, double & pub_time, double & cur_ros,
   double & response_time)
 {
-  bool over_f = dbg_info_->topicStatis(pinfo, pub_time, cur_ros, response_time);
+  bool over_f = dbg_info_->topicStatistics(pinfo, pub_time, cur_ros, response_time);
   if (cur_ros - pinfo.r_i_j_1 >= pinfo.d_i || response_time >= pinfo.d_i) {
     over_f |= true;
   }
@@ -334,7 +334,7 @@ void TimingViolationMonitor::onIntervalTimer(TimingViolationMonitorPathConfig & 
 {
   std::lock_guard<std::mutex> lock(*pinfo.p_mutex);
 
-  dbg_info_->cbStatisEnter(__func__);
+  dbg_info_->cbStatisticsEnter(__func__);
 
   pinfo.interval_timer.reset();
   startPeriodicTimer(pinfo, pinfo.p_i);
@@ -342,7 +342,7 @@ void TimingViolationMonitor::onIntervalTimer(TimingViolationMonitorPathConfig & 
   startDeadlineTimer(pinfo, cur, pinfo.d_i);
   pinfo.cur_j++;
 
-  dbg_info_->cbStatisExit(__func__);
+  dbg_info_->cbStatisticsExit(__func__);
 }
 
 // periodic timer callback
@@ -357,7 +357,7 @@ void TimingViolationMonitor::onPeriodicTimer(TimingViolationMonitorPathConfig & 
     stopDetect(pinfo);
     return;
   }
-  dbg_info_->cbStatisEnter(__func__);
+  dbg_info_->cbStatisticsEnter(__func__);
 
   // periodic timer proc
   auto cur_ros = get_now();
@@ -369,7 +369,7 @@ void TimingViolationMonitor::onPeriodicTimer(TimingViolationMonitorPathConfig & 
   pinfo.cur_j++;
   pinfo.status = e_stat::ST_DETECT;
 
-  dbg_info_->cbStatisExit(__func__);
+  dbg_info_->cbStatisticsExit(__func__);
 }
 
 // deadline timer callback
@@ -384,7 +384,7 @@ void TimingViolationMonitor::onDeadlineTimer(
   if (!isValidDeadlineTimer(pinfo, dm)) {
     return;
   }
-  dbg_info_->cbStatisEnter(__func__);
+  dbg_info_->cbStatisticsEnter(__func__);
 
   dbg_info_->log(fmt::format(
     "|{:.6f}|[{}]:{} <{}> dm[{}] {:.6f} DEADLINE TIMEOUT cur_j={} completed_j={}", get_now(),
@@ -406,7 +406,7 @@ void TimingViolationMonitor::onDeadlineTimer(
   dm.valid = false;
   pinfo.deadline_timer.erase(dm.uniq);
 
-  dbg_info_->cbStatisExit(__func__);
+  dbg_info_->cbStatisticsExit(__func__);
 }
 
 // start interval timer
@@ -525,7 +525,7 @@ void TimingViolationMonitor::diagDataUpdate(diagnostic_updater::DiagnosticStatus
   auto diag_period = updater_->getPeriod().seconds();
   bool warn_f = false;
   bool error_f = false;
-  dbg_info_->cbStatisEnter(__func__);
+  dbg_info_->cbStatisticsEnter(__func__);
 
   for (auto & pair : target_paths_map_) {
     TimingViolationMonitorPathConfig & pinfo = *pair.second;
@@ -556,7 +556,7 @@ void TimingViolationMonitor::diagDataUpdate(diagnostic_updater::DiagnosticStatus
   }
   stat.summary(level, msg);
 
-  dbg_info_->cbStatisExit(__func__);
+  dbg_info_->cbStatisticsExit(__func__);
 }
 
 void TimingViolationMonitor::stopDetect(TimingViolationMonitorPathConfig & pinfo)

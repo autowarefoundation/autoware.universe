@@ -145,7 +145,7 @@ private:
   std::chrono::system_clock::time_point mPrev;
 };
 
-using CbstatisMap = std::unordered_map<std::string, ElapseMinMax>;
+using CbStatisticsMap = std::unordered_map<std::string, ElapseMinMax>;
 
 class TimingViolationMonitorPathConfig;
 class TimingViolationMonitorPathDebug
@@ -209,7 +209,7 @@ public:
   void registerNodeToDebug(const std::shared_ptr<TimingViolationMonitor> & node);
   void registerPathDebugInfo(
     uint32_t key, std::shared_ptr<TimingViolationMonitorPathDebug> dinfo_ptr);
-  bool topicStatis(
+  bool topicStatistics(
     TimingViolationMonitorPathConfig & pinfo, double & pub_time, double & cur_ros,
     double & response_time);
   void setTopicCounter(TimingViolationMonitorPathConfig & pinfo, bool discard);
@@ -222,8 +222,8 @@ public:
   uint64_t getValidTopicCounter(TimingViolationMonitorPathConfig & pinfo);
   uint64_t getDiscardTopicCounter(TimingViolationMonitorPathConfig & pinfo);
   void log(std::string fs);
-  void cbStatisEnter(const char * func);
-  void cbStatisExit(const char * func);
+  void cbStatisticsEnter(const char * func);
+  void cbStatisticsExit(const char * func);
   bool getEnableDetect(TimingViolationMonitorPathConfig & pinfo);
   void setEnableDetect(TimingViolationMonitorPathConfig & pinfo, bool ope);
 
@@ -235,7 +235,7 @@ private:
   // for statistics and debug
   void onCommand(const tier4_system_msgs::msg::TimingViolationMonitorCommand::ConstSharedPtr msg);
   void pubCmdReqInfo();
-  void cmdShowStatis();
+  void cmdShowStatistics();
 
   // others (debug)
   void printLog();

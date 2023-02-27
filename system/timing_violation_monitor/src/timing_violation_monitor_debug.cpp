@@ -37,7 +37,7 @@ static constexpr char DISP_ON[] = "disp on";
 static constexpr char DISP_OFF[] = "disp off";
 
 PathDebugInfoMap path_debug_info_;
-CbstatisMap cb_statis_map_;
+CbStatisticsMap cb_statistics_map_;
 
 // register TimingViolationMonitorPathDebug
 void TimingViolationMonitorDebug::registerPathDebugInfo(
@@ -70,7 +70,7 @@ void TimingViolationMonitorDebug::registerNodeToDebug(
 }
 
 // show stats
-void TimingViolationMonitorDebug::cmdShowStatis()
+void TimingViolationMonitorDebug::cmdShowStatistics()
 {
   std::string fs =
     fmt::format("\n----- timing violation monitor statistics ({}) start -----\n", this->version);
@@ -125,7 +125,7 @@ void TimingViolationMonitorDebug::cmdShowStatis()
   }
   if (debug_ctrl) {
     fs += fmt::format("--- callbacks ---\n");
-    for (auto & cb : cb_statis_map_) {
+    for (auto & cb : cb_statistics_map_) {
       fs += fmt::format(
         "[{}] ({}) min={:.6f} ave={:.6f} max={:.6f} (sec)", cb.first.c_str(), cb.second.getCnt(),
         cb.second.getMin(), cb.second.getAve(), cb.second.getMax());
@@ -140,11 +140,11 @@ void TimingViolationMonitorDebug::onCommand(
   const tier4_system_msgs::msg::TimingViolationMonitorCommand::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(tm_mutex_);
-  cbStatisEnter(__func__);
+  cbStatisticsEnter(__func__);
 
   std::string fs;
   if (msg->command == SHOW_INFO) {
-    cmdShowStatis();
+    cmdShowStatistics();
   } else if (msg->command == REQ_INFO) {
     pubCmdReqInfo();
     fs = fmt::format("\n--- req info\n");
@@ -196,7 +196,7 @@ void TimingViolationMonitorDebug::onCommand(
       msg->command.c_str());
   }
 
-  cbStatisExit(__func__);
+  cbStatisticsExit(__func__);
 }
 
 // publish statistics
@@ -241,7 +241,7 @@ void TimingViolationMonitorDebug::pubCmdReqInfo()
     p.sub_ave = dinfo_ptr->sub_interval.getAve();
     m.path_info.push_back(p);
   }
-  for (auto & cb : cb_statis_map_) {
+  for (auto & cb : cb_statistics_map_) {
     auto c = tier4_system_msgs::msg::TimingViolationMonitorCbLatency();
     c.cb_name = cb.first.c_str();
     c.cb_min = cb.second.getMin();
@@ -255,7 +255,7 @@ void TimingViolationMonitorDebug::pubCmdReqInfo()
 }
 
 // statistics
-bool TimingViolationMonitorDebug::topicStatis(
+bool TimingViolationMonitorDebug::topicStatistics(
   TimingViolationMonitorPathConfig & pinfo, double & pub_time, double & cur_ros,
   double & response_time)
 {
@@ -342,25 +342,25 @@ uint64_t TimingViolationMonitorDebug::getDiscardTopicCounter(
 }
 
 // measurement callback process time
-void TimingViolationMonitorDebug::cbStatisEnter(const char * func)
+void TimingViolationMonitorDebug::cbStatisticsEnter(const char * func)
 {
   if (debug_ctrl) {
     std::string fn = func;
-    if (cb_statis_map_.find(fn) == cb_statis_map_.end()) {
+    if (cb_statistics_map_.find(fn) == cb_statistics_map_.end()) {
       ElapseMinMax tmp;
       tmp.setName(func);
-      cb_statis_map_[fn] = tmp;
+      cb_statistics_map_[fn] = tmp;
     }
-    auto & cs = cb_statis_map_[fn];
+    auto & cs = cb_statistics_map_[fn];
     cs.setPrev();
   }
 }
 
-void TimingViolationMonitorDebug::cbStatisExit(const char * func)
+void TimingViolationMonitorDebug::cbStatisticsExit(const char * func)
 {
   if (debug_ctrl) {
     std::string fn = func;
-    auto & cs = cb_statis_map_[fn];
+    auto & cs = cb_statistics_map_[fn];
     cs.addElapse();
   }
 }
@@ -416,7 +416,7 @@ void TimingViolationMonitorDebug::clearInfo()
     dinfo_ptr->sub_interval.setName("sub_interval");
     dinfo_ptr->com_delay.setName("com_delay");
   }
-  cb_statis_map_.clear();
+  cb_statistics_map_.clear();
   log_buffer_.clear();
 }
 
