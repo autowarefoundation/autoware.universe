@@ -352,6 +352,7 @@ endif
 if(isSameDirectionShift(isOnRight(object),shift_length)?) then (no)
 stop
 endif
+endif
 }
 stop
 @enduml
@@ -427,54 +428,31 @@ TODO
 
 The avoidance specific parameter configuration file can be located at `src/autoware/launcher/planning_launch/config/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/avoidance/avoidance.param.yaml`.
 
-### Avoidance path generation
+### General parameters
 
-| Name                                       | Unit   | Type   | Description                                                                                                                                      | Default value |
-| :----------------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| resample_interval_for_planning             | [m]    | double | Path resample interval for avoidance planning path.                                                                                              | 0.3           |
-| resample_interval_for_output               | [m]    | double | Path resample interval for output path. Too short interval increases computational cost for latter modules.                                      | 4.0           |
-| lateral_collision_margin                   | [m]    | double | The lateral distance between ego and avoidance targets.                                                                                          | 1.0           |
-| lateral_collision_safety_buffer            | [m]    | double | Creates an additional gap that will prevent the vehicle from getting to near to the obstacle                                                     | 0.7           |
-| longitudinal_collision_margin_min_distance | [m]    | double | when complete avoidance motion, there is a distance margin with the object for longitudinal direction.                                           | 0.0           |
-| longitudinal_collision_margin_time         | [s]    | double | when complete avoidance motion, there is a time margin with the object for longitudinal direction.                                               | 0.0           |
-| prepare_time                               | [s]    | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change.                                                    | 2.0           |
-| min_prepare_distance                       | [m]    | double | Minimum distance for "prepare_time" x "ego_speed".                                                                                               | 1.0           |
-| nominal_lateral_jerk                       | [m/s3] | double | Avoidance path is generated with this jerk when there is enough distance from ego.                                                               | 0.2           |
-| max_lateral_jerk                           | [m/s3] | double | Avoidance path gets sharp up to this jerk limit when there is not enough distance from ego.                                                      | 1.0           |
-| min_avoidance_distance                     | [m]    | double | Minimum distance of avoidance path (i.e. this distance is needed even if its lateral jerk is very low)                                           | 10.0          |
-| min_nominal_avoidance_speed                | [m/s]  | double | Minimum speed for jerk calculation in a nominal situation (\*1).                                                                                 | 7.0           |
-| min_sharp_avoidance_speed                  | [m/s]  | double | Minimum speed for jerk calculation in a sharp situation (\*1).                                                                                   | 1.0           |
-| max_right_shift_length                     | [m]    | double | Maximum shift length for right direction                                                                                                         | 5.0           |
-| max_left_shift_length                      | [m]    | double | Maximum shift length for left direction                                                                                                          | 5.0           |
-| road_shoulder_safety_margin                | [m]    | double | Prevents the generated path to come too close to the road shoulders.                                                                             | 0.0           |
-| avoidance_execution_lateral_threshold      | [m]    | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2)                      | 0.499         |
-| enable_avoidance_over_same_direction       | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.                          | true          |
-| enable_avoidance_over_opposite_direction   | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has opposite direction. `enable_avoidance_over_same_direction` must be `true` to take effects | true          |
-| enable_update_path_when_object_is_gone     | [-]    | bool   | Reset trajectory when avoided objects are gone. If false, shifted path points remain same even though the avoided objects are gone.              | false         |
-| enable_bound_clipping                      | `true` | bool   | Enable clipping left and right bound of drivable area when obstacles are in the drivable area                                                    | false         |
+namespace: `avoidance.`
 
-(\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
+| Name                                     | Unit | Type   | Description                                                                                                                                      | Default value |
+| :--------------------------------------- | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| resample_interval_for_planning           | [m]  | double | Path resample interval for avoidance planning path.                                                                                              | 0.3           |
+| resample_interval_for_output             | [m]  | double | Path resample interval for output path. Too short interval increases computational cost for latter modules.                                      | 4.0           |
+| detection_area_right_expand_dist         | [m]  | double | Lanelet expand length for right side to find avoidance target vehicles.                                                                          | 0.0           |
+| detection_area_left_expand_dist          | [m]  | double | Lanelet expand length for left side to find avoidance target vehicles.                                                                           | 1.0           |
+| object_envelope_buffer                   | [m]  | double | Envelope object polygon with buffer in order to prevent shift line chattering.                                                                   | 0.3           |
+| enable_bound_clipping                    | [-]  | bool   | Enable clipping left and right bound of drivable area when obstacles are in the drivable area                                                    | false         |
+| enable_avoidance_over_same_direction     | [-]  | bool   | Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.                          | true          |
+| enable_avoidance_over_opposite_direction | [-]  | bool   | Extend avoidance trajectory to adjacent lanes that has opposite direction. `enable_avoidance_over_same_direction` must be `true` to take effects | true          |
+| enable_update_path_when_object_is_gone   | [-]  | bool   | Reset trajectory when avoided objects are gone. If false, shifted path points remain same even though the avoided objects are gone.              | false         |
+| enable_safety_check                      | [-]  | bool   | Flag to enable safety check.                                                                                                                     | false         |
+| enable_yield_maneuver                    | [-]  | bool   | Flag to enable yield maneuver.                                                                                                                   | false         |
+| publish_debug_marker                     | [-]  | bool   | Flag to publish debug marker (set `false` as default since it takes considerable cost).                                                          | false         |
+| print_debug_info                         | [-]  | bool   | Flag to print debug info (set `false` as default since it takes considerable cost).                                                              | false         |
 
-### Speed limit modification
+**NOTE:** It has to set both `enable_safety_check` and `enable_yield_maneuver` to enable yield maneuver.
 
-| Name                                   | Unit   | Type   | Description                                                                 | Default value |
-| :------------------------------------- | :----- | :----- | :-------------------------------------------------------------------------- | :------------ |
-| min_avoidance_speed_for_acc_prevention | [m]    | double | Minimum speed limit to be applied to prevent acceleration during avoidance. | 3.0           |
-| max_avoidance_acceleration             | [m/ss] | double | Maximum acceleration during avoidance.                                      | 0.5           |
+### Avoidance target filtering parameters
 
-### Object selection
-
-| Name                                   | Unit  | Type   | Description                                                                                                                                                                                                                            | Default value |
-| :------------------------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| object_check_forward_distance          | [m]   | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 150.0         |
-| object_check_backward_distance         | [m]   | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 2.0           |
-| threshold_distance_object_is_on_center | [m]   | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 1.0           |
-| threshold_speed_object_is_stopped      | [m/s] | double | Vehicles with speed greater than this will be excluded from avoidance target.                                                                                                                                                          | 1.0           |
-| detection_area_right_expand_dist       | [m]   | double | Lanelet expand length for right side to find avoidance target vehicles.                                                                                                                                                                | 0.0           |
-| detection_area_left_expand_dist        | [m]   | double | Lanelet expand length for left side to find avoidance target vehicles.                                                                                                                                                                 | 1.0           |
-| object_last_seen_threshold             | [s]   | double | For the compensation of the detection lost. The object is registered once it is observed as an avoidance target. When the detection loses, the timer will start and the object will be un-registered when the time exceeds this limit. | 2.0           |
-
-### Allow avoidance on specific object type
+namespace: `avoidance.target_object.`
 
 | Name       | Unit | Type | Description                                | Default value |
 | :--------- | ---- | ---- | ------------------------------------------ | ------------- |
@@ -487,12 +465,103 @@ The avoidance specific parameter configuration file can be located at `src/autow
 | motorcycle | [-]  | bool | Allow avoidance for object type MOTORCYCLE | false         |
 | pedestrian | [-]  | bool | Allow avoidance for object type PEDESTRIAN | false         |
 
-### System
+namespace: `avoidance.target_filtering.`
 
-| Name                 | Unit | Type   | Description                                                                             | Default value |
-| :------------------- | :--- | :----- | :-------------------------------------------------------------------------------------- | :------------ |
-| publish_debug_marker | [-]  | double | Flag to publish debug marker (set `false` as default since it takes considerable cost). | false         |
-| print_debug_info     | [-]  | double | Flag to print debug info (set `false` as default since it takes considerable cost).     | false         |
+| Name                                   | Unit  | Type   | Description                                                                                                                                                                                                                            | Default value |
+| :------------------------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| threshold_speed_object_is_stopped      | [m/s] | double | Vehicles with speed greater than this will be excluded from avoidance target.                                                                                                                                                          | 1.0           |
+| threshold_time_object_is_moving        | [s]   | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 1.0           |
+| threshold_distance_object_is_on_center | [m]   | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 1.0           |
+| object_check_forward_distance          | [m]   | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 150.0         |
+| object_check_backward_distance         | [m]   | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 2.0           |
+| object_check_goal_distance             | [m]   | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 20.0          |
+| object_check_shiftable_ratio           | [m]   | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 0.6           |
+| object_check_min_road_shoulder_width   | [m]   | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 0.5           |
+| object_last_seen_threshold             | [s]   | double | For the compensation of the detection lost. The object is registered once it is observed as an avoidance target. When the detection loses, the timer will start and the object will be un-registered when the time exceeds this limit. | 2.0           |
+| left_hand_traffic                      | [-]   | bool   | Flag to select left or right hand traffic. `TRUE: LEFT-HAND TRAFFIC / FALSE: RIGHT-HAND TRAFFIC`                                                                                                                                       | true          |
+
+### Safety check parameters
+
+namespace: `avoidance.safety_check.`
+
+| Name                           | Unit   | Type   | Description                                                                       | Default value |
+| :----------------------------- | ------ | ------ | --------------------------------------------------------------------------------- | ------------- |
+| safety_check_backward_distance | [m]    | double | Backward distance to search the dynamic objects.                                  | 50.0          |
+| safety_check_time_horizon      | [s]    | double | Time holizon to check lateral/longitudinal margin is enough or not.               | 10.0          |
+| safety_check_idling_time       | [t]    | double | Time delay constant that be use for longitudinal margin calculation based on RSS. | 1.5           |
+| safety_check_accel_for_rss     | [m/ss] | double | Accel constant that be used for longitudinal margin calculation based on RSS.     | 2.5           |
+| safety_check_hysteresis_factor | [-]    | double | Hysteresis factor that be used for chattering prevention.                         | 2.0           |
+
+### Avoidance maneuver parameters
+
+namespace: `avoidance.avoidance.lateral.`
+
+| Name                                  | Unit | Type   | Description                                                                                                                 | Default value |
+| :------------------------------------ | :--- | :----- | :-------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| lateral_collision_margin              | [m]  | double | The lateral distance between ego and avoidance targets.                                                                     | 1.0           |
+| lateral_collision_safety_buffer       | [m]  | double | Creates an additional gap that will prevent the vehicle from getting to near to the obstacle                                | 0.7           |
+| road_shoulder_safety_margin           | [m]  | double | Prevents the generated path to come too close to the road shoulders.                                                        | 0.0           |
+| avoidance_execution_lateral_threshold | [m]  | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2) | 0.499         |
+| max_right_shift_length                | [m]  | double | Maximum shift length for right direction                                                                                    | 5.0           |
+| max_left_shift_length                 | [m]  | double | Maximum shift length for left direction                                                                                     | 5.0           |
+
+namespace: `avoidance.avoidance.longitudinal.`
+
+| Name                                 | Unit  | Type   | Description                                                                                            | Default value |
+| :----------------------------------- | :---- | :----- | :----------------------------------------------------------------------------------------------------- | :------------ |
+| prepare_time                         | [s]   | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change.          | 2.0           |
+| longitudinal_collision_safety_buffer | [s]   | double | Longitudinal collision buffer between target object and shift line.                                    | 0.0           |
+| min_prepare_distance                 | [m]   | double | Minimum distance for "prepare_time" x "ego_speed".                                                     | 1.0           |
+| min_avoidance_distance               | [m]   | double | Minimum distance of avoidance path (i.e. this distance is needed even if its lateral jerk is very low) | 10.0          |
+| min_nominal_avoidance_speed          | [m/s] | double | Minimum speed for jerk calculation in a nominal situation (\*1).                                       | 7.0           |
+| min_sharp_avoidance_speed            | [m/s] | double | Minimum speed for jerk calculation in a sharp situation (\*1).                                         | 1.0           |
+
+### Yield maneuver parameters
+
+namespace: `avoidance.yield.`
+
+| Name           | Unit  | Type   | Description                                                   | Default value |
+| :------------- | :---- | :----- | :------------------------------------------------------------ | :------------ |
+| yield_velocity | [m/s] | double | The ego will decelerate yield velocity in the yield maneuver. | 2.78          |
+
+### Stop maneuver parameters
+
+namespace: `avoidance.stop.`
+
+| Name         | Unit | Type   | Description                                                                                           | Default value |
+| :----------- | :--- | :----- | :---------------------------------------------------------------------------------------------------- | :------------ |
+| min_distance | [m]  | double | Minimum stop distance in the situation where avoidance maneuver is not approved or in yield maneuver. | 10.0          |
+| max_distance | [m]  | double | Maximum stop distance in the situation where avoidance maneuver is not approved or in yield maneuver. | 20.0          |
+
+### Constraints parameters
+
+namespace: `avoidance.constraints.`
+
+| Name                      | Unit | Type | Description                                                                              | Default value |
+| :------------------------ | :--- | :--- | :--------------------------------------------------------------------------------------- | :------------ |
+| use_constraints_for_decel | [-]  | bool | Flag to decel under longitudinal constraints. `TRUE: allow to control breaking mildness` | false         |
+
+namespace: `avoidance.constraints.lateral.`
+
+| a Name               | Unit   | Type   | Description                                                                                   | Default value |
+| :------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------- | :------------ |
+| prepare_time         | [s]    | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change. | 2.0           |
+| min_prepare_distance | [m]    | double | Minimum distance for "prepare_time" x "ego_speed".                                            | 1.0           |
+| nominal_lateral_jerk | [m/s3] | double | Avoidance path is generated with this jerk when there is enough distance from ego.            | 0.2           |
+| max_lateral_jerk     | [m/s3] | double | Avoidance path gets sharp up to this jerk limit when there is not enough distance from ego.   | 1.0           |
+
+namespace: `avoidance.constraints.longitudinal.`
+
+| Name                                   | Unit    | Type   | Description                                                                 | Default value |
+| :------------------------------------- | :------ | :----- | :-------------------------------------------------------------------------- | :------------ |
+| nominal_deceleration                   | [m/ss]  | double | Nominal deceleration limit.                                                 | -1.0          |
+| nominal_jerk                           | [m/sss] | double | Nominal jerk limit.                                                         | 0.5           |
+| max_deceleration                       | [m/ss]  | double | Max decelerate limit.                                                       | -2.0          |
+| max_jerk                               | [m/sss] | double | Max jerk limit.                                                             | 1.0           |
+| min_avoidance_speed_for_acc_prevention | [m]     | double | Minimum speed limit to be applied to prevent acceleration during avoidance. | 3.0           |
+| max_avoidance_acceleration             | [m/ss]  | double | Maximum acceleration during avoidance.                                      | 0.5           |
+
+(\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 
 ## Future extensions / Unimplemented parts
 
