@@ -546,11 +546,11 @@ The $W$ represents vehicle width, and $L_{margin}$ represents `lateral_passable_
 
 #### Limitation
 
-**Limitation1**
+##### Limitation1
 
-The current behavior in unsafe condition is just slow down and it is so conservative. It is difficult to achieve aggresive behavior in the current architecture because of modulatiry. There are many modules in autoware that change the vehicle speed, and the avoidance module cannot know what speed planning they will output, so it is forced to choose a behavior that is as independent of other modules' processing as possible.
+The current behavior in unsafe condition is just slow down and it is so conservative. It is difficult to achieve aggressive behavior in the current architecture because of modularity. There are many modules in autoware that change the vehicle speed, and the avoidance module cannot know what speed planning they will output, so it is forced to choose a behavior that is as independent of other modules' processing as possible.
 
-**Limitation2**
+##### Limitation2
 
 The YIELD maneuver is executed **ONLY** when the vehicle has **NOT** initiated avoidance maneuver. The module has a threshold parameter (`avoidance_initiate_threshold`) for the amount of shifting and determines that the vehicle is initiating avoidance if the vehicle current shift exceeds the threshold.
 
