@@ -67,88 +67,72 @@ void TimingViolationMonitorDebug::registerNodeToDebug(
     [this](tier4_system_msgs::msg::TimingViolationMonitorCommand::ConstSharedPtr msg) {
       TimingViolationMonitorDebug::onCommand(msg);
     });
-  std::string fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-  RCLCPP_INFO(node->get_logger(), "\n\n--- %s ---\n", fs.c_str());
 }
 
 // show stats
 void TimingViolationMonitorDebug::cmdShowStatis()
 {
-  std::string fs = fmt::format("\n----- statistics ({}) -----", this->version);
-  std::cout << fs.c_str() << std::endl;
+  std::string fs =
+    fmt::format("\n----- timing violation monitor statistics ({}) start -----\n", this->version);
   for (auto pair : path_debug_info_) {
     auto dinfo_ptr = pair.second;
     auto pinfo_ptr = dinfo_ptr->pinfo_ptr;
-    fs = fmt::format(
-      "path_name={} path_i={} p_i={}(ms) d_i={}(ms)", pinfo_ptr->path_name.c_str(),
+    fs += fmt::format(
+      "path_name={} path_i={} p_i={}(ms) d_i={}(ms)\n", pinfo_ptr->path_name.c_str(),
       pinfo_ptr->index, pinfo_ptr->p_i * 1000, pinfo_ptr->d_i * 1000);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format("topic={} [{}]", pinfo_ptr->topic.c_str(), pinfo_ptr->mtype.c_str());
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format("deadline detect={}", (dinfo_ptr->enable_detect == true) ? "true" : "false");
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "topic valid={} discard={}", dinfo_ptr->valid_topic_count, dinfo_ptr->discard_topic_count);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "path OK={} NG={}", dinfo_ptr->completed_count,
+    fs += fmt::format("topic={} [{}]\n", pinfo_ptr->topic.c_str(), pinfo_ptr->mtype.c_str());
+    fs +=
+      fmt::format("deadline detect={}\n", (dinfo_ptr->enable_detect == true) ? "true" : "false");
+    fs += fmt::format(
+      "topic valid={} discard={}\n", dinfo_ptr->valid_topic_count, dinfo_ptr->discard_topic_count);
+    fs += fmt::format(
+      "path OK={} NG={}\n", dinfo_ptr->completed_count,
       dinfo_ptr->deadline_miss_count + dinfo_ptr->false_deadline_miss_count +
         dinfo_ptr->presumed_deadline_miss_count);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format("path completed={}", dinfo_ptr->completed_count);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "deadline miss={} false_miss={} presumed miss={}", dinfo_ptr->deadline_miss_count,
+    fs += fmt::format("path completed={}\n", dinfo_ptr->completed_count);
+    fs += fmt::format(
+      "deadline miss={} false_miss={} presumed miss={}\n", dinfo_ptr->deadline_miss_count,
       dinfo_ptr->false_deadline_miss_count, dinfo_ptr->presumed_deadline_miss_count);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "response time({}) min={:.6f} ave={:.6f} max={:.6f} (sec)", dinfo_ptr->response_time.getCnt(),
-      dinfo_ptr->response_time.getMin(), dinfo_ptr->response_time.getAve(),
-      dinfo_ptr->response_time.getMax());
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "too long response time({}) min={:.6f} ave={:.6f} max={:.6f} (sec)",
+    fs += fmt::format(
+      "response time({}) min={:.6f} ave={:.6f} max={:.6f} (sec)\n",
+      dinfo_ptr->response_time.getCnt(), dinfo_ptr->response_time.getMin(),
+      dinfo_ptr->response_time.getAve(), dinfo_ptr->response_time.getMax());
+    fs += fmt::format(
+      "too long response time({}) min={:.6f} ave={:.6f} max={:.6f} (sec)\n",
       dinfo_ptr->too_long_response_time.getCnt(), dinfo_ptr->too_long_response_time.getMin(),
       dinfo_ptr->too_long_response_time.getAve(), dinfo_ptr->too_long_response_time.getMax());
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format("cur_j={} completed_j={}", pinfo_ptr->cur_j, pinfo_ptr->completed_j);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format("r_i_j_1={:.6f} r_i_j={:.6f}", pinfo_ptr->r_i_j_1, pinfo_ptr->r_i_j);
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "topic({}) HZ min={:.6f} ave={:.6f} max={:.6f} (sec) d_i over={} per limit={}",
+    fs += fmt::format("cur_j={} completed_j={}\n", pinfo_ptr->cur_j, pinfo_ptr->completed_j);
+    fs += fmt::format("r_i_j_1={:.6f} r_i_j={:.6f}\n", pinfo_ptr->r_i_j_1, pinfo_ptr->r_i_j);
+    fs += fmt::format(
+      "topic({}) HZ min={:.6f} ave={:.6f} max={:.6f} (sec) d_i over={} per limit={}\n",
       dinfo_ptr->hz.getCnt(), dinfo_ptr->hz.getMin(), dinfo_ptr->hz.getAve(),
       dinfo_ptr->hz.getMax(), dinfo_ptr->hz.getOver(), dinfo_ptr->hz.getPerLimit());
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "topic({}) Sub interval min={:.6f} ave={:.6f} max={:.6f} (sec) d_i over={} per limit={}",
+    fs += fmt::format(
+      "topic({}) Sub interval min={:.6f} ave={:.6f} max={:.6f} (sec) d_i over={} per limit={}\n",
       dinfo_ptr->sub_interval.getCnt(), dinfo_ptr->sub_interval.getMin(),
       dinfo_ptr->sub_interval.getAve(), dinfo_ptr->sub_interval.getMax(),
       dinfo_ptr->sub_interval.getOver(), dinfo_ptr->sub_interval.getPerLimit());
-    std::cout << fs.c_str() << std::endl;
-    fs = fmt::format(
-      "communication delay({}) min={:.6f} ave={:.6f} max={:.6f} (sec)",
+    fs += fmt::format(
+      "communication delay({}) min={:.6f} ave={:.6f} max={:.6f} (sec)\n",
       dinfo_ptr->com_delay.getCnt(), dinfo_ptr->com_delay.getMin(), dinfo_ptr->com_delay.getAve(),
       dinfo_ptr->com_delay.getMax());
-    std::cout << fs.c_str() << std::endl;
-    std::cout << "-- deadline timer ---" << std::endl;
     for (auto kv : pinfo_ptr->deadline_timer) {
       auto dm = kv.second;
-      fs = fmt::format(
-        "-- j={}[{}] valid={} start={:.6f}", dm.self_j, dm.uniq, dm.valid, dm.start_time);
+      fs += fmt::format(
+        "-- j={}[{}] valid={} start={:.6f}\n", dm.self_j, dm.uniq, dm.valid, dm.start_time);
     }
-    std::cout << "---------------------" << std::endl;
+    fs += fmt::format("-------------\n", this->version);
   }
   if (debug_ctrl) {
-    std::cout << "--- callbacks ---" << std::endl;
+    fs += fmt::format("--- callbacks ---\n");
     for (auto & cb : cb_statis_map_) {
-      fs = fmt::format(
+      fs += fmt::format(
         "[{}] ({}) min={:.6f} ave={:.6f} max={:.6f} (sec)", cb.first.c_str(), cb.second.getCnt(),
         cb.second.getMin(), cb.second.getAve(), cb.second.getMax());
-      std::cout << fs.c_str() << std::endl;
     }
   }
-  std::cout << "(END)-----------------\n" << std::endl;
+  fs += fmt::format("----- timing violation monitor statistics ({}) end -----\n", this->version);
+  RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
 }
 
 // command topic callback
@@ -158,57 +142,54 @@ void TimingViolationMonitorDebug::onCommand(
   std::lock_guard<std::mutex> lock(tm_mutex_);
   cbStatisEnter(__func__);
 
-  std::string fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
+  std::string fs;
   if (msg->command == SHOW_INFO) {
     cmdShowStatis();
   } else if (msg->command == REQ_INFO) {
-    std::cout << "--- statistics & infos topic ---" << std::endl;
-    std::cout << fs.c_str() << std::endl;
     pubCmdReqInfo();
+    fs = fmt::format("\n--- req info\n");
+    fs += fmt::format("debug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else if (msg->command == PRINT_LOG) {
-    std::cout << "--- start of log ---" << std::endl;
     printLog();
-    std::cout << "--- end of log ---\n" << std::endl;
-    std::cout << fs.c_str() << std::endl;
+    RCLCPP_INFO(this->node->get_logger(), "\n--- print log\n");
   } else if (msg->command == CLR_INFO) {
-    std::cout << "--- clear statics & infos ---" << std::endl;
     clearInfo();
+    RCLCPP_INFO(this->node->get_logger(), "\n--- clear info\n");
   } else if (msg->command == ENA_DETECT) {
-    std::cout << "--- restart detect ---" << std::endl;
     detectCtrl(true);
+    RCLCPP_INFO(this->node->get_logger(), "\n--- enable timing violation detection\n");
   } else if (msg->command == DIS_DETECT) {
-    std::cout << "--- stop detect ---" << std::endl;
     detectCtrl(false);
+    RCLCPP_INFO(this->node->get_logger(), "\n--- disable timing violation detection\n");
   } else if (msg->command == ENA_LOG) {
-    std::cout << "--- logging enable ---" << std::endl;
     enLog(true);
-    fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-    std::cout << fs.c_str() << std::endl;
+    fs = fmt::format("\n--- enable logging\n");
+    fs += fmt::format("debug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else if (msg->command == DIS_LOG) {
-    std::cout << "--- logging disable ---" << std::endl;
     enLog(false);
-    fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-    std::cout << fs.c_str() << std::endl;
+    fs = fmt::format("\n--- disable logging\n");
+    fs += fmt::format("debug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else if (msg->command == ENA_DBG) {
-    std::cout << "--- debug enable ---" << std::endl;
     enDbg(true);
-    fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-    std::cout << fs.c_str() << std::endl;
+    fs = fmt::format("\n--- enable debug\n");
+    fs += fmt::format("debug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else if (msg->command == DIS_DBG) {
-    std::cout << "--- debug disable ---" << std::endl;
     enDbg(false);
-    fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-    std::cout << fs.c_str() << std::endl;
+    fs = fmt::format("\n--- disabled debug\n");
+    fs += fmt::format("debug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else if (msg->command == DISP_ON) {
-    std::cout << "--- logging display ---" << std::endl;
     dispLogCtrl(true);
-    fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-    std::cout << fs.c_str() << std::endl;
+    fs = fmt::format("\ndebug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else if (msg->command == DISP_OFF) {
-    std::cout << "--- logging display off ---" << std::endl;
     dispLogCtrl(false);
-    fs = fmt::format("debug={} log={} disp={}", debug_ctrl, enable_log, log_disp);
-    std::cout << fs.c_str() << std::endl;
+    fs = fmt::format("\ndebug={} log={} disp={}\n", debug_ctrl, enable_log, log_disp);
+    RCLCPP_INFO(this->node->get_logger(), "%s", fs.c_str());
   } else {
     RCLCPP_WARN(
       this->node->get_logger(), "[%s]:%04d ## not supported command [%s]", __func__, __LINE__,
@@ -407,7 +388,7 @@ void TimingViolationMonitorDebug::printLog()
     return;
   }
   for (auto & fs : log_buffer_) {
-    std::cout << fs.c_str() << std::endl;
+    RCLCPP_INFO(this->node->get_logger(), "%s\n", fs.c_str());
   }
 }
 void TimingViolationMonitorDebug::enDbg(bool ope)

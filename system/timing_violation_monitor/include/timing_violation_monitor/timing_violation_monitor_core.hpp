@@ -70,9 +70,6 @@ public:
 
   TimingViolationMonitorPathConfig(uint32_t index, std::mutex * mtx) : index(index), p_mutex(mtx)
   {
-    std::string fs =
-      fmt::format("[{}]:{} >>> constructor({}) >>>", __func__, __LINE__, this->index);
-    std::cout << fs.c_str() << std::endl;
     status = e_stat::ST_NONE;
     cur_j = 0l;
     completed_j = -1l;
@@ -81,12 +78,7 @@ public:
     r_i_j_1 = r_i_j = 0.0;
   }
   TimingViolationMonitorPathConfig(const TimingViolationMonitorPathConfig & c) = delete;
-  ~TimingViolationMonitorPathConfig()
-  {
-    std::string fs = fmt::format("[{}]:{} <<< destructor({}) <<<", __func__, __LINE__, this->index);
-    std::cout << fs.c_str() << std::endl;
-    delete p_mutex;
-  }
+  ~TimingViolationMonitorPathConfig() { delete p_mutex; }
 
   // variables
   e_stat status;

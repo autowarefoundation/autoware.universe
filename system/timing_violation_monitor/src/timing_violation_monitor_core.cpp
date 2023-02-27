@@ -119,8 +119,6 @@ TimingViolationMonitor::TimingViolationMonitor()
   gethostname(host_name, sizeof(host_name));
   updater_->setHardwareID(host_name);
   updater_->add("timing violation monitor", this, &TimingViolationMonitor::diagDataUpdate);
-
-  RCLCPP_INFO(get_logger(), "\n\n--- start ---\n");
 }
 
 void TimingViolationMonitor::registerNodeToDebug(
@@ -419,9 +417,9 @@ void TimingViolationMonitor::startIntervalTimer(
     pinfo.interval_timer->cancel();
     pinfo.interval_timer.reset();
   }
-  const auto tval = rclcpp::Rate(1 / time_val).period();
+  const auto period_time = rclcpp::Rate(1 / time_val).period();
   pinfo.interval_timer = rclcpp::create_timer(
-    this, get_clock(), tval, [this, &pinfo]() { TimingViolationMonitor::onIntervalTimer(pinfo); });
+    this, get_clock(), period_time, [this, &pinfo]() { TimingViolationMonitor::onIntervalTimer(pinfo); });
   if (pinfo.interval_timer.get() == nullptr) {
     RCLCPP_ERROR(
       get_logger(), "[%s]:%04d <%s> ## interval timer null", __func__, __LINE__,
@@ -440,9 +438,9 @@ void TimingViolationMonitor::startPeriodicTimer(
     pinfo.periodic_timer->cancel();
     pinfo.periodic_timer.reset();
   }
-  const auto tval = rclcpp::Rate(1 / time_val).period();
+  const auto period_time = rclcpp::Rate(1 / time_val).period();
   pinfo.periodic_timer = rclcpp::create_timer(
-    this, get_clock(), tval, [this, &pinfo]() { TimingViolationMonitor::onPeriodicTimer(pinfo); });
+    this, get_clock(), period_time, [this, &pinfo]() { TimingViolationMonitor::onPeriodicTimer(pinfo); });
   if (pinfo.periodic_timer.get() == nullptr) {
     RCLCPP_ERROR(
       get_logger(), "[%s]:%04d <%s> ## periodic timer null", __func__, __LINE__,
@@ -465,8 +463,8 @@ void TimingViolationMonitor::startDeadlineTimer(
   dm.valid = true;
   pinfo.deadline_timer.emplace_hint(pinfo.deadline_timer.end(), dm.uniq, dm);
   auto & idm = pinfo.deadline_timer[dm.uniq];
-  const auto tval = rclcpp::Rate(1 / dm.timer_val).period();
-  idm.timer = rclcpp::create_timer(this, get_clock(), tval, [this, &pinfo, &idm]() {
+  const auto period_time = rclcpp::Rate(1 / dm.timer_val).period();
+  idm.timer = rclcpp::create_timer(this, get_clock(), period_time, [this, &pinfo, &idm]() {
     TimingViolationMonitor::onDeadlineTimer(pinfo, idm);
   });
   if (idm.timer.get() == nullptr) {
