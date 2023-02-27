@@ -25,7 +25,7 @@ namespace pointcloud_preprocessor
 DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOptions & options)
 : Node("distortion_corrector_node", options)
 {
-  prepare_sincos();
+  trig_func_ = std::make_shared<tier4_autoware_utils::PrecomputedTrigFunc>(SINCOS_TABLE_SIZE);
 
   // initialize debug tool
   {
@@ -282,11 +282,11 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     theta += w * time_offset;
     baselink_quat.setValue(
-      0, 0, cached_sin(theta * 0.5f),
-      cached_cos(theta * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
+      0, 0, trig_func_->sin(theta * 0.5f),
+      trig_func_->cos(theta * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
     const float dis = v * time_offset;
-    x += dis * cached_cos(theta);
-    y += dis * cached_sin(theta);
+    x += dis * trig_func_->cos(theta);
+    y += dis * trig_func_->sin(theta);
 
     baselinkTF_odom.setOrigin(tf2::Vector3(x, y, 0.0));
     baselinkTF_odom.setRotation(baselink_quat);
