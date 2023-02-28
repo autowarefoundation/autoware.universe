@@ -99,6 +99,7 @@ struct StopParam
 
   // margin between obstacle and the ego's front [m]
   double max_longitudinal_margin;
+  double max_longitudinal_margin_behind_goal;
 
   // margin between obstacle and the ego's front [m]
   // if any other stop point is inserted within max_longitudinal_margin.
@@ -121,11 +122,11 @@ struct StopParam
   // params for trajectory pre-process
   // =================================
 
-  // trajectory extend distance [m]
-  double extend_distance;
-
   // step length for pointcloud search range [m]
   double step_length;
+
+  // enable extend trajectory after goal lane for obstacle detection
+  bool enable_stop_behind_goal_for_obstacle;
 
   // ======
   // others
