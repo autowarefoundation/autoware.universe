@@ -149,6 +149,12 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    autonomous_emergency_braking_loader = LoadComposableNodes(
+        condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
+        composable_node_descriptions=[autonomous_emergency_braking],
+        target_container="/control/control_container",
+    )
+
     # vehicle cmd gate
     vehicle_cmd_gate_component = ComposableNode(
         package="vehicle_cmd_gate",
@@ -285,7 +291,6 @@ def launch_setup(context, *args, **kwargs):
             controller_component,
             lane_departure_component,
             shift_decider_component,
-            autonomous_emergency_braking,
             vehicle_cmd_gate_component,
             operation_mode_transition_manager_component,
         ],
@@ -298,6 +303,7 @@ def launch_setup(context, *args, **kwargs):
             external_cmd_selector_loader,
             external_cmd_converter_loader,
             obstacle_collision_checker_loader,
+            autonomous_emergency_braking_loader,
         ]
     )
 
@@ -331,6 +337,7 @@ def generate_launch_description():
     add_launch_arg("obstacle_collision_checker_param_path")
     add_launch_arg("external_cmd_selector_param_path")
     add_launch_arg("aeb_param_path")
+    add_launch_arg("enable_autonomous_emergency_braking")
 
     # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
