@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/debug_utilities.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
+#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/util/pull_out/pull_out_path.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <route_handler/route_handler.hpp>
@@ -418,11 +418,6 @@ PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
   const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
   const double lane_change_buffer);
-
-bool checkLaneIsInIntersection(
-  const RouteHandler & route_handler, const PathWithLaneId & ref,
-  const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameters,
-  const int num_lane_change, double & additional_length_to_add);
 
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,

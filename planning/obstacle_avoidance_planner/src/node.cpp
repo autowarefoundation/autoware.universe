@@ -43,22 +43,29 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset =
+    abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
   {  // 1st circle (rear)
+    const double radius = (vehicle_param.width / 2.0 + lateral_offset) * rear_radius_ratio;
+
     longitudinal_offsets.push_back(-vehicle_param.rear_overhang);
-    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   {  // 2nd circle (front)
-    const double radius = std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+    const double radius =
+      (std::hypot(
+         vehicle_param.length / static_cast<double>(circle_num) / 2.0,
+         (vehicle_param.width / 2.0 + lateral_offset)) *
+       front_radius_ratio);
 
     const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
     const double longitudinal_offset =
       unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
 
     longitudinal_offsets.push_back(longitudinal_offset);
-    radiuses.push_back(radius * front_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   return {radiuses, longitudinal_offsets};
@@ -69,11 +76,13 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset =
+    abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
-  const double radius =
-    std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0) *
-    radius_ratio;
+  const double radius = std::hypot(
+                          vehicle_param.length / static_cast<double>(circle_num) / 2.0,
+                          (vehicle_param.width / 2.0 + lateral_offset)) *
+                        radius_ratio;
   const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
 
   for (size_t i = 0; i < circle_num; ++i) {
@@ -92,8 +101,10 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset =
+    abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
-  const double radius = vehicle_param.width / 2.0;
+  const double radius = (vehicle_param.width / 2.0 + lateral_offset);
   const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num - 1);
 
   for (size_t i = 0; i < circle_num; ++i) {
@@ -110,22 +121,27 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBic
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
+  const double lateral_offset =
+    abs(vehicle_param.right_overhang - vehicle_param.left_overhang) / 2.0;
 
   {  // 1st circle (rear wheel)
+    const double radius = (vehicle_param.width / 2.0 + lateral_offset) * rear_radius_ratio;
     longitudinal_offsets.push_back(0.0);
-    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   {  // 2nd circle (front wheel)
     const double radius = std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+                            vehicle_param.length / static_cast<double>(circle_num) / 2.0,
+                            (vehicle_param.width / 2.0 + lateral_offset)) *
+                          front_radius_ratio;
 
     const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
     const double longitudinal_offset =
       unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
 
     longitudinal_offsets.push_back(longitudinal_offset);
-    radiuses.push_back(radius * front_radius_ratio);
+    radiuses.push_back(radius);
   }
 
   return {radiuses, longitudinal_offsets};
@@ -307,6 +323,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     reset_prev_optimization_ = declare_parameter<bool>("option.reset_prev_optimization");
     is_considering_footprint_edges_ =
       declare_parameter<bool>("option.is_considering_footprint_edges");
+
+    vehicle_stop_margin_outside_drivable_area_ =
+      declare_parameter<double>("common.vehicle_stop_margin_outside_drivable_area");
   }
 
   {  // trajectory parameter
@@ -602,6 +621,10 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     updateParam<bool>(parameters, "option.reset_prev_optimization", reset_prev_optimization_);
     updateParam<bool>(
       parameters, "option.is_considering_footprint_edges", is_considering_footprint_edges_);
+
+    updateParam<double>(
+      parameters, "common.vehicle_stop_margin_outside_drivable_area",
+      vehicle_stop_margin_outside_drivable_area_);
   }
 
   {  // trajectory parameter
@@ -1295,15 +1318,31 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     const bool is_outside = drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
       traj_point, left_bound, right_bound, vehicle_param_, is_considering_footprint_edges_);
 
-    // only insert zero velocity to the first point outside drivable area
+    // only insert zero velocity to the point with longitudinal offset margin from the first point
+    // outside drivable area
     if (is_outside) {
-      traj_points[i].longitudinal_velocity_mps = 0.0;
-      debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
+      size_t stop_idx = i;
+      const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(
+        traj_points, traj_point.pose.position, -1.0 * vehicle_stop_margin_outside_drivable_area_);
+
+      if (op_target_point) {
+        const auto target_point = op_target_point.get();
+        // confirm that target point doesn't overlap with the stop point outside drivable area
+        const auto dist = tier4_autoware_utils::calcDistance2d(traj_point, target_point);
+        const double overlap_threshold = 1e-3;
+        if (dist > overlap_threshold) {
+          stop_idx = motion_utils::findNearestSegmentIndex(traj_points, target_point);
+        }
+      }
+
+      traj_points[stop_idx].longitudinal_velocity_mps = 0.0;
+      debug_data_.stop_pose_by_drivable_area = traj_points[stop_idx].pose;
 
       // NOTE: traj_points does not have valid z for efficient calculation of trajectory
       if (!planner_data.path.points.empty()) {
-        const size_t path_idx =
-          motion_utils::findNearestIndex(planner_data.path.points, traj_points[i].pose.position);
+        const size_t path_idx = motion_utils::findNearestIndex(
+          planner_data.path.points, traj_points[stop_idx].pose.position);
+
         debug_data_.stop_pose_by_drivable_area->position.z =
           planner_data.path.points.at(path_idx).pose.position.z;
       }
