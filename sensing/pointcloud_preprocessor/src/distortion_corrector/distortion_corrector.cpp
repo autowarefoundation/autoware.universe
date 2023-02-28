@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+#include "tier4_autoware_utils/math/trigonometry.hpp"
 
-#include <cmath>
 #include <deque>
 #include <string>
 #include <utility>
@@ -25,8 +25,6 @@ namespace pointcloud_preprocessor
 DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOptions & options)
 : Node("distortion_corrector_node", options)
 {
-  trig_func_ = std::make_shared<tier4_autoware_utils::PrecomputedTrigFunc>(SINCOS_TABLE_SIZE);
-
   // initialize debug tool
   {
     using tier4_autoware_utils::DebugPublisher;
@@ -282,11 +280,11 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     theta += w * time_offset;
     baselink_quat.setValue(
-      0, 0, trig_func_->sin(theta * 0.5f),
-      trig_func_->cos(theta * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
+      0, 0, tier4_autoware_utils::sin(theta * 0.5f),
+      tier4_autoware_utils::cos(theta * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
     const float dis = v * time_offset;
-    x += dis * trig_func_->cos(theta);
-    y += dis * trig_func_->sin(theta);
+    x += dis * tier4_autoware_utils::cos(theta);
+    y += dis * tier4_autoware_utils::sin(theta);
 
     baselinkTF_odom.setOrigin(tf2::Vector3(x, y, 0.0));
     baselinkTF_odom.setRotation(baselink_quat);

@@ -36,7 +36,6 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
-#include <tier4_autoware_utils/math/precompute.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
@@ -48,8 +47,6 @@ namespace pointcloud_preprocessor
 {
 using rcl_interfaces::msg::SetParametersResult;
 using sensor_msgs::msg::PointCloud2;
-
-static const int SINCOS_TABLE_SIZE = 36000;
 
 class DistortionCorrectorComponent : public rclcpp::Node
 {
@@ -84,8 +81,6 @@ private:
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
   bool use_imu_;
-
-  std::shared_ptr<tier4_autoware_utils::PrecomputedTrigFunc> trig_func_;
 };
 
 }  // namespace pointcloud_preprocessor
