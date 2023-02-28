@@ -49,7 +49,7 @@ def generate_test_description():
             ),
             os.path.join(
                 get_package_share_directory("obstacle_avoidance_planner"),
-                "param/obstacle_avoidance_planner.param.yaml",
+                "config/obstacle_avoidance_planner.param.yaml",
             ),
             os.path.join(
                 get_package_share_directory("map_loader"),

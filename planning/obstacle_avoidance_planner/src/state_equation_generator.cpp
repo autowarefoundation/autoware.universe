@@ -51,9 +51,12 @@ StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
     const int idx_u_i_prev = (i - 1) * D_u;
 
     // get discrete kinematics matrix A, B, W
-    const double ds = ref_points.at(i - 1).delta_arc_length;
-    const double ref_k = ref_points.at(i - 1).curvature;
-    vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, ref_k, ds);
+    const auto & p = ref_points.at(i - 1);
+
+    // TODO(murooka) use curvature by stabling optimization
+    // Currently, when using curvature, the optimization result is weird with sample_map.
+    // vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, p.curvature, p.delta_arc_length);
+    vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, 0.0, p.delta_arc_length);
 
     B.block(idx_x_i, 0, D_x, D_x) = Ad * B.block(idx_x_i_prev, 0, D_x, D_x);
     B.block(idx_x_i, D_x + idx_u_i_prev, D_x, D_u) = Bd;

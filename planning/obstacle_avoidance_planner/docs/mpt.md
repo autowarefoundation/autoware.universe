@@ -16,7 +16,7 @@ Trajectory near the ego must be stable, therefore the condition where trajectory
 
 ```plantuml
 @startuml
-title pathCallback
+title getModelPredictiveTrajectory
 start
 
 :calcReferencePoints;

@@ -589,13 +589,6 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
     ref_points.resize(mpt_param_.num_points);
   }
 
-  // TODO(murooka) remove this by stabling optimization
-  // Currently, without this, the optimization result is weird
-  // with sample_map.
-  for (size_t i = 0; i < ref_points.size(); ++i) {
-    ref_points.at(i).curvature = 0.0;
-  }
-
   time_keeper_ptr_->toc(__func__, "        ");
 
   return ref_points;
@@ -1163,8 +1156,17 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   // steer limit
   if (mpt_param_.steer_limit_constraint) {
     A.block(A_rows_end, D_x, N_u, N_u) = Eigen::MatrixXd::Identity(N_u, N_u);
-    lb.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, -mpt_param_.max_steer_rad);
-    ub.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, mpt_param_.max_steer_rad);
+
+    // TODO(murooka) use curvature by stabling optimization
+    // Currently, when using curvature, the optimization result is weird with sample_map.
+    // lb.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, -mpt_param_.max_steer_rad);
+    // ub.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, mpt_param_.max_steer_rad);
+
+    for (size_t i = 0; i < N_u; ++i) {
+      const double ref_steer_angle = std::atan2(vehicle_info_.wheel_base_m * ref_points.at(i).curvature, 1.0);
+      lb(A_rows_end + i) = ref_steer_angle - mpt_param_.max_steer_rad;
+      ub(A_rows_end + i) = ref_steer_angle + mpt_param_.max_steer_rad;
+    }
 
     A_rows_end += N_u;
   }
