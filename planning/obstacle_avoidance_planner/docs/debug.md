@@ -2,56 +2,71 @@
 
 ## Debug visualization
 
-Topics for debugging will be explained in this section.
+The rviz config file for `obstacle_avoidance_planner` is [here](../rviz/obstacle_avoidance_planner.rviz).
+All the following visualization markers are contained.
 
-- **Drivable area**
-  - Drivable area to cover the road. Whether this area is continuous and covers the road can be checked.
-  - `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/drivable_area`, whose type is `nav_msgs/msg/OccupancyGrid`
+### Input
+- **Path**
+  - The path generated in the `behavior` planner.
+  - The semitransparent and thick, green and red band, that is visualized by default.
 
-![drivable_area](../media/drivable_area.png)
+![path](../media/path_visualization.png)
 
-- **Path from behavior**
-  - The input path of obstacle_avoidance_planner. Whether this path is continuous and the curvature is not so high can be checked.
-  - `Path` or `PathFootprint` rviz plugin.
+- **Path Footprint**
+  - The path generated in the `behavior` planner is converted to footprints.
 
-![behavior_path](../media/behavior_path.png)
+![path_footprint](../media/path_footprint_visualization.png)
 
-- **EB trajectory**
-  - The output trajectory of elastic band. Whether this trajectory is very smooth and a sampling width is constant can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
+- **Drivalbe Area**
+  - The Drivable area generated in the `behavior` planner.
+  - The skyblue left and right line strings, that is visualized by default.
 
-![eb_traj](../media/eb_traj.png)
+![drivable_area](../media/drivable_area_visualization.png)
 
-- **MPT reference trajectory**
-  - The reference trajectory of model predictive trajectory. Whether this trajectory is very smooth and a sampling width is constant can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
+### Elastic Band (EB)
+- **EB Fixed Trajectory**
+  - The fixed trajectory points for elastic band.
 
-![mpt_ref_traj](../media/mpt_ref_traj.png)
+![eb_fixed_traj](../media/eb_fixed_traj_visualization.png)
 
-- **MPT fixed trajectory**
-  - The fixed trajectory around the ego of model predictive trajectory.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
+- **EB Trajectory**
+  - The optimized trajectory points by elastic band.
 
-![mpt_fixed_traj](../media/mpt_fixed_traj.png)
+![eb_traj](../media/eb_traj_visualization.png)
 
-- **bounds**
-  - Lateral Distance to the road or object boundaries to check collision in model predictive trajectory.
-  - Whether these lines' ends align the road or obstacle boundaries can be checked.
-  - `bounds*` of `/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/marker` whose type is `visualization_msgs/msg/MarkerArray`
+### Model Predictive Trajectory (MPT)
+- **MPT Reference Trajectory**
+  - The fixed trajectory points for model predictive trajectory.
 
-![bounds](../media/bounds.png)
+![mpt_ref_traj](../media/mpt_ref_traj_visualization.png)
 
-- **MPT trajectory**
-  - The output of model predictive trajectory. Whether this trajectory is smooth enough and inside the drivable area can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
+- **MPT Fixed Trajectory**
+  - The fixed trajectory points for model predictive trajectory.
 
-![mpt_traj](../media/mpt_traj.png)
+![mpt_fixed_traj](../media/mpt_fixed_traj_visualization.png)
 
-- **Output trajectory**
-  - The output of obstacle_avoidance_planner. Whether this trajectory is smooth enough can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
+- **MPT Trajectory**
+  - The optimized trajectory points by model predictive trajectory.
 
-![output_traj](../media/output_traj.png)
+![mpt_traj](../media/mpt_traj_visualization.png)
+
+### Output
+- **Trajectory**
+  - The output trajectory.
+  - The dark and thin, green and red band, that is visualized by default.
+
+![traj](../media/traj_visualization.png)
+
+- **Trajectory Footprint**
+  - The output trajectory is converted to footprints.
+
+![traj_footprint](../media/traj_footprint_visualization.png)
+
+## Q&A for Debug
+### When a part of the trajectory has high curvature
+
+### When the trajectory's shape is zigzag
+
 
 ## Calculation cost
 
