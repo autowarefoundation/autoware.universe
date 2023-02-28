@@ -97,15 +97,16 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   sub_velocity_ = this->create_subscription<VelocityReport>(
     "~/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
 
-  sub_odometry_ = this->create_subscription<Odometry>(
-    "~/input/odometry", rclcpp::QoS{1}, std::bind(&AEB::onOdometry, this, std::placeholders::_1));
-
   sub_imu_ = this->create_subscription<Imu>(
     "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
   sub_predicted_traj_ = this->create_subscription<Trajectory>(
     "~/input/predicted_trajectory", rclcpp::QoS{1},
     std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
+
+  sub_autoware_state_ = this->create_subscription<AutowareState>(
+    "/autoware/state", rclcpp::QoS{1},
+    std::bind(&AEB::onAutowareState, this, std::placeholders::_1));
 
   // Publisher
   pub_obstacle_pointcloud_ =
@@ -117,23 +118,22 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
 
   // parameter
-  use_imu_data_ = declare_parameter<bool>("use_imu_data", false);
-  use_predicted_path_ = declare_parameter<bool>("use_predicted_path", true);
-  use_generated_path_ = declare_parameter<bool>("use_generated_path", true);
-  voxel_grid_x_ = declare_parameter<double>("voxel_grid_x", 0.05);
-  voxel_grid_y_ = declare_parameter<double>("voxel_grid_y", 0.05);
-  voxel_grid_z_ = declare_parameter<double>("voxel_grid_z", 100000.0);
-  min_generated_path_length_ = declare_parameter<double>("min_generated_path_length", 0.5);
-  expand_width_ = declare_parameter<double>("expand_width", 0.1);
-  longitudinal_offset_ = declare_parameter<double>("longitudinal_offset", 1.0);
-  t_response_ = declare_parameter<double>("t_response", 1.0);
-  a_ego_min_ = declare_parameter<double>("a_ego_min", -3.0);
-  a_obj_min_ = declare_parameter<double>("a_obj_min", -1.0);
-  prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon", 1.0);
-  prediction_time_interval_ = declare_parameter<double>("prediction_time_interval", 0.1);
+  use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
+  use_imu_path_ = declare_parameter<bool>("use_imu_path");
+  voxel_grid_x_ = declare_parameter<double>("voxel_grid_x");
+  voxel_grid_y_ = declare_parameter<double>("voxel_grid_y");
+  voxel_grid_z_ = declare_parameter<double>("voxel_grid_z");
+  min_generated_path_length_ = declare_parameter<double>("min_generated_path_length");
+  expand_width_ = declare_parameter<double>("expand_width");
+  longitudinal_offset_ = declare_parameter<double>("longitudinal_offset");
+  t_response_ = declare_parameter<double>("t_response");
+  a_ego_min_ = declare_parameter<double>("a_ego_min");
+  a_obj_min_ = declare_parameter<double>("a_obj_min");
+  prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
+  prediction_time_interval_ = declare_parameter<double>("prediction_time_interval");
 
   // start time
-  const double aeb_hz = declare_parameter<double>("aeb_hz", 10.0);
+  const double aeb_hz = declare_parameter<double>("aeb_hz");
   const auto period_ns = rclcpp::Rate(aeb_hz).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
@@ -145,14 +145,17 @@ void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
   current_velocity_ptr_ = input_msg;
 }
 
-void AEB::onOdometry(const Odometry::ConstSharedPtr input_msg) { odometry_ptr_ = input_msg; }
-
 void AEB::onImu(const Imu::ConstSharedPtr input_msg) { imu_ptr_ = input_msg; }
 
 void AEB::onPredictedTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
 {
   predicted_traj_ptr_ = input_msg;
+}
+
+void AEB::onAutowareState(const AutowareState::ConstSharedPtr input_msg)
+{
+  autoware_state_ = input_msg;
 }
 
 void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
@@ -208,16 +211,20 @@ bool AEB::isDataReady()
     return missing("ego velocity");
   }
 
-  if (!use_imu_data_ && !odometry_ptr_) {
-    return missing("odometry");
-  }
-
-  if (use_imu_data_ && !imu_ptr_) {
-    return missing("imu");
-  }
-
   if (!obstacle_ros_pointcloud_ptr_) {
     return missing("object pointcloud");
+  }
+
+  if (use_imu_path_ && !imu_ptr_) {
+    return missing("object pointcloud");
+  }
+
+  if (use_predicted_trajectory_ && !predicted_traj_ptr_) {
+    return missing("control predicted trajectory");
+  }
+
+  if (!autoware_state_) {
+    return missing("autoware_state");
   }
 
   return true;
@@ -226,8 +233,6 @@ bool AEB::isDataReady()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   if (checkCollision()) {
-    std::cerr << "Emergency" << std::endl;
-    std::cerr << "curr_v: " << current_velocity_ptr_->longitudinal_velocity << std::endl;
     const std::string error_msg = "[AEB]: Emergency Brake";
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
@@ -246,13 +251,13 @@ bool AEB::checkCollision()
     return false;
   }
 
-  // step2. create data
-  const double current_v = current_velocity_ptr_->longitudinal_velocity;
-  const double current_w =
-    use_imu_data_ ? imu_ptr_->angular_velocity.z : odometry_ptr_->twist.twist.angular.z;
-  const auto predicted_traj_ptr = predicted_traj_ptr_;
+  // if not driving, disable aeb
+  if (autoware_state_->state != AutowareState::DRIVING) {
+    return false;
+  }
 
-  // if the vehicle stops, we assume no collision happens
+  // step2. create velocity data check if the vehicle stops or not
+  const double current_v = current_velocity_ptr_->longitudinal_velocity;
   if (current_v < 0.1) {
     return false;
   }
@@ -262,7 +267,8 @@ bool AEB::checkCollision()
   // step3. create ego path based on sensor data
   Path ego_path;
   std::vector<Polygon2d> ego_polys;
-  if (use_generated_path_) {
+  if (use_imu_path_) {
+    const double current_w = imu_ptr_->angular_velocity.z;
     constexpr double color_r = 0.0 / 256.0;
     constexpr double color_g = 148.0 / 256.0;
     constexpr double color_b = 205.0 / 256.0;
@@ -277,7 +283,8 @@ bool AEB::checkCollision()
   // step4. transform predicted trajectory from control module
   Path predicted_path;
   std::vector<Polygon2d> predicted_polys;
-  if (use_predicted_path_ && predicted_traj_ptr) {
+  if (use_predicted_trajectory_) {
+    const auto predicted_traj_ptr = predicted_traj_ptr_;
     constexpr double color_r = 0.0;
     constexpr double color_g = 100.0 / 256.0;
     constexpr double color_b = 0.0;
@@ -318,14 +325,11 @@ bool AEB::hasCollision(
     const double dist_ego_to_object =
       motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
       vehicle_info_.max_longitudinal_offset_m;
-    std::cerr << "rss_dist: " << rss_dist << std::endl;
-    std::cerr << "dist_ego_to_object: " << dist_ego_to_object << std::endl;
     if (dist_ego_to_object < rss_dist) {
       // collision happens
       return true;
     }
   }
-  std::cerr << "------------" << std::endl;
 
   return false;
 }

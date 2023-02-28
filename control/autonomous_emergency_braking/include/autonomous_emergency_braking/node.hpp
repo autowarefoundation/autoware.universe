@@ -21,6 +21,7 @@
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -45,6 +46,7 @@ namespace autoware::motion::control::autonomous_emergency_braking
 {
 
 using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_system_msgs::msg::AutowareState;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
@@ -73,9 +75,9 @@ public:
   // subscriber
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;
   rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
+  rclcpp::Subscription<AutowareState>::SharedPtr sub_autoware_state_;
 
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
@@ -87,10 +89,10 @@ public:
   // callback
   void onPointCloud(const PointCloud2::ConstSharedPtr input_msg);
   void onVelocity(const VelocityReport::ConstSharedPtr input_msg);
-  void onOdometry(const Odometry::ConstSharedPtr input_msg);
   void onImu(const Imu::ConstSharedPtr input_msg);
   void onTimer();
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg);
+  void onAutowareState(const AutowareState::ConstSharedPtr input_msg);
 
   bool isDataReady();
 
@@ -115,9 +117,9 @@ public:
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
-  Odometry::ConstSharedPtr odometry_ptr_{nullptr};
   Imu::ConstSharedPtr imu_ptr_{nullptr};
   Trajectory::ConstSharedPtr predicted_traj_ptr_{nullptr};
+  AutowareState::ConstSharedPtr autoware_state_{nullptr};
 
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -129,18 +131,17 @@ public:
   Updater updater_{this};
 
   // member variables
-  bool use_predicted_path_{true};
-  bool use_generated_path_{true};
-  bool use_imu_data_{false};
-  double voxel_grid_x_{0.0};
-  double voxel_grid_y_{0.0};
-  double voxel_grid_z_{0.0};
-  double min_generated_path_length_{0.0};
-  double expand_width_{0.0};
-  double longitudinal_offset_{0.0};
-  double t_response_{0.0};
-  double a_ego_min_{0.0};
-  double a_obj_min_{0.0};
+  bool use_predicted_trajectory_;
+  bool use_imu_path_;
+  double voxel_grid_x_;
+  double voxel_grid_y_;
+  double voxel_grid_z_;
+  double min_generated_path_length_;
+  double expand_width_;
+  double longitudinal_offset_;
+  double t_response_;
+  double a_ego_min_;
+  double a_obj_min_;
   double prediction_time_horizon_;
   double prediction_time_interval_;
 };
