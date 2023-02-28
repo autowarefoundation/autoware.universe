@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+
 #include "tier4_autoware_utils/math/trigonometry.hpp"
 
 #include <deque>

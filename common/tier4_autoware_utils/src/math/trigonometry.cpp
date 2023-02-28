@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "tier4_autoware_utils/math/trigonometry.hpp"
+
 #include "tier4_autoware_utils/math/constants.hpp"
 #include "tier4_autoware_utils/math/sin_table.hpp"
-#include "tier4_autoware_utils/math/trigonometry.hpp"
 
 #include <cmath>
 
 namespace tier4_autoware_utils
 {
 
-float sin(float radian) {
+float sin(float radian)
+{
   float degree = radian * (180.f / tier4_autoware_utils::pi) * (DISCRETE_ARCS_NUM_360 / 360.f);
-  size_t idx = (static_cast<int>(std::round(degree)) % DISCRETE_ARCS_NUM_360 + DISCRETE_ARCS_NUM_360) % DISCRETE_ARCS_NUM_360;
+  size_t idx =
+    (static_cast<int>(std::round(degree)) % DISCRETE_ARCS_NUM_360 + DISCRETE_ARCS_NUM_360) %
+    DISCRETE_ARCS_NUM_360;
 
   int mul = 1;
   if (DISCRETE_ARCS_NUM_90 <= idx && idx < 2 * DISCRETE_ARCS_NUM_90) {
