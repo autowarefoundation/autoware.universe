@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -60,33 +61,36 @@ using lanelet::ConstLineString2d;
 using lanelet::LaneletMapPtr;
 using lanelet::geometry::fromArcCoordinates;
 using lanelet::geometry::toArcCoordinates;
-using DetectionAreaIdx = boost::optional<std::pair<double, double>>;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
 namespace out_of_lane_utils
 {
 struct PlannerParam
 {
-  double
-    overlap_dist_thr;  // [m] distance inside a lane for a footprint to be considered overlapping
-  double dist_thr;     // [m]
+  double overlap_min_dist;  // [m] minimum distance inside a lane for a footprint to be considered
+                            // overlapping
+  double dist_thr;          // [m]
 
-  // vehicle info
-  double baselink_to_front;  // [m]  wheel_base + front_overhang
-  double wheel_tread;        // [m]  wheel_tread from vehicle info
-  double right_overhang;     // [m]  right_overhang from vehicle info
-  double left_overhang;      // [m]  left_overhang from vehicle info
-};
-
-struct DebugData
-{
-  void resetData() {}
+  // ego dimensions used to create its polygon footprint
+  double front_offset;  // [m]  front offset
+  double rear_offset;   // [m]  rear offset
+  double right_offset;  // [m]  right offset
+  double left_offset;   // [m]  left offset
 };
 
 struct Slowdown
 {
   size_t target_path_idx;
   double velocity;
+};
+
+struct Overlap
+{
+  size_t path_idx;
+  lanelet::Ids overlapped_lanes;
+  // for each overlapped lane
+  std::vector<double> overlap_distances;    // the distance inside the lane
+  std::vector<double> overlap_arc_lengths;  // the min arc length along the lane
 };
 
 struct Interval
@@ -96,7 +100,92 @@ struct Interval
   lanelet::Ids overlapped_lanes;
 };
 
+typedef std::vector<Overlap> Overlaps;
 typedef std::vector<Interval> Intervals;
+
+struct DebugData
+{
+  std::vector<lanelet::BasicPolygon2d> footprints;
+  Overlaps overlaps;
+  Intervals intervals;
+  void resetData()
+  {
+    footprints.clear();
+    overlaps.clear();
+    intervals.clear();
+  }
+};
+
+inline std::vector<BasicPolygon2d> calculate_path_footprints(
+  const PathWithLaneId & path, const PlannerParam & params)
+{
+  tier4_autoware_utils::Polygon2d base_footprint;
+  base_footprint.outer() = {
+    {params.front_offset, params.right_offset},
+    {params.front_offset, params.left_offset},
+    {params.rear_offset, params.left_offset},
+    {params.rear_offset, params.right_offset}};
+
+  std::vector<BasicPolygon2d> path_footprints;
+  path_footprints.reserve(path.points.size());
+  for (const auto & path_point : path.points) {
+    const auto & path_pose = path_point.point.pose;
+    const auto angle = tf2::getYaw(path_pose.orientation);
+    const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
+    BasicPolygon2d footprint;
+    for (const auto & p : rotated_footprint.outer())
+      footprint.emplace_back(p.x() + path_pose.position.x, p.y() + path_pose.position.y);
+    footprint.push_back(footprint.front());  // close the polygon
+    path_footprints.push_back(footprint);
+  }
+  return path_footprints;
+}
+
+inline Overlaps calculate_overlaps(
+  const std::vector<BasicPolygon2d> & path_footprints, const lanelet::ConstLanelets & lanelets,
+  const PlannerParam & params)
+{
+  Overlaps overlaps;
+  (void)params;
+  // TODO(Maxime): only check overlaps if the left/right bound of the path lanelets are crossed.
+  for (auto i = 0UL; i < path_footprints.size(); ++i) {
+    const auto & path_point_polygon = path_footprints[i];
+    Overlap overlap;
+    overlap.path_idx = i;
+    for (const auto & lanelet : lanelets) {
+      const auto lanelet_polygon = lanelet.polygon2d().basicPolygon();
+      auto inside_dist = 0.0;
+      auto arc_length_along_lanelet = std::numeric_limits<double>::infinity();
+      for (const auto & lanelet_bound :
+           {lanelet.leftBound2d().basicLineString(), lanelet.rightBound2d().basicLineString()}) {
+        lanelet::BasicPoints2d intersections;
+        boost::geometry::intersection(path_point_polygon, lanelet_bound, intersections);
+        if (!intersections.empty()) {
+          for (const auto & p : path_point_polygon) {
+            if (boost::geometry::within(p, lanelet_polygon)) {
+              inside_dist = std::min(inside_dist, boost::geometry::distance(p, lanelet_bound));
+              arc_length_along_lanelet = std::min(
+                arc_length_along_lanelet,
+                lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), p).length);
+            }
+          }
+          for (const auto & intersection : intersections) {
+            arc_length_along_lanelet = std::min(
+              arc_length_along_lanelet,
+              lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), intersection).length);
+          }
+        }
+      }
+      if (arc_length_along_lanelet < std::numeric_limits<double>::infinity()) {
+        overlap.overlapped_lanes.push_back(lanelet.id());
+        overlap.overlap_distances.push_back(inside_dist);
+        overlap.overlap_arc_lengths.push_back(arc_length_along_lanelet);
+      }
+    }
+    if (!overlap.overlapped_lanes.empty()) overlaps.push_back(overlap);
+  }
+  return overlaps;
+}
 
 inline Intervals calculate_overlapping_intervals()
 {
@@ -104,7 +193,7 @@ inline Intervals calculate_overlapping_intervals()
   return intervals;
 }
 
-inline std::vector<Slowdown> calculate_decision(const Intervals & intervals)
+inline std::vector<Slowdown> calculate_decisions(const Intervals & intervals)
 {
   std::vector<Slowdown> decisions;
   (void)intervals;

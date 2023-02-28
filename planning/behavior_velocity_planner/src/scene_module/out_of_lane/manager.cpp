@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,10 +27,16 @@ namespace behavior_velocity_planner
 OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
-  /*
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
-  */
+
+  pp.dist_thr = node.declare_parameter<double>(ns + ".distance_threshold");
+  pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap_min_distance");
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  pp.front_offset = vehicle_info.max_longitudinal_offset_m;
+  pp.rear_offset = vehicle_info.min_longitudinal_offset_m;
+  pp.left_offset = vehicle_info.max_lateral_offset_m;
+  pp.right_offset = vehicle_info.min_lateral_offset_m;
 }
 
 void OutOfLaneModuleManager::launchNewModules(
