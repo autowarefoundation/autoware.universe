@@ -55,7 +55,8 @@ StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
 
     // TODO(murooka) use curvature by stabling optimization
     // Currently, when using curvature, the optimization result is weird with sample_map.
-    // vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, p.curvature, p.delta_arc_length);
+    // vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, p.curvature,
+    // p.delta_arc_length);
     vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, 0.0, p.delta_arc_length);
 
     B.block(idx_x_i, 0, D_x, D_x) = Ad * B.block(idx_x_i_prev, 0, D_x, D_x);

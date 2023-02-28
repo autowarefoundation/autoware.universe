@@ -216,7 +216,8 @@ MPTOptimizer::MPTParam::MPTParam(
   }
 
   {  // weight
-    soft_collision_free_weight = node->declare_parameter<double>("mpt.weight.soft_collision_free_weight");
+    soft_collision_free_weight =
+      node->declare_parameter<double>("mpt.weight.soft_collision_free_weight");
 
     lat_error_weight = node->declare_parameter<double>("mpt.weight.lat_error_weight");
     yaw_error_weight = node->declare_parameter<double>("mpt.weight.yaw_error_weight");
@@ -355,7 +356,8 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
   }
 
   {  // weight
-    updateParam<double>(parameters, "mpt.weight.soft_collision_free_weight", soft_collision_free_weight);
+    updateParam<double>(
+      parameters, "mpt.weight.soft_collision_free_weight", soft_collision_free_weight);
 
     updateParam<double>(parameters, "mpt.weight.lat_error_weight", lat_error_weight);
     updateParam<double>(parameters, "mpt.weight.yaw_error_weight", yaw_error_weight);
@@ -1163,7 +1165,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
     // ub.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, mpt_param_.max_steer_rad);
 
     for (size_t i = 0; i < N_u; ++i) {
-      const double ref_steer_angle = std::atan2(vehicle_info_.wheel_base_m * ref_points.at(i).curvature, 1.0);
+      const double ref_steer_angle =
+        std::atan2(vehicle_info_.wheel_base_m * ref_points.at(i).curvature, 1.0);
       lb(A_rows_end + i) = ref_steer_angle - mpt_param_.max_steer_rad;
       ub(A_rows_end + i) = ref_steer_angle + mpt_param_.max_steer_rad;
     }
