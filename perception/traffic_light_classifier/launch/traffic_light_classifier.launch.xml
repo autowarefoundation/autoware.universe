@@ -4,7 +4,7 @@
   <arg name="output/traffic_signals" default="~/traffic_signals"/>
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
-  <arg name="use_gpu" default="true"/>
+  <arg name="use_gpu" default="false"/>
   <!-- classifier_type {hsv_filter: 0, cnn: 1} -->
   <arg name="classifier_type" default="1" if="$(var use_gpu)"/>
   <arg name="classifier_type" default="0" unless="$(var use_gpu)"/>
@@ -24,6 +24,7 @@
     <param name="precision" value="fp16"/>
     <param name="input_name" value="input_0"/>
     <param name="output_name" value="output_0"/>
+    <param name="apply_softmax" value="true"/>
     <param name="input_c" value="3"/>
     <param name="input_h" value="224"/>
     <param name="input_w" value="224"/>

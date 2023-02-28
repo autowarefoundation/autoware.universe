@@ -106,6 +106,7 @@ private:
   int input_c_;
   int input_h_;
   int input_w_;
+  bool apply_softmax_;
 };
 
 }  // namespace traffic_light

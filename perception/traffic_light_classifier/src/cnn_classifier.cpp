@@ -43,8 +43,10 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   std_ = node_ptr_->declare_parameter("std", std::vector<double>({1.0, 1.0, 1.0}));
   std::string input_name = node_ptr_->declare_parameter("input_name", std::string("input_0"));
   std::string output_name = node_ptr_->declare_parameter("output_name", std::string("output_0"));
+  apply_softmax_ = node_ptr_->declare_parameter("apply_softmax", true);
 
-  readLabelfile(label_file_path, labels_);
+
+    readLabelfile(label_file_path, labels_);
 
   trt_ = std::make_shared<Tn::TrtCommon>(model_file_path, precision, input_name, output_name);
   trt_->setup();
