@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "timing_violation_monitor/timing_violation_monitor_debug.hpp"
+
 #include "timing_violation_monitor/timing_violation_monitor_core.hpp"
 
 #define FMT_HEADER_ONLY

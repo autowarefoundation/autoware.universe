@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "timing_violation_monitor/timing_violation_monitor_core.hpp"
+
 #include "timing_violation_monitor/timing_violation_monitor_debug.hpp"
 
 #include <algorithm>
@@ -418,8 +419,9 @@ void TimingViolationMonitor::startIntervalTimer(
     pinfo.interval_timer.reset();
   }
   const auto period_time = rclcpp::Rate(1 / time_val).period();
-  pinfo.interval_timer = rclcpp::create_timer(
-    this, get_clock(), period_time, [this, &pinfo]() { TimingViolationMonitor::onIntervalTimer(pinfo); });
+  pinfo.interval_timer = rclcpp::create_timer(this, get_clock(), period_time, [this, &pinfo]() {
+    TimingViolationMonitor::onIntervalTimer(pinfo);
+  });
   if (pinfo.interval_timer.get() == nullptr) {
     RCLCPP_ERROR(
       get_logger(), "[%s]:%04d <%s> ## interval timer null", __func__, __LINE__,
@@ -439,8 +441,9 @@ void TimingViolationMonitor::startPeriodicTimer(
     pinfo.periodic_timer.reset();
   }
   const auto period_time = rclcpp::Rate(1 / time_val).period();
-  pinfo.periodic_timer = rclcpp::create_timer(
-    this, get_clock(), period_time, [this, &pinfo]() { TimingViolationMonitor::onPeriodicTimer(pinfo); });
+  pinfo.periodic_timer = rclcpp::create_timer(this, get_clock(), period_time, [this, &pinfo]() {
+    TimingViolationMonitor::onPeriodicTimer(pinfo);
+  });
   if (pinfo.periodic_timer.get() == nullptr) {
     RCLCPP_ERROR(
       get_logger(), "[%s]:%04d <%s> ## periodic timer null", __func__, __LINE__,
