@@ -178,7 +178,7 @@ bool JerkFilteredSmoother::apply(
   std::vector<double> upper_bound(l_constraints, 0.0);
 
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(l_variables, l_variables);
-  std::vector<double> q(l_variables, 0.0);
+  Eigen::VectorXd q = Eigen::VectorXd::Zero(l_variables);
 
   /**************************************************************/
   /**************************************************************/
@@ -201,10 +201,10 @@ bool JerkFilteredSmoother::apply(
 
   for (size_t i = 0; i < N; ++i) {
     const double v_max = std::max(v_max_arr.at(i), 0.1);
-    q.at(IDX_B0 + i) =
+    q(IDX_B0 + i) =
       -1.0 / (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
     if (i < N - 1) {
-      q.at(IDX_B0 + i) *= std::max(interval_dist_arr.at(i), 0.0001);
+      q(IDX_B0 + i) *= std::max(interval_dist_arr.at(i), 0.0001);
     }
     P(IDX_DELTA0 + i, IDX_DELTA0 + i) += over_v_weight;  // over velocity cost
     P(IDX_SIGMA0 + i, IDX_SIGMA0 + i) += over_a_weight;  // over acceleration cost
@@ -285,9 +285,76 @@ bool JerkFilteredSmoother::apply(
     ++constr_idx;
   }
 
+  constexpr bool ENABLE_SCALE_PRECONDITIONING = true;
+
+  // This scaling aims to convert the range of decision variables into [0, 1].
+  // The following values can be defined, for example from the expected maximum value.
+  const Eigen::MatrixXd C_scaling = [&]() {
+    const double max_v_ref = std::abs(*std::max_element(v_max_arr.begin(), v_max_arr.end()));
+    const auto max_jerk = std::max(j_max, std::abs(j_min));
+    const double scale_b = std::max(max_v_ref * max_v_ref, 1.0);
+    const double scale_a = std::max(a_max, std::abs(a_min));
+    const double scale_delta = scale_b / std::sqrt(over_v_weight);
+    const double scale_sigma = scale_a / std::sqrt(over_a_weight);
+    const double scale_gamma = max_jerk / std::sqrt(over_j_weight);
+
+    Eigen::MatrixXd C_scaling = Eigen::MatrixXd::Zero(l_variables, l_variables);
+    for (size_t i = 0; i < N; ++i) {
+      C_scaling(IDX_B0 + i, IDX_B0 + i) = scale_b;
+      C_scaling(IDX_A0 + i, IDX_A0 + i) = scale_a;
+      C_scaling(IDX_DELTA0 + i, IDX_DELTA0 + i) = scale_delta;
+      C_scaling(IDX_SIGMA0 + i, IDX_SIGMA0 + i) = scale_sigma;
+      C_scaling(IDX_GAMMA0 + i, IDX_GAMMA0 + i) = scale_gamma;
+    }
+    return C_scaling;
+  }();
+
   // execute optimization
+  if (ENABLE_SCALE_PRECONDITIONING) {
+    P = C_scaling.transpose() * P * C_scaling;
+    q = C_scaling * q;
+    A = A * C_scaling;
+  }
   const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
-  const std::vector<double> optval = std::get<0>(result);
+  const std::vector<double> optval_scaled = std::get<0>(result);
+
+  const Eigen::VectorXd optval_scaled_eigen =
+    Eigen::VectorXd::Map(&optval_scaled[0], optval_scaled.size());
+  const Eigen::VectorXd optval = C_scaling * optval_scaled_eigen;
+
+  constexpr bool TMP_DEBUG_PRINT = true;
+  if (TMP_DEBUG_PRINT) {
+    auto max_sol = std::max_element(optval_scaled.begin(), optval_scaled.end());
+    auto min_sol = std::min_element(optval_scaled.begin(), optval_scaled.end());
+
+    auto max_b = std::max_element(&optval_scaled[IDX_B0], &optval_scaled[IDX_B0 + N - 1]);
+    auto min_b = std::min_element(&optval_scaled[IDX_B0], &optval_scaled[IDX_B0 + N - 1]);
+
+    auto max_a = std::max_element(&optval_scaled[IDX_A0], &optval_scaled[IDX_A0 + N - 1]);
+    auto min_a = std::min_element(&optval_scaled[IDX_A0], &optval_scaled[IDX_A0 + N - 1]);
+
+    auto max_sv = std::max_element(&optval_scaled[IDX_DELTA0], &optval_scaled[IDX_DELTA0 + N - 1]);
+    auto min_sv = std::min_element(&optval_scaled[IDX_DELTA0], &optval_scaled[IDX_DELTA0 + N - 1]);
+
+    auto max_sa = std::max_element(&optval_scaled[IDX_SIGMA0], &optval_scaled[IDX_SIGMA0 + N - 1]);
+    auto min_sa = std::min_element(&optval_scaled[IDX_SIGMA0], &optval_scaled[IDX_SIGMA0 + N - 1]);
+
+    auto max_sj = std::max_element(&optval_scaled[IDX_GAMMA0], &optval_scaled[IDX_GAMMA0 + N - 1]);
+    auto min_sj = std::min_element(&optval_scaled[IDX_GAMMA0], &optval_scaled[IDX_GAMMA0 + N - 1]);
+
+    std::cerr << "[min_sol, max_sol] = "
+              << "[" << *min_sol << ", " << *max_sol << "]" << std::endl;
+    std::cerr << "[min_b, max_b] = "
+              << "[" << *min_b << ", " << *max_b << "]" << std::endl;
+    std::cerr << "[min_a, max_a] = "
+              << "[" << *min_a << ", " << *max_a << "]" << std::endl;
+    std::cerr << "[min_sv, max_sv] = "
+              << "[" << *min_sv << ", " << *max_sv << "]" << std::endl;
+    std::cerr << "[min_sa, max_sa] = "
+              << "[" << *min_sa << ", " << *max_sa << "]" << std::endl;
+    std::cerr << "[min_sj, max_sj] = "
+              << "[" << *min_sj << ", " << *max_sj << "]" << std::endl;
+  }
 
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =
@@ -296,9 +363,9 @@ bool JerkFilteredSmoother::apply(
 
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i) {
-    double b = optval.at(IDX_B0 + i);
+    double b = optval(IDX_B0 + i);
     output.at(i).longitudinal_velocity_mps = std::sqrt(std::max(b, 0.0));
-    output.at(i).acceleration_mps2 = optval.at(IDX_A0 + i);
+    output.at(i).acceleration_mps2 = optval(IDX_A0 + i);
   }
   for (size_t i = N; i < output.size(); ++i) {
     output.at(i).longitudinal_velocity_mps = 0.0;

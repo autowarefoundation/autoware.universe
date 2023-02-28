@@ -413,6 +413,15 @@ OSQPInterface::optimize(
   return result;
 }
 
+std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
+OSQPInterface::optimize(
+  const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const Eigen::VectorXd & q_eigen,
+  const std::vector<double> & l, const std::vector<double> & u)
+{
+  const auto q = std::vector<double>(q_eigen.data(), q_eigen.data() + q_eigen.size());
+  return optimize(P, A, q, l, u);
+}
+
 void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
 {
   const int status = getStatus();

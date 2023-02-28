@@ -122,6 +122,10 @@ public:
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
     const std::vector<double> & l, const std::vector<double> & u);
 
+  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize(
+    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const Eigen::VectorXd & q_eigen,
+    const std::vector<double> & l, const std::vector<double> & u);
+
   /// \brief Converts the input data and sets up the workspace object.
   /// \param P (n,n) matrix defining relations between parameters.
   /// \param A (m,n) matrix defining parameter constraints relative to the lower and upper bound.

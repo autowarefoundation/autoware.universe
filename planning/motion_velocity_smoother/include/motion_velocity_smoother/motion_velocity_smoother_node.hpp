@@ -216,7 +216,8 @@ private:
   void initCommonParam();
 
   // debug
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+  mutable tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+  mutable double time_;
   std::shared_ptr<rclcpp::Time> prev_time_;
   double prev_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_dist_to_stopline_;

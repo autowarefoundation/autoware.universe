@@ -386,7 +386,6 @@ bool MotionVelocitySmootherNode::checkData() const
 void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   RCLCPP_DEBUG(get_logger(), "========================= run start =========================");
-  stop_watch_.tic();
 
   base_traj_raw_ptr_ = msg;
 
@@ -561,10 +560,13 @@ bool MotionVelocitySmootherNode::smoothVelocity(
     clipped.end(), traj_resampled.begin() + traj_resampled_closest, traj_resampled.end());
 
   std::vector<TrajectoryPoints> debug_trajectories;
+  stop_watch_.tic();
+
   if (!smoother_->apply(
         initial_motion.vel, initial_motion.acc, clipped, traj_smoothed, debug_trajectories)) {
     RCLCPP_WARN(get_logger(), "Fail to solve optimization.");
   }
+  time_ = stop_watch_.toc();
 
   // Set 0 velocity after input-stop-point
   overwriteStopPoint(clipped, traj_smoothed);
@@ -995,7 +997,8 @@ void MotionVelocitySmootherNode::publishStopWatchTime()
 {
   Float32Stamped calculation_time_data{};
   calculation_time_data.stamp = this->now();
-  calculation_time_data.data = stop_watch_.toc();
+  calculation_time_data.data = time_;
+  // calculation_time_data.data = stop_watch_.toc();
   debug_calculation_time_->publish(calculation_time_data);
 }
 
