@@ -2,131 +2,182 @@
 
 ## Debug visualization
 
-The rviz config file for `obstacle_avoidance_planner` is [here](../rviz/obstacle_avoidance_planner.rviz).
+The visualization markers of the planning flow (Input, Elastic Band, Model Predictive Trajectory, and Output) will be explained.
+
+The rviz config file for `obstacle_avoidance_planner` is [here](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/obstacle_avoidance_planner/rviz/obstacle_avoidance_planner.rviz).
 All the following visualization markers are contained.
 
 ### Input
+
 - **Path**
   - The path generated in the `behavior` planner.
   - The semitransparent and thick, green and red band, that is visualized by default.
 
-![path](../media/path_visualization.png)
+![path](../media/debug/path_visualization.png)
 
 - **Path Footprint**
   - The path generated in the `behavior` planner is converted to footprints.
+  - NOTE:
+    - Please make sure that there is no high curvature.
+    - The path may be outside the drivable area in some cases, but it is okay to ignore it.
 
-![path_footprint](../media/path_footprint_visualization.png)
+![path_footprint](../media/debug/path_footprint_visualization.png)
 
 - **Drivalbe Area**
   - The Drivable area generated in the `behavior` planner.
   - The skyblue left and right line strings, that is visualized by default.
+  - NOTE:
+    - Please make sure that the path is almost inside the drivable area.
+      - Then, the `obstacle_avoidance_planner` tries to make the trajectory inside the drivable area 100%.
+    - During avoidance or lane change by the `behavior` planner, please make sure that the drivable area is expanded correctly.
 
-![drivable_area](../media/drivable_area_visualization.png)
+![drivable_area](../media/debug/drivable_area_visualization.png)
 
 ### Elastic Band (EB)
+
 - **EB Fixed Trajectory**
   - The fixed trajectory points for elastic band.
 
-![eb_fixed_traj](../media/eb_fixed_traj_visualization.png)
+![eb_fixed_traj](../media/debug/eb_fixed_traj_visualization.png)
 
 - **EB Trajectory**
   - The optimized trajectory points by elastic band.
 
-![eb_traj](../media/eb_traj_visualization.png)
+![eb_traj](../media/debug/eb_traj_visualization.png)
 
 ### Model Predictive Trajectory (MPT)
+
 - **MPT Reference Trajectory**
   - The fixed trajectory points for model predictive trajectory.
 
-![mpt_ref_traj](../media/mpt_ref_traj_visualization.png)
+![mpt_ref_traj](../media/debug/mpt_ref_traj_visualization.png)
 
 - **MPT Fixed Trajectory**
   - The fixed trajectory points for model predictive trajectory.
 
-![mpt_fixed_traj](../media/mpt_fixed_traj_visualization.png)
+![mpt_fixed_traj](../media/debug/mpt_fixed_traj_visualization.png)
+
+- **Boundaries' Width**
+  - The boundaries' width is calculated from the drivable area line strings.
+
+![bounds](../media/debug/bounds_visualization.png)
+
+- **Vehicle Circles**
+  - The vehicle's shape is represented by a set of circles.
+
+![vehicle_circles](../media/debug/vehicle_circles_visualization.png)
+
+- **Vehicle Circles on Trajectory**
+  - The vehicle's circles on the MPT trajectory.
+  - Please make sure that the circles are not so big compared to the road's width.
+
+![vehicle_traj_circles](../media/debug/vehicle_traj_circles_visualization.png)
 
 - **MPT Trajectory**
   - The optimized trajectory points by model predictive trajectory.
 
-![mpt_traj](../media/mpt_traj_visualization.png)
+![mpt_traj](../media/debug/mpt_traj_visualization.png)
 
 ### Output
+
 - **Trajectory**
   - The output trajectory.
   - The dark and thin, green and red band, that is visualized by default.
 
-![traj](../media/traj_visualization.png)
+![traj](../media/debug/traj_visualization.png)
 
 - **Trajectory Footprint**
   - The output trajectory is converted to footprints.
 
-![traj_footprint](../media/traj_footprint_visualization.png)
+![traj_footprint](../media/debug/traj_footprint_visualization.png)
 
-## Q&A for Debug
-### When a part of the trajectory has high curvature
+## Calculation time
 
-### When the trajectory's shape is zigzag
-
-
-## Calculation cost
-
-Obstacle avoidance planner consists of many functions such as clearance map generation, boundary search, reference path smoothing, trajectory optimization, ...
+The `obstacle_avoidance_planner` consists of many functions such as boundaries' width calculation, reference path smoothing, collision-free planning, etc.
 We can see the calculation time for each function as follows.
 
 ### Raw data
 
+Enable `option.enable_calculation_time_info` or echo the topic as follows.
+
 ```sh
 $ ros2 topic echo /planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/calculation_time --field data
-
-      getDrivableAreaInCV:= 0.21 [ms]
-      getClearanceMap:= 1.327 [ms]
-      drawObstaclesOnImage:= 0.436 [ms]
-      getAreaWithObjects:= 0.029 [ms]
-      getClearanceMap:= 2.186 [ms]
-    getMaps:= 4.213 [ms]
-          calculateTrajectory:= 2.417 [ms]
-        getOptimizedTrajectory:= 5.203 [ms]
-      getEBTrajectory:= 5.231 [ms]
-          calcBounds:= 0.821 [ms]
-          calcVehicleBounds:= 0.27 [ms]
-        getReferencePoints:= 2.866 [ms]
-        generateMPTMatrix:= 0.195 [ms]
-        generateValueMatrix:= 0.019 [ms]
-          getObjectiveMatrix:= 0.559 [ms]
-          getConstraintMatrix:= 1.776 [ms]
-          initOsqp:= 9.074 [ms]
-          solveOsqp:= 3.809 [ms]
-        executeOptimization:= 15.46 [ms]
-        getMPTPoints:= 0.049 [ms]
-      getModelPredictiveTrajectory:= 18.928 [ms]
-    optimizeTrajectory:= 24.234 [ms]
-    insertZeroVelocityOutsideDrivableArea:= 0.023 [ms]
-      getDebugVisualizationMarker:= 0.446 [ms]
-      publishDebugVisualizationMarker:= 2.146 [ms]
-      getDebugVisualizationWallMarker:= 0.001 [ms]
-      publishDebugVisualizationWallMarker:= 0.013 [ms]
-    publishDebugDataInOptimization:= 2.696 [ms]
-    getExtendedTrajectory:= 0.016 [ms]
-    generateFineTrajectoryPoints:= 0.118 [ms]
-    alignVelocity:= 1.227 [ms]
-  generatePostProcessedTrajectory:= 1.375 [ms]
-    makePrevTrajectories:= 1.411 [ms]
-  generateOptimizedTrajectory:= 33.284 [ms]
-    getExtendedTrajectory:= 0.018 [ms]
-    generateFineTrajectoryPoints:= 0.084 [ms]
-    alignVelocity:= 1.109 [ms]
-  generatePostProcessedTrajectory:= 1.217 [ms]
-    getDebugCostMap * 3:= 0 [ms]
-  publishDebugDataInMain:= 0.023 [ms]
-pathCallback:= 34.614 [ms]
+---
+        insertFixedPoint:= 0.008 [ms]
+        getPaddedTrajectoryPoints:= 0.002 [ms]
+        updateConstraint:= 0.741 [ms]
+        optimizeTrajectory:= 0.101 [ms]
+        convertOptimizedPointsToTrajectory:= 0.014 [ms]
+      getEBTrajectory:= 0.991 [ms]
+          resampleReferencePoints:= 0.058 [ms]
+          updateFixedPoint:= 0.237 [ms]
+          updateBounds:= 0.22 [ms]
+          updateVehicleBounds:= 0.509 [ms]
+        calcReferencePoints:= 1.649 [ms]
+        calcMatrix:= 0.209 [ms]
+        calcValueMatrix:= 0.015 [ms]
+          calcObjectiveMatrix:= 0.305 [ms]
+          calcConstraintMatrix:= 0.641 [ms]
+          initOsqp:= 6.896 [ms]
+          solveOsqp:= 2.796 [ms]
+        calcOptimizedSteerAngles:= 9.856 [ms]
+        calcMPTPoints:= 0.04 [ms]
+      getModelPredictiveTrajectory:= 12.782 [ms]
+    optimizeTrajectory:= 12.981 [ms]
+    applyInputVelocity:= 0.577 [ms]
+    insertZeroVelocityOutsideDrivableArea:= 0.81 [ms]
+      getDebugMarker:= 0.684 [ms]
+      publishDebugMarker:= 4.354 [ms]
+    publishDebugMarkerOfOptimization:= 5.047 [ms]
+ generateOptimizedTrajectory:= 20.374 [ms]
+  extendTrajectory:= 0.326 [ms]
+  publishDebugData:= 0.008 [ms]
+onPath:= 20.737 [ms]
 ```
 
 ### Plot
 
-With a script, we can plot some of above time as follows.
+With the following script, any calculation time of the above functions can be plot.
 
 ```sh
-python3 scripts/calclation_time_analyzer.py -f "solveOsqp,initOsqp,pathCallback"
+ros2 run obstacle_avoidance_planner calclation_time_plotter.py
 ```
 
-![calculation_cost_plot](../media/calculation_cost_plot.svg)
+![calculation_time_plot](../media/debug/calculation_time_plot.png)
+
+You can specify functions to plot with the `-f` option.
+
+```sh
+ros2 run obstacle_avoidance_planner calclation_time_plotter.py -f "onPath, generateOptimizedTrajectory, calcReferencePoints"
+```
+
+## Q&A for Debug
+
+### The output frequency is low
+
+Check the function which is comparatively heavy according to [here](#calculation-cost) or [here](.#calculation-cost).
+
+The following functions for optimization and its initialization may be heavy in some complicated cases.
+
+- MPT
+  - `initOsqp`
+  - `solveOsqp`
+- EB
+  - `optimizeTrajectory`
+
+### When a part of the trajectory has high curvature
+
+Some of the following may have an issue.
+Please check by the visualization.
+
+- Input Path
+- Drivable Area
+- Boundaries' Width
+
+### When the trajectory's shape is zigzag
+
+Some of the following may have an issue.
+Please check by the visualization.
+
+- EB Trajectory
+- Vehicle Circles on Trajectory
