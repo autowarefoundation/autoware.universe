@@ -17,6 +17,7 @@
 #include <object_detection/object_polygon_display_base.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -47,6 +48,8 @@ public:
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
+  void onInitialize() override;
+  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -112,6 +115,9 @@ private:
   std::mutex mutex;
   std::condition_variable condition;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
+  
+  std::string objects_frame_id_;
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> objs_buffer;
 };
 
 }  // namespace object_detection

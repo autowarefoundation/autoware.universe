@@ -17,6 +17,7 @@
 #include <object_detection/object_polygon_display_base.hpp>
 
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -45,6 +46,8 @@ public:
 
 private:
   void processMessage(TrackedObjects::ConstSharedPtr msg) override;
+  void onInitialize() override;
+  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -96,6 +99,9 @@ private:
   std::map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
+
+  std::string objects_frame_id_;
+  std::vector<autoware_auto_perception_msgs::msg::TrackedObject> objs_buffer;
 };
 
 }  // namespace object_detection

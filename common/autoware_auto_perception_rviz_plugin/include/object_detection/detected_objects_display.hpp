@@ -17,6 +17,8 @@
 #include <object_detection/object_polygon_display_base.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace autoware
 {
@@ -37,6 +39,12 @@ public:
 
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
+  void onInitialize() override;
+  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
+  
+
+  std::string objects_frame_id_;
+  std::vector<autoware_auto_perception_msgs::msg::DetectedObject> objs_buffer;
 };
 
 }  // namespace object_detection

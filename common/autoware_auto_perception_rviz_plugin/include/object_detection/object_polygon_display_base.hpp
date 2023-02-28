@@ -25,6 +25,28 @@
 #include <rviz_default_plugins/displays/marker_array/marker_array_display.hpp>
 #include <visibility_control.hpp>
 
+// #include <rviz_default_plugins/displays/pointcloud/point_cloud2_display.hpp>
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/clock.hpp"
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <rviz_common/display_context.hpp>
+#include "rviz_common/properties/ros_topic_property.hpp"
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp> 
+
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/crop_box.h>
+#include <pcl/filters/passthrough.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -59,7 +81,7 @@ public:
   using PolygonPropertyMap =
     std::unordered_map<ObjectClassificationMsg::_label_type, common::ColorAlphaProperty>;
 
-  explicit ObjectPolygonDisplayBase(const std::string & default_topic)
+  explicit ObjectPolygonDisplayBase(const std::string & default_topic, const std::string & default_pointcloud_topic)
   : m_marker_common(this),
     // m_display_type_property{"Polygon Type", "3d", "Type of the polygon to display object", this},
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
@@ -90,6 +112,13 @@ public:
     m_simple_visualize_mode_property = new rviz_common::properties::EnumProperty(
       "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this,
       SLOT(updatePalette()));
+    m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
+      "Input pointcloud topic", 
+      QString::fromStdString(default_pointcloud_topic), 
+      "", 
+      "Input for pointcloud visualization of Objectcs detection pipeline",
+      this, 
+      SLOT(updatePalette()));
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
     // iterate over default values to create and initialize the properties.
@@ -119,6 +148,21 @@ public:
     this->topic_property_->setMessageType(message_type);
     this->topic_property_->setValue(m_default_topic.c_str());
     this->topic_property_->setDescription("Topic to subscribe to.");
+
+    // get access to rivz node to sub and to pub to topics 
+    rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
+    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud", 10);
+    pointcloud_subscription_ = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
+      m_default_pointcloud_topic->getTopicStd(), 
+      rclcpp::SensorDataQoS(), 
+      std::bind(&ObjectPolygonDisplayBase::pointCloudCallback, 
+      this, 
+      std::placeholders::_1));
+
+    tf_buffer_ =
+      std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
+    tf_listener_ =
+      std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
 
   void load(const rviz_common::Config & config) override
@@ -146,6 +190,8 @@ public:
   {
     m_marker_common.addMessage(markers_ptr);
   }
+   
+  std::string objects_frame_id_;
 
 protected:
   /// \brief Convert given shape msg into a Marker
@@ -382,6 +428,20 @@ protected:
 
   double get_line_width() { return m_line_width_property.getFloat(); }
 
+  // std::vector<MsgT.object> objs_buffer; // object buffer to filtrate input pointcloud 
+  // std::string objects_frame_id_;
+
+  // void transformPointCloud()
+  
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  // add pointcloud subscription
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_subscription_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
+
+  // Default pointcloud topic;
+  rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
+
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
   MarkerCommon m_marker_common;
@@ -415,6 +475,10 @@ private:
   std::string m_default_topic;
 
   std::vector<std_msgs::msg::ColorRGBA> predicted_path_colors;
+
+
+  virtual void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) = 0;
+
 };
 }  // namespace object_detection
 }  // namespace rviz_plugins
