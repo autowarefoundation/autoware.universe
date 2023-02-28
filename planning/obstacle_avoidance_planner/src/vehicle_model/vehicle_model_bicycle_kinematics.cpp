@@ -18,24 +18,24 @@
 #include <limits>
 #include <vector>
 
-KinematicsBicycleModel::KinematicsBicycleModel(const double wheel_base, const double steer_limit)
-: VehicleModelInterface(2, 1, 2, wheel_base, steer_limit)
+KinematicsBicycleModel::KinematicsBicycleModel(const double wheelbase, const double steer_limit)
+: VehicleModelInterface(2, 1, 2, wheelbase, steer_limit)
 {
 }
 
 void KinematicsBicycleModel::calculateStateEquationMatrix(
-  Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd, const double k,
+  Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd, const double curvature,
   const double ds) const
 {
-  const double delta_r = std::atan(wheel_base_ * k);
+  const double delta_r = std::atan(wheelbase_ * curvature);
   const double cropped_delta_r = std::clamp(delta_r, -steer_limit_, steer_limit_);
 
   // NOTE: cos(delta_r) will not be zero since curvature will not be infinity
   Ad << 1.0, ds, 0.0, 1.0;
 
-  Bd << 0.0, ds / wheel_base_ / std::pow(std::cos(delta_r), 2.0);
+  Bd << 0.0, ds / wheelbase_ / std::pow(std::cos(delta_r), 2.0);
 
-  Wd << 0.0, -ds * k + ds / wheel_base_ *
-                         (std::tan(cropped_delta_r) -
-                          cropped_delta_r / std::pow(std::cos(cropped_delta_r), 2.0));
+  Wd << 0.0, -ds * curvature + ds / wheelbase_ *
+                                 (std::tan(cropped_delta_r) -
+                                  cropped_delta_r / std::pow(std::cos(cropped_delta_r), 2.0));
 }

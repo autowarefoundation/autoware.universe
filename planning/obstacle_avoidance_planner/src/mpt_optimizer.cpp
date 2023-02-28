@@ -216,7 +216,7 @@ MPTOptimizer::MPTParam::MPTParam(
   }
 
   {  // weight
-    soft_avoidance_weight = node->declare_parameter<double>("mpt.weight.soft_avoidance_weight");
+    soft_collision_free_weight = node->declare_parameter<double>("mpt.weight.soft_collision_free_weight");
 
     lat_error_weight = node->declare_parameter<double>("mpt.weight.lat_error_weight");
     yaw_error_weight = node->declare_parameter<double>("mpt.weight.yaw_error_weight");
@@ -355,7 +355,7 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
   }
 
   {  // weight
-    updateParam<double>(parameters, "mpt.weight.soft_avoidance_weight", soft_avoidance_weight);
+    updateParam<double>(parameters, "mpt.weight.soft_collision_free_weight", soft_collision_free_weight);
 
     updateParam<double>(parameters, "mpt.weight.lat_error_weight", lat_error_weight);
     updateParam<double>(parameters, "mpt.weight.yaw_error_weight", yaw_error_weight);
@@ -502,14 +502,14 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::getModelPredictiveTraj
     return std::nullopt;
   }
 
-  // 5. convert to points with validation
+  // 7. convert to points with validation
   const auto mpt_traj_points = calcMPTPoints(ref_points, *optimized_steer_angles, mpt_mat);
   if (!mpt_traj_points) {
     RCLCPP_WARN(logger_, "return std::nullopt since lateral or yaw error is too large.");
     return std::nullopt;
   }
 
-  // 6. publish trajectories for debug
+  // 8. publish trajectories for debug
   publishDebugTrajectories(p.header, ref_points, *mpt_traj_points);
 
   time_keeper_ptr_->toc(__func__, "      ");
@@ -631,47 +631,40 @@ void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) co
     return;
   }
 
-  const size_t prev_ref_front_seg_idx = trajectory_utils::findEgoSegmentIndex(
-    *prev_ref_points_ptr_, tier4_autoware_utils::getPose(ref_points.front()), ego_nearest_param_);
-  const size_t prev_ref_front_point_idx = prev_ref_front_seg_idx;
-  const auto & prev_ref_front_point = prev_ref_points_ptr_->at(prev_ref_front_point_idx);
+  // replace the front pose and curvature with previous reference points
+  const auto idx = trajectory_utils::updateFrontPointForFix(
+    ref_points, *prev_ref_points_ptr_, mpt_param_.delta_arc_length, ego_nearest_param_);
 
-  // check if the previous reference points is longer in front than current one
-  const double lon_offset_to_prev_front =
-    motion_utils::calcSignedArcLength(ref_points, 0, prev_ref_front_point.pose.position);
-  if (0 < lon_offset_to_prev_front) {
-    RCLCPP_WARN(logger_, "Fixed point will not be inserted due to the error during calculation.");
-    return;
-  }
+  // NOTE: memorize front point to be fixed before resampling
+  const auto front_point = ref_points.front();
 
-  // update front pose and curvature of ref_points
-  trajectory_utils::updateFrontPointForFix(
-    ref_points, prev_ref_front_point.pose, mpt_param_.delta_arc_length);
-  ref_points.front().curvature = prev_ref_front_point.curvature;
+  if (idx && *idx != 0) {
+    // In order to fix the front "orientation" defined by two front points, insert the previous
+    // fixed point.
+    ref_points.insert(ref_points.begin(), prev_ref_points_ptr_->at(static_cast<int>(*idx) - 1));
 
-  // add previous front pose and curvature if it exists
-  // NOTE: In order to fix the front orientation defined by two front points
-  if (prev_ref_front_point_idx != 0) {
-    ref_points.insert(ref_points.begin(), prev_ref_points_ptr_->at(prev_ref_front_point_idx - 1));
-  }
+    // resample to make ref_points' interval constant.
+    // NOTE: Only pose, velocity and curvature will be interpolated.
+    ref_points = trajectory_utils::resampleReferencePoints(ref_points, mpt_param_.delta_arc_length);
 
-  // resample to make ref_points' interval constant.
-  // NOTE: Only pose, velocity and curvature will be interpolated.
-  ref_points = trajectory_utils::resampleReferencePoints(ref_points, mpt_param_.delta_arc_length);
+    // update pose which is previous one, and fixed kinematic state
+    // NOTE: There may be a lateral error between the previous and input points.
+    //       Therefore, the pose for fix should not be resampled.
+    const auto & prev_ref_front_point = prev_ref_points_ptr_->at(*idx);
+    const auto & prev_ref_prev_front_point = prev_ref_points_ptr_->at(static_cast<int>(*idx) - 1);
 
-  // update pose which is previous one, and fixed kinematic state
-  // NOTE: There may be a lateral error between the previous and input points.
-  //       Therefore, the pose for fix should not be resampled.
-  if (prev_ref_front_point_idx != 0) {
-    const auto & prev_ref_prev_front_point = prev_ref_points_ptr_->at(prev_ref_front_point_idx - 1);
     ref_points.front().pose = prev_ref_prev_front_point.pose;
-    ref_points.at(1).pose = prev_ref_front_point.pose;
-
     ref_points.front().fixed_kinematic_state = prev_ref_prev_front_point.optimized_kinematic_state;
+    ref_points.at(1).pose = prev_ref_front_point.pose;
     ref_points.at(1).fixed_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
   } else {
-    ref_points.front().pose = prev_ref_front_point.pose;
-    ref_points.front().fixed_kinematic_state = prev_ref_front_point.optimized_kinematic_state;
+    // resample to make ref_points' interval constant.
+    // NOTE: Only pose, velocity and curvature will be interpolated.
+    ref_points = trajectory_utils::resampleReferencePoints(ref_points, mpt_param_.delta_arc_length);
+
+    ref_points.front().pose = front_point.pose;
+    ref_points.front().curvature = front_point.curvature;
+    ref_points.front().fixed_kinematic_state = front_point.optimized_kinematic_state;
   }
 
   time_keeper_ptr_->toc(__func__, "          ");
@@ -1006,11 +999,11 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   extended_g.segment(0, D_v) = g;
   if (N_slack > 0) {
     extended_g.segment(D_v, N_ref * N_slack) =
-      mpt_param_.soft_avoidance_weight * Eigen::VectorXd::Ones(N_ref * N_slack);
+      mpt_param_.soft_collision_free_weight * Eigen::VectorXd::Ones(N_ref * N_slack);
   }
   */
   Eigen::VectorXd extended_g(D_v + N_ref * N_slack);
-  extended_g << g, mpt_param_.soft_avoidance_weight * Eigen::VectorXd::Ones(N_ref * N_slack);
+  extended_g << g, mpt_param_.soft_collision_free_weight * Eigen::VectorXd::Ones(N_ref * N_slack);
 
   ObjectiveMatrix obj_matrix;
   obj_matrix.hessian = extended_H;
@@ -1465,11 +1458,7 @@ double MPTOptimizer::getTrajectoryLength() const
   return forward_traj_length + backward_traj_length;
 }
 
-int MPTOptimizer::getNumberOfPoints() const
-{
-  return mpt_param_.num_points +
-         std::round(traj_param_.output_backward_traj_length / mpt_param_.delta_arc_length);
-}
+int MPTOptimizer::getNumberOfPoints() const { return mpt_param_.num_points; }
 
 size_t MPTOptimizer::getNumberOfSlackVariables() const
 {

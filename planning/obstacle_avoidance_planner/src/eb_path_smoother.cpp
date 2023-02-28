@@ -250,15 +250,10 @@ std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
   }
 
   auto traj_points_with_fixed_point = traj_points;
-  const size_t prev_front_seg_idx = trajectory_utils::findEgoSegmentIndex(
-    *prev_eb_traj_points_ptr_, traj_points.front().pose, ego_nearest_param_);
-  const size_t prev_front_point_idx = prev_front_seg_idx;
-  const auto & prev_front_point =
-    trajectory_utils::convertToTrajectoryPoint(prev_eb_traj_points_ptr_->at(prev_front_point_idx));
-
-  // update front pose for fix with previous point
+  // replace the front pose with previous points
   trajectory_utils::updateFrontPointForFix(
-    traj_points_with_fixed_point, prev_front_point.pose, eb_param_.delta_arc_length);
+    traj_points_with_fixed_point, *prev_eb_traj_points_ptr_, eb_param_.delta_arc_length,
+    ego_nearest_param_);
 
   time_keeper_ptr_->toc(__func__, "        ");
   return traj_points_with_fixed_point;

@@ -44,24 +44,9 @@ rclcpp_components_register_node(obstacle_avoidance_planner
   EXECUTABLE obstacle_avoidance_planner_node
 )
 
-# unit test
-# if(BUILD_TESTING)
-#   ament_add_ros_isolated_gtest(test_obstacle_avoidance_planner
-#     test/test_mpt_optimizer.cpp
-#   )
-#   ament_target_dependencies(test_obstacle_avoidance_planner fake_test_node)
-#   target_link_libraries(
-#     test_obstacle_avoidance_planner obstacle_avoidance_planner)
-#
-#   find_package(autoware_testing REQUIRED)
-#   add_smoke_test(obstacle_avoidance_planner obstacle_avoidance_planner_node
-#     PARAM_FILENAMES "obstacle_avoidance_planner.param.yaml test_vehicle_info.param.yaml test_nearest_search.param.yaml"
-#   )
-# endif()
-
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
     scripts
-    param
+    config
 )

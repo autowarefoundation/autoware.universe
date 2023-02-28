@@ -15,9 +15,9 @@
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
 VehicleModelInterface::VehicleModelInterface(
-  const int dim_x, const int dim_u, const int dim_y, const double wheel_base,
+  const int dim_x, const int dim_u, const int dim_y, const double wheelbase,
   const double steer_limit)
-: dim_x_(dim_x), dim_u_(dim_u), dim_y_(dim_y), wheel_base_(wheel_base), steer_limit_(steer_limit)
+: dim_x_(dim_x), dim_u_(dim_u), dim_y_(dim_y), wheelbase_(wheelbase), steer_limit_(steer_limit)
 {
 }
 

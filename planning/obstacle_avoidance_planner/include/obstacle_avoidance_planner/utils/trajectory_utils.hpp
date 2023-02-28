@@ -232,12 +232,29 @@ std::vector<ReferencePoint> resampleReferencePoints(
   const std::vector<ReferencePoint> ref_points, const double interval);
 
 template <typename T>
-void updateFrontPointForFix(
-  std::vector<T> & points, const geometry_msgs::msg::Pose & target_pose, const double epsilon)
+std::optional<size_t> updateFrontPointForFix(
+  std::vector<T> & points, std::vector<T> & points_for_fix, const double delta_arc_length,
+  const EgoNearestParam & ego_nearest_param)
 {
-  const double dist = tier4_autoware_utils::calcDistance2d(points.front(), target_pose);
+  // calculate front point to insert in points as a fixed point
+  const size_t front_seg_idx_for_fix = trajectory_utils::findEgoSegmentIndex(
+    points_for_fix, tier4_autoware_utils::getPose(points.front()), ego_nearest_param);
+  const size_t front_point_idx_for_fix = front_seg_idx_for_fix;
+  const auto & front_fix_point = points_for_fix.at(front_point_idx_for_fix);
 
-  // check if deviation is too large
+  // check if the points_for_fix is longer in front than points
+  const double lon_offset_to_prev_front =
+    motion_utils::calcSignedArcLength(points, 0, front_fix_point.pose.position);
+  if (0 < lon_offset_to_prev_front) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
+      "Fixed point will not be inserted due to the error during calculation.");
+    return std::nullopt;
+  }
+
+  const double dist = tier4_autoware_utils::calcDistance2d(points.front(), front_fix_point);
+
+  // check if deviation is not too large
   constexpr double max_lat_error = 3.0;
   if (max_lat_error < dist) {
     RCLCPP_WARN(
@@ -245,17 +262,18 @@ void updateFrontPointForFix(
       "New Fixed point is too far from points %f [m]", dist);
   }
 
-  if (dist < epsilon) {
+  // update pose
+  if (dist < delta_arc_length) {
     // only pose is updated
-    points.front().pose = target_pose;
+    points.front() = front_fix_point;
   } else {
     // add new front point
     T new_front_point;
-    new_front_point.pose = target_pose;
-    new_front_point.longitudinal_velocity_mps = points.front().longitudinal_velocity_mps;
-
+    new_front_point = front_fix_point;
     points.insert(points.begin(), new_front_point);
   }
+
+  return front_point_idx_for_fix;
 }
 
 void insertStopPoint(

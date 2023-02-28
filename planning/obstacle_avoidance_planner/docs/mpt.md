@@ -12,6 +12,33 @@ When the optimization failed or the optimized trajectory is not collision free, 
 
 Trajectory near the ego must be stable, therefore the condition where trajectory points near the ego are the same as previously generated trajectory is considered, and this is the only hard constraints in MPT.
 
+## Flowchart
+
+```plantuml
+@startuml
+title pathCallback
+start
+
+:calcReferencePoints;
+
+:calc state matrix;
+
+:calcValueMatrix;
+
+:calcObjectiveMatrix;
+
+:calcConstraintMatrix;
+
+:calcOptimizedSteerAngles;
+
+:calcMPTPoints;
+
+:publishDebugTrajectories;
+
+stop
+@enduml
+```
+
 ## Vehicle kinematics
 
 As the following figure, we consider the bicycle kinematics model in the frenet frame to track the reference path.

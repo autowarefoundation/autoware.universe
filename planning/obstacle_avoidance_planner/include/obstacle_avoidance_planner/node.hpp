@@ -35,8 +35,6 @@ namespace obstacle_avoidance_planner
 {
 class ObstacleAvoidancePlanner : public rclcpp::Node
 {
-  FRIEND_TEST(ObstacleAvoidancePlanner, MPTOptimizer);
-
 public:
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
@@ -117,7 +115,7 @@ protected:  // for the static_centerline_optimizer package
   std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<TrajectoryPoint> & optimized_points);
+    const std::vector<TrajectoryPoint> & optimized_points) const;
   void publishDebugData(const Header & header) const;
 
   // functions in generateOptimizedTrajectory
@@ -129,10 +127,9 @@ protected:  // for the static_centerline_optimizer package
     const std::vector<TrajectoryPoint> & input_traj_points,
     const geometry_msgs::msg::Pose & ego_pose) const;
   void insertZeroVelocityOutsideDrivableArea(
-    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
+    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
-  void publishDebugMarkerOfOptimization(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
+  void publishDebugMarkerOfOptimization(const std::vector<TrajectoryPoint> & traj_points) const;
 };
 }  // namespace obstacle_avoidance_planner
 

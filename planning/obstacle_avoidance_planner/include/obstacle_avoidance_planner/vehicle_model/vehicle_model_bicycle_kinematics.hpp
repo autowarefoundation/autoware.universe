@@ -24,11 +24,11 @@
 class KinematicsBicycleModel : public VehicleModelInterface
 {
 public:
-  KinematicsBicycleModel(const double wheel_base, const double steer_limit);
+  KinematicsBicycleModel(const double wheelbase, const double steer_limit);
   virtual ~KinematicsBicycleModel() = default;
 
   void calculateStateEquationMatrix(
-    Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd, const double k,
+    Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd, const double curvature,
     const double ds) const override;
 };
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_

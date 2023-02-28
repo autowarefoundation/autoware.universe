@@ -301,7 +301,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateOptimizedTrajecto
   insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points);
 
   // 4. publish debug marker
-  publishDebugMarkerOfOptimization(planner_data, optimized_traj_points);
+  publishDebugMarkerOfOptimization(optimized_traj_points);
 
   time_keeper_ptr_->toc(__func__, " ");
   return optimized_traj_points;
@@ -412,7 +412,7 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
 }
 
 void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
-  const PlannerData & planner_data, std::vector<TrajectoryPoint> & optimized_traj_points)
+  const PlannerData & planner_data, std::vector<TrajectoryPoint> & optimized_traj_points) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -476,8 +476,7 @@ void ObstacleAvoidancePlanner::publishVirtualWall(const geometry_msgs::msg::Pose
 }
 
 void ObstacleAvoidancePlanner::publishDebugMarkerOfOptimization(
-  [[maybe_unused]] const PlannerData & planner_data,
-  const std::vector<TrajectoryPoint> & traj_points)
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   if (!enable_pub_debug_marker_) {
     return;
@@ -499,27 +498,20 @@ void ObstacleAvoidancePlanner::publishDebugMarkerOfOptimization(
 
 std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
   const std::vector<TrajectoryPoint> & traj_points,
-  const std::vector<TrajectoryPoint> & optimized_traj_points)
+  const std::vector<TrajectoryPoint> & optimized_traj_points) const
 {
   time_keeper_ptr_->tic(__func__);
 
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
   // calculate end idx of optimized points on path points
-  const auto joint_start_traj_seg_idx = motion_utils::findNearestSegmentIndex(
-    traj_points, joint_start_pose, traj_param_.delta_dist_threshold_for_closest_point,
-    traj_param_.delta_yaw_threshold_for_closest_point);
-  if (!joint_start_traj_seg_idx) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "No extend trajectory since nearest segment index was not found.");
-    return optimized_traj_points;
-  }
+  const size_t joint_start_traj_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
 
   // crop trajectory for extension
   constexpr double joint_traj_length_for_smoothing = 5.0;
   const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
-    traj_points, joint_start_pose.position, *joint_start_traj_seg_idx,
+    traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
     joint_traj_length_for_smoothing);
 
   // calculate full trajectory points
@@ -537,7 +529,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
     full_traj_points, traj_param_.output_delta_arc_length);
 
   // update velocity on joint
-  for (size_t i = *joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+  for (size_t i = joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
     if (hasZeroVelocity(traj_points.at(i))) {
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.

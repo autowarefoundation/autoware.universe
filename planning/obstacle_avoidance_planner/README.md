@@ -1,7 +1,7 @@
 ## Purpose
 
 This package generates a trajectory that is kinematically-feasible to drive and collision-free based on the input path, drivable area.
-Only position and orientation of trajectory are updated in this module, and velocity is just aligned from the one in the input path.
+Only position and orientation of trajectory are updated in this module, and velocity is just taken over from the one in the input path.
 
 ## Feature
 
@@ -44,7 +44,7 @@ start
 
 group generateOptimizedTrajectory
   group optimizeTrajectory
-    :checkReplan;
+    :check replan;
     if (replanning required?) then (yes)
       :getEBTrajectory;
       :getModelPredictiveTrajectory;
@@ -57,9 +57,9 @@ group generateOptimizedTrajectory
     endif
   end group
 
-  :applyPathVelocity;
+  :applyInputVelocity;
   :insertZeroVelocityOutsideDrivableArea;
-  :publishDebugMarkerInOptimization;
+  :publishDebugMarkerOfOptimization;
 end group
 
 
@@ -92,20 +92,20 @@ struct PlannerData
 };
 ```
 
-### checkReplan
+### check replan
 
 When one of the following conditions are met, trajectory optimization will be executed.
 Otherwise, previously optimized trajectory is used with updating the velocity from the latest input path.
 
 max_path_shape_around_ego_lat_dist
 
-- Ego moves longer than `replan.max_ego_moving_dist` compared to the previous ego pose (default: 3.0 [m])
+- Ego moves longer than `replan.max_ego_moving_dist` in one cycle. (default: 3.0 [m])
   - This is for when the ego pose is set again in the simulation.
-- Goal pose moved longer than `replan.max_goal_moving_dist`. (default: 15.0 [ms])
+- Trajectory's end, which is considered as the goal pose, moves longer than `replan.max_goal_moving_dist` in one cycle. (default: 15.0 [ms])
   - When the goal pose is set again, the planning should be reset.
-- Time passes (default: 1.0 [s])
-  - The optimization is sometimes heavy.
-- Ego is far from the previously generated trajectory
+- Time passes. (default: 1.0 [s])
+  - The optimization is skipped for a while sine the optimization is sometimes heavy.
+- The input path changes laterally longer than `replan.max_path_shape_around_ego_lat_dist` in one cycle. (default: 2.0)
 
 ### getEBTrajectory
 
@@ -162,7 +162,6 @@ The shapes of the trajectory and the path are different, therefore the each near
 
 ## Limitation
 
-- When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
 - Computation cost is sometimes high.
 - Because of the approximation such as linearization, some narrow roads cannot be run by the planner.
 - Roles of planning for `behavior_path_planner` and `obstacle_avoidance_planner` are not decided clearly. Both can avoid obstacles.

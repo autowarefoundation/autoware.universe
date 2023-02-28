@@ -73,9 +73,9 @@ struct ReferencePoint
   // additional information
   double curvature{0.0};
   double delta_arc_length{0.0};
-  double alpha{0.0};
-  Bounds bounds{};  // bounds on `pose`
-  std::vector<std::optional<double>> beta{};
+  double alpha{0.0};                          // for minimizing lateral error
+  Bounds bounds{};                            // bounds on `pose`
+  std::vector<std::optional<double>> beta{};  // for collision-free constraint
   double normalized_avoidance_cost{0.0};
 
   // bounds and its local pose on each collision-free constraint
@@ -101,8 +101,6 @@ struct ReferencePoint
 
 class MPTOptimizer
 {
-  FRIEND_TEST(ObstacleAvoidancePlanner, MPTOptimizer);
-
 public:
   MPTOptimizer(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
@@ -164,7 +162,7 @@ private:
     // clearance
     double hard_clearance_from_road;
     double soft_clearance_from_road;
-    double soft_avoidance_weight;
+    double soft_collision_free_weight;
 
     // weight
     double lat_error_weight;

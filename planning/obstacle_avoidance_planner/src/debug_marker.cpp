@@ -287,7 +287,8 @@ visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
     // std::to_string(ref_points[i].delta_arc_length); marker.text =
     // std::to_string(ref_points[i].alpha) + "\n" + std::to_string(ref_points[i].beta); marker.text
     // marker.text = std::to_string(ref_points.at(i).curvature);
-    marker.text = std::to_string(ref_points.at(i).normalized_avoidance_cost);
+    marker.text = std::to_string(ref_points.at(i).curvature) + " \n" +
+                  std::to_string(ref_points.at(i).optimized_input);
     marker.pose.position = ref_points.at(i).pose.position;
     msg.markers.push_back(marker);
   }

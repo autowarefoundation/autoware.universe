@@ -26,12 +26,12 @@ protected:
   const int dim_x_;
   const int dim_u_;
   const int dim_y_;
-  const double wheel_base_;
+  const double wheelbase_;
   const double steer_limit_;
 
 public:
   VehicleModelInterface(
-    const int dim_x, const int dim_u, const int dim_y, const double wheel_base,
+    const int dim_x, const int dim_u, const int dim_y, const double wheelbase,
     const double steer_limit);
   virtual ~VehicleModelInterface() = default;
 
