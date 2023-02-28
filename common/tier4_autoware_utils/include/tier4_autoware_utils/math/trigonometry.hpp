@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef TIER4_AUTOWARE_UTILS__MATH__TRIGONOMETRY_HPP_
 #define TIER4_AUTOWARE_UTILS__MATH__TRIGONOMETRY_HPP_
 
@@ -23,6 +22,6 @@ float sin(float radian);
 
 float cos(float radian);
 
-} // namespace tier4_autoware_utils
+}  // namespace tier4_autoware_utils
 
-#endif // TIER4_AUTOWARE_UTILS__MATH__TRIGONOMETRY_HPP_
+#endif  // TIER4_AUTOWARE_UTILS__MATH__TRIGONOMETRY_HPP_

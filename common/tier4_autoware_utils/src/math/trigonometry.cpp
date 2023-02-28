@@ -18,11 +18,14 @@
 
 #include <cmath>
 
-namespace tier4_autoware_utils {
+namespace tier4_autoware_utils
+{
 
-float sin(float radian) {
+float sin(float radian)
+{
   float degree = radian * (180.f / tier4_autoware_utils::pi) * (SIN_TABLE_SIZE_MUL4 / 360.f);
-  size_t idx = (static_cast<int>(std::round(degree)) % SIN_TABLE_SIZE_MUL4 + SIN_TABLE_SIZE_MUL4) % SIN_TABLE_SIZE_MUL4;
+  size_t idx = (static_cast<int>(std::round(degree)) % SIN_TABLE_SIZE_MUL4 + SIN_TABLE_SIZE_MUL4) %
+               SIN_TABLE_SIZE_MUL4;
 
   int mul = 1;
   if (SIN_TABLE_SIZE <= idx && idx < 2 * SIN_TABLE_SIZE) {
@@ -38,8 +41,6 @@ float sin(float radian) {
   return mul * SIN_TABLE[idx];
 }
 
-float cos(float radian) {
-  return sin(radian + tier4_autoware_utils::pi / 2.f);
-}
+float cos(float radian) { return sin(radian + tier4_autoware_utils::pi / 2.f); }
 
-} // namespace tier4_autoware_utils
+}  // namespace tier4_autoware_utils
