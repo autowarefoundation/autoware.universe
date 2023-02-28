@@ -75,7 +75,7 @@ public:
     return m->isExecutionReady();
   }
 
-  bool isAlreadyApproved(const UUID & uuid) const
+  bool isLockedNewModuleLaunch(const UUID & uuid) const
   {
     const auto m = findSceneModule(uuid);
 
@@ -83,7 +83,7 @@ public:
       return false;
     }
 
-    return m->isAlreadyApproved();
+    return m->isLockedNewModuleLaunch();
   }
 
   bool isWaitingApproval(const UUID & uuid) const

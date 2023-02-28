@@ -63,7 +63,7 @@ public:
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
     is_waiting_approval_{false},
-    is_already_approved_{false},
+    is_locked_new_module_launch_{false},
     uuid_(generateUUID()),
     current_state_{ModuleStatus::SUCCESS}
   {
@@ -225,7 +225,7 @@ public:
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
-  bool isAlreadyApproved() const { return is_already_approved_; }
+  bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
 
   rclcpp::Logger getLogger() const { return logger_; }
 
@@ -265,9 +265,9 @@ protected:
     rtc_interface_ptr_->clearCooperateStatus();
   }
 
-  void alreadyApproved() { is_already_approved_ = true; }
+  void lockNewModuleLaunch() { is_locked_new_module_launch_ = true; }
 
-  void nothingApproved() { is_already_approved_ = false; }
+  void unlockNewModuleLaunch() { is_locked_new_module_launch_ = false; }
 
   void waitApproval() { is_waiting_approval_ = true; }
 
@@ -279,7 +279,7 @@ protected:
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
   bool is_waiting_approval_;
-  bool is_already_approved_;
+  bool is_locked_new_module_launch_;
 
   UUID uuid_;
 

@@ -157,7 +157,7 @@ boost::optional<ModuleID> PlannerManager::getCandidateModuleID(
 
     // when the approved module throw another approval request, block all. -> CLEAR REQUEST MODULES
     // AND PUSH BACK.
-    if (manager->isAlreadyApproved(candidate_module_id_.get().second)) {
+    if (manager->isLockedNewModuleLaunch(candidate_module_id_.get().second)) {
       request_modules.clear();
       request_modules.push_back(candidate_module_id_.get());
       processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
@@ -390,7 +390,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
   if (!!candidate_module_id_) {
     const auto & manager = candidate_module_id_.get().first;
     const auto & uuid = candidate_module_id_.get().second;
-    if (manager->isAlreadyApproved(uuid)) {
+    if (manager->isLockedNewModuleLaunch(uuid)) {
       return;
     }
   }
