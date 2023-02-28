@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "timing_violation_monitor/timing_violation_monitor_core.hpp"
-
 #include "timing_violation_monitor/timing_violation_monitor_debug.hpp"
 
 #include <algorithm>
@@ -40,6 +39,7 @@ inline double stamp_to_sec(builtin_interfaces::msg::Time stamp)
 {
   return stamp.sec + stamp.nanosec / 1e9;
 }
+
 builtin_interfaces::msg::Time sec_to_stamp(double sec_time)
 {
   // builtin_interfaces.msg.Time stamp;
