@@ -477,6 +477,8 @@ AvoidanceByLCParameters BehaviorPathPlannerNode::getAvoidanceByLCParam(
 
 AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 {
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+
   AvoidanceParameters p{};
   // general params
   {
@@ -494,7 +496,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       declare_parameter<double>(ns + "drivable_area_left_bound_offset");
     p.drivable_area_types_to_skip =
       declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
-    p.object_envelope_buffer = declare_parameter<double>(ns + "object_envelope_buffer");
     p.enable_bound_clipping = declare_parameter<bool>(ns + "enable_bound_clipping");
     p.enable_avoidance_over_same_direction =
       declare_parameter<bool>(ns + "enable_avoidance_over_same_direction");
@@ -513,15 +514,83 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   // target object
   {
-    std::string ns = "avoidance.target_object.";
-    p.avoid_car = declare_parameter<bool>(ns + "car");
-    p.avoid_truck = declare_parameter<bool>(ns + "truck");
-    p.avoid_bus = declare_parameter<bool>(ns + "bus");
-    p.avoid_trailer = declare_parameter<bool>(ns + "trailer");
-    p.avoid_unknown = declare_parameter<bool>(ns + "unknown");
-    p.avoid_bicycle = declare_parameter<bool>(ns + "bicycle");
-    p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
-    p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
+    std::string ns = "avoidance.target_object.motorcycle.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::MOTORCYCLE, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.car.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::CAR, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.truck.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::TRUCK, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.trailer.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::TRAILER, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.bus.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::BUS, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.pedestrian.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::PEDESTRIAN, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.bicycle.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::BICYCLE, o);
+  }
+
+  {
+    std::string ns = "avoidance.target_object.unknown.";
+    ObjectParameter o{};
+    o.enable = declare_parameter<bool>(ns + "enable");
+    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
+    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
+    p.object_parameters.emplace(ObjectClassification::UNKNOWN, o);
   }
 
   // target filtering
@@ -564,8 +633,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     std::string ns = "avoidance.avoidance.lateral.";
     p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
-    p.lateral_collision_safety_buffer =
-      declare_parameter<double>(ns + "lateral_collision_safety_buffer");
     p.lateral_passable_safety_buffer =
       declare_parameter<double>(ns + "lateral_passable_safety_buffer");
     p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
@@ -579,8 +646,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     std::string ns = "avoidance.avoidance.longitudinal.";
     p.prepare_time = declare_parameter<double>(ns + "prepare_time");
-    p.longitudinal_collision_safety_buffer =
-      declare_parameter<double>(ns + "longitudinal_collision_safety_buffer");
     p.min_prepare_distance = declare_parameter<double>(ns + "min_prepare_distance");
     p.min_avoidance_distance = declare_parameter<double>(ns + "min_avoidance_distance");
     p.min_nominal_avoidance_speed = declare_parameter<double>(ns + "min_nominal_avoidance_speed");
