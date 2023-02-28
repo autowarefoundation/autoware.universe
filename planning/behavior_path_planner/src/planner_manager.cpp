@@ -123,17 +123,20 @@ boost::optional<SceneModulePtr> PlannerManager::getCandidateModule(
   for (const auto & manager_ptr : manager_ptrs_) {
     stop_watch_.tic(manager_ptr->getModuleName());
 
+    const auto toc = [this, &manager_ptr]() {
+      const auto name = manager_ptr->getModuleName();
+      processing_time_.at(name) += stop_watch_.toc(name, true);
+    };
+
     // already exist the modules that don't support simultaneous execution. -> DO NOTHING.
     if (block_simultaneous_execution) {
-      processing_time_.at(manager_ptr->getModuleName()) +=
-        stop_watch_.toc(manager_ptr->getModuleName(), true);
+      toc();
       continue;
     }
 
     // the module doesn't support simultaneous execution. -> DO NOTHING.
     if (!approved_module_ptrs_.empty() && !manager_ptr->isSimultaneousExecutable()) {
-      processing_time_.at(manager_ptr->getModuleName()) +=
-        stop_watch_.toc(manager_ptr->getModuleName(), true);
+      toc();
       continue;
     }
 
@@ -141,8 +144,7 @@ boost::optional<SceneModulePtr> PlannerManager::getCandidateModule(
     if (!candidate_module_opt_) {
       // launched module num reach limit. -> CAN'T LAUNCH NEW MODULE. DO NOTHING.
       if (!manager_ptr->canLaunchNewModule()) {
-        processing_time_.at(manager_ptr->getModuleName()) +=
-          stop_watch_.toc(manager_ptr->getModuleName(), true);
+        toc();
         continue;
       }
 
@@ -153,8 +155,7 @@ boost::optional<SceneModulePtr> PlannerManager::getCandidateModule(
         request_modules.emplace_back(manager_ptr, new_module_ptr);
       }
 
-      processing_time_.at(manager_ptr->getModuleName()) +=
-        stop_watch_.toc(manager_ptr->getModuleName(), true);
+      toc();
       continue;
     }
 
@@ -170,8 +171,7 @@ boost::optional<SceneModulePtr> PlannerManager::getCandidateModule(
       if (itr == manager_ptrs_.end()) {
         request_modules.clear();
         request_modules.emplace_back(*itr, candidate_module_opt_.get());
-        processing_time_.at(manager_ptr->getModuleName()) +=
-          stop_watch_.toc(manager_ptr->getModuleName(), true);
+        toc();
         break;
       }
     }
@@ -187,29 +187,25 @@ boost::optional<SceneModulePtr> PlannerManager::getCandidateModule(
         manager_ptr->deleteModules(candidate_module_opt_.get());
       }
 
-      processing_time_.at(manager_ptr->getModuleName()) +=
-        stop_watch_.toc(manager_ptr->getModuleName(), true);
+      toc();
       continue;
     }
 
     // different name module already launched as candidate.
     // launched module num reach limit. -> CAN'T LAUNCH NEW MODULE. DO NOTHING.
     if (!manager_ptr->canLaunchNewModule()) {
-      processing_time_.at(manager_ptr->getModuleName()) +=
-        stop_watch_.toc(manager_ptr->getModuleName(), true);
+      toc();
       continue;
     }
 
     // the module requests it to be launch. -> CAN LAUNCH THE MODULE. PUSH BACK AS REQUEST MODULES.
     const auto new_module_ptr = manager_ptr->getNewModule();
     if (!manager_ptr->isExecutionRequested(new_module_ptr, previous_module_output)) {
-      processing_time_.at(manager_ptr->getModuleName()) +=
-        stop_watch_.toc(manager_ptr->getModuleName(), true);
+      toc();
       continue;
     }
 
-    processing_time_.at(manager_ptr->getModuleName()) +=
-      stop_watch_.toc(manager_ptr->getModuleName(), true);
+    toc();
     request_modules.emplace_back(manager_ptr, new_module_ptr);
   }
 
