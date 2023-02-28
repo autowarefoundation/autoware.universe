@@ -71,9 +71,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.chattering_threshold = declare_parameter<double>("chattering_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
-    p.voxel_grid_x = declare_parameter("voxel_grid_x", 0.05);
-    p.voxel_grid_y = declare_parameter("voxel_grid_y", 0.05);
-    p.voxel_grid_z = declare_parameter("voxel_grid_z", 100000.0);
+    p.voxel_grid_x = declare_parameter<double>("voxel_grid_x");
+    p.voxel_grid_y = declare_parameter<double>("voxel_grid_y");
+    p.voxel_grid_z = declare_parameter<double>("voxel_grid_z");
     p.use_predicted_objects = declare_parameter<bool>("use_predicted_objects");
     p.publish_obstacle_polygon = declare_parameter<bool>("publish_obstacle_polygon");
   }
@@ -85,6 +85,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     // params for stop position
     p.max_longitudinal_margin =
       declare_parameter<double>(ns + "stop_position.max_longitudinal_margin");
+    p.max_longitudinal_margin_behind_goal =
+      declare_parameter<double>(ns + "stop_position.max_longitudinal_margin_behind_goal");
     p.min_longitudinal_margin =
       declare_parameter<double>(ns + "stop_position.min_longitudinal_margin");
     p.hold_stop_margin_distance =
@@ -98,11 +100,13 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
       declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
     p.unknown_lateral_margin =
       declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
-    p.extend_distance = declare_parameter<double>(ns + "detection_area.extend_distance");
+    p.enable_stop_behind_goal_for_obstacle =
+      declare_parameter<bool>(ns + "detection_area.enable_stop_behind_goal_for_obstacle");
     p.step_length = declare_parameter<double>(ns + "detection_area.step_length");
 
     // apply offset
     p.max_longitudinal_margin += i.max_longitudinal_offset_m;
+    p.max_longitudinal_margin_behind_goal += i.max_longitudinal_offset_m;
     p.min_longitudinal_margin += i.max_longitudinal_offset_m;
     p.stop_search_radius =
       p.step_length +
@@ -311,14 +315,17 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     motion_utils::convertToTrajectoryPointArray(*input_msg);
 
   // trim trajectory from self pose
-  const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
+  TrajectoryPoints base_trajectory = trimTrajectoryWithIndexFromSelfPose(
     motion_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
     planner_data.trajectory_trim_index);
+
   // extend trajectory to consider obstacles after the goal
-  const auto extend_trajectory = extendTrajectory(base_trajectory, stop_param.extend_distance);
+  if (stop_param.enable_stop_behind_goal_for_obstacle) {
+    base_trajectory = extendTrajectory(base_trajectory, stop_param.max_longitudinal_margin);
+  }
   // decimate trajectory for calculation cost
   const auto decimate_trajectory = decimateTrajectory(
-    extend_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
+    base_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
 
   if (node_param_.use_predicted_objects) {
     searchPredictedObject(decimate_trajectory, planner_data, vehicle_info, stop_param);
@@ -1293,8 +1300,13 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
   const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain,
   const StopParam & stop_param)
 {
+  const bool is_behind_goal = static_cast<size_t>(idx) == base_trajectory.size() - 1;
+  const double max_longitudinal_margin = is_behind_goal
+                                           ? stop_param.max_longitudinal_margin_behind_goal
+                                           : stop_param.max_longitudinal_margin;
+
   const auto max_dist_stop_point =
-    createTargetPoint(idx, stop_param.max_longitudinal_margin, base_trajectory, dist_remain);
+    createTargetPoint(idx, max_longitudinal_margin, base_trajectory, dist_remain);
   const auto min_dist_stop_point =
     createTargetPoint(idx, stop_param.min_longitudinal_margin, base_trajectory, dist_remain);
 
