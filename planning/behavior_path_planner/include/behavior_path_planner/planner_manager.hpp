@@ -93,6 +93,10 @@ public:
   {
     std::vector<std::shared_ptr<SceneModuleStatus>> ret;
 
+    const auto size = approved_module_ptrs_.size() + 1;
+
+    ret.reserve(size);
+
     for (const auto & m : approved_module_ptrs_) {
       auto s = std::make_shared<SceneModuleStatus>(m->name());
       s->is_waiting_approval = m->isWaitingApproval();
@@ -107,6 +111,8 @@ public:
       s->status = m->getCurrentStatus();
       ret.push_back(s);
     }
+
+    ret.shrink_to_fit();
 
     return ret;
   }
