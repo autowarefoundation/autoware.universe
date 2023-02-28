@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,21 +18,8 @@
 
 #include <signal.h>
 
-static void signal_handler(int signum)
-{
-  printf("signal_handler: caught signal %d\n", signum);
-  if (signum == SIGINT) {
-    printf("--- SIGINT ---\n");
-    exit(1);
-  }
-}
-
 int main(int argc, char ** argv)
 {
-  if (signal(SIGINT, signal_handler) == SIG_ERR) {
-    printf("## Error caught signal\n");
-    exit(-1);
-  }
   rclcpp::init(argc, argv);
   auto node = std::make_shared<timing_violation_monitor::TimingViolationMonitor>();
   node->registerNodeToDebug(node);
