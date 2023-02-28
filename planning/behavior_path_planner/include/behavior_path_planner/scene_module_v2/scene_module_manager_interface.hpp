@@ -22,6 +22,7 @@
 
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -33,6 +34,7 @@ namespace behavior_path_planner
 
 using tier4_autoware_utils::toHexString;
 using unique_identifier_msgs::msg::UUID;
+using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 
 class SceneModuleManagerInterface
 {
@@ -53,128 +55,63 @@ public:
 
   virtual ~SceneModuleManagerInterface() = default;
 
-  bool isExecutionRequested(const BehaviorModuleOutput & previous_module_output)
+  SceneModulePtr getNewModule()
   {
-    const auto m = getIdlingModule();
-
-    m->setData(planner_data_);
-    m->setPreviousModuleOutput(previous_module_output);
-    m->updateData();
-
-    return m->isExecutionRequested();
-  }
-
-  bool isExecutionReady(const UUID & uuid) const
-  {
-    const auto m = findSceneModule(uuid);
-
-    if (m == nullptr) {
-      return false;
+    if (idling_module_ != nullptr) {
+      return idling_module_;
     }
 
-    return m->isExecutionReady();
+    idling_module_ = createNewSceneModuleInstance();
+    return idling_module_;
   }
 
-  bool isLockedNewModuleLaunch(const UUID & uuid) const
+  bool isExecutionRequested(
+    const SceneModulePtr & module_ptr, const BehaviorModuleOutput & previous_module_output) const
   {
-    const auto m = findSceneModule(uuid);
+    module_ptr->setData(planner_data_);
+    module_ptr->setPreviousModuleOutput(previous_module_output);
+    module_ptr->updateData();
 
-    if (m == nullptr) {
-      return false;
-    }
-
-    return m->isLockedNewModuleLaunch();
+    return module_ptr->isExecutionRequested();
   }
 
-  bool isWaitingApproval(const UUID & uuid) const
+  void registerNewModule(
+    const SceneModulePtr & module_ptr, const BehaviorModuleOutput & previous_module_output)
   {
-    const auto m = findSceneModule(uuid);
+    module_ptr->setData(planner_data_);
+    module_ptr->setPreviousModuleOutput(previous_module_output);
+    module_ptr->onEntry();
 
-    if (m == nullptr) {
-      return false;
-    }
-
-    if (!m->isActivated()) {
-      return m->isWaitingApproval();
-    }
-
-    return false;
+    registered_modules_.push_back(module_ptr);
   }
 
-  ModuleStatus getCurrentStatus(const UUID & uuid) const
+  void deleteModules(const SceneModulePtr & module_ptr)
   {
-    const auto m = findSceneModule(uuid);
+    module_ptr->onExit();
+    module_ptr->publishRTCStatus();
 
-    if (m == nullptr) {
-      return ModuleStatus::IDLE;
-    }
+    const auto itr = std::find(registered_modules_.begin(), registered_modules_.end(), module_ptr);
 
-    return m->getCurrentStatus();
-  }
-
-  BehaviorModuleOutput run(
-    const UUID & uuid, const BehaviorModuleOutput & previous_module_output) const
-  {
-    const auto m = findSceneModule(uuid);
-
-    if (m == nullptr) {
-      return {};
-    }
-
-    m->setData(planner_data_);
-    m->setPreviousModuleOutput(previous_module_output);
-    m->updateData();
-
-    m->lockRTCCommand();
-    const auto result = m->run();
-    m->unlockRTCCommand();
-
-    m->updateState();
-
-    m->publishRTCStatus();
-
-    return result;
-  }
-
-  void registerNewModule(const BehaviorModuleOutput & previous_module_output, const UUID & uuid)
-  {
-    const auto m = createNewSceneModuleInstance();
-
-    m->setData(planner_data_);
-    m->setPreviousModuleOutput(previous_module_output);
-    m->onEntry();
-
-    registered_modules_.insert(std::make_pair(toHexString(uuid), m));
-  }
-
-  void deleteModules(const UUID & uuid)
-  {
-    const auto m = findSceneModule(uuid);
-
-    if (m == nullptr) {
-      return;
-    }
-
-    m->onExit();
-    m->publishRTCStatus();
-
-    registered_modules_.erase(toHexString(uuid));
+    registered_modules_.erase(itr);
 
     pub_debug_marker_->publish(MarkerArray{});
   }
 
-  void publishDebugMarker()
+  void publishDebugMarker() const
   {
     using tier4_autoware_utils::appendMarkerArray;
 
     MarkerArray markers{};
 
+    const auto marker_offset = std::numeric_limits<uint8_t>::max();
+
+    uint32_t marker_id = marker_offset;
     for (const auto & m : registered_modules_) {
-      const uint32_t marker_id = std::stoul(m.first.substr(0, sizeof(uint32_t) / 4), nullptr, 16);
-      for (auto & marker : m.second->getDebugMarkers().markers) {
+      for (auto & marker : m->getDebugMarkers().markers) {
         marker.id += marker_id;
         markers.markers.push_back(marker);
       }
+      marker_id += marker_offset;
     }
 
     if (registered_modules_.empty() && idling_module_ != nullptr) {
@@ -184,15 +121,10 @@ public:
     pub_debug_marker_->publish(markers);
   }
 
-  bool exist(const UUID & uuid) const
+  bool exist(const SceneModulePtr & module_ptr) const
   {
-    if (registered_modules_.count(toHexString(uuid)) == 0) {
-      RCLCPP_DEBUG(
-        logger_, "uuid %s is not found in %s module.", toHexString(uuid).c_str(), name_.c_str());
-      return false;
-    }
-
-    return true;
+    return std::find(registered_modules_.begin(), registered_modules_.end(), module_ptr) !=
+           registered_modules_.end();
   }
 
   bool canLaunchNewModule() const { return registered_modules_.size() < max_module_num_; }
@@ -204,8 +136,8 @@ public:
   void reset()
   {
     std::for_each(registered_modules_.begin(), registered_modules_.end(), [](const auto & m) {
-      m.second->onExit();
-      m.second->publishRTCStatus();
+      m->onExit();
+      m->publishRTCStatus();
     });
     registered_modules_.clear();
 
@@ -220,15 +152,7 @@ public:
 
   std::string getModuleName() const { return name_; }
 
-  std::vector<std::shared_ptr<SceneModuleInterface>> getSceneModules()
-  {
-    std::vector<std::shared_ptr<SceneModuleInterface>> modules;
-    for (const auto & m : registered_modules_) {
-      modules.push_back(m.second);
-    }
-
-    return modules;
-  }
+  std::vector<SceneModulePtr> getSceneModules() { return registered_modules_; }
 
   virtual void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) = 0;
 
@@ -249,31 +173,11 @@ protected:
 
   std::shared_ptr<PlannerData> planner_data_;
 
-  std::shared_ptr<SceneModuleInterface> idling_module_;
+  std::vector<SceneModulePtr> registered_modules_;
 
-  std::unordered_map<std::string, std::shared_ptr<SceneModuleInterface>> registered_modules_;
+  SceneModulePtr idling_module_;
 
 private:
-  std::shared_ptr<SceneModuleInterface> findSceneModule(const UUID & uuid) const
-  {
-    const auto itr = registered_modules_.find(toHexString(uuid));
-    if (itr == registered_modules_.end()) {
-      return nullptr;
-    }
-
-    return registered_modules_.at(toHexString(uuid));
-  }
-
-  std::shared_ptr<SceneModuleInterface> getIdlingModule()
-  {
-    if (idling_module_ != nullptr) {
-      return idling_module_;
-    }
-
-    idling_module_ = createNewSceneModuleInstance();
-    return idling_module_;
-  }
-
   size_t max_module_num_;
 
   size_t priority_;

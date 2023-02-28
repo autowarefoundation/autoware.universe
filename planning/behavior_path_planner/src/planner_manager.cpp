@@ -44,9 +44,8 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     root_lanelet_ = updateRootLanelet(data);
   }
 
-  std::for_each(scene_manager_ptrs_.begin(), scene_manager_ptrs_.end(), [&data](const auto & m) {
-    m->setData(data);
-  });
+  std::for_each(
+    manager_ptrs_.begin(), manager_ptrs_.end(), [&data](const auto & m) { m->setData(data); });
 
   while (rclcpp::ok()) {
     /**
@@ -57,13 +56,13 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     /**
      * STEP2: check modules that need to be launched
      */
-    const auto candidate_module_id = getCandidateModuleID(approved_path_data);
+    const auto candidate_module_opt = getCandidateModule(approved_path_data);
 
     /**
      * STEP3: if there is no module that need to be launched, return approved modules' output
      */
-    if (!candidate_module_id) {
-      candidate_module_id_ = boost::none;
+    if (!candidate_module_opt) {
+      candidate_module_opt_ = boost::none;
       processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
       return approved_path_data;
     }
@@ -71,9 +70,9 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     /**
      * STEP4: if there is module that should be launched, execute the module
      */
-    const auto name = candidate_module_id.get().first->getModuleName();
+    const auto name = candidate_module_opt.get()->name();
     stop_watch_.tic(name);
-    const auto result = run(candidate_module_id.get(), approved_path_data);
+    const auto result = run(candidate_module_opt.get(), data, approved_path_data);
     processing_time_.at(name) += stop_watch_.toc(name, true);
 
     /**
@@ -82,17 +81,17 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
      * shape modification that needs approval. On the other hand, it could include velocity profile
      * modification.
      */
-    if (isWaitingApproval(candidate_module_id.get())) {
-      candidate_module_id_ = candidate_module_id.get();
+    if (candidate_module_opt.get()->isWaitingApproval()) {
+      candidate_module_opt_ = candidate_module_opt.get();
       processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
       return result;
     }
 
     /**
-     * STEP6: if the candidate module is approved, push the module into approved_modules_
+     * STEP6: if the candidate module is approved, push the module into approved_module_ptrs_
      */
-    candidate_module_id_ = boost::none;
-    addApprovedModule(candidate_module_id.get());
+    candidate_module_opt_ = boost::none;
+    addApprovedModule(candidate_module_opt.get());
   }
 
   processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
@@ -100,15 +99,20 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   return {};
 }
 
-boost::optional<ModuleID> PlannerManager::getCandidateModuleID(
+boost::optional<SceneModulePtr> PlannerManager::getCandidateModule(
   const BehaviorModuleOutput & previous_module_output) const
 {
-  std::vector<ModuleID> request_modules{};
+  std::vector<std::pair<SceneModuleManagerPtr, SceneModulePtr>> request_modules{};
 
   const auto block_simultaneous_execution = [this]() {
-    for (const auto & m : approved_modules_) {
-      const auto & manager = m.first;
-      if (!manager->isSimultaneousExecutable()) {
+    for (const auto & module_ptr : approved_module_ptrs_) {
+      const auto itr = std::find_if(
+        manager_ptrs_.begin(), manager_ptrs_.end(),
+        [&module_ptr](const auto & m) { return m->getModuleName() == module_ptr->name(); });
+      if (itr == manager_ptrs_.end()) {
+        return true;
+      }
+      if (!(*itr)->isSimultaneousExecutable()) {
         return true;
       }
     }
@@ -116,85 +120,97 @@ boost::optional<ModuleID> PlannerManager::getCandidateModuleID(
   }();
 
   // pickup execution requested modules
-  for (const auto & m : scene_manager_ptrs_) {
-    stop_watch_.tic(m->getModuleName());
-
-    const auto uuid = generateUUID();  // generate temporary uuid
+  for (const auto & manager_ptr : manager_ptrs_) {
+    stop_watch_.tic(manager_ptr->getModuleName());
 
     // already exist the modules that don't support simultaneous execution. -> DO NOTHING.
     if (block_simultaneous_execution) {
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+      processing_time_.at(manager_ptr->getModuleName()) +=
+        stop_watch_.toc(manager_ptr->getModuleName(), true);
       continue;
     }
 
     // the module doesn't support simultaneous execution. -> DO NOTHING.
-    if (!approved_modules_.empty() && !m->isSimultaneousExecutable()) {
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+    if (!approved_module_ptrs_.empty() && !manager_ptr->isSimultaneousExecutable()) {
+      processing_time_.at(manager_ptr->getModuleName()) +=
+        stop_watch_.toc(manager_ptr->getModuleName(), true);
       continue;
     }
 
     // check there is a launched module which is waiting approval as candidate.
-    if (!candidate_module_id_) {
+    if (!candidate_module_opt_) {
       // launched module num reach limit. -> CAN'T LAUNCH NEW MODULE. DO NOTHING.
-      if (!m->canLaunchNewModule()) {
-        processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+      if (!manager_ptr->canLaunchNewModule()) {
+        processing_time_.at(manager_ptr->getModuleName()) +=
+          stop_watch_.toc(manager_ptr->getModuleName(), true);
         continue;
       }
 
       // the module requests it to be launch. -> CAN LAUNCH THE MODULE. PUSH BACK AS REQUEST
       // MODULES.
-      if (m->isExecutionRequested(previous_module_output)) {
-        request_modules.emplace_back(m, uuid);
+      const auto new_module_ptr = manager_ptr->getNewModule();
+      if (manager_ptr->isExecutionRequested(new_module_ptr, previous_module_output)) {
+        request_modules.emplace_back(manager_ptr, new_module_ptr);
       }
 
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+      processing_time_.at(manager_ptr->getModuleName()) +=
+        stop_watch_.toc(manager_ptr->getModuleName(), true);
       continue;
     }
 
     // candidate module already exist
-    const auto & manager = candidate_module_id_.get().first;
-    const auto & name = manager->getModuleName();
+    const auto & name = candidate_module_opt_.get()->name();
 
     // when the approved module throw another approval request, block all. -> CLEAR REQUEST MODULES
     // AND PUSH BACK.
-    if (manager->isLockedNewModuleLaunch(candidate_module_id_.get().second)) {
-      request_modules.clear();
-      request_modules.push_back(candidate_module_id_.get());
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
-      break;
+    if (candidate_module_opt_.get()->isLockedNewModuleLaunch()) {
+      const auto itr = std::find_if(
+        manager_ptrs_.begin(), manager_ptrs_.end(),
+        [&name](const auto & m) { return m->getModuleName() == name; });
+      if (itr == manager_ptrs_.end()) {
+        request_modules.clear();
+        request_modules.emplace_back(*itr, candidate_module_opt_.get());
+        processing_time_.at(manager_ptr->getModuleName()) +=
+          stop_watch_.toc(manager_ptr->getModuleName(), true);
+        break;
+      }
     }
 
     // same name module already launched as candidate.
-    if (name == m->getModuleName()) {
+    if (name == manager_ptr->getModuleName()) {
       // the module launched as candidate and is running now. the module hasn't thrown any approval
       // yet. -> PUSH BACK AS REQUEST MODULES.
-      if (isRunning(candidate_module_id_.get())) {
-        request_modules.push_back(candidate_module_id_.get());
+      if (candidate_module_opt_.get()->getCurrentStatus() == ModuleStatus::RUNNING) {
+        request_modules.emplace_back(manager_ptr, candidate_module_opt_.get());
       } else {
-        deleteExpiredModules(
-          candidate_module_id_
-            .get());  // TODO(Satoshi OTA) this line is no longer needed? think later.
+        // TODO(Satoshi OTA) this line is no longer needed? think later.
+        manager_ptr->deleteModules(candidate_module_opt_.get());
       }
 
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+      processing_time_.at(manager_ptr->getModuleName()) +=
+        stop_watch_.toc(manager_ptr->getModuleName(), true);
       continue;
     }
 
     // different name module already launched as candidate.
     // launched module num reach limit. -> CAN'T LAUNCH NEW MODULE. DO NOTHING.
-    if (!m->canLaunchNewModule()) {
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+    if (!manager_ptr->canLaunchNewModule()) {
+      processing_time_.at(manager_ptr->getModuleName()) +=
+        stop_watch_.toc(manager_ptr->getModuleName(), true);
       continue;
     }
 
     // the module requests it to be launch. -> CAN LAUNCH THE MODULE. PUSH BACK AS REQUEST MODULES.
-    if (!m->isExecutionRequested(previous_module_output)) {
-      processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
+    const auto new_module_ptr = manager_ptr->getNewModule();
+    if (!manager_ptr->isExecutionRequested(new_module_ptr, previous_module_output)) {
+      processing_time_.at(manager_ptr->getModuleName()) +=
+        stop_watch_.toc(manager_ptr->getModuleName(), true);
       continue;
     }
 
-    processing_time_.at(m->getModuleName()) += stop_watch_.toc(m->getModuleName(), true);
-    request_modules.emplace_back(m, uuid);
+    processing_time_.at(manager_ptr->getModuleName()) +=
+      stop_watch_.toc(manager_ptr->getModuleName(), true);
+    request_modules.emplace_back(manager_ptr, new_module_ptr);
   }
 
   // select one module to run as candidate module.
@@ -207,27 +223,28 @@ boost::optional<ModuleID> PlannerManager::getCandidateModuleID(
   // post process
   {
     const auto & manager = high_priority_module.get().first;
-    const auto & uuid = high_priority_module.get().second;
+    const auto & module_ptr = high_priority_module.get().second;
 
     // if the selected module is NOT registered in manager, registered the module.
-    if (!manager->exist(uuid)) {
-      manager->registerNewModule(previous_module_output, uuid);
+    if (!manager->exist(module_ptr)) {
+      manager->registerNewModule(module_ptr, previous_module_output);
     }
 
     // if the current candidate module is NOT selected as high priority module, delete the candidate
     // module from manager.
     for (const auto & m : request_modules) {
       if (m.first->getModuleName() != manager->getModuleName() && m.first->exist(m.second)) {
-        deleteExpiredModules(m);
+        m.first->deleteModules(m.second);
       }
     }
   }
 
-  return high_priority_module;
+  return high_priority_module.get().second;
 }
 
-boost::optional<ModuleID> PlannerManager::selectHighestPriorityModule(
-  std::vector<ModuleID> & request_modules) const
+boost::optional<std::pair<SceneModuleManagerPtr, SceneModulePtr>>
+PlannerManager::selectHighestPriorityModule(
+  std::vector<std::pair<SceneModuleManagerPtr, SceneModulePtr>> & request_modules) const
 {
   if (request_modules.empty()) {
     return {};
@@ -247,31 +264,30 @@ BehaviorModuleOutput PlannerManager::update(const std::shared_ptr<PlannerData> &
 
   bool remove_after_module = false;
 
-  for (auto itr = approved_modules_.begin(); itr != approved_modules_.end();) {
-    const auto & manager = itr->first;
-    const auto & name = manager->getModuleName();
+  for (auto itr = approved_module_ptrs_.begin(); itr != approved_module_ptrs_.end();) {
+    const auto & name = (*itr)->name();
 
     stop_watch_.tic(name);
 
     // if one of the approved modules changes to waiting approval, remove all behind modules.
     if (remove_after_module) {
-      itr = approved_modules_.erase(itr);
+      itr = approved_module_ptrs_.erase(itr);
       processing_time_.at(name) += stop_watch_.toc(name, true);
       continue;
     }
 
-    const auto result = run(*itr, output);  // execute approved module planning.
+    const auto result = run(*itr, data, output);  // execute approved module planning.
 
     // check the module is necessary or not.
-    if (!isRunning(*itr)) {
-      if (itr == approved_modules_.begin()) {
+    if ((*itr)->getCurrentStatus() != ModuleStatus::RUNNING) {
+      if (itr == approved_module_ptrs_.begin()) {
         // update root lanelet when the lane change is done.
         if (name == "lane_change") {
           root_lanelet_ = updateRootLanelet(data);
         }
 
         deleteExpiredModules(*itr);  // unregister the expired module from manager.
-        itr = approved_modules_.erase(itr);
+        itr = approved_module_ptrs_.erase(itr);
         output = result;
         processing_time_.at(name) += stop_watch_.toc(name, true);
         continue;
@@ -280,12 +296,12 @@ BehaviorModuleOutput PlannerManager::update(const std::shared_ptr<PlannerData> &
 
     // if one of the approved modules is waiting approval, the module is popped as candidate
     // module again.
-    if (isWaitingApproval(*itr)) {
-      if (!!candidate_module_id_) {
-        deleteExpiredModules(candidate_module_id_.get());
+    if ((*itr)->isWaitingApproval()) {
+      if (!!candidate_module_opt_) {
+        deleteExpiredModules(candidate_module_opt_.get());
       }
-      candidate_module_id_ = *itr;
-      itr = approved_modules_.erase(itr);
+      candidate_module_opt_ = *itr;
+      itr = approved_module_ptrs_.erase(itr);
       remove_after_module = true;
       processing_time_.at(name) += stop_watch_.toc(name, true);
       continue;
@@ -383,14 +399,12 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
     }
   }
 
-  if (!approved_modules_.empty()) {
+  if (!approved_module_ptrs_.empty()) {
     return;
   }
 
-  if (!!candidate_module_id_) {
-    const auto & manager = candidate_module_id_.get().first;
-    const auto & uuid = candidate_module_id_.get().second;
-    if (manager->isLockedNewModuleLaunch(uuid)) {
+  if (!!candidate_module_opt_) {
+    if (candidate_module_opt_.get()->isLockedNewModuleLaunch()) {
       return;
     }
   }
@@ -412,22 +426,20 @@ void PlannerManager::print() const
   string_stream << "                  planner manager status\n";
   string_stream << "-----------------------------------------------------------\n";
   string_stream << "registered modules: ";
-  for (const auto & m : scene_manager_ptrs_) {
+  for (const auto & m : manager_ptrs_) {
     string_stream << "[" << m->getModuleName() << "]";
   }
 
   string_stream << "\n";
   string_stream << "approved modules  : ";
-  for (const auto & id : approved_modules_) {
-    const auto & manager = id.first;
-    string_stream << "[" << manager->getModuleName() << "]->";
+  for (const auto & m : approved_module_ptrs_) {
+    string_stream << "[" << m->name() << "]->";
   }
 
   string_stream << "\n";
   string_stream << "candidate module  : ";
-  if (!!candidate_module_id_) {
-    const auto & manager = candidate_module_id_.get().first;
-    string_stream << "[" << manager->getModuleName() << "]";
+  if (!!candidate_module_opt_) {
+    string_stream << "[" << candidate_module_opt_.get()->name() << "]";
   }
 
   string_stream << "\n" << std::fixed << std::setprecision(1);
