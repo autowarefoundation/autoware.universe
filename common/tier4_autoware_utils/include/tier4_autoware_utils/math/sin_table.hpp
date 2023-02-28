@@ -18,8 +18,9 @@
 namespace tier4_autoware_utils
 {
 
-#define SIN_TABLE_SIZE 10000
-#define SIN_TABLE_SIZE_MUL4 40000
+#define SIN_TABLE_SIZE 32769
+#define DISCRETE_ARCS_NUM_90 32768
+#define DISCRETE_ARCS_NUM_360 131072
 extern const float SIN_TABLE[SIN_TABLE_SIZE];
 
 }  // namespace tier4_autoware_utils

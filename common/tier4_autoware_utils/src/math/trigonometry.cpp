@@ -12,30 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tier4_autoware_utils/math/constants.hpp>
-#include <tier4_autoware_utils/math/sin_table.hpp>
-#include <tier4_autoware_utils/math/trigonometry.hpp>
+#include "tier4_autoware_utils/math/constants.hpp"
+#include "tier4_autoware_utils/math/sin_table.hpp"
+#include "tier4_autoware_utils/math/trigonometry.hpp"
 
 #include <cmath>
 
 namespace tier4_autoware_utils
 {
 
-float sin(float radian)
-{
-  float degree = radian * (180.f / tier4_autoware_utils::pi) * (SIN_TABLE_SIZE_MUL4 / 360.f);
-  size_t idx = (static_cast<int>(std::round(degree)) % SIN_TABLE_SIZE_MUL4 + SIN_TABLE_SIZE_MUL4) %
-               SIN_TABLE_SIZE_MUL4;
+float sin(float radian) {
+  float degree = radian * (180.f / tier4_autoware_utils::pi) * (DISCRETE_ARCS_NUM_360 / 360.f);
+  size_t idx = (static_cast<int>(std::round(degree)) % DISCRETE_ARCS_NUM_360 + DISCRETE_ARCS_NUM_360) % DISCRETE_ARCS_NUM_360;
 
   int mul = 1;
-  if (SIN_TABLE_SIZE <= idx && idx < 2 * SIN_TABLE_SIZE) {
-    idx = 2 * SIN_TABLE_SIZE - idx;
-  } else if (2 * SIN_TABLE_SIZE <= idx && idx < 3 * SIN_TABLE_SIZE) {
+  if (DISCRETE_ARCS_NUM_90 <= idx && idx < 2 * DISCRETE_ARCS_NUM_90) {
+    idx = 2 * DISCRETE_ARCS_NUM_90 - idx;
+  } else if (2 * DISCRETE_ARCS_NUM_90 <= idx && idx < 3 * DISCRETE_ARCS_NUM_90) {
     mul = -1;
-    idx = idx - 2 * SIN_TABLE_SIZE;
-  } else if (3 * SIN_TABLE_SIZE <= idx && idx < 4 * SIN_TABLE_SIZE) {
+    idx = idx - 2 * DISCRETE_ARCS_NUM_90;
+  } else if (3 * DISCRETE_ARCS_NUM_90 <= idx && idx < 4 * DISCRETE_ARCS_NUM_90) {
     mul = -1;
-    idx = 4 * SIN_TABLE_SIZE - idx;
+    idx = 4 * DISCRETE_ARCS_NUM_90 - idx;
   }
 
   return mul * SIN_TABLE[idx];
