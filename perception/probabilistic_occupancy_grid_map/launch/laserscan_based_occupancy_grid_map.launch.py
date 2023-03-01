@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import SetLaunchConfiguration
@@ -23,6 +26,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+import yaml
 
 
 def generate_launch_description():
@@ -40,6 +44,14 @@ def generate_launch_description():
         "component_container_mt",
         condition=IfCondition(LaunchConfiguration("use_multithread")),
     )
+
+    # load parameter files
+    param_file = os.path.join(
+        get_package_share_directory("probablistic_occupancy_grid_map"),
+        "config/laserscan_based_occupancy_grid_map.param.yaml",
+    )
+    with open(param_file, "r") as f:
+        laserscan_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     composable_nodes = [
         ComposableNode(
@@ -89,13 +101,11 @@ def generate_launch_description():
             ],
             parameters=[
                 {
-                    "map_resolution": 0.5,
-                    "use_height_filter": True,
                     "input_obstacle_pointcloud": LaunchConfiguration("input_obstacle_pointcloud"),
                     "input_obstacle_and_raw_pointcloud": LaunchConfiguration(
                         "input_obstacle_and_raw_pointcloud"
                     ),
-                }
+                }.update(laserscan_based_occupancy_grid_map_node_params)
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         ),
