@@ -18,6 +18,7 @@
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 
 #include <memory>
+#include <string>
 
 using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
