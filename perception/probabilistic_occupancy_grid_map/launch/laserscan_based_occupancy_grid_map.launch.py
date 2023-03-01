@@ -67,7 +67,9 @@ def generate_launch_description():
             ],
             parameters=[
                 {
-                    "target_frame": "base_link",  # Leave disabled to output scan in pointcloud frame
+                    "target_frame": laserscan_based_occupancy_grid_map_node_params[
+                        "output_frame"
+                    ],  # Leave disabled to output scan in pointcloud frame
                     "transform_tolerance": 0.01,
                     "min_height": 0.0,
                     "max_height": 2.0,
