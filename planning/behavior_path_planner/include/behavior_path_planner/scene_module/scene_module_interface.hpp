@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -29,8 +30,6 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
-
-#include <behaviortree_cpp_v3/basic_types.h>
 
 #include <algorithm>
 #include <limits>
@@ -52,16 +51,6 @@ using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
 
-#ifndef USE_BEHAVIOR_TREE
-enum class ModuleStatus {
-  IDLE = 0,
-  RUNNING = 1,
-  SUCCESS = 2,
-  FAILURE = 3,
-  // SKIPPED = 4,
-};
-#endif
-
 class SceneModuleInterface
 {
 public:
@@ -72,11 +61,7 @@ public:
     is_waiting_approval_{false},
     is_locked_new_module_launch_{false},
     uuid_(generateUUID()),
-#ifdef USE_BEHAVIOR_TREE
-    current_state_{BT::NodeStatus::SUCCESS}
-#else
     current_state_{ModuleStatus::SUCCESS}
-#endif
   {
 #ifdef USE_BEHAVIOR_TREE
     std::string module_ns;
@@ -95,24 +80,13 @@ public:
    *        FAILURE if plan has failed, RUNNING if plan is on going.
    *        These condition is to be implemented in each modules.
    */
-#ifdef USE_BEHAVIOR_TREE
-  virtual BT::NodeStatus updateState() = 0;
-#else
   virtual ModuleStatus updateState() = 0;
-#endif
 
   /**
    * @brief If the module plan customized reference path while waiting approval, it should output
    * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
    */
-#ifdef USE_BEHAVIOR_TREE
-  virtual BT::NodeStatus getNodeStatusWhileWaitingApproval() const
-  {
-    return BT::NodeStatus::FAILURE;
-  }
-#else
   virtual ModuleStatus getNodeStatusWhileWaitingApproval() const { return ModuleStatus::FAILURE; }
-#endif
 
   /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
@@ -160,11 +134,7 @@ public:
    */
   virtual BehaviorModuleOutput run()
   {
-#ifdef USE_BEHAVIOR_TREE
-    current_state_ = BT::NodeStatus::RUNNING;
-#else
     current_state_ = ModuleStatus::RUNNING;
-#endif
 
     updateData();
 
@@ -244,12 +214,10 @@ public:
   /**
    * @brief set previous module's output as input for this module
    */
-#ifndef USE_BEHAVIOR_TREE
   void setPreviousModuleOutput(const BehaviorModuleOutput & previous_module_output)
   {
     previous_module_output_ = previous_module_output;
   }
-#endif
 
   /**
    * @brief set planner data
@@ -274,11 +242,7 @@ public:
 
   MarkerArray getDebugMarkers() { return debug_marker_; }
 
-#ifdef USE_BEHAVIOR_TREE
-  BT::NodeStatus getCurrentStatus() const { return current_state_; }
-#else
   ModuleStatus getCurrentStatus() const { return current_state_; }
-#endif
 
   virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
@@ -337,11 +301,7 @@ protected:
   PlanResult path_candidate_;
   PlanResult path_reference_;
 
-#ifdef USE_BEHAVIOR_TREE
-  BT::NodeStatus current_state_;
-#else
   ModuleStatus current_state_;
-#endif
 
   BehaviorModuleOutput previous_module_output_;
 
