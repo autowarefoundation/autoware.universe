@@ -15,22 +15,24 @@
 #include "tier4_autoware_utils/math/constants.hpp"
 #include "tier4_autoware_utils/math/trigonometry.hpp"
 
-#include <cmath>
 #include <gtest/gtest.h>
+
+#include <cmath>
 
 // EXPECT_FLOAT_EQ
 
-TEST(trigonometry, sin) {
+TEST(trigonometry, sin)
+{
   float x = 4.f * tier4_autoware_utils::pi / 128.f;
   for (int i = 0; i < 128; i++) {
     EXPECT_TRUE(std::abs(std::sin(x * i) - tier4_autoware_utils::sin(x * i)) < 10e-5);
   }
 }
 
-TEST(trigonometry, cos) {
+TEST(trigonometry, cos)
+{
   float x = 4.f * tier4_autoware_utils::pi / 128.f;
   for (int i = 0; i < 128; i++) {
     EXPECT_TRUE(std::abs(std::cos(x * i) - tier4_autoware_utils::cos(x * i)) < 10e-5);
   }
-
 }
