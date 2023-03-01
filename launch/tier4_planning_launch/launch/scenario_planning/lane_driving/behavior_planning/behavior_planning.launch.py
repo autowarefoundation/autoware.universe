@@ -1,4 +1,4 @@
-# Copyright 2021 Tier IV, Inc. All rights reserved.
+# Copyright 2021-2023 Tier IV, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -150,14 +150,19 @@ def launch_setup(context, *args, **kwargs):
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("speed_bump_param_path").perform(context), "r") as f:
         speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("out_of_lane_param_path").perform(context), "r") as f:
+        out_of_lane_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("behavior_velocity_planner_param_path").perform(context), "r"
     ) as f:
         behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    behavior_velocity_planner_component = ComposableNode(
+    from launch_ros.actions import Node
+
+    behavior_velocity_planner_component = Node(
         package="behavior_velocity_planner",
-        plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode",
+        # plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode",
+        executable="behavior_velocity_planner_node",
         name="behavior_velocity_planner",
         namespace="",
         remappings=[
@@ -218,11 +223,13 @@ def launch_setup(context, *args, **kwargs):
             vehicle_param,
             run_out_param,
             speed_bump_param,
+            out_of_lane_param,
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        prefix="konsole -e gdb -ex run --args",
     )
 
     container = ComposableNodeContainer(
@@ -232,7 +239,6 @@ def launch_setup(context, *args, **kwargs):
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
             behavior_path_planner_component,
-            behavior_velocity_planner_component,
         ],
         output="screen",
     )
@@ -289,6 +295,7 @@ def launch_setup(context, *args, **kwargs):
             container,
             load_compare_map,
             load_vector_map_inside_area_filter,
+            behavior_velocity_planner_component,
         ]
     )
 
