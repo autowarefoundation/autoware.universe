@@ -47,7 +47,7 @@ public:
 private:
   void processMessage(TrackedObjects::ConstSharedPtr msg) override;
   void onInitialize() override;
-  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
+  // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -100,8 +100,8 @@ private:
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
 
-  std::string objects_frame_id_;
-  std::vector<autoware_auto_perception_msgs::msg::TrackedObject> objs_buffer;
+  // std::string objects_frame_id_;
+  // std::vector<autoware_auto_perception_msgs::msg::TrackedObject> objs_buffer;
 };
 
 }  // namespace object_detection

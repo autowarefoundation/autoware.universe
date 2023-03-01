@@ -40,11 +40,11 @@ public:
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
   void onInitialize() override;
-  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
+  // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
   
 
-  std::string objects_frame_id_;
-  std::vector<autoware_auto_perception_msgs::msg::DetectedObject> objs_buffer;
+  // std::string objects_frame_id_;
+  // std::vector<autoware_auto_perception_msgs::msg::DetectedObject> objs_buffer;
 };
 
 }  // namespace object_detection
