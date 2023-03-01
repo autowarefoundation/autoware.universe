@@ -12,3 +12,5 @@
     min_y: -70.0
     max_z: 4.5
     min_z: -4.5
+    input_frame: base_link
+    output_frame: base_link
