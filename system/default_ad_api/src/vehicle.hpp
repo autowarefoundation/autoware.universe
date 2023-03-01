@@ -19,9 +19,9 @@
 #include <component_interface_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/vehicle_gear.hpp>
-#include <autoware_adapi_v1_msgs/msg/vehicle_hazard_light.hpp>
-#include <autoware_adapi_v1_msgs/msg/vehicle_turn_indicator.hpp>
+#include <autoware_adapi_v1_msgs/msg/gear.hpp>
+#include <autoware_adapi_v1_msgs/msg/hazard_light.hpp>
+#include <autoware_adapi_v1_msgs/msg/turn_indicator.hpp>
 
 #include <unordered_map>
 
@@ -38,11 +38,11 @@ public:
 
 private:
   using GearReport = vehicle_interface::GearStatus::Message;
-  using VehicleGear = autoware_adapi_v1_msgs::msg::VehicleGear;
+  using VehicleGear = autoware_adapi_v1_msgs::msg::Gear;
   using TurnIndicatorsReport = vehicle_interface::TurnIndicatorStatus::Message;
-  using VehicleTurnIndicator = autoware_adapi_v1_msgs::msg::VehicleTurnIndicator;
+  using VehicleTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicator;
   using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
-  using VehicleHazardLight = autoware_adapi_v1_msgs::msg::VehicleHazardLight;
+  using VehicleHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
     {GearReport::NONE, VehicleGear::NONE},       {GearReport::NEUTRAL, VehicleGear::NEUTRAL},
@@ -72,10 +72,9 @@ private:
   };
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Pub<autoware_ad_api::vehicle::VehiclePosition> pub_position_;
-  Pub<autoware_ad_api::vehicle::VehicleMotion> pub_motion_;
+  Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
   Pub<autoware_ad_api::vehicle::VehicleState> pub_state_;
-  Pub<autoware_ad_api::vehicle::VehicleDoorStatus> pub_door_;
+  Pub<autoware_ad_api::vehicle::DoorStatusArray> pub_door_;
   Sub<vehicle_interface::KinematicState> sub_kinematic_state_;
   Sub<vehicle_interface::Acceleration> sub_acceleration_;
   Sub<vehicle_interface::SteeringStatus> sub_steering_;
@@ -86,10 +85,9 @@ private:
   Sub<vehicle_interface::DoorStatus> sub_door_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  autoware_ad_api::vehicle::VehiclePosition::Message vehicle_position_ptr;
-  autoware_ad_api::vehicle::VehicleMotion::Message vehicle_motion_ptr;
+  autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_ptr;
   autoware_ad_api::vehicle::VehicleState::Message vehicle_state_ptr;
-  autoware_ad_api::vehicle::VehicleDoorStatus::Message vehicle_door_ptr;
+  autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_ptr;
 
   void kinematic_state(const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
   void acceleration_status(const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr);

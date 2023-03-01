@@ -17,27 +17,17 @@
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/vehicle_door_status.hpp>
-#include <autoware_adapi_v1_msgs/msg/vehicle_motion.hpp>
-#include <autoware_adapi_v1_msgs/msg/vehicle_position.hpp>
+#include <autoware_adapi_v1_msgs/msg/door_status_array.hpp>
 #include <autoware_adapi_v1_msgs/msg/vehicle_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/vehicle_status.hpp>
 
 namespace autoware_ad_api::vehicle
 {
 
-struct VehiclePosition
+struct VehicleStatus
 {
-  using Message = autoware_adapi_v1_msgs::msg::VehiclePosition;
-  static constexpr char name[] = "/api/vehicle/position";
-  static constexpr size_t depth = 1;
-  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
-};
-
-struct VehicleMotion
-{
-  using Message = autoware_adapi_v1_msgs::msg::VehicleMotion;
-  static constexpr char name[] = "/api/vehicle/motion";
+  using Message = autoware_adapi_v1_msgs::msg::VehicleStatus;
+  static constexpr char name[] = "/api/vehicle/status";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
@@ -52,9 +42,9 @@ struct VehicleState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-struct VehicleDoorStatus
+struct DoorStatusArray
 {
-  using Message = autoware_adapi_v1_msgs::msg::VehicleDoorStatus;
+  using Message = autoware_adapi_v1_msgs::msg::DoorStatusArray;
   static constexpr char name[] = "/api/vehicle/door";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
