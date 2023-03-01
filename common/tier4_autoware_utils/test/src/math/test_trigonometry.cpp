@@ -19,8 +19,6 @@
 
 #include <cmath>
 
-// EXPECT_FLOAT_EQ
-
 TEST(trigonometry, sin)
 {
   float x = 4.f * tier4_autoware_utils::pi / 128.f;
