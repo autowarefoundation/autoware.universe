@@ -170,7 +170,6 @@ public:
   }
 
 protected:
-  virtual void visualizeDrivableArea([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
   void processMessage(const typename T::ConstSharedPtr msg_ptr) override
   {
     if (!validateFloats<T>(msg_ptr)) {
@@ -180,6 +179,19 @@ protected:
       return;
     }
 
+    // visualize Path
+    visualizePath(msg_ptr);
+
+    // visualize drivable area
+    visualizeDrivableArea(msg_ptr);
+
+    last_msg_ptr_ = msg_ptr;
+  }
+
+  virtual void visualizeDrivableArea([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
+
+  void visualizePath(const typename T::ConstSharedPtr msg_ptr)
+  {
     Ogre::Vector3 position;
     Ogre::Quaternion orientation;
     if (!this->context_->getFrameManager()->getTransform(msg_ptr->header, position, orientation)) {
@@ -187,6 +199,10 @@ protected:
         rclcpp::get_logger("AutowarePathBaseDisplay"),
         "Error transforming from frame '%s' to frame '%s'", msg_ptr->header.frame_id.c_str(),
         qPrintable(this->fixed_frame_));
+    }
+
+    if (msg_ptr->points.empty()) {
+      return;
     }
 
     this->scene_node_->setPosition(position);
@@ -200,136 +216,127 @@ protected:
     material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
     material->setDepthWriteEnabled(false);
 
-    if (!msg_ptr->points.empty()) {
-      path_manual_object_->estimateVertexCount(msg_ptr->points.size() * 2);
-      velocity_manual_object_->estimateVertexCount(msg_ptr->points.size());
-      path_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
-      // path_manual_object_->begin("BaseWhiteNoLighting",
-      // Ogre::RenderOperation::OT_TRIANGLE_STRIP);
-      velocity_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+    path_manual_object_->estimateVertexCount(msg_ptr->points.size() * 2);
+    velocity_manual_object_->estimateVertexCount(msg_ptr->points.size());
+    path_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
+    velocity_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 
-      if (msg_ptr->points.size() > velocity_texts_.size()) {
-        for (size_t i = velocity_texts_.size(); i < msg_ptr->points.size(); i++) {
-          Ogre::SceneNode * node = this->scene_node_->createChildSceneNode();
-          rviz_rendering::MovableText * text =
-            new rviz_rendering::MovableText("not initialized", "Liberation Sans", 0.1);
-          text->setVisible(false);
-          text->setTextAlignment(
-            rviz_rendering::MovableText::H_CENTER, rviz_rendering::MovableText::V_ABOVE);
-          node->attachObject(text);
-          velocity_texts_.push_back(text);
-          velocity_text_nodes_.push_back(node);
-        }
-      } else if (msg_ptr->points.size() < velocity_texts_.size()) {
-        for (size_t i = velocity_texts_.size() - 1; i >= msg_ptr->points.size(); i--) {
-          Ogre::SceneNode * node = velocity_text_nodes_.at(i);
-          node->detachAllObjects();
-          node->removeAndDestroyAllChildren();
-          this->scene_manager_->destroySceneNode(node);
-        }
-        velocity_texts_.resize(msg_ptr->points.size());
-        velocity_text_nodes_.resize(msg_ptr->points.size());
+    if (msg_ptr->points.size() > velocity_texts_.size()) {
+      for (size_t i = velocity_texts_.size(); i < msg_ptr->points.size(); i++) {
+        Ogre::SceneNode * node = this->scene_node_->createChildSceneNode();
+        rviz_rendering::MovableText * text =
+          new rviz_rendering::MovableText("not initialized", "Liberation Sans", 0.1);
+        text->setVisible(false);
+        text->setTextAlignment(
+          rviz_rendering::MovableText::H_CENTER, rviz_rendering::MovableText::V_ABOVE);
+        node->attachObject(text);
+        velocity_texts_.push_back(text);
+        velocity_text_nodes_.push_back(node);
       }
-
-      for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
-        const auto & path_point = msg_ptr->points.at(point_idx);
-        const auto & pose = tier4_autoware_utils::getPose(path_point);
-        const auto & velocity = tier4_autoware_utils::getLongitudinalVelocity(path_point);
-
-        // path
-        if (property_path_view_.getBool()) {
-          Ogre::ColourValue color;
-          if (property_path_color_view_.getBool()) {
-            color = rviz_common::properties::qtToOgre(property_path_color_.getColor());
-          } else {
-            // color change depending on velocity
-            std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-              setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
-            color = *dynamic_color_ptr;
-          }
-          color.a = property_path_alpha_.getFloat();
-          Eigen::Vector3f vec_in;
-          Eigen::Vector3f vec_out;
-          Eigen::Quaternionf quat_yaw_reverse(0, 0, 0, 1);
-          {
-            vec_in << 0, (property_path_width_.getFloat() / 2.0), 0;
-            Eigen::Quaternionf quat(
-              pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
-            if (!isDrivingForward(msg_ptr->points, point_idx)) {
-              quat *= quat_yaw_reverse;
-            }
-            vec_out = quat * vec_in;
-            path_manual_object_->position(
-              static_cast<float>(pose.position.x) + vec_out.x(),
-              static_cast<float>(pose.position.y) + vec_out.y(),
-              static_cast<float>(pose.position.z) + vec_out.z());
-            path_manual_object_->colour(color);
-          }
-          {
-            vec_in << 0, -(property_path_width_.getFloat() / 2.0), 0;
-            Eigen::Quaternionf quat(
-              pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
-            if (!isDrivingForward(msg_ptr->points, point_idx)) {
-              quat *= quat_yaw_reverse;
-            }
-            vec_out = quat * vec_in;
-            path_manual_object_->position(
-              static_cast<float>(pose.position.x) + vec_out.x(),
-              static_cast<float>(pose.position.y) + vec_out.y(),
-              static_cast<float>(pose.position.z) + vec_out.z());
-            path_manual_object_->colour(color);
-          }
-        }
-
-        // velocity
-        if (property_velocity_view_.getBool()) {
-          Ogre::ColourValue color;
-          if (property_velocity_color_view_.getBool()) {
-            color = rviz_common::properties::qtToOgre(property_velocity_color_.getColor());
-          } else {
-            /* color change depending on velocity */
-            std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-              setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
-            color = *dynamic_color_ptr;
-          }
-          color.a = property_velocity_alpha_.getFloat();
-
-          velocity_manual_object_->position(
-            pose.position.x, pose.position.y,
-            static_cast<float>(pose.position.z) + velocity * property_velocity_scale_.getFloat());
-          velocity_manual_object_->colour(color);
-        }
-
-        // velocity text
-        if (property_velocity_text_view_.getBool()) {
-          Ogre::Vector3 position;
-          position.x = pose.position.x;
-          position.y = pose.position.y;
-          position.z = pose.position.z;
-          Ogre::SceneNode * node = velocity_text_nodes_.at(point_idx);
-          node->setPosition(position);
-
-          rviz_rendering::MovableText * text = velocity_texts_.at(point_idx);
-          const double vel = velocity;
-          std::stringstream ss;
-          ss << std::fixed << std::setprecision(2) << vel;
-          text->setCaption(ss.str());
-          text->setCharacterHeight(property_velocity_text_scale_.getFloat());
-          text->setVisible(true);
-        } else {
-          rviz_rendering::MovableText * text = velocity_texts_.at(point_idx);
-          text->setVisible(false);
-        }
+    } else if (msg_ptr->points.size() < velocity_texts_.size()) {
+      for (size_t i = velocity_texts_.size() - 1; i >= msg_ptr->points.size(); i--) {
+        Ogre::SceneNode * node = velocity_text_nodes_.at(i);
+        node->detachAllObjects();
+        node->removeAndDestroyAllChildren();
+        this->scene_manager_->destroySceneNode(node);
       }
-
-      path_manual_object_->end();
-      velocity_manual_object_->end();
+      velocity_texts_.resize(msg_ptr->points.size());
+      velocity_text_nodes_.resize(msg_ptr->points.size());
     }
 
-    // visualize drivable area
-    visualizeDrivableArea(msg_ptr);
+    for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
+      const auto & path_point = msg_ptr->points.at(point_idx);
+      const auto & pose = tier4_autoware_utils::getPose(path_point);
+      const auto & velocity = tier4_autoware_utils::getLongitudinalVelocity(path_point);
 
-    last_msg_ptr_ = msg_ptr;
+      // path
+      if (property_path_view_.getBool()) {
+        Ogre::ColourValue color;
+        if (property_path_color_view_.getBool()) {
+          color = rviz_common::properties::qtToOgre(property_path_color_.getColor());
+        } else {
+          // color change depending on velocity
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
+            setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
+          color = *dynamic_color_ptr;
+        }
+        color.a = property_path_alpha_.getFloat();
+        Eigen::Vector3f vec_in;
+        Eigen::Vector3f vec_out;
+        Eigen::Quaternionf quat_yaw_reverse(0, 0, 0, 1);
+        {
+          vec_in << 0, (property_path_width_.getFloat() / 2.0), 0;
+          Eigen::Quaternionf quat(
+            pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+          if (!isDrivingForward(msg_ptr->points, point_idx)) {
+            quat *= quat_yaw_reverse;
+          }
+          vec_out = quat * vec_in;
+          path_manual_object_->position(
+            static_cast<float>(pose.position.x) + vec_out.x(),
+            static_cast<float>(pose.position.y) + vec_out.y(),
+            static_cast<float>(pose.position.z) + vec_out.z());
+          path_manual_object_->colour(color);
+        }
+        {
+          vec_in << 0, -(property_path_width_.getFloat() / 2.0), 0;
+          Eigen::Quaternionf quat(
+            pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+          if (!isDrivingForward(msg_ptr->points, point_idx)) {
+            quat *= quat_yaw_reverse;
+          }
+          vec_out = quat * vec_in;
+          path_manual_object_->position(
+            static_cast<float>(pose.position.x) + vec_out.x(),
+            static_cast<float>(pose.position.y) + vec_out.y(),
+            static_cast<float>(pose.position.z) + vec_out.z());
+          path_manual_object_->colour(color);
+        }
+      }
+
+      // velocity
+      if (property_velocity_view_.getBool()) {
+        Ogre::ColourValue color;
+        if (property_velocity_color_view_.getBool()) {
+          color = rviz_common::properties::qtToOgre(property_velocity_color_.getColor());
+        } else {
+          /* color change depending on velocity */
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
+            setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
+          color = *dynamic_color_ptr;
+        }
+        color.a = property_velocity_alpha_.getFloat();
+
+        velocity_manual_object_->position(
+          pose.position.x, pose.position.y,
+          static_cast<float>(pose.position.z) + velocity * property_velocity_scale_.getFloat());
+        velocity_manual_object_->colour(color);
+      }
+
+      // velocity text
+      if (property_velocity_text_view_.getBool()) {
+        Ogre::Vector3 position;
+        position.x = pose.position.x;
+        position.y = pose.position.y;
+        position.z = pose.position.z;
+        Ogre::SceneNode * node = velocity_text_nodes_.at(point_idx);
+        node->setPosition(position);
+
+        rviz_rendering::MovableText * text = velocity_texts_.at(point_idx);
+        const double vel = velocity;
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << vel;
+        text->setCaption(ss.str());
+        text->setCharacterHeight(property_velocity_text_scale_.getFloat());
+        text->setVisible(true);
+      } else {
+        rviz_rendering::MovableText * text = velocity_texts_.at(point_idx);
+        text->setVisible(false);
+      }
+    }
+
+    path_manual_object_->end();
+    velocity_manual_object_->end();
   }
 
   Ogre::ManualObject * path_manual_object_{nullptr};
