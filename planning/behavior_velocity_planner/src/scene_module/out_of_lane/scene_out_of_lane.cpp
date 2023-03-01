@@ -59,7 +59,6 @@ bool OutOfLaneModule::modifyPathVelocity(
     *path, planner_data_->route_handler_->getLaneletMapPtr(),
     planner_data_->current_odometry->pose);
   // TODO(Maxime): naively get ALL lanelets that are not the path lanelets. Probably too expensive
-  // for production.
   const auto lanelets_to_check = [&]() {
     lanelet::ConstLanelets lls;
     for (const auto & ll : planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer) {
@@ -71,10 +70,17 @@ bool OutOfLaneModule::modifyPathVelocity(
     return lls;
   }();
   // Calculate overlaps
-  const auto overlaps = calculate_overlaps(path_footprints, lanelets_to_check, param_);
-  planner_data_->route_handler_->getLaneletsFromIds(overlaps.front().overlapped_lanes);
+  const auto overlaps =
+    calculate_overlaps(path_footprints, path_lanelets, lanelets_to_check, param_);
+  std::printf("Found %lu overlaps\n", overlaps.size());
   // Calculate intervals
+  const auto intervals = calculate_overlapping_intervals(overlaps);
+  std::printf("Found %lu intervals\n", intervals.size());
+  for (const auto & i : intervals)
+    std::printf("\t [%lu -> %lu] %ld\n", i.entering_path_idx, i.exiting_path_idx, i.lane_id);
   // Calculate stop and slowdown points
+  // const auto decisions = calculate_slowdown_decisions(intervals,
+  // planner_data_->predicted_objects, param_);
 
   // TODO(Maxime): don't copy data.
   debug_data_.footprints = path_footprints;
@@ -111,21 +117,15 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
   debug_marker.ns = "overlaps";
   debug_marker.color = tier4_autoware_utils::createMarkerColor(0.0, 0.1, 1.0, 0.5);
   for (const auto & overlap : debug_data_.overlaps) {
-    for (const auto & ll_id : overlap.overlapped_lanes) {
-      const auto ll_poly = planner_data_->route_handler_->getLaneletMapPtr()
-                             ->laneletLayer.get(ll_id)
-                             .polygon2d()
-                             .basicPolygon();
-      lanelet::BasicPolygons2d intersections;
-      boost::geometry::intersection(
-        ll_poly, debug_data_.footprints[overlap.path_idx], intersections);
-      debug_marker.points.clear();
-      for (const auto & intersection : intersections)
-        for (const auto & p : intersection)
+    for (const auto & overlapping_area : overlap.overlapping_areas) {
+      for (const auto & poly : overlapping_area) {
+        debug_marker.points.clear();
+        for (const auto & p : poly)
           debug_marker.points.push_back(
             tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-      debug_marker.id++;
-      debug_marker_array.markers.push_back(debug_marker);
+        debug_marker.id++;
+        debug_marker_array.markers.push_back(debug_marker);
+      }
     }
   }
   return debug_marker_array;

@@ -29,6 +29,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <boost/geometry/io/svg/write_svg.hpp>
 #include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -37,7 +38,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 #include <limits>
+#include <list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -72,10 +75,14 @@ struct PlannerParam
   double dist_thr;          // [m]
 
   // ego dimensions used to create its polygon footprint
-  double front_offset;  // [m]  front offset
-  double rear_offset;   // [m]  rear offset
-  double right_offset;  // [m]  right offset
-  double left_offset;   // [m]  left offset
+  double front_offset;        // [m]  front offset (from vehicle info)
+  double rear_offset;         // [m]  rear offset (from vehicle info)
+  double right_offset;        // [m]  right offset (from vehicle info)
+  double left_offset;         // [m]  left offset (from vehicle info)
+  double extra_front_offset;  // [m] extra front distance
+  double extra_rear_offset;   // [m] extra rear distance
+  double extra_right_offset;  // [m] extra right distance
+  double extra_left_offset;   // [m] extra left distance
 };
 
 struct Slowdown
@@ -91,13 +98,14 @@ struct Overlap
   // for each overlapped lane
   std::vector<double> overlap_distances;    // the distance inside the lane
   std::vector<double> overlap_arc_lengths;  // the min arc length along the lane
+  std::vector<lanelet::BasicPolygons2d> overlapping_areas;
 };
 
 struct Interval
 {
   size_t entering_path_idx;
   size_t exiting_path_idx;
-  lanelet::Ids overlapped_lanes;
+  lanelet::Id lane_id;
 };
 
 typedef std::vector<Overlap> Overlaps;
@@ -116,15 +124,21 @@ struct DebugData
   }
 };
 
+/// @brief calculate the path footprints
+/// @details the resulting polygon follows the format used by the lanelet library: clockwise order
+/// and implicit closing edge
 inline std::vector<BasicPolygon2d> calculate_path_footprints(
   const PathWithLaneId & path, const PlannerParam & params)
 {
   tier4_autoware_utils::Polygon2d base_footprint;
   base_footprint.outer() = {
-    {params.front_offset, params.right_offset},
-    {params.front_offset, params.left_offset},
-    {params.rear_offset, params.left_offset},
-    {params.rear_offset, params.right_offset}};
+    {params.front_offset + params.extra_front_offset,
+     params.left_offset + params.extra_left_offset},
+    {params.front_offset + params.extra_front_offset,
+     params.right_offset - params.extra_right_offset},
+    {params.rear_offset - params.extra_rear_offset,
+     params.right_offset - params.extra_right_offset},
+    {params.rear_offset - params.extra_rear_offset, params.left_offset + params.extra_left_offset}};
 
   std::vector<BasicPolygon2d> path_footprints;
   path_footprints.reserve(path.points.size());
@@ -135,44 +149,57 @@ inline std::vector<BasicPolygon2d> calculate_path_footprints(
     BasicPolygon2d footprint;
     for (const auto & p : rotated_footprint.outer())
       footprint.emplace_back(p.x() + path_pose.position.x, p.y() + path_pose.position.y);
-    footprint.push_back(footprint.front());  // close the polygon
     path_footprints.push_back(footprint);
   }
   return path_footprints;
 }
 
 inline Overlaps calculate_overlaps(
-  const std::vector<BasicPolygon2d> & path_footprints, const lanelet::ConstLanelets & lanelets,
-  const PlannerParam & params)
+  const std::vector<BasicPolygon2d> & path_footprints, const lanelet::ConstLanelets & path_lanelets,
+  const lanelet::ConstLanelets & lanelets, const PlannerParam & params)
 {
-  Overlaps overlaps;
   (void)params;
-  // TODO(Maxime): only check overlaps if the left/right bound of the path lanelets are crossed.
+  Overlaps overlaps;
+  lanelet::BasicPolygon2d path_lanelets_polygon;
+  lanelet::BasicPolygons2d union_polygons;
+  for (const auto & path_lanelet : path_lanelets) {
+    union_polygons.clear();
+    boost::geometry::union_(
+      path_lanelets_polygon, path_lanelet.polygon2d().basicPolygon(), union_polygons);
+    path_lanelets_polygon = union_polygons.front();
+  }
+  std::ofstream svg("/tmp/debug.svg");
+  boost::geometry::svg_mapper<lanelet::BasicPoint2d> mapper(svg, 800, 800);
+  mapper.add(path_lanelets_polygon);
   for (auto i = 0UL; i < path_footprints.size(); ++i) {
-    const auto & path_point_polygon = path_footprints[i];
+    auto path_footprint = path_footprints[i];
+    mapper.add(path_footprint);
+    mapper.map(path_footprint, "opacity:0.5;fill-opacity:0.0;fill:red;stroke:red;stroke-width:1");
+    lanelet::BasicPolygons2d outside_polys;
+    boost::geometry::difference(path_footprint, path_lanelets_polygon, outside_polys);
     Overlap overlap;
+    lanelet::BasicPolygons2d overlapping_areas;
     overlap.path_idx = i;
     for (const auto & lanelet : lanelets) {
       const auto lanelet_polygon = lanelet.polygon2d().basicPolygon();
       auto inside_dist = 0.0;
       auto arc_length_along_lanelet = std::numeric_limits<double>::infinity();
-      for (const auto & lanelet_bound :
-           {lanelet.leftBound2d().basicLineString(), lanelet.rightBound2d().basicLineString()}) {
-        lanelet::BasicPoints2d intersections;
-        boost::geometry::intersection(path_point_polygon, lanelet_bound, intersections);
-        if (!intersections.empty()) {
-          for (const auto & p : path_point_polygon) {
-            if (boost::geometry::within(p, lanelet_polygon)) {
-              inside_dist = std::min(inside_dist, boost::geometry::distance(p, lanelet_bound));
-              arc_length_along_lanelet = std::min(
-                arc_length_along_lanelet,
-                lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), p).length);
+      for (const auto & outside_poly : outside_polys) {
+        mapper.add(outside_poly);
+        mapper.map(outside_poly, "opacity:0.5;fill-opacity:0.2;fill:red;stroke:red;stroke-width:1");
+        bool added = false;
+        for (const auto & outside_point : outside_poly) {
+          if (boost::geometry::within(outside_point, lanelet_polygon)) {
+            if (!added) {  // TODO(Maxime): only for debug. to remove
+              overlapping_areas.push_back(outside_poly);
+              added = true;
             }
-          }
-          for (const auto & intersection : intersections) {
+            // TODO(Maxime): inside distance is not correct
+            inside_dist =
+              std::min(inside_dist, boost::geometry::distance(outside_point, lanelet_polygon));
             arc_length_along_lanelet = std::min(
               arc_length_along_lanelet,
-              lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), intersection).length);
+              lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), outside_point).length);
           }
         }
       }
@@ -180,16 +207,74 @@ inline Overlaps calculate_overlaps(
         overlap.overlapped_lanes.push_back(lanelet.id());
         overlap.overlap_distances.push_back(inside_dist);
         overlap.overlap_arc_lengths.push_back(arc_length_along_lanelet);
+        overlap.overlapping_areas.push_back(overlapping_areas);
       }
     }
     if (!overlap.overlapped_lanes.empty()) overlaps.push_back(overlap);
   }
+  mapper.map(
+    path_lanelets_polygon, "opacity:0.5;fill-opacity:0.2;fill:green;stroke:green;stroke-width:1");
   return overlaps;
 }
 
-inline Intervals calculate_overlapping_intervals()
+/// @brief calculate overlapping intervals
+/// @param overlaps overlaps sorted by increasing path index
+/// @return overlapping intervals
+inline Intervals calculate_overlapping_intervals(const Overlaps & overlaps)
 {
+  struct OpenedInterval
+  {
+    lanelet::Id lane_id;
+    size_t index;
+    bool should_keep_open;
+  };
+  std::list<OpenedInterval> opened_intervals;
   Intervals intervals;
+  for (auto overlap_it = overlaps.cbegin(); overlap_it != overlaps.cend(); ++overlap_it) {
+    // identify ids that need to be opened/closed/kept open
+    for (auto & opened_interval : opened_intervals) opened_interval.should_keep_open = false;
+    for (const auto & id : overlap_it->overlapped_lanes) {
+      const auto opened_interval_it = std::find_if(
+        opened_intervals.begin(), opened_intervals.end(),
+        [&](const auto & i) { return i.lane_id == id; });
+      if (opened_interval_it != opened_intervals.end()) {
+        opened_interval_it->should_keep_open = true;
+      } else {
+        OpenedInterval opened_interval;
+        opened_interval.lane_id = id;
+        opened_interval.index = overlap_it->path_idx;
+        opened_interval.should_keep_open = true;
+        opened_intervals.push_back(opened_interval);
+      }
+    }
+    // last overlap or gap with the next overlap: close all the opened intervals
+    if (
+      std::next(overlap_it) == overlaps.end() ||
+      std::next(overlap_it)->path_idx != overlap_it->path_idx + 1) {
+      for (const auto & open_interval : opened_intervals) {
+        Interval interval;
+        interval.lane_id = open_interval.lane_id;
+        interval.entering_path_idx = open_interval.index;
+        // TODO(Maxime): this may go beyond the last path point
+        interval.exiting_path_idx = overlap_it->path_idx + 1;
+        intervals.push_back(interval);
+      }
+      opened_intervals.clear();
+    } else {
+      for (auto it = opened_intervals.begin(); it != opened_intervals.end();) {
+        if (!it->should_keep_open) {
+          Interval interval;
+          interval.lane_id = it->lane_id;
+          interval.entering_path_idx = it->index;
+          interval.exiting_path_idx = overlap_it->path_idx;
+          intervals.push_back(interval);
+          it = opened_intervals.erase(it);
+        } else {
+          ++it;
+        }
+      }
+    }
+  }
   return intervals;
 }
 

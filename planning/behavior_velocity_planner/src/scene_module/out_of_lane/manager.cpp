@@ -32,6 +32,10 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
 
   pp.dist_thr = node.declare_parameter<double>(ns + ".distance_threshold");
   pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap_min_distance");
+  pp.extra_front_offset = node.declare_parameter<double>(ns + ".ego.extra_front_offset"); 
+  pp.extra_rear_offset = node.declare_parameter<double>(ns + ".ego.extra_rear_offset"); 
+  pp.extra_left_offset = node.declare_parameter<double>(ns + ".ego.extra_left_offset"); 
+  pp.extra_right_offset = node.declare_parameter<double>(ns + ".ego.extra_right_offset"); 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   pp.front_offset = vehicle_info.max_longitudinal_offset_m;
   pp.rear_offset = vehicle_info.min_longitudinal_offset_m;
