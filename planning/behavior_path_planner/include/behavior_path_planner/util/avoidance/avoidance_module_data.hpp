@@ -82,9 +82,6 @@ struct AvoidanceParameters
   // constrains
   bool use_constraints_for_decel{false};
 
-  // use for parked car filtering
-  bool left_hand_traffic{true};
-
   // max deceleration for
   double max_deceleration;
 
