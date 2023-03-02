@@ -198,10 +198,10 @@ bool JerkFilteredSmoother::apply(
     P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
   }
 
+  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
   for (size_t i = 0; i < N; ++i) {
     if (v_max_arr.at(i) > 0.01) {
-      // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
-      // Note that if v_max[i] is too small, we did not minimize the corresponding b[i]
+      // Note that if v_max[i] is too small, we did not minimize the corresponding -b[i]
       q.at(IDX_B0 + i) = -1.0 / (v_max_arr.at(i) * v_max_arr.at(i));
     }
     if (i < N - 1) {
