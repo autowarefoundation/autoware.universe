@@ -41,6 +41,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   // Detection results will be ignored if IoU over this value.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
   float nms_threshold = declare_parameter("nms_threshold", 0.7);
+  bool build_only = declare_parameter("build_only", false);
 
   if (!readLabelFile(label_path)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
@@ -56,6 +57,11 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "~/out/objects", 1);
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
+
+  if (build_only) {
+    RCLCPP_INFO(this->get_logger(), "TensorRT engine file is built and exit.");
+    rclcpp::shutdown();
+  }
 }
 
 void TrtYoloXNode::onConnect()
