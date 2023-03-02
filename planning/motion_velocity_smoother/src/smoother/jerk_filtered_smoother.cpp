@@ -199,9 +199,11 @@ bool JerkFilteredSmoother::apply(
   }
 
   for (size_t i = 0; i < N; ++i) {
-    const double v_max = std::max(v_max_arr.at(i), 0.1);
-    q.at(IDX_B0 + i) =
-      -1.0 / (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
+    if (v_max_arr.at(i) > 0.01) {
+      // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
+      // Note that if v_max[i] is too small, we did not minimize the corresponding b[i]
+      q.at(IDX_B0 + i) = -1.0 / (v_max_arr.at(i) * v_max_arr.at(i));
+    }
     if (i < N - 1) {
       q.at(IDX_B0 + i) *= std::max(interval_dist_arr.at(i), 0.0001);
     }
