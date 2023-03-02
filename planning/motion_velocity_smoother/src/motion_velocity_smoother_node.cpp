@@ -284,6 +284,13 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
   constexpr double eps = 1.0E-04;
   const double margin = node_param_.margin_to_insert_external_velocity_limit;
 
+  // Set distance as zero if ego vehicle is stopped and external velocity limit is zero
+  if (
+    std::fabs(current_odometry_ptr_->twist.twist.linear.x) < eps &&
+    external_velocity_limit_ < eps) {
+    external_velocity_limit_dist_ = 0.0;
+  }
+
   // calculate distance and maximum velocity
   // to decelerate to external velocity limit with jerk and acceleration
   // constraints.
