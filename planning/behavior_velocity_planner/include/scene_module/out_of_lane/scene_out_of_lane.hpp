@@ -60,7 +60,9 @@ public:
 private:
   // Parameter
   PlannerParam param_;
-  std::shared_ptr<const PlannerData> planner_data_;
+  // TODO(Maxime): using a raw ptr to shared pointer is BAD but I did not find how to update
+  // planner_data otherwise
+  const std::shared_ptr<const PlannerData> * planner_data_;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stop_watch_;
   std::vector<lanelet::BasicPolygon2d> partition_lanelets_;
 

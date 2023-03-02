@@ -116,11 +116,13 @@ struct DebugData
   std::vector<lanelet::BasicPolygon2d> footprints;
   Overlaps overlaps;
   Intervals intervals;
+  std::vector<Pose> slowdown_poses;
   void resetData()
   {
     footprints.clear();
     overlaps.clear();
     intervals.clear();
+    slowdown_poses.clear();
   }
 };
 
@@ -128,7 +130,7 @@ struct DebugData
 /// @details the resulting polygon follows the format used by the lanelet library: clockwise order
 /// and implicit closing edge
 inline std::vector<BasicPolygon2d> calculate_path_footprints(
-  const PathWithLaneId & path, const PlannerParam & params)
+  const PathWithLaneId & path, const size_t first_idx, const PlannerParam & params)
 {
   tier4_autoware_utils::Polygon2d base_footprint;
   base_footprint.outer() = {
@@ -142,8 +144,8 @@ inline std::vector<BasicPolygon2d> calculate_path_footprints(
 
   std::vector<BasicPolygon2d> path_footprints;
   path_footprints.reserve(path.points.size());
-  for (const auto & path_point : path.points) {
-    const auto & path_pose = path_point.point.pose;
+  for (auto i = first_idx; i < path.points.size(); ++i) {
+    const auto & path_pose = path.points[i].point.pose;
     const auto angle = tf2::getYaw(path_pose.orientation);
     const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
     BasicPolygon2d footprint;
@@ -156,7 +158,7 @@ inline std::vector<BasicPolygon2d> calculate_path_footprints(
 
 inline Overlaps calculate_overlaps(
   const std::vector<BasicPolygon2d> & path_footprints, const lanelet::ConstLanelets & path_lanelets,
-  const lanelet::ConstLanelets & lanelets, const PlannerParam & params)
+  const size_t idx_offset, const lanelet::ConstLanelets & lanelets, const PlannerParam & params)
 {
   (void)params;
   Overlaps overlaps;
@@ -179,7 +181,7 @@ inline Overlaps calculate_overlaps(
     boost::geometry::difference(path_footprint, path_lanelets_polygon, outside_polys);
     Overlap overlap;
     lanelet::BasicPolygons2d overlapping_areas;
-    overlap.path_idx = i;
+    overlap.path_idx = idx_offset + i;
     for (const auto & lanelet : lanelets) {
       const auto lanelet_polygon = lanelet.polygon2d().basicPolygon();
       auto inside_dist = 0.0;
@@ -278,10 +280,70 @@ inline Intervals calculate_overlapping_intervals(const Overlaps & overlaps)
   return intervals;
 }
 
-inline std::vector<Slowdown> calculate_decisions(const Intervals & intervals)
+inline std::vector<Slowdown> calculate_decisions(
+  const Intervals & intervals, const PathWithLaneId & ego_path, const size_t first_idx,
+  const PredictedObjects & objects)
 {
+  const auto time_along_path = [&](const auto & idx) {
+    // TODO(Maxime): this is a bad estimate of the time to reach a point. should use current
+    // velocity ?
+    auto t = 0.0;
+    for (auto i = first_idx; i <= idx && i + 1 < ego_path.points.size(); ++i) {
+      const auto ds =
+        tier4_autoware_utils::calcDistance2d(ego_path.points[i], ego_path.points[i + 1]);
+      const auto v = ego_path.points[i].point.longitudinal_velocity_mps;
+      t += ds / v;
+    }
+    return t;
+  };
+  const auto object_time_to_point = [&](const auto & object, const auto & idx) {
+    // TODO(Maxime): this is a bad estimate of the time to reach a point. should use lanelet map
+    const auto dist = tier4_autoware_utils::calcDistance2d(
+      ego_path.points[idx], object.kinematics.initial_pose_with_covariance.pose);
+    const auto v = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    return dist / v;
+  };
   std::vector<Slowdown> decisions;
-  (void)intervals;
+  std::cout << "** Decisions\n";
+  for (const auto & interval : intervals) {
+    std::printf(
+      "\t[%lu -> %lu] %ld\n", interval.entering_path_idx, interval.exiting_path_idx,
+      interval.lane_id);
+    // skip if we already entered the interval
+    if (interval.entering_path_idx <= first_idx) continue;
+    const auto ego_enter_time = time_along_path(interval.entering_path_idx);
+    const auto ego_exit_time = time_along_path(interval.exiting_path_idx);
+    auto min_object_enter_time = std::numeric_limits<double>::max();
+    auto max_object_exit_time = 0.0;
+    for (const auto & object : objects.objects) {
+      const auto min_vel = 0.1;  // TODO(Maxime): param
+      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < min_vel) continue;
+      const auto enter_time = object_time_to_point(object, interval.entering_path_idx);
+      const auto exit_time = object_time_to_point(
+        object, std::min(ego_path.points.size() - 1, interval.exiting_path_idx));
+      std::printf(
+        "\t\t[%s] going at %2.2fm/s enter at %2.2fs, exits at %2.2fs\n",
+        tier4_autoware_utils::toHexString(object.object_id).c_str(),
+        object.kinematics.initial_twist_with_covariance.twist.linear.x, enter_time, exit_time);
+      if (enter_time < std::numeric_limits<double>::infinity()) {
+        min_object_enter_time = std::min(enter_time, exit_time);
+        max_object_exit_time = std::max(exit_time, enter_time);
+      }
+    }
+    // TODO(Maxime): more complex decisions, threshold, slowdown instead of stop
+    constexpr auto use_threshold = true;
+    const auto ego_enters_before_object = ego_enter_time < min_object_enter_time;
+    const auto ego_exits_after_object = ego_exit_time > max_object_exit_time;
+    // TODO(Maxime): param
+    const auto should_stop = (use_threshold && min_object_enter_time < 3.0) ||
+                             (!use_threshold && ego_enters_before_object && ego_exits_after_object);
+    if (should_stop) {
+      Slowdown decision;
+      decision.target_path_idx = first_idx + ego_enter_time;
+      decision.velocity = 0.0;
+      decisions.push_back(decision);
+    }
+  }
   return decisions;
 }
 }  // namespace out_of_lane_utils
