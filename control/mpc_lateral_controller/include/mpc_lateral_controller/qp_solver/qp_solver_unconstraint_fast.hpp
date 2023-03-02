@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
-#define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
+#ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
+#define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
@@ -60,4 +60,4 @@ public:
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) override;
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
-#endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
+#endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_

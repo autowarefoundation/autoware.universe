@@ -21,7 +21,7 @@
 #include "mpc_lateral_controller/mpc_trajectory.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
 #include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_unconstr_fast.hpp"
+#include "mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
 #include "mpc_lateral_controller/steering_offset/steering_offset.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
