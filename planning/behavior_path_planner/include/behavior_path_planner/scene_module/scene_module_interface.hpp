@@ -64,12 +64,8 @@ public:
     current_state_{ModuleStatus::SUCCESS}
   {
 #ifdef USE_OLD_ARCHITECTURE
-    std::string module_ns;
-    module_ns.resize(name.size());
-    std::transform(name.begin(), name.end(), module_ns.begin(), tolower);
-
-    const auto ns = std::string("~/debug/") + module_ns;
-    pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+    pub_debug_marker_ =
+      node.create_publisher<MarkerArray>(std::string("~/debug/") + util::toSnakeCase(name), 20);
 #endif
   }
 

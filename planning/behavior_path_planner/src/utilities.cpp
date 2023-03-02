@@ -2649,4 +2649,34 @@ lanelet::ConstLanelets getLaneletsFromPath(
 
   return lanelets;
 }
+
+std::string toSnakeCase(const std::string & str)
+{
+  const auto to_lower = [](char ch) {
+    // See notes: https://en.cppreference.com/w/cpp/string/byte/tolower
+    return static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+  };
+  const auto is_lower = [](char ch) { return std::islower(static_cast<unsigned char>(ch)); };
+
+  if (str.empty()) {
+    return str;
+  }
+
+  std::string snake{to_lower(str.front())};
+
+  if (str.size() == 1) {
+    return snake;
+  }
+
+  std::for_each(str.begin() + 1, str.end(), [&](char c) {
+    if (is_lower(c)) {
+      snake += c;
+      return;
+    }
+    snake += '_';
+    snake += to_lower(c);
+  });
+
+  return snake;
+}
 }  // namespace behavior_path_planner::util

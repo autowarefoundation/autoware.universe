@@ -53,7 +53,8 @@ LaneChangeModule::LaneChangeModule(
   uuid_left_{generateUUID()},
   uuid_right_{generateUUID()}
 {
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "lane_change");
+  steering_factor_interface_ptr_ =
+    std::make_unique<SteeringFactorInterface>(&node, util::toSnakeCase(name));
 }
 
 void LaneChangeModule::onEntry()
