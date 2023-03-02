@@ -33,4 +33,3 @@ rclcpp_components_register_node(scene_to_image_projector
 ament_auto_package(INSTALL_TO_SHARE
         launch
         )
-

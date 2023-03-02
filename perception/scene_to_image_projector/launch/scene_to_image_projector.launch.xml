@@ -1,17 +1,17 @@
 <launch>
-    <arg name="input/image" default="/perception/object_recognition/detection/image_rect_front"/>
-    <arg name="input/camera_info" default="/lucid_vision/camera_1/camera_info"/>
-    <arg name="input/objects" default="/perception/object_recognition/detection/objects"/>
-    <arg name="objects_type" default="detected" description="must be tracked or detected"/>
-    <arg name="use_trajectory" default="false" description=""/>
-    <arg name="use_road_boundaries" default="false" description=""/>
+  <arg name="input/image" default="/perception/object_recognition/detection/image_rect_front"/>
+  <arg name="input/camera_info" default="/lucid_vision/camera_1/camera_info"/>
+  <arg name="input/objects" default="/perception/object_recognition/detection/objects"/>
+  <arg name="objects_type" default="detected" description="must be tracked or detected"/>
+  <arg name="use_trajectory" default="false" description=""/>
+  <arg name="use_road_boundaries" default="false" description=""/>
 
-    <node pkg="scene_to_image_projector" exec="scene_to_image_projector_node" name="scene_to_image_projector">
-        <remap from="~/input/image" to="$(var input/image)"/>
-        <remap from="~/input/camera_info" to="$(var input/camera_info)"/>
-        <remap from="~/input/objects" to="$(var input/objects)"/>
-        <param name="objects_type" value="$(var objects_type)"/>
-        <param name="use_trajectory" value="$(var use_trajectory)"/>
-        <param name="use_road_boundaries" value="$(var use_road_boundaries)"/>
-    </node>
+  <node pkg="scene_to_image_projector" exec="scene_to_image_projector_node" name="scene_to_image_projector">
+    <remap from="~/input/image" to="$(var input/image)"/>
+    <remap from="~/input/camera_info" to="$(var input/camera_info)"/>
+    <remap from="~/input/objects" to="$(var input/objects)"/>
+    <param name="objects_type" value="$(var objects_type)"/>
+    <param name="use_trajectory" value="$(var use_trajectory)"/>
+    <param name="use_road_boundaries" value="$(var use_road_boundaries)"/>
+  </node>
 </launch>

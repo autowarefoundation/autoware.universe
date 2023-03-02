@@ -17,12 +17,12 @@
   <depend>image_transport</depend>
   <depend>libboost-filesystem-dev</depend>
   <depend>message_filters</depend>
+  <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>perception_utils</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

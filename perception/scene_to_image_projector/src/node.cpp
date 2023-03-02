@@ -61,7 +61,7 @@ SceneToImageProjectorNode::SceneToImageProjectorNode(const rclcpp::NodeOptions &
 
   auto objects_type = declare_parameter<std::string>("objects_type", "tracked");
   auto use_trajectories = declare_parameter<bool>("use_trajectory", false);
-//  auto sub_road_boundaries = declare_parameter<bool>("sub_road_boundaries", false);
+  //  auto sub_road_boundaries = declare_parameter<bool>("sub_road_boundaries", false);
 
   image_sub_.subscribe(this, "~/input/image", "raw", rmw_qos_profile_sensor_data);
   camera_info_sub_.subscribe(this, "~/input/camera_info", rmw_qos_profile_sensor_data);
