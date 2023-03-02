@@ -28,7 +28,7 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  adaptor.init_pub(pub_status_);
+  adaptor.init_pub(pub_kinematic_);
   adaptor.init_pub(pub_state_);
   adaptor.init_pub(pub_door_);
   adaptor.init_sub(sub_kinematic_state_, this, &VehicleNode::kinematic_state);
@@ -57,22 +57,24 @@ uint8_t VehicleNode::mapping(
 void VehicleNode::kinematic_state(
   const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_ptr.header = msg_ptr->header;
-  vehicle_status_ptr.child_frame_id = msg_ptr->child_frame_id;
-  vehicle_status_ptr.pose = msg_ptr->pose.pose;
-  vehicle_status_ptr.twist = msg_ptr->twist;
+  vehicle_kinematic_ptr.pose_with_covariance.header = msg_ptr->header;
+  vehicle_kinematic_ptr.pose_with_covariance.pose = msg_ptr->pose;
+  vehicle_kinematic_ptr.twist_with_covariance.header = msg_ptr->header;
+  vehicle_kinematic_ptr.twist_with_covariance.header.frame_id = msg_ptr->child_frame_id;
+  vehicle_kinematic_ptr.twist_with_covariance.twist = msg_ptr->twist;
 }
 
 void VehicleNode::acceleration_status(
   const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_ptr.accel = msg_ptr->accel;
+  vehicle_kinematic_ptr.accel_with_covariance.header = msg_ptr->header;
+  vehicle_kinematic_ptr.accel_with_covariance.accel = msg_ptr->accel;
 }
 
 void VehicleNode::steering_status(
   const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_ptr.steering_tire_angle = msg_ptr->steering_tire_angle;
+  vehicle_state_ptr.steering_tire_angle = msg_ptr->steering_tire_angle;
 }
 
 void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
@@ -101,7 +103,7 @@ void VehicleNode::energy_status(
 void VehicleNode::on_timer()
 {
   vehicle_state_ptr.stamp = now();
-  pub_status_->publish(vehicle_status_ptr);
+  pub_kinematic_->publish(vehicle_kinematic_ptr);
   pub_state_->publish(vehicle_state_ptr);
 }
 

@@ -18,16 +18,16 @@
 #include <rclcpp/qos.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/door_status_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/kinematic.hpp>
 #include <autoware_adapi_v1_msgs/msg/vehicle_state.hpp>
-#include <autoware_adapi_v1_msgs/msg/vehicle_status.hpp>
 
 namespace autoware_ad_api::vehicle
 {
 
-struct VehicleStatus
+struct VehicleKinematic
 {
-  using Message = autoware_adapi_v1_msgs::msg::VehicleStatus;
-  static constexpr char name[] = "/api/vehicle/status";
+  using Message = autoware_adapi_v1_msgs::msg::Kinematic;
+  static constexpr char name[] = "/api/vehicle/kinematic";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;

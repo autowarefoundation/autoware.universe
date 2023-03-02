@@ -72,7 +72,7 @@ private:
   };
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
+  Pub<autoware_ad_api::vehicle::VehicleKinematic> pub_kinematic_;
   Pub<autoware_ad_api::vehicle::VehicleState> pub_state_;
   Pub<autoware_ad_api::vehicle::DoorStatusArray> pub_door_;
   Sub<vehicle_interface::KinematicState> sub_kinematic_state_;
@@ -85,7 +85,7 @@ private:
   Sub<vehicle_interface::DoorStatus> sub_door_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_ptr;
+  autoware_ad_api::vehicle::VehicleKinematic::Message vehicle_kinematic_ptr;
   autoware_ad_api::vehicle::VehicleState::Message vehicle_state_ptr;
   autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_ptr;
 
