@@ -25,7 +25,6 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-
     with open(LaunchConfiguration("cpu_monitor_config_file").perform(context), "r") as f:
         cpu_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     cpu_monitor = ComposableNode(

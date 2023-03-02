@@ -18,7 +18,7 @@ $(function () {
         direction: "horizontal",
       },
       1000,
-      callback(tabName)
+      callback(tabName),
     );
     lastTabName = tabName;
   }
@@ -31,7 +31,7 @@ $(function () {
         {
           direction: "horizontal",
         },
-        1000
+        1000,
       );
     }, 1100);
   }

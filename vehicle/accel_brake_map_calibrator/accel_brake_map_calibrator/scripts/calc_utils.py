@@ -69,7 +69,6 @@ class CalcUtils:
 
     @staticmethod
     def create_2d_map(x, y, data, color_factor, x_index_list, x_thresh, y_index_list, y_thresh):
-
         if x.shape != y.shape or y.shape != data.shape:
             print("Error: the shape of x, y, data must be same")
             sys.exit()

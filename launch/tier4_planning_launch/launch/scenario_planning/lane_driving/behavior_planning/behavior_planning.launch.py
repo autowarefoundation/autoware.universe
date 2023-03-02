@@ -34,7 +34,6 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-
     # vehicle information parameter
     vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
