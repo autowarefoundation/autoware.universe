@@ -111,6 +111,8 @@ void Lanelet2MapVisualizationNode::onMapBin(
     lanelet::utils::query::noStoppingAreas(all_lanelets);
   std::vector<lanelet::SpeedBumpConstPtr> sb_reg_elems =
     lanelet::utils::query::speedBumps(all_lanelets);
+  std::vector<lanelet::InvalidLaneletConstPtr> il_reg_elems =
+    lanelet::utils::query::invalidLanelets(all_lanelets);
   lanelet::ConstLineStrings3d parking_spaces =
     lanelet::utils::query::getAllParkingSpaces(viz_lanelet_map);
   lanelet::ConstPolygons3d parking_lots = lanelet::utils::query::getAllParkingLots(viz_lanelet_map);
@@ -130,6 +132,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
     cl_no_stopping_areas, cl_no_obstacle_segmentation_area,
     cl_no_obstacle_segmentation_area_for_run_out, cl_hatched_road_markings_area,
     cl_hatched_road_markings_line;
+    cl_no_obstacle_segmentation_area_for_run_out, cl_invalid_lanelets;
   setColor(&cl_road, 0.27, 0.27, 0.27, 0.999);
   setColor(&cl_shoulder, 0.15, 0.15, 0.15, 0.999);
   setColor(&cl_cross, 0.27, 0.3, 0.27, 0.5);
@@ -150,6 +153,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
   setColor(&cl_no_obstacle_segmentation_area_for_run_out, 0.37, 0.7, 0.27, 0.5);
   setColor(&cl_hatched_road_markings_area, 0.3, 0.3, 0.3, 0.5);
   setColor(&cl_hatched_road_markings_line, 0.5, 0.5, 0.5, 0.999);
+  setColor(&cl_invalid_lanelets, 0.56, 0.40, 0.27, 0.5);
 
   visualization_msgs::msg::MarkerArray map_marker_array;
 
@@ -185,6 +189,9 @@ void Lanelet2MapVisualizationNode::onMapBin(
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::speedBumpsAsMarkerArray(sb_reg_elems, cl_speed_bumps));
+  insertMarkerArray(
+    &map_marker_array,
+    lanelet::visualization::invalidLaneletsAsMarkerArray(il_reg_elems, cl_invalid_lanelets));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::parkingLotsAsMarkerArray(parking_lots, cl_parking_lots));
