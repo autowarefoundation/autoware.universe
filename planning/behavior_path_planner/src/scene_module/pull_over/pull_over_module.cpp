@@ -476,12 +476,17 @@ BehaviorModuleOutput PullOverModule::plan()
 
   // Check if it needs to decide path
   if (status_.is_safe) {
-    const auto dist_to_parking_start_pose = calcSignedArcLength(
-      getCurrentPath().points, current_pose, status_.pull_over_path->start_pose.position,
-      std::numeric_limits<double>::max(), M_PI_2);
-
-    if (*dist_to_parking_start_pose < parameters_.decide_path_distance) {
-      status_.has_decided_path = true;
+    const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
+      getCurrentPath().points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
+    if (ego_segment_idx) {
+      const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
+        getCurrentPath().points, status_.pull_over_path.start_pose.position);
+      const auto dist_to_parking_start_pose = calcSignedArcLength(
+        getCurrentPath().points, current_pose.position, *ego_segment_idx,
+        status_.pull_over_path.start_pose.position, start_pose_segment_idx);
+      if (dist_to_parking_start_pose < parameters_.decide_path_distance) {
+        status_.has_decided_path = true;
+      }
     }
   }
 
@@ -721,15 +726,26 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const auto & full_path = status_.pull_over_path->getFullPath();
-  const auto dist_to_parking_start_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_odometry->pose.pose,
-    status_.pull_over_path->start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
+
+  const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
+    full_path.points, planner_data_->self_odometry->pose.pose, std::numeric_limits<double>::max(),
+    M_PI_2);
+  if(!ego_segment_idx) {
+    return {std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
+  }
+
+  const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
+    full_path.points, status_.pull_over_path.start_pose.position);
+  const double dist_to_parking_start_pose = calcSignedArcLength(
+    full_path.points, planner_data_->self_odometry->pose.pose.position, *ego_segment_idx,
+    status_.pull_over_path.start_pose.position, start_pose_segment_idx);
+  const size_t goal_pose_segment_idx = motion_utils::findNearestSegmentIndex(
+    full_path.points, modified_goal_pose_->goal_pose.position);
   const double dist_to_parking_finish_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_odometry->pose.pose.position,
-    modified_goal_pose_->goal_pose.position);
-  const double start_distance_to_path_change =
-    dist_to_parking_start_pose ? *dist_to_parking_start_pose : std::numeric_limits<double>::max();
-  return {start_distance_to_path_change, dist_to_parking_finish_pose};
+    full_path.points, planner_data_->self_odometry->pose.pose.position, *ego_segment_idx,
+    modified_goal_pose_->goal_pose.position, goal_pose_segment_idx);
+
+  return {dist_to_parking_start_pose, dist_to_parking_finish_pose};
 }
 
 void PullOverModule::setParameters(const PullOverParameters & parameters)
