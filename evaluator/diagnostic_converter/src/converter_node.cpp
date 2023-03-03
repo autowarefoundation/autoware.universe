@@ -22,7 +22,9 @@ DiagnosticConverter::DiagnosticConverter(const rclcpp::NodeOptions & node_option
   using std::placeholders::_1;
 
   size_t sub_counter = 0;
-  std::vector<std::string> diagnostic_topics = {"/diagnostic/planning_evaluator/metrics"};
+  std::vector<std::string> diagnostic_topics;
+  declare_parameter<std::vector<std::string>>("diagnostic_topics", std::vector<std::string>());
+  get_parameter<std::vector<std::string>>("diagnostic_topics", diagnostic_topics);
   for (const std::string & diagnostic_topic : diagnostic_topics) {
     // std::function required with multiple arguments https://answers.ros.org/question/289207
     const std::function<void(const DiagnosticArray::ConstSharedPtr)> fn =
