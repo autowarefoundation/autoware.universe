@@ -395,7 +395,7 @@ BehaviorModuleOutput PullOverModule::plan()
 
     if (ego_segment_idx) {
       const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
-      getCurrentPath().points, status_.pull_over_path.start_pose.position);
+        getCurrentPath().points, status_.pull_over_path.start_pose.position);
 
       const auto dist_to_parking_start_pose = calcSignedArcLength(
         getCurrentPath().points, current_pose.position, *ego_segment_idx,
@@ -405,7 +405,6 @@ BehaviorModuleOutput PullOverModule::plan()
         status_.has_decided_path = true;
       }
     }
-
   }
 
   if (status_.has_decided_path) {
