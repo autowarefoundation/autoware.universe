@@ -1,4 +1,4 @@
-# PullOut Module
+# Pull Out design
 
 ## Purpose / Role
 
