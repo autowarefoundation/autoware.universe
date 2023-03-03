@@ -7,14 +7,14 @@ autoware_package()
 find_package(OpenCV REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
-# use planner manager that supports behavior tree
-set(USE_BT TRUE)
-message(STATUS "USE_BEHAVIOR_TREE: " ${USE_BT})
+set(COMPILE_WITH_OLD_ARCHITECTURE TRUE)
 
 set(common_src
   src/utilities.cpp
   src/path_utilities.cpp
   src/steering_factor_interface.cpp
+  src/behavior_path_planner_node.cpp
+  src/scene_module/scene_module_visitor.cpp
   src/turn_signal_decider.cpp
   src/util/avoidance/util.cpp
   src/util/lane_change/util.cpp
@@ -38,11 +38,9 @@ set(common_src
   src/marker_util/lane_change/debug.cpp
 )
 
-if(USE_BT)
+if(COMPILE_WITH_OLD_ARCHITECTURE)
   ament_auto_add_library(behavior_path_planner_node SHARED
-    src/behavior_path_planner_node.cpp
     src/behavior_tree_manager.cpp
-    src/scene_module/scene_module_visitor.cpp
     src/scene_module/scene_module_bt_node_interface.cpp
     src/scene_module/side_shift/side_shift_module.cpp
     src/scene_module/avoidance/avoidance_module.cpp
@@ -54,22 +52,17 @@ if(USE_BT)
     ${common_src}
   )
 
-  target_compile_definitions(behavior_path_planner_node PRIVATE USE_BEHAVIOR_TREE)
+  target_compile_definitions(behavior_path_planner_node PRIVATE USE_OLD_ARCHITECTURE)
 
-  message(WARNING "Build behavior_path_planner with BT...")
+  message(WARNING "Build behavior_path_planner with OLD framework...")
 
 else()
   ament_auto_add_library(behavior_path_planner_node SHARED
-    src/behavior_path_planner_node.cpp
     src/planner_manager.cpp
-    src/scene_module/scene_module_visitor.cpp
-    # src/scene_module_v2/avoidance
-    # src/scene_module_v2/lane_change
-    # src/scene_module_v2/...
     ${common_src}
   )
 
-  message(WARNING "Build behavior_path_planner without BT...")
+  message(WARNING "Build behavior_path_planner with NEW framework...")
 endif()
 
 target_include_directories(behavior_path_planner_node SYSTEM PUBLIC
