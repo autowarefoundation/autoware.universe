@@ -74,7 +74,6 @@ GoalCandidates --o GoalSeacherBase
 @enduml
 ```
 
-
 ## General parameters for pull_over
 
 | Name                       | Unit   | Type   | Description                                                                                                                             | Default value |
@@ -99,17 +98,17 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 
 | Name                                       | Unit | Type   | Description                                                                                                     | Default value |
 | :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid                         | [-]    | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
-| use_occupancy_grid_for_longitudinal_margin | [-]    | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
+| use_occupancy_grid                         | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
+| use_occupancy_grid_for_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
 | occupancy_grid_collision_check_margin      | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                 | [-]    | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                         | [-]    | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+| theta_size                                 | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
+| obstacle_threshold                         | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
 ### Parameters for object recognition based collision check
 
 | Name                                      | Unit | Type   | Description                                                | Default value |
 | :---------------------------------------- | :--- | :----- | :--------------------------------------------------------- | :------------ |
-| use_object_recognition                    | [-]    | bool   | flag whether to use object recognition for collision check | true          |
+| use_object_recognition                    | [-]  | bool   | flag whether to use object recognition for collision check | true          |
 | object_recognition_collision_check_margin | [m]  | double | margin to calculate ego-vehicle cells from footprint.      | 1.0           |
 
 ## **Goal Search**
@@ -123,8 +122,8 @@ searched for in certain range of the shoulder lane.
 
 | Name                            | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
 | :------------------------------ | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
-| search_priority                 | [-]    | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
-| enable_goal_research            | [-]    | double | flag whether to search goal                                                                                                                                                                                              | true           |
+| search_priority                 | [-]  | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
+| enable_goal_research            | [-]  | double | flag whether to search goal                                                                                                                                                                                              | true           |
 | forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
 | backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
 | goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
@@ -231,5 +230,3 @@ To run this feature, you need to set `parking_lot` to the map, `activate_by_scen
 | enable_freespace_parking | [-]  | bool | This flag enables freespace parking, which runs when the vehicle is stuck due to e.g. obstacles in the parking area. | true          |
 
 See [freespace_planner](../freespace_planner/README.md) for other parameters.
-
-

@@ -85,9 +85,9 @@ Pull out distance is calculated by the speed, lateral deviation, and the lateral
 
 | Name                            | Unit   | Type   | Description                                                                                                          | Default value |
 | :------------------------------ | :----- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_shift_pull_out           | [-]      | bool   | flag whether to enable shift pull out                                                                                | true          |
+| enable_shift_pull_out           | [-]    | bool   | flag whether to enable shift pull out                                                                                | true          |
 | shift_pull_out_velocity         | [m/s]  | double | velocity of shift pull out                                                                                           | 2.0           |
-| pull_out_sampling_num           | [-]      | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
+| pull_out_sampling_num           | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
 | maximum_lateral_jerk            | [m/s3] | double | maximum lateral jerk                                                                                                 | 2.0           |
 | minimum_lateral_jerk            | [m/s3] | double | minimum lateral jerk                                                                                                 | 0.5           |
 | minimum_shift_pull_out_distance | [m]    | double | minimum shift pull out distance. if calculated pull out distance is shorter than this, use this for path generation. | 20.0          |
@@ -103,14 +103,14 @@ See also [[1]](https://www.sciencedirect.com/science/article/pii/S14746670153474
 
 ###### parameters for geometric pull out
 
-| Name                        | Unit  | Type   | Description                                             | Default value |
-| :-------------------------- | :---- | :----- | :------------------------------------------------------ | :------------ |
-| enable_geometric_pull_out   | [-]     | bool   | flag whether to enable geometric pull out               | true          |
-| divide_pull_out_path   | [-]     | bool   | flag whether to divide arc paths.　The path is assumed to be divided because the curvature is not continuous. But it requires a stop during the departure.                | false          |
-| geometric_pull_out_velocity | [m/s] | double | velocity of geometric pull out                          | 1.0           |
-| arc_path_interval           | [m]   | double | path points interval of arc paths of geometric pull out | 1.0           |
-| lane_departure_margin       | [m]   | double | margin of deviation to lane right                       | 0.2           |
-| pull_out_max_steer_angle    | [rad] | double | maximum steer angle for path generation                 | 0.26          |
+| Name                        | Unit  | Type   | Description                                                                                                                                                | Default value |
+| :-------------------------- | :---- | :----- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_geometric_pull_out   | [-]   | bool   | flag whether to enable geometric pull out                                                                                                                  | true          |
+| divide_pull_out_path        | [-]   | bool   | flag whether to divide arc paths.　The path is assumed to be divided because the curvature is not continuous. But it requires a stop during the departure. | false         |
+| geometric_pull_out_velocity | [m/s] | double | velocity of geometric pull out                                                                                                                             | 1.0           |
+| arc_path_interval           | [m]   | double | path points interval of arc paths of geometric pull out                                                                                                    | 1.0           |
+| lane_departure_margin       | [m]   | double | margin of deviation to lane right                                                                                                                          | 0.2           |
+| pull_out_max_steer_angle    | [rad] | double | maximum steer angle for path generation                                                                                                                    | 0.26          |
 
 #### **backward pull out start point search**
 
@@ -120,12 +120,11 @@ If a safe path cannot be generated from the current position, search backwards f
 
 [pull out after backward driving video](https://user-images.githubusercontent.com/39142679/181025149-8fb9fb51-9b8f-45c4-af75-27572f4fba78.mp4)
 
-| Name                                                                       | Unit           | Type   | Description                                                                                                           | Default value |
-| :------------------------------------------------------------------------- | :------------- | :----- | :-------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_back                                                                | [-]              | bool   | flag whether to search backward for start_point                                                                       | true          |
-|              search_priority   | [-]              | string   | In the case of `efficient_path`, use efficient paths even if the back distance is longer. In case of `short_back_distance`, use a path with as short a back distance | efficient_path |
-| max_back_distance                                                          | [m]            | double | maximum back distance                                                                                                 | 30.0          |
-| backward_search_resolution                                                 | [m]            | double | distance interval for searching backward pull out start point                                                         | 2.0           |
-| backward_path_update_duration                                              | [s]            | double | time interval for searching backward pull out start point. this prevents chattering between back driving and pull_out | 3.0           |
-| ignore_distance_from_lane_end                                              | [m]            | double | distance from end of pull out lanes for ignoring start candidates                                                     | 15.0          |
-
+| Name                          | Unit | Type   | Description                                                                                                                                                          | Default value  |
+| :---------------------------- | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| enable_back                   | [-]  | bool   | flag whether to search backward for start_point                                                                                                                      | true           |
+| search_priority               | [-]  | string | In the case of `efficient_path`, use efficient paths even if the back distance is longer. In case of `short_back_distance`, use a path with as short a back distance | efficient_path |
+| max_back_distance             | [m]  | double | maximum back distance                                                                                                                                                | 30.0           |
+| backward_search_resolution    | [m]  | double | distance interval for searching backward pull out start point                                                                                                        | 2.0            |
+| backward_path_update_duration | [s]  | double | time interval for searching backward pull out start point. this prevents chattering between back driving and pull_out                                                | 3.0            |
+| ignore_distance_from_lane_end | [m]  | double | distance from end of pull out lanes for ignoring start candidates                                                                                                    | 15.0           |
