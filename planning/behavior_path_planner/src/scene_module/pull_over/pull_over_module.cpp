@@ -393,16 +393,19 @@ BehaviorModuleOutput PullOverModule::plan()
     const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
       getCurrentPath().points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
-    const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
+    if (ego_segment_idx) {
+      const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
       getCurrentPath().points, status_.pull_over_path.start_pose.position);
 
-    const auto dist_to_parking_start_pose = calcSignedArcLength(
-      getCurrentPath().points, current_pose.position, *ego_segment_idx,
-      status_.pull_over_path.start_pose.position, start_pose_segment_idx);
+      const auto dist_to_parking_start_pose = calcSignedArcLength(
+        getCurrentPath().points, current_pose.position, *ego_segment_idx,
+        status_.pull_over_path.start_pose.position, start_pose_segment_idx);
 
-    if (dist_to_parking_start_pose < parameters_.decide_path_distance) {
-      status_.has_decided_path = true;
+      if (dist_to_parking_start_pose < parameters_.decide_path_distance) {
+        status_.has_decided_path = true;
+      }
     }
+
   }
 
   if (status_.has_decided_path) {
