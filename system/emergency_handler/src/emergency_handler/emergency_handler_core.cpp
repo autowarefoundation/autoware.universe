@@ -380,14 +380,32 @@ void EmergencyHandler::updateMrmState()
   // State Machine
   if (mrm_state_.state == MrmState::NORMAL) {
     // NORMAL
-    if (is_auto_mode && is_emergency) {
-      if (param_.use_takeover_request) {
-        takeover_requested_time_ = this->get_clock()->now();
-        is_takeover_request_ = true;
+
+    if (is_takeover_request_) {
+      const auto time_from_takeover_request = this->get_clock()->now() - takeover_requested_time_;
+      if (time_from_takeover_request.seconds() > param_.timeout_takeover_request) {
+        transitionTo(MrmState::MRM_OPERATING);
+        is_takeover_request_ = false;
         return;
       } else {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
+        if (!is_emergency || is_takeover_done) {
+          is_takeover_request_ = false;
+        } else {
+          // do nothing
+        }
+      }
+    } else {
+      if (is_auto_mode && is_emergency) {
+        if (param_.use_takeover_request) {
+          takeover_requested_time_ = this->get_clock()->now();
+          is_takeover_request_ = true;
+          return;
+        } else {
+          transitionTo(MrmState::MRM_OPERATING);
+          return;
+        }
+      } else {
+        // do nothing
       }
     }
   } else {
@@ -403,13 +421,7 @@ void EmergencyHandler::updateMrmState()
       return;
     }
 
-    if (is_takeover_request_) {
-      const auto time_from_takeover_request = this->get_clock()->now() - takeover_requested_time_;
-      if (time_from_takeover_request.seconds() > param_.timeout_takeover_request) {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
-    } else if (mrm_state_.state == MrmState::MRM_OPERATING) {
+    if (mrm_state_.state == MrmState::MRM_OPERATING) {
       // TODO(Kenji Miyake): Check MRC is accomplished
       if (isStopped()) {
         transitionTo(MrmState::MRM_SUCCEEDED);
