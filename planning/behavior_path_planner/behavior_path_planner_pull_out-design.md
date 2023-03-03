@@ -79,7 +79,7 @@ Pull out distance is calculated by the speed, lateral deviation, and the lateral
 
 ![shift_pull_out](./image/shift_pull_out.drawio.svg)
 
-[shift pull out vidoe](https://user-images.githubusercontent.com/39142679/187872468-6d5057ee-e039-499b-afc7-fe0dc8052a6b.mp4)
+[shift pull out video](https://user-images.githubusercontent.com/39142679/187872468-6d5057ee-e039-499b-afc7-fe0dc8052a6b.mp4)
 
 ###### parameters for shift pull out
 
@@ -106,7 +106,7 @@ See also [[1]](https://www.sciencedirect.com/science/article/pii/S14746670153474
 | Name                        | Unit  | Type   | Description                                             | Default value |
 | :-------------------------- | :---- | :----- | :------------------------------------------------------ | :------------ |
 | enable_geometric_pull_out   | [-]     | bool   | flag whether to enable geometric pull out               | true          |
-| divide_pull_out_path   | [-]     | bool   | flag whether to devide arc paths.　The path is assumed to be divided because the curvature is not continuous. But it requires a stop during the departure.                | false          |
+| divide_pull_out_path   | [-]     | bool   | flag whether to divide arc paths.　The path is assumed to be divided because the curvature is not continuous. But it requires a stop during the departure.                | false          |
 | geometric_pull_out_velocity | [m/s] | double | velocity of geometric pull out                          | 1.0           |
 | arc_path_interval           | [m]   | double | path points interval of arc paths of geometric pull out | 1.0           |
 | lane_departure_margin       | [m]   | double | margin of deviation to lane right                       | 0.2           |
