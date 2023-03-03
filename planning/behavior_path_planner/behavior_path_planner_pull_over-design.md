@@ -230,6 +230,6 @@ To run this feature, you need to set `parking_lot` to the map, `activate_by_scen
 | :----------------------- | :--- | :--- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
 | enable_freespace_parking | [-]  | bool | This flag enables freespace parking, which runs when the vehicle is stuck due to e.g. obstacles in the parking area. | true          |
 
-See [reespace_planner](../freespace_planner/README.md) for other parameters.
+See [freespace_planner](../freespace_planner/README.md) for other parameters.
 
 
