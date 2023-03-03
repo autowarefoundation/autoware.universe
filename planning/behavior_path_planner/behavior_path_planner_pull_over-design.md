@@ -214,7 +214,7 @@ If the vehicle gets stuck with `lane_parking`, run `freespace_parking`.
 To run this feature, you need to set `parking_lot` to the map, `activate_by_scenario` of [costmap_generator](../costmap_generator/README.md) to `false` and `enable_freespace_parking` to `true`
 
 ![pull_over_freespace_parking_flowchart](./image/pull_over_freespace_parking_flowchart.drawio.svg)
-\*Series execution with `avoidance_moudle` in the flowchart is under development.
+\*Series execution with `avoidance_module` in the flowchart is under development.
 
 <img src="https://user-images.githubusercontent.com/39142679/221167581-9a654810-2460-4a0c-8afd-7943ca877cf5.png" width="600">
 
