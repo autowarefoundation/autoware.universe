@@ -15,16 +15,15 @@
 #ifndef CONVERTER_NODE_HPP_
 #define CONVERTER_NODE_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include <tier4_simulation_msgs/msg/user_defined_value.hpp>
-#include <tier4_simulation_msgs/msg/user_defined_value_type.hpp>
-
 #include <memory>
 #include <string>
+#include <tier4_simulation_msgs/msg/user_defined_value.hpp>
+#include <tier4_simulation_msgs/msg/user_defined_value_type.hpp>
 #include <unordered_map>
 #include <vector>
+
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace diagnostic_converter
 {
