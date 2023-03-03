@@ -147,7 +147,7 @@ void CropBoxFilterComponent::faster_filter(
                            point[0] > param_.min_x && point[0] < param_.max_x;
     if ((!param_.negative && point_is_inside) || (param_.negative && !point_is_inside)) {
       memcpy(&output.data[output_size], &input->data[global_offset], input->point_step);
-      
+
       if (transform_info.need_transform) {
         *reinterpret_cast<float *>(&output.data[output_size + x_offset]) = point[0];
         *reinterpret_cast<float *>(&output.data[output_size + y_offset]) = point[1];
