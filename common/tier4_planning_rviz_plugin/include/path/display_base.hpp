@@ -219,6 +219,11 @@ protected:
 
   void processMessage(const typename T::ConstSharedPtr msg_ptr) override
   {
+    path_manual_object_->clear();
+    velocity_manual_object_->clear();
+    footprint_manual_object_->clear();
+    point_manual_object_->clear();
+
     if (!validateFloats<T>(msg_ptr)) {
       this->setStatus(
         rviz_common::properties::StatusProperty::Error, "Topic",
@@ -251,9 +256,6 @@ protected:
 
   void visualizePath(const typename T::ConstSharedPtr msg_ptr)
   {
-    path_manual_object_->clear();
-    velocity_manual_object_->clear();
-
     if (msg_ptr->points.empty()) {
       return;
     }
@@ -388,9 +390,6 @@ protected:
 
   void visualizePathFootprint(const typename T::ConstSharedPtr msg_ptr)
   {
-    footprint_manual_object_->clear();
-    point_manual_object_->clear();
-
     if (msg_ptr->points.empty()) {
       return;
     }
