@@ -85,13 +85,13 @@ void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
 void VehicleNode::turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
   vehicle_state_ptr.turn_indicator.status =
-    mapping(turn_indicator_type_, msg_ptr->report, VehicleTurnIndicator::DISABLE);
+    mapping(turn_indicator_type_, msg_ptr->report, VehicleTurnIndicator::NONE);
 }
 
 void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr)
 {
   vehicle_state_ptr.hazard_light.status =
-    mapping(hazard_light_type_, msg_ptr->report, VehicleHazardLight::DISABLE);
+    mapping(hazard_light_type_, msg_ptr->report, VehicleHazardLight::NONE);
 }
 
 void VehicleNode::energy_status(
