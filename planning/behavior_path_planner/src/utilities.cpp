@@ -1235,6 +1235,31 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   return lanelet_length - arc_coordinates.length;
 }
 
+double getDistanceToNextTrafficLight(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
+{
+  const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
+
+  lanelet::ConstLanelet current_lanelet;
+  if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
+    return std::numeric_limits<double>::max();
+  }
+
+  double distance = 0;
+  bool is_after_current_lanelet = false;
+  for (const auto & llt : lanelets) {
+    if (llt == current_lanelet) {
+      is_after_current_lanelet = true;
+    }
+    if (is_after_current_lanelet && !llt.regulatoryElementsAs<lanelet::TrafficLight>().empty()) {
+      return distance - arc_coordinates.length;
+    }
+    distance += lanelet::utils::getLaneletLength3d(llt);
+  }
+
+  return std::numeric_limits<double>::max();
+}
+
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
 {
@@ -2463,5 +2488,28 @@ double calcLaneChangeBuffer(
   const double length_to_intersection)
 {
   return num_lane_change * calcTotalLaneChangeDistance(common_param) + length_to_intersection;
+}
+
+lanelet::ConstLanelets getLaneletsFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler)
+{
+  std::vector<int64_t> unique_lanelet_ids;
+  for (const auto & p : path.points) {
+    const auto & lane_ids = p.lane_ids;
+    for (const auto & lane_id : lane_ids) {
+      if (
+        std::find(unique_lanelet_ids.begin(), unique_lanelet_ids.end(), lane_id) ==
+        unique_lanelet_ids.end()) {
+        unique_lanelet_ids.push_back(lane_id);
+      }
+    }
+  }
+
+  lanelet::ConstLanelets lanelets;
+  for (const auto & lane_id : unique_lanelet_ids) {
+    lanelets.push_back(route_handler->getLaneletsFromId(lane_id));
+  }
+
+  return lanelets;
 }
 }  // namespace behavior_path_planner::util
