@@ -15,15 +15,13 @@
 #ifndef SCENE_MODULE__INVALID_LANELET__SCENE_HPP_
 #define SCENE_MODULE__INVALID_LANELET__SCENE_HPP_
 
-
-#include <rclcpp/rclcpp.hpp>
-#include "scene_module/scene_module_interface.hpp"
 #include "scene_module/invalid_lanelet/util.hpp"
-
+#include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 #include "utilization/state_machine.hpp"
 
 #include <lanelet2_extension/regulatory_elements/invalid_lanelet.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -42,9 +40,8 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 class InvalidLaneletModule : public SceneModuleInterface
 {
 public:
-
   enum class State { INIT, APPROACH, INSIDE_INVALID_LANELET, STOPPED };
-  
+
   struct DebugData
   {
     double base_link2front;
@@ -73,16 +70,16 @@ public:
 
 private:
   const int64_t lane_id_;
-    
+
   // Key Feature - Invalid Lanelet Regulatory Element
   const lanelet::autoware::InvalidLanelet & invalid_lanelet_reg_elem_;
-  
+
   // Parameter
   PlannerParam planner_param_;
 
   // Debug
   DebugData debug_data_;
-  
+
   // State machine
   State state_;
   std::shared_ptr<const rclcpp::Time> stopped_time_;

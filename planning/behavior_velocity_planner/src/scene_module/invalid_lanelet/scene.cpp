@@ -74,51 +74,48 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   const auto & path_polygon_intersection_status =
     getPathIntersectionWithInvalidLaneletPolygon(ego_path, invalid_lanelet_polygon, ego_pos, 2);
 
-  
   double distance = 0.0;
   const double distance_threshold = 1e-3;
   geometry_msgs::msg::Point first_intersection_point;
-  if(path_polygon_intersection_status.first_intersection_point){
+  if (path_polygon_intersection_status.first_intersection_point) {
     first_intersection_point = path_polygon_intersection_status.first_intersection_point.get();
-    distance = motion_utils::calcSignedArcLength(path->points, current_pose->pose.position, first_intersection_point);
+    distance = motion_utils::calcSignedArcLength(
+      path->points, current_pose->pose.position, first_intersection_point);
   }
-  
 
   debug_data_.path_polygon_intersection_status = path_polygon_intersection_status;
 
   for (const auto & p : invalid_lanelet_reg_elem_.invalidLanelet().basicPolygon()) {
     debug_data_.invalid_lanelet_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
-    }
+  }
 
-    switch (state_) {
+  switch (state_) {
     case State::INIT: {
-      if(path_polygon_intersection_status.is_path_inside_of_polygon){
+      if (path_polygon_intersection_status.is_path_inside_of_polygon) {
         state_ = State::INSIDE_INVALID_LANELET;
-      }
-      else if(distance > distance_threshold){
-          state_ = State::APPROACH;
-      }
-      else if(distance <= distance_threshold){
-          state_ = State::INSIDE_INVALID_LANELET;
-      }
-      else{
+      } else if (distance > distance_threshold) {
+        state_ = State::APPROACH;
+      } else if (distance <= distance_threshold) {
+        state_ = State::INSIDE_INVALID_LANELET;
+      } else {
         state_ = State::INIT;
       }
       break;
     }
 
     case State::APPROACH: {
-      const auto intersection_point_idx = motion_utils::findNearestIndex(path->points, first_intersection_point);
+      const auto intersection_point_idx =
+        motion_utils::findNearestIndex(path->points, first_intersection_point);
       const size_t intersection_point_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
         path->points, first_intersection_point, intersection_point_idx);
       // Insert stop point
       planning_utils::insertStopPoint(first_intersection_point, intersection_point_seg_idx, *path);
 
-      
       // Get stop point and stop factor
       {
         tier4_planning_msgs::msg::StopFactor stop_factor;
-        const auto stop_pose = tier4_autoware_utils::getPose(path->points.at(intersection_point_idx));
+        const auto stop_pose =
+          tier4_autoware_utils::getPose(path->points.at(intersection_point_idx));
         stop_factor.stop_pose = stop_pose;
         stop_factor.stop_factor_points.push_back(first_intersection_point);
         planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -127,13 +124,14 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
           VelocityFactor::APPROACHING);
 
         debug_data_.stop_pose = stop_pose;
-        debug_data_.stop_wall_pose = planning_utils::getAheadPose(intersection_point_idx, debug_data_.base_link2front, *path);
+        debug_data_.stop_wall_pose =
+          planning_utils::getAheadPose(intersection_point_idx, debug_data_.base_link2front, *path);
       }
 
       // Move to stopped state if stopped
       const size_t current_seg_idx = findEgoSegmentIndex(path->points);
       const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
-        path->points, planner_data_->current_odometry->pose.position, current_seg_idx, 
+        path->points, planner_data_->current_odometry->pose.position, current_seg_idx,
         first_intersection_point, intersection_point_seg_idx);
       if (
         signed_arc_dist_to_stop_point < planner_param_.stop_margin &&
@@ -145,7 +143,8 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
 
         if (signed_arc_dist_to_stop_point < -planner_param_.stop_margin) {
           RCLCPP_ERROR(
-            logger_, "Failed to stop near invalid lanelet but ego stopped. Change state to STOPPED");
+            logger_,
+            "Failed to stop near invalid lanelet but ego stopped. Change state to STOPPED");
         }
       }
 
@@ -170,7 +169,8 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
           VelocityFactor::INVALID_LANELET);
 
         debug_data_.stop_pose = stop_pose;
-        debug_data_.stop_wall_pose = planning_utils::getAheadPose(0, debug_data_.base_link2front, *path);
+        debug_data_.stop_wall_pose =
+          planning_utils::getAheadPose(0, debug_data_.base_link2front, *path);
       }
 
       // Move to stopped state if stopped
@@ -181,8 +181,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         stopped_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
       }
 
-      break;     
-
+      break;
     }
 
     case State::STOPPED: {
@@ -190,11 +189,10 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       break;
     }
 
-    // case default: {
+      // case default: {
 
-    // }
-    }
-    return true;
-
+      // }
+  }
+  return true;
 }
 }  // namespace behavior_velocity_planner

@@ -45,7 +45,8 @@ using geometry_msgs::msg::Point32;
 // the status of intersection between path and invalid lanelet polygon
 struct PathWithInvalidLaneletPolygonIntersection
 {
-  bool is_path_inside_of_polygon = false;  // true if path is completely inside the invalid lanelet polygon (no intersection point)
+  bool is_path_inside_of_polygon =
+    false;  // true if path is completely inside the invalid lanelet polygon (no intersection point)
   boost::optional<geometry_msgs::msg::Point> first_intersection_point;
   boost::optional<geometry_msgs::msg::Point> second_intersection_point;
 };

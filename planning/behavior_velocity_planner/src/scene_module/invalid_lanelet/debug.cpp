@@ -34,7 +34,8 @@ using visualization_msgs::msg::Marker;
 namespace
 {
 visualization_msgs::msg::MarkerArray createInvalidLaneletMarkers(
-  const InvalidLaneletModule::DebugData & debug_data, const rclcpp::Time & now, const int64_t module_id)
+  const InvalidLaneletModule::DebugData & debug_data, const rclcpp::Time & now,
+  const int64_t module_id)
 {
   visualization_msgs::msg::MarkerArray msg;
   const int32_t uid = planning_utils::bitShift(module_id);
@@ -42,8 +43,8 @@ visualization_msgs::msg::MarkerArray createInvalidLaneletMarkers(
   // Invalid Lanelet polygon
   if (!debug_data.invalid_lanelet_polygon.empty()) {
     auto marker = createDefaultMarker(
-      "map", now, "invalid_lanelet polygon", uid, Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0),
-      createMarkerColor(0.0, 0.0, 1.0, 0.999));
+      "map", now, "invalid_lanelet polygon", uid, Marker::LINE_STRIP,
+      createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999));
     for (const auto & p : debug_data.invalid_lanelet_polygon) {
       marker.points.push_back(createPoint(p.x, p.y, p.z));
     }
@@ -84,13 +85,13 @@ visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMark
   return wall_marker;
 }
 
-
 visualization_msgs::msg::MarkerArray InvalidLaneletModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   const auto now = this->clock_->now();
-  
-  appendMarkerArray(createInvalidLaneletMarkers(debug_data_, this->clock_->now(), module_id_), &debug_marker_array);
+
+  appendMarkerArray(
+    createInvalidLaneletMarkers(debug_data_, this->clock_->now(), module_id_), &debug_marker_array);
 
   return debug_marker_array;
 }
