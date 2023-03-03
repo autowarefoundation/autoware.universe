@@ -122,7 +122,7 @@ void CropBoxFilterComponent::faster_filter(
   output.data.resize(input->data.size());
   size_t output_size = 0;
 
-  for (size_t global_offset = 0; global_offset + input->point_step < input->data.size();
+  for (size_t global_offset = 0; global_offset + input->point_step <= input->data.size();
        global_offset += input->point_step) {
     Eigen::Vector4f point(
       *reinterpret_cast<const float *>(&input->data[global_offset + x_offset]),
