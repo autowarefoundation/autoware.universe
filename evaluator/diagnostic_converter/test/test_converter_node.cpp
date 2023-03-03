@@ -18,7 +18,7 @@
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "diagnostic_msgs/msg/key_value.hpp"
-#include <tier4_simulation_msgs/msg/user_defined_value.hpp>
+#include "tier4_simulation_msgs/msg/user_defined_value.hpp"
 
 #include <gtest/gtest.h>
 
