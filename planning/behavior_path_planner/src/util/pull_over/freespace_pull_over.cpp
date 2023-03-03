@@ -40,7 +40,7 @@ FreespacePullOver::FreespacePullOver(
     use_back_ = astar_param.use_back;
     planner_ = std::make_unique<AstarSearch>(getCommonParam(node), vehicle_shape, astar_param);
   } else if (algorithm == "rrtstar") {
-    use_back_ = true;  // no opition for disabling back in rrtstar
+    use_back_ = true;  // no option for disabling back in rrtstar
     planner_ =
       std::make_unique<RRTStar>(getCommonParam(node), vehicle_shape, getRRTStarParam(node));
   }
@@ -105,7 +105,7 @@ RRTStarParam FreespacePullOver::getRRTStarParam(rclcpp::Node & node) const
   p.enable_update = dp("enable_update", true);
   p.use_informed_sampling = dp("use_informed_sampling", true);
   p.max_planning_time = dp("max_planning_time", 150.0);
-  p.neighbour_radius = dp("neighbour_radius", 8.0);
+  p.neighbor_radius = dp("neighbor_radius", 8.0);
   p.margin = dp("margin", 0.1);
 
   return p;
@@ -117,7 +117,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
 
   planner_->setMap(*planner_data_->costmap);
 
-  // offset goal pose to make staright path near goal for improving parking precision
+  // offset goal pose to make straight path near goal for improving parking precision
   // todo: support straight path when using back
   constexpr double straight_distance = 1.0;
   const Pose end_pose =
@@ -134,13 +134,13 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
 
   // remove points which are near the goal
   PathWithLaneId & last_path = partial_paths.back();
-  const double th_goal_disntace = 1.0;
+  const double th_goal_distance = 1.0;
   for (auto it = last_path.points.begin(); it != last_path.points.end(); ++it) {
     size_t index = std::distance(last_path.points.begin(), it);
     if (index == 0) continue;
     const double distance =
       tier4_autoware_utils::calcDistance2d(end_pose.position, it->point.pose.position);
-    if (distance < th_goal_disntace) {
+    if (distance < th_goal_distance) {
       last_path.points.erase(it, last_path.points.end());
       break;
     }

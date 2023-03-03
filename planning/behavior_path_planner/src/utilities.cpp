@@ -1228,7 +1228,7 @@ void generateDrivableArea(
   }
 }
 
-// generate drivable area by expandin path for freespace
+// generate drivable area by expanding path for freespace
 void generateDrivableArea(
   PathWithLaneId & path, const double vehicle_length, const double vehicle_width,
   const double margin, const bool is_driving_forward)
@@ -1251,7 +1251,7 @@ void generateDrivableArea(
       }
     }
   }
-  // add last point of path if enogh far from the one of resampled path
+  // add last point of path if enough far from the one of resampled path
   constexpr double th_last_point_distance = 0.3;
   if (
     tier4_autoware_utils::calcDistance2d(

@@ -76,7 +76,7 @@
           enable_update: true
           use_informed_sampling: true
           max_planning_time: 150.0
-          neighbour_radius: 8.0
+          neighbor_radius: 8.0
           margin: 1.0
       # hazard on when parked
       hazard_on_threshold_distance: 1.0
