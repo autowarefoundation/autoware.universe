@@ -17,14 +17,14 @@
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/predicted_objects.hpp>
+#include <autoware_adapi_v1_msgs/msg/predicted_object_array.hpp>
 
 namespace autoware_ad_api::perception
 {
 
-struct ObjectRecognition
+struct PredictedObjectArray
 {
-  using Message = autoware_adapi_v1_msgs::msg::PredictedObjects;
+  using Message = autoware_adapi_v1_msgs::msg::PredictedObjectArray;
   static constexpr char name[] = "/api/perception/object_recognition/objects";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;

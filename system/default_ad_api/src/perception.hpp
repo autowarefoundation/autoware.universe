@@ -41,21 +41,20 @@ public:
   explicit PerceptionNode(const rclcpp::NodeOptions & options);
 
 private:
-  using PredictedObjects = autoware_ad_api::perception::ObjectRecognition;
+  using PredictedObjectArray = autoware_ad_api::perception::PredictedObjectArray;
   using ObjectClassification = autoware_adapi_v1_msgs::msg::ObjectClassification;
   using PredictedObject = autoware_adapi_v1_msgs::msg::PredictedObject;
-  using PredictedObjectKinematics = autoware_adapi_v1_msgs::msg::PredictedObjectKinematics;
   using PredictedPath = autoware_adapi_v1_msgs::msg::PredictedPath;
   using API_Shape = autoware_adapi_v1_msgs::msg::Shape;
   using Shape = autoware_auto_perception_msgs::msg::Shape;
 
   std::unordered_map<uint8_t, uint8_t> shape_type_ = {
-    {Shape::BOUNDING_BOX, API_Shape::BOUNDING_BOX},
+    {Shape::BOUNDING_BOX, API_Shape::BOX},
     {Shape::CYLINDER, API_Shape::CYLINDER},
-    {Shape::POLYGON, API_Shape::POLYGON},
+    {Shape::POLYGON, API_Shape::PRISM},
   };
 
-  Pub<PredictedObjects> pub_object_recognized_;
+  Pub<PredictedObjectArray> pub_object_recognized_;
   Sub<perception_interface::ObjectRecognition> sub_object_recognized_;
   void object_recognize(const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg);
   uint8_t mapping(

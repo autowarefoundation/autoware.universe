@@ -39,11 +39,11 @@ uint8_t PerceptionNode::mapping(
 void PerceptionNode::object_recognize(
   const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg)
 {
-  PredictedObjects::Message objects;
+  PredictedObjectArray::Message objects;
   objects.header = msg->header;
   for (const auto & msg_object : msg->objects) {
     PredictedObject object;
-    object.object_id = msg_object.object_id;
+    object.id = msg_object.object_id;
     object.existence_probability = msg_object.existence_probability;
     for (const auto & msg_classification : msg_object.classification) {
       ObjectClassification classification;
@@ -51,12 +51,9 @@ void PerceptionNode::object_recognize(
       classification.probability = msg_classification.probability;
       object.classification.insert(object.classification.begin(), classification);
     }
-    object.kinematics.initial_pose_with_covariance =
-      msg_object.kinematics.initial_pose_with_covariance;
-    object.kinematics.initial_twist_with_covariance =
-      msg_object.kinematics.initial_twist_with_covariance;
-    object.kinematics.initial_acceleration_with_covariance =
-      msg_object.kinematics.initial_acceleration_with_covariance;
+    object.kinematics.pose = msg_object.kinematics.initial_pose_with_covariance;
+    object.kinematics.twist = msg_object.kinematics.initial_twist_with_covariance;
+    object.kinematics.accel = msg_object.kinematics.initial_acceleration_with_covariance;
     for (const auto & msg_predicted_path : msg_object.kinematics.predicted_paths) {
       PredictedPath predicted_path;
       for (const auto & msg_path : msg_predicted_path.path) {
