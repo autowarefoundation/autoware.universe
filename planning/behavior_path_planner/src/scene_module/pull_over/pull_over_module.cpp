@@ -730,7 +730,7 @@ std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
   const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
     full_path.points, planner_data_->self_odometry->pose.pose, std::numeric_limits<double>::max(),
     M_PI_2);
-  if(!ego_segment_idx) {
+  if (!ego_segment_idx) {
     return {std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
   }
 
