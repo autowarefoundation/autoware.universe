@@ -251,12 +251,12 @@ protected:
 
   void visualizePath(const typename T::ConstSharedPtr msg_ptr)
   {
+    path_manual_object_->clear();
+    velocity_manual_object_->clear();
+
     if (msg_ptr->points.empty()) {
       return;
     }
-
-    path_manual_object_->clear();
-    velocity_manual_object_->clear();
 
     Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
       "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -388,12 +388,12 @@ protected:
 
   void visualizePathFootprint(const typename T::ConstSharedPtr msg_ptr)
   {
+    footprint_manual_object_->clear();
+    point_manual_object_->clear();
+
     if (msg_ptr->points.empty()) {
       return;
     }
-
-    footprint_manual_object_->clear();
-    point_manual_object_->clear();
 
     Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
       "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -402,7 +402,6 @@ protected:
 
     footprint_manual_object_->estimateVertexCount(msg_ptr->points.size() * 4 * 2);
     footprint_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST);
-
     point_manual_object_->estimateVertexCount(msg_ptr->points.size() * 3 * 8);
     point_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
