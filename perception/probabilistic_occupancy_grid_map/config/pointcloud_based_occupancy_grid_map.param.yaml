@@ -9,4 +9,5 @@
     # grid map coordinate
     map_frame: "map"
     base_link_frame: "base_link"
-    output_frame: "velodyne_top" # center of grid_map. Main LiDAR frame is preferable
+    output_frame: "base_link"
+    # center of grid_map. Main LiDAR frame is preferable like: "velodyne_top"
