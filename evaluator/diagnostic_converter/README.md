@@ -35,10 +35,10 @@ For example, we might listen to topic `/diagnostic_topic` and receive a `Diagnos
 
 The resulting topics to publish the `UserDefinedValue` are as follows:
 
-- `/diagnostic_topic_x_a`.
-- `/diagnostic_topic_x_b`.
-- `/diagnostic_topic_y_a`.
-- `/diagnostic_topic_y_c`.
+- `/metrics_x_a`.
+- `/metrics_x_b`.
+- `/metrics_y_a`.
+- `/metrics_y_c`.
 
 ## Parameters
 
