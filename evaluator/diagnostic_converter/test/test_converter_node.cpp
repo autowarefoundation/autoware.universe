@@ -13,17 +13,16 @@
 // limitations under the License.
 
 #include "converter_node.hpp"
-#include "rclcpp/rclcpp.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "diagnostic_msgs/msg/key_value.hpp"
 #include "tier4_simulation_msgs/msg/user_defined_value.hpp"
-
-#include <gtest/gtest.h>
+#include "tier4_simulation_msgs/msg/user_defined_value_type.hpp"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 using ConverterNode = diagnostic_converter::DiagnosticConverter;
