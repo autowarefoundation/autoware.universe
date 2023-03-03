@@ -94,7 +94,7 @@ GoalCandidates --o GoalSeacherBase
 
 Generate footprints from ego-vehicle path points and determine obstacle collision from the value of occupancy_grid of the corresponding cell.
 
-### Parameters for occupancy grid based collision check
+#### Parameters for occupancy grid based collision check
 
 | Name                                       | Unit | Type   | Description                                                                                                     | Default value |
 | :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
@@ -104,7 +104,9 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 | theta_size                                 | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
 | obstacle_threshold                         | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
-### Parameters for object recognition based collision check
+### **onject recognition based collision check**
+
+#### Parameters for object recognition based collision check
 
 | Name                                      | Unit | Type   | Description                                                | Default value |
 | :---------------------------------------- | :--- | :----- | :--------------------------------------------------------- | :------------ |
