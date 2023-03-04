@@ -188,6 +188,95 @@ void updateLateralKinematicsVector(
   }
 }
 
+/**
+ * @brief Get the Right Opposite Lanelets object
+ *
+ * @param current_lanelet
+ * @param lanelet_map_ptr
+ * @return lanelet::ConstLanelets
+ */
+lanelet::ConstLanelets getRightOppositeLanelets(
+  const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  lanelet::ConstLanelets
+    output_lanelets;  // create an empty container of type lanelet::ConstLanelets
+
+  // step1: look for lane sharing right bound
+  lanelet::Lanelets right_opposite =
+    lanelet_map_ptr->laneletLayer.findUsages(current_lanelet.rightBound().invert());
+  if (!right_opposite.empty()) {
+    // lanelets to constlanelets
+    std::copy(right_opposite.begin(), right_opposite.end(), std::back_inserter(output_lanelets));
+    return output_lanelets;
+  }
+  // step2: else look for lane sharing right bound
+  lanelet::Lanelets right_opposite_candidate =
+    lanelet_map_ptr->laneletLayer.findUsages(current_lanelet.rightBound());
+  for (auto & candidate : right_opposite_candidate) {
+    // exclude self lanelet
+    if (candidate == current_lanelet) continue;
+    right_opposite.push_back(candidate);
+  }
+
+  if (!right_opposite.empty()) {
+    // lanelets to constlanelets
+    std::copy(right_opposite.begin(), right_opposite.end(), std::back_inserter(output_lanelets));
+    return output_lanelets;
+  }
+
+  return output_lanelets;  // return empty
+}
+
+[[maybe_unused]] lanelet::ConstLanelets getLeftOppositeLanelets(
+  const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  lanelet::ConstLanelets
+    output_lanelets;  // create an empty container of type lanelet::ConstLanelets
+
+  // step1: look for lane sharing left bound
+  lanelet::Lanelets left_opposite =
+    lanelet_map_ptr->laneletLayer.findUsages(current_lanelet.leftBound().invert());
+  if (!left_opposite.empty()) {
+    // lanelets to constlanelets
+    std::copy(left_opposite.begin(), left_opposite.end(), std::back_inserter(output_lanelets));
+    return output_lanelets;
+  }
+  // step2: else look for lane sharing left bound
+  lanelet::Lanelets left_opposite_candidate =
+    lanelet_map_ptr->laneletLayer.findUsages(current_lanelet.leftBound());
+  for (auto & candidate : left_opposite_candidate) {
+    // exclude self lanelet
+    if (candidate == current_lanelet) continue;
+    left_opposite.push_back(candidate);
+  }
+
+  if (!left_opposite.empty()) {
+    // lanelets to constlanelets
+    std::copy(left_opposite.begin(), left_opposite.end(), std::back_inserter(output_lanelets));
+    return output_lanelets;
+  }
+  return output_lanelets;  // return empty
+}
+
+/**
+ * @brief calc absolute normalized yaw difference between lanelet and object
+ *
+ * @param object
+ * @param lanelet
+ * @return double
+ */
+double calcAbsYawDiffBetweenLaneletAndObject(
+  const TrackedObject & object, const lanelet::ConstLanelet & lanelet)
+{
+  const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  const double lane_yaw =
+    lanelet::utils::getLaneletAngle(lanelet, object.kinematics.pose_with_covariance.pose.position);
+  const double delta_yaw = object_yaw - lane_yaw;
+  const double normalized_delta_yaw = tier4_autoware_utils::normalizeRadian(delta_yaw);
+  const double abs_norm_delta = std::fabs(normalized_delta_yaw);
+  return abs_norm_delta;
+}
+
 lanelet::ConstLanelets getLanelets(const map_based_prediction::LaneletsData & data)
 {
   lanelet::ConstLanelets lanelets;
@@ -899,12 +988,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   }
 
   // Step3. Calculate the angle difference between the lane angle and obstacle angle
-  const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  const double lane_yaw = lanelet::utils::getLaneletAngle(
-    lanelet.second, object.kinematics.pose_with_covariance.pose.position);
-  const double delta_yaw = object_yaw - lane_yaw;
-  const double normalized_delta_yaw = tier4_autoware_utils::normalizeRadian(delta_yaw);
-  const double abs_norm_delta = std::fabs(normalized_delta_yaw);
+  const double abs_norm_delta = calcAbsYawDiffBetweenLaneletAndObject(object, lanelet.second);
 
   // Step4. Check if the closest lanelet is valid, and add all
   // of the lanelets that are below max_dist and max_delta_yaw
@@ -926,10 +1010,7 @@ float MapBasedPredictionNode::calculateLocalLikelihood(
   const auto & obj_point = object.kinematics.pose_with_covariance.pose.position;
 
   // compute yaw difference between the object and lane
-  const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  const double lane_yaw = lanelet::utils::getLaneletAngle(current_lanelet, obj_point);
-  const double delta_yaw = obj_yaw - lane_yaw;
-  const double abs_norm_delta_yaw = std::fabs(tier4_autoware_utils::normalizeRadian(delta_yaw));
+  const double abs_norm_delta_yaw = calcAbsYawDiffBetweenLaneletAndObject(object, current_lanelet);
 
   // compute lateral distance
   const auto centerline = current_lanelet.centerline();
@@ -1012,10 +1093,27 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     auto adjacent_left = routing_graph_ptr_->adjacentLeft(current_lanelet_data.lanelet);
+
     if (!!opt_left) {
+      // set left lane
       left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
     } else if (!!adjacent_left) {
+      // set adjacent left lane
       left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
+    } else {
+      // search for opposite lane
+      //  Note(any): Probably not necessary in countries where the left-hand side of the road is
+      //  used
+      const auto opposite_lefts =
+        getLeftOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+      for (auto & opposite_left : opposite_lefts) {
+        const double abs_norm_delta_yaw =
+          calcAbsYawDiffBetweenLaneletAndObject(object, opposite_left);
+        // do not predict path to opposite lane
+        if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
+        left_paths = routing_graph_ptr_->possiblePaths(opposite_left, possible_params);
+        break;  // currently just considering one path
+      }
     }
 
     // Step1.2 Get the right lanelet
@@ -1026,6 +1124,18 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     } else if (!!adjacent_right) {
       right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
+    } else {
+      // search for opposite lane
+      const auto opposite_rights =
+        getRightOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+      for (auto & opposite_right : opposite_rights) {
+        const double abs_norm_delta_yaw =
+          calcAbsYawDiffBetweenLaneletAndObject(object, opposite_right);
+        // do not predict path to opposite lane
+        if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
+        right_paths = routing_graph_ptr_->possiblePaths(opposite_right, possible_params);
+        break;  // currently just considering one path
+      }
     }
 
     // Step1.3 Get the centerline
