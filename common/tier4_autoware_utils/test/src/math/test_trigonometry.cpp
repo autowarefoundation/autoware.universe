@@ -23,7 +23,10 @@ TEST(trigonometry, sin)
 {
   float x = 4.f * tier4_autoware_utils::pi / 128.f;
   for (int i = 0; i < 128; i++) {
-    EXPECT_TRUE(std::abs(std::sin(x * static_cast<float>(i)) - tier4_autoware_utils::sin(x * static_cast<float>(i))) < 10e-5);
+    EXPECT_TRUE(
+      std::abs(
+        std::sin(x * static_cast<float>(i)) -
+        tier4_autoware_utils::sin(x * static_cast<float>(i))) < 10e-5);
   }
 }
 
@@ -31,6 +34,9 @@ TEST(trigonometry, cos)
 {
   float x = 4.f * tier4_autoware_utils::pi / 128.f;
   for (int i = 0; i < 128; i++) {
-    EXPECT_TRUE(std::abs(std::cos(x * static_cast<float>(i)) - tier4_autoware_utils::cos(x * static_cast<float>(i))) < 10e-5);
+    EXPECT_TRUE(
+      std::abs(
+        std::cos(x * static_cast<float>(i)) -
+        tier4_autoware_utils::cos(x * static_cast<float>(i))) < 10e-5);
   }
 }

@@ -24,7 +24,8 @@ namespace tier4_autoware_utils
 
 float sin(float radian)
 {
-  float degree = radian * (180.f / static_cast<float>(tier4_autoware_utils::pi)) * (discrete_arcs_num_360 / 360.f);
+  float degree = radian * (180.f / static_cast<float>(tier4_autoware_utils::pi)) *
+                 (discrete_arcs_num_360 / 360.f);
   size_t idx =
     (static_cast<int>(std::round(degree)) % discrete_arcs_num_360 + discrete_arcs_num_360) %
     discrete_arcs_num_360;
