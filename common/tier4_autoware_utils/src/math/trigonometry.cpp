@@ -24,25 +24,25 @@ namespace tier4_autoware_utils
 
 float sin(float radian)
 {
-  float degree = radian * (180.f / tier4_autoware_utils::pi) * (DISCRETE_ARCS_NUM_360 / 360.f);
+  float degree = radian * (180.f / static_cast<float>(tier4_autoware_utils::pi)) * (discrete_arcs_num_360 / 360.f);
   size_t idx =
-    (static_cast<int>(std::round(degree)) % DISCRETE_ARCS_NUM_360 + DISCRETE_ARCS_NUM_360) %
-    DISCRETE_ARCS_NUM_360;
+    (static_cast<int>(std::round(degree)) % discrete_arcs_num_360 + discrete_arcs_num_360) %
+    discrete_arcs_num_360;
 
-  int mul = 1;
-  if (DISCRETE_ARCS_NUM_90 <= idx && idx < 2 * DISCRETE_ARCS_NUM_90) {
-    idx = 2 * DISCRETE_ARCS_NUM_90 - idx;
-  } else if (2 * DISCRETE_ARCS_NUM_90 <= idx && idx < 3 * DISCRETE_ARCS_NUM_90) {
-    mul = -1;
-    idx = idx - 2 * DISCRETE_ARCS_NUM_90;
-  } else if (3 * DISCRETE_ARCS_NUM_90 <= idx && idx < 4 * DISCRETE_ARCS_NUM_90) {
-    mul = -1;
-    idx = 4 * DISCRETE_ARCS_NUM_90 - idx;
+  float mul = 1.f;
+  if (discrete_arcs_num_90 <= idx && idx < 2 * discrete_arcs_num_90) {
+    idx = 2 * discrete_arcs_num_90 - idx;
+  } else if (2 * discrete_arcs_num_90 <= idx && idx < 3 * discrete_arcs_num_90) {
+    mul = -1.f;
+    idx = idx - 2 * discrete_arcs_num_90;
+  } else if (3 * discrete_arcs_num_90 <= idx && idx < 4 * discrete_arcs_num_90) {
+    mul = -1.f;
+    idx = 4 * discrete_arcs_num_90 - idx;
   }
 
-  return mul * SIN_TABLE[idx];
+  return mul * g_sin_table[idx];
 }
 
-float cos(float radian) { return sin(radian + tier4_autoware_utils::pi / 2.f); }
+float cos(float radian) { return sin(radian + static_cast<float>(tier4_autoware_utils::pi) / 2.f); }
 
 }  // namespace tier4_autoware_utils

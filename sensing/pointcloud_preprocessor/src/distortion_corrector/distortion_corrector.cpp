@@ -226,7 +226,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
   // For performance, instantiate outside of the for-loop
   tf2::Quaternion baselink_quat{};
-  tf2::Transform baselinkTF_odom{};
+  tf2::Transform baselink_tf_odom{};
   tf2::Vector3 point{};
   tf2::Vector3 undistorted_point{};
 
@@ -242,7 +242,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     float v{static_cast<float>(twist_it->twist.linear.x)};
     float w{static_cast<float>(twist_it->twist.angular.z)};
 
-    if (std::abs(*it_time_stamp - twist_stamp > 0.1)) {
+    if (std::abs(*it_time_stamp - twist_stamp) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
         "twist time_stamp is too late. Could not interpolate.");
@@ -262,7 +262,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
         imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
       }
 
-      if (std::abs(*it_time_stamp - imu_stamp > 0.1)) {
+      if (std::abs(*it_time_stamp - imu_stamp) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(
           get_logger(), *get_clock(), 10000 /* ms */,
           "imu time_stamp is too late. Could not interpolate.");
@@ -271,7 +271,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       }
     }
 
-    const float time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
+    const auto time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
 
     point.setValue(*it_x, *it_y, *it_z);
 
@@ -287,18 +287,18 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     x += dis * tier4_autoware_utils::cos(theta);
     y += dis * tier4_autoware_utils::sin(theta);
 
-    baselinkTF_odom.setOrigin(tf2::Vector3(x, y, 0.0));
-    baselinkTF_odom.setRotation(baselink_quat);
+    baselink_tf_odom.setOrigin(tf2::Vector3(x, y, 0.0));
+    baselink_tf_odom.setRotation(baselink_quat);
 
-    undistorted_point = baselinkTF_odom * point;
+    undistorted_point = baselink_tf_odom * point;
 
     if (need_transform) {
       undistorted_point = tf2_base_link_to_sensor * undistorted_point;
     }
 
-    *it_x = undistorted_point.getX();
-    *it_y = undistorted_point.getY();
-    *it_z = undistorted_point.getZ();
+    *it_x = static_cast<float>(undistorted_point.getX());
+    *it_y = static_cast<float>(undistorted_point.getY());
+    *it_z = static_cast<float>(undistorted_point.getZ());
 
     prev_time_stamp_sec = *it_time_stamp;
   }

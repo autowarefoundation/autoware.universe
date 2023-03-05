@@ -15,13 +15,15 @@
 #ifndef TIER4_AUTOWARE_UTILS__MATH__SIN_TABLE_HPP_
 #define TIER4_AUTOWARE_UTILS__MATH__SIN_TABLE_HPP_
 
+#include <cstddef>
+
 namespace tier4_autoware_utils
 {
 
-#define SIN_TABLE_SIZE 32769
-#define DISCRETE_ARCS_NUM_90 32768
-#define DISCRETE_ARCS_NUM_360 131072
-extern const float SIN_TABLE[SIN_TABLE_SIZE];
+constexpr size_t sin_table_size = 32769;
+constexpr size_t discrete_arcs_num_90 = 32768;
+constexpr size_t discrete_arcs_num_360 = 131072;
+extern const float g_sin_table[sin_table_size];
 
 }  // namespace tier4_autoware_utils
 
