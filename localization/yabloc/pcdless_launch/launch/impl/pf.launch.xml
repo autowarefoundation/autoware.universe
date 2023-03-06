@@ -84,9 +84,4 @@
         <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
         <remap from="gnss_range_marker" to="/localization/pf/gnss_range_marker"/>
     </node>
-
-    <node pkg="corrector_manager" exec="corrector_manager" name="corrector_manager" output="screen" args="--ros-args --log-level info">
-        <remap from="/sensing/gnss/ublox/pose" to="/localization/pf/initial_gnss_pose"/> 
-    </node>
-
 </launch>
