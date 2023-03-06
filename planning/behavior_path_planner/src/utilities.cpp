@@ -2679,4 +2679,14 @@ std::string toSnakeCase(const std::string & str)
 
   return snake;
 }
+
+std::string toSnakeCaseWithSubstringRemoved(const std::string & str, const std::string & substring)
+{
+  auto new_string = str;
+  const auto substring_ptr = str.find(substring);
+  if (substring_ptr != std::string::npos) {
+    new_string.erase(substring_ptr, substring.length());
+  }
+  return toSnakeCase(new_string);
+}
 }  // namespace behavior_path_planner::util

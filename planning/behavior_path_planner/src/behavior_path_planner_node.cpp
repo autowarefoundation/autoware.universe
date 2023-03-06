@@ -128,7 +128,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   {
     RCLCPP_INFO(get_logger(), "use behavior tree.");
 
-    const std::string path_candidate_name_space = "/planning/path_candidate/";
     mutex_bt_.lock();
 
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
@@ -139,8 +138,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     auto avoidance_module =
       std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr_);
-    path_candidate_publishers_.emplace(
-      "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
@@ -150,34 +147,24 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     auto ext_request_lane_change_right_module =
       std::make_shared<ExternalRequestLaneChangeRightModule>(
         "ExternalRequestLaneChangeRight", *this, lane_change_param_ptr_);
-    path_candidate_publishers_.emplace(
-      "ExternalRequestLaneChangeRight",
-      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_right", 1));
     bt_manager_->registerSceneModule(ext_request_lane_change_right_module);
 
     auto ext_request_lane_change_left_module =
       std::make_shared<ExternalRequestLaneChangeLeftModule>(
         "ExternalRequestLaneChangeLeft", *this, lane_change_param_ptr_);
-    path_candidate_publishers_.emplace(
-      "ExternalRequestLaneChangeLeft",
-      create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_left", 1));
     bt_manager_->registerSceneModule(ext_request_lane_change_left_module);
 
     auto lane_change_module =
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr_);
-    path_candidate_publishers_.emplace(
-      "LaneChange", create_publisher<Path>(path_candidate_name_space + "lane_change", 1));
     bt_manager_->registerSceneModule(lane_change_module);
 
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
-    path_candidate_publishers_.emplace(
-      "PullOver", create_publisher<Path>(path_candidate_name_space + "pull_over", 1));
     bt_manager_->registerSceneModule(pull_over_module);
 
     auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, getPullOutParam());
-    path_candidate_publishers_.emplace(
-      "PullOut", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
     bt_manager_->registerSceneModule(pull_out_module);
+
+    createPathCandidatePublisher(bt_manager_->getSceneModules());
 
     bt_manager_->createBehaviorTree();
 
@@ -1000,6 +987,32 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
 }
 
 #ifdef USE_OLD_ARCHITECTURE
+void BehaviorPathPlannerNode::createPathCandidatePublisher(
+  const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules)
+{
+  const std::string path_candidate_name_space = "/planning/path_candidate/";
+  const auto emplace_topic = [&](const auto & module) {
+    std::string topic_name;
+    const auto & module_name = module->name();
+    if (module_name == "LaneFollowing" || module_name == "SideShift") {
+      return;
+    }
+
+    if (
+      module_name == "ExternalRequestLaneChangeLeft" ||
+      module_name == "ExternalRequestLaneChangeRight") {
+      topic_name = util::toSnakeCaseWithSubstringRemoved(module_name, "ernal");
+    } else {
+      topic_name = util::toSnakeCase(module_name);
+    }
+
+    path_candidate_publishers_.emplace(
+      module_name, create_publisher<Path>(path_candidate_name_space + topic_name, 1));
+  };
+
+  std::for_each(scene_modules.begin(), scene_modules.end(), emplace_topic);
+}
+
 void BehaviorPathPlannerNode::publishPathCandidate(
   const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules)
 {

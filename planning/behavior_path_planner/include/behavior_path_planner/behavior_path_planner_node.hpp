@@ -235,6 +235,9 @@ private:
    * @brief publish path candidate
    */
 #ifdef USE_OLD_ARCHITECTURE
+
+  void createPathCandidatePublisher(
+    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules);
   void publishPathCandidate(
     const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules);
 #else

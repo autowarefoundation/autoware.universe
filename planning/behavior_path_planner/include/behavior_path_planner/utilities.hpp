@@ -529,6 +529,8 @@ lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
 
 std::string toSnakeCase(const std::string & str);
+
+std::string toSnakeCaseWithSubstringRemoved(const std::string & str, const std::string & substring);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
