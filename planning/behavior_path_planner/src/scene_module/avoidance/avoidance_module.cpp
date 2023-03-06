@@ -97,7 +97,8 @@ AvoidanceModule::AvoidanceModule(
   uuid_right_{generateUUID()}
 {
   using std::placeholders::_1;
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "avoidance");
+  steering_factor_interface_ptr_ =
+    std::make_unique<SteeringFactorInterface>(&node, util::toSnakeCase(name));
 }
 
 bool AvoidanceModule::isExecutionRequested() const
