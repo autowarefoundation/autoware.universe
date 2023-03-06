@@ -1,0 +1,12 @@
+<library path="tier4_automatic_goal_rviz_plugin">
+  <class
+    type="rviz_plugins::AutowareAutomaticGoalPanel"
+    base_class_type="rviz_common::Panel">
+    <description>AutowareAutomaticGoalPanel</description>
+  </class>
+  <class name="rviz_plugins/AutomaticGoalTool"
+    type="rviz_plugins::AutomaticGoalTool"
+    base_class_type="rviz_common::Tool">
+    <description>AutomaticGoalTool</description>
+  </class>
+</library>
