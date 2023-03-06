@@ -3,7 +3,11 @@
   <!-- Topics -->
   <arg name="input/pointcloud" description="input topic name"/>
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
-  <arg name="pose_estimator_mode" default="lidar" description="select localization mode. lidar, gnss"/>
+
+  <let name="ndt_enabled" value="true" if="$(eval &quot;'$(var pose_estimator_mode)'=='lidar'&quot;)"/>
+  <let name="ndt_enabled" value="false" if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)"/>
+  <let name="gnss_pose_cov" value="/sensing/gnss/pose_with_covariance" if="$(eval &quot;'$(var pose_estimator_mode)'=='lidar'&quot;)"/>
+  <let name="gnss_pose_cov" value="/localization/pose_estimator/pose_with_covariance" if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)"/>
 
   <!-- container -->
   <arg name="use_pointcloud_container" default="True" description="launch pointcloud container"/>
@@ -13,14 +17,13 @@
   <arg name="use_intra_process" default="true" description="use ROS2 component container communication"/>
 
   <!-- pose_initializer -->
-  <group if="$(eval &quot;'$(var pose_estimator_mode)'=='lidar'&quot;)">
-    <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-      <arg name="gnss_enabled" value="true"/>
-      <arg name="ndt_enabled" value="true"/>
-      <arg name="ekf_enabled" value="true"/>
-      <arg name="stop_check_enabled" value="true"/>
-    </include>
-  </group>
+  <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+    <arg name="gnss_enabled" value="true"/>
+    <arg name="ndt_enabled" value="$(var ndt_enabled)"/>
+    <arg name="ekf_enabled" value="true"/>
+    <arg name="stop_check_enabled" value="true"/>
+    <arg name="gnss_pose_cov" value="$(var gnss_pose_cov)"/>
+  </include>
 
   <!-- pose_initializer (Automatic call from AD API) -->
   <group>
