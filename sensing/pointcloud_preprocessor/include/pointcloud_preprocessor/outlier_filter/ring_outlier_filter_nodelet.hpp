@@ -33,6 +33,11 @@ protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
+  // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform to new API
+  virtual void faster_filter(
+      const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+      const TransformInfo & transform_info);
+
 private:
   double distance_ratio_;
   double object_length_threshold_;
@@ -44,19 +49,13 @@ private:
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
-  bool isCluster(
-    sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
-    const std::vector<std::size_t> & tmp_indices)
-  {
-    PointXYZI * front_pt = reinterpret_cast<PointXYZI *>(&input_ptr->data[tmp_indices.front()]);
-    PointXYZI * back_pt = reinterpret_cast<PointXYZI *>(&input_ptr->data[tmp_indices.back()]);
-
-    const auto x_diff = front_pt->x - back_pt->x;
-    const auto y_diff = front_pt->y - back_pt->y;
-    const auto z_diff = front_pt->z - back_pt->z;
-    return static_cast<int>(tmp_indices.size()) > num_points_threshold_ ||
-           (x_diff * x_diff) + (y_diff * y_diff) + (z_diff * z_diff) >=
-             object_length_threshold_ * object_length_threshold_;
+  bool isCluster(const PointCloud2ConstPtr & input, int first_data_idx, int last_data_idx, int walk_size) {
+    auto first_point = reinterpret_cast<const PointXYZI*>(&input->data[first_data_idx]);
+    auto last_point = reinterpret_cast<const PointXYZI*>(&input->data[last_data_idx]);
+    const auto x = first_point->x - last_point->x;
+    const auto y = first_point->y - last_point->y;
+    const auto z = first_point->z - last_point->z;
+    return (walk_size > num_points_threshold_) || (x*x + y*y + z*z >= object_length_threshold_ * object_length_threshold_);
   }
 
 public:
