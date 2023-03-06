@@ -33,10 +33,11 @@ protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
-  // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform to new API
+  // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform
+  // to new API
   virtual void faster_filter(
-      const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
-      const TransformInfo & transform_info);
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+    const TransformInfo & transform_info);
 
 private:
   double distance_ratio_;
@@ -49,13 +50,16 @@ private:
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
-  bool isCluster(const PointCloud2ConstPtr & input, int first_data_idx, int last_data_idx, int walk_size) {
-    auto first_point = reinterpret_cast<const PointXYZI*>(&input->data[first_data_idx]);
-    auto last_point = reinterpret_cast<const PointXYZI*>(&input->data[last_data_idx]);
+  bool isCluster(
+    const PointCloud2ConstPtr & input, int first_data_idx, int last_data_idx, int walk_size)
+  {
+    auto first_point = reinterpret_cast<const PointXYZI *>(&input->data[first_data_idx]);
+    auto last_point = reinterpret_cast<const PointXYZI *>(&input->data[last_data_idx]);
     const auto x = first_point->x - last_point->x;
     const auto y = first_point->y - last_point->y;
     const auto z = first_point->z - last_point->z;
-    return (walk_size > num_points_threshold_) || (x*x + y*y + z*z >= object_length_threshold_ * object_length_threshold_);
+    return (walk_size > num_points_threshold_) ||
+           (x * x + y * y + z * z >= object_length_threshold_ * object_length_threshold_);
   }
 
 public:

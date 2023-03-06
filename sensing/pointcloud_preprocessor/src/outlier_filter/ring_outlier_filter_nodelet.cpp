@@ -71,11 +71,11 @@ void RingOutlierFilterComponent::faster_filter(
 
   for (size_t i = 0; i < 128; i++) {
     ring2indices.push_back(std::vector<size_t>());
-    ring2indices.back().reserve(2000); // TODO(sykwer): Make it parameter
+    ring2indices.back().reserve(2000);  // TODO(sykwer): Make it parameter
   }
 
   for (size_t data_idx = 0; data_idx < input->data.size(); data_idx += input->point_step) {
-    const uint16_t ring = *reinterpret_cast<const uint16_t*>(&input->data[data_idx + ring_offset]);
+    const uint16_t ring = *reinterpret_cast<const uint16_t *>(&input->data[data_idx + ring_offset]);
     ring2indices[ring].push_back(data_idx);
   }
 
@@ -90,33 +90,37 @@ void RingOutlierFilterComponent::faster_filter(
     walk_last_idx = -1;
 
     for (size_t idx = 0U; idx < indices.size() - 1; ++idx) {
-      const size_t &current_data_idx = indices[idx];
-      const size_t &next_data_idx = indices[idx + 1];
+      const size_t & current_data_idx = indices[idx];
+      const size_t & next_data_idx = indices[idx + 1];
       walk_last_idx = idx;
 
       // if(std::abs(iter->distance - (iter+1)->distance) <= std::sqrt(iter->distance) * 0.08)
 
-      const float &current_azimuth =
+      const float & current_azimuth =
         *reinterpret_cast<const float *>(&input->data[current_data_idx + azimuth_offset]);
-      const float &next_azimuth =
+      const float & next_azimuth =
         *reinterpret_cast<const float *>(&input->data[next_data_idx + azimuth_offset]);
       float azimuth_diff = next_azimuth - current_azimuth;
       azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
 
-      const float &current_distance =
+      const float & current_distance =
         *reinterpret_cast<const float *>(&input->data[current_data_idx + distance_offset]);
-      const float &next_distance =
+      const float & next_distance =
         *reinterpret_cast<const float *>(&input->data[next_data_idx + distance_offset]);
 
-      if (std::max(current_distance, next_distance) <
-          std::min(current_distance, next_distance) * distance_ratio_ && azimuth_diff < 100.f) {
-        continue; // Determined to be included in the same walk
+      if (
+        std::max(current_distance, next_distance) <
+          std::min(current_distance, next_distance) * distance_ratio_ &&
+        azimuth_diff < 100.f) {
+        continue;  // Determined to be included in the same walk
       }
 
-      if (isCluster(input, indices[walk_first_idx], indices[walk_last_idx], walk_last_idx - walk_first_idx + 1)) {
+      if (isCluster(
+            input, indices[walk_first_idx], indices[walk_last_idx],
+            walk_last_idx - walk_first_idx + 1)) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
-          auto output_ptr = reinterpret_cast<PointXYZI*>(&output.data[output_size]);
-          *output_ptr = *reinterpret_cast<const PointXYZI*>(&input->data[indices[i]]);
+          auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
+          *output_ptr = *reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
           output_size += output.point_step;
         }
       }
@@ -126,10 +130,12 @@ void RingOutlierFilterComponent::faster_filter(
 
     if (walk_first_idx > walk_last_idx) continue;
 
-    if (isCluster(input, indices[walk_first_idx], indices[walk_last_idx], walk_last_idx - walk_first_idx + 1)) {
+    if (isCluster(
+          input, indices[walk_first_idx], indices[walk_last_idx],
+          walk_last_idx - walk_first_idx + 1)) {
       for (int i = walk_first_idx; i <= walk_last_idx; i++) {
-        auto output_ptr = reinterpret_cast<PointXYZI*>(&output.data[output_size]);
-        *output_ptr = *reinterpret_cast<const PointXYZI*>(&input->data[indices[i]]);
+        auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
+        *output_ptr = *reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
         output_size += output.point_step;
       }
     }
@@ -137,7 +143,8 @@ void RingOutlierFilterComponent::faster_filter(
 
   output.data.resize(output_size);
 
-  // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform == true`
+  // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
+  // == true`
   output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
 
   output.height = 1;
@@ -158,7 +165,8 @@ void RingOutlierFilterComponent::faster_filter(
   }
 }
 
-// TODO(sykwer): Temporary Implementation: Delete this function definition when all the filter nodes conform to new API
+// TODO(sykwer): Temporary Implementation: Delete this function definition when all the filter nodes
+// conform to new API
 void RingOutlierFilterComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
