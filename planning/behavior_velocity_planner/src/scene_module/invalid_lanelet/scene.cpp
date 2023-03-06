@@ -185,7 +185,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     }
 
     case State::STOPPED: {
-      // TODO: Driver RTC to take over responsibility
+      // TODO(ahmeddesokyebrahim): Driver RTC to take over responsibility
       break;
     }
 
