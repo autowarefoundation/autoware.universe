@@ -33,6 +33,16 @@ def create_api_node(node_name, class_name, **kwargs):
     )
 
 
+def create_log_level_node():
+    return ComposableNode(
+        namespace="default_ad_api/node",
+        name="logger_level",
+        package="default_ad_api",
+        plugin="default_ad_api::LoggerLevel",
+        parameters=[],
+    )
+
+
 def get_default_config():
     path = FindPackageShare("default_ad_api")
     path = PathJoinSubstitution([path, "config/default_ad_api.param.yaml"])
@@ -41,6 +51,7 @@ def get_default_config():
 
 def generate_launch_description():
     components = [
+        create_log_level_node(),
         create_api_node("autoware_state", "AutowareStateNode"),
         create_api_node("fail_safe", "FailSafeNode"),
         create_api_node("interface", "InterfaceNode"),
