@@ -34,30 +34,31 @@ visualization_msgs::msg::Marker getObjectMarker(
   return marker;
 }
 
-boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const Trajectory & traj, const size_t start_idx, const double target_length)
+std::optional<geometry_msgs::msg::Pose> calcForwardPose(
+  const std::vector<TrajectoryPoint> & traj_points, const size_t start_idx,
+  const double target_length)
 {
-  if (traj.points.empty()) {
+  if (traj_points.empty()) {
     return {};
   }
 
   size_t search_idx = start_idx;
   double length_to_search_idx = 0.0;
-  for (; search_idx < traj.points.size(); ++search_idx) {
-    length_to_search_idx = motion_utils::calcSignedArcLength(traj.points, start_idx, search_idx);
+  for (; search_idx < traj_points.size(); ++search_idx) {
+    length_to_search_idx = motion_utils::calcSignedArcLength(traj_points, start_idx, search_idx);
     if (length_to_search_idx > target_length) {
       break;
-    } else if (search_idx == traj.points.size() - 1) {
+    } else if (search_idx == traj_points.size() - 1) {
       return {};
     }
   }
 
-  if (search_idx == 0 && !traj.points.empty()) {
-    return traj.points.at(0).pose;
+  if (search_idx == 0 && !traj_points.empty()) {
+    return traj_points.at(0).pose;
   }
 
-  const auto & pre_pose = traj.points.at(search_idx - 1).pose;
-  const auto & next_pose = traj.points.at(search_idx).pose;
+  const auto & pre_pose = traj_points.at(search_idx - 1).pose;
+  const auto & next_pose = traj_points.at(search_idx).pose;
 
   geometry_msgs::msg::Pose target_pose;
 
@@ -69,42 +70,45 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
   return tier4_autoware_utils::calcInterpolatedPose(pre_pose, next_pose, lerp_ratio);
 }
 
-boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
-  const PredictedPath & predicted_path, const rclcpp::Time & obj_base_time,
+std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
+  const PredictedPath & predicted_path, const rclcpp::Time & obstacle_base_time,
   const rclcpp::Time & current_time)
 {
-  const double rel_time = (current_time - obj_base_time).seconds();
+  const double rel_time = (current_time - obstacle_base_time).seconds();
   if (rel_time < 0.0) {
-    return boost::none;
+    return std::nullopt;
   }
 
-  return perception_utils::calcInterpolatedPose(predicted_path, rel_time);
+  const auto pose = perception_utils::calcInterpolatedPose(predicted_path, rel_time);
+  if (!pose) {
+    return std::nullopt;
+  }
+  return pose.get();
 }
 
-boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
-  const std::vector<PredictedPath> & predicted_paths, const rclcpp::Time & obj_base_time,
+std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
+  const std::vector<PredictedPath> & predicted_paths, const rclcpp::Time & obstacle_base_time,
   const rclcpp::Time & current_time)
 {
   if (predicted_paths.empty()) {
-    return boost::none;
+    return std::nullopt;
   }
   // Get the most reliable path
   const auto predicted_path = std::max_element(
     predicted_paths.begin(), predicted_paths.end(),
     [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
-  return getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
+  return getCurrentObjectPoseFromPredictedPath(*predicted_path, obstacle_base_time, current_time);
 }
 
-geometry_msgs::msg::PoseStamped getCurrentObjectPose(
-  const PredictedObject & predicted_object, const std_msgs::msg::Header & obj_header,
+PoseWithStamp getCurrentObjectPose(
+  const PredictedObject & predicted_object, const rclcpp::Time & stamp,
   const rclcpp::Time & current_time, const bool use_prediction)
 {
+  const auto & pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+
   if (!use_prediction) {
-    geometry_msgs::msg::PoseStamped current_pose;
-    current_pose.pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
-    current_pose.header = obj_header;
-    return current_pose;
+    return PoseWithStamp{stamp, pose};
   }
 
   std::vector<PredictedPath> predicted_paths;
@@ -112,46 +116,44 @@ geometry_msgs::msg::PoseStamped getCurrentObjectPose(
     predicted_paths.push_back(path);
   }
   const auto interpolated_pose =
-    getCurrentObjectPoseFromPredictedPaths(predicted_paths, obj_header.stamp, current_time);
+    getCurrentObjectPoseFromPredictedPaths(predicted_paths, stamp, current_time);
 
   if (!interpolated_pose) {
     RCLCPP_WARN(
       rclcpp::get_logger("ObstacleCruisePlanner"), "Failed to find the interpolated obstacle pose");
-    geometry_msgs::msg::PoseStamped current_pose;
-    current_pose.pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
-    current_pose.header = obj_header;
-    return current_pose;
+    return PoseWithStamp{stamp, pose};
   }
 
-  geometry_msgs::msg::PoseStamped current_pose;
-  current_pose.pose = interpolated_pose.get();
-  current_pose.header.frame_id = obj_header.frame_id;
-  current_pose.header.stamp = current_time;
-  return current_pose;
+  return PoseWithStamp{stamp, *interpolated_pose};
 }
 
-boost::optional<TargetObstacle> getClosestStopObstacle(
-  const Trajectory & traj, const std::vector<TargetObstacle> & target_obstacles)
+std::optional<StopObstacle> getClosestStopObstacle(
+  const std::vector<TrajectoryPoint> & traj_points,
+  const std::vector<StopObstacle> & stop_obstacles)
 {
-  if (target_obstacles.empty()) {
-    return boost::none;
+  if (stop_obstacles.empty()) {
+    return std::nullopt;
   }
 
-  boost::optional<TargetObstacle> closest_stop_obstacle = boost::none;
+  std::optional<StopObstacle> closest_stop_obstacle = std::nullopt;
   double dist_to_closest_stop_obstacle = std::numeric_limits<double>::max();
-  for (const auto & obstacle : target_obstacles) {
-    // Ignore obstacle that has not stopped
-    if (!obstacle.has_stopped || obstacle.collision_points.empty()) {
-      continue;
-    }
-
+  for (const auto & stop_obstacle : stop_obstacles) {
     const double dist_to_stop_obstacle =
-      motion_utils::calcSignedArcLength(traj.points, 0, obstacle.collision_points.front().point);
+      motion_utils::calcSignedArcLength(traj_points, 0, stop_obstacle.collision_point);
     if (dist_to_stop_obstacle < dist_to_closest_stop_obstacle) {
       dist_to_closest_stop_obstacle = dist_to_stop_obstacle;
-      closest_stop_obstacle = obstacle;
+      closest_stop_obstacle = stop_obstacle;
     }
   }
   return closest_stop_obstacle;
+}
+
+TrajectoryPoint calcInterpolatedPoint(
+  const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose,
+  const EgoNearestParam & ego_nearest_param)
+{
+  return motion_utils::calcInterpolatedPoint(
+    motion_utils::convertToTrajectory(traj_points), pose, ego_nearest_param.dist_threshold,
+    ego_nearest_param.yaw_threshold);
 }
 }  // namespace obstacle_cruise_utils

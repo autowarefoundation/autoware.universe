@@ -40,21 +40,21 @@ A data structure for cruise and stop planning is as follows.
 This planner data is created first, and then sent to the planning algorithm.
 
 ```cpp
-struct ObstacleCruisePlannerData
+struct PlannerData
 {
   rclcpp::Time current_time;
   autoware_auto_planning_msgs::msg::Trajectory traj;
   geometry_msgs::msg::Pose current_pose;
-  double current_vel;
+  double ego_vel;
   double current_acc;
-  std::vector<TargetObstacle> target_obstacles;
+  std::vector<Obstacle> target_obstacles;
 };
 ```
 
 ```cpp
-struct TargetObstacle
+struct Obstacle
 {
-  rclcpp::Time time_stamp;
+  rclcpp::Time stamp;
   geometry_msgs::msg::Pose pose;
   bool orientation_reliable;
   double velocity;

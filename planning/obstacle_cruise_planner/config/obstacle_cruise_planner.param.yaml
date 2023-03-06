@@ -85,7 +85,7 @@
           kd: 2.0
 
           output_ratio_during_accel: 0.6 # target acceleration is multiplied with this value while ego accelerates to catch up the front vehicle [-]
-          vel_to_acc_weight: 12.0 # target acceleration is calculated by (target_velocity - current_velocity) * vel_to_acc_weight [-]
+          vel_to_acc_weight: 12.0 # target acceleration is calculated by (target_velocity - ego_velocity) * vel_to_acc_weight [-]
 
           enable_jerk_limit_to_output_acc: false
 
