@@ -15,7 +15,8 @@
 #ifndef BYTETRACK__BYTETRACK_HPP_
 #define BYTETRACK__BYTETRACK_HPP_
 
-#include "BYTETracker.h"
+#include "byte_tracker.h"
+#include "strack.h"
 #include <cstdlib>
 #include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
@@ -24,8 +25,6 @@
 #include <string>
 #include <vector>
 #include <boost/uuid/uuid.hpp>
-
-#include "BYTETracker.h"
 
 namespace bytetrack
 {
@@ -48,14 +47,11 @@ class ByteTrack
 public:
   ByteTrack(const int track_buffer_length = 30);
 
-  bool doInference(ObjectArray & objects);
-  ObjectArray updateTracker(ObjectArray& input_objects);
-  //ObjectArray estimate();
-
-  cv::Scalar getColor(int track_id);
+  bool DoInference(ObjectArray & objects);
+  ObjectArray UpdateTracker(ObjectArray& input_objects);
 
 private:
-  std::unique_ptr<BYTETracker> tracker_;
+  std::unique_ptr<ByteTracker> tracker_;
   ObjectArray latest_objects_;
 };
 

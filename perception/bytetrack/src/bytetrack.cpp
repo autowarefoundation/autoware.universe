@@ -17,26 +17,16 @@
 #include <algorithm>
 #include <fstream>
 #include <functional>
-#include <memory>
-#include <opencv2/core/operations.hpp>
-#include <opencv2/core/types.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-#include <string>
-#include <vector>
-
-#include "BYTETracker.h"
-#include "STrack.h"
 
 namespace bytetrack
 {
 ByteTrack::ByteTrack(const int track_buffer_length)
 {
   // Tracker initialization
-  tracker_ = std::make_unique<BYTETracker>(track_buffer_length);
+  tracker_ = std::make_unique<ByteTracker>(track_buffer_length);
 }
 
-bool ByteTrack::doInference(ObjectArray & objects)
+bool ByteTrack::DoInference(ObjectArray & objects)
 {
   // Re-format data
   std::vector<ByteTrackObject> bytetrack_objects;
@@ -74,20 +64,9 @@ bool ByteTrack::doInference(ObjectArray & objects)
   return true;
 }
 
-ObjectArray ByteTrack::updateTracker(ObjectArray& input_objects)
+ObjectArray ByteTrack::UpdateTracker(ObjectArray& input_objects)
 {
-  doInference(input_objects);
+  DoInference(input_objects);
   return latest_objects_;
 }
-
-// ObjectArray ByteTrack::estimate()
-// {
-//   doInference(latest_objects_);
-//   return latest_objects_;
-// }
-
-// cv::Scalar ByteTrack::getColor(int track_id) {
-//   return tracker_->get_color(track_id);
-// }
-
 }  // namespace bytetrack

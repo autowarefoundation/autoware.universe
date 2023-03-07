@@ -18,14 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <bytetrack/bytetrack.hpp>
 
-#include <rclcpp/subscription.hpp>
-#include <sstream>
-
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <tier4_perception_msgs/msg/dynamic_object_array.hpp>
-#include <std_msgs/msg/header.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
-
 
 #include <cv_bridge/cv_bridge.h>
 
@@ -46,9 +40,8 @@ public:
   explicit ByteTrackNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void onConnect();
-  // void onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg);
-  void onRect(const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg);
+  void OnConnect();
+  void OnRect(const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg);
 
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr
     objects_pub_;
