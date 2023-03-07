@@ -17,32 +17,23 @@
 namespace planning_test_manager
 {
 
-// PlanningIntefaceTestManager::PlanningIntefaceTestManager() {}
-
-// PlanningIntefaceTestManager::PlanningTestManager(const std::string & odom_pub_name)
-// {
-//   odom_pub_ = createSubscription(nav_msgs::msg::Odometory, odom_pub_name, 1);
-// }
-
 void PlanningIntefaceTestManager::testPlaningInterface(rclcpp::Node & node)
 {
   testNominalTrajectory(node);
 }
 
-void PlanningIntefaceTestManager::setOdomTopicName()
+void PlanningIntefaceTestManager::setOdomTopicName(std::string topic_name)
 {
-  odom_pub_ = rclcpp::create_publisher<Odometry>(test_node, "/kinematic_evaluator/input/twist", 1);
+  odom_pub_ = rclcpp::create_publisher<Odometry>(test_node, topic_name, 1);
 }
 
-void PlanningIntefaceTestManager::setReceivedTrajectoryTopicName()
+void PlanningIntefaceTestManager::setReceivedTrajectoryTopicName(std::string topic_name)
 {
+  // Count the number of trajectory received.
   traj_sub_ = test_node->create_subscription<Trajectory>(
-    "count_topic", 10,
+    topic_name, 10,
     std::bind(&PlanningIntefaceTestManager::count_callback, this, std::placeholders::_1));
 }
-
-Odometry genDefaultOdom() { return Odometry{}; }
-Trajectory genDefaultTrajectory() { return Trajectory{}; }
 
 void PlanningIntefaceTestManager::publishAllPlanningInterfaceTopics()
 {
@@ -50,6 +41,7 @@ void PlanningIntefaceTestManager::publishAllPlanningInterfaceTopics()
   // ...
   // ...
 }
+
 void PlanningIntefaceTestManager::publishNominalTrajectory()
 {
   normal_trajectory_pub_ = rclcpp::create_publisher<Trajectory>(
@@ -73,10 +65,9 @@ void PlanningIntefaceTestManager::testNominalTrajectory(rclcpp::Node & node)
   rclcpp::executors::SingleThreadedExecutor executor;
   auto nodeSharedPtr = std::shared_ptr<rclcpp::Node>(&node);
   executor.add_node(nodeSharedPtr);
-  executor.spin_once();
+
+  // check that the node does not die here.
   ASSERT_NO_THROW(executor.spin_once());
-  // trajectory is subscribed to the node when it is spin, check that the node
-  // does not die here.
 
   // Test node is working properly（node independent？）
   EXPECT_GE(getReceivedTrajectoryNum(), 1);
@@ -93,9 +84,10 @@ void PlanningIntefaceTestManager::testWithEmptyTrajectory(rclcpp::Node & node)
   auto nodeSharedPtr = std::shared_ptr<rclcpp::Node>(&node);
   executor.add_node(nodeSharedPtr);
   executor.spin_once();
-  ASSERT_NO_THROW(executor.spin_once());  // empty trajectory is subscribed to the node when it is
-                                          // spin, check that the node does not die here.
+    // check that the node does not die with empty trajectory.
+  ASSERT_NO_THROW(executor.spin_once());
 }
+
 void PlanningIntefaceTestManager::count_callback([[maybe_unused]] const Trajectory trajectory)
 {
   // Increment the counter.
@@ -104,6 +96,9 @@ void PlanningIntefaceTestManager::count_callback([[maybe_unused]] const Trajecto
   // Display the current count.
   RCLCPP_DEBUG(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
 }
-int getReceivedTrajectoryNum();
+
+int PlanningIntefaceTestManager::getReceivedTrajectoryNum(){
+  return count_;
+}
 
 }  // namespace planning_test_manager
