@@ -33,13 +33,13 @@ def create_api_node(node_name, class_name, **kwargs):
     )
 
 
-def create_log_level_node():
+def create_logger_level_node():
     return ComposableNode(
         namespace="default_ad_api/node",
         name="logger_level",
-        package="default_ad_api",
-        plugin="default_ad_api::LoggerLevel",
-        parameters=[],
+        package="logging_utils",
+        plugin="logging_utils::LoggerLevel",
+        parameters=[{"name": "default_ad_api.container", "level": "warn"}],
     )
 
 
@@ -51,7 +51,7 @@ def get_default_config():
 
 def generate_launch_description():
     components = [
-        create_log_level_node(),
+        create_logger_level_node(),
         create_api_node("autoware_state", "AutowareStateNode"),
         create_api_node("fail_safe", "FailSafeNode"),
         create_api_node("interface", "InterfaceNode"),

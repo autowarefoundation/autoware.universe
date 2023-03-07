@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace default_ad_api
+namespace logging_utils
 {
 
 class LoggerLevel : public rclcpp::Node
@@ -26,6 +26,6 @@ public:
   explicit LoggerLevel(const rclcpp::NodeOptions & options);
 };
 
-}  // namespace default_ad_api
+}  // namespace logging_utils
 
 #endif  // LOGGER_LEVEL_HPP_

@@ -16,22 +16,36 @@
 
 #include <string>
 
-namespace default_ad_api
+namespace logging_utils
 {
 
 LoggerLevel::LoggerLevel(const rclcpp::NodeOptions & options) : Node("logger_level", options)
 {
-  const std::string name = "default_ad_api.container";
-  const auto level = RCUTILS_LOG_SEVERITY_WARN;
+  const auto name = declare_parameter<std::string>("name");
+  const auto level = declare_parameter<std::string>("level");
+  int severity;
 
-  const auto ret = rcutils_logging_set_logger_level(name.c_str(), level);
-  if (ret != RCUTILS_RET_OK) {
-    RCLCPP_ERROR(get_logger(), "Error log level: %s", rcutils_get_error_string().str);
-    rcutils_reset_error();
+  // Get logging severity.
+  {
+    const auto ret = rcutils_logging_severity_level_from_string(
+      level.c_str(), rcl_get_default_allocator(), &severity);
+    if (ret != RCUTILS_RET_OK) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to get log level: " << level);
+      return;
+    }
+  }
+
+  // Set logging severity.
+  {
+    const auto ret = rcutils_logging_set_logger_level(name.c_str(), severity);
+    if (ret != RCUTILS_RET_OK) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to set log level");
+      return;
+    }
   }
 }
 
-}  // namespace default_ad_api
+}  // namespace logging_utils
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::LoggerLevel)
+RCLCPP_COMPONENTS_REGISTER_NODE(logging_utils::LoggerLevel)

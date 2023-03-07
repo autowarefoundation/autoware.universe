@@ -4,13 +4,6 @@ project(default_ad_api)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(logger_level SHARED
-  src/logger_level.cpp
-)
-rclcpp_components_register_nodes(logger_level
-  "default_ad_api::LoggerLevel"
-)
-
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/fail_safe.cpp
   src/interface.cpp
