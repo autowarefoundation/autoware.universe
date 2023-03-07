@@ -2995,6 +2995,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
       removePreviousRTCStatusLeft();
     } else {
       RCLCPP_WARN_STREAM(getLogger(), "Direction is UNKNOWN");
+      if (!parameters_->disable_path_update) {
+        addNewShiftLines(path_shifter_, data.safe_new_sl);
+      }
     }
     if (!parameters_->disable_path_update) {
       addShiftLineIfApproved(data.safe_new_sl);
