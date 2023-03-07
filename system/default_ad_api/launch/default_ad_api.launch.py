@@ -33,16 +33,6 @@ def create_api_node(node_name, class_name, **kwargs):
     )
 
 
-def create_logger_level_node():
-    return ComposableNode(
-        namespace="default_ad_api/node",
-        name="logger_level",
-        package="logging_utils",
-        plugin="logging_utils::LoggerLevel",
-        parameters=[{"name": "default_ad_api.container", "level": "warn"}],
-    )
-
-
 def get_default_config():
     path = FindPackageShare("default_ad_api")
     path = PathJoinSubstitution([path, "config/default_ad_api.param.yaml"])
@@ -51,7 +41,6 @@ def get_default_config():
 
 def generate_launch_description():
     components = [
-        create_logger_level_node(),
         create_api_node("autoware_state", "AutowareStateNode"),
         create_api_node("fail_safe", "FailSafeNode"),
         create_api_node("interface", "InterfaceNode"),
@@ -66,6 +55,7 @@ def generate_launch_description():
         name="container",
         package="rclcpp_components",
         executable="component_container_mt",
+        ros_arguments=["--log-level", "default_ad_api.container:=WARN"],
         composable_node_descriptions=components,
     )
     web_server = Node(
