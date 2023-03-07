@@ -43,7 +43,7 @@ Zheng Ge, Songtao Liu, Feng Wang, Zeming Li, Jian Sun, "YOLOX: Exceeding YOLO Se
 | `model_path`    | string | ""            | The onnx file name for yolox model                                 |
 | `label_path`    | string | ""            | The label file with label names for detected objects written on it |
 | `trt_precision` | string | "fp32"        | The inference mode: "fp32", "fp16", "int8"                         |
-| `build_only`    | bool   | false         | shutdown node after TensorRT engin file is built                   |
+| `build_only`    | bool   | false         | shutdown node after TensorRT engine file is built                  |
 
 ## Assumptions / Known limits
 
