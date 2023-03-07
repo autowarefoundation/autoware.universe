@@ -80,6 +80,22 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
   EXECUTABLE ${PROJECT_NAME}_node_exe
 )
 
+#
+# Visualizer
+#
+ament_auto_add_library(${PROJECT_NAME}_visualizer SHARED
+  src/bytetrack_visualizer_node.cpp
+)
+
+ament_target_dependencies(${PROJECT_NAME}_visualizer
+  OpenCV
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}_visualizer
+  PLUGIN "bytetrack::ByteTrackVisualizerNode"
+  EXECUTABLE ${PROJECT_NAME}_visualizer_node_exe
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
