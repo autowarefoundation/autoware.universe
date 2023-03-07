@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="detection_rect" default="/perception/object_recognition/detection/rois0"/>
+  <arg name="tracked_rect" default="/perception/object_recognition/detection/tracked/rois0"/>
+  <arg name="track_buffer_length" default="30"/>
+
+  <node pkg="bytetrack" exec="bytetrack_node_exe" output="screen">
+    <remap from="~/in/rect" to="$(var detection_rect)"/>
+    <remap from="~/out/objects" to="$(var tracked_rect)"/>
+    <remap from="~/out/objects/debug/uuid" to="$(var tracked_rect)/debug/uuid"/>
+    <param name="track_buffer_length" value="$(var track_buffer_length)"/>
+  </node>
+
+</launch>
