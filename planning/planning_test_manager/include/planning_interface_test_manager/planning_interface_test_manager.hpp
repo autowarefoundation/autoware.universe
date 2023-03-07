@@ -37,7 +37,6 @@ using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 // using autoware_auto_perception_msgs::msg::PredictedObjects;
-// using autoware_auto_planning_msgs::msg::Trajectory;
 // using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 class PlanningIntefaceTestManager
@@ -46,12 +45,14 @@ public:
   PlanningIntefaceTestManager() {}
 
   void testPlaningInterface(rclcpp::Node & node);
-
   void setOdomTopicName(std::string topic_name);
-  void setReceivedTrajectoryTopicName(std::string topic_name);
+  void setOutputTrajectoryTopicName(std::string topic_name);
 
 private:
   // Publisher
+  rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<SteeringReport>::SharedPtr steering_pub_;
   rclcpp::Publisher<Path>::SharedPtr path_pub_;
@@ -62,7 +63,7 @@ private:
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr
-    traj_sub_;  
+    traj_sub_;
 
 
   // Node

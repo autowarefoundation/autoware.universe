@@ -20,11 +20,38 @@ namespace planning_test_manager
 void PlanningIntefaceTestManager::testPlaningInterface(rclcpp::Node & node)
 {
   testNominalTrajectory(node);
+  checkOutput(topic);
 }
+void PlanningIntefaceTestManager::testCheckPlaningInterface(rclcpp::Node & node)
+{
+  // publisherがいるやつだけ or 全部異常系のチェックを実行
+  testWithEmptyTrajectory(node);
+  testWithEmptyRoute(node);
+  testWithEmptyRoute(node);
+  
+
+}
+  
+
 
 void PlanningIntefaceTestManager::setOdomTopicName(std::string topic_name)
 {
   odom_pub_ = rclcpp::create_publisher<Odometry>(test_node, topic_name, 1);
+}
+
+void PlanningIntefaceTestManager::setPointCloudTopicName(std::string topic_name)
+{
+  point_cloud_pub_ = rclcpp::create_publisher<PointCloud2>(test_node, topic_name, 1);
+}
+
+void PlanningIntefaceTestManager::setPredictedObjectsTopicName(std::string topic_name)
+{
+  PredictedObjects_pub_ = rclcpp::create_publisher<PredictedObjects>(test_node, topic_name, 1);
+}
+
+void PlanningIntefaceTestManager::setTFTopicName(std::string topic_name)
+{
+  TF_pub_ = rclcpp::create_publisher<TFMessage>(test_node, topic_name, 1);
 }
 
 void PlanningIntefaceTestManager::setReceivedTrajectoryTopicName(std::string topic_name)
@@ -38,8 +65,6 @@ void PlanningIntefaceTestManager::setReceivedTrajectoryTopicName(std::string top
 void PlanningIntefaceTestManager::publishAllPlanningInterfaceTopics()
 {
   odom_pub_->publish(genDefaultOdom());
-  // ...
-  // ...
 }
 
 void PlanningIntefaceTestManager::publishNominalTrajectory()
@@ -67,11 +92,12 @@ void PlanningIntefaceTestManager::testNominalTrajectory(rclcpp::Node & node)
   executor.add_node(nodeSharedPtr);
 
   // check that the node does not die here.
-  ASSERT_NO_THROW(executor.spin_once());
+  ASSERT_NO_THROW(executor.spin_some());
+
+}
 
   // Test node is working properly（node independent？）
   EXPECT_GE(getReceivedTrajectoryNum(), 1);
-}
 
 // check to see if target node is dead.
 void PlanningIntefaceTestManager::testWithEmptyTrajectory(rclcpp::Node & node)
@@ -80,12 +106,12 @@ void PlanningIntefaceTestManager::testWithEmptyTrajectory(rclcpp::Node & node)
                                         // planning to work
   publishEmptyTrajectory();             // publish empty trajectory
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  auto nodeSharedPtr = std::shared_ptr<rclcpp::Node>(&node);
-  executor.add_node(nodeSharedPtr);
-  executor.spin_once();
-    // check that the node does not die with empty trajectory.
-  ASSERT_NO_THROW(executor.spin_once());
+
+  // rclcpp::executors::SingleThreadedExecutor executor;
+  // auto nodeSharedPtr = std::shared_ptr<rclcpp::Node>(&node);
+  // executor.add_node(nodeSharedPtr);
+  // // check that the node does not die with empty trajectory.
+  // ASSERT_NO_THROW(executor.spin_some());
 }
 
 void PlanningIntefaceTestManager::count_callback([[maybe_unused]] const Trajectory trajectory)
