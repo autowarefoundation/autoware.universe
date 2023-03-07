@@ -17,7 +17,7 @@
 namespace
 {
 
-rrtstar_core::Pose posemsgToPose(const geometry_msgs::msg::Pose & pose_msg)
+rrtstar_core::Pose poseMsgToPose(const geometry_msgs::msg::Pose & pose_msg)
 {
   return rrtstar_core::Pose{
     pose_msg.position.x, pose_msg.position.y, tf2::getYaw(pose_msg.orientation)};
@@ -31,11 +31,10 @@ RRTStar::RRTStar(
   const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
   const RRTStarParam & rrtstar_param)
 : AbstractPlanningAlgorithm(
-    planner_common_param,
-    VehicleShape{
-      original_vehicle_shape.length + 2 * rrtstar_param.margin,
-      original_vehicle_shape.width + 2 * rrtstar_param.margin,
-      original_vehicle_shape.base2back + rrtstar_param.margin}),
+    planner_common_param, VehicleShape(
+                            original_vehicle_shape.length + 2 * rrtstar_param.margin,
+                            original_vehicle_shape.width + 2 * rrtstar_param.margin,
+                            original_vehicle_shape.base2back + rrtstar_param.margin)),
   rrtstar_param_(rrtstar_param),
   original_vehicle_shape_(original_vehicle_shape)
 {
@@ -68,8 +67,8 @@ bool RRTStar::makePlan(
     M_PI};
   const double radius = planner_common_param_.minimum_turning_radius;
   const auto cspace = rrtstar_core::CSpace(lo, hi, radius, is_obstacle_free);
-  const auto x_start = posemsgToPose(start_pose_);
-  const auto x_goal = posemsgToPose(goal_pose_);
+  const auto x_start = poseMsgToPose(start_pose_);
+  const auto x_goal = poseMsgToPose(goal_pose_);
 
   if (!is_obstacle_free(x_start)) {
     return false;
@@ -82,7 +81,7 @@ bool RRTStar::makePlan(
   const bool is_informed = rrtstar_param_.use_informed_sampling;  // always better
   const double collision_check_resolution = rrtstar_param_.margin * 2;
   auto algo = rrtstar_core::RRTStar(
-    x_start, x_goal, rrtstar_param_.neighbour_radius, collision_check_resolution, is_informed,
+    x_start, x_goal, rrtstar_param_.neighbor_radius, collision_check_resolution, is_informed,
     cspace);
   while (true) {
     const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
@@ -153,15 +152,15 @@ void RRTStar::setRRTPath(const std::vector<rrtstar_core::Pose> & waypoints)
     if (0 == i) {
       const auto & pt_now = waypoints.at(i);
       const auto & pt_next = waypoints.at(i + 1);
-      const double inpro =
+      const double inner_product =
         cos(pt_now.yaw) * (pt_next.x - pt_now.x) + sin(pt_now.yaw) * (pt_next.y - pt_now.y);
-      pw.is_back = (inpro < 0.0);
+      pw.is_back = (inner_product < 0.0);
     } else {
       const auto & pt_pre = waypoints.at(i - 1);
       const auto & pt_now = waypoints.at(i);
-      const double inpro =
+      const double inner_product =
         cos(pt_pre.yaw) * (pt_now.x - pt_pre.x) + sin(pt_pre.yaw) * (pt_now.y - pt_pre.y);
-      pw.is_back = !(inpro > 0.0);
+      pw.is_back = !(inner_product > 0.0);
     }
     pw.pose = pose;
     waypoints_.waypoints.push_back(pw);
