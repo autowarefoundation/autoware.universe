@@ -82,7 +82,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   std::printf("%lu detected objects\n", (*planner_data_)->predicted_objects->objects.size());
   const auto decisions = calculate_decisions(
     intervals, *path, ego_idx, *(*planner_data_)->predicted_objects,
-    (*planner_data_)->route_handler_, lanelets_to_check);
+    (*planner_data_)->route_handler_, lanelets_to_check, params_);
   std::printf("Found %lu decisions\n", decisions.size());
   insert_slowdown_points(*path, decisions, params_);
   for (const auto & decision : decisions) {

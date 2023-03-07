@@ -44,7 +44,6 @@ public:
   const char * getModuleName() override { return "out_of_lane"; }
 
 private:
-  enum class ModuleID { OCCUPANCY, OBJECT };
   using PlannerParam = out_of_lane_utils::PlannerParam;
 
   PlannerParam planner_param_;

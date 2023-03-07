@@ -71,10 +71,19 @@ namespace out_of_lane_utils
 {
 struct PlannerParam
 {
-  double overlap_min_dist;  // [m] minimum distance inside a lane for a footprint to be considered
-                            // overlapping
-  double dist_thr;          // [m]
+  bool use_threshold;  // if true, use a time threshold to decide to stop before going out of lane
 
+  double objects_dist_thr;  // [m]
+  double objects_min_vel;   // [m/s] objects lower than this velocity will be ignored
+  double objects_time_thr;  // if using threshold, stop for an object whose incoming time is below
+                            // this value
+
+  double overlap_extra_length;  // [m] extra length to add around an overlap interval
+  double overlap_min_dist;      // [m] min distance inside a lane for a footprint to be considered
+                                // overlapping
+
+  double stop_extra_dist;
+  double stop_max_decel;
   // ego dimensions used to create its polygon footprint
   double front_offset;        // [m]  front offset (from vehicle info)
   double rear_offset;         // [m]  rear offset (from vehicle info)
@@ -247,13 +256,13 @@ inline Intervals calculate_overlapping_intervals(
         if (!other_lane.interval_is_open) {
           other_lane.first_interval_bound.index = i;
           other_lane.first_interval_bound.point = min_overlap_point;
-          other_lane.first_interval_bound.arc_length = min_arc_length;
+          other_lane.first_interval_bound.arc_length = min_arc_length - params.overlap_extra_length;
           other_lane.first_interval_bound.inside_distance = inside_dist;
           other_lane.interval_is_open = true;
         }
         other_lane.last_interval_bound.index = i;
         other_lane.last_interval_bound.point = max_overlap_point;
-        other_lane.last_interval_bound.arc_length = max_arc_length;
+        other_lane.last_interval_bound.arc_length = max_arc_length + params.overlap_extra_length;
         other_lane.last_interval_bound.inside_distance = inside_dist;
       } else if (other_lane.interval_is_open) {  // close the interval if there were no overlap
         intervals.push_back(other_lane.closeInterval());
@@ -271,7 +280,7 @@ inline Intervals calculate_overlapping_intervals(
 inline std::vector<Slowdown> calculate_decisions(
   const Intervals & intervals, const PathWithLaneId & ego_path, const size_t first_idx,
   const PredictedObjects & objects, std::shared_ptr<route_handler::RouteHandler> route_handler,
-  const lanelet::ConstLanelets & lanelets)
+  const lanelet::ConstLanelets & lanelets, const PlannerParam & params)
 {
   const auto time_along_path = [&](const auto & idx) {
     // TODO(Maxime): this is a bad estimate of the time to reach a point. should use current
@@ -332,13 +341,16 @@ inline std::vector<Slowdown> calculate_decisions(
       interval.lane.id());
     // skip if we already entered the interval
     if (interval.entering_path_idx == 0UL) continue;
+    // skip if the overlap inside the interval is too small
+    if (interval.inside_distance < params.overlap_min_dist) continue;
+
     const auto ego_enter_time = time_along_path(interval.entering_path_idx);
     const auto ego_exit_time = time_along_path(interval.exiting_path_idx);
     auto min_object_enter_time = std::numeric_limits<double>::max();
     auto max_object_exit_time = 0.0;
     for (const auto & object : objects.objects) {
-      const auto min_vel = 0.1;  // TODO(Maxime): param
-      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < min_vel) continue;
+      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel)
+        continue;  // skip objects with velocity bellow a threshold
       const auto & [enter_time, exit_time] = object_time_to_interval(object, interval);
       std::printf(
         "\t\t[%s] going at %2.2fm/s enter at %2.2fs, exits at %2.2fs\n",
@@ -348,15 +360,13 @@ inline std::vector<Slowdown> calculate_decisions(
       max_object_exit_time = std::max(max_object_exit_time, exit_time);
     }
     // TODO(Maxime): more complex decisions, threshold, slowdown instead of stop
-    // TODO(Maxime): params
-    constexpr auto use_threshold = true;
-    constexpr auto time_dist_threshold = 3.0;  // [m/s]
     const auto ego_enters_before_object = ego_enter_time < min_object_enter_time;
     const auto ego_exits_after_object = ego_exit_time > max_object_exit_time;
     const auto threshold_stop_condition =
-      min_object_enter_time > 0.0 && min_object_enter_time < time_dist_threshold;
-    const auto should_stop = (use_threshold && threshold_stop_condition) ||
-                             (!use_threshold && ego_enters_before_object && ego_exits_after_object);
+      min_object_enter_time > 0.0 && min_object_enter_time < params.objects_time_thr;
+    const auto should_stop =
+      (params.use_threshold && threshold_stop_condition) ||
+      (!params.use_threshold && ego_enters_before_object && ego_exits_after_object);
     if (should_stop) {
       std::printf("\t\tWill stop\n");
       Slowdown decision;

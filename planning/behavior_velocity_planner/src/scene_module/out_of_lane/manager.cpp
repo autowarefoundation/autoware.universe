@@ -30,8 +30,18 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
 
-  pp.dist_thr = node.declare_parameter<double>(ns + ".distance_threshold");
-  pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap_min_distance");
+  pp.use_threshold = node.declare_parameter<bool>(ns + ".use_threshold");
+
+  pp.objects_min_vel = node.declare_parameter<double>(ns + ".objects.minimum_velocity");
+  pp.objects_time_thr = node.declare_parameter<double>(ns + ".objects.time_threshold");
+  pp.objects_dist_thr = node.declare_parameter<double>(ns + ".objects.distance_threshold");
+
+  pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap.minimum_distance");
+  pp.overlap_extra_length = node.declare_parameter<double>(ns + ".overlap.extra_length");
+
+  pp.stop_extra_dist = node.declare_parameter<double>(ns + ".stop.extra_distance");
+  pp.stop_max_decel = node.declare_parameter<double>(ns + ".stop.maximum_deceleration");
+
   pp.extra_front_offset = node.declare_parameter<double>(ns + ".ego.extra_front_offset");
   pp.extra_rear_offset = node.declare_parameter<double>(ns + ".ego.extra_rear_offset");
   pp.extra_left_offset = node.declare_parameter<double>(ns + ".ego.extra_left_offset");
