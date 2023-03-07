@@ -15,11 +15,12 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 
-#include "behavior_path_planner/scene_module/lane_change/debug.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -189,10 +190,12 @@ private:
   void updateOutputTurnSignal(BehaviorModuleOutput & output);
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
   bool isApprovedPathSafe(Pose & ego_pose_before_collision) const;
+  void calcTurnSignalInfo();
 
   void updateSteeringFactorPtr(
     const CandidateOutput & output, const LaneChangePath & selected_path) const;
   bool isSafe() const;
+  bool isValidPath() const;
   bool isValidPath(const PathWithLaneId & path) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;

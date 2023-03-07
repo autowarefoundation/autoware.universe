@@ -41,13 +41,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 namespace MPCUtils
 {
@@ -90,7 +84,7 @@ bool convertToAutowareTrajectory(
 /**
  * @brief calculate the arc length at each point of the given trajectory
  * @param [in] trajectory trajectory for which to calculate the arc length
- * @param [out] arclength the cummulative arc length at each point of the trajectory
+ * @param [out] arclength the cumulative arc length at each point of the trajectory
  */
 void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<double> * arclength);
 /**
@@ -192,8 +186,5 @@ void extendTrajectoryInYawDirection(
   const double yaw, const double interval, const bool is_forward_shift, MPCTrajectory & traj);
 
 }  // namespace MPCUtils
-}  // namespace mpc_lateral_controller
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_

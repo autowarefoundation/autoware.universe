@@ -16,7 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
+#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/util/side_shift/side_shift_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -26,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -33,24 +35,6 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_planning_msgs::msg::LateralOffset;
-
-enum class SideShiftStatus { STOP = 0, BEFORE_SHIFT, SHIFTING, AFTER_SHIFT };
-
-struct SideShiftParameters
-{
-  double time_to_start_shifting;
-  double min_distance_to_start_shifting;
-  double shifting_lateral_jerk;
-  double min_shifting_distance;
-  double min_shifting_speed;
-  double drivable_area_resolution;
-  double drivable_area_width;
-  double drivable_area_height;
-  double shift_request_time_limit;
-  // drivable area expansion
-  double drivable_area_right_bound_offset;
-  double drivable_area_left_bound_offset;
-};
 
 class SideShiftModule : public SceneModuleInterface
 {
@@ -126,10 +110,10 @@ private:
   ShiftLine prev_shift_line_;
 
   // NOTE: this function is ported from avoidance.
-  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  inline PoseStamped getEgoPose() const { return *(planner_data_->self_pose); }
+  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+  inline Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
   PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
+    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
 };

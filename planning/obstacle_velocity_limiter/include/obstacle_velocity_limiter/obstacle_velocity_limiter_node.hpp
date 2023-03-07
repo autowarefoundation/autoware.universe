@@ -18,6 +18,7 @@
 #include "obstacle_velocity_limiter/obstacles.hpp"
 #include "obstacle_velocity_limiter/parameters.hpp"
 #include "obstacle_velocity_limiter/types.hpp"
+// cspell: ignore multipolygon, multilinestring
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
@@ -51,7 +52,6 @@ public:
 
 private:
   tier4_autoware_utils::TransformListener transform_listener_{this};
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   rclcpp::Publisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
@@ -76,7 +76,7 @@ private:
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
   multilinestring_t static_map_obstacles_;
-  std::optional<Float> current_ego_velocity_;
+  nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_ptr_;
 
   // parameters
   PreprocessingParameters preprocessing_params_;

@@ -23,13 +23,7 @@
 
 #include <boost/optional.hpp>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 struct LongitudinalOutput
 {
@@ -42,17 +36,14 @@ public:
   virtual bool isReady(const InputData & input_data) = 0;
   virtual LongitudinalOutput run(InputData const & input_data) = 0;
   void sync(LateralSyncData const & lateral_sync_data);
-  // NOTE: This reset function should be called when the trajectory is replaned by changing ego pose
-  // or goal pose.
+  // NOTE: This reset function should be called when the trajectory is replanned by changing ego
+  // pose or goal pose.
   void reset();
 
 protected:
   LateralSyncData lateral_sync_data_;
 };
 
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_

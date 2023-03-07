@@ -41,6 +41,7 @@
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
+#include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -63,17 +64,6 @@ namespace behavior_velocity_planner
 {
 namespace
 {
-geometry_msgs::msg::PoseStamped transform2pose(
-  const geometry_msgs::msg::TransformStamped & transform)
-{
-  geometry_msgs::msg::PoseStamped pose;
-  pose.header = transform.header;
-  pose.pose.position.x = transform.transform.translation.x;
-  pose.pose.position.y = transform.transform.translation.y;
-  pose.pose.position.z = transform.transform.translation.z;
-  pose.pose.orientation = transform.transform.rotation;
-  return pose;
-}
 
 autoware_auto_planning_msgs::msg::Path to_path(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
@@ -110,8 +100,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1),
     createSubscriptionOptions(this));
   sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/vehicle_odometry", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1),
+    "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::onAcceleration, this, _1),
@@ -207,6 +196,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_run_out", false)) {
     planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
   }
+  if (this->declare_parameter("launch_speed_bump", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<SpeedBumpModuleManager>(*this));
+  }
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
@@ -215,13 +207,12 @@ bool BehaviorVelocityPlannerNode::isDataReady(
 {
   const auto & d = planner_data;
 
-  // from tf
-  if (d.current_pose.header.frame_id == "") {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Frame id of current pose is missing");
+  // from callbacks
+  if (!d.current_odometry) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current odometry");
     return false;
   }
 
-  // from callbacks
   if (!d.current_velocity) {
     RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current velocity");
     return false;
@@ -291,10 +282,14 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   }
 }
 
-void BehaviorVelocityPlannerNode::onVehicleVelocity(
-  const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+
+  auto current_odometry = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  current_odometry->header = msg->header;
+  current_odometry->pose = msg->pose.pose;
+  planner_data_.current_odometry = current_odometry;
 
   auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
   current_velocity->header = msg->header;
@@ -329,9 +324,11 @@ void BehaviorVelocityPlannerNode::onAcceleration(
 
 void BehaviorVelocityPlannerNode::onParam()
 {
+  // Note(vrichard): mutex lock is not necessary as onParam is only called once in the constructed.
+  // It would be required if it was a callback.
+  // std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.velocity_smoother_ =
     std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
-  return;
 }
 
 void BehaviorVelocityPlannerNode::onLaneletMap(
@@ -372,6 +369,7 @@ void BehaviorVelocityPlannerNode::onExternalIntersectionStates(
 
 void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
 }
 
@@ -397,20 +395,9 @@ void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
 void BehaviorVelocityPlannerNode::onTrigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
-  mutex_.lock();  // for planner_data_
-
-  // Check ready
-  try {
-    planner_data_.current_pose =
-      transform2pose(tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero));
-  } catch (tf2::TransformException & e) {
-    RCLCPP_INFO(get_logger(), "waiting for transform from `map` to `base_link`");
-    mutex_.unlock();
-    return;
-  }
+  std::unique_lock<std::mutex> lk(mutex_);
 
   if (!isDataReady(planner_data_, *get_clock())) {
-    mutex_.unlock();
     return;
   }
 
@@ -422,20 +409,17 @@ void BehaviorVelocityPlannerNode::onTrigger(
   if (!planner_data_.route_handler_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 3000, "Waiting for the initialization of route_handler");
-    mutex_.unlock();
     return;
   }
-
-  // NOTE: planner_data must not be referenced for multithreading
-  const auto planner_data = planner_data_;
-  mutex_.unlock();
 
   if (input_path_msg->points.empty()) {
     return;
   }
 
   const autoware_auto_planning_msgs::msg::Path output_path_msg =
-    generatePath(input_path_msg, planner_data);
+    generatePath(input_path_msg, planner_data_);
+
+  lk.unlock();
 
   path_pub_->publish(output_path_msg);
   stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());

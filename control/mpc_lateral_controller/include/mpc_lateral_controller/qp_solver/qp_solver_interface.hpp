@@ -19,13 +19,7 @@
 #include "eigen3/Eigen/Dense"
 #include "eigen3/Eigen/LU"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 /// Interface for solvers of Quadratic Programming (QP) problems
@@ -47,15 +41,12 @@ public:
    * @param [in] lb_a parameter matrix for constraint lb_a < a*u < ub_a
    * @param [in] ub_a parameter matrix for constraint lb_a < a*u < ub_a
    * @param [out] u optimal variable vector
-   * @return ture if the problem was solved
+   * @return true if the problem was solved
    */
   virtual bool solve(
     const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,
     const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) = 0;
 };
-}  // namespace mpc_lateral_controller
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_INTERFACE_HPP_

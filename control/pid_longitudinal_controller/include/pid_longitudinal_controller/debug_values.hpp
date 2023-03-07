@@ -17,13 +17,7 @@
 
 #include <array>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace pid_longitudinal_controller
+namespace autoware::motion::control::pid_longitudinal_controller
 {
 
 /// Debug Values used for debugging or controller tuning
@@ -61,6 +55,7 @@ public:
     PITCH_RAW_TRAJ_RAD = 26,
     PITCH_RAW_TRAJ_DEG = 27,
     STOP_DIST = 28,
+    FF_SCALE = 29,
     SIZE  // this is the number of enum elements
   };
 
@@ -94,9 +89,6 @@ public:
 private:
   std::array<double, static_cast<size_t>(TYPE::SIZE)> m_values;
 };
-}  // namespace pid_longitudinal_controller
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::pid_longitudinal_controller
 
 #endif  // PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_

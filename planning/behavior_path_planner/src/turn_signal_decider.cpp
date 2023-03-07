@@ -40,7 +40,7 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   // Data
   const double nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const double nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
-  const auto & current_pose = planner_data->self_pose->pose;
+  const auto & current_pose = planner_data->self_odometry->pose.pose;
   const double & current_vel = planner_data->self_odometry->twist.twist.linear.x;
   const auto route_handler = *(planner_data->route_handler);
 
@@ -433,9 +433,9 @@ void TurnSignalDecider::set_intersection_info(
     }
     intersection_distance_ = dist_to_intersection_required_start;
     intersection_pose_point_ = inter_required_start_point;
+  } else {
+    initialize_intersection_info();
   }
-
-  initialize_intersection_info();
 }
 
 void TurnSignalDecider::initialize_intersection_info()

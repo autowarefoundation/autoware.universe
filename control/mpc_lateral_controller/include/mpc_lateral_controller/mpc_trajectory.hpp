@@ -22,13 +22,7 @@
 #include <iostream>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 /**
@@ -64,7 +58,7 @@ public:
    */
   size_t size() const;
   /**
-   * @return true if the compensents sizes are all 0 or are inconsistent
+   * @return true if the components sizes are all 0 or are inconsistent
    */
   inline bool empty() const { return size() == 0; }
 
@@ -96,8 +90,5 @@ public:
     return points;
   }
 };
-}  // namespace mpc_lateral_controller
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__MPC_TRAJECTORY_HPP_

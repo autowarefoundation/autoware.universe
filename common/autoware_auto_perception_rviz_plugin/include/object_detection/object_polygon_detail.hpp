@@ -84,6 +84,12 @@ get_shape_marker_ptr(
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
   const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
 
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
+get_2d_shape_marker_ptr(
+  const autoware_auto_perception_msgs::msg::Shape & shape_msg,
+  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
+
 /// \brief Convert the given polygon into a marker representing the shape in 3d
 /// \param centroid Centroid position of the shape in Object.header.frame_id frame
 /// \return Marker ptr. Id and header will have to be set by the caller
@@ -120,7 +126,7 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::Sha
 get_predicted_path_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const std_msgs::msg::ColorRGBA & predicted_path_color);
+  const std_msgs::msg::ColorRGBA & predicted_path_color, const bool is_simple = false);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_path_confidence_marker_ptr(
@@ -131,7 +137,15 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_cylinder_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_cylinder_bottom_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
@@ -143,9 +157,13 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_polygon_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_polygon_bottom_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_path_line_list(
   const autoware_auto_perception_msgs::msg::PredictedPath & paths,
-  std::vector<geometry_msgs::msg::Point> & points);
+  std::vector<geometry_msgs::msg::Point> & points, const bool is_simple = false);
 
 /// \brief Convert Point32 to Point
 /// \param val Point32 to be converted

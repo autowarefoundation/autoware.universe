@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2020 TIER IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@
 #include <QLayout>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QTableWidget>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/accept_start.hpp>
@@ -51,6 +53,7 @@ class AutowareStatePanel : public rviz_common::Panel
     autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   using MotionState = autoware_adapi_v1_msgs::msg::MotionState;
   using AcceptStart = autoware_adapi_v1_msgs::srv::AcceptStart;
+  using MRMState = autoware_adapi_v1_msgs::msg::MrmState;
 
   Q_OBJECT
 
@@ -77,6 +80,7 @@ protected:
   QGroupBox * makeRoutingGroup();
   QGroupBox * makeLocalizationGroup();
   QGroupBox * makeMotionGroup();
+  QGroupBox * makeFailSafeGroup();
 
   void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
@@ -139,6 +143,15 @@ protected:
 
   void onMotion(const MotionState::ConstSharedPtr msg);
 
+  // FailSafe
+  QLabel * mrm_state_label_ptr_{nullptr};
+  QLabel * mrm_behavior_label_ptr_{nullptr};
+
+  rclcpp::Subscription<MRMState>::SharedPtr sub_mrm_;
+
+  void onMRMState(const MRMState::ConstSharedPtr msg);
+
+  // Others
   QPushButton * velocity_limit_button_ptr_;
   QLabel * gear_label_ptr_;
 

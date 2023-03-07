@@ -30,7 +30,6 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-
     # vehicle information parameter
     vehicle_param_path = LaunchConfiguration("vehicle_param_file").perform(context)
     with open(vehicle_param_path, "r") as f:
@@ -67,12 +66,18 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/route", LaunchConfiguration("input_route_topic_name")),
             ("~/input/vector_map", LaunchConfiguration("map_topic_name")),
             ("~/input/perception", "/perception/object_recognition/objects"),
+            ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
+            (
+                "~/input/costmap",
+                "/planning/scenario_planning/parking/costmap_generator/occupancy_grid",
+            ),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/accel", "/localization/acceleration"),
             ("~/input/scenario", "/planning/scenario_planning/scenario"),
             ("~/output/path", "path_with_lane_id"),
             ("~/output/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("~/output/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
+            ("~/output/modified_goal", "/planning/scenario_planning/modified_goal"),
         ],
         parameters=[
             nearest_search_param,
@@ -86,11 +91,19 @@ def launch_setup(context, *args, **kwargs):
             behavior_path_planner_param,
             vehicle_param,
             {
-                "bt_tree_config_path": [
-                    FindPackageShare("behavior_path_planner"),
-                    "/config/behavior_path_planner_tree.xml",
-                ],
-                "planning_hz": 10.0,
+                "lane_change.enable_abort_lane_change": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "lane_change.enable_collision_check_at_prepare_phase": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "lane_change.use_predicted_path_outside_lanelet": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "lane_change.use_all_predicted_path": LaunchConfiguration(
+                    "use_experimental_lane_change_function"
+                ),
+                "bt_tree_config_path": LaunchConfiguration("behavior_path_planner_tree_param_path"),
             },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -129,6 +142,8 @@ def launch_setup(context, *args, **kwargs):
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("run_out_param_path").perform(context), "r") as f:
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("speed_bump_param_path").perform(context), "r") as f:
+        speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("behavior_velocity_planner_param_path").perform(context), "r"
     ) as f:
@@ -152,6 +167,10 @@ def launch_setup(context, *args, **kwargs):
             (
                 "~/input/compare_map_filtered_pointcloud",
                 "compare_map_filtered/pointcloud",
+            ),
+            (
+                "~/input/vector_map_inside_area_filtered_pointcloud",
+                "vector_map_inside_area_filtered/pointcloud",
             ),
             (
                 "~/input/traffic_signals",
@@ -192,6 +211,7 @@ def launch_setup(context, *args, **kwargs):
             no_stopping_area_param,
             vehicle_param,
             run_out_param,
+            speed_bump_param,
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
@@ -277,19 +297,17 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    add_launch_arg(
-        "vehicle_param_file",
-        [
-            FindPackageShare("vehicle_info_util"),
-            "/config/vehicle_info.param.yaml",
-        ],
-        "path to the parameter file of vehicle information",
-    )
+    # vehicle parameter
+    add_launch_arg("vehicle_param_file")
 
+    # interface parameter
     add_launch_arg(
         "input_route_topic_name", "/planning/mission_planning/route", "input topic of route"
     )
     add_launch_arg("map_topic_name", "/map/vector_map", "input topic of map")
+
+    # package parameter
+    add_launch_arg("use_experimental_lane_change_function")
 
     # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")

@@ -184,7 +184,7 @@ ros2 run accel_brake_map_calibrator actuation_cmd_publisher.py
 
 ## Calibration Method
 
-Two algorithms are selectable for the acceleration map update, [update_offset_four_cell_around](#update_offset_each_cell) and [update_offset_each_cell](update_offset_each_cell). Please see the link for datails.
+Two algorithms are selectable for the acceleration map update, [update_offset_four_cell_around](#update_offset_four_cell_around-1) and [update_offset_each_cell](#update_offset_each_cell). Please see the link for datails.
 
 ### Data Preprocessing
 
@@ -221,8 +221,8 @@ Data selection is determined by the following thresholds.
 $$
 \begin{align}
     \theta[n]=&
-    \theta[n-1]+\frac{p[n-1]x^{(n)}}{\lambda+p[n-1](x^{(n)})^2}(y^{(n)}-\theta[n-1]x^{(n)})\\
-    p[n]=&\frac{p[n-1]}{\lambda+p[n-1](x^{(n)})^2}
+    \theta[n-1]+\frac{p[n-1]x^{(n)}}{\lambda+p[n-1]{(x^{(n)})}^2}(y^{(n)}-\theta[n-1]x^{(n)})\\
+    p[n]=&\frac{p[n-1]}{\lambda+p[n-1]{(x^{(n)})}^2}
 \end{align}
 $$
 
@@ -243,6 +243,7 @@ Update the offsets by RLS in four grids around newly obtained data. By consideri
 **Advantage** : No data is wasted because updates are performed on the 4 grids around the data with appropriate weighting.
 **Disadvantage** : Accuracy may be degraded due to extreme bias of the data. For example, if data $z(k)$ is biased near $Z_{RR}$ in Fig. 2, updating is performed at the four surrounding points ( $Z_{RR}$, $Z_{RL}$, $Z_{LR}$, and $Z_{LL}$), but accuracy at $Z_{LL}$ is not expected.
 
+<!-- cspell: ignore fourcell -->
 <p align="center">
   <img src="./media/fourcell_RLS.png" width="600">
 </p>
@@ -252,5 +253,7 @@ Update the offsets by RLS in four grids around newly obtained data. By consideri
 See eq.(7)-(10) in [1] for the updated formula. In addition, eq.(17),(18) from [1] are used for Anti-Windup.
 
 ### References
+
+<!-- cspell: ignore Lochrie, Doljevic, Yongsoon, Yoon, IFAC -->
 
 [1] [Gabrielle Lochrie, Michael Doljevic, Mario Nona, Yongsoon Yoon, Anti-Windup Recursive Least Squares Method for Adaptive Lookup Tables with Application to Automotive Powertrain Control Systems, IFAC-PapersOnLine, Volume 54, Issue 20, 2021, Pages 840-845](https://www.sciencedirect.com/science/article/pii/S240589632102320X)
