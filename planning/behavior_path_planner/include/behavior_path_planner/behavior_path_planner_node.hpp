@@ -29,6 +29,8 @@
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #else
 #include "behavior_path_planner/planner_manager.hpp"
+#include "behavior_path_planner/scene_module/pull_out/manager.hpp"
+#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
 #endif
 
 #include "behavior_path_planner/steering_factor_interface.hpp"
@@ -95,6 +97,7 @@ using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
+using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
@@ -113,6 +116,7 @@ private:
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr costmap_subscriber_;
+  rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
@@ -153,8 +157,10 @@ private:
 
   // parameters
   std::shared_ptr<AvoidanceParameters> avoidance_param_ptr_;
+  std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
   std::shared_ptr<LaneFollowingParameters> lane_following_param_ptr_;
+  std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
 
   BehaviorPathPlannerParameters getCommonParam();
 
@@ -178,6 +184,7 @@ private:
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
+  void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
