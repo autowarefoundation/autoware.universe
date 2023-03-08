@@ -11,8 +11,13 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_definitions(-DQT_NO_KEYWORDS)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/automatic_goal_sender.cpp
   src/automatic_goal_append_tool.cpp
-  src/automatic_goal.cpp
+  src/automatic_goal_panel.cpp
+)
+
+ament_auto_add_executable(automatic_goal_sender
+  src/automatic_goal_sender.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -24,6 +29,7 @@ pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.
 
 ament_auto_package(
   INSTALL_TO_SHARE
+  launch
   icons
   plugins
 )
