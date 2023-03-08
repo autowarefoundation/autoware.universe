@@ -1,48 +1,42 @@
 #include "bytetrack/bytetrack_visualizer_node.hpp"
 
-#include <string>
-#include <chrono>
-#include <cv_bridge/cv_bridge.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
+
+#include <cv_bridge/cv_bridge.h>
+
+#include <chrono>
+#include <string>
 
 namespace bytetrack
 {
 
-ByteTrackVisualizerNode::ByteTrackVisualizerNode(
-    const rclcpp::NodeOptions& node_options)
-    : Node ("bytetrack_visualizer", node_options)
+ByteTrackVisualizerNode::ByteTrackVisualizerNode(const rclcpp::NodeOptions & node_options)
+: Node("bytetrack_visualizer", node_options)
 {
   using namespace std::chrono_literals;
 
   use_raw_ = declare_parameter("use_raw", false);
 
   // Create timer to find proper settings for subscribed topics
-  timer_ = rclcpp::create_timer(this,
-                                get_clock(),
-                                100ms,
-                                std::bind(&ByteTrackVisualizerNode::OnTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&ByteTrackVisualizerNode::OnTimer, this));
 
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
 }
 
-ByteTrackVisualizerNode::~ByteTrackVisualizerNode()
-{
-  cv::destroyAllWindows();
-}
+ByteTrackVisualizerNode::~ByteTrackVisualizerNode() { cv::destroyAllWindows(); }
 
-bool ByteTrackVisualizerNode::GetTopicQos(
-    const std::string & query_topic,
-    rclcpp::QoS & qos)
+bool ByteTrackVisualizerNode::GetTopicQos(const std::string & query_topic, rclcpp::QoS & qos)
 {
   auto publisher_info = this->get_publishers_info_by_topic(query_topic);
   if (publisher_info.size() < 1) {
     return false;
   } else if (publisher_info.size() > 1) {
     RCLCPP_ERROR_STREAM(
-        get_logger(),
-        query_topic << " seems to have more than 1 publisher."
-        << this->get_name() << "will be terminated since it could not determine the topic source.");
+      get_logger(),
+      query_topic << " seems to have more than 1 publisher." << this->get_name()
+                  << "will be terminated since it could not determine the topic source.");
     rclcpp::shutdown();
   }
 
@@ -52,7 +46,7 @@ bool ByteTrackVisualizerNode::GetTopicQos(
 
 void ByteTrackVisualizerNode::OnTimer()
 {
-  auto ResolveTopicName = [this](const std::string& query){
+  auto ResolveTopicName = [this](const std::string & query) {
     return this->get_node_topics_interface()->resolve_topic_name(query, false);
   };
 
@@ -73,8 +67,7 @@ void ByteTrackVisualizerNode::OnTimer()
   rclcpp::QoS uuid_qos(0);
   bool is_uuid_query_succeeded = GetTopicQos(uuid_topic, uuid_qos);
 
-  if (is_image_query_succeeded && is_rect_query_succeeded && is_uuid_query_succeeded)
-  {
+  if (is_image_query_succeeded && is_rect_query_succeeded && is_uuid_query_succeeded) {
     // All queries are succeeded. Stop the timer and start subscribing
     std::string conversion_type = use_raw_ ? "raw" : "compressed";
     image_sub_.subscribe(this, image_topic, conversion_type, image_qos.get_rmw_qos_profile());
@@ -82,17 +75,16 @@ void ByteTrackVisualizerNode::OnTimer()
     uuid_sub_.subscribe(this, uuid_topic, uuid_qos.get_rmw_qos_profile());
     // Since rect and uuid topics inherit the header information from the source image,
     // ExactTime sync policy suits the purpose
-    sync_ptr_ = std::make_shared<ExactTimeSync>(ExactTimeSyncPolicy(10),
-                                                image_sub_,
-                                                rect_sub_,
-                                                uuid_sub_);
+    sync_ptr_ =
+      std::make_shared<ExactTimeSync>(ExactTimeSyncPolicy(10), image_sub_, rect_sub_, uuid_sub_);
     sync_ptr_->registerCallback(&ByteTrackVisualizerNode::Callback, this);
 
     timer_->cancel();
   } else {
     RCLCPP_INFO_STREAM(
-        get_logger(),
-        "Subscribed topics seem not to be ready:" << std::endl
+      get_logger(),
+      "Subscribed topics seem not to be ready:"
+        << std::endl
         << image_topic << ": " << (is_image_query_succeeded ? "ready" : "NOT ready") << std::endl
         << rect_topic << ": " << (is_rect_query_succeeded ? "ready" : "NOT ready") << std::endl
         << uuid_topic << ": " << (is_uuid_query_succeeded ? "ready" : "NOT ready") << std::endl);
@@ -100,9 +92,9 @@ void ByteTrackVisualizerNode::OnTimer()
 }
 
 void ByteTrackVisualizerNode::Callback(
-    const sensor_msgs::msg::Image::SharedPtr& image_msg,
-    const tier4_perception_msgs::msg::DetectedObjectsWithFeature::SharedPtr& rect_msg,
-    const tier4_perception_msgs::msg::DynamicObjectArray::SharedPtr& uuid_msg)
+  const sensor_msgs::msg::Image::SharedPtr & image_msg,
+  const tier4_perception_msgs::msg::DetectedObjectsWithFeature::SharedPtr & rect_msg,
+  const tier4_perception_msgs::msg::DynamicObjectArray::SharedPtr & uuid_msg)
 {
   // Extract data from received messages
   cv_bridge::CvImagePtr in_image_ptr;
@@ -117,8 +109,7 @@ void ByteTrackVisualizerNode::Callback(
   std::vector<cv::Rect> bboxes;
   for (auto & feat_obj : rect_msg->feature_objects) {
     auto roi_msg = feat_obj.feature.roi;
-    cv::Rect rect(roi_msg.x_offset, roi_msg.y_offset,
-                  roi_msg.width, roi_msg.height);
+    cv::Rect rect(roi_msg.x_offset, roi_msg.y_offset, roi_msg.width, roi_msg.height);
     bboxes.push_back(rect);
   }
 
@@ -142,9 +133,8 @@ void ByteTrackVisualizerNode::Callback(
 }
 
 void ByteTrackVisualizerNode::Draw(
-    cv::Mat& image,
-    const std::vector<cv::Rect>& bboxes,
-    const std::vector<boost::uuids::uuid>& uuids)
+  cv::Mat & image, const std::vector<cv::Rect> & bboxes,
+  const std::vector<boost::uuids::uuid> & uuids)
 {
   // helper function to generate unique index from uuid
   auto GeneratePseudoIndex = [](boost::uuids::uuid id, size_t num_color) {
@@ -164,17 +154,17 @@ void ByteTrackVisualizerNode::Draw(
     auto color = color_map_(pseudo_id);
 
     cv::rectangle(image, bbox.tl(), bbox.br(), color);
-    cv::putText(image, cv::format("ID: %s", uuid_str.c_str()),
-                cv::Point(bbox.tl().x, bbox.tl().y - 5),
-                cv::FONT_HERSHEY_SIMPLEX,
-                1,  // font scale
-                color,
-                1,  // thickness
-                cv::LINE_AA);
+    cv::putText(
+      image, cv::format("ID: %s", uuid_str.c_str()), cv::Point(bbox.tl().x, bbox.tl().y - 5),
+      cv::FONT_HERSHEY_SIMPLEX,
+      1,  // font scale
+      color,
+      1,  // thickness
+      cv::LINE_AA);
   }
 }
 
-}  // bytetrack
+}  // namespace bytetrack
 
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(bytetrack::ByteTrackVisualizerNode)

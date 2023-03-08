@@ -17,14 +17,16 @@
 
 #include "byte_tracker.h"
 #include "strack.h"
-#include <cstdlib>
+
 #include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
 
+#include <boost/uuid/uuid.hpp>
+
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
-#include <boost/uuid/uuid.hpp>
 
 namespace bytetrack
 {
@@ -48,7 +50,7 @@ public:
   ByteTrack(const int track_buffer_length = 30);
 
   bool DoInference(ObjectArray & objects);
-  ObjectArray UpdateTracker(ObjectArray& input_objects);
+  ObjectArray UpdateTracker(ObjectArray & input_objects);
 
 private:
   std::unique_ptr<ByteTracker> tracker_;

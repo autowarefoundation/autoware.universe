@@ -13,19 +13,21 @@
 // limitations under the License.
 
 #include "bytetrack/bytetrack.hpp"
+
 #include <bytetrack/bytetrack_node.hpp>
+#include <rclcpp/qos.hpp>
 
 #include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 
-#include <rclcpp/qos.hpp>
 #include <rmw/qos_profiles.h>
+
 #include <utility>
 #include <vector>
 
 namespace bytetrack
 {
 ByteTrackNode::ByteTrackNode(const rclcpp::NodeOptions & node_options)
-    : Node("bytetrack", node_options)
+: Node("bytetrack", node_options)
 {
   using std::placeholders::_1;
   using namespace std::chrono_literals;
@@ -34,32 +36,31 @@ ByteTrackNode::ByteTrackNode(const rclcpp::NodeOptions & node_options)
 
   this->bytetrack_ = std::make_unique<bytetrack::ByteTrack>(track_buffer_length);
 
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&ByteTrackNode::OnConnect, this));
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&ByteTrackNode::OnConnect, this));
 
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
-      "~/out/objects", 1);
+    "~/out/objects", 1);
   objects_uuid_pub_ = this->create_publisher<tier4_perception_msgs::msg::DynamicObjectArray>(
-      "~/out/objects/debug/uuid", 1);}
-
+    "~/out/objects/debug/uuid", 1);
+}
 
 void ByteTrackNode::OnConnect()
 {
   using std::placeholders::_1;
-  if (objects_pub_->get_subscription_count() == 0 &&
-      objects_pub_->get_intra_process_subscription_count() == 0)
-  {
+  if (
+    objects_pub_->get_subscription_count() == 0 &&
+    objects_pub_->get_intra_process_subscription_count() == 0) {
     detection_rect_sub_.reset();
   } else if (!detection_rect_sub_) {
     detection_rect_sub_ =
-        this->create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
-            "~/in/rect", 1, std::bind(&ByteTrackNode::OnRect, this, _1));
+      this->create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
+        "~/in/rect", 1, std::bind(&ByteTrackNode::OnRect, this, _1));
   }
 }
 
 void ByteTrackNode::OnRect(
-    const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr
-    msg)
+  const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg)
 {
   using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
@@ -68,7 +69,7 @@ void ByteTrackNode::OnRect(
 
   // Unpack detection results
   ObjectArray object_array;
-  for (auto& feat_obj: msg->feature_objects) {
+  for (auto & feat_obj : msg->feature_objects) {
     Object obj;
     obj.x_offset = feat_obj.feature.roi.x_offset;
     obj.y_offset = feat_obj.feature.roi.y_offset;
@@ -88,9 +89,7 @@ void ByteTrackNode::OnRect(
     object.feature.roi.height = tracked_object.height;
     object.object.existence_probability = tracked_object.score;
     object.object.classification.emplace_back(
-        autoware_auto_perception_msgs::build<Label>()
-        .label(tracked_object.type)
-        .probability(1.0f));
+      autoware_auto_perception_msgs::build<Label>().label(tracked_object.type).probability(1.0f));
 
     out_objects.feature_objects.push_back(object);
 

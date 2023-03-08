@@ -15,8 +15,8 @@
 #ifndef BYTETRACK__BYTETRACK_NODE_HPP_
 #define BYTETRACK__BYTETRACK_NODE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <bytetrack/bytetrack.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <tier4_perception_msgs/msg/dynamic_object_array.hpp>
@@ -43,8 +43,7 @@ private:
   void OnConnect();
   void OnRect(const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg);
 
-  rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr
-    objects_pub_;
+  rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
   rclcpp::Publisher<tier4_perception_msgs::msg::DynamicObjectArray>::SharedPtr objects_uuid_pub_;
 
   rclcpp::Subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr

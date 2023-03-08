@@ -5,7 +5,7 @@
   <arg name="detection_rect" default="/perception/object_recognition/detection/rois0"/>
   <arg name="tracked_rect" default="/perception/object_recognition/detection/tracked/rois0"/>
   <arg name="track_buffer_length" default="30"/>
-  <arg name="use_raw" default="false" />
+  <arg name="use_raw" default="false"/>
 
   <node pkg="bytetrack" exec="bytetrack_node_exe" output="screen">
     <remap from="~/in/rect" to="$(var detection_rect)"/>
@@ -20,5 +20,4 @@
     <remap from="~/in/uuid" to="$(var tracked_rect)/debug/uuid"/>
     <param name="use_raw" value="$(var use_raw)"/>
   </node>
-
 </launch>

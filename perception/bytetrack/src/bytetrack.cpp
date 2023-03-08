@@ -30,10 +30,9 @@ bool ByteTrack::DoInference(ObjectArray & objects)
 {
   // Re-format data
   std::vector<ByteTrackObject> bytetrack_objects;
-  for (auto& obj: objects) {
+  for (auto & obj : objects) {
     ByteTrackObject bytetrack_obj;
-    bytetrack_obj.rect = cv::Rect(obj.x_offset, obj.y_offset,
-                                  obj.width, obj.height);
+    bytetrack_obj.rect = cv::Rect(obj.x_offset, obj.y_offset, obj.width, obj.height);
     bytetrack_obj.prob = obj.score;
     bytetrack_obj.label = obj.type;
     bytetrack_objects.emplace_back(bytetrack_obj);
@@ -44,7 +43,7 @@ bool ByteTrack::DoInference(ObjectArray & objects)
 
   // Pack results
   latest_objects_.clear();
-  for (const auto& tracking_result: output_stracks) {
+  for (const auto & tracking_result : output_stracks) {
     [[maybe_unused]] Object object{};
     std::vector<float> tlwh = tracking_result.tlwh;
     bool vertical = tlwh[2] / tlwh[3] > 1.6;
@@ -64,7 +63,7 @@ bool ByteTrack::DoInference(ObjectArray & objects)
   return true;
 }
 
-ObjectArray ByteTrack::UpdateTracker(ObjectArray& input_objects)
+ObjectArray ByteTrack::UpdateTracker(ObjectArray & input_objects)
 {
   DoInference(input_objects);
   return latest_objects_;

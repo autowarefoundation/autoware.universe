@@ -11,40 +11,42 @@ the number of false negatives is expected to decrease by using it.
 ### Cite
 
 - Yifu Zhang, Peize Sun, Yi Jiang, Dongdong Yu, Fucheng Weng, Zehuan Yuan, Ping Luo, Wenyu Liu, and Xinggang Wang,
-"ByteTrack: Multi-Object Tracking by Associating Every Detection Box", in the proc. of the ECCV
-2022, [[ref](https://arxiv.org/abs/2110.06864)]
+  "ByteTrack: Multi-Object Tracking by Associating Every Detection Box", in the proc. of the ECCV
+  2022, [[ref](https://arxiv.org/abs/2110.06864)]
 - This package is ported version toward Autoware from [this repository](https://github.com/ifzhang/ByteTrack/tree/main/deploy/TensorRT/cpp)
-(The C++ implementation by the ByteTrack's authors)
+  (The C++ implementation by the ByteTrack's authors)
 
 ## Inputs / Outputs
 
 ### bytetrack_node
+
 #### Input
 
 | Name      | Type                                               | Description                                 |
-|-----------|----------------------------------------------------|---------------------------------------------|
+| --------- | -------------------------------------------------- | ------------------------------------------- |
 | `in/rect` | `tier4_perception_msgs/DetectedObjectsWithFeature` | The detected objects with 2D bounding boxes |
 
 #### Output
 
-| Name                     | Type                                               | Description                                        |
-|--------------------------|----------------------------------------------------|----------------------------------------------------|
-| `out/objects`            | `tier4_perception_msgs/DetectedObjectsWithFeature` | The detected objects with 2D bounding boxes        |
+| Name                     | Type                                               | Description                                               |
+| ------------------------ | -------------------------------------------------- | --------------------------------------------------------- |
+| `out/objects`            | `tier4_perception_msgs/DetectedObjectsWithFeature` | The detected objects with 2D bounding boxes               |
 | `out/objects/debug/uuid` | `tier4_perception_msgs/DynamicObjectArray`         | The universally unique identifiers (UUID) for each object |
 
 ### bytetrack_visualizer
+
 #### Input
 
-| Name       | Type                                                 | Description                                                |
-|------------|------------------------------------------------------|------------------------------------------------------------|
-| `in/image` | `sensor_msgs/Image` or `sensor_msgs/CompressedImage` | The input image on which object detection is performed     |
-| `in/rect`  | `tier4_perception_msgs/DetectedObjectsWithFeature`   | The detected objects with 2D bounding boxes                |
+| Name       | Type                                                 | Description                                               |
+| ---------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| `in/image` | `sensor_msgs/Image` or `sensor_msgs/CompressedImage` | The input image on which object detection is performed    |
+| `in/rect`  | `tier4_perception_msgs/DetectedObjectsWithFeature`   | The detected objects with 2D bounding boxes               |
 | `in/uuid`  | `tier4_perception_msgs/DynamicObjectArray`           | The universally unique identifiers (UUID) for each object |
 
 #### Output
 
 | Name        | Type                | Description                                                       |
-|-------------|---------------------|-------------------------------------------------------------------|
+| ----------- | ------------------- | ----------------------------------------------------------------- |
 | `out/image` | `sensor_msgs/Image` | The image that detection bounding boxes and their UUIDs are drawn |
 
 ## Parameters
@@ -52,23 +54,23 @@ the number of false negatives is expected to decrease by using it.
 ### bytetrack_node
 
 | Name                  | Type | Default Value | Description                                              |
-|-----------------------|------|---------------|----------------------------------------------------------|
+| --------------------- | ---- | ------------- | -------------------------------------------------------- |
 | `track_buffer_length` | int  | 30            | The frame count that a tracklet is considered to be lost |
 
 ### bytetrack_visualizer
 
-| Name      | Type | Default Value | Description                                              |
-|-----------|------|---------------|----------------------------------------------------------|
+| Name      | Type | Default Value | Description                                                                                   |
+| --------- | ---- | ------------- | --------------------------------------------------------------------------------------------- |
 | `use_raw` | bool | false         | The flag for the node to switch `sensor_msgs/Image` or `sensor_msgs/CompressedImage` as input |
 
 ## Assumptions/Known limits
-
 
 ## Reference repositories
 
 - <https://github.com/ifzhang/ByteTrack>
 
 ## License
+
 The codes under the `lib` directory are copied from [the original codes](https://github.com/ifzhang/ByteTrack/tree/main/deploy/TensorRT/cpp) and modified.
 The original codes belong to the MIT license stated as follows, while this ported packages are provided with Apache License 2.0:
 
