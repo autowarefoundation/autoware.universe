@@ -91,12 +91,13 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   occupancy_grid_subscriber_ = create_subscription<OccupancyGrid>(
     "~/input/occupancy_grid_map", 1, std::bind(&BehaviorPathPlannerNode::onOccupancyGrid, this, _1),
     createSubscriptionOptions(this));
-#ifndef USE_OLD_ARCHITECTURE
+  costmap_subscriber_ = create_subscription<OccupancyGrid>(
+    "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
+    createSubscriptionOptions(this));
   operation_mode_subscriber_ = create_subscription<OperationModeState>(
     "/system/operation_mode/state", 1,
     std::bind(&BehaviorPathPlannerNode::onOperationMode, this, _1),
     createSubscriptionOptions(this));
-#endif
   scenario_subscriber_ = create_subscription<Scenario>(
     "~/input/scenario", 1,
     [this](const Scenario::ConstSharedPtr msg) {
@@ -113,10 +114,13 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
-#ifdef USE_OLD_ARCHITECTURE
-  avoidance_param_ptr = std::make_shared<AvoidanceParameters>(getAvoidanceParam());
-  lane_change_param_ptr = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
-#endif
+  // set parameters
+  {
+    avoidance_param_ptr_ = std::make_shared<AvoidanceParameters>(getAvoidanceParam());
+    lane_change_param_ptr_ = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
+    lane_following_param_ptr_ = std::make_shared<LaneFollowingParameters>(getLaneFollowingParam());
+    pull_out_param_ptr_ = std::make_shared<PullOutParameters>(getPullOutParam());
+  }
 
   m_set_param_res = this->add_on_set_parameters_callback(
     std::bind(&BehaviorPathPlannerNode::onSetParam, this, std::placeholders::_1));
@@ -136,18 +140,18 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_->registerSceneModule(side_shift_module);
 
     auto avoidance_module =
-      std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr);
+      std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr_);
     path_candidate_publishers_.emplace(
       "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
-      std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
+      std::make_shared<LaneFollowingModule>("LaneFollowing", *this, lane_following_param_ptr_);
     bt_manager_->registerSceneModule(lane_following_module);
 
     auto ext_request_lane_change_right_module =
       std::make_shared<ExternalRequestLaneChangeRightModule>(
-        "ExternalRequestLaneChangeRight", *this, lane_change_param_ptr);
+        "ExternalRequestLaneChangeRight", *this, lane_change_param_ptr_);
     path_candidate_publishers_.emplace(
       "ExternalRequestLaneChangeRight",
       create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_right", 1));
@@ -155,14 +159,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     auto ext_request_lane_change_left_module =
       std::make_shared<ExternalRequestLaneChangeLeftModule>(
-        "ExternalRequestLaneChangeLeft", *this, lane_change_param_ptr);
+        "ExternalRequestLaneChangeLeft", *this, lane_change_param_ptr_);
     path_candidate_publishers_.emplace(
       "ExternalRequestLaneChangeLeft",
       create_publisher<Path>(path_candidate_name_space + "ext_request_lane_change_left", 1));
     bt_manager_->registerSceneModule(ext_request_lane_change_left_module);
 
     auto lane_change_module =
-      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
+      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr_);
     path_candidate_publishers_.emplace(
       "LaneChange", create_publisher<Path>(path_candidate_name_space + "lane_change", 1));
     bt_manager_->registerSceneModule(lane_change_module);
@@ -172,7 +176,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       "PullOver", create_publisher<Path>(path_candidate_name_space + "pull_over", 1));
     bt_manager_->registerSceneModule(pull_over_module);
 
-    auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, getPullOutParam());
+    auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, pull_out_param_ptr_);
     path_candidate_publishers_.emplace(
       "PullOut", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
     bt_manager_->registerSceneModule(pull_out_module);
@@ -191,7 +195,18 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     mutex_bt_.lock();
 
     const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.verbose);
+    planner_manager_ =
+      std::make_shared<PlannerManager>(*this, lane_following_param_ptr_, p.verbose);
+
+    if (p.config_pull_out.enable_module) {
+      auto manager = std::make_shared<PullOutModuleManager>(
+        this, "pull_out", p.config_pull_out, pull_out_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        "pull_out", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
+      path_reference_publishers_.emplace(
+        "pull_out", create_publisher<Path>(path_reference_name_space + "pull_out", 1));
+    }
 
     mutex_bt_.unlock();
   }
@@ -224,9 +239,16 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
 
-#ifndef USE_OLD_ARCHITECTURE
   p.verbose = declare_parameter<bool>("verbose");
-#endif
+
+  {
+    const std::string ns = "pull_out.";
+    p.config_pull_out.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_pull_out.enable_simultaneous_execution =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_pull_out.priority = declare_parameter<int>(ns + "priority");
+    p.config_pull_out.max_module_size = declare_parameter<int>(ns + "max_module_size");
+  }
 
   // vehicle info
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
@@ -305,7 +327,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   return p;
 }
 
-#ifdef USE_OLD_ARCHITECTURE
 SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
 {
   const auto dp = [this](const std::string & str, auto def_val) {
@@ -327,9 +348,7 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
 
   return p;
 }
-#endif
 
-#ifdef USE_OLD_ARCHITECTURE
 AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 {
   AvoidanceParameters p{};
@@ -489,9 +508,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   return p;
 }
-#endif
 
-#ifdef USE_OLD_ARCHITECTURE
 LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
 {
   LaneFollowingParameters p{};
@@ -505,50 +522,53 @@ LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
     declare_parameter("lane_following.lane_change_prepare_duration", 2.0);
   return p;
 }
-#endif
 
-#ifdef USE_OLD_ARCHITECTURE
 LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 {
-  const auto dp = [this](const std::string & str, auto def_val) {
-    std::string name = "lane_change." + str;
-    return this->declare_parameter(name, def_val);
-  };
-
   LaneChangeParameters p{};
+  const auto parameter = [](std::string && name) { return "lane_change." + name; };
 
   // trajectory generation
-  p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
-  p.lane_changing_safety_check_duration = dp("lane_changing_safety_check_duration", 4.0);
-  p.lane_changing_lateral_jerk = dp("lane_changing_lateral_jerk", 0.5);
-  p.lane_changing_lateral_acc = dp("lane_changing_lateral_acc", 0.5);
-  p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
-  p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
-  p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
-  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
-  p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
+  p.lane_change_prepare_duration =
+    declare_parameter<double>(parameter("lane_change_prepare_duration"));
+  p.lane_changing_safety_check_duration =
+    declare_parameter<double>(parameter("lane_changing_safety_check_duration"));
+  p.lane_changing_lateral_jerk = declare_parameter<double>(parameter("lane_changing_lateral_jerk"));
+  p.lane_changing_lateral_acc = declare_parameter<double>(parameter("lane_changing_lateral_acc"));
+  p.lane_change_finish_judge_buffer =
+    declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
+  p.minimum_lane_change_velocity =
+    declare_parameter<double>(parameter("minimum_lane_change_velocity"));
+  p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
+  p.maximum_deceleration = declare_parameter<double>(parameter("maximum_deceleration"));
+  p.lane_change_sampling_num = declare_parameter<int>(parameter("lane_change_sampling_num"));
 
   // collision check
-  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
-  p.prepare_phase_ignore_target_speed_thresh = dp("prepare_phase_ignore_target_speed_thresh", 0.1);
-  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
-  p.use_all_predicted_path = dp("use_all_predicted_path", true);
+  p.enable_collision_check_at_prepare_phase =
+    declare_parameter<bool>(parameter("enable_collision_check_at_prepare_phase"));
+  p.prepare_phase_ignore_target_speed_thresh =
+    declare_parameter<double>(parameter("prepare_phase_ignore_target_speed_thresh"));
+  p.use_predicted_path_outside_lanelet =
+    declare_parameter<bool>(parameter("use_predicted_path_outside_lanelet"));
+  p.use_all_predicted_path = declare_parameter<bool>(parameter("use_all_predicted_path"));
 
   // abort
-  p.enable_cancel_lane_change = dp("enable_cancel_lane_change", true);
-  p.enable_abort_lane_change = dp("enable_abort_lane_change", false);
+  p.enable_cancel_lane_change = declare_parameter<bool>(parameter("enable_cancel_lane_change"));
+  p.enable_abort_lane_change = declare_parameter<bool>(parameter("enable_abort_lane_change"));
 
-  p.abort_delta_time = dp("abort_delta_time", 3.0);
-  p.abort_max_lateral_jerk = dp("abort_max_lateral_jerk", 10.0);
+  p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
+  p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
 
   // drivable area expansion
-  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
-  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
+  p.drivable_area_right_bound_offset =
+    declare_parameter<double>(parameter("drivable_area_right_bound_offset"));
+  p.drivable_area_left_bound_offset =
+    declare_parameter<double>(parameter("drivable_area_left_bound_offset"));
   p.drivable_area_types_to_skip =
-    dp("drivable_area_types_to_skip", std::vector<std::string>({"road_border"}));
+    declare_parameter<std::vector<std::string>>(parameter("drivable_area_types_to_skip"));
 
   // debug marker
-  p.publish_debug_marker = dp("publish_debug_marker", false);
+  p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -584,9 +604,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   return p;
 }
-#endif
 
-#ifdef USE_OLD_ARCHITECTURE
 PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
 {
   const auto dp = [this](const std::string & str, auto def_val) {
@@ -643,6 +661,8 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.backward_parking_lane_departure_margin = dp("backward_parking_lane_departure_margin", 0.0);
   p.arc_path_interval = dp("arc_path_interval", 1.0);
   p.pull_over_max_steer_angle = dp("pull_over_max_steer_angle", 0.35);  // 20deg
+  // freespace parking
+  p.enable_freespace_parking = dp("enable_freespace_parking", true);
   // hazard
   p.hazard_on_threshold_distance = dp("hazard_on_threshold_distance", 1.0);
   p.hazard_on_threshold_velocity = dp("hazard_on_threshold_velocity", 0.5);
@@ -682,9 +702,7 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
 
   return p;
 }
-#endif
 
-#ifdef USE_OLD_ARCHITECTURE
 PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
 {
   const auto dp = [this](const std::string & str, auto def_val) {
@@ -740,7 +758,6 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
 
   return p;
 }
-#endif
 
 #ifdef USE_OLD_ARCHITECTURE
 BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
@@ -785,11 +802,9 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("self_acceleration");
   }
 
-#ifndef USE_OLD_ARCHITECTURE
   if (!planner_data_->operation_mode) {
     return missing("operation_mode");
   }
-#endif
 
   return true;
 }
@@ -1175,6 +1190,11 @@ void BehaviorPathPlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPt
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->occupancy_grid = msg;
 }
+void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
+{
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
+  planner_data_->costmap = msg;
+}
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
@@ -1187,37 +1207,31 @@ void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
   route_ptr_ = msg;
   has_received_route_ = true;
 }
-#ifndef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->operation_mode = msg;
 }
-#endif
 
 SetParametersResult BehaviorPathPlannerNode::onSetParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
 
-#ifdef USE_OLD_ARCHITECTURE
-  if (!lane_change_param_ptr && !avoidance_param_ptr) {
+  if (!lane_change_param_ptr_ && !avoidance_param_ptr_) {
     result.successful = false;
     result.reason = "param not initialized";
     return result;
   }
-#endif
 
   result.successful = true;
   result.reason = "success";
 
   try {
-#ifdef USE_OLD_ARCHITECTURE
     update_param(
-      parameters, "avoidance.publish_debug_marker", avoidance_param_ptr->publish_debug_marker);
+      parameters, "avoidance.publish_debug_marker", avoidance_param_ptr_->publish_debug_marker);
     update_param(
-      parameters, "lane_change.publish_debug_marker", lane_change_param_ptr->publish_debug_marker);
-#endif
+      parameters, "lane_change.publish_debug_marker", lane_change_param_ptr_->publish_debug_marker);
     // Drivable area expansion parameters
     using drivable_area_expansion::DrivableAreaExpansionParameters;
     update_param(
