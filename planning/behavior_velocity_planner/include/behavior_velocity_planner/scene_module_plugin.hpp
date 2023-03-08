@@ -12,27 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <scene_module/v2x_gate/manager.hpp>
+#ifndef BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
 
 namespace behavior_velocity_planner
 {
 
-V2xGateManager::V2xGateManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
-{
-}
-
-void V2xGateManager::launchNewModules(const PathWithLaneId & path)
-{
-  (void)path;
-  RCLCPP_INFO_STREAM(logger_, "[v2x gate] launch_new_modules");
-}
-
-V2xGateManager::ExpiredFunction V2xGateManager::getModuleExpiredFunction(
-  const PathWithLaneId & path)
-{
-  (void)path;
-  return [](const auto &) { return true; };
-}
-
 }  // namespace behavior_velocity_planner
+
+#endif  // BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_

@@ -49,6 +49,19 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 }
 }  // namespace
 
+BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
+: plugin_loader_("behavior_velocity_planner", "behavior_velocity_planner::SceneManagerPlugin")
+{
+}
+
+void BehaviorVelocityPlannerManager::register_scene_manager(
+  rclcpp::Node * node, const std::string name)
+{
+  const auto manager = plugin_loader_.createSharedInstance(name);
+  manager->init(node);
+  scene_manager_ptrs_.push_back(manager);
+}
+
 void BehaviorVelocityPlannerManager::launchSceneModule(
   const std::shared_ptr<SceneModuleManagerInterface> & scene_module_manager_ptr)
 {

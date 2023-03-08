@@ -44,7 +44,6 @@
 #include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
-#include <scene_module/v2x_gate/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
 
 namespace
@@ -203,7 +202,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // TODO(Takagi, Isamu): module order
   if (this->declare_parameter("launch_v2x_gate", true)) {
-    planner_manager_.launchSceneModule(std::make_shared<V2xGateManager>(*this));
+    planner_manager_.register_scene_manager(this, "behavior_v2x_gate::SceneManager");
   }
 }
 

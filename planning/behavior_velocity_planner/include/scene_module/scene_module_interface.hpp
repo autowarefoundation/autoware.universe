@@ -16,6 +16,7 @@
 #define SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_velocity_planner/planner_data.hpp"
+#include "behavior_velocity_planner/scene_manager_plugin.hpp"
 #include "velocity_factor_interface.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
@@ -140,7 +141,7 @@ protected:
   }
 };
 
-class SceneModuleManagerInterface
+class SceneModuleManagerInterface : public SceneManagerPlugin
 {
 public:
   SceneModuleManagerInterface(rclcpp::Node & node, [[maybe_unused]] const char * module_name)
@@ -172,7 +173,7 @@ public:
 
   virtual ~SceneModuleManagerInterface() = default;
 
-  virtual const char * getModuleName() = 0;
+  void init(rclcpp::Node *) {}
 
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 

@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
 
+#include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
@@ -39,8 +40,12 @@ namespace behavior_velocity_planner
 class BehaviorVelocityPlannerManager
 {
 public:
+  BehaviorVelocityPlannerManager();
+
   void launchSceneModule(
     const std::shared_ptr<SceneModuleManagerInterface> & scene_module_manager_ptr);
+
+  void register_scene_manager(rclcpp::Node * node, const std::string name);
 
   autoware_auto_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
@@ -49,7 +54,8 @@ public:
   diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag() const;
 
 private:
-  std::vector<std::shared_ptr<SceneModuleManagerInterface>> scene_manager_ptrs_;
+  pluginlib::ClassLoader<SceneManagerPlugin> plugin_loader_;
+  std::vector<std::shared_ptr<SceneManagerPlugin>> scene_manager_ptrs_;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
 };
 }  // namespace behavior_velocity_planner

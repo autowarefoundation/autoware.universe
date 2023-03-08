@@ -19,7 +19,6 @@ set(scene_modules
   traffic_light
   intersection
   no_stopping_area
-  v2x_gate
   virtual_traffic_light
   occlusion_spot
   run_out

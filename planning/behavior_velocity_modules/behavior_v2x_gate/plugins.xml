@@ -1,0 +1,3 @@
+<library path="behavior_v2x_gate">
+  <class type="behavior_v2x_gate::SceneManager" base_class_type="behavior_velocity_planner::SceneManagerPlugin"/>
+</library>
