@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>ByteTrack implementation ported toward Autoware</description>
   <maintainer email="manato.hirabayashi@tier4.jp">Manato HIRABAYASHI</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>cudnn_cmake_module</buildtool_depend>
