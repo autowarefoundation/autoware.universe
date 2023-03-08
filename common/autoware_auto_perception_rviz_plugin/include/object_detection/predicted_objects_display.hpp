@@ -108,6 +108,8 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg, 
     const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
     autoware_auto_perception_msgs::msg::PredictedObjects & output_msg);
+  
+  void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_objs_msg) override;
 
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
   // std::unordered_map<boost::uuids::uuid, int32_t> id_map;

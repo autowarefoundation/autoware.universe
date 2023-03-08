@@ -40,6 +40,7 @@ public:
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
   void onInitialize() override;
+  void objectsCallback(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objs_msg) override; 
   // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
   
 

@@ -73,13 +73,15 @@ namespace object_detection
 {
 
 using Polygon2d = tier4_autoware_utils::Polygon2d;
+using Shape = autoware_auto_perception_msgs::msg::Shape;
 
   // struct for creating objects buffer 
 struct object_info
 {
-  autoware_auto_perception_msgs::msg::Shape shape;
+  Shape shape;
   geometry_msgs::msg::Pose position; 
-  autoware_auto_perception_msgs::msg::ObjectClassification  classification;
+  // autoware_auto_perception_msgs::msg::ObjectClassification  classification;
+  std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
 };
 
 inline pcl::PointXYZRGB toPCL(const double x, const double y, const double z)
@@ -185,7 +187,7 @@ public:
 
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud", 10);
+    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud", rclcpp::SensorDataQoS());
     pointcloud_subscription_ = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
       m_default_pointcloud_topic->getTopicStd(), 
       rclcpp::SensorDataQoS(), 
@@ -224,8 +226,62 @@ public:
   {
     m_marker_common.addMessage(markers_ptr);
   }
+
+    // transfrom detected object pose to target frame and return bool result
+  bool transformObjects(
+    const MsgT & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+    MsgT & output_msg)
+  {
+    output_msg = input_msg;
+
+    // transform to world coordinate
+    if (input_msg.header.frame_id != target_frame_id) {
+      output_msg.header.frame_id = target_frame_id;
+      tf2::Transform tf_target2objects_world;
+      tf2::Transform tf_target2objects;
+      tf2::Transform tf_objects_world2objects;
+      {
+        const auto ros_target2objects_world = getTransform(
+          tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+        if (!ros_target2objects_world) {
+          return false;
+        }
+        tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
+      }
+      for (auto & object : output_msg.objects) {
+        tf2::fromMsg(object.kinematics.pose_with_covariance.pose, tf_objects_world2objects);
+        tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
+        tf2::toMsg(tf_target2objects, object.kinematics.pose_with_covariance.pose);
+      }
+    }
+    return true;
+  }
+
+    // get transformation from tf2 
+  boost::optional<geometry_msgs::msg::Transform> getTransform(
+    const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
+    const std::string & target_frame_id, const rclcpp::Time & time)
+  {
+    try {
+      geometry_msgs::msg::TransformStamped self_transform_stamped;
+      self_transform_stamped = tf_buffer.lookupTransform(
+        target_frame_id, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+      return self_transform_stamped.transform;
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("perception_utils"), ex.what()); // rename
+      return boost::none;
+    }
+  }
+
    
+  // std::string objects_frame_id_;
+    // variables for transfer detected objects information between callbacks
+  std::vector<object_info> objs_buffer;
   std::string objects_frame_id_;
+  std::string pointcloud_frame_id_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr}; // !! different type in prototype, 
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_; // !! different type in prototype
+  rclcpp::Node::SharedPtr raw_node;
 
 protected:
   /// \brief Convert given shape msg into a Marker
@@ -462,51 +518,8 @@ protected:
 
   double get_line_width() { return m_line_width_property.getFloat(); }
 
-  // get transformation from tf2 
-  boost::optional<geometry_msgs::msg::Transform> getTransform(
-    const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
-    const std::string & target_frame_id, const rclcpp::Time & time)
-  {
-    try {
-      geometry_msgs::msg::TransformStamped self_transform_stamped;
-      self_transform_stamped = tf_buffer.lookupTransform(
-        target_frame_id, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
-      return self_transform_stamped.transform;
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("perception_utils"), ex.what()); // rename
-      return boost::none;
-    }
-  }
 
-  // transfrom detected object pose to target frame and return bool result
-  bool transformObjects(
-    const MsgT & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-    MsgT & output_msg)
-  {
-    output_msg = input_msg;
 
-    // transform to world coordinate
-    if (input_msg.header.frame_id != target_frame_id) {
-      output_msg.header.frame_id = target_frame_id;
-      tf2::Transform tf_target2objects_world;
-      tf2::Transform tf_target2objects;
-      tf2::Transform tf_objects_world2objects;
-      {
-        const auto ros_target2objects_world = getTransform(
-          tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
-        if (!ros_target2objects_world) {
-          return false;
-        }
-        tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
-      }
-      for (auto & object : output_msg.objects) {
-        tf2::fromMsg(object.kinematics.pose_with_covariance.pose, tf_objects_world2objects);
-        tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-        tf2::toMsg(tf_target2objects, object.kinematics.pose_with_covariance.pose);
-      }
-    }
-    return true;
-  }
 
   // helper function to get radius for kd-search
   std::optional<float> getMaxRadius(object_info & object)
@@ -521,13 +534,14 @@ protected:
       }
       return max_dist;
     } else {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "unknown shape type");
+      // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "unknown shape type");
       return std::nullopt;
     }
   }
+
+   virtual void objectsCallback(typename MsgT::ConstSharedPtr msg) = 0;
  
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr} // !! different type in prototype, 
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_; // !! different type in prototype
+
   // add pointcloud subscription
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_subscription_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
@@ -535,10 +549,7 @@ protected:
   // Default pointcloud topic;
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
 
-  // variables for transfer detected objects information between callbacks
-  std::vector<object_info> objs_buffer;
-  std::string objects_frame_id_;
-  std::string pointcloud_frame_id_;
+
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
@@ -579,10 +590,10 @@ private:
     // RCLCPP_INFO(this->get_logger(), "Get new pointcloud");
     pointcloud_frame_id_ = input_pointcloud_msg.header.frame_id;
 
-    pcl::PointXYZ minPt, maxPt;
-    pcl::PointCloud<pcl::PointXYZ> measured_cloud;
-    pcl::fromROSMsg(input_pointcloud_msg, measured_cloud);
-    pcl::getMinMax3D(measured_cloud, minPt, maxPt);
+    // pcl::PointXYZ minPt, maxPt;
+    // pcl::PointCloud<pcl::PointXYZ> measured_cloud;
+    // pcl::fromROSMsg(input_pointcloud_msg, measured_cloud);
+    // pcl::getMinMax3D(measured_cloud, minPt, maxPt);
     
     // RCLCPP_INFO(this->get_logger(), "before translation max X is '%f' max Y is '%f'", maxPt.x, maxPt.y);
     // RCLCPP_INFO(this->get_logger(), "before translation min X is '%f' min Y is '%f'", minPt.x, minPt.y);
@@ -625,7 +636,7 @@ private:
         filterPolygon(neighbor_pointcloud, out_cloud, object);
       }     
     } else {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
+      // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
       return;
     }
 
@@ -636,7 +647,7 @@ private:
     // *output_pointcloud_msg_ptr = transformed_pointcloud;
 
     output_pointcloud_msg_ptr->header = input_pointcloud_msg.header;
-    output_pointcloud_msg_ptr->header.frame_id = objects_frame_id_; // remove 
+    // output_pointcloud_msg_ptr->header.frame_id = objects_frame_id_; // remove 
     
     // RCLCPP_INFO(this->get_logger(), "Publishing pointcloud");
     publisher_->publish(*output_pointcloud_msg_ptr);

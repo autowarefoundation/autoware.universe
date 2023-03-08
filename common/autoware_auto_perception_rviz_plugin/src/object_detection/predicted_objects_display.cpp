@@ -177,34 +177,9 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
         markers.push_back(path_confidence_marker_ptr);
       }
     }
-
-    // add objects to buffer for pointcloud filtering
-    // objs_buffer.push_back(object);
-
-    autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
-    if (!transformObjects(
-          *msg, pointcloud_frame_id_, tf_buffer_,
-          transformed_objects)) {
-      // objects_pub_->publish(*input_objects);
-      // RCLCPP_INFO(this->get_logger(), "Did NOT transform objects");
-      return;
-    }
-    // RCLCPP_INFO(this->get_logger(), "Transform DONE");
-    // RCLCPP_INFO(this->get_logger(), "After transform objects frame is '%s'", transformed_objects.header.frame_id.c_str());
-    // RCLCPP_INFO(this->get_logger(), "First object X is '%f' Y is '%f'", 
-    // transformed_objects.objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x,
-    // transformed_objects.objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y);
-
-    objects_frame_id_ = transformed_objects.header.frame_id;
-    objs_buffer.clear();
-    for (const auto & object : transformed_objects.objects)
-    {
-      std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels = object.classification;
-      object_info info = {object.shape, object.kinematics.initial_pose_with_covariance.pose, object.classification};
-      objs_buffer.push_back(info);
-    }
-    // RCLCPP_INFO(this->get_logger(), "Update objects buffer");
   }
+  
+  objectsCallback(msg);
 
   return markers;
 }
@@ -237,12 +212,12 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
     wall_dt, ros_dt);
 }
 
-void PredictedObjectsDisplay::onInitialize() override
+void PredictedObjectsDisplay::onInitialize() 
 {
     ObjectPolygonDisplayBase::onInitialize();
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/predicted_objects_pointcloud", 10);
+    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/predicted_objects_pointcloud", rclcpp::SensorDataQoS());
     // pointcloud_subscription_ = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
     //   m_default_pointcloud_topic->getTopicStd(), 
     //   rclcpp::SensorDataQoS(), 
@@ -251,7 +226,7 @@ void PredictedObjectsDisplay::onInitialize() override
     //   std::placeholders::_1));
 }
 
-bool transformObjects(
+bool PredictedObjectsDisplay::transformObjects(
   const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg, 
   const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
   autoware_auto_perception_msgs::msg::PredictedObjects & output_msg)
@@ -280,6 +255,40 @@ bool transformObjects(
   }
   return true;
 }
+
+void PredictedObjectsDisplay::objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_objs_msg)
+{
+  // RCLCPP_INFO(this->get_logger(), "New objects");
+  // RCLCPP_INFO(this->get_logger(), "Befor transform objects frame is '%s'", input_objs_msg->header.frame_id.c_str());
+  // RCLCPP_INFO(this->get_logger(), "First object X is '%f' Y is '%f'", 
+  // input_objs_msg->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x,
+  // input_objs_msg->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y);
+  // Transform to pointcloud frame
+  autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
+  if (!transformObjects(
+        *input_objs_msg, pointcloud_frame_id_, *tf_buffer_,
+        transformed_objects)) {
+    // objects_pub_->publish(*input_objects);
+    // RCLCPP_INFO(this->get_logger(), "Did NOT transform objects");
+    return;
+  }
+  // RCLCPP_INFO(this->get_logger(), "Transform DONE");
+  // RCLCPP_INFO(this->get_logger(), "After transform objects frame is '%s'", transformed_objects.header.frame_id.c_str());
+  // RCLCPP_INFO(this->get_logger(), "First object X is '%f' Y is '%f'", 
+  // transformed_objects.objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x,
+  // transformed_objects.objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y);
+
+  // objects_frame_id_ = transformed_objects.header.frame_id;
+  objs_buffer.clear();
+  for (const auto & object : transformed_objects.objects)
+  {
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels = object.classification;
+    object_info info = {object.shape, object.kinematics.initial_pose_with_covariance.pose, object.classification};
+    objs_buffer.push_back(info);
+  }
+  // RCLCPP_INFO(this->get_logger(), "Update objects buffer");
+}
+
 
 
 }  // namespace object_detection
