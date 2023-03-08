@@ -49,8 +49,8 @@ class ByteTrack
 public:
   ByteTrack(const int track_buffer_length = 30);
 
-  bool DoInference(ObjectArray & objects);
-  ObjectArray UpdateTracker(ObjectArray & input_objects);
+  bool do_inference(ObjectArray & objects);
+  ObjectArray update_tracker(ObjectArray & input_objects);
 
 private:
   std::unique_ptr<ByteTracker> tracker_;

@@ -34,14 +34,14 @@ ByteTrackVisualizerNode::ByteTrackVisualizerNode(const rclcpp::NodeOptions & nod
 
   // Create timer to find proper settings for subscribed topics
   timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&ByteTrackVisualizerNode::OnTimer, this));
+    this, get_clock(), 100ms, std::bind(&ByteTrackVisualizerNode::on_timer, this));
 
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
 }
 
 ByteTrackVisualizerNode::~ByteTrackVisualizerNode() { cv::destroyAllWindows(); }
 
-bool ByteTrackVisualizerNode::GetTopicQos(const std::string & query_topic, rclcpp::QoS & qos)
+bool ByteTrackVisualizerNode::get_topic_qos(const std::string & query_topic, rclcpp::QoS & qos)
 {
   auto publisher_info = this->get_publishers_info_by_topic(query_topic);
   if (publisher_info.size() < 1) {
@@ -58,7 +58,7 @@ bool ByteTrackVisualizerNode::GetTopicQos(const std::string & query_topic, rclcp
   return true;
 }
 
-void ByteTrackVisualizerNode::OnTimer()
+void ByteTrackVisualizerNode::on_timer()
 {
   auto ResolveTopicName = [this](const std::string & query) {
     return this->get_node_topics_interface()->resolve_topic_name(query, false);
@@ -71,15 +71,15 @@ void ByteTrackVisualizerNode::OnTimer()
     image_topic_for_qos_query += "/compressed";
   }
   rclcpp::QoS image_qos(0);
-  bool is_image_query_succeeded = GetTopicQos(image_topic_for_qos_query, image_qos);
+  bool is_image_query_succeeded = get_topic_qos(image_topic_for_qos_query, image_qos);
 
   std::string rect_topic = ResolveTopicName("~/in/rect");
   rclcpp::QoS rect_qos(0);
-  bool is_rect_query_succeeded = GetTopicQos(rect_topic, rect_qos);
+  bool is_rect_query_succeeded = get_topic_qos(rect_topic, rect_qos);
 
   std::string uuid_topic = ResolveTopicName("~/in/uuid");
   rclcpp::QoS uuid_qos(0);
-  bool is_uuid_query_succeeded = GetTopicQos(uuid_topic, uuid_qos);
+  bool is_uuid_query_succeeded = get_topic_qos(uuid_topic, uuid_qos);
 
   if (is_image_query_succeeded && is_rect_query_succeeded && is_uuid_query_succeeded) {
     // All queries are succeeded. Stop the timer and start subscribing
@@ -91,7 +91,7 @@ void ByteTrackVisualizerNode::OnTimer()
     // ExactTime sync policy suits the purpose
     sync_ptr_ =
       std::make_shared<ExactTimeSync>(ExactTimeSyncPolicy(10), image_sub_, rect_sub_, uuid_sub_);
-    sync_ptr_->registerCallback(&ByteTrackVisualizerNode::Callback, this);
+    sync_ptr_->registerCallback(&ByteTrackVisualizerNode::callback, this);
 
     timer_->cancel();
   } else {
@@ -105,7 +105,7 @@ void ByteTrackVisualizerNode::OnTimer()
   }
 }
 
-void ByteTrackVisualizerNode::Callback(
+void ByteTrackVisualizerNode::callback(
   const sensor_msgs::msg::Image::SharedPtr & image_msg,
   const tier4_perception_msgs::msg::DetectedObjectsWithFeature::SharedPtr & rect_msg,
   const tier4_perception_msgs::msg::DynamicObjectArray::SharedPtr & uuid_msg)
@@ -137,7 +137,7 @@ void ByteTrackVisualizerNode::Callback(
 
   // Draw results and publish it
   cv::Mat image = in_image_ptr->image;
-  Draw(image, bboxes, uuids);
+  draw(image, bboxes, uuids);
 
   cv_bridge::CvImage pub_image_msg;
   pub_image_msg.header = image_msg->header;
@@ -146,7 +146,7 @@ void ByteTrackVisualizerNode::Callback(
   image_pub_.publish(pub_image_msg.toImageMsg());
 }
 
-void ByteTrackVisualizerNode::Draw(
+void ByteTrackVisualizerNode::draw(
   cv::Mat & image, const std::vector<cv::Rect> & bboxes,
   const std::vector<boost::uuids::uuid> & uuids)
 {

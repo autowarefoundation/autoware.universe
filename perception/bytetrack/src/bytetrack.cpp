@@ -26,7 +26,7 @@ ByteTrack::ByteTrack(const int track_buffer_length)
   tracker_ = std::make_unique<ByteTracker>(track_buffer_length);
 }
 
-bool ByteTrack::DoInference(ObjectArray & objects)
+bool ByteTrack::do_inference(ObjectArray & objects)
 {
   // Re-format data
   std::vector<ByteTrackObject> bytetrack_objects;
@@ -63,9 +63,9 @@ bool ByteTrack::DoInference(ObjectArray & objects)
   return true;
 }
 
-ObjectArray ByteTrack::UpdateTracker(ObjectArray & input_objects)
+ObjectArray ByteTrack::update_tracker(ObjectArray & input_objects)
 {
-  DoInference(input_objects);
+  do_inference(input_objects);
   return latest_objects_;
 }
 }  // namespace bytetrack

@@ -68,14 +68,14 @@ public:
   ~ByteTrackVisualizerNode();
 
 protected:
-  void OnTimer();
-  bool GetTopicQos(const std::string & query_topic, rclcpp::QoS & qos);
+  void on_timer();
+  bool get_topic_qos(const std::string & query_topic, rclcpp::QoS & qos);
 
-  void Callback(
+  void callback(
     const sensor_msgs::msg::Image::SharedPtr & image_msg,
     const tier4_perception_msgs::msg::DetectedObjectsWithFeature::SharedPtr & rect_msg,
     const tier4_perception_msgs::msg::DynamicObjectArray::SharedPtr & uuid_msg);
-  void Draw(
+  void draw(
     cv::Mat & image, const std::vector<cv::Rect> & bboxes,
     const std::vector<boost::uuids::uuid> & uuids);
 

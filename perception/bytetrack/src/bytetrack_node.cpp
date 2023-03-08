@@ -37,7 +37,7 @@ ByteTrackNode::ByteTrackNode(const rclcpp::NodeOptions & node_options)
   this->bytetrack_ = std::make_unique<bytetrack::ByteTrack>(track_buffer_length);
 
   timer_ =
-    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&ByteTrackNode::OnConnect, this));
+    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&ByteTrackNode::on_connect, this));
 
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "~/out/objects", 1);
@@ -45,7 +45,7 @@ ByteTrackNode::ByteTrackNode(const rclcpp::NodeOptions & node_options)
     "~/out/objects/debug/uuid", 1);
 }
 
-void ByteTrackNode::OnConnect()
+void ByteTrackNode::on_connect()
 {
   using std::placeholders::_1;
   if (
@@ -55,11 +55,11 @@ void ByteTrackNode::OnConnect()
   } else if (!detection_rect_sub_) {
     detection_rect_sub_ =
       this->create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
-        "~/in/rect", 1, std::bind(&ByteTrackNode::OnRect, this, _1));
+        "~/in/rect", 1, std::bind(&ByteTrackNode::on_rect, this, _1));
   }
 }
 
-void ByteTrackNode::OnRect(
+void ByteTrackNode::on_rect(
   const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg)
 {
   using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
@@ -80,7 +80,7 @@ void ByteTrackNode::OnRect(
     object_array.emplace_back(obj);
   }
 
-  bytetrack::ObjectArray objects = bytetrack_->UpdateTracker(object_array);
+  bytetrack::ObjectArray objects = bytetrack_->update_tracker(object_array);
   for (const auto & tracked_object : objects) {
     tier4_perception_msgs::msg::DetectedObjectWithFeature object;
     object.feature.roi.x_offset = tracked_object.x_offset;

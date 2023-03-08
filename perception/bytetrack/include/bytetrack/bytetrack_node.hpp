@@ -40,8 +40,8 @@ public:
   explicit ByteTrackNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void OnConnect();
-  void OnRect(const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg);
+  void on_connect();
+  void on_rect(const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr msg);
 
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
   rclcpp::Publisher<tier4_perception_msgs::msg::DynamicObjectArray>::SharedPtr objects_uuid_pub_;
