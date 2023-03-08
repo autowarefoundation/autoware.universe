@@ -17,21 +17,18 @@
 namespace planning_test_manager
 {
 
-void PlanningIntefaceTestManager::testPlaningInterface(rclcpp::Node & node)
-{
-  testNominalTrajectory(node);
-  checkOutput(topic);
-}
-void PlanningIntefaceTestManager::testCheckPlaningInterface(rclcpp::Node & node)
-{
-  // publisherがいるやつだけ or 全部異常系のチェックを実行
-  testWithEmptyTrajectory(node);
-  testWithEmptyRoute(node);
-  testWithEmptyRoute(node);
-  
+// void PlanningIntefaceTestManager::testNormalBehavior(rclcpp::Node & node)
+// {
+//   testNominalTrajectory(node);
+// }
+// void PlanningIntefaceTestManager::testCheckPlaningInterface(rclcpp::Node & node)
+// {
+//   // publisherがいるやつだけ 
+//   testWithEmptyTrajectory(node);
+//   testWithEmptyRoute(node);
+//   testWithEmptyRoute(node);
+// }
 
-}
-  
 
 
 void PlanningIntefaceTestManager::setOdomTopicName(std::string topic_name)
@@ -62,6 +59,14 @@ void PlanningIntefaceTestManager::setReceivedTrajectoryTopicName(std::string top
     std::bind(&PlanningIntefaceTestManager::count_callback, this, std::placeholders::_1));
 }
 
+void PlanningIntefaceTestManager::setReceivedMaxVelocityTopicName(std::string topic_name)
+{
+  // Count the number of trajectory received.
+  max_velocity_sub_ = max_velocity_sub_->create_subscription<TFMessage>(
+    topic_name, 10,
+    std::bind(&PlanningIntefaceTestManager::count_callback, this, std::placeholders::_1));
+}
+
 void PlanningIntefaceTestManager::publishAllPlanningInterfaceTopics()
 {
   odom_pub_->publish(genDefaultOdom());
@@ -87,12 +92,10 @@ void PlanningIntefaceTestManager::testNominalTrajectory(rclcpp::Node & node)
                                         // planning to work
 
   publishNominalTrajectory();  // publish normal trajectory
-  rclcpp::executors::SingleThreadedExecutor executor;
-  auto nodeSharedPtr = std::shared_ptr<rclcpp::Node>(&node);
-  executor.add_node(nodeSharedPtr);
+  executeNode();
 
   // check that the node does not die here.
-  ASSERT_NO_THROW(executor.spin_some());
+  ASSERT_NO_THROW();
 
 }
 
@@ -126,5 +129,13 @@ void PlanningIntefaceTestManager::count_callback([[maybe_unused]] const Trajecto
 int PlanningIntefaceTestManager::getReceivedTrajectoryNum(){
   return count_;
 }
+void PlanningIntefaceTestManager::executeNode(rclcpp::Node & node){
+  rclcpp::executors::SingleThreadedExecutor executor;
+  auto nodeSharedPtr = std::shared_ptr<rclcpp::Node>(&node);
+  executor.add_node(nodeSharedPtr);
+  executor.spin_some();
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+}
+
 
 }  // namespace planning_test_manager

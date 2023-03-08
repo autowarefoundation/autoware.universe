@@ -18,42 +18,53 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
 
 #include <gtest/gtest.h>
+#include <pcl/point_cloud.h>
 
 #include <memory>
 #include <string>
 
 namespace planning_test_manager
 {
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-// using autoware_auto_perception_msgs::msg::PredictedObjects;
-// using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using sensor_msgs::msg::PointCloud2;
+using tf2_msgs::msg::TFMessage;
 
 class PlanningIntefaceTestManager
 {
 public:
   PlanningIntefaceTestManager() {}
 
-  void testPlaningInterface(rclcpp::Node & node);
+  void testNormalBehavior(rclcpp::Node & node);
   void setOdomTopicName(std::string topic_name);
-  void setOutputTrajectoryTopicName(std::string topic_name);
+  void setPointCloudTopicName(std::string topic_name);
+  void setPredictedObjectsTopicName(std::string topic_name);
+  void setTFTopicName(std::string topic_name);
+  void setReceivedTrajectoryTopicName(std::string topic_name);
+  void setReceivedMaxVelocityTopicName(std::string topic_name);
+
 
 private:
   // Publisher
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
+  rclcpp::Publisher<PredictedObjects>::SharedPtr PredictedObjects_pub_;
+  rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
   rclcpp::Publisher<SteeringReport>::SharedPtr steering_pub_;
   rclcpp::Publisher<Path>::SharedPtr path_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
@@ -62,9 +73,8 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
 
   // Subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr
-    traj_sub_;
-
+  rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr max_velocity_sub_;
 
   // Node
   rclcpp::Node::SharedPtr test_node =
@@ -73,6 +83,10 @@ private:
   void count_callback(const Trajectory trajectory);
 
   Odometry genDefaultOdom() { return Odometry{}; }
+  PointCloud2 genDefaultPointCloud() { return PointCloud2{}; }
+  PredictedObjects genDefaultPredictedObjects() { return PredictedObjects{}; }
+  TFMessage genDefaultTFMessage() { return TFMessage{}; }
+
   Trajectory genDefaultTrajectory() { return Trajectory{}; }
 
   void publishAllPlanningInterfaceTopics();
@@ -84,6 +98,7 @@ private:
   void testWithEmptyTrajectory(rclcpp::Node & node);
 
   int getReceivedTrajectoryNum();
+  void executeNode(rclcpp::Node & node);
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager
