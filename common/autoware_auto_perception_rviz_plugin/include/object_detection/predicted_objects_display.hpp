@@ -104,6 +104,11 @@ private:
 
   void update(float wall_dt, float ros_dt) override;
 
+  bool transformObjects(
+    const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg, 
+    const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+    autoware_auto_perception_msgs::msg::PredictedObjects & output_msg);
+
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
   // std::unordered_map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;

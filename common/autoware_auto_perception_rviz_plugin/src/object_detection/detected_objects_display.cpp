@@ -29,8 +29,6 @@ DetectedObjectsDisplay::DetectedObjectsDisplay() : ObjectPolygonDisplayBase("det
 void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 {
   clear_markers();
-  // objects_frame_id_ = msg->header.frame_id;
-  objs_buffer.clear();
   int id = 0;
   for (const auto & object : msg->objects) {
     // TODO(Satoshi Tanaka): fixing from string label to one string
@@ -81,9 +79,25 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       add_marker(twist_marker_ptr);
     }
 
-    // add objects to buffer for pointcloud filtering
-    objs_buffer.push_back({object.shape, object.kinematics.pose_with_covariance.pose.position,
-      object.kinematics.pose_with_covariance.pose.orientation, object.classification});
+    // Transform to pointcloud frame
+    autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+    if (!transformObjects(
+          *msg, pointcloud_frame_id_, tf_buffer_,
+          transformed_objects)) {
+      // objects_pub_->publish(*input_objects);
+      return;
+    }
+    
+    objects_frame_id_ = transformed_objects.header.frame_id; // remove 
+
+    objs_buffer.clear();
+    for (const auto & object : transformed_objects.objects)
+    {
+      std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels = object.classification;
+      object_info info = {object.shape, object.kinematics.pose_with_covariance.pose, object.classification};
+      objs_buffer.push_back(info);
+    }
+    // RCLCPP_INFO(this->get_logger(), "Update objects buffer");
   }
 }
 
