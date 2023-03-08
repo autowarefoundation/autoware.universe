@@ -75,9 +75,12 @@ LaneChangeModule::LaneChangeModule(
 
 void LaneChangeModule::onEntry()
 {
-  std::cerr << "Lane change on entry.\n";
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
+#ifdef USE_OLD_ARCHITECTURE
   current_state_ = ModuleStatus::SUCCESS;
+#else
+  current_state_ = ModuleStatus::IDLE;
+#endif
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
