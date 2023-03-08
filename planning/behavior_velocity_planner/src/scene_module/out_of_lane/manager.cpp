@@ -34,11 +34,12 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
 
   pp.objects_min_vel = node.declare_parameter<double>(ns + ".objects.minimum_velocity");
   pp.objects_time_thr = node.declare_parameter<double>(ns + ".objects.time_threshold");
-  pp.objects_dist_thr = node.declare_parameter<double>(ns + ".objects.distance_threshold");
+  pp.objects_slow_time_thr = node.declare_parameter<double>(ns + ".objects.slow_time_threshold");
 
   pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap.minimum_distance");
   pp.overlap_extra_length = node.declare_parameter<double>(ns + ".overlap.extra_length");
 
+  pp.slow_velocity = node.declare_parameter<double>(ns + ".slowdown.velocity");
   pp.stop_extra_dist = node.declare_parameter<double>(ns + ".stop.extra_distance");
   pp.stop_max_decel = node.declare_parameter<double>(ns + ".stop.maximum_deceleration");
 

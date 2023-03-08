@@ -73,15 +73,17 @@ struct PlannerParam
 {
   bool use_threshold;  // if true, use a time threshold to decide to stop before going out of lane
 
-  double objects_dist_thr;  // [m]
   double objects_min_vel;   // [m/s] objects lower than this velocity will be ignored
   double objects_time_thr;  // if using threshold, stop for an object whose incoming time is below
                             // this value
+  double objects_slow_time_thr;  // if using threshold, slowdown for an object whose incoming time
+                                 // is below this value
 
   double overlap_extra_length;  // [m] extra length to add around an overlap interval
   double overlap_min_dist;      // [m] min distance inside a lane for a footprint to be considered
                                 // overlapping
 
+  double slow_velocity;
   double stop_extra_dist;
   double stop_max_decel;
   // ego dimensions used to create its polygon footprint
@@ -356,23 +358,30 @@ inline std::vector<Slowdown> calculate_decisions(
         "\t\t[%s] going at %2.2fm/s enter at %2.2fs, exits at %2.2fs\n",
         tier4_autoware_utils::toHexString(object.object_id).c_str(),
         object.kinematics.initial_twist_with_covariance.twist.linear.x, enter_time, exit_time);
-      min_object_enter_time = std::min(min_object_enter_time, enter_time);
+      min_object_enter_time = std::min(min_object_enter_time, std::max(0.0, enter_time));
       max_object_exit_time = std::max(max_object_exit_time, exit_time);
     }
     // TODO(Maxime): more complex decisions, threshold, slowdown instead of stop
+    const auto incoming_objects = min_object_enter_time < max_object_exit_time;
     const auto ego_enters_before_object = ego_enter_time < min_object_enter_time;
     const auto ego_exits_after_object = ego_exit_time > max_object_exit_time;
-    const auto threshold_stop_condition =
-      min_object_enter_time > 0.0 && min_object_enter_time < params.objects_time_thr;
-    const auto should_stop =
+    const auto threshold_stop_condition = min_object_enter_time < params.objects_time_thr;
+    const auto threshold_slow_condition = min_object_enter_time < params.objects_slow_time_thr;
+    const auto interval_stop_condition = ego_enters_before_object && ego_exits_after_object;
+    const auto should_stop = incoming_objects && (
       (params.use_threshold && threshold_stop_condition) ||
-      (!params.use_threshold && ego_enters_before_object && ego_exits_after_object);
+      (!params.use_threshold && interval_stop_condition));
+    const auto should_slow = incoming_objects && params.use_threshold && threshold_slow_condition;
+    Slowdown decision;
+    decision.target_path_idx = first_idx + interval.entering_path_idx;
+    decision.lane_to_avoid = interval.lane.id();
     if (should_stop) {
       std::printf("\t\tWill stop\n");
-      Slowdown decision;
-      decision.target_path_idx = first_idx + ego_enter_time;
       decision.velocity = 0.0;
-      decision.lane_to_avoid = interval.lane.id();
+      decisions.push_back(decision);
+    } else if (should_slow) {
+      std::printf("\t\tWill slow\n");
+      decision.velocity = params.slow_velocity;
       decisions.push_back(decision);
     }
   }
