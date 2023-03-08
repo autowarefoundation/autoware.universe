@@ -220,7 +220,6 @@ OccupancyGrid::UniquePtr LaserscanBasedOccupancyGridMapNode::OccupancyGridMapToM
   unsigned char * data = occupancy_grid_map.getCharMap();
   for (unsigned int i = 0; i < msg_ptr->data.size(); ++i) {
     msg_ptr->data[i] = occupancy_cost_value::cost_translation_table[data[i]];
-  }
   return msg_ptr;
 }
 
