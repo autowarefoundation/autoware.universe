@@ -190,6 +190,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
   updateOutputTurnSignal(output);
 
   updateSteeringFactorPtr(output);
+  clearWaitingApproval();
 
   return output;
 }
