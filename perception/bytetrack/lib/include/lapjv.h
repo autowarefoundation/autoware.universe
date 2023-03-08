@@ -48,9 +48,9 @@
 #define FALSE 0
 #endif
 
-#define NEW(x, t, n)                             \
-  if ((x = (t *)malloc(sizeof(t) * (n))) == 0) { \
-    return -1;                                   \
+#define NEW(x, t, n)                                               \
+  if ((x = reinterpret_cast<t *>(malloc(sizeof(t) * (n)))) == 0) { \
+    return -1;                                                     \
   }
 #define FREE(x) \
   if (x != 0) { \

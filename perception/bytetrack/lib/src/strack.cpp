@@ -91,7 +91,7 @@ void STrack::activate(byte_kalman::KalmanFilter & kalman_filter, int frame_id)
   this->state = TrackState::Tracked;
   // if (frame_id == 1)
   // {
-  // 	this->is_activated = true;
+  //   this->is_activated = true;
   // }
   this->is_activated = true;
   this->frame_id = frame_id;

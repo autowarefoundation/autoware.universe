@@ -40,6 +40,8 @@
 
 #include "strack.h"
 
+#include <vector>
+
 struct ByteTrackObject
 {
   cv::Rect_<float> rect;

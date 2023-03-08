@@ -30,7 +30,10 @@
 #include <message_filters/synchronizer.h>
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace bytetrack
 {

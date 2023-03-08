@@ -42,6 +42,7 @@
 #include <eigen3/Eigen/Dense>
 
 #include <cstddef>
+#include <utility>
 #include <vector>
 typedef Eigen::Matrix<float, 1, 4, Eigen::RowMajor> DETECTBOX;
 typedef Eigen::Matrix<float, -1, 4, Eigen::RowMajor> DETECTBOXSS;

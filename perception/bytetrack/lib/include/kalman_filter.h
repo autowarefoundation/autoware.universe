@@ -40,6 +40,7 @@
 
 #include "data_type.h"
 
+#include <vector>
 namespace byte_kalman
 {
 class KalmanFilter

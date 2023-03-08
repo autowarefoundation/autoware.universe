@@ -44,6 +44,8 @@
 
 #include <boost/uuid/uuid.hpp>
 
+#include <vector>
+
 enum TrackState { New = 0, Tracked, Lost, Removed };
 
 class STrack
@@ -53,7 +55,7 @@ public:
   ~STrack();
 
   std::vector<float> static tlbr_to_tlwh(std::vector<float> & tlbr);
-  void static multi_predict(
+  static void multi_predict(
     std::vector<STrack *> & stracks, byte_kalman::KalmanFilter & kalman_filter);
   void static_tlwh();
   void static_tlbr();

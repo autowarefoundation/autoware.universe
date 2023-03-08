@@ -28,7 +28,7 @@ namespace bytetrack
 ByteTrackVisualizerNode::ByteTrackVisualizerNode(const rclcpp::NodeOptions & node_options)
 : Node("bytetrack_visualizer", node_options)
 {
-  using namespace std::chrono_literals;
+  using std::chrono_literals::operator""ms;
 
   use_raw_ = declare_parameter("use_raw", false);
 
