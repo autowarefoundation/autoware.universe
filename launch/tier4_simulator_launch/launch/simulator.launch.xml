@@ -6,7 +6,6 @@
   <arg name="launch_dummy_perception"/>
   <arg name="launch_dummy_vehicle"/>
   <arg name="launch_dummy_localization"/>
-  <arg name="launch_planning_evaluator"/>
   <arg name="launch_diagnostic_converter"/>
   <arg name="vehicle_info_param_file"/>
 
@@ -104,11 +103,6 @@
       <arg name="ekf_enabled" value="false"/>
       <arg name="stop_check_enabled" value="false"/>
     </include>
-  </group>
-
-  <!-- Planning Evaluator -->
-  <group if="$(var launch_planning_evaluator)">
-    <include file="$(find-pkg-share planning_evaluator)/launch/planning_evaluator.launch.xml"/>
   </group>
 
   <!-- Diagnostic Converter -->
