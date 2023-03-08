@@ -71,7 +71,7 @@ the number of false negatives is expected to decrease by using it.
 
 ## License
 
-The codes under the `lib` directory are copied from [the original codes](https://github.com/ifzhang/ByteTrack/tree/main/deploy/TensorRT/cpp) and modified.
+The codes under the `lib` directory are copied from [the original codes](https://github.com/ifzhang/ByteTrack/tree/72ca8b45d36caf5a39e949c6aa815d9abffd1ab5/deploy/TensorRT/cpp) and modified.
 The original codes belong to the MIT license stated as follows, while this ported packages are provided with Apache License 2.0:
 
 > MIT License
