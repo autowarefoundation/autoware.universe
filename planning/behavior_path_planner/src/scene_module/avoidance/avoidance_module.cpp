@@ -752,6 +752,14 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
       getLogger(), *clock_, 5000, "not found safe avoidance path. transit yield maneuver...");
   }
 
+  if (!data.safe && registered) {
+    data.yield_required = true;
+    data.candidate_path = toShiftedPath(data.reference_path);
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000,
+      "found safe avoidance path, but it is not safe. canceling avoidance path...");
+  }
+
   /**
    * TODO(Satoshi OTA) Think yield maneuver in the middle of avoidance.
    * Even if it is determined that a yield is necessary, the yield maneuver is not executed
@@ -811,16 +819,16 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
 
 AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & data) const
 {
+  if (data.yield_required && parameters_->enable_yield_maneuver) {
+    return AvoidanceState::YIELD;
+  }
+
   if (!data.avoid_required) {
     return AvoidanceState::NOT_AVOID;
   }
 
   if (!data.found_avoidance_path) {
     return AvoidanceState::AVOID_PATH_NOT_READY;
-  }
-
-  if (data.yield_required && parameters_->enable_yield_maneuver) {
-    return AvoidanceState::YIELD;
   }
 
   if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
