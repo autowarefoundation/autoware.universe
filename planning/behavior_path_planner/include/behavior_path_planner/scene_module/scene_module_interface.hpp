@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -27,13 +28,8 @@
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
-
-#include <behaviortree_cpp_v3/basic_types.h>
 
 #include <algorithm>
 #include <limits>
@@ -47,37 +43,13 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
-using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
-using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
+using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
-
-struct BehaviorModuleOutput
-{
-  BehaviorModuleOutput() = default;
-
-  // path planed by module
-  PlanResult path{};
-
-  TurnSignalInfo turn_signal_info{};
-
-  std::optional<PoseWithUuidStamped> modified_goal{};
-};
-
-struct CandidateOutput
-{
-  CandidateOutput() = default;
-  explicit CandidateOutput(const PathWithLaneId & path) : path_candidate{path} {}
-  PathWithLaneId path_candidate{};
-  double lateral_shift{0.0};
-  double start_distance_to_path_change{std::numeric_limits<double>::lowest()};
-  double finish_distance_to_path_change{std::numeric_limits<double>::lowest()};
-};
 
 class SceneModuleInterface
 {
@@ -86,16 +58,19 @@ public:
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
-    uuid_(generateUUID()),
     is_waiting_approval_{false},
-    current_state_{BT::NodeStatus::SUCCESS}
+    is_locked_new_module_launch_{false},
+    uuid_(generateUUID()),
+    current_state_{ModuleStatus::SUCCESS}
   {
+#ifdef USE_OLD_ARCHITECTURE
     std::string module_ns;
     module_ns.resize(name.size());
     std::transform(name.begin(), name.end(), module_ns.begin(), tolower);
 
     const auto ns = std::string("~/debug/") + module_ns;
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+#endif
   }
 
   virtual ~SceneModuleInterface() = default;
@@ -105,16 +80,13 @@ public:
    *        FAILURE if plan has failed, RUNNING if plan is on going.
    *        These condition is to be implemented in each modules.
    */
-  virtual BT::NodeStatus updateState() = 0;
+  virtual ModuleStatus updateState() = 0;
 
   /**
    * @brief If the module plan customized reference path while waiting approval, it should output
    * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
    */
-  virtual BT::NodeStatus getNodeStatusWhileWaitingApproval() const
-  {
-    return BT::NodeStatus::FAILURE;
-  }
+  virtual ModuleStatus getNodeStatusWhileWaitingApproval() const { return ModuleStatus::FAILURE; }
 
   /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
@@ -162,7 +134,7 @@ public:
    */
   virtual BehaviorModuleOutput run()
   {
-    current_state_ = BT::NodeStatus::RUNNING;
+    current_state_ = ModuleStatus::RUNNING;
 
     updateData();
 
@@ -223,25 +195,6 @@ public:
     steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
   }
 
-  /**
-   * @brief set planner data
-   */
-  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
-
-  void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
-
-  std::string name() const { return name_; }
-
-  rclcpp::Logger getLogger() const { return logger_; }
-
-  std::shared_ptr<const PlannerData> planner_data_;
-
-  bool isWaitingApproval() const { return is_waiting_approval_; }
-
-  PlanResult getPathCandidate() const { return path_candidate_; }
-
-  void resetPathCandidate() { path_candidate_.reset(); }
-
   virtual void lockRTCCommand()
   {
     if (!rtc_interface_ptr_) {
@@ -257,23 +210,58 @@ public:
     }
     rtc_interface_ptr_->unlockCommandUpdate();
   }
+
+  /**
+   * @brief set previous module's output as input for this module
+   */
+  void setPreviousModuleOutput(const BehaviorModuleOutput & previous_module_output)
+  {
+    previous_module_output_ = previous_module_output;
+  }
+
+  /**
+   * @brief set planner data
+   */
+  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
+
+#ifdef USE_OLD_ARCHITECTURE
+  void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
+#endif
+
+  bool isWaitingApproval() const { return is_waiting_approval_; }
+
+  bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
+  void resetPathReference() { path_reference_.reset(); }
+
+  PlanResult getPathCandidate() const { return path_candidate_; }
+
+  PlanResult getPathReference() const { return path_reference_; }
+
+  MarkerArray getDebugMarkers() { return debug_marker_; }
+
+  ModuleStatus getCurrentStatus() const { return current_state_; }
+
   virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
+
+  std::string name() const { return name_; }
+
+  rclcpp::Logger getLogger() const { return logger_; }
 
 private:
   std::string name_;
+
   rclcpp::Logger logger_;
 
-protected:
-  rclcpp::Clock::SharedPtr clock_;
+#ifdef USE_OLD_ARCHITECTURE
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
-  mutable MarkerArray debug_marker_;
+#endif
 
-  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
-  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
-  UUID uuid_;
-  bool is_waiting_approval_;
-  PlanResult path_candidate_;
+  BehaviorModuleOutput previous_module_output_;
 
+protected:
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {
     if (!rtc_interface_ptr_) {
@@ -291,41 +279,35 @@ protected:
     rtc_interface_ptr_->clearCooperateStatus();
   }
 
+  BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
+
+  void lockNewModuleLaunch() { is_locked_new_module_launch_ = true; }
+
+  void unlockNewModuleLaunch() { is_locked_new_module_launch_ = false; }
+
   void waitApproval() { is_waiting_approval_ = true; }
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
 
-  static UUID generateUUID()
-  {
-    // Generate random number
-    UUID uuid;
-    std::mt19937 gen(std::random_device{}());
-    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
-    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
+  rclcpp::Clock::SharedPtr clock_;
 
-    return uuid;
-  }
+  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
 
-  template <class T>
-  size_t findEgoIndex(const std::vector<T> & points) const
-  {
-    const auto & p = planner_data_;
-    return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
-      p->parameters.ego_nearest_yaw_threshold);
-  }
+  std::shared_ptr<const PlannerData> planner_data_;
 
-  template <class T>
-  size_t findEgoSegmentIndex(const std::vector<T> & points) const
-  {
-    const auto & p = planner_data_;
-    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
-      p->parameters.ego_nearest_yaw_threshold);
-  }
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
-public:
-  BT::NodeStatus current_state_;
+  bool is_waiting_approval_;
+  bool is_locked_new_module_launch_;
+
+  UUID uuid_;
+
+  PlanResult path_candidate_;
+  PlanResult path_reference_;
+
+  ModuleStatus current_state_;
+
+  mutable MarkerArray debug_marker_;
 };
 
 }  // namespace behavior_path_planner

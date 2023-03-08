@@ -984,6 +984,17 @@ lanelet::Lanelets RouteHandler::getLeftOppositeLanelets(const lanelet::ConstLane
   return opposite_lanelets;
 }
 
+lanelet::ConstLanelet RouteHandler::getMostRightLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  // recursively compute the width of the lanes
+  const auto & same = getRightLanelet(lanelet);
+
+  if (same) {
+    return getMostRightLanelet(same.get());
+  }
+  return lanelet;
+}
+
 lanelet::ConstLanelet RouteHandler::getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const
 {
   // recursively compute the width of the lanes
@@ -1084,6 +1095,14 @@ lanelet::ConstLineStrings3d RouteHandler::getFurthestLinestring(
     linestrings.emplace_back(lanelet.leftBound());
   }
   return linestrings;
+}
+
+std::vector<lanelet::ConstLanelets> RouteHandler::getPrecedingLaneletSequence(
+  const lanelet::ConstLanelet & lanelet, const double length,
+  const lanelet::ConstLanelets & exclude_lanelets) const
+{
+  return lanelet::utils::query::getPrecedingLaneletSequences(
+    routing_graph_ptr_, lanelet, length, exclude_lanelets);
 }
 
 bool RouteHandler::getLaneChangeTarget(
