@@ -604,10 +604,10 @@ BehaviorModuleOutput PullOverModule::plan()
           first_path, parameters_->pull_over_velocity, *search_start_pose, -deceleration_buffer,
           parameters_->deceleration_interval);
       } else {
-        // if already passed the search start pose, set current_vel to first_path.
+        // if already passed the search start pose, set pull_over_velocity to first_path.
         for (auto & p : first_path.points) {
-          p.point.longitudinal_velocity_mps =
-            std::min(p.point.longitudinal_velocity_mps, static_cast<float>(current_vel));
+          p.point.longitudinal_velocity_mps = std::min(
+            p.point.longitudinal_velocity_mps, static_cast<float>(parameters_->pull_over_velocity));
         }
       }
     }
@@ -852,10 +852,10 @@ PathWithLaneId PullOverModule::generateStopPath()
       reference_path, parameters_->pull_over_velocity, *search_start_pose, -deceleration_buffer,
       parameters_->deceleration_interval);
   } else {
-    // if already passed the search start pose, set current_vel to reference_path.
+    // if already passed the search start pose, set pull_over_velocity to reference_path.
     for (auto & p : reference_path.points) {
-      p.point.longitudinal_velocity_mps =
-        std::min(p.point.longitudinal_velocity_mps, static_cast<float>(current_vel));
+      p.point.longitudinal_velocity_mps = std::min(
+        p.point.longitudinal_velocity_mps, static_cast<float>(parameters_->pull_over_velocity));
     }
   }
 
