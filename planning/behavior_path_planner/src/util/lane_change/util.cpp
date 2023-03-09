@@ -361,7 +361,7 @@ std::pair<bool, bool> getLaneChangePaths(
       route_handler, original_lanelets, arc_position_from_current.length, backward_path_length,
       prepare_distance, std::max(prepare_speed, minimum_lane_change_velocity));
 
-    const double estimated_shift_length =
+    const auto estimated_shift_length =
       getLateralDistance(target_lanelets, prepare_segment_reference.points.front().point.pose);
 
     const auto [lane_changing_speed, lane_changing_distance] =
