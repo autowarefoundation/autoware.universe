@@ -64,6 +64,9 @@ public:
   int getReceivedTrajectoryNum();
   int getReceivedMaxVelocityNum();
 
+  void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
+  void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
+
 private:
   // Publisher
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;

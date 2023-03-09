@@ -102,6 +102,29 @@ void PlanningIntefaceTestManager::testNominalTrajectory(rclcpp::Node & node)
   ASSERT_NO_THROW(executeNode(node));
 }
 
+void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
+{
+  // for vehicle info
+  node_options.append_parameter_override("wheel_radius", 0.5);
+  node_options.append_parameter_override("wheel_width", 0.2);
+  node_options.append_parameter_override("wheel_base", 3.0);
+  node_options.append_parameter_override("wheel_tread", 2.0);
+  node_options.append_parameter_override("front_overhang", 1.0);
+  node_options.append_parameter_override("rear_overhang", 1.0);
+  node_options.append_parameter_override("left_overhang", 0.5);
+  node_options.append_parameter_override("right_overhang", 0.5);
+  node_options.append_parameter_override("vehicle_height", 1.5);
+  node_options.append_parameter_override("max_steer_angle", 0.7);
+  return;
+}
+
+void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
+  rclcpp::NodeOptions & node_options)
+{
+  node_options.append_parameter_override("ego_nearest_dist_threshold", 3.0);
+  node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
+  return;
+}
 // Test node is working properly（node independent？）
 // EXPECT_GE(getReceivedTrajectoryNum(), 1);
 
