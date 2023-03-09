@@ -102,7 +102,7 @@ void AutowareAutomaticGoalSender::onOperationMode(const OperationModeState::Cons
 // Update
 void AutowareAutomaticGoalSender::updateGoalsList()
 {
-  int i = 0;
+  unsigned i = 0;
   for (const auto & goal : goals_list_) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2);
@@ -146,7 +146,8 @@ void AutowareAutomaticGoalSender::updateAutoExecutionTimerTick()
 
   } else if (state == State::CLEARED) {
     RCLCPP_INFO_STREAM(get_logger(), goal << ": Route has been cleared.");
-    current_goal = (++current_goal) % goals_list_.size();
+    current_goal++;
+    current_goal = current_goal % goals_list_.size();
     state = State::AUTONEXT;
 
   } else if (state == State::STOPPED) {

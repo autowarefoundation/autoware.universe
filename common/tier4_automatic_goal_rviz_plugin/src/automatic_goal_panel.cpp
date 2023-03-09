@@ -220,7 +220,7 @@ void AutowareAutomaticGoalPanel::onClickClearRoute()
 
 void AutowareAutomaticGoalPanel::onClickRemove()
 {
-  if (goals_list_widget_ptr_->currentRow() < goals_list_.size())
+  if (static_cast<unsigned>(goals_list_widget_ptr_->currentRow()) < goals_list_.size())
     goals_list_.erase(goals_list_.begin() + goals_list_widget_ptr_->currentRow());
   resetAchievedGoals();
   updateGUI();
@@ -266,8 +266,7 @@ void AutowareAutomaticGoalPanel::onGoalListUpdated()
   }
   publishMarkers();
 }
-void AutowareAutomaticGoalPanel::onOperationModeUpdated(
-  const OperationModeState::ConstSharedPtr msg)
+void AutowareAutomaticGoalPanel::onOperationModeUpdated(const OperationModeState::ConstSharedPtr)
 {
   updateGUI();
 }
@@ -389,6 +388,8 @@ void AutowareAutomaticGoalPanel::updateGUI()
     case State::CLEARING:
       style = std::make_pair("CLEARING", "background-color: #FFA500;");
       break;
+    default:
+      break;
   }
 
   automatic_mode_btn_ptr_->setStyleSheet("");
@@ -433,7 +434,7 @@ void AutowareAutomaticGoalPanel::publishMarkers()
   text_array.markers.clear();
   arrow_array.markers.clear();
   // Publish current
-  for (int i = 0; i < goals_list_.size(); i++) {
+  for (unsigned i = 0; i < goals_list_.size(); i++) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = rclcpp::Time();

@@ -141,8 +141,8 @@ protected:
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
 
   // Interface
-  virtual void onRouteUpdated(const RouteState::ConstSharedPtr msg) {}
-  virtual void onOperationModeUpdated(const OperationModeState::ConstSharedPtr msg) {}
+  virtual void onRouteUpdated(const RouteState::ConstSharedPtr) {}
+  virtual void onOperationModeUpdated(const OperationModeState::ConstSharedPtr) {}
   virtual void onCallResult() {}
   virtual void onGoalListUpdated() {}
 
