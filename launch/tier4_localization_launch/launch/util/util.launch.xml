@@ -3,12 +3,13 @@
   <!-- Topics -->
   <arg name="input/pointcloud" description="input topic name"/>
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
+  <arg name="stop_check_enabled" default="true"/>
 
   <let name="ndt_enabled" value="true" if="$(eval &quot;'$(var pose_estimator_mode)'=='lidar'&quot;)"/>
   <let name="ndt_enabled" value="false" if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)"/>
   <let name="gnss_pose_cov" value="/sensing/gnss/pose_with_covariance" if="$(eval &quot;'$(var pose_estimator_mode)'=='lidar'&quot;)"/>
   <let name="gnss_pose_cov" value="/localization/pose_estimator/pose_with_covariance" if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)"/>
-
+  <let name="stop_check_enabled" value="false" if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)"/>
   <!-- container -->
   <arg name="use_pointcloud_container" default="True" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="/pointcloud_container" description="container name"/>
@@ -21,7 +22,7 @@
     <arg name="gnss_enabled" value="true"/>
     <arg name="ndt_enabled" value="$(var ndt_enabled)"/>
     <arg name="ekf_enabled" value="true"/>
-    <arg name="stop_check_enabled" value="true"/>
+    <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
     <arg name="gnss_pose_cov" value="$(var gnss_pose_cov)"/>
   </include>
 
