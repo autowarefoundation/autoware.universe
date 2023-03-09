@@ -166,17 +166,17 @@ void AutowareAutomaticGoalSender::loadGoalsList(const std::string & file_path)
 {
   YAML::Node node = YAML::LoadFile(file_path);
   goals_list_.clear();
-  for (unsigned i = 0; i < node.size(); i++) {
+  for (auto && goal : node) {
     std::shared_ptr<PoseStamped> pose = std::make_shared<PoseStamped>();
     pose->header.frame_id = "map";
     pose->header.stamp = rclcpp::Time();
-    pose->pose.position.x = node[i]["position_x"].as<double>();
-    pose->pose.position.y = node[i]["position_y"].as<double>();
-    pose->pose.position.z = node[i]["position_z"].as<double>();
-    pose->pose.orientation.x = node[i]["orientation_x"].as<double>();
-    pose->pose.orientation.y = node[i]["orientation_y"].as<double>();
-    pose->pose.orientation.z = node[i]["orientation_z"].as<double>();
-    pose->pose.orientation.w = node[i]["orientation_w"].as<double>();
+    pose->pose.position.x = goal["position_x"].as<double>();
+    pose->pose.position.y = goal["position_y"].as<double>();
+    pose->pose.position.z = goal["position_z"].as<double>();
+    pose->pose.orientation.x = goal["orientation_x"].as<double>();
+    pose->pose.orientation.y = goal["orientation_y"].as<double>();
+    pose->pose.orientation.z = goal["orientation_z"].as<double>();
+    pose->pose.orientation.w = goal["orientation_w"].as<double>();
     goals_list_.push_back(pose);
   }
   resetAchievedGoals();
@@ -185,7 +185,7 @@ void AutowareAutomaticGoalSender::loadGoalsList(const std::string & file_path)
 
 void AutowareAutomaticGoalSender::updateAchievedGoalsFile(const unsigned goal_index)
 {
-  if (goals_achiev_file_path_ != "") {
+  if (!goals_achiev_file_path_.empty()) {
     std::ofstream out(goals_achiev_file_path_, std::fstream::app);
     std::stringstream ss;
     ss << "[" << getTimestamp() << "] Achieved: " << goals_achieved_[goal_index].first;
@@ -198,7 +198,7 @@ void AutowareAutomaticGoalSender::updateAchievedGoalsFile(const unsigned goal_in
 void AutowareAutomaticGoalSender::resetAchievedGoals()
 {
   goals_achieved_.clear();
-  if (goals_achiev_file_path_ != "") {
+  if (!goals_achiev_file_path_.empty()) {
     std::ofstream out(goals_achiev_file_path_, std::fstream::app);
     out << "[" << getTimestamp()
         << "] GoalsList was loaded from a file or a goal was removed - counters have been reset\n";

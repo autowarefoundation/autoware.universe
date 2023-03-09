@@ -126,10 +126,9 @@ QGroupBox * AutowareAutomaticGoalPanel::makeEngagementGroup()
 
 void AutowareAutomaticGoalPanel::showMessageBox(const QString & string)
 {
-  QMessageBox msgBox(this);
-  msgBox.setText(string);
-  msgBox.exec();
-  return;
+  QMessageBox msg_box(this);
+  msg_box.setText(string);
+  msg_box.exec();
 }
 
 // Slots
@@ -167,14 +166,12 @@ void AutowareAutomaticGoalPanel::onToggleAutoMode(bool checked)
   if (checked && goals_list_widget_ptr_->selectedItems().count() != 1) {
     showMessageBox("Select the first goal in GoalsList");
     automatic_mode_btn_ptr_->setChecked(false);
-    return;
-  } else if (checked) {
-    current_goal = goals_list_widget_ptr_->currentRow();
+  } else {
+    if (checked) current_goal = goals_list_widget_ptr_->currentRow();
+    is_automatic_mode_on = checked;
+    is_automatic_mode_on ? qtimer_->start(1000) : qtimer_->stop();
+    onClickClearRoute();  // here will be set State::AUTONEXT or State::EDITING;
   }
-
-  is_automatic_mode_on = checked;
-  is_automatic_mode_on ? qtimer_->start(1000) : qtimer_->stop();
-  onClickClearRoute();  // here will be set State::AUTONEXT or State::EDITING;
 }
 
 void AutowareAutomaticGoalPanel::onClickPlan()
@@ -403,7 +400,7 @@ void AutowareAutomaticGoalPanel::updateGUI()
   updateLabel(engagement_label_ptr_, style.first, style.second);
 }
 
-void AutowareAutomaticGoalPanel::updateGoalIcon(const unsigned goal_index, QColor color)
+void AutowareAutomaticGoalPanel::updateGoalIcon(const unsigned goal_index, const QColor & color)
 {
   QPixmap pixmap(24, 24);
   pixmap.fill(color);

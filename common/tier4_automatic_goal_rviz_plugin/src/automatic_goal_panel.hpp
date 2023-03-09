@@ -99,7 +99,7 @@ private:
 
   // Visual updates
   void updateGUI();
-  void updateGoalIcon(const unsigned goal_index, QColor color);
+  void updateGoalIcon(const unsigned goal_index, const QColor & color);
   void publishMarkers();
   void showMessageBox(const QString & string);
   void disableAutomaticMode() { automatic_mode_btn_ptr_->setChecked(false); }
@@ -114,11 +114,11 @@ private:
   void saveGoalsList(const std::string & file);
 
   // Pub/Sub
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_append_goal_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_{nullptr};
+  rclcpp::Subscription<PoseStamped>::SharedPtr sub_append_goal_{nullptr};
 
   // Containers
-  rclcpp::Node::SharedPtr raw_node_;
+  rclcpp::Node::SharedPtr raw_node_{nullptr};
   bool is_automatic_mode_on{false};
   bool is_loop_list_on{false};
 
@@ -126,7 +126,7 @@ private:
   QGroupBox * makeGoalsListGroup();
   QGroupBox * makeRoutingGroup();
   QGroupBox * makeEngagementGroup();
-  QTimer * qtimer_;
+  QTimer * qtimer_{nullptr};
   QListWidget * goals_list_widget_ptr_{nullptr};
   QLabel * routing_label_ptr_{nullptr};
   QLabel * operation_mode_label_ptr_{nullptr};

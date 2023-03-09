@@ -72,7 +72,7 @@ protected:
   void initCommunication(rclcpp::Node * node);
   // Calls
   bool callPlanToGoalIndex(
-    const rclcpp::Client<SetRoutePoints>::SharedPtr client, const int goal_index)
+    const rclcpp::Client<SetRoutePoints>::SharedPtr client, const unsigned goal_index)
   {
     if (!client->service_is_ready()) {
       RCLCPP_WARN(get_logger(), "SetRoutePoints client is unavailable");

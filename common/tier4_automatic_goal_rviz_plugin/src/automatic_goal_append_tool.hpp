@@ -76,14 +76,14 @@ private Q_SLOTS:
   void updateTopic();
 
 private:  // NOLINT for Qt
-  rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+  rclcpp::Clock::SharedPtr clock_{nullptr};
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_{nullptr};
 
-  rviz_common::properties::StringProperty * pose_topic_property_;
-  rviz_common::properties::FloatProperty * std_dev_x_;
-  rviz_common::properties::FloatProperty * std_dev_y_;
-  rviz_common::properties::FloatProperty * std_dev_theta_;
-  rviz_common::properties::FloatProperty * position_z_;
+  rviz_common::properties::StringProperty * pose_topic_property_{nullptr};
+  rviz_common::properties::FloatProperty * std_dev_x_{nullptr};
+  rviz_common::properties::FloatProperty * std_dev_y_{nullptr};
+  rviz_common::properties::FloatProperty * std_dev_theta_{nullptr};
+  rviz_common::properties::FloatProperty * position_z_{nullptr};
 };
 
 }  // namespace rviz_plugins
