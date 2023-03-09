@@ -29,7 +29,6 @@
 #include <tf2_msgs/msg/tf_message.hpp>
 
 #include <gtest/gtest.h>
-#include <pcl/point_cloud.h>
 
 #include <memory>
 #include <string>
@@ -57,7 +56,13 @@ public:
   void setTFTopicName(std::string topic_name);
   void setReceivedTrajectoryTopicName(std::string topic_name);
   void setReceivedMaxVelocityTopicName(std::string topic_name);
+  void setMaxVelocityTopicName(std::string topic_name);
 
+  void testNominalTrajectory(rclcpp::Node & node);
+  void testWithEmptyTrajectory(rclcpp::Node & node);
+
+  int getReceivedTrajectoryNum();
+  int getReceivedMaxVelocityNum();
 
 private:
   // Publisher
@@ -71,16 +76,18 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr empty_trajectory_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr max_velocity_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr max_velocity_sub_;
 
   // Node
-  rclcpp::Node::SharedPtr test_node =
+  rclcpp::Node::SharedPtr test_node_ =
     std::make_shared<rclcpp::Node>("planning_interface_test_node");
   int count_{0};
-  void count_callback(const Trajectory trajectory);
+  void countCallback(const Trajectory trajectory);
+  void countCallbackMaxVelocity(const std_msgs::msg::Float32 max_velocity);
 
   Odometry genDefaultOdom() { return Odometry{}; }
   PointCloud2 genDefaultPointCloud() { return PointCloud2{}; }
@@ -94,10 +101,6 @@ private:
   void publishNominalTrajectory();
   void publishEmptyTrajectory();
 
-  void testNominalTrajectory(rclcpp::Node & node);
-  void testWithEmptyTrajectory(rclcpp::Node & node);
-
-  int getReceivedTrajectoryNum();
   void executeNode(rclcpp::Node & node);
 };  // class PlanningIntefaceTestManager
 
