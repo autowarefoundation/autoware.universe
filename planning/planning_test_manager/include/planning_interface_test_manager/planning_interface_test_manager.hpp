@@ -50,16 +50,19 @@ public:
   PlanningIntefaceTestManager() {}
 
   void testNormalBehavior(rclcpp::Node & node);
+
   void setOdomTopicName(std::string topic_name);
   void setPointCloudTopicName(std::string topic_name);
   void setPredictedObjectsTopicName(std::string topic_name);
   void setTFTopicName(std::string topic_name);
+  void setMaxVelocityTopicName(std::string topic_name);
+  void setTrajectoryTopicName(std::string topic_name);
+
   void setReceivedTrajectoryTopicName(std::string topic_name);
   void setReceivedMaxVelocityTopicName(std::string topic_name);
-  void setMaxVelocityTopicName(std::string topic_name);
 
-  void testNominalTrajectory(rclcpp::Node & node);
-  void testWithEmptyTrajectory(rclcpp::Node & node);
+  void testNominalTrajectory(rclcpp::Node::SharedPtr node);
+  void testWithEmptyTrajectory(rclcpp::Node::SharedPtr node);
 
   int getReceivedTrajectoryNum();
   int getReceivedMaxVelocityNum();
@@ -85,6 +88,8 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr max_velocity_sub_;
 
+  std::string input_trajectory_name_;
+
   // Node
   rclcpp::Node::SharedPtr test_node_ =
     std::make_shared<rclcpp::Node>("planning_interface_test_node");
@@ -96,6 +101,7 @@ private:
   PointCloud2 genDefaultPointCloud() { return PointCloud2{}; }
   PredictedObjects genDefaultPredictedObjects() { return PredictedObjects{}; }
   TFMessage genDefaultTFMessage() { return TFMessage{}; }
+  std_msgs::msg::Float32 genDefaultMaxVelocity() { return std_msgs::msg::Float32{}; }
 
   Trajectory genDefaultTrajectory() { return Trajectory{}; }
 
@@ -104,7 +110,7 @@ private:
   void publishNominalTrajectory();
   void publishEmptyTrajectory();
 
-  void executeNode(rclcpp::Node & node);
+  void executeNode(rclcpp::Node::SharedPtr node);
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager

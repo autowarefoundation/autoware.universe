@@ -20,7 +20,7 @@
 
 #include <vector>
 
-TEST(PlanningErrorMonitor, testPlanningInterface)
+TEST(PlanningInterfaceTest, testPlanningInterfaceWithNormalTrajectory)
 {
   rclcpp::init(0, nullptr);
 
@@ -40,16 +40,17 @@ TEST(PlanningErrorMonitor, testPlanningInterface)
      motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
      "--params-file", motion_velocity_smoother_dir + "/config/default_common.param.yaml",
      "--params-file", motion_velocity_smoother_dir + "/config/JerkFiltered.param.yaml"});
+
   auto test_target_node =
     std::make_shared<motion_velocity_smoother::MotionVelocitySmootherNode>(node_options);
+
   test_manager->setOdomTopicName("/localization/kinematic_state");
   test_manager->setMaxVelocityTopicName("/planning/scenario_planning/max_velocity");
   test_manager->setTFTopicName("/tf");
-  test_manager->setReceivedMaxVelocityTopicName("/planning/scenario_planning/trajectory");
-  test_manager->testNominalTrajectory(*test_target_node);
-  EXPECT_GE(test_manager->getReceivedMaxVelocityNum(), 1);
-  // /planning/scenario_planning/current_max_velocity
-  // setReceivedTrajectoryTopicName();
+  test_manager->setTrajectoryTopicName("/planning/scenario_planning/scenario_selector/trajectory");
 
-  // test_manager->testPlaningInterface(test_target_node);
+  test_manager->setReceivedMaxVelocityTopicName("/planning/scenario_planning/current_max_velocity");
+  test_manager->testNominalTrajectory(std::move(test_target_node));
+
+  EXPECT_GE(test_manager->getReceivedMaxVelocityNum(), 1);
 }
