@@ -18,7 +18,9 @@
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
+#include <map>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 namespace lanelet
@@ -40,143 +42,84 @@ std::vector<TrafficLightConstPtr> filter_traffic_signals(const LaneletMapConstPt
 
 }  // namespace lanelet
 
-namespace utils
-{
-
-using OldData = autoware_auto_perception_msgs::msg::TrafficSignal;
-using OldElem = autoware_auto_perception_msgs::msg::TrafficLight;
-using NewData = autoware_perception_msgs::msg::TrafficLight;
-using NewElem = autoware_perception_msgs::msg::TrafficLightElement;
-
-template <class K, class V>
-V at_or(const std::unordered_map<K, V> & map, const K & key, const V & value)
-{
-  return map.count(key) ? map.at(key) : value;
-}
-
-NewElem convert(const OldElem & input)
-{
-  // clang-format off
-  static const std::unordered_map<OldElem::_color_type, NewElem::_color_type> color_map({
-    {OldElem::RED, NewElem::RED},
-    {OldElem::AMBER, NewElem::AMBER},
-    {OldElem::GREEN, NewElem::GREEN},
-    {OldElem::WHITE, NewElem::WHITE}
-  });
-  static const std::unordered_map<OldElem::_shape_type, NewElem::_shape_type> shape_map({
-    {OldElem::CIRCLE, NewElem::CIRCLE},
-    {OldElem::LEFT_ARROW, NewElem::LEFT_ARROW},
-    {OldElem::RIGHT_ARROW, NewElem::RIGHT_ARROW},
-    {OldElem::UP_ARROW, NewElem::UP_ARROW},
-    {OldElem::DOWN_ARROW, NewElem::DOWN_ARROW},
-    {OldElem::DOWN_LEFT_ARROW, NewElem::DOWN_LEFT_ARROW},
-    {OldElem::DOWN_RIGHT_ARROW, NewElem::DOWN_RIGHT_ARROW},
-    {OldElem::CROSS, NewElem::CROSS}
-  });
-  static const std::unordered_map<OldElem::_status_type, NewElem::_status_type> status_map({
-    {OldElem::SOLID_OFF, NewElem::SOLID_OFF},
-    {OldElem::SOLID_ON, NewElem::SOLID_ON},
-    {OldElem::FLASHING, NewElem::FLASHING}
-  });
-  // clang-format on
-
-  NewElem output;
-  output.color = at_or(color_map, input.color, NewElem::UNKNOWN);
-  output.shape = at_or(shape_map, input.shape, NewElem::UNKNOWN);
-  output.color = at_or(status_map, input.status, NewElem::UNKNOWN);
-  output.confidence = input.confidence;
-  return output;
-}
-
-NewData convert(const OldData & input)
-{
-  NewData output;
-  output.traffic_light_id = input.map_primitive_id;
-  for (const auto & light : input.lights) {
-    output.elements.push_back(convert(light));
-  }
-  return output;
-}
-
-}  // namespace utils
-
 TrafficLightSelector::TrafficLightSelector(const rclcpp::NodeOptions & options)
 : Node("traffic_light_selector", options)
 {
   sub_map_ = create_subscription<LaneletMapBin>(
     "~/sub/vector_map", rclcpp::QoS(1).transient_local(),
     std::bind(&TrafficLightSelector::on_map, this, std::placeholders::_1));
-  sub_v2x_ = create_subscription<TrafficSignalArray>(
-    "~/sub/traffic_signals", rclcpp::QoS(1),
-    std::bind(&TrafficLightSelector::on_v2x, this, std::placeholders::_1));
-  sub_perception_ = create_subscription<TrafficLightArray2>(
+
+  sub_tlr_ = create_subscription<TrafficLightArray>(
     "~/sub/traffic_lights", rclcpp::QoS(1),
-    std::bind(&TrafficLightSelector::on_perception, this, std::placeholders::_1));
+    std::bind(&TrafficLightSelector::on_msg, this, std::placeholders::_1));
 
   pub_ = create_publisher<TrafficSignalArray>("~/pub/traffic_signals", rclcpp::QoS(1));
-
-  const auto rate = rclcpp::Rate(1.0);
-  timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 }
 
 void TrafficLightSelector::on_map(const LaneletMapBin::ConstSharedPtr msg)
 {
-  // TODO(Takagi, Isamu): Remove conversion when perception uses new message type.
   const auto map = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, map);
 
   const auto signals = lanelet::filter_traffic_signals(map);
-  light_to_signal_.clear();
+  mapping_.clear();
   for (const auto & signal : signals) {
     for (const auto & light : signal->trafficLights()) {
-      light_to_signal_[light.id()] = signal->id();
+      mapping_[light.id()] = signal->id();
     }
   }
 }
 
-void TrafficLightSelector::on_v2x(const TrafficSignalArray::ConstSharedPtr msg) { data_v2x_ = msg; }
-
-void TrafficLightSelector::on_perception(const TrafficLightArray2::ConstSharedPtr msg)
+void TrafficLightSelector::on_msg(const TrafficLightArray::ConstSharedPtr msg)
 {
-  const auto data = std::make_shared<TrafficLightArray>();
-  data->stamp = msg->header.stamp;
-  data->lights.reserve(msg->signals.size());
-  for (const auto & light : msg->signals) {
-    data->lights.push_back(utils::convert(light));
-  }
-  data_perception_ = data;
-}
-
-void TrafficLightSelector::on_timer()
-{
-  using TrafficLightElement = autoware_perception_msgs::msg::TrafficLightElement;
-  std::unordered_map<lanelet::Id, std::vector<TrafficLightElement>> intersections;
-
-  if (data_v2x_) {
-    for (const auto & signal : data_v2x_->signals) {
-      auto & elements = intersections[signal.traffic_signal_id];
-      for (const auto & element : signal.elements) {
-        elements.push_back(element);
-      }
-    }
-  }
-
-  if (data_perception_ && !light_to_signal_.empty()) {
-    for (const auto & light : data_perception_->lights) {
-      auto & elements = intersections[light_to_signal_[light.traffic_light_id]];
-      for (const auto & element : light.elements) {
-        elements.push_back(element);
-      }
-    }
-  }
-
   using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
+  using Element = autoware_perception_msgs::msg::TrafficLightElement;
+  std::unordered_map<lanelet::Id, std::vector<Element>> intersections;
+
+  // Use the most confident traffic light element in the same state.
+  const auto get_highest_confidence_elements = [](const std::vector<Element> & elements) {
+    using Key = std::tuple<Element::_color_type, Element::_shape_type, Element::_status_type>;
+    std::map<Key, Element> highest_;
+
+    for (const auto & element : elements) {
+      const auto key = std::make_tuple(element.color, element.shape, element.status);
+      auto [iter, success] = highest_.try_emplace(key, element);
+      if (!success && iter->second.confidence < element.confidence) {
+        iter->second = element;
+      }
+    }
+
+    std::vector<Element> result;
+    result.reserve(highest_.size());
+    for (const auto & [k, v] : highest_) {
+      result.push_back(v);
+    }
+    return result;
+  };
+
+  // Wait for vector map to create id mapping.
+  if (mapping_.empty()) {
+    return;
+  }
+
+  // Merge traffic lights in the same group.
+  for (const auto & light : msg->lights) {
+    const auto id = light.traffic_light_id;
+    if (!mapping_.count(id)) {
+      continue;
+    }
+    auto & elements = intersections[mapping_[id]];
+    for (const auto & element : light.elements) {
+      elements.push_back(element);
+    }
+  }
+
   TrafficSignalArray array;
-  array.stamp = now();
+  array.stamp = msg->stamp;
   for (const auto & [id, elements] : intersections) {
     TrafficSignal signal;
     signal.traffic_signal_id = id;
-    signal.elements = elements;
+    signal.elements = get_highest_confidence_elements(elements);
     array.signals.push_back(signal);
   }
   pub_->publish(array);

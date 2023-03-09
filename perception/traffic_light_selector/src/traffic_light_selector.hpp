@@ -18,7 +18,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 
@@ -33,23 +32,16 @@ public:
 
 private:
   using LaneletMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
-  using TrafficLightArray2 = autoware_auto_perception_msgs::msg::TrafficSignalArray;
   using TrafficLightArray = autoware_perception_msgs::msg::TrafficLightArray;
   using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
-  rclcpp::Subscription<TrafficSignalArray>::SharedPtr sub_v2x_;
-  rclcpp::Subscription<TrafficLightArray2>::SharedPtr sub_perception_;
+  rclcpp::Subscription<TrafficLightArray>::SharedPtr sub_tlr_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr pub_;
-  rclcpp::TimerBase::SharedPtr timer_;
 
   void on_map(const LaneletMapBin::ConstSharedPtr msg);
-  void on_v2x(const TrafficSignalArray::ConstSharedPtr msg);
-  void on_perception(const TrafficLightArray2::ConstSharedPtr msg);
-  void on_timer();
+  void on_msg(const TrafficLightArray::ConstSharedPtr msg);
 
-  std::unordered_map<lanelet::Id, lanelet::Id> light_to_signal_;
-  TrafficSignalArray::ConstSharedPtr data_v2x_;
-  TrafficLightArray::ConstSharedPtr data_perception_;
+  std::unordered_map<lanelet::Id, lanelet::Id> mapping_;
 };
 
 #endif  // TRAFFIC_LIGHT_SELECTOR_HPP_
