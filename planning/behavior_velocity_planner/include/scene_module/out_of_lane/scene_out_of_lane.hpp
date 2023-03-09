@@ -18,16 +18,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/out_of_lane/out_of_lane_utils.hpp>
 #include <scene_module/scene_module_interface.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/point.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
-
-#include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>

@@ -16,13 +16,12 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <scene_module/out_of_lane/out_of_lane_utils.hpp>
 #include <scene_module/out_of_lane/scene_out_of_lane.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/debug.hpp>
 #include <utilization/path_utilization.hpp>
 #include <utilization/trajectory_utils.hpp>
 #include <utilization/util.hpp>
-
-#include <boost/optional.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -53,10 +52,14 @@ bool OutOfLaneModule::modifyPathVelocity(
   if (!path || path->points.size() < 2) {
     return true;
   }
+  tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  stopwatch.tic();
   const auto ego_idx =
     motion_utils::findNearestIndex(path->points, (*planner_data_)->current_odometry->pose.position);
   // const auto ego_vel = (*planner_data_)->current_velocity->twist.linear.x;
+  stopwatch.tic("calculate_path_footprints");
   const auto path_footprints = calculate_path_footprints(*path, ego_idx, params_);
+  const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Get neighboring lanes TODO(Maxime): make separate function
   const auto path_lanelets = planning_utils::getLaneletsOnPath(
     *path, (*planner_data_)->route_handler_->getLaneletMapPtr(),
@@ -73,18 +76,24 @@ bool OutOfLaneModule::modifyPathVelocity(
     return lls;
   }();
   // Calculate overlapping intervals
+  stopwatch.tic("calculate_overlapping_intervals");
   const auto intervals = calculate_overlapping_intervals(
     path_footprints, path_lanelets, ego_idx, lanelets_to_check, params_);
+  const auto calculate_overlapping_intervals_us = stopwatch.toc("calculate_overlapping_intervals");
   std::printf("Found %lu intervals\n", intervals.size());
   for (const auto & i : intervals)
     std::printf("\t [%lu -> %lu] %ld\n", i.entering_path_idx, i.exiting_path_idx, i.lane.id());
   // Calculate stop and slowdown points
   std::printf("%lu detected objects\n", (*planner_data_)->predicted_objects->objects.size());
+  stopwatch.tic("calculate_decisions");
   const auto decisions = calculate_decisions(
     intervals, *path, ego_idx, *(*planner_data_)->predicted_objects,
     (*planner_data_)->route_handler_, lanelets_to_check, params_);
+  const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   std::printf("Found %lu decisions\n", decisions.size());
+  stopwatch.tic("insert_slowdown_points");
   insert_slowdown_points(*path, decisions, params_);
+  const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
   for (const auto & decision : decisions) {
     // std::printf("\t [%lu] v = %2.2f m/s\n", decision.target_path_idx, decision.velocity);
     // TODO(Maxime): properly insert stop point
@@ -93,6 +102,15 @@ bool OutOfLaneModule::modifyPathVelocity(
   }
 
   debug_data_.footprints = std::move(path_footprints);
+  const auto total_time_us = stopwatch.toc();
+  std::printf(
+    "Total time = %2.2fus\n"
+    "\tcalculate_path_footprints = %2.2fus\n"
+    "\tcalculate_overlapping_intervals = %2.2fus\n"
+    "\tcalculate_decisions = %2.2fus\n"
+    "\tinsert_slowdown_points = %2.2fus\n",
+    total_time_us, calculate_path_footprints_us, calculate_overlapping_intervals_us,
+    calculate_decisions_us, insert_slowdown_points_us);
   return true;
 }
 

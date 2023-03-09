@@ -101,7 +101,7 @@ struct Slowdown
 {
   size_t target_path_idx;
   double velocity;
-  lanelet::Id lane_to_avoid;
+  lanelet::ConstLanelet lane_to_avoid;
 };
 
 struct Interval
@@ -218,7 +218,6 @@ inline Intervals calculate_overlapping_intervals(
   for (const auto & lanelet : lanelets) other_lanes.emplace_back(lanelet);
 
   Intervals intervals;
-  (void)params;
 
   std::ofstream svg("/tmp/debug.svg");
   boost::geometry::svg_mapper<lanelet::BasicPoint2d> mapper(svg, 800, 800);
@@ -338,9 +337,6 @@ inline std::vector<Slowdown> calculate_decisions(
   std::vector<Slowdown> decisions;
   std::cout << "** Decisions\n";
   for (const auto & interval : intervals) {
-    std::printf(
-      "\t[%lu -> %lu] %ld\n", interval.entering_path_idx, interval.exiting_path_idx,
-      interval.lane.id());
     // skip if we already entered the interval
     if (interval.entering_path_idx == 0UL) continue;
     // skip if the overlap inside the interval is too small
@@ -348,6 +344,9 @@ inline std::vector<Slowdown> calculate_decisions(
 
     const auto ego_enter_time = time_along_path(interval.entering_path_idx);
     const auto ego_exit_time = time_along_path(interval.exiting_path_idx);
+    std::printf(
+      "\t[%lu -> %lu] %ld (ego enters at %2.2f, exits at %2.2f)\n", interval.entering_path_idx,
+      interval.exiting_path_idx, interval.lane.id(), ego_enter_time, ego_exit_time);
     auto min_object_enter_time = std::numeric_limits<double>::max();
     auto max_object_exit_time = 0.0;
     for (const auto & object : objects.objects) {
@@ -368,13 +367,13 @@ inline std::vector<Slowdown> calculate_decisions(
     const auto threshold_stop_condition = min_object_enter_time < params.objects_time_thr;
     const auto threshold_slow_condition = min_object_enter_time < params.objects_slow_time_thr;
     const auto interval_stop_condition = ego_enters_before_object && ego_exits_after_object;
-    const auto should_stop = incoming_objects && (
-      (params.use_threshold && threshold_stop_condition) ||
-      (!params.use_threshold && interval_stop_condition));
+    const auto should_stop =
+      incoming_objects && ((params.use_threshold && threshold_stop_condition) ||
+                           (!params.use_threshold && interval_stop_condition));
     const auto should_slow = incoming_objects && params.use_threshold && threshold_slow_condition;
     Slowdown decision;
     decision.target_path_idx = first_idx + interval.entering_path_idx;
-    decision.lane_to_avoid = interval.lane.id();
+    decision.lane_to_avoid = interval.lane;
     if (should_stop) {
       std::printf("\t\tWill stop\n");
       decision.velocity = 0.0;
@@ -404,15 +403,14 @@ inline void insert_slowdown_points(
 
       const auto precision = 0.1;  // TODO(Maxime): param or better way to find no overlap pose
       auto interpolated_point = path_point;
-      interpolated_point.point.longitudinal_velocity_mps = decision.velocity;
       for (auto ratio = precision; ratio <= 1.0; ratio += precision) {
         interpolated_point.point.pose =
           tier4_autoware_utils::calcInterpolatedPose(path_pose, prev_path_pose, ratio, false);
-        // !boost::geometry::overlaps(
-        // project_to_pose(base_footprint, interpolated_point.point.pose), lanelet_polygon);
-        const auto overlaps = false;
+        const auto overlaps = boost::geometry::overlaps(
+          project_to_pose(base_footprint, interpolated_point.point.pose),
+          decision.lane_to_avoid.polygon2d().basicPolygon());
         if (!overlaps) {
-          planning_utils::insertVelocity(path, interpolated_point, 0.0, path_idx);
+          planning_utils::insertVelocity(path, interpolated_point, decision.velocity, path_idx);
           return;  // TODO(Maxime): should we insert more than the first decision ?
         }
       }
