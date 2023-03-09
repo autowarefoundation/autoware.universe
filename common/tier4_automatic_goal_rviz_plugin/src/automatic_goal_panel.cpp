@@ -156,8 +156,9 @@ void AutowareAutomaticGoalPanel::onToggleSaveGoalsAchievement(bool checked)
       this, tr("Save File with  GoalsList"), "/home/goals_achieved.log",
       tr("Achieved goals (*.log)"));
     goals_achiev_file_path_ = file_name.toStdString();
-  } else
+  } else {
     goals_achiev_file_path_ = "";
+  }
   updateGUI();
 }
 
@@ -167,8 +168,9 @@ void AutowareAutomaticGoalPanel::onToggleAutoMode(bool checked)
     showMessageBox("Select the first goal in GoalsList");
     automatic_mode_btn_ptr_->setChecked(false);
     return;
-  } else if (checked)
+  } else if (checked) {
     current_goal = goals_list_widget_ptr_->currentRow();
+  }
 
   is_automatic_mode_on = checked;
   is_automatic_mode_on ? qtimer_->start(1000) : qtimer_->stop();

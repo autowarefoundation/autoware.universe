@@ -4,9 +4,9 @@
     base_class_type="rviz_common::Panel">
     <description>AutowareAutomaticGoalPanel</description>
   </class>
-  <class name="rviz_plugins/AutomaticGoalTool"
-    type="rviz_plugins::AutomaticGoalTool"
+  <class name="rviz_plugins/AutowareAutomaticGoalTool"
+    type="rviz_plugins::AutowareAutomaticGoalTool"
     base_class_type="rviz_common::Tool">
-    <description>AutomaticGoalTool</description>
+    <description>AutowareAutomaticGoalTool</description>
   </class>
 </library>

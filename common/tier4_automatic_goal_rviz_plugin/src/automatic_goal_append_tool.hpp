@@ -45,8 +45,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MISSION_CHECKPOINT__MISSION_CHECKPOINT_HPP_
-#define MISSION_CHECKPOINT__MISSION_CHECKPOINT_HPP_
+#ifndef AUTOMATIC_GOAL_APPEND_TOOL_HPP_
+#define AUTOMATIC_GOAL_APPEND_TOOL_HPP_
 
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
 #include <QObject>
@@ -61,12 +61,12 @@
 
 namespace rviz_plugins
 {
-class AutomaticGoalTool : public rviz_default_plugins::tools::PoseTool
+class AutowareAutomaticGoalTool : public rviz_default_plugins::tools::PoseTool
 {
   Q_OBJECT
 
 public:
-  AutomaticGoalTool();
+  AutowareAutomaticGoalTool();
   void onInitialize() override;
 
 protected:
@@ -88,4 +88,4 @@ private:  // NOLINT for Qt
 
 }  // namespace rviz_plugins
 
-#endif  // MISSION_CHECKPOINT__MISSION_CHECKPOINT_HPP_
+#endif  // AUTOMATIC_GOAL_APPEND_TOOL_HPP_

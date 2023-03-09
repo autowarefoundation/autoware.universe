@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#ifndef AUTOMATIC_GOAL_SENDER_HPP_
+#define AUTOMATIC_GOAL_SENDER_HPP_
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -27,8 +30,11 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace automatic_goal
 {
@@ -59,7 +65,7 @@ class AutowareAutomaticGoalSender : public rclcpp::Node
   using ClearRoute = autoware_adapi_v1_msgs::srv::ClearRoute;
 
 public:
-  explicit AutowareAutomaticGoalSender();
+  AutowareAutomaticGoalSender();
   void init();
 
 protected:
@@ -135,10 +141,10 @@ protected:
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
 
   // Interface
-  virtual void onRouteUpdated(const RouteState::ConstSharedPtr msg){};
-  virtual void onOperationModeUpdated(const OperationModeState::ConstSharedPtr msg){};
-  virtual void onCallResult(){};
-  virtual void onGoalListUpdated(){};
+  virtual void onRouteUpdated(const RouteState::ConstSharedPtr msg) {}
+  virtual void onOperationModeUpdated(const OperationModeState::ConstSharedPtr msg) {}
+  virtual void onCallResult() {}
+  virtual void onGoalListUpdated() {}
 
   // Cli
   rclcpp::Client<ChangeOperationMode>::SharedPtr cli_change_to_autonomous_;
@@ -165,3 +171,4 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 };
 }  // namespace automatic_goal
+#endif  // AUTOMATIC_GOAL_SENDER_HPP_

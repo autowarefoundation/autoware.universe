@@ -14,8 +14,8 @@
 //  limitations under the License.
 //
 
-#ifndef AUTOWARE_STATE_PANEL_HPP_
-#define AUTOWARE_STATE_PANEL_HPP_
+#ifndef AUTOMATIC_GOAL_PANEL_HPP_
+#define AUTOMATIC_GOAL_PANEL_HPP_
 
 #include "automatic_goal_sender.hpp"
 
@@ -53,6 +53,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace rviz_plugins
 {
@@ -143,4 +144,4 @@ private:
 };
 }  // namespace rviz_plugins
 
-#endif  // AUTOWARE_STATE_PANEL_HPP_
+#endif  // AUTOMATIC_GOAL_PANEL_HPP_

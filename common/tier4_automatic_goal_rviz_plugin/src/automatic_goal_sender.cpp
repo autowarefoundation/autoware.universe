@@ -90,9 +90,9 @@ void AutowareAutomaticGoalSender::onRoute(const RouteState::ConstSharedPtr msg)
 
 void AutowareAutomaticGoalSender::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
-  if (msg->mode == OperationModeState::STOP && state == State::INITIALIZING) {
+  if (msg->mode == OperationModeState::STOP && state == State::INITIALIZING)
     state = State::EDITING;
-  } else if (msg->mode == OperationModeState::STOP && state == State::STOPPING)
+  else if (msg->mode == OperationModeState::STOP && state == State::STOPPING)
     state = State::STOPPED;
   else if (msg->mode == OperationModeState::AUTONOMOUS && state == State::STARTING)
     state = State::STARTED;

@@ -58,7 +58,7 @@
 
 namespace rviz_plugins
 {
-AutomaticGoalTool::AutomaticGoalTool()
+AutowareAutomaticGoalTool::AutowareAutomaticGoalTool()
 {
   shortcut_key_ = 'c';
 
@@ -80,14 +80,14 @@ AutomaticGoalTool::AutomaticGoalTool()
   position_z_->setMin(0);
 }
 
-void AutomaticGoalTool::onInitialize()
+void AutowareAutomaticGoalTool::onInitialize()
 {
   PoseTool::onInitialize();
   setName("2D AppendGoal");
   updateTopic();
 }
 
-void AutomaticGoalTool::updateTopic()
+void AutowareAutomaticGoalTool::updateTopic()
 {
   rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
   pose_pub_ = raw_node->create_publisher<geometry_msgs::msg::PoseStamped>(
@@ -95,7 +95,7 @@ void AutomaticGoalTool::updateTopic()
   clock_ = raw_node->get_clock();
 }
 
-void AutomaticGoalTool::onPoseSet(double x, double y, double theta)
+void AutowareAutomaticGoalTool::onPoseSet(double x, double y, double theta)
 {
   // pose
   std::string fixed_frame = context_->getFixedFrame().toStdString();
@@ -110,12 +110,12 @@ void AutomaticGoalTool::onPoseSet(double x, double y, double theta)
   quat.setRPY(0.0, 0.0, theta);
   pose.pose.orientation = tf2::toMsg(quat);
   RCLCPP_INFO(
-    rclcpp::get_logger("AutomaticGoalTool"), "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y,
-    position_z_->getFloat(), theta, fixed_frame.c_str());
+    rclcpp::get_logger("AutowareAutomaticGoalTool"), "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]",
+    x, y, position_z_->getFloat(), theta, fixed_frame.c_str());
   pose_pub_->publish(pose);
 }
 
 }  // end namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutomaticGoalTool, rviz_common::Tool)
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowareAutomaticGoalTool, rviz_common::Tool)
