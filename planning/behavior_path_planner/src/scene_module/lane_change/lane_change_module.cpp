@@ -186,7 +186,11 @@ BehaviorModuleOutput LaneChangeModule::plan()
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
   path_reference_ = getPreviousModuleOutput().reference_path;
+#ifdef USE_OLD_ARCHITECTURE
+  prev_approved_path_ = path;
+#else
   prev_approved_path_ = *getPreviousModuleOutput().path;
+#endif
   updateOutputTurnSignal(output);
 
   updateSteeringFactorPtr(output);
