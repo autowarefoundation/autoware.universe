@@ -47,7 +47,7 @@ def generate_launch_description():
 
     # load parameter files
     param_file = os.path.join(
-        get_package_share_directory("probablistic_occupancy_grid_map"),
+        get_package_share_directory("probabilistic_occupancy_grid_map"),
         "config/pointcloud_based_occupancy_grid_map.param.yaml",
     )
     with open(param_file, "r") as f:
