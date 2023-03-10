@@ -23,7 +23,6 @@
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <timing_violation_monitor_utils/message_consumption_notifier.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -161,8 +160,6 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     ndt_monte_carlo_initial_pose_marker_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
-  std::unique_ptr<timing_violation_monitor_utils::MessageConsumptionNotifier>
-    pose_consumption_notifier_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
