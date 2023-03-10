@@ -62,6 +62,7 @@ public:
   void setOutputMaxVelocityTopicName(std::string topic_name);
 
   void publishOdometry(rclcpp::Node::SharedPtr node);
+  void publishMaxVelocity(rclcpp::Node::SharedPtr node);
 
   void setTrajectorySubscriber();
 

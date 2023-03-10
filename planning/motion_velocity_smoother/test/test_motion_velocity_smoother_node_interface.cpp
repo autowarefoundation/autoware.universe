@@ -21,7 +21,7 @@
 
 #include <vector>
 
-TEST(PlanningInterfaceTest, testPlanningInterfaceWithNormalTrajectory)
+TEST(PlanningInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
 {
   using autoware_auto_planning_msgs::msg::Trajectory;
   rclcpp::init(0, nullptr);
