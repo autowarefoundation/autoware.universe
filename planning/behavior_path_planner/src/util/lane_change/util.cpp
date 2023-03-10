@@ -107,18 +107,6 @@ std::vector<int64_t> replaceWithSortedIds(
   }
   return original_lane_ids;
 }
-
-double getLateralDistance(
-  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose & pose)
-{
-  lanelet::ConstLanelet closest_lanelet;
-  lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lanelet);
-  const auto & centerline_2d = lanelet::utils::to2D(closest_lanelet.centerline());
-
-  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-  return lanelet::geometry::signedDistance(
-    centerline_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
-}
 }  // namespace
 
 namespace behavior_path_planner::lane_change_utils
@@ -368,8 +356,8 @@ std::pair<bool, bool> getLaneChangePaths(
       route_handler, original_lanelets, arc_position_from_current.length, backward_path_length,
       prepare_distance, std::max(prepare_speed, minimum_lane_change_velocity));
 
-    const auto estimated_shift_length =
-      getLateralDistance(target_lanelets, prepare_segment_reference.points.front().point.pose);
+    const auto estimated_shift_length = util::calcLateralDistanceToLanelet(
+      target_lanelets, prepare_segment_reference.points.front().point.pose);
 
     const auto [lane_changing_speed, lane_changing_distance] =
       calcLaneChangingSpeedAndDistanceWhenDecelerate(
