@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
+#include "behavior_path_planner/util/lane_following/module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -54,7 +55,9 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  PlannerManager(rclcpp::Node & node, const bool verbose);
+  PlannerManager(
+    rclcpp::Node & node, const std::shared_ptr<LaneFollowingParameters> & parameters,
+    const bool verbose);
 
   BehaviorModuleOutput run(const std::shared_ptr<PlannerData> & data);
 
@@ -128,7 +131,6 @@ private:
   {
     module_ptr->setData(planner_data);
     module_ptr->setPreviousModuleOutput(previous_module_output);
-    module_ptr->updateData();
 
     module_ptr->lockRTCCommand();
     const auto result = module_ptr->run();
@@ -186,6 +188,8 @@ private:
   boost::optional<SceneModulePtr> candidate_module_opt_{boost::none};
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
+
+  std::shared_ptr<LaneFollowingParameters> parameters_;
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 
