@@ -2,10 +2,15 @@
 
 ## Debug visualization
 
-The visualization markers of the planning flow (Input, Elastic Band, Model Predictive Trajectory, and Output) will be explained.
+The visualization markers of the planning flow (Input, Elastic Band, Model Predictive Trajectory, and Output) are explained here.
 
-The rviz config file for `obstacle_avoidance_planner` is [here](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/obstacle_avoidance_planner/rviz/obstacle_avoidance_planner.rviz).
-All the following visualization markers are contained.
+All the following markers can be visualized by
+
+```bash
+ros2 launch obstacle_avoidance_planner launch_visualiation.launch.xml vehilce_model:=sample_vehicle
+```
+
+The `vehicle_model` must be specified to make footprints with vehicle's size.
 
 ### Input
 
@@ -18,8 +23,8 @@ All the following visualization markers are contained.
 - **Path Footprint**
   - The path generated in the `behavior` planner is converted to footprints.
   - NOTE:
-    - Please make sure that there is no high curvature.
-    - The path may be outside the drivable area in some cases, but it is okay to ignore it.
+    - Check if there is no high curvature.
+    - The path may be outside the drivable area in some cases, but it is okay to ignore it since the `behavior` planner does not support it.
 
 ![path_footprint](../media/debug/path_footprint_visualization.png)
 
@@ -27,8 +32,8 @@ All the following visualization markers are contained.
   - The Drivable area generated in the `behavior` planner.
   - The skyblue left and right line strings, that is visualized by default.
   - NOTE:
-    - Please make sure that the path is almost inside the drivable area.
-      - Then, the `obstacle_avoidance_planner` tries to make the trajectory inside the drivable area 100%.
+    - Check if the path is almost inside the drivable area.
+      - Then, the `obstacle_avoidance_planner` will try to make the trajectory fully inside the drivable area.
     - During avoidance or lane change by the `behavior` planner, please make sure that the drivable area is expanded correctly.
 
 ![drivable_area](../media/debug/drivable_area_visualization.png)
@@ -36,7 +41,7 @@ All the following visualization markers are contained.
 ### Elastic Band (EB)
 
 - **EB Fixed Trajectory**
-  - The fixed trajectory points for elastic band.
+  - The fixed trajectory points as a constraint of elastic band.
 
 ![eb_fixed_traj](../media/debug/eb_fixed_traj_visualization.png)
 
@@ -48,12 +53,12 @@ All the following visualization markers are contained.
 ### Model Predictive Trajectory (MPT)
 
 - **MPT Reference Trajectory**
-  - The fixed trajectory points for model predictive trajectory.
+  - The reference trajectory points of model predictive trajectory.
 
 ![mpt_ref_traj](../media/debug/mpt_ref_traj_visualization.png)
 
 - **MPT Fixed Trajectory**
-  - The fixed trajectory points for model predictive trajectory.
+  - The fixed trajectory points as a constraint of model predictive trajectory.
 
 ![mpt_fixed_traj](../media/debug/mpt_fixed_traj_visualization.png)
 
@@ -64,17 +69,19 @@ All the following visualization markers are contained.
 
 - **Vehicle Circles**
   - The vehicle's shape is represented by a set of circles.
+  - The `obstcle_avoidance_planner` will try to make the these circles inside the above boundaries' width.
 
 ![vehicle_circles](../media/debug/vehicle_circles_visualization.png)
 
 - **Vehicle Circles on Trajectory**
   - The vehicle's circles on the MPT trajectory.
-  - Please make sure that the circles are not so big compared to the road's width.
+  - Check if the circles are not so big compared to the road's width.
 
 ![vehicle_traj_circles](../media/debug/vehicle_traj_circles_visualization.png)
 
 - **MPT Trajectory**
   - The optimized trajectory points by model predictive trajectory.
+  - The footprints are supposed to be fully inside the drivable area.
 
 ![mpt_traj](../media/debug/mpt_traj_visualization.png)
 
@@ -155,9 +162,9 @@ ros2 run obstacle_avoidance_planner calclation_time_plotter.py -f "onPath, gener
 
 ### The output frequency is low
 
-Check the function which is comparatively heavy according to [here](#calculation-cost) or [here](.#calculation-cost).
+Check the function which is comparatively heavy according to [this information](.#calculation-time).
 
-The following functions for optimization and its initialization may be heavy in some complicated cases.
+For your information, the following functions for optimization and its initialization may be heavy in some complicated cases.
 
 - MPT
   - `initOsqp`
@@ -168,7 +175,7 @@ The following functions for optimization and its initialization may be heavy in 
 ### When a part of the trajectory has high curvature
 
 Some of the following may have an issue.
-Please check by the visualization.
+Please check if there is something weird by the visualization.
 
 - Input Path
 - Drivable Area
@@ -177,7 +184,7 @@ Please check by the visualization.
 ### When the trajectory's shape is zigzag
 
 Some of the following may have an issue.
-Please check by the visualization.
+Please check if there is something weird by the visualization.
 
 - EB Trajectory
 - Vehicle Circles on Trajectory
