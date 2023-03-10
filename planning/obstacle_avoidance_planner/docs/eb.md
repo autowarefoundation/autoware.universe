@@ -40,7 +40,8 @@ end note
 
 :convertOptimizedPointsToTrajectory;
 note right
-When eb.option.enable_optimization_validation is true, the optimization will be ignored if the validation fails.
+The validation function is contained.
+When eb.option.enable_optimization_validation is true, the optimization result will be ignored if the validation fails.
 end note
 
 stop

@@ -206,30 +206,7 @@ Although it has a cons to converge to the local minima, it can get a good soluti
 
 ### Computation time
 
-- Loose EB optimization
-
-  - 1. make `eb.common.delta_arc_length` large and `eb.common.num_points` small
-    - This makes the number of design variables smaller
-    - Be careful about the trajectory length between MPT and EB as shown in Assumptions.
-    - However, empirically this causes large turn at the corner (e.g. The vehicle turns a steering wheel to the opposite side (=left) a bit just before the corner turning to right)
-  - 2. make `eb.qp.eps_abs` and `eb.qp.eps_rel` small
-    - This causes very unstable reference path generation for MPT, or turning a steering wheel a little bit larger
-
-- Enable computation reduction flag
-
-  - 1. set l_inf_norm true (by default)
-    - use L-inf norm optimization for MPT w.r.t. slack variables, resulting in lower number of design variables
-  - 2. set enable_warm_start true
-  - 3. set enable_manual_warm_start true (by default)
-  - 4. set steer_limit_constraint false
-    - This causes no assumption for trajectory generation where steering angle will not exceeds its hardware limitation
-  - 5. make the number of collision-free constraints small
-    - How to change parameters depend on the type of collision-free constraints
-      - If
-    - This may cause the trajectory generation where a part of ego vehicle is out of drivable area
-
-- Disable publishing debug visualization markers
-  - set `option.is_publishing_*` false
+- under construction
 
 ### Robustness
 
@@ -246,10 +223,6 @@ Although it has a cons to converge to the local minima, it can get a good soluti
   - EB is not required if the reference path for MPT is smooth enough and does not change its shape suddenly
 - `option.enable_calculation_time_info` enables showing each calculation time for functions and total calculation time on the terminal.
 - `option.enable_outside_drivable_area_stop` enables stopping just before the generated trajectory point will be outside the drivable area.
-- `mpt.option.plan_from_ego` enables planning from the ego pose when the ego's velocity is zero.
-- `mpt.option.max_plan_from_ego_length` maximum length threshold to plan from ego. it is enabled when the length of trajectory is shorter than this value.
-- `mpt.option.two_step_soft_constraint` enables two step of soft constraints for collision free
-  - `mpt.option.soft_clearance_from_road` and `mpt.option.soft_second_clearance_from_road` are the weight.
 
 ## How To Debug
 
