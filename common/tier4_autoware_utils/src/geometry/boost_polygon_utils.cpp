@@ -211,9 +211,12 @@ double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
   throw std::logic_error("The shape type is not supported in tier4_autoware_utils.");
 }
 
+// NOTE: The number of vertices on the expanded polygon by boost::geometry::buffer
+//       is larger than the original one.
+//       This function fixes the issue.
 Polygon2d expandPolygon(const Polygon2d & input_polygon, const double offset)
 {
-  // NOTE: There is a duplicated point.
+  // NOTE: input_polygon is supposed to have a duplicated point.
   const size_t num_points = input_polygon.outer().size() - 1;
 
   Polygon2d expanded_polygon;
