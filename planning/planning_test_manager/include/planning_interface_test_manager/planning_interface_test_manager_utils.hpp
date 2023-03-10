@@ -17,6 +17,7 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -36,8 +37,9 @@ geometry_msgs::msg::Pose createPose(
 
 template <class T>
 T generateTrajectory(
-  const size_t num_points, const double point_interval, const double vel = 0.0,
-  const double init_theta = 0.0, const double delta_theta = 0.0)
+  const size_t num_points, const double point_interval, const double velocity = 0.0,
+  const double init_theta = 0.0, const double delta_theta = 0.0,
+  const size_t overlapping_point_index = std::numeric_limits<size_t>::max())
 {
   using Point = typename T::_points_type::value_type;
 
@@ -49,34 +51,14 @@ T generateTrajectory(
 
     Point p;
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
-    p.longitudinal_velocity_mps = vel;
+    p.longitudinal_velocity_mps = velocity;
     traj.points.push_back(p);
+
+    if (i == overlapping_point_index) {
+      Point value_to_insert = traj.points[overlapping_point_index];
+      traj.points.insert(traj.points.begin() + overlapping_point_index + 1, value_to_insert);
+    }
   }
-
-  return traj;
-}
-
-template <class T>
-T generateOverlappingPointTrajectory(
-  const size_t num_points, const double point_interval, const size_t overlap_point_idx = 0,
-  const double vel = 0.0, const double init_theta = 0.0, const double delta_theta = 0.0)
-{
-  using Point = typename T::_points_type::value_type;
-
-  T traj;
-  for (size_t i = 0; i < num_points; ++i) {
-    const double theta = init_theta + i * delta_theta;
-    const double x = i * point_interval * std::cos(theta);
-    const double y = i * point_interval * std::sin(theta);
-
-    Point p;
-    p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
-    p.longitudinal_velocity_mps = vel;
-    traj.points.push_back(p);
-  }
-
-  Point value_to_insert = traj.points[overlap_point_idx];
-  traj.points.insert(traj.points.begin() + overlap_point_idx + 1, value_to_insert);
 
   return traj;
 }

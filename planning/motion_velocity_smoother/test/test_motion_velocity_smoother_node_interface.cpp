@@ -70,5 +70,5 @@ TEST(PlanningInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
     test_target_node, test_utils::generateTrajectory<Trajectory>(1, 0.0));
   // test for overlapping points
   test_manager->testWithAbnormalTrajectory(
-    test_target_node, test_utils::generateOverlappingPointTrajectory<Trajectory>(10, 0.0));
+    test_target_node, test_utils::generateTrajectory<Trajectory>(10, 0.0, 0.0, 0.0, 0.0, 1));
 }
