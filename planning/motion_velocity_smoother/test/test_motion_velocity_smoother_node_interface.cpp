@@ -35,6 +35,7 @@ TEST(PlanningInterfaceTest, testPlanningInterfaceWithNormalTrajectory)
 
   const auto motion_velocity_smoother_dir =
     ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
+
   node_options.arguments(
     {"--ros-args", "--params-file",
      motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
@@ -45,12 +46,14 @@ TEST(PlanningInterfaceTest, testPlanningInterfaceWithNormalTrajectory)
     std::make_shared<motion_velocity_smoother::MotionVelocitySmootherNode>(node_options);
 
   test_manager->setOdomTopicName("/localization/kinematic_state");
-  test_manager->setMaxVelocityTopicName("/planning/scenario_planning/max_velocity");
-  test_manager->setTFTopicName("/tf");
-  test_manager->setTrajectoryTopicName("/planning/scenario_planning/scenario_selector/trajectory");
+  test_manager->setMaxVelocityTopicName(
+    "motion_velocity_smoother/input/external_velocity_limit_mps");
+  // test_manager->setTFTopicName("/tf");
+  test_manager->setTrajectoryTopicName("motion_velocity_smoother/input/trajectory");
 
-  test_manager->setReceivedMaxVelocityTopicName("/planning/scenario_planning/current_max_velocity");
-  test_manager->testNominalTrajectory(std::move(test_target_node));
+  test_manager->setReceivedMaxVelocityTopicName(
+    "motion_velocity_smoother/output/current_velocity_limit_mps");
 
+  test_manager->testNominalTrajectory(test_target_node);
   EXPECT_GE(test_manager->getReceivedMaxVelocityNum(), 1);
 }
