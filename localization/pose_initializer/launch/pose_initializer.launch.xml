@@ -1,7 +1,9 @@
 <launch>
+  <arg name="common_config_file" default="$(find-pkg-share pose_initializer)/config/pose_initializer_common.param.yaml"/>
   <arg name="config_file" default="$(find-pkg-share pose_initializer)/config/pose_initializer.param.yaml"/>
 
   <node pkg="pose_initializer" exec="pose_initializer_node" name="pose_initializer_node">
+    <param from="$(var common_config_file)"/>
     <param from="$(var config_file)"/>
     <remap from="ndt_align" to="/localization/pose_estimator/ndt_align_srv"/>
     <remap from="stop_check_twist" to="/sensing/vehicle_velocity_converter/twist_with_covariance"/>

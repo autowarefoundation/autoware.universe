@@ -14,6 +14,7 @@
   <!-- pose_initializer -->
   <group>
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+      <arg name="common_config_file" value="$(var pose_initializer_common_param_path)"/>
       <arg name="config_file" value="$(var pose_initializer_param_path)"/>
     </include>
   </group>

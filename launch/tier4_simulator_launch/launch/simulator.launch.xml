@@ -2,7 +2,8 @@
   <!-- Parameter files -->
   <arg name="fault_injection_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
-  <arg name="pose_initializer_param_planning_simulator_path"/>
+  <arg name="pose_initializer_param_path"/>
+  <arg name="pose_initializer_common_param_path"/>
 
   <arg name="launch_dummy_perception"/>
   <arg name="launch_dummy_vehicle"/>
@@ -98,7 +99,8 @@
   <!-- Dummy localization -->
   <group if="$(var launch_dummy_localization)">
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-      <arg name="config_file" value="$(var pose_initializer_param_planning_simulator_path)"/>
+      <arg name="common_config_file" value="$(var pose_initializer_common_param_path)"/>
+      <arg name="config_file" value="$(var pose_initializer_param_path)"/>
     </include>
   </group>
 

@@ -1,30 +1,6 @@
 /**:
   ros__parameters:
     gnss_enabled: true
-    gnss_pose_timeout: 3.0 # [sec]
     ndt_enabled: true
     ekf_enabled: true
     stop_check_enabled: true
-    stop_check_duration: 3.0 # [sec]
-
-    # from gnss
-    gnss_particle_covariance:
-      [
-        1.0, 0.0, 0.0,  0.0,  0.0,  0.0,
-        0.0, 1.0, 0.0,  0.0,  0.0,  0.0,
-        0.0, 0.0, 0.01, 0.0,  0.0,  0.0,
-        0.0, 0.0, 0.0,  0.01, 0.0,  0.0,
-        0.0, 0.0, 0.0,  0.0,  0.01, 0.0,
-        0.0, 0.0, 0.0,  0.0,  0.0,  10.0,
-      ]
-
-    # output
-    output_pose_covariance:
-      [
-        1.0, 0.0, 0.0,  0.0,  0.0,  0.0,
-        0.0, 1.0, 0.0,  0.0,  0.0,  0.0,
-        0.0, 0.0, 0.01, 0.0,  0.0,  0.0,
-        0.0, 0.0, 0.0,  0.01, 0.0,  0.0,
-        0.0, 0.0, 0.0,  0.0,  0.01, 0.0,
-        0.0, 0.0, 0.0,  0.0,  0.0,  0.2,
-      ]
