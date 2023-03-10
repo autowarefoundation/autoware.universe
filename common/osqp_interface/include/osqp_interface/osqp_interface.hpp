@@ -45,23 +45,24 @@ class OSQP_INTERFACE_PUBLIC OSQPInterface
 {
 private:
   std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
-  std::unique_ptr<OSQPSettings> m_settings;
-  std::unique_ptr<OSQPData> m_data;
+  const std::unique_ptr<OSQPSettings> m_settings;
+  const std::unique_ptr<OSQPData> m_data;
   // store last work info since work is cleaned up at every execution to prevent memory leak.
   OSQPInfo m_latest_work_info;
   // Number of parameters to optimize
   int64_t m_param_n;
-  // Flag to check if the current work exists
-  bool m_work_initialized = false;
   // Exitflag
   int64_t m_exitflag;
   // warm start
   const bool m_warm_start;
+  std::optional<int> m_param_n_prev;
   std::optional<std::vector<double>> m_sol_prev;
   std::optional<std::vector<double>> m_lagrange_multiplier_prev;
 
   // Runs the solver on the stored problem.
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> solve();
+  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> solve(
+    const bool do_warm_start);
+  bool warmStartReady() const;
 
   // should be private
 public:
@@ -129,7 +130,8 @@ public:
   /// \details        std::vector<float> param = std::get<0>(result);
   /// \details        double x_0 = param[0];
   /// \details        double x_1 = param[1];
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize();
+  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize(
+    const bool do_warm_start = true);
 
   /// \brief Solves convex quadratic programs (QPs) using the OSQP solver.
   /// \return The function returns a tuple containing the solution as two float vectors.
@@ -149,7 +151,7 @@ public:
   /// \details        double x_1 = param[1];
   std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u);
+    const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
 
   // Updates problem parameters while keeping solution in memory.
   //

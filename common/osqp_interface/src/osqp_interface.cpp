@@ -25,6 +25,8 @@
 #include <tuple>
 #include <vector>
 
+static c_int check_has_solution(OSQPInfo * info) { return info->status_val == OSQP_SOLVED; }
+
 namespace autoware
 {
 namespace common
@@ -32,11 +34,11 @@ namespace common
 namespace osqp
 {
 OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish, const bool warm_start)
-: m_work{nullptr, OSQPWorkspaceDeleter}, m_warm_start(warm_start)
+: m_work{nullptr, OSQPWorkspaceDeleter},
+  m_settings(std::make_unique<OSQPSettings>()),
+  m_data(std::make_unique<OSQPData>()),
+  m_warm_start(warm_start)
 {
-  m_settings = std::make_unique<OSQPSettings>();
-  m_data = std::make_unique<OSQPData>();
-
   if (m_settings) {
     osqp_set_default_settings(m_settings.get());
     m_settings->alpha = 1.6;  // Change alpha parameter
@@ -44,7 +46,7 @@ OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish, const boo
     m_settings->eps_abs = eps_abs;
     m_settings->eps_prim_inf = 1.0E-4;
     m_settings->eps_dual_inf = 1.0E-4;
-    m_settings->warm_start = true;
+    m_settings->warm_start = warm_start;
     m_settings->max_iter = 4000;
     m_settings->verbose = false;
     m_settings->polish = polish;
@@ -160,7 +162,7 @@ void OSQPInterface::updateBounds(
 void OSQPInterface::updateEpsAbs(const double eps_abs)
 {
   m_settings->eps_abs = eps_abs;  // for default setting
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_eps_abs(m_work.get(), eps_abs);  // for current work
   }
 }
@@ -168,7 +170,7 @@ void OSQPInterface::updateEpsAbs(const double eps_abs)
 void OSQPInterface::updateEpsRel(const double eps_rel)
 {
   m_settings->eps_rel = eps_rel;  // for default setting
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_eps_rel(m_work.get(), eps_rel);  // for current work
   }
 }
@@ -176,7 +178,7 @@ void OSQPInterface::updateEpsRel(const double eps_rel)
 void OSQPInterface::updateMaxIter(const int max_iter)
 {
   m_settings->max_iter = max_iter;  // for default setting
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_max_iter(m_work.get(), max_iter);  // for current work
   }
 }
@@ -184,7 +186,7 @@ void OSQPInterface::updateMaxIter(const int max_iter)
 void OSQPInterface::updateVerbose(const bool is_verbose)
 {
   m_settings->verbose = is_verbose;  // for default setting
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_verbose(m_work.get(), is_verbose);  // for current work
   }
 }
@@ -197,7 +199,7 @@ void OSQPInterface::updateRhoInterval(const int rho_interval)
 void OSQPInterface::updateRho(const double rho)
 {
   m_settings->rho = rho;
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_rho(m_work.get(), rho);
   }
 }
@@ -205,7 +207,7 @@ void OSQPInterface::updateRho(const double rho)
 void OSQPInterface::updateAlpha(const double alpha)
 {
   m_settings->alpha = alpha;
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_alpha(m_work.get(), alpha);
   }
 }
@@ -215,7 +217,7 @@ void OSQPInterface::updateScaling(const int scaling) { m_settings->scaling = sca
 void OSQPInterface::updatePolish(const bool polish)
 {
   m_settings->polish = polish;
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_polish(m_work.get(), polish);
   }
 }
@@ -228,7 +230,7 @@ void OSQPInterface::updatePolishRefinementIteration(const int polish_refine_iter
   }
 
   m_settings->polish_refine_iter = polish_refine_iter;
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_polish_refine_iter(m_work.get(), polish_refine_iter);
   }
 }
@@ -241,7 +243,7 @@ void OSQPInterface::updateCheckTermination(const int check_termination)
   }
 
   m_settings->check_termination = check_termination;
-  if (m_work_initialized) {
+  if (m_work) {
     osqp_update_check_termination(m_work.get(), check_termination);
   }
 }
@@ -254,10 +256,6 @@ bool OSQPInterface::setWarmStart(
 
 bool OSQPInterface::setPrimalVariables(const std::vector<double> & primal_variables)
 {
-  if (!m_work_initialized) {
-    return false;
-  }
-
   const auto result = osqp_warm_start_x(m_work.get(), primal_variables.data());
   if (result != 0) {
     std::cerr << "Failed to set primal variables for warm start" << std::endl;
@@ -269,10 +267,6 @@ bool OSQPInterface::setPrimalVariables(const std::vector<double> & primal_variab
 
 bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
 {
-  if (!m_work_initialized) {
-    return false;
-  }
-
   const auto result = osqp_warm_start_y(m_work.get(), dual_variables.data());
   if (result != 0) {
     std::cerr << "Failed to set dual variables for warm start" << std::endl;
@@ -354,17 +348,34 @@ int64_t OSQPInterface::initializeProblem(
   m_data->u = u_dyn;
 
   // Setup workspace
-  OSQPWorkspace * workspace;
-  m_exitflag = osqp_setup(&workspace, m_data.get(), m_settings.get());
-  m_work.reset(workspace);
-  m_work_initialized = true;
+  if (m_warm_start && warmStartReady()) {
+    // no need to osqp_setup
+    return true;
+  } else {
+    // this is first initialization OR
+    // warm_start is disabled OR
+    // dimension changed from previous OR
+    // previous solution was invalid
+    OSQPWorkspace * workspace;
+    m_exitflag = osqp_setup(&workspace, m_data.get(), m_settings.get());
+    m_work.reset(workspace);
+    return m_exitflag;
+  }
+}
 
-  return m_exitflag;
+bool OSQPInterface::warmStartReady() const
+{
+  return m_param_n_prev && m_param_n_prev.value() == m_param_n && m_sol_prev &&
+         m_lagrange_multiplier_prev;
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
-OSQPInterface::solve()
+OSQPInterface::solve(const bool do_warm_start)
 {
+  if (m_warm_start && do_warm_start && warmStartReady()) {
+    setWarmStart(m_sol_prev.value(), m_lagrange_multiplier_prev.value());
+  }
+
   // Solve Problem
   osqp_solve(m_work.get());
 
@@ -373,46 +384,48 @@ OSQPInterface::solve()
    ********************/
   double * sol_x = m_work->solution->x;
   double * sol_y = m_work->solution->y;
-  std::vector<double> sol_primal(sol_x, sol_x + m_param_n);
-  std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + m_data->m);
+  const std::vector<double> sol_primal(sol_x, sol_x + m_param_n);
+  const std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + m_data->m);
 
-  int64_t status_polish = m_work->info->status_polish;
-  int64_t status_solution = m_work->info->status_val;
-  int64_t status_iteration = m_work->info->iter;
+  const int64_t status_polish = m_work->info->status_polish;
+  const bool has_solution = check_has_solution(m_work->info);
+  const int64_t status_iteration = m_work->info->iter;
 
-  // Result tuple
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> result =
-    std::make_tuple(
-      sol_primal, sol_lagrange_multiplier, status_polish, status_solution, status_iteration);
-
+  // save solution
+  m_param_n_prev = m_param_n;
   m_latest_work_info = *(m_work->info);
+  // do not save invalid solution for warm-start
+  if (m_warm_start && has_solution) {
+    m_sol_prev = sol_primal;
+    m_lagrange_multiplier_prev = sol_lagrange_multiplier;
+  } else {
+    m_sol_prev = std::nullopt;
+    m_lagrange_multiplier_prev = std::nullopt;
+    m_work.reset();
+  }
 
-  return result;
+  return {
+    sol_primal, sol_lagrange_multiplier, status_polish, static_cast<int64_t>(has_solution),
+    status_iteration};
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
-OSQPInterface::optimize()
+OSQPInterface::optimize(const bool do_warm_start)
 {
   // Run the solver on the stored problem representation.
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> result = solve();
-  return result;
+  return solve(do_warm_start);
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
 OSQPInterface::optimize(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-  const std::vector<double> & l, const std::vector<double> & u)
+  const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start)
 {
   // Allocate memory for problem
   initializeProblem(P, A, q, l, u);
 
   // Run the solver on the stored problem representation.
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> result = solve();
-
-  m_work.reset();
-  m_work_initialized = false;
-
-  return result;
+  return solve(do_warm_start);
 }
 
 void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
