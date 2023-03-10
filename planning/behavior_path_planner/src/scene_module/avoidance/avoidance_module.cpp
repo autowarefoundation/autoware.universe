@@ -733,7 +733,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
   }
 
   /**
-   * Check whether the ego should avoid the front object. When the ego follows reference path,
+   * Find the nearest object that should be avoid. When the ego follows reference path,
    * if the lateral distance is smaller than minimum margin, the ego should avoid the object.
    */
   for (const auto & o : data.target_objects) {
@@ -754,6 +754,10 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
       getLogger(), *clock_, 5000, "not found safe avoidance path. transit yield maneuver...");
   }
 
+  /**
+   * Even if data.avoid_required is false, the module cancels registerd shift point when the
+   * approved avoidance path is not safe.
+   */
   if (!data.safe && registered) {
     data.yield_required = true;
     data.candidate_path = toShiftedPath(data.reference_path);
