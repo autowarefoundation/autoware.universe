@@ -46,6 +46,12 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
+using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using geometry_msgs::msg::Pose;
+using tier4_debug_msgs::msg::Float32MultiArrayStamped;
+
 struct MPCParam
 {
   //!< @brief prediction horizon step
@@ -112,7 +118,7 @@ struct MPCData
 {
   int nearest_idx;
   double nearest_time;
-  geometry_msgs::msg::Pose nearest_pose;
+  Pose nearest_pose;
   double steer;
   double predicted_steer;
   double lateral_err;
@@ -170,7 +176,7 @@ private:
   //!< @brief shift is forward or not.
   bool m_is_forward_shift = true;
   //!< @brief buffer of sent command
-  std::vector<autoware_auto_control_msgs::msg::AckermannLateralCommand> m_ctrl_cmd_vec;
+  std::vector<AckermannLateralCommand> m_ctrl_cmd_vec;
   //!< @brief minimum prediction distance
   double m_min_prediction_length = 5.0;
 
@@ -178,9 +184,8 @@ private:
    * @brief get variables for mpc calculation
    */
   bool getData(
-    const MPCTrajectory & traj,
-    const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
-    const geometry_msgs::msg::Pose & current_pose, MPCData * data);
+    const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose,
+    MPCData * data);
   /**
    * @brief calculate predicted steering
    */
@@ -197,7 +202,7 @@ private:
   /**
    * @brief reset previous result of MPC
    */
-  void resetPrevResult(const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer);
+  void resetPrevResult(const SteeringReport & current_steer);
   /**
    * @brief set initial condition for mpc
    * @param [in] data mpc data
@@ -237,15 +242,13 @@ private:
    * @brief apply velocity dynamics filter with v0 from closest index
    */
   MPCTrajectory applyVelocityDynamicsFilter(
-    const MPCTrajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
-    const double v0) const;
+    const MPCTrajectory & trajectory, const Pose & current_pose, const double v0) const;
   /**
    * @brief get prediction delta time of mpc.
    * If trajectory length is shorter than min_prediction length, adjust delta time.
    */
   double getPredictionDeltaTime(
-    const double start_time, const MPCTrajectory & input,
-    const geometry_msgs::msg::Pose & current_pose) const;
+    const double start_time, const MPCTrajectory & input, const Pose & current_pose) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into R
    */
@@ -379,19 +382,17 @@ public:
    * @param [out] diagnostic diagnostic msg to be filled-out
    */
   bool calculateMPC(
-    const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
-    const double current_velocity, const geometry_msgs::msg::Pose & current_pose,
-    autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
-    autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-    tier4_debug_msgs::msg::Float32MultiArrayStamped & diagnostic);
+    const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
+    AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_traj,
+    Float32MultiArrayStamped & diagnostic);
   /**
    * @brief set the reference trajectory to follow
    */
   void setReferenceTrajectory(
-    const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
-    const double traj_resample_dist, const bool enable_path_smoothing,
-    const int path_filter_moving_ave_num, const int curvature_smoothing_num_traj,
-    const int curvature_smoothing_num_ref_steer, const bool extend_trajectory_for_end_yaw_control);
+    const Trajectory & trajectory_msg, const double traj_resample_dist,
+    const bool enable_path_smoothing, const int path_filter_moving_ave_num,
+    const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
+    const bool extend_trajectory_for_end_yaw_control);
   /**
    * @brief set the vehicle model of this MPC
    */

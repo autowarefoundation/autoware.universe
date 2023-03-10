@@ -32,11 +32,9 @@ namespace autoware::motion::control::mpc_lateral_controller
 using namespace std::literals::chrono_literals;
 
 bool MPC::calculateMPC(
-  const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
-  const double current_velocity, const geometry_msgs::msg::Pose & current_pose,
-  autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
-  autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-  tier4_debug_msgs::msg::Float32MultiArrayStamped & diagnostic)
+  const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
+  AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_traj,
+  Float32MultiArrayStamped & diagnostic)
 {
   /* recalculate velocity from ego-velocity with dynamics */
   MPCTrajectory reference_trajectory =
@@ -171,10 +169,10 @@ bool MPC::calculateMPC(
 }
 
 void MPC::setReferenceTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
-  const double traj_resample_dist, const bool enable_path_smoothing,
-  const int path_filter_moving_ave_num, const int curvature_smoothing_num_traj,
-  const int curvature_smoothing_num_ref_steer, const bool extend_trajectory_for_end_yaw_control)
+  const Trajectory & trajectory_msg, const double traj_resample_dist,
+  const bool enable_path_smoothing, const int path_filter_moving_ave_num,
+  const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
+  const bool extend_trajectory_for_end_yaw_control)
 {
   MPCTrajectory mpc_traj_raw;        // received raw trajectory
   MPCTrajectory mpc_traj_resampled;  // resampled trajectory
@@ -248,15 +246,15 @@ void MPC::setReferenceTrajectory(
   m_ref_traj = mpc_traj_smoothed;
 }
 
-void MPC::resetPrevResult(const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer)
+void MPC::resetPrevResult(const SteeringReport & current_steer)
 {
   m_raw_steer_cmd_prev = current_steer.steering_tire_angle;
   m_raw_steer_cmd_pprev = current_steer.steering_tire_angle;
 }
 
 bool MPC::getData(
-  const MPCTrajectory & traj, const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
-  const geometry_msgs::msg::Pose & current_pose, MPCData * data)
+  const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose,
+  MPCData * data)
 {
   static constexpr auto duration = 5000 /*ms*/;
   size_t nearest_idx;
@@ -376,7 +374,7 @@ double MPC::getSteerCmdSum(
 void MPC::storeSteerCmd(const double steer)
 {
   const auto time_delayed = m_clock->now() + rclcpp::Duration::from_seconds(m_param.input_delay);
-  autoware_auto_control_msgs::msg::AckermannLateralCommand cmd;
+  AckermannLateralCommand cmd;
   cmd.stamp = time_delayed;
   cmd.steering_tire_angle = static_cast<float>(steer);
 
@@ -479,9 +477,9 @@ bool MPC::updateStateForDelayCompensation(
 }
 
 MPCTrajectory MPC::applyVelocityDynamicsFilter(
-  const MPCTrajectory & input, const geometry_msgs::msg::Pose & current_pose, const double v0) const
+  const MPCTrajectory & input, const Pose & current_pose, const double v0) const
 {
-  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+  Trajectory autoware_traj;
   MPCUtils::convertToAutowareTrajectory(input, autoware_traj);
   if (autoware_traj.points.empty()) {
     return input;
@@ -773,11 +771,10 @@ void MPC::addSteerWeightF(const double prediction_dt, Eigen::MatrixXd * f_ptr) c
 }
 
 double MPC::getPredictionDeltaTime(
-  const double start_time, const MPCTrajectory & input,
-  const geometry_msgs::msg::Pose & current_pose) const
+  const double start_time, const MPCTrajectory & input, const Pose & current_pose) const
 {
   // Calculate the time min_prediction_length ahead from current_pose
-  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+  Trajectory autoware_traj;
   MPCUtils::convertToAutowareTrajectory(input, autoware_traj);
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
