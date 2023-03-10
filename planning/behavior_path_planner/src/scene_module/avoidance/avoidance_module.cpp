@@ -755,7 +755,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
   }
 
   /**
-   * Even if data.avoid_required is false, the module cancels registerd shift point when the
+   * Even if data.avoid_required is false, the module cancels registered shift point when the
    * approved avoidance path is not safe.
    */
   if (!data.safe && registered) {
