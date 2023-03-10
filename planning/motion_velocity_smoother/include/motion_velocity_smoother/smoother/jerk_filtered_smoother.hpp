@@ -38,6 +38,7 @@ public:
     double over_a_weight;
     double over_j_weight;
     double jerk_filter_ds;
+    bool warm_start;
   };
 
   explicit JerkFilteredSmoother(rclcpp::Node & node);

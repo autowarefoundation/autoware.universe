@@ -25,7 +25,14 @@
 #include <tuple>
 #include <vector>
 
-static c_int check_has_solution(OSQPInfo * info) { return info->status_val == OSQP_SOLVED; }
+static bool check_has_solution(OSQPInfo * info)
+{
+  return (info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
+         (info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
+         (info->status_val != OSQP_DUAL_INFEASIBLE) &&
+         (info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE) &&
+         (info->status_val != OSQP_NON_CVX);
+}
 
 namespace autoware
 {
@@ -34,11 +41,10 @@ namespace common
 namespace osqp
 {
 OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish, const bool warm_start)
-: m_work{nullptr, OSQPWorkspaceDeleter},
-  m_settings(std::make_unique<OSQPSettings>()),
-  m_data(std::make_unique<OSQPData>()),
-  m_warm_start(warm_start)
+: m_work{nullptr, OSQPWorkspaceDeleter}, m_warm_start(warm_start)
 {
+  m_settings = std::make_unique<OSQPSettings>();
+  m_data = std::make_unique<OSQPData>();
   if (m_settings) {
     osqp_set_default_settings(m_settings.get());
     m_settings->alpha = 1.6;  // Change alpha parameter
@@ -60,7 +66,7 @@ OSQPInterface::OSQPInterface(
   const bool polish, const bool warm_start)
 : OSQPInterface(eps_abs, polish, warm_start)
 {
-  initializeProblem(P, A, q, l, u);
+  initializeProblem(P, A, q, l, u, warm_start);
 }
 
 OSQPInterface::OSQPInterface(
@@ -69,7 +75,7 @@ OSQPInterface::OSQPInterface(
   const bool polish, const bool warm_start)
 : OSQPInterface(eps_abs, polish, warm_start)
 {
-  initializeProblem(P, A, q, l, u);
+  initializeProblem(P, A, q, l, u, warm_start);
 }
 
 OSQPInterface::~OSQPInterface()
@@ -278,7 +284,7 @@ bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
 
 int64_t OSQPInterface::initializeProblem(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-  const std::vector<double> & l, const std::vector<double> & u)
+  const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start)
 {
   // check if arguments are valid
   std::stringstream ss;
@@ -310,12 +316,12 @@ int64_t OSQPInterface::initializeProblem(
 
   CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
   CSC_Matrix A_csc = calCSCMatrix(A);
-  return initializeProblem(P_csc, A_csc, q, l, u);
+  return initializeProblem(P_csc, A_csc, q, l, u, do_warm_start);
 }
 
 int64_t OSQPInterface::initializeProblem(
   CSC_Matrix P_csc, CSC_Matrix A_csc, const std::vector<double> & q, const std::vector<double> & l,
-  const std::vector<double> & u)
+  const std::vector<double> & u, const bool do_warm_start)
 {
   // Dynamic float arrays
   std::vector<double> q_tmp(q.begin(), q.end());
@@ -348,7 +354,7 @@ int64_t OSQPInterface::initializeProblem(
   m_data->u = u_dyn;
 
   // Setup workspace
-  if (m_warm_start && warmStartReady()) {
+  if (do_warm_start && warmStartReady()) {
     // no need to osqp_setup
     return true;
   } else {
@@ -358,6 +364,7 @@ int64_t OSQPInterface::initializeProblem(
     // previous solution was invalid
     OSQPWorkspace * workspace;
     m_exitflag = osqp_setup(&workspace, m_data.get(), m_settings.get());
+    std::cout << "osqp_setup() again" << std::endl;
     m_work.reset(workspace);
     return m_exitflag;
   }
@@ -373,9 +380,13 @@ std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
 OSQPInterface::solve(const bool do_warm_start)
 {
   if (m_warm_start && do_warm_start && warmStartReady()) {
+    std::cout << "setWarmStart" << std::endl;
+    m_settings->warm_start = true;
     setWarmStart(m_sol_prev.value(), m_lagrange_multiplier_prev.value());
+  } else {
+    m_settings->warm_start = false;
+    std::cout << "not setWarmStart" << std::endl;
   }
-
   // Solve Problem
   osqp_solve(m_work.get());
 
@@ -391,17 +402,19 @@ OSQPInterface::solve(const bool do_warm_start)
   const bool has_solution = check_has_solution(m_work->info);
   const int64_t status_iteration = m_work->info->iter;
 
+  std::cout << "has_solution = " << has_solution << std::endl;
+  std::cout << "iteration = " << status_iteration << std::endl;
+
   // save solution
   m_param_n_prev = m_param_n;
   m_latest_work_info = *(m_work->info);
   // do not save invalid solution for warm-start
-  if (m_warm_start && has_solution) {
+  if (m_warm_start && has_solution && status_polish == 1) {
     m_sol_prev = sol_primal;
     m_lagrange_multiplier_prev = sol_lagrange_multiplier;
   } else {
     m_sol_prev = std::nullopt;
     m_lagrange_multiplier_prev = std::nullopt;
-    m_work.reset();
   }
 
   return {
@@ -413,7 +426,7 @@ std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
 OSQPInterface::optimize(const bool do_warm_start)
 {
   // Run the solver on the stored problem representation.
-  return solve(do_warm_start);
+  return solve(m_warm_start && do_warm_start);
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
@@ -422,10 +435,10 @@ OSQPInterface::optimize(
   const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start)
 {
   // Allocate memory for problem
-  initializeProblem(P, A, q, l, u);
+  initializeProblem(P, A, q, l, u, m_warm_start && do_warm_start);
 
   // Run the solver on the stored problem representation.
-  return solve(do_warm_start);
+  return solve(m_warm_start && do_warm_start);
 }
 
 void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const

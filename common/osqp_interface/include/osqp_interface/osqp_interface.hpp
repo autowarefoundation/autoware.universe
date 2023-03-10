@@ -45,8 +45,8 @@ class OSQP_INTERFACE_PUBLIC OSQPInterface
 {
 private:
   std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
-  const std::unique_ptr<OSQPSettings> m_settings;
-  const std::unique_ptr<OSQPData> m_data;
+  std::unique_ptr<OSQPSettings> m_settings;
+  std::unique_ptr<OSQPData> m_data;
   // store last work info since work is cleaned up at every execution to prevent memory leak.
   OSQPInfo m_latest_work_info;
   // Number of parameters to optimize
@@ -76,10 +76,10 @@ public:
   /// \param u (m) vector defining the upper bound problem constraint.
   int64_t initializeProblem(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u);
+    const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
   int64_t initializeProblem(
     CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
-    const std::vector<double> & u);
+    const std::vector<double> & u, const bool do_warm_start = true);
 
   // Setter functions for warm start
   bool setWarmStart(

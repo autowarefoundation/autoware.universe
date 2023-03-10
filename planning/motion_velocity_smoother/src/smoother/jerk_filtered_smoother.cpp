@@ -36,6 +36,7 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(n
   p.over_a_weight = node.declare_parameter<double>("over_a_weight");
   p.over_j_weight = node.declare_parameter<double>("over_j_weight");
   p.jerk_filter_ds = node.declare_parameter<double>("jerk_filter_ds");
+  p.warm_start = node.declare_parameter<bool>("warm_start");
 
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
@@ -288,7 +289,8 @@ bool JerkFilteredSmoother::apply(
   }
 
   // execute optimization
-  const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
+  const auto result =
+    qp_solver_.optimize(P, A, q, lower_bound, upper_bound, smoother_param_.warm_start);
   const std::vector<double> optval = std::get<0>(result);
 
   const auto tf1 = std::chrono::system_clock::now();
