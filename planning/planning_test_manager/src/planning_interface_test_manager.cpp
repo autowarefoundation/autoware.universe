@@ -30,7 +30,6 @@ void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions &
   node_options.append_parameter_override("right_overhang", 0.5);
   node_options.append_parameter_override("vehicle_height", 1.5);
   node_options.append_parameter_override("max_steer_angle", 0.7);
-  return;
 }
 
 void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
@@ -38,31 +37,26 @@ void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
 {
   node_options.append_parameter_override("ego_nearest_dist_threshold", 3.0);
   node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
-  return;
 }
 
 void PlanningIntefaceTestManager::setOdomTopicName(std::string topic_name)
 {
   odom_pub_ = rclcpp::create_publisher<Odometry>(test_node_, topic_name, 1);
-  return;
 }
 
 void PlanningIntefaceTestManager::setMaxVelocityTopicName(std::string topic_name)
 {
   max_velocity_pub_ = rclcpp::create_publisher<VelocityLimit>(test_node_, topic_name, 1);
-  return;
 }
 
 void PlanningIntefaceTestManager::setTrajectoryTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;
-  return;
 }
 
 void PlanningIntefaceTestManager::setOutputTrajectoryTopicName(std::string topic_name)
 {
   output_trajectory_name_ = topic_name;
-  return;
 }
 
 void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr node)
@@ -71,7 +65,6 @@ void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr node)
   rclcpp::spin_some(test_node_);
   rclcpp::spin_some(node);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  return;
 }
 
 void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr node)
@@ -80,7 +73,6 @@ void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr nod
   rclcpp::spin_some(test_node_);
   rclcpp::spin_some(node);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  return;
 }
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber()
@@ -89,7 +81,6 @@ void PlanningIntefaceTestManager::setTrajectorySubscriber()
   traj_sub_ = test_node_->create_subscription<Trajectory>(
     output_trajectory_name_, 10,
     std::bind(&PlanningIntefaceTestManager::countCallback, this, std::placeholders::_1));
-  return;
 }
 
 // test for normal working
@@ -97,7 +88,6 @@ void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::Shared
 {
   // check that the node does not die here.
   ASSERT_NO_THROW(publishNominalTrajectory(node));
-  return;
 }
 
 // check to see if target node is dead.
@@ -105,7 +95,6 @@ void PlanningIntefaceTestManager::testWithAbnormalTrajectory(
   rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory)
 {
   ASSERT_NO_THROW(publishAbnormalTrajectory(node, abnormal_trajectory));
-  return;
 }
 
 void PlanningIntefaceTestManager::publishNominalTrajectory(rclcpp::Node::SharedPtr node)
@@ -119,7 +108,6 @@ void PlanningIntefaceTestManager::publishNominalTrajectory(rclcpp::Node::SharedP
   rclcpp::spin_some(test_node_);
   rclcpp::spin_some(node);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  return;
 }
 
 void PlanningIntefaceTestManager::publishAbnormalTrajectory(
@@ -131,7 +119,6 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
   rclcpp::spin_some(test_node_);
   rclcpp::spin_some(node);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  return;
 }
 
 void PlanningIntefaceTestManager::countCallback([[maybe_unused]] const Trajectory trajectory)
@@ -139,8 +126,6 @@ void PlanningIntefaceTestManager::countCallback([[maybe_unused]] const Trajector
   // Increment the counter.
   ++count_;
 
-  // Display the current count.
-  RCLCPP_ERROR(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
 }
 
 void PlanningIntefaceTestManager::countCallbackMaxVelocity(
@@ -149,8 +134,6 @@ void PlanningIntefaceTestManager::countCallbackMaxVelocity(
   // Increment the counter.
   ++count_;
 
-  // Display the current count.
-  RCLCPP_ERROR(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
 }
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
