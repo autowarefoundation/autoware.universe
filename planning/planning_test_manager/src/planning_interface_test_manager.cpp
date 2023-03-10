@@ -125,7 +125,6 @@ void PlanningIntefaceTestManager::countCallback([[maybe_unused]] const Trajector
 {
   // Increment the counter.
   ++count_;
-
 }
 
 void PlanningIntefaceTestManager::countCallbackMaxVelocity(
@@ -133,7 +132,6 @@ void PlanningIntefaceTestManager::countCallbackMaxVelocity(
 {
   // Increment the counter.
   ++count_;
-
 }
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
