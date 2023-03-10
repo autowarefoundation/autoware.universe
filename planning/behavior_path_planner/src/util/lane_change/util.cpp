@@ -310,6 +310,9 @@ std::pair<bool, bool> getLaneChangePaths(
 
   const auto acceleration_resolution = std::abs(maximum_deceleration) / lane_change_sampling_num;
 
+  const auto target_distance =
+    util::getArcLengthToTargetLanelet(original_lanelets, target_lanelets.front(), pose);
+
   const auto num_to_preferred_lane =
     std::abs(route_handler.getNumLaneToPreferredLane(target_lanelets.back()));
 
@@ -356,6 +359,10 @@ std::pair<bool, bool> getLaneChangePaths(
     const auto prepare_distance = getDistanceWhenDecelerate(
       current_velocity, acceleration, lane_change_prepare_duration,
       minimum_lane_change_prepare_distance);
+
+    if (prepare_distance < target_distance) {
+      continue;
+    }
 
     const auto prepare_segment_reference = getLaneChangePathPrepareSegment(
       route_handler, original_lanelets, arc_position_from_current.length, backward_path_length,
