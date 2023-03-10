@@ -6,8 +6,8 @@
   <description>The autoware automatic goal rviz plugin package</description>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
   <maintainer email="dawid.moszynski@robotec.ai">Dawid Moszyński</maintainer>
-  <author email="dawid.moszynski@robotec.ai">Dawid Moszyński</author>
   <license>Apache License 2.0</license>
+  <author email="dawid.moszynski@robotec.ai">Dawid Moszyński</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <build_depend>autoware_cmake</build_depend>
