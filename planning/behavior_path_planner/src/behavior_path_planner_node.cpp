@@ -718,8 +718,8 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
       declare_parameter<bool>(ns + "use_occupancy_grid_for_longitudinal_margin");
     p.occupancy_grid_collision_check_margin =
       declare_parameter<double>(ns + "occupancy_grid_collision_check_margin");
-    p.theta_size = declare_parameter<double>(ns + "theta_size");
-    p.obstacle_threshold = declare_parameter<double>(ns + "obstacle_threshold");
+    p.theta_size = declare_parameter<int>(ns + "theta_size");
+    p.obstacle_threshold = declare_parameter<int>(ns + "obstacle_threshold");
     // object recognition
     p.use_object_recognition = declare_parameter<bool>(ns + "use_object_recognition");
     p.object_recognition_collision_check_margin =

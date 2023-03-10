@@ -53,8 +53,8 @@ struct PullOverParameters
   bool use_occupancy_grid;
   bool use_occupancy_grid_for_longitudinal_margin;
   double occupancy_grid_collision_check_margin;
-  double theta_size;
-  double obstacle_threshold;
+  int theta_size;
+  int obstacle_threshold;
   // object recognition
   bool use_object_recognition;
   double object_recognition_collision_check_margin;
