@@ -13,10 +13,8 @@
 
   <!-- pose_initializer -->
   <group>
-    <let name="config_file" value="$(var pose_initializer_param_path)" if="$(eval &quot;'$(var run_mode)'=='online'&quot;)"/>
-    <let name="config_file" value="$(var pose_initializer_param_logging_simulator_path)" if="$(eval &quot;'$(var run_mode)'=='logging_simulation'&quot;)"/>
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-      <arg name="config_file" value="$(var config_file)"/>
+      <arg name="config_file" value="$(var pose_initializer_param_path)"/>
     </include>
   </group>
 
