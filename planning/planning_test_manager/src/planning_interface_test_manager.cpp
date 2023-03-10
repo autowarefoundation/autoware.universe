@@ -53,24 +53,6 @@ void PlanningIntefaceTestManager::setMaxVelocityTopicName(std::string topic_name
   return;
 }
 
-void PlanningIntefaceTestManager::setPointCloudTopicName(std::string topic_name)
-{
-  point_cloud_pub_ = rclcpp::create_publisher<PointCloud2>(test_node_, topic_name, 1);
-  return;
-}
-
-void PlanningIntefaceTestManager::setPredictedObjectsTopicName(std::string topic_name)
-{
-  PredictedObjects_pub_ = rclcpp::create_publisher<PredictedObjects>(test_node_, topic_name, 1);
-  return;
-}
-
-void PlanningIntefaceTestManager::setTFTopicName(std::string topic_name)
-{
-  TF_pub_ = rclcpp::create_publisher<TFMessage>(test_node_, topic_name, 1);
-  return;
-}
-
 void PlanningIntefaceTestManager::setTrajectoryTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;
@@ -81,14 +63,6 @@ void PlanningIntefaceTestManager::setOutputTrajectoryTopicName(std::string topic
 {
   output_trajectory_name_ = topic_name;
   return;
-}
-
-void PlanningIntefaceTestManager::setOutputMaxVelocityTopicName(std::string topic_name)
-{
-  // Count the number of max_velocity received.
-  max_velocity_sub_ = test_node_->create_subscription<VelocityLimit>(
-    topic_name, 10,
-    std::bind(&PlanningIntefaceTestManager::countCallbackMaxVelocity, this, std::placeholders::_1));
 }
 
 void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr node)
@@ -108,8 +82,6 @@ void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr nod
   rclcpp::sleep_for(std::chrono::milliseconds(100));
   return;
 }
-
-
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber()
 {
@@ -178,7 +150,7 @@ void PlanningIntefaceTestManager::countCallbackMaxVelocity(
   ++count_;
 
   // Display the current count.
-  RCLCPP_DEBUG(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
+  RCLCPP_ERROR(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
 }
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }

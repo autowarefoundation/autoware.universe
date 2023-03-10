@@ -51,12 +51,10 @@ class PlanningIntefaceTestManager
 public:
   PlanningIntefaceTestManager() {}
 
-  void testNormalBehavior(rclcpp::Node & node);
+  void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
+  void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
 
   void setOdomTopicName(std::string topic_name);
-  void setPointCloudTopicName(std::string topic_name);
-  void setPredictedObjectsTopicName(std::string topic_name);
-  void setTFTopicName(std::string topic_name);
   void setMaxVelocityTopicName(std::string topic_name);
   void setTrajectoryTopicName(std::string topic_name);
 
@@ -64,7 +62,6 @@ public:
   void setOutputMaxVelocityTopicName(std::string topic_name);
 
   void publishOdometry(rclcpp::Node::SharedPtr node);
-  void publishMaxVelocity(rclcpp::Node::SharedPtr node);
 
   void setTrajectorySubscriber();
 
@@ -73,9 +70,6 @@ public:
     rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
 
   int getReceivedTopicNum();
-
-  void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
-  void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
 
 private:
   // Publisher
