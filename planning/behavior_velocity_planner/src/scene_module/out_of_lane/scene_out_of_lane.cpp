@@ -88,7 +88,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   stopwatch.tic("calculate_decisions");
   const auto decisions = calculate_decisions(
     intervals, *path, ego_idx, *(*planner_data_)->predicted_objects,
-    (*planner_data_)->route_handler_, lanelets_to_check, params_);
+    (*planner_data_)->route_handler_, lanelets_to_check, params_, debug_data_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   std::printf("Found %lu decisions\n", decisions.size());
   stopwatch.tic("insert_slowdown_points");
@@ -140,6 +140,66 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
     debug_marker.id++;
     debug_marker.points.clear();
   }
+
+  // time intervals TODO(Maxime): remove
+  debug_marker.id = 0;
+  constexpr auto t_scale = 3.0;
+  constexpr auto x_off = 3.0;
+  constexpr auto y_off = -2.0;
+  for(auto i = 0UL; i < debug_data_.intervals.size(); ++i) {
+    // Enter/Exit points
+    debug_marker.ns = "intervals";
+    const auto & entering_p = debug_data_.intervals[i].entering_point;
+    const auto & exiting_p = debug_data_.intervals[i].exiting_point;
+    debug_marker.type = Marker::ARROW;
+    debug_marker.scale.x = 0.2;
+    debug_marker.scale.y = 0.2;
+    debug_marker.scale.z = 0.2;
+    debug_marker.color = tier4_autoware_utils::createMarkerColor(0.1, 1.0, 0.1, 0.5);
+    debug_marker.points.push_back(
+      tier4_autoware_utils::createMarkerPosition(entering_p.x(), entering_p.y(), 0));
+    debug_marker.points.push_back(
+      tier4_autoware_utils::createMarkerPosition(exiting_p.x(), exiting_p.y(), 0));
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+
+    // t=0 point
+    debug_marker.ns = "time intervals";
+    auto p = debug_data_.intervals[i].entering_point;
+    p.x() += x_off;
+    p.y() += y_off;
+    debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 1.0);
+    debug_marker.points = {
+      tier4_autoware_utils::createMarkerPosition(p.x(), p.y() - 3.0, 0),
+      tier4_autoware_utils::createMarkerPosition(p.x(), p.y() + 3.0, 0)};
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+    // time intervals of ego and npcs
+    debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0, 0, 0);
+    const auto & ego = debug_data_.ego_times[i];
+    const auto & npcs = debug_data_.npc_times[i];
+    debug_marker.color = tier4_autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.7);
+    debug_marker.scale.x = 3.0;
+    debug_marker.scale.y = 3.0;
+    debug_marker.scale.z = 1.0;
+    debug_marker.points = {
+      tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * ego.first, p.y(), 0),
+      tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * ego.second, p.y(), 0)};
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+    auto c = 0.25;
+    for(const auto & npc : npcs) {
+      debug_marker.points = {
+        tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * npc.first, p.y(), 0),
+        tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * npc.second, p.y(), 0)
+      };
+      debug_marker.color = tier4_autoware_utils::createMarkerColor(c, c, c/4, 0.7);
+      debug_marker_array.markers.push_back(debug_marker);
+      debug_marker.id++;
+      c += 0.25;
+    }
+  }
+
   return debug_marker_array;
 }
 

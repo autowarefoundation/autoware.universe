@@ -119,13 +119,17 @@ typedef std::vector<Interval> Intervals;
 struct DebugData
 {
   std::vector<lanelet::BasicPolygon2d> footprints;
-  Intervals intervals;
   std::vector<Pose> slowdown_poses;
+  Intervals intervals;
+  std::vector<std::vector<std::pair<double, double>>> npc_times;
+  std::vector<std::pair<double, double>> ego_times;
   void resetData()
   {
     footprints.clear();
-    intervals.clear();
     slowdown_poses.clear();
+    intervals.clear();
+    npc_times.clear();
+    ego_times.clear();
   }
 };
 
@@ -227,22 +231,32 @@ inline Intervals calculate_overlapping_intervals(
     auto path_footprint = path_footprints[i];
     mapper.map(path_footprint, "opacity:0.5;fill-opacity:0.0;fill:red;stroke:red;stroke-width:1");
     for (auto & other_lane : other_lanes) {
-      lanelet::BasicPolygons2d overlapping_polygons;
-      boost::geometry::intersection(path_footprint, other_lane.polygon, overlapping_polygons);
-      auto inside_dist = 0.0;  // maximize
+      const auto & left_bound = other_lane.lanelet.leftBound2d().basicLineString();
+      const auto & right_bound = other_lane.lanelet.rightBound2d().basicLineString();
+      const auto overlap_left = boost::geometry::intersects(path_footprint, left_bound);
+      const auto overlap_right = boost::geometry::intersects(path_footprint, right_bound);
+      auto inside_dist = 0.0;
       lanelet::BasicPoint2d min_overlap_point;
       lanelet::BasicPoint2d max_overlap_point;
       auto min_arc_length = std::numeric_limits<double>::infinity();
       auto max_arc_length = 0.0;
+      lanelet::BasicPolygons2d overlapping_polygons;
+      if(overlap_left || overlap_right)  // TODO(Maxime): special case when both are overlapped
+        boost::geometry::intersection(path_footprint, other_lane.polygon, overlapping_polygons);
       for (const auto & overlapping_polygon : overlapping_polygons) {
         mapper.map(
           overlapping_polygon, "opacity:0.5;fill-opacity:0.2;fill:red;stroke:red;stroke-width:1");
         for (const auto & point : overlapping_polygon) {
-          // TODO(Maxime): inside distance is not correct (need to use the intersected left/right
-          // bound of the lanelet)
-          inside_dist = std::max(inside_dist, boost::geometry::distance(point, other_lane.polygon));
-          const auto length =
-            lanelet::geometry::toArcCoordinates(other_lane.lanelet.centerline2d(), point).length;
+          if(overlap_left && overlap_right)
+            inside_dist = 0.0;  // TODO(Maxime): boost::geometry::distance(left_bound, right_bound)
+          else if(overlap_left)
+            inside_dist = std::max(inside_dist, boost::geometry::distance(point, left_bound));
+          else if(overlap_right)
+            inside_dist = std::max(inside_dist, boost::geometry::distance(point, right_bound));
+          geometry_msgs::msg::Pose p;
+          p.position.x = point.x();
+          p.position.y = point.y();
+          const auto length = lanelet::utils::getArcCoordinates(path_lanelets, p).length;
           if (length > max_arc_length) {
             max_arc_length = length;
             max_overlap_point = point;
@@ -253,7 +267,8 @@ inline Intervals calculate_overlapping_intervals(
           }
         }
       }
-      if (!overlapping_polygons.empty()) {  // if there was an overlap, open/update the interval
+      const auto has_overlap = inside_dist > params.overlap_min_dist;
+      if (has_overlap) {  // open/update the interval
         if (!other_lane.interval_is_open) {
           other_lane.first_interval_bound.index = i;
           other_lane.first_interval_bound.point = min_overlap_point;
@@ -262,11 +277,15 @@ inline Intervals calculate_overlapping_intervals(
           other_lane.interval_is_open = true;
         }
         other_lane.last_interval_bound.index = i;
+        // TODO(Maxime): the last max_overlap_point does not go to go to the interval
         other_lane.last_interval_bound.point = max_overlap_point;
+        mapper.map(max_overlap_point, "opacity:0.5;stroke:green;stroke-width:1", 2);
         other_lane.last_interval_bound.arc_length = max_arc_length + params.overlap_extra_length;
         other_lane.last_interval_bound.inside_distance = inside_dist;
-      } else if (other_lane.interval_is_open) {  // close the interval if there were no overlap
+      } else if (other_lane.interval_is_open) {  // !has_overlap: close the interval
         intervals.push_back(other_lane.closeInterval());
+        mapper.map(intervals.back().entering_point, "opacity:0.5;stroke:blue;stroke-width:1", 2);
+        mapper.map(intervals.back().exiting_point, "opacity:0.5;stroke:green;stroke-width:1", 2);
       }
     }
   }
@@ -274,6 +293,8 @@ inline Intervals calculate_overlapping_intervals(
   for (auto & other_lane : other_lanes)
     if (other_lane.interval_is_open) {
       intervals.push_back(other_lane.closeInterval());
+      mapper.map(intervals.back().entering_point, "opacity:0.5;stroke:blue;stroke-width:1", 2);
+      mapper.map(intervals.back().exiting_point, "opacity:0.5;stroke:green;stroke-width:1", 2);
     }
   return intervals;
 }
@@ -281,23 +302,24 @@ inline Intervals calculate_overlapping_intervals(
 inline std::vector<Slowdown> calculate_decisions(
   const Intervals & intervals, const PathWithLaneId & ego_path, const size_t first_idx,
   const PredictedObjects & objects, std::shared_ptr<route_handler::RouteHandler> route_handler,
-  const lanelet::ConstLanelets & lanelets, const PlannerParam & params)
+  const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug)
 {
+  // TODO(Maxime): move to fn, improve time estimatate.
   const auto time_along_path = [&](const auto & idx) {
-    // TODO(Maxime): this is a bad estimate of the time to reach a point. should use current
-    // velocity ?
     auto t = 0.0;
     for (auto i = first_idx; i <= idx && i + 1 < ego_path.points.size(); ++i) {
       const auto ds =
         tier4_autoware_utils::calcDistance2d(ego_path.points[i], ego_path.points[i + 1]);
-      const auto v = ego_path.points[i].point.longitudinal_velocity_mps;
+      const auto v = ego_path.points[i].point.longitudinal_velocity_mps * 0.2;  // TODO(Maxime) TMP
       t += ds / v;
     }
     return t;
   };
+  // TODO(Maxime): move to function
   const auto object_time_to_interval = [&](const auto & object, const auto & interval) {
     const auto & p = object.kinematics.initial_pose_with_covariance.pose.position;
     const auto object_point = lanelet::BasicPoint2d(p.x, p.y);
+    const auto half_size = objects.objects.front().shape.dimensions.x / 2;
     lanelet::ConstLanelets object_lanelets;
     for (const auto & ll : lanelets)
       if (boost::geometry::within(object_point, ll.polygon2d().basicPolygon()))
@@ -332,27 +354,33 @@ inline std::vector<Slowdown> calculate_decisions(
       }
     }
     const auto v = object.kinematics.initial_twist_with_covariance.twist.linear.x;
-    return std::make_pair(min_dist / v, max_dist / v);
+    return std::make_pair((min_dist - half_size) / v, (max_dist + half_size) / v);
   };
   std::vector<Slowdown> decisions;
   std::cout << "** Decisions\n";
   for (const auto & interval : intervals) {
     // skip if we already entered the interval
     if (interval.entering_path_idx == 0UL) continue;
-    // skip if the overlap inside the interval is too small
-    if (interval.inside_distance < params.overlap_min_dist) continue;
 
     const auto ego_enter_time = time_along_path(interval.entering_path_idx);
     const auto ego_exit_time = time_along_path(interval.exiting_path_idx);
+    // TODO(Maxime): remove debug ?
+    debug.intervals.push_back(interval);
+    debug.ego_times.emplace_back(ego_enter_time, ego_exit_time);
+    auto & npc_times = debug.npc_times.emplace_back();
+
     std::printf(
       "\t[%lu -> %lu] %ld (ego enters at %2.2f, exits at %2.2f)\n", interval.entering_path_idx,
       interval.exiting_path_idx, interval.lane.id(), ego_enter_time, ego_exit_time);
     auto min_object_enter_time = std::numeric_limits<double>::max();
     auto max_object_exit_time = 0.0;
     for (const auto & object : objects.objects) {
+      auto & debug_pair = npc_times.emplace_back(0.0, 0.0);
       if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel)
         continue;  // skip objects with velocity bellow a threshold
       const auto & [enter_time, exit_time] = object_time_to_interval(object, interval);
+      debug_pair.first = enter_time;
+      debug_pair.second = exit_time;
       std::printf(
         "\t\t[%s] going at %2.2fm/s enter at %2.2fs, exits at %2.2fs\n",
         tier4_autoware_utils::toHexString(object.object_id).c_str(),
@@ -360,7 +388,7 @@ inline std::vector<Slowdown> calculate_decisions(
       min_object_enter_time = std::min(min_object_enter_time, std::max(0.0, enter_time));
       max_object_exit_time = std::max(max_object_exit_time, exit_time);
     }
-    // TODO(Maxime): more complex decisions, threshold, slowdown instead of stop
+    // TODO(Maxime): more complex decisions ?
     const auto incoming_objects = min_object_enter_time < max_object_exit_time;
     const auto ego_enters_before_object = ego_enter_time < min_object_enter_time;
     const auto ego_exits_after_object = ego_exit_time > max_object_exit_time;
@@ -390,6 +418,7 @@ inline std::vector<Slowdown> calculate_decisions(
 inline void insert_slowdown_points(
   PathWithLaneId & path, const std::vector<Slowdown> & decisions, const PlannerParam & params)
 {
+  // TODO(Maxime): also check max_deceleration
   const auto base_footprint = make_base_footprint(params);
   for (const auto & decision : decisions) {
     const auto & path_point = path.points[decision.target_path_idx];
