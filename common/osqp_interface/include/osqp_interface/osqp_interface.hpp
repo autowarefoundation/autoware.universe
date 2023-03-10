@@ -24,6 +24,7 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -54,16 +55,42 @@ private:
   bool m_work_initialized = false;
   // Exitflag
   int64_t m_exitflag;
+  // warm start
+  const bool m_warm_start;
+  std::optional<std::vector<double>> m_sol_prev;
+  std::optional<std::vector<double>> m_lagrange_multiplier_prev;
 
   // Runs the solver on the stored problem.
   std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> solve();
 
+  // should be private
+public:
   static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
+
+  /// \brief Converts the input data and sets up the workspace object.
+  /// \param P (n,n) matrix defining relations between parameters.
+  /// \param A (m,n) matrix defining parameter constraints relative to the lower and upper bound.
+  /// \param q (n) vector defining the linear cost of the problem.
+  /// \param l (m) vector defining the lower bound problem constraint.
+  /// \param u (m) vector defining the upper bound problem constraint.
+  int64_t initializeProblem(
+    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
+    const std::vector<double> & l, const std::vector<double> & u);
+  int64_t initializeProblem(
+    CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
+    const std::vector<double> & u);
+
+  // Setter functions for warm start
+  bool setWarmStart(
+    const std::vector<double> & primal_variables, const std::vector<double> & dual_variables);
+  bool setPrimalVariables(const std::vector<double> & primal_variables);
+  bool setDualVariables(const std::vector<double> & dual_variables);
 
 public:
   /// \brief Constructor without problem formulation
   explicit OSQPInterface(
-    const c_float eps_abs = std::numeric_limits<c_float>::epsilon(), const bool polish = true);
+    const c_float eps_abs = std::numeric_limits<c_float>::epsilon(), const bool polish = true,
+    const bool warm_start = true);
   /// \brief Constructor with problem setup
   /// \param P: (n,n) matrix defining relations between parameters.
   /// \param A: (m,n) matrix defining parameter constraints relative to the lower and upper bound.
@@ -73,10 +100,12 @@ public:
   /// \param eps_abs: Absolute convergence tolerance.
   OSQPInterface(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs);
+    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+    const bool polish = true, const bool warm_start = true);
   OSQPInterface(
     const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs);
+    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+    const bool polish = true, const bool warm_start = true);
   ~OSQPInterface();
 
   /****************
@@ -121,25 +150,6 @@ public:
   std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
     const std::vector<double> & l, const std::vector<double> & u);
-
-  /// \brief Converts the input data and sets up the workspace object.
-  /// \param P (n,n) matrix defining relations between parameters.
-  /// \param A (m,n) matrix defining parameter constraints relative to the lower and upper bound.
-  /// \param q (n) vector defining the linear cost of the problem.
-  /// \param l (m) vector defining the lower bound problem constraint.
-  /// \param u (m) vector defining the upper bound problem constraint.
-  int64_t initializeProblem(
-    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u);
-  int64_t initializeProblem(
-    CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
-    const std::vector<double> & u);
-
-  // Setter functions for warm start
-  bool setWarmStart(
-    const std::vector<double> & primal_variables, const std::vector<double> & dual_variables);
-  bool setPrimalVariables(const std::vector<double> & primal_variables);
-  bool setDualVariables(const std::vector<double> & dual_variables);
 
   // Updates problem parameters while keeping solution in memory.
   //

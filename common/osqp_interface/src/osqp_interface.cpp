@@ -31,8 +31,8 @@ namespace common
 {
 namespace osqp
 {
-OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish)
-: m_work{nullptr, OSQPWorkspaceDeleter}
+OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish, const bool warm_start)
+: m_work{nullptr, OSQPWorkspaceDeleter}, m_warm_start(warm_start)
 {
   m_settings = std::make_unique<OSQPSettings>();
   m_data = std::make_unique<OSQPData>();
@@ -54,16 +54,18 @@ OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish)
 
 OSQPInterface::OSQPInterface(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-  const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs)
-: OSQPInterface(eps_abs)
+  const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+  const bool polish, const bool warm_start)
+: OSQPInterface(eps_abs, polish, warm_start)
 {
   initializeProblem(P, A, q, l, u);
 }
 
 OSQPInterface::OSQPInterface(
   const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
-  const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs)
-: OSQPInterface(eps_abs)
+  const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+  const bool polish, const bool warm_start)
+: OSQPInterface(eps_abs, polish, warm_start)
 {
   initializeProblem(P, A, q, l, u);
 }
