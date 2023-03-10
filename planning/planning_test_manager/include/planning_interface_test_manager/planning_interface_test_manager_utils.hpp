@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_FOLLOWER_TEST_UTILS_HPP_
-#define PLANNING_FOLLOWER_TEST_UTILS_HPP_
+#ifndef PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_
+#define PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -83,4 +83,4 @@ T generateOverlappingPointTrajectory(
 
 }  // namespace test_utils
 
-#endif  // PLANNING_FOLLOWER_TEST_UTILS_HPP_
+#endif  // PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_

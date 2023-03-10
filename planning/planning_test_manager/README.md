@@ -6,7 +6,7 @@
 
 ## Inputs / Outputs
 
-### Inputs                                 |
+### Inputs |
 
 ### Outputs
 

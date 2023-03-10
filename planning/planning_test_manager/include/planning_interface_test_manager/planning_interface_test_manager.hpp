@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_TEST_MANAGER_HPP_
-#define PLANNING_TEST_MANAGER_HPP_
+#ifndef PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_
+#define PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -109,10 +109,10 @@ private:
 
   void publishNominalTrajectory(rclcpp::Node::SharedPtr node);
   void publishAbnormalTrajectory(
-  rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
+    rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
 
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager
 
-#endif  // PLANNING_TEST_MANAGER_HPP_
+#endif  // PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_
