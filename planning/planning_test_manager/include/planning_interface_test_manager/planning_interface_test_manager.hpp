@@ -16,7 +16,6 @@
 #define PLANNING_TEST_MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -31,9 +30,9 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <memory>
 #include <string>
-#include <chrono>
 
 namespace planning_test_manager
 {
@@ -45,8 +44,6 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class PlanningIntefaceTestManager
@@ -63,48 +60,22 @@ public:
   void setMaxVelocityTopicName(std::string topic_name);
   void setTrajectoryTopicName(std::string topic_name);
 
-  void setReceivedTrajectoryTopicName(std::string topic_name);
-  void setReceivedMaxVelocityTopicName(std::string topic_name);
+  void setOutputTrajectoryTopicName(std::string topic_name);
+  void setOutputMaxVelocityTopicName(std::string topic_name);
 
-  void testNominalTrajectory(rclcpp::Node::SharedPtr node);
-  void testWithEmptyTrajectory(rclcpp::Node::SharedPtr node);
+  void publishOdometry(rclcpp::Node::SharedPtr node);
+  void publishMaxVelocity(rclcpp::Node::SharedPtr node);
 
-  int getReceivedTrajectoryNum();
-  int getReceivedMaxVelocityNum();
+  void setTrajectorySubscriber();
+
+  void testWithNominalTrajectory(rclcpp::Node::SharedPtr node);
+  void testWithAbnormalTrajectory(
+    rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
+
+  int getReceivedTopicNum();
 
   void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
   void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
-
-  template <class T>
-  T generateTrajectory(
-    const size_t num_points, const double point_interval, const double vel = 0.0,
-    const double init_theta = 0.0, const double delta_theta = 0.0)
-  {
-    using Point = typename T::_points_type::value_type;
-
-    T traj;
-    for (size_t i = 0; i < num_points; ++i) {
-      const double theta = init_theta + i * delta_theta;
-      const double x = i * point_interval * std::cos(theta);
-      const double y = i * point_interval * std::sin(theta);
-
-      Point p;
-      p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
-      p.longitudinal_velocity_mps = vel;
-      traj.points.push_back(p);
-    }
-
-    return traj;
-  }
-
-  geometry_msgs::msg::Pose createPose(
-    double x, double y, double z, double roll, double pitch, double yaw)
-  {
-    geometry_msgs::msg::Pose p;
-    p.position = createPoint(x, y, z);
-    p.orientation = createQuaternionFromRPY(roll, pitch, yaw);
-    return p;
-  }
 
 private:
   // Publisher
@@ -125,6 +96,7 @@ private:
   rclcpp::Subscription<VelocityLimit>::SharedPtr max_velocity_sub_;
 
   std::string input_trajectory_name_;
+  std::string output_trajectory_name_;
 
   // Node
   rclcpp::Node::SharedPtr test_node_ =
@@ -141,12 +113,10 @@ private:
 
   Trajectory genDefaultTrajectory() { return Trajectory{}; }
 
-  void publishAllPlanningInterfaceTopics();
+  void publishNominalTrajectory(rclcpp::Node::SharedPtr node);
+  void publishAbnormalTrajectory(
+  rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
 
-  void publishNominalTrajectory();
-  void publishEmptyTrajectory();
-
-  void executeNode(rclcpp::Node::SharedPtr node);
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager

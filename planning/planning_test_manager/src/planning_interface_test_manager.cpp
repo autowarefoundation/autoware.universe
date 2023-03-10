@@ -13,21 +13,33 @@
 // limitations under the License.
 
 #include <planning_interface_test_manager/planning_interface_test_manager.hpp>
+#include <planning_interface_test_manager/planning_interface_test_manager_utils.hpp>
 
 namespace planning_test_manager
 {
+void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
+{
+  // for vehicle info
+  node_options.append_parameter_override("wheel_radius", 0.5);
+  node_options.append_parameter_override("wheel_width", 0.2);
+  node_options.append_parameter_override("wheel_base", 3.0);
+  node_options.append_parameter_override("wheel_tread", 2.0);
+  node_options.append_parameter_override("front_overhang", 1.0);
+  node_options.append_parameter_override("rear_overhang", 1.0);
+  node_options.append_parameter_override("left_overhang", 0.5);
+  node_options.append_parameter_override("right_overhang", 0.5);
+  node_options.append_parameter_override("vehicle_height", 1.5);
+  node_options.append_parameter_override("max_steer_angle", 0.7);
+  return;
+}
 
-// void PlanningIntefaceTestManager::testNormalBehavior(rclcpp::Node & node)
-// {
-//   testNominalTrajectory(node);
-// }
-// void PlanningIntefaceTestManager::testCheckPlaningInterface(rclcpp::Node & node)
-// {
-//   // publisherがいるやつだけ
-//   testWithEmptyTrajectory(node);
-//   testWithEmptyRoute(node);
-//   testWithEmptyRoute(node);
-// }
+void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
+  rclcpp::NodeOptions & node_options)
+{
+  node_options.append_parameter_override("ego_nearest_dist_threshold", 3.0);
+  node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
+  return;
+}
 
 void PlanningIntefaceTestManager::setOdomTopicName(std::string topic_name)
 {
@@ -65,15 +77,13 @@ void PlanningIntefaceTestManager::setTrajectoryTopicName(std::string topic_name)
   return;
 }
 
-void PlanningIntefaceTestManager::setReceivedTrajectoryTopicName(std::string topic_name)
+void PlanningIntefaceTestManager::setOutputTrajectoryTopicName(std::string topic_name)
 {
-  // Count the number of trajectory received.
-  traj_sub_ = test_node_->create_subscription<Trajectory>(
-    topic_name, 10,
-    std::bind(&PlanningIntefaceTestManager::countCallback, this, std::placeholders::_1));
+  output_trajectory_name_ = topic_name;
+  return;
 }
 
-void PlanningIntefaceTestManager::setReceivedMaxVelocityTopicName(std::string topic_name)
+void PlanningIntefaceTestManager::setOutputMaxVelocityTopicName(std::string topic_name)
 {
   // Count the number of max_velocity received.
   max_velocity_sub_ = test_node_->create_subscription<VelocityLimit>(
@@ -81,73 +91,75 @@ void PlanningIntefaceTestManager::setReceivedMaxVelocityTopicName(std::string to
     std::bind(&PlanningIntefaceTestManager::countCallbackMaxVelocity, this, std::placeholders::_1));
 }
 
-void PlanningIntefaceTestManager::publishAllPlanningInterfaceTopics()
+void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr node)
 {
   odom_pub_->publish(genDefaultOdom());
-  // point_cloud_pub_->publish(genDefaultPointCloud());
-  // PredictedObjects_pub_->publish(genDefaultPredictedObjects());
+  rclcpp::spin_some(test_node_);
+  rclcpp::spin_some(node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  return;
+}
+
+void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr node)
+{
   max_velocity_pub_->publish(genDefaultMaxVelocity());
-  // TF_pub_->publish(genDefaultTFMessage());
+  rclcpp::spin_some(test_node_);
+  rclcpp::spin_some(node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
   return;
 }
 
-void PlanningIntefaceTestManager::publishNominalTrajectory()
-{
-  normal_trajectory_pub_ =
-    rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
-  normal_trajectory_pub_->publish(generateTrajectory<Trajectory>(10, 1.0));
-  return;
-}
 
-void PlanningIntefaceTestManager::publishEmptyTrajectory()
-{
-  empty_trajectory_pub_ = rclcpp::create_publisher<Trajectory>(
-    test_node_, "/planning_test_manager/planning_interface_test_manager/empty_trajectory", 1);
-  empty_trajectory_pub_->publish(genDefaultTrajectory());
-  return;
-}
 
-void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
+void PlanningIntefaceTestManager::setTrajectorySubscriber()
 {
-  // for vehicle info
-  node_options.append_parameter_override("wheel_radius", 0.5);
-  node_options.append_parameter_override("wheel_width", 0.2);
-  node_options.append_parameter_override("wheel_base", 3.0);
-  node_options.append_parameter_override("wheel_tread", 2.0);
-  node_options.append_parameter_override("front_overhang", 1.0);
-  node_options.append_parameter_override("rear_overhang", 1.0);
-  node_options.append_parameter_override("left_overhang", 0.5);
-  node_options.append_parameter_override("right_overhang", 0.5);
-  node_options.append_parameter_override("vehicle_height", 1.5);
-  node_options.append_parameter_override("max_steer_angle", 0.7);
-  return;
-}
-
-void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
-  rclcpp::NodeOptions & node_options)
-{
-  node_options.append_parameter_override("ego_nearest_dist_threshold", 3.0);
-  node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
+  // Count the number of trajectory received.
+  traj_sub_ = test_node_->create_subscription<Trajectory>(
+    output_trajectory_name_, 10,
+    std::bind(&PlanningIntefaceTestManager::countCallback, this, std::placeholders::_1));
   return;
 }
 
 // test for normal working
-void PlanningIntefaceTestManager::testNominalTrajectory(rclcpp::Node::SharedPtr node)
+void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr node)
 {
-  publishAllPlanningInterfaceTopics();  // publish all necessary information except trajectory for
-                                        // planning to work
   // check that the node does not die here.
-  ASSERT_NO_THROW(executeNode(node));
+  ASSERT_NO_THROW(publishNominalTrajectory(node));
   return;
 }
 
 // check to see if target node is dead.
-void PlanningIntefaceTestManager::testWithEmptyTrajectory(rclcpp::Node::SharedPtr node)
+void PlanningIntefaceTestManager::testWithAbnormalTrajectory(
+  rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory)
 {
-  publishAllPlanningInterfaceTopics();  // publish all necessary information except trajectory for
-                                        // planning to work
-  publishEmptyTrajectory();             // publish empty trajectory
-  ASSERT_NO_THROW(executeNode(node));
+  ASSERT_NO_THROW(publishAbnormalTrajectory(node, abnormal_trajectory));
+  return;
+}
+
+void PlanningIntefaceTestManager::publishNominalTrajectory(rclcpp::Node::SharedPtr node)
+{
+  normal_trajectory_pub_ =
+    rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
+  normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
+  rclcpp::spin_some(test_node_);
+  rclcpp::spin_some(node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  rclcpp::spin_some(test_node_);
+  rclcpp::spin_some(node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  return;
+}
+
+void PlanningIntefaceTestManager::publishAbnormalTrajectory(
+  rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory)
+{
+  empty_trajectory_pub_ =
+    rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
+  empty_trajectory_pub_->publish(abnormal_trajectory);
+  rclcpp::spin_some(test_node_);
+  rclcpp::spin_some(node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  return;
 }
 
 void PlanningIntefaceTestManager::countCallback([[maybe_unused]] const Trajectory trajectory)
@@ -156,7 +168,7 @@ void PlanningIntefaceTestManager::countCallback([[maybe_unused]] const Trajector
   ++count_;
 
   // Display the current count.
-  RCLCPP_DEBUG(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
+  RCLCPP_ERROR(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
 }
 
 void PlanningIntefaceTestManager::countCallbackMaxVelocity(
@@ -169,23 +181,6 @@ void PlanningIntefaceTestManager::countCallbackMaxVelocity(
   RCLCPP_DEBUG(rclcpp::get_logger("PlanningInterfaceTestManager"), "Current count: %d", count_);
 }
 
-int PlanningIntefaceTestManager::getReceivedTrajectoryNum() { return count_; }
-int PlanningIntefaceTestManager::getReceivedMaxVelocityNum() { return count_; }
-void PlanningIntefaceTestManager::executeNode(rclcpp::Node::SharedPtr node)
-{
-  rclcpp::spin_some(test_node_);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-  publishNominalTrajectory();
-  rclcpp::spin_some(test_node_);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-  rclcpp::spin_some(test_node_);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-
-  return;
-}
+int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
 }  // namespace planning_test_manager

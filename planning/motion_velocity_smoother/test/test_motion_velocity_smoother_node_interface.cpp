@@ -15,6 +15,7 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "motion_velocity_smoother/motion_velocity_smoother_node.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
+#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -22,6 +23,7 @@
 
 TEST(PlanningInterfaceTest, testPlanningInterfaceWithNormalTrajectory)
 {
+  using autoware_auto_planning_msgs::msg::Trajectory;
   rclcpp::init(0, nullptr);
 
   auto test_manager = std::make_shared<planning_test_manager::PlanningIntefaceTestManager>();
@@ -45,15 +47,28 @@ TEST(PlanningInterfaceTest, testPlanningInterfaceWithNormalTrajectory)
   auto test_target_node =
     std::make_shared<motion_velocity_smoother::MotionVelocitySmootherNode>(node_options);
 
+  // set input topic name for test_target_node
   test_manager->setOdomTopicName("/localization/kinematic_state");
   test_manager->setMaxVelocityTopicName(
     "motion_velocity_smoother/input/external_velocity_limit_mps");
-  // test_manager->setTFTopicName("/tf");
   test_manager->setTrajectoryTopicName("motion_velocity_smoother/input/trajectory");
 
-  test_manager->setReceivedMaxVelocityTopicName(
-    "motion_velocity_smoother/output/current_velocity_limit_mps");
+  // set output topic name for test_target_node
+  test_manager->setOutputTrajectoryTopicName("motion_velocity_smoother/output/trajectory");
 
-  test_manager->testNominalTrajectory(test_target_node);
-  EXPECT_GE(test_manager->getReceivedMaxVelocityNum(), 1);
+  test_manager->publishOdometry(test_target_node);
+  test_manager->publishMaxVelocity(test_target_node);
+  test_manager->setTrajectorySubscriber();
+
+  // test for normal trajectory
+  test_manager->testWithNominalTrajectory(test_target_node);
+  EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
+
+  test_manager->testWithAbnormalTrajectory(test_target_node, Trajectory{});
+  // test for trajectory with one point
+  test_manager->testWithAbnormalTrajectory(
+    test_target_node, test_utils::generateTrajectory<Trajectory>(1, 0.0));
+  // test for overlapping points
+  test_manager->testWithAbnormalTrajectory(
+    test_target_node, test_utils::generateOverlappingPointTrajectory<Trajectory>(10, 0.0));
 }
