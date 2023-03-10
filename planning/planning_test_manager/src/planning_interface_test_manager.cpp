@@ -80,7 +80,8 @@ void PlanningIntefaceTestManager::setTrajectorySubscriber()
   // Count the number of trajectory received.
   traj_sub_ = test_node_->create_subscription<Trajectory>(
     output_trajectory_name_, 10,
-    std::bind(&PlanningIntefaceTestManager::countCallback, this, std::placeholders::_1));
+    std::bind(
+      &PlanningIntefaceTestManager::countCallback<Trajectory>, this, std::placeholders::_1));
 }
 
 // test for normal working
@@ -119,19 +120,6 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
   rclcpp::spin_some(test_node_);
   rclcpp::spin_some(node);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-}
-
-void PlanningIntefaceTestManager::countCallback([[maybe_unused]] const Trajectory trajectory)
-{
-  // Increment the counter.
-  ++count_;
-}
-
-void PlanningIntefaceTestManager::countCallbackMaxVelocity(
-  [[maybe_unused]] const VelocityLimit max_velocity)
-{
-  // Increment the counter.
-  ++count_;
 }
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }

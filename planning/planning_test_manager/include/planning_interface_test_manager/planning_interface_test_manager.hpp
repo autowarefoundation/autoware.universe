@@ -96,9 +96,13 @@ private:
   // Node
   rclcpp::Node::SharedPtr test_node_ =
     std::make_shared<rclcpp::Node>("planning_interface_test_node");
-  int count_{0};
-  void countCallback(const Trajectory trajectory);
-  void countCallbackMaxVelocity(const VelocityLimit max_velocity);
+  size_t count_{0};
+
+  template <typename MessageT>
+  void countCallback([[maybe_unused]] const typename MessageT::SharedPtr msg)
+  {
+    ++count_;
+  }
 
   Odometry genDefaultOdom() { return Odometry{}; }
   PointCloud2 genDefaultPointCloud() { return PointCloud2{}; }
@@ -111,7 +115,6 @@ private:
   void publishNominalTrajectory(rclcpp::Node::SharedPtr node);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
-
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager
