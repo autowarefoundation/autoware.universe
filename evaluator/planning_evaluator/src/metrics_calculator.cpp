@@ -23,9 +23,10 @@
 
 namespace planning_diagnostics
 {
-Stat<double> MetricsCalculator::calculate(const Metric metric, const Trajectory & traj) const
+std::optional<Stat<double>> MetricsCalculator::calculate(
+  const Metric metric, const Trajectory & traj) const
 {
-  // Functions to calculate metrics
+  // Functions to calculate trajectory metrics
   switch (metric) {
     case Metric::curvature:
       return metrics::calcTrajectoryCurvature(traj);
@@ -70,9 +71,23 @@ Stat<double> MetricsCalculator::calculate(const Metric metric, const Trajectory 
     case Metric::obstacle_ttc:
       return metrics::calcTimeToCollision(dynamic_objects_, traj, parameters.obstacle.dist_thr_m);
     default:
-      throw std::runtime_error(
-        "[MetricsCalculator][calculate()] unknown Metric " +
-        std::to_string(static_cast<int>(metric)));
+      return {};
+  }
+}
+
+std::optional<Stat<double>> MetricsCalculator::calculate(
+  const Metric metric, const Pose & base_pose, const Pose & target_pose) const
+{
+  // Functions to calculate pose metrics
+  switch (metric) {
+    case Metric::modified_goal_longitudinal_deviation:
+      return metrics::calcPoseLongitudinalDeviation(base_pose, target_pose);
+    case Metric::modified_goal_lateral_deviation:
+      return metrics::calcPoseLateralDeviation(base_pose, target_pose);
+    case Metric::modified_goal_yaw_deviation:
+      return metrics::calcPoseYawDeviation(base_pose, target_pose);
+    default:
+      return {};
   }
 }
 
@@ -92,6 +107,13 @@ void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
 }
 
 void MetricsCalculator::setEgoPose(const geometry_msgs::msg::Pose & pose) { ego_pose_ = pose; }
+
+Pose MetricsCalculator::getEgoPose() { return ego_pose_; }
+
+void MetricsCalculator::setModifiedGoal(const PoseWithUuidStamped & modified_goal)
+{
+  modified_goal_ = modified_goal;
+}
 
 Trajectory MetricsCalculator::getLookaheadTrajectory(
   const Trajectory & traj, const double max_dist_m, const double max_time_s) const

@@ -77,5 +77,25 @@ Stat<double> calcVelocityDeviation(const Trajectory & ref, const Trajectory & tr
   return stat;
 }
 
+Stat<double> calcPoseLongitudinalDeviation(const Pose & base_pose, const Pose & target_pose)
+{
+  Stat<double> stat;
+  stat.add(tier4_autoware_utils::calcLongitudinalDeviation(base_pose, target_pose.position));
+  return stat;
+}
+
+Stat<double> calcPoseLateralDeviation(const Pose & base_pose, const Pose & target_pose)
+{
+  Stat<double> stat;
+  stat.add(tier4_autoware_utils::calcLateralDeviation(base_pose, target_pose.position));
+  return stat;
+}
+
+Stat<double> calcPoseYawDeviation(const Pose & base_pose, const Pose & target_pose)
+{
+  Stat<double> stat;
+  stat.add(tier4_autoware_utils::calcYawDeviation(base_pose, target_pose));
+  return stat;
+}
 }  // namespace metrics
 }  // namespace planning_diagnostics
