@@ -94,6 +94,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   costmap_subscriber_ = create_subscription<OccupancyGrid>(
     "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
     createSubscriptionOptions(this));
+  lateral_offset_subscriber_ = this->create_subscription<LateralOffset>(
+    "~/input/lateral_offset", 1, std::bind(&BehaviorPathPlannerNode::onLateralOffset, this, _1),
+    createSubscriptionOptions(this));
   operation_mode_subscriber_ = create_subscription<OperationModeState>(
     "/system/operation_mode/state", 1,
     std::bind(&BehaviorPathPlannerNode::onOperationMode, this, _1),
@@ -120,6 +123,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     lane_change_param_ptr_ = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
     lane_following_param_ptr_ = std::make_shared<LaneFollowingParameters>(getLaneFollowingParam());
     pull_out_param_ptr_ = std::make_shared<PullOutParameters>(getPullOutParam());
+    pull_over_param_ptr_ = std::make_shared<PullOverParameters>(getPullOverParam());
+    side_shift_param_ptr_ = std::make_shared<SideShiftParameters>(getSideShiftParam());
   }
 
   m_set_param_res = this->add_on_set_parameters_callback(
@@ -136,7 +141,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
 
     auto side_shift_module =
-      std::make_shared<SideShiftModule>("SideShift", *this, getSideShiftParam());
+      std::make_shared<SideShiftModule>("SideShift", *this, side_shift_param_ptr_);
     bt_manager_->registerSceneModule(side_shift_module);
 
     auto avoidance_module =
@@ -171,7 +176,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       "LaneChange", create_publisher<Path>(path_candidate_name_space + "lane_change", 1));
     bt_manager_->registerSceneModule(lane_change_module);
 
-    auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
+    auto pull_over_module =
+      std::make_shared<PullOverModule>("PullOver", *this, pull_over_param_ptr_);
     path_candidate_publishers_.emplace(
       "PullOver", create_publisher<Path>(path_candidate_name_space + "pull_over", 1));
     bt_manager_->registerSceneModule(pull_over_module);
@@ -206,6 +212,47 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
         "pull_out", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
       path_reference_publishers_.emplace(
         "pull_out", create_publisher<Path>(path_reference_name_space + "pull_out", 1));
+    }
+
+    if (p.config_pull_over.enable_module) {
+      auto manager = std::make_shared<PullOverModuleManager>(
+        this, "pull_over", p.config_pull_over, pull_over_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        "pull_over", create_publisher<Path>(path_candidate_name_space + "pull_over", 1));
+      path_reference_publishers_.emplace(
+        "pull_over", create_publisher<Path>(path_reference_name_space + "pull_over", 1));
+    }
+
+    if (p.config_side_shift.enable_module) {
+      auto manager = std::make_shared<SideShiftModuleManager>(
+        this, "side_shift", p.config_side_shift, side_shift_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        "side_shift", create_publisher<Path>(path_candidate_name_space + "side_shift", 1));
+      path_reference_publishers_.emplace(
+        "side_shift", create_publisher<Path>(path_reference_name_space + "side_shift", 1));
+    }
+
+    if (p.config_lane_change.enable_module) {
+      const std::string module_topic = "lane_change";
+      auto manager = std::make_shared<LaneChangeModuleManager>(
+        this, module_topic, p.config_lane_change, lane_change_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        module_topic, create_publisher<Path>(path_candidate_name_space + module_topic, 1));
+      path_reference_publishers_.emplace(
+        module_topic, create_publisher<Path>(path_reference_name_space + module_topic, 1));
+    }
+
+    if (p.config_avoidance.enable_module) {
+      auto manager = std::make_shared<AvoidanceModuleManager>(
+        this, "avoidance", p.config_avoidance, avoidance_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        "avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
+      path_reference_publishers_.emplace(
+        "avoidance", create_publisher<Path>(path_reference_name_space + "avoidance", 1));
     }
 
     mutex_bt_.unlock();
@@ -248,6 +295,42 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
       declare_parameter<bool>(ns + "enable_simultaneous_execution");
     p.config_pull_out.priority = declare_parameter<int>(ns + "priority");
     p.config_pull_out.max_module_size = declare_parameter<int>(ns + "max_module_size");
+  }
+
+  {
+    const std::string ns = "pull_over.";
+    p.config_pull_over.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_pull_over.enable_simultaneous_execution =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_pull_over.priority = declare_parameter<int>(ns + "priority");
+    p.config_pull_over.max_module_size = declare_parameter<int>(ns + "max_module_size");
+  }
+
+  {
+    const std::string ns = "side_shift.";
+    p.config_side_shift.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_side_shift.enable_simultaneous_execution =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_side_shift.priority = declare_parameter<int>(ns + "priority");
+    p.config_side_shift.max_module_size = declare_parameter<int>(ns + "max_module_size");
+  }
+
+  {
+    const std::string ns = "lane_change.";
+    p.config_lane_change.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_lane_change.enable_simultaneous_execution =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_lane_change.priority = declare_parameter<int>(ns + "priority");
+    p.config_lane_change.max_module_size = declare_parameter<int>(ns + "max_module_size");
+  }
+
+  {
+    const std::string ns = "avoidance.";
+    p.config_avoidance.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_avoidance.enable_simultaneous_execution =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_avoidance.priority = declare_parameter<int>(ns + "priority");
+    p.config_avoidance.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
 
   // vehicle info
@@ -1136,7 +1219,11 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
 bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
+#ifdef USE_OLD_ARCHITECTURE
   const auto target_module = "PullOver";
+#else
+  const auto target_module = "pull_over";
+#endif
 
   const auto target_status = ModuleStatus::RUNNING;
 
@@ -1154,7 +1241,11 @@ bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
 bool BehaviorPathPlannerNode::keepInputPoints(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
+#ifdef USE_OLD_ARCHITECTURE
   const std::vector<std::string> target_modules = {"PullOver", "Avoidance"};
+#else
+  const std::vector<std::string> target_modules = {"pull_over", "avoidance"};
+#endif
 
   const auto target_status = ModuleStatus::RUNNING;
 
@@ -1211,6 +1302,25 @@ void BehaviorPathPlannerNode::onOperationMode(const OperationModeState::ConstSha
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->operation_mode = msg;
+}
+void BehaviorPathPlannerNode::onLateralOffset(const LateralOffset::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_pd_);
+
+  if (!planner_data_->lateral_offset) {
+    planner_data_->lateral_offset = msg;
+    return;
+  }
+
+  const auto & new_offset = msg->lateral_offset;
+  const auto & old_offset = planner_data_->lateral_offset->lateral_offset;
+
+  // offset is not changed.
+  if (std::abs(old_offset - new_offset) < 1e-4) {
+    return;
+  }
+
+  planner_data_->lateral_offset = msg;
 }
 
 SetParametersResult BehaviorPathPlannerNode::onSetParam(
