@@ -147,15 +147,15 @@ private:
   //!< @brief vehicle model type for MPC
   std::string m_vehicle_model_type;
   //!< @brief vehicle model for MPC
-  std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> m_vehicle_model_ptr;
+  std::shared_ptr<VehicleModelInterface> m_vehicle_model_ptr;
   //!< @brief qp solver for MPC
-  std::shared_ptr<mpc_lateral_controller::QPSolverInterface> m_qpsolver_ptr;
+  std::shared_ptr<QPSolverInterface> m_qpsolver_ptr;
   //!< @brief lowpass filter for steering command
-  mpc_lateral_controller::Butterworth2dFilter m_lpf_steering_cmd;
+  Butterworth2dFilter m_lpf_steering_cmd;
   //!< @brief lowpass filter for lateral error
-  mpc_lateral_controller::Butterworth2dFilter m_lpf_lateral_error;
+  Butterworth2dFilter m_lpf_lateral_error;
   //!< @brief lowpass filter for heading error
-  mpc_lateral_controller::Butterworth2dFilter m_lpf_yaw_error;
+  Butterworth2dFilter m_lpf_yaw_error;
 
   //!< @brief raw output computed two iterations ago
   double m_raw_steer_cmd_pprev = 0.0;
@@ -178,7 +178,7 @@ private:
    * @brief get variables for mpc calculation
    */
   bool getData(
-    const mpc_lateral_controller::MPCTrajectory & traj,
+    const MPCTrajectory & traj,
     const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
     const geometry_msgs::msg::Pose & current_pose, MPCData * data);
   /**
@@ -210,14 +210,13 @@ private:
    * @param [out] x updated state at delayed_time
    */
   bool updateStateForDelayCompensation(
-    const mpc_lateral_controller::MPCTrajectory & traj, const double & start_time,
-    Eigen::VectorXd * x);
+    const MPCTrajectory & traj, const double & start_time, Eigen::VectorXd * x);
   /**
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] reference_trajectory used for linearization around reference trajectory
    */
   MPCMatrix generateMPCMatrix(
-    const mpc_lateral_controller::MPCTrajectory & reference_trajectory, const double prediction_dt);
+    const MPCTrajectory & reference_trajectory, const double prediction_dt);
   /**
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] mpc_matrix parameters matrix to use for optimization
@@ -232,21 +231,20 @@ private:
    * @brief resample trajectory with mpc resampling time
    */
   bool resampleMPCTrajectoryByTime(
-    const double start_time, const double prediction_dt,
-    const mpc_lateral_controller::MPCTrajectory & input,
-    mpc_lateral_controller::MPCTrajectory * output) const;
+    const double start_time, const double prediction_dt, const MPCTrajectory & input,
+    MPCTrajectory * output) const;
   /**
    * @brief apply velocity dynamics filter with v0 from closest index
    */
-  mpc_lateral_controller::MPCTrajectory applyVelocityDynamicsFilter(
-    const mpc_lateral_controller::MPCTrajectory & trajectory,
-    const geometry_msgs::msg::Pose & current_pose, const double v0) const;
+  MPCTrajectory applyVelocityDynamicsFilter(
+    const MPCTrajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    const double v0) const;
   /**
    * @brief get prediction delta time of mpc.
    * If trajectory length is shorter than min_prediction length, adjust delta time.
    */
   double getPredictionDeltaTime(
-    const double start_time, const mpc_lateral_controller::MPCTrajectory & input,
+    const double start_time, const MPCTrajectory & input,
     const geometry_msgs::msg::Pose & current_pose) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into R
@@ -342,7 +340,7 @@ private:
 
 public:
   //!< @brief reference trajectory to be followed
-  mpc_lateral_controller::MPCTrajectory m_ref_traj;
+  MPCTrajectory m_ref_traj;
   //!< @brief MPC design parameter
   MPCParam m_param;
   //!< @brief mpc_output buffer for delay time compensation
@@ -398,7 +396,7 @@ public:
    * @brief set the vehicle model of this MPC
    */
   inline void setVehicleModel(
-    std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr,
+    std::shared_ptr<VehicleModelInterface> vehicle_model_ptr,
     const std::string & vehicle_model_type)
   {
     m_vehicle_model_ptr = vehicle_model_ptr;
@@ -407,7 +405,7 @@ public:
   /**
    * @brief set the QP solver of this MPC
    */
-  inline void setQPSolver(std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr)
+  inline void setQPSolver(std::shared_ptr<QPSolverInterface> qpsolver_ptr)
   {
     m_qpsolver_ptr = qpsolver_ptr;
   }
