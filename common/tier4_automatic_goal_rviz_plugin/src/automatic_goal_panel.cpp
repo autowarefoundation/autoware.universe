@@ -152,7 +152,7 @@ void AutowareAutomaticGoalPanel::onToggleSaveGoalsAchievement(bool checked)
 {
   if (checked) {
     QString file_name = QFileDialog::getSaveFileName(
-      this, tr("Save File with  GoalsList"), "/home/goals_achieved.log",
+      this, tr("Save File with  GoalsList"), "/tmp/goals_achieved.log",
       tr("Achieved goals (*.log)"));
     goals_achieved_file_path_ = file_name.toStdString();
   } else {
@@ -227,7 +227,7 @@ void AutowareAutomaticGoalPanel::onClickRemove()
 void AutowareAutomaticGoalPanel::onClickLoadListFromFile()
 {
   QString file_name = QFileDialog::getOpenFileName(
-    this, tr("Open File with GoalsList"), "/home", tr("Goal lists (*.yaml)"));
+    this, tr("Open File with GoalsList"), "/tmp", tr("Goal lists (*.yaml)"));
   if (file_name.count() > 0) loadGoalsList(file_name.toStdString());
 }
 
@@ -235,7 +235,7 @@ void AutowareAutomaticGoalPanel::onClickSaveListToFile()
 {
   if (!goals_list_.empty()) {
     QString file_name = QFileDialog::getSaveFileName(
-      this, tr("Save File with  GoalsList"), "/home/goals_list.yaml", tr("Goal lists (*.yaml)"));
+      this, tr("Save File with  GoalsList"), "/tmp/goals_list.yaml", tr("Goal lists (*.yaml)"));
     if (file_name.count() > 0) saveGoalsList(file_name.toStdString());
   }
 }

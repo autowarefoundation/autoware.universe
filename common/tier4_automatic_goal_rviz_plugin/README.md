@@ -63,6 +63,6 @@
 8. You can save `GoalsList` by clicking `Save to file`.
    
 9. After saving, you can run the `GoalsList` without using a plugin also:
-    - example: `ros2 launch tier4_automatic_goal_rviz_plugin automatic_goal_sender.launch.xml goals_list_file_path:="/home/ros2/goals_list.yaml" goals_achieved_dir_path:="/home/ros2/"`
+    - example: `ros2 launch tier4_automatic_goal_rviz_plugin automatic_goal_sender.launch.xml goals_list_file_path:="/tmp/goals_list.yaml" goals_achieved_dir_path:="/tmp/"`
    - `goals_list_file_path` - is the path to the saved `GoalsList` file to be loaded
    - `goals_achieved_dir_path` - is the path to the directory where the file `goals_achieved.log` will be created and the achieved goals will be written to it
