@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-<<<<<<< HEAD
 from ament_index_python.packages import get_package_share_directory
-=======
->>>>>>> a3c78d06e9 (fix config and launch file)
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
@@ -31,11 +28,7 @@ import yaml
 
 def launch_setup(context, *args, **kwargs):
     # load parameter files
-<<<<<<< HEAD
-    param_file = LaunchConfiguration("param_file").perform(context)
-=======
     param_file = LaunchConfiguration("param_file").parse(context)
->>>>>>> a3c78d06e9 (fix config and launch file)
     with open(param_file, "r") as f:
         laserscan_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
@@ -148,15 +141,11 @@ def generate_launch_description():
             add_launch_arg("output/stixel", "virtual_scan/stixel"),
             add_launch_arg("input_obstacle_pointcloud", "false"),
             add_launch_arg("input_obstacle_and_raw_pointcloud", "true"),
-<<<<<<< HEAD
             add_launch_arg(
                 "param_file",
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/laserscan_based_occupancy_grid_map.param.yaml",
             ),
-=======
-            add_launch_arg("param_file", "config/laserscan_based_occupancy_grid_map.param.yaml"),
->>>>>>> a3c78d06e9 (fix config and launch file)
             add_launch_arg("use_pointcloud_container", "false"),
             add_launch_arg("container_name", "occupancy_grid_map_container"),
             set_container_executable,
