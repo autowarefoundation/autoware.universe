@@ -387,26 +387,24 @@ void EmergencyHandler::updateMrmState()
         transitionTo(MrmState::MRM_OPERATING);
         is_takeover_request_ = false;
         return;
-      } else {
-        if (!is_emergency || is_takeover_done) {
-          is_takeover_request_ = false;
-        } else {
-          // do nothing
-        }
       }
-    } else {
-      if (is_auto_mode && is_emergency) {
-        if (param_.use_takeover_request) {
-          takeover_requested_time_ = this->get_clock()->now();
-          is_takeover_request_ = true;
-          return;
-        } else {
-          transitionTo(MrmState::MRM_OPERATING);
-          return;
-        }
-      } else {
-        // do nothing
+      if (!is_emergency || is_takeover_done) {
+        is_takeover_request_ = false;
+        return;
       }
+      // Wait for takeover. Do nothing
+      return;
+    }
+
+    if (is_auto_mode && is_emergency) {
+      if (param_.use_takeover_request) {
+        takeover_requested_time_ = this->get_clock()->now();
+        is_takeover_request_ = true;
+        return;
+      }
+
+      transitionTo(MrmState::MRM_OPERATING);
+      return;
     }
   } else {
     // Emergency
