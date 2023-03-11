@@ -32,6 +32,7 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
+#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -105,6 +106,92 @@ geometry_msgs::msg::Pose getPose(
   pose = tier4_autoware_utils::transform2pose(tf_stamped.transform);
   return pose;
 }
+
+/**
+ * @brief 3D point struct for sorting and searching
+ *
+ */
+struct MyPoint3d
+{
+  float x;
+  float y;
+  float z;
+
+  // constructor
+  MyPoint3d(float x, float y, float z) : x(x), y(y), z(z) {}
+
+  // calc squared norm
+  float norm2() const { return powf(x, 2) + powf(y, 2) + powf(z, 2); }
+
+  // calc arctan2
+  float arctan2() const { return atan2f(y, x); }
+
+  // overload operator<
+  bool operator<(const MyPoint3d & other) const
+  {
+    const auto a = norm2();
+    const auto b = other.norm2();
+    if (a == b) {  // escape when norm2 is same
+      return arctan2() < other.arctan2();
+    } else {
+      return a < b;
+    }
+  }
+
+  // overload operator==
+  bool operator==(const MyPoint3d & other) const
+  {
+    return fabsf(x - other.x) < FLT_EPSILON && fabsf(y - other.y) < FLT_EPSILON &&
+           fabsf(z - other.z) < FLT_EPSILON;
+  }
+};
+
+/**
+ * @brief extract Common Pointcloud between obstacle pc and raw pc
+ * @param obstacle_pc
+ * @param raw_pc
+ * @param output_obstacle_pc
+ */
+bool extractCommonPointCloud(
+  const sensor_msgs::msg::PointCloud2 & obstacle_pc, const sensor_msgs::msg::PointCloud2 & raw_pc,
+  sensor_msgs::msg::PointCloud2 & output_obstacle_pc)
+{
+  // Convert to vector of 3d points
+  std::vector<MyPoint3d> v_obstacle_pc, v_raw_pc, v_output_obstacle_pc;
+  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(obstacle_pc, "x"),
+       iter_y(obstacle_pc, "y"), iter_z(obstacle_pc, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+    v_obstacle_pc.push_back(MyPoint3d(*iter_x, *iter_y, *iter_z));
+  }
+  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(raw_pc, "x"), iter_y(raw_pc, "y"),
+       iter_z(raw_pc, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+    v_raw_pc.push_back(MyPoint3d(*iter_x, *iter_y, *iter_z));
+  }
+
+  // sort pointclouds for searching cross points: O(nlogn)
+  std::sort(v_obstacle_pc.begin(), v_obstacle_pc.end(), [](auto a, auto b) { return a < b; });
+  std::sort(v_raw_pc.begin(), v_raw_pc.end(), [](auto a, auto b) { return a < b; });
+
+  // calc intersection points of two pointclouds: O(n)
+  set_intersection(
+    v_obstacle_pc.begin(), v_obstacle_pc.end(), v_raw_pc.begin(), v_raw_pc.end(),
+    std::back_inserter(v_output_obstacle_pc));
+  if (v_output_obstacle_pc.size() == 0) {
+    return false;
+  }
+
+  // Convert to ros msg
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
+  for (auto p : v_output_obstacle_pc) {
+    pcl_output->push_back(pcl::PointXYZ(p.x, p.y, p.z));
+  }
+  pcl::toROSMsg(*pcl_output, output_obstacle_pc);
+  output_obstacle_pc.header = obstacle_pc.header;
+
+  return true;
+}
+
 }  // namespace
 
 namespace occupancy_grid_map
@@ -127,6 +214,8 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
   scan_origin_frame_ = declare_parameter("scan_origin_frame", "base_link");
   use_height_filter_ = declare_parameter("use_height_filter", true);
   enable_single_frame_mode_ = declare_parameter("enable_single_frame_mode", false);
+  filter_obstacle_pointcloud_by_raw_pointcloud_ =
+    declare_parameter("filter_obstacle_pointcloud_by_raw_pointcloud", false);
   const double map_length{declare_parameter("map_length", 100.0)};
   const double map_resolution{declare_parameter("map_resolution", 0.5)};
 
@@ -184,6 +273,17 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     use_height_filter_ ? cropped_obstacle_pc : *input_obstacle_msg;
   const PointCloud2 & filtered_raw_pc = use_height_filter_ ? cropped_raw_pc : *input_raw_msg;
 
+  // Filter obstacle pointcloud by raw pointcloud
+  PointCloud2 filtered_obstacle_pc_common{};
+  if (filter_obstacle_pointcloud_by_raw_pointcloud_) {
+    if (!extractCommonPointCloud(
+          filtered_obstacle_pc, filtered_raw_pc, filtered_obstacle_pc_common)) {
+      filtered_obstacle_pc_common = filtered_obstacle_pc;
+    }
+  } else {
+    filtered_obstacle_pc_common = filtered_obstacle_pc;
+  }
+
   // Get from map to sensor frame pose
   Pose robot_pose{};
   Pose gridmap_origin{};
@@ -206,7 +306,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     gridmap_origin.position.x - single_frame_occupancy_grid_map.getSizeInMetersX() / 2,
     gridmap_origin.position.y - single_frame_occupancy_grid_map.getSizeInMetersY() / 2);
   single_frame_occupancy_grid_map.updateWithPointCloud(
-    filtered_raw_pc, filtered_obstacle_pc, robot_pose, scan_origin);
+    filtered_raw_pc, filtered_obstacle_pc_common, robot_pose, scan_origin);
 
   if (enable_single_frame_mode_) {
     // publish
