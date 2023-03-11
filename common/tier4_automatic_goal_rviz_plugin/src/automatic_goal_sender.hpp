@@ -167,7 +167,7 @@ private:
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_{nullptr};
 
   // Containers
-  std::string goals_list_file_path_{nullptr};
+  std::string goals_list_file_path_{};
   rclcpp::TimerBase::SharedPtr timer_{nullptr};
 };
 }  // namespace automatic_goal

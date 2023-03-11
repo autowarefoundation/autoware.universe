@@ -54,15 +54,27 @@
 
 4. Select `tier4_automatic_goal_rviz_plugin/AutowareAutomaticGoalTool` and press OK.
 
-5. Append goals to the `GoalsList` to be achieved using `2D Append Goal`  - in such a way that routes can be planned.
+5. Add goals visualiization as markers to `Displays`.
+
+   ![markers](./images/markers.png)
+
+6. Append goals to the `GoalsList` to be achieved using `2D Append Goal` - in such a way that routes can be planned.
 
 7. Start sequential planning and goal achievement by clicking `Send goals automatically`
 
    ![panel](./images/panel.png)
 
 8. You can save `GoalsList` by clicking `Save to file`.
-   
+
 9. After saving, you can run the `GoalsList` without using a plugin also:
-    - example: `ros2 launch tier4_automatic_goal_rviz_plugin automatic_goal_sender.launch.xml goals_list_file_path:="/tmp/goals_list.yaml" goals_achieved_dir_path:="/tmp/"`
-   - `goals_list_file_path` - is the path to the saved `GoalsList` file to be loaded
-   - `goals_achieved_dir_path` - is the path to the directory where the file `goals_achieved.log` will be created and the achieved goals will be written to it
+   - example: `ros2 launch tier4_automatic_goal_rviz_plugin automatic_goal_sender.launch.xml goals_list_file_path:="/tmp/goals_list.yaml" goals_achieved_dir_path:="/tmp/"`
+     - `goals_list_file_path` - is the path to the saved `GoalsList` file to be loaded
+     - `goals_achieved_dir_path` - is the path to the directory where the file `goals_achieved.log` will be created and the achieved goals will be written to it
+
+### Hints
+
+If the application (Engagement) goes into `ERROR` mode (usually returns to `EDITING` later), it means that one of the services returned a calling error (`code!=0`).
+In this situation, check the terminal output for more information.
+
+- Often it is enough to try again.
+- Sometimes a clearing of the current route is required before retrying.
