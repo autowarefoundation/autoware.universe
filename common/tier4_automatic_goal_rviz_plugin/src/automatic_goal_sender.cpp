@@ -30,7 +30,8 @@ void AutowareAutomaticGoalSender::init()
   RCLCPP_INFO_STREAM(get_logger(), "GoalsList has been loaded from: " << goals_list_file_path_);
   for (auto const & goal : goals_achieved_)
     RCLCPP_INFO_STREAM(get_logger(), "Loaded: " << goal.second.first);
-  RCLCPP_INFO_STREAM(get_logger(), "Achieved goals will be saved in: " << goals_achiev_file_path_);
+  RCLCPP_INFO_STREAM(
+    get_logger(), "Achieved goals will be saved in: " << goals_achieved_file_path_);
 }
 
 void AutowareAutomaticGoalSender::loadParams(rclcpp::Node * node)
@@ -44,11 +45,11 @@ void AutowareAutomaticGoalSender::loadParams(rclcpp::Node * node)
     throw std::invalid_argument(
       "goals_list_file_path parameter - file path is invalid: " + goals_list_file_path_);
   // goals_achieved
-  goals_achiev_file_path_ = node->get_parameter("goals_achieved_dir_path").as_string();
-  if (!fs::exists(goals_achiev_file_path_) || fs::is_regular_file(goals_achiev_file_path_))
+  goals_achieved_file_path_ = node->get_parameter("goals_achieved_dir_path").as_string();
+  if (!fs::exists(goals_achieved_file_path_) || fs::is_regular_file(goals_achieved_file_path_))
     throw std::invalid_argument(
-      "goals_achieved_dir_path - directory path is invalid: " + goals_achiev_file_path_);
-  goals_achiev_file_path_ += "goals_achieved.log";
+      "goals_achieved_dir_path - directory path is invalid: " + goals_achieved_file_path_);
+  goals_achieved_file_path_ += "goals_achieved.log";
 }
 
 void AutowareAutomaticGoalSender::initCommunication(rclcpp::Node * node)
@@ -79,23 +80,23 @@ void AutowareAutomaticGoalSender::initCommunication(rclcpp::Node * node)
 // Sub
 void AutowareAutomaticGoalSender::onRoute(const RouteState::ConstSharedPtr msg)
 {
-  if (msg->state == RouteState::UNSET && state == State::CLEARING)
-    state = State::CLEARED;
-  else if (msg->state == RouteState::SET && state == State::PLANNING)
-    state = State::PLANNED;
-  else if (msg->state == RouteState::ARRIVED && state == State::STARTED)
-    state = State::ARRIVED;
+  if (msg->state == RouteState::UNSET && state_ == State::CLEARING)
+    state_ = State::CLEARED;
+  else if (msg->state == RouteState::SET && state_ == State::PLANNING)
+    state_ = State::PLANNED;
+  else if (msg->state == RouteState::ARRIVED && state_ == State::STARTED)
+    state_ = State::ARRIVED;
   onRouteUpdated(msg);
 }
 
 void AutowareAutomaticGoalSender::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
-  if (msg->mode == OperationModeState::STOP && state == State::INITIALIZING)
-    state = State::EDITING;
-  else if (msg->mode == OperationModeState::STOP && state == State::STOPPING)
-    state = State::STOPPED;
-  else if (msg->mode == OperationModeState::AUTONOMOUS && state == State::STARTING)
-    state = State::STARTED;
+  if (msg->mode == OperationModeState::STOP && state_ == State::INITIALIZING)
+    state_ = State::EDITING;
+  else if (msg->mode == OperationModeState::STOP && state_ == State::STOPPING)
+    state_ = State::STOPPED;
+  else if (msg->mode == OperationModeState::AUTONOMOUS && state_ == State::STARTING)
+    state_ = State::STARTED;
   onOperationModeUpdated(msg);
 }
 
@@ -117,45 +118,45 @@ void AutowareAutomaticGoalSender::updateGoalsList()
 
 void AutowareAutomaticGoalSender::updateAutoExecutionTimerTick()
 {
-  auto goal = goals_achieved_[current_goal].first;
+  auto goal = goals_achieved_[current_goal_].first;
 
-  if (state == State::INITIALIZING) {
+  if (state_ == State::INITIALIZING) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 3000, "Initializing... waiting for OperationModeState::STOP");
 
-  } else if (state == State::EDITING) {  // skip the editing step by default
-    state = State::AUTONEXT;
+  } else if (state_ == State::EDITING) {  // skip the editing step by default
+    state_ = State::AUTO_NEXT;
 
-  } else if (state == State::AUTONEXT) {  // plan to next goal
+  } else if (state_ == State::AUTO_NEXT) {  // plan to next goal
     RCLCPP_INFO_STREAM(get_logger(), goal << ": Goal set as the next. Planning in progress...");
-    if (callPlanToGoalIndex(cli_set_route_, current_goal)) state = State::PLANNING;
+    if (callPlanToGoalIndex(cli_set_route_, current_goal_)) state_ = State::PLANNING;
 
-  } else if (state == State::PLANNED) {  // start plan to next goal
+  } else if (state_ == State::PLANNED) {  // start plan to next goal
     RCLCPP_INFO_STREAM(get_logger(), goal << ": Route has been planned. Route starting...");
-    if (callService<ChangeOperationMode>(cli_change_to_autonomous_)) state = State::STARTING;
+    if (callService<ChangeOperationMode>(cli_change_to_autonomous_)) state_ = State::STARTING;
 
-  } else if (state == State::STARTED) {
+  } else if (state_ == State::STARTED) {
     RCLCPP_INFO_STREAM_THROTTLE(get_logger(), *get_clock(), 5000, goal << ": Driving to the goal.");
 
-  } else if (state == State::ARRIVED) {  // clear plan after achieving next goal, goal++
+  } else if (state_ == State::ARRIVED) {  // clear plan after achieving next goal, goal++
     RCLCPP_INFO_STREAM(
-      get_logger(), goal << ": Goal has been ACHIEVED " << ++goals_achieved_[current_goal].second
+      get_logger(), goal << ": Goal has been ACHIEVED " << ++goals_achieved_[current_goal_].second
                          << " times. Route clearing...");
-    updateAchievedGoalsFile(current_goal);
-    if (callService<ClearRoute>(cli_clear_route_)) state = State::CLEARING;
+    updateAchievedGoalsFile(current_goal_);
+    if (callService<ClearRoute>(cli_clear_route_)) state_ = State::CLEARING;
 
-  } else if (state == State::CLEARED) {
+  } else if (state_ == State::CLEARED) {
     RCLCPP_INFO_STREAM(get_logger(), goal << ": Route has been cleared.");
-    current_goal++;
-    current_goal = current_goal % goals_list_.size();
-    state = State::AUTONEXT;
+    current_goal_++;
+    current_goal_ = current_goal_ % goals_list_.size();
+    state_ = State::AUTO_NEXT;
 
-  } else if (state == State::STOPPED) {
+  } else if (state_ == State::STOPPED) {
     RCLCPP_WARN_STREAM(
       get_logger(), goal << ": The execution has been stopped unexpectedly! Restarting...");
-    if (callService<ChangeOperationMode>(cli_change_to_autonomous_)) state = State::STARTING;
+    if (callService<ChangeOperationMode>(cli_change_to_autonomous_)) state_ = State::STARTING;
 
-  } else if (state == State::ERROR) {
+  } else if (state_ == State::ERROR) {
     timer_->cancel();
     throw std::runtime_error(goal + ": Error encountered during execution!");
   }
@@ -185,8 +186,8 @@ void AutowareAutomaticGoalSender::loadGoalsList(const std::string & file_path)
 
 void AutowareAutomaticGoalSender::updateAchievedGoalsFile(const unsigned goal_index)
 {
-  if (!goals_achiev_file_path_.empty()) {
-    std::ofstream out(goals_achiev_file_path_, std::fstream::app);
+  if (!goals_achieved_file_path_.empty()) {
+    std::ofstream out(goals_achieved_file_path_, std::fstream::app);
     std::stringstream ss;
     ss << "[" << getTimestamp() << "] Achieved: " << goals_achieved_[goal_index].first;
     ss << ", Current number of achievements: " << goals_achieved_[goal_index].second << "\n";
@@ -198,8 +199,8 @@ void AutowareAutomaticGoalSender::updateAchievedGoalsFile(const unsigned goal_in
 void AutowareAutomaticGoalSender::resetAchievedGoals()
 {
   goals_achieved_.clear();
-  if (!goals_achiev_file_path_.empty()) {
-    std::ofstream out(goals_achiev_file_path_, std::fstream::app);
+  if (!goals_achieved_file_path_.empty()) {
+    std::ofstream out(goals_achieved_file_path_, std::fstream::app);
     out << "[" << getTimestamp()
         << "] GoalsList was loaded from a file or a goal was removed - counters have been reset\n";
     out.close();
@@ -210,8 +211,16 @@ void AutowareAutomaticGoalSender::resetAchievedGoals()
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<automatic_goal::AutowareAutomaticGoalSender>();
-  node->init();
+
+  std::shared_ptr<automatic_goal::AutowareAutomaticGoalSender> node{nullptr};
+  try {
+    node = std::make_shared<automatic_goal::AutowareAutomaticGoalSender>();
+    node->init();
+  } catch (const std::exception & e) {
+    fprintf(stderr, "%s Exiting...\n", e.what());
+    return 1;
+  }
+
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

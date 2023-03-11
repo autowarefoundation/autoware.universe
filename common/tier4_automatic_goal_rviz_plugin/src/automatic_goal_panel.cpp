@@ -21,9 +21,9 @@ namespace rviz_plugins
 AutowareAutomaticGoalPanel::AutowareAutomaticGoalPanel(QWidget * parent)
 : rviz_common::Panel(parent)
 {
-  qtimer_ = new QTimer(this);
+  qt_timer_ = new QTimer(this);
   connect(
-    qtimer_, &QTimer::timeout, this, &AutowareAutomaticGoalPanel::updateAutoExecutionTimerTick);
+    qt_timer_, &QTimer::timeout, this, &AutowareAutomaticGoalPanel::updateAutoExecutionTimerTick);
 
   auto * h_layout = new QHBoxLayout(this);
   auto * v_layout = new QVBoxLayout(this);
@@ -61,10 +61,10 @@ QGroupBox * AutowareAutomaticGoalPanel::makeGoalsListGroup()
   connect(loop_list_btn_ptr_, SIGNAL(toggled(bool)), SLOT(onToggleLoopList(bool)));
   grid->addWidget(loop_list_btn_ptr_, 4, 0);
 
-  goals_achiev_btn_ptr_ = new QPushButton("Saving achieved goals to file", group);
-  goals_achiev_btn_ptr_->setCheckable(true);
-  connect(goals_achiev_btn_ptr_, SIGNAL(toggled(bool)), SLOT(onToggleSaveGoalsAchievement(bool)));
-  grid->addWidget(goals_achiev_btn_ptr_, 5, 0);
+  goals_achieved_btn_ptr_ = new QPushButton("Saving achieved goals to file", group);
+  goals_achieved_btn_ptr_->setCheckable(true);
+  connect(goals_achieved_btn_ptr_, SIGNAL(toggled(bool)), SLOT(onToggleSaveGoalsAchievement(bool)));
+  grid->addWidget(goals_achieved_btn_ptr_, 5, 0);
 
   group->setLayout(grid);
   return group;
@@ -144,7 +144,7 @@ void AutowareAutomaticGoalPanel::onInitialize()
 
 void AutowareAutomaticGoalPanel::onToggleLoopList(bool checked)
 {
-  is_loop_list_on = checked;
+  is_loop_list_on_ = checked;
   updateGUI();
 }
 
@@ -154,9 +154,9 @@ void AutowareAutomaticGoalPanel::onToggleSaveGoalsAchievement(bool checked)
     QString file_name = QFileDialog::getSaveFileName(
       this, tr("Save File with  GoalsList"), "/home/goals_achieved.log",
       tr("Achieved goals (*.log)"));
-    goals_achiev_file_path_ = file_name.toStdString();
+    goals_achieved_file_path_ = file_name.toStdString();
   } else {
-    goals_achiev_file_path_ = "";
+    goals_achieved_file_path_ = "";
   }
   updateGUI();
 }
@@ -167,10 +167,10 @@ void AutowareAutomaticGoalPanel::onToggleAutoMode(bool checked)
     showMessageBox("Select the first goal in GoalsList");
     automatic_mode_btn_ptr_->setChecked(false);
   } else {
-    if (checked) current_goal = goals_list_widget_ptr_->currentRow();
-    is_automatic_mode_on = checked;
-    is_automatic_mode_on ? qtimer_->start(1000) : qtimer_->stop();
-    onClickClearRoute();  // here will be set State::AUTONEXT or State::EDITING;
+    if (checked) current_goal_ = goals_list_widget_ptr_->currentRow();
+    is_automatic_mode_on_ = checked;
+    is_automatic_mode_on_ ? qt_timer_->start(1000) : qt_timer_->stop();
+    onClickClearRoute();  // here will be set State::AUTO_NEXT or State::EDITING;
   }
 }
 
@@ -182,7 +182,7 @@ void AutowareAutomaticGoalPanel::onClickPlan()
   }
 
   if (callPlanToGoalIndex(cli_set_route_, goals_list_widget_ptr_->currentRow())) {
-    state = State::PLANNING;
+    state_ = State::PLANNING;
     updateGUI();
   }
 }
@@ -190,7 +190,7 @@ void AutowareAutomaticGoalPanel::onClickPlan()
 void AutowareAutomaticGoalPanel::onClickStart()
 {
   if (callService<ChangeOperationMode>(cli_change_to_autonomous_)) {
-    state = State::STARTING;
+    state_ = State::STARTING;
     updateGUI();
   }
 }
@@ -198,11 +198,11 @@ void AutowareAutomaticGoalPanel::onClickStart()
 void AutowareAutomaticGoalPanel::onClickStop()
 {
   // if ERROR is set then the ego is already stopped
-  if (state == State::ERROR) {
-    state = State::STOPPED;
+  if (state_ == State::ERROR) {
+    state_ = State::STOPPED;
     updateGUI();
   } else if (callService<ChangeOperationMode>(cli_change_to_stop_)) {
-    state = State::STOPPING;
+    state_ = State::STOPPING;
     updateGUI();
   }
 }
@@ -210,7 +210,7 @@ void AutowareAutomaticGoalPanel::onClickStop()
 void AutowareAutomaticGoalPanel::onClickClearRoute()
 {
   if (callService<ClearRoute>(cli_clear_route_)) {
-    state = State::CLEARING;
+    state_ = State::CLEARING;
     updateGUI();
   }
 }
@@ -233,7 +233,7 @@ void AutowareAutomaticGoalPanel::onClickLoadListFromFile()
 
 void AutowareAutomaticGoalPanel::onClickSaveListToFile()
 {
-  if (goals_list_.size() > 0) {
+  if (!goals_list_.empty()) {
     QString file_name = QFileDialog::getSaveFileName(
       this, tr("Save File with  GoalsList"), "/home/goals_list.yaml", tr("Goal lists (*.yaml)"));
     if (file_name.count() > 0) saveGoalsList(file_name.toStdString());
@@ -243,7 +243,7 @@ void AutowareAutomaticGoalPanel::onClickSaveListToFile()
 // Inputs
 void AutowareAutomaticGoalPanel::onAppendGoal(const PoseStamped::ConstSharedPtr pose)
 {
-  if (state == State::EDITING) {
+  if (state_ == State::EDITING) {
     goals_list_.push_back(pose);
     updateGoalsList();
     updateGUI();
@@ -256,7 +256,7 @@ void AutowareAutomaticGoalPanel::onGoalListUpdated()
 {
   goals_list_widget_ptr_->clear();
   for (auto const & goal : goals_achieved_) {
-    QListWidgetItem * item =
+    auto * item =
       new QListWidgetItem(QString::fromStdString(goal.second.first), goals_list_widget_ptr_);
     goals_list_widget_ptr_->addItem(item);
     updateGoalIcon(goals_list_widget_ptr_->count() - 1, QColor("lightGray"));
@@ -287,28 +287,28 @@ void AutowareAutomaticGoalPanel::onRouteUpdated(const RouteState::ConstSharedPtr
 
 void AutowareAutomaticGoalPanel::updateAutoExecutionTimerTick()
 {
-  if (is_automatic_mode_on) {
-    if (state == State::AUTONEXT) {
+  if (is_automatic_mode_on_) {
+    if (state_ == State::AUTO_NEXT) {
       // end if loop is off
-      if (current_goal >= goals_list_.size() && !is_loop_list_on) {
+      if (current_goal_ >= goals_list_.size() && !is_loop_list_on_) {
         disableAutomaticMode();
         return;
       }
       // plan to next goal
-      current_goal = current_goal % goals_list_.size();
-      if (callPlanToGoalIndex(cli_set_route_, current_goal)) {
-        state = State::PLANNING;
+      current_goal_ = current_goal_ % goals_list_.size();
+      if (callPlanToGoalIndex(cli_set_route_, current_goal_)) {
+        state_ = State::PLANNING;
         updateGUI();
       }
-    } else if (state == State::PLANNED) {
-      updateGoalIcon(current_goal, QColor("yellow"));
+    } else if (state_ == State::PLANNED) {
+      updateGoalIcon(current_goal_, QColor("yellow"));
       onClickStart();
-    } else if (state == State::ARRIVED) {
-      goals_achieved_[current_goal].second++;
-      updateAchievedGoalsFile(current_goal);
-      updateGoalIcon(current_goal++, QColor("green"));
-      onClickClearRoute();  // will be set AUTONEXT as next state
-    } else if (state == State::STOPPED || state == State::ERROR) {
+    } else if (state_ == State::ARRIVED) {
+      goals_achieved_[current_goal_].second++;
+      updateAchievedGoalsFile(current_goal_);
+      updateGoalIcon(current_goal_++, QColor("green"));
+      onClickClearRoute();  // will be set AUTO_NEXT as next state_
+    } else if (state_ == State::STOPPED || state_ == State::ERROR) {
       disableAutomaticMode();
     }
   }
@@ -326,14 +326,14 @@ void AutowareAutomaticGoalPanel::updateGUI()
   deactivateButton(load_file_btn_ptr_);
   deactivateButton(save_file_btn_ptr_);
   deactivateButton(loop_list_btn_ptr_);
-  deactivateButton(goals_achiev_btn_ptr_);
+  deactivateButton(goals_achieved_btn_ptr_);
 
   std::pair<QString, QString> style;
-  switch (state) {
+  switch (state_) {
     case State::EDITING:
       activateButton(load_file_btn_ptr_);
-      if (goals_list_.size() > 0) {
-        activateButton(goals_achiev_btn_ptr_);
+      if (!goals_list_.empty()) {
+        activateButton(goals_achieved_btn_ptr_);
         activateButton(plan_btn_ptr_);
         activateButton(remove_selected_goal_btn_ptr_);
         activateButton(automatic_mode_btn_ptr_);
@@ -361,15 +361,15 @@ void AutowareAutomaticGoalPanel::updateGUI()
       style = std::make_pair("STOPPED", "background-color: #00FF00;");
       break;
     case State::ARRIVED:
-      if (!is_automatic_mode_on) onClickClearRoute();  // will be set EDITING as next state
+      if (!is_automatic_mode_on_) onClickClearRoute();  // will be set EDITING as next state_
       break;
     case State::CLEARED:
-      is_automatic_mode_on ? state = State::AUTONEXT : state = State::EDITING;
+      is_automatic_mode_on_ ? state_ = State::AUTO_NEXT : state_ = State::EDITING;
       updateGUI();
       break;
     case State::ERROR:
       activateButton(stop_btn_ptr_);
-      if (goals_list_.size() > 0) activateButton(save_file_btn_ptr_);
+      if (!goals_list_.empty()) activateButton(save_file_btn_ptr_);
       style = std::make_pair("ERROR", "background-color: #FF0000;");
       break;
     case State::PLANNING:
@@ -391,11 +391,11 @@ void AutowareAutomaticGoalPanel::updateGUI()
 
   automatic_mode_btn_ptr_->setStyleSheet("");
   loop_list_btn_ptr_->setStyleSheet("");
-  goals_achiev_btn_ptr_->setStyleSheet("");
-  if (is_automatic_mode_on) automatic_mode_btn_ptr_->setStyleSheet("background-color: green");
-  if (is_loop_list_on) loop_list_btn_ptr_->setStyleSheet("background-color: green");
-  if (goals_achiev_file_path_ != "")
-    goals_achiev_btn_ptr_->setStyleSheet("background-color: green");
+  goals_achieved_btn_ptr_->setStyleSheet("");
+  if (is_automatic_mode_on_) automatic_mode_btn_ptr_->setStyleSheet("background-color: green");
+  if (is_loop_list_on_) loop_list_btn_ptr_->setStyleSheet("background-color: green");
+  if (!goals_achieved_file_path_.empty())
+    goals_achieved_btn_ptr_->setStyleSheet("background-color: green");
 
   updateLabel(engagement_label_ptr_, style.first, style.second);
 }
@@ -410,7 +410,7 @@ void AutowareAutomaticGoalPanel::updateGoalIcon(const unsigned goal_index, const
   QString text = QString::number(goals_achieved_[goal_index].second);
   painter.drawText(QRect(0, 0, 24, 24), Qt::AlignCenter, text);
   QIcon icon(pixmap);
-  goals_list_widget_ptr_->item(goal_index)->setIcon(icon);
+  goals_list_widget_ptr_->item(static_cast<int>(goal_index))->setIcon(icon);
 }
 
 void AutowareAutomaticGoalPanel::publishMarkers()
@@ -436,7 +436,7 @@ void AutowareAutomaticGoalPanel::publishMarkers()
     marker.header.frame_id = "map";
     marker.header.stamp = rclcpp::Time();
     marker.ns = "names";
-    marker.id = i;
+    marker.id = static_cast<int>(i);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose = goals_list_[i]->pose;
@@ -474,9 +474,9 @@ void AutowareAutomaticGoalPanel::saveGoalsList(const std::string & file_path)
     node[i]["orientation_z"] = goals_list_[i]->pose.orientation.z;
     node[i]["orientation_w"] = goals_list_[i]->pose.orientation.w;
   }
-  std::ofstream fout(file_path);
-  fout << node;
-  fout.close();
+  std::ofstream file_out(file_path);
+  file_out << node;
+  file_out.close();
 }
 
 }  // namespace rviz_plugins

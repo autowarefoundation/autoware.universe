@@ -16,10 +16,9 @@
 
 7. Save the current `GoalsList` to a file and load the list from the file.
 
-8. The application enables/disables access to options depending on the current state
+8. The application enables/disables access to options depending on the current state.
 
-9. The saved `GoalsList` can be executed without using a plugin - using a node `automatic_goal_sender`
-   - example: `ros2 launch tier4_automatic_goal_rviz_plugin automatic_goal_sender.launch.xml goals_list_file_path:="/home/ros2/goals_list.yaml" goals_achieved_dir_path:="/home/ros2/"`
+9. The saved `GoalsList` can be executed without using a plugin - using a node `automatic_goal_sender`.
 
 ## Inputs / Outputs
 
@@ -55,8 +54,15 @@
 
 4. Select `tier4_automatic_goal_rviz_plugin/AutowareAutomaticGoalTool` and press OK.
 
-5. Add to the `GoalsList` goals to be achieved using `2D Append Goal`.
+5. Append goals to the `GoalsList` to be achieved using `2D Append Goal`  - in such a way that routes can be planned.
 
-6. Start sequential planning and goal achievement by clicking `Send goals automatically`
+7. Start sequential planning and goal achievement by clicking `Send goals automatically`
 
    ![panel](./images/panel.png)
+
+8. You can save `GoalsList` by clicking `Save to file`.
+   
+9. After saving, you can run the `GoalsList` without using a plugin also:
+    - example: `ros2 launch tier4_automatic_goal_rviz_plugin automatic_goal_sender.launch.xml goals_list_file_path:="/home/ros2/goals_list.yaml" goals_achieved_dir_path:="/home/ros2/"`
+   - `goals_list_file_path` - is the path to the saved `GoalsList` file to be loaded
+   - `goals_achieved_dir_path` - is the path to the directory where the file `goals_achieved.log` will be created and the achieved goals will be written to it

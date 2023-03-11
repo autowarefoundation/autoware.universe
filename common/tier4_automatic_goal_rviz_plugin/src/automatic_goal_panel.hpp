@@ -105,7 +105,7 @@ private:
   void disableAutomaticMode() { automatic_mode_btn_ptr_->setChecked(false); }
   static void activateButton(QAbstractButton * btn) { btn->setEnabled(true); }
   static void deactivateButton(QAbstractButton * btn) { btn->setEnabled(false); }
-  static void updateLabel(QLabel * label, QString text, QString style_sheet)
+  static void updateLabel(QLabel * label, const QString & text, const QString & style_sheet)
   {
     label->setText(text);
     label->setStyleSheet(style_sheet);
@@ -119,20 +119,20 @@ private:
 
   // Containers
   rclcpp::Node::SharedPtr raw_node_{nullptr};
-  bool is_automatic_mode_on{false};
-  bool is_loop_list_on{false};
+  bool is_automatic_mode_on_{false};
+  bool is_loop_list_on_{false};
 
   // QT Containers
   QGroupBox * makeGoalsListGroup();
   QGroupBox * makeRoutingGroup();
   QGroupBox * makeEngagementGroup();
-  QTimer * qtimer_{nullptr};
+  QTimer * qt_timer_{nullptr};
   QListWidget * goals_list_widget_ptr_{nullptr};
   QLabel * routing_label_ptr_{nullptr};
   QLabel * operation_mode_label_ptr_{nullptr};
   QLabel * engagement_label_ptr_{nullptr};
   QPushButton * loop_list_btn_ptr_{nullptr};
-  QPushButton * goals_achiev_btn_ptr_{nullptr};
+  QPushButton * goals_achieved_btn_ptr_{nullptr};
   QPushButton * load_file_btn_ptr_{nullptr};
   QPushButton * save_file_btn_ptr_{nullptr};
   QPushButton * automatic_mode_btn_ptr_{nullptr};

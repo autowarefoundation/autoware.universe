@@ -46,7 +46,7 @@ enum class AutomaticGoalState {
   STARTING,
   STARTED,
   ARRIVED,
-  AUTONEXT,
+  AUTO_NEXT,
   STOPPING,
   STOPPED,
   CLEARING,
@@ -84,7 +84,7 @@ protected:
     req->goal = goals_list_.at(goal_index)->pose;
     client->async_send_request(
       req, [this](typename rclcpp::Client<SetRoutePoints>::SharedFuture result) {
-        if (result.get()->status.code != 0) state = State::ERROR;
+        if (result.get()->status.code != 0) state_ = State::ERROR;
         printCallResult<SetRoutePoints>(result);
         onCallResult();
       });
@@ -100,7 +100,7 @@ protected:
 
     auto req = std::make_shared<typename T::Request>();
     client->async_send_request(req, [this](typename rclcpp::Client<T>::SharedFuture result) {
-      if (result.get()->status.code != 0) state = State::ERROR;
+      if (result.get()->status.code != 0) state_ = State::ERROR;
       printCallResult<T>(result);
       onCallResult();
     });
@@ -128,12 +128,12 @@ protected:
   void loadGoalsList(const std::string & file_path);
   void updateAchievedGoalsFile(const unsigned goal_index);
   void resetAchievedGoals();
-  std::string getTimestamp() const
+  static std::string getTimestamp()
   {
     char buffer[128];
     std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::strftime(&buffer[0], sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-    return std::string(buffer);
+    return std::string{buffer};
   }
 
   // Sub
@@ -147,28 +147,28 @@ protected:
   virtual void onGoalListUpdated() {}
 
   // Cli
-  rclcpp::Client<ChangeOperationMode>::SharedPtr cli_change_to_autonomous_;
-  rclcpp::Client<ChangeOperationMode>::SharedPtr cli_change_to_stop_;
-  rclcpp::Client<ClearRoute>::SharedPtr cli_clear_route_;
-  rclcpp::Client<SetRoutePoints>::SharedPtr cli_set_route_;
+  rclcpp::Client<ChangeOperationMode>::SharedPtr cli_change_to_autonomous_{nullptr};
+  rclcpp::Client<ChangeOperationMode>::SharedPtr cli_change_to_stop_{nullptr};
+  rclcpp::Client<ClearRoute>::SharedPtr cli_clear_route_{nullptr};
+  rclcpp::Client<SetRoutePoints>::SharedPtr cli_set_route_{nullptr};
 
   // Containers
-  unsigned current_goal{0};
-  State state{State::INITIALIZING};
-  std::vector<PoseStamped::ConstSharedPtr> goals_list_;
-  std::map<unsigned, std::pair<std::string, unsigned>> goals_achieved_;
-  std::string goals_achiev_file_path_{};
+  unsigned current_goal_{0};
+  State state_{State::INITIALIZING};
+  std::vector<PoseStamped::ConstSharedPtr> goals_list_{};
+  std::map<unsigned, std::pair<std::string, unsigned>> goals_achieved_{};
+  std::string goals_achieved_file_path_{};
 
 private:
   void loadParams(rclcpp::Node * node);
 
   // Sub
-  rclcpp::Subscription<RouteState>::SharedPtr sub_route_;
-  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
+  rclcpp::Subscription<RouteState>::SharedPtr sub_route_{nullptr};
+  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_{nullptr};
 
   // Containers
-  std::string goals_list_file_path_{};
-  rclcpp::TimerBase::SharedPtr timer_;
+  std::string goals_list_file_path_{nullptr};
+  rclcpp::TimerBase::SharedPtr timer_{nullptr};
 };
 }  // namespace automatic_goal
 #endif  // AUTOMATIC_GOAL_SENDER_HPP_
