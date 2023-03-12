@@ -236,8 +236,13 @@ CandidateOutput LaneChangeModule::planCandidate() const
   const auto current_lanes = util::getCurrentLanes(planner_data_);
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
+#ifdef USE_OLD_ARCHITECTURE
   [[maybe_unused]] const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
+#else
+  selected_path = status_.lane_change_path;
+#endif
+
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
   if (isAbortState()) {
@@ -272,6 +277,10 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 #endif
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(prev_approved_path_);
+
+#ifndef USE_OLD_ARCHITECTURE
+  updateLaneChangeStatus();
+#endif
 
   const auto candidate = planCandidate();
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
