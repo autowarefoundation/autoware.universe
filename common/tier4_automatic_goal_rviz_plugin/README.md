@@ -54,7 +54,7 @@
 
 4. Select `tier4_automatic_goal_rviz_plugin/AutowareAutomaticGoalTool` and press OK.
 
-5. Add goals visualiization as markers to `Displays`.
+5. Add goals visualization as markers to `Displays`.
 
    ![markers](./images/markers.png)
 
