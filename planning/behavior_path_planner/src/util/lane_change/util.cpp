@@ -139,12 +139,14 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets)
 {
-  const auto current_lane_poly_2d = lanelet::utils::to2D(
-    lanelet::utils::getPolygonFromArcLength(original_lanelets, 0, std::numeric_limits<double>::max())
-    ).basicPolygon();
-  const auto target_lane_poly_2d = lanelet::utils::to2D(
-    lanelet::utils::getPolygonFromArcLength(target_lanelets, 0, std::numeric_limits<double>::max())
-    ).basicPolygon();
+  const auto current_lane_poly_2d =
+    lanelet::utils::to2D(lanelet::utils::getPolygonFromArcLength(
+                           original_lanelets, 0, std::numeric_limits<double>::max()))
+      .basicPolygon();
+  const auto target_lane_poly_2d =
+    lanelet::utils::to2D(lanelet::utils::getPolygonFromArcLength(
+                           target_lanelets, 0, std::numeric_limits<double>::max()))
+      .basicPolygon();
 
   for (const auto & pt : path.points) {
     const lanelet::BasicPoint2d ll_pt(pt.point.pose.position.x, pt.point.pose.position.y);
