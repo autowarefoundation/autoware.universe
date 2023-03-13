@@ -1153,4 +1153,44 @@ std::string getStrDirection(const std::string & name, const Direction direction)
   }
   return "";
 }
+
+lanelet::ConstLanelets getLaneChangeLanes(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length,
+  const double prepare_duration, const Direction direction, const LaneChangeModuleType type)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto minimum_lane_change_length = planner_data->parameters.minimum_lane_change_length;
+  const auto current_pose = planner_data->self_odometry->pose.pose;
+  const auto current_speed = planner_data->self_odometry->twist.twist.linear.x;
+
+  if (current_lanes.empty()) {
+    return {};
+  }
+
+  // Get lane change lanes
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(current_lanes, current_pose, &current_lane);
+
+  const auto lane_change_prepare_length =
+    std::max(current_speed * prepare_duration, minimum_lane_change_length);
+
+  const auto current_check_lanes =
+    route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
+
+  const auto lane_change_lane = std::invoke([&]() {
+    if (type == LaneChangeModuleType::NORMAL) {
+      return route_handler->getLaneChangeTarget(current_check_lanes, direction);
+    }
+
+    return route_handler->getLaneChangeTargetExceptPrefferedLane(current_check_lanes, direction);
+  });
+
+  if (lane_change_lane) {
+    return route_handler->getLaneletSequence(
+      lane_change_lane.get(), current_pose, lane_change_lane_length, lane_change_lane_length);
+  }
+
+  return {};
+}
 }  // namespace behavior_path_planner::lane_change_utils

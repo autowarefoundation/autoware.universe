@@ -159,7 +159,11 @@ LaneChangeTargetObjectIndices filterObjectIndices(
 
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
 
-std::string getStrDirection(const std::string name, const Direction direction);
+std::string getStrDirection(const std::string & name, const Direction direction);
 
+lanelet::ConstLanelets getLaneChangeLanes(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length,
+  const double prepare_duration, const Direction direction, const LaneChangeModuleType type);
 }  // namespace behavior_path_planner::lane_change_utils
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__UTIL_HPP_
