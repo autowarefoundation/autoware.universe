@@ -15,6 +15,8 @@
 #ifndef SCENE_MODULE__OUT_OF_LANE__SCENE_OUT_OF_LANE_HPP_
 #define SCENE_MODULE__OUT_OF_LANE__SCENE_OUT_OF_LANE_HPP_
 
+#include "scene_module/out_of_lane/types.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/out_of_lane/out_of_lane_utils.hpp>
 #include <scene_module/scene_module_interface.hpp>
@@ -40,7 +42,7 @@ class OutOfLaneModule : public SceneModuleInterface
 public:
   OutOfLaneModule(
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
-    const PlannerParam & planner_param, const rclcpp::Logger & logger,
+    PlannerParam planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
   /**

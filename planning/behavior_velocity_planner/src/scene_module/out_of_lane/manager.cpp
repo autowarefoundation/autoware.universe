@@ -30,18 +30,23 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
 
-  pp.use_threshold = node.declare_parameter<bool>(ns + ".use_threshold");
+  pp.mode = node.declare_parameter<std::string>(ns + ".mode");
+  pp.time_threshold = node.declare_parameter<double>(ns + ".threshold.time_threshold");
+  pp.intervals_ego_buffer = node.declare_parameter<double>(ns + ".intervals.ego_time_buffer");
+  pp.intervals_obj_buffer = node.declare_parameter<double>(ns + ".intervals.objects_time_buffer");
+  pp.ttc_threshold = node.declare_parameter<double>(ns + ".ttc.threshold");
 
   pp.objects_min_vel = node.declare_parameter<double>(ns + ".objects.minimum_velocity");
-  pp.objects_time_thr = node.declare_parameter<double>(ns + ".objects.time_threshold");
-  pp.objects_slow_time_thr = node.declare_parameter<double>(ns + ".objects.slow_time_threshold");
 
   pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap.minimum_distance");
   pp.overlap_extra_length = node.declare_parameter<double>(ns + ".overlap.extra_length");
 
-  pp.slow_velocity = node.declare_parameter<double>(ns + ".slowdown.velocity");
-  pp.stop_extra_dist = node.declare_parameter<double>(ns + ".stop.extra_distance");
-  pp.stop_max_decel = node.declare_parameter<double>(ns + ".stop.maximum_deceleration");
+  pp.dist_buffer = node.declare_parameter<double>(ns + ".action.distance_buffer");
+  pp.max_decel = node.declare_parameter<double>(ns + ".action.maximum_deceleration");
+  pp.slow_velocity = node.declare_parameter<double>(ns + ".action.slowdown.velocity");
+  pp.slow_dist_threshold =
+    node.declare_parameter<double>(ns + ".action.slowdown.distance_threshold");
+  pp.stop_dist_threshold = node.declare_parameter<double>(ns + ".action.stop.distance_threshold");
 
   pp.extra_front_offset = node.declare_parameter<double>(ns + ".ego.extra_front_offset");
   pp.extra_rear_offset = node.declare_parameter<double>(ns + ".ego.extra_rear_offset");
