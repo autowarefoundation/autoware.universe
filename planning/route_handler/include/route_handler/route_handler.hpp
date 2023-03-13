@@ -264,7 +264,7 @@ public:
    * the number of lane-changeable lane to the preferred lane.
    * @param Desired lanelet to query
    * @param lane change direction
-   * @return number of lanes from input to the preffered lane
+   * @return number of lanes from input to the preferred lane
    */
   int getNumLaneToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
