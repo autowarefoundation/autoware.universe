@@ -15,7 +15,6 @@
 
   <group if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
     <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
-      <arg name="eagleye_mode" value="pose_estimator"/>
       <arg name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
     </include>
   </group>

@@ -6,7 +6,6 @@
   <arg name="output_pose_with_cov_name" default="/localization/pose_estimator/pose_with_covariance"/>
   <arg name="output_twist_with_cov_name" default="/localization/twist_estimator/twist_with_covariance"/>
   <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/eagleye"/>
-  <arg name="eagleye_mode" default="pose_estimator" description="select localization mode. pose_estimator, twist_estimator"/>
 
   <arg name="enable_additional_rolling" default="false"/>
   <arg name="use_multi_antenna_mode" default="false"/>
@@ -14,7 +13,7 @@
   <group>
     <push-ros-namespace namespace="eagleye"/>
 
-    <group if="$(eval &quot;'$(var eagleye_mode)'=='twist_estimator'&quot;)">
+    <group if="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_gnss_fusion'&quot;)">
       <node pkg="topic_tools" exec="relay" name="eagleye_output_twist_relay" args="twist_with_covariance $(var output_twist_with_cov_name)"/>
     </group>
 
@@ -98,7 +97,7 @@
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
     </node>
-    <group if="$(eval &quot;'$(var eagleye_mode)'=='pose_estimator'&quot;)">
+    <group if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
       <node pkg="eagleye_rt" name="position_node" exec="position" if="$(eval &quot;'$(var use_rtk_dead_reckoning)'=='false'&quot;)">
         <param from="$(var config_path)"/>
         <param name="yaml_file" value="$(var config_path)"/>
@@ -147,7 +146,7 @@
 
   </group>
 
-  <group if="$(eval &quot;'$(var eagleye_mode)'=='pose_estimator'&quot;)">
+  <group if="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
     <include file="$(var directory_with_related_launches)/fix2pose.xml">
       <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
     </include>
