@@ -80,12 +80,6 @@ public:
    */
   Pose getEgoPose();
 
-  /**
-   * @brief set the modified goal
-   * @param [in] modified_goal input modified goal pose
-   */
-  void setModifiedGoal(const PoseWithUuidStamped & modified_goal);
-
 private:
   /**
    * @brief trim a trajectory from the current ego pose to some fixed time or distance

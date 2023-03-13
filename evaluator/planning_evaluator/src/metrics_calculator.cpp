@@ -110,11 +110,6 @@ void MetricsCalculator::setEgoPose(const geometry_msgs::msg::Pose & pose) { ego_
 
 Pose MetricsCalculator::getEgoPose() { return ego_pose_; }
 
-void MetricsCalculator::setModifiedGoal(const PoseWithUuidStamped & modified_goal)
-{
-  modified_goal_ = modified_goal;
-}
-
 Trajectory MetricsCalculator::getLookaheadTrajectory(
   const Trajectory & traj, const double max_dist_m, const double max_time_s) const
 {
