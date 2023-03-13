@@ -178,8 +178,6 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       }
     }
   }
-  
-  objectsCallback(msg);
 
   return markers;
 }
@@ -218,12 +216,15 @@ void PredictedObjectsDisplay::onInitialize()
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
     publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/predicted_objects_pointcloud", rclcpp::SensorDataQoS());
-    // pointcloud_subscription_ = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
-    //   m_default_pointcloud_topic->getTopicStd(), 
-    //   rclcpp::SensorDataQoS(), 
-    //   std::bind(&PredictedObjectsDisplay::pointCloudCallback, 
-    //   this, 
-    //   std::placeholders::_1));
+    sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
+
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
+    pointcloud_subscription_.subscribe(
+      raw_node, "/perception/obstacle_segmentation/pointcloud",
+      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    sync_ptr_->registerCallback(&PredictedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
 }
 
 bool PredictedObjectsDisplay::transformObjects(
@@ -256,29 +257,20 @@ bool PredictedObjectsDisplay::transformObjects(
   return true;
 }
 
-void PredictedObjectsDisplay::objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_objs_msg)
-{
-  // RCLCPP_INFO(this->get_logger(), "New objects");
-  // RCLCPP_INFO(this->get_logger(), "Befor transform objects frame is '%s'", input_objs_msg->header.frame_id.c_str());
-  // RCLCPP_INFO(this->get_logger(), "First object X is '%f' Y is '%f'", 
-  // input_objs_msg->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x,
-  // input_objs_msg->objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y);
+void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
+  const PredictedObjects::ConstSharedPtr & input_objs_msg,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
+{ 
+  point_color_ ={5, 5, 255}; // blue color
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
   if (!transformObjects(
-        *input_objs_msg, pointcloud_frame_id_, *tf_buffer_,
-        transformed_objects)) {
-    // objects_pub_->publish(*input_objects);
-    // RCLCPP_INFO(this->get_logger(), "Did NOT transform objects");
+      *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer_,
+      transformed_objects)) {
+  // objects_pub_->publish(*input_objects);
     return;
   }
-  // RCLCPP_INFO(this->get_logger(), "Transform DONE");
-  // RCLCPP_INFO(this->get_logger(), "After transform objects frame is '%s'", transformed_objects.header.frame_id.c_str());
-  // RCLCPP_INFO(this->get_logger(), "First object X is '%f' Y is '%f'", 
-  // transformed_objects.objects.at(0).kinematics.initial_pose_with_covariance.pose.position.x,
-  // transformed_objects.objects.at(0).kinematics.initial_pose_with_covariance.pose.position.y);
 
-  // objects_frame_id_ = transformed_objects.header.frame_id;
   objs_buffer.clear();
   for (const auto & object : transformed_objects.objects)
   {
@@ -286,9 +278,52 @@ void PredictedObjectsDisplay::objectsCallback(const autoware_auto_perception_msg
     object_info info = {object.shape, object.kinematics.initial_pose_with_covariance.pose, object.classification};
     objs_buffer.push_back(info);
   }
-  // RCLCPP_INFO(this->get_logger(), "Update objects buffer");
-}
+  
+  // convert to pcl pointcloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::fromROSMsg(transformed_pointcloud, *temp_cloud);
+  pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
 
+  // Create a new point cloud with RGB color information and copy data from input cloudb
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::copyPointCloud(*temp_cloud, *colored_cloud);
+
+  // Create Kd-tree to search neighbor pointcloud to reduce cost.
+  pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
+  pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
+  kdtree->setInputCloud(colored_cloud);
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+
+ 
+  if (objs_buffer.size() > 0) {
+    for (auto object : objs_buffer) {
+
+      const auto search_radius = getMaxRadius(object);
+      // Search neighbor pointcloud to reduce cost.
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+      std::vector<int> indices;
+      std::vector<float> distances;        
+      kdtree->radiusSearch(
+      toPCL(object.position.position), search_radius.value(), indices, distances);
+      for (const auto & index : indices) {
+        neighbor_pointcloud->push_back(colored_cloud->at(index));
+      }  
+      
+      filterPolygon(neighbor_pointcloud, out_cloud, object);
+    }     
+  } else {
+    // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
+    return;
+  }
+
+  sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr( new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
+
+  output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
+  
+  publisher_->publish(*output_pointcloud_msg_ptr);
+}
 
 
 }  // namespace object_detection

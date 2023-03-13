@@ -40,7 +40,15 @@ public:
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
   void onInitialize() override;
-  void objectsCallback(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objs_msg) override; 
+  void onObjectsAndObstaclePointCloud(const DetectedObjects::ConstSharedPtr & input_objs_msg,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
+
+
+  message_filters::Subscriber<DetectedObjects> percepted_objects_subscription_;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
+  using SyncPolicy =  message_filters::sync_policies::ApproximateTime<DetectedObjects, sensor_msgs::msg::PointCloud2>;
+  using Sync =  message_filters::Synchronizer<SyncPolicy>;
+  std::shared_ptr<Sync> sync_ptr_;
   // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
   
 

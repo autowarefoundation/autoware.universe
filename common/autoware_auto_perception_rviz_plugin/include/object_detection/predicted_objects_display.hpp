@@ -109,7 +109,8 @@ private:
     const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
     autoware_auto_perception_msgs::msg::PredictedObjects & output_msg);
   
-  void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_objs_msg) override;
+  void onObjectsAndObstaclePointCloud(const PredictedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
   // std::unordered_map<boost::uuids::uuid, int32_t> id_map;
@@ -122,6 +123,13 @@ private:
   std::mutex mutex;
   std::condition_variable condition;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
+
+
+  message_filters::Subscriber<PredictedObjects> percepted_objects_subscription_;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
+  typedef message_filters::sync_policies::ApproximateTime<PredictedObjects, sensor_msgs::msg::PointCloud2>SyncPolicy;
+  typedef message_filters::Synchronizer<SyncPolicy> Sync;
+  typename std::shared_ptr<Sync> sync_ptr_;
   
   // std::string objects_frame_id_;
   // std::vector<autoware_auto_perception_msgs::msg::PredictedObject> objs_buffer;

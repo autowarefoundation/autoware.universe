@@ -52,6 +52,10 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/crop_hull.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
@@ -82,6 +86,13 @@ struct object_info
   geometry_msgs::msg::Pose position; 
   // autoware_auto_perception_msgs::msg::ObjectClassification  classification;
   std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+};
+
+struct color
+{
+  uint8_t r; 
+  uint8_t g; 
+  uint8_t b;
 };
 
 inline pcl::PointXYZRGB toPCL(const double x, const double y, const double z)
@@ -171,9 +182,10 @@ public:
       m_polygon_properties.emplace(
         std::piecewise_construct, std::forward_as_tuple(map_property_it.first),
         std::forward_as_tuple(
-          QColor{color[0], color[1], color[2]}, class_property_values.alpha, &parent_property));
+          QColor{color[0], color[1], color[2]}, class_property_values.alpha, & parent_property));
     }
     init_color_list(predicted_path_colors);
+    point_color_ ={255, 255, 255}; // defaul white color 
   }
 
   void onInitialize() override
@@ -188,17 +200,12 @@ public:
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
     publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud", rclcpp::SensorDataQoS());
-    pointcloud_subscription_ = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
-      m_default_pointcloud_topic->getTopicStd(), 
-      rclcpp::SensorDataQoS(), 
-      std::bind(&ObjectPolygonDisplayBase::pointCloudCallback, 
-      this, 
-      std::placeholders::_1));
 
     tf_buffer_ =
       std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener_ =
       std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+    
   }
 
   void load(const rviz_common::Config & config) override
@@ -274,14 +281,15 @@ public:
   }
 
    
-  // std::string objects_frame_id_;
-    // variables for transfer detected objects information between callbacks
+  // variables for transfer detected objects information between callbacks
   std::vector<object_info> objs_buffer;
   std::string objects_frame_id_;
   std::string pointcloud_frame_id_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr}; // !! different type in prototype, 
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_; // !! different type in prototype
-  rclcpp::Node::SharedPtr raw_node;
+
+  color point_color_;
+  
 
 protected:
   /// \brief Convert given shape msg into a Marker
@@ -539,11 +547,47 @@ protected:
     }
   }
 
-   virtual void objectsCallback(typename MsgT::ConstSharedPtr msg) = 0;
- 
+  void filterPolygon(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & in_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud, const object_info & object)
+  {        
+        pcl::PointCloud<pcl::PointXYZRGB> filtered_cloud;
+        std::vector<pcl::Vertices> vertices_array;
+        pcl::Vertices vertices;
 
-  // add pointcloud subscription
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_subscription_;
+        Polygon2d poly2d =
+        tier4_autoware_utils::toPolygon2d(object.position, object.shape);
+        if (boost::geometry::is_empty(poly2d)) return;
+
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        for (size_t i = 0; i < poly2d.outer().size(); ++i) {
+          vertices.vertices.emplace_back(i);
+          vertices_array.emplace_back(vertices);
+          hull_cloud->emplace_back(static_cast<float>(poly2d.outer().at(i).x()), 
+          static_cast<float>(poly2d.outer().at(i).y()), 
+          static_cast<float>(0.0));
+        }
+
+        pcl::CropHull<pcl::PointXYZRGB> crop_hull_filter;
+        crop_hull_filter.setInputCloud(in_cloud);
+        crop_hull_filter.setDim(2);
+        crop_hull_filter.setHullIndices(vertices_array);
+        crop_hull_filter.setHullCloud(hull_cloud);
+        crop_hull_filter.setCropOutside(true);
+        
+        crop_hull_filter.filter(filtered_cloud);
+
+        // Define a custom color for the box polygons
+        const uint8_t r = 30, g = 44, b = 255;
+
+        for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it)
+        {
+          cloud_it->r = r;
+          cloud_it->g = g;
+          cloud_it->b = b;
+        }
+
+        *out_cloud += filtered_cloud;
+  }
+
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
 
   // Default pointcloud topic;
@@ -585,116 +629,6 @@ private:
 
   std::vector<std_msgs::msg::ColorRGBA> predicted_path_colors;
 
-  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) 
-  {
-    // RCLCPP_INFO(this->get_logger(), "Get new pointcloud");
-    pointcloud_frame_id_ = input_pointcloud_msg.header.frame_id;
-
-    // pcl::PointXYZ minPt, maxPt;
-    // pcl::PointCloud<pcl::PointXYZ> measured_cloud;
-    // pcl::fromROSMsg(input_pointcloud_msg, measured_cloud);
-    // pcl::getMinMax3D(measured_cloud, minPt, maxPt);
-    
-    // RCLCPP_INFO(this->get_logger(), "before translation max X is '%f' max Y is '%f'", maxPt.x, maxPt.y);
-    // RCLCPP_INFO(this->get_logger(), "before translation min X is '%f' min Y is '%f'", minPt.x, minPt.y);
-    
-    // convert to pcl pointcloud
-    pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    // pcl::fromROSMsg(transformed_pointcloud, *temp_cloud);
-    pcl::fromROSMsg(input_pointcloud_msg, *temp_cloud);
-
-    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-    // pcl::fromROSMsg(transformed_pointcloud, *colored_cloud);
-    
-    // Create a new point cloud with RGB color information and copy data from input cloudb
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-    pcl::copyPointCloud(*temp_cloud, *colored_cloud);
-
-    // Create Kd-tree to search neighbor pointcloud to reduce cost.
-    pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
-    pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
-    kdtree->setInputCloud(colored_cloud);
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-      
-    if (objs_buffer.size() > 0) {
-      // RCLCPP_INFO(this->get_logger(), "Filtering pointcloud");
-      for (auto object : objs_buffer) {
-        // RCLCPP_INFO(this->get_logger(), "object");
-
-        const auto search_radius = getMaxRadius(object);
-        // Search neighbor pointcloud to reduce cost.
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-        std::vector<int> indices;
-        std::vector<float> distances;        
-        kdtree->radiusSearch(
-        toPCL(object.position.position), search_radius.value(), indices, distances);
-        for (const auto & index : indices) {
-          neighbor_pointcloud->push_back(colored_cloud->at(index));
-        }  
-        
-        filterPolygon(neighbor_pointcloud, out_cloud, object);
-      }     
-    } else {
-      // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
-      return;
-    }
-
-
-    sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr( new sensor_msgs::msg::PointCloud2);
-    // pcl::toROSMsg(*colored_cloud, *output_pointcloud_msg_ptr); 
-    pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
-    // *output_pointcloud_msg_ptr = transformed_pointcloud;
-
-    output_pointcloud_msg_ptr->header = input_pointcloud_msg.header;
-    // output_pointcloud_msg_ptr->header.frame_id = objects_frame_id_; // remove 
-    
-    // RCLCPP_INFO(this->get_logger(), "Publishing pointcloud");
-    publisher_->publish(*output_pointcloud_msg_ptr);
-  }
-
-  void filterPolygon(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &in_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud, const object_info &object)
-  {        
-        pcl::PointCloud<pcl::PointXYZRGB> filtered_cloud;
-        std::vector<pcl::Vertices> vertices_array;
-        pcl::Vertices vertices;
-
-        Polygon2d poly2d =
-        tier4_autoware_utils::toPolygon2d(object.position, object.shape);
-        if (boost::geometry::is_empty(poly2d)) return;
-
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-        for (size_t i = 0; i < poly2d.outer().size(); ++i) {
-          vertices.vertices.emplace_back(i);
-          vertices_array.emplace_back(vertices);
-          hull_cloud->emplace_back(static_cast<float>(poly2d.outer().at(i).x()), 
-          static_cast<float>(poly2d.outer().at(i).y()), 
-          static_cast<float>(0.0));
-        }
-
-        pcl::CropHull<pcl::PointXYZRGB> crop_hull_filter;
-        crop_hull_filter.setInputCloud(in_cloud);
-        crop_hull_filter.setDim(2);
-        crop_hull_filter.setHullIndices(vertices_array);
-        crop_hull_filter.setHullCloud(hull_cloud);
-        crop_hull_filter.setCropOutside(true);
-        
-        crop_hull_filter.filter(filtered_cloud);
-
-        // Define a custom color for the box polygons
-        const uint8_t r = 30, g = 44, b = 255;
-
-        for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it)
-        {
-          cloud_it->r = r;
-          cloud_it->g = g;
-          cloud_it->b = b;
-        }
-
-        *out_cloud += filtered_cloud;
-  }
-
-//  virtual void objectsCallback(typename MsgT::ConstSharedPtr msg) = 0;
 
 };
 }  // namespace object_detection

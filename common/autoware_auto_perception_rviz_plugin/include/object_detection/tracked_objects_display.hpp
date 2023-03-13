@@ -96,11 +96,19 @@ private:
     return id_map.at(uuid);
   }
 
-  void objectsCallback(const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr input_objs_msg) override; 
+  void onObjectsAndObstaclePointCloud(const TrackedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
+
+
+  message_filters::Subscriber<TrackedObjects> percepted_objects_subscription_;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
+  typedef message_filters::sync_policies::ApproximateTime<TrackedObjects, sensor_msgs::msg::PointCloud2>SyncPolicy;
+  typedef message_filters::Synchronizer<SyncPolicy> Sync;
+  typename std::shared_ptr<Sync> sync_ptr_;
 
   // std::string objects_frame_id_;
   // std::vector<autoware_auto_perception_msgs::msg::TrackedObject> objs_buffer;
