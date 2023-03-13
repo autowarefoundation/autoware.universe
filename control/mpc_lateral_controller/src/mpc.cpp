@@ -248,8 +248,8 @@ void MPC::setReferenceTrajectory(
 
 void MPC::resetPrevResult(const SteeringReport & current_steer)
 {
-  // Consider limit. The prev value larger than limiation brakes the optimization constraint and
-  // resluts in optimization failure.
+  // Consider limit. The prev value larger than limitaion brakes the optimization constraint and
+  // results in optimization failure.
   const float steer_lim_f = static_cast<float>(m_steer_lim);
   m_raw_steer_cmd_prev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);
   m_raw_steer_cmd_pprev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);
