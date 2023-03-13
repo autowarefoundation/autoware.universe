@@ -80,6 +80,7 @@ void LaneChangeModule::onEntry()
   current_state_ = ModuleStatus::SUCCESS;
 #else
   current_state_ = ModuleStatus::IDLE;
+  waitApproval();
 #endif
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
@@ -98,7 +99,12 @@ bool LaneChangeModule::isExecutionRequested() const
     return true;
   }
 
+#ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
+#else
+  const auto current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
   LaneChangePath selected_path;
@@ -114,7 +120,12 @@ bool LaneChangeModule::isExecutionReady() const
     return true;
   }
 
+#ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
+#else
+  const auto current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
   LaneChangePath selected_path;
@@ -160,6 +171,7 @@ ModuleStatus LaneChangeModule::updateState()
 BehaviorModuleOutput LaneChangeModule::plan()
 {
   resetPathCandidate();
+  resetPathReference();
   is_activated_ = isActivated();
 
   PathWithLaneId path = status_.lane_change_path.path;
@@ -185,10 +197,14 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
-  path_reference_ = getPreviousModuleOutput().reference_path;
 #ifdef USE_OLD_ARCHITECTURE
+  path_reference_ = getPreviousModuleOutput().reference_path;
   prev_approved_path_ = path;
 #else
+  const auto reference_path =
+    util::getCenterLinePathFromRootLanelet(status_.lane_change_lanes.front(), planner_data_);
+  output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
+  path_reference_ = std::make_shared<PathWithLaneId>(reference_path);
   prev_approved_path_ = *getPreviousModuleOutput().path;
 #endif
   updateOutputTurnSignal(output);
@@ -233,11 +249,21 @@ CandidateOutput LaneChangeModule::planCandidate() const
 
   LaneChangePath selected_path;
   // Get lane change lanes
+#ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
+#else
+  const auto current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
+#ifdef USE_OLD_ARCHITECTURE
   [[maybe_unused]] const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
+#else
+  selected_path = status_.lane_change_path;
+#endif
+
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
   if (isAbortState()) {
@@ -272,6 +298,11 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 #endif
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(prev_approved_path_);
+  out.reference_path = getPreviousModuleOutput().reference_path;
+
+#ifndef USE_OLD_ARCHITECTURE
+  updateLaneChangeStatus();
+#endif
 
   const auto candidate = planCandidate();
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
@@ -284,7 +315,12 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 
 void LaneChangeModule::updateLaneChangeStatus()
 {
+#ifdef USE_OLD_ARCHITECTURE
   status_.current_lanes = util::getCurrentLanes(planner_data_);
+#else
+  status_.current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
   status_.lane_change_lanes = getLaneChangeLanes(status_.current_lanes, lane_change_lane_length_);
 
   // Find lane change path
@@ -315,7 +351,12 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
   // Set header
   reference_path.header = getRouteHeader();
 
+#ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
+#else
+  const auto current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
 
   if (current_lanes.empty()) {
     return reference_path;
@@ -393,7 +434,12 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
   const auto current_twist = getEgoTwist();
   const auto & common_parameters = planner_data_->parameters;
 
+#ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
+#else
+  const auto current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
 
   if (lane_change_lanes.empty()) {
     return std::make_pair(false, false);
@@ -401,10 +447,17 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
 
   // find candidate paths
   LaneChangePaths valid_paths;
+#ifdef USE_OLD_ARCHITECTURE
   const auto [found_valid_path, found_safe_path] = lane_change_utils::getLaneChangePaths(
     *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_, check_distance, &valid_paths,
     &object_debug_);
+#else
+  const auto [found_valid_path, found_safe_path] = lane_change_utils::getLaneChangePaths(
+    *getPreviousModuleOutput().path, *route_handler, current_lanes, lane_change_lanes, current_pose,
+    current_twist, planner_data_->dynamic_object, common_parameters, *parameters_, check_distance,
+    &valid_paths, &object_debug_);
+#endif
   debug_valid_path_ = valid_paths;
 
   if (parameters_->publish_debug_marker) {
