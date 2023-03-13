@@ -45,17 +45,18 @@ class OSQP_INTERFACE_PUBLIC OSQPInterface
 {
 private:
   std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
-  std::unique_ptr<OSQPSettings> m_settings;
-  std::unique_ptr<OSQPData> m_data;
+  std::unique_ptr<OSQPSettings, std::function<void(OSQPSettings *)>> m_settings;
   // store last work info since work is cleaned up at every execution to prevent memory leak.
   OSQPInfo m_latest_work_info;
   // Number of parameters to optimize
   int64_t m_param_n;
+  int64_t m_param_m;
   // Exitflag
   int64_t m_exitflag;
   // warm start
   const bool m_warm_start;
   std::optional<int> m_param_n_prev;
+  std::optional<int> m_param_m_prev;
   std::optional<std::vector<double>> m_sol_prev;
   std::optional<std::vector<double>> m_lagrange_multiplier_prev;
 
@@ -67,6 +68,8 @@ private:
   // should be private
 public:
   static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
+  static void OSQPDataDeleter(OSQPData * ptr) noexcept;
+  static void OSQPSettingsDeleter(OSQPSettings * ptr) noexcept;
 
   /// \brief Converts the input data and sets up the workspace object.
   /// \param P (n,n) matrix defining relations between parameters.
@@ -78,7 +81,7 @@ public:
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
     const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
   int64_t initializeProblem(
-    CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
+    CSC_Matrix && P, CSC_Matrix && A, const std::vector<double> & q, const std::vector<double> & l,
     const std::vector<double> & u, const bool do_warm_start = true);
 
   // Setter functions for warm start
@@ -104,10 +107,10 @@ public:
     const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
     const bool polish = true, const bool warm_start = true);
   OSQPInterface(
-    const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
-    const bool polish = true, const bool warm_start = true);
-  ~OSQPInterface();
+    CSC_Matrix && P, CSC_Matrix && A, const std::vector<double> & q, const std::vector<double> & l,
+    const std::vector<double> & u, const c_float eps_abs, const bool polish = true,
+    const bool warm_start = true);
+  ~OSQPInterface() = default;
 
   /****************
    * OPTIMIZATION

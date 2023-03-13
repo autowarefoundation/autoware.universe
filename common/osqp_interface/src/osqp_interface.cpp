@@ -25,14 +25,7 @@
 #include <tuple>
 #include <vector>
 
-static bool check_has_solution(OSQPInfo * info)
-{
-  return (info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
-         (info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
-         (info->status_val != OSQP_DUAL_INFEASIBLE) &&
-         (info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE) &&
-         (info->status_val != OSQP_NON_CVX);
-}
+static bool check_has_solution(OSQPInfo * info) { return (info->status_val == OSQP_SOLVED); }
 
 namespace autoware
 {
@@ -43,8 +36,9 @@ namespace osqp
 OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish, const bool warm_start)
 : m_work{nullptr, OSQPWorkspaceDeleter}, m_warm_start(warm_start)
 {
-  m_settings = std::make_unique<OSQPSettings>();
-  m_data = std::make_unique<OSQPData>();
+  OSQPSettings * settings_ptr = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
+  m_settings = std::unique_ptr<OSQPSettings, decltype(&OSQPSettingsDeleter)>(
+    settings_ptr, OSQPSettingsDeleter);
   if (m_settings) {
     osqp_set_default_settings(m_settings.get());
     m_settings->alpha = 1.6;  // Change alpha parameter
@@ -70,24 +64,33 @@ OSQPInterface::OSQPInterface(
 }
 
 OSQPInterface::OSQPInterface(
-  const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
-  const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
-  const bool polish, const bool warm_start)
+  CSC_Matrix && P, CSC_Matrix && A, const std::vector<double> & q, const std::vector<double> & l,
+  const std::vector<double> & u, const c_float eps_abs, const bool polish, const bool warm_start)
 : OSQPInterface(eps_abs, polish, warm_start)
 {
-  initializeProblem(P, A, q, l, u, warm_start);
-}
-
-OSQPInterface::~OSQPInterface()
-{
-  if (m_data->P) free(m_data->P);
-  if (m_data->A) free(m_data->A);
+  initializeProblem(std::move(P), std::move(A), q, l, u, warm_start);
 }
 
 void OSQPInterface::OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept
 {
-  if (ptr != nullptr) {
+  if (ptr) {
     osqp_cleanup(ptr);
+  }
+}
+
+void OSQPInterface::OSQPSettingsDeleter(OSQPSettings * ptr) noexcept
+{
+  if (ptr) {
+    c_free(ptr);
+  }
+}
+
+void OSQPInterface::OSQPDataDeleter(OSQPData * ptr) noexcept
+{
+  if (ptr) {
+    if (ptr->A) c_free(ptr->A);
+    if (ptr->P) c_free(ptr->P);
+    c_free(ptr);
   }
 }
 
@@ -136,33 +139,23 @@ void OSQPInterface::updateCscA(const CSC_Matrix & A_csc)
 
 void OSQPInterface::updateQ(const std::vector<double> & q_new)
 {
-  std::vector<double> q_tmp(q_new.begin(), q_new.end());
-  double * q_dyn = q_tmp.data();
-  osqp_update_lin_cost(m_work.get(), q_dyn);
+  osqp_update_lin_cost(m_work.get(), q_new.data());
 }
 
 void OSQPInterface::updateL(const std::vector<double> & l_new)
 {
-  std::vector<double> l_tmp(l_new.begin(), l_new.end());
-  double * l_dyn = l_tmp.data();
-  osqp_update_lower_bound(m_work.get(), l_dyn);
+  osqp_update_lower_bound(m_work.get(), l_new.data());
 }
 
 void OSQPInterface::updateU(const std::vector<double> & u_new)
 {
-  std::vector<double> u_tmp(u_new.begin(), u_new.end());
-  double * u_dyn = u_tmp.data();
-  osqp_update_upper_bound(m_work.get(), u_dyn);
+  osqp_update_upper_bound(m_work.get(), u_new.data());
 }
 
 void OSQPInterface::updateBounds(
   const std::vector<double> & l_new, const std::vector<double> & u_new)
 {
-  std::vector<double> l_tmp(l_new.begin(), l_new.end());
-  std::vector<double> u_tmp(u_new.begin(), u_new.end());
-  double * l_dyn = l_tmp.data();
-  double * u_dyn = u_tmp.data();
-  osqp_update_bounds(m_work.get(), l_dyn, u_dyn);
+  osqp_update_bounds(m_work.get(), l_new.data(), u_new.data());
 }
 
 void OSQPInterface::updateEpsAbs(const double eps_abs)
@@ -316,54 +309,56 @@ int64_t OSQPInterface::initializeProblem(
 
   CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
   CSC_Matrix A_csc = calCSCMatrix(A);
-  return initializeProblem(P_csc, A_csc, q, l, u, do_warm_start);
+  return initializeProblem(std::move(P_csc), std::move(A_csc), q, l, u, do_warm_start);
 }
 
 int64_t OSQPInterface::initializeProblem(
-  CSC_Matrix P_csc, CSC_Matrix A_csc, const std::vector<double> & q, const std::vector<double> & l,
-  const std::vector<double> & u, const bool do_warm_start)
+  CSC_Matrix && P_csc, CSC_Matrix && A_csc, const std::vector<double> & q,
+  const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start)
 {
-  // Dynamic float arrays
-  std::vector<double> q_tmp(q.begin(), q.end());
-  std::vector<double> l_tmp(l.begin(), l.end());
-  std::vector<double> u_tmp(u.begin(), u.end());
-  double * q_dyn = q_tmp.data();
-  double * l_dyn = l_tmp.data();
-  double * u_dyn = u_tmp.data();
-
-  /**********************
-   * OBJECTIVE FUNCTION
-   **********************/
   m_param_n = static_cast<int>(q.size());
-  m_data->m = static_cast<int>(l.size());
-
-  /*****************
-   * POPULATE DATA
-   *****************/
-  m_data->n = m_param_n;
-  if (m_data->P) free(m_data->P);
-  m_data->P = csc_matrix(
-    m_data->n, m_data->n, static_cast<c_int>(P_csc.m_vals.size()), P_csc.m_vals.data(),
-    P_csc.m_row_idxs.data(), P_csc.m_col_idxs.data());
-  m_data->q = q_dyn;
-  if (m_data->A) free(m_data->A);
-  m_data->A = csc_matrix(
-    m_data->m, m_data->n, static_cast<c_int>(A_csc.m_vals.size()), A_csc.m_vals.data(),
-    A_csc.m_row_idxs.data(), A_csc.m_col_idxs.data());
-  m_data->l = l_dyn;
-  m_data->u = u_dyn;
+  m_param_m = static_cast<int>(l.size());
 
   // Setup workspace
   if (do_warm_start && warmStartReady()) {
-    // no need to osqp_setup
+    // if (1) warm_start is enabled AND
+    // (2) problem size is invariant AND
+    // (3) previous solution is valid
+    updateCscP(P_csc);
+    updateCscA(A_csc);
+    updateQ(q);
+    updateBounds(l, u);
     return true;
   } else {
-    // this is first initialization OR
-    // warm_start is disabled OR
-    // dimension changed from previous OR
-    // previous solution was invalid
+    // (1) this is the first initialization OR
+    // (2) warm_start is disabled OR
+    // (3) dimension changed from previous OR
+    // (4) previous solution was invalid
     OSQPWorkspace * workspace;
-    m_exitflag = osqp_setup(&workspace, m_data.get(), m_settings.get());
+    /*****************
+     * POPULATE DATA
+     *****************/
+    OSQPData * data_ptr = (OSQPData *)c_malloc(sizeof(OSQPData));
+    auto data = std::unique_ptr<OSQPData, decltype(&OSQPDataDeleter)>(data_ptr, OSQPDataDeleter);
+    // size
+    data->n = m_param_n;
+    data->m = m_param_m;
+    // P
+    data->P = csc_matrix(
+      data->n, data->n, static_cast<c_int>(P_csc.m_vals.size()), P_csc.m_vals.data(),
+      P_csc.m_row_idxs.data(), P_csc.m_col_idxs.data());
+    // q
+    data->q = const_cast<double *>(q.data());
+    // A
+    data->A = csc_matrix(
+      data->m, data->n, static_cast<c_int>(A_csc.m_vals.size()), A_csc.m_vals.data(),
+      A_csc.m_row_idxs.data(), A_csc.m_col_idxs.data());
+    // bounds
+    data->l = const_cast<double *>(l.data());
+    data->u = const_cast<double *>(u.data());
+    // NOTE(Mamoru Sobue): osqp_setup() copies everything from `data` and `settings`
+    // so `q, l, u` can be mutably referenced and `data` can expire here
+    m_exitflag = osqp_setup(&workspace, data.get(), m_settings.get());
     std::cout << "osqp_setup() again" << std::endl;
     m_work.reset(workspace);
     return m_exitflag;
@@ -372,8 +367,9 @@ int64_t OSQPInterface::initializeProblem(
 
 bool OSQPInterface::warmStartReady() const
 {
-  return m_param_n_prev && m_param_n_prev.value() == m_param_n && m_sol_prev &&
-         m_lagrange_multiplier_prev;
+  return m_param_n_prev && m_param_n_prev.value() == m_param_n &&  // dim of m
+         m_param_n_prev && m_param_n_prev.value() == m_param_n &&  // dim of n
+         m_sol_prev && m_lagrange_multiplier_prev;
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
@@ -396,7 +392,7 @@ OSQPInterface::solve(const bool do_warm_start)
   double * sol_x = m_work->solution->x;
   double * sol_y = m_work->solution->y;
   const std::vector<double> sol_primal(sol_x, sol_x + m_param_n);
-  const std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + m_data->m);
+  const std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + m_param_m);
 
   const int64_t status_polish = m_work->info->status_polish;
   const bool has_solution = check_has_solution(m_work->info);
@@ -407,6 +403,7 @@ OSQPInterface::solve(const bool do_warm_start)
 
   // save solution
   m_param_n_prev = m_param_n;
+  m_param_m_prev = m_param_m;
   m_latest_work_info = *(m_work->info);
   // do not save invalid solution for warm-start
   if (m_warm_start && has_solution && status_polish == 1) {
