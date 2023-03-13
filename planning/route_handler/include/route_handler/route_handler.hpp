@@ -260,7 +260,7 @@ public:
     const lanelet::ConstLanelets & exclude_lanelets = {}) const;
 
   /**
-   * Query input lanelet  to see whether it exist in the preffered lane. If it doesn't exist, return
+   * Query input lanelet  to see whether it exist in the preferred lane. If it doesn't exist, return
    * the number of lane-changeable lane to the preferred lane.
    * @param Desired lanelet to query
    * @param lane change direction
