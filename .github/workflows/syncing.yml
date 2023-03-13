@@ -1,8 +1,8 @@
-name: Sync Fork
+name: Sync Fork With Upstream
 
 on:
   schedule:
-    - cron: '33 16 * * *'
+    - cron: '37 16,17 * * *'
     
 jobs:
   build:
