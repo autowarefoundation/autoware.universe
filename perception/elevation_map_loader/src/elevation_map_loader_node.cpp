@@ -24,6 +24,7 @@
 
 #include <grid_map_msgs/msg/grid_map.hpp>
 
+#include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
@@ -202,7 +203,7 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
 {
   // Convert elevation layer to OpenCV image to fill in holes.
   // Get the inpaint mask (nonzero pixels indicate where values need to be filled in).
-  using boost::geometry::return_centroid;
+  namespace bg = boost::geometry;
   using tier4_autoware_utils::Point2d;
 
   elevation_map_.add("inpaint_mask", 0.0);
@@ -212,28 +213,21 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
     for (const auto & lanelet : lane_filter_.road_lanelets_) {
       auto lane_polygon = lanelet.polygon2d().basicPolygon();
       grid_map::Polygon polygon;
-      const auto centroid = return_centroid<Point2d>(lane_polygon);
 
+      if (lane_filter_.lane_margin_ > 0) {
+        lanelet::BasicPolygons2d out;
+        bg::strategy::buffer::distance_symmetric<double> distance_strategy(
+          lane_filter_.lane_margin_);
+        bg::strategy::buffer::join_miter join_strategy;
+        bg::strategy::buffer::end_flat end_strategy;
+        bg::strategy::buffer::point_square point_strategy;
+        bg::strategy::buffer::side_straight side_strategy;
+        bg::buffer(
+          lane_polygon, out, distance_strategy, side_strategy, join_strategy, end_strategy,
+          point_strategy);
+        lane_polygon = out.front();
+      }
       for (const auto & p : lane_polygon) {
-        auto point = grid_map::Position(p[0], p[1]);
-        if (lane_filter_.lane_margin_ > 0) {
-          const bool is_right = std::signbit(centroid.x() - p[0]);
-          const bool is_above = std::signbit(centroid.y() - p[1]);
-          if (is_right && is_above) {
-            point.x() += lane_filter_.lane_margin_;
-            point.y() += lane_filter_.lane_margin_;
-          } else if (!is_right && is_above) {
-            point.x() -= lane_filter_.lane_margin_;
-            point.y() += lane_filter_.lane_margin_;
-          } else if (is_right && !is_above) {
-            point.x() += lane_filter_.lane_margin_;
-            point.y() -= lane_filter_.lane_margin_;
-          } else if (!is_right && !is_above) {
-            point.x() -= lane_filter_.lane_margin_;
-            point.y() -= lane_filter_.lane_margin_;
-          }
-        }
-
         polygon.addVertex(grid_map::Position(p[0], p[1]));
       }
       for (grid_map_utils::PolygonIterator iterator(elevation_map_, polygon); !iterator.isPastEnd();
