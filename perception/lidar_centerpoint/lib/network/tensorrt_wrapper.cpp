@@ -22,9 +22,14 @@
 
 namespace centerpoint
 {
-TensorRTWrapper::TensorRTWrapper(const CenterPointConfig & config, const bool verbose)
-: config_(config)
+TensorRTWrapper::TensorRTWrapper(const CenterPointConfig & config) : config_(config) {}
+
+TensorRTWrapper::~TensorRTWrapper()
 {
+  context_.reset();
+  runtime_.reset();
+  plan_.reset();
+  engine_.reset();
 }
 
 bool TensorRTWrapper::init(

@@ -30,7 +30,9 @@ namespace centerpoint
 class TensorRTWrapper
 {
 public:
-  explicit TensorRTWrapper(const CenterPointConfig & config, const bool verbose);
+  explicit TensorRTWrapper(const CenterPointConfig & config);
+
+  ~TensorRTWrapper();
 
   bool init(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
