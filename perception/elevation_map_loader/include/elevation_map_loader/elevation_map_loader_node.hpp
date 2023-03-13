@@ -92,6 +92,7 @@ private:
   struct LaneFilter
   {
     lanelet::ConstLanelets road_lanelets_;
+    float lane_margin_;
     bool use_lane_filter_;
   };
   LaneFilter lane_filter_;
