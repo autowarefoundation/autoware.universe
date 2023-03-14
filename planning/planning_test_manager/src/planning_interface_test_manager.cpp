@@ -52,6 +52,34 @@ void PlanningIntefaceTestManager::publishMaxVelocity(
     test_node_, target_node, topic_name, max_velocity_pub_);
 }
 
+void PlanningIntefaceTestManager::publishPointCloud(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<PointCloud2>(
+    test_node_, target_node, topic_name, point_cloud_pub_);
+}
+
+void PlanningIntefaceTestManager::publishAcceleration(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<AccelWithCovarianceStamped>(
+    test_node_, target_node, topic_name, acceleration_pub_);
+}
+
+void PlanningIntefaceTestManager::publishPredictedObjects(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<PredictedObjects>(
+    test_node_, target_node, topic_name, predicted_objects_pub_);
+}
+
+void PlanningIntefaceTestManager::publishExpandStopRange(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<ExpandStopRange>(
+    test_node_, target_node, topic_name, expand_stop_range_pub_);
+}
+
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;

@@ -21,6 +21,8 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -44,6 +46,8 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
+using tier4_planning_msgs::msg::ExpandStopRange;
+using geometry_msgs::msg::AccelWithCovarianceStamped;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class PlanningIntefaceTestManager
@@ -56,6 +60,10 @@ public:
 
   void publishOdometry(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishAcceleration(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishPredictedObjects(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishExpandStopRange(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
 
@@ -70,12 +78,14 @@ private:
   // Publisher
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
-  rclcpp::Publisher<PredictedObjects>::SharedPtr PredictedObjects_pub_;
+  rclcpp::Publisher<PredictedObjects>::SharedPtr predicted_objects_pub_;
   rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
   rclcpp::Publisher<SteeringReport>::SharedPtr steering_pub_;
   rclcpp::Publisher<Path>::SharedPtr path_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr max_velocity_pub_;
+  rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
+  rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
 
   // Subscriber (necessary for node running)
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;

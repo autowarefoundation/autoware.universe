@@ -37,30 +37,29 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
     ament_index_cpp::get_package_share_directory("obstacle_stop_planner");
 
   node_options.arguments(
-    {"--ros-args", "--params-file",
-     obstacle_stop_planner_dir + "/config/common.param.yaml",
+    {"--ros-args", "--params-file", obstacle_stop_planner_dir + "/config/common.param.yaml",
      "--params-file", obstacle_stop_planner_dir + "/config/adaptive_cruise_control.param.yaml",
      "--params-file", obstacle_stop_planner_dir + "/config/obstacle_stop_planner.param.yaml"});
 
-  auto test_target_node =
-    std::make_shared<motion_planning::ObstacleStopPlannerNode>(node_options);
+  auto test_target_node = std::make_shared<motion_planning::ObstacleStopPlannerNode>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "motion_planning/input/odometry");
-  test_manager->publishMaxVelocity(
-    test_target_node, "motion_planning/input/objects");
-  test_manager->publishMaxVelocity(
-    test_target_node, "motion_planning/input/pointcloud");
+  test_manager->publishOdometry(test_target_node, "obstacle_stop_planner/input/odometry");
+  test_manager->publishPointCloud(test_target_node, "obstacle_stop_planner/input/pointcloud");
+  test_manager->publishAcceleration(test_target_node, "obstacle_stop_planner/input/acceleration");
+  test_manager->publishPredictedObjects(test_target_node, "obstacle_stop_planner/input/objects");
+  test_manager->publishExpandStopRange(
+    test_target_node, "obstacle_stop_planner/input/expand_stop_range");
 
   // set subscriber for test_target_node
-  test_manager->setTrajectorySubscriber("motion_planning/output/trajectory");
+  test_manager->setTrajectorySubscriber("obstacle_stop_planner/output/trajectory");
 
   // setting topic name of subscribing topic
-  test_manager->setTrajectoryInputTopicName("motion_planning/input/trajectory");
+  test_manager->setTrajectoryInputTopicName("obstacle_stop_planner/input/trajectory");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(
-    test_target_node, "obstacle_stop_planner/input/trajectory"));
+  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
+
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
