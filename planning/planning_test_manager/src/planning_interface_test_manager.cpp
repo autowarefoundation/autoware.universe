@@ -39,14 +39,26 @@ void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
   node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
 }
 
-void PlanningIntefaceTestManager::setOdomTopicName(std::string topic_name)
+void PlanningIntefaceTestManager::setOdomTopicPublisher(std::string topic_name)
 {
-  odom_pub_ = rclcpp::create_publisher<Odometry>(test_node_, topic_name, 1);
+  setPublisher(topic_name, odom_pub_);
 }
 
-void PlanningIntefaceTestManager::setMaxVelocityTopicName(std::string topic_name)
+void PlanningIntefaceTestManager::setMaxVelocityPublisher(std::string topic_name)
 {
-  max_velocity_pub_ = rclcpp::create_publisher<VelocityLimit>(test_node_, topic_name, 1);
+  setPublisher(topic_name, max_velocity_pub_);
+}
+
+void PlanningIntefaceTestManager::publishOdometry(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  publishData<Odometry>(target_node, topic_name, odom_pub_);
+}
+
+void PlanningIntefaceTestManager::publishMaxVelocity(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  publishData<VelocityLimit>(target_node, topic_name, max_velocity_pub_);
 }
 
 void PlanningIntefaceTestManager::setTrajectoryTopicName(std::string topic_name)
@@ -57,18 +69,6 @@ void PlanningIntefaceTestManager::setTrajectoryTopicName(std::string topic_name)
 void PlanningIntefaceTestManager::setOutputTrajectoryTopicName(std::string topic_name)
 {
   output_trajectory_name_ = topic_name;
-}
-
-void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr target_node)
-{
-  odom_pub_->publish(genDefaultOdom());
-  spinSomeNodes(test_node_, target_node);
-}
-
-void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr target_node)
-{
-  max_velocity_pub_->publish(genDefaultMaxVelocity());
-  spinSomeNodes(test_node_, target_node);
 }
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber()

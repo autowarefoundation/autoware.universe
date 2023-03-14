@@ -21,7 +21,7 @@
 
 #include <vector>
 
-TEST(PlanningInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
+TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
 {
   using autoware_auto_planning_msgs::msg::Trajectory;
   rclcpp::init(0, nullptr);
@@ -48,16 +48,17 @@ TEST(PlanningInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
     std::make_shared<motion_velocity_smoother::MotionVelocitySmootherNode>(node_options);
 
   // set input topic name for test_target_node
-  test_manager->setOdomTopicName("/localization/kinematic_state");
-  test_manager->setMaxVelocityTopicName(
-    "motion_velocity_smoother/input/external_velocity_limit_mps");
   test_manager->setTrajectoryTopicName("motion_velocity_smoother/input/trajectory");
 
   // set output topic name for test_target_node
   test_manager->setOutputTrajectoryTopicName("motion_velocity_smoother/output/trajectory");
 
-  test_manager->publishOdometry(test_target_node);
-  test_manager->publishMaxVelocity(test_target_node);
+  // publish necessary topics from test_manager
+  test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
+  test_manager->publishMaxVelocity(
+    test_target_node, "motion_velocity_smoother/input/external_velocity_limit_mps");
+
+  // set subscriber for test_target_node
   test_manager->setTrajectorySubscriber();
 
   // test for normal trajectory

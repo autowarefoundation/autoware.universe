@@ -54,15 +54,16 @@ public:
   void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
   void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
 
-  void setOdomTopicName(std::string topic_name);
-  void setMaxVelocityTopicName(std::string topic_name);
+  void setOdomTopicPublisher(std::string topic_name);
+  void setMaxVelocityPublisher(std::string topic_name);
+
   void setTrajectoryTopicName(std::string topic_name);
 
   void setOutputTrajectoryTopicName(std::string topic_name);
   void setOutputMaxVelocityTopicName(std::string topic_name);
 
-  void publishOdometry(rclcpp::Node::SharedPtr target_node);
-  void publishMaxVelocity(rclcpp::Node::SharedPtr target_node);
+  void publishOdometry(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectorySubscriber();
 
@@ -90,6 +91,8 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr max_velocity_sub_;
 
+  std::string input_odometry_name_;
+  std::string input_max_velocity_name_;
   std::string input_trajectory_name_;
   std::string output_trajectory_name_;
 
@@ -98,25 +101,34 @@ private:
     std::make_shared<rclcpp::Node>("planning_interface_test_node");
   size_t count_{0};
 
-  template <typename MessageT>
-  void countCallback([[maybe_unused]] const typename MessageT::SharedPtr msg)
-  {
-    ++count_;
-  }
-
-  Odometry genDefaultOdom() { return Odometry{}; }
-  PointCloud2 genDefaultPointCloud() { return PointCloud2{}; }
-  PredictedObjects genDefaultPredictedObjects() { return PredictedObjects{}; }
-  TFMessage genDefaultTFMessage() { return TFMessage{}; }
-  VelocityLimit genDefaultMaxVelocity() { return VelocityLimit{}; }
-
-  Trajectory genDefaultTrajectory() { return Trajectory{}; }
-
   void publishNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
 
   void spinSomeNodes(rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node);
+
+  template <typename T>
+  void setPublisher(std::string topic_name, std::shared_ptr<rclcpp::Publisher<T>> & pub)
+  {
+    pub = rclcpp::create_publisher<T>(test_node_, topic_name, 1);
+  }
+
+  template <typename T>
+  void countCallback([[maybe_unused]] const typename T::SharedPtr msg)
+  {
+    ++count_;
+  }
+
+  template <typename T>
+  void publishData(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name,
+    typename rclcpp::Publisher<T>::SharedPtr pub)
+  {
+    setPublisher(topic_name, pub);
+    pub->publish(T{});
+    spinSomeNodes(test_node_, target_node);
+  }
+
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager
