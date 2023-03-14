@@ -27,7 +27,7 @@
 
 namespace behavior_path_planner
 {
-PathWithLaneId createPath(const std::shared_ptr<RouteHandler> & route_handler)
+PathWithLaneId createShortenPath(const std::shared_ptr<RouteHandler> & route_handler)
 {
   constexpr double backward_length = 1.0;
 
@@ -111,8 +111,9 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
 
   if (isEgoOutOfRoute(data)) {
     BehaviorModuleOutput output{};
-    output.path = std::make_shared<PathWithLaneId>(createPath(data->route_handler));
-    output.reference_path = std::make_shared<PathWithLaneId>(createPath(data->route_handler));
+    output.path = std::make_shared<PathWithLaneId>(createShortenPath(data->route_handler));
+    output.reference_path =
+      std::make_shared<PathWithLaneId>(createShortenPath(data->route_handler));
     return output;
   }
 
