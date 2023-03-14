@@ -63,29 +63,43 @@ T generateTrajectory(
   return traj;
 }
 
-void spinSomeNodes(rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node)
+void spinSomeNodes(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node,
+  const int repeat_count = 1)
 {
-  rclcpp::spin_some(test_node);
-  rclcpp::spin_some(target_node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  for (int i = 0; i < repeat_count; i++) {
+    rclcpp::spin_some(test_node);
+    rclcpp::spin_some(target_node);
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+  }
 }
 
 template <typename T>
 void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
-  std::shared_ptr<rclcpp::Publisher<T>> & pub)
+  std::shared_ptr<rclcpp::Publisher<T>> & publisher)
 {
-  pub = rclcpp::create_publisher<T>(test_node, topic_name, 1);
+  publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
 }
 
 template <typename T>
-void publishData(
+void publishEmptyData(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<T>::SharedPtr pub)
+  typename rclcpp::Publisher<T>::SharedPtr publisher)
 {
-  setPublisher(test_node, topic_name, pub);
-  pub->publish(T{});
+  setPublisher(test_node, topic_name, publisher);
+  publisher->publish(T{});
   spinSomeNodes(test_node, target_node);
+}
+
+template <typename T>
+void setSubscriber(
+  rclcpp::Node::SharedPtr test_node, std::string topic_name,
+  std::shared_ptr<rclcpp::Subscription<T>> & subscriber, size_t & count)
+{
+  // Count the number of topic received.
+  subscriber = test_node->create_subscription<T>(
+    topic_name, 10, [&count](const typename T::SharedPtr) { count++; });
 }
 
 }  // namespace test_utils

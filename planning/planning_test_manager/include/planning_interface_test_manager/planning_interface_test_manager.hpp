@@ -62,8 +62,7 @@ public:
   void setTrajectorySubscriber(std::string topic_name);
 
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr node, std::string topic_name);
-  void testWithAbnormalTrajectory(
-    rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
+  void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();
 
@@ -84,7 +83,7 @@ private:
 
   // Publisher for testing
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr empty_trajectory_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr abnormal_trajectory_pub_;
 
   std::string input_trajectory_name_;
 
@@ -96,12 +95,6 @@ private:
   void publishNominalTrajectory(std::string topic_name);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
-
-  template <typename T>
-  void countCallback([[maybe_unused]] const typename T::SharedPtr msg)
-  {
-    ++count_;
-  }
 
 };  // class PlanningIntefaceTestManager
 

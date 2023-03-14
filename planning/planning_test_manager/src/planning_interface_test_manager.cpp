@@ -42,13 +42,14 @@ void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
 void PlanningIntefaceTestManager::publishOdometry(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<Odometry>(test_node_, target_node, topic_name, odom_pub_);
+  test_utils::publishEmptyData<Odometry>(test_node_, target_node, topic_name, odom_pub_);
 }
 
 void PlanningIntefaceTestManager::publishMaxVelocity(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<VelocityLimit>(test_node_, target_node, topic_name, max_velocity_pub_);
+  test_utils::publishEmptyData<VelocityLimit>(
+    test_node_, target_node, topic_name, max_velocity_pub_);
 }
 
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
@@ -64,11 +65,7 @@ void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_nam
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
-  // Count the number of trajectory received.
-  traj_sub_ = test_node_->create_subscription<Trajectory>(
-    topic_name, 10,
-    std::bind(
-      &PlanningIntefaceTestManager::countCallback<Trajectory>, this, std::placeholders::_1));
+  test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
 }
 
 // test for normal working
@@ -76,26 +73,27 @@ void PlanningIntefaceTestManager::testWithNominalTrajectory(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   publishNominalTrajectory(topic_name);
-  test_utils::spinSomeNodes(test_node_, target_node);
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
 // check to see if target node is dead.
-void PlanningIntefaceTestManager::testWithAbnormalTrajectory(
-  rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
+void PlanningIntefaceTestManager::testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
-  ASSERT_NO_THROW(publishAbnormalTrajectory(target_node, abnormal_trajectory));
+  ASSERT_NO_THROW(publishAbnormalTrajectory(target_node, Trajectory{}));
+  ASSERT_NO_THROW(
+    publishAbnormalTrajectory(target_node, test_utils::generateTrajectory<Trajectory>(1, 0.0)));
+  ASSERT_NO_THROW(publishAbnormalTrajectory(
+    target_node, test_utils::generateTrajectory<Trajectory>(10, 0.0, 0.0, 0.0, 0.0, 1)));
 }
-
-int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
 void PlanningIntefaceTestManager::publishAbnormalTrajectory(
   rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
 {
-  empty_trajectory_pub_ =
-    rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
-  empty_trajectory_pub_->publish(abnormal_trajectory);
+  test_utils::setPublisher(test_node_, input_trajectory_name_, abnormal_trajectory_pub_);
+  abnormal_trajectory_pub_->publish(abnormal_trajectory);
   test_utils::spinSomeNodes(test_node_, target_node);
 }
+
+int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
 }  // namespace planning_test_manager

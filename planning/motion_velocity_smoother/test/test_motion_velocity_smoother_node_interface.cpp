@@ -63,11 +63,6 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
     test_target_node, "motion_velocity_smoother/input/trajectory"));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  test_manager->testWithAbnormalTrajectory(test_target_node, Trajectory{});
-  // test for trajectory with one point
-  test_manager->testWithAbnormalTrajectory(
-    test_target_node, test_utils::generateTrajectory<Trajectory>(1, 0.0));
-  // test for overlapping points
-  test_manager->testWithAbnormalTrajectory(
-    test_target_node, test_utils::generateTrajectory<Trajectory>(10, 0.0, 0.0, 0.0, 0.0, 1));
+  // test for trajectory with empty/one point/overlapping point
+  test_manager->testWithAbnormalTrajectory(test_target_node);
 }
