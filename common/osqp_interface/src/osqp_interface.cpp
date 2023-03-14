@@ -17,6 +17,8 @@
 #include "osqp/osqp.h"
 #include "osqp_interface/csc_matrix_conv.hpp"
 
+#include <glog/logging.h>
+
 #include <chrono>
 #include <iostream>
 #include <limits>
@@ -68,7 +70,7 @@ OSQPInterface::OSQPInterface(
   const std::vector<double> & u, const c_float eps_abs, const bool polish, const bool warm_start)
 : OSQPInterface(eps_abs, polish, warm_start)
 {
-  initializeProblem(std::move(P), std::move(A), q, l, u, warm_start);
+  initializeProblem(std::forward<CSC_Matrix>(P), std::forward<CSC_Matrix>(A), q, l, u, warm_start);
 }
 
 void OSQPInterface::OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept
@@ -324,8 +326,8 @@ int64_t OSQPInterface::initializeProblem(
     // if (1) warm_start is enabled AND
     // (2) problem size is invariant AND
     // (3) previous solution is valid
-    updateCscP(P_csc);
-    updateCscA(A_csc);
+    updateCscP(std::forward<CSC_Matrix>(P_csc));
+    updateCscA(std::forward<CSC_Matrix>(A_csc));
     updateQ(q);
     updateBounds(l, u);
     return true;
@@ -359,7 +361,6 @@ int64_t OSQPInterface::initializeProblem(
     // NOTE(Mamoru Sobue): osqp_setup() copies everything from `data` and `settings`
     // so `q, l, u` can be mutably referenced and `data` can expire here
     m_exitflag = osqp_setup(&workspace, data.get(), m_settings.get());
-    std::cout << "osqp_setup() again" << std::endl;
     m_work.reset(workspace);
     return m_exitflag;
   }
@@ -368,7 +369,7 @@ int64_t OSQPInterface::initializeProblem(
 bool OSQPInterface::warmStartReady() const
 {
   return m_param_n_prev && m_param_n_prev.value() == m_param_n &&  // dim of m
-         m_param_n_prev && m_param_n_prev.value() == m_param_n &&  // dim of n
+         m_param_m_prev && m_param_m_prev.value() == m_param_m &&  // dim of n
          m_sol_prev && m_lagrange_multiplier_prev;
 }
 
@@ -376,12 +377,7 @@ std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>
 OSQPInterface::solve(const bool do_warm_start)
 {
   if (m_warm_start && do_warm_start && warmStartReady()) {
-    std::cout << "setWarmStart" << std::endl;
-    m_settings->warm_start = true;
     setWarmStart(m_sol_prev.value(), m_lagrange_multiplier_prev.value());
-  } else {
-    m_settings->warm_start = false;
-    std::cout << "not setWarmStart" << std::endl;
   }
   // Solve Problem
   osqp_solve(m_work.get());
@@ -395,6 +391,7 @@ OSQPInterface::solve(const bool do_warm_start)
   const std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + m_param_m);
 
   const int64_t status_polish = m_work->info->status_polish;
+  const auto status_val = m_work->info->status_val;
   const bool has_solution = check_has_solution(m_work->info);
   const int64_t status_iteration = m_work->info->iter;
 
@@ -412,11 +409,10 @@ OSQPInterface::solve(const bool do_warm_start)
   } else {
     m_sol_prev = std::nullopt;
     m_lagrange_multiplier_prev = std::nullopt;
+    m_work.reset();
   }
 
-  return {
-    sol_primal, sol_lagrange_multiplier, status_polish, static_cast<int64_t>(has_solution),
-    status_iteration};
+  return {sol_primal, sol_lagrange_multiplier, status_polish, status_val, status_iteration};
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t>

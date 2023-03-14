@@ -341,19 +341,15 @@ void EBPathSmoother::updateConstraint(
   const Eigen::VectorXd raw_q_for_smooth = theta_mat * raw_P_for_smooth * x_mat;
   const auto q = toStdVector(raw_q_for_smooth);
 
-  if (p.enable_warm_start && osqp_solver_ptr_) {
-    osqp_solver_ptr_->updateP(P);
-    osqp_solver_ptr_->updateQ(q);
-    osqp_solver_ptr_->updateA(A);
-    osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
-    osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
-  } else {
+  if (!osqp_solver_ptr_) {
     osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
       P, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
-    osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
-    osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
-    osqp_solver_ptr_->updateMaxIter(p.qp_param.max_iteration);
+  } else {
+    osqp_solver_ptr_->initializeProblem(P, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
   }
+  osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
+  osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
+  osqp_solver_ptr_->updateMaxIter(p.qp_param.max_iteration);
 
   // publish fixed trajectory
   const auto eb_fixed_traj = trajectory_utils::createTrajectory(header, debug_fixed_traj_points);

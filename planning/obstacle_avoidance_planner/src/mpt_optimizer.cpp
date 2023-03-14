@@ -1238,20 +1238,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   // initialize or update solver according to warm start
   time_keeper_ptr_->tic("initOsqp");
 
-  autoware::common::osqp::CSC_Matrix P_csc = autoware::common::osqp::calCSCMatrixTrapezoidal(H);
-  autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
-  if (mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() && prev_mat_m_ == A.rows()) {
-    RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "warm start");
-    osqp_solver_ptr_->updateCscP(std::move(P_csc));
-    osqp_solver_ptr_->updateQ(f);
-    osqp_solver_ptr_->updateCscA(std::move(A_csc));
-    osqp_solver_ptr_->updateL(lower_bound);
-    osqp_solver_ptr_->updateU(upper_bound);
-  } else {
-    RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-      std::move(P_csc), std::move(A_csc), f, lower_bound, upper_bound, osqp_epsilon_);
-  }
+  osqp_solver_ptr_->initializeProblem(H, A, f, lower_bound, upper_bound);
   prev_mat_n_ = H.rows();
   prev_mat_m_ = A.rows();
 
