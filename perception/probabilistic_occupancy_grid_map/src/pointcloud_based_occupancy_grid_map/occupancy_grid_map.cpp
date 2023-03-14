@@ -174,7 +174,6 @@ void OccupancyGridMap::updateWithPointCloud(
   utils::transformPointcloud(map_raw_pointcloud, scan2map_pose, scan_raw_pointcloud);
   utils::transformPointcloud(map_obstacle_pointcloud, scan2map_pose, scan_obstacle_pointcloud);
 
-
   // Create angle bins
   struct BinInfo
   {
