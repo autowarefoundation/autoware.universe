@@ -480,7 +480,7 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
   const auto [found_valid_path, found_safe_path] = lane_change_utils::getLaneChangePaths(
     *getPreviousModuleOutput().path, *route_handler, current_lanes, lane_change_lanes, current_pose,
     current_twist, planner_data_->dynamic_object, common_parameters, *parameters_, check_distance,
-    &valid_paths, &object_debug_);
+    direction_, &valid_paths, &object_debug_);
 #endif
   debug_valid_path_ = valid_paths;
 
