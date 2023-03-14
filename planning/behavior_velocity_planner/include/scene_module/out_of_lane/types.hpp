@@ -19,11 +19,10 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
-{
-namespace out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane_utils
 {
 /// @brief parameters for the "out of lane" module
 struct PlannerParam
@@ -60,19 +59,19 @@ struct PlannerParam
 struct OverlapRange
 {
   lanelet::ConstLanelet lane;
-  size_t entering_path_idx;
-  size_t exiting_path_idx;
+  size_t entering_path_idx{};
+  size_t exiting_path_idx{};
   lanelet::BasicPoint2d entering_point;  // pose of the overlapping point closest along the lane
   lanelet::BasicPoint2d exiting_point;   // pose of the overlapping point furthest along the lane
-  double inside_distance;                // [m] how much ego footprint enters the lane
+  double inside_distance{};              // [m] how much ego footprint enters the lane
 };
-typedef std::vector<OverlapRange> OverlapRanges;
+using OverlapRanges = std::vector<OverlapRange>;
 
 /// @brief action taken by the "out of lane" module
 struct Slowdown
 {
-  size_t target_path_idx;               // we want to slowdown before this path index
-  double velocity;                      // desired slow down velocity
+  size_t target_path_idx{};             // we want to slowdown before this path index
+  double velocity{};                    // desired slow down velocity
   lanelet::ConstLanelet lane_to_avoid;  // we want to slowdown before entering this lane
 };
 /// @brief bound of an overlap range (either the first, or last bound)
@@ -92,12 +91,12 @@ struct OtherLane
   lanelet::ConstLanelet lanelet;
   lanelet::BasicPolygon2d polygon;
 
-  explicit OtherLane(lanelet::ConstLanelet ll) : lanelet(ll)
+  explicit OtherLane(lanelet::ConstLanelet ll) : lanelet(std::move(ll))
   {
     polygon = lanelet.polygon2d().basicPolygon();
   }
 
-  [[nodiscard]] OverlapRange closeRange()
+  [[nodiscard]] OverlapRange close_range()
   {
     OverlapRange range;
     range.lane = lanelet;
@@ -113,7 +112,6 @@ struct OtherLane
   }
 };
 
-}  // namespace out_of_lane_utils
-}  // namespace behavior_velocity_planner
+}  // namespace behavior_velocity_planner::out_of_lane_utils
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_

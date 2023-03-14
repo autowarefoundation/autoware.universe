@@ -23,109 +23,115 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <boost/geometry/io/svg/svg_mapper.hpp>
-
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
 
 #include <algorithm>
-#include <fstream>
 #include <limits>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace behavior_velocity_planner::out_of_lane_utils
 {
-namespace out_of_lane_utils
+
+struct Overlap
 {
+  double inside_distance = 0.0;  ///!< distance inside the overlap
+  double min_arc_length = std::numeric_limits<double>::infinity();
+  double max_arc_length = 0.0;
+  lanelet::BasicPoint2d min_overlap_point{};  ///!< point with min arc length
+  lanelet::BasicPoint2d max_overlap_point{};  ///!< point with max arc length
+};
+
+inline Overlap calculate_overlap(
+  const lanelet::BasicPolygon2d & path_footprint, const lanelet::ConstLanelets & path_lanelets,
+  const lanelet::ConstLanelet & lanelet)
+{
+  Overlap overlap;
+  const auto & left_bound = lanelet.leftBound2d().basicLineString();
+  const auto & right_bound = lanelet.rightBound2d().basicLineString();
+  const auto overlap_left = boost::geometry::intersects(path_footprint, left_bound);
+  const auto overlap_right = boost::geometry::intersects(path_footprint, right_bound);
+
+  lanelet::BasicPolygons2d overlapping_polygons;
+  if (overlap_left || overlap_right)  // TODO(Maxime): special case when both are overlapped
+    boost::geometry::intersection(
+      path_footprint, lanelet.polygon2d().basicPolygon(), overlapping_polygons);
+  for (const auto & overlapping_polygon : overlapping_polygons) {
+    for (const auto & point : overlapping_polygon) {
+      if (overlap_left && overlap_right)
+        overlap.inside_distance =
+          0.0;  // TODO(Maxime): boost::geometry::distance(left_bound, right_bound)
+      else if (overlap_left)
+        overlap.inside_distance =
+          std::max(overlap.inside_distance, boost::geometry::distance(point, left_bound));
+      else if (overlap_right)
+        overlap.inside_distance =
+          std::max(overlap.inside_distance, boost::geometry::distance(point, right_bound));
+      geometry_msgs::msg::Pose p;
+      p.position.x = point.x();
+      p.position.y = point.y();
+      const auto length = lanelet::utils::getArcCoordinates(path_lanelets, p).length;
+      if (length > overlap.max_arc_length) {
+        overlap.max_arc_length = length;
+        overlap.max_overlap_point = point;
+      }
+      if (length < overlap.min_arc_length) {
+        overlap.min_arc_length = length;
+        overlap.min_overlap_point = point;
+      }
+    }
+  }
+  return overlap;
+}
+
+inline OverlapRanges calculate_overlapping_ranges(
+  const std::vector<lanelet::BasicPolygon2d> & path_footprints,
+  const lanelet::ConstLanelets & path_lanelets, const lanelet::ConstLanelet & lanelet,
+  const PlannerParam & params)
+{
+  OverlapRanges ranges;
+  OtherLane other_lane(lanelet);
+  for (auto i = 0UL; i < path_footprints.size(); ++i) {
+    const auto overlap = calculate_overlap(path_footprints[i], path_lanelets, lanelet);
+    const auto has_overlap = overlap.inside_distance > params.overlap_min_dist;
+    if (has_overlap) {  // open/update the range
+      if (!other_lane.range_is_open) {
+        other_lane.first_range_bound.index = i;
+        other_lane.first_range_bound.point = overlap.min_overlap_point;
+        other_lane.first_range_bound.arc_length =
+          overlap.min_arc_length - params.overlap_extra_length;
+        other_lane.first_range_bound.inside_distance = overlap.inside_distance;
+        other_lane.range_is_open = true;
+      }
+      other_lane.last_range_bound.index = i;
+      // TODO(Maxime): the last max_overlap_point does not go to the range
+      other_lane.last_range_bound.point = overlap.max_overlap_point;
+      other_lane.last_range_bound.arc_length = overlap.max_arc_length + params.overlap_extra_length;
+      other_lane.last_range_bound.inside_distance = overlap.inside_distance;
+    } else if (other_lane.range_is_open) {  // !has_overlap: close the range if it is open
+      ranges.push_back(other_lane.close_range());
+    }
+  }
+  // close the range if it is still open
+  if (other_lane.range_is_open) ranges.push_back(other_lane.close_range());
+  return ranges;
+}
+
 inline OverlapRanges calculate_overlapping_ranges(
   const std::vector<lanelet::BasicPolygon2d> & path_footprints,
   const lanelet::ConstLanelets & path_lanelets, const lanelet::ConstLanelets & lanelets,
   const PlannerParam & params)
 {
-  std::vector<OtherLane> other_lanes;
-  for (const auto & lanelet : lanelets) other_lanes.emplace_back(lanelet);
-
   OverlapRanges ranges;
-
-  std::ofstream svg("/tmp/debug.svg");
-  boost::geometry::svg_mapper<lanelet::BasicPoint2d> mapper(svg, 800, 800);
-
-  for (const auto & path_footprint : path_footprints) mapper.add(path_footprint);
-
-  for (auto i = 0UL; i < path_footprints.size(); ++i) {
-    auto path_footprint = path_footprints[i];
-    mapper.map(path_footprint, "opacity:0.5;fill-opacity:0.0;fill:red;stroke:red;stroke-width:1");
-    for (auto & other_lane : other_lanes) {
-      const auto & left_bound = other_lane.lanelet.leftBound2d().basicLineString();
-      const auto & right_bound = other_lane.lanelet.rightBound2d().basicLineString();
-      const auto overlap_left = boost::geometry::intersects(path_footprint, left_bound);
-      const auto overlap_right = boost::geometry::intersects(path_footprint, right_bound);
-      auto inside_dist = 0.0;
-      lanelet::BasicPoint2d min_overlap_point;
-      lanelet::BasicPoint2d max_overlap_point;
-      auto min_arc_length = std::numeric_limits<double>::infinity();
-      auto max_arc_length = 0.0;
-      lanelet::BasicPolygons2d overlapping_polygons;
-      if (overlap_left || overlap_right)  // TODO(Maxime): special case when both are overlapped
-        boost::geometry::intersection(path_footprint, other_lane.polygon, overlapping_polygons);
-      for (const auto & overlapping_polygon : overlapping_polygons) {
-        mapper.map(
-          overlapping_polygon, "opacity:0.5;fill-opacity:0.2;fill:red;stroke:red;stroke-width:1");
-        for (const auto & point : overlapping_polygon) {
-          if (overlap_left && overlap_right)
-            inside_dist = 0.0;  // TODO(Maxime): boost::geometry::distance(left_bound, right_bound)
-          else if (overlap_left)
-            inside_dist = std::max(inside_dist, boost::geometry::distance(point, left_bound));
-          else if (overlap_right)
-            inside_dist = std::max(inside_dist, boost::geometry::distance(point, right_bound));
-          geometry_msgs::msg::Pose p;
-          p.position.x = point.x();
-          p.position.y = point.y();
-          const auto length = lanelet::utils::getArcCoordinates(path_lanelets, p).length;
-          if (length > max_arc_length) {
-            max_arc_length = length;
-            max_overlap_point = point;
-          }
-          if (length < min_arc_length) {
-            min_arc_length = length;
-            min_overlap_point = point;
-          }
-        }
-      }
-      const auto has_overlap = inside_dist > params.overlap_min_dist;
-      if (has_overlap) {  // open/update the range
-        if (!other_lane.range_is_open) {
-          other_lane.first_range_bound.index = i;
-          other_lane.first_range_bound.point = min_overlap_point;
-          other_lane.first_range_bound.arc_length = min_arc_length - params.overlap_extra_length;
-          other_lane.first_range_bound.inside_distance = inside_dist;
-          other_lane.range_is_open = true;
-        }
-        other_lane.last_range_bound.index = i;
-        // TODO(Maxime): the last max_overlap_point does not go to go to the range
-        other_lane.last_range_bound.point = max_overlap_point;
-        mapper.map(max_overlap_point, "opacity:0.5;stroke:green;stroke-width:1", 2);
-        other_lane.last_range_bound.arc_length = max_arc_length + params.overlap_extra_length;
-        other_lane.last_range_bound.inside_distance = inside_dist;
-      } else if (other_lane.range_is_open) {  // !has_overlap: close the range
-        ranges.push_back(other_lane.closeRange());
-        mapper.map(ranges.back().entering_point, "opacity:0.5;stroke:blue;stroke-width:1", 2);
-        mapper.map(ranges.back().exiting_point, "opacity:0.5;stroke:green;stroke-width:1", 2);
-      }
-    }
+  for (auto & lanelet : lanelets) {
+    const auto lanelet_ranges =
+      calculate_overlapping_ranges(path_footprints, path_lanelets, lanelet, params);
+    ranges.insert(ranges.end(), lanelet_ranges.begin(), lanelet_ranges.end());
   }
-  // close all open ranges
-  for (auto & other_lane : other_lanes)
-    if (other_lane.range_is_open) {
-      ranges.push_back(other_lane.closeRange());
-      mapper.map(ranges.back().entering_point, "opacity:0.5;stroke:blue;stroke-width:1", 2);
-      mapper.map(ranges.back().exiting_point, "opacity:0.5;stroke:green;stroke-width:1", 2);
-    }
   return ranges;
 }
 
-}  // namespace out_of_lane_utils
-}  // namespace behavior_velocity_planner
+}  // namespace behavior_velocity_planner::out_of_lane_utils
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__OVERLAPPING_RANGE_HPP_

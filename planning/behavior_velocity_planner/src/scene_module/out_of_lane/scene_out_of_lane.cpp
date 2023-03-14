@@ -49,7 +49,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   std::cout << "modifyPathVelocity\n";
-  debug_data_.resetData();
+  debug_data_.reset_data();
   if (!path || path->points.size() < 2) return true;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();

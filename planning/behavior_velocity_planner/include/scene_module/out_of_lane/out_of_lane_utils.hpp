@@ -41,9 +41,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
-{
-namespace out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane_utils
 {
 struct DebugData
 {
@@ -52,7 +50,7 @@ struct DebugData
   OverlapRanges ranges;
   std::vector<std::vector<std::pair<double, double>>> npc_times;
   std::vector<std::pair<double, double>> ego_times;
-  void resetData()
+  void reset_data()
   {
     footprints.clear();
     slowdown_poses.clear();
@@ -61,7 +59,6 @@ struct DebugData
     ego_times.clear();
   }
 };
-}  // namespace out_of_lane_utils
-}  // namespace behavior_velocity_planner
+}  // namespace behavior_velocity_planner::out_of_lane_utils
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__OUT_OF_LANE_UTILS_HPP_

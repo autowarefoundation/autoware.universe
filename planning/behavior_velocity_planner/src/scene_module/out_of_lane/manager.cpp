@@ -25,7 +25,7 @@
 namespace behavior_velocity_planner
 {
 OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, getModuleName()), module_id_(0UL)
 {
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
