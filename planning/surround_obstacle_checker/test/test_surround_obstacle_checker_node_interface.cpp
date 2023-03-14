@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "motion_velocity_smoother/motion_velocity_smoother_node.hpp"
+#include "surround_obstacle_checker/node.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
@@ -32,35 +32,31 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
 
   test_manager->declareVehicleInfoParams(node_options);
   test_manager->declareNearestSearchDistanceParams(node_options);
-  node_options.append_parameter_override("algorithm_type", "JerkFiltered");
-  node_options.append_parameter_override("publish_debug_trajs", false);
 
-  const auto motion_velocity_smoother_dir =
-    ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
+  const auto surround_obstacle_checker_dir =
+    ament_index_cpp::get_package_share_directory("surround_obstacle_checker");
 
   node_options.arguments(
     {"--ros-args", "--params-file",
-     motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
-     "--params-file", motion_velocity_smoother_dir + "/config/default_common.param.yaml",
-     "--params-file", motion_velocity_smoother_dir + "/config/JerkFiltered.param.yaml"});
+     surround_obstacle_checker_dir + "/config/surround_obstacle_checker.param.yaml"});
 
   auto test_target_node =
-    std::make_shared<motion_velocity_smoother::MotionVelocitySmootherNode>(node_options);
+    std::make_shared<surround_obstacle_checker::SurroundObstacleCheckerNode>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
   test_manager->publishMaxVelocity(
-    test_target_node, "motion_velocity_smoother/input/external_velocity_limit_mps");
+    test_target_node, "surround_obstacle_checker/input/external_velocity_limit_mps");
 
   // set subscriber for test_target_node
-  test_manager->setTrajectorySubscriber("motion_velocity_smoother/output/trajectory");
+  test_manager->setTrajectorySubscriber("surround_obstacle_checker/output/trajectory");
 
   // setting topic name of subscribing topic
-  test_manager->setTrajectoryInputTopicName("motion_velocity_smoother/input/trajectory");
+  test_manager->setTrajectoryInputTopicName("surround_obstacle_checker/input/trajectory");
 
   // test for normal trajectory
   ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(
-    test_target_node, "motion_velocity_smoother/input/trajectory"));
+    test_target_node, "surround_obstacle_checker/input/trajectory"));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point

@@ -29,7 +29,7 @@ rclcpp_components_register_node(${PROJECT_NAME}
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/test_motion_velocity_smoother_node_interface.cpp
+    test/test_surround_obstacle_checker_node_interface.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     ${PROJECT_NAME}

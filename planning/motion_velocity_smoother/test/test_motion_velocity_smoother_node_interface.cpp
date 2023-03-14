@@ -35,7 +35,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   node_options.append_parameter_override("publish_debug_trajs", false);
 
   const auto motion_velocity_smoother_dir =
-    ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
+    ament_index_cpp::get_package_share_directory("surround_obstacle_checker");
 
   node_options.arguments(
     {"--ros-args", "--params-file",
