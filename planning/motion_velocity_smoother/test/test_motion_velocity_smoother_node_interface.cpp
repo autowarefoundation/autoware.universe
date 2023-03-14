@@ -47,22 +47,20 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   auto test_target_node =
     std::make_shared<motion_velocity_smoother::MotionVelocitySmootherNode>(node_options);
 
-  // set input topic name for test_target_node
-  test_manager->setTrajectoryTopicName("motion_velocity_smoother/input/trajectory");
-
-  // set output topic name for test_target_node
-  test_manager->setOutputTrajectoryTopicName("motion_velocity_smoother/output/trajectory");
-
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
   test_manager->publishMaxVelocity(
     test_target_node, "motion_velocity_smoother/input/external_velocity_limit_mps");
 
   // set subscriber for test_target_node
-  test_manager->setTrajectorySubscriber();
+  test_manager->setTrajectorySubscriber("motion_velocity_smoother/output/trajectory");
+
+  // setting topic name of subscribing topic
+  test_manager->setTrajectoryInputTopicName("motion_velocity_smoother/input/trajectory");
 
   // test for normal trajectory
-  test_manager->testWithNominalTrajectory(test_target_node);
+  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(
+    test_target_node, "motion_velocity_smoother/input/trajectory"));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   test_manager->testWithAbnormalTrajectory(test_target_node, Trajectory{});

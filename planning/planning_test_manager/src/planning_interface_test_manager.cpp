@@ -39,52 +39,44 @@ void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
   node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
 }
 
-void PlanningIntefaceTestManager::setOdomTopicPublisher(std::string topic_name)
-{
-  setPublisher(topic_name, odom_pub_);
-}
-
-void PlanningIntefaceTestManager::setMaxVelocityPublisher(std::string topic_name)
-{
-  setPublisher(topic_name, max_velocity_pub_);
-}
-
 void PlanningIntefaceTestManager::publishOdometry(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  publishData<Odometry>(target_node, topic_name, odom_pub_);
+  test_utils::publishData<Odometry>(test_node_, target_node, topic_name, odom_pub_);
 }
 
 void PlanningIntefaceTestManager::publishMaxVelocity(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  publishData<VelocityLimit>(target_node, topic_name, max_velocity_pub_);
+  test_utils::publishData<VelocityLimit>(test_node_, target_node, topic_name, max_velocity_pub_);
 }
 
-void PlanningIntefaceTestManager::setTrajectoryTopicName(std::string topic_name)
-{
+void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name){
   input_trajectory_name_ = topic_name;
 }
 
-void PlanningIntefaceTestManager::setOutputTrajectoryTopicName(std::string topic_name)
+void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_name)
 {
-  output_trajectory_name_ = topic_name;
+  test_utils::setPublisher(test_node_, topic_name, normal_trajectory_pub_);
+  normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
 }
 
-void PlanningIntefaceTestManager::setTrajectorySubscriber()
+void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
   // Count the number of trajectory received.
   traj_sub_ = test_node_->create_subscription<Trajectory>(
-    output_trajectory_name_, 10,
+    topic_name, 10,
     std::bind(
       &PlanningIntefaceTestManager::countCallback<Trajectory>, this, std::placeholders::_1));
 }
 
 // test for normal working
-void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
+void PlanningIntefaceTestManager::testWithNominalTrajectory(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  // check that the node does not die here.
-  ASSERT_NO_THROW(publishNominalTrajectory(target_node));
+  publishNominalTrajectory(topic_name);
+  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::spinSomeNodes(test_node_, target_node);
 }
 
 // check to see if target node is dead.
@@ -96,30 +88,13 @@ void PlanningIntefaceTestManager::testWithAbnormalTrajectory(
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
-void PlanningIntefaceTestManager::publishNominalTrajectory(rclcpp::Node::SharedPtr target_node)
-{
-  normal_trajectory_pub_ =
-    rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
-  normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
-  spinSomeNodes(test_node_, target_node);
-  spinSomeNodes(test_node_, target_node);
-}
-
 void PlanningIntefaceTestManager::publishAbnormalTrajectory(
   rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
 {
   empty_trajectory_pub_ =
     rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
   empty_trajectory_pub_->publish(abnormal_trajectory);
-  spinSomeNodes(test_node_, target_node);
-}
-
-void PlanningIntefaceTestManager::spinSomeNodes(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node)
-{
-  rclcpp::spin_some(test_node);
-  rclcpp::spin_some(target_node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  test_utils::spinSomeNodes(test_node_, target_node);
 }
 
 }  // namespace planning_test_manager

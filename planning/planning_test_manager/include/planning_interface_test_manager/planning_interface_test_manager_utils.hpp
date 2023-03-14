@@ -63,6 +63,31 @@ T generateTrajectory(
   return traj;
 }
 
+void spinSomeNodes(rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node)
+{
+  rclcpp::spin_some(test_node);
+  rclcpp::spin_some(target_node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+}
+
+template <typename T>
+void setPublisher(
+  rclcpp::Node::SharedPtr test_node, std::string topic_name,
+  std::shared_ptr<rclcpp::Publisher<T>> & pub)
+{
+  pub = rclcpp::create_publisher<T>(test_node, topic_name, 1);
+}
+
+template <typename T>
+void publishData(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<T>::SharedPtr pub)
+{
+  setPublisher(test_node, topic_name, pub);
+  pub->publish(T{});
+  spinSomeNodes(test_node, target_node);
+}
+
 }  // namespace test_utils
 
 #endif  // PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_
