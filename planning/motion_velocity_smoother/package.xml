@@ -28,7 +28,6 @@
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>osqp_interface</depend>
-  <depend>planning_test_manager</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
