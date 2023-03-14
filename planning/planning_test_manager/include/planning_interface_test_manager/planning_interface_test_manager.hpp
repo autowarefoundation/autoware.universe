@@ -61,7 +61,7 @@ public:
 
   void setTrajectorySubscriber(std::string topic_name);
 
-  void testWithNominalTrajectory(rclcpp::Node::SharedPtr node, std::string topic_name);
+  void testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();

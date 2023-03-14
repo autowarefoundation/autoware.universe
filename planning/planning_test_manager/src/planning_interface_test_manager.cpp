@@ -69,10 +69,9 @@ void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name
 }
 
 // test for normal working
-void PlanningIntefaceTestManager::testWithNominalTrajectory(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
-  publishNominalTrajectory(topic_name);
+  publishNominalTrajectory(input_trajectory_name_);
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
