@@ -51,7 +51,8 @@ void PlanningIntefaceTestManager::publishMaxVelocity(
   test_utils::publishData<VelocityLimit>(test_node_, target_node, topic_name, max_velocity_pub_);
 }
 
-void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name){
+void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
+{
   input_trajectory_name_ = topic_name;
 }
 

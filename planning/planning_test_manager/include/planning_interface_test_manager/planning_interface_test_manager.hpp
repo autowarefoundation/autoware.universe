@@ -85,7 +85,7 @@ private:
   // Publisher for testing
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr empty_trajectory_pub_;
-  
+
   std::string input_trajectory_name_;
 
   // Node
