@@ -56,7 +56,7 @@ Stat<double> calcVelocityDeviation(const Trajectory & ref, const Trajectory & tr
 /**
  * @brief calculate longitudinal deviation of the given ego pose from the modified goal pose
  * @param [in] base_pose base pose
- * @param [in] target_pose target pose
+ * @param [in] target_point target point
  * @return calculated statistics
  */
 Stat<double> calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point);
@@ -64,7 +64,7 @@ Stat<double> calcLongitudinalDeviation(const Pose & base_pose, const Point & tar
 /**
  * @brief calculate lateral deviation of the given ego pose from the modified goal pose
  * @param [in] base_pose base pose
- * @param [in] target_pose target pose
+ * @param [in] target_point target point
  * @return calculated statistics
  */
 Stat<double> calcLateralDeviation(const Pose & base_pose, const Point & target_point);
