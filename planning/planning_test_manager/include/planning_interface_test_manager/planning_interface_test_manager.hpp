@@ -61,14 +61,14 @@ public:
   void setOutputTrajectoryTopicName(std::string topic_name);
   void setOutputMaxVelocityTopicName(std::string topic_name);
 
-  void publishOdometry(rclcpp::Node::SharedPtr node);
-  void publishMaxVelocity(rclcpp::Node::SharedPtr node);
+  void publishOdometry(rclcpp::Node::SharedPtr target_node);
+  void publishMaxVelocity(rclcpp::Node::SharedPtr target_node);
 
   void setTrajectorySubscriber();
 
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr node);
   void testWithAbnormalTrajectory(
-    rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
+    rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
 
   int getReceivedTopicNum();
 
@@ -112,9 +112,11 @@ private:
 
   Trajectory genDefaultTrajectory() { return Trajectory{}; }
 
-  void publishNominalTrajectory(rclcpp::Node::SharedPtr node);
+  void publishNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void publishAbnormalTrajectory(
-    rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory);
+    rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
+
+  void spinSomeNodes(rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node);
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager

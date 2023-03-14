@@ -59,20 +59,16 @@ void PlanningIntefaceTestManager::setOutputTrajectoryTopicName(std::string topic
   output_trajectory_name_ = topic_name;
 }
 
-void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr node)
+void PlanningIntefaceTestManager::publishOdometry(rclcpp::Node::SharedPtr target_node)
 {
   odom_pub_->publish(genDefaultOdom());
-  rclcpp::spin_some(test_node_);
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  spinSomeNodes(test_node_, target_node);
 }
 
-void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr node)
+void PlanningIntefaceTestManager::publishMaxVelocity(rclcpp::Node::SharedPtr target_node)
 {
   max_velocity_pub_->publish(genDefaultMaxVelocity());
-  rclcpp::spin_some(test_node_);
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  spinSomeNodes(test_node_, target_node);
 }
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber()
@@ -85,43 +81,45 @@ void PlanningIntefaceTestManager::setTrajectorySubscriber()
 }
 
 // test for normal working
-void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr node)
+void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
   // check that the node does not die here.
-  ASSERT_NO_THROW(publishNominalTrajectory(node));
+  ASSERT_NO_THROW(publishNominalTrajectory(target_node));
 }
 
 // check to see if target node is dead.
 void PlanningIntefaceTestManager::testWithAbnormalTrajectory(
-  rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory)
+  rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
 {
-  ASSERT_NO_THROW(publishAbnormalTrajectory(node, abnormal_trajectory));
+  ASSERT_NO_THROW(publishAbnormalTrajectory(target_node, abnormal_trajectory));
 }
 
-void PlanningIntefaceTestManager::publishNominalTrajectory(rclcpp::Node::SharedPtr node)
+int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
+
+void PlanningIntefaceTestManager::publishNominalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
   normal_trajectory_pub_ =
     rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
-  rclcpp::spin_some(test_node_);
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-  rclcpp::spin_some(test_node_);
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  spinSomeNodes(test_node_, target_node);
+  spinSomeNodes(test_node_, target_node);
 }
 
 void PlanningIntefaceTestManager::publishAbnormalTrajectory(
-  rclcpp::Node::SharedPtr node, const Trajectory & abnormal_trajectory)
+  rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
 {
   empty_trajectory_pub_ =
     rclcpp::create_publisher<Trajectory>(test_node_, input_trajectory_name_, 1);
   empty_trajectory_pub_->publish(abnormal_trajectory);
-  rclcpp::spin_some(test_node_);
-  rclcpp::spin_some(node);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
+  spinSomeNodes(test_node_, target_node);
 }
 
-int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
+void PlanningIntefaceTestManager::spinSomeNodes(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node)
+{
+  rclcpp::spin_some(test_node);
+  rclcpp::spin_some(target_node);
+  rclcpp::sleep_for(std::chrono::milliseconds(100));
+}
 
 }  // namespace planning_test_manager
