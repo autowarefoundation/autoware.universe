@@ -58,18 +58,21 @@ using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
+using tier4_rtc_msgs::msg::Module;
 using unique_identifier_msgs::msg::UUID;
 
 class SceneModuleInterface
 {
 public:
   explicit SceneModuleInterface(
-    const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
+    const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
+    std::shared_ptr<RTCInterface> rtc_interface_ptr = nullptr)
   : module_id_(module_id),
     safe_(false),
     distance_(std::numeric_limits<double>::lowest()),
     logger_(logger),
-    clock_(clock)
+    clock_(clock),
+    rtc_interface_ptr_(rtc_interface_ptr)
   {
   }
   virtual ~SceneModuleInterface() = default;
@@ -100,6 +103,16 @@ public:
 
   void setActivation(const bool activated) { activated_ = activated; }
   bool isActivated() const { return activated_; }
+  bool isActivated(const UUID & uuid) const
+  {
+    if (!rtc_interface_ptr_) {
+      return true;
+    }
+    if (rtc_interface_ptr_->isRegistered(uuid)) {
+      return rtc_interface_ptr_->isActivated(uuid);
+    }
+    return false;
+  }
   bool isSafe() const { return safe_; }
   double getDistance() const { return distance_; }
 
@@ -113,6 +126,7 @@ protected:
   double distance_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
+  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
   std::shared_ptr<const PlannerData> planner_data_;
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   boost::optional<int> first_stop_path_point_index_;
@@ -120,14 +134,23 @@ protected:
 
   void setSafe(const bool safe) { safe_ = safe; }
   void setDistance(const double distance) { distance_ = distance; }
+  void updateRTCStatus(
+    const UUID & uuid, const bool safety, const double distance, const Time & stamp,
+    const Module & internal_module)
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->updateCooperateStatus(
+      uuid, safety, distance, distance, stamp, internal_module);
+  }
 
   template <class T>
   size_t findEgoSegmentIndex(const std::vector<T> & points) const
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
-      p->ego_nearest_yaw_threshold);
+      points, p->current_odometry->pose, p->ego_nearest_dist_threshold);
   }
 };
 
@@ -135,7 +158,7 @@ class SceneModuleManagerInterface
 {
 public:
   SceneModuleManagerInterface(rclcpp::Node & node, [[maybe_unused]] const char * module_name)
-  : clock_(node.get_clock()), logger_(node.get_logger())
+  : node_(node), clock_(node.get_clock()), logger_(node.get_logger())
   {
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 1);
@@ -307,6 +330,7 @@ protected:
   std::shared_ptr<const PlannerData> planner_data_;
 
   boost::optional<int> first_stop_path_point_index_;
+  rclcpp::Node & node_;
   rclcpp::Clock::SharedPtr clock_;
   // Debug
   bool is_publish_debug_path_ = {false};  // note : this is very heavy debug topic option
@@ -327,7 +351,8 @@ class SceneModuleManagerInterfaceWithRTC : public SceneModuleManagerInterface
 {
 public:
   SceneModuleManagerInterfaceWithRTC(rclcpp::Node & node, const char * module_name)
-  : SceneModuleManagerInterface(node, module_name), rtc_interface_(&node, module_name)
+  : SceneModuleManagerInterface(node, module_name),
+    rtc_interface_ptr_(std::make_shared<RTCInterface>(&node, module_name))
   {
   }
 
@@ -339,10 +364,10 @@ public:
   }
 
 protected:
-  RTCInterface rtc_interface_;
+  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
   std::unordered_map<int64_t, UUID> map_uuid_;
 
-  void sendRTC(const Time & stamp)
+  virtual void sendRTC(const Time & stamp)
   {
     for (const auto & scene_module : scene_modules_) {
       const UUID uuid = getUUID(scene_module->getModuleId());
@@ -353,21 +378,39 @@ protected:
 
   void setActivation()
   {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
     for (const auto & scene_module : scene_modules_) {
       const UUID uuid = getUUID(scene_module->getModuleId());
-      scene_module->setActivation(rtc_interface_.isActivated(uuid));
+      scene_module->setActivation(rtc_interface_ptr_->isActivated(uuid));
     }
   }
 
   void updateRTCStatus(
     const UUID & uuid, const bool safe, const double distance, const Time & stamp)
   {
-    rtc_interface_.updateCooperateStatus(uuid, safe, distance, distance, stamp);
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->updateCooperateStatus(uuid, safe, distance, distance, stamp);
   }
 
-  void removeRTCStatus(const UUID & uuid) { rtc_interface_.removeCooperateStatus(uuid); }
+  void removeRTCStatus(const UUID & uuid)
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->removeCooperateStatus(uuid);
+  }
 
-  void publishRTCStatus(const Time & stamp) { rtc_interface_.publishCooperateStatus(stamp); }
+  void publishRTCStatus(const Time & stamp)
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->publishCooperateStatus(stamp);
+  }
 
   UUID getUUID(const int64_t & module_id) const
   {

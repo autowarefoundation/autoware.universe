@@ -68,6 +68,8 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::PULL_OVER;
   } else if (module_name == "pull_out") {
     module.type = Module::PULL_OUT;
+  } else if (module_name == "intersection_occlusion") {
+    module.type = Module::INTERSECTION_OCCLUSION;
   }
   return module;
 }
@@ -183,6 +185,13 @@ void RTCInterface::updateCooperateStatus(
   const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
   const rclcpp::Time & stamp)
 {
+  updateCooperateStatus(uuid, safe, start_distance, finish_distance, stamp, module_);
+}
+
+void RTCInterface::updateCooperateStatus(
+  const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
+  const rclcpp::Time & stamp, const Module internal_module)
+{
   std::lock_guard<std::mutex> lock(mutex_);
   // Find registered status which has same uuid
   auto itr = std::find_if(
@@ -194,7 +203,7 @@ void RTCInterface::updateCooperateStatus(
     CooperateStatus status;
     status.stamp = stamp;
     status.uuid = uuid;
-    status.module = module_;
+    status.module = internal_module;
     status.safe = safe;
     status.command_status.type = Command::DEACTIVATE;
     status.start_distance = start_distance;

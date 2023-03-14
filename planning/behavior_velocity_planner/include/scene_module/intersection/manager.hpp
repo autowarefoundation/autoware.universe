@@ -45,6 +45,8 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
+
+  void sendRTC(const Time & stamp) override;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface
