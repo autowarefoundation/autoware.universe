@@ -105,7 +105,6 @@ private:
   void publishNominalTrajectory(std::string topic_name);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
-
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager
