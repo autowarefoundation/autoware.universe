@@ -17,8 +17,6 @@
 #include "osqp/osqp.h"
 #include "osqp_interface/csc_matrix_conv.hpp"
 
-#include <glog/logging.h>
-
 #include <chrono>
 #include <iostream>
 #include <limits>
@@ -27,7 +25,16 @@
 #include <tuple>
 #include <vector>
 
-static bool check_has_solution(OSQPInfo * info) { return (info->status_val == OSQP_SOLVED); }
+static bool check_has_solution(const OSQPInfo * info) { return (info->status_val == OSQP_SOLVED); }
+
+static bool check_feasible_solution(const OSQPInfo * info)
+{
+  return (
+    (info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
+    (info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
+    (info->status_val != OSQP_DUAL_INFEASIBLE) &&
+    (info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE) && (info->status_val != OSQP_NON_CVX));
+}
 
 namespace autoware
 {
@@ -368,8 +375,8 @@ int64_t OSQPInterface::initializeProblem(
 
 bool OSQPInterface::warmStartReady() const
 {
-  return m_param_n_prev && m_param_n_prev.value() == m_param_n &&  // dim of m
-         m_param_m_prev && m_param_m_prev.value() == m_param_m &&  // dim of n
+  return m_param_n_prev && m_param_n_prev.value() == m_param_n &&  // dim of n
+         m_param_m_prev && m_param_m_prev.value() == m_param_m &&  // dim of m
          m_sol_prev && m_lagrange_multiplier_prev;
 }
 
@@ -393,17 +400,15 @@ OSQPInterface::solve(const bool do_warm_start)
   const int64_t status_polish = m_work->info->status_polish;
   const auto status_val = m_work->info->status_val;
   const bool has_solution = check_has_solution(m_work->info);
+  const bool feasible_solution = check_feasible_solution(m_work->info);
   const int64_t status_iteration = m_work->info->iter;
-
-  std::cout << "has_solution = " << has_solution << std::endl;
-  std::cout << "iteration = " << status_iteration << std::endl;
 
   // save solution
   m_param_n_prev = m_param_n;
   m_param_m_prev = m_param_m;
   m_latest_work_info = *(m_work->info);
   // do not save invalid solution for warm-start
-  if (m_warm_start && has_solution && status_polish == 1) {
+  if (m_warm_start && has_solution && feasible_solution && status_polish == 1) {
     m_sol_prev = sol_primal;
     m_lagrange_multiplier_prev = sol_lagrange_multiplier;
   } else {
