@@ -1134,7 +1134,7 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTarget(
   return boost::none;
 }
 
-boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTargetExceptPrefferedLane(
+boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTargetExceptPreferredLane(
   const lanelet::ConstLanelets & lanelets, const Direction direction) const
 {
   for (const auto & lanelet : lanelets) {

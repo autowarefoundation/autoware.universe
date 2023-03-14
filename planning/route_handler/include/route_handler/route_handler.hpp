@@ -298,7 +298,7 @@ public:
     bool use_exact = true) const;
   boost::optional<lanelet::ConstLanelet> getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
-  boost::optional<lanelet::ConstLanelet> getLaneChangeTargetExceptPrefferedLane(
+  boost::optional<lanelet::ConstLanelet> getLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, const Direction direction) const;
   bool getRightLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;

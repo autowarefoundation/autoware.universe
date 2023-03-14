@@ -1207,7 +1207,7 @@ lanelet::ConstLanelets getLaneChangeLanes(
       return route_handler->getLaneChangeTarget(current_check_lanes, direction);
     }
 
-    return route_handler->getLaneChangeTargetExceptPrefferedLane(current_check_lanes, direction);
+    return route_handler->getLaneChangeTargetExceptPreferredLane(current_check_lanes, direction);
   });
 
   if (lane_change_lane) {
