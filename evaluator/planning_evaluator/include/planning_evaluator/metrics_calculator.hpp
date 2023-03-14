@@ -32,6 +32,7 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 
 class MetricsCalculator

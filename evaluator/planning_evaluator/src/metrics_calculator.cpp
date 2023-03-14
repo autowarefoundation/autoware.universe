@@ -81,11 +81,11 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
   // Functions to calculate pose metrics
   switch (metric) {
     case Metric::modified_goal_longitudinal_deviation:
-      return metrics::calcPoseLongitudinalDeviation(base_pose, target_pose);
+      return metrics::calcLongitudinalDeviation(base_pose, target_pose.position);
     case Metric::modified_goal_lateral_deviation:
-      return metrics::calcPoseLateralDeviation(base_pose, target_pose);
+      return metrics::calcLateralDeviation(base_pose, target_pose.position);
     case Metric::modified_goal_yaw_deviation:
-      return metrics::calcPoseYawDeviation(base_pose, target_pose);
+      return metrics::calcYawDeviation(base_pose, target_pose);
     default:
       return {};
   }

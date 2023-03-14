@@ -26,6 +26,7 @@ namespace metrics
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 
 /**
@@ -58,7 +59,7 @@ Stat<double> calcVelocityDeviation(const Trajectory & ref, const Trajectory & tr
  * @param [in] target_pose target pose
  * @return calculated statistics
  */
-Stat<double> calcPoseLongitudinalDeviation(const Pose & base_pose, const Pose & target_pose);
+Stat<double> calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point);
 
 /**
  * @brief calculate lateral deviation of the given ego pose from the modified goal pose
@@ -66,7 +67,7 @@ Stat<double> calcPoseLongitudinalDeviation(const Pose & base_pose, const Pose & 
  * @param [in] target_pose target pose
  * @return calculated statistics
  */
-Stat<double> calcPoseLateralDeviation(const Pose & base_pose, const Pose & target_pose);
+Stat<double> calcLateralDeviation(const Pose & base_pose, const Point & target_point);
 
 /**
  * @brief calculate yaw deviation of the given ego pose from the modified goal pose
@@ -74,7 +75,7 @@ Stat<double> calcPoseLateralDeviation(const Pose & base_pose, const Pose & targe
  * @param [in] target_pose target pose
  * @return calculated statistics
  */
-Stat<double> calcPoseYawDeviation(const Pose & base_pose, const Pose & target_pose);
+Stat<double> calcYawDeviation(const Pose & base_pose, const Pose & target_pose);
 
 }  // namespace metrics
 }  // namespace planning_diagnostics

@@ -77,22 +77,21 @@ Stat<double> calcVelocityDeviation(const Trajectory & ref, const Trajectory & tr
   return stat;
 }
 
-Stat<double> calcPoseLongitudinalDeviation(const Pose & base_pose, const Pose & target_pose)
+Stat<double> calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point)
 {
   Stat<double> stat;
-  stat.add(
-    std::abs(tier4_autoware_utils::calcLongitudinalDeviation(base_pose, target_pose.position)));
+  stat.add(std::abs(tier4_autoware_utils::calcLongitudinalDeviation(base_pose, target_point)));
   return stat;
 }
 
-Stat<double> calcPoseLateralDeviation(const Pose & base_pose, const Pose & target_pose)
+Stat<double> calcLateralDeviation(const Pose & base_pose, const Point & target_point)
 {
   Stat<double> stat;
-  stat.add(std::abs(tier4_autoware_utils::calcLateralDeviation(base_pose, target_pose.position)));
+  stat.add(std::abs(tier4_autoware_utils::calcLateralDeviation(base_pose, target_point)));
   return stat;
 }
 
-Stat<double> calcPoseYawDeviation(const Pose & base_pose, const Pose & target_pose)
+Stat<double> calcYawDeviation(const Pose & base_pose, const Pose & target_pose)
 {
   Stat<double> stat;
   stat.add(std::abs(tier4_autoware_utils::calcYawDeviation(base_pose, target_pose)));
