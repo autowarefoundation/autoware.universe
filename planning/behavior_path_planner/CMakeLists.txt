@@ -15,6 +15,11 @@ set(common_src
   src/steering_factor_interface.cpp
   src/behavior_path_planner_node.cpp
   src/scene_module/scene_module_visitor.cpp
+  src/scene_module/avoidance/avoidance_module.cpp
+  src/scene_module/pull_out/pull_out_module.cpp
+  src/scene_module/pull_over/pull_over_module.cpp
+  src/scene_module/side_shift/side_shift_module.cpp
+  src/scene_module/lane_change/lane_change_module.cpp
   src/turn_signal_decider.cpp
   src/util/avoidance/util.cpp
   src/util/lane_change/util.cpp
@@ -22,6 +27,7 @@ set(common_src
   src/util/pull_over/util.cpp
   src/util/pull_over/shift_pull_over.cpp
   src/util/pull_over/geometric_pull_over.cpp
+  src/util/pull_over/freespace_pull_over.cpp
   src/util/pull_over/goal_searcher.cpp
   src/util/pull_out/util.cpp
   src/util/pull_out/shift_pull_out.cpp
@@ -42,13 +48,9 @@ if(COMPILE_WITH_OLD_ARCHITECTURE)
   ament_auto_add_library(behavior_path_planner_node SHARED
     src/behavior_tree_manager.cpp
     src/scene_module/scene_module_bt_node_interface.cpp
-    src/scene_module/side_shift/side_shift_module.cpp
-    src/scene_module/avoidance/avoidance_module.cpp
     src/scene_module/lane_following/lane_following_module.cpp
     src/scene_module/lane_change/external_request_lane_change_module.cpp
-    src/scene_module/lane_change/lane_change_module.cpp
     src/scene_module/pull_over/pull_over_module.cpp
-    src/scene_module/pull_out/pull_out_module.cpp
     ${common_src}
   )
 
@@ -59,6 +61,11 @@ if(COMPILE_WITH_OLD_ARCHITECTURE)
 else()
   ament_auto_add_library(behavior_path_planner_node SHARED
     src/planner_manager.cpp
+    src/scene_module/avoidance/manager.cpp
+    src/scene_module/pull_out/manager.cpp
+    src/scene_module/pull_over/manager.cpp
+    src/scene_module/side_shift/manager.cpp
+    src/scene_module/lane_change/manager.cpp
     ${common_src}
   )
 

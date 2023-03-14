@@ -29,11 +29,21 @@
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #else
 #include "behavior_path_planner/planner_manager.hpp"
+#include "behavior_path_planner/scene_module/avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
+#include "behavior_path_planner/scene_module/pull_out/manager.hpp"
+#include "behavior_path_planner/scene_module/pull_over/manager.hpp"
+#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
 #endif
 
 #include "behavior_path_planner/steering_factor_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/util/lane_following/module_data.hpp"
+#include "behavior_path_planner/util/pull_out/pull_out_parameters.hpp"
+#include "behavior_path_planner/util/pull_over/pull_over_parameters.hpp"
+#include "behavior_path_planner/util/side_shift/side_shift_parameters.hpp"
 
 #include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -90,6 +100,7 @@ using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
+using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
@@ -107,9 +118,9 @@ private:
   rclcpp::Subscription<Scenario>::SharedPtr scenario_subscriber_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
-#ifndef USE_OLD_ARCHITECTURE
+  rclcpp::Subscription<OccupancyGrid>::SharedPtr costmap_subscriber_;
+  rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_subscriber_;
-#endif
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
@@ -118,9 +129,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
-#ifndef USE_OLD_ARCHITECTURE
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_reference_publishers_;
-#endif
 
   std::shared_ptr<PlannerData> planner_data_;
 
@@ -149,34 +158,37 @@ private:
   // update planner data
   std::shared_ptr<PlannerData> createLatestPlannerData();
 
-#ifdef USE_OLD_ARCHITECTURE
   // parameters
-  std::shared_ptr<AvoidanceParameters> avoidance_param_ptr;
-  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr;
-#endif
+  std::shared_ptr<AvoidanceParameters> avoidance_param_ptr_;
+  std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
+  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
+  std::shared_ptr<LaneFollowingParameters> lane_following_param_ptr_;
+  std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
+  std::shared_ptr<PullOverParameters> pull_over_param_ptr_;
 
   BehaviorPathPlannerParameters getCommonParam();
 
 #ifdef USE_OLD_ARCHITECTURE
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();
-  SideShiftParameters getSideShiftParam();
+#endif
+
   AvoidanceParameters getAvoidanceParam();
-  LaneFollowingParameters getLaneFollowingParam();
   LaneChangeParameters getLaneChangeParam();
+  LaneFollowingParameters getLaneFollowingParam();
+  SideShiftParameters getSideShiftParam();
   PullOverParameters getPullOverParam();
   PullOutParameters getPullOutParam();
-#endif
 
   // callback
   void onOdometry(const Odometry::ConstSharedPtr msg);
   void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
+  void onCostMap(const OccupancyGrid::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
-#ifndef USE_OLD_ARCHITECTURE
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
-#endif
+  void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
