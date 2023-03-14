@@ -1115,20 +1115,18 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTarget(
     }
 
     if (direction == Direction::NONE || direction == Direction::RIGHT) {
-      if (num >= 0) {
-        continue;
-      }
-      if (!!routing_graph_ptr_->right(lanelet)) {
-        return routing_graph_ptr_->right(lanelet);
+      if (num < 0) {
+        if (!!routing_graph_ptr_->right(lanelet)) {
+          return routing_graph_ptr_->right(lanelet);
+        }
       }
     }
 
     if (direction == Direction::NONE || direction == Direction::LEFT) {
-      if (num <= 0) {
-        continue;
-      }
-      if (!!routing_graph_ptr_->left(lanelet)) {
-        return routing_graph_ptr_->left(lanelet);
+      if (num > 0) {
+        if (!!routing_graph_ptr_->left(lanelet)) {
+          return routing_graph_ptr_->left(lanelet);
+        }
       }
     }
   }
