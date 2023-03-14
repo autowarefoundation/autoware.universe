@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "surround_obstacle_checker/node.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
+#include "surround_obstacle_checker/node.hpp"
 
 #include <gtest/gtest.h>
 

@@ -21,13 +21,13 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
-#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
+#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <gtest/gtest.h>
@@ -42,12 +42,12 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using geometry_msgs::msg::AccelWithCovarianceStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::ExpandStopRange;
-using geometry_msgs::msg::AccelWithCovarianceStamped;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class PlanningIntefaceTestManager

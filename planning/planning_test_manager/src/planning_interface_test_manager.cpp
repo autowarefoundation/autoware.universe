@@ -55,8 +55,7 @@ void PlanningIntefaceTestManager::publishMaxVelocity(
 void PlanningIntefaceTestManager::publishPointCloud(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<PointCloud2>(
-    test_node_, target_node, topic_name, point_cloud_pub_);
+  test_utils::publishEmptyData<PointCloud2>(test_node_, target_node, topic_name, point_cloud_pub_);
 }
 
 void PlanningIntefaceTestManager::publishAcceleration(
