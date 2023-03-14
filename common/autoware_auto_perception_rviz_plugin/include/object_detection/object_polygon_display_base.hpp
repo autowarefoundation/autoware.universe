@@ -68,6 +68,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>   
 
 namespace autoware
 {
@@ -201,10 +202,8 @@ public:
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
     publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud", rclcpp::SensorDataQoS());
 
-    tf_buffer_ =
-      std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
-    tf_listener_ =
-      std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
     
   }
 
@@ -576,13 +575,19 @@ protected:
         crop_hull_filter.filter(filtered_cloud);
 
         // Define a custom color for the box polygons
-        const uint8_t r = 30, g = 44, b = 255;
+        // const uint8_t r = 30, g = 44, b = 255;
+        
+        const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(object.classification);
 
         for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it)
         {
-          cloud_it->r = r;
-          cloud_it->g = g;
-          cloud_it->b = b;
+          // cloud_it->r = color_rgba.r;
+          // cloud_it->g = color_rgba.g;
+          // cloud_it->b = color_rgba.b;
+
+          cloud_it->r = std::max(0, std::min(255, (int)floor(color_rgba.r * 256.0)));
+          cloud_it->g = std::max(0, std::min(255, (int)floor(color_rgba.g * 256.0)));
+          cloud_it->b = std::max(0, std::min(255, (int)floor(color_rgba.b * 256.0)));
         }
 
         *out_cloud += filtered_cloud;
