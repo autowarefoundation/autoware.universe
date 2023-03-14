@@ -27,6 +27,26 @@
 
 namespace behavior_path_planner
 {
+PathWithLaneId createPath(const std::shared_ptr<RouteHandler> & route_handler)
+{
+  constexpr double backward_length = 1.0;
+
+  lanelet::ConstLanelet goal_lane;
+  if (!route_handler->getGoalLanelet(&goal_lane)) {
+    PathWithLaneId path{};
+    return path;
+  }
+  lanelet::ConstLanelets goal_lanes = route_handler->getLaneletSequence(
+    goal_lane, route_handler->getGoalPose(), backward_length, 0.0);
+
+  const auto arc_coord =
+    lanelet::utils::getArcCoordinates(goal_lanes, route_handler->getGoalPose());
+  const double s_start = std::max(arc_coord.length - backward_length, 0.0);
+  const double s_end = arc_coord.length;
+
+  return route_handler->getCenterLinePath(goal_lanes, s_start, s_end);
+}
+
 BehaviorTreeManager::BehaviorTreeManager(
   rclcpp::Node & node, const BehaviorTreeManagerParam & param)
 : bt_manager_param_(param),
@@ -89,6 +109,13 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
     *s = SceneModuleStatus{s->module_name};
   });
 
+  if (isEgoOutOfRoute(data)) {
+    BehaviorModuleOutput output{};
+    output.path = std::make_shared<PathWithLaneId>(createPath(data->route_handler));
+    output.reference_path = std::make_shared<PathWithLaneId>(createPath(data->route_handler));
+    return output;
+  }
+
   // reset blackboard
   blackboard_->set<BehaviorModuleOutput>("output", BehaviorModuleOutput{});
 
@@ -148,6 +175,40 @@ void BehaviorTreeManager::resetGrootMonitor()
   if (groot_monitor_) {
     groot_monitor_.reset();
   }
+}
+
+bool BehaviorTreeManager::isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) const
+{
+  const auto self_pose = data->self_odometry->pose.pose;
+  lanelet::ConstLanelet goal_lane;
+  if (!data->route_handler->getGoalLanelet(&goal_lane)) {
+    RCLCPP_WARN_STREAM(logger_, "cannot find goal lanelet");
+    return true;
+  }
+
+  // If ego vehicle is over goal on goal lane, return true
+  if (lanelet::utils::isInLanelet(self_pose, goal_lane)) {
+    const auto ego_arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, self_pose);
+    const auto goal_arc_coord =
+      lanelet::utils::getArcCoordinates({goal_lane}, data->route_handler->getGoalPose());
+    if (ego_arc_coord.length > goal_arc_coord.length) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // If ego vehicle is out of the closest lanelet, return false
+  lanelet::ConstLanelet closest_lane;
+  if (!data->route_handler->getClosestLaneletWithinRoute(self_pose, &closest_lane)) {
+    RCLCPP_WARN_STREAM(logger_, "cannot find closest lanelet");
+    return true;
+  }
+  if (!lanelet::utils::isInLanelet(self_pose, closest_lane)) {
+    return true;
+  }
+
+  return false;
 }
 
 std::shared_ptr<SceneModuleVisitor> BehaviorTreeManager::getAllSceneModuleDebugMsgData()

@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -336,6 +337,7 @@ private:
   std::vector<SceneModulePtr> getRequestModules(
     const BehaviorModuleOutput & previous_module_output) const;
 
+<<<<<<< HEAD
   /**
    * @brief checks whether a path of trajectory has forward driving direction
    * @param modules that make execution request.
@@ -346,6 +348,14 @@ private:
   std::pair<SceneModulePtr, BehaviorModuleOutput> runRequestModules(
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
+=======
+  boost::optional<std::pair<SceneModuleManagerPtr, SceneModulePtr>> selectHighestPriorityModule(
+    std::vector<std::pair<SceneModuleManagerPtr, SceneModulePtr>> & request_modules) const;
+
+  bool isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) const;
+
+  boost::optional<SceneModulePtr> candidate_module_opt_{boost::none};
+>>>>>>> f5171a0f90 (fix(behavior_path_planner): output shorten path if ego vehicle is out of route)
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
 
