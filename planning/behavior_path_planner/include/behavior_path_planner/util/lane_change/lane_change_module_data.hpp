@@ -82,7 +82,7 @@ struct LaneChangeTargetObjectIndices
 
 enum class LaneChangeType {
   Normal = 0,
-  ExternalRequest = 0,
+  ExternalRequest = 1,
 };
 }  // namespace behavior_path_planner
 
