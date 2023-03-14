@@ -30,6 +30,13 @@ struct BehaviorPathPlannerParameters
   bool verbose;
 
   ModuleConfigParameters config_avoidance;
+  ModuleConfigParameters config_pull_out;
+  ModuleConfigParameters config_pull_over;
+  ModuleConfigParameters config_side_shift;
+  ModuleConfigParameters config_lane_change_left;
+  ModuleConfigParameters config_lane_change_right;
+  ModuleConfigParameters config_external_lane_change_left;
+  ModuleConfigParameters config_external_lane_change_right;
 
   double backward_path_length;
   double forward_path_length;
@@ -52,7 +59,9 @@ struct BehaviorPathPlannerParameters
   double turn_signal_shift_length_threshold;
   bool turn_signal_on_swerving;
 
-  double path_interval;
+  double enable_akima_spline_first;
+  double input_path_interval;
+  double output_path_interval;
 
   double ego_nearest_dist_threshold;
   double ego_nearest_yaw_threshold;

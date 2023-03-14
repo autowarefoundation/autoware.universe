@@ -69,7 +69,6 @@
 #endif
 
 #include <algorithm>
-
 namespace costmap_2d
 {
 using sensor_msgs::PointCloud2ConstIterator;
@@ -174,6 +173,7 @@ void OccupancyGridMap::updateWithPointCloud(
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
   utils::transformPointcloud(map_raw_pointcloud, scan2map_pose, scan_raw_pointcloud);
   utils::transformPointcloud(map_obstacle_pointcloud, scan2map_pose, scan_obstacle_pointcloud);
+
 
   // Create angle bins
   struct BinInfo

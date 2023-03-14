@@ -30,7 +30,6 @@ def launch_setup(context, *args, **kwargs):
     param_file = LaunchConfiguration("param_file").perform(context)
     with open(param_file, "r") as f:
         laserscan_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"]["ros__parameters"]
-    print(laserscan_based_occupancy_grid_map_node_params)
     laserscan_based_occupancy_grid_map_node_params["input_obstacle_pointcloud"] = bool(
         LaunchConfiguration("input_obstacle_pointcloud").perform(context)
     )
