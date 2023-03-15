@@ -18,6 +18,62 @@ The model was fine-tuned on 1750 TIER IV internal images of Japanese traffic lig
 
 - <https://drive.google.com/uc?id=1USFDPRH9JrVdGoqt27qHjRgittwc0kcO>
 
+### Customization of CNN model
+
+Currently, in Autoware, [SSD](https://arxiv.org/abs/1512.02325) is used as CNN fine detector by default.
+
+In order to train models and export onnx model, we recommend [open-mmlab/mmdetection](https://github.com/open-mmlab/mmdetection.git).
+Please follow the [official document](https://mmdetection.readthedocs.io/en/latest/) to install and experiment with mmdetection. If you get into troubles, [FAQ page] would help you.
+
+The following steps are example of a quick-start.
+
+#### step 0. Install [MMCV](https://github.com/open-mmlab/mmcv.git) and [MIM](https://github.com/open-mmlab/mim.git)
+
+_NOTE_ : First of all, install [PyTorch](https://pytorch.org/) suitable for your CUDA version (CUDA11.6 is supported in Autoware).
+
+In order to install mmcv suitable for your CUDA version, install it specifying a url.
+
+```shell
+# Install mim
+$ pip install -U openmim
+
+# Install mmcv on a machine with CUDA11.6 and PyTorch1.13.0
+$ pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.13/index.html
+```
+
+#### step 1. Install MMDetection
+
+You can install mmdetection as a Python package or from source.
+
+```shell
+# As a Python package
+$ pip install mmdet
+
+# From source
+$ git clone https://github.com/open-mmlab/mmdetection.git
+$ cd mmdetection
+$ pip install -v -e .
+```
+
+#### step 2. Train your model
+
+Train model with your experiment configuration file. For the details of config file, see [here](https://mmdetection.readthedocs.io/en/latest/user_guides/config.html).
+
+```shell
+# [] is optional, you can start training from pre-trained checkpoint
+$ mim train mmdet YOUR_CONFIG.py [--resume-from YOUR_CHECKPOINT.pth]
+```
+
+#### step 3. Export onnx model
+
+In exporting onnx, use `mmdetection/tools/deployment/pytorch2onnx.py` or [open-mmlab/mmdeploy](https://github.com/open-mmlab/mmdeploy.git).
+_NOTE_: Currently, autoware does not support TensorRT plugin for NMS defined by open-mmlab. Therefore, **please deploy onnx model excluding NMS layer**.
+
+```shell
+cd ~/mmdetection/tools/deployment
+python3 pytorch2onnx.py YOUR_CONFIG.py ...
+```
+
 ## Inner-workings / Algorithms
 
 Based on the camera image and the global ROI array detected by `map_based_detection` node, a CNN-based detection method enables highly accurate traffic light detection.
