@@ -56,10 +56,16 @@ class PointcloudMapFilterPipeline:
                     ("input", LaunchConfiguration("input_topic")),
                     ("map", "/map/pointcloud_map"),
                     ("output", LaunchConfiguration("output_topic")),
+                    ("map_loader_service", "/map/get_differential_pointcloud_map"),
                 ],
                 parameters=[
                     {
                         "distance_threshold": self.distance_threshold,
+                        "input_frame": "map",
+                        "timer_interval_ms": 100,
+                        "is_static_map": False,
+                        "map_update_distance_threshold": 10.0,
+                        "map_loader_radius": 150,
                     }
                 ],
                 extra_arguments=[
