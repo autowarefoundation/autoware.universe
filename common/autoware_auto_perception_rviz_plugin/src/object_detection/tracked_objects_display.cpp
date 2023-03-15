@@ -24,7 +24,7 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-TrackedObjectsDisplay::TrackedObjectsDisplay() : ObjectPolygonDisplayBase("tracks", "/perception/obstacle_segmentation/pointcloud") {}
+TrackedObjectsDisplay::TrackedObjectsDisplay() : ObjectPolygonDisplayBase("/perception/object_recognition/tracking/objects", "/perception/obstacle_segmentation/pointcloud") {}
 
 void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 {
@@ -127,23 +127,23 @@ void TrackedObjectsDisplay::onInitialize()
     ObjectPolygonDisplayBase::onInitialize();
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/tracked_objects_pointcloud", rclcpp::SensorDataQoS());
-    sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
+    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("~/output/tracked_objects_pointcloud", rclcpp::SensorDataQoS());
 
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/tracking/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
-    pointcloud_subscription_.subscribe(
-      raw_node, "/perception/obstacle_segmentation/pointcloud",
-      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
     sync_ptr_->registerCallback(&TrackedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
+
+    percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/tracking/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
+    pointcloud_subscription_.subscribe(raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 void TrackedObjectsDisplay::onObjectsAndObstaclePointCloud(
   const TrackedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
 { 
-  point_color_ ={5, 255, 5}; // green color
+  if (!m_publish_objs_pointcloud->getBool()) {
+    return;
+  }
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::TrackedObjects transformed_objects;
   if (!transformObjects(

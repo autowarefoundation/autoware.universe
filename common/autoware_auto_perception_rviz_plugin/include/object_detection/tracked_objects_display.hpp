@@ -103,9 +103,6 @@ private:
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
 
-
-  message_filters::Subscriber<TrackedObjects> percepted_objects_subscription_;
-  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
   typedef message_filters::sync_policies::ApproximateTime<TrackedObjects, sensor_msgs::msg::PointCloud2>SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   typename std::shared_ptr<Sync> sync_ptr_;

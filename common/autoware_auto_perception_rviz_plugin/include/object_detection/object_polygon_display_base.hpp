@@ -89,13 +89,6 @@ struct object_info
   std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
 };
 
-struct color
-{
-  uint8_t r; 
-  uint8_t g; 
-  uint8_t b;
-};
-
 inline pcl::PointXYZRGB toPCL(const double x, const double y, const double z)
 {
   pcl::PointXYZRGB pcl_point;
@@ -131,7 +124,6 @@ public:
 
   explicit ObjectPolygonDisplayBase(const std::string & default_topic, const std::string & default_pointcloud_topic)
   : m_marker_common(this),
-    // m_display_type_property{"Polygon Type", "3d", "Type of the polygon to display object", this},
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
     m_display_pose_with_covariance_property{
@@ -160,6 +152,8 @@ public:
     m_simple_visualize_mode_property = new rviz_common::properties::EnumProperty(
       "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this,
       SLOT(updatePalette()));
+    m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty("Publish Objects Pointcloud", true, 
+    "Enable/disable objects pointcloud publishing", this);
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", 
       QString::fromStdString(default_pointcloud_topic), 
@@ -186,7 +180,6 @@ public:
           QColor{color[0], color[1], color[2]}, class_property_values.alpha, & parent_property));
     }
     init_color_list(predicted_path_colors);
-    point_color_ ={255, 255, 255}; // defaul white color 
   }
 
   void onInitialize() override
@@ -200,11 +193,10 @@ public:
 
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud", rclcpp::SensorDataQoS());
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-    
+
   }
 
   void load(const rviz_common::Config & config) override
@@ -287,7 +279,6 @@ public:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr}; // !! different type in prototype, 
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_; // !! different type in prototype
 
-  color point_color_;
   
 
 protected:
@@ -574,17 +565,11 @@ protected:
         
         crop_hull_filter.filter(filtered_cloud);
 
-        // Define a custom color for the box polygons
-        // const uint8_t r = 30, g = 44, b = 255;
         
-        const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(object.classification);
+        const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(object.classification); // need to be converted to int
 
         for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it)
         {
-          // cloud_it->r = color_rgba.r;
-          // cloud_it->g = color_rgba.g;
-          // cloud_it->b = color_rgba.b;
-
           cloud_it->r = std::max(0, std::min(255, (int)floor(color_rgba.r * 256.0)));
           cloud_it->g = std::max(0, std::min(255, (int)floor(color_rgba.g * 256.0)));
           cloud_it->b = std::max(0, std::min(255, (int)floor(color_rgba.b * 256.0)));
@@ -597,7 +582,11 @@ protected:
 
   // Default pointcloud topic;
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
+    // Property to enable/disable objects pointcloud publishing
+  rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
 
+  message_filters::Subscriber<MsgT> percepted_objects_subscription_;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
 
 
 private:
@@ -633,6 +622,7 @@ private:
   std::string m_default_topic;
 
   std::vector<std_msgs::msg::ColorRGBA> predicted_path_colors;
+
 
 
 };

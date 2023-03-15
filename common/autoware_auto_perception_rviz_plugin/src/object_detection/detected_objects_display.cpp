@@ -24,7 +24,7 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-DetectedObjectsDisplay::DetectedObjectsDisplay() : ObjectPolygonDisplayBase("detected_objects", "/perception/obstacle_segmentation/pointcloud") {}
+DetectedObjectsDisplay::DetectedObjectsDisplay() : ObjectPolygonDisplayBase("/perception/object_recognition/detection/objects", "/perception/obstacle_segmentation/pointcloud") {}
 
 void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 {
@@ -89,26 +89,22 @@ void DetectedObjectsDisplay::onInitialize()
     ObjectPolygonDisplayBase::onInitialize();
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/detected_objects_pointcloud", rclcpp::SensorDataQoS());
+    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("~/output/detected_objects_pointcloud", rclcpp::SensorDataQoS());
+
     sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
-
-    using std::placeholders::_1;
-    using std::placeholders::_2;
+    sync_ptr_->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this); 
     percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/detection/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
-    pointcloud_subscription_.subscribe(
-      raw_node, "/perception/obstacle_segmentation/pointcloud",
+    pointcloud_subscription_.subscribe(raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
       rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
-    sync_ptr_->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
-    // sync_ptr_->registerCallback([this](const auto& objects, const auto& cloud) {onObjectsAndObstaclePointCloud(objects, cloud);});
-
-    
 }
 
 void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   const DetectedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
 { 
-    point_color_ = {255, 5, 5}; // red color
+  if (!m_publish_objs_pointcloud->getBool()) {
+    return;
+  }
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformObjects(

@@ -124,9 +124,6 @@ private:
   std::condition_variable condition;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
 
-
-  message_filters::Subscriber<PredictedObjects> percepted_objects_subscription_;
-  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
   typedef message_filters::sync_policies::ApproximateTime<PredictedObjects, sensor_msgs::msg::PointCloud2>SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   typename std::shared_ptr<Sync> sync_ptr_;

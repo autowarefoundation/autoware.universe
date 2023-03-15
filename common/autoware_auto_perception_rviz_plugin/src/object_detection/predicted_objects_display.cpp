@@ -22,7 +22,7 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks", "/perception/obstacle_segmentation/pointcloud")
+PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("predictions", "/perception/obstacle_segmentation/pointcloud")
 {
   std::thread worker(&PredictedObjectsDisplay::workerThread, this);
   worker.detach();
@@ -215,16 +215,14 @@ void PredictedObjectsDisplay::onInitialize()
     ObjectPolygonDisplayBase::onInitialize();
     // get access to rivz node to sub and to pub to topics 
     rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("output/predicted_objects_pointcloud", rclcpp::SensorDataQoS());
-    sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
+    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("~/output/predicted_objects_pointcloud", rclcpp::SensorDataQoS());
 
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
-    pointcloud_subscription_.subscribe(
-      raw_node, "/perception/obstacle_segmentation/pointcloud",
-      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
     sync_ptr_->registerCallback(&PredictedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
+
+    percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
+    pointcloud_subscription_.subscribe(raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 bool PredictedObjectsDisplay::transformObjects(
@@ -261,7 +259,9 @@ void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
   const PredictedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
 { 
-  point_color_ ={5, 5, 255}; // blue color
+    if (!m_publish_objs_pointcloud->getBool()) {
+    return;
+  }
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
   if (!transformObjects(
