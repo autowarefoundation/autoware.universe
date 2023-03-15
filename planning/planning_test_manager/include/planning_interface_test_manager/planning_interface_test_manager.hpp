@@ -29,6 +29,8 @@
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <gtest/gtest.h>
 
@@ -49,6 +51,8 @@ using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::VelocityLimit;
+using nav_msgs::msg::OccupancyGrid;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
 
 class PlanningIntefaceTestManager
 {
@@ -64,6 +68,8 @@ public:
   void publishAcceleration(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPredictedObjects(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishExpandStopRange(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
 
@@ -86,6 +92,8 @@ private:
   rclcpp::Publisher<VelocityLimit>::SharedPtr max_velocity_pub_;
   rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
   rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
+  rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
+
 
   // Subscriber (necessary for node running)
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;

@@ -77,7 +77,7 @@ void spinSomeNodes(
 template <typename T>
 void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
-  std::shared_ptr<rclcpp::Publisher<T>> & publisher)
+  typename rclcpp::Publisher<T>::SharedPtr publisher)
 {
   publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
 }

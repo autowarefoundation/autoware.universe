@@ -79,6 +79,21 @@ void PlanningIntefaceTestManager::publishExpandStopRange(
     test_node_, target_node, topic_name, expand_stop_range_pub_);
 }
 
+void PlanningIntefaceTestManager::publishMap(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<HADMapBin>(
+    test_node_, target_node, topic_name, map_pub_);
+}
+
+void PlanningIntefaceTestManager::publishOccupancyGrid(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<OccupancyGrid>(
+    test_node_, target_node, topic_name, occupancy_grid_pub_);
+}
+
+
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;
