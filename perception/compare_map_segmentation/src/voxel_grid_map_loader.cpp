@@ -20,6 +20,9 @@ VoxelGridMapLoader::VoxelGridMapLoader(
 {
   tf_map_input_frame_ = tf_map_input_frame;
   mutex_ptr_ = mutex;
+
+  downsampled_map_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "debug/downsampled_map/pointcloud", rclcpp::QoS{1}.transient_local());
 };
 
 pcl::PointCloud<pcl::PointXYZ> VoxelGridMapLoader::getNeighborVoxelPoints(
@@ -66,6 +69,15 @@ bool VoxelGridMapLoader::is_close_points(
   }
   return false;
 }
+
+void VoxelGridMapLoader::publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc)
+{
+  sensor_msgs::msg::PointCloud2 downsampled_map_msg;
+  pcl::toROSMsg(downsampled_pc, downsampled_map_msg);
+  downsampled_map_msg.header.frame_id = "map";
+  downsampled_map_pub_->publish(downsampled_map_msg);
+}
+
 //*************************** for Static Map loader Voxel Grid Filter *************
 
 VoxelGridStaticMapLoader::VoxelGridStaticMapLoader(
@@ -92,9 +104,10 @@ void VoxelGridStaticMapLoader::onMapCallback(
   voxel_grid_.setSaveLeafLayout(true);
   voxel_grid_.filter(*voxel_map_ptr_);
   (*mutex_ptr_).unlock();
+  publish_downsampled_map(*voxel_map_ptr_);
 }
 bool VoxelGridStaticMapLoader::is_close_to_map(
-  const pcl::PointXYZ & point, const double distance_threshold)
+  const pcl::PointXYZ & point, const double distance_threshold) 
 {
   // check map downsampled pc
   if (voxel_map_ptr_ == NULL) {
@@ -106,11 +119,12 @@ bool VoxelGridStaticMapLoader::is_close_to_map(
     voxel_index = voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(
       neighbor_voxel_points[j].x, neighbor_voxel_points[j].y, neighbor_voxel_points[j].z));
 
-    if (voxel_index != -1) {
-      if (is_close_points(voxel_map_ptr_->points.at(voxel_index), point, distance_threshold)) {
-        return true;
-      };
+    if (voxel_index == -1){
+      continue;
     }
+    if (is_close_points(voxel_map_ptr_->points.at(voxel_index), point, distance_threshold)) {
+      return true;
+    };
   }
   return false;
 };
@@ -148,8 +162,6 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
     std::chrono::milliseconds(timer_interval_ms),
     std::bind(&VoxelGridDynamicMapLoader::timer_callback, this), timer_callback_group_);
 
-  downsampled_map_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "debug/downsampled_map/pointcloud", rclcpp::QoS{1}.transient_local());
 }
 
 void VoxelGridDynamicMapLoader::onEstimatedPoseCallback(
@@ -187,6 +199,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
           return true;
         }
       }
+      return false;
     }
   }
   return false;
@@ -256,15 +269,9 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
     1000.0;
   RCLCPP_INFO(logger_, "Current map updating time: %lf [ms]", exe_run_time);
 
-  publish_downsampled_map();
+  publish_downsampled_map(getCurrentDownsampledMapPc());
 }
 
-void VoxelGridDynamicMapLoader::publish_downsampled_map()
-{
-  sensor_msgs::msg::PointCloud2 downsampled_map_msg;
-  pcl::toROSMsg(getCurrentDownsampledMapPc(), downsampled_map_msg);
-  downsampled_map_msg.header.frame_id = "map";
-  downsampled_map_pub_->publish(downsampled_map_msg);
-}
+
 
 // VoxelGridDynamicMapLoader::~VoxelGridDynamicMapLoader() {}

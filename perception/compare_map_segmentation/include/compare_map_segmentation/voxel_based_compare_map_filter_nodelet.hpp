@@ -16,8 +16,6 @@
 #define COMPARE_MAP_SEGMENTATION__VOXEL_BASED_COMPARE_MAP_FILTER_NODELET_HPP_
 
 #include "compare_map_segmentation/voxel_grid_map_loader.hpp"
-
-// #include "compare_map_segmentation/map_update_module.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
 
 #include <pcl/filters/voxel_grid.h>
@@ -36,15 +34,11 @@ protected:
 private:
   // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
   std::unique_ptr<VoxelGridMapLoader> voxel_grid_map_looader_;
-  // std::unique_ptr<MapUpdateModule> voxel_map_update_module_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
   double distance_threshold_;
   bool set_map_in_voxel_grid_;
 
   bool dynamic_map_load_enable_;
-  // std::unique_ptr<MapUpdateModule> voxel_map_update_module_;
-  std::mutex * voxel_based_compare_map_mutex_ptr_;
-  double radius_search_;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW

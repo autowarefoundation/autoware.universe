@@ -83,6 +83,7 @@ void VoxelBasedCompareMapFilterComponent::filter(
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
+
 }
 
 }  // namespace compare_map_segmentation

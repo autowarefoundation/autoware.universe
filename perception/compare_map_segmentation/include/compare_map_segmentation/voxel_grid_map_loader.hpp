@@ -55,6 +55,7 @@ protected:
   rclcpp::Logger logger_;
   std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
 
 public:
   typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
@@ -62,6 +63,7 @@ public:
   explicit VoxelGridMapLoader(
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex);
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
+  void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
 
   inline pcl::PointCloud<pcl::PointXYZ> getNeighborVoxelPoints(
     pcl::PointXYZ point, double voxel_size);
@@ -114,7 +116,6 @@ private:
     map_update_client_;
   rclcpp::CallbackGroup::SharedPtr client_callback_group_;
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
 
 public:
   explicit VoxelGridDynamicMapLoader(
@@ -125,7 +126,6 @@ public:
   void timer_callback();
   bool should_update_map();
   void request_update_map(const geometry_msgs::msg::Point & position);
-  void publish_downsampled_map();
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
 
   inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc()
