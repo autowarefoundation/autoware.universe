@@ -32,6 +32,15 @@ def launch_setup(context, *args, **kwargs):
         pointcloud_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"][
             "ros__parameters"
         ]
+    # overwrite node params if defined in launch file
+    if LaunchConfiguration("map_origin").perform(context) != "":
+        pointcloud_based_occupancy_grid_map_node_params[
+            "gridmap_origin_frame"
+        ] = LaunchConfiguration("map_origin").perform(context)
+    if LaunchConfiguration("scan_origin").perform(context) != "":
+        pointcloud_based_occupancy_grid_map_node_params["scan_origin_frame"] = LaunchConfiguration(
+            "scan_origin"
+        ).perform(context)
 
     composable_nodes = [
         ComposableNode(
@@ -93,6 +102,8 @@ def generate_launch_description():
             add_launch_arg("input/raw_pointcloud", "concatenated/pointcloud"),
             add_launch_arg("output", "occupancy_grid"),
             add_launch_arg("param_file", "config/pointcloud_based_occupancy_grid_map.param.yaml"),
+            add_launch_arg("map_origin", ""),
+            add_launch_arg("scan_origin", ""),
             set_container_executable,
             set_container_mt_executable,
         ]
