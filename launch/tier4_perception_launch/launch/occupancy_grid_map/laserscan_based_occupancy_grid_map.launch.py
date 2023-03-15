@@ -26,15 +26,19 @@ from launch_ros.descriptions import ComposableNode
 import yaml
 
 
+def str2bool(s):
+    return s.lower() in ["true", "True"]
+
+
 def launch_setup(context, *args, **kwargs):
     # load parameter files
     param_file = LaunchConfiguration("param_file").perform(context)
     with open(param_file, "r") as f:
         laserscan_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"]["ros__parameters"]
-    laserscan_based_occupancy_grid_map_node_params["input_obstacle_pointcloud"] = bool(
+    laserscan_based_occupancy_grid_map_node_params["input_obstacle_pointcloud"] = str2bool(
         LaunchConfiguration("input_obstacle_pointcloud").perform(context)
     )
-    laserscan_based_occupancy_grid_map_node_params["input_obstacle_and_raw_pointcloud"] = bool(
+    laserscan_based_occupancy_grid_map_node_params["input_obstacle_and_raw_pointcloud"] = str2bool(
         LaunchConfiguration("input_obstacle_and_raw_pointcloud").perform(context)
     )
 
