@@ -352,7 +352,7 @@ std::pair<bool, bool> getLaneChangePaths(
       route_handler, original_lanelets, arc_position_from_current.length, backward_path_length,
       prepare_distance, std::max(prepare_speed, minimum_lane_change_velocity));
 #else
-    const auto prepare_segment_reference = getPrepareSegment(
+    const auto prepare_segment = getPrepareSegment(
       original_path, original_lanelets, pose, backward_path_length, prepare_distance,
       std::max(prepare_speed, minimum_lane_change_velocity));
 #endif
