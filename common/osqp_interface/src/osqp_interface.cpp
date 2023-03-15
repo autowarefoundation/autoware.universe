@@ -73,11 +73,12 @@ OSQPInterface::OSQPInterface(
 }
 
 OSQPInterface::OSQPInterface(
-  CSC_Matrix && P, CSC_Matrix && A, const std::vector<double> & q, const std::vector<double> & l,
-  const std::vector<double> & u, const c_float eps_abs, const bool polish, const bool warm_start)
+  const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
+  const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+  const bool polish, const bool warm_start)
 : OSQPInterface(eps_abs, polish, warm_start)
 {
-  initializeProblem(std::forward<CSC_Matrix>(P), std::forward<CSC_Matrix>(A), q, l, u, warm_start);
+  initializeProblem(P, A, q, l, u, warm_start);
 }
 
 void OSQPInterface::OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept
@@ -316,13 +317,13 @@ int64_t OSQPInterface::initializeProblem(
     throw std::invalid_argument(ss.str());
   }
 
-  CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
-  CSC_Matrix A_csc = calCSCMatrix(A);
-  return initializeProblem(std::move(P_csc), std::move(A_csc), q, l, u, do_warm_start);
+  const CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
+  const CSC_Matrix A_csc = calCSCMatrix(A);
+  return initializeProblem(P_csc, A_csc, q, l, u, do_warm_start);
 }
 
 int64_t OSQPInterface::initializeProblem(
-  CSC_Matrix && P_csc, CSC_Matrix && A_csc, const std::vector<double> & q,
+  const CSC_Matrix & P_csc, const CSC_Matrix & A_csc, const std::vector<double> & q,
   const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start)
 {
   m_param_n = static_cast<int>(q.size());
@@ -333,8 +334,8 @@ int64_t OSQPInterface::initializeProblem(
     // if (1) warm_start is enabled AND
     // (2) problem size is invariant AND
     // (3) previous solution is valid
-    updateCscP(std::forward<CSC_Matrix>(P_csc));
-    updateCscA(std::forward<CSC_Matrix>(A_csc));
+    updateCscP(P_csc);
+    updateCscA(A_csc);
     updateQ(q);
     updateBounds(l, u);
     return true;
@@ -354,14 +355,16 @@ int64_t OSQPInterface::initializeProblem(
     data->m = m_param_m;
     // P
     data->P = csc_matrix(
-      data->n, data->n, static_cast<c_int>(P_csc.m_vals.size()), P_csc.m_vals.data(),
-      P_csc.m_row_idxs.data(), P_csc.m_col_idxs.data());
+      data->n, data->n, static_cast<c_int>(P_csc.m_vals.size()),
+      const_cast<double *>(P_csc.m_vals.data()), const_cast<c_int *>(P_csc.m_row_idxs.data()),
+      const_cast<c_int *>(P_csc.m_col_idxs.data()));
     // q
     data->q = const_cast<double *>(q.data());
     // A
     data->A = csc_matrix(
-      data->m, data->n, static_cast<c_int>(A_csc.m_vals.size()), A_csc.m_vals.data(),
-      A_csc.m_row_idxs.data(), A_csc.m_col_idxs.data());
+      data->m, data->n, static_cast<c_int>(A_csc.m_vals.size()),
+      const_cast<double *>(A_csc.m_vals.data()), const_cast<c_int *>(A_csc.m_row_idxs.data()),
+      const_cast<c_int *>(A_csc.m_col_idxs.data()));
     // bounds
     data->l = const_cast<double *>(l.data());
     data->u = const_cast<double *>(u.data());

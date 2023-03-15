@@ -60,9 +60,9 @@ public:
     const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
     const bool polish = true, const bool warm_start = true);
   OSQPInterface(
-    CSC_Matrix && P, CSC_Matrix && A, const std::vector<double> & q, const std::vector<double> & l,
-    const std::vector<double> & u, const c_float eps_abs, const bool polish = true,
-    const bool warm_start = true);
+    const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
+    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+    const bool polish = true, const bool warm_start = true);
   ~OSQPInterface() = default;
 
   static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
@@ -79,8 +79,8 @@ public:
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
     const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
   int64_t initializeProblem(
-    CSC_Matrix && P, CSC_Matrix && A, const std::vector<double> & q, const std::vector<double> & l,
-    const std::vector<double> & u, const bool do_warm_start = true);
+    const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
+    const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
 
   /****************
    * OPTIMIZATION
