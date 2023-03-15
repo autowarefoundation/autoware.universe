@@ -79,27 +79,20 @@ public:
     const Eigen::Vector4i & div_b, const Eigen::Vector4i & divb_mul,
     const Eigen::Array4f & inverse_leaf_size)
   {
-    auto exe_start_time = std::chrono::system_clock::now();
     leaf_layout_ = std::move(*leaf_layout);
-    auto exe_stop_time = std::chrono::system_clock::now();
-    const double exe_run_time =
-      std::chrono::duration_cast<std::chrono::microseconds>(exe_stop_time - exe_start_time)
-        .count() /
-      1000.0;
-    std::cout << " Leaf_layout copying time: " << exe_run_time << "[ms]" << std::endl;
     min_b_ = min_b;
     max_b_ = max_b;
     div_b_ = div_b;
     divb_mul_ = divb_mul;
     inverse_leaf_size_ = inverse_leaf_size;
   }
-  inline Eigen::Vector4f get_min_p() { return min_p; };
-  inline Eigen::Vector4f get_max_p() { return max_p; };
-  inline Eigen::Vector4i get_min_b() { return min_b_; }
-  inline Eigen::Vector4i get_divb_mul() { return divb_mul_; }
-  inline Eigen::Vector4i get_max_b() { return max_b_; }
-  inline Eigen::Vector4i get_div_b() { return div_b_; }
-  inline Eigen::Array4f get_inverse_leaf_size() { return inverse_leaf_size_; }
+  inline Eigen::Vector4f get_min_p() const { return min_p; };
+  inline Eigen::Vector4f get_max_p() const { return max_p; };
+  inline Eigen::Vector4i get_min_b() const { return min_b_; }
+  inline Eigen::Vector4i get_divb_mul() const { return divb_mul_; }
+  inline Eigen::Vector4i get_max_b() const { return max_b_; }
+  inline Eigen::Vector4i get_div_b() const { return div_b_; }
+  inline Eigen::Array4f get_inverse_leaf_size() const { return inverse_leaf_size_; }
   inline std::vector<int> getLeafLayout() { return (leaf_layout_); }
 
   inline void applyFilter(PointCloud & output) override

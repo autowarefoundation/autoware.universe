@@ -65,11 +65,13 @@ public:
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
 
+  /** \brief Get representative points of 27 neigboor voxels*/
   inline pcl::PointCloud<pcl::PointXYZ> getNeighborVoxelPoints(
     pcl::PointXYZ point, double voxel_size);
 
   inline bool is_close_points(
-    const pcl::PointXYZ point, const pcl::PointXYZ target_point, const double distance_threshold);
+    const pcl::PointXYZ point, const pcl::PointXYZ target_point,
+    const double distance_threshold) const;
   std::string * tf_map_input_frame_;
 };
 
@@ -97,14 +99,13 @@ class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
     MultiVoxelGrid map_cell_voxel_grid;
     PointCloudPtr map_cell_pc_ptr;
     float min_b_x, min_b_y, max_b_x, max_b_y;
-    pcl::PointCloud<pcl::PointXYZ> voxel_grid_filtered_pc;
+    // pcl::PointCloud<pcl::PointXYZ> voxel_grid_filtered_pc;
   };
 
   typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
 
 private:
-  /* data */
-  VoxelGridDict current_voxel_grid_list_;
+  VoxelGridDict current_voxel_grid_dict_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     sub_estimated_pose_;
   std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
@@ -124,22 +125,22 @@ public:
   void onEstimatedPoseCallback(geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose);
 
   void timer_callback();
-  bool should_update_map();
+  bool should_update_map() const;
   void request_update_map(const geometry_msgs::msg::Point & position);
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
 
-  inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc()
+  inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
   {
     pcl::PointCloud<pcl::PointXYZ> output;
-    for (const auto & kv : current_voxel_grid_list_) {
-      output = output + kv.second.voxel_grid_filtered_pc;
+    for (const auto & kv : current_voxel_grid_dict_) {
+      output = output + *(kv.second.map_cell_pc_ptr);
     }
     return output;
   }
   inline std::vector<std::string> getCurrentMapIDs() const
   {
     std::vector<std::string> current_map_ids{};
-    for (auto & kv : current_voxel_grid_list_) {
+    for (auto & kv : current_voxel_grid_dict_) {
       current_map_ids.push_back(kv.first);
     }
     return current_map_ids;
@@ -163,7 +164,7 @@ public:
   inline void removeMapCell(const std::string map_cell_id_to_remove)
   {
     (*mutex_ptr_).lock();
-    current_voxel_grid_list_.erase(map_cell_id_to_remove);
+    current_voxel_grid_dict_.erase(map_cell_id_to_remove);
     (*mutex_ptr_).unlock();
   }
 
@@ -187,7 +188,7 @@ public:
     map_cell_voxel_grid_tmp.filter(*map_cell_downsampled_pc_ptr_tmp);
 
     MapGridVoxelInfo current_voxel_grid_list_item;
-    current_voxel_grid_list_item.voxel_grid_filtered_pc = *map_cell_downsampled_pc_ptr_tmp;
+    // current_voxel_grid_list_item.voxel_grid_filtered_pc = *map_cell_downsampled_pc_ptr_tmp;
     current_voxel_grid_list_item.min_b_x = map_cell_voxel_grid_tmp.get_min_p()[0];
     current_voxel_grid_list_item.min_b_y = map_cell_voxel_grid_tmp.get_min_p()[1];
     current_voxel_grid_list_item.max_b_x = map_cell_voxel_grid_tmp.get_max_p()[0];
@@ -205,7 +206,7 @@ public:
     }
     // add
     (*mutex_ptr_).lock();
-    current_voxel_grid_list_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
+    current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
     (*mutex_ptr_).unlock();
 
     auto exe_stop_time = std::chrono::system_clock::now();
