@@ -152,6 +152,8 @@ public:
     m_simple_visualize_mode_property = new rviz_common::properties::EnumProperty(
       "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this,
       SLOT(updatePalette()));
+    m_simple_visualize_mode_property->addOption("Normal", 0);
+    m_simple_visualize_mode_property->addOption("Simple", 1);
     m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty("Publish Objects Pointcloud", true, 
     "Enable/disable objects pointcloud publishing", this);
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
@@ -161,8 +163,7 @@ public:
       "Input for pointcloud visualization of Objectcs detection pipeline",
       this, 
       SLOT(updatePalette()));
-    m_simple_visualize_mode_property->addOption("Normal", 0);
-    m_simple_visualize_mode_property->addOption("Simple", 1);
+    m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
