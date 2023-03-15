@@ -98,7 +98,7 @@ bool hasEnoughDistance(
   const RouteHandler & route_handler, const double minimum_lane_change_length);
 
 ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & current_path, const PathWithLaneId & target_path,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
   const lanelet::ConstLanelets & target_lanes, const PathWithLaneId & reference_path);
 
 PathWithLaneId getReferencePathFromTargetLane(

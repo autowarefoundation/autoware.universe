@@ -217,10 +217,10 @@ std::optional<LaneChangePath> constructCandidatePath(
   const PathPointWithLaneId & lane_changing_start_point = prepare_segment.points.back();
   const PathPointWithLaneId & lane_changing_end_point = lane_changing_segment.points.front();
   const Pose & lane_changing_end_pose = lane_changing_end_point.point.pose;
-  const auto lanechange_end_idx =
+  const auto lane_change_end_idx =
     motion_utils::findNearestIndex(shifted_path.path.points, lane_changing_end_pose);
 
-  if (!lanechange_end_idx) {
+  if (!lane_change_end_idx) {
     RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
       "lane change end idx not found on target path.");
@@ -229,7 +229,7 @@ std::optional<LaneChangePath> constructCandidatePath(
 
   for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
     auto & point = shifted_path.path.points.at(i);
-    if (i < *lanechange_end_idx) {
+    if (i < *lane_change_end_idx) {
       point.lane_ids = replaceWithSortedIds(point.lane_ids, sorted_lane_ids);
       point.point.longitudinal_velocity_mps = std::min(
         point.point.longitudinal_velocity_mps,
@@ -243,11 +243,11 @@ std::optional<LaneChangePath> constructCandidatePath(
     point.lane_ids = lane_changing_segment.points.at(*nearest_idx).lane_ids;
   }
 
+  // check candidate path is in lanelet
   if (!isPathInLanelets(shifted_path.path, original_lanelets, target_lanelets)) {
     return std::nullopt;
   }
 
-  // check candidate path is in lanelet
   candidate_path.path = combineReferencePath(prepare_segment, shifted_path.path);
   candidate_path.shifted_path = shifted_path;
 
@@ -315,8 +315,7 @@ std::pair<bool, bool> getLaneChangePaths(
   const auto required_total_min_distance =
     util::calcLaneChangeBuffer(common_parameter, num_to_preferred_lane);
 
-  [[maybe_unused]] const auto arc_position_from_current =
-    lanelet::utils::getArcCoordinates(original_lanelets, pose);
+  const auto arc_position_from_current = lanelet::utils::getArcCoordinates(original_lanelets, pose);
   const auto arc_position_from_target = lanelet::utils::getArcCoordinates(target_lanelets, pose);
 
   const auto target_lane_length = lanelet::utils::getLaneletLength2d(target_lanelets);
@@ -609,22 +608,21 @@ bool isLaneChangePathSafe(
 }
 
 ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & current_path, const PathWithLaneId & target_path,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
   const lanelet::ConstLanelets & target_lanes, const PathWithLaneId & reference_path)
 {
-  const Pose & lane_change_start_on_self_lane = current_path.points.back().point.pose;
-  const Pose & lane_change_end_on_target_lane = target_path.points.front().point.pose;
-  const ArcCoordinates lane_change_start_on_self_lane_arc =
-    lanelet::utils::getArcCoordinates(target_lanes, lane_change_start_on_self_lane);
+  const Pose & lane_changing_start_pose = prepare_segment.points.back().point.pose;
+  const Pose & lane_changing_end_pose = lane_changing_segment.points.front().point.pose;
 
   ShiftLine shift_line;
-  shift_line.end_shift_length = lane_change_start_on_self_lane_arc.distance;
-  shift_line.start = lane_change_start_on_self_lane;
-  shift_line.end = lane_change_end_on_target_lane;
+  shift_line.end_shift_length =
+    util::calcLateralDistanceToLanelet(target_lanes, lane_changing_start_pose);
+  shift_line.start = lane_changing_start_pose;
+  shift_line.end = lane_changing_end_pose;
   shift_line.start_idx =
-    motion_utils::findNearestIndex(reference_path.points, lane_change_start_on_self_lane.position);
+    motion_utils::findNearestIndex(reference_path.points, lane_changing_start_pose.position);
   shift_line.end_idx =
-    motion_utils::findNearestIndex(reference_path.points, lane_change_end_on_target_lane.position);
+    motion_utils::findNearestIndex(reference_path.points, lane_changing_end_pose.position);
 
   RCLCPP_DEBUG(
     rclcpp::get_logger("behavior_path_planner")
