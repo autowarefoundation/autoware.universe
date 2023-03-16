@@ -100,9 +100,9 @@ void DetectedObjectsDisplay::onInitialize()
   percepted_objects_subscription.subscribe(
     raw_node, "/perception/object_recognition/detection/objects",
     rclcpp::QoS{1}.get_rmw_qos_profile()),
-  pointcloud_subscription.subscribe(
-    raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
-    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    pointcloud_subscription.subscribe(
+      raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
@@ -115,8 +115,7 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformObjects(
-      *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects))
-  {
+        *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
     // objects_pub_->publish(*input_objects);
     return;
   }
