@@ -36,7 +36,7 @@
 #include <memory>
 #include <string>
 
-namespace planning_test_manager
+namespace planning_test_utils
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
@@ -107,6 +107,6 @@ private:
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
 };  // class PlanningIntefaceTestManager
 
-}  // namespace planning_test_manager
+}  // namespace planning_test_utils
 
 #endif  // PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_

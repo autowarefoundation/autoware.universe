@@ -26,7 +26,7 @@
   <depend>nav_msgs</depend>
   <depend>osqp_interface</depend>
   <depend>perception_utils</depend>
-  <depend>planning_test_manager</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>signal_processing</depend>

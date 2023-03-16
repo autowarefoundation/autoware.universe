@@ -15,7 +15,7 @@
 #include <planning_interface_test_manager/planning_interface_test_manager.hpp>
 #include <planning_interface_test_manager/planning_interface_test_manager_utils.hpp>
 
-namespace planning_test_manager
+namespace planning_test_utils
 {
 void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
 {
@@ -122,4 +122,4 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
-}  // namespace planning_test_manager
+}  // namespace planning_test_utils
