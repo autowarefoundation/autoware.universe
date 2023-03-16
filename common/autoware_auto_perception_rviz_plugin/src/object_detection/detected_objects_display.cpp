@@ -80,9 +80,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       twist_marker_ptr->id = id++;
       add_marker(twist_marker_ptr);
     }
-
-    // Transform to pointcloud frame
-    // RCLCPP_INFO(this->get_logger(), "Update objects buffer");
   }
 }
 
@@ -91,18 +88,18 @@ void DetectedObjectsDisplay::onInitialize()
   ObjectPolygonDisplayBase::onInitialize();
   // get access to rivz node to sub and to pub to topics
   rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-  publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
+  publisher = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/output/detected_objects_pointcloud", rclcpp::SensorDataQoS());
 
-  sync_ptr_ = std::make_shared<Sync>(
+  sync_ptr = std::make_shared<Sync>(
     SyncPolicy(
-      10), percepted_objects_subscription_, pointcloud_subscription_);
-  sync_ptr_->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
-  percepted_objects_subscription_.subscribe(
+      10), percepted_objects_subscription, pointcloud_subscription);
+  sync_ptr->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
+  percepted_objects_subscription.subscribe(
     raw_node,
     "/perception/object_recognition/detection/objects",
     rclcpp::QoS{1}.get_rmw_qos_profile()),
-  pointcloud_subscription_.subscribe(
+  pointcloud_subscription.subscribe(
     raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
     rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
@@ -117,7 +114,7 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformObjects(
-      *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer_,
+      *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer,
       transformed_objects))
   {
     // objects_pub_->publish(*input_objects);
@@ -177,7 +174,7 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
 
-  publisher_->publish(*output_pointcloud_msg_ptr);
+  publisher->publish(*output_pointcloud_msg_ptr);
 }
 
 }  // namespace object_detection

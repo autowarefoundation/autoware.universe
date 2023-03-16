@@ -47,7 +47,6 @@ public:
 private:
   void processMessage(TrackedObjects::ConstSharedPtr msg) override;
   void onInitialize() override;
-  // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -108,10 +107,8 @@ private:
   typedef message_filters::sync_policies::ApproximateTime<TrackedObjects,
       sensor_msgs::msg::PointCloud2> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
-  typename std::shared_ptr<Sync> sync_ptr_;
+  typename std::shared_ptr<Sync> sync_ptr;
 
-  // std::string objects_frame_id_;
-  // std::vector<autoware_auto_perception_msgs::msg::TrackedObject> objs_buffer;
 };
 
 }  // namespace object_detection

@@ -199,8 +199,8 @@ public:
     rclcpp::Node::SharedPtr raw_node =
       this->context_->getRosNodeAbstraction().lock()->get_raw_node();
 
-    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
-    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+    tf_buffer = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
+    tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
   }
 
@@ -271,7 +271,7 @@ public:
         target_frame_id, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
       return self_transform_stamped.transform;
     } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("perception_utils"), ex.what()); // rename
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("autoware_auto_perception_plugin"), ex.what()); // rename
       return boost::none;
     }
   }
@@ -279,10 +279,8 @@ public:
 
   // variables for transfer detected objects information between callbacks
   std::vector<object_info> objs_buffer;
-  std::string objects_frame_id_;
-  std::string pointcloud_frame_id_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr}; // !! different type in prototype,
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_; // !! different type in prototype
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr}; 
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer; 
 
 protected:
   /// \brief Convert given shape msg into a Marker
@@ -533,7 +531,6 @@ protected:
       }
       return max_dist;
     } else {
-      // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "unknown shape type");
       return std::nullopt;
     }
   }
@@ -581,15 +578,15 @@ protected:
     *out_cloud += filtered_cloud;
   }
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
 
   // Default pointcloud topic;
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
   // Property to enable/disable objects pointcloud publishing
   rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
 
-  message_filters::Subscriber<MsgT> percepted_objects_subscription_;
-  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
+  message_filters::Subscriber<MsgT> percepted_objects_subscription;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class

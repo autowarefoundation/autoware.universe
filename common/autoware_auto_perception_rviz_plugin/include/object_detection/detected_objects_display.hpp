@@ -47,8 +47,7 @@ private:
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<DetectedObjects,
       sensor_msgs::msg::PointCloud2>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
-  std::shared_ptr<Sync> sync_ptr_;
-  // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
+  std::shared_ptr<Sync> sync_ptr;
 
 };
 
