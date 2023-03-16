@@ -1927,6 +1927,22 @@ void shiftPose(Pose * pose, double shift_length)
   pose->position.y += std::cos(yaw) * shift_length;
 }
 
+PathWithLaneId getCenterLinePathFromRootLanelet(
+  const lanelet::ConstLanelet & root_lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & p = planner_data->parameters;
+
+  const auto reference_lanes = route_handler->getLaneletSequence(
+    root_lanelet, current_pose, p.backward_path_length, p.forward_path_length);
+
+  return getCenterLinePath(
+    *route_handler, reference_lanes, current_pose, p.backward_path_length, p.forward_path_length,
+    p);
+}
+
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
   const Pose & pose, const double backward_path_length, const double forward_path_length,
@@ -1959,7 +1975,11 @@ PathWithLaneId getCenterLinePath(
     s_forward = std::min(s_forward, goal_arc_coordinates.length - lane_change_buffer);
   }
 
-  return route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
+  const auto raw_path_with_lane_id =
+    route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
+  const auto resampled_path_with_lane_id = motion_utils::resamplePath(
+    raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
+  return raw_path_with_lane_id;
 }
 
 // for lane following
@@ -2072,6 +2092,32 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
   return route_handler->getLaneletSequence(
     current_lane, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length);
+}
+
+lanelet::ConstLanelets getCurrentLanesFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & p = planner_data->parameters;
+
+  std::set<uint64_t> lane_ids;
+  for (const auto & p : path.points) {
+    for (const auto & id : p.lane_ids) {
+      lane_ids.insert(id);
+    }
+  }
+
+  lanelet::ConstLanelets reference_lanes{};
+  for (const auto & id : lane_ids) {
+    reference_lanes.push_back(planner_data->route_handler->getLaneletsFromId(id));
+  }
+
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(reference_lanes, current_pose, &current_lane);
+
+  return route_handler->getLaneletSequence(
+    current_lane, current_pose, p.backward_path_length, p.forward_path_length);
 }
 
 lanelet::ConstLanelets extendLanes(
@@ -2644,5 +2690,17 @@ lanelet::ConstLanelets getLaneletsFromPath(
   }
 
   return lanelets;
+}
+
+double calcLateralDistanceToLanelet(
+  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose & pose)
+{
+  lanelet::ConstLanelet closest_lanelet;
+  lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lanelet);
+  const auto & centerline_2d = lanelet::utils::to2D(closest_lanelet.centerline());
+
+  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
+  return lanelet::geometry::signedDistance(
+    centerline_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
 }
 }  // namespace behavior_path_planner::util
