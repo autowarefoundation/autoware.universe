@@ -249,6 +249,8 @@ private:
     std::vector<ReferencePoint> & ref_points,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
     const std::vector<geometry_msgs::msg::Point> & right_bound) const;
+  std::vector<ReferencePoint> extendViolatedBounds(
+    const std::vector<ReferencePoint> & ref_points) const;
   void updateVehicleBounds(
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
