@@ -16,8 +16,8 @@
 
 #include <object_detection/object_polygon_display_base.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -125,11 +125,11 @@ private:
   std::condition_variable condition;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
 
-  typedef message_filters::sync_policies::ApproximateTime<PredictedObjects,
-      sensor_msgs::msg::PointCloud2> SyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<
+      PredictedObjects, sensor_msgs::msg::PointCloud2>
+    SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   typename std::shared_ptr<Sync> sync_ptr;
-
 };
 
 }  // namespace object_detection

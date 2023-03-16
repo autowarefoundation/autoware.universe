@@ -26,49 +26,48 @@
 #include <visibility_control.hpp>
 
 // #include <rviz_default_plugins/displays/pointcloud/point_cloud2_display.hpp>
-#include "rclcpp/rclcpp.hpp"
 #include "rclcpp/clock.hpp"
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <rviz_common/display_context.hpp>
+#include "rclcpp/rclcpp.hpp"
 #include "rviz_common/properties/ros_topic_property.hpp"
 
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
+#include <rviz_common/display_context.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/conversions.h>
-#include <pcl/common/common.h>
-#include <pcl/common/transforms.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/search/pcl_search.h>
-
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/crop_box.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/crop_hull.h>
+#include <boost/geometry.hpp>
+#include <boost/optional.hpp>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/common/common.h>
+#include <pcl/common/transforms.h>
+#include <pcl/conversions.h>
+#include <pcl/filters/crop_box.h>
+#include <pcl/filters/crop_hull.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/search/pcl_search.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
-
-#include <boost/optional.hpp>
-#include <boost/geometry.hpp>
+#include <algorithm>
 #include <bitset>
 #include <list>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 namespace autoware
 {
@@ -103,7 +102,6 @@ inline pcl::PointXYZRGB toPCL(const geometry_msgs::msg::Point & point)
   return toPCL(point.x, point.y, point.z);
 }
 
-
 /// \brief Base rviz plugin class for all object msg types. The class defines common properties
 ///        for the plugin and also defines common helper functions that can be used by its derived
 ///        classes.
@@ -123,8 +121,7 @@ public:
     std::unordered_map<ObjectClassificationMsg::_label_type, common::ColorAlphaProperty>;
 
   explicit ObjectPolygonDisplayBase(
-    const std::string & default_topic,
-    const std::string & default_pointcloud_topic)
+    const std::string & default_topic, const std::string & default_pointcloud_topic)
   : m_marker_common(this),
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
@@ -157,14 +154,10 @@ public:
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
     m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty(
-      "Publish Objects Pointcloud", true,
-      "Enable/disable objects pointcloud publishing", this);
+      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this);
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
-      "Input pointcloud topic",
-      QString::fromStdString(default_pointcloud_topic),
-      "",
-      "Input for pointcloud visualization of Objectcs detection pipeline",
-      this,
+      "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
+      "Input for pointcloud visualization of Objectcs detection pipeline", this,
       SLOT(updatePalette()));
     m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
@@ -201,7 +194,6 @@ public:
 
     tf_buffer = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
-
   }
 
   void load(const rviz_common::Config & config) override
@@ -271,16 +263,16 @@ public:
         target_frame_id, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
       return self_transform_stamped.transform;
     } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("autoware_auto_perception_plugin"), ex.what()); // rename
+      RCLCPP_WARN_STREAM(
+        rclcpp::get_logger("autoware_auto_perception_plugin"), ex.what());  // rename
       return boost::none;
     }
   }
 
-
   // variables for transfer detected objects information between callbacks
   std::vector<object_info> objs_buffer;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr}; 
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer; 
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer;
 
 protected:
   /// \brief Convert given shape msg into a Marker
@@ -517,7 +509,6 @@ protected:
 
   double get_line_width() {return m_line_width_property.getFloat();}
 
-
   // helper function to get radius for kd-search
   std::optional<float> getMaxRadius(object_info & object)
   {
@@ -543,17 +534,17 @@ protected:
     std::vector<pcl::Vertices> vertices_array;
     pcl::Vertices vertices;
 
-    Polygon2d poly2d =
-      tier4_autoware_utils::toPolygon2d(object.position, object.shape);
-    if (boost::geometry::is_empty(poly2d)) {return;}
+    Polygon2d poly2d = tier4_autoware_utils::toPolygon2d(object.position, object.shape);
+    if (boost::geometry::is_empty(poly2d)) {
+      return;
+    }
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     for (size_t i = 0; i < poly2d.outer().size(); ++i) {
       vertices.vertices.emplace_back(i);
       vertices_array.emplace_back(vertices);
       hull_cloud->emplace_back(
-        static_cast<float>(poly2d.outer().at(i).x()),
-        static_cast<float>(poly2d.outer().at(i).y()),
+        static_cast<float>(poly2d.outer().at(i).x()), static_cast<float>(poly2d.outer().at(i).y()),
         static_cast<float>(0.0));
     }
 
@@ -566,8 +557,8 @@ protected:
 
     crop_hull_filter.filter(filtered_cloud);
 
-
-    const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(object.classification);     // need to be converted to int
+    const std_msgs::msg::ColorRGBA color_rgba =
+      get_color_rgba(object.classification);  // need to be converted to int
 
     for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it) {
       cloud_it->r = std::max(0, std::min(255, (int)floor(color_rgba.r * 256.0)));
@@ -577,7 +568,6 @@ protected:
 
     *out_cloud += filtered_cloud;
   }
-
 
   // Default pointcloud topic;
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
@@ -621,8 +611,6 @@ private:
   std::string m_default_topic;
 
   std::vector<std_msgs::msg::ColorRGBA> predicted_path_colors;
-
-
 };
 }  // namespace object_detection
 }  // namespace rviz_plugins

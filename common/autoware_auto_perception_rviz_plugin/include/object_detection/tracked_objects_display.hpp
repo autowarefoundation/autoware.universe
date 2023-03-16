@@ -16,8 +16,8 @@
 
 #include <object_detection/object_polygon_display_base.hpp>
 
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -104,11 +104,11 @@ private:
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
 
-  typedef message_filters::sync_policies::ApproximateTime<TrackedObjects,
-      sensor_msgs::msg::PointCloud2> SyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<
+      TrackedObjects, sensor_msgs::msg::PointCloud2>
+    SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   typename std::shared_ptr<Sync> sync_ptr;
-
 };
 
 }  // namespace object_detection

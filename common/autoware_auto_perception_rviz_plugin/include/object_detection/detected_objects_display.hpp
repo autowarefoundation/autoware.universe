@@ -16,8 +16,8 @@
 
 #include <object_detection/object_polygon_display_base.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_object.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace autoware
@@ -44,11 +44,10 @@ private:
     const DetectedObjects::ConstSharedPtr & input_objs_msg,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
-  using SyncPolicy = message_filters::sync_policies::ApproximateTime<DetectedObjects,
-      sensor_msgs::msg::PointCloud2>;
+  using SyncPolicy =
+    message_filters::sync_policies::ApproximateTime<DetectedObjects, sensor_msgs::msg::PointCloud2>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   std::shared_ptr<Sync> sync_ptr;
-
 };
 
 }  // namespace object_detection
