@@ -34,7 +34,7 @@
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp> 
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -68,7 +68,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>   
+#include <algorithm>
 
 namespace autoware
 {
@@ -80,11 +80,11 @@ namespace object_detection
 using Polygon2d = tier4_autoware_utils::Polygon2d;
 using Shape = autoware_auto_perception_msgs::msg::Shape;
 
-  // struct for creating objects buffer 
+// struct for creating objects buffer
 struct object_info
 {
   Shape shape;
-  geometry_msgs::msg::Pose position; 
+  geometry_msgs::msg::Pose position;
   // autoware_auto_perception_msgs::msg::ObjectClassification  classification;
   std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
 };
@@ -108,9 +108,9 @@ inline pcl::PointXYZRGB toPCL(const geometry_msgs::msg::Point & point)
 ///        for the plugin and also defines common helper functions that can be used by its derived
 ///        classes.
 /// \tparam MsgT PredictedObjects or TrackedObjects or DetectedObjects type
-template <typename MsgT>
+template<typename MsgT>
 class AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC ObjectPolygonDisplayBase
-: public rviz_common::RosTopicDisplay<MsgT>
+  : public rviz_common::RosTopicDisplay<MsgT>
 {
 public:
   using Color = std::array<float, 3U>;
@@ -122,7 +122,9 @@ public:
   using PolygonPropertyMap =
     std::unordered_map<ObjectClassificationMsg::_label_type, common::ColorAlphaProperty>;
 
-  explicit ObjectPolygonDisplayBase(const std::string & default_topic, const std::string & default_pointcloud_topic)
+  explicit ObjectPolygonDisplayBase(
+    const std::string & default_topic,
+    const std::string & default_pointcloud_topic)
   : m_marker_common(this),
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
@@ -154,14 +156,15 @@ public:
       SLOT(updatePalette()));
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
-    m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty("Publish Objects Pointcloud", true, 
-    "Enable/disable objects pointcloud publishing", this);
+    m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty(
+      "Publish Objects Pointcloud", true,
+      "Enable/disable objects pointcloud publishing", this);
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
-      "Input pointcloud topic", 
-      QString::fromStdString(default_pointcloud_topic), 
-      "", 
+      "Input pointcloud topic",
+      QString::fromStdString(default_pointcloud_topic),
+      "",
       "Input for pointcloud visualization of Objectcs detection pipeline",
-      this, 
+      this,
       SLOT(updatePalette()));
     m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
@@ -178,7 +181,7 @@ public:
       m_polygon_properties.emplace(
         std::piecewise_construct, std::forward_as_tuple(map_property_it.first),
         std::forward_as_tuple(
-          QColor{color[0], color[1], color[2]}, class_property_values.alpha, & parent_property));
+          QColor{color[0], color[1], color[2]}, class_property_values.alpha, &parent_property));
     }
     init_color_list(predicted_path_colors);
   }
@@ -192,8 +195,9 @@ public:
     this->topic_property_->setValue(m_default_topic.c_str());
     this->topic_property_->setDescription("Topic to subscribe to.");
 
-    // get access to rivz node to sub and to pub to topics 
-    rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
+    // get access to rivz node to sub and to pub to topics
+    rclcpp::Node::SharedPtr raw_node =
+      this->context_->getRosNodeAbstraction().lock()->get_raw_node();
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -206,7 +210,7 @@ public:
     m_marker_common.load(config);
   }
 
-  void update(float wall_dt, float ros_dt) override { m_marker_common.update(wall_dt, ros_dt); }
+  void update(float wall_dt, float ros_dt) override {m_marker_common.update(wall_dt, ros_dt);}
 
   void reset() override
   {
@@ -214,7 +218,7 @@ public:
     m_marker_common.clearMarkers();
   }
 
-  void clear_markers() { m_marker_common.clearMarkers(); }
+  void clear_markers() {m_marker_common.clearMarkers();}
 
   void add_marker(visualization_msgs::msg::Marker::ConstSharedPtr marker_ptr)
   {
@@ -226,7 +230,7 @@ public:
     m_marker_common.addMessage(markers_ptr);
   }
 
-    // transfrom detected object pose to target frame and return bool result
+  // transfrom detected object pose to target frame and return bool result
   bool transformObjects(
     const MsgT & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
     MsgT & output_msg)
@@ -256,7 +260,7 @@ public:
     return true;
   }
 
-    // get transformation from tf2 
+  // get transformation from tf2
   boost::optional<geometry_msgs::msg::Transform> getTransform(
     const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
     const std::string & target_frame_id, const rclcpp::Time & time)
@@ -272,15 +276,13 @@ public:
     }
   }
 
-   
+
   // variables for transfer detected objects information between callbacks
   std::vector<object_info> objs_buffer;
   std::string objects_frame_id_;
   std::string pointcloud_frame_id_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr}; // !! different type in prototype, 
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr}; // !! different type in prototype,
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_; // !! different type in prototype
-
-  
 
 protected:
   /// \brief Convert given shape msg into a Marker
@@ -291,7 +293,7 @@ protected:
   /// \param labels List of ObjectClassificationMsg objects
   /// \param line_width Line thickness around the object
   /// \return Marker ptr. Id and header will have to be set by the caller
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -308,7 +310,7 @@ protected:
     }
   }
 
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -319,7 +321,7 @@ protected:
   /// \param centroid Centroid position of the shape in Object.header.frame_id frame
   /// \param labels List of ObjectClassificationMsg objects
   /// \return Marker ptr. Id and header will have to be set by the caller
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_label_marker_ptr(
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
     const ClassificationContainerT & labels) const
@@ -333,7 +335,7 @@ protected:
     }
   }
 
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_uuid_marker_ptr(
     const unique_identifier_msgs::msg::UUID & uuid, const geometry_msgs::msg::Point & centroid,
     const ClassificationContainerT & labels) const
@@ -357,7 +359,7 @@ protected:
     }
   }
 
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_velocity_text_marker_ptr(
     const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
     const ClassificationContainerT & labels) const
@@ -370,7 +372,7 @@ protected:
     }
   }
 
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_acceleration_text_marker_ptr(
     const geometry_msgs::msg::Accel & accel, const geometry_msgs::msg::Point & vis_pos,
     const ClassificationContainerT & labels) const
@@ -428,7 +430,7 @@ protected:
   /// \param labels list of classifications
   /// \return Color and alpha for the best class in the given list. Unknown class is used in
   ///         degenerate cases
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std_msgs::msg::ColorRGBA get_color_rgba(const ClassificationContainerT & labels) const
   {
     static const std::string kLoggerName("ObjectPolygonDisplayBase");
@@ -444,7 +446,7 @@ protected:
   /// \tparam ClassificationContainerT Container of ObjectClassification
   /// \param labels list of classifications
   /// \return best label string
-  template <typename ClassificationContainerT>
+  template<typename ClassificationContainerT>
   std::string get_best_label(const ClassificationContainerT & labels) const
   {
     static const std::string kLoggerName("ObjectPolygonDisplayBase");
@@ -469,7 +471,7 @@ protected:
   get_color_from_uuid(const std::string & uuid) const
   {
     int i = (static_cast<int>(uuid.at(0)) * 4 + static_cast<int>(uuid.at(1))) %
-            static_cast<int>(predicted_path_colors.size());
+      static_cast<int>(predicted_path_colors.size());
 
     std_msgs::msg::ColorRGBA color;
     color.r = predicted_path_colors.at(i).r;
@@ -515,9 +517,7 @@ protected:
     colors.push_back(sample_color);  // spring green
   }
 
-  double get_line_width() { return m_line_width_property.getFloat(); }
-
-
+  double get_line_width() {return m_line_width_property.getFloat();}
 
 
   // helper function to get radius for kd-search
@@ -538,57 +538,58 @@ protected:
     }
   }
 
-  void filterPolygon(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & in_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud, const object_info & object)
-  {        
-        pcl::PointCloud<pcl::PointXYZRGB> filtered_cloud;
-        std::vector<pcl::Vertices> vertices_array;
-        pcl::Vertices vertices;
+  void filterPolygon(
+    const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & in_cloud,
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud, const object_info & object)
+  {
+    pcl::PointCloud<pcl::PointXYZRGB> filtered_cloud;
+    std::vector<pcl::Vertices> vertices_array;
+    pcl::Vertices vertices;
 
-        Polygon2d poly2d =
-        tier4_autoware_utils::toPolygon2d(object.position, object.shape);
-        if (boost::geometry::is_empty(poly2d)) return;
+    Polygon2d poly2d =
+      tier4_autoware_utils::toPolygon2d(object.position, object.shape);
+    if (boost::geometry::is_empty(poly2d)) {return;}
 
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-        for (size_t i = 0; i < poly2d.outer().size(); ++i) {
-          vertices.vertices.emplace_back(i);
-          vertices_array.emplace_back(vertices);
-          hull_cloud->emplace_back(static_cast<float>(poly2d.outer().at(i).x()), 
-          static_cast<float>(poly2d.outer().at(i).y()), 
-          static_cast<float>(0.0));
-        }
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    for (size_t i = 0; i < poly2d.outer().size(); ++i) {
+      vertices.vertices.emplace_back(i);
+      vertices_array.emplace_back(vertices);
+      hull_cloud->emplace_back(
+        static_cast<float>(poly2d.outer().at(i).x()),
+        static_cast<float>(poly2d.outer().at(i).y()),
+        static_cast<float>(0.0));
+    }
 
-        pcl::CropHull<pcl::PointXYZRGB> crop_hull_filter;
-        crop_hull_filter.setInputCloud(in_cloud);
-        crop_hull_filter.setDim(2);
-        crop_hull_filter.setHullIndices(vertices_array);
-        crop_hull_filter.setHullCloud(hull_cloud);
-        crop_hull_filter.setCropOutside(true);
-        
-        crop_hull_filter.filter(filtered_cloud);
+    pcl::CropHull<pcl::PointXYZRGB> crop_hull_filter;
+    crop_hull_filter.setInputCloud(in_cloud);
+    crop_hull_filter.setDim(2);
+    crop_hull_filter.setHullIndices(vertices_array);
+    crop_hull_filter.setHullCloud(hull_cloud);
+    crop_hull_filter.setCropOutside(true);
 
-        
-        const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(object.classification); // need to be converted to int
+    crop_hull_filter.filter(filtered_cloud);
 
-        for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it)
-        {
-          cloud_it->r = std::max(0, std::min(255, (int)floor(color_rgba.r * 256.0)));
-          cloud_it->g = std::max(0, std::min(255, (int)floor(color_rgba.g * 256.0)));
-          cloud_it->b = std::max(0, std::min(255, (int)floor(color_rgba.b * 256.0)));
-        }
 
-        *out_cloud += filtered_cloud;
+    const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(object.classification);     // need to be converted to int
+
+    for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it) {
+      cloud_it->r = std::max(0, std::min(255, (int)floor(color_rgba.r * 256.0)));
+      cloud_it->g = std::max(0, std::min(255, (int)floor(color_rgba.g * 256.0)));
+      cloud_it->b = std::max(0, std::min(255, (int)floor(color_rgba.b * 256.0)));
+    }
+
+    *out_cloud += filtered_cloud;
   }
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
 
   // Default pointcloud topic;
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
-    // Property to enable/disable objects pointcloud publishing
+  // Property to enable/disable objects pointcloud publishing
   rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
 
   message_filters::Subscriber<MsgT> percepted_objects_subscription_;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription_;
-
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
@@ -623,7 +624,6 @@ private:
   std::string m_default_topic;
 
   std::vector<std_msgs::msg::ColorRGBA> predicted_path_colors;
-
 
 
 };

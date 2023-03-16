@@ -28,7 +28,7 @@ namespace object_detection
 {
 /// \brief Class defining rviz plugin to visualize DetectedObjects
 class AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC DetectedObjectsDisplay
-: public ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::DetectedObjects>
+  : public ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::DetectedObjects>
 {
   Q_OBJECT
 
@@ -40,14 +40,16 @@ public:
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
   void onInitialize() override;
-  void onObjectsAndObstaclePointCloud(const DetectedObjects::ConstSharedPtr & input_objs_msg,
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
+  void onObjectsAndObstaclePointCloud(
+    const DetectedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
-  using SyncPolicy =  message_filters::sync_policies::ApproximateTime<DetectedObjects, sensor_msgs::msg::PointCloud2>;
-  using Sync =  message_filters::Synchronizer<SyncPolicy>;
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<DetectedObjects,
+      sensor_msgs::msg::PointCloud2>;
+  using Sync = message_filters::Synchronizer<SyncPolicy>;
   std::shared_ptr<Sync> sync_ptr_;
   // void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) override;
-  
+
 };
 
 }  // namespace object_detection

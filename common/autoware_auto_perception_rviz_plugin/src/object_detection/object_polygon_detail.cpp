@@ -487,23 +487,23 @@ void calc_cylinder_line_list(
     for (int i = 0; i < n; ++i) {
       geometry_msgs::msg::Point point;
       point.x = std::cos(
-                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                  M_PI / static_cast<double>(n)) *
-                radius;
+        (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+        M_PI / static_cast<double>(n)) *
+        radius;
       point.y = std::sin(
-                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                  M_PI / static_cast<double>(n)) *
-                radius;
+        (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+        M_PI / static_cast<double>(n)) *
+        radius;
       point.z = shape.dimensions.z * 0.5;
       points.push_back(point);
       point.x = std::cos(
-                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                  M_PI / static_cast<double>(n)) *
-                radius;
+        (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+        M_PI / static_cast<double>(n)) *
+        radius;
       point.y = std::sin(
-                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                  M_PI / static_cast<double>(n)) *
-                radius;
+        (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+        M_PI / static_cast<double>(n)) *
+        radius;
       point.z = -shape.dimensions.z * 0.5;
       points.push_back(point);
     }
@@ -532,27 +532,27 @@ void calc_circle_line_list(
   for (int i = 0; i < n; ++i) {
     geometry_msgs::msg::Point point;
     point.x = std::cos(
-                (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                M_PI / static_cast<double>(n)) *
-                radius +
-              center.x;
+      (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+      M_PI / static_cast<double>(n)) *
+      radius +
+      center.x;
     point.y = std::sin(
-                (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                M_PI / static_cast<double>(n)) *
-                radius +
-              center.y;
+      (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+      M_PI / static_cast<double>(n)) *
+      radius +
+      center.y;
     point.z = center.z;
     points.push_back(point);
     point.x = std::cos(
-                (static_cast<double>(i + 1.0) / static_cast<double>(n)) * 2.0 * M_PI +
-                M_PI / static_cast<double>(n)) *
-                radius +
-              center.x;
+      (static_cast<double>(i + 1.0) / static_cast<double>(n)) * 2.0 * M_PI +
+      M_PI / static_cast<double>(n)) *
+      radius +
+      center.x;
     point.y = std::sin(
-                (static_cast<double>(i + 1.0) / static_cast<double>(n)) * 2.0 * M_PI +
-                M_PI / static_cast<double>(n)) *
-                radius +
-              center.y;
+      (static_cast<double>(i + 1.0) / static_cast<double>(n)) * 2.0 * M_PI +
+      M_PI / static_cast<double>(n)) *
+      radius +
+      center.y;
     point.z = center.z;
     points.push_back(point);
   }
@@ -575,11 +575,11 @@ void calc_polygon_line_list(
     point.z = shape.dimensions.z / 2.0;
     points.push_back(point);
     point.x = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .x;
+      .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+      .x;
     point.y = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .y;
+      .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+      .y;
     point.z = shape.dimensions.z / 2.0;
     points.push_back(point);
   }
@@ -590,11 +590,11 @@ void calc_polygon_line_list(
     point.z = -shape.dimensions.z / 2.0;
     points.push_back(point);
     point.x = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .x;
+      .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+      .x;
     point.y = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .y;
+      .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+      .y;
     point.z = -shape.dimensions.z / 2.0;
     points.push_back(point);
   }
@@ -628,11 +628,11 @@ void calc_2d_polygon_bottom_line_list(
     point.z = -shape.dimensions.z / 2.0;
     points.push_back(point);
     point.x = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .x;
+      .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+      .x;
     point.y = shape.footprint.points
-                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
-                .y;
+      .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+      .y;
     point.z = -shape.dimensions.z / 2.0;
     points.push_back(point);
   }

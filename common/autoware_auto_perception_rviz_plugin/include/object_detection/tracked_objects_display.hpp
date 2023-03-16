@@ -35,7 +35,7 @@ namespace object_detection
 {
 /// \brief Class defining rviz plugin to visualize TrackedObjects
 class AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC TrackedObjectsDisplay
-: public ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::TrackedObjects>
+  : public ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::TrackedObjects>
 {
   Q_OBJECT
 
@@ -71,7 +71,8 @@ private:
     auto itr = id_map.begin();
     while (itr != id_map.end()) {
       if (
-        std::find(tracked_uuids.begin(), tracked_uuids.end(), itr->first) == tracked_uuids.end()) {
+        std::find(tracked_uuids.begin(), tracked_uuids.end(), itr->first) == tracked_uuids.end())
+      {
         unused_marker_ids.push_back(itr->second);
         itr = id_map.erase(itr);
       } else {
@@ -96,14 +97,16 @@ private:
     return id_map.at(uuid);
   }
 
-  void onObjectsAndObstaclePointCloud(const TrackedObjects::ConstSharedPtr & input_objs_msg,
+  void onObjectsAndObstaclePointCloud(
+    const TrackedObjects::ConstSharedPtr & input_objs_msg,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
 
-  typedef message_filters::sync_policies::ApproximateTime<TrackedObjects, sensor_msgs::msg::PointCloud2>SyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<TrackedObjects,
+      sensor_msgs::msg::PointCloud2> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   typename std::shared_ptr<Sync> sync_ptr_;
 

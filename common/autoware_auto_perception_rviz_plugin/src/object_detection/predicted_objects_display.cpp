@@ -22,7 +22,8 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("predictions", "/perception/obstacle_segmentation/pointcloud")
+PredictedObjectsDisplay::PredictedObjectsDisplay()
+: ObjectPolygonDisplayBase("predictions", "/perception/obstacle_segmentation/pointcloud")
 {
   std::thread worker(&PredictedObjectsDisplay::workerThread, this);
   worker.detach();
@@ -32,7 +33,7 @@ void PredictedObjectsDisplay::workerThread()
 {
   while (true) {
     std::unique_lock<std::mutex> lock(mutex);
-    condition.wait(lock, [this] { return this->msg; });
+    condition.wait(lock, [this] {return this->msg;});
 
     auto tmp_msg = this->msg;
     this->msg.reset();
@@ -210,23 +211,29 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
     wall_dt, ros_dt);
 }
 
-void PredictedObjectsDisplay::onInitialize() 
+void PredictedObjectsDisplay::onInitialize()
 {
-    ObjectPolygonDisplayBase::onInitialize();
-    // get access to rivz node to sub and to pub to topics 
-    rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-    publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>("~/output/predicted_objects_pointcloud", rclcpp::SensorDataQoS());
+  ObjectPolygonDisplayBase::onInitialize();
+  // get access to rivz node to sub and to pub to topics
+  rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
+  publisher_ = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "~/output/predicted_objects_pointcloud", rclcpp::SensorDataQoS());
 
-    sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription_, pointcloud_subscription_);
-    sync_ptr_->registerCallback(&PredictedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
+  sync_ptr_ = std::make_shared<Sync>(
+    SyncPolicy(
+      10), percepted_objects_subscription_, pointcloud_subscription_);
+  sync_ptr_->registerCallback(&PredictedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
 
-    percepted_objects_subscription_.subscribe(raw_node, "/perception/object_recognition/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
-    pointcloud_subscription_.subscribe(raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
-      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+  percepted_objects_subscription_.subscribe(
+    raw_node, "/perception/object_recognition/objects",
+    rclcpp::QoS{1}.get_rmw_qos_profile()),
+  pointcloud_subscription_.subscribe(
+    raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 bool PredictedObjectsDisplay::transformObjects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg, 
+  const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
   const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
   autoware_auto_perception_msgs::msg::PredictedObjects & output_msg)
 {
@@ -258,27 +265,30 @@ bool PredictedObjectsDisplay::transformObjects(
 void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
   const PredictedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
-{ 
-    if (!m_publish_objs_pointcloud->getBool()) {
+{
+  if (!m_publish_objs_pointcloud->getBool()) {
     return;
   }
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
   if (!transformObjects(
       *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer_,
-      transformed_objects)) {
-  // objects_pub_->publish(*input_objects);
+      transformed_objects))
+  {
+    // objects_pub_->publish(*input_objects);
     return;
   }
 
   objs_buffer.clear();
-  for (const auto & object : transformed_objects.objects)
-  {
-    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels = object.classification;
-    object_info info = {object.shape, object.kinematics.initial_pose_with_covariance.pose, object.classification};
+  for (const auto & object : transformed_objects.objects) {
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels =
+      object.classification;
+    object_info info =
+    {object.shape, object.kinematics.initial_pose_with_covariance.pose,
+      object.classification};
     objs_buffer.push_back(info);
   }
-  
+
   // convert to pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   // pcl::fromROSMsg(transformed_pointcloud, *temp_cloud);
@@ -290,12 +300,12 @@ void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   // Create Kd-tree to search neighbor pointcloud to reduce cost.
   pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
-  pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
+    pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
   kdtree->setInputCloud(colored_cloud);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
 
- 
+
   if (objs_buffer.size() > 0) {
     for (auto object : objs_buffer) {
 
@@ -303,25 +313,26 @@ void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
       // Search neighbor pointcloud to reduce cost.
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
       std::vector<int> indices;
-      std::vector<float> distances;        
+      std::vector<float> distances;
       kdtree->radiusSearch(
-      toPCL(object.position.position), search_radius.value(), indices, distances);
+        toPCL(object.position.position), search_radius.value(), indices, distances);
       for (const auto & index : indices) {
         neighbor_pointcloud->push_back(colored_cloud->at(index));
-      }  
-      
+      }
+
       filterPolygon(neighbor_pointcloud, out_cloud, object);
-    }     
+    }
   } else {
     // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
     return;
   }
 
-  sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr( new sensor_msgs::msg::PointCloud2);
+  sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(new sensor_msgs::msg::
+    PointCloud2);
   pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
-  
+
   publisher_->publish(*output_pointcloud_msg_ptr);
 }
 
