@@ -13,7 +13,7 @@
       pointcloudPreprocessor-to-ndt: # path name
         topic: /localization/pose_estimator/pose_with_covariance # topic name
         message_type: geometry_msgs/msg/PoseWithCovarianceStamped # message type
-        severity: error # severity
+        severity: warn # severity
         period: 100.0 # execution frequency of path
         deadline: 150.0 # deadline of response time
         violation_count_threshold: 1 # threshold to judge error or not.
