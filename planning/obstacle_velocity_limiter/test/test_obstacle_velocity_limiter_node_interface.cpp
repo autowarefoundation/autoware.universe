@@ -30,15 +30,13 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   auto node_options = rclcpp::NodeOptions{};
 
   test_manager->declareVehicleInfoParams(node_options);
-  test_manager->declareNearestSearchDistanceParams(node_options);
-  node_options.append_parameter_override("enable_slow_down", false);
 
   const auto obstacle_velocity_limiter_dir =
     ament_index_cpp::get_package_share_directory("obstacle_velocity_limiter");
 
   node_options.arguments(
     {"--ros-args", "--params-file",
-     obstacle_velocity_limiter_dir + "/config/default_obstacle_velocity_limiter.param"});
+     obstacle_velocity_limiter_dir + "/config/default_obstacle_velocity_limiter.param.yaml"});
 
   auto test_target_node =
     std::make_shared<obstacle_velocity_limiter::ObstacleVelocityLimiterNode>(node_options);
@@ -46,12 +44,11 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "obstacle_velocity_limiter/input/odometry");
   test_manager->publishPointCloud(test_target_node, "obstacle_velocity_limiter/input/pointcloud");
-  test_manager->publishAcceleration(
+  test_manager->publishOccupancyGrid(
     test_target_node, "obstacle_velocity_limiter/input/occupancy_grid");
   test_manager->publishPredictedObjects(
-    test_target_node, "obstacle_velocity_limiter/input/objects");
-  test_manager->publishExpandStopRange(
-    test_target_node, "obstacle_velocity_limiter/input/map");
+    test_target_node, "obstacle_velocity_limiter/input/dynamic_obstacles");
+  test_manager->publishMap(test_target_node, "obstacle_velocity_limiter/input/map");
 
   // set subscriber for test_target_node
   test_manager->setTrajectorySubscriber("obstacle_velocity_limiter/output/trajectory");

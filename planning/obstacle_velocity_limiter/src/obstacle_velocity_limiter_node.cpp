@@ -170,7 +170,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleVelocityLimiterNode::onParamete
 
 void ObstacleVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const auto t_start = std::chrono::system_clock::now();
   const auto ego_idx =
     motion_utils::findNearestIndex(msg->points, current_odometry_ptr_->pose.pose);
@@ -232,7 +231,6 @@ void ObstacleVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr 
 
 bool ObstacleVelocityLimiterNode::validInputs(const boost::optional<size_t> & ego_idx)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   constexpr auto one_sec = rcutils_duration_value_t(1000);
   if (!occupancy_grid_ptr_)
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");

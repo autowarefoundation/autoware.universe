@@ -30,7 +30,6 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   auto node_options = rclcpp::NodeOptions{};
 
   test_manager->declareVehicleInfoParams(node_options);
-  test_manager->declareNearestSearchDistanceParams(node_options);
 
   const auto planning_validator_dir =
     ament_index_cpp::get_package_share_directory("planning_validator");

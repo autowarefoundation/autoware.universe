@@ -41,7 +41,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
      obstacle_avoidance_planner_dir + "/config/obstacle_avoidance_planner.param.yaml"});
 
   auto test_target_node =
-    std::make_shared<motion_planning::ObstacleCruisePlannerNode>(node_options);
+    std::make_shared<obstacle_avoidance_planner::ObstacleAvoidancePlanner>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "obstacle_avoidance_planner/input/odometry");
