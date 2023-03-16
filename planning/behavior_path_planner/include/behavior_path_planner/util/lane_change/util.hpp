@@ -54,10 +54,9 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets);
 
-std::pair<double, double> calcLaneChangingSpeedAndDistance(
-  const double velocity, const double shift_length, const double deceleration,
-  const double min_total_lc_len, const BehaviorPathPlannerParameters & com_param,
-  const LaneChangeParameters & lc_param);
+double calcLaneChangingDistance(
+  const double lane_changing_velocity, const double shift_length, const double min_total_lc_len,
+  const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,

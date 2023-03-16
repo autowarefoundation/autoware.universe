@@ -359,9 +359,10 @@ std::pair<bool, bool> getLaneChangePaths(
     const auto estimated_shift_length = util::calcLateralDistanceToLanelet(
       target_lanelets, prepare_segment.points.front().point.pose);
 
-    const auto [lane_changing_speed, lane_changing_distance] = calcLaneChangingSpeedAndDistance(
-      prepare_speed, estimated_shift_length, acceleration, end_of_lane_dist, common_parameter,
-      parameter);
+    // we assume constant speed during lane change
+    const auto lane_changing_speed = std::max(prepare_speed, minimum_lane_change_velocity);
+    const auto lane_changing_distance = calcLaneChangingDistance(
+      lane_changing_speed, estimated_shift_length, end_of_lane_dist, common_parameter, parameter);
 
     const auto lc_dist = LaneChangePhaseInfo{prepare_distance, lane_changing_distance};
 
@@ -685,17 +686,14 @@ PathWithLaneId getPrepareSegment(
   return prepare_segment;
 }
 
-std::pair<double, double> calcLaneChangingSpeedAndDistance(
-  const double velocity, const double shift_length, const double deceleration,
-  const double min_total_lc_len, const BehaviorPathPlannerParameters & com_param,
-  const LaneChangeParameters & lc_param)
+double calcLaneChangingDistance(
+  const double lane_changing_speed, const double shift_length, const double min_total_lc_len,
+  const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param)
 {
-  const auto required_time = PathShifter::calcShiftTimeFromJerkAndJerk(
+  const auto required_time = PathShifter::calcShiftTimeFromJerk(
     shift_length, lc_param.lane_changing_lateral_jerk, lc_param.lane_changing_lateral_acc);
 
-  const auto lane_changing_average_speed =
-    std::max(velocity + deceleration * 0.5 * required_time, lc_param.minimum_lane_change_velocity);
-  const auto expected_dist = lane_changing_average_speed * required_time;
+  const auto expected_dist = lane_changing_speed * required_time;
   const auto lane_changing_distance =
     (expected_dist < min_total_lc_len) ? expected_dist : com_param.minimum_lane_change_length;
 
@@ -705,9 +703,9 @@ std::pair<double, double> calcLaneChangingSpeedAndDistance(
       .get_child("util")
       .get_child("calcLaneChangingSpeedAndDistance"),
     "required_time: %f [s] average_speed: %f [m/s], lane_changing_distance : %f [m]", required_time,
-    lane_changing_average_speed, lane_changing_distance);
+    lane_changing_speed, lane_changing_distance);
 
-  return {lane_changing_average_speed, lane_changing_distance};
+  return lane_changing_distance;
 }
 
 PathWithLaneId getLaneChangingSegment(
