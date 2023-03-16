@@ -34,6 +34,7 @@
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_localization_msgs</depend>
+  <depend>timing_violation_monitor</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
