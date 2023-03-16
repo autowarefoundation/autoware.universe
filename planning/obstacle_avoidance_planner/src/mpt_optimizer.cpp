@@ -234,6 +234,8 @@ MPTOptimizer::MPTParam::MPTParam(
   }
 
   {  // avoidance
+    max_longitudinal_margin_for_bound_violation =
+      node->declare_parameter<double>("mpt.avoidance.max_longitudinal_margin_for_bound_violation");
     max_avoidance_cost = node->declare_parameter<double>("mpt.avoidance.max_avoidance_cost");
     avoidance_cost_margin = node->declare_parameter<double>("mpt.avoidance.avoidance_cost_margin");
     avoidance_cost_band_length =
@@ -374,6 +376,9 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
   }
 
   {  // avoidance
+    updateParam<double>(
+      parameters, "mpt.avoidance.max_longitudinal_margin_for_bound_violation",
+      max_longitudinal_margin_for_bound_violation);
     updateParam<double>(parameters, "mpt.avoidance.max_avoidance_cost", max_avoidance_cost);
     updateParam<double>(parameters, "mpt.avoidance.avoidance_cost_margin", avoidance_cost_margin);
     updateParam<double>(
@@ -783,6 +788,29 @@ void MPTOptimizer::updateBounds(
     const double dist_to_right_bound =
       calcLateralDistToBounds(ref_point.pose, right_bound, soft_road_clearance, false);
     ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+  }
+
+  // spread the ends of drivable area discontinuity
+  const int max_length_idx = std::floor(
+    mpt_param_.max_longitudinal_margin_for_bound_violation / mpt_param_.delta_arc_length);
+  for (int i = 0; i < static_cast<int>(ref_points.size()) - 1; ++i) {
+    if (
+      ref_points.at(i).bounds.lower_bound <= 0.0 &&
+      0.0 <= ref_points.at(i + 1).bounds.lower_bound) {
+      for (int j = -max_length_idx; j <= 0; ++j) {
+        const int k = std::clamp(i + j, 0, static_cast<int>(ref_points.size()) - 1);
+        ref_points.at(k).bounds.lower_bound = ref_points.at(i + 1).bounds.lower_bound;
+      }
+    }
+
+    if (
+      0.0 <= ref_points.at(i).bounds.upper_bound &&
+      ref_points.at(i + 1).bounds.upper_bound <= 0.0) {
+      for (int j = -max_length_idx; j <= 0; ++j) {
+        const int k = std::clamp(i + j, 0, static_cast<int>(ref_points.size()) - 1);
+        ref_points.at(k).bounds.upper_bound = ref_points.at(i + 1).bounds.upper_bound;
+      }
+    }
   }
 
   /*

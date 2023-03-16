@@ -178,6 +178,7 @@ private:
     double steer_rate_weight;
 
     // avoidance
+    double max_longitudinal_margin_for_bound_violation;
     double max_avoidance_cost;
     double avoidance_cost_margin;
     double avoidance_cost_band_length;
