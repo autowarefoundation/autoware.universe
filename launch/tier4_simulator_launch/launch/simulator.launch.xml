@@ -44,6 +44,7 @@
       <arg name="input_obstacle_and_raw_pointcloud" value="false"/>
       <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
       <arg name="output" value="/perception/occupancy_grid_map/map"/>
+      <arg name="param_file" value="$(find-pkg-share probabilistic_occupancy_grid_map)/config/laserscan_based_occupancy_grid_map.param.yaml"/>
     </include>
   </group>
 
