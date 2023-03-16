@@ -93,10 +93,22 @@ void PlanningIntefaceTestManager::publishOccupancyGrid(
     test_node_, target_node, topic_name, occupancy_grid_pub_);
 }
 
+void PlanningIntefaceTestManager::publishScenario(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishEmptyData<Scenario>(
+    test_node_, target_node, topic_name, scenario_pub_);
+}
+
 
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;
+}
+
+void PlanningIntefaceTestManager::setRouteInputTopicName(std::string topic_name)
+{
+  input_route_name_ = topic_name;
 }
 
 void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_name)
@@ -105,7 +117,19 @@ void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_nam
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
 }
 
+void PlanningIntefaceTestManager::publishNominalRoute(std::string topic_name)
+{
+  test_utils::setPublisher(test_node_, topic_name, normal_route_pub_);
+  // normal_route_pub_->publish(test_utils::generateTrajectory<LaneletRoute>(10, 1.0));
+}
+
+
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
+{
+  test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
+}
+
+void PlanningIntefaceTestManager::setRouteSubscriber(std::string topic_name)
 {
   test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
 }
@@ -134,6 +158,32 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
   abnormal_trajectory_pub_->publish(abnormal_trajectory);
   test_utils::spinSomeNodes(test_node_, target_node);
 }
+
+// test for normal working
+void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
+{
+  publishNominalRoute(input_route_name_);
+  test_utils::spinSomeNodes(test_node_, target_node, 2);
+}
+
+// check to see if target node is dead.
+void PlanningIntefaceTestManager::testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node)
+{
+  ASSERT_NO_THROW(publishAbnormalRoute(target_node, LaneletRoute{}));
+  // ASSERT_NO_THROW(
+  //   publishAbnormalRoute(target_node, test_utils::generateRoute<LaneletRoute>(1, 0.0)));
+  // ASSERT_NO_THROW(publishAbnormalRoute(
+  //   target_node, test_utils::generateRoute<LaneletRoute>(10, 0.0, 0.0, 0.0, 0.0, 1)));
+}
+
+void PlanningIntefaceTestManager::publishAbnormalRoute(
+  rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route)
+{
+  test_utils::setPublisher(test_node_, input_route_name_, abnormal_route_pub_);
+  abnormal_route_pub_->publish(abnormal_route);
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 

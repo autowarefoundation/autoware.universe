@@ -18,19 +18,20 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
+#include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <gtest/gtest.h>
 
@@ -40,19 +41,20 @@
 
 namespace planning_test_manager
 {
+using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::ExpandStopRange;
+using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
-using nav_msgs::msg::OccupancyGrid;
-using autoware_auto_mapping_msgs::msg::HADMapBin;
 
 class PlanningIntefaceTestManager
 {
@@ -70,18 +72,24 @@ public:
   void publishExpandStopRange(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
-
   void setTrajectorySubscriber(std::string topic_name);
+
+  void setRouteInputTopicName(std::string topic_name);
+  void setRouteSubscriber(std::string topic_name);
 
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
 
+  void testWithNominalRoute(rclcpp::Node::SharedPtr target_node);
+  void testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node);
+
   int getReceivedTopicNum();
 
 private:
-  // Publisher
+  // Publisher (necessary for node running)
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
   rclcpp::Publisher<PredictedObjects>::SharedPtr predicted_objects_pub_;
@@ -93,17 +101,22 @@ private:
   rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
   rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
   rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
+  rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
 
-
-  // Subscriber (necessary for node running)
+  // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr max_velocity_sub_;
 
-  // Publisher for testing
+  // Publisher for testing(trajectory)
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr abnormal_trajectory_pub_;
 
+  // Publisher for testing(trajectory)
+  rclcpp::Publisher<LaneletRoute>::SharedPtr normal_route_pub_;
+  rclcpp::Publisher<LaneletRoute>::SharedPtr abnormal_route_pub_;
+
   std::string input_trajectory_name_;
+  std::string input_route_name_;
 
   // Node
   rclcpp::Node::SharedPtr test_node_ =
@@ -113,6 +126,9 @@ private:
   void publishNominalTrajectory(std::string topic_name);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
+  void publishNominalRoute(std::string topic_name);
+  void publishAbnormalRoute(
+    rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_manager
