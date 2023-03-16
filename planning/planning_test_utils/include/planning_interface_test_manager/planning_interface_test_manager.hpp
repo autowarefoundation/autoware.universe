@@ -39,7 +39,7 @@
 #include <memory>
 #include <string>
 
-namespace planning_test_manager
+namespace planning_test_utils
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -131,6 +131,6 @@ private:
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 };  // class PlanningIntefaceTestManager
 
-}  // namespace planning_test_manager
+}  // namespace planning_test_utils
 
 #endif  // PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_
