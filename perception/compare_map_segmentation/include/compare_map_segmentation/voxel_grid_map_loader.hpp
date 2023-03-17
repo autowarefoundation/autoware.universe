@@ -67,10 +67,10 @@ public:
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
 
   /** \brief Get representative points of 27 neighboor voxels*/
-  inline pcl::PointCloud<pcl::PointXYZ> getNeighborVoxelPoints(
+  pcl::PointCloud<pcl::PointXYZ> getNeighborVoxelPoints(
     pcl::PointXYZ point, double voxel_size);
 
-  inline bool is_close_points(
+  bool is_close_points(
     const pcl::PointXYZ point, const pcl::PointXYZ target_point,
     const double distance_threshold) const;
   std::string * tf_map_input_frame_;
@@ -167,8 +167,6 @@ public:
   inline void addMapCellAndFilter(
     const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
-    auto exe_start_time = std::chrono::system_clock::now();
-
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
 
@@ -205,14 +203,6 @@ public:
     (*mutex_ptr_).lock();
     current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
     (*mutex_ptr_).unlock();
-
-    auto exe_stop_time = std::chrono::system_clock::now();
-    const double exe_run_time =
-      std::chrono::duration_cast<std::chrono::microseconds>(exe_stop_time - exe_start_time)
-        .count() /
-      1000.0;
-    RCLCPP_INFO(
-      logger_, " map cell %s adding time: %lf", map_cell_to_add.cell_id.c_str(), exe_run_time);
   }
 };
 
