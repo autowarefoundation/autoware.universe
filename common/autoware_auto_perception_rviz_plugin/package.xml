@@ -31,7 +31,8 @@
   <depend>tf2_ros</depend>
   <depend>tf2_sensor_msgs</depend>
   <depend>tier4_autoware_utils</depend>
-  <depend>tier4_autoware_utils/math</depend>
+
+
 
   <exec_depend>libqt5-widgets</exec_depend>
   <exec_depend>rviz2</exec_depend>
