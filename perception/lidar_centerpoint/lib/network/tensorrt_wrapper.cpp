@@ -75,17 +75,19 @@ bool TensorRTWrapper::parseONNX(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision,
   const size_t workspace_size)
 {
+  using Severity = tensorrt_common::Logger::Severity;
+
   auto builder =
     tensorrt_common::TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
   if (!builder) {
-    std::cout << "Fail to create builder" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create builder");
     return false;
   }
 
   auto config =
     tensorrt_common::TrtUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
   if (!config) {
-    std::cout << "Fail to create config" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create config");
     return false;
   }
 #if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
@@ -95,10 +97,10 @@ bool TensorRTWrapper::parseONNX(
 #endif
   if (precision == "fp16") {
     if (builder->platformHasFastFp16()) {
-      std::cout << "use TensorRT FP16 Inference" << std::endl;
+      logger_.log(Severity::kINFO, "Using TensorRT FP16 Inference");
       config->setFlag(nvinfer1::BuilderFlag::kFP16);
     } else {
-      std::cout << "TensorRT FP16 Inference isn't supported in this environment" << std::endl;
+      logger_.log(Severity::kINFO, "TensorRT FP16 Inference isn't supported in this environment");
     }
   }
 
@@ -107,7 +109,7 @@ bool TensorRTWrapper::parseONNX(
   auto network =
     tensorrt_common::TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(flag));
   if (!network) {
-    std::cout << "Fail to create network" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create network");
     return false;
   }
 
@@ -116,22 +118,23 @@ bool TensorRTWrapper::parseONNX(
   parser->parseFromFile(onnx_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR));
 
   if (!setProfile(*builder, *network, *config)) {
-    std::cout << "Fail to set profile" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to set profile");
     return false;
   }
 
-  std::cout << "Applying optimizations and building TRT CUDA engine (" << onnx_path << ") ..."
-            << std::endl;
+  logger_.log(
+    Severity::kINFO, std::string("Applying optimizations and building TRT CUDA engine (") +
+                       onnx_path + std::string(") ..."));
   plan_ = tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory>(
     builder->buildSerializedNetwork(*network, *config));
   if (!plan_) {
-    std::cout << "Fail to create serialized network" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create serialized network");
     return false;
   }
   engine_ = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(
     runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!engine_) {
-    std::cout << "Fail to create engine" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create engine");
     return false;
   }
 
@@ -140,7 +143,8 @@ bool TensorRTWrapper::parseONNX(
 
 bool TensorRTWrapper::saveEngine(const std::string & engine_path)
 {
-  std::cout << "Writing to " << engine_path << std::endl;
+  using Severity = tensorrt_common::Logger::Severity;
+  logger_.log(Severity::kINFO, std::string("Writing to ") + engine_path);
   std::ofstream file(engine_path, std::ios::out | std::ios::binary);
   file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
   return true;
@@ -148,13 +152,14 @@ bool TensorRTWrapper::saveEngine(const std::string & engine_path)
 
 bool TensorRTWrapper::loadEngine(const std::string & engine_path)
 {
+  using Severity = tensorrt_common::Logger::Severity;
   std::ifstream engine_file(engine_path);
   std::stringstream engine_buffer;
   engine_buffer << engine_file.rdbuf();
   std::string engine_str = engine_buffer.str();
   engine_ = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
     reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
-  std::cout << "Loaded engine from " << engine_path << std::endl;
+  logger_.log(Severity::kINFO, std::string("Loaded engine from ") + engine_path);
   return true;
 }
 
