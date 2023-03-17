@@ -165,10 +165,10 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
+  // setRouteSubscriber();
   auto start_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
   auto goal_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
   publishRoute(start_pose, goal_pose);
-  setRouteSubscriber();
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 

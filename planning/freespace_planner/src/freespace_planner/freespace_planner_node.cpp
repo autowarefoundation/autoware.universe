@@ -60,12 +60,17 @@ using tier4_planning_msgs::msg::Scenario;
 
 bool isActive(const Scenario::ConstSharedPtr & scenario)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+
   if (!scenario) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return false;
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const auto & s = scenario->activating_scenarios;
   if (std::find(std::begin(s), std::end(s), Scenario::PARKING) != std::end(s)) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return true;
   }
 
@@ -313,7 +318,9 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
 
 void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
+  std::cerr << "route is subscribed " << __FILE__ << __LINE__ << std::endl;
   route_ = msg;
+  std::cerr << "route_: " << route_ << __FILE__ << __LINE__ << std::endl;
 
   goal_pose_.header = msg->header;
   goal_pose_.pose = msg->goal_pose;
@@ -428,6 +435,7 @@ void FreespacePlannerNode::onTimer()
     reset();
     return;
   }
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (is_completed_) {
@@ -439,6 +447,7 @@ void FreespacePlannerNode::onTimer()
   constexpr const char * vehicle_frame = "base_link";
   current_pose_ = tier4_autoware_utils::transform2pose(
     getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (current_pose_.header.frame_id == "") {
     return;

@@ -42,17 +42,14 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
     std::make_shared<freespace_planner::FreespacePlannerNode>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
+  test_manager->publishOdometry(test_target_node, "freespace_planner/input/odometry");
   test_manager->publishOccupancyGrid(
     test_target_node, "freespace_planner/input/occupancy_grid");
   test_manager->publishScenario(
-    test_target_node, "freespace_planner/input/external_velocity_limit_mps");
+    test_target_node, "freespace_planner/input/scenario");
 
-  // set subscriber for test_target_node
-  // test_manager->setRouteSubscriber("/planning/mission_planning/route");
-
-  // setting topic name of subscribing topic
-  // test_manager->setRouteInputTopicName("/planning/mission_planning/route");
+  // test_target_node → test_node_
+  test_manager->setTrajectorySubscriber("/freespace_planner/output/trajectory");
 
   // test for normal route
   ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));

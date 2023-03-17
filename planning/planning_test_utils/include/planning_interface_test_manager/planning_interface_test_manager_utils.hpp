@@ -17,11 +17,13 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <boost/optional.hpp>
+
+#include <tf2_ros/buffer.h>
+
 #include <limits>
 #include <memory>
 #include <string>
-#include <boost/optional.hpp>
-#include <tf2_ros/buffer.h>
 
 namespace test_utils
 {
@@ -101,10 +103,12 @@ void setSubscriber(
   std::shared_ptr<rclcpp::Subscription<T>> & subscriber, size_t & count)
 {
   // Count the number of topic received.
-  subscriber = test_node->create_subscription<T>(
-    topic_name, 10, [&count](const typename T::SharedPtr) { count++; });
+  subscriber =
+    test_node->create_subscription<T>(topic_name, 10, [&count](const typename T::SharedPtr) {
+      count++;
+      std::cerr << "count up XXXX " << __FILE__ << __LINE__ << std::endl;
+    });
 }
-
 
 }  // namespace test_utils
 
