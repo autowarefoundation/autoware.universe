@@ -327,6 +327,12 @@ bool DetectionAreaModule::hasEnoughBrakingDistance(
   const double pass_judge_line_distance =
     planning_utils::calcJudgeLineDistWithAccLimit(current_velocity, max_acc, delay_response_time);
 
+  // prevent from being judged as not having enough distance when the current velocity is zero
+  // and the vehicle crosses the stop line
+  if (current_velocity < 1e-3) {
+    return true;
+  }
+
   return arc_lane_utils::calcSignedDistance(self_pose, line_pose.position) >
          pass_judge_line_distance;
 }
