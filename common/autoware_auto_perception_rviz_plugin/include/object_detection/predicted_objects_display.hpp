@@ -38,7 +38,7 @@ namespace object_detection
 {
 /// \brief Class defining rviz plugin to visualize PredictedObjects
 class AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC PredictedObjectsDisplay
-  : public ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>
+: public ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>
 {
   Q_OBJECT
 
@@ -73,8 +73,7 @@ private:
     auto itr = id_map.begin();
     while (itr != id_map.end()) {
       if (
-        std::find(tracked_uuids.begin(), tracked_uuids.end(), itr->first) == tracked_uuids.end())
-      {
+        std::find(tracked_uuids.begin(), tracked_uuids.end(), itr->first) == tracked_uuids.end()) {
         unused_marker_ids.push_back(itr->second);
         itr = id_map.erase(itr);
       } else {
@@ -127,7 +126,7 @@ private:
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
 
   typedef message_filters::sync_policies::ApproximateTime<
-      PredictedObjects, sensor_msgs::msg::PointCloud2>
+    PredictedObjects, sensor_msgs::msg::PointCloud2>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   typename std::shared_ptr<Sync> sync_ptr;

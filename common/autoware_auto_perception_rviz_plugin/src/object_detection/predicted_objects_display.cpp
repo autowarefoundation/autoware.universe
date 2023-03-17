@@ -33,7 +33,7 @@ void PredictedObjectsDisplay::workerThread()
 {
   while (true) {
     std::unique_lock<std::mutex> lock(mutex);
-    condition.wait(lock, [this] {return this->msg;});
+    condition.wait(lock, [this] { return this->msg; });
 
     auto tmp_msg = this->msg;
     this->msg.reset();
@@ -225,9 +225,9 @@ void PredictedObjectsDisplay::onInitialize()
 
   percepted_objects_subscription.subscribe(
     raw_node, "/perception/object_recognition/objects", rclcpp::QoS{1}.get_rmw_qos_profile()),
-  pointcloud_subscription.subscribe(
-    raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
-    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    pointcloud_subscription.subscribe(
+      raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 bool PredictedObjectsDisplay::transformObjects(
@@ -270,8 +270,7 @@ void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
   if (!transformObjects(
-      *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects))
-  {
+        *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
     return;
   }
 

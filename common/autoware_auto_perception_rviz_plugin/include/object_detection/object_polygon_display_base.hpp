@@ -106,9 +106,9 @@ inline pcl::PointXYZRGB toPCL(const geometry_msgs::msg::Point & point)
 ///        for the plugin and also defines common helper functions that can be used by its derived
 ///        classes.
 /// \tparam MsgT PredictedObjects or TrackedObjects or DetectedObjects type
-template<typename MsgT>
+template <typename MsgT>
 class AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC ObjectPolygonDisplayBase
-  : public rviz_common::RosTopicDisplay<MsgT>
+: public rviz_common::RosTopicDisplay<MsgT>
 {
 public:
   using Color = std::array<float, 3U>;
@@ -202,7 +202,7 @@ public:
     m_marker_common.load(config);
   }
 
-  void update(float wall_dt, float ros_dt) override {m_marker_common.update(wall_dt, ros_dt);}
+  void update(float wall_dt, float ros_dt) override { m_marker_common.update(wall_dt, ros_dt); }
 
   void reset() override
   {
@@ -210,7 +210,7 @@ public:
     m_marker_common.clearMarkers();
   }
 
-  void clear_markers() {m_marker_common.clearMarkers();}
+  void clear_markers() { m_marker_common.clearMarkers(); }
 
   void add_marker(visualization_msgs::msg::Marker::ConstSharedPtr marker_ptr)
   {
@@ -283,7 +283,7 @@ protected:
   /// \param labels List of ObjectClassificationMsg objects
   /// \param line_width Line thickness around the object
   /// \return Marker ptr. Id and header will have to be set by the caller
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -300,7 +300,7 @@ protected:
     }
   }
 
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -311,7 +311,7 @@ protected:
   /// \param centroid Centroid position of the shape in Object.header.frame_id frame
   /// \param labels List of ObjectClassificationMsg objects
   /// \return Marker ptr. Id and header will have to be set by the caller
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_label_marker_ptr(
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
     const ClassificationContainerT & labels) const
@@ -325,7 +325,7 @@ protected:
     }
   }
 
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_uuid_marker_ptr(
     const unique_identifier_msgs::msg::UUID & uuid, const geometry_msgs::msg::Point & centroid,
     const ClassificationContainerT & labels) const
@@ -349,7 +349,7 @@ protected:
     }
   }
 
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_velocity_text_marker_ptr(
     const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
     const ClassificationContainerT & labels) const
@@ -362,7 +362,7 @@ protected:
     }
   }
 
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_acceleration_text_marker_ptr(
     const geometry_msgs::msg::Accel & accel, const geometry_msgs::msg::Point & vis_pos,
     const ClassificationContainerT & labels) const
@@ -420,7 +420,7 @@ protected:
   /// \param labels list of classifications
   /// \return Color and alpha for the best class in the given list. Unknown class is used in
   ///         degenerate cases
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std_msgs::msg::ColorRGBA get_color_rgba(const ClassificationContainerT & labels) const
   {
     static const std::string kLoggerName("ObjectPolygonDisplayBase");
@@ -436,7 +436,7 @@ protected:
   /// \tparam ClassificationContainerT Container of ObjectClassification
   /// \param labels list of classifications
   /// \return best label string
-  template<typename ClassificationContainerT>
+  template <typename ClassificationContainerT>
   std::string get_best_label(const ClassificationContainerT & labels) const
   {
     static const std::string kLoggerName("ObjectPolygonDisplayBase");
@@ -461,7 +461,7 @@ protected:
   get_color_from_uuid(const std::string & uuid) const
   {
     int i = (static_cast<int>(uuid.at(0)) * 4 + static_cast<int>(uuid.at(1))) %
-      static_cast<int>(predicted_path_colors.size());
+            static_cast<int>(predicted_path_colors.size());
 
     std_msgs::msg::ColorRGBA color;
     color.r = predicted_path_colors.at(i).r;
@@ -507,7 +507,7 @@ protected:
     colors.push_back(sample_color);  // spring green
   }
 
-  double get_line_width() {return m_line_width_property.getFloat();}
+  double get_line_width() { return m_line_width_property.getFloat(); }
 
   // helper function to get radius for kd-search
   std::optional<float> getMaxRadius(object_info & object)
