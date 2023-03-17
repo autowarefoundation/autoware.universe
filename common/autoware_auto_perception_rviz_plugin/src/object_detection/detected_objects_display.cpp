@@ -95,9 +95,9 @@ void DetectedObjectsDisplay::onInitialize()
     "~/output/detected_objects_pointcloud", rclcpp::SensorDataQoS());
 
   sync_ptr =
-    std::make_shared<Sync>(SyncPolicy(10), percepted_objects_subscription, pointcloud_subscription);
+    std::make_shared<Sync>(SyncPolicy(10), perception_objects_subscription, pointcloud_subscription);
   sync_ptr->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
-  percepted_objects_subscription.subscribe(
+  perception_objects_subscription.subscribe(
     raw_node, "/perception/object_recognition/detection/objects",
     rclcpp::QoS{1}.get_rmw_qos_profile()),
     pointcloud_subscription.subscribe(
@@ -134,7 +134,7 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   // pcl::fromROSMsg(transformed_pointcloud, *temp_cloud);
   pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
 
-  // Create a new point cloud with RGB color information and copy data from input cloudb
+  // Create a new point cloud with RGB color information and copy data from input cloud
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
   pcl::copyPointCloud(*temp_cloud, *colored_cloud);
 

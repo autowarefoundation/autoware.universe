@@ -157,7 +157,7 @@ public:
       "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this);
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
-      "Input for pointcloud visualization of Objectcs detection pipeline", this,
+      "Input for pointcloud visualization of objects detection pipeline.", this,
       SLOT(updatePalette()));
     m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
@@ -188,7 +188,7 @@ public:
     this->topic_property_->setValue(m_default_topic.c_str());
     this->topic_property_->setDescription("Topic to subscribe to.");
 
-    // get access to rivz node to sub and to pub to topics
+    // get access to rviz node to sub and to pub to topics
     rclcpp::Node::SharedPtr raw_node =
       this->context_->getRosNodeAbstraction().lock()->get_raw_node();
 
@@ -222,7 +222,7 @@ public:
     m_marker_common.addMessage(markers_ptr);
   }
 
-  // transfrom detected object pose to target frame and return bool result
+  // transform detected object pose to target frame and return bool result
   bool transformObjects(
     const MsgT & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
     MsgT & output_msg)
@@ -575,7 +575,7 @@ protected:
   rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
-  message_filters::Subscriber<MsgT> percepted_objects_subscription;
+  message_filters::Subscriber<MsgT> perception_objects_subscription;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
 
 private:
