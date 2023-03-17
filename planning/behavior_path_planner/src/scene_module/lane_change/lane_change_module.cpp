@@ -827,7 +827,7 @@ void LaneChangeModule::calcTurnSignalInfo()
 
     return get_blinker_pose(path.path, path.reference_lanelets, prepare_to_blinker_start_diff);
   });
-  turn_signal_info.desired_end_point = path.shift_line.end;
+  turn_signal_info.desired_end_point = path.shifted_path.path.points.back().point.pose;
 
   turn_signal_info.required_start_point = path.shift_line.start;
   const auto mid_lane_change_length = path.length.prepare / 2;
