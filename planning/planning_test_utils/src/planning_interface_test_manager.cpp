@@ -82,8 +82,7 @@ void PlanningIntefaceTestManager::publishExpandStopRange(
 void PlanningIntefaceTestManager::publishMap(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<HADMapBin>(
-    test_node_, target_node, topic_name, map_pub_);
+  test_utils::publishEmptyData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
 }
 
 void PlanningIntefaceTestManager::publishOccupancyGrid(
@@ -96,10 +95,8 @@ void PlanningIntefaceTestManager::publishOccupancyGrid(
 void PlanningIntefaceTestManager::publishScenario(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<Scenario>(
-    test_node_, target_node, topic_name, scenario_pub_);
+  test_utils::publishEmptyData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
 }
-
 
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
@@ -117,12 +114,11 @@ void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_nam
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
 }
 
-void PlanningIntefaceTestManager::publishNominalRoute(std::string topic_name)
+void PlanningIntefaceTestManager::publishNominalRoute([[maybe_unused]] std::string topic_name)
 {
-  test_utils::setPublisher(test_node_, topic_name, normal_route_pub_);
-  // normal_route_pub_->publish(test_utils::generateTrajectory<LaneletRoute>(10, 1.0));
-}
 
+
+}
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
@@ -162,7 +158,9 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
-  publishNominalRoute(input_route_name_);
+  publishRoute(
+    std::make_shared<geometry_msgs::msg::PoseStamped>(),
+    std::make_shared<geometry_msgs::msg::PoseStamped>());
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
@@ -184,7 +182,38 @@ void PlanningIntefaceTestManager::publishAbnormalRoute(
   test_utils::spinSomeNodes(test_node_, target_node);
 }
 
-
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
-}  // namespace planning_test_utils
+PoseStamped PlanningIntefaceTestManager::transform_pose(const PoseStamped & input)
+{
+  PoseStamped output;
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf_buffer_.lookupTransform(map_frame_, input.header.frame_id, tf2::TimePointZero);
+    tf2::doTransform(input, output, transform);
+    return output;
+  } catch (tf2::TransformException & error) {
+    throw component_interface_utils::TransformError(error.what());
+  }
+}
+
+void PlanningIntefaceTestManager::publishRoute(
+  const PoseStamped::ConstSharedPtr start_pose, const PoseStamped::ConstSharedPtr goal_pose)
+{
+  // transform goal pose
+  const auto opt_transformed_goal_pose = transform_pose(*goal_pose, map_frame_);
+  if (!opt_transformed_goal_pose) {
+    std::cerr << "Failed to get goal pose in map frame. Aborting frame transformation" << std::endl;
+    return;
+  }
+  const auto transformed_goal_pose = opt_transformed_goal_pose.get();
+
+  // publish an empty route
+  Route::Message route;
+  route.header = start_pose->header;
+  route.start_pose = start_pose->pose.pose;
+  route.goal_pose = goal_pose->pose;
+  pub_route_->publish(route);
+}
+
+}  // namespace planning_test_manager

@@ -24,6 +24,8 @@
   <depend>tf2_msgs</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
+  <depend>component_interface_utils</depend>
+  <depend>component_interface_specs</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_ros</test_depend>

@@ -49,7 +49,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
     test_target_node, "freespace_planner/input/external_velocity_limit_mps");
 
   // set subscriber for test_target_node
-  test_manager->setRouteSubscriber("freespace_planner/output/route");
+  test_manager->setRouteSubscriber("/planning/routing/route");
 
   // setting topic name of subscribing topic
   test_manager->setRouteInputTopicName("freespace_planner/input/route");

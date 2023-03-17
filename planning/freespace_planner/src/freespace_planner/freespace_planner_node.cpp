@@ -415,26 +415,36 @@ void FreespacePlannerNode::onTimer()
 {
   // Check all inputs are ready
   if (!occupancy_grid_ || !route_ || !scenario_ || !odom_) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+    std::cerr << "occupancy_grid_ " << !occupancy_grid_ << __FILE__ << __LINE__ << std::endl;
+    std::cerr << "route_ " << !route_ << __FILE__ << __LINE__ << std::endl;
+    std::cerr << "scenario_ " << !scenario_ << __FILE__ << __LINE__ << std::endl;
+    std::cerr << "odom_ " << !odom_ << __FILE__ << __LINE__ << std::endl;
     return;
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (!isActive(scenario_)) {
     reset();
     return;
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (is_completed_) {
     return;
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // Get current pose
   constexpr const char * vehicle_frame = "base_link";
   current_pose_ = tier4_autoware_utils::transform2pose(
     getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (current_pose_.header.frame_id == "") {
     return;
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (isPlanRequired()) {
     // Stop before planning new trajectory
     const auto stop_trajectory = partial_trajectory_.points.empty()
@@ -444,24 +454,32 @@ void FreespacePlannerNode::onTimer()
     debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
     debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
 
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     reset();
 
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     // Plan new trajectory
     planTrajectory();
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // StopTrajectory
   if (trajectory_.points.size() <= 1) {
     return;
   }
 
   // Update partial trajectory
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   updateTargetIndex();
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   partial_trajectory_ = getPartialTrajectory(trajectory_, prev_target_index_, target_index_);
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // Publish messages
   trajectory_pub_->publish(partial_trajectory_);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   debug_pose_array_pub_->publish(trajectory2PoseArray(trajectory_));
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   debug_partial_pose_array_pub_->publish(trajectory2PoseArray(partial_trajectory_));
 }
 
