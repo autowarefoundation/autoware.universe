@@ -154,7 +154,9 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   const double dist_from_ego_to_stop = calcSignedArcLength(
     original_path.points, self_pose.position, current_seg_idx, stop_pose.position,
     stop_line_seg_idx);
-  if (state_ != State::STOP && dist_from_ego_to_stop < -planner_param_.distance_to_judge_over_stop_line) {
+  if (
+    state_ != State::STOP &&
+    dist_from_ego_to_stop < -planner_param_.distance_to_judge_over_stop_line) {
     setSafe(true);
     return true;
   }
