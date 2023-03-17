@@ -60,7 +60,7 @@ target_link_libraries(grid_map_fusion
 )
 
 rclcpp_components_register_node(grid_map_fusion
-  PLUGIN "occupancy_grid_map::GridMapFusionNode"
+  PLUGIN "grid_map_fusion::GridMapFusionNode"
   EXECUTABLE grid_map_fusion_node
 )
 

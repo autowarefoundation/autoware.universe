@@ -36,9 +36,11 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   const std::vector<std::string> temp_input_topics = {
     "/perception/occupancy_grid_map/top_lidar/map", "/perception/occupancy_grid_map/left_lidar/map",
     "/perception/occupancy_grid_map/right_lidar/map"};
+  const double temp_input_map_number = 3;
 
   // get input topics
-  num_input_topics_ = static_cast<std::size_t>(declare_parameter("input_map_number", 1));
+  num_input_topics_ =
+    static_cast<std::size_t>(declare_parameter("input_map_number", temp_input_map_number));
   if (num_input_topics_ < 1) {
     RCLCPP_WARN(
       this->get_logger(), "minimum num_input_topics_ is 1. current num_input_topics_ is %zu",
