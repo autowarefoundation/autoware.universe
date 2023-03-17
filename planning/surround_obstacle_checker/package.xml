@@ -23,7 +23,7 @@
   <depend>libpcl-all-dev</depend>
   <depend>motion_utils</depend>
   <depend>pcl_conversions</depend>
-  <depend>planning_test_manager</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>

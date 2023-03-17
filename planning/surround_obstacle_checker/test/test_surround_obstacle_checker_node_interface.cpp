@@ -26,7 +26,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   using autoware_auto_planning_msgs::msg::Trajectory;
   rclcpp::init(0, nullptr);
 
-  auto test_manager = std::make_shared<planning_test_manager::PlanningIntefaceTestManager>();
+  auto test_manager = std::make_shared<planning_test_utils::PlanningIntefaceTestManager>();
 
   auto node_options = rclcpp::NodeOptions{};
 
