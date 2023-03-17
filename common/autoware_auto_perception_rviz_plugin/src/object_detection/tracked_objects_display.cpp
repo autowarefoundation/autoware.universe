@@ -134,8 +134,8 @@ void TrackedObjectsDisplay::onInitialize()
   publisher = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/output/tracked_objects_pointcloud", rclcpp::SensorDataQoS());
 
-  sync_ptr =
-    std::make_shared<Sync>(SyncPolicy(10), perception_objects_subscription, pointcloud_subscription);
+  sync_ptr = std::make_shared<Sync>(
+    SyncPolicy(10), perception_objects_subscription, pointcloud_subscription);
   sync_ptr->registerCallback(&TrackedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
 
   perception_objects_subscription.subscribe(
