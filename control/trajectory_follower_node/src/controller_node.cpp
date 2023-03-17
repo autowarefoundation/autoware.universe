@@ -49,8 +49,8 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
       throw std::domain_error("[LateralController] invalid algorithm");
   }
 
-  const auto longitudinal_controller_mode = getLongitudinalControllerMode(
-    declare_parameter<std::string>("longitudinal_controller_mode"));
+  const auto longitudinal_controller_mode =
+    getLongitudinalControllerMode(declare_parameter<std::string>("longitudinal_controller_mode"));
   switch (longitudinal_controller_mode) {
     case LongitudinalControllerMode::PID: {
       longitudinal_controller_ =
