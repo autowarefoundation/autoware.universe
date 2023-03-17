@@ -27,7 +27,10 @@
 
 #include <cfloat>  // for FLT_MAX
 #include <iostream>
+#include <limits>
 #include <map>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace compare_map_segmentation
@@ -86,8 +89,8 @@ public:
     divb_mul_ = divb_mul;
     inverse_leaf_size_ = inverse_leaf_size;
   }
-  inline Eigen::Vector4f get_min_p() const { return min_p; };
-  inline Eigen::Vector4f get_max_p() const { return max_p; };
+  inline Eigen::Vector4f get_min_p() const { return min_p; }
+  inline Eigen::Vector4f get_max_p() const { return max_p; }
   inline Eigen::Vector4i get_min_b() const { return min_b_; }
   inline Eigen::Vector4i get_divb_mul() const { return divb_mul_; }
   inline Eigen::Vector4i get_max_b() const { return max_b_; }
@@ -190,9 +193,8 @@ public:
           int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
           index_vector.emplace_back(static_cast<unsigned int>(idx), index);
         }
-    }
-    // No distance filtering, process all data
-    else {
+    } else {
+      // No distance filtering, process all data
       // First pass: go over all points and insert them into the index_vector vector
       // with calculated idx. Points with the same idx value will contribute to the
       // same point of resulting CloudPoint

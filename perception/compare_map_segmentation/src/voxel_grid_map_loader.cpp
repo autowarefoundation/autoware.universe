@@ -23,7 +23,7 @@ VoxelGridMapLoader::VoxelGridMapLoader(
 
   downsampled_map_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "debug/downsampled_map/pointcloud", rclcpp::QoS{1}.transient_local());
-};
+}
 
 pcl::PointCloud<pcl::PointXYZ> VoxelGridMapLoader::getNeighborVoxelPoints(
   pcl::PointXYZ point, double voxel_size)
@@ -126,10 +126,10 @@ bool VoxelGridStaticMapLoader::is_close_to_map(
     }
     if (is_close_points(voxel_map_ptr_->points.at(voxel_index), point, distance_threshold)) {
       return true;
-    };
+    }
   }
   return false;
-};
+}
 //*************** for Dynamic and Differential Map loader Voxel Grid Filter *************
 
 VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
@@ -137,15 +137,14 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
   rclcpp::CallbackGroup::SharedPtr main_callback_group)
 : VoxelGridMapLoader(node, leaf_size, tf_map_input_frame, mutex)
 {
-  auto timer_interval_ms = static_cast<int>(node->declare_parameter("timer_interval_ms", 500));
-  map_update_distance_threshold_ =
-    static_cast<double>(node->declare_parameter("map_update_distance_threshold", 10.0));
-  map_loader_radius_ = static_cast<double>(node->declare_parameter("map_loader_radius", 100));
+  auto timer_interval_ms = node->declare_parameter<int>("timer_interval_ms");
+  map_update_distance_threshold_ = node->declare_parameter<double>("map_update_distance_threshold");
+  map_loader_radius_ = node->declare_parameter<double>("map_loader_radius");
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
   sub_estimated_pose_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "/localization/pose_estimator/pose_with_covariance", rclcpp::QoS{1},
+    "pose_with_covariance", rclcpp::QoS{1},
     std::bind(&VoxelGridDynamicMapLoader::onEstimatedPoseCallback, this, std::placeholders::_1),
     main_sub_opt);
   RCLCPP_INFO(logger_, "VoxelGridDynamicMapLoader initialized.\n");
@@ -178,30 +177,38 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     return false;
   }
   for (const auto & kv : current_voxel_grid_dict_) {
-    if (
-      // TODO(badai-nguyen): add neighboor map cells checking for points on boundary
-      point.x >= kv.second.min_b_x && point.y >= kv.second.min_b_y &&
-      point.x <= kv.second.max_b_x && point.y <= kv.second.max_b_y) {
-      if (kv.second.map_cell_pc_ptr == NULL) {
-        return false;
-      }
-      auto neighbor_voxel_points = getNeighborVoxelPoints(point, distance_threshold);
-      int voxel_index;
-      for (size_t j = 0; j < neighbor_voxel_points.size(); ++j) {
-        voxel_index = kv.second.map_cell_voxel_grid.getCentroidIndexAt(
-          kv.second.map_cell_voxel_grid.getGridCoordinates(
-            neighbor_voxel_points[j].x, neighbor_voxel_points[j].y, neighbor_voxel_points[j].z));
-
-        if (voxel_index == -1) {
-          continue;
-        }
-        if (is_close_points(
-              kv.second.map_cell_pc_ptr->points.at(voxel_index), point, distance_threshold)) {
-          return true;
-        }
-      }
+    // TODO(badai-nguyen): add neighboor map cells checking for points on boundary
+    if (point.x < kv.second.min_b_x) {
+      continue;
+    }
+    if (point.y < kv.second.min_b_y) {
+      continue;
+    }
+    if (point.x > kv.second.max_b_x) {
+      continue;
+    }
+    if (point.y > kv.second.max_b_y) {
+      continue;
+    }
+    // the map cell is found
+    if (kv.second.map_cell_pc_ptr == NULL) {
       return false;
     }
+    auto neighbor_voxel_points = getNeighborVoxelPoints(point, distance_threshold);
+    int voxel_index;
+    for (size_t j = 0; j < neighbor_voxel_points.size(); ++j) {
+      voxel_index = kv.second.map_cell_voxel_grid.getCentroidIndexAt(
+        kv.second.map_cell_voxel_grid.getGridCoordinates(
+          neighbor_voxel_points[j].x, neighbor_voxel_points[j].y, neighbor_voxel_points[j].z));
+      if (voxel_index == -1) {
+        continue;
+      }
+      if (is_close_points(
+            kv.second.map_cell_pc_ptr->points.at(voxel_index), point, distance_threshold)) {
+        return true;
+      }
+    }
+    return false;
   }
   return false;
 }

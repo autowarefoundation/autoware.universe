@@ -21,6 +21,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
 
+#include <memory>
 #include <vector>
 
 namespace compare_map_segmentation
@@ -33,7 +34,7 @@ protected:
 
 private:
   // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
-  std::unique_ptr<VoxelGridMapLoader> voxel_grid_map_looader_;
+  std::unique_ptr<VoxelGridMapLoader> voxel_grid_map_loader_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
   double distance_threshold_;
   bool set_map_in_voxel_grid_;

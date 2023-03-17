@@ -30,6 +30,12 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/pcl_base.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 // create map loader interface for static and dynamic map
 
 template <typename T, typename U>
@@ -65,7 +71,7 @@ public:
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
 
-  /** \brief Get representative points of 27 neigboor voxels*/
+  /** \brief Get representative points of 27 neighboor voxels*/
   inline pcl::PointCloud<pcl::PointXYZ> getNeighborVoxelPoints(
     pcl::PointXYZ point, double voxel_size);
 
@@ -149,15 +155,11 @@ public:
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & map_cells_to_add,
     std::vector<std::string> map_cell_ids_to_remove)
   {
-    if (map_cells_to_add.size() > 0) {
-      for (const auto & map_cell_to_add : map_cells_to_add) {
-        addMapCellAndFilter(map_cell_to_add);
-      }
+    for (const auto & map_cell_to_add : map_cells_to_add) {
+      addMapCellAndFilter(map_cell_to_add);
     }
-    if (map_cell_ids_to_remove.size() > 0) {
-      for (size_t i = 0; i < map_cell_ids_to_remove.size(); ++i) {
-        removeMapCell(map_cell_ids_to_remove.at(i));
-      }
+    for (size_t i = 0; i < map_cell_ids_to_remove.size(); ++i) {
+      removeMapCell(map_cell_ids_to_remove.at(i));
     }
   }
 
@@ -169,7 +171,7 @@ public:
   }
 
   inline void addMapCellAndFilter(
-    const autoware_map_msgs::msg::PointCloudMapCellWithID map_cell_to_add)
+    const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
     auto exe_start_time = std::chrono::system_clock::now();
 
@@ -188,7 +190,6 @@ public:
     map_cell_voxel_grid_tmp.filter(*map_cell_downsampled_pc_ptr_tmp);
 
     MapGridVoxelInfo current_voxel_grid_list_item;
-    // current_voxel_grid_list_item.voxel_grid_filtered_pc = *map_cell_downsampled_pc_ptr_tmp;
     current_voxel_grid_list_item.min_b_x = map_cell_voxel_grid_tmp.get_min_p()[0];
     current_voxel_grid_list_item.min_b_y = map_cell_voxel_grid_tmp.get_min_p()[1];
     current_voxel_grid_list_item.max_b_x = map_cell_voxel_grid_tmp.get_max_p()[0];
@@ -200,10 +201,11 @@ public:
       map_cell_voxel_grid_tmp.get_divb_mul(), map_cell_voxel_grid_tmp.get_inverse_leaf_size());
 
     current_voxel_grid_list_item.map_cell_pc_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>);
-    for (size_t i = 0; i < map_cell_downsampled_pc_ptr_tmp->points.size(); ++i) {
-      current_voxel_grid_list_item.map_cell_pc_ptr->points.push_back(
-        map_cell_downsampled_pc_ptr_tmp->points.at(i));
-    }
+    // for (size_t i = 0; i < map_cell_downsampled_pc_ptr_tmp->points.size(); ++i) {
+    //   current_voxel_grid_list_item.map_cell_pc_ptr->points.push_back(
+    //     map_cell_downsampled_pc_ptr_tmp->points.at(i));
+    // }
+    current_voxel_grid_list_item.map_cell_pc_ptr = std::move(map_cell_downsampled_pc_ptr_tmp);
     // add
     (*mutex_ptr_).lock();
     current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});

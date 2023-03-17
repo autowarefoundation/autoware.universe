@@ -38,20 +38,20 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
     stop_watch_ptr_->tic("processing_time");
   }
 
-  distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
-  bool is_static_map = static_cast<bool>(declare_parameter("is_static_map", true));
+  distance_threshold_ = declare_parameter<double>("distance_threshold");
+  bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
 
   set_map_in_voxel_grid_ = false;
-  if (is_static_map) {
-    voxel_grid_map_looader_ = std::make_unique<VoxelGridStaticMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_);
-  } else {
+  if (use_dynamic_map_loading) {
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    voxel_grid_map_looader_ = std::make_unique<VoxelGridDynamicMapLoader>(
+    voxel_grid_map_loader_ = std::make_unique<VoxelGridDynamicMapLoader>(
       this, distance_threshold_, &tf_input_frame_, &mutex_, main_callback_group);
+  } else {
+    voxel_grid_map_loader_ = std::make_unique<VoxelGridStaticMapLoader>(
+      this, distance_threshold_, &tf_input_frame_, &mutex_);
   }
-  tf_input_frame_ = *(voxel_grid_map_looader_->tf_map_input_frame_);
+  tf_input_frame_ = *(voxel_grid_map_loader_->tf_map_input_frame_);
 }
 
 void VoxelBasedCompareMapFilterComponent::filter(
@@ -66,7 +66,7 @@ void VoxelBasedCompareMapFilterComponent::filter(
   pcl_output->points.reserve(pcl_input->points.size());
   for (size_t i = 0; i < pcl_input->points.size(); ++i) {
     const pcl::PointXYZ point = pcl_input->points.at(i);
-    if (voxel_grid_map_looader_->is_close_to_map(point, distance_threshold_)) {
+    if (voxel_grid_map_loader_->is_close_to_map(point, distance_threshold_)) {
       continue;
     }
     pcl_output->points.push_back(point);
