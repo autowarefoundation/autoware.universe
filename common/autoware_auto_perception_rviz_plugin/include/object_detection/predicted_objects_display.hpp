@@ -25,6 +25,7 @@
 
 #include <condition_variable>
 #include <list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>

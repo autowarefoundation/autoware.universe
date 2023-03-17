@@ -561,9 +561,9 @@ protected:
       get_color_rgba(object.classification);  // need to be converted to int
 
     for (auto cloud_it = filtered_cloud.begin(); cloud_it != filtered_cloud.end(); ++cloud_it) {
-      cloud_it->r = std::max(0, std::min(255, (int)floor(color_rgba.r * 256.0)));
-      cloud_it->g = std::max(0, std::min(255, (int)floor(color_rgba.g * 256.0)));
-      cloud_it->b = std::max(0, std::min(255, (int)floor(color_rgba.b * 256.0)));
+      cloud_it->r = std::max(0, std::min(255, static_cast<int>(floor(color_rgba.r * 256.0))));
+      cloud_it->g = std::max(0, std::min(255, static_cast<int>(floor(color_rgba.g * 256.0))));
+      cloud_it->b = std::max(0, std::min(255, static_cast<int>(floor(color_rgba.b * 256.0))));
     }
 
     *out_cloud += filtered_cloud;

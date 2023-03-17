@@ -20,6 +20,8 @@
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <memory>
+
 namespace autoware
 {
 namespace rviz_plugins
