@@ -315,7 +315,8 @@ std::pair<bool, bool> getLaneChangePaths(
   const auto required_total_min_distance =
     util::calcLaneChangeBuffer(common_parameter, num_to_preferred_lane);
 
-  const auto arc_position_from_current = lanelet::utils::getArcCoordinates(original_lanelets, pose);
+  [[maybe_unused]] const auto arc_position_from_current =
+    lanelet::utils::getArcCoordinates(original_lanelets, pose);
   const auto arc_position_from_target = lanelet::utils::getArcCoordinates(target_lanelets, pose);
 
   const auto target_lane_length = lanelet::utils::getLaneletLength2d(target_lanelets);
@@ -356,7 +357,7 @@ std::pair<bool, bool> getLaneChangePaths(
       std::max(prepare_speed, minimum_lane_change_velocity));
 #endif
 
-    const auto estimated_shift_length = util::calcLateralDistanceToLanelet(
+    const auto estimated_shift_length = lanelet::utils::getLateralDistanceToClosestLanelet(
       target_lanelets, prepare_segment.points.front().point.pose);
 
     // we assume constant speed during lane change
@@ -618,7 +619,7 @@ ShiftLine getLaneChangingShiftLine(
 
   ShiftLine shift_line;
   shift_line.end_shift_length =
-    util::calcLateralDistanceToLanelet(target_lanes, lane_changing_start_pose);
+    lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
   shift_line.start = lane_changing_start_pose;
   shift_line.end = lane_changing_end_pose;
   shift_line.start_idx =
