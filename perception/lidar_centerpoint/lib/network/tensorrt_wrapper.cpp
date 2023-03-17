@@ -35,10 +35,12 @@ TensorRTWrapper::~TensorRTWrapper()
 bool TensorRTWrapper::init(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision)
 {
+  using Severity = tensorrt_common::Logger::Severity;
+
   runtime_ =
     tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
   if (!runtime_) {
-    std::cout << "Fail to create runtime" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create runtime");
     return false;
   }
 
@@ -56,8 +58,10 @@ bool TensorRTWrapper::init(
 
 bool TensorRTWrapper::createContext()
 {
+  using Severity = tensorrt_common::Logger::Severity;
+
   if (!engine_) {
-    std::cout << "Fail to create context: Engine isn't created" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create context: Engine was not created");
     return false;
   }
 
@@ -65,6 +69,7 @@ bool TensorRTWrapper::createContext()
     tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
   if (!context_) {
     std::cout << "Fail to create context" << std::endl;
+    logger_.log(Severity::kERROR, "Failed to create builder");
     return false;
   }
 
