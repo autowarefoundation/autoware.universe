@@ -105,7 +105,6 @@ class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
     MultiVoxelGrid map_cell_voxel_grid;
     PointCloudPtr map_cell_pc_ptr;
     float min_b_x, min_b_y, max_b_x, max_b_y;
-    // pcl::PointCloud<pcl::PointXYZ> voxel_grid_filtered_pc;
   };
 
   typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
@@ -190,6 +189,7 @@ public:
     map_cell_voxel_grid_tmp.filter(*map_cell_downsampled_pc_ptr_tmp);
 
     MapGridVoxelInfo current_voxel_grid_list_item;
+    // TODO(badai-nguyen): use map cell info from map cell, when map loader I/F is updated
     current_voxel_grid_list_item.min_b_x = map_cell_voxel_grid_tmp.get_min_p()[0];
     current_voxel_grid_list_item.min_b_y = map_cell_voxel_grid_tmp.get_min_p()[1];
     current_voxel_grid_list_item.max_b_x = map_cell_voxel_grid_tmp.get_max_p()[0];

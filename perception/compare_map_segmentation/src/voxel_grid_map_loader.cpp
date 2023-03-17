@@ -177,7 +177,8 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     return false;
   }
   for (const auto & kv : current_voxel_grid_dict_) {
-    // TODO(badai-nguyen): add neighboor map cells checking for points on boundary
+    // TODO(badai-nguyen): add neighboor map cells checking for points on boundary when map loader
+    // I/F is updated
     if (point.x < kv.second.min_b_x) {
       continue;
     }

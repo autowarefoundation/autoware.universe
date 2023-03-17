@@ -36,6 +36,8 @@
 namespace compare_map_segmentation
 {
 template <typename PointT>
+// TODO(badai-nguyen): when map loader I/F is updated, remove this class since
+// boundary point calculation become unnecessary
 class MultiVoxelGrid : public pcl::VoxelGrid<PointT>
 {
   typedef std::map<std::string, pcl::PointCloud<PointT>> MapCellDict;
@@ -98,6 +100,8 @@ public:
   inline Eigen::Array4f get_inverse_leaf_size() const { return inverse_leaf_size_; }
   inline std::vector<int> getLeafLayout() { return (leaf_layout_); }
 
+  // TODO(badai-nguyen): when map loader I/F is updated, use default Voxel applyFilter since
+  // boundary point calculation become unnecessary
   inline void applyFilter(PointCloud & output) override
   {
     // Has the input dataset been set already?
