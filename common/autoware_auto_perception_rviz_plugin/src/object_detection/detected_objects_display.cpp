@@ -89,7 +89,7 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 void DetectedObjectsDisplay::onInitialize()
 {
   ObjectPolygonDisplayBase::onInitialize();
-  // get access to rivz node to sub and to pub to topics
+  // get access to rviz node to sub and to pub to topics
   rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
   publisher = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/output/detected_objects_pointcloud", rclcpp::SensorDataQoS());
