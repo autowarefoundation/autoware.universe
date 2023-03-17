@@ -44,20 +44,17 @@ bool ByteTrack::do_inference(ObjectArray & objects)
   // Pack results
   latest_objects_.clear();
   for (const auto & tracking_result : output_stracks) {
-    [[maybe_unused]] Object object{};
+    Object object{};
     std::vector<float> tlwh = tracking_result.tlwh;
-    bool vertical = tlwh[2] / tlwh[3] > 1.6;
-    if (tlwh[2] * tlwh[3] > 20 && !vertical) {
-      object.x_offset = tlwh[0];
-      object.y_offset = tlwh[1];
-      object.width = tlwh[2];
-      object.height = tlwh[3];
-      object.score = tracking_result.score;
-      object.type = tracking_result.label;
-      object.track_id = tracking_result.track_id;
-      object.unique_id = tracking_result.unique_id;
-      latest_objects_.emplace_back(object);
-    }
+    object.x_offset = tlwh[0];
+    object.y_offset = tlwh[1];
+    object.width = tlwh[2];
+    object.height = tlwh[3];
+    object.score = tracking_result.score;
+    object.type = tracking_result.label;
+    object.track_id = tracking_result.track_id;
+    object.unique_id = tracking_result.unique_id;
+    latest_objects_.emplace_back(object);
   }
 
   return true;

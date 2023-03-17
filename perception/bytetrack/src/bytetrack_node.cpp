@@ -75,7 +75,7 @@ void ByteTrackNode::on_rect(
     obj.y_offset = feat_obj.feature.roi.y_offset;
     obj.height = feat_obj.feature.roi.height;
     obj.width = feat_obj.feature.roi.width;
-    obj.score = feat_obj.object.classification.front().probability;
+    obj.score = feat_obj.object.existence_probability;
     obj.type = feat_obj.object.classification.front().label;
     object_array.emplace_back(obj);
   }

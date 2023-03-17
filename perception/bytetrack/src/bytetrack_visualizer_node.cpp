@@ -167,9 +167,14 @@ void ByteTrackVisualizerNode::draw(
     auto pseudo_id = GeneratePseudoIndex(uuid, this->color_map_.kColorNum);
     auto color = color_map_(pseudo_id);
 
-    cv::rectangle(image, bbox.tl(), bbox.br(), color);
+    const auto left = std::max(0, static_cast<int>(bbox.x));
+    const auto top = std::max(0, static_cast<int>(bbox.y));
+    const auto right = std::min(static_cast<int>(bbox.x + bbox.width), image.size().width);
+    const auto bottom = std::min(static_cast<int>(bbox.y + bbox.height), image.size().height);
+
+    cv::rectangle(image, cv::Point(left, top), cv::Point(right, bottom), color);
     cv::putText(
-      image, cv::format("ID: %s", uuid_str.c_str()), cv::Point(bbox.tl().x, bbox.tl().y - 5),
+      image, cv::format("ID: %s", uuid_str.c_str()), cv::Point(left, top - 5),
       cv::FONT_HERSHEY_SIMPLEX,
       1,  // font scale
       color,
