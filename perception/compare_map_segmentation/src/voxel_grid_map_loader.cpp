@@ -280,5 +280,3 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
 
   publish_downsampled_map(getCurrentDownsampledMapPc());
 }
-
-// VoxelGridDynamicMapLoader::~VoxelGridDynamicMapLoader() {}
