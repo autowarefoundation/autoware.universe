@@ -69,11 +69,13 @@ bool isActive(const Scenario::ConstSharedPtr & scenario)
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const auto & s = scenario->activating_scenarios;
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (std::find(std::begin(s), std::end(s), Scenario::PARKING) != std::end(s)) {
     std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return true;
   }
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   return false;
 }
 
@@ -432,7 +434,9 @@ void FreespacePlannerNode::onTimer()
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (!isActive(scenario_)) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     reset();
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return;
   }
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
@@ -445,9 +449,9 @@ void FreespacePlannerNode::onTimer()
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // Get current pose
   constexpr const char * vehicle_frame = "base_link";
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   current_pose_ = tier4_autoware_utils::transform2pose(
     getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (current_pose_.header.frame_id == "") {
     return;

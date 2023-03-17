@@ -16,6 +16,10 @@
 #define PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_planning_msgs/msg/scenario.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+
 
 #include <boost/optional.hpp>
 
@@ -30,6 +34,9 @@ namespace test_utils
 using planning_interface::Route;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::createQuaternionFromRPY;
+using tier4_planning_msgs::msg::Scenario;
+using nav_msgs::msg::Odometry;
+using nav_msgs::msg::OccupancyGrid;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
@@ -88,12 +95,48 @@ void setPublisher(
 }
 
 template <typename T>
-void publishEmptyData(
+void publishData(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
   typename rclcpp::Publisher<T>::SharedPtr publisher)
 {
   setPublisher(test_node, topic_name, publisher);
   publisher->publish(T{});
+  spinSomeNodes(test_node, target_node);
+}
+
+template <>
+void publishData<Scenario>(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<Scenario>::SharedPtr publisher)
+{
+  auto current_scenario = std::make_shared<Scenario>();
+  current_scenario->activating_scenarios.emplace_back(Scenario::PARKING);
+  setPublisher(test_node, topic_name, publisher);
+  publisher->publish(*current_scenario);
+  spinSomeNodes(test_node, target_node);
+}
+
+template <>
+void publishData<Odometry>(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<Odometry>::SharedPtr publisher)
+{
+  setPublisher(test_node, topic_name, publisher);
+  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
+  current_odometry->header.frame_id = "base_link";
+  publisher->publish(*current_odometry);
+  spinSomeNodes(test_node, target_node);
+}
+
+template <>
+void publishData<OccupancyGrid>(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<OccupancyGrid>::SharedPtr publisher)
+{
+  setPublisher(test_node, topic_name, publisher);
+  std::shared_ptr<OccupancyGrid> current_occupancy_grid = std::make_shared<OccupancyGrid>();
+  current_occupancy_grid->header.frame_id = "base_link";
+  publisher->publish(*current_occupancy_grid);
   spinSomeNodes(test_node, target_node);
 }
 

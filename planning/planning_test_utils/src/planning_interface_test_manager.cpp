@@ -53,60 +53,60 @@ void PlanningIntefaceTestManager::declareNearestSearchDistanceParams(
 void PlanningIntefaceTestManager::publishOdometry(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<Odometry>(test_node_, target_node, topic_name, odom_pub_);
+  test_utils::publishData<Odometry>(test_node_, target_node, topic_name, odom_pub_);
 }
 
 void PlanningIntefaceTestManager::publishMaxVelocity(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<VelocityLimit>(
+  test_utils::publishData<VelocityLimit>(
     test_node_, target_node, topic_name, max_velocity_pub_);
 }
 
 void PlanningIntefaceTestManager::publishPointCloud(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<PointCloud2>(test_node_, target_node, topic_name, point_cloud_pub_);
+  test_utils::publishData<PointCloud2>(test_node_, target_node, topic_name, point_cloud_pub_);
 }
 
 void PlanningIntefaceTestManager::publishAcceleration(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<AccelWithCovarianceStamped>(
+  test_utils::publishData<AccelWithCovarianceStamped>(
     test_node_, target_node, topic_name, acceleration_pub_);
 }
 
 void PlanningIntefaceTestManager::publishPredictedObjects(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<PredictedObjects>(
+  test_utils::publishData<PredictedObjects>(
     test_node_, target_node, topic_name, predicted_objects_pub_);
 }
 
 void PlanningIntefaceTestManager::publishExpandStopRange(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<ExpandStopRange>(
+  test_utils::publishData<ExpandStopRange>(
     test_node_, target_node, topic_name, expand_stop_range_pub_);
 }
 
 void PlanningIntefaceTestManager::publishMap(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
+  test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
 }
 
 void PlanningIntefaceTestManager::publishOccupancyGrid(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<OccupancyGrid>(
+  test_utils::publishData<OccupancyGrid>(
     test_node_, target_node, topic_name, occupancy_grid_pub_);
 }
 
-void PlanningIntefaceTestManager::publishScenario(
+void PlanningIntefaceTestManager::publishParkingScenario(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishEmptyData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
+  test_utils::publishData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
 }
 
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)

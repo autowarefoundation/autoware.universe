@@ -45,7 +45,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   test_manager->publishOdometry(test_target_node, "freespace_planner/input/odometry");
   test_manager->publishOccupancyGrid(
     test_target_node, "freespace_planner/input/occupancy_grid");
-  test_manager->publishScenario(
+  test_manager->publishParkingScenario(
     test_target_node, "freespace_planner/input/scenario");
 
   // test_target_node → test_node_

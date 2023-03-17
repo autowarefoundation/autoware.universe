@@ -35,6 +35,7 @@
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
@@ -81,6 +82,7 @@ public:
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setTrajectorySubscriber(std::string topic_name);
