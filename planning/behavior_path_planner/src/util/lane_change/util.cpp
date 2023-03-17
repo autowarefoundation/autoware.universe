@@ -24,6 +24,7 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -357,6 +358,13 @@ std::pair<bool, bool> getLaneChangePaths(
       std::max(prepare_speed, minimum_lane_change_velocity));
 #endif
 
+    if (prepare_segment.points.empty()) {
+      RCLCPP_ERROR_STREAM(
+        rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
+        "prepare segment is empty!! something wrong...");
+      continue;
+    }
+
     const auto estimated_shift_length = lanelet::utils::getLateralDistanceToClosestLanelet(
       target_lanelets, prepare_segment.points.front().point.pose);
 
@@ -365,20 +373,31 @@ std::pair<bool, bool> getLaneChangePaths(
     const auto lane_changing_distance = calcLaneChangingDistance(
       lane_changing_speed, estimated_shift_length, end_of_lane_dist, common_parameter, parameter);
 
+    // lane changing start pose is at the end of prepare segment
+    const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
+
+    if (is_goal_in_route) {
+      const double s_start =
+        lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
+      const double s_goal =
+        lanelet::utils::getArcCoordinates(target_lanelets, route_handler.getGoalPose()).length;
+      if (s_start + lane_changing_distance + parameter.lane_change_finish_judge_buffer > s_goal) {
+        continue;
+      }
+    }
+
     const auto lc_dist = LaneChangePhaseInfo{prepare_distance, lane_changing_distance};
 
     const auto lane_changing_segment = getLaneChangingSegment(
-      route_handler, target_lanelets, forward_path_length, arc_position_from_target.length,
+      route_handler, target_lanelets, forward_path_length, lane_changing_start_pose,
       target_lane_length, lc_dist, lane_changing_speed, required_total_min_distance);
 
-    if (prepare_segment.points.empty() || lane_changing_segment.points.empty()) {
+    if (lane_changing_segment.points.empty()) {
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
-        "reference path is empty!! something wrong...");
+        "lane changing segment is empty!! something wrong...");
       continue;
     }
-
-    const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
 
     const auto resample_interval =
       calcLaneChangeResampleInterval(lane_changing_distance, lane_changing_speed);
@@ -711,16 +730,20 @@ double calcLaneChangingDistance(
 
 PathWithLaneId getLaneChangingSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
-  const double forward_path_length, const double arc_length_from_target,
+  const double forward_path_length, const Pose & lane_changing_start_pose,
   const double target_lane_length, const LaneChangePhaseInfo dist_prepare_to_lc_end,
   const double lane_changing_speed, const double total_required_min_dist)
 {
-  const double s_start = std::invoke([&arc_length_from_target, &dist_prepare_to_lc_end,
-                                      &target_lane_length, &total_required_min_dist]() {
-    const double dist_from_current_pose = arc_length_from_target + dist_prepare_to_lc_end.sum();
-    const double end_of_lane_dist_without_buffer = target_lane_length - total_required_min_dist;
-    return std::min(dist_from_current_pose, end_of_lane_dist_without_buffer);
-  });
+  const double s_start =
+    std::invoke([&lane_changing_start_pose, &target_lanelets, &dist_prepare_to_lc_end,
+                 &target_lane_length, &total_required_min_dist]() {
+      const auto arc_to_start_pose =
+        lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose);
+      const double dist_from_front_target_lanelet =
+        arc_to_start_pose.length + dist_prepare_to_lc_end.lane_changing;
+      const double end_of_lane_dist_without_buffer = target_lane_length - total_required_min_dist;
+      return std::min(dist_from_front_target_lanelet, end_of_lane_dist_without_buffer);
+    });
 
   const double s_end =
     std::invoke([&s_start, &forward_path_length, &target_lane_length, &total_required_min_dist]() {
@@ -760,10 +783,9 @@ PathWithLaneId getReferencePathFromTargetLane(
   const double s_end = std::invoke([&]() {
     const auto dist_from_lc_start = s_start + lane_changing_distance + forward_path_length;
     if (is_goal_in_route) {
-      const auto goal_arc_coordinates =
-        lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose());
-      const auto dist_to_goal = goal_arc_coordinates.length - min_total_lane_changing_distance;
-      return std::min(dist_from_lc_start, dist_to_goal);
+      const double s_goal =
+        lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose()).length;
+      return std::min(dist_from_lc_start, s_goal);
     }
     const auto dist_from_end = target_lane_length - min_total_lane_changing_distance;
     return std::min(dist_from_lc_start, dist_from_end);
