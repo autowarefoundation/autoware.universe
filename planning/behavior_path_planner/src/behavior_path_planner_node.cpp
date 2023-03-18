@@ -205,8 +205,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       std::make_shared<PlannerManager>(*this, lane_following_param_ptr_, p.verbose);
 
     const auto register_and_create_publisher = [&](const auto & manager) {
-      const auto & module_name =
-        manager->getModuleName();
+      const auto & module_name = manager->getModuleName();
       planner_manager_->registerSceneModuleManager(manager);
       path_candidate_publishers_.emplace(
         module_name, create_publisher<Path>(path_candidate_name_space + module_name, 1));
