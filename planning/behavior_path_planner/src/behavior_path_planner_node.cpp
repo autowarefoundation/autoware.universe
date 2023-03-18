@@ -204,6 +204,16 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_manager_ =
       std::make_shared<PlannerManager>(*this, lane_following_param_ptr_, p.verbose);
 
+    const auto register_and_create_publisher = [&](const auto & manager) {
+      const auto & module_name =
+        manager->getModuleName();
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        module_name, create_publisher<Path>(path_candidate_name_space + module_name, 1));
+      path_reference_publishers_.emplace(
+        module_name, create_publisher<Path>(path_reference_name_space + module_name, 1));
+    };
+
     if (p.config_pull_out.enable_module) {
       auto manager = std::make_shared<PullOutModuleManager>(
         this, "pull_out", p.config_pull_out, pull_out_param_ptr_);
@@ -239,11 +249,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       auto manager = std::make_shared<LaneChangeModuleManager>(
         this, module_topic, p.config_lane_change_left, lane_change_param_ptr_,
         route_handler::Direction::LEFT, LaneChangeModuleType::NORMAL);
-      planner_manager_->registerSceneModuleManager(manager);
-      path_candidate_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_candidate_name_space + module_topic, 1));
-      path_reference_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_reference_name_space + module_topic, 1));
+      register_and_create_publisher(manager);
     }
 
     if (p.config_lane_change_right.enable_module) {
@@ -251,11 +257,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       auto manager = std::make_shared<LaneChangeModuleManager>(
         this, module_topic, p.config_lane_change_right, lane_change_param_ptr_,
         route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL);
-      planner_manager_->registerSceneModuleManager(manager);
-      path_candidate_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_candidate_name_space + module_topic, 1));
-      path_reference_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_reference_name_space + module_topic, 1));
+      register_and_create_publisher(manager);
     }
 
     if (p.config_ext_request_lane_change_right.enable_module) {
@@ -263,11 +265,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       auto manager = std::make_shared<LaneChangeModuleManager>(
         this, module_topic, p.config_ext_request_lane_change_right, lane_change_param_ptr_,
         route_handler::Direction::RIGHT, LaneChangeModuleType::EXTERNAL_REQUEST);
-      planner_manager_->registerSceneModuleManager(manager);
-      path_candidate_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_candidate_name_space + module_topic, 1));
-      path_reference_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_reference_name_space + module_topic, 1));
+      register_and_create_publisher(manager);
     }
 
     if (p.config_ext_request_lane_change_left.enable_module) {
@@ -275,11 +273,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       auto manager = std::make_shared<LaneChangeModuleManager>(
         this, module_topic, p.config_ext_request_lane_change_left, lane_change_param_ptr_,
         route_handler::Direction::LEFT, LaneChangeModuleType::EXTERNAL_REQUEST);
-      planner_manager_->registerSceneModuleManager(manager);
-      path_candidate_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_candidate_name_space + module_topic, 1));
-      path_reference_publishers_.emplace(
-        module_topic, create_publisher<Path>(path_reference_name_space + module_topic, 1));
+      register_and_create_publisher(manager);
     }
 
     if (p.config_avoidance.enable_module) {
