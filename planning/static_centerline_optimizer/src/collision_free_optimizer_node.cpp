@@ -182,8 +182,7 @@ CollisionFreeOptimizerNode::CollisionFreeOptimizerNode(const rclcpp::NodeOptions
     traj_param_.is_avoiding_unknown =
       declare_parameter<bool>("object.avoiding_object_type.unknown");
     traj_param_.is_avoiding_car = declare_parameter<bool>("object.avoiding_object_type.car");
-    traj_param_.is_avoiding_truck =
-      declare_parameter<bool>("object.avoiding_object_type.truck");
+    traj_param_.is_avoiding_truck = declare_parameter<bool>("object.avoiding_object_type.truck");
     traj_param_.is_avoiding_bus = declare_parameter<bool>("object.avoiding_object_type.bus");
     traj_param_.is_avoiding_bicycle =
       declare_parameter<bool>("object.avoiding_object_type.bicycle");
@@ -191,8 +190,7 @@ CollisionFreeOptimizerNode::CollisionFreeOptimizerNode(const rclcpp::NodeOptions
       declare_parameter<bool>("object.avoiding_object_type.motorbike");
     traj_param_.is_avoiding_pedestrian =
       declare_parameter<bool>("object.avoiding_object_type.pedestrian");
-    traj_param_.is_avoiding_animal =
-      declare_parameter<bool>("object.avoiding_object_type.animal");
+    traj_param_.is_avoiding_animal = declare_parameter<bool>("object.avoiding_object_type.animal");
 
     // ego nearest search
     traj_param_.ego_nearest_dist_threshold =
@@ -259,8 +257,8 @@ CollisionFreeOptimizerNode::CollisionFreeOptimizerNode(const rclcpp::NodeOptions
     // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
     // The 0.8 scale is adopted as it performed the best.
     constexpr double default_wheelbase_ratio = 0.8;
-    mpt_param_.optimization_center_offset = declare_parameter<double>(
-      "mpt.kinematics.optimization_center_offset");
+    mpt_param_.optimization_center_offset =
+      declare_parameter<double>("mpt.kinematics.optimization_center_offset");
 
     // bounds search
     mpt_param_.bounds_search_widths =
