@@ -23,7 +23,6 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <map>
@@ -59,17 +58,20 @@ protected:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
 
 public:
+  typedef compare_map_segmentation::MultiVoxelGrid<pcl::PointXYZ> MultiVoxelGrid;
   typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
   typedef typename PointCloud::Ptr PointCloudPtr;
   explicit VoxelGridMapLoader(
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex);
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
+  bool is_close_to_neighbor_voxels(
+    const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
+    MultiVoxelGrid & voxel) const;
+  bool is_in_voxel(
+    const pcl::PointXYZ & src_point, const pcl::PointXYZ & target_point,
+    const double distance_threshold, const PointCloudPtr & map, MultiVoxelGrid & voxel) const;
+
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
-
-  /** \brief Get representative points of 27 neighboor voxels*/
-  pcl::PointCloud<pcl::PointXYZ> getNeighborVoxelPoints(
-    pcl::PointXYZ point, double voxel_size);
-
   bool is_close_points(
     const pcl::PointXYZ point, const pcl::PointXYZ target_point,
     const double distance_threshold) const;
@@ -81,7 +83,7 @@ class VoxelGridStaticMapLoader : public VoxelGridMapLoader
 {
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
-  pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_;
+  MultiVoxelGrid voxel_grid_;
   PointCloudPtr voxel_map_ptr_;
 
 public:
@@ -94,7 +96,6 @@ public:
 // *************** for Dynamic and Differential Map loader Voxel Grid Filter *************
 class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
 {
-  typedef compare_map_segmentation::MultiVoxelGrid<pcl::PointXYZ> MultiVoxelGrid;
   struct MapGridVoxelInfo
   {
     MultiVoxelGrid map_cell_voxel_grid;

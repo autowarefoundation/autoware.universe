@@ -25,42 +25,6 @@ VoxelGridMapLoader::VoxelGridMapLoader(
     "debug/downsampled_map/pointcloud", rclcpp::QoS{1}.transient_local());
 }
 
-pcl::PointCloud<pcl::PointXYZ> VoxelGridMapLoader::getNeighborVoxelPoints(
-  pcl::PointXYZ point, double voxel_size)
-{
-  pcl::PointCloud<pcl::PointXYZ> output;
-  output.push_back(pcl::PointXYZ(point.x, point.y, point.z));
-  output.push_back(pcl::PointXYZ(point.x, point.y - voxel_size, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x, point.y - voxel_size, point.z));
-  output.push_back(pcl::PointXYZ(point.x, point.y - voxel_size, point.z + voxel_size));
-  output.push_back(pcl::PointXYZ(point.x, point.y, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x, point.y, point.z + voxel_size));
-  output.push_back(pcl::PointXYZ(point.x, point.y + voxel_size, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x, point.y + voxel_size, point.z));
-  output.push_back(pcl::PointXYZ(point.x, point.y + voxel_size, point.z + voxel_size));
-
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y - voxel_size, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y - voxel_size, point.z));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y - voxel_size, point.z + voxel_size));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y, point.z));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y, point.z + voxel_size));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y + voxel_size, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y + voxel_size, point.z));
-  output.push_back(pcl::PointXYZ(point.x - voxel_size, point.y + voxel_size, point.z + voxel_size));
-
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y - voxel_size, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y - voxel_size, point.z));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y - voxel_size, point.z + voxel_size));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y, point.z));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y, point.z + voxel_size));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y + voxel_size, point.z - voxel_size));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y + voxel_size, point.z));
-  output.push_back(pcl::PointXYZ(point.x + voxel_size, point.y + voxel_size, point.z + voxel_size));
-  return output;
-}
-
 bool VoxelGridMapLoader::is_close_points(
   const pcl::PointXYZ point, const pcl::PointXYZ target_point,
   const double distance_threshold) const
@@ -78,6 +42,180 @@ void VoxelGridMapLoader::publish_downsampled_map(
   pcl::toROSMsg(downsampled_pc, downsampled_map_msg);
   downsampled_map_msg.header.frame_id = "map";
   downsampled_map_pub_->publish(downsampled_map_msg);
+}
+
+bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
+  const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
+  MultiVoxelGrid & voxel) const
+{
+  // check map downsampled pc
+  if (map == NULL) {
+    return false;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y, point.z), point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y - distance_threshold, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y - distance_threshold, point.z), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y - distance_threshold, point.z + distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y, point.z - distance_threshold), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y, point.z + distance_threshold), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y + distance_threshold, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y + distance_threshold, point.z), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y + distance_threshold, point.z + distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x - distance_threshold, point.y - distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x - distance_threshold, point.y - distance_threshold, point.z), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x - distance_threshold, point.y - distance_threshold, point.z + distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x - distance_threshold, point.y, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x - distance_threshold, point.y, point.z), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x - distance_threshold, point.y, point.z + distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x - distance_threshold, point.y + distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x - distance_threshold, point.y + distance_threshold, point.z), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x - distance_threshold, point.y + distance_threshold, point.z + distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x + distance_threshold, point.y - distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x + distance_threshold, point.y - distance_threshold, point.z), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x + distance_threshold, point.y - distance_threshold, point.z + distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x + distance_threshold, point.y, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x + distance_threshold, point.y, point.z), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x + distance_threshold, point.y, point.z + distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x + distance_threshold, point.y + distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x + distance_threshold, point.y + distance_threshold, point.z), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x + distance_threshold, point.y + distance_threshold, point.z + distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool VoxelGridMapLoader::is_in_voxel(
+  const pcl::PointXYZ & src_point, const pcl::PointXYZ & target_point,
+  const double distance_threshold, const PointCloudPtr & map, MultiVoxelGrid & voxel) const
+{
+  int voxel_index =
+    voxel.getCentroidIndexAt(voxel.getGridCoordinates(src_point.x, src_point.y, src_point.z));
+  if (voxel_index != -1) {  // not empty voxel
+    const double dist_x = map->points.at(voxel_index).x - target_point.x;
+    const double dist_y = map->points.at(voxel_index).y - target_point.y;
+    const double dist_z = map->points.at(voxel_index).z - target_point.z;
+    const double sqr_distance = dist_x * dist_x + dist_y * dist_y + dist_z * dist_z;
+    if (sqr_distance < distance_threshold * distance_threshold) {
+      return true;
+    }
+  }
+  return false;
 }
 
 //*************************** for Static Map loader Voxel Grid Filter *************
@@ -111,22 +249,8 @@ void VoxelGridStaticMapLoader::onMapCallback(
 bool VoxelGridStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  // check map downsampled pc
-  if (voxel_map_ptr_ == NULL) {
-    return false;
-  }
-  auto neighbor_voxel_points = getNeighborVoxelPoints(point, distance_threshold);
-  int voxel_index;
-  for (size_t j = 0; j < neighbor_voxel_points.size(); ++j) {
-    voxel_index = voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(
-      neighbor_voxel_points[j].x, neighbor_voxel_points[j].y, neighbor_voxel_points[j].z));
-
-    if (voxel_index == -1) {
-      continue;
-    }
-    if (is_close_points(voxel_map_ptr_->points.at(voxel_index), point, distance_threshold)) {
-      return true;
-    }
+  if (is_close_to_neighbor_voxels(point, distance_threshold, voxel_map_ptr_, voxel_grid_)) {
+    return true;
   }
   return false;
 }
@@ -176,7 +300,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
   if (current_voxel_grid_dict_.size() == 0) {
     return false;
   }
-  for (const auto & kv : current_voxel_grid_dict_) {
+  for (auto & kv : current_voxel_grid_dict_) {
     // TODO(badai-nguyen): add neighboor map cells checking for points on boundary when map loader
     // I/F is updated
     if (point.x < kv.second.min_b_x) {
@@ -195,21 +319,10 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     if (kv.second.map_cell_pc_ptr == NULL) {
       return false;
     }
-    auto neighbor_voxel_points = getNeighborVoxelPoints(point, distance_threshold);
-    int voxel_index;
-    for (size_t j = 0; j < neighbor_voxel_points.size(); ++j) {
-      voxel_index = kv.second.map_cell_voxel_grid.getCentroidIndexAt(
-        kv.second.map_cell_voxel_grid.getGridCoordinates(
-          neighbor_voxel_points[j].x, neighbor_voxel_points[j].y, neighbor_voxel_points[j].z));
-      if (voxel_index == -1) {
-        continue;
-      }
-      if (is_close_points(
-            kv.second.map_cell_pc_ptr->points.at(voxel_index), point, distance_threshold)) {
-        return true;
-      }
+    if (is_close_to_neighbor_voxels(
+          point, distance_threshold, kv.second.map_cell_pc_ptr, kv.second.map_cell_voxel_grid)) {
+      return true;
     }
-    return false;
   }
   return false;
 }
@@ -225,7 +338,6 @@ void VoxelGridDynamicMapLoader::timer_callback()
   }
 
   if (should_update_map()) {
-    RCLCPP_INFO(logger_, "Vehicle moved. Update current map!.\n");
     last_updated_position_ = current_position_;
     request_update_map((current_position_.value()));
     last_updated_position_ = current_position_;
@@ -244,7 +356,6 @@ bool VoxelGridDynamicMapLoader::should_update_map() const
 
 void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Point & position)
 {
-  auto exe_start_time = std::chrono::system_clock::now();
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
   request->area.center = position;
   request->area.radius = map_loader_radius_;
@@ -271,12 +382,5 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
         result.get()->new_pointcloud_with_ids, result.get()->ids_to_remove);
     }
   }
-
-  auto exe_stop_time = std::chrono::system_clock::now();
-  const double exe_run_time =
-    std::chrono::duration_cast<std::chrono::microseconds>(exe_stop_time - exe_start_time).count() /
-    1000.0;
-  RCLCPP_INFO(logger_, "Current map updating time: %lf [ms]", exe_run_time);
-
   publish_downsampled_map(getCurrentDownsampledMapPc());
 }
