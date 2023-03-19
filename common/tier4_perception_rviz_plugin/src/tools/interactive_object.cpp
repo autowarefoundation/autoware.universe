@@ -258,7 +258,8 @@ void InteractiveObjectTool::onPoseSet(double x, double y, double theta)
   auto output_msg = createObjectMsg();
   output_msg.initial_state.pose_covariance.pose.position.x = x;
   output_msg.initial_state.pose_covariance.pose.position.y = y;
-  output_msg.initial_state.pose_covariance.pose.position.z = position_z_->getFloat();
+  output_msg.initial_state.pose_covariance.pose.position.z =
+    position_z_->getFloat() + height_->getFloat() / 2.0;
   output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
   output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
   output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
@@ -305,8 +306,9 @@ int InteractiveObjectTool::processMouseEvent(rviz_common::ViewportMouseEvent & e
   }
 
   if (event.rightDown()) {
-    const auto point = get_point_from_mouse(event);
+    auto point = get_point_from_mouse(event);
     if (point) {
+      point.value().z = position_z_->getFloat() + height_->getFloat() / 2.0;
       if (event.shift()) {
         const auto uuid = objects_.create(point.value());
         publishObjectMsg(uuid.get(), Object::ADD);
@@ -327,8 +329,9 @@ int InteractiveObjectTool::processMouseEvent(rviz_common::ViewportMouseEvent & e
   }
 
   if (event.right()) {
-    const auto point = get_point_from_mouse(event);
+    auto point = get_point_from_mouse(event);
     if (point) {
+      point.value().z = position_z_->getFloat() + height_->getFloat() / 2.0;
       const auto uuid = objects_.update(point.value());
       publishObjectMsg(uuid.get(), Object::MODIFY);
     }
