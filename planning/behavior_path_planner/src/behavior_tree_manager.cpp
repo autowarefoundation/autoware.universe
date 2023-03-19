@@ -27,24 +27,41 @@
 
 namespace behavior_path_planner
 {
-PathWithLaneId createShortenPath(const std::shared_ptr<RouteHandler> & route_handler)
+bool isInLanelets(const lanelet::ConstLanelets & lanes, const Pose & pose)
 {
-  constexpr double backward_length = 1.0;
+  for (const auto & lane : lanes) {
+    if (lanelet::utils::isInLanelet(pose, lane)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+PathWithLaneId createGoalAroundPath(
+  const std::shared_ptr<RouteHandler> & route_handler,
+  const std::optional<PoseWithUuidStamped> & modified_goal)
+{
+  const Pose goal_pose = modified_goal ? modified_goal->pose : route_handler->getGoalPose();
+  const auto shoulder_lanes = route_handler->getShoulderLanelets();
 
   lanelet::ConstLanelet goal_lane;
-  if (!route_handler->getGoalLanelet(&goal_lane)) {
+  const bool is_failed_getting_lanelet = std::invoke([&]() {
+    if (isInLanelets(shoulder_lanes, goal_pose)) {
+      return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
+    }
+    return !route_handler->getGoalLanelet(&goal_lane);
+  });
+  if (is_failed_getting_lanelet) {
     PathWithLaneId path{};
     return path;
   }
-  lanelet::ConstLanelets goal_lanes = route_handler->getLaneletSequence(
-    goal_lane, route_handler->getGoalPose(), backward_length, 0.0);
 
-  const auto arc_coord =
-    lanelet::utils::getArcCoordinates(goal_lanes, route_handler->getGoalPose());
+  constexpr double backward_length = 1.0;
+  const auto arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, goal_pose);
   const double s_start = std::max(arc_coord.length - backward_length, 0.0);
   const double s_end = arc_coord.length;
 
-  return route_handler->getCenterLinePath(goal_lanes, s_start, s_end);
+  return route_handler->getCenterLinePath({goal_lane}, s_start, s_end);
 }
 
 BehaviorTreeManager::BehaviorTreeManager(
@@ -111,9 +128,9 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
 
   if (isEgoOutOfRoute(data)) {
     BehaviorModuleOutput output{};
-    output.path = std::make_shared<PathWithLaneId>(createShortenPath(data->route_handler));
-    output.reference_path =
-      std::make_shared<PathWithLaneId>(createShortenPath(data->route_handler));
+    const auto output_path = createGoalAroundPath(data->route_handler, data->prev_modified_goal);
+    output.path = std::make_shared<PathWithLaneId>(output_path);
+    output.reference_path = std::make_shared<PathWithLaneId>(output_path);
     return output;
   }
 
@@ -181,18 +198,29 @@ void BehaviorTreeManager::resetGrootMonitor()
 bool BehaviorTreeManager::isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) const
 {
   const auto self_pose = data->self_odometry->pose.pose;
+  const Pose goal_pose =
+    data->prev_modified_goal ? data->prev_modified_goal->pose : data->route_handler->getGoalPose();
+  const auto shoulder_lanes = data->route_handler->getShoulderLanelets();
+
   lanelet::ConstLanelet goal_lane;
-  if (!data->route_handler->getGoalLanelet(&goal_lane)) {
+  const bool is_failed_getting_lanelet = std::invoke([&]() {
+    if (isInLanelets(shoulder_lanes, goal_pose)) {
+      return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
+    }
+    return !data->route_handler->getGoalLanelet(&goal_lane);
+  });
+  if (is_failed_getting_lanelet) {
     RCLCPP_WARN_STREAM(logger_, "cannot find goal lanelet");
     return true;
   }
 
   // If ego vehicle is over goal on goal lane, return true
   if (lanelet::utils::isInLanelet(self_pose, goal_lane)) {
+    constexpr double buffer = 1.0;
     const auto ego_arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, self_pose);
     const auto goal_arc_coord =
       lanelet::utils::getArcCoordinates({goal_lane}, data->route_handler->getGoalPose());
-    if (ego_arc_coord.length > goal_arc_coord.length) {
+    if (ego_arc_coord.length > goal_arc_coord.length + buffer) {
       return true;
     } else {
       return false;
