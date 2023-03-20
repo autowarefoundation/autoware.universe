@@ -138,9 +138,9 @@ void CropBoxFilterComponent::faster_filter(
     }
 
     if (transform_info.need_transform) {
-        point = transform_info.eigen_transform * point;
+      point = transform_info.eigen_transform * point;
     }
-    
+
     bool point_is_inside = point[2] > param_.min_z && point[2] < param_.max_z &&
                            point[1] > param_.min_y && point[1] < param_.max_y &&
                            point[0] > param_.min_x && point[0] < param_.max_x;
