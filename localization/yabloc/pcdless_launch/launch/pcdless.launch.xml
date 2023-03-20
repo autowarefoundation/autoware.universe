@@ -10,15 +10,17 @@
 
     <!-- flags to launch -->
     <arg name="mode" default="pekf" description="[pekf, ekf, pf]"/>
+    <arg name="standalone" default="true" description="set false if it launches as multi pose estimator"/>
+
     <let name="launch_ekf" value="false"/>
     <let name="launch_ekf_corrector" value="false"/>
     <let name="launch_pf" value="false"/>
-    <let name="connect_base_link_to_particle_pose" value="false"/>
+    <let name="connect_base_link_to_particle_pose" value="true" if="$(var standalone)"/>
+    <let name="connect_base_link_to_particle_pose" value="false" unless="$(var standalone)"/>
 
     <let name="launch_ekf" value="true" if="$(eval &quot;'$(var mode)'=='pekf' or '$(var mode)'=='ekf'&quot;)"/>
     <let name="launch_ekf_corrector" value="true" if="$(eval &quot;'$(var mode)'=='ekf'&quot;)"/>
     <let name="launch_pf" value="true" if="$(eval &quot;'$(var mode)'=='pekf' or '$(var mode)'=='pf'&quot;)"/>
-    <let name="connect_base_link_to_particle_pose" value="true" if="$(eval &quot;'$(var mode)'=='pf'&quot;)"/>
 
     <group>
         <push-ros-namespace namespace="localization"/>
@@ -68,9 +70,8 @@
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/twist.launch.xml"/>
         </group>
 
-
-        <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose"/>
-        <let name="input_pose" value="/localization/pf/pose" unless="$(var launch_ekf)"/>
+        <let name="input_pose" value="/localization/pf/pose" if="$(var standalone)"/>
+        <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose" unless="$(var standalone)"/>
 
         <!-- validation -->
         <group>
