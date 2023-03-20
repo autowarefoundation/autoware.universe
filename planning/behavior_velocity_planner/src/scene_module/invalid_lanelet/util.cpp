@@ -85,11 +85,14 @@ PathWithInvalidLaneletPolygonIntersection getPathIntersectionWithInvalidLaneletP
   const Point & last_path_point{p_last.x, p_last.y};
   const Point & first_path_point{p_first.x, p_first.y};
 
-  path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon = bg::within(first_path_point, polygon);
+  path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon =
+    bg::within(first_path_point, polygon);
   auto const & is_last_path_point_inside_polygon = bg::within(last_path_point, polygon);
 
   if (
-    intersects.empty() && path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon && is_last_path_point_inside_polygon) {
+    intersects.empty() &&
+    path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon &&
+    is_last_path_point_inside_polygon) {
     path_invalid_lanelet_polygon_intersection.is_path_inside_of_polygon = true;
   } else {
     // classify first and second intersection points
@@ -98,10 +101,12 @@ PathWithInvalidLaneletPolygonIntersection getPathIntersectionWithInvalidLaneletP
       if (
         (intersects.size() == 2 && i == 0) ||
         (intersects.size() == 1 && is_last_path_point_inside_polygon)) {
-        path_invalid_lanelet_polygon_intersection.first_intersection_point = createPoint(p.x(), p.y(), ego_pos.z);
+        path_invalid_lanelet_polygon_intersection.first_intersection_point =
+          createPoint(p.x(), p.y(), ego_pos.z);
       } else if (
         (intersects.size() == 2 && i == 1) ||
-        (intersects.size() == 1 && path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon)) {
+        (intersects.size() == 1 &&
+         path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon)) {
         path_invalid_lanelet_polygon_intersection.second_intersection_point =
           createPoint(p.x(), p.y(), ego_pos.z);
       }

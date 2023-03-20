@@ -48,21 +48,18 @@ void InvalidLaneletModuleManager::launchNewModules(
     if (isModuleRegistered(module_id)) {
       continue;
     }
-    
+
     const std::string invalid_lanelet_attribute = ll.attributeOr("invalid_lanelet", "no");
-    if (invalid_lanelet_attribute != "yes"){
+    if (invalid_lanelet_attribute != "yes") {
       continue;
     }
 
     registerModule(std::make_shared<InvalidLaneletModule>(
-      module_id, lane_id, planner_param_, logger_.get_child("invalid_lanelet"),
-      clock_));
+      module_id, lane_id, planner_param_, logger_.get_child("invalid_lanelet"), clock_));
     generateUUID(module_id);
     updateRTCStatus(
       getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
-      
   }
-   
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>

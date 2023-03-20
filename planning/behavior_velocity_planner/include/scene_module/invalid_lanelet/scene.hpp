@@ -40,7 +40,7 @@ class InvalidLaneletModule : public SceneModuleInterface
 {
 public:
   enum class State { INIT, APPROACH, INSIDE_INVALID_LANELET, STOPPED };
-  
+
   struct SegmentIndexWithPose
   {
     size_t index;
@@ -54,7 +54,7 @@ public:
     std::vector<geometry_msgs::msg::Point> invalid_lanelet_polygon;
     // geometry_msgs::msg::Pose stop_wall_pose;
     geometry_msgs::msg::Pose stop_pose;
-    //geometry_msgs::msg::Pose stop_pose;
+    // geometry_msgs::msg::Pose stop_pose;
   };
 
   struct PlannerParam
@@ -64,9 +64,8 @@ public:
   };
 
   InvalidLaneletModule(
-    const int64_t module_id, const int64_t lane_id,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, const int64_t lane_id, const PlannerParam & planner_param,
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
@@ -84,7 +83,7 @@ private:
 
   bool is_first_time;
   PathWithInvalidLaneletPolygonIntersection path_invalid_lanelet_polygon_intersection;
-  geometry_msgs::msg::Pose  intersection_pose;
+  geometry_msgs::msg::Pose intersection_pose;
   // State machine
   State state_;
   std::shared_ptr<const rclcpp::Time> stopped_time_;
