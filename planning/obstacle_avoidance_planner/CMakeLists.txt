@@ -58,6 +58,11 @@ endif()
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
-    scripts
     config
+    rviz
+)
+
+install(PROGRAMS
+  scripts/calclation_time_plotter.py
+  DESTINATION lib/${PROJECT_NAME}
 )

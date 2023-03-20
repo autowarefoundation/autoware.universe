@@ -45,6 +45,7 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
+using route_handler::Direction;
 using tier4_autoware_utils::Polygon2d;
 
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
@@ -53,11 +54,7 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets);
 
-double getExpectedVelocityWhenDecelerate(
-  const double & current_velocity, const double & expected_acceleration,
-  const double & lane_change_prepare_duration);
-
-std::pair<double, double> calcLaneChangingSpeedAndDistanceWhenDecelerate(
+std::pair<double, double> calcLaneChangingSpeedAndDistance(
   const double velocity, const double shift_length, const double deceleration,
   const double min_total_lc_len, const BehaviorPathPlannerParameters & com_param,
   const LaneChangeParameters & lc_param);
@@ -101,27 +98,27 @@ bool hasEnoughDistance(
   const lanelet::ConstLanelets & target_lanes, const Pose & current_pose, const Pose & goal_pose,
   const RouteHandler & route_handler, const double minimum_lane_change_length);
 
-ShiftLine getLaneChangeShiftLine(
-  const PathWithLaneId & path1, const PathWithLaneId & path2,
+ShiftLine getLaneChangingShiftLine(
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
   const lanelet::ConstLanelets & target_lanes, const PathWithLaneId & reference_path);
 
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double target_lane_length,
-  const LaneChangePhaseInfo dist_prepare_to_lc_end, const double min_total_lane_changing_distance,
+  const double lane_changing_distance, const double min_total_lane_changing_distance,
   const double forward_path_length, const double resample_interval, const bool is_goal_in_route);
 
-PathWithLaneId getLaneChangePathPrepareSegment(
+PathWithLaneId getPrepareSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
   const double arc_length_from_current, const double backward_path_length,
   const double prepare_distance, const double prepare_speed);
 
-PathWithLaneId getLaneChangePathPrepareSegment(
+PathWithLaneId getPrepareSegment(
   const PathWithLaneId & original_path, const lanelet::ConstLanelets & original_lanelets,
   const Pose & current_pose, const double backward_path_length, const double prepare_distance,
   const double prepare_speed);
 
-PathWithLaneId getLaneChangePathLaneChangingSegment(
+PathWithLaneId getLaneChangingSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
   const double forward_path_length, const double arc_length_from_target,
   const double target_lane_length, const LaneChangePhaseInfo dist_prepare_to_lc_end,
@@ -161,6 +158,8 @@ LaneChangeTargetObjectIndices filterObjectIndices(
   const bool ignore_unknown_obj = false);
 
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
+
+std::string getStrDirection(const std::string name, const Direction direction);
 
 }  // namespace behavior_path_planner::lane_change_utils
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__UTIL_HPP_
