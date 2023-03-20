@@ -43,7 +43,7 @@ PathWithInvalidLaneletPolygonIntersection getPathIntersectionWithInvalidLaneletP
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num)
 {
-  PathWithInvalidLaneletPolygonIntersection polygon_intersection_status;
+  PathWithInvalidLaneletPolygonIntersection path_invalid_lanelet_polygon_intersection;
   std::vector<Point> intersects{};
 
   bool found_max_num = false;
@@ -85,12 +85,12 @@ PathWithInvalidLaneletPolygonIntersection getPathIntersectionWithInvalidLaneletP
   const Point & last_path_point{p_last.x, p_last.y};
   const Point & first_path_point{p_first.x, p_first.y};
 
-  auto const & is_first_path_point_inside_polygon = bg::within(first_path_point, polygon);
+  path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon = bg::within(first_path_point, polygon);
   auto const & is_last_path_point_inside_polygon = bg::within(last_path_point, polygon);
 
   if (
-    intersects.empty() && is_first_path_point_inside_polygon && is_last_path_point_inside_polygon) {
-    polygon_intersection_status.is_path_inside_of_polygon = true;
+    intersects.empty() && path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon && is_last_path_point_inside_polygon) {
+    path_invalid_lanelet_polygon_intersection.is_path_inside_of_polygon = true;
   } else {
     // classify first and second intersection points
     for (size_t i = 0; i < intersects.size(); ++i) {
@@ -98,15 +98,15 @@ PathWithInvalidLaneletPolygonIntersection getPathIntersectionWithInvalidLaneletP
       if (
         (intersects.size() == 2 && i == 0) ||
         (intersects.size() == 1 && is_last_path_point_inside_polygon)) {
-        polygon_intersection_status.first_intersection_point = createPoint(p.x(), p.y(), ego_pos.z);
+        path_invalid_lanelet_polygon_intersection.first_intersection_point = createPoint(p.x(), p.y(), ego_pos.z);
       } else if (
         (intersects.size() == 2 && i == 1) ||
-        (intersects.size() == 1 && is_first_path_point_inside_polygon)) {
-        polygon_intersection_status.second_intersection_point =
+        (intersects.size() == 1 && path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon)) {
+        path_invalid_lanelet_polygon_intersection.second_intersection_point =
           createPoint(p.x(), p.y(), ego_pos.z);
       }
     }
   }
-  return polygon_intersection_status;
+  return path_invalid_lanelet_polygon_intersection;
 }
 }  // namespace behavior_velocity_planner

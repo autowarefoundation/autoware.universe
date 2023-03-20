@@ -57,6 +57,8 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::PULL_OUT;
   } else if (module_name == "intersection_occlusion") {
     module.type = Module::INTERSECTION_OCCLUSION;
+  } else if (module_name == "invalid_lanelet") {
+    module.type = Module::INVALID_LANELET;
   } else {
     module.type = Module::NONE;
   }

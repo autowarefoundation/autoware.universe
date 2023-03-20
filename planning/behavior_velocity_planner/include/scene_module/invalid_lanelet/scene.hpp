@@ -20,7 +20,6 @@
 #include "utilization/boost_geometry_helper.hpp"
 #include "utilization/state_machine.hpp"
 
-#include <lanelet2_extension/regulatory_elements/invalid_lanelet.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -41,14 +40,21 @@ class InvalidLaneletModule : public SceneModuleInterface
 {
 public:
   enum class State { INIT, APPROACH, INSIDE_INVALID_LANELET, STOPPED };
+  
+  struct SegmentIndexWithPose
+  {
+    size_t index;
+    geometry_msgs::msg::Pose pose;
+  };
 
   struct DebugData
   {
     double base_link2front;
-    PathWithInvalidLaneletPolygonIntersection path_polygon_intersection_status;
+    PathWithInvalidLaneletPolygonIntersection path_polygon_intersection;
     std::vector<geometry_msgs::msg::Point> invalid_lanelet_polygon;
-    geometry_msgs::msg::Pose stop_wall_pose;
+    // geometry_msgs::msg::Pose stop_wall_pose;
     geometry_msgs::msg::Pose stop_pose;
+    //geometry_msgs::msg::Pose stop_pose;
   };
 
   struct PlannerParam
@@ -59,7 +65,6 @@ public:
 
   InvalidLaneletModule(
     const int64_t module_id, const int64_t lane_id,
-    const lanelet::autoware::InvalidLanelet & invalid_lanelet_reg_elem,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
@@ -71,15 +76,15 @@ public:
 private:
   const int64_t lane_id_;
 
-  // Key Feature - Invalid Lanelet Regulatory Element
-  const lanelet::autoware::InvalidLanelet & invalid_lanelet_reg_elem_;
-
   // Parameter
   PlannerParam planner_param_;
 
   // Debug
   DebugData debug_data_;
 
+  bool is_first_time;
+  PathWithInvalidLaneletPolygonIntersection path_invalid_lanelet_polygon_intersection;
+  geometry_msgs::msg::Pose  intersection_pose;
   // State machine
   State state_;
   std::shared_ptr<const rclcpp::Time> stopped_time_;

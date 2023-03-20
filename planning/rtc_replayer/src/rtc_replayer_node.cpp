@@ -74,6 +74,9 @@ std::string getModuleName(const uint8_t module_type)
     case Module::OCCLUSION_SPOT: {
       return "occlusion_spot";
     }
+    case Module::INVALID_LANELET: {
+      return "invalid_lanelet";
+    }
   }
   return "NONE";
 }

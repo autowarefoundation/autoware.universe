@@ -27,7 +27,6 @@
 
 namespace behavior_velocity_planner
 {
-using lanelet::autoware::InvalidLanelet;
 
 InvalidLaneletModuleManager::InvalidLaneletModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(node, getModuleName())
@@ -40,34 +39,41 @@ InvalidLaneletModuleManager::InvalidLaneletModuleManager(rclcpp::Node & node)
 void InvalidLaneletModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & m : planning_utils::getRegElemMapOnPath<InvalidLanelet>(
+  for (const auto & ll : planning_utils::getLaneletsOnPath(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
-    // Use lanelet_id to unregister module when the route is changed
-    const int64_t module_id = m.first->id();
-    const int64_t lane_id = m.second.id();
+    const auto lane_id = ll.id();
+    const auto module_id = lane_id;
 
-    if (!isModuleRegistered(module_id)) {
-      // assign 1 invalid lanelet for each module
-      registerModule(std::make_shared<InvalidLaneletModule>(
-        module_id, lane_id, *m.first, planner_param_, logger_.get_child("invalid_lanelet_module"),
-        clock_));
-      generateUUID(module_id);
-      updateRTCStatus(
-        getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+    if (isModuleRegistered(module_id)) {
+      continue;
     }
+    
+    const std::string invalid_lanelet_attribute = ll.attributeOr("invalid_lanelet", "no");
+    if (invalid_lanelet_attribute != "yes"){
+      continue;
+    }
+
+    registerModule(std::make_shared<InvalidLaneletModule>(
+      module_id, lane_id, planner_param_, logger_.get_child("invalid_lanelet"),
+      clock_));
+    generateUUID(module_id);
+    updateRTCStatus(
+      getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+      
   }
+   
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 InvalidLaneletModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto invalid_lanelet_id_set = planning_utils::getRegElemIdSetOnPath<InvalidLanelet>(
+  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [invalid_lanelet_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return invalid_lanelet_id_set.count(scene_module->getModuleId()) == 0;
+  return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    return lane_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
 

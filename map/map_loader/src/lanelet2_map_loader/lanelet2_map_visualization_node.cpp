@@ -111,8 +111,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
     lanelet::utils::query::noStoppingAreas(all_lanelets);
   std::vector<lanelet::SpeedBumpConstPtr> sb_reg_elems =
     lanelet::utils::query::speedBumps(all_lanelets);
-  std::vector<lanelet::InvalidLaneletConstPtr> il_reg_elems =
-    lanelet::utils::query::invalidLanelets(all_lanelets);
   lanelet::ConstLineStrings3d parking_spaces =
     lanelet::utils::query::getAllParkingSpaces(viz_lanelet_map);
   lanelet::ConstPolygons3d parking_lots = lanelet::utils::query::getAllParkingLots(viz_lanelet_map);
@@ -189,9 +187,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::speedBumpsAsMarkerArray(sb_reg_elems, cl_speed_bumps));
-  insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::invalidLaneletsAsMarkerArray(il_reg_elems, cl_invalid_lanelets));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::parkingLotsAsMarkerArray(parking_lots, cl_parking_lots));
