@@ -76,22 +76,22 @@ struct LongitudinalInfo
 {
   explicit LongitudinalInfo(rclcpp::Node & node)
   {
-    max_accel = node.declare_parameter<double>("normal.max_acc");
-    min_accel = node.declare_parameter<double>("normal.min_acc");
-    max_jerk = node.declare_parameter<double>("normal.max_jerk");
-    min_jerk = node.declare_parameter<double>("normal.min_jerk");
-    limit_max_accel = node.declare_parameter<double>("limit.max_acc");
-    limit_min_accel = node.declare_parameter<double>("limit.min_acc");
-    limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
-    limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+    max_accel = node.declare_parameter("normal.max_acc").get<double>();
+    min_accel = node.declare_parameter("normal.min_acc").get<double>();
+    max_jerk = node.declare_parameter("normal.max_jerk").get<double>();
+    min_jerk = node.declare_parameter("normal.min_jerk").get<double>();
+    limit_max_accel = node.declare_parameter("limit.max_acc").get<double>();
+    limit_min_accel = node.declare_parameter("limit.min_acc").get<double>();
+    limit_max_jerk = node.declare_parameter("limit.max_jerk").get<double>();
+    limit_min_jerk = node.declare_parameter("limit.min_jerk").get<double>();
 
-    idling_time = node.declare_parameter<double>("common.idling_time");
-    min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
-    min_object_accel_for_rss = node.declare_parameter<double>("common.min_object_accel_for_rss");
+    idling_time = node.declare_parameter("common.idling_time").get<double>();
+    min_ego_accel_for_rss = node.declare_parameter("common.min_ego_accel_for_rss").get<double>();
+    min_object_accel_for_rss = node.declare_parameter("common.min_object_accel_for_rss").get<double>();
 
-    safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
+    safe_distance_margin = node.declare_parameter("common.safe_distance_margin").get<double>();
     terminal_safe_distance_margin =
-      node.declare_parameter<double>("common.terminal_safe_distance_margin");
+      node.declare_parameter("common.terminal_safe_distance_margin").get<double>();
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -153,8 +153,8 @@ struct EgoNearestParam
   EgoNearestParam() = default;
   explicit EgoNearestParam(rclcpp::Node & node)
   {
-    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
-    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
+    dist_threshold = node.declare_parameter("ego_nearest_dist_threshold").get<double>();
+    yaw_threshold = node.declare_parameter("ego_nearest_yaw_threshold").get<double>();
   }
 
   double dist_threshold;

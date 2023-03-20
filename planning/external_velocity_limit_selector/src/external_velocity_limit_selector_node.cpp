@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <iomanip>
 
 namespace
 {
@@ -111,15 +112,15 @@ ExternalVelocityLimitSelectorNode::ExternalVelocityLimitSelectorNode(
   // Params
   {
     auto & p = node_param_;
-    p.max_velocity = this->declare_parameter<double>("max_velocity");
-    p.normal_min_acc = this->declare_parameter<double>("normal.min_acc");
-    p.normal_max_acc = this->declare_parameter<double>("normal.max_acc");
-    p.normal_min_jerk = this->declare_parameter<double>("normal.min_jerk");
-    p.normal_max_jerk = this->declare_parameter<double>("normal.max_jerk");
-    p.limit_min_acc = this->declare_parameter<double>("limit.min_acc");
-    p.limit_max_acc = this->declare_parameter<double>("limit.max_acc");
-    p.limit_min_jerk = this->declare_parameter<double>("limit.min_jerk");
-    p.limit_max_jerk = this->declare_parameter<double>("limit.max_jerk");
+    p.max_velocity = this->declare_parameter("max_velocity").get<double>();
+    p.normal_min_acc = this->declare_parameter("normal.min_acc").get<double>();
+    p.normal_max_acc = this->declare_parameter("normal.max_acc").get<double>();
+    p.normal_min_jerk = this->declare_parameter("normal.min_jerk").get<double>();
+    p.normal_max_jerk = this->declare_parameter("normal.max_jerk").get<double>();
+    p.limit_min_acc = this->declare_parameter("limit.min_acc").get<double>();
+    p.limit_max_acc = this->declare_parameter("limit.max_acc").get<double>();
+    p.limit_min_jerk = this->declare_parameter("limit.min_jerk").get<double>();
+    p.limit_max_jerk = this->declare_parameter("limit.max_jerk").get<double>();
   }
 }
 

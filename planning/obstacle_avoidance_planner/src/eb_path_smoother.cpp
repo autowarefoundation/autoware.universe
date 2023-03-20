@@ -74,36 +74,36 @@ namespace obstacle_avoidance_planner
 EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
 {
   {  // option
-    enable_warm_start = node->declare_parameter<bool>("eb.option.enable_warm_start");
+    enable_warm_start = node->declare_parameter("eb.option.enable_warm_start").get<bool>();
     enable_optimization_validation =
-      node->declare_parameter<bool>("eb.option.enable_optimization_validation");
+      node->declare_parameter("eb.option.enable_optimization_validation").get<bool>();
   }
 
   {  // common
-    delta_arc_length = node->declare_parameter<double>("eb.common.delta_arc_length");
-    num_points = node->declare_parameter<int>("eb.common.num_points");
+    delta_arc_length = node->declare_parameter("eb.common.delta_arc_length").get<double>();
+    num_points = node->declare_parameter("eb.common.num_points").get<int>();
   }
 
   {  // clearance
-    num_joint_points = node->declare_parameter<int>("eb.clearance.num_joint_points");
-    clearance_for_fix = node->declare_parameter<double>("eb.clearance.clearance_for_fix");
-    clearance_for_joint = node->declare_parameter<double>("eb.clearance.clearance_for_joint");
-    clearance_for_smooth = node->declare_parameter<double>("eb.clearance.clearance_for_smooth");
+    num_joint_points = node->declare_parameter("eb.clearance.num_joint_points").get<int>();
+    clearance_for_fix = node->declare_parameter("eb.clearance.clearance_for_fix").get<double>();
+    clearance_for_joint = node->declare_parameter("eb.clearance.clearance_for_joint").get<double>();
+    clearance_for_smooth = node->declare_parameter("eb.clearance.clearance_for_smooth").get<double>();
   }
 
   {  // weight
-    smooth_weight = node->declare_parameter<double>("eb.weight.smooth_weight");
-    lat_error_weight = node->declare_parameter<double>("eb.weight.lat_error_weight");
+    smooth_weight = node->declare_parameter("eb.weight.smooth_weight").get<double>();
+    lat_error_weight = node->declare_parameter("eb.weight.lat_error_weight").get<double>();
   }
 
   {  // qp
-    qp_param.max_iteration = node->declare_parameter<int>("eb.qp.max_iteration");
-    qp_param.eps_abs = node->declare_parameter<double>("eb.qp.eps_abs");
-    qp_param.eps_rel = node->declare_parameter<double>("eb.qp.eps_rel");
+    qp_param.max_iteration = node->declare_parameter("eb.qp.max_iteration").get<int>();
+    qp_param.eps_abs = node->declare_parameter("eb.qp.eps_abs").get<double>();
+    qp_param.eps_rel = node->declare_parameter("eb.qp.eps_rel").get<double>();
   }
 
   // validation
-  max_validation_error = node->declare_parameter<double>("eb.validation.max_error");
+  max_validation_error = node->declare_parameter("eb.validation.max_error").get<double>();
 }
 
 void EBPathSmoother::EBParam::onParam(const std::vector<rclcpp::Parameter> & parameters)

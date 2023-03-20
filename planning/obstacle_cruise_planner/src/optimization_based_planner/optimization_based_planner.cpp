@@ -45,40 +45,40 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
 
   // parameter
   dense_resampling_time_interval_ =
-    node.declare_parameter<double>("optimization_based_planner.dense_resampling_time_interval");
+    node.declare_parameter("optimization_based_planner.dense_resampling_time_interval").get<double>();
   sparse_resampling_time_interval_ =
-    node.declare_parameter<double>("optimization_based_planner.sparse_resampling_time_interval");
+    node.declare_parameter("optimization_based_planner.sparse_resampling_time_interval").get<double>();
   dense_time_horizon_ =
-    node.declare_parameter<double>("optimization_based_planner.dense_time_horizon");
-  max_time_horizon_ = node.declare_parameter<double>("optimization_based_planner.max_time_horizon");
+    node.declare_parameter("optimization_based_planner.dense_time_horizon").get<double>();
+  max_time_horizon_ = node.declare_parameter("optimization_based_planner.max_time_horizon").get<double>();
 
-  t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
-  velocity_margin_ = node.declare_parameter<double>("optimization_based_planner.velocity_margin");
+  t_dangerous_ = node.declare_parameter("optimization_based_planner.t_dangerous").get<double>();
+  velocity_margin_ = node.declare_parameter("optimization_based_planner.velocity_margin").get<double>();
 
   replan_vel_deviation_ =
-    node.declare_parameter<double>("optimization_based_planner.replan_vel_deviation");
-  engage_velocity_ = node.declare_parameter<double>("optimization_based_planner.engage_velocity");
+    node.declare_parameter("optimization_based_planner.replan_vel_deviation").get<double>();
+  engage_velocity_ = node.declare_parameter("optimization_based_planner.engage_velocity").get<double>();
   engage_acceleration_ =
-    node.declare_parameter<double>("optimization_based_planner.engage_acceleration");
+    node.declare_parameter("optimization_based_planner.engage_acceleration").get<double>();
   engage_exit_ratio_ =
-    node.declare_parameter<double>("optimization_based_planner.engage_exit_ratio");
+    node.declare_parameter("optimization_based_planner.engage_exit_ratio").get<double>();
   stop_dist_to_prohibit_engage_ =
-    node.declare_parameter<double>("optimization_based_planner.stop_dist_to_prohibit_engage");
+    node.declare_parameter("optimization_based_planner.stop_dist_to_prohibit_engage").get<double>();
 
   const double max_s_weight =
-    node.declare_parameter<double>("optimization_based_planner.max_s_weight");
+    node.declare_parameter("optimization_based_planner.max_s_weight").get<double>();
   const double max_v_weight =
-    node.declare_parameter<double>("optimization_based_planner.max_v_weight");
+    node.declare_parameter("optimization_based_planner.max_v_weight").get<double>();
   const double over_s_safety_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_s_safety_weight");
+    node.declare_parameter("optimization_based_planner.over_s_safety_weight").get<double>();
   const double over_s_ideal_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_s_ideal_weight");
+    node.declare_parameter("optimization_based_planner.over_s_ideal_weight").get<double>();
   const double over_v_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_v_weight");
+    node.declare_parameter("optimization_based_planner.over_v_weight").get<double>();
   const double over_a_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_a_weight");
+    node.declare_parameter("optimization_based_planner.over_a_weight").get<double>();
   const double over_j_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_j_weight");
+    node.declare_parameter("optimization_based_planner.over_j_weight").get<double>();
 
   // velocity optimizer
   velocity_optimizer_ptr_ = std::make_shared<VelocityOptimizer>(

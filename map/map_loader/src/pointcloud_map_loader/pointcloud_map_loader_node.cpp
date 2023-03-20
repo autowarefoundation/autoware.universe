@@ -48,11 +48,11 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 : Node("pointcloud_map_loader", options)
 {
   const auto pcd_paths =
-    getPcdPaths(declare_parameter<std::vector<std::string>>("pcd_paths_or_directory"));
-  bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
-  bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
-  bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
-  bool enable_differential_load = declare_parameter<bool>("enable_differential_load");
+    getPcdPaths(declare_parameter("pcd_paths_or_directory").get<std::vector<std::string>>());
+  bool enable_whole_load = declare_parameter("enable_whole_load").get<bool>();
+  bool enable_downsample_whole_load = declare_parameter("enable_downsampled_whole_load").get<bool>();
+  bool enable_partial_load = declare_parameter("enable_partial_load").get<bool>();
+  bool enable_differential_load = declare_parameter("enable_differential_load").get<bool>();
 
   if (enable_whole_load) {
     std::string publisher_name = "output/pointcloud_map";

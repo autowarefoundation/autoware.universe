@@ -185,17 +185,17 @@ MPTOptimizer::MPTParam::MPTParam(
   rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   {  // option
-    steer_limit_constraint = node->declare_parameter<bool>("mpt.option.steer_limit_constraint");
-    enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
-    enable_manual_warm_start = node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
+    steer_limit_constraint = node->declare_parameter("mpt.option.steer_limit_constraint").get<bool>();
+    enable_warm_start = node->declare_parameter("mpt.option.enable_warm_start").get<bool>();
+    enable_manual_warm_start = node->declare_parameter("mpt.option.enable_manual_warm_start").get<bool>();
     enable_optimization_validation =
-      node->declare_parameter<bool>("mpt.option.enable_optimization_validation");
-    mpt_visualize_sampling_num = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
+      node->declare_parameter("mpt.option.enable_optimization_validation").get<bool>();
+    mpt_visualize_sampling_num = node->declare_parameter("mpt.option.visualize_sampling_num").get<int>();
   }
 
   {  // common
-    num_points = node->declare_parameter<int>("mpt.common.num_points");
-    delta_arc_length = node->declare_parameter<double>("mpt.common.delta_arc_length");
+    num_points = node->declare_parameter("mpt.common.num_points").get<int>();
+    delta_arc_length = node->declare_parameter("mpt.common.delta_arc_length").get<double>();
   }
 
   // kinematics
@@ -210,83 +210,83 @@ MPTOptimizer::MPTParam::MPTParam(
 
   {  // clearance
     hard_clearance_from_road =
-      node->declare_parameter<double>("mpt.clearance.hard_clearance_from_road");
+      node->declare_parameter("mpt.clearance.hard_clearance_from_road").get<double>();
     soft_clearance_from_road =
-      node->declare_parameter<double>("mpt.clearance.soft_clearance_from_road");
+      node->declare_parameter("mpt.clearance.soft_clearance_from_road").get<double>();
   }
 
   {  // weight
     soft_collision_free_weight =
-      node->declare_parameter<double>("mpt.weight.soft_collision_free_weight");
+      node->declare_parameter("mpt.weight.soft_collision_free_weight").get<double>();
 
-    lat_error_weight = node->declare_parameter<double>("mpt.weight.lat_error_weight");
-    yaw_error_weight = node->declare_parameter<double>("mpt.weight.yaw_error_weight");
-    yaw_error_rate_weight = node->declare_parameter<double>("mpt.weight.yaw_error_rate_weight");
-    steer_input_weight = node->declare_parameter<double>("mpt.weight.steer_input_weight");
-    steer_rate_weight = node->declare_parameter<double>("mpt.weight.steer_rate_weight");
+    lat_error_weight = node->declare_parameter("mpt.weight.lat_error_weight").get<double>();
+    yaw_error_weight = node->declare_parameter("mpt.weight.yaw_error_weight").get<double>();
+    yaw_error_rate_weight = node->declare_parameter("mpt.weight.yaw_error_rate_weight").get<double>();
+    steer_input_weight = node->declare_parameter("mpt.weight.steer_input_weight").get<double>();
+    steer_rate_weight = node->declare_parameter("mpt.weight.steer_rate_weight").get<double>();
 
     terminal_lat_error_weight =
-      node->declare_parameter<double>("mpt.weight.terminal_lat_error_weight");
+      node->declare_parameter("mpt.weight.terminal_lat_error_weight").get<double>();
     terminal_yaw_error_weight =
-      node->declare_parameter<double>("mpt.weight.terminal_yaw_error_weight");
-    goal_lat_error_weight = node->declare_parameter<double>("mpt.weight.goal_lat_error_weight");
-    goal_yaw_error_weight = node->declare_parameter<double>("mpt.weight.goal_yaw_error_weight");
+      node->declare_parameter("mpt.weight.terminal_yaw_error_weight").get<double>();
+    goal_lat_error_weight = node->declare_parameter("mpt.weight.goal_lat_error_weight").get<double>();
+    goal_yaw_error_weight = node->declare_parameter("mpt.weight.goal_yaw_error_weight").get<double>();
   }
 
   {  // avoidance
-    max_avoidance_cost = node->declare_parameter<double>("mpt.avoidance.max_avoidance_cost");
-    avoidance_cost_margin = node->declare_parameter<double>("mpt.avoidance.avoidance_cost_margin");
+    max_avoidance_cost = node->declare_parameter("mpt.avoidance.max_avoidance_cost").get<double>();
+    avoidance_cost_margin = node->declare_parameter("mpt.avoidance.avoidance_cost_margin").get<double>();
     avoidance_cost_band_length =
-      node->declare_parameter<double>("mpt.avoidance.avoidance_cost_band_length");
+      node->declare_parameter("mpt.avoidance.avoidance_cost_band_length").get<double>();
     avoidance_cost_decrease_rate =
-      node->declare_parameter<double>("mpt.avoidance.avoidance_cost_decrease_rate");
+      node->declare_parameter("mpt.avoidance.avoidance_cost_decrease_rate").get<double>();
 
     avoidance_lat_error_weight =
-      node->declare_parameter<double>("mpt.avoidance.weight.lat_error_weight");
+      node->declare_parameter("mpt.avoidance.weight.lat_error_weight").get<double>();
     avoidance_yaw_error_weight =
-      node->declare_parameter<double>("mpt.avoidance.weight.yaw_error_weight");
+      node->declare_parameter("mpt.avoidance.weight.yaw_error_weight").get<double>();
     avoidance_steer_input_weight =
-      node->declare_parameter<double>("mpt.avoidance.weight.steer_input_weight");
+      node->declare_parameter("mpt.avoidance.weight.steer_input_weight").get<double>();
   }
 
   {  // collision free constraints
-    l_inf_norm = node->declare_parameter<bool>("mpt.collision_free_constraints.option.l_inf_norm");
+    l_inf_norm = node->declare_parameter("mpt.collision_free_constraints.option.l_inf_norm").get<bool>();
     soft_constraint =
-      node->declare_parameter<bool>("mpt.collision_free_constraints.option.soft_constraint");
+      node->declare_parameter("mpt.collision_free_constraints.option.soft_constraint").get<bool>();
     hard_constraint =
-      node->declare_parameter<bool>("mpt.collision_free_constraints.option.hard_constraint");
+      node->declare_parameter("mpt.collision_free_constraints.option.hard_constraint").get<bool>();
   }
 
   {  // vehicle_circles
     // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
     vehicle_circles_method =
-      node->declare_parameter<std::string>("mpt.collision_free_constraints.vehicle_circles.method");
+      node->declare_parameter("mpt.collision_free_constraints.vehicle_circles.method").get<std::string>();
 
     // uniform circles
-    vehicle_circles_uniform_circle_num = node->declare_parameter<int>(
-      "mpt.collision_free_constraints.vehicle_circles.uniform_circle.num");
-    vehicle_circles_uniform_circle_radius_ratio = node->declare_parameter<double>(
-      "mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio");
+    vehicle_circles_uniform_circle_num = node->declare_parameter(
+      "mpt.collision_free_constraints.vehicle_circles.uniform_circle.num").get<int>();
+    vehicle_circles_uniform_circle_radius_ratio = node->declare_parameter(
+      "mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio").get<double>();
 
     // bicycle model
-    vehicle_circles_bicycle_model_num = node->declare_parameter<int>(
+    vehicle_circles_bicycle_model_num = node->declare_parameter(
       "mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
-      "calculation");
-    vehicle_circles_bicycle_model_rear_radius_ratio = node->declare_parameter<double>(
+      "calculation").get<int>();
+    vehicle_circles_bicycle_model_rear_radius_ratio = node->declare_parameter(
       "mpt.collision_free_constraints.vehicle_circles."
-      "bicycle_model.rear_radius_ratio");
-    vehicle_circles_bicycle_model_front_radius_ratio = node->declare_parameter<double>(
+      "bicycle_model.rear_radius_ratio").get<double>();
+    vehicle_circles_bicycle_model_front_radius_ratio = node->declare_parameter(
       "mpt.collision_free_constraints.vehicle_circles."
-      "bicycle_model.front_radius_ratio");
+      "bicycle_model.front_radius_ratio").get<double>();
 
     // fitting uniform circles
-    vehicle_circles_fitting_uniform_circle_num = node->declare_parameter<int>(
-      "mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num");
+    vehicle_circles_fitting_uniform_circle_num = node->declare_parameter(
+      "mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num").get<int>();
   }
 
   {  // validation
-    max_validation_lat_error = node->declare_parameter<double>("mpt.validation.max_lat_error");
-    max_validation_yaw_error = node->declare_parameter<double>("mpt.validation.max_yaw_error");
+    max_validation_lat_error = node->declare_parameter("mpt.validation.max_lat_error").get<double>();
+    max_validation_yaw_error = node->declare_parameter("mpt.validation.max_yaw_error").get<double>();
   }
 }
 

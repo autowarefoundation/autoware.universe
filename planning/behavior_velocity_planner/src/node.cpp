@@ -155,9 +155,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // nearest search
   planner_data_.ego_nearest_dist_threshold =
-    this->declare_parameter<double>("ego_nearest_dist_threshold");
+    this->declare_parameter("ego_nearest_dist_threshold").get<double>();
   planner_data_.ego_nearest_yaw_threshold =
-    this->declare_parameter<double>("ego_nearest_yaw_threshold");
+    this->declare_parameter("ego_nearest_yaw_threshold").get<double>();
 
   // Initialize PlannerManager
   if (this->declare_parameter("launch_crosswalk", true)) {

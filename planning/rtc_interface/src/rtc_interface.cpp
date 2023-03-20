@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iomanip>
 #include "rtc_interface/rtc_interface.hpp"
 
 namespace

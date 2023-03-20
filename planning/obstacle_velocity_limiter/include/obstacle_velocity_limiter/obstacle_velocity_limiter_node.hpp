@@ -83,7 +83,7 @@ private:
   ProjectionParameters projection_params_;
   ObstacleParameters obstacle_params_;
   VelocityParameters velocity_params_;
-  Float distance_buffer_ = static_cast<Float>(declare_parameter<Float>("distance_buffer"));
+  Float distance_buffer_ = static_cast<Float>(declare_parameter("distance_buffer").get<Float>());
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
 

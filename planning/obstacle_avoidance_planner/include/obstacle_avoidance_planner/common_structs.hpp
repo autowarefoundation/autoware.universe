@@ -105,8 +105,8 @@ struct TrajectoryParam
   explicit TrajectoryParam(rclcpp::Node * node)
   {
     output_backward_traj_length =
-      node->declare_parameter<double>("common.output_backward_traj_length");
-    output_delta_arc_length = node->declare_parameter<double>("common.output_delta_arc_length");
+      node->declare_parameter("common.output_backward_traj_length").get<double>();
+    output_delta_arc_length = node->declare_parameter("common.output_delta_arc_length").get<double>();
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -128,8 +128,8 @@ struct EgoNearestParam
   EgoNearestParam() = default;
   explicit EgoNearestParam(rclcpp::Node * node)
   {
-    dist_threshold = node->declare_parameter<double>("ego_nearest_dist_threshold");
-    yaw_threshold = node->declare_parameter<double>("ego_nearest_yaw_threshold");
+    dist_threshold = node->declare_parameter("ego_nearest_dist_threshold").get<double>();
+    yaw_threshold = node->declare_parameter("ego_nearest_yaw_threshold").get<double>();
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)

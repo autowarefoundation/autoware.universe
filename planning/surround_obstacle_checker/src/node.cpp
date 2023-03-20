@@ -146,13 +146,13 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   // Parameters
   {
     auto & p = node_param_;
-    p.use_pointcloud = this->declare_parameter<bool>("use_pointcloud");
-    p.use_dynamic_object = this->declare_parameter<bool>("use_dynamic_object");
-    p.surround_check_distance = this->declare_parameter<double>("surround_check_distance");
+    p.use_pointcloud = this->declare_parameter("use_pointcloud").get<bool>();
+    p.use_dynamic_object = this->declare_parameter("use_dynamic_object").get<bool>();
+    p.surround_check_distance = this->declare_parameter("surround_check_distance").get<double>();
     p.surround_check_recover_distance =
-      this->declare_parameter<double>("surround_check_recover_distance");
-    p.state_clear_time = this->declare_parameter<double>("state_clear_time");
-    p.publish_debug_footprints = this->declare_parameter<bool>("publish_debug_footprints");
+      this->declare_parameter("surround_check_recover_distance").get<double>();
+    p.state_clear_time = this->declare_parameter("state_clear_time").get<double>();
+    p.publish_debug_footprints = this->declare_parameter("publish_debug_footprints").get<bool>();
   }
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();

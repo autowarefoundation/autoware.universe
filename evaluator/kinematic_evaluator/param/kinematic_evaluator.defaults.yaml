@@ -1,6 +1,0 @@
-/**:
-  ros__parameters:
-    output_file: kinematic_metrics.results # if empty, metrics are not written to file
-
-    selected_metrics:
-      - velocity_stats

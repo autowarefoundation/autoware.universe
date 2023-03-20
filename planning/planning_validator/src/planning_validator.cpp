@@ -53,7 +53,7 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 
 void PlanningValidator::setupParameters()
 {
-  const auto type = declare_parameter<int>("invalid_trajectory_handling_type");
+  const auto type = declare_parameter("invalid_trajectory_handling_type").get<int>();
   if (type == 0) {
     invalid_trajectory_handling_type_ = InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IS;
   } else if (type == 1) {
@@ -64,23 +64,23 @@ void PlanningValidator::setupParameters()
     throw std::invalid_argument{
       "unsupported invalid_trajectory_handling_type (" + std::to_string(type) + ")"};
   }
-  publish_diag_ = declare_parameter<bool>("publish_diag");
-  diag_error_count_threshold_ = declare_parameter<int>("diag_error_count_threshold");
-  display_on_terminal_ = declare_parameter<bool>("display_on_terminal");
+  publish_diag_ = declare_parameter("publish_diag").get<bool>();
+  diag_error_count_threshold_ = declare_parameter("diag_error_count_threshold").get<int>();
+  display_on_terminal_ = declare_parameter("display_on_terminal").get<bool>();
 
   {
     auto & p = validation_params_;
     const std::string t = "thresholds.";
-    p.interval_threshold = declare_parameter<double>(t + "interval");
-    p.relative_angle_threshold = declare_parameter<double>(t + "relative_angle");
-    p.curvature_threshold = declare_parameter<double>(t + "curvature");
-    p.lateral_acc_threshold = declare_parameter<double>(t + "lateral_acc");
-    p.longitudinal_max_acc_threshold = declare_parameter<double>(t + "longitudinal_max_acc");
-    p.longitudinal_min_acc_threshold = declare_parameter<double>(t + "longitudinal_min_acc");
-    p.steering_threshold = declare_parameter<double>(t + "steering");
-    p.steering_rate_threshold = declare_parameter<double>(t + "steering_rate");
-    p.velocity_deviation_threshold = declare_parameter<double>(t + "velocity_deviation");
-    p.distance_deviation_threshold = declare_parameter<double>(t + "distance_deviation");
+    p.interval_threshold = declare_parameter(t + "interval").get<double>();
+    p.relative_angle_threshold = declare_parameter(t + "relative_angle").get<double>();
+    p.curvature_threshold = declare_parameter(t + "curvature").get<double>();
+    p.lateral_acc_threshold = declare_parameter(t + "lateral_acc").get<double>();
+    p.longitudinal_max_acc_threshold = declare_parameter(t + "longitudinal_max_acc").get<double>();
+    p.longitudinal_min_acc_threshold = declare_parameter(t + "longitudinal_min_acc").get<double>();
+    p.steering_threshold = declare_parameter(t + "steering").get<double>();
+    p.steering_rate_threshold = declare_parameter(t + "steering_rate").get<double>();
+    p.velocity_deviation_threshold = declare_parameter(t + "velocity_deviation").get<double>();
+    p.distance_deviation_threshold = declare_parameter(t + "distance_deviation").get<double>();
   }
 
   try {

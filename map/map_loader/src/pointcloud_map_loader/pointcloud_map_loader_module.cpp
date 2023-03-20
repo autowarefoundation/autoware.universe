@@ -51,7 +51,7 @@ PointcloudMapLoaderModule::PointcloudMapLoaderModule(
 
   sensor_msgs::msg::PointCloud2 pcd;
   if (use_downsample) {
-    const float leaf_size = node->declare_parameter<float>("leaf_size");
+    const float leaf_size = node->declare_parameter("leaf_size").get<float>();
     pcd = loadPCDFiles(pcd_paths, leaf_size);
   } else {
     pcd = loadPCDFiles(pcd_paths, boost::none);

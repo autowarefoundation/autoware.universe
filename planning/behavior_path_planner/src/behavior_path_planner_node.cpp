@@ -299,60 +299,60 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
 
-  p.verbose = declare_parameter<bool>("verbose");
+  p.verbose = declare_parameter("verbose").get<bool>();
 
   {
     const std::string ns = "pull_out.";
-    p.config_pull_out.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_pull_out.enable_module = declare_parameter(ns + "enable_module").get<bool>();
     p.config_pull_out.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
-    p.config_pull_out.priority = declare_parameter<int>(ns + "priority");
-    p.config_pull_out.max_module_size = declare_parameter<int>(ns + "max_module_size");
+      declare_parameter(ns + "enable_simultaneous_execution").get<bool>();
+    p.config_pull_out.priority = declare_parameter(ns + "priority").get<int>();
+    p.config_pull_out.max_module_size = declare_parameter(ns + "max_module_size").get<int>();
   }
 
   {
     const std::string ns = "pull_over.";
-    p.config_pull_over.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_pull_over.enable_module = declare_parameter(ns + "enable_module").get<bool>();
     p.config_pull_over.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
-    p.config_pull_over.priority = declare_parameter<int>(ns + "priority");
-    p.config_pull_over.max_module_size = declare_parameter<int>(ns + "max_module_size");
+      declare_parameter(ns + "enable_simultaneous_execution").get<bool>();
+    p.config_pull_over.priority = declare_parameter(ns + "priority").get<int>();
+    p.config_pull_over.max_module_size = declare_parameter(ns + "max_module_size").get<int>();
   }
 
   {
     const std::string ns = "side_shift.";
-    p.config_side_shift.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_side_shift.enable_module = declare_parameter(ns + "enable_module").get<bool>();
     p.config_side_shift.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
-    p.config_side_shift.priority = declare_parameter<int>(ns + "priority");
-    p.config_side_shift.max_module_size = declare_parameter<int>(ns + "max_module_size");
+      declare_parameter(ns + "enable_simultaneous_execution").get<bool>();
+    p.config_side_shift.priority = declare_parameter(ns + "priority").get<int>();
+    p.config_side_shift.max_module_size = declare_parameter(ns + "max_module_size").get<int>();
   }
 
   {
     const std::string ns = "lane_change_left.";
-    p.config_lane_change_left.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_lane_change_left.enable_module = declare_parameter(ns + "enable_module").get<bool>();
     p.config_lane_change_left.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
-    p.config_lane_change_left.priority = declare_parameter<int>(ns + "priority");
-    p.config_lane_change_left.max_module_size = declare_parameter<int>(ns + "max_module_size");
+      declare_parameter(ns + "enable_simultaneous_execution").get<bool>();
+    p.config_lane_change_left.priority = declare_parameter(ns + "priority").get<int>();
+    p.config_lane_change_left.max_module_size = declare_parameter(ns + "max_module_size").get<int>();
   }
 
   {
     const std::string ns = "lane_change_right.";
-    p.config_lane_change_right.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_lane_change_right.enable_module = declare_parameter(ns + "enable_module").get<bool>();
     p.config_lane_change_right.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
-    p.config_lane_change_right.priority = declare_parameter<int>(ns + "priority");
-    p.config_lane_change_right.max_module_size = declare_parameter<int>(ns + "max_module_size");
+      declare_parameter(ns + "enable_simultaneous_execution").get<bool>();
+    p.config_lane_change_right.priority = declare_parameter(ns + "priority").get<int>();
+    p.config_lane_change_right.max_module_size = declare_parameter(ns + "max_module_size").get<int>();
   }
 
   {
     const std::string ns = "avoidance.";
-    p.config_avoidance.enable_module = declare_parameter<bool>(ns + "enable_module");
+    p.config_avoidance.enable_module = declare_parameter(ns + "enable_module").get<bool>();
     p.config_avoidance.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
-    p.config_avoidance.priority = declare_parameter<int>(ns + "priority");
-    p.config_avoidance.max_module_size = declare_parameter<int>(ns + "max_module_size");
+      declare_parameter(ns + "enable_simultaneous_execution").get<bool>();
+    p.config_avoidance.priority = declare_parameter(ns + "priority").get<int>();
+    p.config_avoidance.max_module_size = declare_parameter(ns + "max_module_size").get<int>();
   }
 
   // vehicle info
@@ -405,12 +405,12 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter("turn_signal_shift_length_threshold", 0.3);
   p.turn_signal_on_swerving = declare_parameter("turn_signal_on_swerving", true);
 
-  p.enable_akima_spline_first = declare_parameter<bool>("enable_akima_spline_first");
-  p.input_path_interval = declare_parameter<double>("input_path_interval");
-  p.output_path_interval = declare_parameter<double>("output_path_interval");
+  p.enable_akima_spline_first = declare_parameter("enable_akima_spline_first").get<bool>();
+  p.input_path_interval = declare_parameter("input_path_interval").get<double>();
+  p.output_path_interval = declare_parameter("output_path_interval").get<double>();
   p.visualize_maximum_drivable_area = declare_parameter("visualize_maximum_drivable_area", true);
-  p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+  p.ego_nearest_dist_threshold = declare_parameter("ego_nearest_dist_threshold").get<double>();
+  p.ego_nearest_yaw_threshold = declare_parameter("ego_nearest_yaw_threshold").get<double>();
 
   p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 2.0);
   p.longitudinal_distance_min_threshold =
@@ -463,154 +463,154 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     std::string ns = "avoidance.";
     p.resample_interval_for_planning =
-      declare_parameter<double>(ns + "resample_interval_for_planning");
-    p.resample_interval_for_output = declare_parameter<double>(ns + "resample_interval_for_output");
+      declare_parameter(ns + "resample_interval_for_planning").get<double>();
+    p.resample_interval_for_output = declare_parameter(ns + "resample_interval_for_output").get<double>();
     p.detection_area_right_expand_dist =
-      declare_parameter<double>(ns + "detection_area_right_expand_dist");
+      declare_parameter(ns + "detection_area_right_expand_dist").get<double>();
     p.detection_area_left_expand_dist =
-      declare_parameter<double>(ns + "detection_area_left_expand_dist");
+      declare_parameter(ns + "detection_area_left_expand_dist").get<double>();
     p.drivable_area_right_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_right_bound_offset");
+      declare_parameter(ns + "drivable_area_right_bound_offset").get<double>();
     p.drivable_area_left_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_left_bound_offset");
+      declare_parameter(ns + "drivable_area_left_bound_offset").get<double>();
     p.drivable_area_types_to_skip =
-      declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
-    p.object_envelope_buffer = declare_parameter<double>(ns + "object_envelope_buffer");
-    p.enable_bound_clipping = declare_parameter<bool>(ns + "enable_bound_clipping");
+      declare_parameter(ns + "drivable_area_types_to_skip").get<std::vector<std::string>>();
+    p.object_envelope_buffer = declare_parameter(ns + "object_envelope_buffer").get<double>();
+    p.enable_bound_clipping = declare_parameter(ns + "enable_bound_clipping").get<bool>();
     p.enable_avoidance_over_same_direction =
-      declare_parameter<bool>(ns + "enable_avoidance_over_same_direction");
+      declare_parameter(ns + "enable_avoidance_over_same_direction").get<bool>();
     p.enable_avoidance_over_opposite_direction =
-      declare_parameter<bool>(ns + "enable_avoidance_over_opposite_direction");
+      declare_parameter(ns + "enable_avoidance_over_opposite_direction").get<bool>();
     p.enable_update_path_when_object_is_gone =
-      declare_parameter<bool>(ns + "enable_update_path_when_object_is_gone");
+      declare_parameter(ns + "enable_update_path_when_object_is_gone").get<bool>();
     p.enable_force_avoidance_for_stopped_vehicle =
-      declare_parameter<bool>(ns + "enable_force_avoidance_for_stopped_vehicle");
-    p.enable_safety_check = declare_parameter<bool>(ns + "enable_safety_check");
-    p.enable_yield_maneuver = declare_parameter<bool>(ns + "enable_yield_maneuver");
-    p.disable_path_update = declare_parameter<bool>(ns + "disable_path_update");
-    p.publish_debug_marker = declare_parameter<bool>(ns + "publish_debug_marker");
-    p.print_debug_info = declare_parameter<bool>(ns + "print_debug_info");
+      declare_parameter(ns + "enable_force_avoidance_for_stopped_vehicle").get<bool>();
+    p.enable_safety_check = declare_parameter(ns + "enable_safety_check").get<bool>();
+    p.enable_yield_maneuver = declare_parameter(ns + "enable_yield_maneuver").get<bool>();
+    p.disable_path_update = declare_parameter(ns + "disable_path_update").get<bool>();
+    p.publish_debug_marker = declare_parameter(ns + "publish_debug_marker").get<bool>();
+    p.print_debug_info = declare_parameter(ns + "print_debug_info").get<bool>();
   }
 
   // target object
   {
     std::string ns = "avoidance.target_object.";
-    p.avoid_car = declare_parameter<bool>(ns + "car");
-    p.avoid_truck = declare_parameter<bool>(ns + "truck");
-    p.avoid_bus = declare_parameter<bool>(ns + "bus");
-    p.avoid_trailer = declare_parameter<bool>(ns + "trailer");
-    p.avoid_unknown = declare_parameter<bool>(ns + "unknown");
-    p.avoid_bicycle = declare_parameter<bool>(ns + "bicycle");
-    p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
-    p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
+    p.avoid_car = declare_parameter(ns + "car").get<bool>();
+    p.avoid_truck = declare_parameter(ns + "truck").get<bool>();
+    p.avoid_bus = declare_parameter(ns + "bus").get<bool>();
+    p.avoid_trailer = declare_parameter(ns + "trailer").get<bool>();
+    p.avoid_unknown = declare_parameter(ns + "unknown").get<bool>();
+    p.avoid_bicycle = declare_parameter(ns + "bicycle").get<bool>();
+    p.avoid_motorcycle = declare_parameter(ns + "motorcycle").get<bool>();
+    p.avoid_pedestrian = declare_parameter(ns + "pedestrian").get<bool>();
   }
 
   // target filtering
   {
     std::string ns = "avoidance.target_filtering.";
     p.threshold_speed_object_is_stopped =
-      declare_parameter<double>(ns + "threshold_speed_object_is_stopped");
+      declare_parameter(ns + "threshold_speed_object_is_stopped").get<double>();
     p.threshold_time_object_is_moving =
-      declare_parameter<double>(ns + "threshold_time_object_is_moving");
+      declare_parameter(ns + "threshold_time_object_is_moving").get<double>();
     p.threshold_time_force_avoidance_for_stopped_vehicle =
-      declare_parameter<double>(ns + "threshold_time_force_avoidance_for_stopped_vehicle");
+      declare_parameter(ns + "threshold_time_force_avoidance_for_stopped_vehicle").get<double>();
     p.object_check_force_avoidance_clearance =
-      declare_parameter<double>(ns + "object_check_force_avoidance_clearance");
+      declare_parameter(ns + "object_check_force_avoidance_clearance").get<double>();
     p.object_check_forward_distance =
-      declare_parameter<double>(ns + "object_check_forward_distance");
+      declare_parameter(ns + "object_check_forward_distance").get<double>();
     p.object_check_backward_distance =
-      declare_parameter<double>(ns + "object_check_backward_distance");
-    p.object_check_goal_distance = declare_parameter<double>(ns + "object_check_goal_distance");
+      declare_parameter(ns + "object_check_backward_distance").get<double>();
+    p.object_check_goal_distance = declare_parameter(ns + "object_check_goal_distance").get<double>();
     p.threshold_distance_object_is_on_center =
-      declare_parameter<double>(ns + "threshold_distance_object_is_on_center");
-    p.object_check_shiftable_ratio = declare_parameter<double>(ns + "object_check_shiftable_ratio");
+      declare_parameter(ns + "threshold_distance_object_is_on_center").get<double>();
+    p.object_check_shiftable_ratio = declare_parameter(ns + "object_check_shiftable_ratio").get<double>();
     p.object_check_min_road_shoulder_width =
-      declare_parameter<double>(ns + "object_check_min_road_shoulder_width");
-    p.object_last_seen_threshold = declare_parameter<double>(ns + "object_last_seen_threshold");
+      declare_parameter(ns + "object_check_min_road_shoulder_width").get<double>();
+    p.object_last_seen_threshold = declare_parameter(ns + "object_last_seen_threshold").get<double>();
   }
 
   // safety check
   {
     std::string ns = "avoidance.safety_check.";
     p.safety_check_backward_distance =
-      declare_parameter<double>(ns + "safety_check_backward_distance");
-    p.safety_check_time_horizon = declare_parameter<double>(ns + "safety_check_time_horizon");
-    p.safety_check_idling_time = declare_parameter<double>(ns + "safety_check_idling_time");
-    p.safety_check_accel_for_rss = declare_parameter<double>(ns + "safety_check_accel_for_rss");
+      declare_parameter(ns + "safety_check_backward_distance").get<double>();
+    p.safety_check_time_horizon = declare_parameter(ns + "safety_check_time_horizon").get<double>();
+    p.safety_check_idling_time = declare_parameter(ns + "safety_check_idling_time").get<double>();
+    p.safety_check_accel_for_rss = declare_parameter(ns + "safety_check_accel_for_rss").get<double>();
     p.safety_check_hysteresis_factor =
-      declare_parameter<double>(ns + "safety_check_hysteresis_factor");
+      declare_parameter(ns + "safety_check_hysteresis_factor").get<double>();
   }
 
   // avoidance maneuver (lateral)
   {
     std::string ns = "avoidance.avoidance.lateral.";
-    p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
+    p.lateral_collision_margin = declare_parameter(ns + "lateral_collision_margin").get<double>();
     p.lateral_collision_safety_buffer =
-      declare_parameter<double>(ns + "lateral_collision_safety_buffer");
+      declare_parameter(ns + "lateral_collision_safety_buffer").get<double>();
     p.lateral_passable_safety_buffer =
-      declare_parameter<double>(ns + "lateral_passable_safety_buffer");
-    p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
+      declare_parameter(ns + "lateral_passable_safety_buffer").get<double>();
+    p.road_shoulder_safety_margin = declare_parameter(ns + "road_shoulder_safety_margin").get<double>();
     p.avoidance_execution_lateral_threshold =
-      declare_parameter<double>(ns + "avoidance_execution_lateral_threshold");
-    p.max_right_shift_length = declare_parameter<double>(ns + "max_right_shift_length");
-    p.max_left_shift_length = declare_parameter<double>(ns + "max_left_shift_length");
+      declare_parameter(ns + "avoidance_execution_lateral_threshold").get<double>();
+    p.max_right_shift_length = declare_parameter(ns + "max_right_shift_length").get<double>();
+    p.max_left_shift_length = declare_parameter(ns + "max_left_shift_length").get<double>();
   }
 
   // avoidance maneuver (longitudinal)
   {
     std::string ns = "avoidance.avoidance.longitudinal.";
-    p.prepare_time = declare_parameter<double>(ns + "prepare_time");
+    p.prepare_time = declare_parameter(ns + "prepare_time").get<double>();
     p.longitudinal_collision_safety_buffer =
-      declare_parameter<double>(ns + "longitudinal_collision_safety_buffer");
-    p.min_prepare_distance = declare_parameter<double>(ns + "min_prepare_distance");
-    p.min_avoidance_distance = declare_parameter<double>(ns + "min_avoidance_distance");
-    p.min_nominal_avoidance_speed = declare_parameter<double>(ns + "min_nominal_avoidance_speed");
-    p.min_sharp_avoidance_speed = declare_parameter<double>(ns + "min_sharp_avoidance_speed");
+      declare_parameter(ns + "longitudinal_collision_safety_buffer").get<double>();
+    p.min_prepare_distance = declare_parameter(ns + "min_prepare_distance").get<double>();
+    p.min_avoidance_distance = declare_parameter(ns + "min_avoidance_distance").get<double>();
+    p.min_nominal_avoidance_speed = declare_parameter(ns + "min_nominal_avoidance_speed").get<double>();
+    p.min_sharp_avoidance_speed = declare_parameter(ns + "min_sharp_avoidance_speed").get<double>();
   }
 
   // yield
   {
     std::string ns = "avoidance.yield.";
-    p.yield_velocity = declare_parameter<double>(ns + "yield_velocity");
+    p.yield_velocity = declare_parameter(ns + "yield_velocity").get<double>();
   }
 
   // stop
   {
     std::string ns = "avoidance.stop.";
-    p.stop_min_distance = declare_parameter<double>(ns + "min_distance");
-    p.stop_max_distance = declare_parameter<double>(ns + "max_distance");
+    p.stop_min_distance = declare_parameter(ns + "min_distance").get<double>();
+    p.stop_max_distance = declare_parameter(ns + "max_distance").get<double>();
   }
 
   // constraints
   {
     std::string ns = "avoidance.constraints.";
-    p.use_constraints_for_decel = declare_parameter<bool>(ns + "use_constraints_for_decel");
+    p.use_constraints_for_decel = declare_parameter(ns + "use_constraints_for_decel").get<bool>();
   }
 
   // constraints (longitudinal)
   {
     std::string ns = "avoidance.constraints.longitudinal.";
-    p.nominal_deceleration = declare_parameter<double>(ns + "nominal_deceleration");
-    p.nominal_jerk = declare_parameter<double>(ns + "nominal_jerk");
-    p.max_deceleration = declare_parameter<double>(ns + "max_deceleration");
-    p.max_jerk = declare_parameter<double>(ns + "max_jerk");
+    p.nominal_deceleration = declare_parameter(ns + "nominal_deceleration").get<double>();
+    p.nominal_jerk = declare_parameter(ns + "nominal_jerk").get<double>();
+    p.max_deceleration = declare_parameter(ns + "max_deceleration").get<double>();
+    p.max_jerk = declare_parameter(ns + "max_jerk").get<double>();
     p.min_avoidance_speed_for_acc_prevention =
-      declare_parameter<double>(ns + "min_avoidance_speed_for_acc_prevention");
-    p.max_avoidance_acceleration = declare_parameter<double>(ns + "max_avoidance_acceleration");
+      declare_parameter(ns + "min_avoidance_speed_for_acc_prevention").get<double>();
+    p.max_avoidance_acceleration = declare_parameter(ns + "max_avoidance_acceleration").get<double>();
   }
 
   // constraints (lateral)
   {
     std::string ns = "avoidance.constraints.lateral.";
-    p.nominal_lateral_jerk = declare_parameter<double>(ns + "nominal_lateral_jerk");
-    p.max_lateral_jerk = declare_parameter<double>(ns + "max_lateral_jerk");
+    p.nominal_lateral_jerk = declare_parameter(ns + "nominal_lateral_jerk").get<double>();
+    p.max_lateral_jerk = declare_parameter(ns + "max_lateral_jerk").get<double>();
   }
 
   // velocity matrix
   {
     std::string ns = "avoidance.target_velocity_matrix.";
-    p.col_size = declare_parameter<int>(ns + "col_size");
-    p.target_velocity_matrix = declare_parameter<std::vector<double>>(ns + "matrix");
+    p.col_size = declare_parameter(ns + "col_size").get<int>();
+    p.target_velocity_matrix = declare_parameter(ns + "matrix").get<std::vector<double>>();
   }
 
   return p;
@@ -637,45 +637,45 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   // trajectory generation
   p.lane_change_prepare_duration =
-    declare_parameter<double>(parameter("lane_change_prepare_duration"));
+    declare_parameter(parameter("lane_change_prepare_duration")).get<double>();
   p.lane_changing_safety_check_duration =
-    declare_parameter<double>(parameter("lane_changing_safety_check_duration"));
-  p.lane_changing_lateral_jerk = declare_parameter<double>(parameter("lane_changing_lateral_jerk"));
-  p.lane_changing_lateral_acc = declare_parameter<double>(parameter("lane_changing_lateral_acc"));
+    declare_parameter(parameter("lane_changing_safety_check_duration")).get<double>();
+  p.lane_changing_lateral_jerk = declare_parameter(parameter("lane_changing_lateral_jerk")).get<double>();
+  p.lane_changing_lateral_acc = declare_parameter(parameter("lane_changing_lateral_acc")).get<double>();
   p.lane_change_finish_judge_buffer =
-    declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
+    declare_parameter(parameter("lane_change_finish_judge_buffer")).get<double>();
   p.minimum_lane_change_velocity =
-    declare_parameter<double>(parameter("minimum_lane_change_velocity"));
-  p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
-  p.maximum_deceleration = declare_parameter<double>(parameter("maximum_deceleration"));
-  p.lane_change_sampling_num = declare_parameter<int>(parameter("lane_change_sampling_num"));
+    declare_parameter(parameter("minimum_lane_change_velocity")).get<double>();
+  p.prediction_time_resolution = declare_parameter(parameter("prediction_time_resolution")).get<double>();
+  p.maximum_deceleration = declare_parameter(parameter("maximum_deceleration")).get<double>();
+  p.lane_change_sampling_num = declare_parameter(parameter("lane_change_sampling_num")).get<int>();
 
   // collision check
   p.enable_collision_check_at_prepare_phase =
-    declare_parameter<bool>(parameter("enable_collision_check_at_prepare_phase"));
+    declare_parameter(parameter("enable_collision_check_at_prepare_phase")).get<bool>();
   p.prepare_phase_ignore_target_speed_thresh =
-    declare_parameter<double>(parameter("prepare_phase_ignore_target_speed_thresh"));
+    declare_parameter(parameter("prepare_phase_ignore_target_speed_thresh")).get<double>();
   p.use_predicted_path_outside_lanelet =
-    declare_parameter<bool>(parameter("use_predicted_path_outside_lanelet"));
-  p.use_all_predicted_path = declare_parameter<bool>(parameter("use_all_predicted_path"));
+    declare_parameter(parameter("use_predicted_path_outside_lanelet")).get<bool>();
+  p.use_all_predicted_path = declare_parameter(parameter("use_all_predicted_path")).get<bool>();
 
   // abort
-  p.enable_cancel_lane_change = declare_parameter<bool>(parameter("enable_cancel_lane_change"));
-  p.enable_abort_lane_change = declare_parameter<bool>(parameter("enable_abort_lane_change"));
+  p.enable_cancel_lane_change = declare_parameter(parameter("enable_cancel_lane_change")).get<bool>();
+  p.enable_abort_lane_change = declare_parameter(parameter("enable_abort_lane_change")).get<bool>();
 
-  p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
-  p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
+  p.abort_delta_time = declare_parameter(parameter("abort_delta_time")).get<double>();
+  p.abort_max_lateral_jerk = declare_parameter(parameter("abort_max_lateral_jerk")).get<double>();
 
   // drivable area expansion
   p.drivable_area_right_bound_offset =
-    declare_parameter<double>(parameter("drivable_area_right_bound_offset"));
+    declare_parameter(parameter("drivable_area_right_bound_offset")).get<double>();
   p.drivable_area_left_bound_offset =
-    declare_parameter<double>(parameter("drivable_area_left_bound_offset"));
+    declare_parameter(parameter("drivable_area_left_bound_offset")).get<double>();
   p.drivable_area_types_to_skip =
-    declare_parameter<std::vector<std::string>>(parameter("drivable_area_types_to_skip"));
+    declare_parameter(parameter("drivable_area_types_to_skip")).get<std::vector<std::string>>();
 
   // debug marker
-  p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
+  p.publish_debug_marker = declare_parameter(parameter("publish_debug_marker")).get<bool>();
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -718,88 +718,88 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
 
   {
     std::string ns = "pull_over.";
-    p.request_length = declare_parameter<double>(ns + "request_length");
-    p.th_stopped_velocity = declare_parameter<double>(ns + "th_stopped_velocity");
-    p.th_arrived_distance = declare_parameter<double>(ns + "th_arrived_distance");
-    p.th_stopped_time = declare_parameter<double>(ns + "th_stopped_time");
-    p.margin_from_boundary = declare_parameter<double>(ns + "margin_from_boundary");
-    p.decide_path_distance = declare_parameter<double>(ns + "decide_path_distance");
-    p.maximum_deceleration = declare_parameter<double>(ns + "maximum_deceleration");
+    p.request_length = declare_parameter(ns + "request_length").get<double>();
+    p.th_stopped_velocity = declare_parameter(ns + "th_stopped_velocity").get<double>();
+    p.th_arrived_distance = declare_parameter(ns + "th_arrived_distance").get<double>();
+    p.th_stopped_time = declare_parameter(ns + "th_stopped_time").get<double>();
+    p.margin_from_boundary = declare_parameter(ns + "margin_from_boundary").get<double>();
+    p.decide_path_distance = declare_parameter(ns + "decide_path_distance").get<double>();
+    p.maximum_deceleration = declare_parameter(ns + "maximum_deceleration").get<double>();
     // goal research
-    p.enable_goal_research = declare_parameter<bool>(ns + "enable_goal_research");
-    p.search_priority = declare_parameter<std::string>(ns + "search_priority");
-    p.forward_goal_search_length = declare_parameter<double>(ns + "forward_goal_search_length");
-    p.backward_goal_search_length = declare_parameter<double>(ns + "backward_goal_search_length");
-    p.goal_search_interval = declare_parameter<double>(ns + "goal_search_interval");
-    p.longitudinal_margin = declare_parameter<double>(ns + "longitudinal_margin");
-    p.max_lateral_offset = declare_parameter<double>(ns + "max_lateral_offset");
-    p.lateral_offset_interval = declare_parameter<double>(ns + "lateral_offset_interval");
+    p.enable_goal_research = declare_parameter(ns + "enable_goal_research").get<bool>();
+    p.search_priority = declare_parameter(ns + "search_priority").get<std::string>();
+    p.forward_goal_search_length = declare_parameter(ns + "forward_goal_search_length").get<double>();
+    p.backward_goal_search_length = declare_parameter(ns + "backward_goal_search_length").get<double>();
+    p.goal_search_interval = declare_parameter(ns + "goal_search_interval").get<double>();
+    p.longitudinal_margin = declare_parameter(ns + "longitudinal_margin").get<double>();
+    p.max_lateral_offset = declare_parameter(ns + "max_lateral_offset").get<double>();
+    p.lateral_offset_interval = declare_parameter(ns + "lateral_offset_interval").get<double>();
     p.ignore_distance_from_lane_start =
-      declare_parameter<double>(ns + "ignore_distance_from_lane_start");
+      declare_parameter(ns + "ignore_distance_from_lane_start").get<double>();
     // occupancy grid map
-    p.use_occupancy_grid = declare_parameter<bool>(ns + "use_occupancy_grid");
+    p.use_occupancy_grid = declare_parameter(ns + "use_occupancy_grid").get<bool>();
     p.use_occupancy_grid_for_longitudinal_margin =
-      declare_parameter<bool>(ns + "use_occupancy_grid_for_longitudinal_margin");
+      declare_parameter(ns + "use_occupancy_grid_for_longitudinal_margin").get<bool>();
     p.occupancy_grid_collision_check_margin =
-      declare_parameter<double>(ns + "occupancy_grid_collision_check_margin");
-    p.theta_size = declare_parameter<int>(ns + "theta_size");
-    p.obstacle_threshold = declare_parameter<int>(ns + "obstacle_threshold");
+      declare_parameter(ns + "occupancy_grid_collision_check_margin").get<double>();
+    p.theta_size = declare_parameter(ns + "theta_size").get<int>();
+    p.obstacle_threshold = declare_parameter(ns + "obstacle_threshold").get<int>();
     // object recognition
-    p.use_object_recognition = declare_parameter<bool>(ns + "use_object_recognition");
+    p.use_object_recognition = declare_parameter(ns + "use_object_recognition").get<bool>();
     p.object_recognition_collision_check_margin =
-      declare_parameter<double>(ns + "object_recognition_collision_check_margin");
+      declare_parameter(ns + "object_recognition_collision_check_margin").get<double>();
     // shift path
-    p.enable_shift_parking = declare_parameter<bool>(ns + "enable_shift_parking");
-    p.pull_over_sampling_num = declare_parameter<int>(ns + "pull_over_sampling_num");
-    p.maximum_lateral_jerk = declare_parameter<double>(ns + "maximum_lateral_jerk");
-    p.minimum_lateral_jerk = declare_parameter<double>(ns + "minimum_lateral_jerk");
-    p.deceleration_interval = declare_parameter<double>(ns + "deceleration_interval");
-    p.pull_over_velocity = declare_parameter<double>(ns + "pull_over_velocity");
-    p.pull_over_minimum_velocity = declare_parameter<double>(ns + "pull_over_minimum_velocity");
+    p.enable_shift_parking = declare_parameter(ns + "enable_shift_parking").get<bool>();
+    p.pull_over_sampling_num = declare_parameter(ns + "pull_over_sampling_num").get<int>();
+    p.maximum_lateral_jerk = declare_parameter(ns + "maximum_lateral_jerk").get<double>();
+    p.minimum_lateral_jerk = declare_parameter(ns + "minimum_lateral_jerk").get<double>();
+    p.deceleration_interval = declare_parameter(ns + "deceleration_interval").get<double>();
+    p.pull_over_velocity = declare_parameter(ns + "pull_over_velocity").get<double>();
+    p.pull_over_minimum_velocity = declare_parameter(ns + "pull_over_minimum_velocity").get<double>();
     p.after_pull_over_straight_distance =
-      declare_parameter<double>(ns + "after_pull_over_straight_distance");
+      declare_parameter(ns + "after_pull_over_straight_distance").get<double>();
     // parallel parking
-    p.enable_arc_forward_parking = declare_parameter<bool>(ns + "enable_arc_forward_parking");
-    p.enable_arc_backward_parking = declare_parameter<bool>(ns + "enable_arc_backward_parking");
+    p.enable_arc_forward_parking = declare_parameter(ns + "enable_arc_forward_parking").get<bool>();
+    p.enable_arc_backward_parking = declare_parameter(ns + "enable_arc_backward_parking").get<bool>();
     p.after_forward_parking_straight_distance =
-      declare_parameter<double>(ns + "after_forward_parking_straight_distance");
+      declare_parameter(ns + "after_forward_parking_straight_distance").get<double>();
     p.after_backward_parking_straight_distance =
-      declare_parameter<double>(ns + "after_backward_parking_straight_distance");
-    p.forward_parking_velocity = declare_parameter<double>(ns + "forward_parking_velocity");
-    p.backward_parking_velocity = declare_parameter<double>(ns + "backward_parking_velocity");
+      declare_parameter(ns + "after_backward_parking_straight_distance").get<double>();
+    p.forward_parking_velocity = declare_parameter(ns + "forward_parking_velocity").get<double>();
+    p.backward_parking_velocity = declare_parameter(ns + "backward_parking_velocity").get<double>();
     p.forward_parking_lane_departure_margin =
-      declare_parameter<double>(ns + "forward_parking_lane_departure_margin");
+      declare_parameter(ns + "forward_parking_lane_departure_margin").get<double>();
     p.backward_parking_lane_departure_margin =
-      declare_parameter<double>(ns + "backward_parking_lane_departure_margin");
-    p.arc_path_interval = declare_parameter<double>(ns + "arc_path_interval");
+      declare_parameter(ns + "backward_parking_lane_departure_margin").get<double>();
+    p.arc_path_interval = declare_parameter(ns + "arc_path_interval").get<double>();
     p.pull_over_max_steer_angle =
-      declare_parameter<double>(ns + "pull_over_max_steer_angle");  // 20deg
+      declare_parameter(ns + "pull_over_max_steer_angle").get<double>();  // 20deg
                                                                     // freespace parking
-    p.enable_freespace_parking = declare_parameter<bool>(ns + "enable_freespace_parking");
+    p.enable_freespace_parking = declare_parameter(ns + "enable_freespace_parking").get<bool>();
     // hazard
-    p.hazard_on_threshold_distance = declare_parameter<double>(ns + "hazard_on_threshold_distance");
-    p.hazard_on_threshold_velocity = declare_parameter<double>(ns + "hazard_on_threshold_velocity");
+    p.hazard_on_threshold_distance = declare_parameter(ns + "hazard_on_threshold_distance").get<double>();
+    p.hazard_on_threshold_velocity = declare_parameter(ns + "hazard_on_threshold_velocity").get<double>();
     // safety with dynamic objects. Not used now.
-    p.pull_over_duration = declare_parameter<double>(ns + "pull_over_duration");
-    p.pull_over_prepare_duration = declare_parameter<double>(ns + "pull_over_prepare_duration");
-    p.min_stop_distance = declare_parameter<double>(ns + "min_stop_distance");
-    p.stop_time = declare_parameter<double>(ns + "stop_time");
-    p.hysteresis_buffer_distance = declare_parameter<double>(ns + "hysteresis_buffer_distance");
-    p.prediction_time_resolution = declare_parameter<double>(ns + "prediction_time_resolution");
+    p.pull_over_duration = declare_parameter(ns + "pull_over_duration").get<double>();
+    p.pull_over_prepare_duration = declare_parameter(ns + "pull_over_prepare_duration").get<double>();
+    p.min_stop_distance = declare_parameter(ns + "min_stop_distance").get<double>();
+    p.stop_time = declare_parameter(ns + "stop_time").get<double>();
+    p.hysteresis_buffer_distance = declare_parameter(ns + "hysteresis_buffer_distance").get<double>();
+    p.prediction_time_resolution = declare_parameter(ns + "prediction_time_resolution").get<double>();
     p.enable_collision_check_at_prepare_phase =
-      declare_parameter<bool>(ns + "enable_collision_check_at_prepare_phase");
+      declare_parameter(ns + "enable_collision_check_at_prepare_phase").get<bool>();
     p.use_predicted_path_outside_lanelet =
-      declare_parameter<bool>(ns + "use_predicted_path_outside_lanelet");
-    p.use_all_predicted_path = declare_parameter<bool>(ns + "use_all_predicted_path");
+      declare_parameter(ns + "use_predicted_path_outside_lanelet").get<bool>();
+    p.use_all_predicted_path = declare_parameter(ns + "use_all_predicted_path").get<bool>();
     // drivable area
     p.drivable_area_right_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_right_bound_offset");
+      declare_parameter(ns + "drivable_area_right_bound_offset").get<double>();
     p.drivable_area_left_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_left_bound_offset");
+      declare_parameter(ns + "drivable_area_left_bound_offset").get<double>();
     p.drivable_area_types_to_skip =
-      declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
+      declare_parameter(ns + "drivable_area_types_to_skip").get<std::vector<std::string>>();
     // debug
-    p.print_debug_info = declare_parameter<bool>(ns + "print_debug_info");
+    p.print_debug_info = declare_parameter(ns + "print_debug_info").get<bool>();
 
     // validation of parameters
     if (p.pull_over_sampling_num < 1) {
@@ -821,49 +821,49 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   {
     std::string ns = "pull_over.freespace_parking.";
     // search configs
-    p.algorithm = declare_parameter<std::string>(ns + "planning_algorithm");
-    p.freespace_parking_velocity = declare_parameter<double>(ns + "velocity");
-    p.vehicle_shape_margin = declare_parameter<double>(ns + "vehicle_shape_margin");
-    p.common_parameters.time_limit = declare_parameter<double>(ns + "time_limit");
+    p.algorithm = declare_parameter(ns + "planning_algorithm").get<std::string>();
+    p.freespace_parking_velocity = declare_parameter(ns + "velocity").get<double>();
+    p.vehicle_shape_margin = declare_parameter(ns + "vehicle_shape_margin").get<double>();
+    p.common_parameters.time_limit = declare_parameter(ns + "time_limit").get<double>();
     p.common_parameters.minimum_turning_radius =
-      declare_parameter<double>(ns + "minimum_turning_radius");
+      declare_parameter(ns + "minimum_turning_radius").get<double>();
     p.common_parameters.maximum_turning_radius =
-      declare_parameter<double>(ns + "maximum_turning_radius");
-    p.common_parameters.turning_radius_size = declare_parameter<int>(ns + "turning_radius_size");
+      declare_parameter(ns + "maximum_turning_radius").get<double>();
+    p.common_parameters.turning_radius_size = declare_parameter(ns + "turning_radius_size").get<int>();
     p.common_parameters.maximum_turning_radius = std::max(
       p.common_parameters.maximum_turning_radius, p.common_parameters.minimum_turning_radius);
     p.common_parameters.turning_radius_size = std::max(p.common_parameters.turning_radius_size, 1);
 
-    p.common_parameters.theta_size = declare_parameter<int>(ns + "theta_size");
-    p.common_parameters.angle_goal_range = declare_parameter<double>(ns + "angle_goal_range");
+    p.common_parameters.theta_size = declare_parameter(ns + "theta_size").get<int>();
+    p.common_parameters.angle_goal_range = declare_parameter(ns + "angle_goal_range").get<double>();
 
-    p.common_parameters.curve_weight = declare_parameter<double>(ns + "curve_weight");
-    p.common_parameters.reverse_weight = declare_parameter<double>(ns + "reverse_weight");
-    p.common_parameters.lateral_goal_range = declare_parameter<double>(ns + "lateral_goal_range");
+    p.common_parameters.curve_weight = declare_parameter(ns + "curve_weight").get<double>();
+    p.common_parameters.reverse_weight = declare_parameter(ns + "reverse_weight").get<double>();
+    p.common_parameters.lateral_goal_range = declare_parameter(ns + "lateral_goal_range").get<double>();
     p.common_parameters.longitudinal_goal_range =
-      declare_parameter<double>(ns + "longitudinal_goal_range");
+      declare_parameter(ns + "longitudinal_goal_range").get<double>();
 
     // costmap configs
-    p.common_parameters.obstacle_threshold = declare_parameter<int>(ns + "obstacle_threshold");
+    p.common_parameters.obstacle_threshold = declare_parameter(ns + "obstacle_threshold").get<int>();
   }
 
   {
     std::string ns = "pull_over.freespace_parking.astar.";
     p.astar_parameters.only_behind_solutions =
-      declare_parameter<bool>(ns + "only_behind_solutions");
-    p.astar_parameters.use_back = declare_parameter<bool>(ns + "use_back");
+      declare_parameter(ns + "only_behind_solutions").get<bool>();
+    p.astar_parameters.use_back = declare_parameter(ns + "use_back").get<bool>();
     p.astar_parameters.distance_heuristic_weight =
-      declare_parameter<double>(ns + "distance_heuristic_weight");
+      declare_parameter(ns + "distance_heuristic_weight").get<double>();
   }
 
   {
     std::string ns = "pull_over.freespace_parking.rrtstar.";
-    p.rrt_star_parameters.enable_update = declare_parameter<bool>(ns + "enable_update");
+    p.rrt_star_parameters.enable_update = declare_parameter(ns + "enable_update").get<bool>();
     p.rrt_star_parameters.use_informed_sampling =
-      declare_parameter<bool>(ns + "use_informed_sampling");
-    p.rrt_star_parameters.max_planning_time = declare_parameter<double>(ns + "max_planning_time");
-    p.rrt_star_parameters.neighbor_radius = declare_parameter<double>(ns + "neighbor_radius");
-    p.rrt_star_parameters.margin = declare_parameter<double>(ns + "margin");
+      declare_parameter(ns + "use_informed_sampling").get<bool>();
+    p.rrt_star_parameters.max_planning_time = declare_parameter(ns + "max_planning_time").get<double>();
+    p.rrt_star_parameters.neighbor_radius = declare_parameter(ns + "neighbor_radius").get<double>();
+    p.rrt_star_parameters.margin = declare_parameter(ns + "margin").get<double>();
   }
 
   return p;

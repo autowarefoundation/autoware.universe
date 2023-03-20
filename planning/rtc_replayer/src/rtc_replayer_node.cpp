@@ -15,6 +15,7 @@
 #include "rtc_replayer/rtc_replayer_node.hpp"
 
 #include <algorithm>
+#include <iomanip>
 
 namespace rtc_replayer
 {

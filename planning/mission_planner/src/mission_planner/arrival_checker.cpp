@@ -23,10 +23,10 @@ namespace mission_planner
 
 ArrivalChecker::ArrivalChecker(rclcpp::Node * node) : vehicle_stop_checker_(node)
 {
-  const double angle_deg = node->declare_parameter<double>("arrival_check_angle_deg");
+  const double angle_deg = node->declare_parameter("arrival_check_angle_deg").get<double>();
   angle_ = tier4_autoware_utils::deg2rad(angle_deg);
-  distance_ = node->declare_parameter<double>("arrival_check_distance");
-  duration_ = node->declare_parameter<double>("arrival_check_duration");
+  distance_ = node->declare_parameter("arrival_check_distance").get<double>();
+  duration_ = node->declare_parameter("arrival_check_duration").get<double>();
 
   sub_goal_ = node->create_subscription<PoseWithUuidStamped>(
     "input/modified_goal", 1,

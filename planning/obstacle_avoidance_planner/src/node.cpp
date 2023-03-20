@@ -85,21 +85,21 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   {  // parameters
     // parameter for option
     enable_outside_drivable_area_stop_ =
-      declare_parameter<bool>("option.enable_outside_drivable_area_stop");
-    enable_smoothing_ = declare_parameter<bool>("option.enable_smoothing");
-    enable_skip_optimization_ = declare_parameter<bool>("option.enable_skip_optimization");
+      declare_parameter("option.enable_outside_drivable_area_stop").get<bool>();
+    enable_smoothing_ = declare_parameter("option.enable_smoothing").get<bool>();
+    enable_skip_optimization_ = declare_parameter("option.enable_skip_optimization").get<bool>();
     enable_reset_prev_optimization_ =
-      declare_parameter<bool>("option.enable_reset_prev_optimization");
+      declare_parameter("option.enable_reset_prev_optimization").get<bool>();
     use_footprint_polygon_for_outside_drivable_area_check_ =
-      declare_parameter<bool>("option.use_footprint_polygon_for_outside_drivable_area_check");
+      declare_parameter("option.use_footprint_polygon_for_outside_drivable_area_check").get<bool>();
 
     // parameter for debug marker
-    enable_pub_debug_marker_ = declare_parameter<bool>("option.debug.enable_pub_debug_marker");
+    enable_pub_debug_marker_ = declare_parameter("option.debug.enable_pub_debug_marker").get<bool>();
 
     // parameter for debug info
-    enable_debug_info_ = declare_parameter<bool>("option.debug.enable_debug_info");
+    enable_debug_info_ = declare_parameter("option.debug.enable_debug_info").get<bool>();
     time_keeper_ptr_->enable_calculation_time_info =
-      declare_parameter<bool>("option.debug.enable_calculation_time_info");
+      declare_parameter("option.debug.enable_calculation_time_info").get<bool>();
 
     // parameters for ego nearest search
     ego_nearest_param_ = EgoNearestParam(this);

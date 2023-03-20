@@ -133,57 +133,57 @@ AdaptiveCruiseController::AdaptiveCruiseController(
 
   /* config */
   param_.use_object_to_est_vel =
-    node_->declare_parameter<bool>(acc_ns + "use_object_to_estimate_vel");
-  param_.use_pcl_to_est_vel = node_->declare_parameter<bool>(acc_ns + "use_pcl_to_estimate_vel");
-  param_.consider_obj_velocity = node_->declare_parameter<bool>(acc_ns + "consider_obj_velocity");
+    node_->declare_parameter(acc_ns + "use_object_to_estimate_vel").get<bool>();
+  param_.use_pcl_to_est_vel = node_->declare_parameter(acc_ns + "use_pcl_to_estimate_vel").get<bool>();
+  param_.consider_obj_velocity = node_->declare_parameter(acc_ns + "consider_obj_velocity").get<bool>();
 
   /* parameter for acc */
   param_.obstacle_velocity_thresh_to_start_acc =
-    node_->declare_parameter<double>(acc_ns + "obstacle_velocity_thresh_to_start_acc");
+    node_->declare_parameter(acc_ns + "obstacle_velocity_thresh_to_start_acc").get<double>();
   param_.obstacle_velocity_thresh_to_stop_acc =
-    node_->declare_parameter<double>(acc_ns + "obstacle_velocity_thresh_to_stop_acc");
+    node_->declare_parameter(acc_ns + "obstacle_velocity_thresh_to_stop_acc").get<double>();
   param_.emergency_stop_acceleration =
-    node_->declare_parameter<double>(acc_ns + "emergency_stop_acceleration");
+    node_->declare_parameter(acc_ns + "emergency_stop_acceleration").get<double>();
   param_.obstacle_emergency_stop_acceleration =
-    node_->declare_parameter<double>(acc_ns + "obstacle_emergency_stop_acceleration");
+    node_->declare_parameter(acc_ns + "obstacle_emergency_stop_acceleration").get<double>();
   param_.emergency_stop_idling_time =
-    node_->declare_parameter<double>(acc_ns + "emergency_stop_idling_time");
-  param_.min_dist_stop = node_->declare_parameter<double>(acc_ns + "min_dist_stop");
+    node_->declare_parameter(acc_ns + "emergency_stop_idling_time").get<double>();
+  param_.min_dist_stop = node_->declare_parameter(acc_ns + "min_dist_stop").get<double>();
   param_.max_standard_acceleration =
-    node_->declare_parameter<double>(acc_ns + "max_standard_acceleration");
+    node_->declare_parameter(acc_ns + "max_standard_acceleration").get<double>();
   param_.min_standard_acceleration =
-    node_->declare_parameter<double>(acc_ns + "min_standard_acceleration");
-  param_.standard_idling_time = node_->declare_parameter<double>(acc_ns + "standard_idling_time");
-  param_.min_dist_standard = node_->declare_parameter<double>(acc_ns + "min_dist_standard");
+    node_->declare_parameter(acc_ns + "min_standard_acceleration").get<double>();
+  param_.standard_idling_time = node_->declare_parameter(acc_ns + "standard_idling_time").get<double>();
+  param_.min_dist_standard = node_->declare_parameter(acc_ns + "min_dist_standard").get<double>();
   param_.obstacle_min_standard_acceleration =
-    node_->declare_parameter<double>(acc_ns + "obstacle_min_standard_acceleration");
+    node_->declare_parameter(acc_ns + "obstacle_min_standard_acceleration").get<double>();
   param_.margin_rate_to_change_vel =
-    node_->declare_parameter<double>(acc_ns + "margin_rate_to_change_vel");
+    node_->declare_parameter(acc_ns + "margin_rate_to_change_vel").get<double>();
   param_.use_time_compensation_to_dist =
-    node_->declare_parameter<bool>(acc_ns + "use_time_compensation_to_calc_distance");
+    node_->declare_parameter(acc_ns + "use_time_compensation_to_calc_distance").get<bool>();
   param_.lowpass_gain_ =
-    node_->declare_parameter<double>(acc_ns + "lowpass_gain_of_upper_velocity");
+    node_->declare_parameter(acc_ns + "lowpass_gain_of_upper_velocity").get<double>();
 
   /* parameter for pid in acc */
-  param_.p_coeff_pos = node_->declare_parameter<double>(acc_ns + "p_coefficient_positive");
-  param_.p_coeff_neg = node_->declare_parameter<double>(acc_ns + "p_coefficient_negative");
-  param_.d_coeff_pos = node_->declare_parameter<double>(acc_ns + "d_coefficient_positive");
-  param_.d_coeff_neg = node_->declare_parameter<double>(acc_ns + "d_coefficient_negative");
+  param_.p_coeff_pos = node_->declare_parameter(acc_ns + "p_coefficient_positive").get<double>();
+  param_.p_coeff_neg = node_->declare_parameter(acc_ns + "p_coefficient_negative").get<double>();
+  param_.d_coeff_pos = node_->declare_parameter(acc_ns + "d_coefficient_positive").get<double>();
+  param_.d_coeff_neg = node_->declare_parameter(acc_ns + "d_coefficient_negative").get<double>();
 
   /* parameter for speed estimation of obstacle */
   param_.object_polygon_length_margin =
-    node_->declare_parameter<double>(acc_ns + "object_polygon_length_margin");
+    node_->declare_parameter(acc_ns + "object_polygon_length_margin").get<double>();
   param_.object_polygon_width_margin =
-    node_->declare_parameter<double>(acc_ns + "object_polygon_width_margin");
+    node_->declare_parameter(acc_ns + "object_polygon_width_margin").get<double>();
   param_.valid_est_vel_diff_time =
-    node_->declare_parameter<double>(acc_ns + "valid_estimated_vel_diff_time");
-  param_.valid_vel_que_time = node_->declare_parameter<double>(acc_ns + "valid_vel_que_time");
-  param_.valid_est_vel_max = node_->declare_parameter<double>(acc_ns + "valid_estimated_vel_max");
-  param_.valid_est_vel_min = node_->declare_parameter<double>(acc_ns + "valid_estimated_vel_min");
-  param_.thresh_vel_to_stop = node_->declare_parameter<double>(acc_ns + "thresh_vel_to_stop");
+    node_->declare_parameter(acc_ns + "valid_estimated_vel_diff_time").get<double>();
+  param_.valid_vel_que_time = node_->declare_parameter(acc_ns + "valid_vel_que_time").get<double>();
+  param_.valid_est_vel_max = node_->declare_parameter(acc_ns + "valid_estimated_vel_max").get<double>();
+  param_.valid_est_vel_min = node_->declare_parameter(acc_ns + "valid_estimated_vel_min").get<double>();
+  param_.thresh_vel_to_stop = node_->declare_parameter(acc_ns + "thresh_vel_to_stop").get<double>();
   param_.use_rough_est_vel =
-    node_->declare_parameter<bool>(acc_ns + "use_rough_velocity_estimation");
-  param_.rough_velocity_rate = node_->declare_parameter<double>(acc_ns + "rough_velocity_rate");
+    node_->declare_parameter(acc_ns + "use_rough_velocity_estimation").get<bool>();
+  param_.rough_velocity_rate = node_->declare_parameter(acc_ns + "rough_velocity_rate").get<double>();
 
   /* publisher */
   pub_debug_ = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(

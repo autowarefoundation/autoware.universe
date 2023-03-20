@@ -217,11 +217,11 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 void StaticCenterlineOptimizerNode::run()
 {
   // declare planning setting parameters
-  const auto lanelet2_input_file_path = declare_parameter<std::string>("lanelet2_input_file_path");
+  const auto lanelet2_input_file_path = declare_parameter("lanelet2_input_file_path").get<std::string>();
   const auto lanelet2_output_file_path =
-    declare_parameter<std::string>("lanelet2_output_file_path");
-  const int start_lanelet_id = declare_parameter<int>("start_lanelet_id");
-  const int end_lanelet_id = declare_parameter<int>("end_lanelet_id");
+    declare_parameter("lanelet2_output_file_path").get<std::string>();
+  const int start_lanelet_id = declare_parameter("start_lanelet_id").get<int>();
+  const int end_lanelet_id = declare_parameter("end_lanelet_id").get<int>();
 
   // process
   load_map(lanelet2_input_file_path);
@@ -374,8 +374,8 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
     utils::get_center_pose(*route_handler_ptr_, route_lane_ids.front());
 
   // ego nearest search parameters
-  const double ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+  const double ego_nearest_dist_threshold = declare_parameter("ego_nearest_dist_threshold").get<double>();
+  const double ego_nearest_yaw_threshold = declare_parameter("ego_nearest_yaw_threshold").get<double>();
 
   // extract path with lane id from lanelets
   const auto raw_path_with_lane_id = utils::get_path_with_lane_id(
@@ -475,8 +475,8 @@ void StaticCenterlineOptimizerNode::evaluate(
 {
   const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
 
-  const auto dist_thresh_vec = declare_parameter<std::vector<double>>("marker_color_dist_thresh");
-  const auto marker_color_vec = declare_parameter<std::vector<std::string>>("marker_color");
+  const auto dist_thresh_vec = declare_parameter("marker_color_dist_thresh").get<std::vector<double>>();
+  const auto marker_color_vec = declare_parameter("marker_color").get<std::vector<std::string>>();
   const auto get_marker_color = [&](const double dist) -> boost::optional<std::array<double, 3>> {
     for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
       const double dist_thresh = dist_thresh_vec.at(i);

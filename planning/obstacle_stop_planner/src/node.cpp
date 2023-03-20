@@ -63,19 +63,19 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   // Parameters
   {
     auto & p = node_param_;
-    p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
+    p.enable_slow_down = declare_parameter("enable_slow_down").get<bool>();
     p.enable_z_axis_obstacle_filtering =
-      declare_parameter<bool>("enable_z_axis_obstacle_filtering");
-    p.z_axis_filtering_buffer = declare_parameter<double>("z_axis_filtering_buffer");
-    p.max_velocity = declare_parameter<double>("max_velocity");
-    p.chattering_threshold = declare_parameter<double>("chattering_threshold");
-    p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-    p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
-    p.voxel_grid_x = declare_parameter<double>("voxel_grid_x");
-    p.voxel_grid_y = declare_parameter<double>("voxel_grid_y");
-    p.voxel_grid_z = declare_parameter<double>("voxel_grid_z");
-    p.use_predicted_objects = declare_parameter<bool>("use_predicted_objects");
-    p.publish_obstacle_polygon = declare_parameter<bool>("publish_obstacle_polygon");
+      declare_parameter("enable_z_axis_obstacle_filtering").get<bool>();
+    p.z_axis_filtering_buffer = declare_parameter("z_axis_filtering_buffer").get<double>();
+    p.max_velocity = declare_parameter("max_velocity").get<double>();
+    p.chattering_threshold = declare_parameter("chattering_threshold").get<double>();
+    p.ego_nearest_dist_threshold = declare_parameter("ego_nearest_dist_threshold").get<double>();
+    p.ego_nearest_yaw_threshold = declare_parameter("ego_nearest_yaw_threshold").get<double>();
+    p.voxel_grid_x = declare_parameter("voxel_grid_x").get<double>();
+    p.voxel_grid_y = declare_parameter("voxel_grid_y").get<double>();
+    p.voxel_grid_z = declare_parameter("voxel_grid_z").get<double>();
+    p.use_predicted_objects = declare_parameter("use_predicted_objects").get<bool>();
+    p.publish_obstacle_polygon = declare_parameter("publish_obstacle_polygon").get<bool>();
   }
 
   {
@@ -84,25 +84,25 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
     // params for stop position
     p.max_longitudinal_margin =
-      declare_parameter<double>(ns + "stop_position.max_longitudinal_margin");
+      declare_parameter(ns + "stop_position.max_longitudinal_margin").get<double>();
     p.max_longitudinal_margin_behind_goal =
-      declare_parameter<double>(ns + "stop_position.max_longitudinal_margin_behind_goal");
+      declare_parameter(ns + "stop_position.max_longitudinal_margin_behind_goal").get<double>();
     p.min_longitudinal_margin =
-      declare_parameter<double>(ns + "stop_position.min_longitudinal_margin");
+      declare_parameter(ns + "stop_position.min_longitudinal_margin").get<double>();
     p.hold_stop_margin_distance =
-      declare_parameter<double>(ns + "stop_position.hold_stop_margin_distance");
+      declare_parameter(ns + "stop_position.hold_stop_margin_distance").get<double>();
 
     // params for detection area
-    p.lateral_margin = declare_parameter<double>(ns + "detection_area.lateral_margin");
+    p.lateral_margin = declare_parameter(ns + "detection_area.lateral_margin").get<double>();
     p.vehicle_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.vehicle_lateral_margin");
+      declare_parameter(ns + "detection_area.vehicle_lateral_margin").get<double>();
     p.pedestrian_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
+      declare_parameter(ns + "detection_area.pedestrian_lateral_margin").get<double>();
     p.unknown_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
+      declare_parameter(ns + "detection_area.unknown_lateral_margin").get<double>();
     p.enable_stop_behind_goal_for_obstacle =
-      declare_parameter<bool>(ns + "detection_area.enable_stop_behind_goal_for_obstacle");
-    p.step_length = declare_parameter<double>(ns + "detection_area.step_length");
+      declare_parameter(ns + "detection_area.enable_stop_behind_goal_for_obstacle").get<bool>();
+    p.step_length = declare_parameter(ns + "detection_area.step_length").get<double>();
 
     // apply offset
     p.max_longitudinal_margin += i.max_longitudinal_offset_m;
@@ -118,47 +118,47 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     const std::string ns = "slow_down_planner.";
 
     // common param
-    p.normal_min_jerk = declare_parameter<double>("normal.min_jerk");
-    p.normal_min_acc = declare_parameter<double>("normal.min_acc");
-    p.limit_min_jerk = declare_parameter<double>("limit.min_jerk");
-    p.limit_min_acc = declare_parameter<double>("limit.min_acc");
+    p.normal_min_jerk = declare_parameter("normal.min_jerk").get<double>();
+    p.normal_min_acc = declare_parameter("normal.min_acc").get<double>();
+    p.limit_min_jerk = declare_parameter("limit.min_jerk").get<double>();
+    p.limit_min_acc = declare_parameter("limit.min_acc").get<double>();
 
     // params for slow down section
     p.longitudinal_forward_margin =
-      declare_parameter<double>(ns + "slow_down_section.longitudinal_forward_margin");
+      declare_parameter(ns + "slow_down_section.longitudinal_forward_margin").get<double>();
     p.longitudinal_backward_margin =
-      declare_parameter<double>(ns + "slow_down_section.longitudinal_backward_margin");
+      declare_parameter(ns + "slow_down_section.longitudinal_backward_margin").get<double>();
     p.min_longitudinal_forward_margin =
-      declare_parameter<double>(ns + "slow_down_section.min_longitudinal_forward_margin");
+      declare_parameter(ns + "slow_down_section.min_longitudinal_forward_margin").get<double>();
     p.longitudinal_margin_span =
-      declare_parameter<double>(ns + "slow_down_section.longitudinal_margin_span");
+      declare_parameter(ns + "slow_down_section.longitudinal_margin_span").get<double>();
 
     // params for detection area
-    p.lateral_margin = declare_parameter<double>(ns + "detection_area.lateral_margin");
+    p.lateral_margin = declare_parameter(ns + "detection_area.lateral_margin").get<double>();
     p.vehicle_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.vehicle_lateral_margin");
+      declare_parameter(ns + "detection_area.vehicle_lateral_margin").get<double>();
     p.pedestrian_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
+      declare_parameter(ns + "detection_area.pedestrian_lateral_margin").get<double>();
     p.unknown_lateral_margin =
-      declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
+      declare_parameter(ns + "detection_area.unknown_lateral_margin").get<double>();
 
     // params for target velocity
     p.max_slow_down_velocity =
-      declare_parameter<double>(ns + "target_velocity.max_slow_down_velocity");
+      declare_parameter(ns + "target_velocity.max_slow_down_velocity").get<double>();
     p.min_slow_down_velocity =
-      declare_parameter<double>(ns + "target_velocity.min_slow_down_velocity");
-    p.slow_down_velocity = declare_parameter<double>(ns + "target_velocity.slow_down_velocity");
+      declare_parameter(ns + "target_velocity.min_slow_down_velocity").get<double>();
+    p.slow_down_velocity = declare_parameter(ns + "target_velocity.slow_down_velocity").get<double>();
 
     // consider jerk/dec constraints in slow down
-    p.consider_constraints = declare_parameter<bool>(ns + "consider_constraints");
-    p.slow_down_min_jerk = declare_parameter<double>(ns + "constraints.jerk_min_slow_down");
-    p.jerk_start = declare_parameter<double>(ns + "constraints.jerk_start");
-    p.jerk_span = declare_parameter<double>(ns + "constraints.jerk_span");
+    p.consider_constraints = declare_parameter(ns + "consider_constraints").get<bool>();
+    p.slow_down_min_jerk = declare_parameter(ns + "constraints.jerk_min_slow_down").get<double>();
+    p.jerk_start = declare_parameter(ns + "constraints.jerk_start").get<double>();
+    p.jerk_span = declare_parameter(ns + "constraints.jerk_span").get<double>();
 
     p.velocity_threshold_decel_complete =
-      declare_parameter<double>(ns + "velocity_threshold_decel_complete");
+      declare_parameter(ns + "velocity_threshold_decel_complete").get<double>();
     p.acceleration_threshold_decel_complete =
-      declare_parameter<double>(ns + "acceleration_threshold_decel_complete");
+      declare_parameter(ns + "acceleration_threshold_decel_complete").get<double>();
 
     // apply offset
     p.longitudinal_forward_margin += i.max_longitudinal_offset_m;

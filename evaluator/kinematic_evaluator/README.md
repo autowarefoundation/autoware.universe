@@ -1,3 +1,0 @@
-# Kinematic Evaluator
-
-TBD

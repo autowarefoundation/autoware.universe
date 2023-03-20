@@ -78,15 +78,15 @@ public:
     typename WrapType::SharedRequest request, CallbackT && callback)
   {
 #ifdef ROS_DISTRO_GALACTIC
-    using rosidl_generator_traits::to_yaml;
+    // using rosidl_generator_traits::to_yaml;
 #endif
 
     const auto wrapped = [this, callback](typename WrapType::SharedFuture future) {
-      interface_->log(ServiceLog::CLIENT_RESPONSE, SpecType::name, to_yaml(*future.get()));
+      // interface_->log(ServiceLog::CLIENT_RESPONSE, SpecType::name, to_yaml(*future.get()));
       callback(future);
     };
 
-    interface_->log(ServiceLog::CLIENT_REQUEST, SpecType::name, to_yaml(*request));
+    // interface_->log(ServiceLog::CLIENT_REQUEST, SpecType::name, to_yaml(*request));
 
 #ifdef ROS_DISTRO_GALACTIC
     return client_->async_send_request(request, wrapped);

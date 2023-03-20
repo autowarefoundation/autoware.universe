@@ -16,7 +16,7 @@
 
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <array>
 #include <random>
@@ -66,7 +66,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_)
 {
-  map_frame_ = declare_parameter<std::string>("map_frame");
+  map_frame_ = declare_parameter("map_frame").get<std::string>();
 
   planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->initialize(this);

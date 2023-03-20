@@ -221,40 +221,40 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   ego_nearest_param_ = EgoNearestParam(*this);
 
-  is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");
-  disable_stop_planning_ = declare_parameter<bool>("common.disable_stop_planning");
+  is_showing_debug_info_ = declare_parameter("common.is_showing_debug_info").get<bool>();
+  disable_stop_planning_ = declare_parameter("common.disable_stop_planning").get<bool>();
 
   {  // Obstacle filtering parameters
     obstacle_filtering_param_.rough_detection_area_expand_width =
-      declare_parameter<double>("obstacle_filtering.rough_detection_area_expand_width");
+      declare_parameter("obstacle_filtering.rough_detection_area_expand_width").get<double>();
     obstacle_filtering_param_.detection_area_expand_width =
-      declare_parameter<double>("obstacle_filtering.detection_area_expand_width");
+      declare_parameter("obstacle_filtering.detection_area_expand_width").get<double>();
     obstacle_filtering_param_.decimate_trajectory_step_length =
-      declare_parameter<double>("obstacle_filtering.decimate_trajectory_step_length");
+      declare_parameter("obstacle_filtering.decimate_trajectory_step_length").get<double>();
     obstacle_filtering_param_.crossing_obstacle_velocity_threshold =
-      declare_parameter<double>("obstacle_filtering.crossing_obstacle_velocity_threshold");
+      declare_parameter("obstacle_filtering.crossing_obstacle_velocity_threshold").get<double>();
     obstacle_filtering_param_.collision_time_margin =
-      declare_parameter<double>("obstacle_filtering.collision_time_margin");
+      declare_parameter("obstacle_filtering.collision_time_margin").get<double>();
     obstacle_filtering_param_.outside_rough_detection_area_expand_width =
-      declare_parameter<double>("obstacle_filtering.outside_rough_detection_area_expand_width");
+      declare_parameter("obstacle_filtering.outside_rough_detection_area_expand_width").get<double>();
     obstacle_filtering_param_.outside_obstacle_min_velocity_threshold =
-      declare_parameter<double>("obstacle_filtering.outside_obstacle_min_velocity_threshold");
+      declare_parameter("obstacle_filtering.outside_obstacle_min_velocity_threshold").get<double>();
     obstacle_filtering_param_.ego_obstacle_overlap_time_threshold =
-      declare_parameter<double>("obstacle_filtering.ego_obstacle_overlap_time_threshold");
+      declare_parameter("obstacle_filtering.ego_obstacle_overlap_time_threshold").get<double>();
     obstacle_filtering_param_.max_prediction_time_for_collision_check =
-      declare_parameter<double>("obstacle_filtering.max_prediction_time_for_collision_check");
+      declare_parameter("obstacle_filtering.max_prediction_time_for_collision_check").get<double>();
     obstacle_filtering_param_.crossing_obstacle_traj_angle_threshold =
-      declare_parameter<double>("obstacle_filtering.crossing_obstacle_traj_angle_threshold");
+      declare_parameter("obstacle_filtering.crossing_obstacle_traj_angle_threshold").get<double>();
     obstacle_filtering_param_.stop_obstacle_hold_time_threshold =
-      declare_parameter<double>("obstacle_filtering.stop_obstacle_hold_time_threshold");
+      declare_parameter("obstacle_filtering.stop_obstacle_hold_time_threshold").get<double>();
     obstacle_filtering_param_.prediction_resampling_time_interval =
-      declare_parameter<double>("obstacle_filtering.prediction_resampling_time_interval");
+      declare_parameter("obstacle_filtering.prediction_resampling_time_interval").get<double>();
     obstacle_filtering_param_.prediction_resampling_time_horizon =
-      declare_parameter<double>("obstacle_filtering.prediction_resampling_time_horizon");
+      declare_parameter("obstacle_filtering.prediction_resampling_time_horizon").get<double>();
     obstacle_filtering_param_.goal_extension_length =
-      declare_parameter<double>("obstacle_filtering.goal_extension_length");
+      declare_parameter("obstacle_filtering.goal_extension_length").get<double>();
     obstacle_filtering_param_.goal_extension_interval =
-      declare_parameter<double>("obstacle_filtering.goal_extension_interval");
+      declare_parameter("obstacle_filtering.goal_extension_interval").get<double>();
 
     {
       if (declare_parameter<bool>("obstacle_filtering.ignored_outside_obstacle_type.unknown")) {
@@ -294,7 +294,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   {  // planning algorithm
     const std::string planning_algorithm_param =
-      declare_parameter<std::string>("common.planning_algorithm");
+      declare_parameter("common.planning_algorithm").get<std::string>();
     planning_algorithm_ = getPlanningAlgorithmType(planning_algorithm_param);
 
     if (planning_algorithm_ == PlanningAlgorithm::OPTIMIZATION_BASE) {
@@ -307,11 +307,11 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       std::logic_error("Designated algorithm is not supported.");
     }
 
-    min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
+    min_behavior_stop_margin_ = declare_parameter("common.min_behavior_stop_margin").get<double>();
     obstacle_velocity_threshold_from_cruise_to_stop_ =
-      declare_parameter<double>("common.obstacle_velocity_threshold_from_cruise_to_stop");
+      declare_parameter("common.obstacle_velocity_threshold_from_cruise_to_stop").get<double>();
     obstacle_velocity_threshold_from_stop_to_cruise_ =
-      declare_parameter<double>("common.obstacle_velocity_threshold_from_stop_to_cruise");
+      declare_parameter("common.obstacle_velocity_threshold_from_stop_to_cruise").get<double>();
     planner_ptr_->setParam(is_showing_debug_info_, min_behavior_stop_margin_);
   }
 

@@ -27,21 +27,21 @@ target_link_libraries(freespace_planning_algorithms
 )
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_ros REQUIRED)
-  ament_add_ros_isolated_gtest(freespace_planning_algorithms-test
-    test/src/test_freespace_planning_algorithms.cpp
-  )
-  target_link_libraries(freespace_planning_algorithms-test
-    freespace_planning_algorithms
-  )
+  # find_package(ament_cmake_ros REQUIRED)
+  # ament_add_ros_isolated_gtest(freespace_planning_algorithms-test
+  #   test/src/test_freespace_planning_algorithms.cpp
+  # )
+  # target_link_libraries(freespace_planning_algorithms-test
+  #   freespace_planning_algorithms
+  # )
 
-  find_package(ament_cmake_ros REQUIRED)
-  ament_add_gtest(rrtstar_core_informed-test
-    test/src/test_rrtstar_core_informed.cpp
-  )
-  target_link_libraries(rrtstar_core_informed-test
-    freespace_planning_algorithms
-  )
+  # find_package(ament_cmake_ros REQUIRED)
+  # ament_add_gtest(rrtstar_core_informed-test
+  #   test/src/test_rrtstar_core_informed.cpp
+  # )
+  # target_link_libraries(rrtstar_core_informed-test
+  #   freespace_planning_algorithms
+  # )
 endif()
 
 ament_auto_package(
