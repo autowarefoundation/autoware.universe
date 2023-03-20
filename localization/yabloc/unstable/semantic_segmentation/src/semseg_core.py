@@ -20,7 +20,7 @@ class SemSeg:
         depth = cv2.CV_32F
         return cv2.dnn.blobFromImage(image, scale, size, mean, swap, crop, depth)
 
-    def inference(self, image: np.ndarray) -> np.ndarray:
+    def inference(self, image: np.ndarray, score_threshold=0.5) -> np.ndarray:
         blob = self.makeBlob(image)
         self.net_.setInput(blob)
         output_layers = self.net_.getUnconnectedOutLayersNames()
@@ -33,24 +33,25 @@ class SemSeg:
             interpolation=cv2.INTER_LINEAR
         )
 
-        return mask
+        return self.__normalize(mask, score_threshold)
 
-    def drawOverlayMask(self, image, segmentation, score_threshold=0.5) -> np.ndarray:
-        overlay_image = copy.deepcopy(image)
-
-        masks = cv2.split(segmentation)[1:]
+    def __normalize(self, mask, score_threshold=0.5) -> np.ndarray:
+        masks = cv2.split(mask)[1:]
         bin_masks = []
         for mask in masks:
             bin_mask = np.where(mask > score_threshold, 0, 1).astype('uint8')
-            bin_masks.append(255-255*bin_mask)
-        mask_image = cv2.merge(bin_masks)
-        overlay_image = cv2.addWeighted(overlay_image, 0.5, mask_image, 0.5, 1.0)
-        return overlay_image
+            bin_masks.append(255 - 255 * bin_mask)
+        return cv2.merge(bin_masks)
+
+    def drawOverlay(self, image, segmentation) -> np.ndarray:
+        overlay_image = copy.deepcopy(image)
+        return cv2.addWeighted(
+            overlay_image, 0.5, segmentation, 0.5, 1.0)
 
 
 def main():
     dirname = os.path.dirname(__file__)
-    path = dirname+'/../data/model_32.pb'
+    path = dirname + '/../data/model_32.pb'
 
 
 if __name__ == '__main__':
