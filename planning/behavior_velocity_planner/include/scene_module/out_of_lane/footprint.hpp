@@ -60,14 +60,13 @@ inline lanelet::BasicPolygon2d project_to_pose(
 /// @param [in] params parameters
 /// @return polygon footprints for each path point starting from first_idx
 inline std::vector<lanelet::BasicPolygon2d> calculate_path_footprints(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t first_idx,
-  const PlannerParam & params)
+  const EgoInfo & ego_info, const PlannerParam & params)
 {
   const auto base_footprint = make_base_footprint(params);
   std::vector<lanelet::BasicPolygon2d> path_footprints;
-  path_footprints.reserve(path.points.size());
-  for (auto i = first_idx; i < path.points.size(); ++i) {
-    const auto & path_pose = path.points[i].point.pose;
+  path_footprints.reserve(ego_info.path.points.size());
+  for (auto i = ego_info.first_path_idx; i < ego_info.path.points.size(); ++i) {
+    const auto & path_pose = ego_info.path.points[i].point.pose;
     const auto angle = tf2::getYaw(path_pose.orientation);
     const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
     lanelet::BasicPolygon2d footprint;

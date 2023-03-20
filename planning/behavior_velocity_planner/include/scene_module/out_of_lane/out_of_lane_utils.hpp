@@ -47,6 +47,7 @@ struct DebugData
 {
   std::vector<lanelet::BasicPolygon2d> footprints;
   std::vector<Pose> slowdown_poses;
+  Pose ego_pose;
   OverlapRanges ranges;
   std::vector<std::vector<std::pair<double, double>>> npc_times;
   std::vector<std::pair<double, double>> ego_times;

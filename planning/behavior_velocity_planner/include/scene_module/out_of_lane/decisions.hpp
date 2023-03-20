@@ -35,14 +35,20 @@
 
 namespace behavior_velocity_planner::out_of_lane_utils
 {
-inline double distance_along_path(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & ego_path, const size_t first_idx,
-  const size_t target_idx)
+inline double distance_along_path(const EgoInfo & ego_info, const size_t target_idx)
 {
-  auto s = 0.0;
-  for (auto i = first_idx; i <= target_idx && i + 1 < ego_path.points.size(); ++i)
-    s += tier4_autoware_utils::calcDistance2d(ego_path.points[i], ego_path.points[i + 1]);
-  return s;
+  return motion_utils::calcSignedArcLength(
+    ego_info.path.points, ego_info.pose.position, ego_info.first_path_idx + target_idx);
+}
+
+inline double time_along_path(const EgoInfo & info, const size_t target_idx)
+{
+  const auto dist = distance_along_path(info, target_idx);
+  // TODO(Maxime): improve estimate of velocity
+  const auto v = std::max(
+    info.velocity,
+    info.path.points[info.first_path_idx + target_idx].point.longitudinal_velocity_mps * 0.5);
+  return dist / v;
 }
 
 /// @brief estimate the times when an object will enter and exit a given overlapping range
@@ -79,16 +85,20 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
       pose.position.set__x(object_point.x()).set__y(object_point.y());
       const auto object_curr_length = lanelet::utils::getArcCoordinates(lls, pose).length;
       pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
-      const auto enter_length = lanelet::utils::getArcCoordinates(lls, pose).length;
+      const auto enter_length =
+        lanelet::utils::getArcCoordinates(lls, pose).length - object_curr_length;
       pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
-      const auto exit_length = lanelet::utils::getArcCoordinates(lls, pose).length;
+      const auto exit_length =
+        lanelet::utils::getArcCoordinates(lls, pose).length - object_curr_length;
       std::printf(
         "\t\t\t%2.2f -> [%2.2f(%2.2f, %2.2f) - %2.2f(%2.2f, %2.2f)]\n", object_curr_length,
         enter_length, range.entering_point.x(), range.entering_point.y(), exit_length,
         range.exiting_point.x(), range.exiting_point.y());
       const auto already_entered_range = std::abs(enter_length - exit_length) > range_size * 2.0;
-      if(already_entered_range) {  // double check this
-        std::printf("\t\t\t\t SKIP ([%2.2f - %2.2f = %2.2f > %2.2f] passed the overlapping range)\n", enter_length, exit_length, std::abs(enter_length - exit_length), range_size);
+      if (already_entered_range) {  // double check this
+        std::printf(
+          "\t\t\t\t SKIP ([%2.2f - %2.2f = %2.2f > %2.2f] passed the overlapping range)\n",
+          enter_length, exit_length, std::abs(enter_length - exit_length), range_size);
         continue;
       }
       // multiple paths to the overlap -> be conservative and use the "worst" case
@@ -115,23 +125,9 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
   return {};
 }
 
-inline double time_along_path(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & ego_path, const size_t from_idx,
-  const size_t to_idx)
-{
-  auto t = 0.0;
-  for (auto i = from_idx; i <= to_idx && i + 1 < ego_path.points.size(); ++i) {
-    const auto ds =
-      tier4_autoware_utils::calcDistance2d(ego_path.points[i], ego_path.points[i + 1]);
-    const auto v = ego_path.points[i].point.longitudinal_velocity_mps * 0.5;  // TODO(Maxime) TMP
-    t += ds / v;
-  }
-  return t;
-}
-
 inline std::vector<Slowdown> calculate_decisions(
-  const OverlapRanges & ranges, const autoware_auto_planning_msgs::msg::PathWithLaneId & ego_path,
-  const size_t first_idx, const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
+  const OverlapRanges & ranges, const EgoInfo & ego_info,
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const std::shared_ptr<route_handler::RouteHandler> & route_handler,
   const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug)
 {
@@ -141,10 +137,9 @@ inline std::vector<Slowdown> calculate_decisions(
     if (range.entering_path_idx == 0UL) continue;  // skip if we already entered the range
     bool should_not_enter = false;  // we will decide if we need to stop/slow before this range
 
-    const auto ego_enter_time = time_along_path(ego_path, first_idx, range.entering_path_idx);
-    const auto ego_exit_time = time_along_path(ego_path, first_idx, range.exiting_path_idx);
-    const auto ego_dist_to_range =
-      distance_along_path(ego_path, first_idx, range.entering_path_idx);
+    const auto ego_enter_time = time_along_path(ego_info, range.entering_path_idx);
+    const auto ego_exit_time = time_along_path(ego_info, range.exiting_path_idx);
+    const auto ego_dist_to_range = distance_along_path(ego_info, range.entering_path_idx);
     std::printf(
       "\t[%lu -> %lu] %ld | ego dist = %2.2f (enters at %2.2f, exits at %2.2f)\n",
       range.entering_path_idx, range.exiting_path_idx, range.lane.id(), ego_dist_to_range,
@@ -196,12 +191,15 @@ inline std::vector<Slowdown> calculate_decisions(
         else
           ttc = std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit));
         if (ttc <= params.ttc_threshold) should_not_enter = true;
-        std::printf("\t\t\t[TTC] %2.2f (%2.2f - %2.2f) -> %d\n", ttc, ttc_at_enter, ttc_at_exit, ttc <= params.ttc_threshold);
+        std::printf(
+          "\t\t\t[TTC] %2.2fs (%2.2fs - %2.2fs) -> %d\n", ttc, ttc_at_enter, ttc_at_exit,
+          ttc <= params.ttc_threshold);
       }
     }
     if (should_not_enter) {
       Slowdown decision;
-      decision.target_path_idx = first_idx + range.entering_path_idx;  // add offset from curr pose
+      decision.target_path_idx =
+        ego_info.first_path_idx + range.entering_path_idx;  // add offset from curr pose
       decision.lane_to_avoid = range.lane;
       if (ego_dist_to_range < params.stop_dist_threshold) {
         std::printf("\t\tWill stop\n");

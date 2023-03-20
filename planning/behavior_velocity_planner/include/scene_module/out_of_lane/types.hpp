@@ -15,6 +15,8 @@
 #ifndef SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
 #define SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
 
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <lanelet2_core/LaneletMap.h>
 
 #include <algorithm>
@@ -110,6 +112,14 @@ struct OtherLane
     last_range_bound = {};
     return range;
   }
+};
+
+struct EgoInfo
+{
+  autoware_auto_planning_msgs::msg::PathWithLaneId path;
+  size_t first_path_idx;
+  double velocity;  // [m/s]
+  geometry_msgs::msg::Pose pose;
 };
 
 }  // namespace behavior_velocity_planner::out_of_lane_utils

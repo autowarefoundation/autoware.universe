@@ -53,11 +53,14 @@ bool OutOfLaneModule::modifyPathVelocity(
   if (!path || path->points.size() < 2) return true;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
-  const auto ego_idx =
-    motion_utils::findNearestIndex(path->points, (*planner_data_)->current_odometry->pose.position);
-  // const auto ego_vel = (*planner_data_)->current_velocity->twist.linear.x;
+  out_of_lane_utils::EgoInfo ego_info;
+  ego_info.pose = (*planner_data_)->current_odometry->pose;
+  ego_info.path = *path;
+  ego_info.first_path_idx =
+    motion_utils::findNearestSegmentIndex(path->points, ego_info.pose.position);
+  ego_info.velocity = (*planner_data_)->current_velocity->twist.linear.x;
   stopwatch.tic("calculate_path_footprints");
-  const auto path_footprints = calculate_path_footprints(*path, ego_idx, params_);
+  const auto path_footprints = calculate_path_footprints(ego_info, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Get neighboring lanes TODO(Maxime): make separate function
   const auto path_lanelets = planning_utils::getLaneletsOnPath(
@@ -86,7 +89,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   std::printf("%lu detected objects\n", (*planner_data_)->predicted_objects->objects.size());
   stopwatch.tic("calculate_decisions");
   const auto decisions = calculate_decisions(
-    ranges, *path, ego_idx, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
+    ranges, ego_info, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
     lanelets_to_check, params_, debug_data_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   std::printf("Found %lu decisions\n", decisions.size());
