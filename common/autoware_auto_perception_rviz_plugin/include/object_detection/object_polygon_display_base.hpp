@@ -26,6 +26,8 @@
 #include <visibility_control.hpp>
 
 // #include <rviz_default_plugins/displays/pointcloud/point_cloud2_display.hpp>
+#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp" // added 
+
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/properties/ros_topic_property.hpp"
@@ -122,7 +124,8 @@ public:
 
   explicit ObjectPolygonDisplayBase(
     const std::string & default_topic, const std::string & default_pointcloud_topic)
-  : m_marker_common(this),
+  : point_cloud_common_(new rviz_default_plugins::PointCloudCommon(this)), // added 
+    m_marker_common(this),
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
     m_display_pose_with_covariance_property{
@@ -194,6 +197,8 @@ public:
 
     tf_buffer = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
+
+    point_cloud_common_->initialize(this->context_, this->scene_node_);
   }
 
   void load(const rviz_common::Config & config) override
@@ -577,6 +582,8 @@ protected:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
   message_filters::Subscriber<MsgT> perception_objects_subscription;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
+
+  std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common_;
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
