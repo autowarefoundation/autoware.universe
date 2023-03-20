@@ -60,6 +60,13 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
   for (const auto & ll : lanelets)
     if (boost::geometry::within(object_point, ll.polygon2d().basicPolygon()))
       object_lanelets.push_back(ll);
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
+  const auto range_enter_length = lanelet::utils::getArcCoordinates({range.lane}, pose).length;
+  pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
+  const auto range_exit_length = lanelet::utils::getArcCoordinates({range.lane}, pose).length;
+  const auto range_size = std::abs(range_enter_length - range_exit_length);
   auto enter_arc_length = std::optional<double>();
   auto exit_arc_length = std::optional<double>();
   for (const auto & lane : object_lanelets) {
@@ -69,17 +76,21 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
     if (path) {
       lanelet::ConstLanelets lls;
       for (const auto & ll : *path) lls.push_back(ll);
-      geometry_msgs::msg::Pose p;
-      p.position.set__x(object_point.x()).set__y(object_point.y());
-      const auto object_curr_length = lanelet::utils::getArcCoordinates(lls, p).length;
-      p.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
-      const auto enter_length = lanelet::utils::getArcCoordinates(lls, p).length;
-      p.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
-      const auto exit_length = lanelet::utils::getArcCoordinates(lls, p).length;
+      pose.position.set__x(object_point.x()).set__y(object_point.y());
+      const auto object_curr_length = lanelet::utils::getArcCoordinates(lls, pose).length;
+      pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
+      const auto enter_length = lanelet::utils::getArcCoordinates(lls, pose).length;
+      pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
+      const auto exit_length = lanelet::utils::getArcCoordinates(lls, pose).length;
       std::printf(
         "\t\t\t%2.2f -> [%2.2f(%2.2f, %2.2f) - %2.2f(%2.2f, %2.2f)]\n", object_curr_length,
         enter_length, range.entering_point.x(), range.entering_point.y(), exit_length,
         range.exiting_point.x(), range.exiting_point.y());
+      const auto already_entered_range = std::abs(enter_length - exit_length) > range_size * 2.0;
+      if(already_entered_range) {  // double check this
+        std::printf("\t\t\t\t SKIP ([%2.2f - %2.2f = %2.2f > %2.2f] passed the overlapping range)\n", enter_length, exit_length, std::abs(enter_length - exit_length), range_size);
+        continue;
+      }
       // multiple paths to the overlap -> be conservative and use the "worst" case
       // "worst" = min/max arc length depending on if the lane is running opposite to the ego path
       const auto is_opposite = enter_length > exit_length;
@@ -112,7 +123,7 @@ inline double time_along_path(
   for (auto i = from_idx; i <= to_idx && i + 1 < ego_path.points.size(); ++i) {
     const auto ds =
       tier4_autoware_utils::calcDistance2d(ego_path.points[i], ego_path.points[i + 1]);
-    const auto v = ego_path.points[i].point.longitudinal_velocity_mps * 0.2;  // TODO(Maxime) TMP
+    const auto v = ego_path.points[i].point.longitudinal_velocity_mps * 0.5;  // TODO(Maxime) TMP
     t += ds / v;
   }
   return t;
@@ -148,6 +159,7 @@ inline std::vector<Slowdown> calculate_decisions(
       auto & debug_pair = npc_times.emplace_back(0.0, 0.0);
       if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel)
         continue;  // skip objects with velocity bellow a threshold
+      // skip objects that are already on the interval
       const auto enter_exit_time = object_time_to_range(object, range, lanelets, route_handler);
       if (!enter_exit_time) continue;  // object is not driving towards the overlapping range
 
@@ -176,16 +188,15 @@ inline std::vector<Slowdown> calculate_decisions(
         }
       } else if (params.mode == "ttc") {
         auto ttc = 0.0;
-        const auto ttc_at_enter =
-          ego_enter_time - (object_is_going_opposite_way ? exit_time : enter_time);
-        const auto ttc_at_exit =
-          ego_exit_time - (object_is_going_opposite_way ? enter_time : exit_time);
+        const auto ttc_at_enter = ego_enter_time - enter_time;
+        const auto ttc_at_exit = ego_exit_time - exit_time;
         // one vehicle is predicted to overtake the other -> collision
         if (std::signbit(ttc_at_enter) != std::signbit(ttc_at_exit))
           ttc = 0.0;
         else
-          ttc = std::min(ttc_at_enter, ttc_at_exit);
+          ttc = std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit));
         if (ttc <= params.ttc_threshold) should_not_enter = true;
+        std::printf("\t\t\t[TTC] %2.2f (%2.2f - %2.2f) -> %d\n", ttc, ttc_at_enter, ttc_at_exit, ttc <= params.ttc_threshold);
       }
     }
     if (should_not_enter) {
