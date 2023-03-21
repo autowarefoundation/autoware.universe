@@ -130,7 +130,6 @@ Object CarInitialPoseTool::createObjectMsg() const
   object.shape.dimensions.z = height_->getFloat();
 
   // initial state
-  std::cout << "z = " << position_z_->getFloat() + height_->getFloat() / 2.0 << std::endl;
   object.initial_state.pose_covariance.pose.position.z =
     position_z_->getFloat() + height_->getFloat() / 2.0;
   object.initial_state.pose_covariance.covariance[0] =
