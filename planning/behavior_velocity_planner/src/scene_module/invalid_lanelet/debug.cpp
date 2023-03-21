@@ -76,12 +76,14 @@ visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMark
   visualization_msgs::msg::MarkerArray wall_marker;
 
   const auto now = this->clock_->now();
-  
+
   if (
     (state_ == State::APPROACH) || (state_ == State::INSIDE_INVALID_LANELET) ||
     (state_ == State::STOPPED)) {
-      appendMarkerArray(virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.stop_pose}, "invalid_lanelet", now, module_id_),&wall_marker, now);
+    appendMarkerArray(
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
+        {debug_data_.stop_pose}, "invalid_lanelet", now, module_id_),
+      &wall_marker, now);
   }
 
   return wall_marker;

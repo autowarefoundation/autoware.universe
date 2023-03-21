@@ -68,11 +68,10 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   const auto invalid_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
   const auto invalid_lanelet_polygon =
     lanelet::utils::to2D(invalid_lanelet).polygon2d().basicPolygon();
-    
-    const auto & ego_path = *path;
-    const auto path_invalid_lanelet_polygon_intersection =
-      getPathIntersectionWithInvalidLaneletPolygon(ego_path, invalid_lanelet_polygon, ego_pos, 2);
 
+  const auto & ego_path = *path;
+  const auto path_invalid_lanelet_polygon_intersection =
+    getPathIntersectionWithInvalidLaneletPolygon(ego_path, invalid_lanelet_polygon, ego_pos, 2);
 
   double distance_ego_first_intersection = 0.0;
 
@@ -198,18 +197,20 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       if (
         (signed_arc_dist_to_intersection_point <= planner_param_.stop_margin) &&
         (planner_data_->isVehicleStopped())) {
-          
-          if (planner_param_.print_debug_info) {
-            RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
-            RCLCPP_INFO_STREAM(logger_, "signed_arc_dist_to_stop_point = " << signed_arc_dist_to_intersection_point);
-          }
-            
-          if (signed_arc_dist_to_intersection_point < 0.0) {
-            RCLCPP_ERROR(logger_,"Failed to stop before invalid lanelet but ego stopped. Change state to STOPPED");
-          }
-          
-          state_ = State::STOPPED;
-          stopped_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
+        if (planner_param_.print_debug_info) {
+          RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
+          RCLCPP_INFO_STREAM(
+            logger_, "signed_arc_dist_to_stop_point = " << signed_arc_dist_to_intersection_point);
+        }
+
+        if (signed_arc_dist_to_intersection_point < 0.0) {
+          RCLCPP_ERROR(
+            logger_,
+            "Failed to stop before invalid lanelet but ego stopped. Change state to STOPPED");
+        }
+
+        state_ = State::STOPPED;
+        stopped_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
       }
 
       setSafe(true);
