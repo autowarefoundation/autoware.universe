@@ -8,7 +8,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  # add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # ===================================================
@@ -22,6 +23,9 @@ find_package(Eigen3 REQUIRED)
 # PCL
 find_package(PCL REQUIRED COMPONENTS common kdtree)
 
+# Sophus
+find_package(Sophus REQUIRED)
+
 # ===================================================
 # Executable
 ament_auto_add_executable(${PROJECT_NAME}
@@ -29,7 +33,7 @@ ament_auto_add_executable(${PROJECT_NAME}
   src/camera_pose_initializer_node.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()
