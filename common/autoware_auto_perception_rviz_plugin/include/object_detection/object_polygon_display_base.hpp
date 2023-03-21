@@ -26,11 +26,10 @@
 #include <visibility_control.hpp>
 
 // #include <rviz_default_plugins/displays/pointcloud/point_cloud2_display.hpp>
-#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp" // added 
-
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/properties/ros_topic_property.hpp"
+#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp"  // added
 
 #include <rviz_common/display_context.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -124,7 +123,7 @@ public:
 
   explicit ObjectPolygonDisplayBase(
     const std::string & default_topic, const std::string & default_pointcloud_topic)
-  : point_cloud_common_(new rviz_default_plugins::PointCloudCommon(this)), // added 
+  : point_cloud_common_(new rviz_default_plugins::PointCloudCommon(this)),  // added
     m_marker_common(this),
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
@@ -207,8 +206,9 @@ public:
     m_marker_common.load(config);
   }
 
-  void update(float wall_dt, float ros_dt) override 
-  { m_marker_common.update(wall_dt, ros_dt); 
+  void update(float wall_dt, float ros_dt) override
+  {
+    m_marker_common.update(wall_dt, ros_dt);
     point_cloud_common_->update(wall_dt, ros_dt);
   }
 
@@ -231,7 +231,7 @@ public:
     m_marker_common.addMessage(markers_ptr);
   }
 
-  void add_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud) 
+  void add_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud)
   {
     point_cloud_common_->addMessage(cloud);
   }
