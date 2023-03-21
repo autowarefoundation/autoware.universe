@@ -1,5 +1,6 @@
 #pragma once
 #include <Eigen/Geometry>
+#include <opencv2/core.hpp>
 #include <pcdless_common/camera_info_subscriber.hpp>
 #include <pcdless_common/static_tf_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -21,6 +22,7 @@ public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Ground = ground_msgs::srv::Ground;
   using Image = sensor_msgs::msg::Image;
+  using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const cv::Point2i &)>;
 
   CameraPoseInitializer();
 
@@ -41,11 +43,25 @@ private:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 
   std::optional<Image::ConstSharedPtr> latest_image_msg_{std::nullopt};
+  ProjectFunc project_func_ = nullptr;
+
+  cv::Point2i to_cv_point(const Eigen::Vector3f & v) const
+  {
+    const float image_size_ = 800;
+    const float max_range_ = 20;
+
+    cv::Point pt;
+    pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2;
+    pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_;
+    return pt;
+  }
 
   void on_map(const HADMapBin & msg);
   void on_initial_pose(const PoseCovStamped & initialpose);
 
   bool estimate_pose(const Eigen::Vector3f & position, Eigen::Vector3f & tangent);
+
+  bool define_project_func();
 
   void publish_rectified_initial_pose(
     const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent, const rclcpp::Time & stamp);

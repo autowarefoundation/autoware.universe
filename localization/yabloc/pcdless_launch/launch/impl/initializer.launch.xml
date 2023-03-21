@@ -3,6 +3,7 @@
 
     <node name="camera_pose_initializer_node" pkg="camera_pose_initializer" exec="camera_pose_initializer" output="screen" args="--ros-args --log-level info">
         <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>
+        <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="initialpose" to="/initialpose"/>
     </node>
 
