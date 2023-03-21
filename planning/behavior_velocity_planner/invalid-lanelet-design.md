@@ -12,11 +12,10 @@ This function is activated when the lane id of the target path has an invalid la
 
 ### Module Parameters
 
-| Parameter           | Type   | Description                                               |
-| ------------------- | ------ | --------------------------------------------------------- |
-| `stop_margin`       | double | [m] margin for ego vehicle to stop before speed_bump      |
-| `print_debug_info`  | bool   | whether debug info will be printed or not                 |
-
+| Parameter          | Type   | Description                                          |
+| ------------------ | ------ | ---------------------------------------------------- |
+| `stop_margin`      | double | [m] margin for ego vehicle to stop before speed_bump |
+| `print_debug_info` | bool   | whether debug info will be printed or not            |
 
 ### Inner-workings / Algorithms
 
@@ -35,15 +34,14 @@ This function is activated when the lane id of the target path has an invalid la
 - At each state, RTC settings are assigned according to the following table
 
 #### RTC Settings During Different States
-| State                    | RTC Activation   | Safe State | Distance                                                   |
-| -----------------------  | ---------------- |------------|----------------------------------------------------------- |
-| `INIT`                   | `false`          | `true`     | distance from ego front to first intersection point OR zero|
-| `APPROACHING`            | `false`          | `true`     | distance from ego front to first intersection              |
-| `INSIDE_INVALID_LANELET` | `false`          | `false`    | zero                                                       |
-| `STOPPED`                | `true`           | `false`    | zero                                                       |
 
+| State                    | RTC Activation | Safe State | Distance                                                    |
+| ------------------------ | -------------- | ---------- | ----------------------------------------------------------- |
+| `INIT`                   | `false`        | `true`     | distance from ego front to first intersection point OR zero |
+| `APPROACHING`            | `false`        | `true`     | distance from ego front to first intersection               |
+| `INSIDE_INVALID_LANELET` | `false`        | `false`    | zero                                                        |
+| `STOPPED`                | `true`         | `false`    | zero                                                        |
 
 ### Future Work
 
 - Handle the case when the vehicle stops before an invalid lanelet but part of it footprint intersects with the invalid lanelet polygon.
-

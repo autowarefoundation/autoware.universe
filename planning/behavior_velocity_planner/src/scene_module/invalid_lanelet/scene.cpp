@@ -67,7 +67,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       path_invalid_lanelet_polygon_intersection.first_intersection_point.get();
     distance_ego_first_intersection = motion_utils::calcSignedArcLength(
       path->points, current_pose->pose.position, first_intersection_point);
-      distance_ego_first_intersection -= planner_data_->vehicle_info_.max_longitudinal_offset_m;
+    distance_ego_first_intersection -= planner_data_->vehicle_info_.max_longitudinal_offset_m;
   }
 
   debug_data_.path_polygon_intersection = path_invalid_lanelet_polygon_intersection;
@@ -190,8 +190,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         RCLCPP_INFO(logger_, "INSIDE_INVALID_LANELET");
       }
 
-      const auto current_point =
-        planner_data_->current_odometry->pose.position;
+      const auto current_point = planner_data_->current_odometry->pose.position;
       const size_t current_seg_idx = findEgoSegmentIndex(path->points);
       // Insert stop point
       planning_utils::insertStopPoint(current_point, current_seg_idx, *path);

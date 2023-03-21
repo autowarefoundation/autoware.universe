@@ -15,18 +15,18 @@
 #ifndef SCENE_MODULE__INVALID_LANELET__UTIL_HPP_
 #define SCENE_MODULE__INVALID_LANELET__UTIL_HPP_
 
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
+
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <limits>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-
-#include <lanelet2_core/primitives/Polygon.h>
 
 namespace behavior_velocity_planner
 {
