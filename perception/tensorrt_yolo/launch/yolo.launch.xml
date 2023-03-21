@@ -1,9 +1,9 @@
 <launch>
-  <arg name="image_raw0" default="/image_raw0"/>
-  <arg name="gpu_id_image_raw0" default="0"/>
+  <arg name="image_raw0" default="/lucid_vision/camera_1/image"/>
+  <arg name="gpu_id_image_raw0" default="1"/>
 
   <arg name="image_raw1" default=""/>
-  <arg name="gpu_id_image_raw1" default="0"/>
+  <arg name="gpu_id_image_raw1" default="1"/>
 
   <arg name="image_raw2" default=""/>
   <arg name="gpu_id_image_raw2" default="0"/>
