@@ -71,75 +71,19 @@ visualization_msgs::msg::MarkerArray createInvalidLaneletMarkers(
 }
 }  // namespace
 
-// visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMarkerArray()
-// {
-//   visualization_msgs::msg::MarkerArray wall_marker;
-
-//   const auto now = this->clock_->now();
-
-//   appendMarkerArray(
-//     virtual_wall_marker_creator_->createStopVirtualWallMarker(
-//       {debug_data_.stop_wall_pose}, "invalid_lanelet", now, module_id_),
-//     &wall_marker, now);
-//   return wall_marker;
-// }
-
-// visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMarkerArray()
-// {
-//   const auto now = this->clock_->now();
-//   visualization_msgs::msg::MarkerArray wall_marker;
-
-//   const auto p_front = tier4_autoware_utils::calcOffsetPose(
-//     debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);
-//     appendMarkerArray(
-//       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-//         {p_front}, "invalid_lanelet", now, module_id_),
-//       &wall_marker, now);
-
-//   return wall_marker;
-// }
-
-// visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMarkerArray()
-// {
-//   const auto now = this->clock_->now();
-//   visualization_msgs::msg::MarkerArray wall_marker;
-
-//   const auto p_front = tier4_autoware_utils::calcOffsetPose(
-//     debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);
-//     appendMarkerArray(
-//       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-//         {p_front}, "invalid_lanelet", now, module_id_),
-//       &wall_marker, now);
-
-//   return wall_marker;
-// }
-
 visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMarkerArray()
 {
   visualization_msgs::msg::MarkerArray wall_marker;
 
   const auto now = this->clock_->now();
-
-  RCLCPP_INFO(logger_, "\n\n\n\n *******DEBUG ---- InvalidLaneletModule ************** :");
-
+  
   if (
     (state_ == State::APPROACH) || (state_ == State::INSIDE_INVALID_LANELET) ||
     (state_ == State::STOPPED)) {
-    // wall_marker = virtual_wall_marker_creator_->createStopVirtualWallMarker(
-    //   {debug_data_.stop_pose}, "invalid_lanelet", now, module_id_);
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.stop_pose}, "invalid_lanelet", now, module_id_),
-      &wall_marker, now);
+      appendMarkerArray(virtual_wall_marker_creator_->createStopVirtualWallMarker(
+        {debug_data_.stop_pose}, "invalid_lanelet", now, module_id_),&wall_marker, now);
   }
-  // std::vector<visualization_msgs::msg::Marker>::iterator position =
-  // std::find(wall_marker.markers.begin(), wall_marker.markers.end(),
-  // [&](const visualization_msgs::msg::Marker & mrkr){return (mrkr.action ==
-  // visualization_msgs::msg::Marker::DELETE);}); if (position != wall_marker.markers.end()) // ==
-  // wall_marker.markers.end() means the element was not found
-  //   wall_marker.markers.erase(position);
 
-  RCLCPP_INFO_STREAM(logger_, "markerarraysize = " << wall_marker.markers.size());
   return wall_marker;
 }
 

@@ -81,9 +81,6 @@ private:
   // Debug
   DebugData debug_data_;
 
-  bool is_first_time;
-  PathWithInvalidLaneletPolygonIntersection path_invalid_lanelet_polygon_intersection;
-  geometry_msgs::msg::Pose intersection_pose;
   // State machine
   State state_;
   std::shared_ptr<const rclcpp::Time> stopped_time_;
