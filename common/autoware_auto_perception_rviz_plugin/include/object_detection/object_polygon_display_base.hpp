@@ -207,12 +207,16 @@ public:
     m_marker_common.load(config);
   }
 
-  void update(float wall_dt, float ros_dt) override { m_marker_common.update(wall_dt, ros_dt); }
+  void update(float wall_dt, float ros_dt) override 
+  { m_marker_common.update(wall_dt, ros_dt); 
+    point_cloud_common_->update(wall_dt, ros_dt);
+  }
 
   void reset() override
   {
     RosTopicDisplay::reset();
     m_marker_common.clearMarkers();
+    point_cloud_common_->reset();
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
@@ -225,6 +229,11 @@ public:
   void add_marker(visualization_msgs::msg::MarkerArray::ConstSharedPtr markers_ptr)
   {
     m_marker_common.addMessage(markers_ptr);
+  }
+
+  void add_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud) 
+  {
+    point_cloud_common_->addMessage(cloud);
   }
 
   // transform detected object pose to target frame and return bool result

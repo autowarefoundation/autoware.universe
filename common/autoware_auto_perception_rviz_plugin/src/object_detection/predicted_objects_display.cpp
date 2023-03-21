@@ -327,7 +327,7 @@ void PredictedObjectsDisplay::onObjectsAndObstaclePointCloud(
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
 
   // publisher->publish(*output_pointcloud_msg_ptr);
-  point_cloud_common_->addMessage(output_pointcloud_msg_ptr);
+  add_pointcloud(output_pointcloud_msg_ptr);
 }
 
 }  // namespace object_detection
