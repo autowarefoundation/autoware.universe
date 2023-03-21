@@ -15,18 +15,7 @@
 #include "motion_utils/motion_utils.hpp"
 
 #include <scene_module/invalid_lanelet/util.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/util.hpp>
-
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-
-#include <algorithm>
-#include <cmath>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace behavior_velocity_planner
 {

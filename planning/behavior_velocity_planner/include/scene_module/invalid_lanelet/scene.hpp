@@ -18,7 +18,6 @@
 #include "scene_module/invalid_lanelet/util.hpp"
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
-#include "utilization/state_machine.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -52,9 +51,7 @@ public:
     double base_link2front;
     PathWithInvalidLaneletPolygonIntersection path_polygon_intersection;
     std::vector<geometry_msgs::msg::Point> invalid_lanelet_polygon;
-    // geometry_msgs::msg::Pose stop_wall_pose;
     geometry_msgs::msg::Pose stop_pose;
-    // geometry_msgs::msg::Pose stop_pose;
   };
 
   struct PlannerParam

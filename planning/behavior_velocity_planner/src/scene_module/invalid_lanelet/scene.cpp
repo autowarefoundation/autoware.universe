@@ -14,26 +14,11 @@
 
 #include "scene_module/invalid_lanelet/scene.hpp"
 
-#include "utilization/arc_lane_util.hpp"
-#include "utilization/path_utilization.hpp"
 #include "utilization/util.hpp"
 
-#include <interpolation/spline_interpolation.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <lanelet2_core/utility/Optional.h>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
-
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <utility>
-#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -82,6 +67,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       path_invalid_lanelet_polygon_intersection.first_intersection_point.get();
     distance_ego_first_intersection = motion_utils::calcSignedArcLength(
       path->points, current_pose->pose.position, first_intersection_point);
+      distance_ego_first_intersection -= planner_data_->vehicle_info_.max_longitudinal_offset_m;
   }
 
   debug_data_.path_polygon_intersection = path_invalid_lanelet_polygon_intersection;
@@ -151,7 +137,6 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       {
         tier4_planning_msgs::msg::StopFactor stop_factor;
         const auto stop_pose = op_stop_pose.get();
-        // tier4_autoware_utils::getPose(path->points.at(stop_point_idx));
         stop_factor.stop_pose = stop_pose;
         stop_factor.stop_factor_points.push_back(stop_point);
         planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -206,7 +191,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       }
 
       const auto current_point =
-        planner_data_->current_odometry->pose.position;  // path->points.at(0).point.pose.position;
+        planner_data_->current_odometry->pose.position;
       const size_t current_seg_idx = findEgoSegmentIndex(path->points);
       // Insert stop point
       planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
@@ -287,9 +272,9 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       break;
     }
 
-      // case default: {
-
-      // }
+    default: {
+      RCLCPP_ERROR(logger_, "ERROR. Undefined case");
+    }
   }
   return true;
 }
