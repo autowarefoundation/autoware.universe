@@ -87,7 +87,7 @@ bool PointCloudDensification::enqueuePointCloud(
 
     enqueue(pointcloud_msg, affine_world2current);
   } else {
-     enqueue(pointcloud_msg, Eigen::Affine3f::Identity());
+    enqueue(pointcloud_msg, Eigen::Affine3f::Identity());
   }
   dequeue();
 
