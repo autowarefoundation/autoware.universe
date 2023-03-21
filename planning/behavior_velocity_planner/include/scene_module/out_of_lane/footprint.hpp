@@ -77,6 +77,18 @@ inline std::vector<lanelet::BasicPolygon2d> calculate_path_footprints(
   return path_footprints;
 }
 
+inline lanelet::BasicPolygon2d calculate_current_ego_footprint(
+  const EgoInfo & ego_info, const PlannerParam & params)
+{
+  const auto base_footprint = make_base_footprint(params);
+  const auto angle = tf2::getYaw(ego_info.pose.orientation);
+  const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
+  lanelet::BasicPolygon2d footprint;
+  for (const auto & p : rotated_footprint.outer())
+    footprint.emplace_back(p.x() + ego_info.pose.position.x, p.y() + ego_info.pose.position.y);
+  return footprint;
+}
+
 inline void insert_slowdown_points(
   autoware_auto_planning_msgs::msg::PathWithLaneId & path, const std::vector<Slowdown> & decisions,
   const PlannerParam & params)

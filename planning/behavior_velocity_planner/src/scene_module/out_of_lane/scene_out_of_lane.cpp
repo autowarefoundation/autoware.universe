@@ -77,6 +77,14 @@ bool OutOfLaneModule::modifyPathVelocity(
     }
     return lls;
   }();
+  if (params_.skip_if_already_overlapping) {  // TODO(Maxime): cleanup
+    const auto ego_footprint = calculate_current_ego_footprint(ego_info, params_);
+    if (std::find_if(lanelets_to_check.begin(), lanelets_to_check.end(), [&](const auto & ll) {
+          return boost::geometry::intersects(ll.polygon2d().basicPolygon(), ego_footprint);
+        }) != lanelets_to_check.end()) {
+      std::printf("*** ALREADY OVERLAPPING *** skipping\n");
+    }
+  }
   // Calculate overlapping ranges
   stopwatch.tic("calculate_overlapping_ranges");
   const auto ranges =

@@ -31,6 +31,8 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   auto & pp = planner_param_;
 
   pp.mode = node.declare_parameter<std::string>(ns + ".mode");
+  pp.skip_if_already_overlapping =
+    node.declare_parameter<bool>(ns + ".skip_if_already_overlapping");
   pp.time_threshold = node.declare_parameter<double>(ns + ".threshold.time_threshold");
   pp.intervals_ego_buffer = node.declare_parameter<double>(ns + ".intervals.ego_time_buffer");
   pp.intervals_obj_buffer = node.declare_parameter<double>(ns + ".intervals.objects_time_buffer");

@@ -29,7 +29,9 @@ namespace behavior_velocity_planner::out_of_lane_utils
 /// @brief parameters for the "out of lane" module
 struct PlannerParam
 {
-  std::string mode;  // mode used to consider a conflict with an object
+  std::string mode;                  // mode used to consider a conflict with an object
+  bool skip_if_already_overlapping;  // if true, do not run the module when ego already overlaps
+                                     // another lane
 
   double time_threshold;        // [s](mode="threshold") objects time threshold
   double intervals_ego_buffer;  // [s](mode="intervals") buffer to extend the ego time range

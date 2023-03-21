@@ -174,12 +174,23 @@ inline std::vector<Slowdown> calculate_decisions(
           const auto ego_exits_before_object_enters =
             ego_exit_time + params.intervals_ego_buffer < enter_time + params.intervals_obj_buffer;
           if (ego_exits_before_object_enters) should_not_enter = true;
+          std::printf(
+            "\t\t\t[Intervals] (opposite way) ego exit %2.2fs < obj enter %2.2fs ? -> should not "
+            "enter = %d\n",
+            ego_exit_time + params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer,
+            ego_exits_before_object_enters);
         } else {
           const auto ego_enters_before_object =
             ego_enter_time + params.intervals_ego_buffer < enter_time + params.intervals_obj_buffer;
           const auto ego_exits_after_object =
             ego_exit_time + params.intervals_ego_buffer > exit_time + params.intervals_obj_buffer;
           if (ego_enters_before_object && ego_exits_after_object) should_not_enter = true;
+          std::printf(
+            "\t\t\t[Intervals] (same way) ego enter %2.2fs < obj enter %2.2fs && ego_exit %2.2fs > "
+            "obj_exit %2.2fs ? -> should not enter = %d\n",
+            ego_enter_time + params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer,
+            ego_exit_time + params.intervals_ego_buffer, exit_time + params.intervals_obj_buffer,
+            ego_enters_before_object && ego_exits_after_object);
         }
       } else if (params.mode == "ttc") {
         auto ttc = 0.0;
