@@ -83,7 +83,6 @@ private:
 
   // State machine
   State state_;
-  std::shared_ptr<const rclcpp::Time> stopped_time_;
 
   std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
     std::make_shared<motion_utils::VirtualWallMarkerCreator>();

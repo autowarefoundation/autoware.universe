@@ -95,6 +95,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       if (planner_param_.print_debug_info) {
         RCLCPP_INFO(logger_, "Init");
       }
+
       if ((path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon)) {
         state_ = State::INSIDE_INVALID_LANELET;
       } else if (path_invalid_lanelet_polygon_intersection.first_intersection_point) {
@@ -107,7 +108,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         state_ = State::INIT;
       }
       setSafe(true);
-      setDistance(std::numeric_limits<double>::lowest());
+      setDistance(distance_ego_first_intersection);
       setActivation(false);
       break;
     }
@@ -117,11 +118,12 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         RCLCPP_INFO(logger_, "Approach ");
       }
 
-      const double longitudinal_offset =
-        -1.0 *
-        (planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m);
+      const double longitudinal_offset = -1.0 *
+      (planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m);
+      
       const auto op_target_point = motion_utils::calcLongitudinalOffsetPoint(
         path->points, first_intersection_point, longitudinal_offset);
+      
       geometry_msgs::msg::Point target_point;
 
       if (op_target_point) {
@@ -138,8 +140,12 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         target_point_idx = op_target_point_idx.get();
       }
 
-      path->points.at(target_point_idx).point.longitudinal_velocity_mps = 0.0;
-      const auto stop_pose = tier4_autoware_utils::getPose(path->points.at(target_point_idx).point);
+      geometry_msgs::msg::Point stop_point = tier4_autoware_utils::getPoint(path->points.at(target_point_idx).point);
+
+      const auto op_stop_pose = planning_utils::insertStopPoint(stop_point, target_segment_idx, *path);
+
+      //path->points.at(target_point_idx).point.longitudinal_velocity_mps = 0.0;
+      //const auto stop_pose = tier4_autoware_utils::getPose(path->points.at(target_point_idx).point);
 
       // const auto & op_stop_point = motion_utils::calcLongitudinalOffsetPoint(
       //   path->points, intersection_pose.position,
@@ -169,21 +175,26 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
 
       // Get stop point and stop factor
       {
-        // tier4_planning_msgs::msg::StopFactor stop_factor;
-        // const auto stop_pose = *stop_pose;
-        //   //tier4_autoware_utils::getPose(path->points.at(stop_point_idx));
-        // stop_factor.stop_pose = stop_pose;
-        // stop_factor.stop_factor_points.push_back(stop_point);
-        // planning_utils::appendStopReason(stop_factor, stop_reason);
-        // velocity_factor_.set(
-        //   path->points, planner_data_->current_odometry->pose, stop_pose,
-        //   VelocityFactor::APPROACHING);
+        tier4_planning_msgs::msg::StopFactor stop_factor;
+        const auto stop_pose = op_stop_pose.get();
+          //tier4_autoware_utils::getPose(path->points.at(stop_point_idx));
+        stop_factor.stop_pose = stop_pose;
+        stop_factor.stop_factor_points.push_back(stop_point);
+        planning_utils::appendStopReason(stop_factor, stop_reason);
+        velocity_factor_.set(
+          path->points, planner_data_->current_odometry->pose, stop_pose,
+          VelocityFactor::APPROACHING);
 
         const auto virtual_wall_pose = motion_utils::calcLongitudinalOffsetPose(
           path->points, stop_pose.position, debug_data_.base_link2front);
 
         debug_data_.stop_pose = virtual_wall_pose.get();
       }
+
+      setSafe(true);
+      setDistance(std::numeric_limits<double>::lowest());
+      setActivation(false);
+
       const size_t current_seg_idx = findEgoSegmentIndex(path->points);
       const auto intersection_segment_idx =
         motion_utils::findNearestSegmentIndex(path->points, first_intersection_point);
@@ -197,25 +208,19 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       if (
         (signed_arc_dist_to_intersection_point <= planner_param_.stop_margin) &&
         (planner_data_->isVehicleStopped())) {
-        if (planner_param_.print_debug_info) {
-          RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
-          RCLCPP_INFO_STREAM(
-            logger_, "signed_arc_dist_to_stop_point = " << signed_arc_dist_to_intersection_point);
-        }
-
-        if (signed_arc_dist_to_intersection_point < 0.0) {
-          RCLCPP_ERROR(
-            logger_,
-            "Failed to stop before invalid lanelet but ego stopped. Change state to STOPPED");
-        }
-
-        state_ = State::STOPPED;
-        stopped_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
+          
+          if (planner_param_.print_debug_info) {
+            RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
+            RCLCPP_INFO_STREAM(logger_, "signed_arc_dist_to_stop_point = " << signed_arc_dist_to_intersection_point);
+          }
+          
+          if (signed_arc_dist_to_intersection_point < 0.0) {
+            RCLCPP_ERROR(logger_, "Failed to stop before invalid lanelet but ego stopped. Change state to STOPPED");
+          }
+          
+          state_ = State::STOPPED;
       }
 
-      setSafe(true);
-      setDistance(std::numeric_limits<double>::lowest());
-      setActivation(false);
       break;
     }
 
@@ -244,11 +249,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         const auto virtual_wall_pose = motion_utils::calcLongitudinalOffsetPose(
           path->points, stop_pose.position, debug_data_.base_link2front);
 
-        debug_data_.stop_pose =
-          virtual_wall_pose.get();  /// planning_utils::getAheadPose(0,
-                                    /// -1*debug_data_.base_link2front, *path);//stop_pose;
-        // debug_data_.stop_wall_pose =
-        //   planning_utils::getAheadPose(0, debug_data_.base_link2front, *path);
+        debug_data_.stop_pose = virtual_wall_pose.get();
       }
 
       // Move to stopped state if stopped
@@ -258,12 +259,12 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         }
 
         state_ = State::STOPPED;
-        stopped_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
       }
 
-      setSafe(true);
-      setDistance(std::numeric_limits<double>::lowest());
+      setSafe(false);
+      setDistance(0);
       setActivation(false);
+
       break;
     }
 
@@ -272,7 +273,6 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         RCLCPP_INFO(logger_, "STOPPED");
       }
 
-      // Change state after vehicle departure
       const auto stopped_pose = motion_utils::calcLongitudinalOffsetPose(
         path->points, planner_data_->current_odometry->pose.position, 0.0);
 
@@ -288,31 +288,57 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       // Insert stop pose
       planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
 
-      const auto virtual_wall_pose = motion_utils::calcLongitudinalOffsetPose(
-        path->points, stopped_pose.get().position, debug_data_.base_link2front);
+      // const auto current_point =
+      //   planner_data_->current_odometry->pose.position;  // path->points.at(0).point.pose.position;
+      
+      // const size_t current_seg_idx = findEgoSegmentIndex(path->points);
 
-      debug_data_.stop_pose =
-        virtual_wall_pose.get();  // planning_utils::getAheadPose(0, -1*debug_data_.base_link2front,
-                                  // *path);;//stopped_pose.get();
+      // planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
+
+      // const size_t current_seg_idx = findEgoSegmentIndex(path->points);
+
+
+      // // Insert stop point
+      // planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
+      // // Change state after vehicle departure
+      // const auto stopped_pose = motion_utils::calcLongitudinalOffsetPose(
+      //   path->points, planner_data_->current_odometry->pose.position, 0.0);
+
+      // if (!stopped_pose) {
+      //   state_ = State::INIT;
+      //   break;
+      // }
+
+      // SegmentIndexWithPose ego_pos_on_path;
+      // ego_pos_on_path.pose = stopped_pose.get();
+      // ego_pos_on_path.index = findEgoSegmentIndex(path->points);
+
+      // // Insert stop pose
+      // planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
 
       // Get stop point and stop factor
       {
         tier4_planning_msgs::msg::StopFactor stop_factor;
-        stop_factor.stop_pose = ego_pos_on_path.pose;
-        stop_factor.stop_factor_points.push_back(ego_pos_on_path.pose.position);
+        const auto stop_pose = ego_pos_on_path.pose;
+        stop_factor.stop_pose = stop_pose;
+        stop_factor.stop_factor_points.push_back(stop_pose.position);
         planning_utils::appendStopReason(stop_factor, stop_reason);
         velocity_factor_.set(
-          path->points, planner_data_->current_odometry->pose, ego_pos_on_path.pose,
+          path->points, planner_data_->current_odometry->pose, stop_pose,
           VelocityFactor::STOPPED);
+        
+        const auto virtual_wall_pose = motion_utils::calcLongitudinalOffsetPose(
+          path->points, stop_pose.position, debug_data_.base_link2front);
+
+        debug_data_.stop_pose = virtual_wall_pose.get();
       }
-
-      // const auto elapsed_time = (clock_->now() - *stopped_time_).seconds();
-
-      // TODO(ahmeddesokyebrahim): Driver RTC to take over responsibility
+      
       setSafe(false);
       setDistance(0);
       setActivation(true);
+
       break;
+
     }
 
       // case default: {
