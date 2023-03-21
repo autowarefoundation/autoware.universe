@@ -147,36 +147,6 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       const auto op_stop_pose =
         planning_utils::insertStopPoint(stop_point, target_segment_idx, *path);
 
-      // path->points.at(target_point_idx).point.longitudinal_velocity_mps = 0.0;
-      // const auto stop_pose =
-      // tier4_autoware_utils::getPose(path->points.at(target_point_idx).point);
-
-      // const auto & op_stop_point = motion_utils::calcLongitudinalOffsetPoint(
-      //   path->points, intersection_pose.position,
-      //   );
-
-      //   const auto & target_segment_idx = motion_utils::findNearestSegmentIndex(path,
-      //   *op_stop_point); const auto & stop_pose = planning_utils::insertStopPoint(*op_stop_point,
-      //   target_segment_idx, *path);
-
-      // auto stop_point = first_intersection_point;
-      // auto stop_point_idx = intersection_point_idx;
-
-      // if(op_stop_point){
-      //   RCLCPP_INFO(logger_, "TRUEEEE");
-      //   stop_point = op_stop_point.get();
-      //   stop_point_idx = motion_utils::findNearestIndex(path->points, stop_point);
-      // }
-      // else{
-      //   RCLCPP_INFO(logger_, "FALSEEEE");
-      // }
-
-      // const size_t stop_point_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
-      //   path->points, stop_point, stop_point_idx);
-
-      // // Insert stop point
-      // planning_utils::insertStopPoint(stop_point, stop_point_seg_idx, *path);
-
       // Get stop point and stop factor
       {
         tier4_planning_msgs::msg::StopFactor stop_factor;
@@ -196,7 +166,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       }
 
       setSafe(true);
-      setDistance(std::numeric_limits<double>::lowest());
+      setDistance(distance_ego_first_intersection);
       setActivation(false);
 
       const size_t current_seg_idx = findEgoSegmentIndex(path->points);
@@ -293,35 +263,6 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
 
       // Insert stop pose
       planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
-
-      // const auto current_point =
-      //   planner_data_->current_odometry->pose.position;  //
-      //   path->points.at(0).point.pose.position;
-
-      // const size_t current_seg_idx = findEgoSegmentIndex(path->points);
-
-      // planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
-
-      // const size_t current_seg_idx = findEgoSegmentIndex(path->points);
-
-      // // Insert stop point
-      // planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
-      // // Change state after vehicle departure
-      // const auto stopped_pose = motion_utils::calcLongitudinalOffsetPose(
-      //   path->points, planner_data_->current_odometry->pose.position, 0.0);
-
-      // if (!stopped_pose) {
-      //   state_ = State::INIT;
-      //   break;
-      // }
-
-      // SegmentIndexWithPose ego_pos_on_path;
-      // ego_pos_on_path.pose = stopped_pose.get();
-      // ego_pos_on_path.index = findEgoSegmentIndex(path->points);
-
-      // // Insert stop pose
-      // planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index,
-      // *path);
 
       // Get stop point and stop factor
       {
