@@ -156,7 +156,7 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWall
         return resample_utils::validate_points_duplication(poses);
       });
 
-    if (!previous_stop_pose_is_in_stop_pose) {
+    if (previous_stop_pose_is_in_stop_pose) {
       appendMarkerArray(function_delete_wall_marker(now, id_to_delete), &wall_marker, now);
     }
     id_to_delete++;
