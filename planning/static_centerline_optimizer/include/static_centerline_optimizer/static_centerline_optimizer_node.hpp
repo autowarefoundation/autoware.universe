@@ -81,10 +81,6 @@ private:
 
   // vehicle info
   vehicle_info_util::VehicleInfo vehicle_info_;
-
-  // parameters
-  double ego_nearest_dist_threshold_;
-  double ego_nearest_yaw_threshold_;
 };
 }  // namespace static_centerline_optimizer
 #endif  // STATIC_CENTERLINE_OPTIMIZER__STATIC_CENTERLINE_OPTIMIZER_NODE_HPP_
