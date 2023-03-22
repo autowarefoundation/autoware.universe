@@ -15,6 +15,7 @@
 #ifndef POINTCLOUD_MAP_LOADER__UTILS_HPP_
 #define POINTCLOUD_MAP_LOADER__UTILS_HPP_
 
+#include "autoware_map_msgs/srv/get_differential_point_cloud_map.hpp"
 #include <autoware_map_msgs/msg/area_info.hpp>
 #include <geometry_msgs/msg/point.hpp>
 

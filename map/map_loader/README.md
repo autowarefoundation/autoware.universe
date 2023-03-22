@@ -38,13 +38,14 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 
 ### Parameters
 
-| Name                          | Type  | Description                                                                       | Default value |
-| :---------------------------- | :---- | :-------------------------------------------------------------------------------- | :------------ |
-| enable_whole_load             | bool  | A flag to enable raw pointcloud map publishing                                    | true          |
-| enable_downsampled_whole_load | bool  | A flag to enable downsampled pointcloud map publishing                            | false         |
-| enable_partial_load           | bool  | A flag to enable partial pointcloud map server                                    | false         |
-| enable_differential_load      | bool  | A flag to enable differential pointcloud map server                               | false         |
-| leaf_size                     | float | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
+| Name                          | Type   | Description                                                                                                   | Default value |
+| :---------------------------- | :----- | :------------------------------------------------------------------------------------------------------------ | :------------ |
+| enable_whole_load             | bool   | A flag to enable raw pointcloud map publishing                                                                | true          |
+| enable_downsampled_whole_load | bool   | A flag to enable downsampled pointcloud map publishing                                                        | false         |
+| enable_partial_load           | bool   | A flag to enable partial pointcloud map server                                                                | false         |
+| enable_differential_load      | bool   | A flag to enable differential pointcloud map server                                                           | false         |
+| leaf_size                     | float  | Downsampling leaf size (only used when enable_downsampled_whole_load is set true)                             | 3.0           |
+| map_upper_limit               | double | Limit data size of topic/service/action (determined by cyclonedds) (only used when differential_load enabled) | 2147483647.0  |
 
 ### Interfaces
 

@@ -23,6 +23,7 @@ DifferentialMapLoaderModule::DifferentialMapLoaderModule(
     std::bind(
       &DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap, this,
       std::placeholders::_1, std::placeholders::_2));
+  map_upper_limit_ = node->declare_parameter<double>("map_upper_limit");
 }
 
 void DifferentialMapLoaderModule::differentialAreaLoad(
@@ -63,10 +64,27 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   GetDifferentialPointCloudMap::Request::SharedPtr req,
   GetDifferentialPointCloudMap::Response::SharedPtr res)
 {
+  const double map_upper_limit_margin = 10000;
   auto area = req->area;
   std::vector<std::string> cached_ids = req->cached_ids;
   differentialAreaLoad(area, cached_ids, res);
   res->header.frame_id = "map";
+  // calculate pcd map size to respond
+  double response_pcd_size = 0;
+  for (const auto & new_pointcloud_with_id : res->new_pointcloud_with_ids) {
+    response_pcd_size +=
+      new_pointcloud_with_id.pointcloud.row_step * new_pointcloud_with_id.pointcloud.height;
+  }
+  // if pcd map size exceeds map_upper_limit, remove overflowing maps from response
+  if (response_pcd_size > map_upper_limit_ - map_upper_limit_margin) {
+    // calculate ids to respond
+    int use_id_len = std::floor(
+      static_cast<int>(res->new_pointcloud_with_ids.size()) /
+      std::ceil(response_pcd_size / (map_upper_limit_ - map_upper_limit_margin)));
+    // remove overflowing maps from response
+    res->new_pointcloud_with_ids.erase(
+      res->new_pointcloud_with_ids.begin() + use_id_len, res->new_pointcloud_with_ids.end());
+  }
   return true;
 }
 

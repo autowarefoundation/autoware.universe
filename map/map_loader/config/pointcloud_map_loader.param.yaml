@@ -7,3 +7,6 @@
 
     # only used when downsample_whole_load enabled
     leaf_size: 3.0 # downsample leaf size [m]
+
+    # only used when differential_load enabled
+    map_upper_limit: 2147483647.0 # limit data size [byte] of topic/service/action (determined by cyclonedds)
