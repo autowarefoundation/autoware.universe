@@ -114,6 +114,7 @@ bool AvoidanceModule::isExecutionRequested() const
   }
 
   // Check ego is in preferred lane
+#ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(
@@ -123,6 +124,7 @@ bool AvoidanceModule::isExecutionRequested() const
   if (num != 0) {
     return false;
   }
+#endif
 
   // Check avoidance targets exist
   const auto avoid_data = calcAvoidancePlanningData(debug_data_);
@@ -235,9 +237,14 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
     calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
 
   // lanelet info
+#ifdef USE_OLD_ARCHITECTURE
   data.current_lanelets = util::calcLaneAroundPose(
     planner_data_->route_handler, reference_pose, planner_data_->parameters.forward_path_length,
     planner_data_->parameters.backward_path_length);
+#else
+  data.current_lanelets =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
 
   // keep avoidance state
   data.state = avoidance_data_.state;
@@ -744,10 +751,12 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
 
   /**
    * Find the nearest object that should be avoid. When the ego follows reference path,
-   * if the lateral distance is smaller than minimum margin, the ego should avoid the object.
+   * if the both of following two conditions are satisfied, the module surely avoid the object.
+   * Condition1: there is risk to collide with object without avoidance.
+   * Condition2: there is enough space to avoid.
    */
   for (const auto & o : data.target_objects) {
-    if (o.avoid_required) {
+    if (o.avoid_required && o.is_avoidable) {
       data.avoid_required = true;
       data.stop_target_object = o;
     }
@@ -1369,7 +1378,7 @@ void AvoidanceModule::generateTotalShiftLine(
   for (size_t i = 1; i < N; ++i) {
     bool has_object = false;
     for (const auto & al : avoid_lines) {
-      if (al.start_idx < i && i < al.end_idx) {
+      if (al.start_idx <= i && i <= al.end_idx) {
         has_object = true;
         break;
       }
@@ -2955,8 +2964,13 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
     "p.backward_path_length = %f, longest_dist_to_shift_line = %f, backward_length = %f",
     p.backward_path_length, longest_dist_to_shift_line, backward_length);
 
+#ifdef USE_OLD_ARCHITECTURE
   const lanelet::ConstLanelets current_lanes =
     util::calcLaneAroundPose(route_handler, pose, p.forward_path_length, backward_length);
+#else
+  const lanelet::ConstLanelets current_lanes =
+    util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+#endif
   centerline_path = util::getCenterLinePath(
     *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
 
