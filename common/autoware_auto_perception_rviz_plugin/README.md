@@ -24,7 +24,6 @@ Example:
 |      | `autoware_auto_perception_msgs::msg::DetectedObjects` | detection result array    |
 |      | `sensor_msgs::msg::PointCloud2`                       | point cloud for filtering |
 
-
 #### Visualization Result
 
 ![detected-object-visualization-description](./images/detected-object-visualization-description.jpg)
@@ -37,7 +36,6 @@ Example:
 | ---- | ---------------------------------------------------- | ------------------------- |
 |      | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking result array     |
 |      | `sensor_msgs::msg::PointCloud2`                      | point cloud for filtering |
-
 
 #### Visualization Result
 
@@ -53,7 +51,6 @@ Overwrite tracking results with detection results.
 | ---- | ------------------------------------------------------ | ------------------------ |
 |      | `autoware_auto_perception_msgs::msg::PredictedObjects` | prediction result array  |
 |      | `sensor_msgs::msg::PointCloud2`                        | pointcloud for filtering |
-
 
 #### Visualization Result
 

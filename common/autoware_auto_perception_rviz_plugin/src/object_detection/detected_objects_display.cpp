@@ -99,8 +99,8 @@ void DetectedObjectsDisplay::onInitialize()
     raw_node, "/perception/object_recognition/detection/objects",
     rclcpp::QoS{1}.get_rmw_qos_profile());
   pointcloud_subscription.subscribe(
-      raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
-      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
