@@ -171,8 +171,7 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createSlowDownVir
   create_wall_function creator = motion_utils::createSlowDownVirtualWallMarker;
 
   return handleVirtualWallMarker(
-    slow_down_poses, module_name, now, id, creator, previous_slow_down_poses_,
-    longitudinal_offset);
+    slow_down_poses, module_name, now, id, creator, previous_slow_down_poses_, longitudinal_offset);
 }
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createDeadLineVirtualWallMarker(
@@ -182,8 +181,7 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createDeadLineVir
   create_wall_function creator = motion_utils::createDeadLineVirtualWallMarker;
 
   return handleVirtualWallMarker(
-    dead_line_poses, module_name, now, id, creator, previous_dead_line_poses_,
-    longitudinal_offset);
+    dead_line_poses, module_name, now, id, creator, previous_dead_line_poses_, longitudinal_offset);
 }
 
 }  // namespace motion_utils
