@@ -1,5 +1,5 @@
 <launch>
   <group>
-    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" />
+    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"/>
   </group>
 </launch>

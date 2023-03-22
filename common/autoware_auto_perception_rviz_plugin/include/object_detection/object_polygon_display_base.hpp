@@ -30,6 +30,7 @@
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/properties/ros_topic_property.hpp"
+#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp"  // added
 
 #include <rviz_common/display_context.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -229,7 +230,7 @@ public:
     m_marker_common.addMessage(markers_ptr);
   }
 
-  void add_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud) 
+  void add_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud)
   {
     point_cloud_common->addMessage(cloud);
   }
