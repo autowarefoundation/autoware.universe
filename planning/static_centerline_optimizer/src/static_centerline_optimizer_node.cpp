@@ -177,6 +177,12 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
   const rclcpp::NodeOptions & node_options)
 : Node("static_centerline_optimizer", node_options)
 {
+  // parameters
+
+  // ego nearest search parameters
+  ego_nearest_dist_threshold_ = declare_parameter<double>("ego_nearest_dist_threshold");
+  ego_nearest_yaw_threshold_ = declare_parameter<double>("ego_nearest_yaw_threshold");
+
   // publishers
   pub_map_bin_ = create_publisher<HADMapBin>("lanelet2_map_topic", create_transient_local_qos());
   pub_raw_path_with_lane_id_ =
@@ -373,14 +379,10 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
   const auto start_center_pose =
     utils::get_center_pose(*route_handler_ptr_, route_lane_ids.front());
 
-  // ego nearest search parameters
-  const double ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
-
   // extract path with lane id from lanelets
   const auto raw_path_with_lane_id = utils::get_path_with_lane_id(
-    *route_handler_ptr_, route_lanelets, start_center_pose, ego_nearest_dist_threshold,
-    ego_nearest_yaw_threshold);
+    *route_handler_ptr_, route_lanelets, start_center_pose, ego_nearest_dist_threshold_,
+    ego_nearest_yaw_threshold_);
 
   pub_raw_path_with_lane_id_->publish(raw_path_with_lane_id);
   RCLCPP_INFO(get_logger(), "Calculated raw path with lane id and published.");
