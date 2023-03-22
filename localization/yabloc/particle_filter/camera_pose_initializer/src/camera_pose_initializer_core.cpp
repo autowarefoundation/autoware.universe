@@ -15,8 +15,7 @@ CameraPoseInitializer::CameraPoseInitializer()
 : Node("camera_pose_initializer"),
   cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()},
   info_(this),
-  tf_subscriber_(this->get_clock()),
-  cost_map_(this)
+  tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
   const rclcpp::QoS map_qos = rclcpp::QoS(1).transient_local().reliable();
@@ -28,10 +27,12 @@ CameraPoseInitializer::CameraPoseInitializer()
 
   // Subscriber
   auto on_initialpose = std::bind(&CameraPoseInitializer::on_initial_pose, this, _1);
-  auto on_ll2 = std::bind(&CameraPoseInitializer::on_ll2, this, _1);
+  auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
 
   sub_initialpose_ = create_subscription<PoseCovStamped>("initialpose", 10, on_initialpose);
-  sub_ll2_ = create_subscription<PointCloud2>("/map/ll2_road_marking", map_qos, on_ll2);
+  // sub_ll2_ = create_subscription<PointCloud2>("/map/ll2_road_marking", map_qos, on_ll2);
+  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
+
   sub_image_ = create_subscription<Image>(
     "/semseg/semantic_image", 10,
     [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; });
@@ -107,7 +108,8 @@ cv::Mat CameraPoseInitializer::create_vectormap_image(const Eigen::Vector3f & po
   pose.position.x = position.x();
   pose.position.y = position.y();
   pose.position.z = position.z();
-  cv::Mat image = cost_map_.get_map_image(pose);
+  // cv::Mat image = cost_map_.get_map_image(pose);
+  cv::Mat image = lane_image_->get_image(pose);
   return image;
 }
 
@@ -180,11 +182,18 @@ cv::Mat CameraPoseInitializer::project_image()
   return projected_image;
 }
 
+void CameraPoseInitializer::on_map(const HADMapBin & msg)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
+  lanelet::LaneletMapPtr lanelet_map = ll2_decomposer::from_bin_msg(msg);
+  lane_image_ = std::make_shared<LaneImage>(lanelet_map);
+}
+
 void CameraPoseInitializer::on_ll2(const PointCloud2 & msg)
 {
   pcl::PointCloud<pcl::PointNormal> ll2_cloud;
   pcl::fromROSMsg(msg, ll2_cloud);
-  cost_map_.set_cloud(ll2_cloud);
+  // cost_map_.set_cloud(ll2_cloud);
   RCLCPP_INFO_STREAM(get_logger(), "Set LL2 cloud into Hierarchical cost map");
 }
 

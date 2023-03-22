@@ -1,11 +1,13 @@
 #pragma once
+#include "camera_pose_initializer/lane_image.hpp"
+
 #include <Eigen/Geometry>
-#include <ll2_cost_map/hierarchical_cost_map.hpp>
 #include <opencv2/core.hpp>
 #include <pcdless_common/camera_info_subscriber.hpp>
 #include <pcdless_common/static_tf_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -24,18 +26,18 @@ public:
   using Ground = ground_msgs::srv::Ground;
   using Image = sensor_msgs::msg::Image;
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const cv::Point2i &)>;
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
 
   CameraPoseInitializer();
 
 private:
   const Eigen::Vector2d cov_xx_yy_;
-  HierarchicalCostMap cost_map_;
-
+  LaneImage::SharedPtr lane_image_{nullptr};
   common::CameraInfoSubscriber info_;
   common::StaticTfSubscriber tf_subscriber_;
 
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
@@ -58,6 +60,7 @@ private:
     return pt;
   }
   void on_ll2(const PointCloud2 & msg);
+  void on_map(const HADMapBin & msg);
   void on_initial_pose(const PoseCovStamped & initialpose);
 
   cv::Mat create_vectormap_image(const Eigen::Vector3f & position);

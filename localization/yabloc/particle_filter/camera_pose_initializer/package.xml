@@ -16,10 +16,10 @@
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
 
+  <depend>autoware_auto_mapping_msgs</depend>
   <depend>ground_msgs</depend>
   <depend>ll2_decomposer</depend>
   <depend>pcdless_common</depend>
-  <depend>ll2_cost_map</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
