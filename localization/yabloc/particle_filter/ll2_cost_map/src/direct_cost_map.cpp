@@ -1,6 +1,6 @@
-#include "camera_particle_corrector/direct_cost_map.hpp"
+#include "ll2_cost_map/direct_cost_map.hpp"
 
-namespace pcdless::modularized_particle_filter
+namespace pcdless
 {
 cv::Mat direct_cost_map(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
@@ -80,7 +80,7 @@ cv::Mat visualize_direction_map(const cv::Mat & cost_map)
   return rgb;
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace pcdless
 
 // #include <opencv4/opencv2/highgui.hpp>
 

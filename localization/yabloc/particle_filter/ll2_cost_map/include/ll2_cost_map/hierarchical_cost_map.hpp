@@ -13,7 +13,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace pcdless::modularized_particle_filter
+namespace pcdless
 {
 struct Area
 {
@@ -121,4 +121,4 @@ private:
 
   cv::Mat create_available_area_image(const Area & area) const;
 };
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace pcdless

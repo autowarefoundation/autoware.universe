@@ -1,7 +1,6 @@
 #pragma once
 
-#include "camera_particle_corrector/hierarchical_cost_map.hpp"
-
+#include <ll2_cost_map/hierarchical_cost_map.hpp>
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
 #include <std_srvs/srv/set_bool.hpp>

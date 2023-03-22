@@ -1,6 +1,6 @@
-#include "camera_particle_corrector/hierarchical_cost_map.hpp"
+#include "ll2_cost_map/hierarchical_cost_map.hpp"
 
-#include "camera_particle_corrector/direct_cost_map.hpp"
+#include "ll2_cost_map/direct_cost_map.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
@@ -8,7 +8,7 @@
 
 #include <boost/geometry/geometry.hpp>
 
-namespace pcdless::modularized_particle_filter
+namespace pcdless
 {
 float Area::unit_length_ = -1;
 
@@ -170,8 +170,8 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::show_map_range() const
 
 cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
 {
-  if (generated_map_history_.empty())
-    return cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
+  // if (generated_map_history_.empty())
+  //   return cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
 
   Eigen::Vector2f center;
   center << pose.position.x, pose.position.y;
@@ -249,4 +249,4 @@ cv::Mat HierarchicalCostMap::create_available_area_image(const Area & area) cons
   return available_area;
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace pcdless
