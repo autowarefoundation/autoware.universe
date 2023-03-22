@@ -3,6 +3,7 @@
 #include <ll2_decomposer/from_bin_msg.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <pcdless_common/color.hpp>
 #include <pcdless_common/cv_decompress.hpp>
 
 #include <pcl/point_cloud.h>
@@ -23,7 +24,7 @@ CameraPoseInitializer::CameraPoseInitializer()
 
   // Publisher
   pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
-  pub_marker_ = create_publisher<Marker>("init/marker", 10);
+  pub_marker_ = create_publisher<MarkerArray>("init/marker", 10);
 
   // Subscriber
   auto on_initialpose = std::bind(&CameraPoseInitializer::on_initial_pose, this, _1);
@@ -77,6 +78,34 @@ void CameraPoseInitializer::on_initial_pose(const PoseCovStamped & initialpose)
   }
 }
 
+cv::Mat bitwise_and_3ch(const cv::Mat src1, const cv::Mat src2)
+{
+  std::vector<cv::Mat> src1_array;
+  std::vector<cv::Mat> src2_array;
+  cv::split(src1, src1_array);
+  cv::split(src2, src2_array);
+  std::vector<cv::Mat> dst_array;
+  for (int i = 0; i < 3; i++) {
+    cv::Mat dst;
+    cv::bitwise_and(src1_array.at(i), src2_array.at(i), dst);
+    dst_array.push_back(dst);
+  }
+  cv::Mat merged;
+  cv::merge(dst_array, merged);
+  return merged;
+}
+
+int count_nonzero(cv::Mat image_3ch)
+{
+  std::vector<cv::Mat> images;
+  cv::split(image_3ch, images);
+  int count = 0;
+  for (int i = 0; i < 3; i++) {
+    count += cv::countNonZero(images.at(i));
+  }
+  return count;
+}
+
 bool CameraPoseInitializer::estimate_pose(
   const Eigen::Vector3f & position, Eigen::Vector3f & tangent)
 {
@@ -90,16 +119,73 @@ bool CameraPoseInitializer::estimate_pose(
     return false;
   }
 
-  RCLCPP_INFO_STREAM(get_logger(), "semantic image is ready");
-
   cv::Mat projected_image = project_image();
   cv::Mat vectormap_image = create_vectormap_image(position);
 
-  cv::hconcat(projected_image, vectormap_image, vectormap_image);
-  cv::imshow("contours", vectormap_image);
-  cv::waitKey(0);
+  // cv::hconcat(projected_image, vectormap_image, vectormap_image);
+  // cv::imshow("contours", vectormap_image);
+  // cv::waitKey(100);
+
+  std::vector<int> scores;
+  std::vector<float> angles;
+
+  for (int i = 0; i < 30; i++) {
+    cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(400, 400), (-i / 30.0 * 360), 1);
+    cv::Mat rotated_image;
+    cv::warpAffine(vectormap_image, rotated_image, rot, vectormap_image.size());
+
+    cv::Mat dst = bitwise_and_3ch(rotated_image, projected_image);
+    cv::Mat show_image;
+    cv::hconcat(std::vector<cv::Mat>{projected_image, rotated_image, dst}, show_image);
+
+    int count = count_nonzero(dst);
+    cv::imshow("and operator", show_image);
+    cv::waitKey(50);
+
+    scores.push_back(count);
+    angles.push_back(i / 15.f * M_PI);
+  }
+
+  publish_marker(scores, angles, position);
 
   return false;
+}
+
+void CameraPoseInitializer::publish_marker(
+  const std::vector<int> scores, const std::vector<float> angles, const Eigen::Vector3f & position)
+{
+  const int N = scores.size();
+  auto minmax = std::minmax_element(scores.begin(), scores.end());
+  auto normalize = [minmax](int score) -> float {
+    return static_cast<float>(score - *minmax.first) /
+           static_cast<float>(*minmax.second - *minmax.first);
+  };
+
+  MarkerArray array;
+  for (int i = 0; i < N; i++) {
+    Marker marker;
+    marker.header.frame_id = "map";
+    marker.type = Marker::ARROW;
+    marker.id = i;
+    marker.ns = "arrow";
+    marker.color = common::color_scale::rainbow(normalize(scores.at(i)));
+    marker.color.a = 0.5;
+
+    marker.pose.position.x = position.x();
+    marker.pose.position.y = position.y();
+    marker.pose.position.z = position.z();
+
+    const float rad = angles.at(i);
+    marker.pose.orientation.w = std::cos(rad / 2.f);
+    marker.pose.orientation.z = std::sin(rad / 2.f);
+
+    marker.scale.x = 2.0;  // arrow length
+    marker.scale.y = 0.3;  // arrow width
+    marker.scale.z = 0.3;  // arrow height
+
+    array.markers.push_back(marker);
+  }
+  pub_marker_->publish(array);
 }
 
 cv::Mat CameraPoseInitializer::create_vectormap_image(const Eigen::Vector3f & position)

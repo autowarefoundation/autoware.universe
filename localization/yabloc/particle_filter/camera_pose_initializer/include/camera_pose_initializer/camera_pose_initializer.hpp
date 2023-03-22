@@ -12,7 +12,7 @@
 #include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 namespace pcdless
 {
@@ -22,6 +22,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using Marker = visualization_msgs::msg::Marker;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Ground = ground_msgs::srv::Ground;
   using Image = sensor_msgs::msg::Image;
@@ -41,7 +42,7 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
-  rclcpp::Publisher<Marker>::SharedPtr pub_marker_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   rclcpp::Client<Ground>::SharedPtr ground_cli_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
@@ -52,11 +53,11 @@ private:
   cv::Point2i to_cv_point(const Eigen::Vector3f & v) const
   {
     const float image_size_ = 800;
-    const float max_range_ = 20;
+    const float max_range_ = 30;
 
     cv::Point pt;
-    pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2;
-    pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_;
+    pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2.f;
+    pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_ / 2.f;
     return pt;
   }
   void on_ll2(const PointCloud2 & msg);
@@ -68,6 +69,10 @@ private:
   bool estimate_pose(const Eigen::Vector3f & position, Eigen::Vector3f & tangent);
 
   bool define_project_func();
+
+  void publish_marker(
+    const std::vector<int> scores, const std::vector<float> angles,
+    const Eigen::Vector3f & position);
 
   void publish_rectified_initial_pose(
     const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent, const rclcpp::Time & stamp);
