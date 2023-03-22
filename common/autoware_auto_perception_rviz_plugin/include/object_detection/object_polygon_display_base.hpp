@@ -14,12 +14,10 @@
 #ifndef OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
 #define OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
 
-#include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/ros_topic_property.hpp"
 #include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp"
-#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp"  // added
 
 #include <common/color_alpha_property.hpp>
 #include <object_detection/object_polygon_detail.hpp>
