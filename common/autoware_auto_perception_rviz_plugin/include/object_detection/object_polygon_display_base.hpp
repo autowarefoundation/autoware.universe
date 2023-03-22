@@ -25,8 +25,7 @@
 #include <rviz_default_plugins/displays/marker_array/marker_array_display.hpp>
 #include <visibility_control.hpp>
 
-// #include <rviz_default_plugins/displays/pointcloud/point_cloud2_display.hpp>
-#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp" // added 
+#include "rviz_default_plugins/displays/pointcloud/point_cloud_common.hpp"
 
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -86,7 +85,6 @@ struct object_info
 {
   Shape shape;
   geometry_msgs::msg::Pose position;
-  // autoware_auto_perception_msgs::msg::ObjectClassification  classification;
   std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
 };
 
@@ -124,7 +122,7 @@ public:
 
   explicit ObjectPolygonDisplayBase(
     const std::string & default_topic, const std::string & default_pointcloud_topic)
-  : point_cloud_common_(new rviz_default_plugins::PointCloudCommon(this)), // added 
+  : point_cloud_common(new rviz_default_plugins::PointCloudCommon(this)),
     m_marker_common(this),
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
@@ -198,7 +196,7 @@ public:
     tf_buffer = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
-    point_cloud_common_->initialize(this->context_, this->scene_node_);
+    point_cloud_common->initialize(this->context_, this->scene_node_);
   }
 
   void load(const rviz_common::Config & config) override
@@ -209,14 +207,14 @@ public:
 
   void update(float wall_dt, float ros_dt) override 
   { m_marker_common.update(wall_dt, ros_dt); 
-    point_cloud_common_->update(wall_dt, ros_dt);
+    point_cloud_common->update(wall_dt, ros_dt);
   }
 
   void reset() override
   {
     RosTopicDisplay::reset();
     m_marker_common.clearMarkers();
-    point_cloud_common_->reset();
+    point_cloud_common->reset();
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
@@ -233,7 +231,7 @@ public:
 
   void add_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud) 
   {
-    point_cloud_common_->addMessage(cloud);
+    point_cloud_common->addMessage(cloud);
   }
 
   // transform detected object pose to target frame and return bool result
@@ -278,7 +276,7 @@ public:
       return self_transform_stamped.transform;
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN_STREAM(
-        rclcpp::get_logger("autoware_auto_perception_plugin"), ex.what());  // rename
+        rclcpp::get_logger("autoware_auto_perception_plugin"), ex.what());
       return boost::none;
     }
   }
@@ -588,11 +586,10 @@ protected:
   // Property to enable/disable objects pointcloud publishing
   rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
   message_filters::Subscriber<MsgT> perception_objects_subscription;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
-
-  std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common_;
+  // plugin to visualize pointclouds
+  std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common;
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class

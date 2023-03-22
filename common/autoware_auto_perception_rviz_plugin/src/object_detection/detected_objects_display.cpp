@@ -91,16 +91,14 @@ void DetectedObjectsDisplay::onInitialize()
   ObjectPolygonDisplayBase::onInitialize();
   // get access to rviz node to sub and to pub to topics
   rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-  publisher = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/output/detected_objects_pointcloud", rclcpp::SensorDataQoS());
 
   sync_ptr = std::make_shared<Sync>(
     SyncPolicy(10), perception_objects_subscription, pointcloud_subscription);
   sync_ptr->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
   perception_objects_subscription.subscribe(
     raw_node, "/perception/object_recognition/detection/objects",
-    rclcpp::QoS{1}.get_rmw_qos_profile()),
-    pointcloud_subscription.subscribe(
+    rclcpp::QoS{1}.get_rmw_qos_profile());
+  pointcloud_subscription.subscribe(
       raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
       rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
@@ -116,7 +114,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformObjects(
         *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
-    // objects_pub_->publish(*input_objects);
     return;
   }
 
@@ -131,7 +128,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   // convert to pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  // pcl::fromROSMsg(transformed_pointcloud, *temp_cloud);
   pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
 
   // Create a new point cloud with RGB color information and copy data from input cloud
@@ -162,7 +158,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
       filterPolygon(neighbor_pointcloud, out_cloud, object);
     }
   } else {
-    // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
     return;
   }
 
@@ -172,8 +167,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
 
-  // publisher->publish(*output_pointcloud_msg_ptr);
-  // point_cloud_common_->addMessage(output_pointcloud_mbsg_ptr);
   add_pointcloud(output_pointcloud_msg_ptr);
 }
 

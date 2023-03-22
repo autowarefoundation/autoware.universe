@@ -131,8 +131,6 @@ void TrackedObjectsDisplay::onInitialize()
   ObjectPolygonDisplayBase::onInitialize();
   // get access to rviz node to sub and to pub to topics
   rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-  publisher = raw_node->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/output/tracked_objects_pointcloud", rclcpp::SensorDataQoS());
 
   sync_ptr = std::make_shared<Sync>(
     SyncPolicy(10), perception_objects_subscription, pointcloud_subscription);
@@ -140,10 +138,10 @@ void TrackedObjectsDisplay::onInitialize()
 
   perception_objects_subscription.subscribe(
     raw_node, "/perception/object_recognition/tracking/objects",
-    rclcpp::QoS{1}.get_rmw_qos_profile()),
-    pointcloud_subscription.subscribe(
-      raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
-      rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    rclcpp::QoS{1}.get_rmw_qos_profile());
+  pointcloud_subscription.subscribe(
+    raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
+    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
 }
 
 void TrackedObjectsDisplay::onObjectsAndObstaclePointCloud(
@@ -202,7 +200,6 @@ void TrackedObjectsDisplay::onObjectsAndObstaclePointCloud(
       filterPolygon(neighbor_pointcloud, out_cloud, object);
     }
   } else {
-    // RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "objects buffer is empty");
     return;
   }
 
@@ -212,8 +209,6 @@ void TrackedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
 
-  // publisher->publish(*output_pointcloud_msg_ptr);
-  // point_cloud_common_->addMessage(output_pointcloud_msg_ptr);
   add_pointcloud(output_pointcloud_msg_ptr);
 }
 
