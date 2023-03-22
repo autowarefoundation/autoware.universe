@@ -958,6 +958,18 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
   return closest_lanelets;
 }
 
+/**
+ * @brief Check if the close lanelets meet the necessary condition
+ * @note 1. If we only have one point in the centerline, we will ignore the lanelet
+ *       2. Check if the obstacle is inside of this lanelet
+ *       3. If the object is in the objects history, we check if the target lanelet is
+ *          inside the current lanelets id or following lanelets
+ *       4. Calculate the distance between the obstacle and the lanelet
+ *       5. Check if the closest lanelet is valid
+ * @param lanelet
+ * @param object
+ * @param search_point
+ */
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
   const lanelet::BasicPoint2d & search_point)
@@ -978,11 +990,19 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   if (objects_history_.count(object_id) != 0) {
     const std::vector<lanelet::ConstLanelet> & possible_lanelet =
       objects_history_.at(object_id).back().future_possible_lanelets;
+    const auto left_opposite = getLeftOppositeLanelets(lanelet.second, lanelet_map_ptr_);
+    const auto right_opposite = getRightOppositeLanelets(lanelet.second, lanelet_map_ptr_);
 
     bool not_in_possible_lanelet =
       std::find(possible_lanelet.begin(), possible_lanelet.end(), lanelet.second) ==
       possible_lanelet.end();
-    if (!possible_lanelet.empty() && not_in_possible_lanelet) {
+    const bool not_in_left_opposite =
+      std::find(left_opposite.begin(), left_opposite.end(), lanelet.second) == left_opposite.end();
+    const bool not_in_right_opposite =
+      std::find(right_opposite.begin(), right_opposite.end(), lanelet.second) ==
+      right_opposite.end();
+    const bool not_in_opposite = not_in_left_opposite && not_in_right_opposite;
+    if (!possible_lanelet.empty() && not_in_possible_lanelet && not_in_opposite) {
       return false;
     }
   }
@@ -992,9 +1012,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 
   // Step4. Check if the closest lanelet is valid, and add all
   // of the lanelets that are below max_dist and max_delta_yaw
-  const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-  const bool is_yaw_reversed =
-    M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta && object_vel < 0.0;
+  const bool is_yaw_reversed = M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta;
   if (
     lanelet.first < dist_threshold_for_searching_lanelet_ &&
     (is_yaw_reversed || abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_)) {
