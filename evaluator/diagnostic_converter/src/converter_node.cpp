@@ -30,7 +30,7 @@ std::string removeInvalidTopicString(const std::string & input_string)
   return result;
 }
 
-std::string removeUnit(const std::string & input_string)
+std::string removeUnitString(const std::string & input_string)
 {
   for (size_t i = 0; i < input_string.size(); ++i) {
     if (input_string.at(i) == '[') {
@@ -82,7 +82,7 @@ UserDefinedValue DiagnosticConverter::createUserDefinedValue(const KeyValue & ke
 {
   UserDefinedValue param_msg;
   param_msg.type.data = UserDefinedValueType::DOUBLE;
-  param_msg.value = removeUnit(key_value.value);
+  param_msg.value = removeUnitString(key_value.value);
   return param_msg;
 }
 
