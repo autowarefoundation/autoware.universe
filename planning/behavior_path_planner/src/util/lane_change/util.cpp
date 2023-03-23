@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/util/lane_change/util.hpp"
 
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
@@ -1216,5 +1217,65 @@ lanelet::ConstLanelets getLaneChangeLanes(
   }
 
   return {};
+}
+
+TurnSignalInfo calcTurnSignalInfo(
+  const std::string & module_name, const LaneChangePath & path, const double speed,
+  const Pose & pose, const BehaviorPathPlannerParameters & bpp_param)
+{
+  const auto get_blinker_pose = [&](
+                                  const lanelet::ConstLanelets & lanes,
+                                  const std::vector<PathPointWithLaneId> & points,
+                                  const double length) {
+    const auto arc_front = lanelet::utils::getArcCoordinates(lanes, points.front().point.pose);
+    const auto blinker_start_pt =
+      std::find_if(points.begin(), points.end(), [&](const PathPointWithLaneId & pt) {
+        const auto arc_current = lanelet::utils::getArcCoordinates(lanes, pt.point.pose);
+        return (arc_current.length - arc_front.length) >= length;
+      });
+
+    if (blinker_start_pt != points.end()) {
+      if (std::prev(blinker_start_pt) != points.begin()) {
+        return std::prev(blinker_start_pt)->point.pose;
+      }
+      return blinker_start_pt->point.pose;
+    }
+
+    RCLCPP_WARN(
+      getLogger(module_name, "calcTurnSignalInfo"), "unable to determine blinker start pose...");
+    return points.front().point.pose;
+  };
+
+  const auto & points = path.path.points;
+
+  TurnSignalInfo turn_signal_info{};
+  const auto dt = path.duration.prepare - bpp_param.turn_signal_search_time;
+  if (dt <= 1e-3) {
+    turn_signal_info.desired_start_point = path.path.points.front().point.pose;
+  } else {
+    const auto length = speed * dt;
+    turn_signal_info.desired_start_point =
+      get_blinker_pose(path.reference_lanelets, points, length);
+  }
+
+  turn_signal_info.desired_end_point = path.shift_line.end;
+
+  turn_signal_info.required_start_point = path.shift_line.start;
+
+  const auto mid_lane_change_length = path.length.lane_changing / 2;
+
+  turn_signal_info.required_end_point =
+    get_blinker_pose(path.target_lanelets, path.shifted_path.path.points, mid_lane_change_length);
+
+  const auto [indicator_command, max_distance] = util::getPathTurnSignal(
+    path.reference_lanelets, path.shifted_path, path.shift_line, pose, speed, bpp_param);
+
+  turn_signal_info.turn_signal.command = indicator_command.command;
+  return turn_signal_info;
+}
+
+rclcpp::Logger getLogger(const std::string & module_name, const std::string & function_name)
+{
+  return rclcpp::get_logger(module_name).get_child(function_name);
 }
 }  // namespace behavior_path_planner::lane_change_utils

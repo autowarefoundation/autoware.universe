@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__UTIL_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__UTIL_HPP_
 
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
@@ -173,5 +174,11 @@ lanelet::ConstLanelets getLaneChangeLanes(
   const std::shared_ptr<const PlannerData> & planner_data,
   const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length,
   const double prepare_duration, const Direction direction, const LaneChangeModuleType type);
+
+TurnSignalInfo calcTurnSignalInfo(
+  const std::string & module_name, const LaneChangePath & path, const double speed,
+  const Pose & pose, const BehaviorPathPlannerParameters & bpp_param);
+
+rclcpp::Logger getLogger(const std::string & module_name, const std::string & function_name);
 }  // namespace behavior_path_planner::lane_change_utils
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__UTIL_HPP_
