@@ -19,12 +19,16 @@
 #include <geometry_msgs/msg/point.hpp>
 
 #include <pcl/common/common.h>
+#include <yaml-cpp/yaml.h>
 
 struct PCDFileMetadata
 {
   pcl::PointXYZ min;
   pcl::PointXYZ max;
 };
+
+std::map<std::string, PCDFileMetadata> loadPCDMetadata(
+  const std::string & pcd_metadata_path);
 
 bool sphereAndBoxOverlapExists(
   const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,

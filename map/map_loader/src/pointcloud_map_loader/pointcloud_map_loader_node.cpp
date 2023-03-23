@@ -49,6 +49,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 {
   const auto pcd_paths =
     getPcdPaths(declare_parameter<std::vector<std::string>>("pcd_paths_or_directory"));
+  std::string pcd_metadata_path = declare_parameter<std::string>("pcd_metadata_path");
   bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
   bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
   bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
@@ -67,7 +68,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   }
 
   if (enable_partial_load | enable_differential_load) {
-    pcd_metadata_dict_ = generatePCDMetadata(pcd_paths);
+    pcd_metadata_dict_ = loadPCDMetadata(pcd_metadata_path);
   }
 
   if (enable_partial_load) {
@@ -103,22 +104,6 @@ std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
     }
   }
   return pcd_paths;
-}
-
-std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::generatePCDMetadata(
-  const std::vector<std::string> & pcd_paths) const
-{
-  pcl::PointCloud<pcl::PointXYZ> partial_pcd;
-  std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict;
-  for (const auto & path : pcd_paths) {
-    if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
-      RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
-    }
-    PCDFileMetadata metadata = {};
-    pcl::getMinMax3D(partial_pcd, metadata.min, metadata.max);
-    all_pcd_file_metadata_dict[path] = metadata;
-  }
-  return all_pcd_file_metadata_dict;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

@@ -48,8 +48,6 @@ private:
 
   std::vector<std::string> getPcdPaths(
     const std::vector<std::string> & pcd_paths_or_directory) const;
-  std::map<std::string, PCDFileMetadata> generatePCDMetadata(
-    const std::vector<std::string> & pcd_paths) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
