@@ -54,6 +54,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   layer_name_ = this->declare_parameter("map_layer_name", std::string("elevation"));
   param_file_path_ = this->declare_parameter("param_file_path", "path_default");
   map_frame_ = this->declare_parameter("map_frame", "map");
+  bool use_differential_load = this->declare_parameter<bool>("use_differential_load", true);
   use_inpaint_ = this->declare_parameter("use_inpaint", true);
   inpaint_radius_ = this->declare_parameter("inpaint_radius", 0.3);
   use_elevation_map_cloud_publisher_ =
@@ -79,11 +80,33 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   sub_map_hash_ = create_subscription<tier4_external_api_msgs::msg::MapHash>(
     "/api/autoware/get/map/info/hash", durable_qos,
     std::bind(&ElevationMapLoaderNode::onMapHash, this, _1));
-  sub_pointcloud_map_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/pointcloud_map", durable_qos,
-    std::bind(&ElevationMapLoaderNode::onPointcloudMap, this, _1));
   sub_vector_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", durable_qos, std::bind(&ElevationMapLoaderNode::onVectorMap, this, _1));
+  if (use_differential_load) {
+    {
+      const auto period_ns =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0));
+      group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+      pcd_loader_client_ = create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
+        "service/get_differential_pcd_map", rmw_qos_profile_services_default, group_);
+      while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+        RCLCPP_INFO(
+          this->get_logger(),
+          "Waiting for pcd map loader service. Check if the enable_differential_load in "
+          "pointcloud_map_loader is set `true`.");
+      }
+      timer_ = rclcpp::create_timer(
+        this, get_clock(), period_ns, std::bind(&ElevationMapLoaderNode::timerCallback, this));
+    }
+
+    if (data_manager_.isInitialized()) {
+      publish();
+    }
+  } else {
+    sub_pointcloud_map_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "input/pointcloud_map", durable_qos,
+      std::bind(&ElevationMapLoaderNode::onPointcloudMap, this, _1));
+  }
 }
 
 void ElevationMapLoaderNode::publish()
@@ -128,6 +151,21 @@ void ElevationMapLoaderNode::publish()
     pcl::toROSMsg(*elevation_map_cloud_ptr, elevation_map_cloud_msg);
     pub_elevation_map_cloud_->publish(elevation_map_cloud_msg);
   }
+  is_elevation_map_published_ = true;
+}
+
+void ElevationMapLoaderNode::timerCallback()
+{
+  // flag to make receiveMap() called only once.
+  static bool is_map_received = false;
+  if (!is_map_received) {
+    ElevationMapLoaderNode::receiveMap();
+    is_map_received = true;
+    RCLCPP_INFO(this->get_logger(), "receive service with pointcloud_map");
+  }
+  if (data_manager_.isInitialized() && !is_elevation_map_published_) {
+    publish();
+  }
 }
 
 void ElevationMapLoaderNode::onMapHash(
@@ -168,6 +206,63 @@ void ElevationMapLoaderNode::onVectorMap(
   if (data_manager_.isInitialized()) {
     publish();
   }
+}
+
+void ElevationMapLoaderNode::receiveMap()
+{
+  pcl::PointCloud<pcl::PointXYZ> map_pcl;
+  sensor_msgs::msg::PointCloud2 pointcloud_map;
+  // create a loading request with mode = 1
+  auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
+  // request all area
+  request->area.type = autoware_map_msgs::msg::AreaInfo::ALL_AREA;
+  std::vector<std::string> cached_ids{};
+  if (!pcd_loader_client_->service_is_ready()) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Waiting for pcd map loader service. Check if the enable_differential_load in "
+      "pointcloud_map_loader is set `true`.");
+  }
+  bool is_all_received = false;
+  while (!is_all_received) {
+    // update cached_ids
+    request->cached_ids = cached_ids;
+    // send a request to map_loader
+    RCLCPP_INFO(this->get_logger(), "send a request to map_loader");
+    auto result{pcd_loader_client_->async_send_request(
+      request,
+      [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
+    std::future_status status = result.wait_for(std::chrono::seconds(0));
+    while (status != std::future_status::ready) {
+      RCLCPP_INFO(this->get_logger(), "waiting response");
+      if (!rclcpp::ok()) {
+        return;
+      }
+      status = result.wait_for(std::chrono::seconds(1));
+    }
+
+    RCLCPP_INFO(this->get_logger(), "concat maps");
+    if (result.get()->new_pointcloud_with_ids.empty()) {
+      RCLCPP_INFO(this->get_logger(), "finish receiving");
+      is_all_received = true;
+    } else {
+      // concat maps
+      for (const auto & new_pointcloud_with_id : result.get()->new_pointcloud_with_ids) {
+        if (pointcloud_map.width == 0) {
+          pointcloud_map = new_pointcloud_with_id.pointcloud;
+        } else {
+          pointcloud_map.width += new_pointcloud_with_id.pointcloud.width;
+          pointcloud_map.row_step += new_pointcloud_with_id.pointcloud.row_step;
+          pointcloud_map.data.insert(
+            pointcloud_map.data.end(), new_pointcloud_with_id.pointcloud.data.begin(),
+            new_pointcloud_with_id.pointcloud.data.end());
+        }
+        cached_ids.push_back(new_pointcloud_with_id.cell_id);
+      }
+    }
+  }
+  pcl::fromROSMsg<pcl::PointXYZ>(pointcloud_map, map_pcl);
+  data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 }
 
 void ElevationMapLoaderNode::createElevationMap()

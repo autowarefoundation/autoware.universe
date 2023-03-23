@@ -32,6 +32,12 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 | `output/elevation_map`       | `grid_map_msgs::msg::GridMap`   | The elevation map                                                    |
 | `output/elevation_map_cloud` | `sensor_msgs::msg::PointCloud2` | (Optional) The point cloud generated from the value of elevation map |
 
+### Service
+
+| Name                               | Type                                                   | Description                                                                                                                                            |
+| ---------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `service/get_differential_pcd_map` | `autoware_map_msgs::srv::GetDifferentialPointCloudMap` | (Optional) service to request point cloud map. If pointcloud_map_loader sends differential pointcloud map loading via ROS 2 service, use this service. |
+
 ## Parameters
 
 ### Node parameters
@@ -47,6 +53,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 | use_elevation_map_cloud_publisher | bool        | Whether to publish `output/elevation_map_cloud`                                                                                   | false         |
 | use_lane_filter                   | bool        | Whether to filter elevation_map with vector_map                                                                                   | false         |
 | lane_margin                       | float       | Margin distance from the lane polygon of the area to be included in the inpainting mask [m]. Used only when use_lane_filter=True. | 0.0           |
+| use_differential_load             | bool        | Whether to get point cloud map by service                                                                                         | false         |
 
 ### GridMap parameters
 
