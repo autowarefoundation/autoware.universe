@@ -55,8 +55,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   test_manager->setTrajectoryInputTopicName("surround_obstacle_checker/input/trajectory");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(
-    test_target_node, "surround_obstacle_checker/input/trajectory"));
+  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point

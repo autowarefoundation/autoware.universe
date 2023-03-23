@@ -51,7 +51,7 @@ if(BUILD_TESTING)
     test/src/test_planning_validator_functions.cpp
     test/src/test_planning_validator_helper.cpp
     test/src/test_planning_validator_pubsub.cpp
-    test/test_${PROJECT_NAME}_node_interface.cpp
+    test/src/test_${PROJECT_NAME}_node_interface.cpp
 
   )
   ament_target_dependencies(test_planning_validator
