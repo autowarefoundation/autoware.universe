@@ -122,12 +122,8 @@ bool CameraPoseInitializer::estimate_pose(
   cv::Mat projected_image = project_image();
   cv::Mat vectormap_image = create_vectormap_image(position);
 
-  // cv::hconcat(projected_image, vectormap_image, vectormap_image);
-  // cv::imshow("contours", vectormap_image);
-  // cv::waitKey(100);
-
   std::vector<int> scores;
-  std::vector<float> angles;
+  std::vector<float> angles;  // rad
 
   for (int i = 0; i < 30; i++) {
     cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(400, 400), (-i / 30.0 * 360), 1);
@@ -146,9 +142,18 @@ bool CameraPoseInitializer::estimate_pose(
     angles.push_back(i / 15.f * M_PI);
   }
 
+  {
+    size_t max_index =
+      std::distance(scores.begin(), std::max_element(scores.begin(), scores.end()));
+    float max_angle = angles.at(max_index);
+    tangent.x() = std::cos(max_angle);
+    tangent.y() = std::sin(max_angle);
+    tangent.z() = 0;
+  }
+
   publish_marker(scores, angles, position);
 
-  return false;
+  return true;
 }
 
 void CameraPoseInitializer::publish_marker(
