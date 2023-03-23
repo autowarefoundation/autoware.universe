@@ -1498,8 +1498,7 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     update_param(
       parameters, "avoidance.publish_debug_marker", avoidance_param_ptr_->publish_debug_marker);
     update_param(
-      parameters, "lane_change.publish_debug_marker",
-      lane_change_param_ptr_->publish_debug_marker);
+      parameters, "lane_change.publish_debug_marker", lane_change_param_ptr_->publish_debug_marker);
     // Drivable area expansion parameters
     using drivable_area_expansion::DrivableAreaExpansionParameters;
     const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
