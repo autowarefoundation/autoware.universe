@@ -38,15 +38,15 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 
 ### Parameters
 
-| Name                          | Type  | Description                                                                       | Default value |
-| :---------------------------- | :---- | :-------------------------------------------------------------------------------- | :------------ |
-| enable_whole_load             | bool  | A flag to enable raw pointcloud map publishing                                    | true          |
-| enable_downsampled_whole_load | bool  | A flag to enable downsampled pointcloud map publishing                            | false         |
-| enable_partial_load           | bool  | A flag to enable partial pointcloud map server                                    | false         |
-| enable_differential_load      | bool  | A flag to enable differential pointcloud map server                               | false         |
-| leaf_size                     | float | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
-| pcd_paths_or_directory        | std::string | Path(s) to pointcloud map file or directory  |            |
-| pcd_metadata_path             | std::string | Path to pointcloud metadata file  |            |
+| Name                          | Type        | Description                                                                       | Default value |
+| :---------------------------- | :---------- | :-------------------------------------------------------------------------------- | :------------ |
+| enable_whole_load             | bool        | A flag to enable raw pointcloud map publishing                                    | true          |
+| enable_downsampled_whole_load | bool        | A flag to enable downsampled pointcloud map publishing                            | false         |
+| enable_partial_load           | bool        | A flag to enable partial pointcloud map server                                    | false         |
+| enable_differential_load      | bool        | A flag to enable differential pointcloud map server                               | false         |
+| leaf_size                     | float       | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
+| pcd_paths_or_directory        | std::string | Path(s) to pointcloud map file or directory                                       |               |
+| pcd_metadata_path             | std::string | Path to pointcloud metadata file                                                  |               |
 
 ### Interfaces
 
@@ -58,17 +58,18 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 - metadata of pointcloud map(s) (.yaml)
 
 ### Metadata
+
 You must provide metadata in YAML format as well as pointcloud map files. Pointcloud map should be divided into one or more files with x-y grid.
 
 Metadata should look like this:
+
 ```yaml
 x_resolution: 100.0
 y_resolution: 150.0
-A.pcd: [1200, 2500]   # -> 1200 < x < 1300, 2500 < y < 2650
-B.pcd: [1300, 2500]   # -> 1300 < x < 1400, 2500 < y < 2650
-C.pcd: [1200, 2650]   # -> 1200 < x < 1300, 2650 < y < 2800
-D.pcd: [1400, 2650]   # -> 1400 < x < 1500, 2650 < y < 2800
-...
+A.pcd: [1200, 2500] # -> 1200 < x < 1300, 2500 < y < 2650
+B.pcd: [1300, 2500] # -> 1300 < x < 1400, 2500 < y < 2650
+C.pcd: [1200, 2650] # -> 1200 < x < 1300, 2650 < y < 2800
+D.pcd: [1400, 2650] # -> 1400 < x < 1500, 2650 < y < 2800
 ```
 
 ---
