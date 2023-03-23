@@ -49,7 +49,7 @@ These two sections have the following meanings.
     - In this section, ego vehicle must activate designated blinkers. However, if there are blinker conflicts, it must solve them based on the algorithm we mention later in this document.
     - Required section cannot be longer than desired section.
 
-When turning on the blinker, you decide whether or not to turn on the specified blinker based on the distance from the front of the ego vehicle to the start point of each section. Conversely, when turning off the blinker, you calculate the distance from the base link of the ego vehicle to the end point of each section and decide whether or not to turn it off based on that.
+When turning on the blinker, it decides whether or not to turn on the specified blinker based on the distance from the front of the ego vehicle to the start point of each section. Conversely, when turning off the blinker, it calculates the distance from the base link of the ego vehicle to the end point of each section and decide whether or not to turn it off based on that.
 
 ![activation_distance](./image/turn_signal_decider/activation_distance.drawio.svg)
 
