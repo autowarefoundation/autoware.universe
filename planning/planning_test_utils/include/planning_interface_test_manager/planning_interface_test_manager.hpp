@@ -35,7 +35,7 @@
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
@@ -83,9 +83,14 @@ public:
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishParkingState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setTrajectorySubscriber(std::string topic_name);
+  void setParkingTrajectoryInputTopicName(std::string topic_name);
+  void setLaneDrivingTrajectoryInputTopicName(std::string topic_name);
 
   void setRouteInputTopicName(std::string topic_name);
 
@@ -111,6 +116,9 @@ private:
   rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
   rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
+  component_interface_utils::Publisher<Route>::SharedPtr route_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
@@ -121,10 +129,12 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr abnormal_trajectory_pub_;
 
   // Publisher for testing(route)
-  component_interface_utils::Publisher<Route>::SharedPtr pub_route_;
+  component_interface_utils::Publisher<Route>::SharedPtr normal_route_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr abnormal_route_pub_;
 
   std::string input_trajectory_name_;
+  std::string input_parking_trajectory_name_;
+  std::string input_lane_driving_trajectory_name_;
   std::string input_route_name_;
 
   // Node
@@ -138,7 +148,7 @@ private:
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
   boost::optional<PoseStamped> transform_pose(const PoseStamped & input);
   void setRouteSubscriber();
-  void publishRoute(
+  Route::Message makeRoute(
     const PoseStamped::ConstSharedPtr start_pose, const PoseStamped::ConstSharedPtr goal_pose);
   void publishNominalRoute(std::string topic_name);
   void publishAbnormalRoute(

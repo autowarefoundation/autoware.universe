@@ -25,7 +25,8 @@ PlanningIntefaceTestManager::PlanningIntefaceTestManager()
 
   rclcpp::Node & node = *test_node_;
   const auto adaptor = component_interface_utils::NodeAdaptor(&node);
-  adaptor.init_pub(pub_route_);
+  adaptor.init_pub(normal_route_pub_);
+  adaptor.init_pub(route_pub_);
 }
 
 void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
@@ -59,8 +60,7 @@ void PlanningIntefaceTestManager::publishOdometry(
 void PlanningIntefaceTestManager::publishMaxVelocity(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<VelocityLimit>(
-    test_node_, target_node, topic_name, max_velocity_pub_);
+  test_utils::publishData<VelocityLimit>(test_node_, target_node, topic_name, max_velocity_pub_);
 }
 
 void PlanningIntefaceTestManager::publishPointCloud(
@@ -99,8 +99,7 @@ void PlanningIntefaceTestManager::publishMap(
 void PlanningIntefaceTestManager::publishOccupancyGrid(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<OccupancyGrid>(
-    test_node_, target_node, topic_name, occupancy_grid_pub_);
+  test_utils::publishData<OccupancyGrid>(test_node_, target_node, topic_name, occupancy_grid_pub_);
 }
 
 void PlanningIntefaceTestManager::publishParkingScenario(
@@ -109,9 +108,40 @@ void PlanningIntefaceTestManager::publishParkingScenario(
   test_utils::publishData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
 }
 
+void PlanningIntefaceTestManager::publishParkingState(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<std_msgs::msg::Bool>(
+    test_node_, target_node, topic_name, parking_state_pub_);
+}
+
+void PlanningIntefaceTestManager::publishTrajectory(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<Trajectory>(test_node_, target_node, topic_name, trajectory_pub_);
+}
+
+void PlanningIntefaceTestManager::publishRoute(
+  [[maybe_unused]] rclcpp::Node::SharedPtr target_node, [[maybe_unused]] std::string topic_name)
+{
+  auto start_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  auto goal_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  route_pub_->publish(makeRoute(start_pose, goal_pose));
+}
+
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;
+}
+
+void PlanningIntefaceTestManager::setParkingTrajectoryInputTopicName(std::string topic_name)
+{
+  input_parking_trajectory_name_ = topic_name;
+}
+
+void PlanningIntefaceTestManager::setLaneDrivingTrajectoryInputTopicName(std::string topic_name)
+{
+  input_lane_driving_trajectory_name_ = topic_name;
 }
 
 void PlanningIntefaceTestManager::setRouteInputTopicName(std::string topic_name)
@@ -168,7 +198,7 @@ void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr t
   // setRouteSubscriber();
   auto start_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
   auto goal_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  publishRoute(start_pose, goal_pose);
+  normal_route_pub_->publish(makeRoute(start_pose, goal_pose));
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
@@ -192,14 +222,14 @@ void PlanningIntefaceTestManager::publishAbnormalRoute(
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
 
-void PlanningIntefaceTestManager::publishRoute(
+Route::Message PlanningIntefaceTestManager::makeRoute(
   const PoseStamped::ConstSharedPtr start_pose, const PoseStamped::ConstSharedPtr goal_pose)
 {
   Route::Message route;
   route.header = start_pose->header;
   route.start_pose = start_pose->pose;
   route.goal_pose = goal_pose->pose;
-  pub_route_->publish(route);
+  return route;
 }
 
 }  // namespace planning_test_utils

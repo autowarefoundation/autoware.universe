@@ -19,7 +19,7 @@
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-
+#include <std_msgs/msg/bool.hpp>
 
 #include <boost/optional.hpp>
 
