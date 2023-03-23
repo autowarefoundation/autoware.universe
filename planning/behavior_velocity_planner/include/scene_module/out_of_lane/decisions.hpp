@@ -223,9 +223,26 @@ inline std::vector<Slowdown> calculate_decisions(
     }
     if (should_not_enter) {
       Slowdown decision;
+      auto stop_before_range = range;
+      if (params.strict) {
+        // find lowest entering_path_idx for ranges with overlapping start-end indexes
+        bool found = true;
+        while (found) {
+          found = false;
+          for (const auto & other_range : ranges) {
+            if (
+              other_range.entering_path_idx < stop_before_range.entering_path_idx &&
+              other_range.exiting_path_idx >= stop_before_range.entering_path_idx) {
+              stop_before_range = other_range;
+              found = true;
+            }
+          }
+        }
+      }
       decision.target_path_idx =
-        ego_data.first_path_idx + range.entering_path_idx;  // add offset from curr pose
-      decision.lane_to_avoid = range.lane;
+        ego_data.first_path_idx + stop_before_range.entering_path_idx;  // add offset from curr pose
+      decision.lane_to_avoid = stop_before_range.lane;
+
       if (ego_dist_to_range < params.stop_dist_threshold) {
         std::printf("\t\tWill stop\n");
         decision.velocity = 0.0;
