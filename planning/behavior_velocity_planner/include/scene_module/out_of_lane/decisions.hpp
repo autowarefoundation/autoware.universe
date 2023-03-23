@@ -52,7 +52,78 @@ inline double time_along_path(const EgoData & ego_data, const size_t target_idx)
   return dist / v;
 }
 
-/// @brief estimate the times when an object will enter and exit a given overlapping range
+/// @brief estimate the times when an object will enter and exit an overlapping range using its
+/// predicted paths
+inline std::optional<std::pair<double, double>> object_time_to_range(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range)
+{
+  enum Position { before = 0, inside, after, unset };
+  constexpr auto max_deviation = 2.0;
+  const auto half_size = object.shape.dimensions.x / 2.0;
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
+  const auto range_enter_length =
+    lanelet::utils::getArcCoordinates({range.lane}, pose).length - half_size;
+  pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
+  const auto range_exit_length =
+    lanelet::utils::getArcCoordinates({range.lane}, pose).length + half_size;
+  auto min_enter_time = std::optional<double>();
+  auto max_exit_time = std::optional<double>();
+
+  for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    const auto t_step = rclcpp::Duration(predicted_path.time_step).seconds();
+    auto t = 0.0;
+    Position prev_p_position = unset;
+    auto prev_p_length = 0.0;
+    for (const auto & p : predicted_path.path) {
+      const auto p_coordinates = lanelet::utils::getArcCoordinates({range.lane}, p);
+      if (std::abs(p_coordinates.distance) > max_deviation)
+        continue;  // skip points that are far from the overlap lane
+      Position p_position;
+      if(p_coordinates.length < range_enter_length) p_position = before;
+      else if(p_coordinates.length > range_exit_length) p_position = after;
+      else
+        p_position = inside;
+
+      std::printf("(%2.2f, %2.2f) -> [%d,%d,%d] (prev [%d,%d,%d)",
+        p_coordinates.length, p_coordinates.distance,
+        p_position == before, p_position == inside, p_position == after,
+        prev_p_position == before, prev_p_position == inside, prev_p_position == after);
+
+      if (p_position == inside) {
+        min_enter_time = min_enter_time ? std::min(*min_enter_time, t) : t;
+        max_exit_time = max_exit_time ? std::max(*max_exit_time, t) : t;
+        std::printf(" -> inside (%2.2f, %2.2f)", *min_enter_time, *max_exit_time);
+      }
+      if (prev_p_position < p_position) {
+        std::printf(" -> prev ");
+        const auto length_step = p_coordinates.length - prev_p_length;
+        if(prev_p_position == before) {
+          const auto enter_ratio = (range_enter_length - prev_p_length) / length_step;
+          const auto enter_time = t + (enter_ratio * t_step);
+          min_enter_time = min_enter_time ? std::min(*min_enter_time, enter_time) : enter_time;
+          std::printf(" before (%2.2f)", *min_enter_time);
+        }
+        if(p_position == after) {
+          const auto exit_ratio = (range_exit_length - prev_p_length) / length_step;
+          const auto exit_time = t + (exit_ratio * t_step);
+          max_exit_time = max_exit_time ? std::max(*max_exit_time, exit_time) : exit_time;
+          std::printf(" after (%2.2f)", *max_exit_time);
+        }
+      }
+      std::printf("\n");
+      prev_p_position = p_position;
+      prev_p_length = p_coordinates.length;
+      t += t_step;
+    }
+  }
+  if (min_enter_time && max_exit_time) return std::make_pair(*min_enter_time, *max_exit_time);
+  return {};
+}
+
+/// @brief estimate the times when an object will enter and exit an overlapping range assuming it
+/// follows some lanelet
 /// @details the enter/exit is relative to ego and may be inversed if the object drives in the
 /// opposite direction
 inline std::optional<std::pair<double, double>> object_time_to_range(
@@ -74,6 +145,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
   pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
   const auto range_exit_length = lanelet::utils::getArcCoordinates({range.lane}, pose).length;
   const auto range_size = std::abs(range_enter_length - range_exit_length);
+  // TODO(Maxime): rename arc_length -> dist
   auto enter_arc_length = std::optional<double>();
   auto exit_arc_length = std::optional<double>();
   for (const auto & lane : object_lanelets) {
@@ -156,7 +228,9 @@ inline std::vector<Slowdown> calculate_decisions(
       if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel)
         continue;  // skip objects with velocity bellow a threshold
       // skip objects that are already on the interval
-      const auto enter_exit_time = object_time_to_range(object, range, lanelets, route_handler);
+      const auto enter_exit_time = params.objects_use_predicted_paths
+                                     ? object_time_to_range(object, range)
+                                     : object_time_to_range(object, range, lanelets, route_handler);
       if (!enter_exit_time) continue;  // object is not driving towards the overlapping range
 
       const auto & [enter_time, exit_time] = *enter_exit_time;

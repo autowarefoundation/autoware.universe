@@ -117,12 +117,13 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto total_time_us = stopwatch.toc();
   std::printf(
     "Total time = %2.2fus\n"
-    "\tcalculate_path_footprints = %2.2fus\n"
-    "\tcalculate_overlapping_ranges = %2.2fus\n"
-    "\tcalculate_decisions = %2.2fus\n"
-    "\tinsert_slowdown_points = %2.2fus\n",
+    "\tcalculate_path_footprints = %2.0fus\n"
+    "\tcalculate_overlapping_ranges = %2.0fus\n"
+    "\tcalculate_decisions = %2.0fus\n"
+    "\tcalc_slowdown_points = %2.0fus\n"
+    "\tinsert_slowdown_points = %2.0fus\n",
     total_time_us, calculate_path_footprints_us, calculate_overlapping_ranges_us,
-    calculate_decisions_us, insert_slowdown_points_us);
+    calculate_decisions_us, calc_slowdown_points_us, insert_slowdown_points_us);
   return true;
 }
 
