@@ -321,7 +321,7 @@ class GroundSegmentationPipeline:
                     ("output/elevation_map", "map"),
                     ("input/pointcloud_map", "/map/pointcloud_map"),
                     ("input/vector_map", "/map/vector_map"),
-                    ("service/get_differential_pcd_map", "/service/get_differential_pcd_map"),
+                    ("service/get_differential_pcd_map", "/map/get_differential_pointcloud_map"),
                 ],
                 parameters=[
                     {

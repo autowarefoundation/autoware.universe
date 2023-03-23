@@ -95,8 +95,8 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
           "Waiting for pcd map loader service. Check if the enable_differential_load in "
           "pointcloud_map_loader is set `true`.");
       }
-      timer_ = rclcpp::create_timer(
-        this, get_clock(), period_ns, std::bind(&ElevationMapLoaderNode::timerCallback, this));
+      timer_ =
+        this->create_wall_timer(period_ns, std::bind(&ElevationMapLoaderNode::timerCallback, this));
     }
 
     if (data_manager_.isInitialized()) {
