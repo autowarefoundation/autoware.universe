@@ -68,6 +68,10 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   }
 
   if (enable_partial_load | enable_differential_load) {
+    if (!fs::exists(pcd_metadata_path)) {
+      RCLCPP_ERROR_STREAM(get_logger(), "PCD metadata file not found: " << pcd_metadata_path);
+      return;
+    }
     pcd_metadata_dict_ = loadPCDMetadata(pcd_metadata_path);
   }
 
