@@ -16,15 +16,16 @@
 
 #include <fmt/format.h>
 
-std::map<std::string, PCDFileMetadata> loadPCDMetadata(
-  const std::string & pcd_metadata_path)
+std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path)
 {
   YAML::Node config = YAML::LoadFile(pcd_metadata_path);
 
   std::map<std::string, PCDFileMetadata> metadata;
 
-  for (const auto &node : config) {
-    if (node.first.as<std::string>() == "x_resolution" || node.first.as<std::string>() == "y_resolution") {
+  for (const auto & node : config) {
+    if (
+      node.first.as<std::string>() == "x_resolution" ||
+      node.first.as<std::string>() == "y_resolution") {
       continue;
     }
 
@@ -42,7 +43,6 @@ std::map<std::string, PCDFileMetadata> loadPCDMetadata(
 
   return metadata;
 }
-
 
 bool sphereAndBoxOverlapExists(
   const geometry_msgs::msg::Point center, const double radius, const pcl::PointXYZ box_min_point,

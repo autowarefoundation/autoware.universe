@@ -27,8 +27,7 @@ struct PCDFileMetadata
   pcl::PointXYZ max;
 };
 
-std::map<std::string, PCDFileMetadata> loadPCDMetadata(
-  const std::string & pcd_metadata_path);
+std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path);
 
 bool sphereAndBoxOverlapExists(
   const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,
