@@ -46,7 +46,7 @@ namespace behavior_velocity_planner::out_of_lane_utils
 struct DebugData
 {
   std::vector<lanelet::BasicPolygon2d> footprints;
-  std::vector<Pose> slowdown_poses;
+  std::vector<SlowdownToInsert> slowdowns;
   Pose ego_pose;
   OverlapRanges ranges;
   std::vector<std::vector<std::pair<double, double>>> npc_times;
@@ -54,7 +54,7 @@ struct DebugData
   void reset_data()
   {
     footprints.clear();
-    slowdown_poses.clear();
+    slowdowns.clear();
     ranges.clear();
     npc_times.clear();
     ego_times.clear();

@@ -35,19 +35,20 @@
 
 namespace behavior_velocity_planner::out_of_lane_utils
 {
-inline double distance_along_path(const EgoInfo & ego_info, const size_t target_idx)
+inline double distance_along_path(const EgoData & ego_data, const size_t target_idx)
 {
   return motion_utils::calcSignedArcLength(
-    ego_info.path.points, ego_info.pose.position, ego_info.first_path_idx + target_idx);
+    ego_data.path->points, ego_data.pose.position, ego_data.first_path_idx + target_idx);
 }
 
-inline double time_along_path(const EgoInfo & info, const size_t target_idx)
+inline double time_along_path(const EgoData & ego_data, const size_t target_idx)
 {
-  const auto dist = distance_along_path(info, target_idx);
+  const auto dist = distance_along_path(ego_data, target_idx);
   // TODO(Maxime): improve estimate of velocity
   const auto v = std::max(
-    info.velocity,
-    info.path.points[info.first_path_idx + target_idx].point.longitudinal_velocity_mps * 0.5);
+    ego_data.velocity,
+    ego_data.path->points[ego_data.first_path_idx + target_idx].point.longitudinal_velocity_mps *
+      0.5);
   return dist / v;
 }
 
@@ -126,7 +127,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
 }
 
 inline std::vector<Slowdown> calculate_decisions(
-  const OverlapRanges & ranges, const EgoInfo & ego_info,
+  const OverlapRanges & ranges, const EgoData & ego_data,
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const std::shared_ptr<route_handler::RouteHandler> & route_handler,
   const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug)
@@ -137,9 +138,9 @@ inline std::vector<Slowdown> calculate_decisions(
     if (range.entering_path_idx == 0UL) continue;  // skip if we already entered the range
     bool should_not_enter = false;  // we will decide if we need to stop/slow before this range
 
-    const auto ego_enter_time = time_along_path(ego_info, range.entering_path_idx);
-    const auto ego_exit_time = time_along_path(ego_info, range.exiting_path_idx);
-    const auto ego_dist_to_range = distance_along_path(ego_info, range.entering_path_idx);
+    const auto ego_enter_time = time_along_path(ego_data, range.entering_path_idx);
+    const auto ego_exit_time = time_along_path(ego_data, range.exiting_path_idx);
+    const auto ego_dist_to_range = distance_along_path(ego_data, range.entering_path_idx);
     std::printf(
       "\t[%lu -> %lu] %ld | ego dist = %2.2f (enters at %2.2f, exits at %2.2f)\n",
       range.entering_path_idx, range.exiting_path_idx, range.lane.id(), ego_dist_to_range,
@@ -180,17 +181,30 @@ inline std::vector<Slowdown> calculate_decisions(
             ego_exit_time + params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer,
             ego_exits_before_object_enters);
         } else {
-          const auto ego_enters_before_object =
-            ego_enter_time + params.intervals_ego_buffer < enter_time + params.intervals_obj_buffer;
-          const auto ego_exits_after_object =
-            ego_exit_time + params.intervals_ego_buffer > exit_time + params.intervals_obj_buffer;
-          if (ego_enters_before_object && ego_exits_after_object) should_not_enter = true;
-          std::printf(
-            "\t\t\t[Intervals] (same way) ego enter %2.2fs < obj enter %2.2fs && ego_exit %2.2fs > "
-            "obj_exit %2.2fs ? -> should not enter = %d\n",
-            ego_enter_time + params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer,
-            ego_exit_time + params.intervals_ego_buffer, exit_time + params.intervals_obj_buffer,
-            ego_enters_before_object && ego_exits_after_object);
+          // const auto ego_enters_before_object =
+          //   ego_enter_time + params.intervals_ego_buffer < enter_time +
+          //   params.intervals_obj_buffer;
+          // const auto ego_exits_after_object =
+          //   ego_exit_time + params.intervals_ego_buffer > exit_time +
+          //   params.intervals_obj_buffer;
+          const auto object_enters_during_overlap =
+            ego_enter_time - params.intervals_ego_buffer <
+              enter_time + params.intervals_obj_buffer &&
+            enter_time - params.intervals_obj_buffer - ego_exit_time <
+              ego_exit_time + params.intervals_ego_buffer;
+          const auto object_exits_during_overlap =
+            ego_enter_time - params.intervals_ego_buffer <
+              exit_time + params.intervals_obj_buffer &&
+            exit_time - params.intervals_obj_buffer - ego_exit_time <
+              ego_exit_time + params.intervals_ego_buffer;
+          // if (ego_enters_before_object && ego_exits_after_object) should_not_enter = true;
+          if (object_enters_during_overlap || object_exits_during_overlap) should_not_enter = true;
+          // std::printf(
+          //   "\t\t\t[Intervals] (same way) ego enter %2.2fs < obj enter %2.2fs && ego_exit %2.2fs
+          //   > " "obj_exit %2.2fs ? -> should not enter = %d\n", ego_enter_time +
+          //   params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer, ego_exit_time
+          //   + params.intervals_ego_buffer, exit_time + params.intervals_obj_buffer,
+          //   ego_enters_before_object && ego_exits_after_object);
         }
       } else if (params.mode == "ttc") {
         auto ttc = 0.0;
@@ -210,7 +224,7 @@ inline std::vector<Slowdown> calculate_decisions(
     if (should_not_enter) {
       Slowdown decision;
       decision.target_path_idx =
-        ego_info.first_path_idx + range.entering_path_idx;  // add offset from curr pose
+        ego_data.first_path_idx + range.entering_path_idx;  // add offset from curr pose
       decision.lane_to_avoid = range.lane;
       if (ego_dist_to_range < params.stop_dist_threshold) {
         std::printf("\t\tWill stop\n");

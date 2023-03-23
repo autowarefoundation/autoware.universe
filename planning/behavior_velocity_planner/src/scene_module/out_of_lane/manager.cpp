@@ -33,18 +33,22 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   pp.mode = node.declare_parameter<std::string>(ns + ".mode");
   pp.skip_if_already_overlapping =
     node.declare_parameter<bool>(ns + ".skip_if_already_overlapping");
+
   pp.time_threshold = node.declare_parameter<double>(ns + ".threshold.time_threshold");
   pp.intervals_ego_buffer = node.declare_parameter<double>(ns + ".intervals.ego_time_buffer");
   pp.intervals_obj_buffer = node.declare_parameter<double>(ns + ".intervals.objects_time_buffer");
   pp.ttc_threshold = node.declare_parameter<double>(ns + ".ttc.threshold");
 
   pp.objects_min_vel = node.declare_parameter<double>(ns + ".objects.minimum_velocity");
+  pp.objects_use_predicted_paths =
+    node.declare_parameter<bool>(ns + ".objects.use_predicted_paths");
 
   pp.overlap_min_dist = node.declare_parameter<double>(ns + ".overlap.minimum_distance");
   pp.overlap_extra_length = node.declare_parameter<double>(ns + ".overlap.extra_length");
 
+  pp.skip_if_over_max_decel = node.declare_parameter<bool>(ns + ".action.skip_if_over_max_decel");
+  pp.strict = node.declare_parameter<bool>(ns + ".action.strict");
   pp.dist_buffer = node.declare_parameter<double>(ns + ".action.distance_buffer");
-  pp.max_decel = node.declare_parameter<double>(ns + ".action.maximum_deceleration");
   pp.slow_velocity = node.declare_parameter<double>(ns + ".action.slowdown.velocity");
   pp.slow_dist_threshold =
     node.declare_parameter<double>(ns + ".action.slowdown.distance_threshold");

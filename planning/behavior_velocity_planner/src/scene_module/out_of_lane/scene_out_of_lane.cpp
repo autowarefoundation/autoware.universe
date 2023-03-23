@@ -53,14 +53,15 @@ bool OutOfLaneModule::modifyPathVelocity(
   if (!path || path->points.size() < 2) return true;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
-  out_of_lane_utils::EgoInfo ego_info;
-  ego_info.pose = (*planner_data_)->current_odometry->pose;
-  ego_info.path = *path;
-  ego_info.first_path_idx =
-    motion_utils::findNearestSegmentIndex(path->points, ego_info.pose.position);
-  ego_info.velocity = (*planner_data_)->current_velocity->twist.linear.x;
+  out_of_lane_utils::EgoData ego_data;
+  ego_data.pose = (*planner_data_)->current_odometry->pose;
+  ego_data.path = path;
+  ego_data.first_path_idx =
+    motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
+  ego_data.velocity = (*planner_data_)->current_velocity->twist.linear.x;
+  ego_data.max_decel = -(*planner_data_)->max_stop_acceleration_threshold;
   stopwatch.tic("calculate_path_footprints");
-  const auto path_footprints = calculate_path_footprints(ego_info, params_);
+  const auto path_footprints = calculate_path_footprints(ego_data, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Get neighboring lanes TODO(Maxime): make separate function
   const auto path_lanelets = planning_utils::getLaneletsOnPath(
@@ -78,7 +79,7 @@ bool OutOfLaneModule::modifyPathVelocity(
     return lls;
   }();
   if (params_.skip_if_already_overlapping) {  // TODO(Maxime): cleanup
-    const auto ego_footprint = calculate_current_ego_footprint(ego_info, params_);
+    const auto ego_footprint = calculate_current_ego_footprint(ego_data, params_);
     if (std::find_if(lanelets_to_check.begin(), lanelets_to_check.end(), [&](const auto & ll) {
           return boost::geometry::intersects(ll.polygon2d().basicPolygon(), ego_footprint);
         }) != lanelets_to_check.end()) {
@@ -96,20 +97,23 @@ bool OutOfLaneModule::modifyPathVelocity(
   // Calculate stop and slowdown points
   std::printf("%lu detected objects\n", (*planner_data_)->predicted_objects->objects.size());
   stopwatch.tic("calculate_decisions");
-  const auto decisions = calculate_decisions(
-    ranges, ego_info, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
+  auto decisions = calculate_decisions(
+    ranges, ego_data, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
     lanelets_to_check, params_, debug_data_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   std::printf("Found %lu decisions\n", decisions.size());
+  stopwatch.tic("calc_slowdown_points");
+  const auto points_to_insert = calculate_slowdown_points(ego_data, decisions, params_);
+  const auto calc_slowdown_points_us = stopwatch.toc("calc_slowdown_points");
   stopwatch.tic("insert_slowdown_points");
-  insert_slowdown_points(*path, decisions, params_);
-  const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
-  for (const auto & decision : decisions) {
-    // std::printf("\t [%lu] v = %2.2f m/s\n", decision.target_path_idx, decision.velocity);
-    debug_data_.slowdown_poses.push_back(path->points[decision.target_path_idx].point.pose);
+  for (const auto & point : points_to_insert) {
+    auto path_idx = point.slowdown.target_path_idx;
+    planning_utils::insertVelocity(*ego_data.path, point.point, point.slowdown.velocity, path_idx);
   }
+  const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
 
   debug_data_.footprints = path_footprints;
+  debug_data_.slowdowns = points_to_insert;
   const auto total_time_us = stopwatch.toc();
   std::printf(
     "Total time = %2.2fus\n"
@@ -217,8 +221,8 @@ MarkerArray OutOfLaneModule::createVirtualWallMarkerArray()
   MarkerArray wall_marker;
   std::string module_name = "out_of_lane";
   std::vector<Pose> slow_down_poses;
-  for (const auto & slowdown_pose : debug_data_.slowdown_poses) {
-    const auto p_front = calcOffsetPose(slowdown_pose, params_.front_offset, 0.0, 0.0);
+  for (const auto & slowdown : debug_data_.slowdowns) {
+    const auto p_front = calcOffsetPose(slowdown.point.point.pose, params_.front_offset, 0.0, 0.0);
     slow_down_poses.push_back(p_front);
     auto markers = virtual_wall_marker_creator_->createSlowDownVirtualWallMarker(
       slow_down_poses, module_name, current_time, static_cast<int32_t>(module_id_));

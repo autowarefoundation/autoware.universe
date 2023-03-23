@@ -60,13 +60,13 @@ inline lanelet::BasicPolygon2d project_to_pose(
 /// @param [in] params parameters
 /// @return polygon footprints for each path point starting from first_idx
 inline std::vector<lanelet::BasicPolygon2d> calculate_path_footprints(
-  const EgoInfo & ego_info, const PlannerParam & params)
+  const EgoData & ego_data, const PlannerParam & params)
 {
   const auto base_footprint = make_base_footprint(params);
   std::vector<lanelet::BasicPolygon2d> path_footprints;
-  path_footprints.reserve(ego_info.path.points.size());
-  for (auto i = ego_info.first_path_idx; i < ego_info.path.points.size(); ++i) {
-    const auto & path_pose = ego_info.path.points[i].point.pose;
+  path_footprints.reserve(ego_data.path->points.size());
+  for (auto i = ego_data.first_path_idx; i < ego_data.path->points.size(); ++i) {
+    const auto & path_pose = ego_data.path->points[i].point.pose;
     const auto angle = tf2::getYaw(path_pose.orientation);
     const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
     lanelet::BasicPolygon2d footprint;
@@ -78,32 +78,45 @@ inline std::vector<lanelet::BasicPolygon2d> calculate_path_footprints(
 }
 
 inline lanelet::BasicPolygon2d calculate_current_ego_footprint(
-  const EgoInfo & ego_info, const PlannerParam & params)
+  const EgoData & ego_data, const PlannerParam & params)
 {
   const auto base_footprint = make_base_footprint(params);
-  const auto angle = tf2::getYaw(ego_info.pose.orientation);
+  const auto angle = tf2::getYaw(ego_data.pose.orientation);
   const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
   lanelet::BasicPolygon2d footprint;
   for (const auto & p : rotated_footprint.outer())
-    footprint.emplace_back(p.x() + ego_info.pose.position.x, p.y() + ego_info.pose.position.y);
+    footprint.emplace_back(p.x() + ego_data.pose.position.x, p.y() + ego_data.pose.position.y);
   return footprint;
 }
 
-inline void insert_slowdown_points(
-  autoware_auto_planning_msgs::msg::PathWithLaneId & path, const std::vector<Slowdown> & decisions,
-  const PlannerParam & params)
+/// @brief calculate points along the path where we want ego to slowdown/stop
+/// @param ego_data ego data (path, velocity, etc)
+/// @param decisions decisions (before which point to stop, what lane to avoid entering, etc)
+/// @param params parameters
+/// @return precise points to insert in the path
+inline std::vector<SlowdownToInsert> calculate_slowdown_points(
+  const EgoData & ego_data, std::vector<Slowdown> & decisions, const PlannerParam & params)
 {
-  // TODO(Maxime): how do we handle more than max_decel ?
+  const auto can_decel = [&](const auto dist_ahead_of_ego, const auto target_vel) {
+    const auto dist_to_target_vel =
+      (ego_data.velocity * ego_data.velocity - target_vel * target_vel) / (2 * ego_data.max_decel);
+    std::printf(
+      "[can_decel] (%2.2f, %2.2f) -> %d | dist_to_target_vel = %2.2f\n", dist_ahead_of_ego,
+      target_vel, dist_to_target_vel < dist_ahead_of_ego, dist_to_target_vel);
+    return dist_to_target_vel < dist_ahead_of_ego;
+  };
+  std::vector<SlowdownToInsert> to_insert;
   const auto base_footprint = make_base_footprint(params);
   for (const auto & decision : decisions) {
-    const auto & path_point = path.points[decision.target_path_idx];
-    auto path_idx = decision.target_path_idx;
+    const auto & path_point = ego_data.path->points[decision.target_path_idx];
     if (decision.target_path_idx == 0) {
-      planning_utils::insertVelocity(path, path_point, decision.velocity, path_idx);
-      if (decision.velocity == 0.0) return;  // stop once a stop point is inserted
+      const auto dist_ahead_of_ego = motion_utils::calcSignedArcLength(
+        ego_data.path->points, ego_data.pose.position, path_point.point.pose.position);
+      if (!params.skip_if_over_max_decel || can_decel(dist_ahead_of_ego, decision.velocity))
+        to_insert.push_back({decision, path_point});
     } else {
       const auto & path_pose = path_point.point.pose;
-      const auto & prev_path_pose = path.points[decision.target_path_idx - 1].point.pose;
+      const auto & prev_path_pose = ego_data.path->points[decision.target_path_idx - 1].point.pose;
 
       const auto precision = 0.1;  // TODO(Maxime): param or better way to find no overlap pose
       auto interpolated_point = path_point;
@@ -114,12 +127,16 @@ inline void insert_slowdown_points(
           project_to_pose(base_footprint, interpolated_point.point.pose),
           decision.lane_to_avoid.polygon2d().basicPolygon());
         if (!overlaps) {
-          planning_utils::insertVelocity(path, interpolated_point, decision.velocity, path_idx);
-          if (decision.velocity == 0.0) return;  // stop once a stop point is inserted
+          const auto dist_ahead_of_ego = motion_utils::calcSignedArcLength(
+            ego_data.path->points, ego_data.pose.position, path_point.point.pose.position);
+          if (!params.skip_if_over_max_decel || can_decel(dist_ahead_of_ego, decision.velocity))
+            to_insert.push_back({decision, path_point});
+          break;
         }
       }
     }
   }
+  return to_insert;
 }
 }  // namespace out_of_lane_utils
 }  // namespace behavior_velocity_planner

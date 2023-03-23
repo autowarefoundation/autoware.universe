@@ -38,13 +38,15 @@ struct PlannerParam
   double intervals_obj_buffer;  // [s](mode="intervals") buffer to extend the objects time range
   double ttc_threshold;  // [s](mode="ttc") threshold on time to collision between ego and an object
 
-  double objects_min_vel;  //  # [m/s] objects lower than this velocity will be ignored
+  bool objects_use_predicted_paths;  //  # whether to use the objects' predicted paths
+  double objects_min_vel;            //  # [m/s] objects lower than this velocity will be ignored
 
   double overlap_extra_length;  // [m] extra length to add around an overlap range
   double overlap_min_dist;      // [m] min distance inside another lane to consider an overlap
   // action to insert in the path if an object causes a conflict at an overlap
+  bool skip_if_over_max_decel;  // if true, skip the action if it causes more than the max decel
+  bool strict;  // if true stop before entering *any* other lane, not only the lane to avoid
   double dist_buffer;
-  double max_decel;
   double slow_velocity;
   double slow_dist_threshold;
   double stop_dist_threshold;
@@ -78,6 +80,13 @@ struct Slowdown
   double velocity{};                    // desired slow down velocity
   lanelet::ConstLanelet lane_to_avoid;  // we want to slowdown before entering this lane
 };
+/// @brief slowdown to insert in a path
+struct SlowdownToInsert
+{
+  Slowdown slowdown;
+  autoware_auto_planning_msgs::msg::PathWithLaneId::_points_type::value_type point;
+};
+
 /// @brief bound of an overlap range (either the first, or last bound)
 struct RangeBound
 {
@@ -116,11 +125,12 @@ struct OtherLane
   }
 };
 
-struct EgoInfo
+struct EgoData
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId path;
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path;
   size_t first_path_idx;
-  double velocity;  // [m/s]
+  double velocity;   // [m/s]
+  double max_decel;  // [m/s²]
   geometry_msgs::msg::Pose pose;
 };
 
