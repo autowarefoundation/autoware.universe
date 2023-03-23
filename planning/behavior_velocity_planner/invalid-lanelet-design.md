@@ -23,11 +23,11 @@ This function is activated when the lane id of the target path has an invalid la
 - The invalid lanelet state machine starts in `INIT` state
 - Get the intersection points between path and invalid lanelet polygon
 - Assign the state to `APPROACHING` toward an invalid lanelet if:
-  - the distance from front of the ego vehicle till the first interection point between the ego path and the invalid lanelet polygon is more than the `stop_margin`
+  - the distance from front of the ego vehicle till the first intersection point between the ego path and the invalid lanelet polygon is more than the `stop_margin`
 - Assign the state to `INSIDE_INVALID_LANELET` if:
-  - the first point of the ego path is inside the invalid lenelet polygon, or
-  - the distance from front of the ego vehicle till the first interection point between the ego path and the invalid lanelet polygon is less than the `stop_margin`
-- Assing the state to `STOPPED` when the vehicle is completeley stopped
+  - the first point of the ego path is inside the invalid lanelet polygon, or
+  - the distance from front of the ego vehicle till the first intersection point between the ego path and the invalid lanelet polygon is less than the `stop_margin`
+- Assign the state to `STOPPED` when the vehicle is completely stopped
 
 ![invalid_lanelet_scenarios.svg](docs%2Finvalid_lanelet%2Finvalid_lanelet_scenarios.svg)
 
