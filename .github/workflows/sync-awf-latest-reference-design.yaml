@@ -1,4 +1,4 @@
-name: sync-awf-latest-s1
+name: sync-awf-latest-reference-design
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync-awf-latest-s1:
+  sync-awf-latest-reference-design:
     runs-on: ubuntu-latest
     steps:
       - name: Generate token
@@ -20,12 +20,12 @@ jobs:
         uses: autowarefoundation/autoware-github-actions/sync-branches@v1
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          base-branch: awf-latest-s1
-          sync-pr-branch: sync-awf-latest-s1
+          base-branch: awf-latest-reference-design
+          sync-pr-branch: sync-awf-latest-reference-design
           sync-target-repository: https://github.com/tier4/pilot-auto
           sync-target-branch: awf-latest
-          pr-title: "chore: sync awf-latest-s1"
+          pr-title: "chore: sync awf-latest-reference-design"
           pr-labels: |
             bot
-            sync-awf-latest-s1
+            sync-awf-latest-reference-design
           auto-merge-method: merge
