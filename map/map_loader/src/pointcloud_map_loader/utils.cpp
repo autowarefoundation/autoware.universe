@@ -44,6 +44,20 @@ std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_m
   return metadata;
 }
 
+std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
+    const std::map<std::string, PCDFileMetadata> &pcd_metadata_path,
+    const std::vector<std::string> &pcd_paths) {
+  std::map<std::string, PCDFileMetadata> absolute_path_map;
+  for (const auto &path : pcd_paths) {
+    std::string filename = path.substr(path.find_last_of("/\\") + 1);
+    auto it = pcd_metadata_path.find(filename);
+    if (it != pcd_metadata_path.end()) {
+      absolute_path_map[path] = it->second;
+    }
+  }
+  return absolute_path_map;
+}
+
 bool sphereAndBoxOverlapExists(
   const geometry_msgs::msg::Point center, const double radius, const pcl::PointXYZ box_min_point,
   const pcl::PointXYZ box_max_point)

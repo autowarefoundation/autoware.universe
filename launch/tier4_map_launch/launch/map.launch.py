@@ -154,7 +154,7 @@ def generate_launch_description():
     ),
     add_launch_arg(
         "pointcloud_map_metadata_path",
-        [LaunchConfiguration("map_path"), "/poindcloud_map_metadata.yaml"],
+        [LaunchConfiguration("map_path"), "/pointcloud_map_metadata.yaml"],
         "path to pointcloud map metadata file",
     ),
     add_launch_arg(

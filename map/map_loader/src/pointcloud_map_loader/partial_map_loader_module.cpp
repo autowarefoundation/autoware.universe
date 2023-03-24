@@ -29,7 +29,6 @@ void PartialMapLoaderModule::partialAreaLoad(
   GetPartialPointCloudMap::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
-
   for (const auto & ele : all_pcd_file_metadata_dict_) {
     std::string path = ele.first;
     PCDFileMetadata metadata = ele.second;
