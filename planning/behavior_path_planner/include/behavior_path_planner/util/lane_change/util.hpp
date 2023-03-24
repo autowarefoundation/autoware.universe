@@ -18,6 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/parameters.hpp"
+#include "behavior_path_planner/steering_factor_interface.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/utilities.hpp"
@@ -48,6 +49,7 @@ using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using route_handler::Direction;
 using tier4_autoware_utils::Polygon2d;
+using steering_factor_interface::SteeringFactorInterface;
 
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
 
@@ -180,5 +182,16 @@ TurnSignalInfo calcTurnSignalInfo(
   const Pose & pose, const BehaviorPathPlannerParameters & bpp_param);
 
 rclcpp::Logger getLogger(const std::string & module_name, const std::string & function_name);
+
+void updateSteeringFactorPtrWhenOutput(
+  const PathWithLaneId & output_path, const ShiftLine & shift_line, const Pose & current_pose,
+  [[maybe_unused]] const TurnIndicatorsCommand & turn_signal_indicator_cmd,
+  const std::unique_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+
+void updateSteeringFactorPtrWhenPlanCandidate(
+  const double lateral_shift, const ShiftLine & shift_line,
+  const double start_distance_to_path_change, const double finish_distance_to_path_change,
+  const std::unique_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
 }  // namespace behavior_path_planner::lane_change_utils
+
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__UTIL_HPP_

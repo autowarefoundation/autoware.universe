@@ -17,6 +17,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
@@ -26,6 +27,9 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <autoware_auto_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
+#include <autoware_auto_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <tf2/utils.h>
@@ -1277,5 +1281,57 @@ TurnSignalInfo calcTurnSignalInfo(
 rclcpp::Logger getLogger(const std::string & module_name, const std::string & function_name)
 {
   return rclcpp::get_logger(module_name).get_child(function_name);
+}
+
+void updateSteeringFactorPtrWhenOutput(
+  const PathWithLaneId & output_path, const ShiftLine & shift_line, const Pose & current_pose,
+  const TurnIndicatorsCommand & turn_signal_indicator_cmd,
+  const std::unique_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
+{
+  const double start_distance = motion_utils::calcSignedArcLength(
+    output_path.points, current_pose.position, shift_line.start.position);
+  const double finish_distance = motion_utils::calcSignedArcLength(
+    output_path.points, current_pose.position, shift_line.end.position);
+
+#ifdef USE_OLD_ARCHITECTURE
+  const uint16_t steering_factor_direction = std::invoke([&]() {
+    if (turn_signal_indicator_cmd.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      return SteeringFactor::LEFT;
+    }
+    if (turn_signal_indicator_cmd.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      return SteeringFactor::RIGHT;
+    }
+    return SteeringFactor::UNKNOWN;
+  });
+#else
+  const auto steering_factor_direction = std::invoke([&]() {
+    if (direction_ == Direction::LEFT) {
+      return SteeringFactor::LEFT;
+    }
+    if (direction_ == Direction::RIGHT) {
+      return SteeringFactor::RIGHT;
+    }
+    return SteeringFactor::UNKNOWN;
+  });
+#endif
+
+  // TODO(tkhmy) add handle status TRYING
+  steering_factor_interface_ptr->updateSteeringFactor(
+    {shift_line.start, shift_line.end}, {start_distance, finish_distance},
+    SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::TURNING, "");
+}
+
+void updateSteeringFactorPtrWhenPlanCandidate(
+  const double lateral_shift, const ShiftLine & shift_line,
+  const double start_distance_to_path_change, const double finish_distance_to_path_change,
+  const std::unique_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
+{
+  const auto steering_factor_direction =
+    (lateral_shift > 0.0) ? SteeringFactor::LEFT : SteeringFactor::RIGHT;
+
+  steering_factor_interface_ptr->updateSteeringFactor(
+    {shift_line.start, shift_line.end},
+    {start_distance_to_path_change, finish_distance_to_path_change}, SteeringFactor::LANE_CHANGE,
+    steering_factor_direction, SteeringFactor::APPROACHING, "");
 }
 }  // namespace behavior_path_planner::lane_change_utils

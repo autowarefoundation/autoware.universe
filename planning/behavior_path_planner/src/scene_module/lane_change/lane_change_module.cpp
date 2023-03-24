@@ -212,7 +212,9 @@ BehaviorModuleOutput LaneChangeModule::plan()
     name(), status_.lane_change_path, getEgoTwist().linear.x, getEgoPose(),
     planner_data_->parameters);
 
-  updateSteeringFactorPtr(output);
+  lane_change_utils::updateSteeringFactorPtrWhenOutput(
+    *output.path, status_.lane_change_path.shift_line, getEgoPose(),
+    output.turn_signal_info.turn_signal, steering_factor_interface_ptr_);
   clearWaitingApproval();
 
   return output;
@@ -295,7 +297,9 @@ CandidateOutput LaneChangeModule::planCandidate() const
   output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, getEgoPose().position, selected_path.shift_line.end.position);
 
-  updateSteeringFactorPtr(output, selected_path);
+  lane_change_utils::updateSteeringFactorPtrWhenPlanCandidate(
+    output.lateral_shift, status_.lane_change_path.shift_line, output.start_distance_to_path_change,
+    output.finish_distance_to_path_change, steering_factor_interface_ptr_);
   return output;
 }
 
@@ -690,62 +694,6 @@ std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeModule::get_debug_msg_array()
   return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
 }
 
-void LaneChangeModule::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
-{
-  const auto current_pose = getEgoPose();
-  const double start_distance = motion_utils::calcSignedArcLength(
-    output.path->points, current_pose.position, status_.lane_change_path.shift_line.start.position);
-  const double finish_distance = motion_utils::calcSignedArcLength(
-    output.path->points, current_pose.position, status_.lane_change_path.shift_line.end.position);
-
-#ifdef USE_OLD_ARCHITECTURE
-  const auto turn_signal_info = output.turn_signal_info;
-  const uint16_t steering_factor_direction =
-    std::invoke([this, &start_distance, &finish_distance, &turn_signal_info]() {
-      if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-        waitApprovalLeft(start_distance, finish_distance);
-        return SteeringFactor::LEFT;
-      }
-      if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-        waitApprovalRight(start_distance, finish_distance);
-        return SteeringFactor::RIGHT;
-      }
-      return SteeringFactor::UNKNOWN;
-    });
-#else
-  const auto steering_factor_direction = std::invoke([&]() {
-    if (direction_ == Direction::LEFT) {
-      return SteeringFactor::LEFT;
-    }
-    if (direction_ == Direction::RIGHT) {
-      return SteeringFactor::RIGHT;
-    }
-    return SteeringFactor::UNKNOWN;
-  });
-#endif
-
-  // TODO(tkhmy) add handle status TRYING
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {status_.lane_change_path.shift_line.start, status_.lane_change_path.shift_line.end},
-    {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, steering_factor_direction,
-    SteeringFactor::TURNING, "");
-}
-
-void LaneChangeModule::updateSteeringFactorPtr(
-  const CandidateOutput & output, const LaneChangePath & selected_path) const
-{
-  const uint16_t steering_factor_direction = std::invoke([&output]() {
-    if (output.lateral_shift > 0.0) {
-      return SteeringFactor::LEFT;
-    }
-    return SteeringFactor::RIGHT;
-  });
-
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {selected_path.shift_line.start, selected_path.shift_line.end},
-    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
-}
 Pose LaneChangeModule::getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
 Twist LaneChangeModule::getEgoTwist() const { return planner_data_->self_odometry->twist.twist; }
 std_msgs::msg::Header LaneChangeModule::getRouteHeader() const
