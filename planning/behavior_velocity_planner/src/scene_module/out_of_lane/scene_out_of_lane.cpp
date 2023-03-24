@@ -48,7 +48,6 @@ OutOfLaneModule::OutOfLaneModule(
 bool OutOfLaneModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
-  std::cout << "modifyPathVelocity\n";
   debug_data_.reset_data();
   if (!path || path->points.size() < 2) return true;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
@@ -67,15 +66,14 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto path_lanelets = planning_utils::getLaneletsOnPath(
     *path, (*planner_data_)->route_handler_->getLaneletMapPtr(),
     (*planner_data_)->current_odometry->pose);
-  // TODO(Maxime): naively get ALL lanelets that are not the path lanelets. Probably too expensive
+  lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
+  const auto lanelets_within_range =
+    lanelet::geometry::findWithin2d(
+        (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer,
+        ego_point, std::max(params_.slow_dist_threshold, params_.stop_dist_threshold));
   const auto lanelets_to_check = [&]() {
     lanelet::ConstLanelets lls;
-    for (const auto & ll : (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer) {
-      if (std::find_if(path_lanelets.begin(), path_lanelets.end(), [&](const auto & l) {
-            return l.id() == ll.id();
-          }) == path_lanelets.end())
-        lls.push_back(ll);
-    }
+    for(const auto & l : lanelets_within_range) lls.push_back(l.second);
     return lls;
   }();
   if (params_.skip_if_already_overlapping) {  // TODO(Maxime): cleanup
@@ -84,6 +82,7 @@ bool OutOfLaneModule::modifyPathVelocity(
           return boost::geometry::intersects(ll.polygon2d().basicPolygon(), ego_footprint);
         }) != lanelets_to_check.end()) {
       std::printf("*** ALREADY OVERLAPPING *** skipping\n");
+      return true;
     }
   }
   // Calculate overlapping ranges
@@ -91,17 +90,12 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto ranges =
     calculate_overlapping_ranges(path_footprints, path_lanelets, lanelets_to_check, params_);
   const auto calculate_overlapping_ranges_us = stopwatch.toc("calculate_overlapping_ranges");
-  std::printf("Found %lu ranges\n", ranges.size());
-  for (const auto & i : ranges)
-    std::printf("\t [%lu -> %lu] %ld\n", i.entering_path_idx, i.exiting_path_idx, i.lane.id());
   // Calculate stop and slowdown points
-  std::printf("%lu detected objects\n", (*planner_data_)->predicted_objects->objects.size());
   stopwatch.tic("calculate_decisions");
   auto decisions = calculate_decisions(
     ranges, ego_data, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
     lanelets_to_check, params_, debug_data_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
-  std::printf("Found %lu decisions\n", decisions.size());
   stopwatch.tic("calc_slowdown_points");
   const auto points_to_insert = calculate_slowdown_points(ego_data, decisions, params_);
   const auto calc_slowdown_points_us = stopwatch.toc("calc_slowdown_points");

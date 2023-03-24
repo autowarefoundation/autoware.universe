@@ -118,6 +118,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
       t += t_step;
     }
   }
+  // TODO(Maxime): add extrapolation to exit if the last p_position != after
   if (min_enter_time && max_exit_time) return std::make_pair(*min_enter_time, *max_exit_time);
   return {};
 }
@@ -133,7 +134,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
 {
   const auto & p = object.kinematics.initial_pose_with_covariance.pose.position;
   const auto object_point = lanelet::BasicPoint2d(p.x, p.y);
-  const auto half_size = object.shape.dimensions.x / 2;
+  const auto half_size = object.shape.dimensions.x / 2.0;
   lanelet::ConstLanelets object_lanelets;
   for (const auto & ll : lanelets)
     if (boost::geometry::within(object_point, ll.polygon2d().basicPolygon()))
@@ -168,12 +169,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
         enter_length, range.entering_point.x(), range.entering_point.y(), exit_length,
         range.exiting_point.x(), range.exiting_point.y());
       const auto already_entered_range = std::abs(enter_length - exit_length) > range_size * 2.0;
-      if (already_entered_range) {  // double check this
-        std::printf(
-          "\t\t\t\t SKIP ([%2.2f - %2.2f = %2.2f > %2.2f] passed the overlapping range)\n",
-          enter_length, exit_length, std::abs(enter_length - exit_length), range_size);
-        continue;
-      }
+      if (already_entered_range) continue;
       // multiple paths to the overlap -> be conservative and use the "worst" case
       // "worst" = min/max arc length depending on if the lane is running opposite to the ego path
       const auto is_opposite = enter_length > exit_length;
@@ -255,12 +251,6 @@ inline std::vector<Slowdown> calculate_decisions(
             ego_exit_time + params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer,
             ego_exits_before_object_enters);
         } else {
-          // const auto ego_enters_before_object =
-          //   ego_enter_time + params.intervals_ego_buffer < enter_time +
-          //   params.intervals_obj_buffer;
-          // const auto ego_exits_after_object =
-          //   ego_exit_time + params.intervals_ego_buffer > exit_time +
-          //   params.intervals_obj_buffer;
           const auto object_enters_during_overlap =
             ego_enter_time - params.intervals_ego_buffer <
               enter_time + params.intervals_obj_buffer &&
@@ -271,14 +261,7 @@ inline std::vector<Slowdown> calculate_decisions(
               exit_time + params.intervals_obj_buffer &&
             exit_time - params.intervals_obj_buffer - ego_exit_time <
               ego_exit_time + params.intervals_ego_buffer;
-          // if (ego_enters_before_object && ego_exits_after_object) should_not_enter = true;
           if (object_enters_during_overlap || object_exits_during_overlap) should_not_enter = true;
-          // std::printf(
-          //   "\t\t\t[Intervals] (same way) ego enter %2.2fs < obj enter %2.2fs && ego_exit %2.2fs
-          //   > " "obj_exit %2.2fs ? -> should not enter = %d\n", ego_enter_time +
-          //   params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer, ego_exit_time
-          //   + params.intervals_ego_buffer, exit_time + params.intervals_obj_buffer,
-          //   ego_enters_before_object && ego_exits_after_object);
         }
       } else if (params.mode == "ttc") {
         auto ttc = 0.0;

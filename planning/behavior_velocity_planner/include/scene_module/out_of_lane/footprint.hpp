@@ -100,9 +100,6 @@ inline std::vector<SlowdownToInsert> calculate_slowdown_points(
   const auto can_decel = [&](const auto dist_ahead_of_ego, const auto target_vel) {
     const auto dist_to_target_vel =
       (ego_data.velocity * ego_data.velocity - target_vel * target_vel) / (2 * ego_data.max_decel);
-    std::printf(
-      "[can_decel] (%2.2f, %2.2f) -> %d | dist_to_target_vel = %2.2f\n", dist_ahead_of_ego,
-      target_vel, dist_to_target_vel < dist_ahead_of_ego, dist_to_target_vel);
     return dist_to_target_vel < dist_ahead_of_ego;
   };
   std::vector<SlowdownToInsert> to_insert;
