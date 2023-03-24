@@ -122,10 +122,6 @@ void PlanningIntefaceTestManager::publishRoute(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<LaneletRoute>(test_node_, target_node, topic_name, route_pub_);
-
-  // route_pub_->publish(makeRoute(start_pose, goal_pose));
-  // test_utils::publishData<LaneletRoute>(test_node_, target_node, topic_name, trajectory_pub_);
-  // Set QoS policies for reliability, durability and depth
 }
 
 void PlanningIntefaceTestManager::publishTF(
