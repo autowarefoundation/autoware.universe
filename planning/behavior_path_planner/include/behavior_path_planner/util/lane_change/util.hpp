@@ -48,8 +48,8 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using route_handler::Direction;
-using tier4_autoware_utils::Polygon2d;
 using steering_factor_interface::SteeringFactorInterface;
+using tier4_autoware_utils::Polygon2d;
 
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
 
