@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
-#include "behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include <gtest/gtest.h>
 
@@ -32,30 +32,29 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   auto test_target_node = std::make_shared<ScenarioSelectorNode>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "input/odometry");
-  test_manager->publishAcceleration(test_target_node, "input/acceleration");
-  test_manager->publishPredictedObjects(test_target_node, "input/perception");
-  test_manager->publishOccupancyGrid(test_target_node, "input/occupancy_grid_map");
-  test_manager->publishCostMap(test_target_node, "input/costmap");
-  test_manager->publishAcceleration(test_target_node, "input/lateral_offset");
-  test_manager->publishAcceleration(test_target_node, "system/operation_mode/state");
-  test_manager->publishScenario(test_target_node, "input/scenario");
-  test_manager->publishAcceleration(test_target_node, "system/operation_mode/state");
-  test_manager->publishMap(test_target_node, "input/vector_map");
-  test_manager->publishRoute(test_target_node, "input/route");
-
+  test_manager->publishOdometry(test_target_node, "behavior_path_planner/input/odometry");
+  test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
+  test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
+  test_manager->publishOccupancyGrid(
+    test_target_node, "behavior_path_planner/input/occupancy_grid_map");
+  test_manager->publishScenario(test_target_node, "behavior_path_planner/input/scenario");
+  test_manager->publishMap(test_target_node, "behavior_path_planner/input/vector_map");
+  test_manager->publishCostMap(test_target_node, "behavior_path_planner/input/costmap");
+  test_manager->publishOperationModeState(test_target_node, "operation_mode/state");
+  test_manager->publishLateralOffset(
+    test_target_node, "behavior_path_planner/input/lateral_offset");
 
   // test_target_node → test_node_
-  test_manager->setScenarioSubscriber("output/scenario");
+  test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 
   // setting topic name of subscribing topic
-  test_manager->setTrajectoryInputTopicName("input/lane_driving/trajectory");
+  test_manager->setTrajectoryInputTopicName("behavior_path_planner/input/route");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
-  test_manager->testWithAbnormalTrajectory(test_target_node);
+  test_manager->testWithAbnormalRoute(test_target_node);
   rclcpp::shutdown();
 }

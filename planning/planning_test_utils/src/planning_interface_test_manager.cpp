@@ -85,24 +85,22 @@ void PlanningIntefaceTestManager::publishExpandStopRange(
     test_node_, target_node, topic_name, expand_stop_range_pub_);
 }
 
-void PlanningIntefaceTestManager::publishMap(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-
-  test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
-}
-
 void PlanningIntefaceTestManager::publishOccupancyGrid(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<OccupancyGrid>(test_node_, target_node, topic_name, occupancy_grid_pub_);
 }
 
+void PlanningIntefaceTestManager::publishMap(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
+}
+
 void PlanningIntefaceTestManager::publishParkingScenario(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
+  test_utils::publishData<Scenario>(test_node_, target_node, topic_name, parking_scenario_pub_);
 }
 
 void PlanningIntefaceTestManager::publishParkingState(
@@ -129,13 +127,9 @@ void PlanningIntefaceTestManager::publishTF(
 {
   test_utils::publishData<TFMessage>(test_node_, target_node, topic_name, TF_pub_);
 }
-
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-
   input_trajectory_name_ = topic_name;
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 }
 
 void PlanningIntefaceTestManager::setParkingTrajectoryInputTopicName(std::string topic_name)

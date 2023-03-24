@@ -19,6 +19,7 @@
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -26,7 +27,6 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -35,6 +35,7 @@
 #include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
+#include <tier4_planning_msgs/msg/lateral_offset.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
@@ -50,6 +51,7 @@
 
 namespace planning_test_utils
 {
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
@@ -64,10 +66,9 @@ using planning_interface::Route;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::ExpandStopRange;
+using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
-using tier4_planning_msgs::msg::LateralOffset;
-using autoware_adapi_v1_msgs::msg::OperationModeState;
 
 class PlanningIntefaceTestManager
 {
@@ -86,12 +87,13 @@ public:
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishCostMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
@@ -113,20 +115,21 @@ public:
 private:
   // Publisher (necessary for node running)
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
-  rclcpp::Publisher<PredictedObjects>::SharedPtr predicted_objects_pub_;
-  rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
-  rclcpp::Publisher<SteeringReport>::SharedPtr steering_pub_;
-  rclcpp::Publisher<Path>::SharedPtr path_pub_;
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr max_velocity_pub_;
-  rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
   rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
+  rclcpp::Publisher<PredictedObjects>::SharedPtr predicted_objects_pub_;
+  rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
+  rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
+  rclcpp::Publisher<OccupancyGrid>::SharedPtr cost_map_pub_;
   rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
-  rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
+  rclcpp::Publisher<Scenario>::SharedPtr parking_scenario_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr route_pub_;
+  rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
+  rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
+  rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
