@@ -91,10 +91,22 @@ void PlanningIntefaceTestManager::publishOccupancyGrid(
   test_utils::publishData<OccupancyGrid>(test_node_, target_node, topic_name, occupancy_grid_pub_);
 }
 
+void PlanningIntefaceTestManager::publishCostMap(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<OccupancyGrid>(test_node_, target_node, topic_name, cost_map_pub_);
+}
+
 void PlanningIntefaceTestManager::publishMap(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
+}
+
+void PlanningIntefaceTestManager::publishScenario(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
 }
 
 void PlanningIntefaceTestManager::publishParkingScenario(
@@ -127,6 +139,20 @@ void PlanningIntefaceTestManager::publishTF(
 {
   test_utils::publishData<TFMessage>(test_node_, target_node, topic_name, TF_pub_);
 }
+
+void PlanningIntefaceTestManager::publishLateralOffset(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<LateralOffset>(test_node_, target_node, topic_name, lateral_offset_pub_);
+}
+
+void PlanningIntefaceTestManager::publishOperationModeState(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<OperationModeState>(
+    test_node_, target_node, topic_name, operation_mode_state_pub_);
+}
+
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
   input_trajectory_name_ = topic_name;
@@ -160,13 +186,18 @@ void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name
   test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
 }
 
-void PlanningIntefaceTestManager::setRouteSubscriber()
+void PlanningIntefaceTestManager::setRouteSubscriber(std::string topic_name)
 {
-  test_utils::setSubscriber(test_node_, "/planning/mission_planning/route", route_sub_, count_);
+  test_utils::setSubscriber(test_node_, topic_name, route_sub_, count_);
 }
 void PlanningIntefaceTestManager::setScenarioSubscriber(std::string topic_name)
 {
   test_utils::setSubscriber(test_node_, topic_name, scenario_sub_, count_);
+}
+
+void PlanningIntefaceTestManager::setPathWithLaneIdSubscriber(std::string topic_name)
+{
+  test_utils::setSubscriber(test_node_, topic_name, path_with_lane_id_sub_, count_);
 }
 
 // test for normal working

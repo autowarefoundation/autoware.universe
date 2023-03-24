@@ -115,7 +115,7 @@ if(BUILD_TESTING)
     test/test_${PROJECT_NAME}_node_interface.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}_node_interface
-  behavior_path_planner_node
+    behavior_path_planner_node
   )
 endif()
 

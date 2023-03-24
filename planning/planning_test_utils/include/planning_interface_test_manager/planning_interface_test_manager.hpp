@@ -25,6 +25,7 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
@@ -69,6 +70,7 @@ using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
 class PlanningIntefaceTestManager
 {
@@ -87,6 +89,7 @@ public:
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishCostMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -102,7 +105,8 @@ public:
 
   void setTrajectorySubscriber(std::string topic_name);
   void setScenarioSubscriber(std::string topic_name);
-  void setRouteSubscriber();
+  void setPathWithLaneIdSubscriber(std::string topic_name);
+  void setRouteSubscriber(std::string topic_name);
 
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
@@ -123,6 +127,7 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr cost_map_pub_;
   rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
+  rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr parking_scenario_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
@@ -135,6 +140,7 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
+  rclcpp::Subscription<PathWithLaneId>::SharedPtr path_with_lane_id_sub_;
 
   // Publisher for testing(trajectory)
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;

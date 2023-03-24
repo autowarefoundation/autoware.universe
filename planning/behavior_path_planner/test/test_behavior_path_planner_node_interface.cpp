@@ -22,14 +22,33 @@
 #include <cmath>
 #include <vector>
 
-TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
+TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
 {
   rclcpp::init(0, nullptr);
 
   auto test_manager = std::make_shared<planning_test_utils::PlanningIntefaceTestManager>();
 
   auto node_options = rclcpp::NodeOptions{};
-  auto test_target_node = std::make_shared<ScenarioSelectorNode>(node_options);
+
+  test_manager->declareVehicleInfoParams(node_options);
+  test_manager->declareNearestSearchDistanceParams(node_options);
+
+  const auto behavior_path_planner_dir =
+    ament_index_cpp::get_package_share_directory("behavior_path_planner");
+
+  node_options.arguments(
+    {"--ros-args", "--params-file",
+     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml", "--params-file",
+     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml", "--params-file",
+     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml", "--params-file",
+     behavior_path_planner_dir + "/config/lane_following/lane_following.param.yaml",
+     "--params-file", behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
+     "--params-file", behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
+     "--params-file", behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
+     "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+
+  auto test_target_node =
+    std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "behavior_path_planner/input/odometry");
