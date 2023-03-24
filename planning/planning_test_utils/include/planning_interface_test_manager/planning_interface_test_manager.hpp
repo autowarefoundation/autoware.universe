@@ -31,11 +31,13 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <std_msgs/msg/bool.hpp>
+
+#include <boost/optional.hpp>
 
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
@@ -44,7 +46,6 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <boost/optional.hpp>
 
 namespace planning_test_utils
 {
@@ -58,12 +59,12 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
+using planning_interface::Route;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
-using planning_interface::Route;
 
 class PlanningIntefaceTestManager
 {
@@ -86,13 +87,16 @@ public:
   void publishParkingState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
-  void setTrajectorySubscriber(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
   void setLaneDrivingTrajectoryInputTopicName(std::string topic_name);
-
   void setRouteInputTopicName(std::string topic_name);
+
+  void setTrajectorySubscriber(std::string topic_name);
+  void setScenarioSubscriber(std::string topic_name);
+  void setRouteSubscriber();
 
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
@@ -118,18 +122,19 @@ private:
   rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
-  component_interface_utils::Publisher<Route>::SharedPtr route_pub_;
+  rclcpp::Publisher<LaneletRoute>::SharedPtr route_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
+  rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
 
   // Publisher for testing(trajectory)
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr abnormal_trajectory_pub_;
 
   // Publisher for testing(route)
-  component_interface_utils::Publisher<Route>::SharedPtr normal_route_pub_;
+  rclcpp::Publisher<LaneletRoute>::SharedPtr normal_route_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr abnormal_route_pub_;
 
   std::string input_trajectory_name_;
@@ -147,9 +152,7 @@ private:
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
   boost::optional<PoseStamped> transform_pose(const PoseStamped & input);
-  void setRouteSubscriber();
-  Route::Message makeRoute(
-    const PoseStamped::ConstSharedPtr start_pose, const PoseStamped::ConstSharedPtr goal_pose);
+
   void publishNominalRoute(std::string topic_name);
   void publishAbnormalRoute(
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);

@@ -15,8 +15,8 @@
 #ifndef PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_
 #define PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_UTILS_HPP_
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 
 #include <component_interface_specs/planning.hpp>
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
@@ -26,13 +26,13 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
 #include <boost/optional.hpp>
 
@@ -47,8 +47,8 @@
 namespace test_utils
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::LaneletRoute;
+using autoware_auto_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
@@ -194,6 +194,7 @@ void publishData<HADMapBin>(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
   typename rclcpp::Publisher<HADMapBin>::SharedPtr publisher)
 {
+
   setPublisher(test_node, topic_name, publisher);
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
@@ -299,8 +300,11 @@ void setSubscriber(
   std::shared_ptr<rclcpp::Subscription<T>> & subscriber, size_t & count)
 {
   // Count the number of topic received.
-  subscriber = test_node->create_subscription<T>(
-    topic_name, 10, [&count](const typename T::SharedPtr) { count++; });
+  subscriber =
+    test_node->create_subscription<T>(topic_name, 10, [&count](const typename T::SharedPtr) {
+      count++;
+      std::cerr << "count up XXXX " << __FILE__ << __LINE__ << std::endl;
+    });
 }
 
 }  // namespace test_utils

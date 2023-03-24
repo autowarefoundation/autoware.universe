@@ -20,12 +20,12 @@
   <depend>geometry_msgs</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
-  <depend>planning_test_utils</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

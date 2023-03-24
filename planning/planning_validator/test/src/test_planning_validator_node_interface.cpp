@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "planning_validator/planning_validator.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
+#include "planning_validator/planning_validator.hpp"
 
 #include <gtest/gtest.h>
 
@@ -38,8 +38,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
     {"--ros-args", "--params-file",
      planning_validator_dir + "/config/planning_validator.param.yaml"});
 
-  auto test_target_node =
-    std::make_shared<planning_validator::PlanningValidator>(node_options);
+  auto test_target_node = std::make_shared<planning_validator::PlanningValidator>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "/localization/kinematics");

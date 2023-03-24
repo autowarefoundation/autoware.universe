@@ -46,8 +46,10 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "obstacle_avoidance_planner/input/odometry");
   test_manager->publishPointCloud(test_target_node, "obstacle_avoidance_planner/input/vector_map");
-  test_manager->publishPredictedObjects(test_target_node, "obstacle_avoidance_planner/input/objects");
-  test_manager->publishAcceleration(test_target_node, "obstacle_avoidance_planner/input/acceleration");
+  test_manager->publishPredictedObjects(
+    test_target_node, "obstacle_avoidance_planner/input/objects");
+  test_manager->publishAcceleration(
+    test_target_node, "obstacle_avoidance_planner/input/acceleration");
 
   // set subscriber for test_target_node
   test_manager->setTrajectorySubscriber("obstacle_avoidance_planner/output/trajectory");

@@ -22,11 +22,6 @@ PlanningIntefaceTestManager::PlanningIntefaceTestManager()
 {
   test_node_ = std::make_shared<rclcpp::Node>("planning_interface_test_node");
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(test_node_->get_clock());
-
-  rclcpp::Node & node = *test_node_;
-  const auto adaptor = component_interface_utils::NodeAdaptor(&node);
-  adaptor.init_pub(normal_route_pub_);
-  adaptor.init_pub(route_pub_);
 }
 
 void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
@@ -93,6 +88,8 @@ void PlanningIntefaceTestManager::publishExpandStopRange(
 void PlanningIntefaceTestManager::publishMap(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+
   test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
 }
 
@@ -122,16 +119,27 @@ void PlanningIntefaceTestManager::publishTrajectory(
 }
 
 void PlanningIntefaceTestManager::publishRoute(
-  [[maybe_unused]] rclcpp::Node::SharedPtr target_node, [[maybe_unused]] std::string topic_name)
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  auto start_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  auto goal_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  route_pub_->publish(makeRoute(start_pose, goal_pose));
+  test_utils::publishData<LaneletRoute>(test_node_, target_node, topic_name, route_pub_);
+
+  // route_pub_->publish(makeRoute(start_pose, goal_pose));
+  // test_utils::publishData<LaneletRoute>(test_node_, target_node, topic_name, trajectory_pub_);
+  // Set QoS policies for reliability, durability and depth
+}
+
+void PlanningIntefaceTestManager::publishTF(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<TFMessage>(test_node_, target_node, topic_name, TF_pub_);
 }
 
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+
   input_trajectory_name_ = topic_name;
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 }
 
 void PlanningIntefaceTestManager::setParkingTrajectoryInputTopicName(std::string topic_name)
@@ -166,6 +174,10 @@ void PlanningIntefaceTestManager::setRouteSubscriber()
 {
   test_utils::setSubscriber(test_node_, "/planning/mission_planning/route", route_sub_, count_);
 }
+void PlanningIntefaceTestManager::setScenarioSubscriber(std::string topic_name)
+{
+  test_utils::setSubscriber(test_node_, topic_name, scenario_sub_, count_);
+}
 
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
@@ -198,7 +210,7 @@ void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr t
   // setRouteSubscriber();
   auto start_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
   auto goal_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  normal_route_pub_->publish(makeRoute(start_pose, goal_pose));
+  normal_route_pub_->publish(test_utils::makeRoute(start_pose, goal_pose));
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
@@ -221,15 +233,5 @@ void PlanningIntefaceTestManager::publishAbnormalRoute(
 }
 
 int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
-
-Route::Message PlanningIntefaceTestManager::makeRoute(
-  const PoseStamped::ConstSharedPtr start_pose, const PoseStamped::ConstSharedPtr goal_pose)
-{
-  Route::Message route;
-  route.header = start_pose->header;
-  route.start_pose = start_pose->pose;
-  route.goal_pose = goal_pose->pose;
-  return route;
-}
 
 }  // namespace planning_test_utils
