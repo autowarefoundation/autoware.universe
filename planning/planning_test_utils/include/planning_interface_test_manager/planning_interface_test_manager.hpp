@@ -26,6 +26,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -65,6 +66,8 @@ using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
+using tier4_planning_msgs::msg::LateralOffset;
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 
 class PlanningIntefaceTestManager
 {
@@ -81,6 +84,7 @@ public:
   void publishPredictedObjects(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishExpandStopRange(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishCostMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
