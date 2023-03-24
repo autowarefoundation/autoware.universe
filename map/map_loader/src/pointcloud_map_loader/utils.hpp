@@ -29,8 +29,8 @@ struct PCDFileMetadata
 
 std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path);
 std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
-    const std::map<std::string, PCDFileMetadata> &pcd_metadata_path,
-    const std::vector<std::string> &pcd_paths);
+  const std::map<std::string, PCDFileMetadata> & pcd_metadata_path,
+  const std::vector<std::string> & pcd_paths);
 
 bool sphereAndBoxOverlapExists(
   const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,

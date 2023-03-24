@@ -76,7 +76,6 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
     pcd_metadata_dict_ = loadPCDMetadata(pcd_metadata_path);
     pcd_metadata_dict_ = replaceWithAbsolutePath(pcd_metadata_dict_, pcd_paths);
     RCLCPP_INFO_STREAM(get_logger(), "Loaded PCD metadata: " << pcd_metadata_path);
-
   }
 
   if (enable_partial_load) {

@@ -45,10 +45,11 @@ std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_m
 }
 
 std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
-    const std::map<std::string, PCDFileMetadata> &pcd_metadata_path,
-    const std::vector<std::string> &pcd_paths) {
+  const std::map<std::string, PCDFileMetadata> & pcd_metadata_path,
+  const std::vector<std::string> & pcd_paths)
+{
   std::map<std::string, PCDFileMetadata> absolute_path_map;
-  for (const auto &path : pcd_paths) {
+  for (const auto & path : pcd_paths) {
     std::string filename = path.substr(path.find_last_of("/\\") + 1);
     auto it = pcd_metadata_path.find(filename);
     if (it != pcd_metadata_path.end()) {
