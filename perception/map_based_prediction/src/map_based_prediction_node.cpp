@@ -940,22 +940,86 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
   }
 
   LaneletsData closest_lanelets;
-  for (const auto & lanelet : surrounding_lanelets) {
-    // Check if the close lanelets meet the necessary condition for start lanelets and
-    // Check if similar lanelet is inside the closest lanelet
-    if (
-      !checkCloseLaneletCondition(lanelet, object, search_point) ||
-      isDuplicated(lanelet, closest_lanelets)) {
-      continue;
-    }
+  // Search for the Lanelets to meet the necessary condition for start lanelets, and
+  // exclude similar lanelet is inside the closest lanelet
 
-    LaneletData closest_lanelet;
-    closest_lanelet.lanelet = lanelet.second;
-    closest_lanelet.probability = calculateLocalLikelihood(lanelet.second, object);
-    closest_lanelets.push_back(closest_lanelet);
+  // search forward lanelet
+  bool search_opposite_lane = false;
+  // search twice for forward and opposite lanelet
+  for (auto i = 0; i < 2; i++) {
+    for (const auto & lanelet : surrounding_lanelets) {
+      if (
+        !checkCloseLaneletCondition(lanelet, object, search_point, search_opposite_lane) ||
+        isDuplicated(lanelet, closest_lanelets)) {
+        continue;
+      }
+
+      LaneletData closest_lanelet;
+      closest_lanelet.lanelet = lanelet.second;
+      closest_lanelet.probability = calculateLocalLikelihood(lanelet.second, object);
+      closest_lanelets.push_back(closest_lanelet);
+    }
+    // if no closest lanelet, search opposite lanelet
+    if (closest_lanelets.empty()) {
+      search_opposite_lane = true;
+    } else {
+      break;  // if found closest lanelet in forward lanelet, stop searching
+    }
   }
 
   return closest_lanelets;
+}
+
+/**
+ * @brief Check if the lanelet is valid for the object
+ *
+ * @param object_id
+ * @param lanelet
+ * @param lanelet_map_ptr_
+ * @param objects_history_
+ * @param allow_opposite_lane_change_history
+ * @return true
+ * @return false
+ */
+bool checkValidLaneletHistory(
+  const std::string & object_id, const std::pair<double, lanelet::Lanelet> & lanelet,
+  const lanelet::LaneletMapPtr & lanelet_map_ptr_,
+  const std::unordered_map<std::string, std::deque<ObjectData>> & objects_history_,
+  const bool allow_opposite_lane_change_history)
+{
+  // early return if no past information
+  if (objects_history_.count(object_id) == 0) {
+    return true;
+  }
+  // search if candidate lanelet is on the possible lanelet paths
+  const std::vector<lanelet::ConstLanelet> & possible_lanelet =
+    objects_history_.at(object_id).back().future_possible_lanelets;
+  bool not_in_possible_lanelet = false;
+  if (!possible_lanelet.empty()) {
+    not_in_possible_lanelet =
+      std::find(possible_lanelet.begin(), possible_lanelet.end(), lanelet.second) ==
+      possible_lanelet.end();
+  }
+
+  // additional search on opposite lane connections
+  if (allow_opposite_lane_change_history) {
+    const auto left_opposite = getLeftOppositeLanelets(lanelet.second, lanelet_map_ptr_);
+    const auto right_opposite = getRightOppositeLanelets(lanelet.second, lanelet_map_ptr_);
+    const bool not_in_left_opposite =
+      std::find(left_opposite.begin(), left_opposite.end(), lanelet.second) == left_opposite.end();
+    const bool not_in_right_opposite =
+      std::find(right_opposite.begin(), right_opposite.end(), lanelet.second) ==
+      right_opposite.end();
+    const bool not_in_opposite = not_in_left_opposite && not_in_right_opposite;
+    // update policy
+    not_in_possible_lanelet = not_in_possible_lanelet && not_in_opposite;
+  }
+
+  if (not_in_possible_lanelet) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 /**
@@ -972,7 +1036,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
  */
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-  const lanelet::BasicPoint2d & search_point)
+  const lanelet::BasicPoint2d & search_point, const bool allow_opposite_lane_condition = false)
 {
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
@@ -987,24 +1051,11 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   // If the object is in the objects history, we check if the target lanelet is
   // inside the current lanelets id or following lanelets
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
-  if (objects_history_.count(object_id) != 0) {
-    const std::vector<lanelet::ConstLanelet> & possible_lanelet =
-      objects_history_.at(object_id).back().future_possible_lanelets;
-    const auto left_opposite = getLeftOppositeLanelets(lanelet.second, lanelet_map_ptr_);
-    const auto right_opposite = getRightOppositeLanelets(lanelet.second, lanelet_map_ptr_);
-
-    bool not_in_possible_lanelet =
-      std::find(possible_lanelet.begin(), possible_lanelet.end(), lanelet.second) ==
-      possible_lanelet.end();
-    const bool not_in_left_opposite =
-      std::find(left_opposite.begin(), left_opposite.end(), lanelet.second) == left_opposite.end();
-    const bool not_in_right_opposite =
-      std::find(right_opposite.begin(), right_opposite.end(), lanelet.second) ==
-      right_opposite.end();
-    const bool not_in_opposite = not_in_left_opposite && not_in_right_opposite;
-    if (!possible_lanelet.empty() && not_in_possible_lanelet && not_in_opposite) {
-      return false;
-    }
+  const bool allow_opposite_lane_change_history = true;
+  if (!checkValidLaneletHistory(
+        object_id, lanelet, lanelet_map_ptr_, objects_history_,
+        allow_opposite_lane_change_history)) {
+    return false;
   }
 
   // Step3. Calculate the angle difference between the lane angle and obstacle angle
@@ -1012,13 +1063,24 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 
   // Step4. Check if the closest lanelet is valid, and add all
   // of the lanelets that are below max_dist and max_delta_yaw
-  const bool is_yaw_reversed = M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta;
-  if (
-    lanelet.first < dist_threshold_for_searching_lanelet_ &&
-    (is_yaw_reversed || abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_)) {
-    return true;
-  }
 
+  const bool distance_condition = lanelet.first < dist_threshold_for_searching_lanelet_;
+  const bool delta_yaw_condition = abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_;
+  const bool delta_yaw_reversed_condition =
+    M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta;
+  const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+  const bool velocity_reverted = object_vel < 0.0;
+
+  if (allow_opposite_lane_condition) {
+    if (distance_condition && (delta_yaw_reversed_condition || delta_yaw_condition)) {
+      return true;
+    }
+  } else {
+    const bool reverted_yaw_condition = delta_yaw_reversed_condition && velocity_reverted;
+    if (distance_condition && (reverted_yaw_condition || delta_yaw_condition)) {
+      return true;
+    }
+  }
   return false;
 }
 
