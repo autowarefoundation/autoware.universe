@@ -27,7 +27,6 @@
 #include <lanelet2_core/LaneletMap.h>
 
 #include <algorithm>
-#include <cmath>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -54,10 +53,12 @@ inline double time_along_path(const EgoData & ego_data, const size_t target_idx)
 
 /// @brief estimate the times when an object will enter and exit an overlapping range using its
 /// predicted paths
+/// @details times when the predicted paths of the object enters/exits the range are calculated
+/// but may not exist (e.g,, predicted path ends before reaching the end of the range)
+/// so we also calculate the min/max time inside the range.
 inline std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range)
 {
-  enum Position { before = 0, inside, after, unset };
   constexpr auto max_deviation = 2.0;
   const auto half_size = object.shape.dimensions.x / 2.0;
 
@@ -68,58 +69,56 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
   pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
   const auto range_exit_length =
     lanelet::utils::getArcCoordinates({range.lane}, pose).length + half_size;
-  auto min_enter_time = std::optional<double>();
-  auto max_exit_time = std::optional<double>();
+  auto worst_enter_time = std::optional<double>();
+  auto worst_exit_time = std::optional<double>();
 
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
-    const auto t_step = rclcpp::Duration(predicted_path.time_step).seconds();
-    auto t = 0.0;
-    Position prev_p_position = unset;
-    auto prev_p_length = 0.0;
-    for (const auto & p : predicted_path.path) {
-      const auto p_coordinates = lanelet::utils::getArcCoordinates({range.lane}, p);
-      if (std::abs(p_coordinates.distance) > max_deviation)
-        continue;  // skip points that are far from the overlap lane
-      Position p_position;
-      if(p_coordinates.length < range_enter_length) p_position = before;
-      else if(p_coordinates.length > range_exit_length) p_position = after;
-      else
-        p_position = inside;
+    const auto time_step = rclcpp::Duration(predicted_path.time_step).seconds();
 
-      std::printf("(%2.2f, %2.2f) -> [%d,%d,%d] (prev [%d,%d,%d)",
-        p_coordinates.length, p_coordinates.distance,
-        p_position == before, p_position == inside, p_position == after,
-        prev_p_position == before, prev_p_position == inside, prev_p_position == after);
+    const auto enter_point =
+      geometry_msgs::msg::Point().set__x(range.entering_point.x()).set__y(range.entering_point.y());
+    const auto enter_segment_idx =
+      motion_utils::findNearestSegmentIndex(predicted_path.path, enter_point);
+    const auto enter_offset = motion_utils::calcLongitudinalOffsetToSegment(
+      predicted_path.path, enter_segment_idx, enter_point);
+    const auto enter_lat_dist =
+      tier4_autoware_utils::calcDistance2d(predicted_path.path[enter_segment_idx], enter_point);
+    const auto enter_segment_length = tier4_autoware_utils::calcDistance2d(
+      predicted_path.path[enter_segment_idx], predicted_path.path[enter_segment_idx + 1]);
+    const auto enter_offset_ratio = enter_offset / enter_segment_length;
+    const auto enter_time = enter_segment_idx * time_step + enter_offset_ratio * time_step;
 
-      if (p_position == inside) {
-        min_enter_time = min_enter_time ? std::min(*min_enter_time, t) : t;
-        max_exit_time = max_exit_time ? std::max(*max_exit_time, t) : t;
-        std::printf(" -> inside (%2.2f, %2.2f)", *min_enter_time, *max_exit_time);
-      }
-      if (prev_p_position < p_position) {
-        std::printf(" -> prev ");
-        const auto length_step = p_coordinates.length - prev_p_length;
-        if(prev_p_position == before) {
-          const auto enter_ratio = (range_enter_length - prev_p_length) / length_step;
-          const auto enter_time = t + (enter_ratio * t_step);
-          min_enter_time = min_enter_time ? std::min(*min_enter_time, enter_time) : enter_time;
-          std::printf(" before (%2.2f)", *min_enter_time);
-        }
-        if(p_position == after) {
-          const auto exit_ratio = (range_exit_length - prev_p_length) / length_step;
-          const auto exit_time = t + (exit_ratio * t_step);
-          max_exit_time = max_exit_time ? std::max(*max_exit_time, exit_time) : exit_time;
-          std::printf(" after (%2.2f)", *max_exit_time);
-        }
-      }
-      std::printf("\n");
-      prev_p_position = p_position;
-      prev_p_length = p_coordinates.length;
-      t += t_step;
+    const auto exit_point =
+      geometry_msgs::msg::Point().set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
+    const auto exit_segment_idx =
+      motion_utils::findNearestSegmentIndex(predicted_path.path, exit_point);
+    const auto exit_offset = motion_utils::calcLongitudinalOffsetToSegment(
+      predicted_path.path, exit_segment_idx, exit_point);
+    const auto exit_lat_dist =
+      tier4_autoware_utils::calcDistance2d(predicted_path.path[exit_segment_idx], exit_point);
+    const auto exit_segment_length = tier4_autoware_utils::calcDistance2d(
+      predicted_path.path[exit_segment_idx], predicted_path.path[exit_segment_idx + 1]);
+    const auto exit_offset_ratio = exit_offset / static_cast<double>(exit_segment_length);
+    const auto exit_time =
+      static_cast<double>(exit_segment_idx) * time_step + exit_offset_ratio * time_step;
+
+    // predicted path is too far from the overlapping range to be relevent
+    const auto is_far_from_entering_point = enter_lat_dist > max_deviation;
+    const auto is_far_from_exiting_point = exit_lat_dist > max_deviation;
+    if (is_far_from_entering_point && is_far_from_exiting_point) continue;
+    // else we rely on the interpolation to estimate beyond the end of the predicted path
+
+    const auto same_driving_direction_as_ego = enter_time < exit_time;
+    if (same_driving_direction_as_ego) {
+      worst_enter_time = worst_enter_time ? std::min(*worst_enter_time, enter_time) : enter_time;
+      worst_exit_time = worst_exit_time ? std::max(*worst_exit_time, exit_time) : exit_time;
+    } else {
+      worst_enter_time = worst_enter_time ? std::max(*worst_enter_time, enter_time) : enter_time;
+      worst_exit_time = worst_exit_time ? std::min(*worst_exit_time, exit_time) : exit_time;
     }
   }
-  // TODO(Maxime): add extrapolation to exit if the last p_position != after
-  if (min_enter_time && max_exit_time) return std::make_pair(*min_enter_time, *max_exit_time);
+  if (worst_enter_time && worst_exit_time)
+    return std::make_pair(*worst_enter_time, *worst_exit_time);
   return {};
 }
 
@@ -187,6 +186,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
         exit_arc_length = std::min(*exit_arc_length, exit_length);
     }
   }
+  // TODO(Maxime): fix this for opposite lanes (and also test the "use_predicted_path")
   if (enter_arc_length && exit_arc_length) {
     const auto v = object.kinematics.initial_twist_with_covariance.twist.linear.x;
     return std::make_pair((*enter_arc_length - half_size) / v, (*exit_arc_length + half_size) / v);
@@ -264,18 +264,15 @@ inline std::vector<Slowdown> calculate_decisions(
           if (object_enters_during_overlap || object_exits_during_overlap) should_not_enter = true;
         }
       } else if (params.mode == "ttc") {
-        auto ttc = 0.0;
         const auto ttc_at_enter = ego_enter_time - enter_time;
         const auto ttc_at_exit = ego_exit_time - exit_time;
-        // one vehicle is predicted to overtake the other -> collision
-        if (std::signbit(ttc_at_enter) != std::signbit(ttc_at_exit))
-          ttc = 0.0;
-        else
-          ttc = std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit));
-        if (ttc <= params.ttc_threshold) should_not_enter = true;
+        const auto collision_during_overlap = (ttc_at_enter < 0.0 != ttc_at_exit < 0.0);
+        const auto ttc_is_bellow_threshold =
+          std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit)) <= params.ttc_threshold;
+        if (collision_during_overlap || ttc_is_bellow_threshold) should_not_enter = true;
         std::printf(
-          "\t\t\t[TTC] %2.2fs (%2.2fs - %2.2fs) -> %d\n", ttc, ttc_at_enter, ttc_at_exit,
-          ttc <= params.ttc_threshold);
+          "\t\t\t[TTC] (%2.2fs - %2.2fs) -> %d\n", ttc_at_enter, ttc_at_exit,
+          (collision_during_overlap || ttc_is_bellow_threshold));
       }
     }
     if (should_not_enter) {
