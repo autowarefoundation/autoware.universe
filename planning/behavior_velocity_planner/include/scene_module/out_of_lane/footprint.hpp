@@ -30,14 +30,19 @@ namespace behavior_velocity_planner
 {
 namespace out_of_lane_utils
 {
-inline tier4_autoware_utils::Polygon2d make_base_footprint(const PlannerParam & p)
+inline tier4_autoware_utils::Polygon2d make_base_footprint(
+  const PlannerParam & p, const bool ignore_offset = false)
 {
   tier4_autoware_utils::Polygon2d base_footprint;
+  const auto front_offset = ignore_offset ? 0.0 : p.extra_front_offset;
+  const auto rear_offset = ignore_offset ? 0.0 : p.extra_rear_offset;
+  const auto right_offset = ignore_offset ? 0.0 : p.extra_right_offset;
+  const auto left_offset = ignore_offset ? 0.0 : p.extra_left_offset;
   base_footprint.outer() = {
-    {p.front_offset + p.extra_front_offset, p.left_offset + p.extra_left_offset},
-    {p.front_offset + p.extra_front_offset, p.right_offset - p.extra_right_offset},
-    {p.rear_offset - p.extra_rear_offset, p.right_offset - p.extra_right_offset},
-    {p.rear_offset - p.extra_rear_offset, p.left_offset + p.extra_left_offset}};
+    {p.front_offset + front_offset, p.left_offset + left_offset},
+    {p.front_offset + front_offset, p.right_offset - right_offset},
+    {p.rear_offset - rear_offset, p.right_offset - right_offset},
+    {p.rear_offset - rear_offset, p.left_offset + left_offset}};
   return base_footprint;
 }
 
@@ -78,9 +83,9 @@ inline std::vector<lanelet::BasicPolygon2d> calculate_path_footprints(
 }
 
 inline lanelet::BasicPolygon2d calculate_current_ego_footprint(
-  const EgoData & ego_data, const PlannerParam & params)
+  const EgoData & ego_data, const PlannerParam & params, const bool ignore_offset = false)
 {
-  const auto base_footprint = make_base_footprint(params);
+  const auto base_footprint = make_base_footprint(params, ignore_offset);
   const auto angle = tf2::getYaw(ego_data.pose.orientation);
   const auto rotated_footprint = tier4_autoware_utils::rotatePolygon(base_footprint, angle);
   lanelet::BasicPolygon2d footprint;
@@ -95,7 +100,7 @@ inline lanelet::BasicPolygon2d calculate_current_ego_footprint(
 /// @param params parameters
 /// @return precise points to insert in the path
 inline std::vector<SlowdownToInsert> calculate_slowdown_points(
-  const EgoData & ego_data, std::vector<Slowdown> & decisions, const PlannerParam & params)
+  const EgoData & ego_data, std::vector<Slowdown> & decisions, PlannerParam params)
 {
   const auto can_decel = [&](const auto dist_ahead_of_ego, const auto target_vel) {
     const auto dist_to_target_vel =
@@ -103,6 +108,7 @@ inline std::vector<SlowdownToInsert> calculate_slowdown_points(
     return dist_to_target_vel < dist_ahead_of_ego;
   };
   std::vector<SlowdownToInsert> to_insert;
+  params.extra_front_offset += params.dist_buffer;
   const auto base_footprint = make_base_footprint(params);
   for (const auto & decision : decisions) {
     const auto & path_point = ego_data.path->points[decision.target_path_idx];
@@ -120,10 +126,10 @@ inline std::vector<SlowdownToInsert> calculate_slowdown_points(
       for (auto ratio = precision; ratio <= 1.0; ratio += precision) {
         interpolated_point.point.pose =
           tier4_autoware_utils::calcInterpolatedPose(path_pose, prev_path_pose, ratio, false);
-        const auto overlaps = boost::geometry::overlaps(
+        const auto is_overlap = boost::geometry::overlaps(
           project_to_pose(base_footprint, interpolated_point.point.pose),
           decision.lane_to_avoid.polygon2d().basicPolygon());
-        if (!overlaps) {
+        if (!is_overlap) {
           const auto dist_ahead_of_ego = motion_utils::calcSignedArcLength(
             ego_data.path->points, ego_data.pose.position, path_point.point.pose.position);
           if (!params.skip_if_over_max_decel || can_decel(dist_ahead_of_ego, decision.velocity))

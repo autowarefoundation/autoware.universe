@@ -51,6 +51,8 @@ struct DebugData
   OverlapRanges ranges;
   std::vector<std::vector<std::pair<double, double>>> npc_times;
   std::vector<std::pair<double, double>> ego_times;
+  lanelet::BasicPolygon2d current_footprint;
+  lanelet::ConstLanelets current_overlapped_lanelets;
   void reset_data()
   {
     footprints.clear();
@@ -58,6 +60,7 @@ struct DebugData
     ranges.clear();
     npc_times.clear();
     ego_times.clear();
+    current_overlapped_lanelets.clear();
   }
 };
 }  // namespace behavior_velocity_planner::out_of_lane_utils

@@ -60,27 +60,45 @@ bool OutOfLaneModule::modifyPathVelocity(
   ego_data.velocity = (*planner_data_)->current_velocity->twist.linear.x;
   ego_data.max_decel = -(*planner_data_)->max_stop_acceleration_threshold;
   stopwatch.tic("calculate_path_footprints");
+  const auto current_ego_footprint = calculate_current_ego_footprint(ego_data, params_, true);
   const auto path_footprints = calculate_path_footprints(ego_data, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Get neighboring lanes TODO(Maxime): make separate function
-  const auto path_lanelets = planning_utils::getLaneletsOnPath(
+  auto path_lanelets = planning_utils::getLaneletsOnPath(
     *path, (*planner_data_)->route_handler_->getLaneletMapPtr(),
     (*planner_data_)->current_odometry->pose);
+  lanelet::ConstLanelets previous_lanelets;
+  for (const auto & path_lanelet : path_lanelets) {
+    if (!boost::geometry::intersects(
+          path_lanelet.polygon2d().basicPolygon(), current_ego_footprint))
+      break;
+    const auto lanelets = (*planner_data_)->route_handler_->getPreviousLanelets(path_lanelet);
+    previous_lanelets.insert(previous_lanelets.end(), lanelets.begin(), lanelets.end());
+  }
+  path_lanelets.insert(path_lanelets.end(), previous_lanelets.begin(), previous_lanelets.end());
   lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
-  const auto lanelets_within_range =
-    lanelet::geometry::findWithin2d(
-        (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer,
-        ego_point, std::max(params_.slow_dist_threshold, params_.stop_dist_threshold));
+  const auto lanelets_within_range = lanelet::geometry::findWithin2d(
+    (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer, ego_point,
+    std::max(params_.slow_dist_threshold, params_.stop_dist_threshold));
   const auto lanelets_to_check = [&]() {
     lanelet::ConstLanelets lls;
-    for(const auto & l : lanelets_within_range) lls.push_back(l.second);
+    for (const auto & l : lanelets_within_range) {
+      const auto is_path_lanelet =
+        std::find_if(path_lanelets.begin(), path_lanelets.end(), [&](const auto & path_ll) {
+          return path_ll.id() == l.second.id();
+        }) != path_lanelets.end();
+      if (!is_path_lanelet) lls.push_back(l.second);
+    }
     return lls;
   }();
   if (params_.skip_if_already_overlapping) {  // TODO(Maxime): cleanup
-    const auto ego_footprint = calculate_current_ego_footprint(ego_data, params_);
-    if (std::find_if(lanelets_to_check.begin(), lanelets_to_check.end(), [&](const auto & ll) {
-          return boost::geometry::intersects(ll.polygon2d().basicPolygon(), ego_footprint);
-        }) != lanelets_to_check.end()) {
+    debug_data_.current_footprint = current_ego_footprint;
+    const auto overlapped_lanelet_it =
+      std::find_if(lanelets_to_check.begin(), lanelets_to_check.end(), [&](const auto & ll) {
+        return boost::geometry::intersects(ll.polygon2d().basicPolygon(), current_ego_footprint);
+      });
+    if (overlapped_lanelet_it != lanelets_to_check.end()) {
+      debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
       std::printf("*** ALREADY OVERLAPPING *** skipping\n");
       return true;
     }
@@ -148,7 +166,31 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
     debug_marker.points.clear();
   }
 
+  // current footprint + overlapped lanelets (if any)
+  debug_marker.ns = "current_overlap";
+  debug_marker.points.clear();
+  for (const auto & p : debug_data_.current_footprint)
+    debug_marker.points.push_back(
+      tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+  debug_marker.points.push_back(debug_marker.points.front());
+  if (debug_data_.current_overlapped_lanelets.empty())
+    debug_marker.color = tier4_autoware_utils::createMarkerColor(0.1, 1.0, 0.1, 0.5);
+  else
+    debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
+  debug_marker_array.markers.push_back(debug_marker);
+  debug_marker.id++;
+  for (const auto & ll : debug_data_.current_overlapped_lanelets) {
+    debug_marker.points.clear();
+    for (const auto & p : ll.polygon3d())
+      debug_marker.points.push_back(
+        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
+    debug_marker.points.push_back(debug_marker.points.front());
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+  }
+
   // time ranges TODO(Maxime): remove
+  /*
   debug_marker.id = 0;
   constexpr auto t_scale = 3.0;
   constexpr auto x_off = 3.0;
@@ -205,6 +247,7 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
       c += 0.25;
     }
   }
+  */
 
   return debug_marker_array;
 }
