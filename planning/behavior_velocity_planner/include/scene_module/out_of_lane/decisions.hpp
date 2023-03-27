@@ -59,9 +59,8 @@ inline double time_along_path(const EgoData & ego_data, const size_t target_idx)
 inline std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range)
 {
-  // [m] maximum allowed lateral distance between a predicted path and the the overlapping range
-  constexpr auto max_deviation = 3.0;
   const auto half_size = object.shape.dimensions.x / 2.0;
+  const auto max_deviation = object.shape.dimensions.y * 2.0;
 
   geometry_msgs::msg::Pose pose;
   pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
@@ -81,8 +80,8 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
       motion_utils::findNearestSegmentIndex(predicted_path.path, enter_point);
     const auto enter_offset = motion_utils::calcLongitudinalOffsetToSegment(
       predicted_path.path, enter_segment_idx, enter_point);
-    const auto enter_lat_dist =
-      tier4_autoware_utils::calcDistance2d(predicted_path.path[enter_segment_idx], enter_point);
+    const auto enter_lat_dist = std::abs(
+      motion_utils::calcLateralOffset(predicted_path.path, enter_point, enter_segment_idx));
     const auto enter_segment_length = tier4_autoware_utils::calcDistance2d(
       predicted_path.path[enter_segment_idx], predicted_path.path[enter_segment_idx + 1]);
     const auto enter_offset_ratio = enter_offset / enter_segment_length;
@@ -95,7 +94,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
     const auto exit_offset = motion_utils::calcLongitudinalOffsetToSegment(
       predicted_path.path, exit_segment_idx, exit_point);
     const auto exit_lat_dist =
-      tier4_autoware_utils::calcDistance2d(predicted_path.path[exit_segment_idx], exit_point);
+      std::abs(motion_utils::calcLateralOffset(predicted_path.path, exit_point, exit_segment_idx));
     const auto exit_segment_length = tier4_autoware_utils::calcDistance2d(
       predicted_path.path[exit_segment_idx], predicted_path.path[exit_segment_idx + 1]);
     const auto exit_offset_ratio = exit_offset / static_cast<double>(exit_segment_length);
@@ -110,7 +109,7 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
     const auto is_far_from_exiting_point = exit_lat_dist > max_deviation;
     if (is_far_from_entering_point && is_far_from_exiting_point) {
       std::printf(
-        " * far_from_enter (%d) = %2.2fm | far_from_exit (%d) = %2.2fm | max_dec = %2.2fm\n",
+        " * far_from_enter (%d) = %2.2fm | far_from_exit (%d) = %2.2fm | max_dev = %2.2fm\n",
         is_far_from_entering_point, enter_lat_dist, is_far_from_exiting_point, exit_lat_dist,
         max_deviation);
       continue;
