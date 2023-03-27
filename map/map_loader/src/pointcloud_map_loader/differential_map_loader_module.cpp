@@ -23,7 +23,7 @@ DifferentialMapLoaderModule::DifferentialMapLoaderModule(
     std::bind(
       &DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap, this,
       std::placeholders::_1, std::placeholders::_2));
-  map_upper_limit_ = node->declare_parameter<double>("map_upper_limit");
+  map_upper_limit_ = node->declare_parameter<int64_t>("map_upper_limit");
 }
 
 void DifferentialMapLoaderModule::differentialAreaLoad(
@@ -64,7 +64,7 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   GetDifferentialPointCloudMap::Request::SharedPtr req,
   GetDifferentialPointCloudMap::Response::SharedPtr res)
 {
-  const double map_upper_limit_margin = 10000;
+  const int64_t map_upper_limit_margin = 10000;
   auto area = req->area;
   std::vector<std::string> cached_ids = req->cached_ids;
   differentialAreaLoad(area, cached_ids, res);
