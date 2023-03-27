@@ -1115,8 +1115,8 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
           debug.unavoidable_objects.push_back(o);
+          continue;
         }
-        continue;
       }
 
       // This is the case of exceeding the jerk limit. Use the sharp avoidance ego speed.
@@ -1129,8 +1129,8 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
           debug.unavoidable_objects.push_back(o);
+          continue;
         }
-        continue;
       }
     }
     const auto avoiding_distance =
@@ -3713,14 +3713,15 @@ void AvoidanceModule::setDebugData(
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
   using marker_utils::createShiftLineMarkerArray;
+  using marker_utils::avoidance_marker::createAvoidableTargetObjectsMarkerArray;
   using marker_utils::avoidance_marker::createAvoidLineMarkerArray;
   using marker_utils::avoidance_marker::createEgoStatusMarkerArray;
   using marker_utils::avoidance_marker::createOtherObjectsMarkerArray;
   using marker_utils::avoidance_marker::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::avoidance_marker::createPredictedVehiclePositions;
   using marker_utils::avoidance_marker::createSafetyCheckMarkerArray;
-  using marker_utils::avoidance_marker::createTargetObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnavoidableObjectsMarkerArray;
+  using marker_utils::avoidance_marker::createUnavoidableTargetObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnsafeObjectsMarkerArray;
   using marker_utils::avoidance_marker::makeOverhangToRoadShoulderMarkerArray;
   using motion_utils::createDeadLineVirtualWallMarker;
@@ -3777,9 +3778,22 @@ void AvoidanceModule::setDebugData(
 
   add(createSafetyCheckMarkerArray(data.state, getEgoPose(), debug));
 
+  std::vector<ObjectData> avoidable_target_objects;
+  std::vector<ObjectData> unavoidable_target_objects;
+  for (const auto & object : data.target_objects) {
+    if (object.is_avoidable) {
+      avoidable_target_objects.push_back(object);
+    } else {
+      unavoidable_target_objects.push_back(object);
+    }
+  }
+
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
-  add(createTargetObjectsMarkerArray(data.target_objects, "target_objects"));
+  add(
+    createAvoidableTargetObjectsMarkerArray(avoidable_target_objects, "avoidable_target_objects"));
+  add(createUnavoidableTargetObjectsMarkerArray(
+    unavoidable_target_objects, "unavoidable_target_objects"));
   add(createOtherObjectsMarkerArray(data.other_objects, "other_objects"));
   add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
   add(createOverhangFurthestLineStringMarkerArray(
