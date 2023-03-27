@@ -16,6 +16,10 @@
 
 #include <fmt/format.h>
 
+#include <vector>
+#include <map>
+#include <string>
+
 std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path)
 {
   YAML::Node config = YAML::LoadFile(pcd_metadata_path);

@@ -21,6 +21,10 @@
 #include <pcl/common/common.h>
 #include <yaml-cpp/yaml.h>
 
+#include <vector>
+#include <map>
+#include <string>
+
 struct PCDFileMetadata
 {
   pcl::PointXYZ min;
