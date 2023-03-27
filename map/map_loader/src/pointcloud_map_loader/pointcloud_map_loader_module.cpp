@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "pointcloud_map_loader_module.hpp"
+
 #include "utils.hpp"
 
 #include <fmt/format.h>

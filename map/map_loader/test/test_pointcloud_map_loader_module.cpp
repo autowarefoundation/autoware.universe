@@ -12,27 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <filesystem>
-#include <memory>
-#include <chrono>
-
 #include "../src/pointcloud_map_loader/pointcloud_map_loader_module.hpp"
 #include "../src/pointcloud_map_loader/utils.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <gtest/gtest.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+
+#include <chrono>
+#include <filesystem>
+#include <memory>
 
 using namespace std::chrono_literals;
 
-class TestPointcloudMapLoaderModule : public ::testing::Test {
+class TestPointcloudMapLoaderModule : public ::testing::Test
+{
 protected:
   rclcpp::Node::SharedPtr node;
   std::string temp_pcd_path;
 
-  void SetUp() override {
+  void SetUp() override
+  {
     rclcpp::init(0, nullptr);
     node = rclcpp::Node::make_shared("test_pointcloud_map_loader_module");
 
@@ -53,7 +57,8 @@ protected:
     pcl::io::savePCDFileASCII(temp_pcd_path, cloud);
   }
 
-  void TearDown() override {
+  void TearDown() override
+  {
     // Delete the temporary PCD file
     std::filesystem::remove(temp_pcd_path);
 
@@ -61,7 +66,8 @@ protected:
   }
 };
 
-TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest) {
+TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest)
+{
   // Prepare PCD paths
   std::vector<std::string> pcd_paths = {temp_pcd_path};
 
@@ -73,11 +79,10 @@ TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest) {
   auto pointcloud_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
 
   rclcpp::QoS durable_qos{10};
-  durable_qos.transient_local(); // Match publisher's Durability setting
+  durable_qos.transient_local();  // Match publisher's Durability setting
 
   auto pointcloud_sub = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "pointcloud_map_no_downsample",
-    durable_qos,
+    "pointcloud_map_no_downsample", durable_qos,
     [pointcloud_received, pointcloud_msg](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
       *pointcloud_received = true;
       *pointcloud_msg = *msg;
@@ -109,7 +114,8 @@ TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char ** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -17,10 +17,11 @@
 
 #include <autoware_map_msgs/msg/area_info.hpp>
 #include <geometry_msgs/msg/point.hpp>
+
+#include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/common/common.h>
 
 struct PCDFileMetadata
 {
