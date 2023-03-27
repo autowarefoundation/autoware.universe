@@ -69,6 +69,9 @@ if(BUILD_TESTING)
   add_testcase(test/test_sphere_box_overlap.cpp)
   add_testcase(test/test_replace_with_absolute_path.cpp)
   add_testcase(test/test_load_pcd_metadata.cpp)
+  add_testcase(test/test_pointcloud_map_loader_module.cpp)
+  add_testcase(test/test_partial_map_loader_module.cpp)
+  add_testcase(test/test_differential_map_loader_module.cpp)
 endif()
 
 install(PROGRAMS
