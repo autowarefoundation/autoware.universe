@@ -303,9 +303,6 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
   std::vector<std::string> neighbor_map_cells_id;
 
   for (auto & kv : current_voxel_grid_dict_) {
-    // TODO(badai-nguyen): add neighboor map cells checking for points on boundary when map loader
-    // I/F is updated
-
     if (point.x < kv.second.min_b_x - distance_threshold) {
       continue;
     }
@@ -320,15 +317,12 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     }
     // the map cell is found
     neighbor_map_cells_id.push_back(kv.first);
-  }
-  for (auto & neighbor_map_cell_id : neighbor_map_cells_id) {
-    if (current_voxel_grid_dict_.find(neighbor_map_cell_id)->second.map_cell_pc_ptr == NULL) {
-      return false;
+    // check distance
+    if (kv.second.map_cell_pc_ptr == NULL) {
+      continue;
     }
     if (is_close_to_neighbor_voxels(
-          point, distance_threshold,
-          current_voxel_grid_dict_.find(neighbor_map_cell_id)->second.map_cell_pc_ptr,
-          current_voxel_grid_dict_.find(neighbor_map_cell_id)->second.map_cell_voxel_grid)) {
+          point, distance_threshold, kv.second.map_cell_pc_ptr, kv.second.map_cell_voxel_grid)) {
       return true;
     }
   }
