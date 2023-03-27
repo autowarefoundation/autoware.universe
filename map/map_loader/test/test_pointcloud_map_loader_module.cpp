@@ -27,7 +27,7 @@
 #include <filesystem>
 #include <memory>
 
-using namespace std::chrono_literals;
+using std::chrono_literals::operator""ms;
 
 class TestPointcloudMapLoaderModule : public ::testing::Test
 {
