@@ -68,8 +68,6 @@ public:
     }
   }
 
-  void log(Severity severity, const std::string & msg) noexcept { log(severity, msg.c_str()); }
-
   Severity reportable_severity_{Severity::kWARNING};
   rclcpp::Logger logger_{rclcpp::get_logger("tensorrt_common")};
 };
