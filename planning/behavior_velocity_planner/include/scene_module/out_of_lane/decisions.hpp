@@ -159,9 +159,8 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
   pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
   const auto range_exit_length = lanelet::utils::getArcCoordinates({range.lane}, pose).length;
   const auto range_size = std::abs(range_enter_length - range_exit_length);
-  // TODO(Maxime): rename arc_length -> dist
-  auto enter_arc_length = std::optional<double>();
-  auto exit_arc_length = std::optional<double>();
+  auto worst_enter_dist = std::optional<double>();
+  auto worst_exit_dist = std::optional<double>();
   for (const auto & lane : object_lanelets) {
     const auto path = route_handler->getRoutingGraphPtr()->shortestPath(lane, range.lane);
     std::printf(
@@ -172,37 +171,37 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
       pose.position.set__x(object_point.x()).set__y(object_point.y());
       const auto object_curr_length = lanelet::utils::getArcCoordinates(lls, pose).length;
       pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
-      const auto enter_length =
+      const auto enter_dist =
         lanelet::utils::getArcCoordinates(lls, pose).length - object_curr_length;
       pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
-      const auto exit_length =
+      const auto exit_dist =
         lanelet::utils::getArcCoordinates(lls, pose).length - object_curr_length;
       std::printf(
         "\t\t\t%2.2f -> [%2.2f(%2.2f, %2.2f) - %2.2f(%2.2f, %2.2f)]\n", object_curr_length,
-        enter_length, range.entering_point.x(), range.entering_point.y(), exit_length,
+        enter_dist, range.entering_point.x(), range.entering_point.y(), exit_dist,
         range.exiting_point.x(), range.exiting_point.y());
-      const auto already_entered_range = std::abs(enter_length - exit_length) > range_size * 2.0;
+      const auto already_entered_range = std::abs(enter_dist - exit_dist) > range_size * 2.0;
       if (already_entered_range) continue;
       // multiple paths to the overlap -> be conservative and use the "worst" case
       // "worst" = min/max arc length depending on if the lane is running opposite to the ego path
-      const auto is_opposite = enter_length > exit_length;
-      if (!enter_arc_length)
-        enter_arc_length = enter_length;
+      const auto is_opposite = enter_dist > exit_dist;
+      if (!worst_enter_dist)
+        worst_enter_dist = enter_dist;
       else if (is_opposite)
-        enter_arc_length = std::max(*enter_arc_length, enter_length);
+        worst_enter_dist = std::max(*worst_enter_dist, enter_dist);
       else
-        enter_arc_length = std::min(*enter_arc_length, enter_length);
-      if (!exit_arc_length)
-        exit_arc_length = exit_length;
+        worst_enter_dist = std::min(*worst_enter_dist, enter_dist);
+      if (!worst_exit_dist)
+        worst_exit_dist = exit_dist;
       else if (is_opposite)
-        exit_arc_length = std::max(*exit_arc_length, exit_length);
+        worst_exit_dist = std::max(*worst_exit_dist, exit_dist);
       else
-        exit_arc_length = std::min(*exit_arc_length, exit_length);
+        worst_exit_dist = std::min(*worst_exit_dist, exit_dist);
     }
   }
-  if (enter_arc_length && exit_arc_length) {
+  if (worst_enter_dist && worst_exit_dist) {
     const auto v = object.kinematics.initial_twist_with_covariance.twist.linear.x;
-    return std::make_pair((*enter_arc_length - half_size) / v, (*exit_arc_length + half_size) / v);
+    return std::make_pair((*worst_enter_dist - half_size) / v, (*worst_exit_dist + half_size) / v);
   }
   return {};
 }
