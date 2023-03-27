@@ -16,9 +16,9 @@
 
 #include <fmt/format.h>
 
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path)
 {

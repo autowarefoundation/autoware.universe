@@ -21,9 +21,9 @@
 #include <pcl/common/common.h>
 #include <yaml-cpp/yaml.h>
 
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 struct PCDFileMetadata
 {
