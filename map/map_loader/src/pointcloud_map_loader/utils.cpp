@@ -70,20 +70,3 @@ bool isGridWithinQueriedArea(
   bool res = sphereAndBoxOverlapExists(center, radius, metadata.min, metadata.max);
   return res;
 }
-
-sensor_msgs::msg::PointCloud2 downsample(
-  const sensor_msgs::msg::PointCloud2 & msg_input, const float leaf_size)
-{
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(msg_input, *pcl_input);
-  pcl::VoxelGrid<pcl::PointXYZ> filter;
-  filter.setInputCloud(pcl_input);
-  filter.setLeafSize(leaf_size, leaf_size, leaf_size);
-  filter.filter(*pcl_output);
-
-  sensor_msgs::msg::PointCloud2 msg_output;
-  pcl::toROSMsg(*pcl_output, msg_output);
-  msg_output.header = msg_input.header;
-  return msg_output;
-}

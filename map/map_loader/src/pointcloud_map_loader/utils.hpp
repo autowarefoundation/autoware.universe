@@ -17,11 +17,7 @@
 
 #include <autoware_map_msgs/msg/area_info.hpp>
 #include <geometry_msgs/msg/point.hpp>
-
 #include <pcl/common/common.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl_conversions/pcl_conversions.h>
 
 struct PCDFileMetadata
 {
@@ -34,7 +30,5 @@ bool sphereAndBoxOverlapExists(
   const pcl::PointXYZ position_max);
 bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata);
-sensor_msgs::msg::PointCloud2 downsample(
-  const sensor_msgs::msg::PointCloud2 & msg_input, const float leaf_size);
 
 #endif  // POINTCLOUD_MAP_LOADER__UTILS_HPP_
