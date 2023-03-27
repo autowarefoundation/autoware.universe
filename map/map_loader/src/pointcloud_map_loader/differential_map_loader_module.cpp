@@ -69,7 +69,7 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   differentialAreaLoad(area, cached_ids, res);
   res->header.frame_id = "map";
   // calculate pcd map size to respond
-  double response_pcd_size = 0;
+  int64_t response_pcd_size = 0;
   for (const auto & new_pointcloud_with_id : res->new_pointcloud_with_ids) {
     response_pcd_size +=
       new_pointcloud_with_id.pointcloud.row_step * new_pointcloud_with_id.pointcloud.height;
@@ -79,7 +79,7 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
     // calculate ids to respond
     int use_id_len = std::floor(
       static_cast<int>(res->new_pointcloud_with_ids.size()) /
-      std::ceil(response_pcd_size / (map_upper_limit_)));
+      std::ceil(1.0 * response_pcd_size / (map_upper_limit_)));
     // remove overflowing maps from response
     res->new_pointcloud_with_ids.erase(
       res->new_pointcloud_with_ids.begin() + use_id_len, res->new_pointcloud_with_ids.end());
