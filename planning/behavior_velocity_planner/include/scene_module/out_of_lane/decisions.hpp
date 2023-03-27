@@ -59,7 +59,8 @@ inline double time_along_path(const EgoData & ego_data, const size_t target_idx)
 inline std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range)
 {
-  constexpr auto max_deviation = 2.0;
+  // [m] maximum allowed lateral distance between a predicted path and the the overlapping range
+  constexpr auto max_deviation = 3.0;
   const auto half_size = object.shape.dimensions.x / 2.0;
 
   geometry_msgs::msg::Pose pose;
@@ -74,7 +75,6 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
 
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
     const auto time_step = rclcpp::Duration(predicted_path.time_step).seconds();
-
     const auto enter_point =
       geometry_msgs::msg::Point().set__x(range.entering_point.x()).set__y(range.entering_point.y());
     const auto enter_segment_idx =
@@ -102,23 +102,38 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
     const auto exit_time =
       static_cast<double>(exit_segment_idx) * time_step + exit_offset_ratio * time_step;
 
+    std::printf(
+      "\t\t\tPredicted path (time step = %2.2fs): enter @ %2.2fs, exit @ %2.2fs", time_step,
+      enter_time, exit_time);
     // predicted path is too far from the overlapping range to be relevent
     const auto is_far_from_entering_point = enter_lat_dist > max_deviation;
     const auto is_far_from_exiting_point = exit_lat_dist > max_deviation;
-    if (is_far_from_entering_point && is_far_from_exiting_point) continue;
+    if (is_far_from_entering_point && is_far_from_exiting_point) {
+      std::printf(
+        " * far_from_enter (%d) = %2.2fm | far_from_exit (%d) = %2.2fm | max_dec = %2.2fm\n",
+        is_far_from_entering_point, enter_lat_dist, is_far_from_exiting_point, exit_lat_dist,
+        max_deviation);
+      continue;
+    }
     // else we rely on the interpolation to estimate beyond the end of the predicted path
 
     const auto same_driving_direction_as_ego = enter_time < exit_time;
     if (same_driving_direction_as_ego) {
+      std::printf(" / SAME DIR \\\n");
       worst_enter_time = worst_enter_time ? std::min(*worst_enter_time, enter_time) : enter_time;
       worst_exit_time = worst_exit_time ? std::max(*worst_exit_time, exit_time) : exit_time;
     } else {
+      std::printf(" / OPPOSITE DIR \\\n");
       worst_enter_time = worst_enter_time ? std::max(*worst_enter_time, enter_time) : enter_time;
       worst_exit_time = worst_exit_time ? std::min(*worst_exit_time, exit_time) : exit_time;
     }
   }
-  if (worst_enter_time && worst_exit_time)
+  if (worst_enter_time && worst_exit_time) {
+    std::printf(
+      "\t\t\t * found enter/exit time [%2.2f, %2.2f]\n", *worst_enter_time, *worst_exit_time);
     return std::make_pair(*worst_enter_time, *worst_exit_time);
+  }
+  std::printf("\t\t\t * enter/exit time not found\n");
   return {};
 }
 
@@ -186,7 +201,6 @@ inline std::optional<std::pair<double, double>> object_time_to_range(
         exit_arc_length = std::min(*exit_arc_length, exit_length);
     }
   }
-  // TODO(Maxime): fix this for opposite lanes (and also test the "use_predicted_path")
   if (enter_arc_length && exit_arc_length) {
     const auto v = object.kinematics.initial_twist_with_covariance.twist.linear.x;
     return std::make_pair((*enter_arc_length - half_size) / v, (*exit_arc_length + half_size) / v);
@@ -201,7 +215,6 @@ inline std::vector<Slowdown> calculate_decisions(
   const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug)
 {
   std::vector<Slowdown> decisions;
-  std::cout << "** Decisions\n";
   for (const auto & range : ranges) {
     if (range.entering_path_idx == 0UL) continue;  // skip if we already entered the range
     bool should_not_enter = false;  // we will decide if we need to stop/slow before this range
@@ -220,22 +233,27 @@ inline std::vector<Slowdown> calculate_decisions(
     auto & npc_times = debug.npc_times.emplace_back();
 
     for (const auto & object : objects.objects) {
+      std::printf(
+        "\t\t[%s] going at %2.2fm/s", tier4_autoware_utils::toHexString(object.object_id).c_str(),
+        object.kinematics.initial_twist_with_covariance.twist.linear.x);
       auto & debug_pair = npc_times.emplace_back(0.0, 0.0);
-      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel)
+      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel) {
+        std::printf(" SKIP (velocity bellow threshold %2.2fm/s)\n", params.objects_min_vel);
         continue;  // skip objects with velocity bellow a threshold
+      }
       // skip objects that are already on the interval
       const auto enter_exit_time = params.objects_use_predicted_paths
                                      ? object_time_to_range(object, range)
                                      : object_time_to_range(object, range, lanelets, route_handler);
-      if (!enter_exit_time) continue;  // object is not driving towards the overlapping range
+      if (!enter_exit_time) {
+        std::printf(" SKIP (no enter/exit times found)\n");
+        continue;  // object is not driving towards the overlapping range
+      }
 
       const auto & [enter_time, exit_time] = *enter_exit_time;
       debug_pair.first = std::min(enter_time, exit_time);
       debug_pair.second = std::max(enter_time, exit_time);
-      std::printf(
-        "\t\t[%s] going at %2.2fm/s enter at %2.2fs, exits at %2.2fs\n",
-        tier4_autoware_utils::toHexString(object.object_id).c_str(),
-        object.kinematics.initial_twist_with_covariance.twist.linear.x, enter_time, exit_time);
+      std::printf(" enter at %2.2fs, exits at %2.2fs\n", enter_time, exit_time);
 
       const auto object_is_going_opposite_way = enter_time > exit_time;
       if (params.mode == "threshold") {
