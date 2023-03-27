@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include "../src/pointcloud_map_loader/differential_map_loader_module.hpp"
+
 #include <rclcpp/rclcpp.hpp>
-#include <memory>
+
+#include "autoware_map_msgs/srv/get_differential_point_cloud_map.hpp"
+
+#include <gtest/gtest.h>
 #include <pcl/io/pcd_io.h>
 
-#include "../src/pointcloud_map_loader/differential_map_loader_module.hpp"
-#include "autoware_map_msgs/srv/get_differential_point_cloud_map.hpp"
+#include <memory>
 
 using autoware_map_msgs::srv::GetDifferentialPointCloudMap;
 
@@ -52,13 +55,11 @@ protected:
     module_ = std::make_shared<DifferentialMapLoaderModule>(node_.get(), dummy_metadata_dict);
 
     // Create a client for the GetDifferentialPointCloudMap service
-    client_ = node_->create_client<GetDifferentialPointCloudMap>("service/get_differential_pcd_map");
+    client_ =
+      node_->create_client<GetDifferentialPointCloudMap>("service/get_differential_pcd_map");
   }
 
-  void TearDown() override
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() override { rclcpp::shutdown(); }
 
   rclcpp::Node::SharedPtr node_;
   std::shared_ptr<DifferentialMapLoaderModule> module_;
@@ -81,8 +82,7 @@ TEST_F(TestDifferentialMapLoaderModule, LoadDifferentialPCDFiles)
   // Call the service
   auto result_future = client_->async_send_request(request);
   ASSERT_EQ(
-    rclcpp::spin_until_future_complete(node_, result_future),
-    rclcpp::FutureReturnCode::SUCCESS);
+    rclcpp::spin_until_future_complete(node_, result_future), rclcpp::FutureReturnCode::SUCCESS);
 
   // Check the result
   auto result = result_future.get();
@@ -91,7 +91,7 @@ TEST_F(TestDifferentialMapLoaderModule, LoadDifferentialPCDFiles)
   EXPECT_EQ(static_cast<int>(result->ids_to_remove.size()), 0);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

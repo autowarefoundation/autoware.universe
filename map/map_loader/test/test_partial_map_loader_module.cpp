@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <rclcpp/rclcpp.hpp>
-#include <memory>
-
 #include "../src/pointcloud_map_loader/partial_map_loader_module.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
 #include "autoware_map_msgs/srv/get_partial_point_cloud_map.hpp"
+
+#include <gtest/gtest.h>
+
+#include <memory>
 
 using autoware_map_msgs::srv::GetPartialPointCloudMap;
 
@@ -54,10 +57,7 @@ protected:
     client_ = node_->create_client<GetPartialPointCloudMap>("service/get_partial_pcd_map");
   }
 
-  void TearDown() override
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() override { rclcpp::shutdown(); }
 
   rclcpp::Node::SharedPtr node_;
   std::shared_ptr<PartialMapLoaderModule> module_;
@@ -79,8 +79,7 @@ TEST_F(TestPartialMapLoaderModule, LoadPartialPCDFiles)
   // Call the service
   auto result_future = client_->async_send_request(request);
   ASSERT_EQ(
-    rclcpp::spin_until_future_complete(node_, result_future),
-    rclcpp::FutureReturnCode::SUCCESS);
+    rclcpp::spin_until_future_complete(node_, result_future), rclcpp::FutureReturnCode::SUCCESS);
 
   // Check the result
   auto result = result_future.get();
@@ -88,7 +87,7 @@ TEST_F(TestPartialMapLoaderModule, LoadPartialPCDFiles)
   EXPECT_EQ(result->new_pointcloud_with_ids[0].cell_id, "/tmp/dummy.pcd");
 }
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
