@@ -18,7 +18,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
 #include <boost/optional.hpp>
 
 #include <string>
