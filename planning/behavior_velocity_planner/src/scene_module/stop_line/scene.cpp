@@ -77,6 +77,10 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     stop_pose.position, stop_line_seg_idx);
   switch (state_) {
     case State::APPROACH: {
+      if (signed_arc_dist_to_stop_point < 0) {
+        // already passed the registered stop line
+        break;
+      }
       // Insert stop pose
       planning_utils::insertStopPoint(stop_pose.position, stop_line_seg_idx, *path);
 
