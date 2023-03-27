@@ -81,4 +81,32 @@ where $v$ and $\omega$ are current longitudinal velocity and angular velocity re
 
 ### 3. Get target obstacles from the input point cloud
 
-After generating the ego predicted path, we select target obstacles.
+After generating the ego predicted path, we select target obstacles from the input point cloud. This obstacle filtering has two major steps, which are rough filtering and rigorous filtering.
+
+#### Rough filtering
+
+In rough filtering step, we select target obstacle with simple filter. Create a search area up to a certain distance (default 5[m]) away from the predicted path of the ego vehicle and ignore the point cloud (obstacles) that are not within it. The image of the rough filtering is illustrated below.
+
+![rough_filtering](./image/obstacle_filtering_1.drawio.svg)
+
+#### Rigorous filtering
+
+After rough filtering, it performs a geometric collision check to determine whether the filtered obstacles actually have possibility to collide with the ego vehicle. In this check, the ego vehicle is represented as a rectangle, and the point cloud obstacles are represented as points.
+
+![rigorous_filtering](./image/obstacle_filtering_2.drawio.svg)
+
+### 4. Collision check with target obstacles
+
+In the fourth step, it checks the collision with filtered obstacles using RSS distance. RSS is formulated as:
+
+$$
+d = v_{ego}*t_{response} + v_{ego}^2/(2*a_{min}) - v_{obj}^2/(2*a_{obj_{min}}) + offset
+$$
+
+where $v_{ego}$ and $v_{obj}$ is current ego and obstacle velocity, $a_{min}$ and $a_{obj_{min}}$ is ego and object minimum acceleration (maximum deceleration), $t_{response}$ is response time of the ego vehicle to start deceleration. Therefore the distance from the ego vehicle to the obstacle is smaller than this RSS distance $d$, the ego vehicle send emergency stop signals. This is illustrated in the following picture.
+
+![rss_check](./image/rss_check.drawio.svg)
+
+### 5. Send emergency stop signals to `/diagnostics`
+
+If AEB detects collision with point cloud obstacles in the previous step, it sends emergency signal to `/diagnostics` in this step. Note that in order to enable emergency stop, it has to send ERROR level emergency. Moreover, AEB user should modify the setting file to keep the emergency level, otherwise Autoware does not hold the emergency state.
