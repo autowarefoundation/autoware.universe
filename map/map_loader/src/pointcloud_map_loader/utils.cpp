@@ -67,7 +67,7 @@ bool isGridWithinQueriedArea(
   bool res = false;
   if (area.type == autoware_map_msgs::msg::AreaInfo::ALL_AREA) {
     res = true;
-  } else if (area.type == autoware_map_msgs::msg::AreaInfo::CYLINDER) {
+  } else if (area.type == autoware_map_msgs::msg::AreaInfo::SPHERE) {
     // Currently, the area load only supports spherical area
     geometry_msgs::msg::Point center = area.center;
     double radius = area.radius;
