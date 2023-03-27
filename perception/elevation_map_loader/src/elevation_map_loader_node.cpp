@@ -157,10 +157,9 @@ void ElevationMapLoaderNode::publish()
 void ElevationMapLoaderNode::timerCallback()
 {
   // flag to make receiveMap() called only once.
-  static bool is_map_received = false;
-  if (!is_map_received) {
+  if (!is_map_received_) {
     ElevationMapLoaderNode::receiveMap();
-    is_map_received = true;
+    is_map_received_ = true;
     RCLCPP_INFO(this->get_logger(), "receive service with pointcloud_map");
   }
   if (data_manager_.isInitialized() && !is_elevation_map_published_) {

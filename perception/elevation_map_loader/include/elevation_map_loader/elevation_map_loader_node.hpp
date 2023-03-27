@@ -94,6 +94,7 @@ private:
   float inpaint_radius_;
   bool use_elevation_map_cloud_publisher_;
   std::string param_file_path_;
+  bool is_map_received_ = false;
   bool is_elevation_map_published_ = false;
 
   DataManager data_manager_;
