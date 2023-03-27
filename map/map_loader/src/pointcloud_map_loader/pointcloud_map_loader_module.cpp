@@ -17,6 +17,7 @@
 #include "utils.hpp"
 
 #include <fmt/format.h>
+
 #include <string>
 #include <vector>
 

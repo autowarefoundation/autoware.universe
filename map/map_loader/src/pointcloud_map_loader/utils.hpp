@@ -17,6 +17,7 @@
 
 #include <autoware_map_msgs/msg/area_info.hpp>
 #include <geometry_msgs/msg/point.hpp>
+
 #include <pcl/common/common.h>
 
 struct PCDFileMetadata
