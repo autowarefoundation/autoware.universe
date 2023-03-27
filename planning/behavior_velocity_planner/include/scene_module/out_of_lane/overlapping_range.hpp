@@ -54,14 +54,13 @@ inline Overlap calculate_overlap(
   const auto overlap_right = boost::geometry::intersects(path_footprint, right_bound);
 
   lanelet::BasicPolygons2d overlapping_polygons;
-  if (overlap_left || overlap_right)  // TODO(Maxime): special case when both are overlapped
+  if (overlap_left || overlap_right)
     boost::geometry::intersection(
       path_footprint, lanelet.polygon2d().basicPolygon(), overlapping_polygons);
   for (const auto & overlapping_polygon : overlapping_polygons) {
     for (const auto & point : overlapping_polygon) {
       if (overlap_left && overlap_right)
-        overlap.inside_distance =
-          0.0;  // TODO(Maxime): boost::geometry::distance(left_bound, right_bound)
+        overlap.inside_distance = boost::geometry::distance(left_bound, right_bound);
       else if (overlap_left)
         overlap.inside_distance =
           std::max(overlap.inside_distance, boost::geometry::distance(point, left_bound));
