@@ -63,41 +63,62 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto current_ego_footprint = calculate_current_ego_footprint(ego_data, params_, true);
   const auto path_footprints = calculate_path_footprints(ego_data, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
-  // Get neighboring lanes TODO(Maxime): make separate function
-  auto path_lanelets = planning_utils::getLaneletsOnPath(
+  // Get path lanelets, other lanelets, and lanelets to ignore TODO(Maxime): make separate function
+  const auto contains_lanelet = [](const auto & container, const auto & ll) -> bool {
+    return std::find_if(container.begin(), container.end(), [&](const auto & l) {
+             return l.id() == ll.id();
+           }) != container.end();
+  };
+  const auto path_lanelets = planning_utils::getLaneletsOnPath(
     *path, (*planner_data_)->route_handler_->getLaneletMapPtr(),
     (*planner_data_)->current_odometry->pose);
-  lanelet::ConstLanelets previous_lanelets;
+  lanelet::ConstLanelets lanelets_to_ignore;
   for (const auto & path_lanelet : path_lanelets) {
-    if (!boost::geometry::intersects(
-          path_lanelet.polygon2d().basicPolygon(), current_ego_footprint))
-      break;
-    const auto lanelets = (*planner_data_)->route_handler_->getPreviousLanelets(path_lanelet);
-    previous_lanelets.insert(previous_lanelets.end(), lanelets.begin(), lanelets.end());
+    for (const auto & following :
+         (*planner_data_)->route_handler_->getRoutingGraphPtr()->following(path_lanelet)) {
+      if (!contains_lanelet(path_lanelets, following)) {
+        lanelets_to_ignore.push_back(following);
+      }
+    }
   }
-  path_lanelets.insert(path_lanelets.end(), previous_lanelets.begin(), previous_lanelets.end());
-  lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
+  const auto behind =
+    planning_utils::calculateOffsetPoint2d(ego_data.pose, params_.rear_offset, 0.0);
+  const lanelet::BasicPoint2d behind_point(behind.x(), behind.y());
+  const auto behind_lanelets = lanelet::geometry::findWithin2d(
+    (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
+  for (const auto & l : behind_lanelets) {
+    const auto is_path_lanelet = contains_lanelet(path_lanelets, l.second);
+    if (!is_path_lanelet) lanelets_to_ignore.push_back(l.second);
+  }
+  const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
   const auto lanelets_within_range = lanelet::geometry::findWithin2d(
     (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer, ego_point,
     std::max(params_.slow_dist_threshold, params_.stop_dist_threshold));
-  const auto lanelets_to_check = [&]() {
+  const auto other_lanelets = [&]() {
     lanelet::ConstLanelets lls;
-    for (const auto & l : lanelets_within_range) {
-      const auto is_path_lanelet =
-        std::find_if(path_lanelets.begin(), path_lanelets.end(), [&](const auto & path_ll) {
-          return path_ll.id() == l.second.id();
-        }) != path_lanelets.end();
-      if (!is_path_lanelet) lls.push_back(l.second);
+    for (const auto & ll : lanelets_within_range) {
+      const auto is_path_lanelet = contains_lanelet(path_lanelets, ll.second);
+      const auto is_overlapped_by_path_lanelets = [&](const auto & l) {
+        for (const auto & path_ll : path_lanelets)
+          if (boost::geometry::overlaps(
+                path_ll.polygon2d().basicPolygon(), ll.second.polygon2d().basicPolygon()))
+            return true;
+        return false;
+      };
+      if (!is_path_lanelet && !is_overlapped_by_path_lanelets(ll.second)) lls.push_back(ll.second);
     }
     return lls;
   }();
+  debug_data_.path_lanelets = path_lanelets;
+  debug_data_.ignored_lanelets = lanelets_to_ignore;
+  debug_data_.other_lanelets = other_lanelets;
   if (params_.skip_if_already_overlapping) {  // TODO(Maxime): cleanup
     debug_data_.current_footprint = current_ego_footprint;
     const auto overlapped_lanelet_it =
-      std::find_if(lanelets_to_check.begin(), lanelets_to_check.end(), [&](const auto & ll) {
+      std::find_if(other_lanelets.begin(), other_lanelets.end(), [&](const auto & ll) {
         return boost::geometry::intersects(ll.polygon2d().basicPolygon(), current_ego_footprint);
       });
-    if (overlapped_lanelet_it != lanelets_to_check.end()) {
+    if (overlapped_lanelet_it != other_lanelets.end()) {
       debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
       std::printf("*** ALREADY OVERLAPPING *** skipping\n");
       return true;
@@ -106,13 +127,13 @@ bool OutOfLaneModule::modifyPathVelocity(
   // Calculate overlapping ranges
   stopwatch.tic("calculate_overlapping_ranges");
   const auto ranges =
-    calculate_overlapping_ranges(path_footprints, path_lanelets, lanelets_to_check, params_);
+    calculate_overlapping_ranges(path_footprints, path_lanelets, other_lanelets, params_);
   const auto calculate_overlapping_ranges_us = stopwatch.toc("calculate_overlapping_ranges");
   // Calculate stop and slowdown points
   stopwatch.tic("calculate_decisions");
   auto decisions = calculate_decisions(
     ranges, ego_data, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
-    lanelets_to_check, params_, debug_data_);
+    other_lanelets, params_, debug_data_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   stopwatch.tic("calc_slowdown_points");
   const auto points_to_insert = calculate_slowdown_points(ego_data, decisions, params_);
@@ -180,6 +201,41 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
   debug_marker_array.markers.push_back(debug_marker);
   debug_marker.id++;
   for (const auto & ll : debug_data_.current_overlapped_lanelets) {
+    debug_marker.points.clear();
+    for (const auto & p : ll.polygon3d())
+      debug_marker.points.push_back(
+        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
+    debug_marker.points.push_back(debug_marker.points.front());
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+  }
+
+  // Lanelets
+  debug_marker.ns = "path_lanelets";
+  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5);
+  for (const auto & ll : debug_data_.path_lanelets) {
+    debug_marker.points.clear();
+    for (const auto & p : ll.polygon3d())
+      debug_marker.points.push_back(
+        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
+    debug_marker.points.push_back(debug_marker.points.front());
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+  }
+  debug_marker.ns = "ignored_lanelets";
+  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5);
+  for (const auto & ll : debug_data_.ignored_lanelets) {
+    debug_marker.points.clear();
+    for (const auto & p : ll.polygon3d())
+      debug_marker.points.push_back(
+        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
+    debug_marker.points.push_back(debug_marker.points.front());
+    debug_marker_array.markers.push_back(debug_marker);
+    debug_marker.id++;
+  }
+  debug_marker.ns = "other_lanelets";
+  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5);
+  for (const auto & ll : debug_data_.other_lanelets) {
     debug_marker.points.clear();
     for (const auto & p : ll.polygon3d())
       debug_marker.points.push_back(

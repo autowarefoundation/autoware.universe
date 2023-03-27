@@ -100,7 +100,7 @@ struct OtherLane
 {
   bool range_is_open = false;
   RangeBound first_range_bound{};
-  RangeBound last_range_bound{};  // TODO(Maxime): if we look ahead we do not need this
+  RangeBound last_range_bound{};
   lanelet::ConstLanelet lanelet;
   lanelet::BasicPolygon2d polygon;
 

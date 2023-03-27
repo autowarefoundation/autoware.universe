@@ -53,6 +53,9 @@ struct DebugData
   std::vector<std::pair<double, double>> ego_times;
   lanelet::BasicPolygon2d current_footprint;
   lanelet::ConstLanelets current_overlapped_lanelets;
+  lanelet::ConstLanelets path_lanelets;
+  lanelet::ConstLanelets ignored_lanelets;
+  lanelet::ConstLanelets other_lanelets;
   void reset_data()
   {
     footprints.clear();
