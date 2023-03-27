@@ -64,10 +64,14 @@ bool sphereAndBoxOverlapExists(
 bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata)
 {
-  if (area.type == autoware_map_msgs::msg::AreaInfo::ALL_AREA) return true;
-  // Currently, the area load only supports spherical area
-  geometry_msgs::msg::Point center = area.center;
-  double radius = area.radius;
-  bool res = sphereAndBoxOverlapExists(center, radius, metadata.min, metadata.max);
+  bool res = false;
+  if (area.type == autoware_map_msgs::msg::AreaInfo::ALL_AREA) {
+    res = true;
+  } else if (area.type == autoware_map_msgs::msg::AreaInfo::CYLINDER) {
+    // Currently, the area load only supports spherical area
+    geometry_msgs::msg::Point center = area.center;
+    double radius = area.radius;
+    res = sphereAndBoxOverlapExists(center, radius, metadata.min, metadata.max);
+  }
   return res;
 }
