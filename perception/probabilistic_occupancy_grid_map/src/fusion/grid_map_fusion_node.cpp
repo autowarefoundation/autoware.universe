@@ -250,12 +250,9 @@ void GridMapFusionNode::updateGridMap(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg)
 {
   // get updater map origin
-  const auto & fusion_map_origin_x = occupancy_grid_map_updater_ptr_->getOriginX();
-  const auto & fusion_map_origin_y = occupancy_grid_map_updater_ptr_->getOriginY();
 
   // origin is set to current updater map
   auto map_for_update = OccupancyGridMapToCostmap2D(*occupancy_grid_msg);
-  map_for_update.updateOrigin(fusion_map_origin_x, fusion_map_origin_y);
 
   // update
   occupancy_grid_map_updater_ptr_->update(map_for_update);
@@ -272,7 +269,8 @@ nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMapToCostmap2D(
   for (unsigned int i = 0; i < occupancy_grid_map.info.width; i++) {
     for (unsigned int j = 0; j < occupancy_grid_map.info.height; j++) {
       const unsigned int index = i + j * occupancy_grid_map.info.width;
-      costmap2d.setCost(i, j, occupancy_grid_map.data[index]);
+      costmap2d.setCost(
+        i, j, occupancy_cost_value::inverse_cost_translation_table[occupancy_grid_map.data[index]]);
     }
   }
 

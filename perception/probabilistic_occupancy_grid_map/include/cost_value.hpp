@@ -71,7 +71,21 @@ struct CostTranslationTable
   char operator[](unsigned char n) const { return data[n]; }
   char data[256];
 };
+struct InverseCostTranslationTable
+{
+  InverseCostTranslationTable()
+  {
+    // 0-100 to 0-255
+    for (int i = 0; i < 100; i++) {
+      data[i] = static_cast<char>(i * 255 / 99);
+    }
+  }
+  char operator[](unsigned char n) const { return (n > 99) ? data[99] : data[n]; }
+  char data[100];
+};
+
 static const CostTranslationTable cost_translation_table;
+static const InverseCostTranslationTable inverse_cost_translation_table;
 }  // namespace occupancy_cost_value
 
 #endif  // COST_VALUE_HPP_
