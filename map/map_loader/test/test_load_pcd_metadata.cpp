@@ -15,37 +15,41 @@
 #include "../src/pointcloud_map_loader/utils.hpp"
 
 #include <gmock/gmock.h>
-#include <fstream>
+
 #include <filesystem>
+#include <fstream>
 
 using ::testing::ContainerEq;
 
-std::string createYAMLFile() {
-    std::filesystem::path tmp_path = std::filesystem::temp_directory_path() / "temp_metadata.yaml";
+std::string createYAMLFile()
+{
+  std::filesystem::path tmp_path = std::filesystem::temp_directory_path() / "temp_metadata.yaml";
 
-    std::ofstream ofs(tmp_path);
-    ofs << "file1.pcd: [1, 2]\n";
-    ofs << "file2.pcd: [3, 4]\n";
-    ofs << "x_resolution: 5\n";
-    ofs << "y_resolution: 6\n";
-    ofs.close();
+  std::ofstream ofs(tmp_path);
+  ofs << "file1.pcd: [1, 2]\n";
+  ofs << "file2.pcd: [3, 4]\n";
+  ofs << "x_resolution: 5\n";
+  ofs << "y_resolution: 6\n";
+  ofs.close();
 
-    return tmp_path.string();
+  return tmp_path.string();
 }
 
-TEST(LoadPCDMetadataTest, BasicFunctionality) {
-    std::string yaml_file_path = createYAMLFile();
+TEST(LoadPCDMetadataTest, BasicFunctionality)
+{
+  std::string yaml_file_path = createYAMLFile();
 
-    std::map<std::string, PCDFileMetadata> expected = {
-        {"file1.pcd", {{1, 2, 0}, {6, 8, 0}}},
-        {"file2.pcd", {{3, 4, 0}, {8, 10, 0}}},
-    };
+  std::map<std::string, PCDFileMetadata> expected = {
+    {"file1.pcd", {{1, 2, 0}, {6, 8, 0}}},
+    {"file2.pcd", {{3, 4, 0}, {8, 10, 0}}},
+  };
 
-    auto result = loadPCDMetadata(yaml_file_path);
-    ASSERT_THAT(result, ContainerEq(expected));
+  auto result = loadPCDMetadata(yaml_file_path);
+  ASSERT_THAT(result, ContainerEq(expected));
 }
 
-int main(int argc, char** argv) {
-    ::testing::InitGoogleMock(&argc, argv);
-    return RUN_ALL_TESTS();
+int main(int argc, char ** argv)
+{
+  ::testing::InitGoogleMock(&argc, argv);
+  return RUN_ALL_TESTS();
 }

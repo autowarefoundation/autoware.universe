@@ -14,49 +14,52 @@
 
 #include "../src/pointcloud_map_loader/utils.hpp"
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using ::testing::ContainerEq;
 
-TEST(ReplaceWithAbsolutePathTest, BasicFunctionality) {
-    std::map<std::string, PCDFileMetadata> pcd_metadata_path = {
-        {"file1.pcd", {{1, 2, 3}, {4, 5, 6}}},
-        {"file2.pcd", {{-1, -2, -3}, {-4, -5, -6}}},
-    };
+TEST(ReplaceWithAbsolutePathTest, BasicFunctionality)
+{
+  std::map<std::string, PCDFileMetadata> pcd_metadata_path = {
+    {"file1.pcd", {{1, 2, 3}, {4, 5, 6}}},
+    {"file2.pcd", {{-1, -2, -3}, {-4, -5, -6}}},
+  };
 
-    std::vector<std::string> pcd_paths = {
-        "/home/user/pcd/file1.pcd",
-        "/home/user/pcd/file2.pcd",
-    };
+  std::vector<std::string> pcd_paths = {
+    "/home/user/pcd/file1.pcd",
+    "/home/user/pcd/file2.pcd",
+  };
 
-    std::map<std::string, PCDFileMetadata> expected = {
-        {"/home/user/pcd/file1.pcd", {{1, 2, 3}, {4, 5, 6}}},
-        {"/home/user/pcd/file2.pcd", {{-1, -2, -3}, {-4, -5, -6}}},
-    };
+  std::map<std::string, PCDFileMetadata> expected = {
+    {"/home/user/pcd/file1.pcd", {{1, 2, 3}, {4, 5, 6}}},
+    {"/home/user/pcd/file2.pcd", {{-1, -2, -3}, {-4, -5, -6}}},
+  };
 
-    auto result = replaceWithAbsolutePath(pcd_metadata_path, pcd_paths);
-    ASSERT_THAT(result, ContainerEq(expected));
+  auto result = replaceWithAbsolutePath(pcd_metadata_path, pcd_paths);
+  ASSERT_THAT(result, ContainerEq(expected));
 }
 
-TEST(ReplaceWithAbsolutePathTest, NoMatchingFiles) {
-    std::map<std::string, PCDFileMetadata> pcd_metadata_path = {
-        {"file1.pcd", {{1, 2, 3}, {4, 5, 6}}},
-        {"file2.pcd", {{-1, -2, -3}, {-4, -5, -6}}},
-    };
+TEST(ReplaceWithAbsolutePathTest, NoMatchingFiles)
+{
+  std::map<std::string, PCDFileMetadata> pcd_metadata_path = {
+    {"file1.pcd", {{1, 2, 3}, {4, 5, 6}}},
+    {"file2.pcd", {{-1, -2, -3}, {-4, -5, -6}}},
+  };
 
-    std::vector<std::string> pcd_paths = {
-        "/home/user/pcd/non_matching_file1.pcd",
-        "/home/user/pcd/non_matching_file2.pcd",
-    };
+  std::vector<std::string> pcd_paths = {
+    "/home/user/pcd/non_matching_file1.pcd",
+    "/home/user/pcd/non_matching_file2.pcd",
+  };
 
-    std::map<std::string, PCDFileMetadata> expected = {};
+  std::map<std::string, PCDFileMetadata> expected = {};
 
-    auto result = replaceWithAbsolutePath(pcd_metadata_path, pcd_paths);
-    ASSERT_THAT(result, ContainerEq(expected));
+  auto result = replaceWithAbsolutePath(pcd_metadata_path, pcd_paths);
+  ASSERT_THAT(result, ContainerEq(expected));
 }
 
-int main(int argc, char** argv) {
-    ::testing::InitGoogleMock(&argc, argv);
-    return RUN_ALL_TESTS();
+int main(int argc, char ** argv)
+{
+  ::testing::InitGoogleMock(&argc, argv);
+  return RUN_ALL_TESTS();
 }

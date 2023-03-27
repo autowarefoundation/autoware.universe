@@ -25,7 +25,8 @@ struct PCDFileMetadata
 {
   pcl::PointXYZ min;
   pcl::PointXYZ max;
-  bool operator==(const PCDFileMetadata& other) const {
+  bool operator==(const PCDFileMetadata & other) const
+  {
     return min.x == other.min.x && min.y == other.min.y && min.z == other.min.z &&
            max.x == other.max.x && max.y == other.max.y && max.z == other.max.z;
   }
