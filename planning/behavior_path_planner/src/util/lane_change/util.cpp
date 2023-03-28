@@ -330,7 +330,7 @@ std::pair<bool, bool> getLaneChangePaths(
 
   const auto sorted_lane_ids = getSortedLaneIds(
     route_handler, original_lanelets, target_lanelets, arc_position_from_target.distance);
-  constexpr auto ignore_unknown{true};
+  constexpr auto ignore_unknown{false};
   const auto lateral_buffer = calcLateralBufferForFiltering(common_parameter.vehicle_width, 0.5);
 
   LaneChangeTargetObjectIndices dynamic_object_indices;
