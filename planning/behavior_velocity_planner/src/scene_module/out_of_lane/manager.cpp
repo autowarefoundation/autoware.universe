@@ -71,7 +71,7 @@ void OutOfLaneModuleManager::launchNewModules(
   if (path.points.empty()) return;
   // general
   if (!isModuleRegistered(module_id_)) {
-    registerModule(std::make_shared<OutOfLaneModule>(
+    registerModule(std::make_shared<out_of_lane::OutOfLaneModule>(
       module_id_, planner_param_, logger_.get_child("out_of_lane_module"), clock_));
   }
 }

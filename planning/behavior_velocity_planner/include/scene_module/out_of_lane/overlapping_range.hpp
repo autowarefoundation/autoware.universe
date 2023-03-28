@@ -27,6 +27,7 @@
 namespace behavior_velocity_planner::out_of_lane
 {
 
+/// @brief representation of an overlap between the ego footprint and some other lane
 struct Overlap
 {
   double inside_distance = 0.0;  ///!< distance inside the overlap
@@ -35,21 +36,34 @@ struct Overlap
   lanelet::BasicPoint2d min_overlap_point{};  ///!< point with min arc length
   lanelet::BasicPoint2d max_overlap_point{};  ///!< point with max arc length
 };
-
+/// @brief calculate the overlap between the given footprint and lanelet
+/// @param [in] path_footprint footprint used to calculate the overlap
+/// @param [in] path_lanelets path lanelets used to calculate arc length along the ego path
+/// @param [in] lanelet lanelet used to calculate the overlap
+/// @return the found overlap between the footprint and the lanelet
 Overlap calculate_overlap(
   const lanelet::BasicPolygon2d & path_footprint, const lanelet::ConstLanelets & path_lanelets,
   const lanelet::ConstLanelet & lanelet);
-
+/// @brief calculate the overlapping ranges between the path footprints and a lanelet
+/// @param [in] path_footprints footprints used to calculate the overlaps
+/// @param [in] path_lanelets path lanelets used to calculate arc length along the ego path
+/// @param [in] lanelet lanelet used to calculate the overlaps
+/// @param [in] params parameters
+/// @return the overlapping ranges found between the footprints and the lanelet
 OverlapRanges calculate_overlapping_ranges(
   const std::vector<lanelet::BasicPolygon2d> & path_footprints,
   const lanelet::ConstLanelets & path_lanelets, const lanelet::ConstLanelet & lanelet,
   const PlannerParam & params);
-
+/// @brief calculate the overlapping ranges between the path footprints and some lanelets
+/// @param [in] path_footprints footprints used to calculate the overlaps
+/// @param [in] path_lanelets path lanelets used to calculate arc length along the ego path
+/// @param [in] lanelets lanelets used to calculate the overlaps
+/// @param [in] params parameters
+/// @return the overlapping ranges found between the footprints and the lanelets
 OverlapRanges calculate_overlapping_ranges(
   const std::vector<lanelet::BasicPolygon2d> & path_footprints,
   const lanelet::ConstLanelets & path_lanelets, const lanelet::ConstLanelets & lanelets,
   const PlannerParam & params);
-
 }  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__OVERLAPPING_RANGE_HPP_

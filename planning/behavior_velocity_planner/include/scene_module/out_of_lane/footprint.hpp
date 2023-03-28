@@ -25,32 +25,34 @@ namespace behavior_velocity_planner
 {
 namespace out_of_lane
 {
+/// @brief create the base footprint of ego
+/// @param [in] p parameters used to create the footprint
+/// @param [in] ignore_offset optional parameter, if true, ignore the "extra offsets" to build the
+/// footprint
+/// @return base ego footprint
 tier4_autoware_utils::Polygon2d make_base_footprint(
   const PlannerParam & p, const bool ignore_offset = false);
-
+/// @brief project a footprint to the given pose
+/// @param [in] base_footprint footprint to project
+/// @param [in] pose projection pose
+/// @return footprint projected to the given pose
 lanelet::BasicPolygon2d project_to_pose(
   const tier4_autoware_utils::Polygon2d & base_footprint, const geometry_msgs::msg::Pose & pose);
-
 /// @brief calculate the path footprints
 /// @details the resulting polygon follows the format used by the lanelet library: clockwise order
 /// and implicit closing edge
-/// @param [in] path input path
-/// @param [in] first_idx first path index to consider
+/// @param [in] ego_data data related to the ego vehicle (includes its path)
 /// @param [in] params parameters
-/// @return polygon footprints for each path point starting from first_idx
+/// @return polygon footprints for each path point starting from ego's current position
 std::vector<lanelet::BasicPolygon2d> calculate_path_footprints(
   const EgoData & ego_data, const PlannerParam & params);
-
+/// @brief calculate the current ego footprint
+/// @param [in] ego_data data related to the ego vehicle
+/// @param [in] params parameters
+/// @param [in] ignore_offset optional parameter, if true, ignore the "extra offsets" to build the
+/// footprint
 lanelet::BasicPolygon2d calculate_current_ego_footprint(
   const EgoData & ego_data, const PlannerParam & params, const bool ignore_offset = false);
-
-/// @brief calculate points along the path where we want ego to slowdown/stop
-/// @param ego_data ego data (path, velocity, etc)
-/// @param decisions decisions (before which point to stop, what lane to avoid entering, etc)
-/// @param params parameters
-/// @return precise points to insert in the path
-std::vector<SlowdownToInsert> calculate_slowdown_points(
-  const EgoData & ego_data, std::vector<Slowdown> & decisions, PlannerParam params);
 }  // namespace out_of_lane
 }  // namespace behavior_velocity_planner
 

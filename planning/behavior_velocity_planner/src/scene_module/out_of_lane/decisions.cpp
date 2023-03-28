@@ -41,11 +41,6 @@ double time_along_path(const EgoData & ego_data, const size_t target_idx)
   return dist / v;
 }
 
-/// @brief estimate the times when an object will enter and exit an overlapping range using its
-/// predicted paths
-/// @details times when the predicted paths of the object enters/exits the range are calculated
-/// but may not exist (e.g,, predicted path ends before reaching the end of the range)
-/// so we also calculate the min/max time inside the range.
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range)
 {
@@ -192,7 +187,7 @@ std::vector<Slowdown> calculate_decisions(
   const OverlapRanges & ranges, const EgoData & ego_data,
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const std::shared_ptr<route_handler::RouteHandler> & route_handler,
-  const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug)
+  const lanelet::ConstLanelets & lanelets, const PlannerParam & params)
 {
   std::vector<Slowdown> decisions;
   for (const auto & range : ranges) {
@@ -207,16 +202,10 @@ std::vector<Slowdown> calculate_decisions(
       range.entering_path_idx, range.exiting_path_idx, range.lane.id(), ego_dist_to_range,
       ego_enter_time, ego_exit_time);
 
-    // TODO(Maxime): remove debug ?
-    debug.ranges.push_back(range);
-    debug.ego_times.emplace_back(ego_enter_time, ego_exit_time);
-    auto & npc_times = debug.npc_times.emplace_back();
-
     for (const auto & object : objects.objects) {
       std::printf(
         "\t\t[%s] going at %2.2fm/s", tier4_autoware_utils::toHexString(object.object_id).c_str(),
         object.kinematics.initial_twist_with_covariance.twist.linear.x);
-      auto & debug_pair = npc_times.emplace_back(0.0, 0.0);
       if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel) {
         std::printf(" SKIP (velocity bellow threshold %2.2fm/s)\n", params.objects_min_vel);
         continue;  // skip objects with velocity bellow a threshold
@@ -231,8 +220,6 @@ std::vector<Slowdown> calculate_decisions(
       }
 
       const auto & [enter_time, exit_time] = *enter_exit_time;
-      debug_pair.first = std::min(enter_time, exit_time);
-      debug_pair.second = std::max(enter_time, exit_time);
       std::printf(" enter at %2.2fs, exits at %2.2fs\n", enter_time, exit_time);
 
       const auto object_is_going_opposite_way = enter_time > exit_time;

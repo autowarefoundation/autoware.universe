@@ -126,6 +126,7 @@ struct OtherLane
   }
 };
 
+/// @brief data related to the ego vehicle
 struct EgoData
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId * path;
@@ -135,14 +136,13 @@ struct EgoData
   geometry_msgs::msg::Pose pose;
 };
 
+/// @brief debug data
 struct DebugData
 {
   std::vector<lanelet::BasicPolygon2d> footprints;
   std::vector<SlowdownToInsert> slowdowns;
   geometry_msgs::msg::Pose ego_pose;
   OverlapRanges ranges;
-  std::vector<std::vector<std::pair<double, double>>> npc_times;
-  std::vector<std::pair<double, double>> ego_times;
   lanelet::BasicPolygon2d current_footprint;
   lanelet::ConstLanelets current_overlapped_lanelets;
   lanelet::ConstLanelets path_lanelets;
@@ -153,8 +153,6 @@ struct DebugData
     footprints.clear();
     slowdowns.clear();
     ranges.clear();
-    npc_times.clear();
-    ego_times.clear();
     current_overlapped_lanelets.clear();
   }
 };

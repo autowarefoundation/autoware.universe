@@ -29,33 +29,51 @@
 
 namespace behavior_velocity_planner::out_of_lane
 {
+/// @brief calculate the distance along the ego path between ego and some target path index
+/// @param [in] ego_data data related to the ego vehicle
+/// @param [in] target_idx target ego path index
+/// @return distance between ego and the target [m]
 double distance_along_path(const EgoData & ego_data, const size_t target_idx);
-
+/// @brief estimate the time when ego will reach some target path index
+/// @param [in] ego_data data related to the ego vehicle
+/// @param [in] target_idx target ego path index
+/// @return time taken by ego to reach the target [s]
 double time_along_path(const EgoData & ego_data, const size_t target_idx);
-
-/// @brief estimate the times when an object will enter and exit an overlapping range using its
-/// predicted paths
+/// @brief use an object's predicted paths to estimate the times it will reach the enter and exit
+/// points of an overlapping range
 /// @details times when the predicted paths of the object enters/exits the range are calculated
 /// but may not exist (e.g,, predicted path ends before reaching the end of the range)
-/// so we also calculate the min/max time inside the range.
+/// @param [in] object dynamic object
+/// @param [in] range overlapping range
+/// @return an optional pair (time at enter [s], time at exit [s]). If the dynamic object drives in
+/// the opposite direction, time at enter > time at exit
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range);
-
-/// @brief estimate the times when an object will enter and exit an overlapping range assuming it
-/// follows some lanelet
-/// @details the enter/exit is relative to ego and may be inversed if the object drives in the
-/// opposite direction
+/// @brief use the lanelet map to estimate the times when an object will reach the enter and exit
+/// points of an overlapping range
+/// @param [in] object dynamic object
+/// @param [in] range overlapping range
+/// @param [in] lanelets objects to consider
+/// @param [in] route_handler route handler used to estimate the path of the dynamic object
+/// @return an optional pair (time at enter [s], time at exit [s]). If the dynamic object drives in
+/// the opposite direction, time at enter > time at exit.
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const lanelet::ConstLanelets & lanelets,
   const std::shared_ptr<route_handler::RouteHandler> & route_handler);
-
+/// @brief calculate decisions to stop or slowdown before some overlapping ranges
+/// @param [in] ranges overlapping ranges
+/// @param [in] ego_data data about the ego vehicle
+/// @param [in] objects dynamic objects to consider
+/// @param [in] route_handler route handler
+/// @param [in] lanelets lanelets to consider
+/// @param [in] params parameters
+/// @return return the calculated decisions to slowdown or stop
 std::vector<Slowdown> calculate_decisions(
   const OverlapRanges & ranges, const EgoData & ego_data,
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const std::shared_ptr<route_handler::RouteHandler> & route_handler,
-  const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug);
-
+  const lanelet::ConstLanelets & lanelets, const PlannerParam & params);
 }  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__DECISIONS_HPP_

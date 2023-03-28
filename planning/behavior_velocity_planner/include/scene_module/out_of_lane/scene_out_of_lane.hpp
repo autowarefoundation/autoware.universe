@@ -29,21 +29,18 @@
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace behavior_velocity_planner::out_of_lane
 {
 class OutOfLaneModule : public SceneModuleInterface
 {
-  using PlannerParam = out_of_lane::PlannerParam;
-  using DebugData = out_of_lane::DebugData;
-
 public:
   OutOfLaneModule(
     const int64_t module_id, PlannerParam planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  /**
-   * @brief insert stop or slow down points to prevent dangerously entering another lane
-   */
+  /// @brief insert stop or slow down points to prevent dangerously entering another lane
+  /// @param [inout] path the path to update
+  /// @param [inout] stop_reason reason for stopping
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
@@ -62,6 +59,15 @@ protected:
   std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
     std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
-}  // namespace behavior_velocity_planner
+
+/// @brief calculate points along the path where we want ego to slowdown/stop
+/// @param ego_data ego data (path, velocity, etc)
+/// @param decisions decisions (before which point to stop, what lane to avoid entering, etc)
+/// @param params parameters
+/// @return precise points to insert in the path
+std::vector<SlowdownToInsert> calculate_slowdown_points(
+  const EgoData & ego_data, std::vector<Slowdown> & decisions, PlannerParam params);
+
+}  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__SCENE_OUT_OF_LANE_HPP_

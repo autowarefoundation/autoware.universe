@@ -23,17 +23,32 @@
 
 namespace behavior_velocity_planner::out_of_lane
 {
+/// @brief checks if a lanelet is already contained in a vector of lanelets
+/// @param [in] lanelets vector to check
+/// @param [in] id lanelet id to check
+/// @return true if the given vector contains a lanelet of the given id
 inline bool contains_lanelet(const lanelet::ConstLanelets & lanelets, const lanelet::Id id)
 {
   return std::find_if(lanelets.begin(), lanelets.end(), [&](const auto & l) {
            return l.id() == id;
          }) != lanelets.end();
 };
-
+/// @brief calculate lanelets that should be ignored
+/// @param [in] ego_data data about the ego vehicle
+/// @param [in] path_lanelets lanelets driven by the ego vehicle
+/// @param [in] route_handler route handler
+/// @param [in] params parameters
+/// @return lanelets to ignore
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
   const route_handler::RouteHandler & route_handler, const PlannerParam & params);
-
+/// @brief calculate lanelets that should be checked by the module
+/// @param [in] ego_data data about the ego vehicle
+/// @param [in] path_lanelets lanelets driven by the ego vehicle
+/// @param [in] ignored_lanelets lanelets to ignore
+/// @param [in] route_handler route handler
+/// @param [in] params parameters
+/// @return lanelets to check for overlaps
 lanelet::ConstLanelets calculate_other_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
   const lanelet::ConstLanelets & ignored_lanelets,
