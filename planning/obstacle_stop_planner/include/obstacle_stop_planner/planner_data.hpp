@@ -59,11 +59,17 @@ struct NodeParam
   // set True, slow down for obstacle beside the path
   bool enable_slow_down;
 
+  // set True, filter obstacles in z axis
+  bool enable_z_axis_obstacle_filtering;
+
+  // buffer for z axis filtering [m]
+  double z_axis_filtering_buffer;
+
   // max velocity [m/s]
   double max_velocity;
 
   // keep slow down or stop state if obstacle vanished [s]
-  double hunting_threshold;
+  double chattering_threshold;
 
   // dist threshold for ego's nearest index
   double ego_nearest_dist_threshold;
@@ -79,6 +85,10 @@ struct NodeParam
 
   // voxel grid z parameter for filtering pointcloud [m]
   double voxel_grid_z;
+
+  bool use_predicted_objects;
+
+  bool publish_obstacle_polygon;
 };
 
 struct StopParam
@@ -89,6 +99,7 @@ struct StopParam
 
   // margin between obstacle and the ego's front [m]
   double max_longitudinal_margin;
+  double max_longitudinal_margin_behind_goal;
 
   // margin between obstacle and the ego's front [m]
   // if any other stop point is inserted within max_longitudinal_margin.
@@ -103,16 +114,19 @@ struct StopParam
   // if any obstacles exist within the detection area, this module plans to stop
   // before the obstacle.
   double lateral_margin;
+  double vehicle_lateral_margin;
+  double pedestrian_lateral_margin;
+  double unknown_lateral_margin;
 
   // =================================
   // params for trajectory pre-process
   // =================================
 
-  // trajectory extend distance [m]
-  double extend_distance;
-
   // step length for pointcloud search range [m]
   double step_length;
+
+  // enable extend trajectory after goal lane for obstacle detection
+  bool enable_stop_behind_goal_for_obstacle;
 
   // ======
   // others
@@ -152,6 +166,9 @@ struct SlowDownParam
   // lateral margin between the ego's footprint and the boundary of the detection area for slow down
   // obstacles [m]
   double lateral_margin;
+  double vehicle_lateral_margin;
+  double pedestrian_lateral_margin;
+  double unknown_lateral_margin;
 
   // ===================
   // params for velocity
@@ -231,6 +248,12 @@ struct PlannerData
   pcl::PointXYZ nearest_slow_down_point;
 
   pcl::PointXYZ lateral_nearest_slow_down_point;
+
+  Pose nearest_collision_point_pose{};
+
+  Pose nearest_slow_down_point_pose{};
+
+  Pose lateral_nearest_slow_down_point_pose{};
 
   rclcpp::Time nearest_collision_point_time{};
 

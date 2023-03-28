@@ -43,6 +43,14 @@ private:
 
   void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path) override;
 
+  bool isModuleRegisteredFromRegElement(const lanelet::Id & id, const size_t module_id) const;
+
+  bool isModuleRegisteredFromExistingAssociatedModule(const lanelet::Id & id) const;
+
+  bool hasSameTrafficLight(
+    const lanelet::TrafficLightConstPtr element,
+    const lanelet::TrafficLightConstPtr registered_element) const;
+
   // Debug
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::LookingTrafficSignal>::SharedPtr
     pub_tl_state_;

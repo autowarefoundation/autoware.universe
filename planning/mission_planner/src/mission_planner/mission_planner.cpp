@@ -16,12 +16,10 @@
 
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
+
+#include <array>
+#include <random>
 
 namespace
 {
@@ -46,6 +44,14 @@ LaneletSegment convert(const LaneletSegment & s)
     segment.primitives.push_back(convert(p));
   }
   return segment;
+}
+
+std::array<uint8_t, 16> generate_random_id()
+{
+  static std::independent_bits_engine<std::mt19937, 8, uint8_t> engine(std::random_device{}());
+  std::array<uint8_t, 16> id;
+  std::generate(id.begin(), id.end(), std::ref(engine));
+  return id;
 }
 
 }  // namespace
@@ -113,19 +119,18 @@ PoseStamped MissionPlanner::transform_pose(const PoseStamped & input)
 
 void MissionPlanner::change_route()
 {
-  arrival_checker_.reset_goal();
+  arrival_checker_.set_goal();
   // TODO(Takagi, Isamu): publish an empty route here
 }
 
 void MissionPlanner::change_route(const LaneletRoute & route)
 {
-  // TODO(Takagi, Isamu): replace when modified goal is always published
-  // arrival_checker_.reset_goal();
-  PoseStamped goal;
+  PoseWithUuidStamped goal;
   goal.header = route.header;
   goal.pose = route.goal_pose;
-  arrival_checker_.reset_goal(goal);
+  goal.uuid = route.uuid;
 
+  arrival_checker_.set_goal(goal);
   pub_route_->publish(route);
   pub_marker_->publish(planner_->visualize(route));
 }
@@ -161,20 +166,21 @@ void MissionPlanner::on_set_route(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
 
-  // Use temporary pose stapmed for transform.
+  // Use temporary pose stamped for transform.
   PoseStamped pose;
   pose.header = req->header;
   pose.pose = req->goal;
 
   // Convert route.
   LaneletRoute route;
-  route.header.stamp = req->header.stamp;
-  route.header.frame_id = map_frame_;
   route.start_pose = odometry_->pose.pose;
   route.goal_pose = transform_pose(pose).pose;
   for (const auto & segment : req->segments) {
     route.segments.push_back(convert(segment));
   }
+  route.header.stamp = req->header.stamp;
+  route.header.frame_id = map_frame_;
+  route.uuid.uuid = generate_random_id();
 
   // Update route.
   change_route(route);
@@ -202,7 +208,7 @@ void MissionPlanner::on_set_route_points(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
 
-  // Use temporary pose stapmed for transform.
+  // Use temporary pose stamped for transform.
   PoseStamped pose;
   pose.header = req->header;
 
@@ -224,6 +230,7 @@ void MissionPlanner::on_set_route_points(
   }
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
+  route.uuid.uuid = generate_random_id();
 
   // Update route.
   change_route(route);

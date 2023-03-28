@@ -31,11 +31,13 @@
 
 ### Common Parameter
 
-| Parameter           | Type   | Description                                                                            |
-| ------------------- | ------ | -------------------------------------------------------------------------------------- |
-| `enable_slow_down`  | bool   | enable slow down planner [-]                                                           |
-| `max_velocity`      | double | max velocity [m/s]                                                                     |
-| `hunting_threshold` | double | even if the obstacle disappears, the stop judgment continues for hunting_threshold [s] |
+| Parameter                          | Type   | Description                                                                               |
+| ---------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| `enable_slow_down`                 | bool   | enable slow down planner [-]                                                              |
+| `max_velocity`                     | double | max velocity [m/s]                                                                        |
+| `chattering_threshold`             | double | even if the obstacle disappears, the stop judgment continues for chattering_threshold [s] |
+| `enable_z_axis_obstacle_filtering` | bool   | filter obstacles in z axis (height) [-]                                                   |
+| `z_axis_filtering_buffer`          | double | additional buffer for z axis filtering [m]]                                               |
 
 ## Obstacle Stop Planner
 
@@ -87,19 +89,20 @@ This module has parameter `hold_stop_margin_distance` in order to prevent from t
 
 #### Stop position
 
-| Parameter                   | Type   | Description                                                                                                                                    |
-| --------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `max_longitudinal_margin`   | double | margin between obstacle and the ego's front [m]                                                                                                |
-| `min_longitudinal_margin`   | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
-| `hold_stop_margin_distance` | double | parameter for restart prevention (See above section) [m]                                                                                       |
+| Parameter                             | Type   | Description                                                                                                                                    |
+| ------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_longitudinal_margin`             | double | margin between obstacle and the ego's front [m]                                                                                                |
+| `max_longitudinal_margin_behind_goal` | double | margin between obstacle and the ego's front when the stop point is behind the goal[m]                                                          |
+| `min_longitudinal_margin`             | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
+| `hold_stop_margin_distance`           | double | parameter for restart prevention (See above section) [m]                                                                                       |
 
 #### Obstacle detection area
 
-| Parameter         | Type   | Description                                                                         |
-| ----------------- | ------ | ----------------------------------------------------------------------------------- |
-| `lateral_margin`  | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
-| `step_length`     | double | step length for pointcloud search range [m]                                         |
-| `extend_distance` | double | extend trajectory to consider after goal obstacle in the extend_distance [m]        |
+| Parameter                              | Type   | Description                                                                         |
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `lateral_margin`                       | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
+| `step_length`                          | double | step length for pointcloud search range [m]                                         |
+| `enable_stop_behind_goal_for_obstacle` | bool   | enabling extend trajectory after goal lane for obstacle detection                   |
 
 ### Flowchart
 

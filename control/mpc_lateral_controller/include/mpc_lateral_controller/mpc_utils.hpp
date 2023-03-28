@@ -16,8 +16,6 @@
 #define MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
 
 #include "eigen3/Eigen/Core"
-#include "geometry/common_2d.hpp"
-#include "helper_functions/angle_utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -84,7 +82,7 @@ bool convertToAutowareTrajectory(
 /**
  * @brief calculate the arc length at each point of the given trajectory
  * @param [in] trajectory trajectory for which to calculate the arc length
- * @param [out] arclength the cummulative arc length at each point of the trajectory
+ * @param [out] arclength the cumulative arc length at each point of the trajectory
  */
 void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<double> * arclength);
 /**

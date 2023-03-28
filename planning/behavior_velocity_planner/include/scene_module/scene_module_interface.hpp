@@ -126,7 +126,8 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
+      p->ego_nearest_yaw_threshold);
   }
 
   template <class T>
@@ -134,7 +135,8 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
+      p->ego_nearest_yaw_threshold);
   }
 };
 
@@ -304,7 +306,8 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
+      p->ego_nearest_yaw_threshold);
   }
 
   template <class T>
@@ -313,7 +316,8 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
+      p->ego_nearest_yaw_threshold);
   }
 
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
@@ -395,12 +399,7 @@ protected:
 
   void generateUUID(const int64_t & module_id)
   {
-    // Generate random number
-    UUID uuid;
-    std::mt19937 gen(std::random_device{}());
-    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
-    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
-    map_uuid_.insert({module_id, uuid});
+    map_uuid_.insert({module_id, tier4_autoware_utils::generateUUID()});
   }
 
   void removeUUID(const int64_t & module_id)

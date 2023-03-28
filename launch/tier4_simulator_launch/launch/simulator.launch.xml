@@ -2,10 +2,13 @@
   <!-- Parameter files -->
   <arg name="fault_injection_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
+  <arg name="pose_initializer_param_path"/>
+  <arg name="pose_initializer_common_param_path"/>
 
   <arg name="launch_dummy_perception"/>
   <arg name="launch_dummy_vehicle"/>
   <arg name="launch_dummy_localization"/>
+  <arg name="launch_diagnostic_converter"/>
   <arg name="vehicle_info_param_file"/>
 
   <arg name="perception/enable_detection_failure" default="true" description="enable to simulate detection failure when using dummy perception"/>
@@ -41,6 +44,7 @@
       <arg name="input_obstacle_and_raw_pointcloud" value="false"/>
       <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
       <arg name="output" value="/perception/occupancy_grid_map/map"/>
+      <arg name="param_file" value="$(find-pkg-share probabilistic_occupancy_grid_map)/config/laserscan_based_occupancy_grid_map.param.yaml"/>
     </include>
   </group>
 
@@ -97,10 +101,16 @@
   <!-- Dummy localization -->
   <group if="$(var launch_dummy_localization)">
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-      <arg name="gnss_enabled" value="false"/>
-      <arg name="ndt_enabled" value="false"/>
-      <arg name="stop_check_enabled" value="false"/>
+      <arg name="common_config_file" value="$(var pose_initializer_common_param_path)"/>
+      <arg name="config_file" value="$(var pose_initializer_param_path)"/>
     </include>
+  </group>
+
+  <!-- Diagnostic Converter -->
+  <group if="$(var launch_diagnostic_converter)">
+    <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen">
+      <param name="diagnostic_topics" value="[/diagnostic/planning_evaluator/metrics, /diagnostics_err]"/>
+    </node>
   </group>
 
   <!-- Simulator model -->

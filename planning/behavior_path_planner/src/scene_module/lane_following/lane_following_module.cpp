@@ -25,7 +25,8 @@
 namespace behavior_path_planner
 {
 LaneFollowingModule::LaneFollowingModule(
-  const std::string & name, rclcpp::Node & node, const LaneFollowingParameters & parameters)
+  const std::string & name, rclcpp::Node & node,
+  const std::shared_ptr<LaneFollowingParameters> & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
   initParam();
@@ -69,9 +70,32 @@ void LaneFollowingModule::onExit()
   RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onExit");
 }
 
-void LaneFollowingModule::setParameters(const LaneFollowingParameters & parameters)
+void LaneFollowingModule::setParameters(const std::shared_ptr<LaneFollowingParameters> & parameters)
 {
   parameters_ = parameters;
+}
+
+lanelet::ConstLanelets getLaneletsFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler)
+{
+  std::vector<int64_t> unique_lanelet_ids;
+  for (const auto & p : path.points) {
+    const auto & lane_ids = p.lane_ids;
+    for (const auto & lane_id : lane_ids) {
+      if (
+        std::find(unique_lanelet_ids.begin(), unique_lanelet_ids.end(), lane_id) ==
+        unique_lanelet_ids.end()) {
+        unique_lanelet_ids.push_back(lane_id);
+      }
+    }
+  }
+
+  lanelet::ConstLanelets lanelets;
+  for (const auto & lane_id : unique_lanelet_ids) {
+    lanelets.push_back(route_handler->getLaneletsFromId(lane_id));
+  }
+
+  return lanelets;
 }
 
 PathWithLaneId LaneFollowingModule::getReferencePath() const
@@ -79,7 +103,7 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   PathWithLaneId reference_path{};
 
   const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const auto p = planner_data_->parameters;
 
   // Set header
@@ -95,7 +119,6 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   // For current_lanes with desired length
   const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
-  const auto drivable_lanes = util::generateDrivableLanes(current_lanes);
 
   if (current_lanes.empty()) {
     return reference_path;
@@ -103,8 +126,7 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
 
   // calculate path with backward margin to avoid end points' instability by spline interpolation
   constexpr double extra_margin = 10.0;
-  const double backward_length =
-    std::max(p.backward_path_length, p.backward_path_length + extra_margin);
+  const double backward_length = p.backward_path_length + extra_margin;
   const auto current_lanes_with_backward_margin =
     util::calcLaneAroundPose(route_handler, current_pose, p.forward_path_length, backward_length);
   reference_path = util::getCenterLinePath(
@@ -112,35 +134,28 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     p.forward_path_length, p);
 
   // clip backward length
-  const size_t current_seg_idx = findEgoSegmentIndex(reference_path.points);
+  const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(reference_path.points);
   util::clipPathLength(
     reference_path, current_seg_idx, p.forward_path_length, p.backward_path_length);
+  const auto drivable_lanelets = getLaneletsFromPath(reference_path, route_handler);
+  const auto drivable_lanes = util::generateDrivableLanes(drivable_lanelets);
 
   {
     const int num_lane_change =
       std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
-    double optional_lengths{0.0};
-    const auto isInIntersection = util::checkLaneIsInIntersection(
-      *route_handler, reference_path, current_lanes, p, num_lane_change, optional_lengths);
-    if (isInIntersection) {
-      reference_path = util::getCenterLinePath(
-        *route_handler, current_lanes, current_pose, p.backward_path_length, p.forward_path_length,
-        p, optional_lengths);
-    }
 
-    const double lane_change_buffer =
-      util::calcLaneChangeBuffer(p, num_lane_change, optional_lengths);
+    const double lane_change_buffer = util::calcLaneChangeBuffer(p, num_lane_change);
 
     reference_path = util::setDecelerationVelocity(
-      *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
+      *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
       lane_change_buffer);
   }
 
   const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
 
   const auto expanded_lanes = util::expandLanelets(
-    shorten_lanes, parameters_.drivable_area_left_bound_offset,
-    parameters_.drivable_area_right_bound_offset);
+    shorten_lanes, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
 
   util::generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data_);
 

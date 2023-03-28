@@ -21,6 +21,10 @@
 
 #include <boost/optional.hpp>
 
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <string>
 #include <vector>
 
@@ -29,7 +33,7 @@ class PointcloudMapLoaderModule
 public:
   explicit PointcloudMapLoaderModule(
     rclcpp::Node * node, const std::vector<std::string> & pcd_paths,
-    const std::string publisher_name, const bool use_downsample);
+    const std::string & publisher_name, const bool use_downsample);
 
 private:
   rclcpp::Logger logger_;
