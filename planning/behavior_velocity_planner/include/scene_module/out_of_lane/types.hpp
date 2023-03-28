@@ -16,6 +16,7 @@
 #define SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -132,6 +133,30 @@ struct EgoData
   double velocity;   // [m/s]
   double max_decel;  // [m/s²]
   geometry_msgs::msg::Pose pose;
+};
+
+struct DebugData
+{
+  std::vector<lanelet::BasicPolygon2d> footprints;
+  std::vector<SlowdownToInsert> slowdowns;
+  geometry_msgs::msg::Pose ego_pose;
+  OverlapRanges ranges;
+  std::vector<std::vector<std::pair<double, double>>> npc_times;
+  std::vector<std::pair<double, double>> ego_times;
+  lanelet::BasicPolygon2d current_footprint;
+  lanelet::ConstLanelets current_overlapped_lanelets;
+  lanelet::ConstLanelets path_lanelets;
+  lanelet::ConstLanelets ignored_lanelets;
+  lanelet::ConstLanelets other_lanelets;
+  void reset_data()
+  {
+    footprints.clear();
+    slowdowns.clear();
+    ranges.clear();
+    npc_times.clear();
+    ego_times.clear();
+    current_overlapped_lanelets.clear();
+  }
 };
 
 }  // namespace behavior_velocity_planner::out_of_lane_utils

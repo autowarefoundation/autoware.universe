@@ -18,7 +18,6 @@
 #include "scene_module/out_of_lane/types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/out_of_lane/out_of_lane_utils.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>

@@ -16,7 +16,6 @@
 
 #include "scene_module/out_of_lane/decisions.hpp"
 #include "scene_module/out_of_lane/footprint.hpp"
-#include "scene_module/out_of_lane/out_of_lane_utils.hpp"
 #include "scene_module/out_of_lane/overlapping_range.hpp"
 #include "scene_module/out_of_lane/types.hpp"
 
@@ -25,6 +24,8 @@
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <utilization/debug.hpp>
 #include <utilization/util.hpp>
+
+#include <lanelet2_core/geometry/LaneletMap.h>
 
 #include <memory>
 #include <string>

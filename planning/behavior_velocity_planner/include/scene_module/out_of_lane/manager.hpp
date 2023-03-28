@@ -16,7 +16,6 @@
 #define SCENE_MODULE__OUT_OF_LANE__MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/out_of_lane/out_of_lane_utils.hpp>
 #include <scene_module/out_of_lane/scene_out_of_lane.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
