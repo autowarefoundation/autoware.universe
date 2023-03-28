@@ -72,6 +72,8 @@ C.pcd: [1200, 2650] # -> 1200 < x < 1300, 2650 < y < 2800
 D.pcd: [1400, 2650] # -> 1400 < x < 1500, 2650 < y < 2800
 ```
 
+You may use [pointcloud_divider](https://github.com/MapIV/pointcloud_divider) from MAP IV for dividing pointcloud map as well as generating the compatible metadata.yaml.
+
 ### How to store map-related files
 
 If you only have one pointcloud map, Autoware will assume the following directory structure by default.
