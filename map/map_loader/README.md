@@ -72,6 +72,30 @@ C.pcd: [1200, 2650] # -> 1200 < x < 1300, 2650 < y < 2800
 D.pcd: [1400, 2650] # -> 1400 < x < 1500, 2650 < y < 2800
 ```
 
+### How to store map-related files
+If you only have one pointcloud map, Autoware will assume the following directory structure by default.
+```
+sample-map-rosbag
+├── lanelet2_map.osm
+├── pointcloud_map.pcd
+└── pointcloud_map_metadata.yaml
+```
+
+If you have multiple rosbags, an example directory structure would be as follows:
+```
+sample-map-rosbag
+├── lanelet2_map.osm
+├── pointcloud_map
+│   ├── pcd_00.pcd
+│   ├── pcd_01.pcd
+│   └── pcd_02.pcd
+└── pointcloud_map_metadata.yaml
+```
+Note that in this case, you have to launch autoware or simulators with a following command:
+```
+ros2 launch autoware_launch autoware.launch.xml map_path:=/PATH/TO/sample-map-rosbag pointcloud_map_file:=pointcloud_map ...
+```
+
 ---
 
 ## lanelet2_map_loader
