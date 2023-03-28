@@ -23,6 +23,7 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <tier4_api_msgs/msg/door_status.hpp>
 #include <tier4_vehicle_msgs/msg/battery_status.hpp>
 
@@ -81,6 +82,15 @@ struct HazardLightStatus
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+};
+
+struct MGRSGrid
+{
+  using Message = std_msgs::msg::String;
+  static constexpr char name[] = "/map/mgrs_grid";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
 struct EnergyStatus

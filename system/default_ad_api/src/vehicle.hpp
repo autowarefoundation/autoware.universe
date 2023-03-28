@@ -15,6 +15,8 @@
 #ifndef VEHICLE_HPP_
 #define VEHICLE_HPP_
 
+#include "lanelet2_extension/projection/mgrs_projector.hpp"
+
 #include <autoware_ad_api_specs/vehicle.hpp>
 #include <component_interface_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -23,6 +25,9 @@
 #include <autoware_adapi_v1_msgs/msg/hazard_light.hpp>
 #include <autoware_adapi_v1_msgs/msg/turn_indicator.hpp>
 
+#include <lanelet2_core/primitives/Lanelet.h>
+
+#include <string>
 #include <unordered_map>
 
 // This file should be included after messages.
@@ -81,10 +86,12 @@ private:
   Sub<vehicle_interface::GearStatus> sub_gear_state_;
   Sub<vehicle_interface::TurnIndicatorStatus> sub_turn_indicator_;
   Sub<vehicle_interface::HazardLightStatus> sub_hazard_light_;
+  Sub<vehicle_interface::MGRSGrid> sub_mgrs_grid_;
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
   Sub<vehicle_interface::DoorStatus> sub_door_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
+  std::string mgrs_grid_ptr;
   autoware_ad_api::vehicle::VehicleKinematic::Message vehicle_kinematic_ptr;
   autoware_ad_api::vehicle::VehicleState::Message vehicle_state_ptr;
   autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_ptr;
@@ -94,11 +101,13 @@ private:
   void steering_status(const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr);
   void gear_status(const GearReport::ConstSharedPtr msg_ptr);
   void turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr);
+  void mgrs_grid_data(const vehicle_interface::MGRSGrid::Message::ConstSharedPtr msg_ptr);
   void hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr);
   void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
   void on_timer();
+  Eigen::Vector3d toBasicPoint3dPt(const geometry_msgs::msg::Point src);
 };
 
 }  // namespace default_ad_api

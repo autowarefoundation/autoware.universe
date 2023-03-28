@@ -36,6 +36,7 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
   adaptor.init_sub(sub_steering_, this, &VehicleNode::steering_status);
   adaptor.init_sub(sub_gear_state_, this, &VehicleNode::gear_status);
   adaptor.init_sub(sub_turn_indicator_, this, &VehicleNode::turn_indicator_status);
+  adaptor.init_sub(sub_mgrs_grid_, this, &VehicleNode::mgrs_grid_data);
   adaptor.init_sub(sub_hazard_light_, this, &VehicleNode::hazard_light_status);
   adaptor.init_sub(sub_energy_level_, this, &VehicleNode::energy_status);
   // adaptor.init_sub(sub_door_status_, this, &VehicleNode::door_status);
@@ -62,6 +63,24 @@ void VehicleNode::kinematic_state(
   vehicle_kinematic_ptr.twist.header = msg_ptr->header;
   vehicle_kinematic_ptr.twist.header.frame_id = msg_ptr->child_frame_id;
   vehicle_kinematic_ptr.twist.twist = msg_ptr->twist;
+  if (!mgrs_grid_ptr.empty()) {
+    lanelet::GPSPoint projected_gps_point = lanelet::projection::MGRSProjector::reverse(
+      toBasicPoint3dPt(msg_ptr->pose.pose.position), mgrs_grid_ptr);
+    vehicle_kinematic_ptr.geographic_pose.header = msg_ptr->header;
+    vehicle_kinematic_ptr.geographic_pose.header.frame_id = "global";
+    vehicle_kinematic_ptr.geographic_pose.position.latitude = projected_gps_point.lat;
+    vehicle_kinematic_ptr.geographic_pose.position.longitude = projected_gps_point.lon;
+    vehicle_kinematic_ptr.geographic_pose.position.altitude = projected_gps_point.ele;
+  }
+}
+
+Eigen::Vector3d VehicleNode::toBasicPoint3dPt(const geometry_msgs::msg::Point src)
+{
+  Eigen::Vector3d dst;
+  dst.x() = src.x;
+  dst.y() = src.y;
+  dst.z() = src.z;
+  return dst;
 }
 
 void VehicleNode::acceleration_status(
@@ -92,6 +111,11 @@ void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr m
 {
   vehicle_state_ptr.hazard_light.status =
     mapping(hazard_light_type_, msg_ptr->report, VehicleHazardLight::UNKNOWN);
+}
+
+void VehicleNode::mgrs_grid_data(const vehicle_interface::MGRSGrid::Message::ConstSharedPtr msg_ptr)
+{
+  mgrs_grid_ptr = msg_ptr->data;
 }
 
 void VehicleNode::energy_status(
