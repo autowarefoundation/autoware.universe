@@ -99,10 +99,10 @@ private:
     const SetRoutePoints::Service::Request::SharedPtr req,
     const SetRoutePoints::Service::Response::SharedPtr res);
 
-  component_interface_utils::Subscription<NewGoal>::SharedPtr sub_new_goal_;
+  component_interface_utils::Subscription<NewGoal>::SharedPtr sub_modified_goal_;
   component_interface_utils::Service<SetMrm>::SharedPtr srv_set_mrm_;
   component_interface_utils::Service<ClearMrm>::SharedPtr srv_clear_mrm_;
-  void on_new_goal(const NewGoal::Message::ConstSharedPtr msg);
+  void on_modified_goal(const NewGoal::Message::ConstSharedPtr msg);
   void on_set_mrm(
     const SetMrm::Service::Request::SharedPtr req, const SetMrm::Service::Response::SharedPtr res);
   void on_clear_mrm(

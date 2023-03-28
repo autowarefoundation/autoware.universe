@@ -87,7 +87,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
   adaptor.init_srv(srv_change_route_, this, &MissionPlanner::on_change_route);
   adaptor.init_srv(srv_change_route_points_, this, &MissionPlanner::on_change_route_points);
-  adaptor.init_sub(sub_new_goal_, this, &MissionPlanner::on_new_goal);
+  adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
   adaptor.init_srv(srv_set_mrm_, this, &MissionPlanner::on_set_mrm);
   adaptor.init_srv(srv_clear_mrm_, this, &MissionPlanner::on_clear_mrm);
 
@@ -263,7 +263,7 @@ void MissionPlanner::on_change_route_points(
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
-void MissionPlanner::on_new_goal(const NewGoal::Message::ConstSharedPtr msg)
+void MissionPlanner::on_modified_goal(const NewGoal::Message::ConstSharedPtr msg)
 {
   // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
   arrival_checker_.modify_goal(*msg);
