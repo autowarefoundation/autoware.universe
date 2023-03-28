@@ -273,7 +273,7 @@ bool MPC::getData(
   data->nearest_idx = static_cast<int>(nearest_idx);
   data->steer = static_cast<double>(current_steer.steering_tire_angle);
   data->lateral_err = MPCUtils::calcLateralError(current_pose, data->nearest_pose);
-  data->yaw_err = autoware::common::helper_functions::wrap_angle(
+  data->yaw_err = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(current_pose.orientation) - tf2::getYaw(data->nearest_pose.orientation));
 
   /* get predicted steer */
@@ -284,8 +284,8 @@ bool MPC::getData(
   *m_steer_prediction_prev = data->predicted_steer;
 
   /* check error limit */
-  const double dist_err = autoware::common::geometry::distance_2d<double>(
-    current_pose.position, data->nearest_pose.position);
+  const double dist_err =
+    tier4_autoware_utils::calcDistance2d(current_pose.position, data->nearest_pose.position);
   if (dist_err > m_admissible_position_error) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "position error is over limit. error = %fm, limit: %fm",
