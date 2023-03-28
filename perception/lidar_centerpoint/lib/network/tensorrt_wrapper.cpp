@@ -67,8 +67,7 @@ bool TensorRTWrapper::createContext()
   context_ =
     tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
   if (!context_) {
-    std::cout << "Fail to create context" << std::endl;
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create builder");
+    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create context");
     return false;
   }
 
