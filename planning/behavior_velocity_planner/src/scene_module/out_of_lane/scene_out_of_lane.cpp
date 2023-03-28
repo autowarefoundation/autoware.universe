@@ -16,6 +16,7 @@
 
 #include "scene_module/out_of_lane/decisions.hpp"
 #include "scene_module/out_of_lane/footprint.hpp"
+#include "scene_module/out_of_lane/lanelets_selection.hpp"
 #include "scene_module/out_of_lane/overlapping_range.hpp"
 #include "scene_module/out_of_lane/types.hpp"
 
@@ -51,7 +52,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   if (!path || path->points.size() < 2) return true;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
-  out_of_lane_utils::EgoData ego_data;
+  out_of_lane::EgoData ego_data;
   ego_data.pose = planner_data_->current_odometry->pose;
   ego_data.path = path;
   ego_data.first_path_idx =
@@ -62,56 +63,21 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto current_ego_footprint = calculate_current_ego_footprint(ego_data, params_, true);
   const auto path_footprints = calculate_path_footprints(ego_data, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
-  // Get path lanelets, other lanelets, and lanelets to ignore TODO(Maxime): make separate function
-  const auto contains_lanelet = [](const auto & container, const auto & ll) -> bool {
-    return std::find_if(container.begin(), container.end(), [&](const auto & l) {
-             return l.id() == ll.id();
-           }) != container.end();
-  };
+  // Calculate lanelets to ignore and consider
   const auto path_lanelets = planning_utils::getLaneletsOnPath(
     *path, planner_data_->route_handler_->getLaneletMapPtr(),
     planner_data_->current_odometry->pose);
-  lanelet::ConstLanelets lanelets_to_ignore;
-  for (const auto & path_lanelet : path_lanelets) {
-    for (const auto & following :
-         planner_data_->route_handler_->getRoutingGraphPtr()->following(path_lanelet)) {
-      if (!contains_lanelet(path_lanelets, following)) {
-        lanelets_to_ignore.push_back(following);
-      }
-    }
-  }
-  const auto behind =
-    planning_utils::calculateOffsetPoint2d(ego_data.pose, params_.rear_offset, 0.0);
-  const lanelet::BasicPoint2d behind_point(behind.x(), behind.y());
-  const auto behind_lanelets = lanelet::geometry::findWithin2d(
-    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
-  for (const auto & l : behind_lanelets) {
-    const auto is_path_lanelet = contains_lanelet(path_lanelets, l.second);
-    if (!is_path_lanelet) lanelets_to_ignore.push_back(l.second);
-  }
-  const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
-  const auto lanelets_within_range = lanelet::geometry::findWithin2d(
-    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer, ego_point,
-    std::max(params_.slow_dist_threshold, params_.stop_dist_threshold));
-  const auto other_lanelets = [&]() {
-    lanelet::ConstLanelets lls;
-    for (const auto & ll : lanelets_within_range) {
-      const auto is_path_lanelet = contains_lanelet(path_lanelets, ll.second);
-      const auto is_overlapped_by_path_lanelets = [&](const auto & l) {
-        for (const auto & path_ll : path_lanelets)
-          if (boost::geometry::overlaps(
-                path_ll.polygon2d().basicPolygon(), l.polygon2d().basicPolygon()))
-            return true;
-        return false;
-      };
-      if (!is_path_lanelet && !is_overlapped_by_path_lanelets(ll.second)) lls.push_back(ll.second);
-    }
-    return lls;
-  }();
+  const auto ignored_lanelets =
+    calculate_ignored_lanelets(ego_data, path_lanelets, *planner_data_->route_handler_, params_);
+  const auto other_lanelets = calculate_other_lanelets(
+    ego_data, path_lanelets, ignored_lanelets, *planner_data_->route_handler_, params_);
+
+  debug_data_.footprints = path_footprints;
   debug_data_.path_lanelets = path_lanelets;
-  debug_data_.ignored_lanelets = lanelets_to_ignore;
+  debug_data_.ignored_lanelets = ignored_lanelets;
   debug_data_.other_lanelets = other_lanelets;
-  if (params_.skip_if_already_overlapping) {  // TODO(Maxime): cleanup
+
+  if (params_.skip_if_already_overlapping) {
     debug_data_.current_footprint = current_ego_footprint;
     const auto overlapped_lanelet_it =
       std::find_if(other_lanelets.begin(), other_lanelets.end(), [&](const auto & ll) {
@@ -119,7 +85,7 @@ bool OutOfLaneModule::modifyPathVelocity(
       });
     if (overlapped_lanelet_it != other_lanelets.end()) {
       debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
-      std::printf("*** ALREADY OVERLAPPING *** skipping\n");
+      RCLCPP_INFO(logger_, "Ego is already overlapping a lane, skipping the module ()\n");
       return true;
     }
   }
@@ -136,6 +102,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   stopwatch.tic("calc_slowdown_points");
   const auto points_to_insert = calculate_slowdown_points(ego_data, decisions, params_);
+  debug_data_.slowdowns = points_to_insert;
   const auto calc_slowdown_points_us = stopwatch.toc("calc_slowdown_points");
   stopwatch.tic("insert_slowdown_points");
   for (const auto & point : points_to_insert) {
@@ -144,10 +111,9 @@ bool OutOfLaneModule::modifyPathVelocity(
   }
   const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
 
-  debug_data_.footprints = path_footprints;
-  debug_data_.slowdowns = points_to_insert;
   const auto total_time_us = stopwatch.toc();
-  std::printf(
+  RCLCPP_INFO(
+    logger_,
     "Total time = %2.2fus\n"
     "\tcalculate_path_footprints = %2.0fus\n"
     "\tcalculate_overlapping_ranges = %2.0fus\n"

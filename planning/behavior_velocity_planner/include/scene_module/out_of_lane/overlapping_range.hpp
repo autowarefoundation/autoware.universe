@@ -24,7 +24,7 @@
 #include <limits>
 #include <vector>
 
-namespace behavior_velocity_planner::out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane
 {
 
 struct Overlap
@@ -50,6 +50,6 @@ OverlapRanges calculate_overlapping_ranges(
   const lanelet::ConstLanelets & path_lanelets, const lanelet::ConstLanelets & lanelets,
   const PlannerParam & params);
 
-}  // namespace behavior_velocity_planner::out_of_lane_utils
+}  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__OVERLAPPING_RANGE_HPP_

@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner::out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane
 {
 double distance_along_path(const EgoData & ego_data, const size_t target_idx)
 {
@@ -309,4 +309,4 @@ std::vector<Slowdown> calculate_decisions(
   return decisions;
 }
 
-}  // namespace behavior_velocity_planner::out_of_lane_utils
+}  // namespace behavior_velocity_planner::out_of_lane

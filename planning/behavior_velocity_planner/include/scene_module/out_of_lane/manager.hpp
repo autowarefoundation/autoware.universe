@@ -43,7 +43,7 @@ public:
   const char * getModuleName() override { return "out_of_lane"; }
 
 private:
-  using PlannerParam = out_of_lane_utils::PlannerParam;
+  using PlannerParam = out_of_lane::PlannerParam;
 
   PlannerParam planner_param_;
   int64_t module_id_;

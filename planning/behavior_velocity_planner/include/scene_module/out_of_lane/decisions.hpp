@@ -27,7 +27,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner::out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane
 {
 double distance_along_path(const EgoData & ego_data, const size_t target_idx);
 
@@ -56,6 +56,6 @@ std::vector<Slowdown> calculate_decisions(
   const std::shared_ptr<route_handler::RouteHandler> & route_handler,
   const lanelet::ConstLanelets & lanelets, const PlannerParam & params, DebugData & debug);
 
-}  // namespace behavior_velocity_planner::out_of_lane_utils
+}  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__DECISIONS_HPP_

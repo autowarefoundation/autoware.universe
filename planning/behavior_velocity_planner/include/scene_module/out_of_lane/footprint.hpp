@@ -23,7 +23,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace out_of_lane_utils
+namespace out_of_lane
 {
 tier4_autoware_utils::Polygon2d make_base_footprint(
   const PlannerParam & p, const bool ignore_offset = false);
@@ -51,7 +51,7 @@ lanelet::BasicPolygon2d calculate_current_ego_footprint(
 /// @return precise points to insert in the path
 std::vector<SlowdownToInsert> calculate_slowdown_points(
   const EgoData & ego_data, std::vector<Slowdown> & decisions, PlannerParam params);
-}  // namespace out_of_lane_utils
+}  // namespace out_of_lane
 }  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__FOOTPRINT_HPP_

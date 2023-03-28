@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace behavior_velocity_planner::out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane
 {
 
 Overlap calculate_overlap(
@@ -115,4 +115,4 @@ OverlapRanges calculate_overlapping_ranges(
   return ranges;
 }
 
-}  // namespace behavior_velocity_planner::out_of_lane_utils
+}  // namespace behavior_velocity_planner::out_of_lane

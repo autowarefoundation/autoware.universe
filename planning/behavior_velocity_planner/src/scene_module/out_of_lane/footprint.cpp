@@ -26,7 +26,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace out_of_lane_utils
+namespace out_of_lane
 {
 tier4_autoware_utils::Polygon2d make_base_footprint(
   const PlannerParam & p, const bool ignore_offset)
@@ -145,5 +145,5 @@ std::vector<SlowdownToInsert> calculate_slowdown_points(
   }
   return to_insert;
 }
-}  // namespace out_of_lane_utils
+}  // namespace out_of_lane
 }  // namespace behavior_velocity_planner

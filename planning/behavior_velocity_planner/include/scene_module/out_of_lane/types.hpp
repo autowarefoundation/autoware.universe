@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner::out_of_lane_utils
+namespace behavior_velocity_planner::out_of_lane
 {
 /// @brief parameters for the "out of lane" module
 struct PlannerParam
@@ -159,6 +159,6 @@ struct DebugData
   }
 };
 
-}  // namespace behavior_velocity_planner::out_of_lane_utils
+}  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_

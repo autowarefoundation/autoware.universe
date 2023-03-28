@@ -24,7 +24,6 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
 
 #include <memory>
 #include <string>
@@ -34,8 +33,8 @@ namespace behavior_velocity_planner
 {
 class OutOfLaneModule : public SceneModuleInterface
 {
-  using PlannerParam = out_of_lane_utils::PlannerParam;
-  using DebugData = out_of_lane_utils::DebugData;
+  using PlannerParam = out_of_lane::PlannerParam;
+  using DebugData = out_of_lane::DebugData;
 
 public:
   OutOfLaneModule(
