@@ -22,6 +22,7 @@ The clear API is called automatically before setting the route.
 
 | Interface    | Local Name       | Global Name                           | Description                 |
 | ------------ | ---------------- | ------------------------------------- | --------------------------- |
+| Subscription | ~/input/reroute  | /rviz/routing/reroute                 | The pose pose of reroute.   |
 | Subscription | ~/input/goal     | /planning/mission_planning/goal       | The goal pose of route.     |
 | Subscription | ~/input/waypoint | /planning/mission_planning/checkpoint | The waypoint pose of route. |
 | Client       | -                | /api/routing/clear_route              | The route clear API.        |
