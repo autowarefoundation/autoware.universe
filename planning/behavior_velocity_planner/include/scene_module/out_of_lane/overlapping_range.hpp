@@ -104,7 +104,6 @@ inline OverlapRanges calculate_overlapping_ranges(
         other_lane.range_is_open = true;
       }
       other_lane.last_range_bound.index = i;
-      // TODO(Maxime): the last max_overlap_point does not go to the range
       other_lane.last_range_bound.point = overlap.max_overlap_point;
       other_lane.last_range_bound.arc_length = overlap.max_arc_length + params.overlap_extra_length;
       other_lane.last_range_bound.inside_distance = overlap.inside_distance;

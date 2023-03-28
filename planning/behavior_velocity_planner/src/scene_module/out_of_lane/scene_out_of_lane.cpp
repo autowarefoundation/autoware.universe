@@ -37,11 +37,9 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 OutOfLaneModule::OutOfLaneModule(
-  const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
-  PlannerParam planner_param, const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
-  params_(std::move(planner_param)),
-  planner_data_(&planner_data)
+  const int64_t module_id, PlannerParam planner_param, const rclcpp::Logger & logger,
+  const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock), params_(std::move(planner_param))
 {
 }
 
@@ -53,12 +51,12 @@ bool OutOfLaneModule::modifyPathVelocity(
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
   out_of_lane_utils::EgoData ego_data;
-  ego_data.pose = (*planner_data_)->current_odometry->pose;
+  ego_data.pose = planner_data_->current_odometry->pose;
   ego_data.path = path;
   ego_data.first_path_idx =
     motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
-  ego_data.velocity = (*planner_data_)->current_velocity->twist.linear.x;
-  ego_data.max_decel = -(*planner_data_)->max_stop_acceleration_threshold;
+  ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
+  ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
   stopwatch.tic("calculate_path_footprints");
   const auto current_ego_footprint = calculate_current_ego_footprint(ego_data, params_, true);
   const auto path_footprints = calculate_path_footprints(ego_data, params_);
@@ -70,12 +68,12 @@ bool OutOfLaneModule::modifyPathVelocity(
            }) != container.end();
   };
   const auto path_lanelets = planning_utils::getLaneletsOnPath(
-    *path, (*planner_data_)->route_handler_->getLaneletMapPtr(),
-    (*planner_data_)->current_odometry->pose);
+    *path, planner_data_->route_handler_->getLaneletMapPtr(),
+    planner_data_->current_odometry->pose);
   lanelet::ConstLanelets lanelets_to_ignore;
   for (const auto & path_lanelet : path_lanelets) {
     for (const auto & following :
-         (*planner_data_)->route_handler_->getRoutingGraphPtr()->following(path_lanelet)) {
+         planner_data_->route_handler_->getRoutingGraphPtr()->following(path_lanelet)) {
       if (!contains_lanelet(path_lanelets, following)) {
         lanelets_to_ignore.push_back(following);
       }
@@ -85,14 +83,14 @@ bool OutOfLaneModule::modifyPathVelocity(
     planning_utils::calculateOffsetPoint2d(ego_data.pose, params_.rear_offset, 0.0);
   const lanelet::BasicPoint2d behind_point(behind.x(), behind.y());
   const auto behind_lanelets = lanelet::geometry::findWithin2d(
-    (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
+    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
   for (const auto & l : behind_lanelets) {
     const auto is_path_lanelet = contains_lanelet(path_lanelets, l.second);
     if (!is_path_lanelet) lanelets_to_ignore.push_back(l.second);
   }
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
   const auto lanelets_within_range = lanelet::geometry::findWithin2d(
-    (*planner_data_)->route_handler_->getLaneletMapPtr()->laneletLayer, ego_point,
+    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer, ego_point,
     std::max(params_.slow_dist_threshold, params_.stop_dist_threshold));
   const auto other_lanelets = [&]() {
     lanelet::ConstLanelets lls;
@@ -132,7 +130,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   // Calculate stop and slowdown points
   stopwatch.tic("calculate_decisions");
   auto decisions = calculate_decisions(
-    ranges, ego_data, *(*planner_data_)->predicted_objects, (*planner_data_)->route_handler_,
+    ranges, ego_data, *planner_data_->predicted_objects, planner_data_->route_handler_,
     other_lanelets, params_, debug_data_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   stopwatch.tic("calc_slowdown_points");
@@ -244,67 +242,6 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
     debug_marker_array.markers.push_back(debug_marker);
     debug_marker.id++;
   }
-
-  // time ranges TODO(Maxime): remove
-  /*
-  debug_marker.id = 0;
-  constexpr auto t_scale = 3.0;
-  constexpr auto x_off = 3.0;
-  constexpr auto y_off = -2.0;
-  for (auto i = 0UL; i < debug_data_.ranges.size(); ++i) {
-    // Enter/Exit points
-    debug_marker.ns = "ranges";
-    const auto & entering_p = debug_data_.ranges[i].entering_point;
-    const auto & exiting_p = debug_data_.ranges[i].exiting_point;
-    debug_marker.type = Marker::ARROW;
-    debug_marker.scale.x = 0.2;
-    debug_marker.scale.y = 0.2;
-    debug_marker.scale.z = 0.2;
-    debug_marker.color = tier4_autoware_utils::createMarkerColor(0.1, 1.0, 0.1, 0.5);
-    debug_marker.points.push_back(
-      tier4_autoware_utils::createMarkerPosition(entering_p.x(), entering_p.y(), 0));
-    debug_marker.points.push_back(
-      tier4_autoware_utils::createMarkerPosition(exiting_p.x(), exiting_p.y(), 0));
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-
-    // t=0 point
-    debug_marker.ns = "time ranges";
-    auto p = debug_data_.ranges[i].entering_point;
-    p.x() += x_off;
-    p.y() += y_off;
-    debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 1.0);
-    debug_marker.points = {
-      tier4_autoware_utils::createMarkerPosition(p.x(), p.y() - 3.0, 0),
-      tier4_autoware_utils::createMarkerPosition(p.x(), p.y() + 3.0, 0)};
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-    // time ranges of ego and npcs
-    debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0, 0, 0);
-    const auto & ego = debug_data_.ego_times[i];
-    const auto & npcs = debug_data_.npc_times[i];
-    debug_marker.color = tier4_autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.7);
-    debug_marker.scale.x = 3.0;
-    debug_marker.scale.y = 3.0;
-    debug_marker.scale.z = 1.0;
-    debug_marker.points = {
-      tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * ego.first, p.y(), 0),
-      tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * ego.second, p.y(), 0)};
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-    auto c = 0.25F;
-    for (const auto & npc : npcs) {
-      debug_marker.points = {
-        tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * npc.first, p.y(), 0),
-        tier4_autoware_utils::createMarkerPosition(p.x() + t_scale * npc.second, p.y(), 0)};
-      debug_marker.color = tier4_autoware_utils::createMarkerColor(c, c, c / 4, 0.7);
-      debug_marker_array.markers.push_back(debug_marker);
-      debug_marker.id++;
-      c += 0.25;
-    }
-  }
-  */
-
   return debug_marker_array;
 }
 

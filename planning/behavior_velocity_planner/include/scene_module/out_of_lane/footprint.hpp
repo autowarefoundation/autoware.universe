@@ -121,7 +121,7 @@ inline std::vector<SlowdownToInsert> calculate_slowdown_points(
       const auto & path_pose = path_point.point.pose;
       const auto & prev_path_pose = ego_data.path->points[decision.target_path_idx - 1].point.pose;
 
-      const auto precision = 0.1;  // TODO(Maxime): param or better way to find no overlap pose
+      constexpr auto precision = 0.1;
       auto interpolated_point = path_point;
       bool is_found = false;
       for (auto ratio = precision; ratio <= 1.0; ratio += precision) {
@@ -140,7 +140,7 @@ inline std::vector<SlowdownToInsert> calculate_slowdown_points(
           break;
         }
       }
-      // if valid point not found, fallback to use the previous index (known to not overlap)
+      // if no valid point found, fallback to using the previous index (known to not overlap)
       if (!is_found)
         to_insert.push_back({decision, ego_data.path->points[decision.target_path_idx]});
     }
