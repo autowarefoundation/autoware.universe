@@ -19,6 +19,7 @@
 
 #include <component_interface_specs/planning.hpp>
 #include <component_interface_utils/rclcpp.hpp>
+#include <mission_planner/mission_planner_interface.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -97,6 +98,15 @@ private:
   void on_change_route_points(
     const SetRoutePoints::Service::Request::SharedPtr req,
     const SetRoutePoints::Service::Response::SharedPtr res);
+
+  component_interface_utils::Subscription<NewGoal>::SharedPtr sub_new_goal_;
+  component_interface_utils::Subscription<MrmGoal>::SharedPtr sub_mrm_goal_;
+  component_interface_utils::Service<ClearMrm>::SharedPtr srv_clear_mrm_;
+  void on_new_goal(const NewGoal::Message::ConstSharedPtr msg);
+  void on_mrm_goal(const MrmGoal::Message::ConstSharedPtr msg);
+  void on_clear_mrm(
+    const ClearMrm::Service::Request::SharedPtr req,
+    const ClearMrm::Service::Response::SharedPtr res);
 };
 
 }  // namespace mission_planner

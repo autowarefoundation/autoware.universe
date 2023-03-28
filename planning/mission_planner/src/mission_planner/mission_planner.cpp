@@ -87,6 +87,9 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
   adaptor.init_srv(srv_change_route_, this, &MissionPlanner::on_change_route);
   adaptor.init_srv(srv_change_route_points_, this, &MissionPlanner::on_change_route_points);
+  adaptor.init_sub(sub_new_goal_, this, &MissionPlanner::on_new_goal);
+  adaptor.init_sub(sub_mrm_goal_, this, &MissionPlanner::on_mrm_goal);
+  adaptor.init_srv(srv_clear_mrm_, this, &MissionPlanner::on_clear_mrm);
 
   change_state(RouteState::Message::UNSET);
 }
@@ -144,7 +147,7 @@ void MissionPlanner::change_state(RouteState::Message::_state_type state)
   pub_state_->publish(state_);
 }
 
-// NOTE: The route services should be mutually exclusive by callback group.
+// NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_clear_route(
   const ClearRoute::Service::Request::SharedPtr, const ClearRoute::Service::Response::SharedPtr res)
 {
@@ -153,7 +156,7 @@ void MissionPlanner::on_clear_route(
   res->status.success = true;
 }
 
-// NOTE: The route services should be mutually exclusive by callback group.
+// NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_set_route(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
@@ -190,7 +193,7 @@ void MissionPlanner::on_set_route(
   res->status.success = true;
 }
 
-// NOTE: The route services should be mutually exclusive by callback group.
+// NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_set_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
@@ -240,19 +243,44 @@ void MissionPlanner::on_set_route_points(
   res->status.success = true;
 }
 
-// NOTE: The route services should be mutually exclusive by callback group.
+// NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_change_route(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
+  // TODO(Yutaka Shimizu): reroute
   (void)req;
   (void)res;
 }
 
-// NOTE: The route services should be mutually exclusive by callback group.
+// NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_change_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
 {
+  // TODO(Yutaka Shimizu): reroute
+  (void)req;
+  (void)res;
+}
+
+// NOTE: The route interface should be mutually exclusive by callback group.
+void MissionPlanner::on_new_goal(const NewGoal::Message::ConstSharedPtr msg)
+{
+  // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
+  arrival_checker_.modify_goal(*msg);
+}
+
+// NOTE: The route interface should be mutually exclusive by callback group.
+void MissionPlanner::on_mrm_goal(const MrmGoal::Message::ConstSharedPtr msg)
+{
+  // TODO(Yutaka Shimizu): reroute for MRM
+  (void)msg;
+}
+
+// NOTE: The route interface should be mutually exclusive by callback group.
+void MissionPlanner::on_clear_mrm(
+  const ClearMrm::Service::Request::SharedPtr req, const ClearMrm::Service::Response::SharedPtr res)
+{
+  // TODO(Yutaka Shimizu): reroute for MRM
   (void)req;
   (void)res;
 }
