@@ -171,9 +171,12 @@ double calcLateralDistToBounds(
         tier4_autoware_utils::calcDistance2d(pose.position, *intersect_point) *
         (is_point_left ? 1.0 : -1.0);
 
-      closest_dist_to_bound =
-        is_left_bound ? std::min(dist_to_bound - additional_offset, closest_dist_to_bound)
-                      : std::max(dist_to_bound + additional_offset, closest_dist_to_bound);
+      // the bound which is closest to the centerline will be chosen
+      const double tmp_dist_to_bound =
+        is_left_bound ? dist_to_bound - additional_offset : dist_to_bound + additional_offset;
+      if (std::abs(tmp_dist_to_bound) < std::abs(closest_dist_to_bound)) {
+        closest_dist_to_bound = tmp_dist_to_bound;
+      }
     }
   }
 
