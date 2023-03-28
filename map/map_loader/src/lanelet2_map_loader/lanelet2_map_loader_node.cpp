@@ -65,10 +65,14 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   // create map bin msg
   const auto map_bin_msg = create_map_bin_msg(map, lanelet2_filename, now());
 
+  const auto mgrs_grid_msg = get_mgrs_grid(lanelet2_filename, lanelet2_map_projector_type);
   // create publisher and publish
   pub_map_bin_ =
     create_publisher<HADMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
   pub_map_bin_->publish(map_bin_msg);
+  // create publisher and publish
+  pub_mgrs_grid_ = create_publisher<String>("mgrs_grid", rclcpp::QoS{1}.transient_local());
+  pub_mgrs_grid_->publish(mgrs_grid_msg);
 }
 
 lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
@@ -102,6 +106,19 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("map_loader"), error);
   }
   return nullptr;
+}
+
+String Lanelet2MapLoaderNode::get_mgrs_grid(
+  const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type)
+{
+  lanelet::ErrorMessages errors{};
+  String mgrs_grid_msg;
+  if (lanelet2_map_projector_type == "MGRS") {
+    lanelet::projection::MGRSProjector projector{};
+    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
+    mgrs_grid_msg.data = projector.getProjectedMGRSGrid();
+  }
+  return mgrs_grid_msg;
 }
 
 HADMapBin Lanelet2MapLoaderNode::create_map_bin_msg(

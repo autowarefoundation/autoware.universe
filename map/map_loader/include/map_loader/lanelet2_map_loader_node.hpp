@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <lanelet2_projection/UTM.h>
 
@@ -25,6 +26,7 @@
 #include <string>
 
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using std_msgs::msg::String;
 
 class Lanelet2MapLoaderNode : public rclcpp::Node
 {
@@ -34,12 +36,15 @@ public:
   static lanelet::LaneletMapPtr load_map(
     rclcpp::Node & node, const std::string & lanelet2_filename,
     const std::string & lanelet2_map_projector_type);
+  static String get_mgrs_grid(
+    const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type);
   static HADMapBin create_map_bin_msg(
     const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
     const rclcpp::Time & now);
 
 private:
   rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_;
+  rclcpp::Publisher<String>::SharedPtr pub_mgrs_grid_;
 };
 
 #endif  // MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
