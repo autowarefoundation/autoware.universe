@@ -45,7 +45,7 @@ private:
   using VehicleHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
-    {GearReport::NONE, VehicleGear::NONE},       {GearReport::NEUTRAL, VehicleGear::NEUTRAL},
+    {GearReport::NONE, VehicleGear::UNKNOWN},    {GearReport::NEUTRAL, VehicleGear::NEUTRAL},
     {GearReport::DRIVE, VehicleGear::DRIVE},     {GearReport::DRIVE_2, VehicleGear::DRIVE},
     {GearReport::DRIVE_3, VehicleGear::DRIVE},   {GearReport::DRIVE_4, VehicleGear::DRIVE},
     {GearReport::DRIVE_5, VehicleGear::DRIVE},   {GearReport::DRIVE_6, VehicleGear::DRIVE},

@@ -57,18 +57,18 @@ uint8_t VehicleNode::mapping(
 void VehicleNode::kinematic_state(
   const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_kinematic_ptr.pose_with_covariance.header = msg_ptr->header;
-  vehicle_kinematic_ptr.pose_with_covariance.pose = msg_ptr->pose;
-  vehicle_kinematic_ptr.twist_with_covariance.header = msg_ptr->header;
-  vehicle_kinematic_ptr.twist_with_covariance.header.frame_id = msg_ptr->child_frame_id;
-  vehicle_kinematic_ptr.twist_with_covariance.twist = msg_ptr->twist;
+  vehicle_kinematic_ptr.pose.header = msg_ptr->header;
+  vehicle_kinematic_ptr.pose.pose = msg_ptr->pose;
+  vehicle_kinematic_ptr.twist.header = msg_ptr->header;
+  vehicle_kinematic_ptr.twist.header.frame_id = msg_ptr->child_frame_id;
+  vehicle_kinematic_ptr.twist.twist = msg_ptr->twist;
 }
 
 void VehicleNode::acceleration_status(
   const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_kinematic_ptr.accel_with_covariance.header = msg_ptr->header;
-  vehicle_kinematic_ptr.accel_with_covariance.accel = msg_ptr->accel;
+  vehicle_kinematic_ptr.accel.header = msg_ptr->header;
+  vehicle_kinematic_ptr.accel.accel = msg_ptr->accel;
 }
 
 void VehicleNode::steering_status(
@@ -79,19 +79,19 @@ void VehicleNode::steering_status(
 
 void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_state_ptr.gear.status = mapping(gear_type_, msg_ptr->report, VehicleGear::NONE);
+  vehicle_state_ptr.gear.status = mapping(gear_type_, msg_ptr->report, VehicleGear::UNKNOWN);
 }
 
 void VehicleNode::turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
   vehicle_state_ptr.turn_indicator.status =
-    mapping(turn_indicator_type_, msg_ptr->report, VehicleTurnIndicator::NONE);
+    mapping(turn_indicator_type_, msg_ptr->report, VehicleTurnIndicator::UNKNOWN);
 }
 
 void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr)
 {
   vehicle_state_ptr.hazard_light.status =
-    mapping(hazard_light_type_, msg_ptr->report, VehicleHazardLight::NONE);
+    mapping(hazard_light_type_, msg_ptr->report, VehicleHazardLight::UNKNOWN);
 }
 
 void VehicleNode::energy_status(
