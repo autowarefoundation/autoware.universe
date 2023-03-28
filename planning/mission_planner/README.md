@@ -25,29 +25,29 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Services
 
-| Name                                 | Type                                        | Description                       |
-| ------------------------------------ | ------------------------------------------- | --------------------------------- |
-| `/planning/routing/clear_route`      | autoware_adapi_v1_msgs::srv::ClearRoute     | route clear request               |
-| `/planning/routing/set_route_points` | autoware_adapi_v1_msgs::srv::SetRoutePoints | route request with pose waypoints |
-| `/planning/routing/set_route`        | autoware_planning_msgs::srv::SetRoute       | route request with HAD map format |
-| `~/srv/clear_mrm`                    | std_srvs::srv::Trigger                      | clear emergency operation         |
+| Name                                 | Type                                              | Description                       |
+| ------------------------------------ | ------------------------------------------------- | --------------------------------- |
+| `/planning/routing/clear_route`      | autoware_adapi_v1_msgs/srv/ClearRoute             | route clear request               |
+| `/planning/routing/set_route_points` | autoware_adapi_v1_msgs/srv/SetRoutePoints         | route request with pose waypoints |
+| `/planning/routing/set_route`        | autoware_planning_msgs/srv/SetRoute               | route request with HAD map format |
+| `~/srv/set_mrm`                      | autoware_planning_msgs/srv/SetPoseWithUuidStamped | set emergency route               |
+| `~/srv/clear_mrm`                    | std_srvs/srv/Trigger                              | clear emergency route             |
 
 ### Subscriptions
 
-| Name               | Type                                 | Description                                |
-| ------------------ | ------------------------------------ | ------------------------------------------ |
-| `input/vector_map` | autoware_auto_mapping_msgs/HADMapBin | vector map of Lanelet2                     |
-| `~/sub/new_goal`   | geometry_msgs/PoseWithUuidStamped    | modified goal pose                         |
-| `~/sub/mrm_goal`   | geometry_msgs/PoseWithUuidStamped    | modified goal pose for emergency operation |
+| Name               | Type                                 | Description            |
+| ------------------ | ------------------------------------ | ---------------------- |
+| `input/vector_map` | autoware_auto_mapping_msgs/HADMapBin | vector map of Lanelet2 |
+| `~/sub/new_goal`   | geometry_msgs/PoseWithUuidStamped    | modified goal pose     |
 
 ### Publications
 
-| Name                            | Type                                    | Description              |
-| ------------------------------- | --------------------------------------- | ------------------------ |
-| `/planning/routing/route_state` | autoware_adapi_v1_msgs::msg::RouteState | route state              |
-| `/planning/routing/route`       | autoware_planning_msgs/LaneletRoute     | route                    |
-| `debug/route_marker`            | visualization_msgs::msg::MarkerArray    | route marker for debug   |
-| `debug/goal_footprint`          | visualization_msgs::msg::MarkerArray    | goal footprint for debug |
+| Name                            | Type                                  | Description              |
+| ------------------------------- | ------------------------------------- | ------------------------ |
+| `/planning/routing/route_state` | autoware_adapi_v1_msgs/msg/RouteState | route state              |
+| `/planning/routing/route`       | autoware_planning_msgs/LaneletRoute   | route                    |
+| `debug/route_marker`            | visualization_msgs/msg/MarkerArray    | route marker for debug   |
+| `debug/goal_footprint`          | visualization_msgs/msg/MarkerArray    | goal footprint for debug |
 
 ## Route section
 

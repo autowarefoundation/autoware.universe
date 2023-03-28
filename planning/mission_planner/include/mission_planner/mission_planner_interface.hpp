@@ -18,6 +18,7 @@
 #include <rclcpp/qos.hpp>
 
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
+#include <autoware_planning_msgs/srv/set_pose_with_uuid_stamped.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
 namespace mission_planner
@@ -32,13 +33,10 @@ struct NewGoal
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-struct MrmGoal
+struct SetMrm
 {
-  using Message = autoware_planning_msgs::msg::PoseWithUuidStamped;
-  static constexpr char name[] = "~/sub/mrm_goal";
-  static constexpr size_t depth = 1;
-  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+  using Service = autoware_planning_msgs::srv::SetPoseWithUuidStamped;
+  static constexpr char name[] = "~/srv/set_mrm";
 };
 
 struct ClearMrm

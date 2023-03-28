@@ -88,7 +88,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_change_route_, this, &MissionPlanner::on_change_route);
   adaptor.init_srv(srv_change_route_points_, this, &MissionPlanner::on_change_route_points);
   adaptor.init_sub(sub_new_goal_, this, &MissionPlanner::on_new_goal);
-  adaptor.init_sub(sub_mrm_goal_, this, &MissionPlanner::on_mrm_goal);
+  adaptor.init_srv(srv_set_mrm_, this, &MissionPlanner::on_set_mrm);
   adaptor.init_srv(srv_clear_mrm_, this, &MissionPlanner::on_clear_mrm);
 
   change_state(RouteState::Message::UNSET);
@@ -270,10 +270,12 @@ void MissionPlanner::on_new_goal(const NewGoal::Message::ConstSharedPtr msg)
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
-void MissionPlanner::on_mrm_goal(const MrmGoal::Message::ConstSharedPtr msg)
+void MissionPlanner::on_set_mrm(
+  const SetMrm::Service::Request::SharedPtr req, const SetMrm::Service::Response::SharedPtr res)
 {
   // TODO(Yutaka Shimizu): reroute for MRM
-  (void)msg;
+  (void)req;
+  (void)res;
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
