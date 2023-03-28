@@ -59,16 +59,8 @@ inline double time_along_path(const EgoData & ego_data, const size_t target_idx)
 inline std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range)
 {
-  const auto half_size = object.shape.dimensions.x / 2.0;
   const auto max_deviation = object.shape.dimensions.y * 2.0;
 
-  geometry_msgs::msg::Pose pose;
-  pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
-  const auto range_enter_length =
-    lanelet::utils::getArcCoordinates({range.lane}, pose).length - half_size;
-  pose.position.set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
-  const auto range_exit_length =
-    lanelet::utils::getArcCoordinates({range.lane}, pose).length + half_size;
   auto worst_enter_time = std::optional<double>();
   auto worst_exit_time = std::optional<double>();
 
@@ -282,7 +274,7 @@ inline std::vector<Slowdown> calculate_decisions(
       } else if (params.mode == "ttc") {
         const auto ttc_at_enter = ego_enter_time - enter_time;
         const auto ttc_at_exit = ego_exit_time - exit_time;
-        const auto collision_during_overlap = (ttc_at_enter < 0.0 != ttc_at_exit < 0.0);
+        const auto collision_during_overlap = (ttc_at_enter < 0.0) != (ttc_at_exit < 0.0);
         const auto ttc_is_bellow_threshold =
           std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit)) <= params.ttc_threshold;
         if (collision_during_overlap || ttc_is_bellow_threshold) should_not_enter = true;

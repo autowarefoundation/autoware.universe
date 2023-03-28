@@ -99,7 +99,7 @@ bool OutOfLaneModule::modifyPathVelocity(
       const auto is_overlapped_by_path_lanelets = [&](const auto & l) {
         for (const auto & path_ll : path_lanelets)
           if (boost::geometry::overlaps(
-                path_ll.polygon2d().basicPolygon(), ll.second.polygon2d().basicPolygon()))
+                path_ll.polygon2d().basicPolygon(), l.polygon2d().basicPolygon()))
             return true;
         return false;
       };
