@@ -56,10 +56,7 @@ protected:
     pcl::io::savePCDFileASCII(temp_pcd_path, cloud);
   }
 
-  void TearDown() override
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() override { rclcpp::shutdown(); }
 };
 
 TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest)
