@@ -67,25 +67,54 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, true);
   }
 
-  if (enable_partial_load | enable_differential_load) {
-    if (!fs::exists(pcd_metadata_path)) {
-      RCLCPP_ERROR_STREAM(get_logger(), "PCD metadata file not found: " << pcd_metadata_path);
-      return;
+  if (enable_partial_load || enable_differential_load) {
+    std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
+    try {
+      pcd_metadata_dict = getPCDMetadata(pcd_metadata_path, pcd_paths);
+    } catch (std::runtime_error & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), e.what());
     }
 
-    pcd_metadata_dict_ = loadPCDMetadata(pcd_metadata_path);
-    pcd_metadata_dict_ = replaceWithAbsolutePath(pcd_metadata_dict_, pcd_paths);
+    if (enable_partial_load) {
+      partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict);
+    }
+
+    if (enable_differential_load) {
+      differential_map_loader_ =
+        std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict);
+    }
+  }
+}
+
+std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
+  const std::string & pcd_metadata_path,
+  const std::vector<std::string> & pcd_paths) const
+{
+  std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
+  if (pcd_paths.size() != 1) {
+    if (!fs::exists(pcd_metadata_path)) {
+      throw std::runtime_error("PCD metadata file not found: " + pcd_metadata_path);
+    }
+
+    pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
+    pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict_, pcd_paths);
     RCLCPP_INFO_STREAM(get_logger(), "Loaded PCD metadata: " << pcd_metadata_path);
+  } else {
+    // An exception when using a single file PCD map so that the users do not have to provide 
+    // a metadata file. 
+    // Note that this should ideally be avoided and thus eventually be removed by someone, until
+    // Autoware users get used to handling the PCD file(s) with metadata.
+    RCLCPP_INFO_STREAM(get_logger(), "Create PCD metadata, as the pointcloud is a single file.");
+    pcl::PointCloud<pcl::PointXYZ> single_pcd;
+    if (pcl::io::loadPCDFile(pcd_paths[0], single_pcd) == -1) {
+      throw std::runtime_error("PCD load failed: " + pcd_paths[0]);
+    }
+    PCDFileMetadata metadata = {};
+    pcl::getMinMax3D(single_pcd, metadata.min, metadata.max);
+    pcd_metadata_dict[pcd_paths[0]] = metadata;
+    std::cout << "pointcloud_map_loader " << pcd_paths[0] << std::endl;
   }
-
-  if (enable_partial_load) {
-    partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict_);
-  }
-
-  if (enable_differential_load) {
-    differential_map_loader_ =
-      std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict_);
-  }
+  return pcd_metadata_dict;
 }
 
 std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
