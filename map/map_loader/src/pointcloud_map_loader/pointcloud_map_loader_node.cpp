@@ -87,8 +87,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 }
 
 std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
-  const std::string & pcd_metadata_path,
-  const std::vector<std::string> & pcd_paths) const
+  const std::string & pcd_metadata_path, const std::vector<std::string> & pcd_paths) const
 {
   std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
   if (pcd_paths.size() != 1) {
@@ -100,8 +99,8 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
     pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict_, pcd_paths);
     RCLCPP_INFO_STREAM(get_logger(), "Loaded PCD metadata: " << pcd_metadata_path);
   } else {
-    // An exception when using a single file PCD map so that the users do not have to provide 
-    // a metadata file. 
+    // An exception when using a single file PCD map so that the users do not have to provide
+    // a metadata file.
     // Note that this should ideally be avoided and thus eventually be removed by someone, until
     // Autoware users get used to handling the PCD file(s) with metadata.
     RCLCPP_INFO_STREAM(get_logger(), "Create PCD metadata, as the pointcloud is a single file.");
