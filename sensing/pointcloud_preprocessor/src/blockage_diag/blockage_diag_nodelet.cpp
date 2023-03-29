@@ -214,11 +214,11 @@ void BlockageDiagComponent::filter(
   cv::Mat no_return_mask(cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::inRange(lidar_depth_map_8u, 0, 1, no_return_mask);
   cv::Mat erosion_dst;
-  cv::Mat element = cv::getStructuringElement(
+  cv::Mat blockage_element = cv::getStructuringElement(
     cv::MORPH_RECT, cv::Size(2 * blockage_kernel_ + 1, 2 * blockage_kernel_ + 1),
     cv::Point(blockage_kernel_, blockage_kernel_));
-  cv::erode(no_return_mask, erosion_dst, element);
-  cv::dilate(erosion_dst, no_return_mask, element);
+  cv::erode(no_return_mask, erosion_dst, blockage_element);
+  cv::dilate(erosion_dst, no_return_mask, blockage_element);
   static boost::circular_buffer<cv::Mat> no_return_mask_buffer(blockage_buffering_frames_);
   cv::Mat time_series_blockage_result(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
