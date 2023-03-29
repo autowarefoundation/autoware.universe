@@ -103,10 +103,10 @@ private:
   Sub<vehicle_interface::DoorStatus> sub_door_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::string mgrs_grid_ptr;
-  autoware_ad_api::vehicle::VehicleKinematic::Message vehicle_kinematic_ptr;
-  autoware_ad_api::vehicle::VehicleState::Message vehicle_state_ptr;
-  autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_ptr;
+  std::string mgrs_grid_;
+  autoware_ad_api::vehicle::VehicleKinematic::Message vehicle_kinematic_;
+  autoware_ad_api::vehicle::VehicleState::Message vehicle_state_;
+  autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_;
 
   void kinematic_state(const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
   void acceleration_status(const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr);
