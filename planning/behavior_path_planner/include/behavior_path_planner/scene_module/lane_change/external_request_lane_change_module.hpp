@@ -15,11 +15,11 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__EXTERNAL_REQUEST_LANE_CHANGE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__EXTERNAL_REQUEST_LANE_CHANGE_MODULE_HPP_
 
-#include "behavior_path_planner/scene_module/lane_change/debug.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -46,6 +46,8 @@ using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
+
+#ifdef USE_OLD_ARCHITECTURE
 
 class ExternalRequestLaneChangeModule : public SceneModuleInterface
 {
@@ -151,6 +153,7 @@ public:
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<LaneChangeParameters> parameters);
 };
+#endif
 
 }  // namespace behavior_path_planner
 // clang-format off

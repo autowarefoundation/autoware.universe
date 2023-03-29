@@ -133,7 +133,10 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       0.0, 0.0, 0.5, 0.5),
     &debug_marker_array, now);
 
-  // TODO(Mamoru Sobue): should be changed path polygon for LC
+  appendMarkerArray(
+    createLaneletPolygonsMarkerArray({debug_data_.ego_lane}, "ego_lane", lane_id_, 1, 0.647, 0.0),
+    &debug_marker_array, now);
+
   appendMarkerArray(
     debug::createPolygonMarkerArray(
       debug_data_.candidate_collision_ego_lane_polygon, "candidate_collision_ego_lane_polygon",
@@ -173,10 +176,12 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
 
   const auto now = this->clock_->now();
 
-  appendMarkerArray(
-    virtual_wall_marker_creator_->createStopVirtualWallMarker(
-      {debug_data_.stop_wall_pose}, "intersection", now, module_id_),
-    &wall_marker, now);
+  if (debug_data_.stop_required) {
+    appendMarkerArray(
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
+        {debug_data_.stop_wall_pose}, "intersection", now, module_id_),
+      &wall_marker, now);
+  }
   return wall_marker;
 }
 
@@ -202,7 +207,6 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWa
   visualization_msgs::msg::MarkerArray wall_marker;
 
   const auto state = state_machine_.getState();
-
   const auto now = this->clock_->now();
   if (state == StateMachine::State::STOP) {
     const std::vector<Pose> & pose = {debug_data_.virtual_wall_pose};

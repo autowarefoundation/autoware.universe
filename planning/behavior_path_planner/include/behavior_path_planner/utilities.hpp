@@ -16,8 +16,9 @@
 #define BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/debug_utilities.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
+#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/util/pull_out/pull_out_path.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <route_handler/route_handler.hpp>
@@ -138,6 +139,9 @@ std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
 double l2Norm(const Vector3 vector);
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
+
+double getDistanceToNextTrafficLight(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
 
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
@@ -329,6 +333,10 @@ void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
 
+void generateDrivableArea(
+  PathWithLaneId & path, const double vehicle_length, const double vehicle_width,
+  const double margin, const bool is_driving_forward = true);
+
 lanelet::ConstLineStrings3d getMaximumDrivableArea(
   const std::shared_ptr<const PlannerData> & planner_data);
 
@@ -408,6 +416,10 @@ std::vector<Polygon2d> getTargetLaneletPolygons(
 
 void shiftPose(Pose * pose, double shift_length);
 
+PathWithLaneId getCenterLinePathFromRootLanelet(
+  const lanelet::ConstLanelet & root_lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data);
+
 // route handler
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
@@ -418,11 +430,6 @@ PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
   const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
   const double lane_change_buffer);
-
-bool checkLaneIsInIntersection(
-  const RouteHandler & route_handler, const PathWithLaneId & ref,
-  const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameters,
-  const int num_lane_change, double & additional_length_to_add);
 
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
@@ -435,6 +442,9 @@ PathWithLaneId setDecelerationVelocityForTurnSignal(
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
 lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data);
+
+lanelet::ConstLanelets getCurrentLanesFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
 
 lanelet::ConstLanelets extendLanes(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
@@ -498,19 +508,20 @@ bool isLateralDistanceEnough(
   const double & relative_lateral_distance, const double & lateral_distance_threshold);
 
 bool isSafeInLaneletCollisionCheck(
-  const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double check_start_time, const double check_end_time, const double check_time_resolution,
-  const PredictedObject & target_object, const PredictedPath & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
+  const Twist & ego_current_twist, const std::vector<double> & check_duration,
+  const double prepare_duration, const PredictedObject & target_object,
+  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
+  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
-  const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double check_start_time, const double check_end_time, const double check_time_resolution,
-  const PredictedObject & target_object, const BehaviorPathPlannerParameters & common_parameters,
-  const double front_decel, const double rear_decel, CollisionCheckDebug & debug);
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
+  const Twist & ego_current_twist, const std::vector<double> & check_duration,
+  const double prepare_duration, const PredictedObject & target_object,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
+  const double rear_decel, CollisionCheckDebug & debug);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
@@ -520,6 +531,9 @@ double calcTotalLaneChangeDistance(
 double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
   const double length_to_intersection = 0.0);
+
+lanelet::ConstLanelets getLaneletsFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
