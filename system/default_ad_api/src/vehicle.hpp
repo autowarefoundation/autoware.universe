@@ -44,39 +44,39 @@ public:
 
 private:
   using GearReport = vehicle_interface::GearStatus::Message;
-  using VehicleGear = autoware_adapi_v1_msgs::msg::Gear;
+  using ApiGear = autoware_adapi_v1_msgs::msg::Gear;
   using TurnIndicatorsReport = vehicle_interface::TurnIndicatorStatus::Message;
-  using VehicleTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicator;
+  using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicator;
   using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
-  using VehicleHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
+  using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
   using VehicleDoorStatus = vehicle_interface::DoorStatus::Message;
   using ApiDoorStatus = autoware_adapi_v1_msgs::msg::DoorStatus;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
-    {GearReport::NONE, VehicleGear::UNKNOWN},    {GearReport::NEUTRAL, VehicleGear::NEUTRAL},
-    {GearReport::DRIVE, VehicleGear::DRIVE},     {GearReport::DRIVE_2, VehicleGear::DRIVE},
-    {GearReport::DRIVE_3, VehicleGear::DRIVE},   {GearReport::DRIVE_4, VehicleGear::DRIVE},
-    {GearReport::DRIVE_5, VehicleGear::DRIVE},   {GearReport::DRIVE_6, VehicleGear::DRIVE},
-    {GearReport::DRIVE_7, VehicleGear::DRIVE},   {GearReport::DRIVE_8, VehicleGear::DRIVE},
-    {GearReport::DRIVE_9, VehicleGear::DRIVE},   {GearReport::DRIVE_10, VehicleGear::DRIVE},
-    {GearReport::DRIVE_11, VehicleGear::DRIVE},  {GearReport::DRIVE_12, VehicleGear::DRIVE},
-    {GearReport::DRIVE_13, VehicleGear::DRIVE},  {GearReport::DRIVE_14, VehicleGear::DRIVE},
-    {GearReport::DRIVE_15, VehicleGear::DRIVE},  {GearReport::DRIVE_16, VehicleGear::DRIVE},
-    {GearReport::DRIVE_17, VehicleGear::DRIVE},  {GearReport::DRIVE_18, VehicleGear::DRIVE},
-    {GearReport::REVERSE, VehicleGear::REVERSE}, {GearReport::REVERSE_2, VehicleGear::REVERSE},
-    {GearReport::PARK, VehicleGear::PARK},       {GearReport::LOW, VehicleGear::LOW},
-    {GearReport::LOW_2, VehicleGear::LOW},
+    {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
+    {GearReport::DRIVE, ApiGear::DRIVE},     {GearReport::DRIVE_2, ApiGear::DRIVE},
+    {GearReport::DRIVE_3, ApiGear::DRIVE},   {GearReport::DRIVE_4, ApiGear::DRIVE},
+    {GearReport::DRIVE_5, ApiGear::DRIVE},   {GearReport::DRIVE_6, ApiGear::DRIVE},
+    {GearReport::DRIVE_7, ApiGear::DRIVE},   {GearReport::DRIVE_8, ApiGear::DRIVE},
+    {GearReport::DRIVE_9, ApiGear::DRIVE},   {GearReport::DRIVE_10, ApiGear::DRIVE},
+    {GearReport::DRIVE_11, ApiGear::DRIVE},  {GearReport::DRIVE_12, ApiGear::DRIVE},
+    {GearReport::DRIVE_13, ApiGear::DRIVE},  {GearReport::DRIVE_14, ApiGear::DRIVE},
+    {GearReport::DRIVE_15, ApiGear::DRIVE},  {GearReport::DRIVE_16, ApiGear::DRIVE},
+    {GearReport::DRIVE_17, ApiGear::DRIVE},  {GearReport::DRIVE_18, ApiGear::DRIVE},
+    {GearReport::REVERSE, ApiGear::REVERSE}, {GearReport::REVERSE_2, ApiGear::REVERSE},
+    {GearReport::PARK, ApiGear::PARK},       {GearReport::LOW, ApiGear::LOW},
+    {GearReport::LOW_2, ApiGear::LOW},
   };
 
   std::unordered_map<uint8_t, uint8_t> turn_indicator_type_ = {
-    {TurnIndicatorsReport::DISABLE, VehicleTurnIndicator::DISABLE},
-    {TurnIndicatorsReport::ENABLE_LEFT, VehicleTurnIndicator::LEFT},
-    {TurnIndicatorsReport::ENABLE_RIGHT, VehicleTurnIndicator::RIGHT},
+    {TurnIndicatorsReport::DISABLE, ApiTurnIndicator::DISABLE},
+    {TurnIndicatorsReport::ENABLE_LEFT, ApiTurnIndicator::LEFT},
+    {TurnIndicatorsReport::ENABLE_RIGHT, ApiTurnIndicator::RIGHT},
   };
 
   std::unordered_map<uint8_t, uint8_t> hazard_light_type_ = {
-    {HazardLightsReport::DISABLE, VehicleHazardLight::DISABLE},
-    {HazardLightsReport::ENABLE, VehicleHazardLight::ENABLE},
+    {HazardLightsReport::DISABLE, ApiHazardLight::DISABLE},
+    {HazardLightsReport::ENABLE, ApiHazardLight::ENABLE},
   };
 
   std::unordered_map<uint8_t, uint8_t> door_status_type_ = {

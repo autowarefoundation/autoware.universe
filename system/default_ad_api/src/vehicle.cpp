@@ -98,19 +98,19 @@ void VehicleNode::steering_status(
 
 void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_state_.gear.status = mapping(gear_type_, msg_ptr->report, VehicleGear::UNKNOWN);
+  vehicle_state_.gear.status = mapping(gear_type_, msg_ptr->report, ApiGear::UNKNOWN);
 }
 
 void VehicleNode::turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
   vehicle_state_.turn_indicator.status =
-    mapping(turn_indicator_type_, msg_ptr->report, VehicleTurnIndicator::UNKNOWN);
+    mapping(turn_indicator_type_, msg_ptr->report, ApiTurnIndicator::UNKNOWN);
 }
 
 void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr)
 {
   vehicle_state_.hazard_light.status =
-    mapping(hazard_light_type_, msg_ptr->report, VehicleHazardLight::UNKNOWN);
+    mapping(hazard_light_type_, msg_ptr->report, ApiHazardLight::UNKNOWN);
 }
 
 void VehicleNode::mgrs_grid_data(const vehicle_interface::MGRSGrid::Message::ConstSharedPtr msg_ptr)
