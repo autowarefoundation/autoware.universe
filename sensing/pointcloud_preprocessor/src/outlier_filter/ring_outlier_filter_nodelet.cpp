@@ -149,8 +149,10 @@ void RingOutlierFilterComponent::faster_filter(
   // == true`
   output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
 
+  output.fields.resize(4); // x, y, z, intensity
+  std::copy(input->fields.begin(), input->fields.begin() + 4, output.fields.begin());
+
   output.height = 1;
-  output.fields = input->fields;
   output.is_bigendian = input->is_bigendian;
   output.is_dense = input->is_dense;
   output.width = static_cast<uint32_t>(output.data.size() / output.height / output.point_step);
