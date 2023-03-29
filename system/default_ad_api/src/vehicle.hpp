@@ -21,6 +21,7 @@
 #include <component_interface_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/door_status.hpp>
 #include <autoware_adapi_v1_msgs/msg/gear.hpp>
 #include <autoware_adapi_v1_msgs/msg/hazard_light.hpp>
 #include <autoware_adapi_v1_msgs/msg/turn_indicator.hpp>
@@ -48,6 +49,8 @@ private:
   using VehicleTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicator;
   using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
   using VehicleHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
+  using VehicleDoorStatus = vehicle_interface::DoorStatus::Message;
+  using ApiDoorStatus = autoware_adapi_v1_msgs::msg::DoorStatus;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
     {GearReport::NONE, VehicleGear::UNKNOWN},    {GearReport::NEUTRAL, VehicleGear::NEUTRAL},
@@ -74,6 +77,15 @@ private:
   std::unordered_map<uint8_t, uint8_t> hazard_light_type_ = {
     {HazardLightsReport::DISABLE, VehicleHazardLight::DISABLE},
     {HazardLightsReport::ENABLE, VehicleHazardLight::ENABLE},
+  };
+
+  std::unordered_map<uint8_t, uint8_t> door_status_type_ = {
+    {VehicleDoorStatus::UNKNOWN, ApiDoorStatus::UNKNOWN},
+    {VehicleDoorStatus::DOOR_OPENED, ApiDoorStatus::OPENED},
+    {VehicleDoorStatus::DOOR_CLOSED, ApiDoorStatus::CLOSED},
+    {VehicleDoorStatus::DOOR_OPENING, ApiDoorStatus::OPENING},
+    {VehicleDoorStatus::DOOR_CLOSING, ApiDoorStatus::CLOSING},
+    {VehicleDoorStatus::NOT_APPLICABLE, ApiDoorStatus::NOT_AVAILABLE},
   };
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
@@ -104,6 +116,7 @@ private:
   void mgrs_grid_data(const vehicle_interface::MGRSGrid::Message::ConstSharedPtr msg_ptr);
   void hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr);
   void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
+  void door_status(const VehicleDoorStatus::ConstSharedPtr msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
   void on_timer();

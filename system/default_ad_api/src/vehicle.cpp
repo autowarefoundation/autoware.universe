@@ -39,7 +39,7 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
   adaptor.init_sub(sub_mgrs_grid_, this, &VehicleNode::mgrs_grid_data);
   adaptor.init_sub(sub_hazard_light_, this, &VehicleNode::hazard_light_status);
   adaptor.init_sub(sub_energy_level_, this, &VehicleNode::energy_status);
-  // adaptor.init_sub(sub_door_status_, this, &VehicleNode::door_status);
+  adaptor.init_sub(sub_door_status_, this, &VehicleNode::door_status);
 
   const auto rate = rclcpp::Rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -124,11 +124,21 @@ void VehicleNode::energy_status(
   vehicle_state_ptr.energy_level = msg_ptr->energy_level;
 }
 
+void VehicleNode::door_status(const VehicleDoorStatus::ConstSharedPtr msg_ptr)
+{
+  // Currently only support single door status
+  ApiDoorStatus door_status;
+  door_status.status = mapping(door_status_type_, msg_ptr->status, ApiDoorStatus::UNKNOWN);
+  vehicle_door_ptr.stamp = now();
+  vehicle_door_ptr.doors = {door_status};
+}
+
 void VehicleNode::on_timer()
 {
   vehicle_state_ptr.stamp = now();
   pub_kinematic_->publish(vehicle_kinematic_ptr);
   pub_state_->publish(vehicle_state_ptr);
+  pub_door_->publish(vehicle_door_ptr);
 }
 
 }  // namespace default_ad_api
