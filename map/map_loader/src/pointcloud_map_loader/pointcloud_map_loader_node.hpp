@@ -48,7 +48,8 @@ private:
 
   std::vector<std::string> getPcdPaths(
     const std::vector<std::string> & pcd_paths_or_directory) const;
-  std::map<std::string, PCDFileMetadata> generatePCDMetadata(
+  std::map<std::string, PCDFileMetadata> getPCDMetadata(
+    const std::string & pcd_metadata_path,
     const std::vector<std::string> & pcd_paths) const;
 };
 
