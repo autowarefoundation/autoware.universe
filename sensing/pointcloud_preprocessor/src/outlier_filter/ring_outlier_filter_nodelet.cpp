@@ -37,6 +37,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     object_length_threshold_ =
       static_cast<double>(declare_parameter("object_length_threshold", 0.1));
     num_points_threshold_ = static_cast<int>(declare_parameter("num_points_threshold", 4));
+    max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
+    max_points_num_per_ring_ = static_cast<size_t>(declare_parameter("max_points_num_per_ring", 2000));
   }
 
   using std::placeholders::_1;
@@ -67,11 +69,11 @@ void RingOutlierFilterComponent::faster_filter(
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Distance)).offset;
 
   std::vector<std::vector<size_t>> ring2indices;
-  ring2indices.reserve(128);
+  ring2indices.reserve(max_rings_num_);
 
-  for (size_t i = 0; i < 128; i++) {
+  for (uint16_t i = 0; i < max_rings_num_; i++) {
     ring2indices.push_back(std::vector<size_t>());
-    ring2indices.back().reserve(2000);  // TODO(sykwer): Make it parameter
+    ring2indices.back().reserve(max_points_num_per_ring_);
   }
 
   for (size_t data_idx = 0; data_idx < input->data.size(); data_idx += input->point_step) {
