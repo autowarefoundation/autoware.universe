@@ -82,7 +82,7 @@ If you only have one pointcloud map, Autoware will assume the following director
 sample-map-rosbag
 ├── lanelet2_map.osm
 ├── pointcloud_map.pcd
-└── pointcloud_map_metadata.yaml
+└── pointcloud_map_metadata.yaml (not necessary when only a single PCD file exists)
 ```
 
 If you have multiple rosbags, an example directory structure would be as follows:
