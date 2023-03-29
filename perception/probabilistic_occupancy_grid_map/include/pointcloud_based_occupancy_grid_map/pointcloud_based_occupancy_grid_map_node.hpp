@@ -30,6 +30,7 @@
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/synchronizer.h>
 #include <tf2_ros/buffer.h>
@@ -74,8 +75,11 @@ private:
   std::shared_ptr<TransformListener> tf2_listener_{std::make_shared<TransformListener>(*tf2_)};
 
   using SyncPolicy = message_filters::sync_policies::ExactTime<PointCloud2, PointCloud2>;
+  using ApproxSyncPolicy =
+    message_filters::sync_policies::ApproximateTime<PointCloud2, PointCloud2>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
-  std::shared_ptr<Sync> sync_ptr_;
+  using ApproxSync = message_filters::Synchronizer<ApproxSyncPolicy>;
+  std::shared_ptr<ApproxSync> sync_ptr_;
 
   std::shared_ptr<OccupancyGridMapUpdaterInterface> occupancy_grid_map_updater_ptr_;
 
