@@ -60,6 +60,11 @@ class PointcloudMapFilterPipeline:
                 parameters=[
                     {
                         "distance_threshold": self.distance_threshold,
+                        "timer_interval_ms": self.timer_interval_ms,
+                        "use_dynamic_map_loading": self.use_dynamic_map_loading,
+                        "map_update_distance_threshold": self.map_update_distance_threshold,
+                        "map_loader_radius": self.map_loader_radius,
+                        "input_frame": "map",
                     }
                 ],
                 extra_arguments=[
