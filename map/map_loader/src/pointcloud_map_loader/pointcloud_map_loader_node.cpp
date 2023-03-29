@@ -111,7 +111,6 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
     PCDFileMetadata metadata = {};
     pcl::getMinMax3D(single_pcd, metadata.min, metadata.max);
     pcd_metadata_dict[pcd_paths[0]] = metadata;
-    std::cout << "pointcloud_map_loader " << pcd_paths[0] << std::endl;
   }
   return pcd_metadata_dict;
 }
