@@ -116,9 +116,7 @@ String Lanelet2MapLoaderNode::get_mgrs_grid(
   if (lanelet2_map_projector_type == "MGRS") {
     lanelet::projection::MGRSProjector projector{};
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
-    if (projector.isMGRSCodeSet()) {
-      mgrs_grid_msg.data = projector.getProjectedMGRSGrid();
-    }
+    mgrs_grid_msg.data = projector.getProjectedMGRSGrid();
   }
   return mgrs_grid_msg;
 }
