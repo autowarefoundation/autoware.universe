@@ -325,8 +325,6 @@ void BlockageDiagComponent::filter(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
   cv::applyColorMap(single_dust_img, single_frame_ground_dust_colorized, cv::COLORMAP_JET);
   cv::Mat multi_frame_ground_dust_colorized;
-  cv::applyColorMap(
-    multi_frame_gronud_dust_result, multi_frame_ground_dust_colorized, cv::COLORMAP_JET);
   cv::Mat blockage_dust_merged_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
   cv::Mat blockage_dust_merged_mask(
