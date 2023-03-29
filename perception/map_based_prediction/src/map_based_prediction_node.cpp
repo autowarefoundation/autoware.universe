@@ -439,22 +439,33 @@ ObjectClassification::_label_type changeLabelForPrediction(
     return label;
   } else if (  // for bicycle and motorcycle
     label == ObjectClassification::MOTORCYCLE || label == ObjectClassification::BICYCLE) {
-    // calculate existence in road lanelet
+    // if object is within road lanelet and satisfies yaw constraints
     const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
+    const float high_speed_threshold = 25.0 / 18.0 * 5.0;  // High speed bycicle 25 km/h
+    const bool high_speed_object =
+      object.kinematics.twist_with_covariance.twist.linear.x > high_speed_threshold;
 
     // if the object is within lanelet, do the same estimation with vehicle
     if (within_road_lanelet) {
       return ObjectClassification::MOTORCYCLE;
+    } else if (high_speed_object) {
+      // high speed object outside road lanelet will move like unknown object
+      return ObjectClassification::UNKNOWN;
     } else {
       return label == ObjectClassification::BICYCLE;
     }
   } else if (label == ObjectClassification::PEDESTRIAN) {
     const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
-    const float max_velocity_for_human_mps = 7.5;  // Max human being motion speed is 27km/h
+    const float max_velocity_for_human_mps =
+      25.0 / 18.0 * 5.0;  // Max human being motion speed is 25km/h
     const bool high_speed_object =
       object.kinematics.twist_with_covariance.twist.linear.x > max_velocity_for_human_mps;
+    // fast, human-like object: like segway
     if (within_road_lanelet && high_speed_object) {
       return ObjectClassification::MOTORCYCLE;
+    } else if (high_speed_object) {
+      // fast human outside road lanelet will move like unknown object
+      return ObjectClassification::UNKNOWN;
     } else {
       return label;
     }
