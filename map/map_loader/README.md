@@ -78,7 +78,7 @@ You may use [pointcloud_divider](https://github.com/MapIV/pointcloud_divider) fr
 
 If you only have one pointcloud map, Autoware will assume the following directory structure by default.
 
-```
+```bash
 sample-map-rosbag
 ├── lanelet2_map.osm
 ├── pointcloud_map.pcd
@@ -87,7 +87,7 @@ sample-map-rosbag
 
 If you have multiple rosbags, an example directory structure would be as follows:
 
-```
+```bash
 sample-map-rosbag
 ├── lanelet2_map.osm
 ├── pointcloud_map
@@ -99,7 +99,7 @@ sample-map-rosbag
 
 Note that in this case, you have to launch autoware or simulators with a following command:
 
-```
+```bash
 ros2 launch autoware_launch autoware.launch.xml map_path:=/PATH/TO/sample-map-rosbag pointcloud_map_file:=pointcloud_map ...
 ```
 
