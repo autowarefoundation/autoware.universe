@@ -500,9 +500,7 @@ bool hasEnoughDistance(
   const double lane_change_required_distance =
     static_cast<double>(num) * minimum_lane_change_length;
 
-  if (
-    lane_change_total_distance + lane_change_required_distance >
-    util::getDistanceToEndOfLane(current_pose, current_lanes)) {
+  if (lane_change_total_distance > util::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
   }
 
