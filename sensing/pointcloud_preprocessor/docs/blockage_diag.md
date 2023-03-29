@@ -33,13 +33,13 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 ### Input
 
 | Name                        | Type                            | Description                                                     |
-|-----------------------------|---------------------------------|-----------------------------------------------------------------|
+| --------------------------- | ------------------------------- | --------------------------------------------------------------- |
 | `~/input/pointcloud_raw_ex` | `sensor_msgs::msg::PointCloud2` | The raw point cloud data is used to detect the no-return region |
 
 ### Output
 
 | Name                                                      | Type                                    | Description                                                                                      |
-|:----------------------------------------------------------|:----------------------------------------|--------------------------------------------------------------------------------------------------|
+| :-------------------------------------------------------- | :-------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `~/output/blockage_diag/debug/blockage_mask_image`        | `sensor_msgs::msg::Image`               | The mask image of detected blockage                                                              |
 | `~/output/blockage_diag/debug/ground_blockage_ratio`      | `tier4_debug_msgs::msg::Float32Stamped` | The area ratio of blockage region in ground region                                               |
 | `~/output/blockage_diag/debug/sky_blockage_ratio`         | `tier4_debug_msgs::msg::Float32Stamped` | The area ratio of blockage region in sky region                                                  |
@@ -52,7 +52,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 ## Parameters
 
 | Name                          | Type   | Description                                                      |
-|-------------------------------|--------|------------------------------------------------------------------|
+| ----------------------------- | ------ | ---------------------------------------------------------------- |
 | `blockage_ratio_threshold`    | float  | The threshold of blockage area ratio                             |
 | `blockage_count_threshold`    | float  | The threshold of number continuous blockage frames               |
 | `horizontal_ring_id`          | int    | The id of horizontal ring of the LiDAR                           |
