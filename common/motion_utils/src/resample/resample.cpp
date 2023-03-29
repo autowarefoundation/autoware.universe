@@ -291,19 +291,16 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   // interpolate lane_ids
   std::vector<std::vector<int64_t>> interpolated_lane_ids;
   interpolated_lane_ids.resize(resampling_arclength.size());
+  constexpr double epsilon = 1e-6;
   for (size_t i = 0; i < resampling_arclength.size(); ++i) {
     const size_t seg_idx = std::min(closest_segment_indices.at(i), input_path.points.size() - 2);
     const auto & prev_lane_ids = input_path.points.at(seg_idx).lane_ids;
     const auto & next_lane_ids = input_path.points.at(seg_idx + 1).lane_ids;
 
-    if (
-      std::abs(input_arclength.at(seg_idx) - resampling_arclength.at(i)) <=
-      motion_utils::overlap_threshold) {
+    if (std::abs(input_arclength.at(seg_idx) - resampling_arclength.at(i)) <= epsilon) {
       interpolated_lane_ids.at(i).insert(
         interpolated_lane_ids.at(i).end(), prev_lane_ids.begin(), prev_lane_ids.end());
-    } else if (
-      std::abs(input_arclength.at(seg_idx + 1) - resampling_arclength.at(i)) <=
-      motion_utils::overlap_threshold) {
+    } else if (std::abs(input_arclength.at(seg_idx + 1) - resampling_arclength.at(i)) <= epsilon) {
       interpolated_lane_ids.at(i).insert(
         interpolated_lane_ids.at(i).end(), next_lane_ids.begin(), next_lane_ids.end());
     } else {
@@ -316,7 +313,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
         }
       }
       // If there are no common lane_ids, the prev_lane_ids is assigned.
-      if (interpolated_lane_ids.empty()) {
+      if (interpolated_lane_ids.at(i).empty()) {
         interpolated_lane_ids.at(i).insert(
           interpolated_lane_ids.at(i).end(), prev_lane_ids.begin(), prev_lane_ids.end());
       }
