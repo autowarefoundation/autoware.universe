@@ -331,11 +331,6 @@ void BlockageDiagComponent::filter(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
   cv::Mat blockage_dust_merged_mask(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-  cv::Mat yellow_plane(
-    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 127, 127));
-  cv::Mat red_plane(cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 255));
-  cv::Mat blue_plane(
-    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(255, 0, 0));
   blockage_dust_merged_img.setTo(
     cv::Vec3b(0, 0, 255), time_series_blockage_result);  // red:blockage
   blockage_dust_merged_img.setTo(
