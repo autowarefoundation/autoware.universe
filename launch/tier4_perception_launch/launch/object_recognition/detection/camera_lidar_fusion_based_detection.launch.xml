@@ -41,6 +41,17 @@
     <arg name="image_number" value="$(var image_number)"/>
   </include> -->
 
+<!--  GOLF Camera Containers -->
+
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/f_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/fr_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/fl_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/ml_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/mr_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/b_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/bl_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/br_camera_node_container.launch.py"/>
+
   <!-- Pointcloud map filter -->
   <group>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/pointcloud_map_filter.launch.py" if="$(var use_pointcloud_map)">
