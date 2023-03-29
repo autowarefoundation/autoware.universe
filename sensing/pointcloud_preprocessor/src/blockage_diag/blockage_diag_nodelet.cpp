@@ -43,7 +43,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
       static_cast<int>(declare_parameter("blockage_buffering_frames", 100));
     blockage_buffering_interval_ =
       static_cast<int>(declare_parameter("blockage_buffering_interval", 5));
-    dust_ratio_threshold_ = static_cast<float>(declare_parameter("dust_ratio_threshold", 0.1));
+    dust_ratio_threshold_ = static_cast<float>(declare_parameter("dust_ratio_threshold", 0.2));
     dust_count_threshold_ = static_cast<int>(declare_parameter("dust_count_threshold", 10));
     dust_kernel_size_ = static_cast<int>(declare_parameter("dust_kernel_size", 2));
     dust_buffering_frames_ = static_cast<int>(declare_parameter("dust_buffering_frames", 10));
@@ -360,10 +360,8 @@ void BlockageDiagComponent::filter(
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", blockage_dust_merged_colorized)
       .toImageMsg();
   if (ground_dust_ratio_ > dust_ratio_threshold_) {
-    if (dust_frame_count_ < dust_count_threshold_) {
+    if (dust_frame_count_ < 2 * dust_count_threshold_) {
       dust_frame_count_++;
-    } else {
-      dust_frame_count_ = dust_count_threshold_;
     }
   } else {
     dust_frame_count_ = 0;
