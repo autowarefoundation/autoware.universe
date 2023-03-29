@@ -45,7 +45,8 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
      "--params-file", behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
      "--params-file", behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
      "--params-file", behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+     "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml",
+     "--params-file", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml"});
 
   auto test_target_node =
     std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
