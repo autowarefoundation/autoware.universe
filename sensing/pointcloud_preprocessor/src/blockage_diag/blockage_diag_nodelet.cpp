@@ -343,12 +343,8 @@ void BlockageDiagComponent::filter(
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", multi_frame_ground_dust_colorized)
       .toImageMsg();
   multi_frame_dust_mask_pub.publish(multi_frame_dust_mask_msg);
-  cv::Mat colorized_full_size_depth_map(
-    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0, 0, 0));
-  colorized_full_size_depth_map = full_size_depth_map.clone();
   sensor_msgs::msg::Image::SharedPtr lidar_depth_map_msg =
-    cv_bridge::CvImage(std_msgs::msg::Header(), "mono16", colorized_full_size_depth_map)
-      .toImageMsg();
+    cv_bridge::CvImage(std_msgs::msg::Header(), "mono16", full_size_depth_map).toImageMsg();
   lidar_depth_map_msg->header = input->header;
   lidar_depth_map_pub_.publish(lidar_depth_map_msg);
   cv::Mat blockage_mask_colorized;
