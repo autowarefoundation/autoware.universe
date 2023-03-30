@@ -97,10 +97,10 @@ sample-map-rosbag
 └── pointcloud_map_metadata.yaml
 ```
 
-Note that in this case, you have to launch autoware or simulators with a following command:
+Note that in this case, you have to launch autoware or simulators with `pointcloud_map_file:=pointcloud_map` argument attached:
 
 ```bash
-ros2 launch autoware_launch autoware.launch.xml map_path:=/PATH/TO/sample-map-rosbag pointcloud_map_file:=pointcloud_map ...
+ros2 launch autoware_launch autoware.launch.xml map_path:=/PATH/TO/sample-map-rosbag pointcloud_map_file:=pointcloud_map vehicle_model:=VEHICLE_MODEL sensor_model:=SENSOR_MODEL
 ```
 
 ---
