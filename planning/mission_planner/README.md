@@ -25,13 +25,15 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Services
 
-| Name                                 | Type                                              | Description                       |
-| ------------------------------------ | ------------------------------------------------- | --------------------------------- |
-| `/planning/routing/clear_route`      | autoware_adapi_v1_msgs/srv/ClearRoute             | route clear request               |
-| `/planning/routing/set_route_points` | autoware_adapi_v1_msgs/srv/SetRoutePoints         | route request with pose waypoints |
-| `/planning/routing/set_route`        | autoware_planning_msgs/srv/SetRoute               | route request with HAD map format |
-| `~/srv/set_mrm`                      | autoware_planning_msgs/srv/SetPoseWithUuidStamped | set emergency route               |
-| `~/srv/clear_mrm`                    | std_srvs/srv/Trigger                              | clear emergency route             |
+| Name                                             | Type                                              | Description                                 |
+| ------------------------------------------------ | ------------------------------------------------- | ------------------------------------------- |
+| `/planning/mission_planning/clear_route`         | autoware_adapi_v1_msgs/srv/ClearRoute             | route clear request                         |
+| `/planning/mission_planning/set_route_points`    | autoware_adapi_v1_msgs/srv/SetRoutePoints         | route request with pose waypoints           |
+| `/planning/mission_planning/set_route`           | autoware_planning_msgs/srv/SetRoute               | route request with lanelet waypoints        |
+| `/planning/mission_planning/change_route_points` | autoware_adapi_v1_msgs/srv/SetRoutePoints         | route change request with pose waypoints    |
+| `/planning/mission_planning/change_route`        | autoware_planning_msgs/srv/SetRoute               | route change request with lanelet waypoints |
+| `~/srv/set_mrm`                                  | autoware_planning_msgs/srv/SetPoseWithUuidStamped | set emergency route                         |
+| `~/srv/clear_mrm`                                | std_srvs/srv/Trigger                              | clear emergency route                       |
 
 ### Subscriptions
 
