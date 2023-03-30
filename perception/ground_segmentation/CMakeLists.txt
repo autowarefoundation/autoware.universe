@@ -71,14 +71,14 @@ find_path(YAML_CPP_INCLUDE_DIR
           NAMES yaml_cpp.h
           PATHS ${YAML_CPP_INCLUDE_DIRS})
 find_library(YAML_CPP_LIBRARY
-             NAMES YAML_CPP
-             PATHS ${YAML_CPP_LIBRARY_DIRS})
+            NAMES YAML_CPP
+            PATHS ${YAML_CPP_LIBRARY_DIRS})
 
 link_directories(${YAML_CPP_LIBRARY_DIRS})
 
 if(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
   add_definitions(-DHAVE_NEW_YAMLCPP)
-endif(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
+endif()
 
 
 if(BUILD_TESTING)
