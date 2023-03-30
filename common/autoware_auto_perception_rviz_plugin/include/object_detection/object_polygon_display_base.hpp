@@ -25,6 +25,7 @@
 #include <rviz_common/display_context.hpp>
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/status_property.hpp>
 #include <rviz_default_plugins/displays/marker/marker_common.hpp>
 #include <rviz_default_plugins/displays/marker_array/marker_array_display.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -155,7 +156,7 @@ public:
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
       "Input for pointcloud visualization of objects detection pipeline.", this,
-      SLOT(updatePalette()));
+      SLOT(updateTopic()));
     // m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
@@ -212,7 +213,55 @@ public:
     RosTopicDisplay::reset();
     m_marker_common.clearMarkers();
     point_cloud_common->reset();
-    m_default_pointcloud_topic->reset();
+  }
+
+  virtual void subscribe()
+  {
+    RosTopicDisplay::subscribe();
+    
+    if (!RosTopicDisplay::isEnabled() && !m_publish_objs_pointcloud) {
+      return;
+    }
+
+    if (m_default_pointcloud_topic->isEmpty()) {
+      RosTopicDisplay::setStatus(
+        rviz_common::properties::StatusProperty::Error,
+        "Topic",
+        QString("Error subscribing: Empty topic name"));
+      return;
+    }
+
+    try {
+      rclcpp::SubscriptionOptions sub_opts;
+      sub_opts.event_callbacks.message_lost_callback =
+        [&](rclcpp::QOSMessageLostInfo & info)
+        {
+          std::ostringstream sstm;
+          sstm << "Some messages were lost:\n>\tNumber of new lost messages: " <<
+            info.total_count_change << " \n>\tTotal number of messages lost: " <<
+            info.total_count;
+          RosTopicDisplay::setStatus(rviz_common::properties::StatusProperty::Warn, "Topic", QString(sstm.str().c_str()));
+        };
+
+      rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
+      pointcloud_subscription = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
+        m_default_pointcloud_topic->getTopicStd(), 
+        rclcpp::SensorDataQoS(), 
+        std::bind(&ObjectPolygonDisplayBase::pointCloudCallback, 
+        this, 
+        std::placeholders::_1));
+      RosTopicDisplay::setStatus(rviz_common::properties::StatusProperty::Ok, "Topic", "OK");
+    } catch (rclcpp::exceptions::InvalidTopicNameError & e) {
+      RosTopicDisplay::setStatus(
+        rviz_common::properties::StatusProperty::Error, "Topic",
+        QString("Error subscribing: ") + e.what());
+    }
+  }
+
+  void unsubscribe()
+  {
+    RosTopicDisplay::unsubscribe();
+    pointcloud_subscription.reset ();
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
@@ -535,6 +584,14 @@ protected:
     }
   }
 
+  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) 
+  {
+    std::string frame_id = input_pointcloud_msg.header.frame_id;
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
+
+    // add pointcloud to buffer
+  }
+
   void filterPolygon(
     const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr & in_cloud,
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud, const object_info & object)
@@ -583,8 +640,9 @@ protected:
   // Property to enable/disable objects pointcloud publishing
   rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
 
-  message_filters::Subscriber<MsgT> perception_objects_subscription;
-  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
+  // message_filters::Subscriber<MsgT> perception_objects_subscription;
+  // rclcpp::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_subscription;
   // plugin to visualize pointclouds
   std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common;
 
