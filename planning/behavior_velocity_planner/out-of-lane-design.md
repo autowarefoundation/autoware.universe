@@ -4,8 +4,6 @@
 
 `out_of_lane` is the module that decelerates and stops to prevent the ego vehicle from entering another lane with incoming dynamic objects.
 
-![brief](./docs/out_of_lane/out_of_lane-overview.svg)
-
 ### Activation Timing
 
 This module is activated if `launch_out_of_lane` is set to true.
@@ -14,11 +12,13 @@ This module is activated if `launch_out_of_lane` is set to true.
 
 The algorithm is made of the following steps.
 
-1. Calculate the ego path footprints.
-2. Calculate the other lanes.
-3. Calculate the overlapping ranges between the ego path footprints and the other lanes.
+1. Calculate the ego path footprints (red).
+2. Calculate the other lanes (magenta).
+3. Calculate the overlapping ranges between the ego path footprints and the other lanes (green).
 4. For each overlapping range, decide if a stop or slow down action must be taken.
 5. For each action, insert the corresponding stop or slow down point in the path.
+
+![overview](./docs/out_of_lane/out_of_lane-footprints_other_lanes_overlaps_ranges.png)
 
 #### 1. Ego Path Footprints
 
@@ -58,6 +58,17 @@ Whether it is decided to slow down or stop is determined by the distance between
 If this distance is bellow the `actions.slowdown.threshold`, a velocity of `actions.slowdown.velocity` will be used.
 If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s will be used.
 
+<table width="100%">
+  <tr>
+  <td>
+    <img src="./docs/out_of_lane/out_of_lane_slow.png" width="550px"/>
+  </td>
+  <td>
+    <img src="./docs/out_of_lane/out_of_lane_stop.png" width="550px"/>
+  </td>
+  </tr>
+</table>
+
 ##### Threshold
 
 With the `mode` set to `"threshold"`,
@@ -95,13 +106,17 @@ Otherwise, the lanelet map is used to estimate the distance between the object a
 
 #### 5. Path update
 
-For each decision to stop or slow down before an overlapping range with other lane $l$ starting at ego path point index $i$,
+Finally, for each decision to stop or slow down before an overlapping range,
+a point is inserted in the path.
+For a decision taken for an overlapping range with a lane $l$ starting at ego path point index $i$,
 a point is inserted in the path between index $i$ and $i-1$ such that the ego footprint projected at the inserted point does not overlap $l$.
 Such point with no overlap must exist since, by definition of the overlapping range,
 we know that there is no overlap at $i-1$.
 
 If the point would cause a higher deceleration than allowed by the `max_accel` parameter (node parameter),
 it is skipped.
+
+Moreover, parameter `action.distance_buffer` adds an extra distance between the ego footprint and the overlap when possible.
 
 ### Module Parameters
 
@@ -148,5 +163,3 @@ it is skipped.
 | `extra_rear_offset`  | double | [m] extra rear distance to add to the ego footprint  |
 | `extra_left_offset`  | double | [m] extra left distance to add to the ego footprint  |
 | `extra_right_offset` | double | [m] extra right distance to add to the ego footprint |
-
-### Future extensions / Unimplemented parts
