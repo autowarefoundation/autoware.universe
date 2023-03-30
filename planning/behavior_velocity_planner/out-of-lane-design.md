@@ -13,11 +13,12 @@ This module is activated if `launch_out_of_lane` is set to true
 ### Inner-workings / Algorithms
 
 The algorithm is made of the following steps.
+
 1. Calculate the ego path footprints.
-1. Calculate the other lanes.
-1. Calculate the overlapping ranges between the ego path footprints and the other lanes.
-1. For each overlapping range, decide if a stop or slow down action must be taken.
-1. For each action, insert the corresponding stop or slow down point in the path.
+2. Calculate the other lanes.
+3. Calculate the overlapping ranges between the ego path footprints and the other lanes.
+4. For each overlapping range, decide if a stop or slow down action must be taken.
+5. For each action, insert the corresponding stop or slow down point in the path.
 
 #### 1. Ego Path Footprints
 
@@ -30,6 +31,7 @@ This set is built by selecting all lanelets within some distance from the ego ve
 The selection distance is choosen as the maximum between the `slowdown.distance_threshold` and the `stop.distance_threshold`.
 
 A lanelet is deemed non-relevent if it meets one of the following conditions.
+
 - It is part of the lanelets followed by the ego path.
 - It contains the rear point of the ego footprint.
 - It follows one of the ego path lanelets.
@@ -41,6 +43,7 @@ For each pair of other lane $l$ and ego path footprint $f$, we calculate the ove
 For each overlapping polygon found, if the distance inside the other lane $l$ is above the `overlap.minimum_distance` threshold, then the overlap is ignored.
 Otherwise, the arc length range (relative to the ego path) and corresponding points of the overlapping polygons are stored.
 Ultimately, for each other lane $l$, overlapping ranges of successive overlaps are built with the following information:
+
 - overlapped other lane $l$.
 - start and end ego path indexes.
 - start and end ego path arc lengths.
@@ -51,13 +54,35 @@ Ultimately, for each other lane $l$, overlapping ranges of successive overlaps a
 In the fourth step, a decision to either slow down or stop before each overlapping range is taken based on the dynamic objects.
 The conditions for the decision depend on the value of the `mode` parameter.
 
+Whether it is decided to slow down or stop is determined by the distance between the ego vehicle and the start of the overlapping range (in arc length along the ego path).
+If this distance is bellow the `actions.slowdown.threshold`, a velocity of `actions.slowdown.velocity` will be used.
+If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s will be used.
+
 ##### Threshold
 
-##### Intervals
+With the `mode` set to `"threshold"`,
+a decision to stop or slow down before a range is made if
+an incoming dynamic object is estimated to reach the overlap within `threshold.time_threshold`.
 
 ##### TTC (time to collision)
 
-##### Dynamic objects 
+With the `mode` set to `"ttc"`,
+estimates for the times when ego and the dynamic objects reach the start and end of the overlapping range are calculated.
+This is then used to calculate the time to collision over the period where ego crosses the overlap.
+If the time to collision is predicted to go bellow the `ttc.threshold`, the decision to stop or slow down is made.
+
+##### Intervals
+
+With the `mode` set to `"intervals"`,
+TODO
+
+##### Time estimates
+
+###### Ego
+
+TODO
+
+###### Dynamic objects
 
 Two methods are used to estimate the time when a dynamic objects with reach some point.
 If `objects.use_predicted_paths` is set to `true`, the predicted path of the dynamic object is used.
@@ -70,48 +95,48 @@ a point is inserted in the path between index $i$ and $i-1$ such that the ego fo
 
 ### Module Parameters
 
-| Parameter               | Type   | Description                                                                                                              |
-| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `mode`      | string | [-] mode used to consider a dynamic object. Candidates: threshold, intervals, ttc |
-| `skip_if_already_overlapping` | bool   | [-] if true, do not run this module when ego already overlaps another lane |
+| Parameter                     | Type   | Description                                                                       |
+| ----------------------------- | ------ | --------------------------------------------------------------------------------- |
+| `mode`                        | string | [-] mode used to consider a dynamic object. Candidates: threshold, intervals, ttc |
+| `skip_if_already_overlapping` | bool   | [-] if true, do not run this module when ego already overlaps another lane        |
 
-| Parameter /threshold | Type   | Description                                  |
-| ------------------------- | ------ | -------------------------------------------- |
-| `time_threshold`            | double | [s] consider objects that will reach an overlap within this time |
+| Parameter /threshold | Type   | Description                                                      |
+| -------------------- | ------ | ---------------------------------------------------------------- |
+| `time_threshold`     | double | [s] consider objects that will reach an overlap within this time |
 
-| Parameter /intervals | Type   | Description                                                                                                                   |
-| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `ego_time_buffer`              | double | [s] extend the ego time interval by this buffer |
-| `objects_time_buffer`              | double | [s] extend the time intervals of objects by this buffer |
+| Parameter /intervals  | Type   | Description                                             |
+| --------------------- | ------ | ------------------------------------------------------- |
+| `ego_time_buffer`     | double | [s] extend the ego time interval by this buffer         |
+| `objects_time_buffer` | double | [s] extend the time intervals of objects by this buffer |
 
-| Parameter /ttc | Type   | Description                                           |
-| ---------------------- | ------ | ----------------------------------------------------- |
-| `threshold`               | double | [s] consider objects with an estimated time to collision bellow this value while ego is on the overlap |
+| Parameter /ttc | Type   | Description                                                                                            |
+| -------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| `threshold`    | double | [s] consider objects with an estimated time to collision bellow this value while ego is on the overlap |
 
-| Parameter /objects | Type   | Description                                                                         |
-| ------------------------ | ------ | ----------------------------------------------------------------------------------- |
-| `minimum_velocity`            | double | [m/s] consider objects with an estimated time to collision bellow this value while on the overlap |
-| `use_predicted_paths`       | bool | [-] if true, use the predicted paths to estimate future positions; if false, assume the object moves at constant velocity along *all* lanelets it currently is located in |
+| Parameter /objects    | Type   | Description                                                                                                                                                               |
+| --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minimum_velocity`    | double | [m/s] consider objects with an estimated time to collision bellow this value while on the overlap                                                                         |
+| `use_predicted_paths` | bool   | [-] if true, use the predicted paths to estimate future positions; if false, assume the object moves at constant velocity along _all_ lanelets it currently is located in |
 
-| Parameter /overlap | Type   | Description                                                   |
-| -------------------------- | ------ | ------------------------------------------------------------- |
-| `minimum_distance`                   | double | [m] minimum distance inside a lanelet for an overlap to be considered |
-| `extra_length`                 | double | [m] extra arc length to add to the front and back of an overlap (used to calculate enter/exit times) |
+| Parameter /overlap | Type   | Description                                                                                          |
+| ------------------ | ------ | ---------------------------------------------------------------------------------------------------- |
+| `minimum_distance` | double | [m] minimum distance inside a lanelet for an overlap to be considered                                |
+| `extra_length`     | double | [m] extra arc length to add to the front and back of an overlap (used to calculate enter/exit times) |
 
-| Parameter /action | Type   | Description                                                   |
-| -------------------------- | ------ | ------------------------------------------------------------- |
-| `skip_if_over_max_decel`                   | bool   | [-] if true, do not take an action that would cause more deceleration than the maximum allowed |
-| `strict`                 | bool | [-] if true, when a decision is taken to avoid entering a lane, the stop point will make sure no lane at all is entered by ego; if false, ego stops just before entering a lane but may then be overlapping another lane |
-| `distance_buffer`                 | double | [m] buffer distance to try to keep between the ego footprint and lane |
-| `slowdown.distance_threshold`                 | double | [m] insert a slow down when closer than this distance from an overlap |
-| `slowdown.velocity`                 | double | [m] slow down velocity |
-| `stop.distance_threshold`                 | double | [m] insert a stop when closer than this distance from an overlap |
+| Parameter /action             | Type   | Description                                                                                                                                                                                                              |
+| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `skip_if_over_max_decel`      | bool   | [-] if true, do not take an action that would cause more deceleration than the maximum allowed                                                                                                                           |
+| `strict`                      | bool   | [-] if true, when a decision is taken to avoid entering a lane, the stop point will make sure no lane at all is entered by ego; if false, ego stops just before entering a lane but may then be overlapping another lane |
+| `distance_buffer`             | double | [m] buffer distance to try to keep between the ego footprint and lane                                                                                                                                                    |
+| `slowdown.distance_threshold` | double | [m] insert a slow down when closer than this distance from an overlap                                                                                                                                                    |
+| `slowdown.velocity`           | double | [m] slow down velocity                                                                                                                                                                                                   |
+| `stop.distance_threshold`     | double | [m] insert a stop when closer than this distance from an overlap                                                                                                                                                         |
 
-| Parameter /ego | Type   | Description                                                   |
-| -------------------------- | ------ | ------------------------------------------------------------- |
-| `extra_front_offset`       | double | [m] extra front distance to add to the ego footprint |
-| `extra_rear_offset`       | double | [m] extra rear distance to add to the ego footprint |
-| `extra_left_offset`       | double | [m] extra left distance to add to the ego footprint |
-| `extra_right_offset`       | double | [m] extra right distance to add to the ego footprint |
+| Parameter /ego       | Type   | Description                                          |
+| -------------------- | ------ | ---------------------------------------------------- |
+| `extra_front_offset` | double | [m] extra front distance to add to the ego footprint |
+| `extra_rear_offset`  | double | [m] extra rear distance to add to the ego footprint  |
+| `extra_left_offset`  | double | [m] extra left distance to add to the ego footprint  |
+| `extra_right_offset` | double | [m] extra right distance to add to the ego footprint |
 
 ### Future extensions / Unimplemented parts
