@@ -47,7 +47,7 @@ public:
 
 private:
   void processMessage(TrackedObjects::ConstSharedPtr msg) override;
-  void onInitialize() override;
+  // void onInitialize() override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -96,19 +96,19 @@ private:
     return id_map.at(uuid);
   }
 
-  void onObjectsAndObstaclePointCloud(
-    const TrackedObjects::ConstSharedPtr & input_objs_msg,
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
+  // void onObjectsAndObstaclePointCloud(
+  //   const TrackedObjects::ConstSharedPtr & input_objs_msg,
+  //   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
 
-  typedef message_filters::sync_policies::ApproximateTime<
-    TrackedObjects, sensor_msgs::msg::PointCloud2>
-    SyncPolicy;
-  typedef message_filters::Synchronizer<SyncPolicy> Sync;
-  typename std::shared_ptr<Sync> sync_ptr;
+  // typedef message_filters::sync_policies::ApproximateTime<
+  //   TrackedObjects, sensor_msgs::msg::PointCloud2>
+  //   SyncPolicy;
+  // typedef message_filters::Synchronizer<SyncPolicy> Sync;
+  // typename std::shared_ptr<Sync> sync_ptr;
 };
 
 }  // namespace object_detection

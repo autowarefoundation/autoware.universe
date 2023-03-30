@@ -156,7 +156,7 @@ public:
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
       "Input for pointcloud visualization of objects detection pipeline.", this,
       SLOT(updatePalette()));
-    m_default_pointcloud_topic->setReadOnly(true);
+    // m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
@@ -212,6 +212,7 @@ public:
     RosTopicDisplay::reset();
     m_marker_common.clearMarkers();
     point_cloud_common->reset();
+    m_default_pointcloud_topic->reset();
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
