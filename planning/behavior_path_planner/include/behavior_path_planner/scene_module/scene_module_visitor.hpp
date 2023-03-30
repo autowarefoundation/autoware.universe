@@ -28,6 +28,9 @@ namespace behavior_path_planner
 // Forward Declaration
 class AvoidanceModule;
 class LaneChangeModule;
+#ifdef USE_OLD_ARCHITECTURE
+class ExternalRequestLaneChangeModule;
+#endif
 class LaneFollowingModule;
 class PullOutModule;
 class PullOverModule;
@@ -42,6 +45,9 @@ class SceneModuleVisitor
 {
 public:
   void visitLaneChangeModule(const LaneChangeModule * module) const;
+#ifdef USE_OLD_ARCHITECTURE
+  void visitExternalRequestLaneChangeModule(const ExternalRequestLaneChangeModule * module) const;
+#endif
   void visitAvoidanceModule(const AvoidanceModule * module) const;
 
   std::shared_ptr<AvoidanceDebugMsgArray> getAvoidanceModuleDebugMsg() const;
@@ -49,6 +55,10 @@ public:
 
 protected:
   mutable std::shared_ptr<LaneChangeDebugMsgArray> lane_change_visitor_;
+
+#ifdef USE_OLD_ARCHITECTURE
+  mutable std::shared_ptr<LaneChangeDebugMsgArray> ext_request_lane_change_visitor_;
+#endif
   mutable std::shared_ptr<AvoidanceDebugMsgArray> avoidance_visitor_;
 };
 }  // namespace behavior_path_planner

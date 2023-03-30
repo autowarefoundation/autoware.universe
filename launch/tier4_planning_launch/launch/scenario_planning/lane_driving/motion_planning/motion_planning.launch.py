@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -26,77 +24,50 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
-from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
 def launch_setup(context, *args, **kwargs):
     # vehicle information param path
-    vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
+    vehicle_info_param_path = LaunchConfiguration("vehicle_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # planning common param path
-    common_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "common",
-        "common.param.yaml",
-    )
-    with open(common_param_path, "r") as f:
+    with open(LaunchConfiguration("common_param_path").perform(context), "r") as f:
         common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # nearest search parameter
-    nearest_search_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "common",
-        "nearest_search.param.yaml",
-    )
-    with open(nearest_search_param_path, "r") as f:
+    with open(LaunchConfiguration("nearest_search_param_path").perform(context), "r") as f:
         nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # obstacle avoidance planner
-    obstacle_avoidance_planner_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "motion_planning",
-        "obstacle_avoidance_planner",
-        "obstacle_avoidance_planner.param.yaml",
-    )
-    with open(obstacle_avoidance_planner_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("obstacle_avoidance_planner_param_path").perform(context), "r"
+    ) as f:
         obstacle_avoidance_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     obstacle_avoidance_planner_component = ComposableNode(
         package="obstacle_avoidance_planner",
-        plugin="ObstacleAvoidancePlanner",
+        plugin="obstacle_avoidance_planner::ObstacleAvoidancePlanner",
         name="obstacle_avoidance_planner",
         namespace="",
         remappings=[
-            ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/odometry", "/localization/kinematic_state"),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
         parameters=[
             nearest_search_param,
             obstacle_avoidance_planner_param,
             vehicle_info_param,
-            {"is_showing_debug_info": False},
-            {"is_stopping_if_outside_drivable_area": True},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # obstacle velocity limiter
-    obstacle_velocity_limiter_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "motion_planning",
-        "obstacle_velocity_limiter",
-        "obstacle_velocity_limiter.param.yaml",
-    )
-    with open(obstacle_velocity_limiter_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("obstacle_velocity_limiter_param_path").perform(context), "r"
+    ) as f:
         obstacle_velocity_limiter_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     obstacle_velocity_limiter_component = ComposableNode(
         package="obstacle_velocity_limiter",
@@ -122,15 +93,9 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # surround obstacle checker
-    surround_obstacle_checker_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "motion_planning",
-        "surround_obstacle_checker",
-        "surround_obstacle_checker.param.yaml",
-    )
-    with open(surround_obstacle_checker_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("surround_obstacle_checker_param_path").perform(context), "r"
+    ) as f:
         surround_obstacle_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     surround_obstacle_checker_component = ComposableNode(
         package="surround_obstacle_checker",
@@ -160,25 +125,11 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # obstacle stop planner
-    obstacle_stop_planner_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "motion_planning",
-        "obstacle_stop_planner",
-        "obstacle_stop_planner.param.yaml",
-    )
-    obstacle_stop_planner_acc_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "motion_planning",
-        "obstacle_stop_planner",
-        "adaptive_cruise_control.param.yaml",
-    )
-    with open(obstacle_stop_planner_param_path, "r") as f:
+    with open(LaunchConfiguration("obstacle_stop_planner_param_path").perform(context), "r") as f:
         obstacle_stop_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(obstacle_stop_planner_acc_param_path, "r") as f:
+    with open(
+        LaunchConfiguration("obstacle_stop_planner_acc_param_path").perform(context), "r"
+    ) as f:
         obstacle_stop_planner_acc_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     obstacle_stop_planner_component = ComposableNode(
         package="obstacle_stop_planner",
@@ -214,15 +165,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # obstacle cruise planner
-    obstacle_cruise_planner_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "motion_planning",
-        "obstacle_cruise_planner",
-        "obstacle_cruise_planner.param.yaml",
-    )
-    with open(obstacle_cruise_planner_param_path, "r") as f:
+    with open(LaunchConfiguration("obstacle_cruise_planner_param_path").perform(context), "r") as f:
         obstacle_cruise_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     obstacle_cruise_planner_component = ComposableNode(
         package="obstacle_cruise_planner",
@@ -274,19 +217,19 @@ def launch_setup(context, *args, **kwargs):
     obstacle_stop_planner_loader = LoadComposableNodes(
         composable_node_descriptions=[obstacle_stop_planner_component],
         target_container=container,
-        condition=LaunchConfigurationEquals("cruise_planner", "obstacle_stop_planner"),
+        condition=LaunchConfigurationEquals("cruise_planner_type", "obstacle_stop_planner"),
     )
 
     obstacle_cruise_planner_loader = LoadComposableNodes(
         composable_node_descriptions=[obstacle_cruise_planner_component],
         target_container=container,
-        condition=LaunchConfigurationEquals("cruise_planner", "obstacle_cruise_planner"),
+        condition=LaunchConfigurationEquals("cruise_planner_type", "obstacle_cruise_planner"),
     )
 
     obstacle_cruise_planner_relay_loader = LoadComposableNodes(
         composable_node_descriptions=[obstacle_cruise_planner_relay_component],
         target_container=container,
-        condition=LaunchConfigurationEquals("cruise_planner", "none"),
+        condition=LaunchConfigurationEquals("cruise_planner_type", "none"),
     )
 
     surround_obstacle_checker_loader = LoadComposableNodes(
@@ -315,30 +258,21 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    # vehicle information parameter file
-    add_launch_arg(
-        "vehicle_info_param_file",
-        [
-            FindPackageShare("vehicle_info_util"),
-            "/config/vehicle_info.param.yaml",
-        ],
-        "path to the parameter file of vehicle information",
-    )
+    # vehicle parameter
+    add_launch_arg("vehicle_param_file")
 
-    # obstacle_avoidance_planner
+    # interface parameter
     add_launch_arg(
         "input_path_topic",
         "/planning/scenario_planning/lane_driving/behavior_planning/path",
         "input path topic of obstacle_avoidance_planner",
     )
 
-    # surround obstacle checker
-    add_launch_arg("use_surround_obstacle_check", "true", "launch surround_obstacle_checker or not")
+    # package parameter
+    add_launch_arg("use_surround_obstacle_check")  # launch surround_obstacle_checker or not
     add_launch_arg(
-        "cruise_planner", "obstacle_stop_planner", "cruise planner type"
+        "cruise_planner_type"
     )  # select from "obstacle_stop_planner", "obstacle_cruise_planner", "none"
-
-    add_launch_arg("tier4_planning_launch_param_path", None, "tier4_planning_launch parameter path")
 
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")

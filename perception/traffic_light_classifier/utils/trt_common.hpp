@@ -108,7 +108,8 @@ Tn::UniquePtr<T> make_unique()
 class TrtCommon
 {
 public:
-  TrtCommon(std::string model_path, std::string precision);
+  TrtCommon(
+    std::string model_path, std::string precision, std::string input_name, std::string output_name);
   ~TrtCommon() {}
 
   bool loadEngine(std::string engine_file_path);
@@ -118,8 +119,6 @@ public:
   bool isInitialized();
   int getNumInput();
   int getNumOutput();
-  int getInputBindingIndex();
-  int getOutputBindingIndex();
 
   UniquePtr<nvinfer1::IExecutionContext> context_;
 

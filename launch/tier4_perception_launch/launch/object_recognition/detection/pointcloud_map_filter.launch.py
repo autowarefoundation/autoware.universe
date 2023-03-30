@@ -29,14 +29,21 @@ import yaml
 class PointcloudMapFilterPipeline:
     def __init__(self, context):
         pointcloud_map_filter_param_path = os.path.join(
-            LaunchConfiguration("tier4_perception_launch_param_path").perform(context),
-            "object_recognition/detection/pointcloud_map_filter.param.yaml",
+            LaunchConfiguration(
+                "object_recognition_detection_pointcloud_map_filter_param_path"
+            ).perform(context),
         )
         with open(pointcloud_map_filter_param_path, "r") as f:
             self.pointcloud_map_filter_param = yaml.safe_load(f)["/**"]["ros__parameters"]
         self.use_down_sample_filter = self.pointcloud_map_filter_param["use_down_sample_filter"]
         self.voxel_size = self.pointcloud_map_filter_param["down_sample_voxel_size"]
         self.distance_threshold = self.pointcloud_map_filter_param["distance_threshold"]
+        self.timer_interval_ms = self.pointcloud_map_filter_param["timer_interval_ms"]
+        self.use_dynamic_map_loading = self.pointcloud_map_filter_param["use_dynamic_map_loading"]
+        self.map_update_distance_threshold = self.pointcloud_map_filter_param[
+            "map_update_distance_threshold"
+        ]
+        self.map_loader_radius = self.pointcloud_map_filter_param["map_loader_radius"]
 
     def create_pipeline(self):
         if self.use_down_sample_filter:
@@ -55,10 +62,17 @@ class PointcloudMapFilterPipeline:
                     ("input", LaunchConfiguration("input_topic")),
                     ("map", "/map/pointcloud_map"),
                     ("output", LaunchConfiguration("output_topic")),
+                    ("map_loader_service", "/map/get_differential_pointcloud_map"),
+                    ("pose_with_covariance", "/localization/pose_estimator/pose_with_covariance"),
                 ],
                 parameters=[
                     {
                         "distance_threshold": self.distance_threshold,
+                        "timer_interval_ms": self.timer_interval_ms,
+                        "use_dynamic_map_loading": self.use_dynamic_map_loading,
+                        "map_update_distance_threshold": self.map_update_distance_threshold,
+                        "map_loader_radius": self.map_loader_radius,
+                        "input_frame": "map",
                     }
                 ],
                 extra_arguments=[
@@ -150,7 +164,6 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
     add_launch_arg("container_name", "pointcloud_map_filter_pipeline_container")
-    add_launch_arg("tier4_perception_launch_param_path", "tier4_perception_launch parameter path")
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
         "component_container",

@@ -35,26 +35,25 @@ tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
   header.stamp = current_time;
 
   // create stop factor
-  tier4_planning_msgs::msg::StopFactor stop_factor;
+  StopFactor stop_factor;
   stop_factor.stop_pose = stop_pose;
   geometry_msgs::msg::Point stop_factor_point = stop_obstacle.collision_points.front().point;
   stop_factor_point.z = stop_pose.position.z;
   stop_factor.stop_factor_points.emplace_back(stop_factor_point);
 
   // create stop reason stamped
-  tier4_planning_msgs::msg::StopReason stop_reason_msg;
-  stop_reason_msg.reason = tier4_planning_msgs::msg::StopReason::OBSTACLE_STOP;
+  StopReason stop_reason_msg;
+  stop_reason_msg.reason = StopReason::OBSTACLE_STOP;
   stop_reason_msg.stop_factors.emplace_back(stop_factor);
 
   // create stop reason array
-  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+  StopReasonArray stop_reason_array;
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;
 }
 
-tier4_planning_msgs::msg::StopReasonArray makeEmptyStopReasonArray(
-  const rclcpp::Time & current_time)
+StopReasonArray makeEmptyStopReasonArray(const rclcpp::Time & current_time)
 {
   // create header
   std_msgs::msg::Header header;
@@ -62,11 +61,11 @@ tier4_planning_msgs::msg::StopReasonArray makeEmptyStopReasonArray(
   header.stamp = current_time;
 
   // create stop reason stamped
-  tier4_planning_msgs::msg::StopReason stop_reason_msg;
-  stop_reason_msg.reason = tier4_planning_msgs::msg::StopReason::OBSTACLE_STOP;
+  StopReason stop_reason_msg;
+  stop_reason_msg.reason = StopReason::OBSTACLE_STOP;
 
   // create stop reason array
-  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+  StopReasonArray stop_reason_array;
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;
@@ -106,6 +105,12 @@ double calcMinimumDistanceToStop(
 Trajectory PlannerInterface::generateStopTrajectory(
   const ObstacleCruisePlannerData & planner_data, DebugData & debug_data)
 {
+  stop_planning_debug_info_.reset();
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.current_vel);
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.current_acc);
+
   const double abs_ego_offset = planner_data.is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
@@ -138,26 +143,20 @@ Trajectory PlannerInterface::generateStopTrajectory(
   const double closest_obstacle_dist = motion_utils::calcSignedArcLength(
     planner_data.traj.points, 0, closest_stop_obstacle->collision_points.front().point);
 
-  const auto negative_dist_to_ego = motion_utils::calcSignedArcLength(
-    planner_data.traj.points, planner_data.current_pose, 0, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
-  if (!negative_dist_to_ego) {
-    // delete marker
-    const auto markers =
-      motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
+  const auto ego_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    planner_data.traj.points, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
 
-    return planner_data.traj;
-  }
-  const double dist_to_ego = -negative_dist_to_ego.get();
+  const auto negative_dist_to_ego = motion_utils::calcSignedArcLength(
+    planner_data.traj.points, planner_data.current_pose.position, ego_segment_idx, 0);
+
+  const double dist_to_ego = -negative_dist_to_ego;
 
   // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
   // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
   const double margin_from_obstacle = [&]() {
     const size_t nearest_segment_idx =
-      motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
-        nearest_yaw_deviation_threshold_);
+      findEgoSegmentIndex(planner_data.traj, planner_data.current_pose);
     const auto closest_behavior_stop_idx =
       motion_utils::searchZeroVelocityIndex(planner_data.traj.points, nearest_segment_idx + 1);
 
@@ -236,6 +235,17 @@ Trajectory PlannerInterface::generateStopTrajectory(
     stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
   }
 
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_DISTANCE,
+    closest_obstacle_dist - abs_ego_offset);  // TODO(murooka)
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_VELOCITY, closest_stop_obstacle->velocity);
+
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, feasible_margin_from_obstacle);
+  stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_VELOCITY, 0.0);
+  stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_ACCELERATION, 0.0);
+
   return output_traj;
 }
 
@@ -246,15 +256,16 @@ double PlannerInterface::calcDistanceToCollisionPoint(
                           ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                           : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
+  const size_t ego_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    planner_data.traj.points, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
+
+  const size_t collision_segment_idx =
+    motion_utils::findNearestSegmentIndex(planner_data.traj.points, collision_point);
+
   const auto dist_to_collision_point = motion_utils::calcSignedArcLength(
-    planner_data.traj.points, planner_data.current_pose, collision_point,
-    nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    planner_data.traj.points, planner_data.current_pose.position, ego_segment_idx, collision_point,
+    collision_segment_idx);
 
-  if (dist_to_collision_point) {
-    return dist_to_collision_point.get() - offset;
-  }
-
-  return motion_utils::calcSignedArcLength(
-           planner_data.traj.points, planner_data.current_pose.position, collision_point) -
-         offset;
+  return dist_to_collision_point - offset;
 }

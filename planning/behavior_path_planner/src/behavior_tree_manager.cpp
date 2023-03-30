@@ -98,6 +98,8 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
 
   RCLCPP_DEBUG(logger_, "BehaviorPathPlanner::run end status = %s", BT::toStr(res).c_str());
 
+  resetNotRunningModulePathCandidate();
+
   std::for_each(scene_modules_.begin(), scene_modules_.end(), [](const auto & m) {
     m->publishDebugMarker();
     if (!m->isExecutionRequested()) {
@@ -115,16 +117,17 @@ BehaviorTreeManager::getModulesStatus()
   return modules_status_;
 }
 
-BT::NodeStatus BehaviorTreeManager::checkForceApproval(const std::string & name)
+void BehaviorTreeManager::resetNotRunningModulePathCandidate()
 {
-  const auto & approval = current_planner_data_->approval.is_force_approved;
-  if ((clock_.now() - approval.stamp).seconds() > 1.0) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock_, 3000, "BehaviorTreeManager : Force approval data is time out!");
-    return BT::NodeStatus::FAILURE;
-  }
+  const bool is_any_module_running = std::any_of(
+    scene_modules_.begin(), scene_modules_.end(),
+    [](const auto & module) { return module->getCurrentStatus() == BT::NodeStatus::RUNNING; });
 
-  return approval.module_name == name ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+  for (auto & module : scene_modules_) {
+    if (is_any_module_running && (module->getCurrentStatus() != BT::NodeStatus::RUNNING)) {
+      module->resetPathCandidate();
+    }
+  }
 }
 
 void BehaviorTreeManager::resetBehaviorTree() { bt_tree_.haltTree(); }

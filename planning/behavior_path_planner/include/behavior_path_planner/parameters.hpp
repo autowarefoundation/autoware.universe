@@ -17,22 +17,38 @@
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+struct ModuleConfigParameters
+{
+  bool enable_module{false};
+  bool enable_simultaneous_execution{false};
+  uint8_t priority{0};
+  uint8_t max_module_size{0};
+};
+
 struct BehaviorPathPlannerParameters
 {
+  bool verbose;
+
+  ModuleConfigParameters config_avoidance;
+  ModuleConfigParameters config_pull_out;
+  ModuleConfigParameters config_pull_over;
+  ModuleConfigParameters config_side_shift;
+  ModuleConfigParameters config_lane_change_left;
+  ModuleConfigParameters config_lane_change_right;
+  ModuleConfigParameters config_ext_request_lane_change_left;
+  ModuleConfigParameters config_ext_request_lane_change_right;
+
   double backward_path_length;
   double forward_path_length;
   double backward_length_buffer_for_end_of_lane;
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
   double minimum_lane_change_length;
+  double minimum_lane_change_prepare_distance;
+
   double minimum_pull_over_length;
   double minimum_pull_out_length;
   double drivable_area_resolution;
-
-  double drivable_lane_forward_length;
-  double drivable_lane_backward_length;
-  double drivable_lane_margin;
-  double drivable_area_margin;
 
   double refine_goal_search_radius_range;
 
@@ -43,7 +59,9 @@ struct BehaviorPathPlannerParameters
   double turn_signal_shift_length_threshold;
   bool turn_signal_on_swerving;
 
-  double path_interval;
+  double enable_akima_spline_first;
+  double input_path_interval;
+  double output_path_interval;
 
   double ego_nearest_dist_threshold;
   double ego_nearest_yaw_threshold;
@@ -61,8 +79,8 @@ struct BehaviorPathPlannerParameters
   double base_link2front;
   double base_link2rear;
 
-  // drivable area visualization
-  bool visualize_drivable_area_for_shared_linestrings_lanelet;
+  // maximum drivable area visualization
+  bool visualize_maximum_drivable_area;
 
   // collision check
   double lateral_distance_max_threshold;

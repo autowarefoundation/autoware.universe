@@ -18,6 +18,7 @@
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -27,18 +28,21 @@ namespace mission_planner
 class ArrivalChecker
 {
 public:
+  using PoseWithUuidStamped = autoware_planning_msgs::msg::PoseWithUuidStamped;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
   explicit ArrivalChecker(rclcpp::Node * node);
-  void reset_goal();
-  void reset_goal(const geometry_msgs::msg::PoseStamped & goal);
-  bool is_arrived(const geometry_msgs::msg::PoseStamped & pose) const;
+  void set_goal();
+  void set_goal(const PoseWithUuidStamped & goal);
+  bool is_arrived(const PoseStamped & pose) const;
 
 private:
   double distance_;
   double angle_;
   double duration_;
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_pose_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_;
+  std::optional<PoseWithUuidStamped> goal_with_uuid_;
+  rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr sub_goal_;
   motion_utils::VehicleStopChecker vehicle_stop_checker_;
+  void modify_goal(const PoseWithUuidStamped & modified_goal);
 };
 
 }  // namespace mission_planner
