@@ -8,7 +8,7 @@
 
 ### Activation Timing
 
-This module is activated if `launch_out_of_lane` is set to true
+This module is activated if `launch_out_of_lane` is set to true.
 
 ### Inner-workings / Algorithms
 
@@ -74,13 +74,18 @@ If the time to collision is predicted to go bellow the `ttc.threshold`, the deci
 ##### Intervals
 
 With the `mode` set to `"intervals"`,
-TODO
+the estimated times when ego and the dynamic objects reach the start and end points of
+the overlapping range are used to create time intervals.
+These intervals can be made shorter or longer using the
+`intervals.ego_time_buffer` and `intervals.objects_time_buffer` parameters.
+If the time interval of ego overlaps with the time interval of an object, the decision to stop or slow down is made.
 
 ##### Time estimates
 
 ###### Ego
 
-TODO
+To estimate the times when ego will reach an overlap, it is assumed that ego travels along its path
+at its current velocity or at half the velocity of the path points, whichever is higher.
 
 ###### Dynamic objects
 
@@ -90,8 +95,13 @@ Otherwise, the lanelet map is used to estimate the distance between the object a
 
 #### 5. Path update
 
-For each decision to stop or slow down before an overlapping interval with other lane $l$ starting at ego path point index $i$,
+For each decision to stop or slow down before an overlapping range with other lane $l$ starting at ego path point index $i$,
 a point is inserted in the path between index $i$ and $i-1$ such that the ego footprint projected at the inserted point does not overlap $l$.
+Such point with no overlap must exist since, by definition of the overlapping range,
+we know that there is no overlap at $i-1$.
+
+If the point would cause a higher deceleration than allowed by the `max_accel` parameter (node parameter),
+it is skipped.
 
 ### Module Parameters
 
