@@ -2,6 +2,10 @@
 
 <!-- Write a brief description of this PR. -->
 
+## Tests performed
+
+<!-- Describe how you have tested this PR. -->
+
 ## Pre-review checklist for the PR author
 
 The PR author **must** check the checkboxes below when creating the PR.
