@@ -113,6 +113,9 @@ bool AvoidanceModule::isExecutionRequested() const
     return true;
   }
 
+  // Check avoidance targets exist
+  auto avoid_data = calcAvoidancePlanningData(debug_data_);
+
   // Check ego is in preferred lane
 #ifdef USE_OLD_ARCHITECTURE
   const auto current_lanes = util::getCurrentLanes(planner_data_);
@@ -124,10 +127,13 @@ bool AvoidanceModule::isExecutionRequested() const
   if (num != 0) {
     return false;
   }
-#endif
+#else
+  fillShiftLine(avoid_data, debug_data_);
 
-  // Check avoidance targets exist
-  const auto avoid_data = calcAvoidancePlanningData(debug_data_);
+  if (avoid_data.unapproved_new_sl.empty()) {
+    return false;
+  }
+#endif
 
   if (parameters_->publish_debug_marker) {
     setDebugData(avoid_data, path_shifter_, debug_data_);
@@ -759,6 +765,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
     if (o.avoid_required && o.is_avoidable) {
       data.avoid_required = true;
       data.stop_target_object = o;
+      break;
     }
   }
 
@@ -1115,8 +1122,8 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
           debug.unavoidable_objects.push_back(o);
+          continue;
         }
-        continue;
       }
 
       // This is the case of exceeding the jerk limit. Use the sharp avoidance ego speed.
@@ -1129,8 +1136,8 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
           debug.unavoidable_objects.push_back(o);
+          continue;
         }
-        continue;
       }
     }
     const auto avoiding_distance =
@@ -1617,6 +1624,14 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
     trimSharpReturn(sl_array_trimmed);
     debug.trim_too_sharp_shift = sl_array_trimmed;
     printShiftLines(sl_array_trimmed, "after trimSharpReturn");
+  }
+
+  // - Combine avoid points that have almost same gradient (again)
+  {
+    const auto CHANGE_SHIFT_THRESHOLD = 0.2;
+    trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
+    debug.trim_similar_grad_shift_third = sl_array_trimmed;
+    printShiftLines(sl_array_trimmed, "after trim_similar_grad_shift_second");
   }
 
   return sl_array_trimmed;
@@ -2660,8 +2675,10 @@ ObjectDataArray AvoidanceModule::getAdjacentLaneObjects(
 // TODO(murooka) freespace during turning in intersection where there is no neighbor lanes
 // NOTE: Assume that there is no situation where there is an object in the middle lane of more than
 // two lanes since which way to avoid is not obvious
-void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
+void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output) const
 {
+  auto & path = *output.path;
+
   const auto has_same_lane =
     [](const lanelet::ConstLanelets lanes, const lanelet::ConstLanelet & lane) {
       if (lanes.empty()) return false;
@@ -2672,7 +2689,6 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_lanes = avoidance_data_.current_lanelets;
   const auto & enable_opposite = parameters_->enable_avoidance_over_opposite_direction;
-  std::vector<DrivableLanes> drivable_lanes;
 
   for (const auto & current_lane : current_lanes) {
     DrivableLanes current_drivable_lanes;
@@ -2680,7 +2696,7 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
     current_drivable_lanes.right_lane = current_lane;
 
     if (!parameters_->enable_avoidance_over_same_direction) {
-      drivable_lanes.push_back(current_drivable_lanes);
+      output.drivable_lanes.push_back(current_drivable_lanes);
       continue;
     }
 
@@ -2801,10 +2817,10 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
       current_drivable_lanes.middle_lanes.push_back(current_lane);
     }
 
-    drivable_lanes.push_back(current_drivable_lanes);
+    output.drivable_lanes.push_back(current_drivable_lanes);
   }
 
-  const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
+  const auto shorten_lanes = util::cutOverlappedLanes(path, output.drivable_lanes);
 
   const auto extended_lanes = util::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
@@ -2813,7 +2829,7 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
   {
     const auto & p = planner_data_->parameters;
     generateDrivableArea(
-      path, drivable_lanes, p.vehicle_length, planner_data_, avoidance_data_.target_objects,
+      path, output.drivable_lanes, p.vehicle_length, planner_data_, avoidance_data_.target_objects,
       parameters_->enable_bound_clipping, parameters_->disable_path_update,
       parameters_->object_envelope_buffer);
   }
@@ -3143,7 +3159,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
   util::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
 
   // Drivable area generation.
-  generateExtendedDrivableArea(*output.path);
+  generateExtendedDrivableArea(output);
 
   DEBUG_PRINT("exit plan(): set prev output (back().lat = %f)", prev_output_.shift_length.back());
 
@@ -3824,6 +3840,7 @@ void AvoidanceModule::setDebugData(
     debug.trim_similar_grad_shift_second, "c_4_trim_similar_grad_shift", 0.97, 0.32, 0.91);
   addAvoidLine(debug.trim_momentary_return, "c_5_trim_momentary_return", 0.976, 0.078, 0.878);
   addAvoidLine(debug.trim_too_sharp_shift, "c_6_trim_too_sharp_shift", 0.576, 0.0, 0.978);
+  addAvoidLine(debug.trim_similar_grad_shift_third, "c_7_trim_too_sharp_shift", 1.0, 0.0, 0.0);
 
   addShiftLine(shifter.getShiftLines(), "path_shifter_registered_points", 0.99, 0.99, 0.0, 0.5);
   addAvoidLine(debug.new_shift_lines, "path_shifter_proposed_points", 0.99, 0.0, 0.0, 0.5);

@@ -22,6 +22,7 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
@@ -640,12 +641,11 @@ bool LaneChangeModule::isAbortState() const
 bool LaneChangeModule::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
-  const auto arclength_current =
-    lanelet::utils::getArcCoordinates(status_.lane_change_lanes, current_pose);
-  const double travel_distance = arclength_current.length - status_.start_distance;
-  const double finish_distance =
-    status_.lane_change_path.length.sum() + parameters_->lane_change_finish_judge_buffer;
-  return travel_distance > finish_distance;
+  const auto & lane_change_path = status_.lane_change_path.path;
+  const auto & lane_change_end = status_.lane_change_path.shift_line.end;
+  const double dist_to_lane_change_end = motion_utils::calcSignedArcLength(
+    lane_change_path.points, current_pose.position, lane_change_end.position);
+  return dist_to_lane_change_end + parameters_->lane_change_finish_judge_buffer < 0.0;
 }
 
 void LaneChangeModule::setObjectDebugVisualization() const
@@ -754,8 +754,14 @@ void LaneChangeModule::generateExtendedDrivableArea(PathWithLaneId & path)
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
+#ifdef USE_OLD_ARCHITECTURE
   const auto drivable_lanes = lane_change_utils::generateDrivableLanes(
     *route_handler, status_.current_lanes, status_.lane_change_lanes);
+#else
+  const auto drivable_lanes = lane_change_utils::generateDrivableLanes(
+    getPreviousModuleOutput().drivable_lanes, *route_handler, status_.current_lanes,
+    status_.lane_change_lanes);
+#endif
   const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,

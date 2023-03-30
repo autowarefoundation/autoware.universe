@@ -171,9 +171,12 @@ double calcLateralDistToBounds(
         tier4_autoware_utils::calcDistance2d(pose.position, *intersect_point) *
         (is_point_left ? 1.0 : -1.0);
 
-      closest_dist_to_bound =
-        is_left_bound ? std::min(dist_to_bound - additional_offset, closest_dist_to_bound)
-                      : std::max(dist_to_bound + additional_offset, closest_dist_to_bound);
+      // the bound which is closest to the centerline will be chosen
+      const double tmp_dist_to_bound =
+        is_left_bound ? dist_to_bound - additional_offset : dist_to_bound + additional_offset;
+      if (std::abs(tmp_dist_to_bound) < std::abs(closest_dist_to_bound)) {
+        closest_dist_to_bound = tmp_dist_to_bound;
+      }
     }
   }
 
@@ -234,6 +237,8 @@ MPTOptimizer::MPTParam::MPTParam(
   }
 
   {  // avoidance
+    max_longitudinal_margin_for_bound_violation =
+      node->declare_parameter<double>("mpt.avoidance.max_longitudinal_margin_for_bound_violation");
     max_avoidance_cost = node->declare_parameter<double>("mpt.avoidance.max_avoidance_cost");
     avoidance_cost_margin = node->declare_parameter<double>("mpt.avoidance.avoidance_cost_margin");
     avoidance_cost_band_length =
@@ -374,6 +379,9 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
   }
 
   {  // avoidance
+    updateParam<double>(
+      parameters, "mpt.avoidance.max_longitudinal_margin_for_bound_violation",
+      max_longitudinal_margin_for_bound_violation);
     updateParam<double>(parameters, "mpt.avoidance.max_avoidance_cost", max_avoidance_cost);
     updateParam<double>(parameters, "mpt.avoidance.avoidance_cost_margin", avoidance_cost_margin);
     updateParam<double>(
@@ -548,9 +556,9 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   constexpr double tmp_margin = 10.0;
   size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
-  ref_points = trajectory_utils::cropPoints(
+  ref_points = motion_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
-    -backward_traj_length - tmp_margin);
+    backward_traj_length + tmp_margin);
   SplineInterpolationPoints2d ref_points_spline(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
@@ -560,9 +568,9 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   // 4. crop backward
   // NOTE: Start point may change. Spline calculation is required.
-  ref_points = trajectory_utils::cropPoints(
+  ref_points = motion_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
-    -backward_traj_length);
+    backward_traj_length);
   ref_points_spline = SplineInterpolationPoints2d(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
@@ -585,7 +593,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   updateExtraPoints(ref_points);
 
   // 9. crop forward
-  // ref_points = trajectory_utils::cropForwardPoints(
+  // ref_points = motion_utils::cropForwardPoints(
   //   ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
   if (static_cast<size_t>(mpt_param_.num_points) < ref_points.size()) {
     ref_points.resize(mpt_param_.num_points);
@@ -777,13 +785,23 @@ void MPTOptimizer::updateBounds(
     mpt_param_.soft_clearance_from_road + vehicle_info_.vehicle_width_m / 2.0;
 
   // calculate distance to left/right bound on each reference point
-  for (auto & ref_point : ref_points) {
-    const double dist_to_left_bound =
-      calcLateralDistToBounds(ref_point.pose, left_bound, soft_road_clearance, true);
-    const double dist_to_right_bound =
-      calcLateralDistToBounds(ref_point.pose, right_bound, soft_road_clearance, false);
-    ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+  // NOTE: Reference points is sometimes not fully covered by the drivable area.
+  //       In some edge cases like U-turn, the wrong bound may be found. To avoid finding the wrong
+  //       bound, some beginning bounds are copied from the following one.
+  const size_t min_ref_point_index = std::min(
+    static_cast<size_t>(std::ceil(1.0 / mpt_param_.delta_arc_length)), ref_points.size() - 1);
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    const auto ref_point_for_bound_search = ref_points.at(std::max(min_ref_point_index, i));
+    const double dist_to_left_bound = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
+    const double dist_to_right_bound = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
+
+    ref_points.at(i).bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
   }
+
+  // extend violated bounds, where the input path is outside the drivable area
+  ref_points = extendViolatedBounds(ref_points);
 
   /*
   // TODO(murooka) deal with filling data between obstacles
@@ -804,6 +822,53 @@ void MPTOptimizer::updateBounds(
 
   time_keeper_ptr_->toc(__func__, "          ");
   return;
+}
+
+std::vector<ReferencePoint> MPTOptimizer::extendViolatedBounds(
+  const std::vector<ReferencePoint> & ref_points) const
+{
+  auto extended_ref_points = ref_points;
+  const int max_length_idx = std::floor(
+    mpt_param_.max_longitudinal_margin_for_bound_violation / mpt_param_.delta_arc_length);
+  for (int i = 0; i < static_cast<int>(ref_points.size()) - 1; ++i) {
+    // before violation
+    if (
+      ref_points.at(i).bounds.lower_bound <= 0.0 &&
+      0.0 <= ref_points.at(i + 1).bounds.lower_bound) {
+      for (int j = 0; j <= max_length_idx; ++j) {
+        const int k = std::clamp(i - j, 0, static_cast<int>(ref_points.size()) - 1);
+        extended_ref_points.at(k).bounds.lower_bound = ref_points.at(i + 1).bounds.lower_bound;
+      }
+    }
+
+    if (
+      0.0 <= ref_points.at(i).bounds.upper_bound &&
+      ref_points.at(i + 1).bounds.upper_bound <= 0.0) {
+      for (int j = 0; j <= max_length_idx; ++j) {
+        const int k = std::clamp(i - j, 0, static_cast<int>(ref_points.size()) - 1);
+        extended_ref_points.at(k).bounds.upper_bound = ref_points.at(i + 1).bounds.upper_bound;
+      }
+    }
+
+    // after violation
+    if (0 <= ref_points.at(i).bounds.lower_bound && ref_points.at(i + 1).bounds.lower_bound <= 0) {
+      for (int j = 0; j <= max_length_idx; ++j) {
+        const int k = std::clamp(i + j, 0, static_cast<int>(ref_points.size()) - 1);
+        extended_ref_points.at(k).bounds.lower_bound = ref_points.at(i).bounds.lower_bound;
+      }
+    }
+
+    if (
+      ref_points.at(i).bounds.upper_bound <= 0.0 &&
+      0.0 <= ref_points.at(i + 1).bounds.upper_bound) {
+      for (int j = 0; j <= max_length_idx; ++j) {
+        const int k = std::clamp(i + j, 0, static_cast<int>(ref_points.size()) - 1);
+        extended_ref_points.at(k).bounds.upper_bound = ref_points.at(i).bounds.upper_bound;
+      }
+    }
+  }
+
+  return extended_ref_points;
 }
 
 void MPTOptimizer::updateVehicleBounds(

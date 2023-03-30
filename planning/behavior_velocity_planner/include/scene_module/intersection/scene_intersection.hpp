@@ -48,7 +48,7 @@ class IntersectionModule : public SceneModuleInterface
 public:
   struct DebugData
   {
-    bool stop_required;
+    bool stop_required = false;
 
     geometry_msgs::msg::Pose stop_wall_pose;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
