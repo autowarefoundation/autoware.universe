@@ -43,6 +43,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 | `nms_iou_target_class_names`    | list[string] | -             | target classes for IoU-based Non Maximum Suppression          |
 | `nms_iou_search_distance_2d`    | double       | -             | If two objects are farther than the value, NMS isn't applied. |
 | `nms_iou_threshold`             | double       | -             | IoU threshold for the IoU-based Non Maximum Suppression       |
+| `build_only`                    | bool         | `false`       | shutdown the node after TensorRT engine file is built         |
 
 ## Assumptions / Known limits
 
@@ -51,6 +52,12 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 ## Trained Models
 
 You can download the onnx format of trained models by clicking on the links below.
+
+- Centerpoint : [pts_voxel_encoder_centerpoint.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_voxel_encoder_centerpoint.onnx), [pts_backbone_neck_head_centerpoint.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_backbone_neck_head_centerpoint.onnx)
+- Centerpoint tiny: [pts_voxel_encoder_centerpoint_tiny.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_voxel_encoder_centerpoint_tiny.onnx), [pts_backbone_neck_head_centerpoint_tiny.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_backbone_neck_head_centerpoint_tiny.onnx)
+
+`Centerpoint` was trained in `nuScenes` (~110k lidar frames) [8] and TIER IV's internal database (~11k lidar frames) for 60 epochs.
+`Centerpoint tiny` was trained in `Argoverse 2` (~28k lidar frames) [9] and TIER IV's internal database (~11k lidar frames) for 20 epochs.
 
 ## Standalone inference and visualization
 
@@ -118,6 +125,10 @@ Example:
 [6] <https://github.com/yukkysaito/autoware_perception>
 
 [7] <https://github.com/NVIDIA-AI-IOT/CUDA-PointPillars>
+
+[8] <https://www.nuscenes.org/nuscenes>
+
+[9] <https://www.argoverse.org/av2.html>
 
 ## (Optional) Future extensions / Unimplemented parts
 

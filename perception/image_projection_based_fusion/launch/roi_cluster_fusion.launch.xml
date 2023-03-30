@@ -19,11 +19,14 @@
   <arg name="input/clusters" default="clusters"/>
   <arg name="output/clusters" default="labeled_clusters"/>
   <arg name="sync_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/roi_sync.param.yaml"/>
+  <arg name="remove_unknown" default="true"/>
+  <arg name="trust_distance" default="100.0"/>
 
   <!-- for eval variable-->
   <arg name="input_rois_number" default="$(var input/rois_number)"/>
 
   <!-- debug -->
+  <!-- cspell: ignore minx, maxx, miny, maxy, minz, maxz  -->
   <arg name="debug_mode" default="false"/>
   <arg name="filter_scope_minx" default="-100"/>
   <arg name="filter_scope_maxx" default="100"/>
@@ -73,6 +76,8 @@
       <param name="use_iou_y" value="false"/>
       <param name="iou_threshold" value="0.35"/>
       <param name="rois_number" value="$(var input/rois_number)"/>
+      <param name="remove_unknown" value="$(var remove_unknown)"/>
+      <param name="trust_distance" value="$(var trust_distance)"/>
       <param from="$(var sync_param_path)"/>
       <remap from="input" to="$(var input/clusters)"/>
       <remap from="output" to="$(var output/clusters)"/>

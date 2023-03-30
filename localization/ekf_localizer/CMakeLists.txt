@@ -19,6 +19,7 @@ ament_auto_add_library(ekf_localizer_lib SHARED
   src/mahalanobis.cpp
   src/measurement.cpp
   src/state_transition.cpp
+  src/warning_message.cpp
 )
 
 target_link_libraries(ekf_localizer_lib Eigen3::Eigen)
@@ -43,10 +44,13 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
   set(TEST_FILES
+    test/test_aged_object_queue.cpp
     test/test_mahalanobis.cpp
     test/test_measurement.cpp
     test/test_numeric.cpp
-    test/test_state_transition.cpp)
+    test/test_state_transition.cpp
+    test/test_string.cpp
+    test/test_warning_message.cpp)
 
   foreach(filepath ${TEST_FILES})
     add_testcase(${filepath})
@@ -71,5 +75,6 @@ endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
+  config
   launch
 )

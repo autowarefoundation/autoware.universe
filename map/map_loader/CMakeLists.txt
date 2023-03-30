@@ -10,6 +10,7 @@ ament_auto_add_library(pointcloud_map_loader_node SHARED
   src/pointcloud_map_loader/pointcloud_map_loader_node.cpp
   src/pointcloud_map_loader/pointcloud_map_loader_module.cpp
   src/pointcloud_map_loader/partial_map_loader_module.cpp
+  src/pointcloud_map_loader/differential_map_loader_module.cpp
   src/pointcloud_map_loader/utils.cpp
 )
 target_link_libraries(pointcloud_map_loader_node ${PCL_LIBRARIES})
@@ -64,6 +65,9 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   add_testcase(test/test_sphere_box_overlap.cpp)
+  add_testcase(test/test_pointcloud_map_loader_module.cpp)
+  add_testcase(test/test_partial_map_loader_module.cpp)
+  add_testcase(test/test_differential_map_loader_module.cpp)
 endif()
 
 install(PROGRAMS

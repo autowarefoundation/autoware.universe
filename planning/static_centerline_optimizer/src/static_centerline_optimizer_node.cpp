@@ -19,8 +19,8 @@
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "static_centerline_optimizer/collision_free_optimizer_node.hpp"
 #include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
+#include "static_centerline_optimizer/successive_trajectory_optimizer_node.hpp"
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
 
@@ -45,7 +45,8 @@ Path convert_to_path(const PathWithLaneId & path_with_lane_id)
 {
   Path path;
   path.header = path_with_lane_id.header;
-  path.drivable_area = path_with_lane_id.drivable_area;
+  path.left_bound = path_with_lane_id.left_bound;
+  path.right_bound = path_with_lane_id.right_bound;
   for (const auto & point : path_with_lane_id.points) {
     path.points.push_back(point.point);
   }
@@ -373,8 +374,14 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
     utils::get_center_pose(*route_handler_ptr_, route_lane_ids.front());
 
   // ego nearest search parameters
-  const double ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+  const double ego_nearest_dist_threshold =
+    has_parameter("ego_nearest_dist_threshold")
+      ? get_parameter("ego_nearest_dist_threshold").as_double()
+      : declare_parameter<double>("ego_nearest_dist_threshold");
+  const double ego_nearest_yaw_threshold =
+    has_parameter("ego_nearest_yaw_threshold")
+      ? get_parameter("ego_nearest_yaw_threshold").as_double()
+      : declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // extract path with lane id from lanelets
   const auto raw_path_with_lane_id = utils::get_path_with_lane_id(
@@ -390,9 +397,8 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
   RCLCPP_INFO(get_logger(), "Converted to path and published.");
 
   // optimize trajectory by the obstacle_avoidance_planner package
-  CollisionFreeOptimizerNode successive_path_optimizer(create_node_options());
-  const auto optimized_traj =
-    successive_path_optimizer.pathCallback(std::make_shared<Path>(raw_path));
+  SuccessiveTrajectoryOptimizer successive_trajectory_optimizer(create_node_options());
+  const auto optimized_traj = successive_trajectory_optimizer.on_centerline(raw_path);
   pub_optimized_centerline_->publish(optimized_traj);
   const auto optimized_traj_points = motion_utils::convertToTrajectoryPointArray(optimized_traj);
 

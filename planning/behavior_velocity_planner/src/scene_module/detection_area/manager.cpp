@@ -39,6 +39,8 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
   planner_param_.state_clear_time = node.declare_parameter(ns + ".state_clear_time", 2.0);
   planner_param_.hold_stop_margin_distance =
     node.declare_parameter(ns + ".hold_stop_margin_distance", 0.0);
+  planner_param_.distance_to_judge_over_stop_line =
+    node.declare_parameter(ns + ".distance_to_judge_over_stop_line", 0.5);
 }
 
 void DetectionAreaModuleManager::launchNewModules(
@@ -47,7 +49,7 @@ void DetectionAreaModuleManager::launchNewModules(
   for (const auto & detection_area_with_lane_id :
        planning_utils::getRegElemMapOnPath<DetectionArea>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
-         planner_data_->current_pose.pose)) {
+         planner_data_->current_odometry->pose)) {
     // Use lanelet_id to unregister module when the route is changed
     const auto lane_id = detection_area_with_lane_id.second.id();
     const auto module_id = detection_area_with_lane_id.first->id();
@@ -67,7 +69,7 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto detection_area_id_set = planning_utils::getRegElemIdSetOnPath<DetectionArea>(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [detection_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return detection_area_id_set.count(scene_module->getModuleId()) == 0;

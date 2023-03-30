@@ -73,22 +73,11 @@ private:
   void publish();
   void createElevationMap();
   void setVerbosityLevelToDebugIfFlagSet();
-  void createElevationMapFromPointcloud();
-  tier4_autoware_utils::LinearRing2d getConvexHull(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & input_cloud);
-  lanelet::ConstLanelets getIntersectedLanelets(
-    const tier4_autoware_utils::LinearRing2d & convex_hull,
-    const lanelet::ConstLanelets & road_lanelets_);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr getLaneFilteredPointCloud(
-    const lanelet::ConstLanelets & joint_lanelets,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud);
-  bool checkPointWithinLanelets(
-    const pcl::PointXYZ & point, const lanelet::ConstLanelets & joint_lanelets);
+  void createElevationMapFromPointcloud(
+    const pcl::shared_ptr<grid_map::GridMapPclLoader> & grid_map_pcl_loader);
   void inpaintElevationMap(const float radius);
   pcl::PointCloud<pcl::PointXYZ>::Ptr createPointcloudFromElevationMap();
   void saveElevationMap();
-  float calculateDistancePointFromPlane(
-    const pcl::PointXYZ & point, const lanelet::ConstLanelet & lanelet);
 
   grid_map::GridMap elevation_map_;
   std::string layer_name_;
@@ -97,17 +86,13 @@ private:
   bool use_inpaint_;
   float inpaint_radius_;
   bool use_elevation_map_cloud_publisher_;
-  pcl::shared_ptr<grid_map::GridMapPclLoader> grid_map_pcl_loader_;
+  std::string param_file_path_;
 
   DataManager data_manager_;
   struct LaneFilter
   {
-    float voxel_size_x_;
-    float voxel_size_y_;
-    float voxel_size_z_;
-    float lane_margin_;
-    float lane_height_diff_thresh_;
     lanelet::ConstLanelets road_lanelets_;
+    float lane_margin_;
     bool use_lane_filter_;
   };
   LaneFilter lane_filter_;

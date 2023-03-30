@@ -112,6 +112,17 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
     }
   }
 
+  // calculate orientation of each point
+  if (predicted_path.path.size() >= 2) {
+    for (size_t i = 0; i < predicted_path.path.size() - 1; i++) {
+      const auto yaw = tier4_autoware_utils::calcAzimuthAngle(
+        predicted_path.path.at(i).position, predicted_path.path.at(i + 1).position);
+      predicted_path.path.at(i).orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    }
+    predicted_path.path.back().orientation =
+      predicted_path.path.at(predicted_path.path.size() - 2).orientation;
+  }
+
   predicted_path.confidence = 1.0;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
 
@@ -139,8 +150,7 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   const TrackedObject & object, const PosePath & ref_paths)
 {
   if (ref_paths.size() < 2) {
-    const PredictedPath empty_path;
-    return empty_path;
+    return generateStraightPath(object);
   }
 
   return generatePolynomialPath(object, ref_paths);
@@ -190,8 +200,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
 
   if (frenet_predicted_path.size() < 2 || interpolated_ref_path.size() < 2) {
-    const PredictedPath empty_path;
-    return empty_path;
+    return generateStraightPath(object);
   }
 
   // Step4. Convert predicted trajectory from Frenet to Cartesian coordinate
@@ -287,15 +296,18 @@ PosePath PathGenerator::interpolateReferencePath(
     return interpolated_path;
   }
 
-  std::vector<double> base_path_x;
-  std::vector<double> base_path_y;
-  std::vector<double> base_path_z;
-  std::vector<double> base_path_s;
+  std::vector<double> base_path_x(base_path.size());
+  std::vector<double> base_path_y(base_path.size());
+  std::vector<double> base_path_z(base_path.size());
+  std::vector<double> base_path_s(base_path.size(), 0.0);
   for (size_t i = 0; i < base_path.size(); ++i) {
-    base_path_x.push_back(base_path.at(i).position.x);
-    base_path_y.push_back(base_path.at(i).position.y);
-    base_path_z.push_back(base_path.at(i).position.z);
-    base_path_s.push_back(motion_utils::calcSignedArcLength(base_path, 0, i));
+    base_path_x.at(i) = base_path.at(i).position.x;
+    base_path_y.at(i) = base_path.at(i).position.y;
+    base_path_z.at(i) = base_path.at(i).position.z;
+    if (i > 0) {
+      base_path_s.at(i) = base_path_s.at(i - 1) + tier4_autoware_utils::calcDistance2d(
+                                                    base_path.at(i - 1), base_path.at(i));
+    }
   }
 
   std::vector<double> resampled_s(frenet_predicted_path.size());
