@@ -41,9 +41,12 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   auto test_target_node = std::make_shared<freespace_planner::FreespacePlannerNode>(node_options);
 
   // publish necessary topics from test_manager
+  test_manager->publishTF(test_target_node, "/tf");
   test_manager->publishOdometry(test_target_node, "freespace_planner/input/odometry");
   test_manager->publishOccupancyGrid(test_target_node, "freespace_planner/input/occupancy_grid");
   test_manager->publishParkingScenario(test_target_node, "freespace_planner/input/scenario");
+
+  test_manager->setRouteInputTopicName("/planning/mission_planning/route");
 
   // test_target_node → test_node_
   test_manager->setTrajectorySubscriber("/freespace_planner/output/trajectory");

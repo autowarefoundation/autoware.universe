@@ -36,6 +36,8 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
 
+  node_options.append_parameter_override(
+    "bt_tree_config_path", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml");
   node_options.arguments(
     {"--ros-args", "--params-file",
      behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml", "--params-file",
@@ -45,8 +47,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
      "--params-file", behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
      "--params-file", behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
      "--params-file", behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml"});
+     "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
 
   auto test_target_node =
     std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
@@ -68,7 +69,8 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 
   // setting topic name of subscribing topic
-  test_manager->setTrajectoryInputTopicName("behavior_path_planner/input/route");
+
+  test_manager->setRouteInputTopicName("/planning/mission_planning/route");
 
   // test for normal trajectory
   ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));

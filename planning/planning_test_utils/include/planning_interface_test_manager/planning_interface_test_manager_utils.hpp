@@ -49,6 +49,7 @@ namespace test_utils
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::LaneletRoute;
+using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
@@ -96,14 +97,46 @@ T generateTrajectory(
   return traj;
 }
 
-Route::Message makeRoute(
-  const PoseStamped::ConstSharedPtr start_pose, const PoseStamped::ConstSharedPtr goal_pose)
+Pose create_pose_msg(const std::array<double, 3> & pose3d)
 {
+  Pose pose;
+  tf2::Quaternion quat{};
+  quat.setRPY(0, 0, pose3d[2]);
+  tf2::convert(quat, pose.orientation);
+  pose.position.x = pose3d[0];
+  pose.position.y = pose3d[1];
+  pose.position.z = 0.0;
+  return pose;
+}
+
+Route::Message makeNormalRoute()
+{
+  const double pi = 3.1415926;
+  const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
+  const std::array<double, 3> goal_pose{8.0, 26.3, 0};
   Route::Message route;
-  route.header = start_pose->header;
-  route.start_pose = start_pose->pose;
-  route.goal_pose = goal_pose->pose;
+  route.header.frame_id = "map";
+
+  route.start_pose = create_pose_msg(start_pose);
+  route.goal_pose = create_pose_msg(goal_pose);
   return route;
+}
+
+OccupancyGrid construct_cost_map(size_t width, size_t height, double resolution)
+{
+  nav_msgs::msg::OccupancyGrid costmap_msg{};
+
+  // create info
+  costmap_msg.info.width = width;
+  costmap_msg.info.height = height;
+  costmap_msg.info.resolution = resolution;
+
+  // create data
+  const size_t n_elem = width * height;
+  for (size_t i = 0; i < n_elem; ++i) {
+    costmap_msg.data.push_back(0.0);
+  }
+  return costmap_msg;
 }
 
 void spinSomeNodes(
@@ -162,10 +195,10 @@ void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<LaneletRoute>> & publisher)
 {
-  rclcpp::QoS qos(rclcpp::KeepLast(1));
-  qos.reliable();
-  qos.transient_local();
-  publisher = rclcpp::create_publisher<LaneletRoute>(test_node, topic_name, qos);
+  rclcpp::QoS custom_qos_profile{rclcpp::KeepLast(1)};
+  custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+  custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  publisher = rclcpp::create_publisher<LaneletRoute>(test_node, topic_name, custom_qos_profile);
 }
 
 template <>
@@ -246,8 +279,13 @@ void publishData<Odometry>(
   typename rclcpp::Publisher<Odometry>::SharedPtr publisher)
 {
   setPublisher(test_node, topic_name, publisher);
+
   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  current_odometry->header.frame_id = "base_link";
+  const double pi = 3.1415926;
+  const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
+  current_odometry->pose.pose = create_pose_msg(start_pose);
+  current_odometry->header.frame_id = "map";
+  // current_odometry->header.frame_id = "base_link";
   publisher->publish(*current_odometry);
   spinSomeNodes(test_node, target_node);
 }
@@ -259,8 +297,9 @@ void publishData<OccupancyGrid>(
 {
   setPublisher(test_node, topic_name, publisher);
   std::shared_ptr<OccupancyGrid> current_occupancy_grid = std::make_shared<OccupancyGrid>();
-  current_occupancy_grid->header.frame_id = "base_link";
-  publisher->publish(*current_occupancy_grid);
+  auto costmap_msg = construct_cost_map(150, 150, 0.2);
+  costmap_msg.header.frame_id = "map";
+  publisher->publish(costmap_msg);
   spinSomeNodes(test_node, target_node);
 }
 
@@ -270,9 +309,7 @@ void publishData<LaneletRoute>(
   typename rclcpp::Publisher<LaneletRoute>::SharedPtr publisher)
 {
   setPublisher(test_node, topic_name, publisher);
-  auto start_pose = std::make_shared<PoseStamped>();
-  auto goal_pose = std::make_shared<PoseStamped>();
-  publisher->publish(makeRoute(start_pose, goal_pose));
+  publisher->publish(makeNormalRoute());
   spinSomeNodes(test_node, target_node);
 }
 
@@ -301,6 +338,28 @@ void setSubscriber(
   // Count the number of topic received.
   subscriber = test_node->create_subscription<T>(
     topic_name, 10, [&count](const typename T::SharedPtr) { count++; });
+}
+
+template <>
+void setSubscriber<Trajectory>(
+  rclcpp::Node::SharedPtr test_node, std::string topic_name,
+  std::shared_ptr<rclcpp::Subscription<Trajectory>> & subscriber, size_t & count)
+{
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  rclcpp::QoS qos{1};
+  // qos.transient_local();
+  // qos.keep_last(1);
+  // Count the number of topic received.
+  qos.best_effort() ;
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  subscriber = test_node->create_subscription<Trajectory>(
+    topic_name, qos, [&count](const typename Trajectory::SharedPtr) {
+      std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+      count++;
+    });
+  // subscriberが使用しているトピック名を表示する
+  std::string used_topic_name = subscriber->get_topic_name();
+  std::cerr << "The subscriber is using the topic: " << used_topic_name << std::endl;
 }
 
 }  // namespace test_utils

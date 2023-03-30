@@ -179,7 +179,11 @@ void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_nam
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
 }
 
-void PlanningIntefaceTestManager::publishNominalRoute([[maybe_unused]] std::string topic_name) {}
+void PlanningIntefaceTestManager::publishNominalRoute(std::string topic_name) {
+  test_utils::setPublisher(test_node_, topic_name, normal_route_pub_);
+
+  normal_route_pub_->publish(test_utils::makeNormalRoute());
+}
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
@@ -228,10 +232,7 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
-  // setRouteSubscriber();
-  auto start_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  auto goal_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  normal_route_pub_->publish(test_utils::makeRoute(start_pose, goal_pose));
+  publishNominalRoute(input_route_name_);
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
