@@ -58,10 +58,12 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
   test_manager->publishOccupancyGrid(
     test_target_node, "behavior_path_planner/input/occupancy_grid_map");
-  test_manager->publishScenario(test_target_node, "behavior_path_planner/input/scenario");
+  test_manager->publishLaneDrivingScenario(
+    test_target_node, "behavior_path_planner/input/scenario");
   test_manager->publishMap(test_target_node, "behavior_path_planner/input/vector_map");
+  test_manager->publishRoute(test_target_node, "behavior_path_planner/input/route");
   test_manager->publishCostMap(test_target_node, "behavior_path_planner/input/costmap");
-  test_manager->publishOperationModeState(test_target_node, "operation_mode/state");
+  test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
   test_manager->publishLateralOffset(
     test_target_node, "behavior_path_planner/input/lateral_offset");
 

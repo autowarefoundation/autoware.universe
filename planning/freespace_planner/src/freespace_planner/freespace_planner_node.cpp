@@ -432,8 +432,6 @@ void FreespacePlannerNode::onTimer()
   }
 
   // Get current pose
-  constexpr const char * vehicle_frame = "base_link";
-
   current_pose_.pose = odom_->pose.pose;
   current_pose_.header = odom_->header;
 

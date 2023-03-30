@@ -249,15 +249,15 @@ void publishData<HADMapBin>(
   spinSomeNodes(test_node, target_node);
 }
 
-template <>
-void publishData<Scenario>(
+void publishScenarioData(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<Scenario>::SharedPtr publisher)
+  rclcpp::Publisher<Scenario>::SharedPtr publisher, const std::string scenario)
 {
   auto current_scenario = std::make_shared<Scenario>();
-  current_scenario->activating_scenarios.emplace_back(Scenario::PARKING);
+  current_scenario->current_scenario = scenario;
   setPublisher(test_node, topic_name, publisher);
   publisher->publish(*current_scenario);
+
   spinSomeNodes(test_node, target_node);
 }
 
@@ -346,14 +346,14 @@ void setSubscriber<Trajectory>(
   std::shared_ptr<rclcpp::Subscription<Trajectory>> & subscriber, size_t & count)
 {
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  rclcpp::QoS qos{1};
+  // rclcpp::QoS qos{1};
   // qos.transient_local();
   // qos.keep_last(1);
   // Count the number of topic received.
-  qos.best_effort() ;
+  // qos.best_effort() ;
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   subscriber = test_node->create_subscription<Trajectory>(
-    topic_name, qos, [&count](const typename Trajectory::SharedPtr) {
+    topic_name, rclcpp::QoS{1}, [&count](const typename Trajectory::SharedPtr) {
       std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       count++;
     });

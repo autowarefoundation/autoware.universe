@@ -103,16 +103,18 @@ void PlanningIntefaceTestManager::publishMap(
   test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
 }
 
-void PlanningIntefaceTestManager::publishScenario(
+void PlanningIntefaceTestManager::publishLaneDrivingScenario(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<Scenario>(test_node_, target_node, topic_name, scenario_pub_);
+  test_utils::publishScenarioData(
+    test_node_, target_node, topic_name, lane_driving_scenario_pub_, Scenario::LANEDRIVING);
 }
 
 void PlanningIntefaceTestManager::publishParkingScenario(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishData<Scenario>(test_node_, target_node, topic_name, parking_scenario_pub_);
+  test_utils::publishScenarioData(
+    test_node_, target_node, topic_name, parking_scenario_pub_, Scenario::PARKING);
 }
 
 void PlanningIntefaceTestManager::publishParkingState(
@@ -179,7 +181,8 @@ void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_nam
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
 }
 
-void PlanningIntefaceTestManager::publishNominalRoute(std::string topic_name) {
+void PlanningIntefaceTestManager::publishNominalRoute(std::string topic_name)
+{
   test_utils::setPublisher(test_node_, topic_name, normal_route_pub_);
 
   normal_route_pub_->publish(test_utils::makeNormalRoute());

@@ -90,6 +90,7 @@ public:
   void publishCostMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishLaneDrivingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -129,6 +130,7 @@ private:
   rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr parking_scenario_pub_;
+  rclcpp::Publisher<Scenario>::SharedPtr lane_driving_scenario_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr route_pub_;
