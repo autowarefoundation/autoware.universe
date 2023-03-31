@@ -1271,16 +1271,12 @@ boost::optional<size_t> insertDecelPoint(
     return {};
   }
 
-  const auto insertVelocity = [&insert_idx](T & points_with_twist, const float v) {
-    for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
-      const auto & original_velocity =
-        tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.at(i));
-      tier4_autoware_utils::setLongitudinalVelocity(
-        std::min(static_cast<float>(original_velocity), v), points_with_twist.at(i));
-    }
-  };
-
-  insertVelocity(points_with_twist, velocity);
+  for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
+    const auto & original_velocity =
+      tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.at(i));
+    tier4_autoware_utils::setLongitudinalVelocity(
+      std::min(original_velocity, velocity), points_with_twist.at(i));
+  }
 
   return insert_idx;
 }
