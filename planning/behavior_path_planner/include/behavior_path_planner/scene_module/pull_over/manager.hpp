@@ -27,14 +27,14 @@
 namespace behavior_path_planner
 {
 
-class PullOverModuleManager : public SceneModuleManagerInterface
+class PullOverModuleManager : public SceneModuleManagerInterface<PullOverModule>
 {
 public:
   PullOverModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
     const std::shared_ptr<PullOverParameters> & parameters);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
+  std::shared_ptr<PullOverModule> createNewSceneModuleInstance() override
   {
     return std::make_shared<PullOverModule>(name_, *node_, parameters_, rtc_interface_);
   }
@@ -45,8 +45,6 @@ private:
   std::shared_ptr<PullOverParameters> parameters_;
 
   std::shared_ptr<RTCInterface> rtc_interface_;
-
-  std::vector<std::shared_ptr<PullOverModule>> registered_modules_;
 };
 
 }  // namespace behavior_path_planner

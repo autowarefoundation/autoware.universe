@@ -28,24 +28,17 @@
 namespace behavior_path_planner
 {
 
-class SideShiftModuleManager : public SceneModuleManagerInterface
+class SideShiftModuleManager : public SceneModuleManagerInterface<SideShiftModule>
 {
 public:
   SideShiftModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
     const std::shared_ptr<SideShiftParameters> & parameters);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
-  {
-    return std::make_shared<SideShiftModule>(name_, *node_, parameters_);
-  }
-
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
   std::shared_ptr<SideShiftParameters> parameters_;
-
-  std::vector<std::shared_ptr<SideShiftModule>> registered_modules_;
 };
 
 }  // namespace behavior_path_planner

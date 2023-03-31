@@ -29,14 +29,14 @@
 namespace behavior_path_planner
 {
 
-class AvoidanceModuleManager : public SceneModuleManagerInterface
+class AvoidanceModuleManager : public SceneModuleManagerInterface<AvoidanceModule>
 {
 public:
   AvoidanceModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
     const std::shared_ptr<AvoidanceParameters> & parameters);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
+  std::shared_ptr<AvoidanceModule> createNewSceneModuleInstance() override
   {
     return std::make_shared<AvoidanceModule>(
       name_, *node_, parameters_, rtc_interface_left_, rtc_interface_right_);
@@ -50,8 +50,6 @@ private:
   std::shared_ptr<RTCInterface> rtc_interface_right_;
 
   std::shared_ptr<AvoidanceParameters> parameters_;
-
-  std::vector<std::shared_ptr<AvoidanceModule>> registered_modules_;
 };
 
 }  // namespace behavior_path_planner

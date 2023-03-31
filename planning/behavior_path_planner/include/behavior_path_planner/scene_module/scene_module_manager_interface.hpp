@@ -34,10 +34,12 @@ namespace behavior_path_planner
 
 using tier4_autoware_utils::toHexString;
 using unique_identifier_msgs::msg::UUID;
-using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 
+template <typename T>
 class SceneModuleManagerInterface
 {
+  using SceneModulePtr = std::shared_ptr<T>;
+
 public:
   SceneModuleManagerInterface(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
@@ -156,7 +158,10 @@ public:
   virtual void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) = 0;
 
 protected:
-  virtual std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() = 0;
+  virtual std::shared_ptr<T> createNewSceneModuleInstance()
+  {
+    return std::make_shared<T>(name_, *node_, parameters_);
+  }
 
   rclcpp::Node * node_;
 

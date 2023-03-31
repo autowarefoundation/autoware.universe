@@ -28,7 +28,7 @@
 namespace behavior_path_planner
 {
 
-class LaneChangeModuleManager : public SceneModuleManagerInterface
+class LaneChangeModuleManager : public SceneModuleManagerInterface<LaneChangeModule>
 {
 public:
   LaneChangeModuleManager(
@@ -36,7 +36,7 @@ public:
     std::shared_ptr<LaneChangeParameters> parameters, const Direction direction,
     const LaneChangeModuleType type);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
+  std::shared_ptr<LaneChangeModule> createNewSceneModuleInstance() override
   {
     return std::make_shared<LaneChangeModule>(
       name_, *node_, parameters_, rtc_interface_, direction_, type_);
@@ -48,8 +48,6 @@ private:
   std::shared_ptr<RTCInterface> rtc_interface_;
 
   std::shared_ptr<LaneChangeParameters> parameters_;
-
-  std::vector<std::shared_ptr<LaneChangeModule>> registered_modules_;
 
   Direction direction_;
 

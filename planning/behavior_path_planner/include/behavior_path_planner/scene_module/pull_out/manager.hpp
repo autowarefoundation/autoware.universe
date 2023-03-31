@@ -27,14 +27,14 @@
 namespace behavior_path_planner
 {
 
-class PullOutModuleManager : public SceneModuleManagerInterface
+class PullOutModuleManager : public SceneModuleManagerInterface<PullOutModule>
 {
 public:
   PullOutModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
     const std::shared_ptr<PullOutParameters> & parameters);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
+  std::shared_ptr<PullOutModule> createNewSceneModuleInstance() override
   {
     return std::make_shared<PullOutModule>(name_, *node_, parameters_, rtc_interface_);
   }
@@ -45,8 +45,6 @@ private:
   std::shared_ptr<PullOutParameters> parameters_;
 
   std::shared_ptr<RTCInterface> rtc_interface_;
-
-  std::vector<std::shared_ptr<PullOutModule>> registered_modules_;
 };
 
 }  // namespace behavior_path_planner
