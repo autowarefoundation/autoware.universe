@@ -78,7 +78,7 @@ GoalCandidates --o GoalSeacherBase
 
 | Name                       | Unit   | Type   | Description                                                                                                                             | Default value |
 | :------------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| request_length             | [m]    | double | when the ego-vehicle approaches the goal by this distance, the module is activated.                                                     | 200.0         |
+| minimum_request_length     | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, the module is activated.                          | 200.0         |
 | th_arrived_distance        | [m]    | double | distance threshold for arrival of path termination                                                                                      | 1.0           |
 | th_stopped_velocity        | [m/s]  | double | velocity threshold for arrival of path termination                                                                                      | 0.01          |
 | th_stopped_time            | [s]    | double | time threshold for arrival of path termination                                                                                          | 2.0           |
