@@ -295,7 +295,8 @@ std::pair<bool, bool> getLaneChangePaths(
     std::invoke([&minimum_lane_change_velocity, &current_velocity, &parameter]() {
       const double min_a =
         (minimum_lane_change_velocity - current_velocity) / parameter.lane_change_prepare_duration;
-      return std::clamp(min_a, -std::abs(parameter.maximum_deceleration), 0.0);
+      return std::clamp(
+        min_a, -std::abs(parameter.maximum_deceleration), -std::numeric_limits<double>::epsilon());
     });
 
   const auto acceleration_resolution = std::abs(maximum_deceleration) / lane_change_sampling_num;
