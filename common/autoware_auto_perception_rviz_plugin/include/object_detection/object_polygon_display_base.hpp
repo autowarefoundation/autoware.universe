@@ -26,6 +26,7 @@
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/status_property.hpp>
+#include <rviz_common/ros_integration/ros_node_abstraction_iface.hpp>
 #include <rviz_default_plugins/displays/marker/marker_common.hpp>
 #include <rviz_default_plugins/displays/marker_array/marker_array_display.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -137,7 +138,8 @@ public:
       "Display Predicted Path Confidence", true, "Enable/disable predicted paths visualization",
       this},
     m_line_width_property{"Line Width", 0.03, "Line width of object-shape", this},
-    m_default_topic{default_topic}
+    m_default_topic{default_topic},
+    qos_profile_points(5)
   {
     m_display_type_property = new rviz_common::properties::EnumProperty(
       "Polygon Type", "3d", "Type of the polygon to display object.", this, SLOT(updatePalette()));
@@ -152,11 +154,12 @@ public:
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
     m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty(
-      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this);
+      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this, SLOT(RosTopicDisplay::updateTopic()));
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
       "Input for pointcloud visualization of objects detection pipeline.", this,
-      SLOT(updateTopic()));
+      SLOT(RosTopicDisplay::updateTopic()));
+    qos_profile_points_property = new rviz_common::properties::QosProfileProperty(m_default_pointcloud_topic, qos_profile_points);
     // m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
@@ -186,6 +189,20 @@ public:
     this->topic_property_->setValue(m_default_topic.c_str());
     this->topic_property_->setDescription("Topic to subscribe to.");
 
+    qos_profile_points_property->initialize(
+      [this](rclcpp::QoS profile) {
+        this->qos_profile_points = profile;
+        RosTopicDisplay::updateTopic();
+      });
+    
+    // get weak_ptr to properly init RosTopicProperty
+    rviz_ros_node = this->context_->getRosNodeAbstraction();
+    
+    m_default_pointcloud_topic->initialize(rviz_ros_node);
+    QString points_message_type = QString::fromStdString(
+      rosidl_generator_traits::name<sensor_msgs::msg::PointCloud2>());
+    m_default_pointcloud_topic->setMessageType(points_message_type);
+
     // get access to rviz node to sub and to pub to topics
     rclcpp::Node::SharedPtr raw_node =
       this->context_->getRosNodeAbstraction().lock()->get_raw_node();
@@ -193,6 +210,8 @@ public:
     tf_buffer = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
+    // m_default_pointcloud_topic->setValue(m_default_pointcloud_topic->c_str());
+    
     point_cloud_common->initialize(this->context_, this->scene_node_);
   }
 
@@ -217,9 +236,18 @@ public:
 
   virtual void subscribe()
   {
+    if (!RosTopicDisplay::isEnabled()) {
+      return;
+    }
+
     RosTopicDisplay::subscribe();
-    
-    if (!RosTopicDisplay::isEnabled() && !m_publish_objs_pointcloud) {
+    points_subscribe();
+  }
+
+
+  void points_subscribe()
+  {
+    if (!m_publish_objs_pointcloud->getBool()) {
       return;
     }
 
@@ -258,10 +286,13 @@ public:
     }
   }
 
+
   void unsubscribe()
   {
     RosTopicDisplay::unsubscribe();
     pointcloud_subscription.reset ();
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Unsubscribe called");
+
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
@@ -586,6 +617,10 @@ protected:
 
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) 
   {
+    if (!m_publish_objs_pointcloud->getBool()) {
+      return;
+    }
+    
     std::string frame_id = input_pointcloud_msg.header.frame_id;
     RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
 
@@ -645,6 +680,7 @@ protected:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_subscription;
   // plugin to visualize pointclouds
   std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common;
+  rviz_common::ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node;
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
@@ -679,6 +715,8 @@ private:
   std::string m_default_topic;
 
   std::vector<std_msgs::msg::ColorRGBA> predicted_path_colors;
+  rclcpp::QoS qos_profile_points;
+  rviz_common::properties::QosProfileProperty * qos_profile_points_property;
 };
 }  // namespace object_detection
 }  // namespace rviz_plugins
