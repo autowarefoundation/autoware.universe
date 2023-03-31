@@ -14,17 +14,16 @@
 
 #include "gtest/gtest.h"
 #include "motion_utils/distance/distance.hpp"
-
-using namespace motion_utils;
-
 namespace
 {
+using motion_utils::calcDecelDistWithJerkAndAccConstraints;
+
 constexpr double epsilon = 1e-3;
 
 TEST(distance, calcDecelDistWithJerkAndAccConstraints)
 {
+  // invalid velocity
   {
-    // invalid velocity
     constexpr double current_vel = 16.7;
     constexpr double target_vel = 20.0;
     constexpr double current_acc = 0.0;
@@ -38,8 +37,8 @@ TEST(distance, calcDecelDistWithJerkAndAccConstraints)
     EXPECT_FALSE(dist);
   }
 
+  // invalid deceleration
   {
-    // invalid deceleration
     constexpr double current_vel = 16.7;
     constexpr double target_vel = 0.0;
     constexpr double current_acc = -2.5;
@@ -53,8 +52,8 @@ TEST(distance, calcDecelDistWithJerkAndAccConstraints)
     EXPECT_FALSE(dist);
   }
 
+  // normal stop
   {
-    // normal stop
     constexpr double current_vel = 16.7;
     constexpr double target_vel = 0.0;
     constexpr double current_acc = 0.0;
@@ -68,8 +67,8 @@ TEST(distance, calcDecelDistWithJerkAndAccConstraints)
     EXPECT_NEAR(expected_dist, *dist, epsilon);
   }
 
+  // sudden stop
   {
-    // sudden stop
     constexpr double current_vel = 16.7;
     constexpr double target_vel = 0.0;
     constexpr double current_acc = 0.0;
@@ -83,8 +82,8 @@ TEST(distance, calcDecelDistWithJerkAndAccConstraints)
     EXPECT_NEAR(expected_dist, *dist, epsilon);
   }
 
+  // normal deceleration
   {
-    // normal deceleration
     constexpr double current_vel = 16.7;
     constexpr double target_vel = 10.0;
     constexpr double current_acc = 0.0;
@@ -98,8 +97,8 @@ TEST(distance, calcDecelDistWithJerkAndAccConstraints)
     EXPECT_NEAR(expected_dist, *dist, epsilon);
   }
 
+  // sudden deceleration
   {
-    // sudden deceleration
     constexpr double current_vel = 16.7;
     constexpr double target_vel = 10.0;
     constexpr double current_acc = 0.0;
