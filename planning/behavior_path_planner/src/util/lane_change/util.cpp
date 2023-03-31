@@ -338,7 +338,6 @@ std::pair<bool, bool> getLaneChangePaths(
   candidate_paths->reserve(lane_change_sampling_num);
   for (double acceleration = 0.0; acceleration >= maximum_deceleration;
        acceleration -= acceleration_resolution) {
-    std::cerr << "maximum_deceleration: " << maximum_deceleration << std::endl;
     const double prepare_speed =
       std::max(current_velocity + acceleration * prepare_duration, minimum_lane_change_velocity);
 
