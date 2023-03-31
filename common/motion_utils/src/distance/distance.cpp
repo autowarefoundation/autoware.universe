@@ -16,6 +16,8 @@
 
 namespace motion_utils
 {
+namespace
+{
 bool validCheckDecelPlan(
   const double v_end, const double a_end, const double v_target, const double a_target,
   const double v_margin, const double a_margin)
@@ -59,8 +61,8 @@ std::tuple<double, double, double> update(
 }
 
 /**
- * @brief calculate distance until velocity is reached target velocity (TYPE: TRAPEZOID ACCELERATION
- * PROFILE). this type of profile has ZERO JERK time.
+ * @brief calculate distance until velocity is reached target velocity (TYPE: TRAPEZOID
+ * ACCELERATION PROFILE). this type of profile has ZERO JERK time.
  *
  * [ACCELERATION PROFILE]
  *  a  ^
@@ -124,8 +126,8 @@ boost::optional<double> calcDecelDistPlanType1(
 }
 
 /**
- * @brief calculate distance until velocity is reached target velocity (TYPE: TRIANGLE ACCELERATION
- * PROFILE), This type of profile do NOT have ZERO JERK time.
+ * @brief calculate distance until velocity is reached target velocity (TYPE: TRIANGLE
+ * ACCELERATION PROFILE), This type of profile do NOT have ZERO JERK time.
  *
  * [ACCELERATION PROFILE]
  *  a  ^
@@ -234,6 +236,7 @@ boost::optional<double> calcDecelDistPlanType3(
 
   return x1;
 }
+}  // namespace
 
 boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
   const double current_vel, const double target_vel, const double current_acc, const double acc_min,
