@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Parameter files -->
+  <arg name="ndt_scan_matcher_param_path"/>
+  <arg name="localization_error_monitor_param_path"/>
+  <arg name="ekf_localizer_param_path"/>
+  <arg name="pose_initializer_param_path"/>
+  <arg name="pose_initializer_common_param_path"/>
+
+  <arg name="input/pointcloud" default="/sensing/lidar/top/outlier_filtered/pointcloud/relay" description="The topic will be used in the localization util module"/>
+
+  <!-- localization module -->
+  <group>
+    <push-ros-namespace namespace="localization"/>
+    <!-- util module -->
+    <group>
+      <push-ros-namespace namespace="util"/>
+      <include file="$(find-pkg-share pcdless_localization_launch)/launch/util/util.launch.xml"/>
+    </group>
+    <!-- pose_estimator module -->
+    <group>
+      <push-ros-namespace namespace="pose_estimator"/>
+      <include file="$(find-pkg-share pcdless_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
+    </group>
+    <!-- twist_estimator module -->
+    <group>
+      <push-ros-namespace namespace="twist_estimator"/>
+      <include file="$(find-pkg-share pcdless_localization_launch)/launch/twist_estimator/twist_estimator.launch.xml"/>
+    </group>
+    <!-- pose_twist_fusion_filter module -->
+    <group>
+      <push-ros-namespace namespace="pose_twist_fusion_filter"/>
+      <include file="$(find-pkg-share pcdless_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml"/>
+    </group>
+    <!-- localization_error_monitor_module -->
+    <group>
+      <include file="$(find-pkg-share pcdless_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml"/>
+    </group>
+  </group>
+</launch>
