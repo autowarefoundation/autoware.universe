@@ -70,8 +70,7 @@ public:
 #else
   PullOutModule(
     const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<PullOutParameters> & parameters,
-    const std::shared_ptr<RTCInterface> & rtc_interface);
+    const std::shared_ptr<PullOutParameters> & parameters);
 
   void updateModuleParams(const std::shared_ptr<PullOutParameters> & parameters)
   {

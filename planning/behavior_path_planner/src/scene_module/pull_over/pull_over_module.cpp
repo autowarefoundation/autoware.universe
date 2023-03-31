@@ -53,17 +53,14 @@ PullOverModule::PullOverModule(
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
-  rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_over");
 #else
 PullOverModule::PullOverModule(
   const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<PullOverParameters> & parameters,
-  const std::shared_ptr<RTCInterface> & rtc_interface)
+  const std::shared_ptr<PullOverParameters> & parameters)
 : SceneModuleInterface{name, node},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
-  rtc_interface_ptr_ = rtc_interface;
 #endif
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_over");
 
@@ -528,7 +525,9 @@ BehaviorModuleOutput PullOverModule::plan()
       waitApproval();
       removeRTCStatus();
       steering_factor_interface_ptr_->clearSteeringFactors();
-      uuid_ = generateUUID();
+      for (auto & uuid : uuid_vec_) {
+        uuid = generateUUID();
+      }
       current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
       status_.has_requested_approval = true;
     } else if (isActivated() && isWaitingApproval()) {

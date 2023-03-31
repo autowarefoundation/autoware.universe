@@ -92,8 +92,7 @@ public:
 #else
   PullOverModule(
     const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<PullOverParameters> & parameters,
-    const std::shared_ptr<RTCInterface> & rtc_interface);
+    const std::shared_ptr<PullOverParameters> & parameters);
 
   void updateModuleParams(const std::shared_ptr<PullOverParameters> & parameters)
   {

@@ -28,7 +28,6 @@ PullOverModuleManager::PullOverModuleManager(
   const std::shared_ptr<PullOverParameters> & parameters)
 : SceneModuleManagerInterface(node, name, config), parameters_{parameters}
 {
-  rtc_interface_ = std::make_shared<RTCInterface>(node, name);
 }
 
 void PullOverModuleManager::updateModuleParams(
