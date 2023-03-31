@@ -43,9 +43,10 @@ std::string getTopicName(const ExternalRequestLaneChangeModule::Direction & dire
 ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
   const Direction & direction)
-: SceneModuleInterface{name, node}, parameters_{std::move(parameters)}, direction_{direction}
+: SceneModuleInterface{name, node, {getTopicName(direction)}},
+  parameters_{std::move(parameters)},
+  direction_{direction}
 {
-  rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, getTopicName(direction));
   steering_factor_interface_ptr_ =
     std::make_unique<SteeringFactorInterface>(&node, getTopicName(direction));
 }
@@ -174,7 +175,9 @@ void ExternalRequestLaneChangeModule::resetPathIfAbort()
 
   if (!is_abort_approval_requested_) {
     RCLCPP_DEBUG(getLogger(), "[abort] uuid is reset to request abort approval.");
-    uuid_ = generateUUID();
+    for (auto & uuid : uuid_vec_) {
+      uuid = generateUUID();
+    }
     is_abort_approval_requested_ = true;
     is_abort_path_approved_ = false;
     return;

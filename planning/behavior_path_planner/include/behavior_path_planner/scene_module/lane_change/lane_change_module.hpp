@@ -59,8 +59,7 @@ public:
 #else
   LaneChangeModule(
     const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters,
-    const std::shared_ptr<RTCInterface> & rtc_interface, Direction direction,
+    const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction,
     LaneChangeModuleType type);
 #endif
   bool isExecutionRequested() const override;
@@ -76,36 +75,7 @@ public:
   void acceptVisitor(
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
-#ifdef USE_OLD_ARCHITECTURE
-  void publishRTCStatus() override
-  {
-    rtc_interface_left_->publishCooperateStatus(clock_->now());
-    rtc_interface_right_->publishCooperateStatus(clock_->now());
-  }
-
-  bool isActivated() override
-  {
-    if (rtc_interface_left_->isRegistered(uuid_left_)) {
-      return rtc_interface_left_->isActivated(uuid_left_);
-    }
-    if (rtc_interface_right_->isRegistered(uuid_right_)) {
-      return rtc_interface_right_->isActivated(uuid_right_);
-    }
-    return false;
-  }
-
-  void lockRTCCommand() override
-  {
-    rtc_interface_left_->lockCommandUpdate();
-    rtc_interface_right_->lockCommandUpdate();
-  }
-
-  void unlockRTCCommand() override
-  {
-    rtc_interface_left_->unlockCommandUpdate();
-    rtc_interface_right_->unlockCommandUpdate();
-  }
-#else
+#ifndef USE_OLD_ARCHITECTURE
   void updateModuleParams(const std::shared_ptr<LaneChangeParameters> & parameters)
   {
     parameters_ = parameters;
@@ -129,10 +99,6 @@ private:
   bool is_activated_{false};
 
 #ifdef USE_OLD_ARCHITECTURE
-  std::shared_ptr<RTCInterface> rtc_interface_left_;
-  std::shared_ptr<RTCInterface> rtc_interface_right_;
-  UUID uuid_left_;
-  UUID uuid_right_;
   UUID candidate_uuid_;
 #else
   Direction direction_{Direction::NONE};
@@ -144,32 +110,32 @@ private:
 #ifdef USE_OLD_ARCHITECTURE
   void waitApprovalLeft(const double start_distance, const double finish_distance)
   {
-    rtc_interface_left_->updateCooperateStatus(
-      uuid_left_, isExecutionReady(), start_distance, finish_distance, clock_->now());
+    rtc_interface_ptr_vec_.at(0)->updateCooperateStatus(
+      uuid_vec_.at(0), isExecutionReady(), start_distance, finish_distance, clock_->now());
     is_waiting_approval_ = true;
   }
 
   void waitApprovalRight(const double start_distance, const double finish_distance)
   {
-    rtc_interface_right_->updateCooperateStatus(
-      uuid_right_, isExecutionReady(), start_distance, finish_distance, clock_->now());
+    rtc_interface_ptr_vec_.at(1)->updateCooperateStatus(
+      uuid_vec_.at(1), isExecutionReady(), start_distance, finish_distance, clock_->now());
     is_waiting_approval_ = true;
   }
 
   void updateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
-      rtc_interface_left_->updateCooperateStatus(
-        uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_vec_.at(0)->updateCooperateStatus(
+        uuid_vec_.at(0), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_left_;
+      candidate_uuid_ = uuid_vec_.at(0);
       return;
     }
     if (candidate.lateral_shift < 0.0) {
-      rtc_interface_right_->updateCooperateStatus(
-        uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_vec_.at(1)->updateCooperateStatus(
+        uuid_vec_.at(1), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_right_;
+      candidate_uuid_ = uuid_vec_.at(1);
       return;
     }
 
@@ -178,23 +144,17 @@ private:
       "Direction is UNKNOWN, start_distance = " << candidate.start_distance_to_path_change);
   }
 
-  void removeRTCStatus() override
-  {
-    rtc_interface_left_->clearCooperateStatus();
-    rtc_interface_right_->clearCooperateStatus();
-  }
-
   void removePreviousRTCStatusLeft()
   {
-    if (rtc_interface_left_->isRegistered(uuid_left_)) {
-      rtc_interface_left_->removeCooperateStatus(uuid_left_);
+    if (rtc_interface_ptr_vec_.at(0)->isRegistered(uuid_vec_.at(0))) {
+      rtc_interface_ptr_vec_.at(0)->removeCooperateStatus(uuid_vec_.at(0));
     }
   }
 
   void removePreviousRTCStatusRight()
   {
-    if (rtc_interface_right_->isRegistered(uuid_right_)) {
-      rtc_interface_right_->removeCooperateStatus(uuid_right_);
+    if (rtc_interface_ptr_vec_.at(1)->isRegistered(uuid_vec_.at(1))) {
+      rtc_interface_ptr_vec_.at(1)->removeCooperateStatus(uuid_vec_.at(1));
     }
   }
 #endif

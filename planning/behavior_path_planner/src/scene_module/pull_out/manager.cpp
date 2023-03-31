@@ -28,7 +28,6 @@ PullOutModuleManager::PullOutModuleManager(
   const std::shared_ptr<PullOutParameters> & parameters)
 : SceneModuleManagerInterface(node, name, config), parameters_{parameters}
 {
-  rtc_interface_ = std::make_shared<RTCInterface>(node, name);
 }
 
 void PullOutModuleManager::updateModuleParams(

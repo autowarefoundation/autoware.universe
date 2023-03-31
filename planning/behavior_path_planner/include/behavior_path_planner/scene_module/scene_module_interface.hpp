@@ -54,13 +54,13 @@ using PlanResult = PathWithLaneId::SharedPtr;
 class SceneModuleInterface
 {
 public:
-  SceneModuleInterface(const std::string & name, rclcpp::Node & node)
+  SceneModuleInterface(
+    const std::string & name, rclcpp::Node & node, const std::vector<std::string> rtc_types = {""})
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
     is_waiting_approval_{false},
     is_locked_new_module_launch_{false},
-    uuid_(generateUUID()),
     current_state_{ModuleStatus::SUCCESS}
   {
 #ifdef USE_OLD_ARCHITECTURE
@@ -70,6 +70,16 @@ public:
 
     const auto ns = std::string("~/debug/") + module_ns;
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+
+    for (const auto & rtc_type : rtc_types) {
+      uuid_vec_.push_back(generateUUID());
+      if (rtc_type == "") {
+        rtc_interface_ptr_vec_.push_back(std::make_shared<RTCInterface>(&node, name));
+      } else {
+        rtc_interface_ptr_vec_.push_back(
+          std::make_shared<RTCInterface>(&node, name + "_" + rtc_type));
+      }
+    }
 #endif
   }
 
@@ -167,10 +177,11 @@ public:
    */
   virtual void publishRTCStatus()
   {
-    if (!rtc_interface_ptr_) {
-      return;
+    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
+      if (rtc_interface_ptr) {
+        rtc_interface_ptr->publishCooperateStatus(clock_->now());
+      }
     }
-    rtc_interface_ptr_->publishCooperateStatus(clock_->now());
   }
 
   /**
@@ -178,11 +189,10 @@ public:
    */
   virtual bool isActivated()
   {
-    if (!rtc_interface_ptr_) {
-      return true;
-    }
-    if (rtc_interface_ptr_->isRegistered(uuid_)) {
-      return rtc_interface_ptr_->isActivated(uuid_);
+    for (size_t i = 0; i < rtc_interface_ptr_vec_.size(); ++i) {
+      if (rtc_interface_ptr_vec_.at(i)->isRegistered(uuid_vec_.at(i))) {
+        return rtc_interface_ptr_vec_.at(i)->isActivated(uuid_vec_.at(i));
+      }
     }
     return false;
   }
@@ -197,18 +207,20 @@ public:
 
   virtual void lockRTCCommand()
   {
-    if (!rtc_interface_ptr_) {
-      return;
+    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
+      if (rtc_interface_ptr) {
+        rtc_interface_ptr->lockCommandUpdate();
+      }
     }
-    rtc_interface_ptr_->lockCommandUpdate();
   }
 
   virtual void unlockRTCCommand()
   {
-    if (!rtc_interface_ptr_) {
-      return;
+    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
+      if (rtc_interface_ptr) {
+        rtc_interface_ptr->unlockCommandUpdate();
+      }
     }
-    rtc_interface_ptr_->unlockCommandUpdate();
   }
 
   /**
@@ -264,19 +276,21 @@ private:
 protected:
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {
-    if (!rtc_interface_ptr_) {
-      return;
+    for (size_t i = 0; i < rtc_interface_ptr_vec_.size(); ++i) {
+      if (rtc_interface_ptr_vec_.at(i)) {
+        rtc_interface_ptr_vec_.at(i)->updateCooperateStatus(
+          uuid_vec_.at(i), isExecutionReady(), start_distance, finish_distance, clock_->now());
+      }
     }
-    rtc_interface_ptr_->updateCooperateStatus(
-      uuid_, isExecutionReady(), start_distance, finish_distance, clock_->now());
   }
 
   virtual void removeRTCStatus()
   {
-    if (!rtc_interface_ptr_) {
-      return;
+    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
+      if (rtc_interface_ptr) {
+        rtc_interface_ptr->clearCooperateStatus();
+      }
     }
-    rtc_interface_ptr_->clearCooperateStatus();
   }
 
   BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
@@ -291,7 +305,7 @@ protected:
 
   rclcpp::Clock::SharedPtr clock_;
 
-  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
+  std::vector<std::shared_ptr<RTCInterface>> rtc_interface_ptr_vec_;
 
   std::shared_ptr<const PlannerData> planner_data_;
 
@@ -300,7 +314,7 @@ protected:
   bool is_waiting_approval_;
   bool is_locked_new_module_launch_;
 
-  UUID uuid_;
+  std::vector<UUID> uuid_vec_;
 
   PlanResult path_candidate_;
   PlanResult path_reference_;

@@ -32,9 +32,7 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   parameters_{std::move(parameters)},
   direction_{direction},
   type_{type}
-
 {
-  rtc_interface_ = std::make_shared<RTCInterface>(node, name);
 }
 
 void LaneChangeModuleManager::updateModuleParams(
