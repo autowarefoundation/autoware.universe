@@ -49,15 +49,16 @@ namespace behavior_path_planner
 PullOverModule::PullOverModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<PullOverParameters> & parameters)
-: SceneModuleInterface{name, node},
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
 #else
 PullOverModule::PullOverModule(
   const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<PullOverParameters> & parameters)
-: SceneModuleInterface{name, node},
+  const std::shared_ptr<PullOverParameters> & parameters,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
@@ -525,8 +526,8 @@ BehaviorModuleOutput PullOverModule::plan()
       waitApproval();
       removeRTCStatus();
       steering_factor_interface_ptr_->clearSteeringFactors();
-      for (auto & uuid : uuid_vec_) {
-        uuid = generateUUID();
+      for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+        itr->second = generateUUID();
       }
       current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
       status_.has_requested_approval = true;

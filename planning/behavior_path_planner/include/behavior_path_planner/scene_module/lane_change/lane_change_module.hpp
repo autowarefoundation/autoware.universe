@@ -59,8 +59,9 @@ public:
 #else
   LaneChangeModule(
     const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction,
-    LaneChangeModuleType type);
+    const std::shared_ptr<LaneChangeParameters> & parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
+    Direction direction, LaneChangeModuleType type);
 #endif
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -110,32 +111,32 @@ private:
 #ifdef USE_OLD_ARCHITECTURE
   void waitApprovalLeft(const double start_distance, const double finish_distance)
   {
-    rtc_interface_ptr_vec_.at(0)->updateCooperateStatus(
-      uuid_vec_.at(0), isExecutionReady(), start_distance, finish_distance, clock_->now());
+    rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+      uuid_map_.at("left"), isExecutionReady(), start_distance, finish_distance, clock_->now());
     is_waiting_approval_ = true;
   }
 
   void waitApprovalRight(const double start_distance, const double finish_distance)
   {
-    rtc_interface_ptr_vec_.at(1)->updateCooperateStatus(
-      uuid_vec_.at(1), isExecutionReady(), start_distance, finish_distance, clock_->now());
+    rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+      uuid_map_.at("right"), isExecutionReady(), start_distance, finish_distance, clock_->now());
     is_waiting_approval_ = true;
   }
 
   void updateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
-      rtc_interface_ptr_vec_.at(0)->updateCooperateStatus(
-        uuid_vec_.at(0), isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+        uuid_map_.at("left"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_vec_.at(0);
+      candidate_uuid_ = uuid_map_.at("left");
       return;
     }
     if (candidate.lateral_shift < 0.0) {
-      rtc_interface_ptr_vec_.at(1)->updateCooperateStatus(
-        uuid_vec_.at(1), isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+        uuid_map_.at("right"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_vec_.at(1);
+      candidate_uuid_ = uuid_map_.at("right");
       return;
     }
 
@@ -146,15 +147,15 @@ private:
 
   void removePreviousRTCStatusLeft()
   {
-    if (rtc_interface_ptr_vec_.at(0)->isRegistered(uuid_vec_.at(0))) {
-      rtc_interface_ptr_vec_.at(0)->removeCooperateStatus(uuid_vec_.at(0));
+    if (rtc_interface_ptr_map_.at("left")->isRegistered(uuid_map_.at("left"))) {
+      rtc_interface_ptr_map_.at("left")->removeCooperateStatus(uuid_map_.at("left"));
     }
   }
 
   void removePreviousRTCStatusRight()
   {
-    if (rtc_interface_ptr_vec_.at(1)->isRegistered(uuid_vec_.at(1))) {
-      rtc_interface_ptr_vec_.at(1)->removeCooperateStatus(uuid_vec_.at(1));
+    if (rtc_interface_ptr_map_.at("right")->isRegistered(uuid_map_.at("right"))) {
+      rtc_interface_ptr_map_.at("right")->removeCooperateStatus(uuid_map_.at("right"));
     }
   }
 #endif

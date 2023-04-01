@@ -39,7 +39,8 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 #ifdef USE_OLD_ARCHITECTURE
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters)
-: SceneModuleInterface{name, node, {"left", "right"}}, parameters_{std::move(parameters)}
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {"left", "right"})},
+  parameters_{std::move(parameters)}
 {
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "lane_change");
 }
@@ -47,8 +48,9 @@ LaneChangeModule::LaneChangeModule(
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneChangeParameters> & parameters,
-  const std::vector<std::string> & rtc_types, Direction direction, LaneChangeModuleType type)
-: SceneModuleInterface{name, node, rtc_types},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
+  Direction direction, LaneChangeModuleType type)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   direction_{direction},
   type_{type}
@@ -220,10 +222,10 @@ void LaneChangeModule::resetPathIfAbort()
     const auto lateral_shift = lane_change_utils::getLateralShift(*abort_path_);
     if (lateral_shift > 0.0) {
       removePreviousRTCStatusRight();
-      uuid_vec_.at(1) = generateUUID();
+      uuid_map_.at("right") = generateUUID();
     } else if (lateral_shift < 0.0) {
       removePreviousRTCStatusLeft();
-      uuid_vec_.at(0) = generateUUID();
+      uuid_map_.at("left") = generateUUID();
     }
 #else
     removeRTCStatus();

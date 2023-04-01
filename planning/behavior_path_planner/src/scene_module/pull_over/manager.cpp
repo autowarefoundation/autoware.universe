@@ -26,7 +26,7 @@ namespace behavior_path_planner
 PullOverModuleManager::PullOverModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
   const std::shared_ptr<PullOverParameters> & parameters)
-: SceneModuleManagerInterface(node, name, config), parameters_{parameters}
+: SceneModuleManagerInterface(node, name, config, {""}), parameters_{parameters}
 {
 }
 

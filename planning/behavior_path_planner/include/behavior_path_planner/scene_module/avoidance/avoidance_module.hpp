@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -49,7 +50,8 @@ public:
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
 #else
   AvoidanceModule(
-    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
 #endif
 
   bool isExecutionRequested() const override;
@@ -94,17 +96,17 @@ private:
   void updateCandidateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
-      rtc_interface_ptr_vec_.at(0)->updateCooperateStatus(
-        uuid_vec_.at(0), isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+        uuid_map_.at("left"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_vec_.at(0);
+      candidate_uuid_ = uuid_map_.at("left");
       return;
     }
     if (candidate.lateral_shift < 0.0) {
-      rtc_interface_ptr_vec_.at(1)->updateCooperateStatus(
-        uuid_vec_.at(1), isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+        uuid_map_.at("right"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_vec_.at(1);
+      candidate_uuid_ = uuid_map_.at("right");
       return;
     }
 
@@ -122,7 +124,7 @@ private:
         calcSignedArcLength(path.points, ego_position, left_shift.start_pose.position);
       const double finish_distance =
         calcSignedArcLength(path.points, ego_position, left_shift.finish_pose.position);
-      rtc_interface_ptr_vec_.at(0)->updateCooperateStatus(
+      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
@@ -136,7 +138,7 @@ private:
         calcSignedArcLength(path.points, ego_position, right_shift.start_pose.position);
       const double finish_distance =
         calcSignedArcLength(path.points, ego_position, right_shift.finish_pose.position);
-      rtc_interface_ptr_vec_.at(1)->updateCooperateStatus(
+      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
@@ -149,24 +151,24 @@ private:
 
   void removeCandidateRTCStatus()
   {
-    if (rtc_interface_ptr_vec_.at(0)->isRegistered(candidate_uuid_)) {
-      rtc_interface_ptr_vec_.at(0)->removeCooperateStatus(candidate_uuid_);
-    } else if (rtc_interface_ptr_vec_.at(1)->isRegistered(candidate_uuid_)) {
-      rtc_interface_ptr_vec_.at(1)->removeCooperateStatus(candidate_uuid_);
+    if (rtc_interface_ptr_map_.at("left")->isRegistered(candidate_uuid_)) {
+      rtc_interface_ptr_map_.at("left")->removeCooperateStatus(candidate_uuid_);
+    } else if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
+      rtc_interface_ptr_map_.at("right")->removeCooperateStatus(candidate_uuid_);
     }
   }
 
   void removePreviousRTCStatusLeft()
   {
-    if (rtc_interface_ptr_vec_.at(0)->isRegistered(uuid_vec_.at(0))) {
-      rtc_interface_ptr_vec_.at(0)->removeCooperateStatus(uuid_vec_.at(0));
+    if (rtc_interface_ptr_map_.at("left")->isRegistered(uuid_map_.at("left"))) {
+      rtc_interface_ptr_map_.at("left")->removeCooperateStatus(uuid_map_.at("left"));
     }
   }
 
   void removePreviousRTCStatusRight()
   {
-    if (rtc_interface_ptr_vec_.at(1)->isRegistered(uuid_vec_.at(1))) {
-      rtc_interface_ptr_vec_.at(1)->removeCooperateStatus(uuid_vec_.at(1));
+    if (rtc_interface_ptr_map_.at("right")->isRegistered(uuid_map_.at("right"))) {
+      rtc_interface_ptr_map_.at("right")->removeCooperateStatus(uuid_map_.at("right"));
     }
   }
 

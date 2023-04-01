@@ -80,15 +80,17 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 #ifdef USE_OLD_ARCHITECTURE
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters)
-: SceneModuleInterface{name, node, {"left", "right"}}, parameters_{std::move(parameters)}
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {"left", "right"})},
+  parameters_{std::move(parameters)}
 {
   using std::placeholders::_1;
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "avoidance");
 }
 #else
 AvoidanceModule::AvoidanceModule(
-  const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters)
-: SceneModuleInterface{name, node}, parameters_{std::move(parameters)}
+  const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
 {
   using std::placeholders::_1;
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "avoidance");
@@ -3238,13 +3240,13 @@ void AvoidanceModule::addShiftLineIfApproved(const AvoidLineArray & shift_lines)
     const auto sl_back = shift_lines.back();
 
     if (getRelativeLengthFromPath(sl) > 0.0) {
-      left_shift_array_.push_back({uuid_vec_.at(0), sl_front.start, sl_back.end});
+      left_shift_array_.push_back({uuid_map_.at("left"), sl_front.start, sl_back.end});
     } else if (getRelativeLengthFromPath(sl) < 0.0) {
-      right_shift_array_.push_back({uuid_vec_.at(1), sl_front.start, sl_back.end});
+      right_shift_array_.push_back({uuid_map_.at("right"), sl_front.start, sl_back.end});
     }
 
-    uuid_vec_.at(0) = generateUUID();
-    uuid_vec_.at(1) = generateUUID();
+    uuid_map_.at("left") = generateUUID();
+    uuid_map_.at("right") = generateUUID();
     candidate_uuid_ = generateUUID();
 
     lockNewModuleLaunch();

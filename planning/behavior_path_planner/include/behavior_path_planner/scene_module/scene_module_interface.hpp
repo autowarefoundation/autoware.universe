@@ -36,6 +36,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -55,13 +56,15 @@ class SceneModuleInterface
 {
 public:
   SceneModuleInterface(
-    const std::string & name, rclcpp::Node & node, const std::vector<std::string> rtc_types = {""})
+    const std::string & name, rclcpp::Node & node,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
     is_waiting_approval_{false},
     is_locked_new_module_launch_{false},
-    current_state_{ModuleStatus::SUCCESS}
+    current_state_{ModuleStatus::SUCCESS},
+    rtc_interface_ptr_map_(rtc_interface_ptr_map)
   {
 #ifdef USE_OLD_ARCHITECTURE
     std::string module_ns;
@@ -70,17 +73,11 @@ public:
 
     const auto ns = std::string("~/debug/") + module_ns;
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
-
-    for (const auto & rtc_type : rtc_types) {
-      uuid_vec_.push_back(generateUUID());
-      if (rtc_type == "") {
-        rtc_interface_ptr_vec_.push_back(std::make_shared<RTCInterface>(&node, name));
-      } else {
-        rtc_interface_ptr_vec_.push_back(
-          std::make_shared<RTCInterface>(&node, name + "_" + rtc_type));
-      }
-    }
 #endif
+
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      uuid_map_.emplace(itr->first, generateUUID());
+    }
   }
 
   virtual ~SceneModuleInterface() = default;
@@ -177,9 +174,9 @@ public:
    */
   virtual void publishRTCStatus()
   {
-    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
-      if (rtc_interface_ptr) {
-        rtc_interface_ptr->publishCooperateStatus(clock_->now());
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second) {
+        itr->second->publishCooperateStatus(clock_->now());
       }
     }
   }
@@ -189,9 +186,9 @@ public:
    */
   virtual bool isActivated()
   {
-    for (size_t i = 0; i < rtc_interface_ptr_vec_.size(); ++i) {
-      if (rtc_interface_ptr_vec_.at(i)->isRegistered(uuid_vec_.at(i))) {
-        return rtc_interface_ptr_vec_.at(i)->isActivated(uuid_vec_.at(i));
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second->isRegistered(uuid_map_.at(itr->first))) {
+        return itr->second->isActivated(uuid_map_.at(itr->first));
       }
     }
     return false;
@@ -207,18 +204,18 @@ public:
 
   virtual void lockRTCCommand()
   {
-    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
-      if (rtc_interface_ptr) {
-        rtc_interface_ptr->lockCommandUpdate();
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second) {
+        itr->second->lockCommandUpdate();
       }
     }
   }
 
   virtual void unlockRTCCommand()
   {
-    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
-      if (rtc_interface_ptr) {
-        rtc_interface_ptr->unlockCommandUpdate();
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second) {
+        itr->second->unlockCommandUpdate();
       }
     }
   }
@@ -274,21 +271,35 @@ private:
   BehaviorModuleOutput previous_module_output_;
 
 protected:
+  // TODO(murooka) Remove this function when BT-based architecture will be removed
+  std::unordered_map<std::string, std::shared_ptr<RTCInterface>> createRTCInterfaceMap(
+    rclcpp::Node & node, const std::string & name, const std::vector<std::string> & rtc_types)
+  {
+    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map;
+    for (const auto & rtc_type : rtc_types) {
+      const auto rtc_interface_name = rtc_type == "" ? rtc_type : name + "_" + rtc_type;
+      rtc_interface_ptr_map.emplace(
+        rtc_type, std::make_shared<RTCInterface>(&node, rtc_interface_name));
+    }
+    return rtc_interface_ptr_map;
+  }
+
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {
-    for (size_t i = 0; i < rtc_interface_ptr_vec_.size(); ++i) {
-      if (rtc_interface_ptr_vec_.at(i)) {
-        rtc_interface_ptr_vec_.at(i)->updateCooperateStatus(
-          uuid_vec_.at(i), isExecutionReady(), start_distance, finish_distance, clock_->now());
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second) {
+        itr->second->updateCooperateStatus(
+          uuid_map_.at(itr->first), isExecutionReady(), start_distance, finish_distance,
+          clock_->now());
       }
     }
   }
 
   virtual void removeRTCStatus()
   {
-    for (const auto & rtc_interface_ptr : rtc_interface_ptr_vec_) {
-      if (rtc_interface_ptr) {
-        rtc_interface_ptr->clearCooperateStatus();
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second) {
+        itr->second->clearCooperateStatus();
       }
     }
   }
@@ -305,8 +316,6 @@ protected:
 
   rclcpp::Clock::SharedPtr clock_;
 
-  std::vector<std::shared_ptr<RTCInterface>> rtc_interface_ptr_vec_;
-
   std::shared_ptr<const PlannerData> planner_data_;
 
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
@@ -314,12 +323,14 @@ protected:
   bool is_waiting_approval_;
   bool is_locked_new_module_launch_;
 
-  std::vector<UUID> uuid_vec_;
+  std::unordered_map<std::string, UUID> uuid_map_;
 
   PlanResult path_candidate_;
   PlanResult path_reference_;
 
   ModuleStatus current_state_;
+
+  std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
   mutable MarkerArray debug_marker_;
 };

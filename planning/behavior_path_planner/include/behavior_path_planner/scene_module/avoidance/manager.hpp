@@ -38,7 +38,7 @@ public:
 
   std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
-    return std::make_shared<AvoidanceModule>(name_, *node_, parameters_, {"left", "right"});
+    return std::make_shared<AvoidanceModule>(name_, *node_, parameters_, rtc_interface_ptr_map_);
   }
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;

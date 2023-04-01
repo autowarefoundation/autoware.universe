@@ -26,7 +26,7 @@ namespace behavior_path_planner
 AvoidanceModuleManager::AvoidanceModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
   const std::shared_ptr<AvoidanceParameters> & parameters)
-: SceneModuleManagerInterface(node, name, config), parameters_{parameters}
+: SceneModuleManagerInterface(node, name, config, {"left", "right"}), parameters_{parameters}
 {
 }
 

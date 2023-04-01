@@ -38,7 +38,7 @@ namespace behavior_path_planner
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<PullOutParameters> & parameters)
-: SceneModuleInterface{name, node},
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
@@ -62,8 +62,9 @@ PullOutModule::PullOutModule(
 #else
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<PullOutParameters> & parameters)
-: SceneModuleInterface{name, node},
+  const std::shared_ptr<PullOutParameters> & parameters,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
@@ -739,8 +740,8 @@ void PullOutModule::checkBackFinished()
     // request pull_out approval
     waitApproval();
     removeRTCStatus();
-    for (auto & uuid : uuid_vec_) {
-      uuid = generateUUID();
+    for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+      itr->second = generateUUID();
     }
     current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   }
