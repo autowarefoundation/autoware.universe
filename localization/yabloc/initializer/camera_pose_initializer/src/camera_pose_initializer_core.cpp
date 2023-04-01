@@ -19,6 +19,7 @@ CameraPoseInitializer::CameraPoseInitializer()
   tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
+  using std::placeholders::_2;
   const rclcpp::QoS map_qos = rclcpp::QoS(1).transient_local().reliable();
   service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
@@ -31,7 +32,6 @@ CameraPoseInitializer::CameraPoseInitializer()
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
 
   sub_initialpose_ = create_subscription<PoseCovStamped>("initialpose", 10, on_initialpose);
-  // sub_ll2_ = create_subscription<PointCloud2>("/map/ll2_road_marking", map_qos, on_ll2);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
 
   sub_image_ = create_subscription<Image>(
@@ -39,11 +39,15 @@ CameraPoseInitializer::CameraPoseInitializer()
     [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; });
 
   // Client
-  ground_cli_ = create_client<Ground>(
+  ground_client_ = create_client<Ground>(
     "/localization/map/ground", rmw_qos_profile_services_default, service_callback_group_);
 
+  // Server
+  auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
+  align_server_ = create_service<RequestPoseAlignment>("pcdless_align_srv", on_service);
+
   using namespace std::chrono_literals;
-  while (!ground_cli_->wait_for_service(1s) && rclcpp::ok()) {
+  while (!ground_client_->wait_for_service(1s) && rclcpp::ok()) {
     RCLCPP_INFO_STREAM(get_logger(), "Waiting for service...");
   }
 }
@@ -57,7 +61,7 @@ void CameraPoseInitializer::on_initial_pose(const PoseCovStamped & initialpose)
   request->point.y = query_pos.y;
 
   using namespace std::chrono_literals;
-  auto result_future = ground_cli_->async_send_request(request);
+  auto result_future = ground_client_->async_send_request(request);
   std::future_status status = result_future.wait_for(1000ms);
   if (status == std::future_status::ready) {
   } else {
@@ -317,6 +321,13 @@ void CameraPoseInitializer::publish_rectified_initial_pose(
   msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
 
   pub_initialpose_->publish(msg);
+}
+
+void CameraPoseInitializer::on_service(
+  const RequestPoseAlignment::Request::SharedPtr, RequestPoseAlignment::Response::SharedPtr request)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "CameraPoseInitializer on_service");
+  request->success = false;
 }
 
 }  // namespace pcdless

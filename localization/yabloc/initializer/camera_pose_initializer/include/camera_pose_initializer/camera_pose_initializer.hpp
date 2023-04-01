@@ -12,6 +12,7 @@
 #include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 namespace pcdless
@@ -28,6 +29,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const cv::Point2i &)>;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
 
   CameraPoseInitializer();
 
@@ -44,7 +46,8 @@ private:
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
-  rclcpp::Client<Ground>::SharedPtr ground_cli_;
+  rclcpp::Service<RequestPoseAlignment>::SharedPtr align_server_;
+  rclcpp::Client<Ground>::SharedPtr ground_client_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 
   std::optional<Image::ConstSharedPtr> latest_image_msg_{std::nullopt};
@@ -63,6 +66,9 @@ private:
   void on_ll2(const PointCloud2 & msg);
   void on_map(const HADMapBin & msg);
   void on_initial_pose(const PoseCovStamped & initialpose);
+  void on_service(
+    const RequestPoseAlignment::Request::SharedPtr,
+    RequestPoseAlignment::Response::SharedPtr request);
 
   cv::Mat create_vectormap_image(const Eigen::Vector3f & position);
   cv::Mat project_image();
