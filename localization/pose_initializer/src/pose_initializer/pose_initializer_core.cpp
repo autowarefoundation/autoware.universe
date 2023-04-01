@@ -91,6 +91,9 @@ void PoseInitializer::on_initialize(
     if (ndt_) {
       pose = ndt_->align_pose(pose);
     }
+    if (pcdless_) {
+      pose = pcdless_->align_pose(pose);
+    }
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
     if (ekf_localization_trigger_) {
