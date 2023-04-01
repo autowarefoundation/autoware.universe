@@ -61,25 +61,16 @@ LaneChangeModule::LaneChangeModule(
 }
 #endif
 
-void LaneChangeModule::onEntry()
+void LaneChangeModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
+#ifndef USE_OLD_ARCHITECTURE
   waitApproval();
 #endif
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
 
-void LaneChangeModule::onExit()
-{
-  resetParameters();
-  current_state_ = ModuleStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
-}
+void LaneChangeModule::processOnExit() { resetParameters(); }
 
 bool LaneChangeModule::isExecutionRequested() const
 {
@@ -874,10 +865,6 @@ void LaneChangeModule::resetParameters()
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
 
-  clearWaitingApproval();
-  unlockNewModuleLaunch();
-  removeRTCStatus();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   object_debug_.clear();
   debug_marker_.markers.clear();
   resetPathCandidate();

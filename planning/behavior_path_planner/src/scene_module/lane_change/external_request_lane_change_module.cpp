@@ -50,20 +50,13 @@ ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
     std::make_unique<SteeringFactorInterface>(&node, getTopicName(direction));
 }
 
-void ExternalRequestLaneChangeModule::onEntry()
+void ExternalRequestLaneChangeModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
-  current_state_ = BT::NodeStatus::SUCCESS;
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
 
-void ExternalRequestLaneChangeModule::onExit()
-{
-  resetParameters();
-  current_state_ = BT::NodeStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
-}
+void ExternalRequestLaneChangeModule::processOnExit() { resetParameters(); }
 
 bool ExternalRequestLaneChangeModule::isExecutionRequested() const
 {
@@ -742,10 +735,7 @@ void ExternalRequestLaneChangeModule::calcTurnSignalInfo()
 
 void ExternalRequestLaneChangeModule::resetParameters()
 {
-  clearWaitingApproval();
-  removeRTCStatus();
   resetPathCandidate();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   object_debug_.clear();
   debug_marker_.markers.clear();
 }

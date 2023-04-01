@@ -63,17 +63,17 @@ CandidateOutput LaneFollowingModule::planCandidate() const
 {
   return CandidateOutput(getReferencePath());
 }
-void LaneFollowingModule::onEntry()
+void LaneFollowingModule::processOnEntry()
 {
+  // TODO(murooka)
   initParam();
   current_state_ = BT::NodeStatus::RUNNING;
-  RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onEntry");
 }
-void LaneFollowingModule::onExit()
+void LaneFollowingModule::processOnExit()
 {
+  // TODO(murooka)
   initParam();
   current_state_ = BT::NodeStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onExit");
 }
 
 void LaneFollowingModule::setParameters(const std::shared_ptr<LaneFollowingParameters> & parameters)

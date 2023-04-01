@@ -3581,27 +3581,9 @@ void AvoidanceModule::compensateDetectionLost(
   DEBUG_PRINT("object size: %lu -> %lu", old_size, now_objects.size());
 }
 
-void AvoidanceModule::onEntry()
-{
-  DEBUG_PRINT("AVOIDANCE onEntry. wait approval!");
-  initVariables();
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
-#endif
-}
+void AvoidanceModule::processOnEntry() { initVariables(); }
 
-void AvoidanceModule::onExit()
-{
-  DEBUG_PRINT("AVOIDANCE onExit");
-  initVariables();
-  current_state_ = ModuleStatus::SUCCESS;
-  clearWaitingApproval();
-  removeRTCStatus();
-  unlockNewModuleLaunch();
-  steering_factor_interface_ptr_->clearSteeringFactors();
-}
+void AvoidanceModule::processOnExit() { initVariables(); }
 
 void AvoidanceModule::initVariables()
 {

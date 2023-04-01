@@ -264,15 +264,8 @@ ParallelParkingParameters PullOverModule::getGeometricPullOverParameters() const
   return params;
 }
 
-void PullOverModule::onEntry()
+void PullOverModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "PULL_OVER onEntry");
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
-#endif
-
   // Initialize occupancy grid map
   if (parameters_->use_occupancy_grid) {
     OccupancyGridMapParam occupancy_grid_map_param{};
@@ -311,16 +304,12 @@ void PullOverModule::onEntry()
     std::make_unique<rclcpp::Time>(planner_data_->route_handler->getRouteHeader().stamp);
 }
 
-void PullOverModule::onExit()
+void PullOverModule::processOnExit()
 {
-  RCLCPP_DEBUG(getLogger(), "PULL_OVER onExit");
-  clearWaitingApproval();
-  removeRTCStatus();
+  // TODO(murooka) unlockNewModuleLaunch was missing
   resetPathCandidate();
   resetPathReference();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   debug_marker_.markers.clear();
-  current_state_ = ModuleStatus::SUCCESS;
 }
 
 bool PullOverModule::isExecutionRequested() const

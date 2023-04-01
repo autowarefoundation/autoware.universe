@@ -64,20 +64,17 @@ void SideShiftModule::initVariables()
   resetPathReference();
 }
 
-void SideShiftModule::onEntry()
+void SideShiftModule::processOnEntry()
 {
   // write me... (Don't initialize variables, otherwise lateral offset gets zero on entry.)
   start_pose_reset_request_ = false;
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::IDLE;
-#endif
 }
 
-void SideShiftModule::onExit()
+void SideShiftModule::processOnExit()
 {
   // write me...
   initVariables();
-  current_state_ = ModuleStatus::SUCCESS;
+  // TODO(murooka) lots of process was missing compared to other modules
 }
 
 void SideShiftModule::setParameters(const std::shared_ptr<SideShiftParameters> & parameters)

@@ -102,15 +102,8 @@ BehaviorModuleOutput PullOutModule::run()
   return plan();
 }
 
-void PullOutModule::onEntry()
+void PullOutModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "PULL_OUT onEntry");
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
-#endif
-
   // initialize when receiving new route
   if (
     last_route_received_time_ == nullptr ||
@@ -137,15 +130,11 @@ void PullOutModule::onEntry()
   updatePullOutStatus();
 }
 
-void PullOutModule::onExit()
+void PullOutModule::processOnExit()
 {
-  clearWaitingApproval();
-  removeRTCStatus();
-  steering_factor_interface_ptr_->clearSteeringFactors();
+  // TODO(murooka) unlockNewModuleLaunch was missing
   resetPathCandidate();
   resetPathReference();
-  current_state_ = ModuleStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }
 
 bool PullOutModule::isExecutionRequested() const
