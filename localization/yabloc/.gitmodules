@@ -11,3 +11,6 @@
 [submodule "standalone/sample_vehicle_launch"]
 	path = standalone/sample_vehicle_launch
 	url = https://github.com/autowarefoundation/sample_vehicle_launch.git
+[submodule "standalone/tier4_autoware_msgs"]
+	path = standalone/tier4_autoware_msgs
+	url = https://github.com/tier4/tier4_autoware_msgs.git
