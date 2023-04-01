@@ -19,6 +19,7 @@
 #include "gnss_module.hpp"
 #include "ndt_localization_trigger_module.hpp"
 #include "ndt_module.hpp"
+#include "pcdless_module.hpp"
 #include "stop_check_module.hpp"
 
 #include <memory>
@@ -40,6 +41,9 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   }
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
+  }
+  if (declare_parameter<bool>("pcdless_enabled")) {
+    pcdless_ = std::make_unique<PcdlessModule>(this);
   }
   if (declare_parameter<bool>("ndt_enabled")) {
     ndt_ = std::make_unique<NdtModule>(this);
