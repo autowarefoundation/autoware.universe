@@ -10,6 +10,7 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <ground_msgs/srv/ground.hpp>
+#include <semseg_msgs/srv/semseg.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
@@ -30,6 +31,7 @@ public:
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const cv::Point2i &)>;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
+  using SemsegSrv = semseg_msgs::srv::Semseg;
 
   CameraPoseInitializer();
 
@@ -48,21 +50,13 @@ private:
 
   rclcpp::Service<RequestPoseAlignment>::SharedPtr align_server_;
   rclcpp::Client<Ground>::SharedPtr ground_client_;
+  rclcpp::Client<SemsegSrv>::SharedPtr semseg_client_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 
   std::optional<Image::ConstSharedPtr> latest_image_msg_{std::nullopt};
   ProjectFunc project_func_ = nullptr;
 
-  cv::Point2i to_cv_point(const Eigen::Vector3f & v) const
-  {
-    const float image_size_ = 800;
-    const float max_range_ = 30;
-
-    cv::Point pt;
-    pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2.f;
-    pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_ / 2.f;
-    return pt;
-  }
+  cv::Point2i to_cv_point(const Eigen::Vector3f & v) const;
   void on_ll2(const PointCloud2 & msg);
   void on_map(const HADMapBin & msg);
   void on_initial_pose(const PoseCovStamped & initialpose);

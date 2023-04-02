@@ -330,4 +330,15 @@ void CameraPoseInitializer::on_service(
   request->success = false;
 }
 
+cv::Point2i CameraPoseInitializer::to_cv_point(const Eigen::Vector3f & v) const
+{
+  const float image_size_ = 800;
+  const float max_range_ = 30;
+
+  cv::Point pt;
+  pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2.f;
+  pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_ / 2.f;
+  return pt;
+}
+
 }  // namespace pcdless
