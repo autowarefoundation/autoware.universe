@@ -17,6 +17,8 @@ public:
 
   cv::Mat get_image(const Pose & pose);
 
+  cv::Mat create_vectormap_image(const Eigen::Vector3f & position);
+
 private:
   lanelet::LaneletMapPtr map_;
 };

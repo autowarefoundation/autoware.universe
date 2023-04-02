@@ -30,6 +30,15 @@ cv::Point2i to_cv_point(const Eigen::Vector3f & v)
   return pt;
 }
 
+cv::Mat LaneImage::create_vectormap_image(const Eigen::Vector3f & position)
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = position.x();
+  pose.position.y = position.y();
+  pose.position.z = position.z();
+  return get_image(pose);
+}
+
 void draw_lane(cv::Mat & image, const polygon_t & polygon)
 {
   std::vector<cv::Point> contour;
