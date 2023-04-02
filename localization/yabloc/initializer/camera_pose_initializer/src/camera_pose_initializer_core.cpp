@@ -22,9 +22,6 @@ CameraPoseInitializer::CameraPoseInitializer()
   marker_module_ = std::make_unique<initializer::MarkerModule>(this);
   projector_module_ = std::make_unique<initializer::ProjectorModule>(this);
 
-  // Publisher
-  pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
-
   // Subscriber
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
   auto on_image = [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; };
@@ -183,18 +180,20 @@ void CameraPoseInitializer::on_service(
   RCLCPP_INFO_STREAM(get_logger(), "get initial position " << pos_vec3f.transpose());
 
   // Estimate orientation
+  const auto header = request->pose_with_covariance.header;
   Eigen::Vector3f tangent;
   if (estimate_pose(pos_vec3f, tangent)) {
     response->success = true;
-    response->pose_with_covariance = create_rectified_initial_pose(pos_vec3f, tangent);
+    response->pose_with_covariance = create_rectified_initial_pose(pos_vec3f, tangent, header);
   }
 }
 
 CameraPoseInitializer::PoseCovStamped CameraPoseInitializer::create_rectified_initial_pose(
-  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent)
+  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
+  const std_msgs::msg::Header & header)
 {
   PoseCovStamped msg;
-  msg.header.frame_id = "map";
+  msg.header = header;
   msg.pose.pose.position.x = pos.x();
   msg.pose.pose.position.y = pos.y();
   msg.pose.pose.position.z = pos.z();

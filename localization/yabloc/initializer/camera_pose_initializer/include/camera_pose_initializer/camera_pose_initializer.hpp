@@ -40,8 +40,6 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
-  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
-
   rclcpp::Service<RequestPoseAlignment>::SharedPtr align_server_;
   rclcpp::Client<Ground>::SharedPtr ground_client_;
   rclcpp::Client<SemsegSrv>::SharedPtr semseg_client_;
@@ -54,7 +52,8 @@ private:
     const RequestPoseAlignment::Request::SharedPtr,
     RequestPoseAlignment::Response::SharedPtr request);
   PoseCovStamped create_rectified_initial_pose(
-    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent);
+    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
+    const std_msgs::msg::Header & header);
 
   bool estimate_pose(const Eigen::Vector3f & position, Eigen::Vector3f & tangent);
 };

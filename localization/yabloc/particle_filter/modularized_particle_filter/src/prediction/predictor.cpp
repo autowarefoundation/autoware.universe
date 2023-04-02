@@ -172,12 +172,14 @@ void Predictor::update_with_dynamic_noise(
   rclcpp::Time msg_time{particle_array.header.stamp};
 
   const float dt = static_cast<float>((current_time - msg_time).seconds());
-  if (dt < 0.0f) {
+  particle_array.header.stamp = current_time;
+
+  if (dt < 0.0f || dt > 1.0f) {
+    // NOTE: sometime particle_array.header.stamp is ancient due to lagged pose_initializer
     RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
     return;
   }
 
-  particle_array.header.stamp = current_time;
   const float linear_x = twist.twist.twist.linear.x;
   const float angular_z = twist.twist.twist.angular.z;
   const float std_linear_x = std::sqrt(twist.twist.covariance[6 * 0 + 0]);

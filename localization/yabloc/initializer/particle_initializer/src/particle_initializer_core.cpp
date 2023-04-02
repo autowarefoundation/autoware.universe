@@ -10,16 +10,12 @@ ParticleInitializer::ParticleInitializer()
 
   // Publisher
   pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
-  pub_initialpose_ekf_ = create_publisher<PoseCovStamped>("ekf/initialpose", 10);
   pub_marker_ = create_publisher<Marker>("init/marker", 10);
 
   // Subscriber
-  auto on_initialpose = std::bind(&ParticleInitializer::on_initial_pose, this, _1);
+  auto on_initial_pose = std::bind(&ParticleInitializer::on_initial_pose, this, _1);
   sub_initialpose_ =
-    create_subscription<PoseCovStamped>("initialpose", 10, std::move(on_initialpose));
-
-  client_ekf_trigger_ =
-    create_client<SetBool>("/localization/pose_twist_fusion_filter/trigger_node");
+    create_subscription<PoseCovStamped>("initialpose3d", 10, std::move(on_initial_pose));
 }
 
 void ParticleInitializer::on_initial_pose(const PoseCovStamped & initialpose)
@@ -34,7 +30,8 @@ void ParticleInitializer::on_initial_pose(const PoseCovStamped & initialpose)
   tangent << std::cos(theta), std::sin(theta), 0;
 
   publish_range_marker(pos_vec3f, tangent);
-  publish_rectified_initial_pose(pos_vec3f, tangent, initialpose);
+
+  pub_initialpose_->publish(rectify_initial_pose(pos_vec3f, tangent, initialpose));
 }
 
 void ParticleInitializer::publish_range_marker(
@@ -72,7 +69,7 @@ void ParticleInitializer::publish_range_marker(
   pub_marker_->publish(msg);
 }
 
-void ParticleInitializer::publish_rectified_initial_pose(
+ParticleInitializer::PoseCovStamped ParticleInitializer::rectify_initial_pose(
   const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
   const PoseCovStamped & raw_initialpose)
 {
@@ -100,12 +97,7 @@ void ParticleInitializer::publish_rectified_initial_pose(
   msg.pose.covariance.at(6 * 1 + 1) = cov(1, 1);
   msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
 
-  pub_initialpose_->publish(msg);
-  pub_initialpose_ekf_->publish(msg);
-
-  const auto req = std::make_shared<SetBool::Request>();
-  req->data = true;
-  client_ekf_trigger_->async_send_request(req);
+  return msg;
 }
 
 }  // namespace pcdless::modularized_particle_filter
