@@ -22,5 +22,6 @@ ament_auto_package(INSTALL_TO_SHARE data launch)
 install(PROGRAMS
     src/semseg_core.py
     src/semseg_node.py
+    src/semseg_server.py
     DESTINATION lib/${PROJECT_NAME}
 )

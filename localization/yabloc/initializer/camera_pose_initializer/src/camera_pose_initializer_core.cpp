@@ -26,12 +26,10 @@ CameraPoseInitializer::CameraPoseInitializer()
   pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
 
   // Subscriber
-  auto on_initialpose = std::bind(&CameraPoseInitializer::on_initial_pose, this, _1);
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
   auto on_image = [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; };
-  sub_initialpose_ = create_subscription<PoseCovStamped>("initialpose", 10, on_initialpose);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
-  sub_image_ = create_subscription<Image>("/sensing/undistorted/image_raw", 10, on_image);
+  sub_image_ = create_subscription<Image>("/sensing/camera/undistorted/image_raw", 10, on_image);
 
   // Client
   ground_client_ = create_client<Ground>(
@@ -49,36 +47,6 @@ CameraPoseInitializer::CameraPoseInitializer()
   }
   while (!semseg_client_->wait_for_service(1s) && rclcpp::ok()) {
     RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << semseg_client_->get_service_name());
-  }
-}
-
-void CameraPoseInitializer::on_initial_pose(const PoseCovStamped & initialpose)
-{
-  const rclcpp::Time stamp = initialpose.header.stamp;
-  const auto query_pos = initialpose.pose.pose.position;
-  auto request = std::make_shared<Ground::Request>();
-  request->point.x = query_pos.x;
-  request->point.y = query_pos.y;
-
-  using namespace std::chrono_literals;
-  auto result_future = ground_client_->async_send_request(request);
-  std::future_status status = result_future.wait_for(1000ms);
-  if (status == std::future_status::ready) {
-  } else {
-    RCLCPP_ERROR_STREAM(get_logger(), "get height service exited unexpectedly");
-    return;
-  }
-
-  // Retrieve 3d position
-  const auto position = result_future.get()->pose.position;
-  Eigen::Vector3f pos_vec3f;
-  pos_vec3f << position.x, position.y, position.z;
-  RCLCPP_INFO_STREAM(get_logger(), "get initial position " << pos_vec3f.transpose());
-
-  // Estimate orientation
-  Eigen::Vector3f tangent;
-  if (estimate_pose(pos_vec3f, tangent)) {
-    publish_rectified_initial_pose(pos_vec3f, tangent, stamp);
   }
 }
 
@@ -186,11 +154,46 @@ void CameraPoseInitializer::on_map(const HADMapBin & msg)
   lane_image_ = std::make_unique<LaneImage>(lanelet_map);
 }
 
-void CameraPoseInitializer::publish_rectified_initial_pose(
-  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent, const rclcpp::Time & stamp)
+void CameraPoseInitializer::on_service(
+  const RequestPoseAlignment::Request::SharedPtr request,
+  RequestPoseAlignment::Response::SharedPtr response)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "CameraPoseInitializer on_service");
+  response->success = false;
+
+  const auto query_pos = request->pose_with_covariance.pose.pose.position;
+  auto ground_request = std::make_shared<Ground::Request>();
+  ground_request->point.x = query_pos.x;
+  ground_request->point.y = query_pos.y;
+
+  using namespace std::chrono_literals;
+  auto result_future = ground_client_->async_send_request(ground_request);
+  std::future_status status = result_future.wait_for(1000ms);
+  if (status == std::future_status::ready) {
+    RCLCPP_ERROR_STREAM(get_logger(), "get height service exited ");
+  } else {
+    RCLCPP_ERROR_STREAM(get_logger(), "get height service exited unexpectedly");
+    return;
+  }
+
+  // Retrieve 3d position
+  const auto position = result_future.get()->pose.position;
+  Eigen::Vector3f pos_vec3f;
+  pos_vec3f << position.x, position.y, position.z;
+  RCLCPP_INFO_STREAM(get_logger(), "get initial position " << pos_vec3f.transpose());
+
+  // Estimate orientation
+  Eigen::Vector3f tangent;
+  if (estimate_pose(pos_vec3f, tangent)) {
+    response->success = true;
+    response->pose_with_covariance = create_rectified_initial_pose(pos_vec3f, tangent);
+  }
+}
+
+CameraPoseInitializer::PoseCovStamped CameraPoseInitializer::create_rectified_initial_pose(
+  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent)
 {
   PoseCovStamped msg;
-  msg.header.stamp = stamp;
   msg.header.frame_id = "map";
   msg.pose.pose.position.x = pos.x();
   msg.pose.pose.position.y = pos.y();
@@ -213,15 +216,7 @@ void CameraPoseInitializer::publish_rectified_initial_pose(
   msg.pose.covariance.at(6 * 1 + 0) = cov(1, 0);
   msg.pose.covariance.at(6 * 1 + 1) = cov(1, 1);
   msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
-
-  pub_initialpose_->publish(msg);
-}
-
-void CameraPoseInitializer::on_service(
-  const RequestPoseAlignment::Request::SharedPtr, RequestPoseAlignment::Response::SharedPtr request)
-{
-  RCLCPP_INFO_STREAM(get_logger(), "CameraPoseInitializer on_service");
-  request->success = false;
+  return msg;
 }
 
 }  // namespace pcdless

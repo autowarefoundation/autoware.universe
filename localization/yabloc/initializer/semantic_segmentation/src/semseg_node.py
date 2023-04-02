@@ -11,7 +11,7 @@ import time
 
 class SemsegNode(Node):
     def __init__(self):
-        super().__init__('initial_pose_latch')
+        super().__init__('semseg_node')
 
         model_path = self.declare_parameter('model_path', '').value
         self.imshow_ = self.declare_parameter('imshow', False).value

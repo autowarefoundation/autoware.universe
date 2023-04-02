@@ -8,6 +8,7 @@
         <remap from="initialpose" to="/initialpose"/>
         <remap from="/map/ll2_road_marking" to="/localization/map/ll2_road_marking"/>
     </node>
+    <include file="$(find-pkg-share semantic_segmentation)/launch/semseg_server.launch.xml"/>
 
     <node if="false" name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
         <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>

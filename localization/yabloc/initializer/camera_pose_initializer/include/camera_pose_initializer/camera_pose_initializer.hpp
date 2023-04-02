@@ -50,14 +50,12 @@ private:
   std::optional<Image::ConstSharedPtr> latest_image_msg_{std::nullopt};
 
   void on_map(const HADMapBin & msg);
-  void on_initial_pose(const PoseCovStamped & initialpose);
   void on_service(
     const RequestPoseAlignment::Request::SharedPtr,
     RequestPoseAlignment::Response::SharedPtr request);
+  PoseCovStamped create_rectified_initial_pose(
+    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent);
 
   bool estimate_pose(const Eigen::Vector3f & position, Eigen::Vector3f & tangent);
-
-  void publish_rectified_initial_pose(
-    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent, const rclcpp::Time & stamp);
 };
 }  // namespace pcdless
