@@ -3,7 +3,6 @@
 #include <ll2_decomposer/from_bin_msg.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <pcdless_common/color.hpp>
 #include <pcdless_common/cv_decompress.hpp>
 
 #include <pcl/point_cloud.h>
@@ -25,7 +24,7 @@ CameraPoseInitializer::CameraPoseInitializer()
 
   // Publisher
   pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
-  pub_marker_ = create_publisher<MarkerArray>("init/marker", 10);
+  marker_module_ = std::make_unique<initializer::MarkerModule>(this);
 
   // Subscriber
   auto on_initialpose = std::bind(&CameraPoseInitializer::on_initial_pose, this, _1);
@@ -155,46 +154,9 @@ bool CameraPoseInitializer::estimate_pose(
     tangent.z() = 0;
   }
 
-  publish_marker(scores, angles, position);
+  marker_module_->publish_marker(scores, angles, position);
 
   return true;
-}
-
-void CameraPoseInitializer::publish_marker(
-  const std::vector<int> scores, const std::vector<float> angles, const Eigen::Vector3f & position)
-{
-  const int N = scores.size();
-  auto minmax = std::minmax_element(scores.begin(), scores.end());
-  auto normalize = [minmax](int score) -> float {
-    return static_cast<float>(score - *minmax.first) /
-           static_cast<float>(*minmax.second - *minmax.first);
-  };
-
-  MarkerArray array;
-  for (int i = 0; i < N; i++) {
-    Marker marker;
-    marker.header.frame_id = "map";
-    marker.type = Marker::ARROW;
-    marker.id = i;
-    marker.ns = "arrow";
-    marker.color = common::color_scale::rainbow(normalize(scores.at(i)));
-    marker.color.a = 0.5;
-
-    marker.pose.position.x = position.x();
-    marker.pose.position.y = position.y();
-    marker.pose.position.z = position.z();
-
-    const float rad = angles.at(i);
-    marker.pose.orientation.w = std::cos(rad / 2.f);
-    marker.pose.orientation.z = std::sin(rad / 2.f);
-
-    marker.scale.x = 2.0;  // arrow length
-    marker.scale.y = 0.3;  // arrow width
-    marker.scale.z = 0.3;  // arrow height
-
-    array.markers.push_back(marker);
-  }
-  pub_marker_->publish(array);
 }
 
 cv::Mat CameraPoseInitializer::create_vectormap_image(const Eigen::Vector3f & position)
@@ -281,7 +243,7 @@ void CameraPoseInitializer::on_map(const HADMapBin & msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
   lanelet::LaneletMapPtr lanelet_map = ll2_decomposer::from_bin_msg(msg);
-  lane_image_ = std::make_shared<LaneImage>(lanelet_map);
+  lane_image_ = std::make_unique<LaneImage>(lanelet_map);
 }
 
 void CameraPoseInitializer::on_ll2(const PointCloud2 & msg)

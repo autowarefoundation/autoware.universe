@@ -1,5 +1,6 @@
 #pragma once
 #include "camera_pose_initializer/lane_image.hpp"
+#include "camera_pose_initializer/marker_module.hpp"
 
 #include <Eigen/Geometry>
 #include <opencv2/core.hpp>
@@ -14,7 +15,6 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 
 namespace pcdless
 {
@@ -23,8 +23,6 @@ class CameraPoseInitializer : public rclcpp::Node
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-  using Marker = visualization_msgs::msg::Marker;
-  using MarkerArray = visualization_msgs::msg::MarkerArray;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Ground = ground_msgs::srv::Ground;
   using Image = sensor_msgs::msg::Image;
@@ -37,7 +35,9 @@ public:
 
 private:
   const Eigen::Vector2d cov_xx_yy_;
-  LaneImage::SharedPtr lane_image_{nullptr};
+  std::unique_ptr<LaneImage> lane_image_{nullptr};
+  std::unique_ptr<initializer::MarkerModule> marker_module_{nullptr};
+
   common::CameraInfoSubscriber info_;
   common::StaticTfSubscriber tf_subscriber_;
 
@@ -46,7 +46,6 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   rclcpp::Service<RequestPoseAlignment>::SharedPtr align_server_;
   rclcpp::Client<Ground>::SharedPtr ground_client_;
@@ -69,10 +68,6 @@ private:
   bool estimate_pose(const Eigen::Vector3f & position, Eigen::Vector3f & tangent);
 
   bool define_project_func();
-
-  void publish_marker(
-    const std::vector<int> scores, const std::vector<float> angles,
-    const Eigen::Vector3f & position);
 
   void publish_rectified_initial_pose(
     const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent, const rclcpp::Time & stamp);
