@@ -28,17 +28,16 @@ CameraPoseInitializer::CameraPoseInitializer()
   // Subscriber
   auto on_initialpose = std::bind(&CameraPoseInitializer::on_initial_pose, this, _1);
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
-
+  auto on_image = [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; };
   sub_initialpose_ = create_subscription<PoseCovStamped>("initialpose", 10, on_initialpose);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
-
-  sub_image_ = create_subscription<Image>(
-    "/semseg/semantic_image", 10,
-    [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; });
+  sub_image_ = create_subscription<Image>("/sensing/undistorted/image_raw", 10, on_image);
 
   // Client
   ground_client_ = create_client<Ground>(
     "/localization/map/ground", rmw_qos_profile_services_default, service_callback_group_);
+  semseg_client_ = create_client<SemsegSrv>(
+    "/localization/semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
 
   // Server
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
@@ -46,7 +45,10 @@ CameraPoseInitializer::CameraPoseInitializer()
 
   using namespace std::chrono_literals;
   while (!ground_client_->wait_for_service(1s) && rclcpp::ok()) {
-    RCLCPP_INFO_STREAM(get_logger(), "Waiting for service...");
+    RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << ground_client_->get_service_name());
+  }
+  while (!semseg_client_->wait_for_service(1s) && rclcpp::ok()) {
+    RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << semseg_client_->get_service_name());
   }
 }
 
@@ -119,13 +121,28 @@ bool CameraPoseInitializer::estimate_pose(
     return false;
   }
 
-  // TODO: check time stamp
-  if (!latest_image_msg_.has_value()) {
-    RCLCPP_WARN_STREAM(get_logger(), "semantic image is not ready");
-    return false;
+  Image semseg_image;
+  {
+    // TODO: check time stamp
+    if (!latest_image_msg_.has_value()) {
+      RCLCPP_WARN_STREAM(get_logger(), "image is not ready");
+      return false;
+    }
+
+    auto request = std::make_shared<SemsegSrv::Request>();
+    request->src_image = *latest_image_msg_.value();
+    auto result_future = semseg_client_->async_send_request(request);
+    using namespace std::chrono_literals;
+    std::future_status status = result_future.wait_for(1000ms);
+    if (status == std::future_status::ready) {
+      semseg_image = result_future.get()->dst_image;
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "semseg service exited unexpectedly");
+      return false;
+    }
   }
 
-  cv::Mat projected_image = projector_module_->project_image(*latest_image_msg_.value());
+  cv::Mat projected_image = projector_module_->project_image(semseg_image);
   cv::Mat vectormap_image = lane_image_->create_vectormap_image(position);
 
   std::vector<int> scores;
