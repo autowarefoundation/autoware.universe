@@ -14,6 +14,7 @@
 
 #include "scene_module/out_of_lane/scene_out_of_lane.hpp"
 
+#include "scene_module/out_of_lane/debug.hpp"
 #include "scene_module/out_of_lane/decisions.hpp"
 #include "scene_module/out_of_lane/footprint.hpp"
 #include "scene_module/out_of_lane/lanelets_selection.hpp"
@@ -133,86 +134,19 @@ MarkerArray OutOfLaneModule::createDebugMarkerArray()
 {
   constexpr auto z = 0.0;
   MarkerArray debug_marker_array;
-  Marker debug_marker;
-  debug_marker.header.frame_id = "map";
-  debug_marker.header.stamp = rclcpp::Time(0);
-  debug_marker.id = 0;
-  debug_marker.type = Marker::LINE_STRIP;
-  debug_marker.action = Marker::ADD;
-  debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, 0);
-  debug_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
-  debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
-  debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
-  debug_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-  debug_marker.ns = "footprints";
-  for (const auto & f : debug_data_.footprints) {
-    debug_marker.points.clear();
-    for (const auto & p : f)
-      debug_marker.points.push_back(
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-    debug_marker.points.clear();
-  }
 
-  // current footprint + overlapped lanelets (if any)
-  debug_marker.ns = "current_overlap";
-  debug_marker.points.clear();
-  for (const auto & p : debug_data_.current_footprint)
-    debug_marker.points.push_back(
-      tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-  debug_marker.points.push_back(debug_marker.points.front());
-  if (debug_data_.current_overlapped_lanelets.empty())
-    debug_marker.color = tier4_autoware_utils::createMarkerColor(0.1, 1.0, 0.1, 0.5);
-  else
-    debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
-  debug_marker_array.markers.push_back(debug_marker);
-  debug_marker.id++;
-  for (const auto & ll : debug_data_.current_overlapped_lanelets) {
-    debug_marker.points.clear();
-    for (const auto & p : ll.polygon3d())
-      debug_marker.points.push_back(
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-  }
-
-  // Lanelets
-  debug_marker.ns = "path_lanelets";
-  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5);
-  for (const auto & ll : debug_data_.path_lanelets) {
-    debug_marker.points.clear();
-    for (const auto & p : ll.polygon3d())
-      debug_marker.points.push_back(
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-  }
-  debug_marker.ns = "ignored_lanelets";
-  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5);
-  for (const auto & ll : debug_data_.ignored_lanelets) {
-    debug_marker.points.clear();
-    for (const auto & p : ll.polygon3d())
-      debug_marker.points.push_back(
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-  }
-  debug_marker.ns = "other_lanelets";
-  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5);
-  for (const auto & ll : debug_data_.other_lanelets) {
-    debug_marker.points.clear();
-    for (const auto & p : ll.polygon3d())
-      debug_marker.points.push_back(
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.5));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-  }
+  debug::add_footprint_markers(debug_marker_array, debug_data_.footprints, z);
+  debug::add_current_overlap_marker(
+    debug_marker_array, debug_data_.current_footprint, debug_data_.current_overlapped_lanelets, z);
+  debug::add_lanelet_markers(
+    debug_marker_array, debug_data_.path_lanelets, "path_lanelets",
+    tier4_autoware_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5));
+  debug::add_lanelet_markers(
+    debug_marker_array, debug_data_.ignored_lanelets, "ignored_lanelets",
+    tier4_autoware_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5));
+  debug::add_lanelet_markers(
+    debug_marker_array, debug_data_.other_lanelets, "other_lanelets",
+    tier4_autoware_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5));
   return debug_marker_array;
 }
 
