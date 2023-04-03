@@ -535,6 +535,8 @@ double calcLaneChangeBuffer(
 
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
+
+std::string convertToSnakeCase(const std::string & input_str);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

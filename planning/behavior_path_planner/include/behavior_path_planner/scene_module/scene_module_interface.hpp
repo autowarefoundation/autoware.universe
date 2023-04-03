@@ -277,7 +277,9 @@ protected:
   {
     std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map;
     for (const auto & rtc_type : rtc_types) {
-      const auto rtc_interface_name = rtc_type == "" ? name : name + "_" + rtc_type;
+      const auto snake_case_name = util::convertToSnakeCase(name);
+      const auto rtc_interface_name =
+        rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
       rtc_interface_ptr_map.emplace(
         rtc_type, std::make_shared<RTCInterface>(&node, rtc_interface_name));
     }

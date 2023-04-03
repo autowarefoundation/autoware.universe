@@ -33,22 +33,15 @@
 namespace behavior_path_planner
 {
 #ifdef USE_OLD_ARCHITECTURE
-std::string getTopicName(const ExternalRequestLaneChangeModule::Direction & direction)
-{
-  const std::string direction_name =
-    direction == ExternalRequestLaneChangeModule::Direction::RIGHT ? "right" : "left";
-  return "ext_request_lane_change_" + direction_name;
-}
-
 ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
   const Direction & direction)
-: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {getTopicName(direction)})},
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
   parameters_{std::move(parameters)},
   direction_{direction}
 {
   steering_factor_interface_ptr_ =
-    std::make_unique<SteeringFactorInterface>(&node, getTopicName(direction));
+    std::make_unique<SteeringFactorInterface>(&node, util::convertToSnakeCase(name));
 }
 
 void ExternalRequestLaneChangeModule::onEntry()
