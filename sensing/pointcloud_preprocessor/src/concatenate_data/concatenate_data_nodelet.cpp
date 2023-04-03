@@ -128,7 +128,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
   }
 
-  // Publishers
+  // Output Publishers
   {
     pub_output_ = this->create_publisher<PointCloud2>(
       "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
@@ -163,6 +163,16 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this, std::placeholders::_1);
     sub_twist_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
       "/vehicle/status/velocity_status", rclcpp::QoS{100}, twist_cb);
+  }
+
+  // Transformed Raw PointCloud2 Publisher
+  {
+    for (auto & topic : input_topics_) {
+      std::string new_topic = topic + "_transformed";
+      auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
+      transformed_raw_pc_publisher_map_.insert({topic, publisher});
+    }
   }
 
   // Set timer
@@ -257,18 +267,23 @@ Eigen::Matrix4f PointCloudConcatenateDataSynchronizerComponent::calcDelayCompens
   return rotation_matrix;
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
+std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
+PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr)
 {
+  // map for storing the transformed point clouds
+  std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> transformed_clouds;
+
   // Step1. gather stamps and sort it
   std::vector<rclcpp::Time> pc_stamps;
   for (const auto & e : cloud_stdmap_) {
+    transformed_clouds[e.first] = nullptr;
     if (e.second != nullptr) {
       pc_stamps.push_back(rclcpp::Time(e.second->header.stamp));
     }
   }
   if (pc_stamps.empty()) {
-    return;
+    return transformed_clouds;
   }
   // sort stamps and get latest stamp
   std::sort(pc_stamps.begin(), pc_stamps.end());
@@ -300,12 +315,14 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
         pcl::concatenatePointCloud(
           *concat_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concat_cloud_ptr);
       }
+      // gather transformed clouds
+      transformed_clouds[e.first] = transformed_delay_compensated_cloud_ptr;
     } else {
       not_subscribed_topic_names_.insert(e.first);
     }
   }
   concat_cloud_ptr->header.stamp = latest_stamp;
-  return;
+  return transformed_clouds;
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::publish()
@@ -314,13 +331,27 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   sensor_msgs::msg::PointCloud2::SharedPtr concat_cloud_ptr = nullptr;
   not_subscribed_topic_names_.clear();
 
-  PointCloudConcatenateDataSynchronizerComponent::combineClouds(concat_cloud_ptr);
+  const auto & transformed_raw_points =
+    PointCloudConcatenateDataSynchronizerComponent::combineClouds(concat_cloud_ptr);
 
+  // publish concatenated pointcloud
   if (concat_cloud_ptr) {
     auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*concat_cloud_ptr);
     pub_output_->publish(std::move(output));
   } else {
     RCLCPP_WARN(this->get_logger(), "concat_cloud_ptr is nullptr, skipping pointcloud publish.");
+  }
+
+  // publish transformed raw pointclouds
+  for (const auto & e : transformed_raw_points) {
+    if (e.second) {
+      auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*e.second);
+      transformed_raw_pc_publisher_map_[e.first]->publish(std::move(output));
+    } else {
+      RCLCPP_WARN(
+        this->get_logger(), "transformed_raw_points[%s] is nullptr, skipping pointcloud publish.",
+        e.first.c_str());
+    }
   }
 
   updater_.force_update();

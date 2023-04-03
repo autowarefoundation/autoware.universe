@@ -114,6 +114,9 @@ public:
 private:
   /** \brief The output PointCloud publisher. */
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_output_;
+  /** \brief Delay Compensated PointCloud publisher*/
+  std::map<std::string, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
+    transformed_raw_pc_publisher_map_;
 
   /** \brief The maximum number of messages that we can store in the queue. */
   int maximum_queue_size_ = 3;
@@ -153,7 +156,8 @@ private:
   void transformPointCloud(const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out);
   Eigen::Matrix4f calcDelayCompensateTransform(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
-  void combineClouds(sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
+  std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> combineClouds(
+    sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
   void publish();
 
   void convertToXYZICloud(
