@@ -629,6 +629,25 @@ TEST(Interpolation, interpolate_points_with_length)
     }
   }
 
+  // one point
+  {
+    autoware_auto_planning_msgs::msg::Trajectory traj;
+    traj.points.resize(1);
+    for (size_t i = 0; i < 1; ++i) {
+      traj.points.at(i) = generateTestTrajectoryPoint(
+        (i + 1) * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
+    }
+
+    const auto result = calcInterpolatedPose(traj.points, 2.0);
+    EXPECT_NEAR(result.position.x, 1.0, epsilon);
+    EXPECT_NEAR(result.position.y, 0.0, epsilon);
+    EXPECT_NEAR(result.position.z, 0.0, epsilon);
+    EXPECT_NEAR(result.orientation.x, 0.0, epsilon);
+    EXPECT_NEAR(result.orientation.y, 0.0, epsilon);
+    EXPECT_NEAR(result.orientation.z, 0.0, epsilon);
+    EXPECT_NEAR(result.orientation.w, 1.0, epsilon);
+  }
+
   // Empty Point
   {
     const Trajectory traj;
