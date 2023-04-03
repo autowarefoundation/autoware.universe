@@ -62,6 +62,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <deque>
 #include <list>
 #include <memory>
 #include <string>
@@ -98,6 +99,12 @@ inline pcl::PointXYZRGB toPCL(const double x, const double y, const double z)
 inline pcl::PointXYZRGB toPCL(const geometry_msgs::msg::Point & point)
 {
   return toPCL(point.x, point.y, point.z);
+}
+
+// Define a custom comparator function to compare pointclouds by timestamp
+inline bool comparePointCloudsByTimestamp(const sensor_msgs::msg::PointCloud2 & pc1, const sensor_msgs::msg::PointCloud2 & pc2)
+{
+  return (int(pc1.header.stamp.nanosec - pc2.header.stamp.nanosec)) < 0;
 }
 
 /// \brief Base rviz plugin class for all object msg types. The class defines common properties
@@ -620,6 +627,14 @@ protected:
     if (!m_publish_objs_pointcloud->getBool()) {
       return;
     }
+
+    // Add a pointer to the new message to the front of the deque
+    pointCloudBuffer.push_front(input_pointcloud_msg);
+
+    // If the deque has more than 5 elements, remove the oldest element from the back of the deque
+    if (pointCloudBuffer.size() > 5) {
+        pointCloudBuffer.pop_back();
+    }
     
     std::string frame_id = input_pointcloud_msg.header.frame_id;
     RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
@@ -670,6 +685,46 @@ protected:
     *out_cloud += filtered_cloud;
   }
 
+  // Function that returns the pointcloud with the nearest timestamp from a buffer of pointclouds
+  sensor_msgs::msg::PointCloud2 getNearestPointCloud(std::deque<sensor_msgs::msg::PointCloud2> & buffer, const rclcpp::Time & timestamp) 
+  {
+    // Sort the buffer of pointclouds by timestamp using our custom comparator function
+    std::sort(buffer.begin(), buffer.end(), comparePointCloudsByTimestamp);
+
+    // Find the first pointcloud with a timestamp greater than or equal to the target timestamp
+    auto iter = std::lower_bound(buffer.begin(), buffer.end(), timestamp, 
+                                 [](const sensor_msgs::msg::PointCloud2 & pointcloud, const rclcpp::Time& timestamp) {
+                                    return pointcloud.header.stamp.nanosec < timestamp.nanoseconds();
+                                 });
+
+    // If the target timestamp is less than the timestamp of the first pointcloud in the buffer, return that pointcloud
+    if (iter == buffer.begin()) {
+        return *iter;
+    }
+
+    // If the target timestamp is greater than the timestamp of the last pointcloud in the buffer, return that pointcloud
+    if (iter == buffer.end()) {
+        return *(--iter);
+    }
+
+    // Calculate the difference between the target timestamp and the timestamps of the two adjacent pointclouds
+    rclcpp::Duration diff1 = timestamp - rclcpp::Time(iter->header.stamp);
+    // rclcpp::Time diff2 = iter->header.stamp.nanosec - (*(--iter)).header.stamp.nanosec;
+    rclcpp::Duration diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time((--iter)->header.stamp);
+
+    // rclcpp::Duration diff2;
+    // if (iter != buffer.begin()) {
+    //     --iter;
+    //     diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time(iter->header.stamp);
+    // } else {
+      
+    //     diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time(iter->header.stamp);
+    // }
+
+    // Return the pointcloud with the nearest timestamp
+    return (diff1 < diff2) ? *iter : *(++iter);
+  }
+
   // Default pointcloud topic;
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
   // Property to enable/disable objects pointcloud publishing
@@ -681,6 +736,8 @@ protected:
   // plugin to visualize pointclouds
   std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common;
   rviz_common::ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node;
+  std::deque<sensor_msgs::msg::PointCloud2> pointCloudBuffer;
+
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
@@ -723,3 +780,4 @@ private:
 }  // namespace autoware
 
 #endif  // OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
+
