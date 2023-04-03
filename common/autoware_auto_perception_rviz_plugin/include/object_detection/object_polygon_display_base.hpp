@@ -610,16 +610,18 @@ protected:
   {
     if (object.shape.type == Shape::BOUNDING_BOX || object.shape.type == Shape::CYLINDER) {
       return std::hypot(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
-    } else if (object.shape.type == Shape::POLYGON) {
+    }
+    
+    if (object.shape.type == Shape::POLYGON) {
       float max_dist = 0.0;
       for (const auto & point : object.shape.footprint.points) {
         const float dist = std::hypot(point.x, point.y);
-        max_dist = max_dist < dist ? dist : max_dist;
+        max_dist = std::max(max_dist, dist);
       }
       return max_dist;
-    } else {
-      return std::nullopt;
     }
+    
+    return std::nullopt;
   }
 
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) 

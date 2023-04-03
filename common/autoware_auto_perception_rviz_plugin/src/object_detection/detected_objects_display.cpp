@@ -154,24 +154,24 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
 
-  if (objs_buffer.size() > 0) {
-    for (auto object : objs_buffer) {
-      const auto search_radius = getMaxRadius(object);
-      // Search neighbor pointcloud to reduce cost.
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(
-        new pcl::PointCloud<pcl::PointXYZRGB>);
-      std::vector<int> indices;
-      std::vector<float> distances;
-      kdtree->radiusSearch(
-        toPCL(object.position.position), search_radius.value(), indices, distances);
-      for (const auto & index : indices) {
-        neighbor_pointcloud->push_back(colored_cloud->at(index));
-      }
-
-      filterPolygon(neighbor_pointcloud, out_cloud, object);
-    }
-  } else {
+  if (objs_buffer.empty()) {
     return;
+  }
+  
+  for (auto object : objs_buffer) {
+    const auto search_radius = getMaxRadius(object);
+    // Search neighbor pointcloud to reduce cost.
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
+    std::vector<int> indices;
+    std::vector<float> distances;
+    kdtree->radiusSearch(
+      toPCL(object.position.position), search_radius.value(), indices, distances);
+    for (const auto & index : indices) {
+      neighbor_pointcloud->push_back(colored_cloud->at(index));
+    }
+
+    filterPolygon(neighbor_pointcloud, out_cloud, object);
   }
 
   sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(
