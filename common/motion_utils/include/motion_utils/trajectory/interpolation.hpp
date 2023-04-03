@@ -61,8 +61,8 @@ autoware_auto_planning_msgs::msg::PathPointWithLaneId calcInterpolatedPoint(
   const double yaw_threshold = std::numeric_limits<double>::max());
 
 /**
- * @brief An interpolation function that finds the closest interpolated point on the path that is a certain length away from
- * the given pose
+ * @brief An interpolation function that finds the closest interpolated point on the path that is a
+ * certain length away from the given pose
  * @param points input path
  * @param target_length length from the front point of the path
  * @return resampled pose
@@ -75,14 +75,14 @@ geometry_msgs::msg::Pose calcInterpolatedPose(const T & points, const double tar
     return interpolated_pose;
   }
 
-  if(points.size() < 2 || target_length < 0.0) {
+  if (points.size() < 2 || target_length < 0.0) {
     return tier4_autoware_utils::getPose(points.front());
   }
 
   double accumulated_length = 0;
-  for (size_t i=0; i<points.size()-1; ++i) {
+  for (size_t i = 0; i < points.size() - 1; ++i) {
     const auto & curr_pose = tier4_autoware_utils::getPose(points.at(i));
-    const auto & next_pose = tier4_autoware_utils::getPose(points.at(i+1));
+    const auto & next_pose = tier4_autoware_utils::getPose(points.at(i + 1));
     const double length = tier4_autoware_utils::calcDistance3d(curr_pose, next_pose);
     if (accumulated_length + length > target_length) {
       const double ratio = (target_length - accumulated_length) / std::max(length, 1e-6);
