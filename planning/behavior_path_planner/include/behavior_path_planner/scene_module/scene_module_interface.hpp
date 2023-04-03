@@ -172,7 +172,7 @@ public:
   /**
    * @brief Publish status if the module is requested to run
    */
-  virtual void publishRTCStatus()
+  void publishRTCStatus()
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second) {
@@ -184,7 +184,7 @@ public:
   /**
    * @brief Return true if the activation command is received
    */
-  virtual bool isActivated()
+  bool isActivated()
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second->isRegistered(uuid_map_.at(itr->first))) {
@@ -194,7 +194,7 @@ public:
     return false;
   }
 
-  virtual void publishSteeringFactor()
+  void publishSteeringFactor()
   {
     if (!steering_factor_interface_ptr_) {
       return;
@@ -202,7 +202,7 @@ public:
     steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
   }
 
-  virtual void lockRTCCommand()
+  void lockRTCCommand()
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second) {
@@ -211,7 +211,7 @@ public:
     }
   }
 
-  virtual void unlockRTCCommand()
+  void unlockRTCCommand()
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second) {
@@ -297,7 +297,7 @@ protected:
     }
   }
 
-  virtual void removeRTCStatus()
+  void removeRTCStatus()
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second) {
