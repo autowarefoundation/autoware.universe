@@ -151,9 +151,9 @@ private:
   std::map<std::string, double> offset_map_;
 
   void transformPointCloud(const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out);
-  void combineClouds(
-    const PointCloud2::ConstSharedPtr & in1, const PointCloud2::ConstSharedPtr & in2,
-    PointCloud2::SharedPtr & out);
+  Eigen::Matrix4f calcDelayCompensateTransform(
+    const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
+  void combineClouds(sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
   void publish();
 
   void convertToXYZICloud(
