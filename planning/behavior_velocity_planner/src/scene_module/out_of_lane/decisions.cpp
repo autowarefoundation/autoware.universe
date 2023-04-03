@@ -181,15 +181,86 @@ std::optional<std::pair<double, double>> object_time_to_range(
   return {};
 }
 
+bool threshold_condition(const RangeTimes & range_times, const PlannerParam & params)
+{
+  return std::min(range_times.object.enter_time, range_times.object.exit_time) <
+         params.time_threshold;
+}
+
+bool intervals_condition(
+  const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger)
+{
+  const auto object_is_going_opposite_way =
+    range_times.object.enter_time > range_times.object.exit_time;
+  if (object_is_going_opposite_way) {
+    const auto ego_exits_before_object_enters =
+      range_times.ego.exit_time + params.intervals_ego_buffer <
+      range_times.object.enter_time + params.intervals_obj_buffer;
+    RCLCPP_DEBUG(
+      logger,
+      "\t\t\t[Intervals] (opposite way) ego exit %2.2fs < obj enter %2.2fs ? -> should not "
+      "enter = %d\n",
+      range_times.ego.exit_time + params.intervals_ego_buffer,
+      range_times.object.enter_time + params.intervals_obj_buffer, ego_exits_before_object_enters);
+    if (ego_exits_before_object_enters) return true;
+  } else {
+    const auto object_enters_during_overlap =
+      range_times.ego.enter_time - params.intervals_ego_buffer <
+        range_times.object.enter_time + params.intervals_obj_buffer &&
+      range_times.object.enter_time - params.intervals_obj_buffer - range_times.ego.exit_time <
+        range_times.ego.exit_time + params.intervals_ego_buffer;
+    const auto object_exits_during_overlap =
+      range_times.ego.enter_time - params.intervals_ego_buffer <
+        range_times.object.exit_time + params.intervals_obj_buffer &&
+      range_times.object.exit_time - params.intervals_obj_buffer - range_times.ego.exit_time <
+        range_times.ego.exit_time + params.intervals_ego_buffer;
+    RCLCPP_DEBUG(
+      logger,
+      "\t\t\t[Intervals] obj enters during overlap ? %d OR obj exits during overlap %d ? -> should "
+      "not "
+      "enter = %d\n",
+      object_enters_during_overlap, object_exits_during_overlap,
+      (object_enters_during_overlap || object_exits_during_overlap));
+    if (object_enters_during_overlap || object_exits_during_overlap) return true;
+  }
+  return false;
+}
+
+bool ttc_condition(
+  const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger)
+{
+  const auto ttc_at_enter = range_times.ego.enter_time - range_times.object.enter_time;
+  const auto ttc_at_exit = range_times.ego.exit_time - range_times.object.exit_time;
+  const auto collision_during_overlap = (ttc_at_enter < 0.0) != (ttc_at_exit < 0.0);
+  const auto ttc_is_bellow_threshold =
+    std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit)) <= params.ttc_threshold;
+  RCLCPP_DEBUG(
+    logger, "\t\t\t[TTC] (%2.2fs - %2.2fs) -> %d\n", ttc_at_enter, ttc_at_exit,
+    (collision_during_overlap || ttc_is_bellow_threshold));
+  return collision_during_overlap || ttc_is_bellow_threshold;
+}
+
+bool object_is_incoming(
+  const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger)
+{
+  RCLCPP_DEBUG(
+    logger, " enter at %2.2fs, exits at %2.2fs\n", range_times.object.enter_time,
+    range_times.object.exit_time);
+  return (params.mode == "threshold" && threshold_condition(range_times, params)) ||
+         (params.mode == "intervals" && intervals_condition(range_times, params, logger)) ||
+         (params.mode == "ttc" && ttc_condition(range_times, params, logger));
+}
+
 bool should_not_enter(
   const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
   const rclcpp::Logger & logger)
 {
-  const auto ego_enter_time = time_along_path(inputs.ego_data, range.entering_path_idx);
-  const auto ego_exit_time = time_along_path(inputs.ego_data, range.exiting_path_idx);
+  RangeTimes range_times;
+  range_times.ego.enter_time = time_along_path(inputs.ego_data, range.entering_path_idx);
+  range_times.ego.exit_time = time_along_path(inputs.ego_data, range.exiting_path_idx);
   RCLCPP_DEBUG(
     logger, "\t[%lu -> %lu] %ld | ego enters at %2.2f, exits at %2.2f\n", range.entering_path_idx,
-    range.exiting_path_idx, range.lane.id(), ego_enter_time, ego_exit_time);
+    range.exiting_path_idx, range.lane.id(), range_times.ego.enter_time, range_times.ego.exit_time);
   for (const auto & object : inputs.objects.objects) {
     RCLCPP_DEBUG(
       logger, "\t\t[%s] going at %2.2fm/s",
@@ -205,48 +276,12 @@ bool should_not_enter(
                                    : object_time_to_range(object, range, inputs, logger);
     if (!enter_exit_time) {
       RCLCPP_DEBUG(logger, " SKIP (no enter/exit times found)\n");
-      continue;  // object is not driving towards the overlapping range
+      continue;  // skip objects that are not driving towards the overlapping range
     }
 
-    const auto & [enter_time, exit_time] = *enter_exit_time;
-    RCLCPP_DEBUG(logger, " enter at %2.2fs, exits at %2.2fs\n", enter_time, exit_time);
-
-    const auto object_is_going_opposite_way = enter_time > exit_time;
-    if (params.mode == "threshold") {
-      if (std::min(enter_time, exit_time) < params.time_threshold) return true;
-    } else if (params.mode == "intervals") {
-      if (object_is_going_opposite_way) {
-        const auto ego_exits_before_object_enters =
-          ego_exit_time + params.intervals_ego_buffer < enter_time + params.intervals_obj_buffer;
-        if (ego_exits_before_object_enters) return true;
-        RCLCPP_DEBUG(
-          logger,
-          "\t\t\t[Intervals] (opposite way) ego exit %2.2fs < obj enter %2.2fs ? -> should not "
-          "enter = %d\n",
-          ego_exit_time + params.intervals_ego_buffer, enter_time + params.intervals_obj_buffer,
-          ego_exits_before_object_enters);
-      } else {
-        const auto object_enters_during_overlap =
-          ego_enter_time - params.intervals_ego_buffer < enter_time + params.intervals_obj_buffer &&
-          enter_time - params.intervals_obj_buffer - ego_exit_time <
-            ego_exit_time + params.intervals_ego_buffer;
-        const auto object_exits_during_overlap =
-          ego_enter_time - params.intervals_ego_buffer < exit_time + params.intervals_obj_buffer &&
-          exit_time - params.intervals_obj_buffer - ego_exit_time <
-            ego_exit_time + params.intervals_ego_buffer;
-        if (object_enters_during_overlap || object_exits_during_overlap) return true;
-      }
-    } else if (params.mode == "ttc") {
-      const auto ttc_at_enter = ego_enter_time - enter_time;
-      const auto ttc_at_exit = ego_exit_time - exit_time;
-      const auto collision_during_overlap = (ttc_at_enter < 0.0) != (ttc_at_exit < 0.0);
-      const auto ttc_is_bellow_threshold =
-        std::min(std::abs(ttc_at_enter), std::abs(ttc_at_exit)) <= params.ttc_threshold;
-      if (collision_during_overlap || ttc_is_bellow_threshold) return true;
-      RCLCPP_DEBUG(
-        logger, "\t\t\t[TTC] (%2.2fs - %2.2fs) -> %d\n", ttc_at_enter, ttc_at_exit,
-        (collision_during_overlap || ttc_is_bellow_threshold));
-    }
+    range_times.object.enter_time = enter_exit_time->first;
+    range_times.object.exit_time = enter_exit_time->second;
+    if (object_is_incoming(range_times, params, logger)) return true;
   }
   return false;
 }
@@ -255,25 +290,26 @@ std::optional<Slowdown> calculate_decision(
   const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
   const rclcpp::Logger & logger)
 {
+  const auto find_preceding_range = [&](auto & preceding_range) {
+    // find lowest entering_path_idx for ranges with overlapping start-end indexes
+    bool found_preceding_range = true;
+    while (found_preceding_range) {
+      found_preceding_range = false;
+      for (const auto & other_range : inputs.ranges) {
+        if (
+          other_range.entering_path_idx < preceding_range.entering_path_idx &&
+          other_range.exiting_path_idx >= preceding_range.entering_path_idx) {
+          preceding_range = other_range;
+          found_preceding_range = true;
+        }
+      }
+    }
+  };
   std::optional<Slowdown> decision;
   const auto ego_dist_to_range = distance_along_path(inputs.ego_data, range.entering_path_idx);
   if (should_not_enter(range, inputs, params, logger)) {
     auto stop_before_range = range;
-    if (params.strict) {
-      // find lowest entering_path_idx for ranges with overlapping start-end indexes
-      bool found_preceding_range = true;
-      while (found_preceding_range) {
-        found_preceding_range = false;
-        for (const auto & other_range : inputs.ranges) {
-          if (
-            other_range.entering_path_idx < stop_before_range.entering_path_idx &&
-            other_range.exiting_path_idx >= stop_before_range.entering_path_idx) {
-            stop_before_range = other_range;
-            found_preceding_range = true;
-          }
-        }
-      }
-    }
+    if (params.strict) find_preceding_range(stop_before_range);
     decision.emplace();
     decision->target_path_idx = inputs.ego_data.first_path_idx +
                                 stop_before_range.entering_path_idx;  // add offset from curr pose
