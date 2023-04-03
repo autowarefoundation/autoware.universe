@@ -93,34 +93,28 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
   // poincloud pub
   sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
     getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
-  onObjectsAndObstaclePointCloud(msg, closest_pointcloud);
+  processPointCloud(msg, closest_pointcloud);
 }
 
-void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
+void DetectedObjectsDisplay::processPointCloud(
   const DetectedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
 {
   if (!m_publish_objs_pointcloud->getBool()) {
     return;
   }
-   RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "publish pointcloud flag");
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformObjects(
         *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
     return;
   }
-   RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "transform objects to poincloud frame");
-
-
   // convert to pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
-
   // Create a new point cloud with RGB color information and copy data from input cloud
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
   pcl::copyPointCloud(*temp_cloud, *colored_cloud);
-
   // Create Kd-tree to search neighbor pointcloud to reduce cost.
   pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
     pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
@@ -147,7 +141,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
     }
 
     filterPolygon(neighbor_pointcloud, out_cloud, unified_object);
-
   }
 
   sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(
@@ -157,8 +150,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
   
   add_pointcloud(output_pointcloud_msg_ptr);
-  RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "publish poinclouds");
-
 }
 
 }  // namespace object_detection

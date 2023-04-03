@@ -161,7 +161,7 @@ public:
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
     m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty(
-      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this, SLOT(RosTopicDisplay::updateTopic()));
+      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this, SLOT(updatePalette()));
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
       "Input for pointcloud visualization of objects detection pipeline.", this,
@@ -638,7 +638,7 @@ protected:
     }
     
     std::string frame_id = input_pointcloud_msg.header.frame_id;
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
 
     // add pointcloud to buffer
   }
@@ -691,26 +691,26 @@ protected:
   {
     // Sort the buffer of pointclouds by timestamp using our custom comparator function
     std::sort(buffer.begin(), buffer.end(), comparePointCloudsByTimestamp);
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "sort poinclouds");
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "sort poinclouds");
 
     // Find the first pointcloud with a timestamp greater than or equal to the target timestamp
     auto iter = std::lower_bound(buffer.begin(), buffer.end(), timestamp, 
                                  [](const sensor_msgs::msg::PointCloud2 & pointcloud, const rclcpp::Time& timestamp) {
                                     return pointcloud.header.stamp.nanosec < timestamp.nanoseconds();
                                  });
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "lower bond");
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "lower bond");
 
     // If the target timestamp is less than the timestamp of the first pointcloud in the buffer, return that pointcloud
     if (iter == buffer.begin()) {
         return *iter;
     }
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "not first pointcloud");
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "not first pointcloud");
 
     // If the target timestamp is greater than the timestamp of the last pointcloud in the buffer, return that pointcloud
     if (iter == buffer.end()) {
         return *(--iter);
     }
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "not Last poincloud");
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "not Last poincloud");
 
 
     // Calculate the difference between the target timestamp and the timestamps of the two adjacent pointclouds

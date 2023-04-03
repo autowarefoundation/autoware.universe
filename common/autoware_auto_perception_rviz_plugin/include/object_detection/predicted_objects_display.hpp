@@ -104,14 +104,14 @@ private:
 
   void update(float wall_dt, float ros_dt) override;
 
-  // bool transformObjects(
-  //   const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
-  //   const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-  //   autoware_auto_perception_msgs::msg::PredictedObjects & output_msg);
+  bool transformObjects(
+    const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
+    const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+    autoware_auto_perception_msgs::msg::PredictedObjects & output_msg);
 
-  // void onObjectsAndObstaclePointCloud(
-  //   const PredictedObjects::ConstSharedPtr & input_objs_msg,
-  //   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
+  void processPointCloud(
+    const PredictedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
   // std::unordered_map<boost::uuids::uuid, int32_t> id_map;
@@ -124,12 +124,6 @@ private:
   std::mutex mutex;
   std::condition_variable condition;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
-
-  // typedef message_filters::sync_policies::ApproximateTime<
-  //   PredictedObjects, sensor_msgs::msg::PointCloud2>
-  //   SyncPolicy;
-  // typedef message_filters::Synchronizer<SyncPolicy> Sync;
-  // typename std::shared_ptr<Sync> sync_ptr;
 };
 
 }  // namespace object_detection

@@ -42,14 +42,9 @@ public:
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
   // void onInitialize() override;
-  void onObjectsAndObstaclePointCloud(
+  void processPointCloud(
     const DetectedObjects::ConstSharedPtr & input_objs_msg,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
-
-  // using SyncPolicy =
-  //   message_filters::sync_policies::ApproximateTime<DetectedObjects, sensor_msgs::msg::PointCloud2>;
-  // using Sync = message_filters::Synchronizer<SyncPolicy>;
-  // std::shared_ptr<Sync> sync_ptr;
 };
 
 }  // namespace object_detection
