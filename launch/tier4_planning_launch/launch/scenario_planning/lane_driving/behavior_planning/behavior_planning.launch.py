@@ -54,6 +54,8 @@ def launch_setup(context, *args, **kwargs):
         pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("drivable_area_expansion_param_path").perform(context), "r") as f:
         drivable_area_expansion_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("scene_module_manager_param_path").perform(context), "r") as f:
+        scene_module_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("behavior_path_planner_param_path").perform(context), "r") as f:
         behavior_path_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
@@ -67,6 +69,10 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/vector_map", LaunchConfiguration("map_topic_name")),
             ("~/input/perception", "/perception/object_recognition/objects"),
             ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
+            (
+                "~/input/costmap",
+                "/planning/scenario_planning/parking/costmap_generator/occupancy_grid",
+            ),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/accel", "/localization/acceleration"),
             ("~/input/scenario", "/planning/scenario_planning/scenario"),
@@ -84,6 +90,7 @@ def launch_setup(context, *args, **kwargs):
             pull_over_param,
             pull_out_param,
             drivable_area_expansion_param,
+            scene_module_manager_param,
             behavior_path_planner_param,
             vehicle_param,
             {

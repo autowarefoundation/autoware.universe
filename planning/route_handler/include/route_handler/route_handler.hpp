@@ -54,7 +54,7 @@ using std_msgs::msg::Header;
 using unique_identifier_msgs::msg::UUID;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
-enum class LaneChangeDirection { NONE, LEFT, RIGHT };
+enum class Direction { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
 
@@ -259,9 +259,19 @@ public:
     const lanelet::ConstLanelet & lanelet, const double length,
     const lanelet::ConstLanelets & exclude_lanelets = {}) const;
 
-  int getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const;
+  /**
+   * Query input lanelet  to see whether it exist in the preferred lane. If it doesn't exist, return
+   * the number of lane-changeable lane to the preferred lane.
+   * @param Desired lanelet to query
+   * @param lane change direction
+   * @return number of lanes from input to the preferred lane
+   */
+  int getNumLaneToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
+
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids & ids) const;
   lanelet::ConstLanelets getLaneletSequence(
@@ -286,8 +296,10 @@ public:
   PathWithLaneId getCenterLinePath(
     const lanelet::ConstLanelets & lanelet_sequence, const double s_start, const double s_end,
     bool use_exact = true) const;
-  bool getLaneChangeTarget(
-    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
+  boost::optional<lanelet::ConstLanelet> getLaneChangeTarget(
+    const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
+  boost::optional<lanelet::ConstLanelet> getLaneChangeTargetExceptPreferredLane(
+    const lanelet::ConstLanelets & lanelets, const Direction direction) const;
   bool getRightLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
   bool getLeftLaneChangeTargetExceptPreferredLane(
@@ -298,8 +310,7 @@ public:
   static bool getPullOutStartLane(
     const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
     lanelet::ConstLanelet * target_lanelet);
-  double getLaneChangeableDistance(
-    const Pose & current_pose, const LaneChangeDirection & direction) const;
+  double getLaneChangeableDistance(const Pose & current_pose, const Direction & direction) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
 
 private:

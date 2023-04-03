@@ -44,16 +44,20 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
+#ifdef USE_OLD_ARCHITECTURE
   AvoidanceModule(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
+#else
+  AvoidanceModule(
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
+    std::shared_ptr<RTCInterface> & rtc_interface_left,
+    std::shared_ptr<RTCInterface> & rtc_interface_right);
+#endif
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  BT::NodeStatus updateState() override;
-  BT::NodeStatus getNodeStatusWhileWaitingApproval() const override
-  {
-    return BT::NodeStatus::SUCCESS;
-  }
+  ModuleStatus updateState() override;
+  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;
@@ -62,33 +66,40 @@ public:
   void updateData() override;
   void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
+#ifndef USE_OLD_ARCHITECTURE
+  void updateModuleParams(const std::shared_ptr<AvoidanceParameters> & parameters)
+  {
+    parameters_ = parameters;
+  }
+#endif
+
   void publishRTCStatus() override
   {
-    rtc_interface_left_.publishCooperateStatus(clock_->now());
-    rtc_interface_right_.publishCooperateStatus(clock_->now());
+    rtc_interface_left_->publishCooperateStatus(clock_->now());
+    rtc_interface_right_->publishCooperateStatus(clock_->now());
   }
 
   bool isActivated() override
   {
-    if (rtc_interface_left_.isRegistered(uuid_left_)) {
-      return rtc_interface_left_.isActivated(uuid_left_);
+    if (rtc_interface_left_->isRegistered(uuid_left_)) {
+      return rtc_interface_left_->isActivated(uuid_left_);
     }
-    if (rtc_interface_right_.isRegistered(uuid_right_)) {
-      return rtc_interface_right_.isActivated(uuid_right_);
+    if (rtc_interface_right_->isRegistered(uuid_right_)) {
+      return rtc_interface_right_->isActivated(uuid_right_);
     }
     return false;
   }
 
   void lockRTCCommand() override
   {
-    rtc_interface_left_.lockCommandUpdate();
-    rtc_interface_right_.lockCommandUpdate();
+    rtc_interface_left_->lockCommandUpdate();
+    rtc_interface_right_->lockCommandUpdate();
   }
 
   void unlockRTCCommand() override
   {
-    rtc_interface_left_.unlockCommandUpdate();
-    rtc_interface_right_.unlockCommandUpdate();
+    rtc_interface_left_->unlockCommandUpdate();
+    rtc_interface_right_->unlockCommandUpdate();
   }
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
@@ -107,8 +118,8 @@ private:
 
   PathShifter path_shifter_;
 
-  RTCInterface rtc_interface_left_;
-  RTCInterface rtc_interface_right_;
+  std::shared_ptr<RTCInterface> rtc_interface_left_;
+  std::shared_ptr<RTCInterface> rtc_interface_right_;
 
   RegisteredShiftLineArray left_shift_array_;
   RegisteredShiftLineArray right_shift_array_;
@@ -119,14 +130,14 @@ private:
   void updateCandidateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
-      rtc_interface_left_.updateCooperateStatus(
+      rtc_interface_left_->updateCooperateStatus(
         uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
       candidate_uuid_ = uuid_left_;
       return;
     }
     if (candidate.lateral_shift < 0.0) {
-      rtc_interface_right_.updateCooperateStatus(
+      rtc_interface_right_->updateCooperateStatus(
         uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
       candidate_uuid_ = uuid_right_;
@@ -147,7 +158,7 @@ private:
         calcSignedArcLength(path.points, ego_position, left_shift.start_pose.position);
       const double finish_distance =
         calcSignedArcLength(path.points, ego_position, left_shift.finish_pose.position);
-      rtc_interface_left_.updateCooperateStatus(
+      rtc_interface_left_->updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
@@ -161,7 +172,7 @@ private:
         calcSignedArcLength(path.points, ego_position, right_shift.start_pose.position);
       const double finish_distance =
         calcSignedArcLength(path.points, ego_position, right_shift.finish_pose.position);
-      rtc_interface_right_.updateCooperateStatus(
+      rtc_interface_right_->updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
@@ -174,30 +185,30 @@ private:
 
   void removeRTCStatus() override
   {
-    rtc_interface_left_.clearCooperateStatus();
-    rtc_interface_right_.clearCooperateStatus();
+    rtc_interface_left_->clearCooperateStatus();
+    rtc_interface_right_->clearCooperateStatus();
   }
 
   void removeCandidateRTCStatus()
   {
-    if (rtc_interface_left_.isRegistered(candidate_uuid_)) {
-      rtc_interface_left_.removeCooperateStatus(candidate_uuid_);
-    } else if (rtc_interface_right_.isRegistered(candidate_uuid_)) {
-      rtc_interface_right_.removeCooperateStatus(candidate_uuid_);
+    if (rtc_interface_left_->isRegistered(candidate_uuid_)) {
+      rtc_interface_left_->removeCooperateStatus(candidate_uuid_);
+    } else if (rtc_interface_right_->isRegistered(candidate_uuid_)) {
+      rtc_interface_right_->removeCooperateStatus(candidate_uuid_);
     }
   }
 
   void removePreviousRTCStatusLeft()
   {
-    if (rtc_interface_left_.isRegistered(uuid_left_)) {
-      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    if (rtc_interface_left_->isRegistered(uuid_left_)) {
+      rtc_interface_left_->removeCooperateStatus(uuid_left_);
     }
   }
 
   void removePreviousRTCStatusRight()
   {
-    if (rtc_interface_right_.isRegistered(uuid_right_)) {
-      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    if (rtc_interface_right_->isRegistered(uuid_right_)) {
+      rtc_interface_right_->removeCooperateStatus(uuid_right_);
     }
   }
 
@@ -281,6 +292,7 @@ private:
     AvoidLineArray & shift_lines, const bool recalculate_start_length = true) const;
   AvoidLineArray fillAdditionalInfo(const AvoidLineArray & shift_lines) const;
   AvoidLine fillAdditionalInfo(const AvoidLine & shift_line) const;
+  AvoidLine getNonStraightShiftLine(const AvoidLineArray & shift_lines) const;
   void fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const;
   void fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const;
 
@@ -292,7 +304,7 @@ private:
 
   // -- path generation --
   ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
-  void generateExtendedDrivableArea(PathWithLaneId & path) const;
+  void generateExtendedDrivableArea(BehaviorModuleOutput & output) const;
 
   // -- velocity planning --
   std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
@@ -347,9 +359,11 @@ private:
     path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
   }
 
-  double getFeasibleDecelDistance(const double target_velocity) const;
+  boost::optional<double> getFeasibleDecelDistance(const double target_velocity) const;
 
-  double getMildDecelDistance(const double target_velocity) const;
+  boost::optional<double> getMildDecelDistance(const double target_velocity) const;
+
+  double getRelativeLengthFromPath(const AvoidLine & avoid_line) const;
 
   // ========= safety check ==============
 
@@ -459,6 +473,8 @@ private:
   Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
 
   Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+
+  PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
 
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
