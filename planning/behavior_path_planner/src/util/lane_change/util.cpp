@@ -337,10 +337,10 @@ std::pair<bool, bool> getLaneChangePaths(
   LaneChangeTargetObjectIndices dynamic_object_indices;
 
   candidate_paths->reserve(lane_change_sampling_num);
-  for (double candidate_acc = 0.0; candidate_acc >= maximum_deceleration;
-       candidate_acc -= acceleration_resolution) {
+  for (double sampled_acc = 0.0; sampled_acc >= maximum_deceleration;
+       sampled_acc -= acceleration_resolution) {
     const auto prepare_speed =
-      std::max(current_velocity + candidate_acc * prepare_duration, minimum_lane_change_velocity);
+      std::max(current_velocity + sampled_acc * prepare_duration, minimum_lane_change_velocity);
 
     // compute actual acceleration
     const double acceleration = (prepare_speed - current_velocity) / prepare_duration;
