@@ -9,8 +9,4 @@
     leaf_size: 3.0 # downsample leaf size [m]
 
     # only used when differential_load enabled
-    # limit data size [byte] of topic/service/action (determined by cyclonedds).
-    # Default value is calculated as follows;
-    #  map_upper_limit = floor((maximum receive buffer size)* 0.8)
-    # If maximum receive buffer size in your PC's environment is 2147483647, map_upper_limit is 1717986917.
-    map_upper_limit: 1717986917
+    map_upper_limit: 1717986917 # limit map size [byte]
