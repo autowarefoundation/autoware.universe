@@ -38,7 +38,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
       static_cast<double>(declare_parameter("object_length_threshold", 0.1));
     num_points_threshold_ = static_cast<int>(declare_parameter("num_points_threshold", 4));
     max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
-    max_points_num_per_ring_ = static_cast<size_t>(declare_parameter("max_points_num_per_ring", 2000));
+    max_points_num_per_ring_ =
+      static_cast<size_t>(declare_parameter("max_points_num_per_ring", 2000));
   }
 
   using std::placeholders::_1;
@@ -171,7 +172,7 @@ void RingOutlierFilterComponent::faster_filter(
   // == true`
   output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
 
-  output.fields.resize(4); // x, y, z, intensity
+  output.fields.resize(4);  // x, y, z, intensity
   std::copy(input->fields.begin(), input->fields.begin() + 4, output.fields.begin());
 
   output.height = 1;

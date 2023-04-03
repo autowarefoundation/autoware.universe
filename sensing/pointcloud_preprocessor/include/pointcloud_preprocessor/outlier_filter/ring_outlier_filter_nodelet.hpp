@@ -53,7 +53,8 @@ private:
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
   bool isCluster(
-    const PointCloud2ConstPtr & input, std::pair<int, int> data_idx_both_ends, int walk_size, const TransformInfo & transform_info)
+    const PointCloud2ConstPtr & input, std::pair<int, int> data_idx_both_ends, int walk_size,
+    const TransformInfo & transform_info)
   {
     if (walk_size > num_points_threshold_) return true;
 
