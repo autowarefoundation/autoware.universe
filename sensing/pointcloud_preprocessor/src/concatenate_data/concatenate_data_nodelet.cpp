@@ -201,17 +201,14 @@ void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
   }
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
-  const PointCloud2::ConstSharedPtr & in1, const PointCloud2::ConstSharedPtr & in2,
-  PointCloud2::SharedPtr & out)
+Eigen::Matrix4f PointCloudConcatenateDataSynchronizerComponent::calcDelayCompensateTransform(
+  const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp)
 {
-  if (twist_ptr_queue_.empty()) {
-    pcl::concatenatePointCloud(*in1, *in2, *out);
-    out->header.stamp = std::min(rclcpp::Time(in1->header.stamp), rclcpp::Time(in2->header.stamp));
-    return;
+  // return identity if no twist is available or old_stamp is newer than new_stamp
+  if (twist_ptr_queue_.empty() || old_stamp > new_stamp) {
+    return Eigen::Matrix4f::Identity();
   }
 
-  const auto old_stamp = std::min(rclcpp::Time(in1->header.stamp), rclcpp::Time(in2->header.stamp));
   auto old_twist_ptr_it = std::lower_bound(
     std::begin(twist_ptr_queue_), std::end(twist_ptr_queue_), old_stamp,
     [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, const rclcpp::Time & t) {
@@ -220,7 +217,6 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   old_twist_ptr_it =
     old_twist_ptr_it == twist_ptr_queue_.end() ? (twist_ptr_queue_.end() - 1) : old_twist_ptr_it;
 
-  const auto new_stamp = std::max(rclcpp::Time(in1->header.stamp), rclcpp::Time(in2->header.stamp));
   auto new_twist_ptr_it = std::lower_bound(
     std::begin(twist_ptr_queue_), std::end(twist_ptr_queue_), new_stamp,
     [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, const rclcpp::Time & t) {
@@ -258,50 +254,73 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   Eigen::AngleAxisf rotation_z(yaw, Eigen::Vector3f::UnitZ());
   Eigen::Translation3f translation(x, y, 0);
   Eigen::Matrix4f rotation_matrix = (translation * rotation_z * rotation_y * rotation_x).matrix();
-
-  // TODO(YamatoAndo): if output_frame_ is not base_link, we must transform
-
-  if (rclcpp::Time(in1->header.stamp) > rclcpp::Time(in2->header.stamp)) {
-    sensor_msgs::msg::PointCloud2::SharedPtr in1_t(new sensor_msgs::msg::PointCloud2());
-    pcl_ros::transformPointCloud(rotation_matrix, *in1, *in1_t);
-    pcl::concatenatePointCloud(*in1_t, *in2, *out);
-    out->header.stamp = in2->header.stamp;
-  } else {
-    sensor_msgs::msg::PointCloud2::SharedPtr in2_t(new sensor_msgs::msg::PointCloud2());
-    pcl_ros::transformPointCloud(rotation_matrix, *in2, *in2_t);
-    pcl::concatenatePointCloud(*in1, *in2_t, *out);
-    out->header.stamp = in1->header.stamp;
-  }
+  return rotation_matrix;
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::publish()
+void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
+  sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr)
 {
-  stop_watch_ptr_->toc("processing_time", true);
-  sensor_msgs::msg::PointCloud2::SharedPtr concat_cloud_ptr_ = nullptr;
-  not_subscribed_topic_names_.clear();
+  // Step1. gather stamps and sort it
+  std::vector<rclcpp::Time> pc_stamps;
+  for (const auto & e : cloud_stdmap_) {
+    if (e.second != nullptr) {
+      pc_stamps.push_back(rclcpp::Time(e.second->header.stamp));
+    }
+  }
+  if (pc_stamps.empty()) {
+    return;
+  }
+  // sort stamps and get latest stamp
+  std::sort(pc_stamps.begin(), pc_stamps.end());
+  const auto latest_stamp = pc_stamps.back();
 
+  // Step2. Calculate compensation transform and concatenate with the latest stamp
   for (const auto & e : cloud_stdmap_) {
     if (e.second != nullptr) {
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
       transformPointCloud(e.second, transformed_cloud_ptr);
-      if (concat_cloud_ptr_ == nullptr) {
-        concat_cloud_ptr_ = transformed_cloud_ptr;
-      } else {
-        PointCloudConcatenateDataSynchronizerComponent::combineClouds(
-          concat_cloud_ptr_, transformed_cloud_ptr, concat_cloud_ptr_);
-      }
 
+      // calculate transforms to latest stamp
+      Eigen::Matrix4f delay_compensation_matrix = Eigen::Matrix4f::Identity();
+      for (const auto & stamp : pc_stamps) {
+        const auto compensate_delay = calcDelayCompensateTransform(e.second->header.stamp, stamp);
+        delay_compensation_matrix = compensate_delay * delay_compensation_matrix;
+      }
+      sensor_msgs::msg::PointCloud2::SharedPtr transformed_delay_compensated_cloud_ptr(
+        new sensor_msgs::msg::PointCloud2());
+      pcl_ros::transformPointCloud(
+        delay_compensation_matrix, *transformed_cloud_ptr,
+        *transformed_delay_compensated_cloud_ptr);
+
+      // concatenate
+      if (concat_cloud_ptr == nullptr) {
+        concat_cloud_ptr = transformed_delay_compensated_cloud_ptr;
+      } else {
+        pcl::concatenatePointCloud(
+          *concat_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concat_cloud_ptr);
+      }
     } else {
       not_subscribed_topic_names_.insert(e.first);
     }
   }
+  concat_cloud_ptr->header.stamp = latest_stamp;
+  return;
+}
 
-  if (concat_cloud_ptr_) {
-    auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*concat_cloud_ptr_);
+void PointCloudConcatenateDataSynchronizerComponent::publish()
+{
+  stop_watch_ptr_->toc("processing_time", true);
+  sensor_msgs::msg::PointCloud2::SharedPtr concat_cloud_ptr = nullptr;
+  not_subscribed_topic_names_.clear();
+
+  PointCloudConcatenateDataSynchronizerComponent::combineClouds(concat_cloud_ptr);
+
+  if (concat_cloud_ptr) {
+    auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*concat_cloud_ptr);
     pub_output_->publish(std::move(output));
   } else {
-    RCLCPP_WARN(this->get_logger(), "concat_cloud_ptr_ is nullptr, skipping pointcloud publish.");
+    RCLCPP_WARN(this->get_logger(), "concat_cloud_ptr is nullptr, skipping pointcloud publish.");
   }
 
   updater_.force_update();
