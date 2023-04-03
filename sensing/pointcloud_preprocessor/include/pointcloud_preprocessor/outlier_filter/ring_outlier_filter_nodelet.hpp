@@ -53,15 +53,26 @@ private:
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
   bool isCluster(
-    const PointCloud2ConstPtr & input, int first_data_idx, int last_data_idx, int walk_size)
+    const PointCloud2ConstPtr & input, std::pair<int, int> data_idx_both_ends, int walk_size, const TransformInfo & transform_info)
   {
-    auto first_point = reinterpret_cast<const PointXYZI *>(&input->data[first_data_idx]);
-    auto last_point = reinterpret_cast<const PointXYZI *>(&input->data[last_data_idx]);
-    const auto x = first_point->x - last_point->x;
-    const auto y = first_point->y - last_point->y;
-    const auto z = first_point->z - last_point->z;
-    return (walk_size > num_points_threshold_) ||
-           (x * x + y * y + z * z >= object_length_threshold_ * object_length_threshold_);
+    if (walk_size > num_points_threshold_) return true;
+
+    auto first_point = reinterpret_cast<const PointXYZI *>(&input->data[data_idx_both_ends.first]);
+    auto last_point = reinterpret_cast<const PointXYZI *>(&input->data[data_idx_both_ends.second]);
+
+    Eigen::Vector4f p1(first_point->x, first_point->y, first_point->z, 1);
+    Eigen::Vector4f p2(last_point->x, last_point->y, last_point->z, 1);
+
+    if (transform_info.need_transform) {
+      p1 = transform_info.eigen_transform * p1;
+      p2 = transform_info.eigen_transform * p2;
+    }
+
+    auto x = p1[0] - p2[0];
+    auto y = p1[1] - p2[1];
+    auto z = p1[2] - p2[2];
+
+    return x * x + y * y + z * z >= object_length_threshold_ * object_length_threshold_;
   }
 
 public:

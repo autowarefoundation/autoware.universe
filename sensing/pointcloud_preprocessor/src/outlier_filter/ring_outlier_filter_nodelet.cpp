@@ -52,8 +52,6 @@ void RingOutlierFilterComponent::faster_filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output, const TransformInfo & transform_info)
 {
-  (void)transform_info;
-
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
 
@@ -118,11 +116,23 @@ void RingOutlierFilterComponent::faster_filter(
       }
 
       if (isCluster(
-            input, indices[walk_first_idx], indices[walk_last_idx],
-            walk_last_idx - walk_first_idx + 1)) {
+            input, std::make_pair(indices[walk_first_idx], indices[walk_last_idx]),
+            walk_last_idx - walk_first_idx + 1, transform_info)) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
           auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
-          *output_ptr = *reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+          auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+
+          if (transform_info.need_transform) {
+            Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
+            p = transform_info.eigen_transform * p;
+            output_ptr->x = p[0];
+            output_ptr->y = p[1];
+            output_ptr->z = p[2];
+            output_ptr->intensity = input_ptr->intensity;
+          } else {
+            *output_ptr = *input_ptr;
+          }
+
           output_size += output.point_step;
         }
       }
@@ -133,11 +143,23 @@ void RingOutlierFilterComponent::faster_filter(
     if (walk_first_idx > walk_last_idx) continue;
 
     if (isCluster(
-          input, indices[walk_first_idx], indices[walk_last_idx],
-          walk_last_idx - walk_first_idx + 1)) {
+          input, std::make_pair(indices[walk_first_idx], indices[walk_last_idx]),
+          walk_last_idx - walk_first_idx + 1, transform_info)) {
       for (int i = walk_first_idx; i <= walk_last_idx; i++) {
         auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
-        *output_ptr = *reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+        auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+
+        if (transform_info.need_transform) {
+          Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
+          p = transform_info.eigen_transform * p;
+          output_ptr->x = p[0];
+          output_ptr->y = p[1];
+          output_ptr->z = p[2];
+          output_ptr->intensity = input_ptr->intensity;
+        } else {
+          *output_ptr = *input_ptr;
+        }
+
         output_size += output.point_step;
       }
     }
