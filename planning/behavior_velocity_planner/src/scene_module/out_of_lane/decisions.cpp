@@ -62,7 +62,8 @@ std::optional<std::pair<double, double>> object_time_to_range(
     const auto enter_segment_length = tier4_autoware_utils::calcDistance2d(
       predicted_path.path[enter_segment_idx], predicted_path.path[enter_segment_idx + 1]);
     const auto enter_offset_ratio = enter_offset / enter_segment_length;
-    const auto enter_time = enter_segment_idx * time_step + enter_offset_ratio * time_step;
+    const auto enter_time =
+      static_cast<double>(enter_segment_idx) * time_step + enter_offset_ratio * time_step;
 
     const auto exit_point =
       geometry_msgs::msg::Point().set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
