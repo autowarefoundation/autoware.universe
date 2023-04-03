@@ -17,6 +17,7 @@
 
 #include "scene_module/out_of_lane/types.hpp"
 
+#include <rclcpp/logger.hpp>
 #include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -61,19 +62,34 @@ std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const lanelet::ConstLanelets & lanelets,
   const std::shared_ptr<route_handler::RouteHandler> & route_handler);
-/// @brief calculate decisions to stop or slowdown before some overlapping ranges
-/// @param [in] ranges overlapping ranges
-/// @param [in] ego_data data about the ego vehicle
-/// @param [in] objects dynamic objects to consider
-/// @param [in] route_handler route handler
-/// @param [in] lanelets lanelets to consider
+/// @brief check whether we should avoid entering the given range
+/// @param [in] range the range to check
+/// @param [in] inputs information used to take decisions (ranges, ego and objects data, route
+/// handler, lanelets)
 /// @param [in] params parameters
+/// @param [in] logger ros logger
+/// @return return true if we should avoid entering the range
+bool should_not_enter(
+  const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
+  const rclcpp::Logger & logger);
+/// @brief calculate the decision to slowdown or stop before an overlapping range
+/// @param [in] range the range to check
+/// @param [in] inputs information used to take decisions (ranges, ego and objects data, route
+/// handler, lanelets)
+/// @param [in] params parameters
+/// @param [in] logger ros logger
+/// @return return an optional decision to slowdown or stop
+std::optional<Slowdown> calculate_decision(
+  const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
+  const rclcpp::Logger & logger);
+/// @brief calculate decisions to slowdown or stop before some overlapping ranges
+/// @param [in] inputs information used to take decisions (ranges, ego and objects data, route
+/// handler, lanelets)
+/// @param [in] params parameters
+/// @param [in] logger ros logger
 /// @return return the calculated decisions to slowdown or stop
 std::vector<Slowdown> calculate_decisions(
-  const OverlapRanges & ranges, const EgoData & ego_data,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
-  const std::shared_ptr<route_handler::RouteHandler> & route_handler,
-  const lanelet::ConstLanelets & lanelets, const PlannerParam & params);
+  const DecisionInputs & inputs, const PlannerParam & params, const rclcpp::Logger & logger);
 }  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_MODULE__OUT_OF_LANE__DECISIONS_HPP_

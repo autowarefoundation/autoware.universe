@@ -85,7 +85,7 @@ bool OutOfLaneModule::modifyPathVelocity(
       });
     if (overlapped_lanelet_it != other_lanelets.end()) {
       debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
-      RCLCPP_INFO(logger_, "Ego is already overlapping a lane, skipping the module ()\n");
+      RCLCPP_DEBUG(logger_, "Ego is already overlapping a lane, skipping the module ()\n");
       return true;
     }
   }
@@ -96,9 +96,13 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto calculate_overlapping_ranges_us = stopwatch.toc("calculate_overlapping_ranges");
   // Calculate stop and slowdown points
   stopwatch.tic("calculate_decisions");
-  auto decisions = calculate_decisions(
-    ranges, ego_data, *planner_data_->predicted_objects, planner_data_->route_handler_,
-    other_lanelets, params_);
+  DecisionInputs inputs;
+  inputs.ranges = ranges;
+  inputs.ego_data = ego_data;
+  inputs.objects = *planner_data_->predicted_objects;
+  inputs.route_handler = planner_data_->route_handler_;
+  inputs.lanelets = other_lanelets;
+  auto decisions = calculate_decisions(inputs, params_, logger_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   stopwatch.tic("calc_slowdown_points");
   const auto points_to_insert = calculate_slowdown_points(ego_data, decisions, params_);
@@ -112,7 +116,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
 
   const auto total_time_us = stopwatch.toc();
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     logger_,
     "Total time = %2.2fus\n"
     "\tcalculate_path_footprints = %2.0fus\n"

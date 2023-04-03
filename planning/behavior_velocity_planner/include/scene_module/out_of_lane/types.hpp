@@ -15,12 +15,16 @@
 #ifndef SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
 #define SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
 
+#include <route_handler/route_handler.hpp>
+
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -134,6 +138,16 @@ struct EgoData
   double velocity{};   // [m/s]
   double max_decel{};  // [m/s²]
   geometry_msgs::msg::Pose pose;
+};
+
+/// @brief data needed to make decisions
+struct DecisionInputs
+{
+  OverlapRanges ranges{};
+  EgoData ego_data;
+  autoware_auto_perception_msgs::msg::PredictedObjects objects{};
+  std::shared_ptr<route_handler::RouteHandler> route_handler{};
+  lanelet::ConstLanelets lanelets{};
 };
 
 /// @brief debug data
