@@ -45,6 +45,9 @@ SideShiftModule::SideShiftModule(
     "~/input/lateral_offset", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
 #endif
 
+  // TODO(murooka) The following is temporary implementation for new architecture's refactoring
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "sideshift");
+
   // If lateral offset is subscribed, it approves side shift module automatically
   clearWaitingApproval();
 }
@@ -74,7 +77,6 @@ void SideShiftModule::processOnExit()
 {
   // write me...
   initVariables();
-  // TODO(murooka) lots of process was missing compared to other modules
 }
 
 void SideShiftModule::setParameters(const std::shared_ptr<SideShiftParameters> & parameters)

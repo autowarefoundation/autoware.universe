@@ -306,7 +306,6 @@ void PullOverModule::processOnEntry()
 
 void PullOverModule::processOnExit()
 {
-  // TODO(murooka) unlockNewModuleLaunch was missing
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();

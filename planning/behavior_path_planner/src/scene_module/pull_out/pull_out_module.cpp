@@ -132,7 +132,6 @@ void PullOutModule::processOnEntry()
 
 void PullOutModule::processOnExit()
 {
-  // TODO(murooka) unlockNewModuleLaunch was missing
   resetPathCandidate();
   resetPathReference();
 }

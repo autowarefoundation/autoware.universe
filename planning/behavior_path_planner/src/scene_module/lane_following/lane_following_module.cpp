@@ -30,6 +30,9 @@ LaneFollowingModule::LaneFollowingModule(
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
   initParam();
+  // TODO(murooka) The following is temporary implementation for new architecture's refactoring
+  steering_factor_interface_ptr_ =
+    std::make_unique<SteeringFactorInterface>(&node, "lane_following");
 }
 
 void LaneFollowingModule::initParam()
@@ -65,13 +68,11 @@ CandidateOutput LaneFollowingModule::planCandidate() const
 }
 void LaneFollowingModule::processOnEntry()
 {
-  // TODO(murooka)
   initParam();
   current_state_ = BT::NodeStatus::RUNNING;
 }
 void LaneFollowingModule::processOnExit()
 {
-  // TODO(murooka)
   initParam();
   current_state_ = BT::NodeStatus::SUCCESS;
 }
