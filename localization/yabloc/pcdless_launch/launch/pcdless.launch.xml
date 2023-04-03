@@ -10,7 +10,7 @@
 
     <!-- flags to launch -->
     <arg name="mode" default="pekf" description="[pekf, ekf, pf]"/>
-    <arg name="standalone" default="true" description="set false if it launches as multi pose estimator"/>
+    <arg name="standalone" default="false" description="set false if it launches as multi pose estimator"/>
 
     <let name="launch_ekf" value="false"/>
     <let name="launch_ekf_corrector" value="false"/>

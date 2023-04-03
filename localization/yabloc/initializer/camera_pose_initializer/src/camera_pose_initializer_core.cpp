@@ -12,7 +12,8 @@ namespace pcdless
 {
 CameraPoseInitializer::CameraPoseInitializer()
 : Node("camera_pose_initializer"),
-  cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()}
+  cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()},
+  angle_resolution_{declare_parameter("angle_resolution_", 60)}
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -111,35 +112,39 @@ bool CameraPoseInitializer::estimate_pose(
   cv::Mat vectormap_image = lane_image_->create_vectormap_image(position);
 
   std::vector<int> scores;
-  std::vector<float> angles;  // rad
+  std::vector<float> angles_rad;  // rad
 
-  for (int i = 0; i < 30; i++) {
-    cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(400, 400), (-i / 30.0 * 360), 1);
+  for (int i = 0; i < angle_resolution_; i++) {
+    const double angle_deg = static_cast<double>(i) / static_cast<double>(angle_resolution_) * 360.;
+    cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(400, 400), angle_deg, 1);
     cv::Mat rotated_image;
-    cv::warpAffine(vectormap_image, rotated_image, rot, vectormap_image.size());
+    cv::warpAffine(projected_image, rotated_image, rot, vectormap_image.size());
 
-    cv::Mat dst = bitwise_and_3ch(rotated_image, projected_image);
+    cv::Mat dst = bitwise_and_3ch(rotated_image, vectormap_image);
     cv::Mat show_image;
-    cv::hconcat(std::vector<cv::Mat>{projected_image, rotated_image, dst}, show_image);
+    cv::hconcat(std::vector<cv::Mat>{rotated_image, vectormap_image, dst}, show_image);
 
     int count = count_nonzero(dst);
-    cv::imshow("and operator", show_image);
-    cv::waitKey(50);
+    constexpr bool imshow = false;
+    if (imshow) {
+      cv::imshow("and operator", show_image);
+      cv::waitKey(50);
+    }
 
     scores.push_back(count);
-    angles.push_back(i / 15.f * M_PI);
+    angles_rad.push_back(angle_deg * M_PI / 180.0);
   }
 
   {
     size_t max_index =
       std::distance(scores.begin(), std::max_element(scores.begin(), scores.end()));
-    float max_angle = angles.at(max_index);
+    float max_angle = angles_rad.at(max_index);
     tangent.x() = std::cos(max_angle);
     tangent.y() = std::sin(max_angle);
     tangent.z() = 0;
   }
 
-  marker_module_->publish_marker(scores, angles, position);
+  marker_module_->publish_marker(scores, angles_rad, position);
 
   return true;
 }

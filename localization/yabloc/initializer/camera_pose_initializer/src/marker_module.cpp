@@ -7,7 +7,7 @@ namespace pcdless::initializer
 
 MarkerModule::MarkerModule(rclcpp::Node * node)
 {
-  pub_marker_ = node->create_publisher<MarkerArray>("init/marker", 10);
+  pub_marker_ = node->create_publisher<MarkerArray>("init/candidates", 10);
 }
 
 void MarkerModule::publish_marker(
@@ -39,7 +39,7 @@ void MarkerModule::publish_marker(
     marker.pose.orientation.z = std::sin(rad / 2.f);
 
     marker.scale.x = 2.0;  // arrow length
-    marker.scale.y = 0.3;  // arrow width
+    marker.scale.y = 0.2;  // arrow width
     marker.scale.z = 0.3;  // arrow height
 
     array.markers.push_back(marker);

@@ -32,6 +32,7 @@ public:
 
 private:
   const Eigen::Vector2d cov_xx_yy_;
+  const int angle_resolution_;
   std::unique_ptr<LaneImage> lane_image_{nullptr};
   std::unique_ptr<initializer::MarkerModule> marker_module_{nullptr};
   std::unique_ptr<initializer::ProjectorModule> projector_module_{nullptr};
