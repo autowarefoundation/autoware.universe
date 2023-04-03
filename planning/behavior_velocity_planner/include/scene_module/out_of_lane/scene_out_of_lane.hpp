@@ -66,7 +66,7 @@ protected:
 /// @param params parameters
 /// @return precise points to insert in the path
 std::vector<SlowdownToInsert> calculate_slowdown_points(
-  const EgoData & ego_data, std::vector<Slowdown> & decisions, PlannerParam params);
+  const EgoData & ego_data, const std::vector<Slowdown> & decisions, PlannerParam params);
 
 }  // namespace behavior_velocity_planner::out_of_lane
 
