@@ -76,6 +76,9 @@ private:
   void timerCallback();
   void onVectorMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr vector_map);
   void receiveMap();
+  void concatPointCloundMaps(
+    sensor_msgs::msg::PointCloud2 & pointcloud_map,
+    const sensor_msgs::msg::PointCloud2 & new_pointcloud);
 
   void publish();
   void createElevationMap();

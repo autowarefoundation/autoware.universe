@@ -247,21 +247,27 @@ void ElevationMapLoaderNode::receiveMap()
     } else {
       // concat maps
       for (const auto & new_pointcloud_with_id : result.get()->new_pointcloud_with_ids) {
-        if (pointcloud_map.width == 0) {
-          pointcloud_map = new_pointcloud_with_id.pointcloud;
-        } else {
-          pointcloud_map.width += new_pointcloud_with_id.pointcloud.width;
-          pointcloud_map.row_step += new_pointcloud_with_id.pointcloud.row_step;
-          pointcloud_map.data.insert(
-            pointcloud_map.data.end(), new_pointcloud_with_id.pointcloud.data.begin(),
-            new_pointcloud_with_id.pointcloud.data.end());
-        }
+        concatPointCloundMaps(pointcloud_map, new_pointcloud_with_id.pointcloud);
         cached_ids.push_back(new_pointcloud_with_id.cell_id);
       }
     }
   }
   pcl::fromROSMsg<pcl::PointXYZ>(pointcloud_map, map_pcl);
   data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
+}
+
+void ElevationMapLoaderNode::concatPointCloundMaps(
+  sensor_msgs::msg::PointCloud2 & pointcloud_map,
+  const sensor_msgs::msg::PointCloud2 & new_pointcloud)
+{
+  if (pointcloud_map.width == 0) {
+    pointcloud_map = new_pointcloud;
+  } else {
+    pointcloud_map.width += new_pointcloud.width;
+    pointcloud_map.row_step += new_pointcloud.row_step;
+    pointcloud_map.data.insert(
+      pointcloud_map.data.end(), new_pointcloud.data.begin(), new_pointcloud.data.end());
+  }
 }
 
 void ElevationMapLoaderNode::createElevationMap()
