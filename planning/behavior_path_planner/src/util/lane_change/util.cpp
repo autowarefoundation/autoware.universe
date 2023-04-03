@@ -342,6 +342,7 @@ std::pair<bool, bool> getLaneChangePaths(
     const auto prepare_speed =
       std::max(current_velocity + candidate_acc * prepare_duration, minimum_lane_change_velocity);
 
+    // compute actual acceleration
     const double acceleration = (prepare_speed - current_velocity) / prepare_duration;
 
     // get path on original lanes
