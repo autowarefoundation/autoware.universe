@@ -900,7 +900,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
       return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
     };
 
-  const auto checkMiddle = [&](const auto & lane) -> std::optional<DrivableLane> {
+  const auto checkMiddle = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (has_same_lane(drivable_lane.middle_lanes, lane)) {
         return drivable_lane;
@@ -909,7 +909,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
     return std::nullopt;
   };
 
-  const auto checkLeft = [&](const auto & lane) -> std::optional<DrivableLane> {
+  const auto checkLeft = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (drivable_lane.left_lane.id() == lane.id()) {
         return drivable_lane;
@@ -918,7 +918,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
     return std::nullopt;
   };
 
-  const auto checkRight = [&](const auto & lane) -> std::optional<DrivableLane> {
+  const auto checkRight = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (drivable_lane.right_lane.id() == lane.id()) {
         return drivable_lane;
