@@ -33,11 +33,6 @@ DetectedObjectsDisplay::DetectedObjectsDisplay()
 
 void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 {
-  // find nearest pointcloud
-  // transfor objs to poincloud frame
-  //
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
-  onObjectsAndObstaclePointCloud(msg, closest_pointcloud);
   
   clear_markers();
   int id = 0;
@@ -90,6 +85,15 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       add_marker(twist_marker_ptr);
     }
   }
+  
+  if (pointCloudBuffer.empty())
+  {
+    return; 
+  }
+  // poincloud pub
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
+    getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
+  onObjectsAndObstaclePointCloud(msg, closest_pointcloud);
 }
 
 // void DetectedObjectsDisplay::onInitialize()
@@ -116,12 +120,14 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   if (!m_publish_objs_pointcloud->getBool()) {
     return;
   }
+   RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "publish pointcloud flag");
   // Transform to pointcloud frame
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformObjects(
         *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
     return;
   }
+   RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "transform objects to poincloud frame");
 
   objs_buffer.clear();
   for (const auto & object : transformed_objects.objects) {
@@ -131,6 +137,7 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
       object.shape, object.kinematics.pose_with_covariance.pose, object.classification};
     objs_buffer.push_back(info);
   }
+   RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "convert to objs info");
 
   // convert to pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -172,8 +179,10 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
-
+  
   add_pointcloud(output_pointcloud_msg_ptr);
+  RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "publish poinclouds");
+
 }
 
 }  // namespace object_detection

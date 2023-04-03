@@ -690,22 +690,27 @@ protected:
   {
     // Sort the buffer of pointclouds by timestamp using our custom comparator function
     std::sort(buffer.begin(), buffer.end(), comparePointCloudsByTimestamp);
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "sort poinclouds");
 
     // Find the first pointcloud with a timestamp greater than or equal to the target timestamp
     auto iter = std::lower_bound(buffer.begin(), buffer.end(), timestamp, 
                                  [](const sensor_msgs::msg::PointCloud2 & pointcloud, const rclcpp::Time& timestamp) {
                                     return pointcloud.header.stamp.nanosec < timestamp.nanoseconds();
                                  });
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "lower bond");
 
     // If the target timestamp is less than the timestamp of the first pointcloud in the buffer, return that pointcloud
     if (iter == buffer.begin()) {
         return *iter;
     }
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "not first pointcloud");
 
     // If the target timestamp is greater than the timestamp of the last pointcloud in the buffer, return that pointcloud
     if (iter == buffer.end()) {
         return *(--iter);
     }
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "not Last poincloud");
+
 
     // Calculate the difference between the target timestamp and the timestamps of the two adjacent pointclouds
     rclcpp::Duration diff1 = timestamp - rclcpp::Time(iter->header.stamp);
@@ -717,9 +722,10 @@ protected:
     //     --iter;
     //     diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time(iter->header.stamp);
     // } else {
-      
+
     //     diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time(iter->header.stamp);
     // }
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "calculate diff");
 
     // Return the pointcloud with the nearest timestamp
     return (diff1 < diff2) ? *iter : *(++iter);
