@@ -366,7 +366,6 @@ public:
   }
 
   // variables for transfer detected objects information between callbacks
-  std::vector<object_info> objs_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
 

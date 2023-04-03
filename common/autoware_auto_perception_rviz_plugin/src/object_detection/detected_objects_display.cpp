@@ -96,23 +96,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
   onObjectsAndObstaclePointCloud(msg, closest_pointcloud);
 }
 
-// void DetectedObjectsDisplay::onInitialize()
-// {
-//   ObjectPolygonDisplayBase::onInitialize();
-//   // get access to rviz node to sub and to pub to topics
-//   rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
-
-//   sync_ptr = std::make_shared<Sync>(
-//     SyncPolicy(10), perception_objects_subscription, pointcloud_subscription);
-//   sync_ptr->registerCallback(&DetectedObjectsDisplay::onObjectsAndObstaclePointCloud, this);
-//   perception_objects_subscription.subscribe(
-//     raw_node, "/perception/object_recognition/detection/objects",
-//     rclcpp::QoS{1}.get_rmw_qos_profile());
-//   pointcloud_subscription.subscribe(
-//     raw_node, m_default_pointcloud_topic->getTopic().toStdString(),
-//     rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
-// }
-
 void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   const DetectedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
@@ -129,15 +112,6 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
   }
    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "transform objects to poincloud frame");
 
-  objs_buffer.clear();
-  for (const auto & object : transformed_objects.objects) {
-    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels =
-      object.classification;
-    object_info info = {
-      object.shape, object.kinematics.pose_with_covariance.pose, object.classification};
-    objs_buffer.push_back(info);
-  }
-   RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "convert to objs info");
 
   // convert to pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -154,24 +128,26 @@ void DetectedObjectsDisplay::onObjectsAndObstaclePointCloud(
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
 
-  if (objs_buffer.empty()) {
-    return;
-  }
-  
-  for (auto object : objs_buffer) {
-    const auto search_radius = getMaxRadius(object);
+  for (const auto & object : transformed_objects.objects) {
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels =
+      object.classification;
+    object_info unified_object = {
+      object.shape, object.kinematics.pose_with_covariance.pose, object.classification};
+
+    const auto search_radius = getMaxRadius(unified_object);
     // Search neighbor pointcloud to reduce cost.
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(
       new pcl::PointCloud<pcl::PointXYZRGB>);
     std::vector<int> indices;
     std::vector<float> distances;
     kdtree->radiusSearch(
-      toPCL(object.position.position), search_radius.value(), indices, distances);
+      toPCL(unified_object.position.position), search_radius.value(), indices, distances);
     for (const auto & index : indices) {
       neighbor_pointcloud->push_back(colored_cloud->at(index));
     }
 
-    filterPolygon(neighbor_pointcloud, out_cloud, object);
+    filterPolygon(neighbor_pointcloud, out_cloud, unified_object);
+
   }
 
   sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(
