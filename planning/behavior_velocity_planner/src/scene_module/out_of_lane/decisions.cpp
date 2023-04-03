@@ -82,7 +82,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
     RCLCPP_DEBUG(
       logger, "\t\t\tPredicted path (time step = %2.2fs): enter @ %2.2fs, exit @ %2.2fs", time_step,
       enter_time, exit_time);
-    // predicted path is too far from the overlapping range to be relevent
+    // predicted path is too far from the overlapping range to be relevant
     const auto is_far_from_entering_point = enter_lat_dist > max_deviation;
     const auto is_far_from_exiting_point = exit_lat_dist > max_deviation;
     if (is_far_from_entering_point && is_far_from_exiting_point) {
