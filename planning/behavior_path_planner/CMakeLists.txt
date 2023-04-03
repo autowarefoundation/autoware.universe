@@ -7,7 +7,7 @@ autoware_package()
 find_package(OpenCV REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
-set(COMPILE_WITH_OLD_ARCHITECTURE TRUE)
+set(COMPILE_WITH_OLD_ARCHITECTURE FALSE)
 
 set(common_src
   src/steering_factor_interface.cpp
@@ -18,8 +18,8 @@ set(common_src
   src/scene_module/pull_out/pull_out_module.cpp
   src/scene_module/pull_over/pull_over_module.cpp
   src/scene_module/side_shift/side_shift_module.cpp
-  src/scene_module/lane_change/lane_change_module.cpp
-  src/scene_module/lane_change/external_request_lane_change_module.cpp
+  src/scene_module/lane_change/interface.cpp
+  src/scene_module/lane_change/module.cpp
   src/turn_signal_decider.cpp
   src/utils/utils.cpp
   src/utils/path_utils.cpp

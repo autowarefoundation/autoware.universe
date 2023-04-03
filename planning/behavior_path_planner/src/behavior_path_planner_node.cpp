@@ -251,51 +251,51 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       register_and_create_publisher(manager);
     }
 
-    if (p.config_lane_change_right.enable_module) {
-      const std::string module_topic = "lane_change_right";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_lane_change_right, lane_change_param_ptr_,
-        route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL);
-      register_and_create_publisher(manager);
-    }
+    // if (p.config_lane_change_right.enable_module) {
+    //   const std::string module_topic = "lane_change_right";
+    //   auto manager = std::make_shared<LaneChangeModuleManager>(
+    //     this, module_topic, p.config_lane_change_right, lane_change_param_ptr_,
+    //     route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL);
+    //   register_and_create_publisher(manager);
+    // }
 
-    if (p.config_ext_request_lane_change_right.enable_module) {
-      const std::string module_topic = "external_request_lane_change_right";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_ext_request_lane_change_right, lane_change_param_ptr_,
-        route_handler::Direction::RIGHT, LaneChangeModuleType::EXTERNAL_REQUEST);
-      register_and_create_publisher(manager);
-    }
+    // if (p.config_ext_request_lane_change_right.enable_module) {
+    //   const std::string module_topic = "external_request_lane_change_right";
+    //   auto manager = std::make_shared<LaneChangeModuleManager>(
+    //     this, module_topic, p.config_ext_request_lane_change_right, lane_change_param_ptr_,
+    //     route_handler::Direction::RIGHT, LaneChangeModuleType::EXTERNAL_REQUEST);
+    //   register_and_create_publisher(manager);
+    // }
 
-    if (p.config_ext_request_lane_change_left.enable_module) {
-      const std::string module_topic = "external_request_lane_change_left";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_ext_request_lane_change_left, lane_change_param_ptr_,
-        route_handler::Direction::LEFT, LaneChangeModuleType::EXTERNAL_REQUEST);
-      register_and_create_publisher(manager);
-    }
+    // if (p.config_ext_request_lane_change_left.enable_module) {
+    //   const std::string module_topic = "external_request_lane_change_left";
+    //   auto manager = std::make_shared<LaneChangeModuleManager>(
+    //     this, module_topic, p.config_ext_request_lane_change_left, lane_change_param_ptr_,
+    //     route_handler::Direction::LEFT, LaneChangeModuleType::EXTERNAL_REQUEST);
+    //   register_and_create_publisher(manager);
+    // }
 
-    if (p.config_avoidance.enable_module) {
-      auto manager = std::make_shared<AvoidanceModuleManager>(
-        this, "avoidance", p.config_avoidance, avoidance_param_ptr_);
-      planner_manager_->registerSceneModuleManager(manager);
-      path_candidate_publishers_.emplace(
-        "avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
-      path_reference_publishers_.emplace(
-        "avoidance", create_publisher<Path>(path_reference_name_space + "avoidance", 1));
-    }
+    // if (p.config_avoidance.enable_module) {
+    //   auto manager = std::make_shared<AvoidanceModuleManager>(
+    //     this, "avoidance", p.config_avoidance, avoidance_param_ptr_);
+    //   planner_manager_->registerSceneModuleManager(manager);
+    //   path_candidate_publishers_.emplace(
+    //     "avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
+    //   path_reference_publishers_.emplace(
+    //     "avoidance", create_publisher<Path>(path_reference_name_space + "avoidance", 1));
+    // }
 
-    if (p.config_avoidance_by_lc.enable_module) {
-      auto manager = std::make_shared<AvoidanceByLCModuleManager>(
-        this, "avoidance_by_lane_change", p.config_avoidance_by_lc, avoidance_by_lc_param_ptr_);
-      planner_manager_->registerSceneModuleManager(manager);
-      path_candidate_publishers_.emplace(
-        "avoidance_by_lane_change",
-        create_publisher<Path>(path_candidate_name_space + "avoidance_by_lane_change", 1));
-      path_reference_publishers_.emplace(
-        "avoidance_by_lane_change",
-        create_publisher<Path>(path_reference_name_space + "avoidance_by_lane_change", 1));
-    }
+    // if (p.config_avoidance_by_lc.enable_module) {
+    //   auto manager = std::make_shared<AvoidanceByLCModuleManager>(
+    //     this, "avoidance_by_lane_change", p.config_avoidance_by_lc, avoidance_by_lc_param_ptr_);
+    //   planner_manager_->registerSceneModuleManager(manager);
+    //   path_candidate_publishers_.emplace(
+    //     "avoidance_by_lane_change",
+    //     create_publisher<Path>(path_candidate_name_space + "avoidance_by_lane_change", 1));
+    //   path_reference_publishers_.emplace(
+    //     "avoidance_by_lane_change",
+    //     create_publisher<Path>(path_reference_name_space + "avoidance_by_lane_change", 1));
+    // }
   }
 #endif
 
