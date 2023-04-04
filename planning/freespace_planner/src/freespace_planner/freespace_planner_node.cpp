@@ -65,7 +65,6 @@ bool isActive(const Scenario::ConstSharedPtr & scenario)
   }
 
   const auto & s = scenario->activating_scenarios;
-
   if (std::find(std::begin(s), std::end(s), Scenario::PARKING) != std::end(s)) {
     return true;
   }
@@ -253,7 +252,7 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
   // Subscribers
   {
     route_sub_ = create_subscription<LaneletRoute>(
-      "/planning/mission_planning/route", rclcpp::QoS{1}.transient_local(),
+      "~/input/route", rclcpp::QoS{1}.transient_local(),
       std::bind(&FreespacePlannerNode::onRoute, this, _1));
     occupancy_grid_sub_ = create_subscription<OccupancyGrid>(
       "~/input/occupancy_grid", 1, std::bind(&FreespacePlannerNode::onOccupancyGrid, this, _1));
@@ -460,16 +459,12 @@ void FreespacePlannerNode::onTimer()
   }
 
   // Update partial trajectory
-
   updateTargetIndex();
-
   partial_trajectory_ = getPartialTrajectory(trajectory_, prev_target_index_, target_index_);
 
   // Publish messages
   trajectory_pub_->publish(partial_trajectory_);
-
   debug_pose_array_pub_->publish(trajectory2PoseArray(trajectory_));
-
   debug_partial_pose_array_pub_->publish(trajectory2PoseArray(partial_trajectory_));
 }
 
@@ -480,11 +475,9 @@ void FreespacePlannerNode::planTrajectory()
   }
 
   // Provide robot shape and map for the planner
-
   algo_->setMap(*occupancy_grid_);
 
   // Calculate poses in costmap frame
-
   const auto current_pose_in_costmap_frame = transformPose(
     current_pose_.pose,
     getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
@@ -493,25 +486,18 @@ void FreespacePlannerNode::planTrajectory()
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
   // execute planning
-
   const rclcpp::Time start = get_clock()->now();
-
   const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
-
   const rclcpp::Time end = get_clock()->now();
 
   RCLCPP_INFO(get_logger(), "Freespace planning: %f [s]", (end - start).seconds());
 
   if (result) {
     RCLCPP_INFO(get_logger(), "Found goal!");
-
     trajectory_ =
       createTrajectory(current_pose_, algo_->getWaypoints(), node_param_.waypoints_velocity);
-
     reversing_indices_ = getReversingIndices(trajectory_);
-
     prev_target_index_ = 0;
-
     target_index_ =
       getNextTargetIndex(trajectory_.points.size(), reversing_indices_, prev_target_index_);
 
