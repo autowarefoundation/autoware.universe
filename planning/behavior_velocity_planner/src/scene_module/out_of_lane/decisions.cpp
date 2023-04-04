@@ -255,7 +255,7 @@ bool should_not_enter(
   const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
   const rclcpp::Logger & logger)
 {
-  RangeTimes range_times;
+  RangeTimes range_times{};
   range_times.ego.enter_time = time_along_path(inputs.ego_data, range.entering_path_idx);
   range_times.ego.exit_time = time_along_path(inputs.ego_data, range.exiting_path_idx);
   RCLCPP_DEBUG(

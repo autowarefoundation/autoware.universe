@@ -57,7 +57,7 @@ void add_footprint_markers(
 void add_current_overlap_marker(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
   const lanelet::BasicPolygon2d & current_footprint,
-  const lanelet::ConstLanelets current_overlapped_lanelets, const double z)
+  const lanelet::ConstLanelets & current_overlapped_lanelets, const double z)
 {
   auto debug_marker = get_base_marker();
   debug_marker.ns = "current_overlap";

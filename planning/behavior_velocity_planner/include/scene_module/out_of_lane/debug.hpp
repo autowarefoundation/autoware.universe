@@ -40,7 +40,7 @@ void add_footprint_markers(
 void add_current_overlap_marker(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
   const lanelet::BasicPolygon2d & current_footprint,
-  const lanelet::ConstLanelets current_overlapped_lanelets, const double z);
+  const lanelet::ConstLanelets & current_overlapped_lanelets, const double z);
 /// @brief add footprint markers to the given marker array
 /// @param [inout] debug_marker_array marker array
 /// @param [in] lanelets lanelets to turn into markers
