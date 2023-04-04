@@ -2694,11 +2694,11 @@ lanelet::ConstLanelets getLaneletsFromPath(
 
 std::string convertToSnakeCase(const std::string & input_str)
 {
-  std::string output_str = std::string{std::tolower(input_str.at(0))};
+  std::string output_str = std::string{static_cast<char>(std::tolower(input_str.at(0)))};
   for (size_t i = 1; i < input_str.length(); ++i) {
     const auto input_chr = input_str.at(i);
     if (std::isupper(input_chr)) {
-      output_str += "_" + std::string{std::tolower(input_chr)};
+      output_str += "_" + std::string{static_cast<char>(std::tolower(input_chr))};
     } else {
       output_str += input_chr;
     }
