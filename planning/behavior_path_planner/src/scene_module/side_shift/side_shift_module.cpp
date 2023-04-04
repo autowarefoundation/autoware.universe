@@ -46,7 +46,7 @@ SideShiftModule::SideShiftModule(
 #endif
 
   // TODO(murooka) The following is temporary implementation for new architecture's refactoring
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "sideshift");
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "side_shift");
 
   // If lateral offset is subscribed, it approves side shift module automatically
   clearWaitingApproval();
