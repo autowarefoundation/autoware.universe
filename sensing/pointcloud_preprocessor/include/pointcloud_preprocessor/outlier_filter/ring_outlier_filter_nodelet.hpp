@@ -20,6 +20,7 @@
 
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
+#include <utility>
 #include <vector>
 
 namespace pointcloud_preprocessor
