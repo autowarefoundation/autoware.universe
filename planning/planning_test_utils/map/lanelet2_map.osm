@@ -4433,6 +4433,42 @@
     <tag k="local_y" v="73733.2266"/>
     <tag k="ele" v="19.4177"/>
   </node>
+  <node id="10267" lat="35.90323763887946" lon="139.9334284917011">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3753.4013"/>
+    <tag k="local_y" v="73741.5427"/>
+    <tag k="ele" v="20.54"/>
+  </node>
+  <node id="10268" lat="35.90321379214454" lon="139.9334441703088">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3754.7873"/>
+    <tag k="local_y" v="73738.8822"/>
+    <tag k="ele" v="20.5097"/>
+  </node>
+  <node id="10270" lat="35.90325646243863" lon="139.93354307856995">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3763.7647"/>
+    <tag k="local_y" v="73743.5177"/>
+    <tag k="ele" v="20.4896"/>
+  </node>
+  <node id="10271" lat="35.90324904467445" lon="139.93357346094498">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3766.4975"/>
+    <tag k="local_y" v="73742.665"/>
+    <tag k="ele" v="20.4795"/>
+  </node>
+  <node id="10272" lat="35.90322377697778" lon="139.9335640562234">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3765.6182"/>
+    <tag k="local_y" v="73739.8716"/>
+    <tag k="ele" v="20.4492"/>
+  </node>
+  <node id="10273" lat="35.903231799673485" lon="139.9335375297724">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3763.2341"/>
+    <tag k="local_y" v="73740.7876"/>
+    <tag k="ele" v="20.4593"/>
+  </node>
   <way id="35">
     <nd ref="2007"/>
     <nd ref="2008"/>
@@ -5988,12 +6024,26 @@
     <tag k="type" v="stop_line"/>
     <tag k="subtype" v="solid"/>
   </way>
+  <way id="10269">
+    <nd ref="10267"/>
+    <nd ref="10268"/>
+    <tag k="type" v="stop_line"/>
+    <tag k="subtype" v="solid"/>
+  </way>
   <way id="10265">
     <nd ref="10261"/>
     <nd ref="10262"/>
     <nd ref="10263"/>
     <nd ref="10264"/>
     <tag k="type" v="detection_area"/>
+    <tag k="area" v="yes"/>
+  </way>
+  <way id="10274">
+    <nd ref="10270"/>
+    <nd ref="10271"/>
+    <nd ref="10272"/>
+    <nd ref="10273"/>
+    <tag k="type" v="no_stopping_area"/>
     <tag k="area" v="yes"/>
   </way>
   <relation id="13">
@@ -6121,6 +6171,7 @@
     <member type="way" role="left" ref="207"/>
     <member type="way" role="right" ref="214"/>
     <member type="relation" role="regulatory_element" ref="1015"/>
+    <member type="relation" role="regulatory_element" ref="10275"/>
     <tag k="type" v="lanelet"/>
     <tag k="subtype" v="road"/>
     <tag k="speed_limit" v="30"/>
@@ -6513,5 +6564,11 @@
     <member type="way" role="ref_line" ref="10260"/>
     <tag k="type" v="regulatory_element"/>
     <tag k="subtype" v="detection_area"/>
+  </relation>
+  <relation id="10275">
+    <member type="way" role="refers" ref="10274"/>
+    <member type="way" role="ref_line" ref="10269"/>
+    <tag k="type" v="regulatory_element"/>
+    <tag k="subtype" v="no_stopping_area"/>
   </relation>
 </osm>
