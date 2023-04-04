@@ -635,6 +635,8 @@ protected:
     // If the deque has more than 5 elements, remove the oldest element from the back of the deque
     if (pointCloudBuffer.size() > 5) {
         pointCloudBuffer.pop_back();
+        RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Drop poincloud from buffer");
+
     }
     
     std::string frame_id = input_pointcloud_msg.header.frame_id;
@@ -689,48 +691,6 @@ protected:
   // Function that returns the pointcloud with the nearest timestamp from a buffer of pointclouds
   sensor_msgs::msg::PointCloud2 getNearestPointCloud(std::deque<sensor_msgs::msg::PointCloud2> & buffer, const rclcpp::Time & timestamp) 
   {
-    // Sort the buffer of pointclouds by timestamp using our custom comparator function
-    // std::sort(buffer.begin(), buffer.end(), comparePointCloudsByTimestamp);
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "sort poinclouds");
-
-    // // Find the first pointcloud with a timestamp greater than or equal to the target timestamp
-    // auto iter = std::lower_bound(buffer.begin(), buffer.end(), timestamp, 
-    //                              [](const sensor_msgs::msg::PointCloud2 & pointcloud, const rclcpp::Time& timestamp) {
-    //                                 return pointcloud.header.stamp.nanosec < timestamp.nanoseconds();
-    //                              });
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "lower bond");
-
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "First pointcloud");
-    // // If the target timestamp is less than the timestamp of the first pointcloud in the buffer, return that pointcloud
-    // if (iter == buffer.begin()) {
-    //     return *iter;
-    // }
-
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Last poincloud");
-    // // If the target timestamp is greater than the timestamp of the last pointcloud in the buffer, return that pointcloud
-    // if (iter == buffer.end()) {
-    //     return *(--iter);
-    // }
-
-
-    // // Calculate the difference between the target timestamp and the timestamps of the two adjacent pointclouds
-    // rclcpp::Duration diff1 = timestamp - rclcpp::Time(iter->header.stamp);
-    // // rclcpp::Time diff2 = iter->header.stamp.nanosec - (*(--iter)).header.stamp.nanosec;
-    // rclcpp::Duration diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time((--iter)->header.stamp);
-
-    // // rclcpp::Duration diff2;
-    // // if (iter != buffer.begin()) {
-    // //     --iter;
-    // //     diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time(iter->header.stamp);
-    // // } else {
-
-    // //     diff2 = rclcpp::Time(iter->header.stamp) - rclcpp::Time(iter->header.stamp);
-    // // }
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "calculate diff");
-
-    // // Return the pointcloud with the nearest timestamp
-    // return (diff1 < diff2) ? *iter : *(++iter);
-
     if (buffer.empty()) {
     // Handle the case where the buffer is empty
     throw std::runtime_error("Buffer is empty");
@@ -738,19 +698,19 @@ protected:
 
     RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "buffer len is %ld", buffer.size());
 
-
     sensor_msgs::msg::PointCloud2 result  = buffer.front();
     rclcpp::Duration diff = timestamp - rclcpp::Time(result.header.stamp);
       RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Set last getted pointcloud as result");
 
-    // for (sensor_msgs::msg::PointCloud2 pointcloud : buffer){
-    //   if (diff > (timestamp - rclcpp::Time(pointcloud.header.stamp))) {
-    //     diff = timestamp - rclcpp::Time(pointcloud.header.stamp);
-    //     result = pointcloud;
-    //     RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Update result");
-    //   }
-    // }
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "return result");   
+    for (sensor_msgs::msg::PointCloud2 pointcloud : buffer){
+      RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Check pointcloud in buffer");
+      if (diff > (timestamp - rclcpp::Time(pointcloud.header.stamp))) {
+        diff = timestamp - rclcpp::Time(pointcloud.header.stamp);
+        result = pointcloud;
+        RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Update result");
+      }
+    }
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "return result");   
     return result;
   }
 
