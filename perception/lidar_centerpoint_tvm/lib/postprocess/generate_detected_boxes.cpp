@@ -69,39 +69,40 @@ void generateBoxes3D_worker(
   // heatmap: N = class_size, offset: N = 2, z: N = 1, dim: N = 3, rot: N = 2, vel: N = 2
   for (std::size_t idx = 0; idx < grids_per_thread; idx++) {
     std::size_t grid_idx = thread_idx * grids_per_thread + idx;
-    const auto down_grid_size = config.down_grid_size_y_ * config.down_grid_size_x_;
-    if (grid_idx >= down_grid_size) {
+    std::size_t array_idx = config.downsample_factor_ * grid_idx;
+    const auto grid_size = config.grid_size_y_ * config.grid_size_x_;
+    if (array_idx >= grid_size) {
       return;
     }
 
-    const auto yi = grid_idx / config.down_grid_size_x_;
-    const auto xi = grid_idx % config.down_grid_size_x_;
+    const auto yi = array_idx / config.grid_size_x_;
+    const auto xi = array_idx % config.grid_size_x_;
 
     int32_t label = -1;
     float max_score = -1;
     for (std::size_t ci = 0; ci < config.class_size_; ci++) {
-      float score = sigmoid(out_heatmap[down_grid_size * ci + grid_idx]);
+      float score = sigmoid(out_heatmap[grid_size * ci + array_idx]);
       if (score > max_score) {
         label = ci;
         max_score = score;
       }
     }
 
-    const float offset_x = out_offset[down_grid_size * 0 + grid_idx];
-    const float offset_y = out_offset[down_grid_size * 1 + grid_idx];
+    const float offset_x = out_offset[grid_size * 0 + array_idx];
+    const float offset_y = out_offset[grid_size * 1 + array_idx];
     const float x =
-      config.voxel_size_x_ * config.downsample_factor_ * (xi + offset_x) + config.range_min_x_;
+      config.voxel_size_x_ * (xi + offset_x) + config.range_min_x_;
     const float y =
-      config.voxel_size_y_ * config.downsample_factor_ * (yi + offset_y) + config.range_min_y_;
-    const float z = out_z[grid_idx];
-    const float w = out_dim[down_grid_size * 0 + grid_idx];
-    const float l = out_dim[down_grid_size * 1 + grid_idx];
-    const float h = out_dim[down_grid_size * 2 + grid_idx];
-    const float yaw_sin = out_rot[down_grid_size * 0 + grid_idx];
-    const float yaw_cos = out_rot[down_grid_size * 1 + grid_idx];
+      config.voxel_size_y_ * (yi + offset_y) + config.range_min_y_;
+    const float z = out_z[array_idx];
+    const float w = out_dim[grid_size * 0 + array_idx];
+    const float l = out_dim[grid_size * 1 + array_idx];
+    const float h = out_dim[grid_size * 2 + array_idx];
+    const float yaw_sin = out_rot[grid_size * 0 + array_idx];
+    const float yaw_cos = out_rot[grid_size * 1 + array_idx];
     const float yaw_norm = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
-    const float vel_x = out_vel[down_grid_size * 0 + grid_idx];
-    const float vel_y = out_vel[down_grid_size * 1 + grid_idx];
+    const float vel_x = out_vel[grid_size * 0 + array_idx];
+    const float vel_y = out_vel[grid_size * 1 + array_idx];
 
     boxes3d[grid_idx].label = label;
     boxes3d[grid_idx].score = yaw_norm >= config.yaw_norm_threshold_ ? max_score : 0.f;
