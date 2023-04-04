@@ -100,7 +100,9 @@ public:
   void onCheckCollision(DiagnosticStatusWrapper & stat);
   bool checkCollision();
   bool hasCollision(
-    const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys);
+    const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
+    const rclcpp::Time & current_time, const std_msgs::msg::ColorRGBA & color,
+    const std::string & ns, MarkerArray & debug_markers);
 
   void generateEgoPath(
     const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons);
@@ -112,8 +114,11 @@ public:
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
-    const double color_r, const double color_g, const double color_b, const double color_a,
-    const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers);
+    const std_msgs::msg::ColorRGBA & color, const std::string & ns, MarkerArray & debug_markers);
+
+  void addObjectDataMarker(
+    const std::vector<ObjectData> & objects, const rclcpp::Time & current_time,
+    const std_msgs::msg::ColorRGBA & color, const std::string & ns, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};

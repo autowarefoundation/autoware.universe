@@ -271,46 +271,49 @@ bool AEB::checkCollision()
   MarkerArray debug_markers;
 
   // step3. create ego path based on sensor data
-  Path ego_path;
-  std::vector<Polygon2d> ego_polys;
+  bool has_collision_ego = false;
   if (use_imu_path_) {
+    Path path;
+    std::vector<Polygon2d> polys;
     const double current_w = imu_ptr_->angular_velocity.z;
-    constexpr double color_r = 0.0 / 256.0;
-    constexpr double color_g = 148.0 / 256.0;
-    constexpr double color_b = 205.0 / 256.0;
-    constexpr double color_a = 0.999;
+    generateEgoPath(current_v, current_w, path, polys);
+
     const auto current_time = get_clock()->now();
-    generateEgoPath(current_v, current_w, ego_path, ego_polys);
-    addMarker(
-      current_time, ego_path, ego_polys, color_r, color_g, color_b, color_a, "ego_path",
-      "ego_polygons", debug_markers);
+    std_msgs::msg::ColorRGBA color =
+      tier4_autoware_utils::createMarkerColor(0.0, 148.0 / 256.0, 205.0 / 256.0, 0.999);
+    std::string ns = "ego";
+    has_collision_ego =
+      hasCollision(current_v, path, polys, current_time, color, ns, debug_markers);
+    addMarker(current_time, path, polys, color, ns, debug_markers);
   }
 
   // step4. transform predicted trajectory from control module
-  Path predicted_path;
-  std::vector<Polygon2d> predicted_polys;
+  bool has_collision_predicted = false;
   if (use_predicted_trajectory_) {
     const auto predicted_traj_ptr = predicted_traj_ptr_;
-    constexpr double color_r = 0.0;
-    constexpr double color_g = 100.0 / 256.0;
-    constexpr double color_b = 0.0;
-    constexpr double color_a = 0.999;
+    Path path;
+    std::vector<Polygon2d> polys;
+    generateEgoPath(*predicted_traj_ptr, path, polys);
+
     const auto current_time = predicted_traj_ptr->header.stamp;
-    generateEgoPath(*predicted_traj_ptr, predicted_path, predicted_polys);
-    addMarker(
-      current_time, predicted_path, predicted_polys, color_r, color_g, color_b, color_a,
-      "predicted_path", "predicted_polygons", debug_markers);
+    std_msgs::msg::ColorRGBA color =
+      tier4_autoware_utils::createMarkerColor(0.0, 100.0 / 256.0, 0.0, 0.999);
+    std::string ns = "predicted";
+    has_collision_predicted =
+      hasCollision(current_v, path, polys, current_time, color, ns, debug_markers);
+    addMarker(current_time, path, polys, color, ns, debug_markers);
   }
 
   // publish debug markers
   debug_ego_path_publisher_->publish(debug_markers);
 
-  return hasCollision(current_v, ego_path, ego_polys) ||
-         hasCollision(current_v, predicted_path, predicted_polys);
+  return has_collision_ego || has_collision_predicted;
 }
 
 bool AEB::hasCollision(
-  const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys)
+  const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
+  const rclcpp::Time & current_time, const std_msgs::msg::ColorRGBA & color, const std::string & ns,
+  MarkerArray & debug_markers)
 {
   // check if the predicted path has valid number of points
   if (ego_path.size() < 2 || ego_polys.empty()) {
@@ -320,6 +323,7 @@ bool AEB::hasCollision(
   // step1. create object
   std::vector<ObjectData> objects;
   createObjectData(ego_path, ego_polys, objects);
+  addObjectDataMarker(objects, current_time, color, ns, debug_markers);
 
   // step2. calculate RSS
   const auto current_p = tier4_autoware_utils::createPoint(0.0, 0.0, 0.0);
@@ -448,13 +452,11 @@ void AEB::createObjectData(
 
 void AEB::addMarker(
   const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
-  const double color_r, const double color_g, const double color_b, const double color_a,
-  const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers)
+  const std_msgs::msg::ColorRGBA & color, const std::string & ns, MarkerArray & debug_markers)
 {
   auto path_marker = tier4_autoware_utils::createDefaultMarker(
-    "base_link", current_time, path_ns, 0L, Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.2, 0.2, 0.2),
-    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+    "base_link", current_time, ns + "_path", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.2, 0.2, 0.2), color);
   path_marker.points.resize(path.size());
   for (size_t i = 0; i < path.size(); ++i) {
     path_marker.points.at(i) = path.at(i).position;
@@ -462,9 +464,8 @@ void AEB::addMarker(
   debug_markers.markers.push_back(path_marker);
 
   auto polygon_marker = tier4_autoware_utils::createDefaultMarker(
-    "base_link", current_time, poly_ns, 0, Marker::LINE_LIST,
-    tier4_autoware_utils::createMarkerScale(0.03, 0.0, 0.0),
-    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+    "base_link", current_time, ns + "_polygon", 0, Marker::LINE_LIST,
+    tier4_autoware_utils::createMarkerScale(0.03, 0.0, 0.0), color);
   for (const auto & poly : polygons) {
     for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
       const auto & boost_cp = poly.outer().at(dp_idx);
@@ -476,6 +477,19 @@ void AEB::addMarker(
     }
   }
   debug_markers.markers.push_back(polygon_marker);
+}
+
+void AEB::addObjectDataMarker(
+  const std::vector<ObjectData> & objects, const rclcpp::Time & current_time,
+  const std_msgs::msg::ColorRGBA & color, const std::string & ns, MarkerArray & debug_markers)
+{
+  auto object_data_marker = tier4_autoware_utils::createDefaultMarker(
+    "base_link", current_time, ns + "_objects", 0, Marker::SPHERE_LIST,
+    tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1), color);
+  for (const auto & e : objects) {
+    object_data_marker.points.push_back(e.position);
+  }
+  debug_markers.markers.push_back(object_data_marker);
 }
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 
