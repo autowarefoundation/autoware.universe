@@ -37,7 +37,7 @@ std::string getTopicName(const ExternalRequestLaneChangeModule::Direction & dire
 {
   const std::string direction_name =
     direction == ExternalRequestLaneChangeModule::Direction::RIGHT ? "right" : "left";
-  return "ext_request_lane_change_" + direction_name;
+  return "external_request_lane_change_" + direction_name;
 }
 
 ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
