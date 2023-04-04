@@ -89,6 +89,20 @@ bool object_is_incoming(
 bool should_not_enter(
   const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
   const rclcpp::Logger & logger);
+/// @brief find the most preceding range
+/// @details the most preceding range is the first range in a succession of ranges with overlapping
+/// enter/exit indexes.
+/// @param [in] range range
+/// @param [in] inputs information used to take decisions (ranges, ego and objects data, route
+/// handler, lanelets)
+/// @return most preceding range
+OverlapRange find_most_preceding_range(const OverlapRange & range, const DecisionInputs & inputs);
+/// @brief set the velocity of a decision (or unset it) based on the distance away from the range
+/// @param [out] decision decision to update (either set its velocity or unset the decision)
+/// @param [in] distance distance between ego and the range corresponding to the decision
+/// @param [in] params parameters
+void set_decision_velocity(
+  std::optional<Slowdown> & decision, const double distance, const PlannerParam & params);
 /// @brief calculate the decision to slowdown or stop before an overlapping range
 /// @param [in] range the range to check
 /// @param [in] inputs information used to take decisions (ranges, ego and objects data, route

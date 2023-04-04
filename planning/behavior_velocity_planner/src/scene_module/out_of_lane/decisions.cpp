@@ -190,9 +190,7 @@ bool threshold_condition(const RangeTimes & range_times, const PlannerParam & pa
 bool intervals_condition(
   const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger)
 {
-  const auto object_is_going_opposite_way =
-    range_times.object.enter_time > range_times.object.exit_time;
-  if (object_is_going_opposite_way) {
+  const auto opposite_way_condition = [&]() -> bool {
     const auto ego_exits_before_object_enters =
       range_times.ego.exit_time + params.intervals_ego_buffer <
       range_times.object.enter_time + params.intervals_obj_buffer;
@@ -202,8 +200,9 @@ bool intervals_condition(
       "enter = %d\n",
       range_times.ego.exit_time + params.intervals_ego_buffer,
       range_times.object.enter_time + params.intervals_obj_buffer, ego_exits_before_object_enters);
-    if (ego_exits_before_object_enters) return true;
-  } else {
+    return ego_exits_before_object_enters;
+  };
+  const auto same_way_condition = [&]() -> bool {
     const auto object_enters_during_overlap =
       range_times.ego.enter_time - params.intervals_ego_buffer <
         range_times.object.enter_time + params.intervals_obj_buffer &&
@@ -220,10 +219,14 @@ bool intervals_condition(
       "not "
       "enter = %d\n",
       object_enters_during_overlap, object_exits_during_overlap,
-      (object_enters_during_overlap || object_exits_during_overlap));
-    if (object_enters_during_overlap || object_exits_during_overlap) return true;
-  }
-  return false;
+      object_enters_during_overlap || object_exits_during_overlap);
+    return object_enters_during_overlap || object_exits_during_overlap;
+  };
+
+  const auto object_is_going_same_way =
+    range_times.object.enter_time < range_times.object.exit_time;
+  return (object_is_going_same_way && same_way_condition()) ||
+         (!object_is_going_same_way && opposite_way_condition());
 }
 
 bool ttc_condition(
@@ -286,44 +289,49 @@ bool should_not_enter(
   return false;
 }
 
+OverlapRange find_most_preceding_range(const OverlapRange & range, const DecisionInputs & inputs)
+{
+  OverlapRange preceding_range = range;
+  bool found_preceding_range = true;
+  while (found_preceding_range) {
+    found_preceding_range = false;
+    for (const auto & other_range : inputs.ranges) {
+      if (
+        other_range.entering_path_idx < preceding_range.entering_path_idx &&
+        other_range.exiting_path_idx >= preceding_range.entering_path_idx) {
+        preceding_range = other_range;
+        found_preceding_range = true;
+      }
+    }
+  }
+  return preceding_range;
+}
+
+void set_decision_velocity(
+  std::optional<Slowdown> & decision, const double distance, const PlannerParam & params)
+{
+  if (distance < params.stop_dist_threshold) {
+    decision->velocity = 0.0;
+  } else if (distance < params.slow_dist_threshold) {
+    decision->velocity = params.slow_velocity;
+  } else {
+    decision.reset();
+  }
+}
+
 std::optional<Slowdown> calculate_decision(
   const OverlapRange & range, const DecisionInputs & inputs, const PlannerParam & params,
   const rclcpp::Logger & logger)
 {
-  const auto find_preceding_range = [&](auto & preceding_range) {
-    // find lowest entering_path_idx for ranges with overlapping start-end indexes
-    bool found_preceding_range = true;
-    while (found_preceding_range) {
-      found_preceding_range = false;
-      for (const auto & other_range : inputs.ranges) {
-        if (
-          other_range.entering_path_idx < preceding_range.entering_path_idx &&
-          other_range.exiting_path_idx >= preceding_range.entering_path_idx) {
-          preceding_range = other_range;
-          found_preceding_range = true;
-        }
-      }
-    }
-  };
   std::optional<Slowdown> decision;
-  const auto ego_dist_to_range = distance_along_path(inputs.ego_data, range.entering_path_idx);
   if (should_not_enter(range, inputs, params, logger)) {
-    auto stop_before_range = range;
-    if (params.strict) find_preceding_range(stop_before_range);
+    const auto stop_before_range = params.strict ? find_most_preceding_range(range, inputs) : range;
     decision.emplace();
     decision->target_path_idx = inputs.ego_data.first_path_idx +
                                 stop_before_range.entering_path_idx;  // add offset from curr pose
     decision->lane_to_avoid = stop_before_range.lane;
-
-    if (ego_dist_to_range < params.stop_dist_threshold) {
-      RCLCPP_DEBUG(logger, "\t\tWill stop\n");
-      decision->velocity = 0.0;
-    } else if (ego_dist_to_range < params.slow_dist_threshold) {
-      RCLCPP_DEBUG(logger, "\t\tWill slow\n");
-      decision->velocity = params.slow_velocity;
-    } else {
-      decision.reset();
-    }
+    const auto ego_dist_to_range = distance_along_path(inputs.ego_data, range.entering_path_idx);
+    set_decision_velocity(decision, ego_dist_to_range, params);
   }
   return decision;
 }
