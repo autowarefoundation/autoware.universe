@@ -22,6 +22,7 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
@@ -504,9 +505,15 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
   return {found_valid_path, found_safe_path};
 }
 
-bool LaneChangeModule::isSafe() const { return status_.is_safe; }
+bool LaneChangeModule::isSafe() const
+{
+  return status_.is_safe;
+}
 
-bool LaneChangeModule::isValidPath() const { return status_.is_valid_path; }
+bool LaneChangeModule::isValidPath() const
+{
+  return status_.is_valid_path;
+}
 
 bool LaneChangeModule::isValidPath(const PathWithLaneId & path) const
 {
@@ -640,12 +647,11 @@ bool LaneChangeModule::isAbortState() const
 bool LaneChangeModule::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
-  const auto arclength_current =
-    lanelet::utils::getArcCoordinates(status_.lane_change_lanes, current_pose);
-  const double travel_distance = arclength_current.length - status_.start_distance;
-  const double finish_distance =
-    status_.lane_change_path.length.sum() + parameters_->lane_change_finish_judge_buffer;
-  return travel_distance > finish_distance;
+  const auto & lane_change_path = status_.lane_change_path.path;
+  const auto & lane_change_end = status_.lane_change_path.shift_line.end;
+  const double dist_to_lane_change_end = motion_utils::calcSignedArcLength(
+    lane_change_path.points, current_pose.position, lane_change_end.position);
+  return dist_to_lane_change_end + parameters_->lane_change_finish_judge_buffer < 0.0;
 }
 
 void LaneChangeModule::setObjectDebugVisualization() const
@@ -744,8 +750,14 @@ void LaneChangeModule::updateSteeringFactorPtr(
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
 }
-Pose LaneChangeModule::getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-Twist LaneChangeModule::getEgoTwist() const { return planner_data_->self_odometry->twist.twist; }
+Pose LaneChangeModule::getEgoPose() const
+{
+  return planner_data_->self_odometry->pose.pose;
+}
+Twist LaneChangeModule::getEgoTwist() const
+{
+  return planner_data_->self_odometry->twist.twist;
+}
 std_msgs::msg::Header LaneChangeModule::getRouteHeader() const
 {
   return planner_data_->route_handler->getRouteHeader();

@@ -170,6 +170,7 @@ size_t getIdxByArclength(
   }
 }
 
+// TODO(murooka) This function should be replaced with motion_utils::cropPoints
 void clipPathLength(
   PathWithLaneId & path, const size_t target_idx, const double forward, const double backward)
 {
@@ -186,6 +187,7 @@ void clipPathLength(
   path.points = clipped_points;
 }
 
+// TODO(murooka) This function should be replaced with motion_utils::cropPoints
 void clipPathLength(
   PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params)
 {
@@ -456,7 +458,8 @@ std::vector<Pose> interpolatePose(
     std::sin(tf2::getYaw(end_pose.orientation)), new_s);
   for (size_t i = 0; i < interpolated_x.size(); ++i) {
     Pose pose{};
-    pose = util::lerpByPose(end_pose, start_pose, (base_s.back() - new_s.at(i)) / base_s.back());
+    pose = tier4_autoware_utils::calcInterpolatedPose(
+      end_pose, start_pose, (base_s.back() - new_s.at(i)) / base_s.back());
     pose.position.x = interpolated_x.at(i);
     pose.position.y = interpolated_y.at(i);
     pose.position.z = end_pose.position.z;

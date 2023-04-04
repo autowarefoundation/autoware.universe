@@ -54,13 +54,12 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets);
 
-std::pair<double, double> calcLaneChangingSpeedAndDistance(
-  const double velocity, const double shift_length, const double deceleration,
-  const double min_total_lc_len, const BehaviorPathPlannerParameters & com_param,
-  const LaneChangeParameters & lc_param);
+double calcLaneChangingDistance(
+  const double lane_changing_velocity, const double shift_length,
+  const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param);
 
 std::optional<LaneChangePath> constructCandidatePath(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
   const PathWithLaneId & target_lane_reference_path, const ShiftLine & shift_line,
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const double acceleration, const double prepare_distance, const double prepare_duration,
@@ -107,14 +106,15 @@ bool hasEnoughDistance(
 #endif
 
 ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
-  const lanelet::ConstLanelets & target_lanes, const PathWithLaneId & reference_path);
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
+  const lanelet::ConstLanelets & target_lanes, const PathWithLaneId & reference_path,
+  const double shift_length);
 
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double lane_changing_distance, const double min_total_lane_changing_distance,
-  const double forward_path_length, const double resample_interval, const bool is_goal_in_route);
+  const double lane_changing_distance, const double forward_path_length,
+  const double resample_interval, const bool is_goal_in_route);
 
 PathWithLaneId getPrepareSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
@@ -126,10 +126,10 @@ PathWithLaneId getPrepareSegment(
   const Pose & current_pose, const double backward_path_length, const double prepare_distance,
   const double prepare_speed);
 
-PathWithLaneId getLaneChangingSegment(
+PathWithLaneId getTargetSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
-  const double forward_path_length, const double arc_length_from_target,
-  const double target_lane_length, const LaneChangePhaseInfo dist_prepare_to_lc_end,
+  const double forward_path_length, const Pose & lane_changing_start_pose,
+  const double target_lane_length, const double lane_changing_distance,
   const double lane_changing_speed, const double total_required_min_dist);
 
 bool isEgoWithinOriginalLane(
