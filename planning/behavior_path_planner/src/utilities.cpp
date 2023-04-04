@@ -1829,7 +1829,7 @@ PathWithLaneId getCenterLinePath(
     raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
 
   // convert centerline, which we consider as CoG center,  to rear wheel center
-  if (true) {
+  if (parameter.enable_cog_on_centerline) {
     const double rear_to_cog = (parameter.vehicle_length / 2 - parameter.rear_overhang) * 1.2;
     return motion_utils::convertToRearWheelCenter(resampled_path_with_lane_id.points, rear_to_cog);
   }

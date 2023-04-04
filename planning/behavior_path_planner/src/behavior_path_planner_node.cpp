@@ -441,6 +441,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_signal_on_swerving = declare_parameter("turn_signal_on_swerving", true);
 
   p.enable_akima_spline_first = declare_parameter<bool>("enable_akima_spline_first");
+  p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
   p.input_path_interval = declare_parameter<double>("input_path_interval");
   p.output_path_interval = declare_parameter<double>("output_path_interval");
   p.visualize_maximum_drivable_area = declare_parameter("visualize_maximum_drivable_area", true);
