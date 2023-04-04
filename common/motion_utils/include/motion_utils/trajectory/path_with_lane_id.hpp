@@ -99,6 +99,11 @@ inline size_t findNearestSegmentIndexFromLaneId(
 
   return nearest_idx;
 }
+
+// NOTE: rear_to_cog is supposed to be positive
+autoware_auto_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double rear_to_cog,
+  const bool enable_last_point_compensation = true);
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__PATH_WITH_LANE_ID_HPP_
