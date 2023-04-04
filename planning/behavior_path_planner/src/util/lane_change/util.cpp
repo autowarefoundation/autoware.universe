@@ -371,7 +371,6 @@ std::pair<bool, bool> getLaneChangePaths(
     // lane changing start pose is at the end of prepare segment
     const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
 
-#ifndef USE_OLD_ARCHITECTURE
     const auto target_distance_from_lane_change_start_pose = util::getArcLengthToTargetLanelet(
       original_lanelets, target_lanelets.front(), lane_changing_start_pose);
     // In new architecture, there is a possibility that the lane change start pose is behind of the
@@ -380,7 +379,6 @@ std::pair<bool, bool> getLaneChangePaths(
     if (target_distance_from_lane_change_start_pose > 0.0) {
       break;
     }
-#endif
 
     const auto shift_length =
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanelets, lane_changing_start_pose);
