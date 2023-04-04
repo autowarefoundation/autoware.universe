@@ -79,7 +79,10 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
     p.max_x = static_cast<float>(declare_parameter("max_x", 1.0));
     p.max_y = static_cast<float>(declare_parameter("max_y", 1.0));
     p.max_z = static_cast<float>(declare_parameter("max_z", 1.0));
-    p.negative = static_cast<float>(declare_parameter("negative", false));
+    p.negative = static_cast<bool>(declare_parameter("negative", false));
+    if (tf_input_frame_.empty()) {
+      throw std::invalid_argument("Crop box requires non-empty input_frame");
+    }
   }
 
   // set additional publishers
@@ -145,17 +148,22 @@ void CropBoxFilterComponent::faster_filter(
     if ((!param_.negative && point_is_inside) || (param_.negative && !point_is_inside)) {
       memcpy(&output.data[output_size], &input->data[global_offset], input->point_step);
 
-      *reinterpret_cast<float *>(&output.data[output_size + x_offset]) = point[0];
-      *reinterpret_cast<float *>(&output.data[output_size + y_offset]) = point[1];
-      *reinterpret_cast<float *>(&output.data[output_size + z_offset]) = point[2];
+      if (transform_info.need_transform) {
+        *reinterpret_cast<float *>(&output.data[output_size + x_offset]) = point[0];
+        *reinterpret_cast<float *>(&output.data[output_size + y_offset]) = point[1];
+        *reinterpret_cast<float *>(&output.data[output_size + z_offset]) = point[2];
+      }
 
       output_size += input->point_step;
     }
   }
 
   output.data.resize(output_size);
-  output.header.frame_id =
-    tf_input_frame_;  // Note that `input->header.frame_id` is data before converted
+
+  // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
+  // == true`
+  output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
+
   output.height = 1;
   output.fields = input->fields;
   output.is_bigendian = input->is_bigendian;

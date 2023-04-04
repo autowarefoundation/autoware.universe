@@ -37,7 +37,7 @@ namespace fpa = freespace_planning_algorithms;
 
 const double length_lexus = 5.5;
 const double width_lexus = 2.75;
-const fpa::VehicleShape vehicle_shape = fpa::VehicleShape{length_lexus, width_lexus, 1.5};
+const fpa::VehicleShape vehicle_shape = fpa::VehicleShape(length_lexus, width_lexus, 1.5);
 const double pi = 3.1415926;
 const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
 const std::array<double, 3> goal_pose1{8.0, 26.3, pi * 1.5};   // easiest
@@ -364,9 +364,15 @@ TEST(AstarSearchTestSuite, MultiCurvature)
   EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI));
 }
 
-TEST(RRTStarTestSuite, Fastest) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST)); }
+TEST(RRTStarTestSuite, Fastest)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST));
+}
 
-TEST(RRTStarTestSuite, Update) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE)); }
+TEST(RRTStarTestSuite, Update)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE));
+}
 
 TEST(RRTStarTestSuite, InformedUpdate)
 {

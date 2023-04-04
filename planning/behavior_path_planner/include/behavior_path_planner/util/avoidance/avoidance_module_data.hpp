@@ -408,6 +408,9 @@ struct AvoidancePlanningData
   // the others
   ObjectDataArray other_objects;
 
+  // nearest object that should be avoid
+  boost::optional<ObjectData> stop_target_object{boost::none};
+
   // raw shift point
   AvoidLineArray unapproved_raw_sl{};
 
@@ -494,6 +497,7 @@ struct DebugData
   AvoidLineArray quantized;
   AvoidLineArray trim_small_shift;
   AvoidLineArray trim_similar_grad_shift_second;
+  AvoidLineArray trim_similar_grad_shift_third;
   AvoidLineArray trim_momentary_return;
   AvoidLineArray trim_too_sharp_shift;
   std::vector<double> pos_shift;

@@ -199,7 +199,8 @@ PredictedPath convertToPredictedPath(
   double prev_vehicle_speed = vehicle_speed;
 
   // first point
-  predicted_path.path.push_back(lerpPoseByLength(path.points, vehicle_pose_frenet.length));
+  predicted_path.path.push_back(
+    motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length));
 
   for (double t = resolution; t < duration; t += resolution) {
     double accelerated_velocity = prev_vehicle_speed + acceleration * t;
@@ -213,7 +214,7 @@ PredictedPath convertToPredictedPath(
 
     length += travel_distance;
     predicted_path.path.push_back(
-      lerpPoseByLength(path.points, vehicle_pose_frenet.length + length));
+      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
     prev_vehicle_speed = accelerated_velocity;
   }
   return predicted_path;
@@ -273,7 +274,7 @@ bool lerpByTimeStamp(const PredictedPath & path, const double t_query, Pose * le
       const double duration = time_step.seconds();
       const double offset = t_query - prev_t;
       const double ratio = offset / duration;
-      *lerped_pt = lerpByPose(prev_pt, pt, ratio);
+      *lerped_pt = tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
       return true;
     }
   }
@@ -315,7 +316,7 @@ bool lerpByTimeStamp(
       const double duration = time_step.seconds();
       const double offset = t_query - prev_t;
       const double ratio = offset / duration;
-      *lerped_pt = lerpByPose(prev_pt, pt, ratio);
+      *lerped_pt = tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
       return true;
     }
   }
@@ -423,14 +424,12 @@ double calcLateralDistanceFromEgoToObject(
 
   for (const auto & p : obj_polygon.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    // left direction is positive
     const double signed_distance_from_left =
       tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, point);
-    // right direction is positive
     const double signed_distance_from_right =
       tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, point);
 
-    if (signed_distance_from_left < 0.0 && signed_distance_from_right < 0.0) {
+    if (signed_distance_from_left < 0.0 && signed_distance_from_right > 0.0) {
       // point is between left and right
       return 0.0;
     }
@@ -1228,6 +1227,143 @@ void generateDrivableArea(
   }
 }
 
+// generate drivable area by expanding path for freespace
+void generateDrivableArea(
+  PathWithLaneId & path, const double vehicle_length, const double vehicle_width,
+  const double margin, const bool is_driving_forward)
+{
+  using tier4_autoware_utils::calcOffsetPose;
+
+  // remove path points which is close to the previous point
+  PathWithLaneId resampled_path{};
+  const double resample_interval = 2.0;
+  for (size_t i = 0; i < path.points.size(); ++i) {
+    if (i == 0) {
+      resampled_path.points.push_back(path.points.at(i));
+    } else {
+      const auto & prev_point = resampled_path.points.back().point.pose.position;
+      const auto & curr_point = path.points.at(i).point.pose.position;
+      const double signed_arc_length =
+        motion_utils::calcSignedArcLength(path.points, prev_point, curr_point);
+      if (signed_arc_length > resample_interval) {
+        resampled_path.points.push_back(path.points.at(i));
+      }
+    }
+  }
+  // add last point of path if enough far from the one of resampled path
+  constexpr double th_last_point_distance = 0.3;
+  if (
+    tier4_autoware_utils::calcDistance2d(
+      resampled_path.points.back().point.pose.position, path.points.back().point.pose.position) >
+    th_last_point_distance) {
+    resampled_path.points.push_back(path.points.back());
+  }
+
+  // create bound point by calculating offset point
+  std::vector<Point> left_bound;
+  std::vector<Point> right_bound;
+  for (const auto & point : resampled_path.points) {
+    const auto & pose = point.point.pose;
+
+    const auto left_point = calcOffsetPose(pose, 0, vehicle_width / 2.0 + margin, 0);
+    const auto right_point = calcOffsetPose(pose, 0, -vehicle_width / 2.0 - margin, 0);
+
+    left_bound.push_back(left_point.position);
+    right_bound.push_back(right_point.position);
+  }
+
+  if (is_driving_forward) {
+    // add backward offset point to bound
+    const Pose first_point =
+      calcOffsetPose(resampled_path.points.front().point.pose, -vehicle_length, 0, 0);
+    const Pose left_first_point = calcOffsetPose(first_point, 0, vehicle_width / 2.0 + margin, 0);
+    const Pose right_first_point = calcOffsetPose(first_point, 0, -vehicle_width / 2.0 - margin, 0);
+    left_bound.insert(left_bound.begin(), left_first_point.position);
+    right_bound.insert(right_bound.begin(), right_first_point.position);
+
+    // add forward offset point to bound
+    const Pose last_point =
+      calcOffsetPose(resampled_path.points.back().point.pose, vehicle_length, 0, 0);
+    const Pose left_last_point = calcOffsetPose(last_point, 0, vehicle_width / 2.0 + margin, 0);
+    const Pose right_last_point = calcOffsetPose(last_point, 0, -vehicle_width / 2.0 - margin, 0);
+    left_bound.push_back(left_last_point.position);
+    right_bound.push_back(right_last_point.position);
+  } else {
+    // add forward offset point to bound
+    const Pose first_point =
+      calcOffsetPose(resampled_path.points.front().point.pose, vehicle_length, 0, 0);
+    const Pose left_first_point = calcOffsetPose(first_point, 0, vehicle_width / 2.0 + margin, 0);
+    const Pose right_first_point = calcOffsetPose(first_point, 0, -vehicle_width / 2.0 - margin, 0);
+    left_bound.insert(left_bound.begin(), left_first_point.position);
+    right_bound.insert(right_bound.begin(), right_first_point.position);
+
+    // add backward offset point to bound
+    const Pose last_point =
+      calcOffsetPose(resampled_path.points.back().point.pose, -vehicle_length, 0, 0);
+    const Pose left_last_point = calcOffsetPose(last_point, 0, vehicle_width / 2.0 + margin, 0);
+    const Pose right_last_point = calcOffsetPose(last_point, 0, -vehicle_width / 2.0 - margin, 0);
+    left_bound.push_back(left_last_point.position);
+    right_bound.push_back(right_last_point.position);
+  }
+
+  if (left_bound.empty() || right_bound.empty()) {
+    return;
+  }
+
+  // fix intersected bound
+  // if bound is intersected, remove them and insert intersection point
+  typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
+  typedef boost::geometry::model::linestring<BoostPoint> LineString;
+  auto modify_bound_intersection = [](const std::vector<Point> & bound) {
+    const double intersection_check_distance = 10.0;
+    std::vector<Point> modified_bound;
+    size_t i = 0;
+    while (i < bound.size() - 1) {
+      BoostPoint p1(bound.at(i).x, bound.at(i).y);
+      BoostPoint p2(bound.at(i + 1).x, bound.at(i + 1).y);
+      LineString p_line;
+      p_line.push_back(p1);
+      p_line.push_back(p2);
+      bool intersection_found = false;
+      for (size_t j = i + 2; j < bound.size() - 1; j++) {
+        const double distance = tier4_autoware_utils::calcDistance2d(bound.at(i), bound.at(j));
+        if (distance > intersection_check_distance) {
+          break;
+        }
+        LineString q_line;
+        BoostPoint q1(bound.at(j).x, bound.at(j).y);
+        BoostPoint q2(bound.at(j + 1).x, bound.at(j + 1).y);
+        q_line.push_back(q1);
+        q_line.push_back(q2);
+        std::vector<BoostPoint> intersection_points;
+        boost::geometry::intersection(p_line, q_line, intersection_points);
+        if (intersection_points.size() > 0) {
+          modified_bound.push_back(bound.at(i));
+          Point intersection_point;
+          intersection_point.x = intersection_points.at(0).x();
+          intersection_point.y = intersection_points.at(0).y();
+          modified_bound.push_back(intersection_point);
+          i = j + 1;
+          intersection_found = true;
+          break;
+        }
+      }
+      if (!intersection_found) {
+        modified_bound.push_back(bound.at(i));
+        i++;
+      }
+    }
+    modified_bound.push_back(bound.back());
+    return modified_bound;
+  };
+  std::vector<Point> modified_left_bound = modify_bound_intersection(left_bound);
+  std::vector<Point> modified_right_bound = modify_bound_intersection(right_bound);
+
+  // set bound to path
+  path.left_bound = modified_left_bound;
+  path.right_bound = modified_right_bound;
+}
+
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
 {
   const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
@@ -1465,7 +1601,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
     if (accumulated_length > length) {
       insert_idx = i;
       const double ratio = 1 - (accumulated_length - length) / segment_length;
-      stop_pose = lerpByPose(prev_pose, curr_pose, ratio);
+      stop_pose = tier4_autoware_utils::calcInterpolatedPose(prev_pose, curr_pose, ratio);
       break;
     }
   }
@@ -1792,6 +1928,22 @@ void shiftPose(Pose * pose, double shift_length)
   pose->position.y += std::cos(yaw) * shift_length;
 }
 
+PathWithLaneId getCenterLinePathFromRootLanelet(
+  const lanelet::ConstLanelet & root_lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & p = planner_data->parameters;
+
+  const auto reference_lanes = route_handler->getLaneletSequence(
+    root_lanelet, current_pose, p.backward_path_length, p.forward_path_length);
+
+  return getCenterLinePath(
+    *route_handler, reference_lanes, current_pose, p.backward_path_length, p.forward_path_length,
+    p);
+}
+
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
   const Pose & pose, const double backward_path_length, const double forward_path_length,
@@ -1824,7 +1976,11 @@ PathWithLaneId getCenterLinePath(
     s_forward = std::min(s_forward, goal_arc_coordinates.length - lane_change_buffer);
   }
 
-  return route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
+  const auto raw_path_with_lane_id =
+    route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
+  const auto resampled_path_with_lane_id = motion_utils::resamplePath(
+    raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
+  return resampled_path_with_lane_id;
 }
 
 // for lane following
@@ -1937,6 +2093,32 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
   return route_handler->getLaneletSequence(
     current_lane, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length);
+}
+
+lanelet::ConstLanelets getCurrentLanesFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & p = planner_data->parameters;
+
+  std::set<uint64_t> lane_ids;
+  for (const auto & p : path.points) {
+    for (const auto & id : p.lane_ids) {
+      lane_ids.insert(id);
+    }
+  }
+
+  lanelet::ConstLanelets reference_lanes{};
+  for (const auto & id : lane_ids) {
+    reference_lanes.push_back(planner_data->route_handler->getLaneletsFromId(id));
+  }
+
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(reference_lanes, current_pose, &current_lane);
+
+  return route_handler->getLaneletSequence(
+    current_lane, current_pose, p.backward_path_length, p.forward_path_length);
 }
 
 lanelet::ConstLanelets extendLanes(
@@ -2268,16 +2450,14 @@ bool hasEnoughDistance(
   const auto [front_vehicle_velocity, rear_vehicle_velocity] = std::invoke([&]() {
     debug.object_twist.linear = object_current_twist.linear;
     if (is_obj_in_front) {
-      return std::make_pair(
-        util::l2Norm(object_current_twist.linear), util::l2Norm(ego_current_twist.linear));
+      return std::make_pair(object_current_twist.linear.x, ego_current_twist.linear.x);
     }
-    return std::make_pair(
-      util::l2Norm(ego_current_twist.linear), util::l2Norm(object_current_twist.linear));
+    return std::make_pair(ego_current_twist.linear.x, object_current_twist.linear.x);
   });
 
   const auto is_unsafe_dist_between_vehicle = std::invoke([&]() {
     // ignore this for parked vehicle.
-    if (l2Norm(object_current_twist.linear) < 0.1) {
+    if (object_current_twist.linear.x < 0.1) {
       return false;
     }
 
@@ -2326,7 +2506,7 @@ bool isSafeInLaneletCollisionCheck(
 
   Pose expected_obj_pose = target_object.kinematics.initial_pose_with_covariance.pose;
   const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
-  const auto object_speed = l2Norm(object_twist.linear);
+  const auto object_speed = object_twist.linear.x;
   const auto ignore_check_at_time = [&](const double current_time) {
     return (
       (current_time < prepare_duration) &&
@@ -2387,7 +2567,7 @@ bool isSafeInFreeSpaceCollisionCheck(
   }
 
   const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
-  const auto object_speed = l2Norm(object_twist.linear);
+  const auto object_speed = object_twist.linear.x;
   const auto ignore_check_at_time = [&](const double current_time) {
     return (
       (current_time < prepare_duration) &&

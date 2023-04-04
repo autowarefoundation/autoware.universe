@@ -32,6 +32,7 @@
 #include <vector>
 namespace behavior_path_planner
 {
+#ifdef USE_OLD_ARCHITECTURE
 std::string getTopicName(const ExternalRequestLaneChangeModule::Direction & direction)
 {
   const std::string direction_name =
@@ -398,7 +399,10 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
   return {found_valid_path, found_safe_path};
 }
 
-bool ExternalRequestLaneChangeModule::isSafe() const { return status_.is_safe; }
+bool ExternalRequestLaneChangeModule::isSafe() const
+{
+  return status_.is_safe;
+}
 
 bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) const
 {
@@ -451,7 +455,7 @@ bool ExternalRequestLaneChangeModule::isNearEndOfLane() const
 bool ExternalRequestLaneChangeModule::isCurrentSpeedLow() const
 {
   constexpr double threshold_ms = 10.0 * 1000 / 3600;
-  return util::l2Norm(getEgoTwist().linear) < threshold_ms;
+  return getEgoTwist().linear.x < threshold_ms;
 }
 
 bool ExternalRequestLaneChangeModule::isAbortConditionSatisfied()
@@ -574,7 +578,7 @@ std::shared_ptr<LaneChangeDebugMsgArray> ExternalRequestLaneChangeModule::get_de
     debug_msg.is_front = debug_data.is_front;
     debug_msg.relative_distance = debug_data.relative_to_ego;
     debug_msg.failed_reason = debug_data.failed_reason;
-    debug_msg.velocity = util::l2Norm(debug_data.object_twist.linear);
+    debug_msg.velocity = debug_data.object_twist.linear.x;
     debug_msg_array.lane_change_info.push_back(debug_msg);
   }
   lane_change_debug_msg_array_ = debug_msg_array;
@@ -771,5 +775,6 @@ ExternalRequestLaneChangeLeftModule::ExternalRequestLaneChangeLeftModule(
 : ExternalRequestLaneChangeModule{name, node, parameters, Direction::LEFT}
 {
 }
+#endif
 
 }  // namespace behavior_path_planner

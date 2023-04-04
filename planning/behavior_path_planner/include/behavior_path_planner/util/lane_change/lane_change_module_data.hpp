@@ -79,6 +79,8 @@ struct LaneChangeTargetObjectIndices
   std::vector<size_t> target_lane{};
   std::vector<size_t> other_lane{};
 };
+
+enum class LaneChangeModuleType { NORMAL = 0, EXTERNAL_REQUEST };
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_

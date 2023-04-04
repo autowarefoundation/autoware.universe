@@ -688,48 +688,6 @@ TEST(trajectory, calcSignedArcLengthFromPointToIndex)
   EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(4.3, 7.0, 0.0), 2), -2.3, epsilon);
 }
 
-TEST(trajectory, calcSignedArcLengthFromPoseToIndex_DistThreshold)
-{
-  using motion_utils::calcSignedArcLength;
-
-  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
-
-  // Out of threshold
-  EXPECT_FALSE(calcSignedArcLength(traj.points, createPose(0.0, 0.6, 0.0, 0.0, 0.0, 0.0), 3, 0.5));
-
-  // On threshold
-  EXPECT_NEAR(
-    *calcSignedArcLength(traj.points, createPose(0.0, 0.5, 0.0, 0.0, 0.0, 0.0), 3, 0.5), 3.0,
-    epsilon);
-
-  // Within threshold
-  EXPECT_NEAR(
-    *calcSignedArcLength(traj.points, createPose(0.0, 0.4, 0.0, 0.0, 0.0, 0.0), 3, 0.5), 3.0,
-    epsilon);
-}
-
-TEST(trajectory, calcSignedArcLengthFromPoseToIndex_YawThreshold)
-{
-  using motion_utils::calcSignedArcLength;
-
-  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
-  const auto max_d = std::numeric_limits<double>::max();
-
-  // Out of threshold
-  EXPECT_FALSE(
-    calcSignedArcLength(traj.points, createPose(0.0, 0.5, 0.0, 0.0, 0.0, 1.1), 3, max_d, 1.0));
-
-  // On threshold
-  EXPECT_NEAR(
-    *calcSignedArcLength(traj.points, createPose(0.0, 0.5, 0.0, 0.0, 0.0, 1.0), 3, max_d, 1.0), 3.0,
-    epsilon);
-
-  // Within threshold
-  EXPECT_NEAR(
-    *calcSignedArcLength(traj.points, createPose(0.0, 0.5, 0.0, 0.0, 0.0, 0.9), 3, max_d, 1.0), 3.0,
-    epsilon);
-}
-
 TEST(trajectory, calcSignedArcLengthFromIndexToPoint)
 {
   using motion_utils::calcSignedArcLength;
@@ -3784,6 +3742,96 @@ TEST(trajectory, insertStopPoint_from_a_pose)
   }
 }
 
+TEST(trajectory, insertDecelPoint_from_a_point)
+{
+  using motion_utils::calcArcLength;
+  using motion_utils::findNearestSegmentIndex;
+  using motion_utils::insertDecelPoint;
+  using tier4_autoware_utils::calcDistance2d;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::getLongitudinalVelocity;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 10.0);
+  const auto total_length = calcArcLength(traj.points);
+  const double decel_velocity = 5.0;
+
+  // Insert (From Zero Point)
+  {
+    for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
+      auto traj_out = traj;
+      const geometry_msgs::msg::Point src_point = createPoint(0.0, 0.0, 0.0);
+      const auto p_target = createPoint(x_start, 0.0, 0.0);
+      const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+      const auto insert_idx = insertDecelPoint(src_point, x_start, decel_velocity, traj_out.points);
+
+      EXPECT_NE(insert_idx, boost::none);
+      EXPECT_EQ(insert_idx.get(), base_idx + 1);
+      EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+      for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        if (i < insert_idx.get()) {
+          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), 10.0, epsilon);
+        } else {
+          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), decel_velocity, epsilon);
+        }
+      }
+    }
+  }
+
+  // Insert (From Non-Zero Point)
+  {
+    const double src_point_x = 5.0;
+    const double src_point_y = 3.0;
+    for (double x_start = 0.5; x_start < total_length - src_point_x; x_start += 1.0) {
+      auto traj_out = traj;
+      const geometry_msgs::msg::Point src_point = createPoint(src_point_x, src_point_y, 0.0);
+      const auto p_target = createPoint(src_point_x + x_start, 0.0, 0.0);
+      const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+      const auto insert_idx = insertDecelPoint(src_point, x_start, decel_velocity, traj_out.points);
+
+      EXPECT_NE(insert_idx, boost::none);
+      EXPECT_EQ(insert_idx.get(), base_idx + 1);
+      EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+      for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        if (i < insert_idx.get()) {
+          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), 10.0, epsilon);
+        } else {
+          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), decel_velocity, epsilon);
+        }
+      }
+    }
+  }
+
+  // No Insert
+  {
+    const double src_point_x = 2.0;
+    const double src_point_y = 3.0;
+    for (double x_start = 1e-3; x_start < total_length - src_point_x; x_start += 1.0) {
+      auto traj_out = traj;
+      const geometry_msgs::msg::Point src_point = createPoint(src_point_x, src_point_y, 0.0);
+      const auto p_target = createPoint(src_point_x + x_start, 0.0, 0.0);
+      const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+      const auto insert_idx = insertDecelPoint(src_point, x_start, decel_velocity, traj_out.points);
+
+      EXPECT_NE(insert_idx, boost::none);
+      EXPECT_EQ(insert_idx.get(), base_idx);
+      EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+      for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        if (i < insert_idx.get()) {
+          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), 10.0, epsilon);
+        } else {
+          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), decel_velocity, epsilon);
+        }
+      }
+    }
+  }
+}
+
 TEST(trajectory, findFirstNearestIndexWithSoftConstraints)
 {
   using motion_utils::findFirstNearestIndexWithSoftConstraints;
@@ -4583,5 +4631,98 @@ TEST(trajectory, removeOverlapPoints)
     const Trajectory traj;
     const auto removed_traj = removeOverlapPoints(traj.points);
     EXPECT_TRUE(removed_traj.empty());
+  }
+}
+
+TEST(trajectory, cropForwardPoints)
+{
+  using motion_utils::cropForwardPoints;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+
+  {  // Normal case
+    const auto cropped_traj_points =
+      cropForwardPoints(traj.points, tier4_autoware_utils::createPoint(1.5, 1.5, 0.0), 1, 4.8);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(7));
+  }
+
+  {  // Forward length is longer than points arc length.
+    const auto cropped_traj_points =
+      cropForwardPoints(traj.points, tier4_autoware_utils::createPoint(1.5, 1.5, 0.0), 1, 10.0);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
+  }
+
+  {  // Point is on the previous segment
+    const auto cropped_traj_points =
+      cropForwardPoints(traj.points, tier4_autoware_utils::createPoint(1.0, 1.0, 0.0), 0, 2.5);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
+  }
+
+  {  // Point is on the next segment
+    const auto cropped_traj_points =
+      cropForwardPoints(traj.points, tier4_autoware_utils::createPoint(1.0, 1.0, 0.0), 1, 2.5);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
+  }
+}
+
+TEST(trajectory, cropBackwardPoints)
+{
+  using motion_utils::cropBackwardPoints;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+
+  {  // Normal case
+    const auto cropped_traj_points =
+      cropBackwardPoints(traj.points, tier4_autoware_utils::createPoint(8.5, 8.5, 0.0), 8, 4.8);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(6));
+  }
+
+  {  // Backward length is longer than points arc length.
+    const auto cropped_traj_points =
+      cropBackwardPoints(traj.points, tier4_autoware_utils::createPoint(8.5, 8.5, 0.0), 8, 10.0);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
+  }
+
+  {  // Point is on the previous segment
+    const auto cropped_traj_points =
+      cropBackwardPoints(traj.points, tier4_autoware_utils::createPoint(8.0, 8.0, 0.0), 7, 2.5);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
+  }
+
+  {  // Point is on the next segment
+    const auto cropped_traj_points =
+      cropBackwardPoints(traj.points, tier4_autoware_utils::createPoint(8.0, 8.0, 0.0), 8, 2.5);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
+  }
+}
+
+TEST(trajectory, cropPoints)
+{
+  using motion_utils::cropPoints;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+
+  {  // Normal case
+    const auto cropped_traj_points =
+      cropPoints(traj.points, tier4_autoware_utils::createPoint(3.5, 3.5, 0.0), 3, 2.3, 1.2);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(3));
+  }
+
+  {  // Length is longer than points arc length.
+    const auto cropped_traj_points =
+      cropPoints(traj.points, tier4_autoware_utils::createPoint(3.5, 3.5, 0.0), 3, 10.0, 10.0);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
+  }
+
+  {  // Point is on the previous segment
+    const auto cropped_traj_points =
+      cropPoints(traj.points, tier4_autoware_utils::createPoint(3.0, 3.0, 0.0), 2, 2.2, 1.9);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
+  }
+
+  {  // Point is on the next segment
+    const auto cropped_traj_points =
+      cropPoints(traj.points, tier4_autoware_utils::createPoint(3.0, 3.0, 0.0), 3, 2.2, 1.9);
+    EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 }
