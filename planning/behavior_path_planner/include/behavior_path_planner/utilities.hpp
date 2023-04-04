@@ -452,6 +452,10 @@ double calcLaneChangeBuffer(
 
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
+
+std::vector<DrivableLanes> combineDrivableLanes(
+  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
+  const std::vector<DrivableLanes> & new_drivable_lanes_vec);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

@@ -210,7 +210,7 @@ private:
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
 
   void updateLaneChangeStatus();
-  void generateExtendedDrivableArea(PathWithLaneId & path);
+  void generateExtendedDrivableArea(BehaviorModuleOutput & output);
   void updateOutputTurnSignal(BehaviorModuleOutput & output);
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
   bool isApprovedPathSafe(Pose & ego_pose_before_collision) const;

@@ -53,15 +53,10 @@ BT::NodeStatus LaneFollowingModule::updateState()
   return current_state_;
 }
 
-BehaviorModuleOutput LaneFollowingModule::plan()
-{
-  BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  return output;
-}
+BehaviorModuleOutput LaneFollowingModule::plan() { return getReferencePath(); }
 CandidateOutput LaneFollowingModule::planCandidate() const
 {
-  return CandidateOutput(getReferencePath());
+  return CandidateOutput(*getReferencePath().path);
 }
 void LaneFollowingModule::onEntry()
 {
@@ -104,7 +99,7 @@ lanelet::ConstLanelets getLaneletsFromPath(
   return lanelets;
 }
 
-PathWithLaneId LaneFollowingModule::getReferencePath() const
+BehaviorModuleOutput LaneFollowingModule::getReferencePath() const
 {
   PathWithLaneId reference_path{};
 
@@ -119,7 +114,9 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   if (!planner_data_->route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
     RCLCPP_ERROR_THROTTLE(
       getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
-    return reference_path;  // TODO(Horibe)
+    BehaviorModuleOutput output;
+    output.path = std::make_shared<PathWithLaneId>(reference_path);
+    return output;  // TODO(Horibe)
   }
 
   // For current_lanes with desired length
@@ -127,7 +124,9 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
 
   if (current_lanes.empty()) {
-    return reference_path;
+    BehaviorModuleOutput output;
+    output.path = std::make_shared<PathWithLaneId>(reference_path);
+    return output;
   }
 
   // calculate path with backward margin to avoid end points' instability by spline interpolation
@@ -167,8 +166,10 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
 
-  util::generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data_);
+  BehaviorModuleOutput output;
+  output.path = std::make_shared<PathWithLaneId>(reference_path);
+  output.drivable_area_info.drivable_lanes = drivable_lanes;
 
-  return reference_path;
+  return output;
 }
 }  // namespace behavior_path_planner

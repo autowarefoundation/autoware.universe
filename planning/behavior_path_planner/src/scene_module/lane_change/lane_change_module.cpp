@@ -195,9 +195,8 @@ BehaviorModuleOutput LaneChangeModule::plan()
     }
   }
 
-  generateExtendedDrivableArea(path);
-
   BehaviorModuleOutput output;
+
   output.path = std::make_shared<PathWithLaneId>(path);
 #ifdef USE_OLD_ARCHITECTURE
   path_reference_ = getPreviousModuleOutput().reference_path;
@@ -213,6 +212,8 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
+
+  generateExtendedDrivableArea(output);
 
   return output;
 }
@@ -762,21 +763,21 @@ std_msgs::msg::Header LaneChangeModule::getRouteHeader() const
 {
   return planner_data_->route_handler->getRouteHeader();
 }
-void LaneChangeModule::generateExtendedDrivableArea(PathWithLaneId & path)
+void LaneChangeModule::generateExtendedDrivableArea(BehaviorModuleOutput & output)
 {
-  const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
   auto drivable_lanes = lane_change_utils::generateDrivableLanes(
     *route_handler, status_.current_lanes, status_.lane_change_lanes);
 #ifndef USE_OLD_ARCHITECTURE
-  drivable_lanes = lane_change_utils::combineDrivableLanes(
-    getPreviousModuleOutput().drivable_lanes, drivable_lanes);
+  drivable_lanes = util::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes, drivable_lanes);
 #endif
-  const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
+  output.drivable_area_info.drivable_lanes = drivable_lanes;
+
+  const auto shorten_lanes = util::cutOverlappedLanes(*output.path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-  util::generateDrivableArea(path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
 
 bool LaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) const

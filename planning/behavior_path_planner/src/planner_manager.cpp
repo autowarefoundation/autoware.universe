@@ -97,6 +97,11 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     addApprovedModule(candidate_module_opt.get());
   }
 
+  // TODO(murooka) generateDrivableArea, this is for BT as well
+  // util::generateDrivableArea(
+  // PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
+  // const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward)
+
   processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
 
   return {};
@@ -376,7 +381,7 @@ BehaviorModuleOutput PlannerManager::getReferencePath(
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(reference_path);
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
-  output.drivable_lanes = drivable_lanes;
+  output.drivable_area_info.drivable_lanes = drivable_lanes;
 
   return output;
 }

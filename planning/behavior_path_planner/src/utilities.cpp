@@ -2563,4 +2563,73 @@ lanelet::ConstLanelets getLaneletsFromPath(
 
   return lanelets;
 }
+
+std::vector<DrivableLanes> combineDrivableLanes(
+  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
+  const std::vector<DrivableLanes> & new_drivable_lanes_vec)
+{
+  const auto has_same_lane =
+    [](const lanelet::ConstLanelet & target_lane, const lanelet::ConstLanelets & lanes) {
+      return std::find_if(lanes.begin(), lanes.end(), [&](const auto & ll) {
+               return ll.id() == target_lane.id();
+             }) != lanes.end();
+    };
+
+  const auto convert_to_lanes = [](const DrivableLanes & drivable_lanes) {
+    auto lanes = drivable_lanes.middle_lanes;
+    lanes.push_back(drivable_lanes.right_lane);
+    lanes.push_back(drivable_lanes.left_lane);
+    return lanes;
+  };
+
+  auto updated_drivable_lanes_vec = original_drivable_lanes_vec;
+  for (auto & updated_drivable_lanes : updated_drivable_lanes_vec) {
+    // calculted corresponding index of new_drivable_lanes
+    const auto new_drivable_lanes = [&]() -> std::optional<DrivableLanes> {
+      for (const auto & new_drivable_lanes : new_drivable_lanes_vec) {
+        for (const auto & ll : convert_to_lanes(updated_drivable_lanes)) {
+          if (has_same_lane(ll, convert_to_lanes(new_drivable_lanes))) {
+            return new_drivable_lanes;
+          }
+        }
+      }
+      return std::nullopt;
+    }();
+    if (!new_drivable_lanes) {
+      continue;
+    }
+
+    // update left lane
+    if (has_same_lane(updated_drivable_lanes.left_lane, convert_to_lanes(*new_drivable_lanes))) {
+      updated_drivable_lanes.left_lane = new_drivable_lanes->left_lane;
+    }
+    // update right lane
+    if (has_same_lane(updated_drivable_lanes.right_lane, convert_to_lanes(*new_drivable_lanes))) {
+      updated_drivable_lanes.right_lane = new_drivable_lanes->right_lane;
+    }
+    // update middle lanes
+    for (const auto & middle_lane : convert_to_lanes(*new_drivable_lanes)) {
+      if (!has_same_lane(middle_lane, convert_to_lanes(updated_drivable_lanes))) {
+        updated_drivable_lanes.middle_lanes.push_back(middle_lane);
+      }
+    }
+
+    // validate middle lanes
+    auto & middle_lanes = updated_drivable_lanes.middle_lanes;
+    if (has_same_lane(updated_drivable_lanes.right_lane, middle_lanes)) {
+      middle_lanes.erase(
+        std::remove(
+          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.right_lane),
+        std::cend(middle_lanes));
+    }
+    if (has_same_lane(updated_drivable_lanes.left_lane, middle_lanes)) {
+      middle_lanes.erase(
+        std::remove(
+          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.left_lane),
+        std::cend(middle_lanes));
+    }
+  }
+
+  return updated_drivable_lanes_vec;
+}
 }  // namespace behavior_path_planner::util

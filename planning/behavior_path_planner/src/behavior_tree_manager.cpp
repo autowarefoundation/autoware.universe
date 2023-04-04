@@ -108,6 +108,14 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
     m->publishRTCStatus();
     m->publishSteeringFactor();
   });
+
+  // generate drivable area
+  if (output.path) {
+    util::generateDrivableArea(
+      *output.path, output.drivable_area_info.drivable_lanes, data->parameters.vehicle_length,
+      data);
+  }
+
   return output;
 }
 
