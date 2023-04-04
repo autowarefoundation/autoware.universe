@@ -31,7 +31,6 @@ public:
   CameraPoseInitializer();
 
 private:
-  const Eigen::Vector2d cov_xx_yy_;
   const int angle_resolution_;
   std::unique_ptr<LaneImage> lane_image_{nullptr};
   std::unique_ptr<initializer::MarkerModule> marker_module_{nullptr};
@@ -53,9 +52,8 @@ private:
     const RequestPoseAlignment::Request::SharedPtr,
     RequestPoseAlignment::Response::SharedPtr request);
   PoseCovStamped create_rectified_initial_pose(
-    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
-    const std_msgs::msg::Header & header);
+    const Eigen::Vector3f & pos, double yaw_angle_rad, const PoseCovStamped & src_msg);
 
-  bool estimate_pose(const Eigen::Vector3f & position, Eigen::Vector3f & tangent);
+  bool estimate_pose(const Eigen::Vector3f & position, double & yaw_angle_rad, double yaw_std_rad);
 };
 }  // namespace pcdless

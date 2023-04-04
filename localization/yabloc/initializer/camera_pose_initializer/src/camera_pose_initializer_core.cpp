@@ -11,9 +11,7 @@
 namespace pcdless
 {
 CameraPoseInitializer::CameraPoseInitializer()
-: Node("camera_pose_initializer"),
-  cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()},
-  angle_resolution_{declare_parameter("angle_resolution_", 60)}
+: Node("camera_pose_initializer"), angle_resolution_{declare_parameter("angle_resolution", 30)}
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -77,7 +75,7 @@ int count_nonzero(cv::Mat image_3ch)
 }
 
 bool CameraPoseInitializer::estimate_pose(
-  const Eigen::Vector3f & position, Eigen::Vector3f & tangent)
+  const Eigen::Vector3f & position, double & yaw_angle_rad, double yaw_std_rad)
 {
   if (!projector_module_->define_project_func()) {
     return false;
@@ -86,15 +84,15 @@ bool CameraPoseInitializer::estimate_pose(
     RCLCPP_WARN_STREAM(get_logger(), "vector map is not ready ");
     return false;
   }
+  // TODO: check time stamp, too
+  if (!latest_image_msg_.has_value()) {
+    RCLCPP_WARN_STREAM(get_logger(), "source image is not ready");
+    return false;
+  }
 
   Image semseg_image;
   {
-    // TODO: check time stamp
-    if (!latest_image_msg_.has_value()) {
-      RCLCPP_WARN_STREAM(get_logger(), "image is not ready");
-      return false;
-    }
-
+    // Call semantic segmentation service
     auto request = std::make_shared<SemsegSrv::Request>();
     request->src_image = *latest_image_msg_.value();
     auto result_future = semseg_client_->async_send_request(request);
@@ -112,36 +110,37 @@ bool CameraPoseInitializer::estimate_pose(
   cv::Mat vectormap_image = lane_image_->create_vectormap_image(position);
 
   std::vector<int> scores;
-  std::vector<float> angles_rad;  // rad
+  std::vector<float> angles_rad;
 
-  for (int i = 0; i < angle_resolution_; i++) {
-    const double angle_deg = static_cast<double>(i) / static_cast<double>(angle_resolution_) * 360.;
+  for (int i = -angle_resolution_; i < angle_resolution_; i++) {
+    const double angle_rad =
+      yaw_angle_rad + yaw_std_rad * static_cast<double>(i) / static_cast<double>(angle_resolution_);
+    const double angle_deg = angle_rad * 180. / M_PI;
+
     cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(400, 400), angle_deg, 1);
     cv::Mat rotated_image;
     cv::warpAffine(projected_image, rotated_image, rot, vectormap_image.size());
 
     cv::Mat dst = bitwise_and_3ch(rotated_image, vectormap_image);
-    cv::Mat show_image;
-    cv::hconcat(std::vector<cv::Mat>{rotated_image, vectormap_image, dst}, show_image);
+    const int count = count_nonzero(dst);
 
-    int count = count_nonzero(dst);
+    // DEBUG:
     constexpr bool imshow = false;
     if (imshow) {
+      cv::Mat show_image;
+      cv::hconcat(std::vector<cv::Mat>{rotated_image, vectormap_image, dst}, show_image);
       cv::imshow("and operator", show_image);
       cv::waitKey(50);
     }
 
     scores.push_back(count);
-    angles_rad.push_back(angle_deg * M_PI / 180.0);
+    angles_rad.push_back(angle_rad);
   }
 
   {
     size_t max_index =
       std::distance(scores.begin(), std::max_element(scores.begin(), scores.end()));
-    float max_angle = angles_rad.at(max_index);
-    tangent.x() = std::cos(max_angle);
-    tangent.y() = std::sin(max_angle);
-    tangent.z() = 0;
+    yaw_angle_rad = angles_rad.at(max_index);
   }
 
   marker_module_->publish_marker(scores, angles_rad, position);
@@ -151,7 +150,6 @@ bool CameraPoseInitializer::estimate_pose(
 
 void CameraPoseInitializer::on_map(const HADMapBin & msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
   lanelet::LaneletMapPtr lanelet_map = ll2_decomposer::from_bin_msg(msg);
   lane_image_ = std::make_unique<LaneImage>(lanelet_map);
 }
@@ -163,7 +161,10 @@ void CameraPoseInitializer::on_service(
   RCLCPP_INFO_STREAM(get_logger(), "CameraPoseInitializer on_service");
   response->success = false;
 
+  const auto query_pos_with_cov = request->pose_with_covariance;
   const auto query_pos = request->pose_with_covariance.pose.pose.position;
+  const double yaw_std_rad = std::sqrt(query_pos_with_cov.pose.covariance.at(35));
+
   auto ground_request = std::make_shared<Ground::Request>();
   ground_request->point.x = query_pos.x;
   ground_request->point.y = query_pos.y;
@@ -172,9 +173,8 @@ void CameraPoseInitializer::on_service(
   auto result_future = ground_client_->async_send_request(ground_request);
   std::future_status status = result_future.wait_for(1000ms);
   if (status == std::future_status::ready) {
-    RCLCPP_ERROR_STREAM(get_logger(), "get height service exited ");
   } else {
-    RCLCPP_ERROR_STREAM(get_logger(), "get height service exited unexpectedly");
+    RCLCPP_ERROR_STREAM(get_logger(), "get height from LL2 service exited unexpectedly");
     return;
   }
 
@@ -186,40 +186,25 @@ void CameraPoseInitializer::on_service(
 
   // Estimate orientation
   const auto header = request->pose_with_covariance.header;
-  Eigen::Vector3f tangent;
-  if (estimate_pose(pos_vec3f, tangent)) {
+  double yaw_angle_rad;
+  if (estimate_pose(pos_vec3f, yaw_angle_rad, yaw_std_rad)) {
     response->success = true;
-    response->pose_with_covariance = create_rectified_initial_pose(pos_vec3f, tangent, header);
+    response->pose_with_covariance =
+      create_rectified_initial_pose(pos_vec3f, yaw_angle_rad, query_pos_with_cov);
   }
 }
 
 CameraPoseInitializer::PoseCovStamped CameraPoseInitializer::create_rectified_initial_pose(
-  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
-  const std_msgs::msg::Header & header)
+  const Eigen::Vector3f & pos, double yaw_angle_rad, const PoseCovStamped & src_msg)
 {
-  PoseCovStamped msg;
-  msg.header = header;
+  PoseCovStamped msg = src_msg;
   msg.pose.pose.position.x = pos.x();
   msg.pose.pose.position.y = pos.y();
   msg.pose.pose.position.z = pos.z();
-
-  float theta = std::atan2(tangent.y(), tangent.x());
-
-  msg.pose.pose.orientation.w = std::cos(theta / 2);
+  msg.pose.pose.orientation.w = std::cos(yaw_angle_rad / 2.);
   msg.pose.pose.orientation.x = 0;
   msg.pose.pose.orientation.y = 0;
-  msg.pose.pose.orientation.z = std::sin(theta / 2);
-
-  Eigen::Matrix2f cov;
-  cov << cov_xx_yy_(0), 0, 0, cov_xx_yy_(1);
-  Eigen::Rotation2D r(theta);
-  cov = r * cov * r.inverse();
-
-  msg.pose.covariance.at(6 * 0 + 0) = cov(0, 0);
-  msg.pose.covariance.at(6 * 0 + 1) = cov(0, 1);
-  msg.pose.covariance.at(6 * 1 + 0) = cov(1, 0);
-  msg.pose.covariance.at(6 * 1 + 1) = cov(1, 1);
-  msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
+  msg.pose.pose.orientation.z = std::sin(yaw_angle_rad / 2.);
   return msg;
 }
 

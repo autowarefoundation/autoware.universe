@@ -3,7 +3,6 @@
 
     <node name="camera_pose_initializer_node" pkg="camera_pose_initializer" exec="camera_pose_initializer" output="screen" args="--ros-args --log-level info">
         <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>
-        <param name="max_range" value="20.0"/>
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="initialpose" to="/initialpose"/>
         <remap from="/map/ll2_road_marking" to="/localization/map/ll2_road_marking"/>
