@@ -90,10 +90,8 @@ void generateBoxes3D_worker(
 
     const float offset_x = out_offset[grid_size * 0 + array_idx];
     const float offset_y = out_offset[grid_size * 1 + array_idx];
-    const float x =
-      config.voxel_size_x_ * (xi + offset_x) + config.range_min_x_;
-    const float y =
-      config.voxel_size_y_ * (yi + offset_y) + config.range_min_y_;
+    const float x = config.voxel_size_x_ * (xi + offset_x) + config.range_min_x_;
+    const float y = config.voxel_size_y_ * (yi + offset_y) + config.range_min_y_;
     const float z = out_z[array_idx];
     const float w = out_dim[grid_size * 0 + array_idx];
     const float l = out_dim[grid_size * 1 + array_idx];
