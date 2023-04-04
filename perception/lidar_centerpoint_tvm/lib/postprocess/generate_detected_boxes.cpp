@@ -69,14 +69,15 @@ void generateBoxes3D_worker(
   // heatmap: N = class_size, offset: N = 2, z: N = 1, dim: N = 3, rot: N = 2, vel: N = 2
   for (std::size_t idx = 0; idx < grids_per_thread; idx++) {
     std::size_t grid_idx = thread_idx * grids_per_thread + idx;
-    std::size_t array_idx = config.downsample_factor_ * grid_idx;
     const auto grid_size = config.grid_size_y_ * config.grid_size_x_;
-    if (array_idx >= grid_size) {
+    const auto down_grid_size = config.down_grid_size_y_ * config.down_grid_size_x_;
+    if (grid_idx >= down_grid_size) {
       return;
     }
 
-    const auto yi = array_idx / config.grid_size_x_;
-    const auto xi = array_idx % config.grid_size_x_;
+    const auto yi = config.downsample_factor_ * (grid_idx / config.down_grid_size_x_);
+    const auto xi = config.downsample_factor_ * (grid_idx % config.down_grid_size_x_);
+    std::size_t array_idx = yi * config.grid_size_x_ + xi;
 
     int32_t label = -1;
     float max_score = -1;
