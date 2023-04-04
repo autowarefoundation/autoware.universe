@@ -56,7 +56,10 @@ void ExternalRequestLaneChangeModule::processOnEntry()
   updateLaneChangeStatus();
 }
 
-void ExternalRequestLaneChangeModule::processOnExit() { resetParameters(); }
+void ExternalRequestLaneChangeModule::processOnExit()
+{
+  resetParameters();
+}
 
 bool ExternalRequestLaneChangeModule::isExecutionRequested() const
 {

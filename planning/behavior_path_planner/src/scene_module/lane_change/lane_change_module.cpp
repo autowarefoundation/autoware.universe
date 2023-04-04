@@ -70,7 +70,10 @@ void LaneChangeModule::processOnEntry()
   updateLaneChangeStatus();
 }
 
-void LaneChangeModule::processOnExit() { resetParameters(); }
+void LaneChangeModule::processOnExit()
+{
+  resetParameters();
+}
 
 bool LaneChangeModule::isExecutionRequested() const
 {

@@ -3581,9 +3581,15 @@ void AvoidanceModule::compensateDetectionLost(
   DEBUG_PRINT("object size: %lu -> %lu", old_size, now_objects.size());
 }
 
-void AvoidanceModule::processOnEntry() { initVariables(); }
+void AvoidanceModule::processOnEntry()
+{
+  initVariables();
+}
 
-void AvoidanceModule::processOnExit() { initVariables(); }
+void AvoidanceModule::processOnExit()
+{
+  initVariables();
+}
 
 void AvoidanceModule::initVariables()
 {
