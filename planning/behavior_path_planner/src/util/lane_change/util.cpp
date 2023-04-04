@@ -337,10 +337,13 @@ std::pair<bool, bool> getLaneChangePaths(
   LaneChangeTargetObjectIndices dynamic_object_indices;
 
   candidate_paths->reserve(lane_change_sampling_num);
-  for (double acceleration = 0.0; acceleration >= maximum_deceleration;
-       acceleration -= acceleration_resolution) {
+  for (double sampled_acc = 0.0; sampled_acc >= maximum_deceleration;
+       sampled_acc -= acceleration_resolution) {
     const auto prepare_speed =
-      std::max(current_velocity + acceleration * prepare_duration, minimum_lane_change_velocity);
+      std::max(current_velocity + sampled_acc * prepare_duration, minimum_lane_change_velocity);
+
+    // compute actual acceleration
+    const double acceleration = (prepare_speed - current_velocity) / prepare_duration;
 
     // get path on original lanes
     const double prepare_distance = std::max(
@@ -370,6 +373,15 @@ std::pair<bool, bool> getLaneChangePaths(
 
     // lane changing start pose is at the end of prepare segment
     const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
+
+    const auto target_distance_from_lane_change_start_pose = util::getArcLengthToTargetLanelet(
+      original_lanelets, target_lanelets.front(), lane_changing_start_pose);
+    // In new architecture, there is a possibility that the lane change start pose is behind of the
+    // target lanelet, even if the condition prepare_distance > target_distance is satisfied. In
+    // that case, the lane change shouldn't be executed.
+    if (target_distance_from_lane_change_start_pose > 0.0) {
+      break;
+    }
 
     const auto shift_length =
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanelets, lane_changing_start_pose);
@@ -598,17 +610,15 @@ bool isLaneChangePathSafe(
   check_durations.reserve(reserve_size);
   interpolated_ego.reserve(reserve_size);
 
-  {
-    Pose expected_ego_pose = current_pose;
-    for (double t = check_start_time; t < check_end_time; t += time_resolution) {
-      std::string failed_reason;
-      tier4_autoware_utils::Polygon2d ego_polygon;
-      [[maybe_unused]] const auto get_ego_info = util::getEgoExpectedPoseAndConvertToPolygon(
-        current_pose, vehicle_predicted_path, ego_polygon, t, vehicle_info, expected_ego_pose,
-        failed_reason);
-      check_durations.push_back(t);
-      interpolated_ego.emplace_back(expected_ego_pose, ego_polygon);
+  for (double t = check_start_time; t < check_end_time; t += time_resolution) {
+    tier4_autoware_utils::Polygon2d ego_polygon;
+    const auto result =
+      util::getEgoExpectedPoseAndConvertToPolygon(vehicle_predicted_path, t, vehicle_info);
+    if (!result) {
+      continue;
     }
+    check_durations.push_back(t);
+    interpolated_ego.emplace_back(result->first, result->second);
   }
 
   for (const auto & i : in_lane_object_indices) {
@@ -903,31 +913,31 @@ std::vector<DrivableLanes> generateDrivableLanes(
       return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
     };
 
-  const auto checkMiddle = [&](const auto & lane) {
+  const auto checkMiddle = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (has_same_lane(drivable_lane.middle_lanes, lane)) {
-        return std::make_pair(true, drivable_lane);
+        return drivable_lane;
       }
     }
-    return std::make_pair(false, DrivableLanes());
+    return std::nullopt;
   };
 
-  const auto checkLeft = [&](const auto & lane) {
+  const auto checkLeft = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (drivable_lane.left_lane.id() == lane.id()) {
-        return std::make_pair(true, drivable_lane);
+        return drivable_lane;
       }
     }
-    return std::make_pair(false, DrivableLanes());
+    return std::nullopt;
   };
 
-  const auto checkRight = [&](const auto & lane) {
+  const auto checkRight = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (drivable_lane.right_lane.id() == lane.id()) {
-        return std::make_pair(true, drivable_lane);
+        return drivable_lane;
       }
     }
-    return std::make_pair(false, DrivableLanes());
+    return std::nullopt;
   };
 
   size_t current_lc_idx = 0;
@@ -935,22 +945,22 @@ std::vector<DrivableLanes> generateDrivableLanes(
   for (size_t i = 0; i < current_lanes.size(); ++i) {
     const auto & current_lane = current_lanes.at(i);
 
-    const auto [is_middle, drivable_lane_1] = checkMiddle(current_lane);
-    if (is_middle) {
-      drivable_lanes.at(i) = drivable_lane_1;
+    const auto middle_drivable_lane = checkMiddle(current_lane);
+    if (middle_drivable_lane) {
+      drivable_lanes.at(i) = *middle_drivable_lane;
     }
 
-    const auto [is_left, drivable_lane_2] = checkLeft(current_lane);
-    if (is_left) {
-      drivable_lanes.at(i) = drivable_lane_2;
+    const auto left_drivable_lane = checkLeft(current_lane);
+    if (left_drivable_lane) {
+      drivable_lanes.at(i) = *left_drivable_lane;
     }
 
-    const auto [is_right, drivable_lane_3] = checkRight(current_lane);
-    if (is_right) {
-      drivable_lanes.at(i) = drivable_lane_3;
+    const auto right_drivable_lane = checkRight(current_lane);
+    if (right_drivable_lane) {
+      drivable_lanes.at(i) = *right_drivable_lane;
     }
 
-    if (!is_middle && !is_left && !is_right) {
+    if (!middle_drivable_lane && !left_drivable_lane && !right_drivable_lane) {
       drivable_lanes.at(i).left_lane = current_lane;
       drivable_lanes.at(i).right_lane = current_lane;
     }
@@ -964,7 +974,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
     for (size_t lc_idx = current_lc_idx; lc_idx < lane_change_lanes.size(); ++lc_idx) {
       const auto & lc_lane = lane_change_lanes.at(lc_idx);
       if (left_lane && lc_lane.id() == left_lane->id()) {
-        if (is_left) {
+        if (left_drivable_lane) {
           drivable_lanes.at(i).left_lane = lc_lane;
         }
         current_lc_idx = lc_idx;
@@ -972,7 +982,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
       }
 
       if (right_lane && lc_lane.id() == right_lane->id()) {
-        if (is_right) {
+        if (right_drivable_lane) {
           drivable_lanes.at(i).right_lane = lc_lane;
         }
         current_lc_idx = lc_idx;
@@ -985,22 +995,22 @@ std::vector<DrivableLanes> generateDrivableLanes(
     const auto & lc_lane = lane_change_lanes.at(i);
     DrivableLanes drivable_lane;
 
-    const auto [is_middle, drivable_lane_1] = checkMiddle(lc_lane);
-    if (is_middle) {
-      drivable_lane = drivable_lane_1;
+    const auto middle_drivable_lane = checkMiddle(lc_lane);
+    if (middle_drivable_lane) {
+      drivable_lane = *middle_drivable_lane;
     }
 
-    const auto [is_left, drivable_lane_2] = checkLeft(lc_lane);
-    if (is_left) {
-      drivable_lane = drivable_lane_2;
+    const auto left_drivable_lane = checkLeft(lc_lane);
+    if (left_drivable_lane) {
+      drivable_lane = *left_drivable_lane;
     }
 
-    const auto [is_right, drivable_lane_3] = checkRight(lc_lane);
-    if (is_right) {
-      drivable_lane = drivable_lane_3;
+    const auto right_drivable_lane = checkRight(lc_lane);
+    if (right_drivable_lane) {
+      drivable_lane = *right_drivable_lane;
     }
 
-    if (!is_middle && !is_left && !is_right) {
+    if (!middle_drivable_lane && !left_drivable_lane && !right_drivable_lane) {
       drivable_lane.left_lane = lc_lane;
       drivable_lane.right_lane = lc_lane;
     }
@@ -1256,14 +1266,7 @@ LaneChangeTargetObjectIndices filterObjectIndices(
       }
     }
 
-    Polygon2d obj_polygon;
-    if (!util::calcObjectPolygon(obj, &obj_polygon)) {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("behavior_path_planner").get_child("lane_change"),
-        "Failed to calcObjectPolygon...!!!");
-      continue;
-    }
-
+    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj);
     if (boost::geometry::intersects(current_polygon, obj_polygon)) {
       const double distance = boost::geometry::distance(obj_polygon, ego_path_linestring);
 

@@ -19,6 +19,8 @@
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/pull_out/pull_out_path.hpp"
+#include "motion_utils/motion_utils.hpp"
+#include "perception_utils/predicted_path_utils.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <route_handler/route_handler.hpp>
@@ -48,6 +50,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -157,84 +160,6 @@ double getArcLengthToTargetLanelet(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
   const Pose & pose);
 
-// object collision check
-inline Pose lerpByPose(const Pose & p1, const Pose & p2, const double t)
-{
-  tf2::Transform tf_transform1;
-  tf2::Transform tf_transform2;
-  tf2::fromMsg(p1, tf_transform1);
-  tf2::fromMsg(p2, tf_transform2);
-  const auto & tf_point = tf2::lerp(tf_transform1.getOrigin(), tf_transform2.getOrigin(), t);
-  const auto & tf_quaternion =
-    tf2::slerp(tf_transform1.getRotation(), tf_transform2.getRotation(), t);
-
-  Pose pose{};
-  pose.position = tf2::toMsg(tf_point, pose.position);
-  pose.orientation = tf2::toMsg(tf_quaternion);
-  return pose;
-}
-
-inline Point lerpByPoint(const Point & p1, const Point & p2, const double t)
-{
-  tf2::Vector3 v1, v2;
-  v1.setValue(p1.x, p1.y, p1.z);
-  v2.setValue(p2.x, p2.y, p2.z);
-
-  const auto lerped_point = v1.lerp(v2, t);
-
-  Point point;
-  point.x = lerped_point.x();
-  point.y = lerped_point.y();
-  point.z = lerped_point.z();
-  return point;
-}
-
-template <class T>
-Point lerpByLength(const std::vector<T> & point_array, const double length)
-{
-  Point lerped_point;
-  if (point_array.empty()) {
-    return lerped_point;
-  }
-  Point prev_geom_pt = tier4_autoware_utils::getPoint(point_array.front());
-  double accumulated_length = 0;
-  for (const auto & pt : point_array) {
-    const auto & geom_pt = tier4_autoware_utils::getPoint(pt);
-    const double distance = tier4_autoware_utils::calcDistance3d(prev_geom_pt, geom_pt);
-    if (accumulated_length + distance > length) {
-      return lerpByPoint(prev_geom_pt, geom_pt, (length - accumulated_length) / distance);
-    }
-    accumulated_length += distance;
-    prev_geom_pt = geom_pt;
-  }
-
-  return tier4_autoware_utils::getPoint(point_array.back());
-}
-
-template <class T>
-Pose lerpPoseByLength(const std::vector<T> & point_array, const double length)
-{
-  Pose lerped_pose;
-  if (point_array.empty()) {
-    return lerped_pose;
-  }
-  Pose prev_geom_pose = tier4_autoware_utils::getPose(point_array.front());
-  double accumulated_length = 0;
-  for (const auto & pt : point_array) {
-    const auto & geom_pose = tier4_autoware_utils::getPose(pt);
-    const double distance = tier4_autoware_utils::calcDistance3d(prev_geom_pose, geom_pose);
-    if (accumulated_length + distance > length) {
-      return lerpByPose(prev_geom_pose, geom_pose, (length - accumulated_length) / distance);
-    }
-    accumulated_length += distance;
-    prev_geom_pose = geom_pose;
-  }
-
-  return tier4_autoware_utils::getPose(point_array.back());
-}
-
-bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_pt);
-
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
 bool calcObjectPolygon(
@@ -242,9 +167,6 @@ bool calcObjectPolygon(
 
 bool calcObjectPolygon(
   const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
-
-PredictedPath resamplePredictedPath(
-  const PredictedPath & input_path, const double resolution, const double duration);
 
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & path1, const PredictedPath & path2, const double start_time,
@@ -472,14 +394,11 @@ std::vector<PredictedPath> getPredictedPathFromObj(
 
 Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
 
-bool getEgoExpectedPoseAndConvertToPolygon(
-  const Pose & current_pose, const PredictedPath & pred_path,
-  tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
-  const VehicleInfo & ego_info, Pose & expected_pose, std::string & failed_reason);
+boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
 
-bool getObjectExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const PredictedObject & object, Polygon2d & obj_polygon,
-  const double & check_current_time, Pose & expected_pose, std::string & failed_reason);
+boost::optional<std::pair<Pose, Polygon2d>> getObjectExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const double current_time, const PredictedObject & object);
 
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
 
@@ -534,6 +453,8 @@ double calcLaneChangeBuffer(
 
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
+
+std::string convertToSnakeCase(const std::string & input_str);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
