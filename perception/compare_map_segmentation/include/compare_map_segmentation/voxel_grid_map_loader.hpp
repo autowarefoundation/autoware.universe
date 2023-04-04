@@ -15,14 +15,17 @@
 #ifndef COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
 #define COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
 
-#include "compare_map_segmentation/multi_voxel_grid_map_update.hpp"
-
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <pcl/common/centroid.h>
+#include <pcl/common/common.h>
+#include <pcl/common/io.h>
+#include <pcl/filters/filter.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <unistd.h>
 
@@ -51,6 +54,47 @@ double distance2D(const T p1, const U p2)
   return std::sqrt(dx * dx + dy * dy);
 }
 
+template <typename PointT>
+class VoxelGrid : public pcl::VoxelGrid<PointT>
+{
+protected:
+  using pcl::VoxelGrid<PointT>::downsample_all_data_;
+  using pcl::VoxelGrid<PointT>::input_;
+  using pcl::VoxelGrid<PointT>::save_leaf_layout_;
+  using pcl::VoxelGrid<PointT>::min_b_;
+  using pcl::VoxelGrid<PointT>::max_b_;
+  using pcl::VoxelGrid<PointT>::divb_mul_;
+  using pcl::VoxelGrid<PointT>::div_b_;
+  using pcl::VoxelGrid<PointT>::inverse_leaf_size_;
+
+  using PointCloud = typename pcl::Filter<PointT>::PointCloud;
+  using PointCloudPtr = typename PointCloud::Ptr;
+  using PointCloudConstPtr = typename PointCloud::ConstPtr;
+
+public:
+  using pcl::VoxelGrid<PointT>::leaf_layout_;
+
+  inline void set_voxel_grid(
+    std::vector<int> * leaf_layout, const Eigen::Vector4i & min_b, const Eigen::Vector4i & max_b,
+    const Eigen::Vector4i & div_b, const Eigen::Vector4i & divb_mul,
+    const Eigen::Array4f & inverse_leaf_size)
+  {
+    leaf_layout_ = std::move(*leaf_layout);
+    min_b_ = min_b;
+    max_b_ = max_b;
+    div_b_ = div_b;
+    divb_mul_ = divb_mul;
+    inverse_leaf_size_ = inverse_leaf_size;
+  }
+
+  inline Eigen::Vector4i get_min_b() const { return min_b_; }
+  inline Eigen::Vector4i get_divb_mul() const { return divb_mul_; }
+  inline Eigen::Vector4i get_max_b() const { return max_b_; }
+  inline Eigen::Vector4i get_div_b() const { return div_b_; }
+  inline Eigen::Array4f get_inverse_leaf_size() const { return inverse_leaf_size_; }
+  inline std::vector<int> getLeafLayout() { return (leaf_layout_); }
+};
+
 class VoxelGridMapLoader
 {
 protected:
@@ -60,7 +104,7 @@ protected:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
 
 public:
-  typedef compare_map_segmentation::MultiVoxelGrid<pcl::PointXYZ> MultiVoxelGrid;
+  typedef VoxelGrid<pcl::PointXYZ> MultiVoxelGrid;
   typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
   typedef typename PointCloud::Ptr PointCloudPtr;
   explicit VoxelGridMapLoader(
@@ -123,7 +167,6 @@ private:
   double map_grid_size_x_ = -1.0;
   double map_grid_size_y_ = -1.0;
   std::vector<std::shared_ptr<MapGridVoxelInfo>> current_voxel_grid_array_;
-  // std::vector<std::string> current_voxel_grid_id_array_;
   int map_grids_x_;
   int map_grids_y_;
   float origin_x_;
@@ -160,9 +203,6 @@ public:
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & map_cells_to_add,
     std::vector<std::string> map_cell_ids_to_remove)
   {
-    std::cout << "update differential map cells PIP = :" << getpid() << std::endl;
-    std::cout << "update differential map cells thredad ID: " << std::this_thread::get_id()
-              << std::endl;
     for (const auto & map_cell_to_add : map_cells_to_add) {
       addMapCellAndFilter(map_cell_to_add);
     }
@@ -182,7 +222,6 @@ public:
     map_grids_y_ = static_cast<int>(
       std::ceil((current_position_.value().y + map_loader_radius_ - origin_y_) / map_grid_size_y_));
 
-    // current_voxel_grid_id_array_.assign(map_grids_x_ * map_grid_size_y_, "");
     current_voxel_grid_array_.assign(
       map_grids_x_ * map_grid_size_y_, std::make_shared<MapGridVoxelInfo>());
     for (const auto & kv : current_voxel_grid_dict_) {
@@ -190,14 +229,6 @@ public:
         std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +
         map_grids_x_ * std::floor((kv.second.min_b_y - origin_y_) / map_grid_size_y_));
 
-      RCLCPP_INFO(
-        logger_, "map cell position: min_x: %f min_y: %f max_x: %f max_y: %f ", kv.second.min_b_x,
-        kv.second.min_b_y, kv.second.max_b_x, kv.second.max_b_y);
-      RCLCPP_INFO(
-        logger_, "ego-vehicle position: x: %f y: %f", current_position_.value().x,
-        current_position_.value().y);
-      RCLCPP_INFO(logger_, "index %i in the array of %i x %i", index, map_grids_x_, map_grids_y_);
-      // current_voxel_grid_id_array_.at(index) = kv.first;
       current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
     }
   }
@@ -230,7 +261,6 @@ public:
     map_cell_voxel_grid_tmp.filter(*map_cell_downsampled_pc_ptr_tmp);
 
     MapGridVoxelInfo current_voxel_grid_list_item;
-    // TODO(badai-nguyen): use map cell info from map cell, when map loader I/F is updated
     current_voxel_grid_list_item.min_b_x = map_cell_to_add.min_x;
     current_voxel_grid_list_item.min_b_y = map_cell_to_add.min_y;
     current_voxel_grid_list_item.max_b_x = map_cell_to_add.max_x;
@@ -242,10 +272,6 @@ public:
       map_cell_voxel_grid_tmp.get_divb_mul(), map_cell_voxel_grid_tmp.get_inverse_leaf_size());
 
     current_voxel_grid_list_item.map_cell_pc_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>);
-    // for (size_t i = 0; i < map_cell_downsampled_pc_ptr_tmp->points.size(); ++i) {
-    //   current_voxel_grid_list_item.map_cell_pc_ptr->points.push_back(
-    //     map_cell_downsampled_pc_ptr_tmp->points.at(i));
-    // }
     current_voxel_grid_list_item.map_cell_pc_ptr = std::move(map_cell_downsampled_pc_ptr_tmp);
     // add
     (*mutex_ptr_).lock();

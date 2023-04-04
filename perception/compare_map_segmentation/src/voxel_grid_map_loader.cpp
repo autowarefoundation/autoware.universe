@@ -313,7 +313,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
       return true;
     }
   }
-  //TODO(badai-nguyen): add checking neighbor map cell for point on the boundary
+  // TODO(badai-nguyen): add checking neighbor map cell for point on the boundary
 
   return false;
 }
