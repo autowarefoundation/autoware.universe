@@ -115,24 +115,17 @@ PredictedPath convertToPredictedPath(
 
 template <class T>
 FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<T> & pose_array, const Point & search_point_geom, const size_t seg_idx)
+  const T & points, const Point & search_point_geom, const size_t seg_idx)
 {
   FrenetCoordinate3d frenet_coordinate;
 
   const double longitudinal_length =
-    motion_utils::calcLongitudinalOffsetToSegment(pose_array, seg_idx, search_point_geom);
+    motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom);
   frenet_coordinate.length =
-    motion_utils::calcSignedArcLength(pose_array, 0, seg_idx) + longitudinal_length;
-  frenet_coordinate.distance =
-    motion_utils::calcLateralOffset(pose_array, search_point_geom, seg_idx);
+    motion_utils::calcSignedArcLength(points, 0, seg_idx) + longitudinal_length;
+  frenet_coordinate.distance = motion_utils::calcLateralOffset(points, search_point_geom, seg_idx);
 
   return frenet_coordinate;
-}
-
-inline FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom, const size_t seg_idx)
-{
-  return convertToFrenetCoordinate3d(path.points, search_point_geom, seg_idx);
 }
 
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
