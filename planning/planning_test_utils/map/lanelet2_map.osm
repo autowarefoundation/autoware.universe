@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <osm generator="VMB">
-  <MetaInfo format_version="1" map_version="43"/>
+  <MetaInfo format_version="1" map_version="45"/>
   <node id="285" lat="35.90327302735748" lon="139.93366161080428">
     <tag k="mgrs_code" v="54SVE037737"/>
     <tag k="local_x" v="3774.4814"/>
@@ -933,12 +933,6 @@
     <tag k="local_x" v="3713.6931"/>
     <tag k="local_y" v="73714.2279"/>
     <tag k="ele" v="19.281"/>
-  </node>
-  <node id="2488" lat="35.902986083060604" lon="139.9337731499142">
-    <tag k="mgrs_code" v="54SVE037737"/>
-    <tag k="local_x" v="3784.1996"/>
-    <tag k="local_y" v="73713.3009"/>
-    <tag k="ele" v="19.424"/>
   </node>
   <node id="2500" lat="35.90289991696869" lon="139.93291255604734">
     <tag k="mgrs_code" v="54SVE037737"/>
@@ -4241,18 +4235,6 @@
     <tag k="local_y" v="73710.9551"/>
     <tag k="ele" v="24.685"/>
   </node>
-  <node id="9325" lat="35.90298673738466" lon="139.93377414177056">
-    <tag k="mgrs_code" v="54SVE037737"/>
-    <tag k="local_x" v="3784.2899"/>
-    <tag k="local_y" v="73713.3725"/>
-    <tag k="ele" v="19.3926"/>
-  </node>
-  <node id="9326" lat="35.90297450692319" lon="139.93374602879317">
-    <tag k="mgrs_code" v="54SVE037737"/>
-    <tag k="local_x" v="3781.7381"/>
-    <tag k="local_y" v="73712.0436"/>
-    <tag k="ele" v="19.3984"/>
-  </node>
   <node id="9469" lat="35.903038950697436" lon="139.93311046950768">
     <tag k="mgrs_code" v="54SVE037737"/>
     <tag k="local_x" v="3724.4615"/>
@@ -4390,6 +4372,30 @@
     <tag k="local_x" v="3704.1555"/>
     <tag k="local_y" v="73726.9804"/>
     <tag k="ele" v="19.4694"/>
+  </node>
+  <node id="10248" lat="35.902933866161995" lon="139.93380956068148">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3787.4222"/>
+    <tag k="local_y" v="73707.4732"/>
+    <tag k="ele" v="19.5696"/>
+  </node>
+  <node id="10250" lat="35.90292011542114" lon="139.93378070793983">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3784.8018"/>
+    <tag k="local_y" v="73705.9764"/>
+    <tag k="ele" v="19.5938"/>
+  </node>
+  <node id="10253" lat="35.90355238424396" lon="139.93332791514095">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3744.7062"/>
+    <tag k="local_y" v="73776.553"/>
+    <tag k="ele" v="19.135"/>
+  </node>
+  <node id="10255" lat="35.903564726208785" lon="139.9333579127952">
+    <tag k="mgrs_code" v="54SVE037737"/>
+    <tag k="local_x" v="3747.4282"/>
+    <tag k="local_y" v="73777.8924"/>
+    <tag k="ele" v="19.1275"/>
   </node>
   <way id="35">
     <nd ref="2007"/>
@@ -5015,11 +5021,6 @@
     <nd ref="2201"/>
     <tag k="type" v="stop_line"/>
   </way>
-  <way id="357">
-    <nd ref="1975"/>
-    <nd ref="2245"/>
-    <tag k="type" v="stop_line"/>
-  </way>
   <way id="367">
     <nd ref="1890"/>
     <nd ref="2200"/>
@@ -5389,16 +5390,6 @@
     <tag k="type" v="line_thin"/>
     <tag k="subtype" v="solid"/>
     <tag k="width" v="0.200"/>
-  </way>
-  <way id="443">
-    <nd ref="2488"/>
-    <nd ref="2182"/>
-    <tag k="type" v="stop_line"/>
-  </way>
-  <way id="444">
-    <nd ref="2488"/>
-    <nd ref="2182"/>
-    <tag k="type" v="stop_line"/>
   </way>
   <way id="471">
     <nd ref="1898"/>
@@ -5796,12 +5787,6 @@
     <tag k="type" v="line_thin"/>
     <tag k="subtype" v="solid"/>
   </way>
-  <way id="9329">
-    <nd ref="9325"/>
-    <nd ref="9326"/>
-    <tag k="type" v="stop_line"/>
-    <tag k="subtype" v="solid"/>
-  </way>
   <way id="9460">
     <nd ref="1708"/>
     <nd ref="1709"/>
@@ -5936,6 +5921,30 @@
     <tag k="type" v="traffic_light"/>
     <tag k="subtype" v="solid"/>
     <tag k="height" v="0.5"/>
+  </way>
+  <way id="10249">
+    <nd ref="1624"/>
+    <nd ref="10248"/>
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+  </way>
+  <way id="10251">
+    <nd ref="2182"/>
+    <nd ref="10250"/>
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+  </way>
+  <way id="10254">
+    <nd ref="1975"/>
+    <nd ref="10253"/>
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
+  </way>
+  <way id="10256">
+    <nd ref="2245"/>
+    <nd ref="10255"/>
+    <tag k="type" v="line_thin"/>
+    <tag k="subtype" v="solid"/>
   </way>
   <relation id="13">
     <member type="way" role="left" ref="245"/>
@@ -6138,7 +6147,6 @@
   <relation id="112">
     <member type="way" role="left" ref="35"/>
     <member type="way" role="right" ref="38"/>
-    <member type="relation" role="regulatory_element" ref="9331"/>
     <tag k="type" v="lanelet"/>
     <tag k="subtype" v="road"/>
     <tag k="speed_limit" v="30"/>
@@ -6166,7 +6174,6 @@
   <relation id="122">
     <member type="way" role="left" ref="41"/>
     <member type="way" role="right" ref="42"/>
-    <member type="relation" role="regulatory_element" ref="9338"/>
     <tag k="type" v="lanelet"/>
     <tag k="subtype" v="road"/>
     <tag k="speed_limit" v="30"/>
@@ -6327,6 +6334,24 @@
     <tag k="location" v="urban"/>
     <tag k="one_way" v="yes"/>
   </relation>
+  <relation id="10252">
+    <member type="way" role="left" ref="10249"/>
+    <member type="way" role="right" ref="10251"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="speed_limit" v="10"/>
+    <tag k="location" v="urban"/>
+    <tag k="one_way" v="yes"/>
+  </relation>
+  <relation id="10257">
+    <member type="way" role="left" ref="10254"/>
+    <member type="way" role="right" ref="10256"/>
+    <tag k="type" v="lanelet"/>
+    <tag k="subtype" v="road"/>
+    <tag k="speed_limit" v="10"/>
+    <tag k="location" v="urban"/>
+    <tag k="one_way" v="yes"/>
+  </relation>
   <relation id="1012">
     <member type="way" role="refers" ref="369"/>
     <member type="way" role="refers" ref="371"/>
@@ -6407,16 +6432,6 @@
     <member type="way" role="light_bulbs" ref="418"/>
     <tag k="type" v="regulatory_element"/>
     <tag k="subtype" v="traffic_light"/>
-  </relation>
-  <relation id="9331">
-    <member type="way" role="ref_line" ref="9329"/>
-    <tag k="type" v="regulatory_element"/>
-    <tag k="subtype" v="traffic_sign"/>
-  </relation>
-  <relation id="9338">
-    <member type="way" role="ref_line" ref="357"/>
-    <tag k="type" v="regulatory_element"/>
-    <tag k="subtype" v="traffic_sign"/>
   </relation>
   <relation id="9838">
     <member type="way" role="refers" ref="9833"/>
