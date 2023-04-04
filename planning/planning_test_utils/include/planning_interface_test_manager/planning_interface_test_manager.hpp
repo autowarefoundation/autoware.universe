@@ -163,12 +163,12 @@ private:
   std::string map_frame_ = "map";
   size_t count_{0};
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-  void publishNominalTrajectory(std::string topic_name);
+  void publishNominalTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
   boost::optional<PoseStamped> transform_pose(const PoseStamped & input);
 
-  void publishNominalRoute(std::string topic_name);
+  void publishNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbnormalRoute(
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 };  // class PlanningIntefaceTestManager

@@ -145,6 +145,7 @@ void spinSomeNodes(
 {
   for (int i = 0; i < repeat_count; i++) {
     rclcpp::spin_some(test_node);
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
     rclcpp::spin_some(target_node);
     rclcpp::sleep_for(std::chrono::milliseconds(100));
   }
@@ -354,7 +355,7 @@ void setSubscriber<Trajectory>(
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   subscriber = test_node->create_subscription<Trajectory>(
     topic_name, rclcpp::QoS{1}, [&count](const typename Trajectory::SharedPtr) {
-      std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+      // std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       count++;
     });
   // subscriberが使用しているトピック名を表示する

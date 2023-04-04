@@ -175,17 +175,20 @@ void PlanningIntefaceTestManager::setRouteInputTopicName(std::string topic_name)
   input_route_name_ = topic_name;
 }
 
-void PlanningIntefaceTestManager::publishNominalTrajectory(std::string topic_name)
+void PlanningIntefaceTestManager::publishNominalTrajectory(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::setPublisher(test_node_, topic_name, normal_trajectory_pub_);
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
+  test_utils::spinSomeNodes(test_node_, target_node);
 }
 
-void PlanningIntefaceTestManager::publishNominalRoute(std::string topic_name)
+void PlanningIntefaceTestManager::publishNominalRoute(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::setPublisher(test_node_, topic_name, normal_route_pub_);
-
   normal_route_pub_->publish(test_utils::makeNormalRoute());
+  test_utils::spinSomeNodes(test_node_, target_node);
 }
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
@@ -210,7 +213,7 @@ void PlanningIntefaceTestManager::setPathWithLaneIdSubscriber(std::string topic_
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
-  publishNominalTrajectory(input_trajectory_name_);
+  publishNominalTrajectory(target_node, input_trajectory_name_);
   test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
@@ -235,8 +238,8 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
-  publishNominalRoute(input_route_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 2);
+  publishNominalRoute(target_node, input_route_name_);
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // check to see if target node is dead.
@@ -257,6 +260,9 @@ void PlanningIntefaceTestManager::publishAbnormalRoute(
   test_utils::spinSomeNodes(test_node_, target_node);
 }
 
-int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
+int PlanningIntefaceTestManager::getReceivedTopicNum()
+{
+  return count_;
+}
 
 }  // namespace planning_test_utils
