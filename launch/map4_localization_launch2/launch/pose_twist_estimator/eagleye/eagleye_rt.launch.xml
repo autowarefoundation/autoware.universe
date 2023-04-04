@@ -139,14 +139,14 @@
       <param from="$(var config_path)"/>
       <param name="yaml_file" value="$(var config_path)"/>
     </node>
-    <include file="$(var directory_with_related_launches)/gnss_converter.xml">
+    <include file="$(var directory_with_related_launches)/gnss_converter.launch.xml">
       <arg name="config_path" value="$(var config_path)"/>
     </include>
 
   </group>
 
   <group if="$(var use_eagleye_pose)">
-    <include file="$(var directory_with_related_launches)/fix2pose.xml">
+    <include file="$(var directory_with_related_launches)/fix2pose.launch.xml">
       <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
     </include>
   </group>
