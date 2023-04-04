@@ -1,19 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-<group if ="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_fusion'&quot;)">
-    <include file="$(find-pkg-share gyro_odometer)/launch/gyro_odometer.launch.xml">
-        <arg name="input_vehicle_twist_with_covariance_topic" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
-        <arg name="output_twist_with_covariance_topic" value="/localization/twist_estimator/twist_with_covariance"/>
-        <arg name="output_twist_with_covariance_raw_topic" value="/localization/twist_estimator/twist_with_covariance_raw"/>
-    </include>
-</group>
 
-  <group if="$(eval &quot;'$(var twist_estimator_mode)'=='gyro_odom_gnss_fusion'&quot;)">
-    <group unless="$(eval &quot;'$(var pose_estimator_mode)'=='gnss'&quot;)">
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/eagleye/eagleye_rt.launch.xml">
-        <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
-      </include>
-    </group>
-  </group>
+  <include file="$(find-pkg-share gyro_odometer)/launch/gyro_odometer.launch.xml">
+      <arg name="input_vehicle_twist_with_covariance_topic" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+      <arg name="output_twist_with_covariance_topic" value="/localization/twist_estimator/twist_with_covariance"/>
+      <arg name="output_twist_with_covariance_raw_topic" value="/localization/twist_estimator/twist_with_covariance_raw"/>
+  </include>
 
 </launch>
