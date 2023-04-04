@@ -292,6 +292,7 @@ void VoxelGridDynamicMapLoader::onEstimatedPoseCallback(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
   current_position_ = msg->pose.pose.position;
+  publish_downsampled_map(getCurrentDownsampledMapPc());
 }
 
 bool VoxelGridDynamicMapLoader::is_close_to_map(
@@ -300,32 +301,20 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
   if (current_voxel_grid_dict_.size() == 0) {
     return false;
   }
-  std::vector<std::string> neighbor_map_cells_id;
 
-  for (auto & kv : current_voxel_grid_dict_) {
-    if (point.x < kv.second.min_b_x - distance_threshold) {
-      continue;
-    }
-    if (point.y < kv.second.min_b_y - distance_threshold) {
-      continue;
-    }
-    if (point.x > kv.second.max_b_x + distance_threshold) {
-      continue;
-    }
-    if (point.y > kv.second.max_b_y + distance_threshold) {
-      continue;
-    }
-    // the map cell is found
-    neighbor_map_cells_id.push_back(kv.first);
-    // check distance
-    if (kv.second.map_cell_pc_ptr == NULL) {
-      continue;
-    }
+  int map_grid_index = static_cast<int>(
+    std::floor((point.x - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
+
+  if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
     if (is_close_to_neighbor_voxels(
-          point, distance_threshold, kv.second.map_cell_pc_ptr, kv.second.map_cell_voxel_grid)) {
+          point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
+          current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid)) {
       return true;
     }
   }
+  //TODO(badai-nguyen): add checking neighbor map cell for point on the boundary
+
   return false;
 }
 void VoxelGridDynamicMapLoader::timer_callback()
@@ -384,5 +373,4 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
         result.get()->new_pointcloud_with_ids, result.get()->ids_to_remove);
     }
   }
-  publish_downsampled_map(getCurrentDownsampledMapPc());
 }

@@ -24,10 +24,12 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+#include <unistd.h>
 
 #include <map>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 // create map loader interface for static and dynamic map
@@ -118,6 +120,14 @@ private:
     map_update_client_;
   rclcpp::CallbackGroup::SharedPtr client_callback_group_;
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
+  double map_grid_size_x_ = -1.0;
+  double map_grid_size_y_ = -1.0;
+  std::vector<std::shared_ptr<MapGridVoxelInfo>> current_voxel_grid_array_;
+  // std::vector<std::string> current_voxel_grid_id_array_;
+  int map_grids_x_;
+  int map_grids_y_;
+  float origin_x_;
+  float origin_y_;
 
 public:
   explicit VoxelGridDynamicMapLoader(
@@ -150,11 +160,45 @@ public:
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & map_cells_to_add,
     std::vector<std::string> map_cell_ids_to_remove)
   {
+    std::cout << "update differential map cells PIP = :" << getpid() << std::endl;
+    std::cout << "update differential map cells thredad ID: " << std::this_thread::get_id()
+              << std::endl;
     for (const auto & map_cell_to_add : map_cells_to_add) {
       addMapCellAndFilter(map_cell_to_add);
     }
     for (size_t i = 0; i < map_cell_ids_to_remove.size(); ++i) {
       removeMapCell(map_cell_ids_to_remove.at(i));
+    }
+
+    // update array:
+
+    origin_x_ = std::floor((current_position_.value().x - map_loader_radius_) / map_grid_size_x_) *
+                map_grid_size_x_;
+    origin_y_ = std::floor((current_position_.value().y - map_loader_radius_) / map_grid_size_y_) *
+                map_grid_size_y_;
+
+    map_grids_x_ = static_cast<int>(
+      std::ceil((current_position_.value().x + map_loader_radius_ - origin_x_) / map_grid_size_x_));
+    map_grids_y_ = static_cast<int>(
+      std::ceil((current_position_.value().y + map_loader_radius_ - origin_y_) / map_grid_size_y_));
+
+    // current_voxel_grid_id_array_.assign(map_grids_x_ * map_grid_size_y_, "");
+    current_voxel_grid_array_.assign(
+      map_grids_x_ * map_grid_size_y_, std::make_shared<MapGridVoxelInfo>());
+    for (const auto & kv : current_voxel_grid_dict_) {
+      int index = static_cast<int>(
+        std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +
+        map_grids_x_ * std::floor((kv.second.min_b_y - origin_y_) / map_grid_size_y_));
+
+      RCLCPP_INFO(
+        logger_, "map cell position: min_x: %f min_y: %f max_x: %f max_y: %f ", kv.second.min_b_x,
+        kv.second.min_b_y, kv.second.max_b_x, kv.second.max_b_y);
+      RCLCPP_INFO(
+        logger_, "ego-vehicle position: x: %f y: %f", current_position_.value().x,
+        current_position_.value().y);
+      RCLCPP_INFO(logger_, "index %i in the array of %i x %i", index, map_grids_x_, map_grids_y_);
+      // current_voxel_grid_id_array_.at(index) = kv.first;
+      current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
     }
   }
 
@@ -168,6 +212,9 @@ public:
   inline void addMapCellAndFilter(
     const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
+    map_grid_size_x_ = map_cell_to_add.max_x - map_cell_to_add.min_x;
+    map_grid_size_y_ = map_cell_to_add.max_y - map_cell_to_add.min_y;
+
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
 
@@ -184,10 +231,10 @@ public:
 
     MapGridVoxelInfo current_voxel_grid_list_item;
     // TODO(badai-nguyen): use map cell info from map cell, when map loader I/F is updated
-    current_voxel_grid_list_item.min_b_x = map_cell_voxel_grid_tmp.get_min_p()[0];
-    current_voxel_grid_list_item.min_b_y = map_cell_voxel_grid_tmp.get_min_p()[1];
-    current_voxel_grid_list_item.max_b_x = map_cell_voxel_grid_tmp.get_max_p()[0];
-    current_voxel_grid_list_item.max_b_y = map_cell_voxel_grid_tmp.get_max_p()[1];
+    current_voxel_grid_list_item.min_b_x = map_cell_to_add.min_x;
+    current_voxel_grid_list_item.min_b_y = map_cell_to_add.min_y;
+    current_voxel_grid_list_item.max_b_x = map_cell_to_add.max_x;
+    current_voxel_grid_list_item.max_b_y = map_cell_to_add.max_y;
 
     current_voxel_grid_list_item.map_cell_voxel_grid.set_voxel_grid(
       &(map_cell_voxel_grid_tmp.leaf_layout_), map_cell_voxel_grid_tmp.get_min_b(),
