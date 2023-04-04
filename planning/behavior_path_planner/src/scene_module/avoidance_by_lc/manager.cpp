@@ -26,10 +26,8 @@ namespace behavior_path_planner
 AvoidanceByLCModuleManager::AvoidanceByLCModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
   const std::shared_ptr<AvoidanceByLCParameters> & parameters)
-: SceneModuleManagerInterface(node, name, config), parameters_{parameters}
+: SceneModuleManagerInterface(node, name, config, {"left", "right"}), parameters_{parameters}
 {
-  rtc_interface_left_ = std::make_shared<RTCInterface>(node, name + "_left");
-  rtc_interface_right_ = std::make_shared<RTCInterface>(node, name + "_right");
 }
 
 void AvoidanceByLCModuleManager::updateModuleParams(
