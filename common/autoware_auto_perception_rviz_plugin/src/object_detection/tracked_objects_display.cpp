@@ -130,7 +130,7 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
     return; 
   }
   // poincloud pub
-  // sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
+  // sensor_msgs::msg::PointCloud2::ConstSharedPtr test_closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
   //   getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
   sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(pointCloudBuffer.front());
   processPointCloud(msg, closest_pointcloud);

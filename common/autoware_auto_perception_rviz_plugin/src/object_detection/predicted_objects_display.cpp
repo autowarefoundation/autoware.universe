@@ -181,11 +181,12 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
   }
 
   if (pointCloudBuffer.empty())
-  {
+  { 
+      RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Pointcloud buffer is empty");
     return markers; 
   }
   // poincloud pub
-  // sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
+  // sensor_msgs::msg::PointCloud2::ConstSharedPtr test_closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
   //   getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
   sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(pointCloudBuffer.front());
 
