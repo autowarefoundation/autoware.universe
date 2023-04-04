@@ -64,6 +64,7 @@ class PointcloudMapFilterPipeline:
                     ("output", LaunchConfiguration("output_topic")),
                     ("map_loader_service", "/map/get_differential_pointcloud_map"),
                     ("pose_with_covariance", "/localization/pose_estimator/pose_with_covariance"),
+                    ("initialization_state", "/localization/initialization_state"),
                 ],
                 parameters=[
                     {

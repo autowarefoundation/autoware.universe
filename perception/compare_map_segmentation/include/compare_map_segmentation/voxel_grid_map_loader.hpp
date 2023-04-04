@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -155,6 +156,9 @@ private:
   VoxelGridDict current_voxel_grid_dict_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     sub_estimated_pose_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::LocalizationInitializationState>::SharedPtr
+    sub_pose_initializer_state_;
+  autoware_adapi_v1_msgs::msg::LocalizationInitializationState initialization_state_;
   std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
   std::optional<geometry_msgs::msg::Point> last_updated_position_ = std::nullopt;
   rclcpp::TimerBase::SharedPtr map_update_timer_;
@@ -177,6 +181,8 @@ public:
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex,
     rclcpp::CallbackGroup::SharedPtr main_callback_group);
   void onEstimatedPoseCallback(geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose);
+  void onPoseInitializerCallback(
+    autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg);
 
   void timer_callback();
   bool should_update_map() const;

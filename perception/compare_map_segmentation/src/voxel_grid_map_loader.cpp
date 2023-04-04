@@ -267,6 +267,12 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
+  sub_pose_initializer_state_ =
+    node->create_subscription<autoware_adapi_v1_msgs::msg::LocalizationInitializationState>(
+      "initialization_state", rclcpp::QoS{1},
+      std::bind(
+        &VoxelGridDynamicMapLoader::onPoseInitializerCallback, this, std::placeholders::_1));
+
   sub_estimated_pose_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "pose_with_covariance", rclcpp::QoS{1},
     std::bind(&VoxelGridDynamicMapLoader::onEstimatedPoseCallback, this, std::placeholders::_1),
@@ -287,7 +293,16 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
     std::chrono::milliseconds(timer_interval_ms),
     std::bind(&VoxelGridDynamicMapLoader::timer_callback, this), timer_callback_group_);
 }
-
+void VoxelGridDynamicMapLoader::onPoseInitializerCallback(
+  autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg)
+{
+  initialization_state_.state = msg->state;
+  if (msg->state != autoware_adapi_v1_msgs::msg::LocalizationInitializationState::INITIALIZED) {
+    current_position_ = std::nullopt;
+    last_updated_position_ = std::nullopt;
+    RCLCPP_INFO(logger_, "Initializing pose... Reset the position of Vehicle");
+  }
+}
 void VoxelGridDynamicMapLoader::onEstimatedPoseCallback(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
@@ -319,7 +334,10 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
 }
 void VoxelGridDynamicMapLoader::timer_callback()
 {
-  if (current_position_ == std::nullopt) {
+  if (
+    current_position_ == std::nullopt ||
+    initialization_state_.state !=
+      autoware_adapi_v1_msgs::msg::LocalizationInitializationState::INITIALIZED) {
     return;
   }
   if (last_updated_position_ == std::nullopt) {
@@ -364,7 +382,6 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
     }
     status = result.wait_for(std::chrono::seconds(1));
   }
-
   //
   if (status == std::future_status::ready) {
     if (
