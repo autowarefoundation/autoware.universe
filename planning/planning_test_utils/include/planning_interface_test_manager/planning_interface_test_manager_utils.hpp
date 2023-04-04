@@ -254,10 +254,11 @@ void publishScenarioData(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
   rclcpp::Publisher<Scenario>::SharedPtr publisher, const std::string scenario)
 {
-  auto current_scenario = std::make_shared<Scenario>();
-  current_scenario->current_scenario = scenario;
+  auto scenario_msg = std::make_shared<Scenario>();
+  scenario_msg->current_scenario = scenario;
+  scenario_msg->activating_scenarios = {scenario};
   setPublisher(test_node, topic_name, publisher);
-  publisher->publish(*current_scenario);
+  publisher->publish(*scenario_msg);
 
   spinSomeNodes(test_node, target_node);
 }

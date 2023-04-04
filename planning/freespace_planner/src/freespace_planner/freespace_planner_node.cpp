@@ -314,9 +314,7 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
 
 void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
-  std::cerr << "route is subscribed " << __FILE__ << __LINE__ << std::endl;
   route_ = msg;
-  std::cerr << "route_: " << route_ << __FILE__ << __LINE__ << std::endl;
 
   goal_pose_.header = msg->header;
   goal_pose_.pose = msg->goal_pose;
@@ -426,7 +424,6 @@ void FreespacePlannerNode::onTimer()
 
   if (!isActive(scenario_)) {
     reset();
-
     return;
   }
 
@@ -483,9 +480,11 @@ void FreespacePlannerNode::planTrajectory()
   }
 
   // Provide robot shape and map for the planner
+
   algo_->setMap(*occupancy_grid_);
 
   // Calculate poses in costmap frame
+
   const auto current_pose_in_costmap_frame = transformPose(
     current_pose_.pose,
     getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
@@ -494,18 +493,25 @@ void FreespacePlannerNode::planTrajectory()
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
   // execute planning
+
   const rclcpp::Time start = get_clock()->now();
+
   const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+
   const rclcpp::Time end = get_clock()->now();
 
   RCLCPP_INFO(get_logger(), "Freespace planning: %f [s]", (end - start).seconds());
 
   if (result) {
     RCLCPP_INFO(get_logger(), "Found goal!");
+
     trajectory_ =
       createTrajectory(current_pose_, algo_->getWaypoints(), node_param_.waypoints_velocity);
+
     reversing_indices_ = getReversingIndices(trajectory_);
+
     prev_target_index_ = 0;
+
     target_index_ =
       getNextTargetIndex(trajectory_.points.size(), reversing_indices_, prev_target_index_);
 

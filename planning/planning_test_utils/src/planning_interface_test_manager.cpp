@@ -238,7 +238,9 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   publishNominalRoute(target_node, input_route_name_);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
