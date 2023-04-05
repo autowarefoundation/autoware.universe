@@ -42,6 +42,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
     {"--ros-args", "--params-file",
      behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml", "--params-file",
      behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml", "--params-file",
+     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml", "--params-file",
      behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml", "--params-file",
      behavior_path_planner_dir + "/config/lane_following/lane_following.param.yaml",
      "--params-file", behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
