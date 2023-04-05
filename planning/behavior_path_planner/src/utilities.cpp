@@ -1365,19 +1365,6 @@ std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets)
   return ids;
 }
 
-Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id)
-{
-  Path path;
-  path.header = path_with_lane_id.header;
-  path.left_bound = path_with_lane_id.left_bound;
-  path.right_bound = path_with_lane_id.right_bound;
-  path.points.reserve(path_with_lane_id.points.size());
-  for (const auto & pt_with_lane_id : path_with_lane_id.points) {
-    path.points.push_back(pt_with_lane_id.point);
-  }
-  return path;
-}
-
 lanelet::Polygon3d getVehiclePolygon(
   const Pose & vehicle_pose, const double vehicle_width, const double base_link2front)
 {
