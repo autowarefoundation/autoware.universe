@@ -89,7 +89,7 @@ bool AvoidanceByLCModule::isExecutionRequested() const
   const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
 
-  if (!found_safe_path) {
+  if (!found_valid_path) {
     return false;
   }
 
