@@ -113,7 +113,7 @@ class GuideNode(Node):
     def check_autonomous_condition(self):
         states = [state.msg.available if state.msg else False for state in self.auto_states]
         if all(states):
-            return "Unable to safely switch to automatic mode. Please stop or satisfy position and velocity constraints."
+            return "Unable to safely switch to automatic mode. Please stop or satisfy the driving mode change condition."
         else:
             components = ",".join([module for module, state in zip(modules, states) if not state])
             return f"The topic rate error is detected. Please check [{components}] components."
