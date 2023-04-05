@@ -79,12 +79,12 @@ private:
   visualization_msgs::msg::MarkerArray handleVirtualWallMarker(
     const std::vector<Pose> & poses, const std::string & module_name, const rclcpp::Time & now,
     int32_t id, create_wall_function function_create_wall_marker,
-    delete_wall_function function_delete_wall_marker,
-    std::vector<geometry_msgs::msg::Pose> & previous_poses, const double longitudinal_offset = 0.0);
+    delete_wall_function function_delete_wall_marker, size_t & previous_virtual_walls_nb,
+    const double longitudinal_offset = 0.0);
 
-  std::vector<Pose> previous_stop_poses_;
-  std::vector<Pose> previous_slow_down_poses_;
-  std::vector<Pose> previous_dead_line_poses_;
+  size_t previous_stop_poses_nb_ = 0UL;
+  size_t previous_slow_down_poses_nb_ = 0UL;
+  size_t previous_dead_line_poses_nb_ = 0UL;
 };
 }  // namespace motion_utils
 
