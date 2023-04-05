@@ -13,6 +13,35 @@
 // limitations under the License.
 
 #include "id_map_loader_module.hpp"
+namespace
+{
+autoware_map_msgs::msg::PointCloudMapMetadata createMetadata(
+  const std::map<std::string, PCDFileMetadata> & pcd_file_metadata_dict)
+{
+  autoware_map_msgs::msg::PointCloudMapMetadata metadata_msg;
+  metadata_msg.header.frame_id = "map";
+  metadata_msg.header.stamp = rclcpp::Clock().now();
+
+  for (const auto & ele : pcd_file_metadata_dict) {
+    std::string path = ele.first;
+    PCDFileMetadata metadata = ele.second;
+
+    // assume that the map ID = map path (for now)
+    std::string map_id = path;
+
+    autoware_map_msgs::msg::PointCloudCellMetadata cell_metadata;
+    cell_metadata.cell_id = map_id;
+    cell_metadata.min_x = metadata.min.x;
+    cell_metadata.min_y = metadata.min.y;
+    cell_metadata.max_x = metadata.max.x;
+    cell_metadata.max_y = metadata.max.y;
+
+    metadata_msg.cell_metadata.push_back(cell_metadata);
+  }
+
+  return metadata_msg;
+}
+}  // namespace
 
 IdMapLoaderModule::IdMapLoaderModule(
   rclcpp::Node * node, const std::map<std::string, PCDFileMetadata> & pcd_file_metadata_dict)
@@ -22,7 +51,13 @@ IdMapLoaderModule::IdMapLoaderModule(
     "service/get_id_pcd_map", std::bind(
                                 &IdMapLoaderModule::onServiceGetIdPointCloudMap, this,
                                 std::placeholders::_1, std::placeholders::_2));
-  // TODO: initialize publisher and publish the map metadata
+
+  // publish the map metadata
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
+  pub_metadata_ = node->create_publisher<autoware_map_msgs::msg::PointCloudMapMetadata>(
+    "output/pointcloud_map_metadata", durable_qos);
+  pub_metadata_->publish(createMetadata(all_pcd_file_metadata_dict_));
 }
 
 bool IdMapLoaderModule::onServiceGetIdPointCloudMap(

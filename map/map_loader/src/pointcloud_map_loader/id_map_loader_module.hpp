@@ -19,6 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "autoware_map_msgs/msg/point_cloud_map_metadata.hpp"
 #include "autoware_map_msgs/srv/get_id_point_cloud_map.hpp"
 
 #include <pcl/common/common.h>
@@ -46,7 +47,7 @@ private:
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
   rclcpp::Service<GetIdPointCloudMap>::SharedPtr get_id_pcd_maps_service_;
 
-  // TODO: add publisher for id list
+  rclcpp::Publisher<autoware_map_msgs::msg::PointCloudMapMetadata>::SharedPtr pub_metadata_;
 
   bool onServiceGetIdPointCloudMap(
     GetIdPointCloudMap::Request::SharedPtr req, GetIdPointCloudMap::Response::SharedPtr res);
