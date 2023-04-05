@@ -35,6 +35,7 @@ struct LaneChangePath
   ShiftedPath shifted_path;
   ShiftLine shift_line;
   double acceleration{0.0};
+  double lane_changing_velocity{0.0};
   LaneChangePhaseInfo length{};
   LaneChangePhaseInfo duration{};
   TurnSignalInfo turn_signal_info;

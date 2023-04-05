@@ -128,9 +128,9 @@ double l2Norm(const Vector3 vector)
 }
 
 PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_duration, const double acceleration)
+  const PathWithLaneId & path, const double initial_velocity, const double lane_changing_velocity,
+  const Pose & vehicle_pose, const size_t nearest_seg_idx, const double duration,
+  const double resolution, const double prepare_duration, const double acceleration)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
@@ -142,9 +142,6 @@ PredictedPath convertToPredictedPath(
 
   FrenetPoint vehicle_pose_frenet =
     convertToFrenetPoint(path.points, vehicle_pose.position, nearest_seg_idx);
-  const double initial_velocity = std::abs(vehicle_twist.linear.x);
-  const double lane_change_velocity =
-    std::max(initial_velocity + acceleration * prepare_duration, 0.0);
 
   // prepare segment
   for (double t = 0.0; t < prepare_duration; t += resolution) {
@@ -157,7 +154,7 @@ PredictedPath convertToPredictedPath(
   const double offset =
     initial_velocity * prepare_duration + 0.5 * acceleration * prepare_duration * prepare_duration;
   for (double t = prepare_duration; t < duration; t += resolution) {
-    const double length = lane_change_velocity * (t - prepare_duration) + offset;
+    const double length = lane_changing_velocity * (t - prepare_duration) + offset;
     predicted_path.path.push_back(
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
   }

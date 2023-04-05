@@ -648,6 +648,7 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
 {
   const auto current_pose = getEgoPose();
   const auto current_twist = getEgoTwist();
+  const auto lane_changing_velocity = status_.lane_change_path.lane_changing_velocity;
   const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
@@ -668,8 +669,9 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
     lateral_buffer, ignore_unknown);
 
   return lane_change_utils::isLaneChangePathSafe(
-    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
-    *parameters_, common_parameters.expected_front_deceleration_for_abort,
+    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist,
+    lane_changing_velocity, common_parameters, *parameters_,
+    common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     status_.lane_change_path.acceleration);
 }

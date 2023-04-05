@@ -103,8 +103,8 @@ void getProjectedDistancePointFromPolygons(
 // data conversions
 
 PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
+  const PathWithLaneId & path, const double initial_velocity, const double lane_changing_velocity,
+  const Pose & pose, const size_t nearest_seg_idx, const double duration, const double resolution,
   const double prepare_duration, const double acceleration);
 
 template <class T>

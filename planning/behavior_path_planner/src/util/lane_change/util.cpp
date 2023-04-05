@@ -192,6 +192,7 @@ std::optional<LaneChangePath> constructCandidatePath(
 
   LaneChangePath candidate_path;
   candidate_path.acceleration = acceleration;
+  candidate_path.lane_changing_velocity = lane_changing_speed;
   candidate_path.length.prepare = prepare_distance;
   candidate_path.length.lane_changing = lane_change_distance;
   candidate_path.duration.prepare = std::invoke([&]() {
@@ -470,8 +471,8 @@ std::pair<bool, bool> getLaneChangePaths(
     candidate_paths->push_back(*candidate_path);
 
     const auto is_safe = isLaneChangePathSafe(
-      *candidate_path, dynamic_objects, dynamic_object_indices, pose, twist, common_parameter,
-      parameter, common_parameter.expected_front_deceleration,
+      *candidate_path, dynamic_objects, dynamic_object_indices, pose, twist, lane_changing_speed,
+      common_parameter, parameter, common_parameter.expected_front_deceleration,
       common_parameter.expected_rear_deceleration, ego_pose_before_collision, *debug_data,
       acceleration);
 
@@ -540,7 +541,8 @@ bool hasEnoughDistance(
 bool isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const PredictedObjects::ConstSharedPtr dynamic_objects,
   const LaneChangeTargetObjectIndices & dynamic_objects_indices, const Pose & current_pose,
-  const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameter,
+  const Twist & current_twist, const double lane_changing_velocity,
+  const BehaviorPathPlannerParameters & common_parameter,
   const LaneChangeParameters & lane_change_parameter, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double acceleration)
@@ -568,8 +570,8 @@ bool isLaneChangePathSafe(
     common_parameter.ego_nearest_yaw_threshold);
 
   const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
-    prepare_duration, acceleration);
+    path, current_twist.linear.x, lane_changing_velocity, current_pose, current_seg_idx,
+    check_end_time, time_resolution, prepare_duration, acceleration);
   const auto & vehicle_info = common_parameter.vehicle_info;
 
   auto in_lane_object_indices = dynamic_objects_indices.target_lane;
