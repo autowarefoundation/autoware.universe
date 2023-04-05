@@ -34,8 +34,8 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 ### Service
 
-| Name                               | Type                                                   | Description                                                                                                                                            |
-| ---------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Name                     | Type                                         | Description                                                                                                                                  |
+| ------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `service/get_id_pcd_map` | `autoware_map_msgs::srv::GetIdPointCloudMap` | (Optional) service to request point cloud map. If pointcloud_map_loader sends id pointcloud map loading via ROS 2 service, use this service. |
 
 ## Parameters
@@ -53,7 +53,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 | use_elevation_map_cloud_publisher | bool        | Whether to publish `output/elevation_map_cloud`                                                                                   | false         |
 | use_lane_filter                   | bool        | Whether to filter elevation_map with vector_map                                                                                   | false         |
 | lane_margin                       | float       | Margin distance from the lane polygon of the area to be included in the inpainting mask [m]. Used only when use_lane_filter=True. | 0.0           |
-| use_sequential_load | bool | Whether to get point cloud map by service | false |
+| use_sequential_load               | bool        | Whether to get point cloud map by service                                                                                         | false         |
 
 ### GridMap parameters
 

@@ -84,14 +84,16 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
     "input/vector_map", durable_qos, std::bind(&ElevationMapLoaderNode::onVectorMap, this, _1));
   if (use_sequential_load) {
     {
-      sub_pointcloud_metadata_ = this->create_subscription<autoware_map_msgs::srv::PointCloudMapMetadata>(
-        "input/pointcloud_map_metadata", durable_qos,std::bind(&ElevationMapLoaderNode::onPointCloudMapMetadata, this, _1));
+      sub_pointcloud_metadata_ =
+        this->create_subscription<autoware_map_msgs::srv::PointCloudMapMetadata>(
+          "input/pointcloud_map_metadata", durable_qos,
+          std::bind(&ElevationMapLoaderNode::onPointCloudMapMetadata, this, _1));
       constexpr auto period_ns =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0));
       group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
       pcd_loader_client_ = create_client<autoware_map_msgs::srv::GetIdPointCloudMap>(
         "service/get_id_pcd_map", rmw_qos_profile_services_default, group_);
-      
+
       while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
         RCLCPP_INFO(
           this->get_logger(),
@@ -244,8 +246,7 @@ void ElevationMapLoaderNode::receiveMap()
     // send a request to map_loader
     RCLCPP_INFO(this->get_logger(), "send a request to map_loader");
     auto result{pcd_loader_client_->async_send_request(
-      request,
-      [](rclcpp::Client<autoware_map_msgs::srv::GetIdPointCloudMap>::SharedFuture) {})};
+      request, [](rclcpp::Client<autoware_map_msgs::srv::GetIdPointCloudMap>::SharedFuture) {})};
     std::future_status status = result.wait_for(std::chrono::seconds(0));
     while (status != std::future_status::ready) {
       RCLCPP_INFO(this->get_logger(), "waiting response");
