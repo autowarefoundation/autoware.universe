@@ -23,7 +23,7 @@ This is a debug script to check the conditions for transition to autonomous mode
 ```bash
 $ ros2 run default_ad_api guide.py
 
-The vehicle pose is not estimated. Plase set an initial pose or check GNSS.
+The vehicle pose is not estimated. Please set an initial pose or check GNSS.
 The route is not set. Please set a goal pose.
 The topic rate error is detected. Please check [control,planning] components.
 The vehicle is ready. Please change the operation mode to autonomous.
