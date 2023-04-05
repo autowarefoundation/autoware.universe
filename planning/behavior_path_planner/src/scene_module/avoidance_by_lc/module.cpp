@@ -134,7 +134,7 @@ bool AvoidanceByLCModule::isExecutionReady() const
   const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
 
-  return found_valid_path;
+  return found_safe_path;
 }
 
 void AvoidanceByLCModule::updateData()
