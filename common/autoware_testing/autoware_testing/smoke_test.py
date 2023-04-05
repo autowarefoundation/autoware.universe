@@ -82,9 +82,15 @@ class DummyTest(unittest.TestCase):
         """Waiting for the node is ready."""
         rclpy.init()
         test_node = rclpy.create_node("test_node")
-        while len(test_node.get_node_names()) == 0:
+        # Wait until both dummy node "test_node" and real tested node are registered and then kill
+        # both of them, if tested node does not register within `timeout` seconds test will fail
+        start_time = time.time()
+        timeout = 2 # seconds
+        timeout_msg = "Smoke test timeout has been reached ({}s)".format(timeout)
+        print("waiting for Nodes to be ready")
+        while len(test_node.get_node_names()) < 2:
+            assert time.time() - start_time < timeout, timeout_msg
             time.sleep(0.1)
-            print("waiting for Node to be ready")
         rclpy.shutdown()
 
 
