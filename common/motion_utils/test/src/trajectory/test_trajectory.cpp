@@ -4726,3 +4726,33 @@ TEST(trajectory, cropPoints)
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 }
+
+TEST(Trajectory, removeInvalidOrientationPoints)
+{
+  using motion_utils::insertOrientation;
+  using motion_utils::removeInvalidOrientationPoints;
+
+  const double max_yaw_diff = M_PI_2;
+
+  auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+  insertOrientation(traj.points, true);
+  const auto original_traj = traj;
+
+  // check non invalid points
+  removeInvalidOrientationPoints(traj.points, max_yaw_diff);
+  EXPECT_EQ(traj.points.size(), static_cast<size_t>(10));
+
+  // check invalid points
+  auto invalid_point = traj.points.back();
+  invalid_point.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 3 * M_PI_2));
+  traj.points.push_back(invalid_point);
+  removeInvalidOrientationPoints(traj.points, max_yaw_diff);
+  EXPECT_EQ(traj.points.size(), static_cast<size_t>(10));
+  for (size_t i = 0; i < traj.points.size() - 1; ++i) {
+    EXPECT_EQ(original_traj.points.at(i), traj.points.at(i));
+    const double yaw1 = tf2::getYaw(traj.points.at(i).pose.orientation);
+    const double yaw2 = tf2::getYaw(traj.points.at(i + 1).pose.orientation);
+    const double yaw_diff = std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2));
+    EXPECT_LE(yaw_diff, max_yaw_diff);
+  }
+}
