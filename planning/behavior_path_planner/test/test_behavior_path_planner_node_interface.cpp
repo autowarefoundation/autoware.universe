@@ -53,7 +53,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
     std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "behavior_path_planner/input/odometry");
+  test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
   test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
   test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
   test_manager->publishOccupancyGrid(

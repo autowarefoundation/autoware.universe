@@ -117,6 +117,13 @@ void PlanningIntefaceTestManager::publishParkingScenario(
     test_node_, target_node, topic_name, parking_scenario_pub_, Scenario::PARKING);
 }
 
+void PlanningIntefaceTestManager::publishInitialPose(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishInitialPoseData(
+    test_node_, target_node, topic_name, initial_pose_pub_);
+}
+
 void PlanningIntefaceTestManager::publishParkingState(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {

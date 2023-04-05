@@ -37,6 +37,7 @@
 #include <boost/optional.hpp>
 
 #include <lanelet2_io/Io.h>
+#include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
 
 #include <limits>
@@ -250,19 +251,6 @@ void publishData<HADMapBin>(
   spinSomeNodes(test_node, target_node);
 }
 
-void publishScenarioData(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  rclcpp::Publisher<Scenario>::SharedPtr publisher, const std::string scenario)
-{
-  auto scenario_msg = std::make_shared<Scenario>();
-  scenario_msg->current_scenario = scenario;
-  scenario_msg->activating_scenarios = {scenario};
-  setPublisher(test_node, topic_name, publisher);
-  publisher->publish(*scenario_msg);
-
-  spinSomeNodes(test_node, target_node);
-}
-
 template <>
 void publishData<Trajectory>(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
@@ -329,6 +317,47 @@ void publishData<TFMessage>(
   tf_msg.transforms.emplace_back(std::move(tf));
   setPublisher(test_node, topic_name, publisher);
   publisher->publish(tf_msg);
+  spinSomeNodes(test_node, target_node);
+}
+
+void publishInitialPoseData(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<Odometry>::SharedPtr publisher)
+{
+  setPublisher(test_node, topic_name, publisher);
+
+  const double position_x = 3722.16015625;
+  const double position_y = 73723.515625;
+  const double quaternion_x = 0.;
+  const double quaternion_y = 0.;
+  const double quaternion_z = 0.23311256049418302;
+  const double quaternion_w = 0.9724497591854532;
+  geometry_msgs::msg::Quaternion quaternion;
+  quaternion.x = quaternion_x;
+  quaternion.y = quaternion_y;
+  quaternion.z = quaternion_z;
+  quaternion.w = quaternion_w;
+  const double yaw = tf2::getYaw(quaternion);
+
+  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
+  const std::array<double, 3> start_pose{position_x, position_y, yaw};
+  current_odometry->pose.pose = create_pose_msg(start_pose);
+  current_odometry->header.frame_id = "map";
+  // current_odometry->header.frame_id = "base_link";
+  publisher->publish(*current_odometry);
+  spinSomeNodes(test_node, target_node);
+}
+
+void publishScenarioData(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  rclcpp::Publisher<Scenario>::SharedPtr publisher, const std::string scenario)
+{
+  auto scenario_msg = std::make_shared<Scenario>();
+  scenario_msg->current_scenario = scenario;
+  scenario_msg->activating_scenarios = {scenario};
+  setPublisher(test_node, topic_name, publisher);
+  publisher->publish(*scenario_msg);
+
   spinSomeNodes(test_node, target_node);
 }
 

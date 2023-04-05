@@ -81,6 +81,7 @@ public:
   void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
 
   void publishOdometry(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishInitialPose(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAcceleration(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -120,6 +121,7 @@ public:
 private:
   // Publisher (necessary for node running)
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<Odometry>::SharedPtr initial_pose_pub_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr max_velocity_pub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
   rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
