@@ -122,31 +122,9 @@ using geometry_msgs::msg::PoseWithCovarianceStamped;
 using tf2::fromMsg;
 using tier4_autoware_utils::Point2d;
 
-std::vector<Pose> convertToPoseArray(const PathWithLaneId & path)
-{
-  std::vector<Pose> pose_array;
-  pose_array.reserve(path.points.size());
-  for (const auto & pt : path.points) {
-    pose_array.push_back(pt.point.pose);
-  }
-  return pose_array;
-}
-
 double l2Norm(const Vector3 vector)
 {
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
-}
-
-PoseArray convertToGeometryPoseArray(const PathWithLaneId & path)
-{
-  PoseArray converted_array;
-  converted_array.header = path.header;
-
-  converted_array.poses.reserve(path.points.size());
-  for (const auto & point_with_id : path.points) {
-    converted_array.poses.push_back(point_with_id.point.pose);
-  }
-  return converted_array;
 }
 
 PredictedPath convertToPredictedPath(
