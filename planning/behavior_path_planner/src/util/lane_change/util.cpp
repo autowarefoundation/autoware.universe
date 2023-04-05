@@ -1041,7 +1041,7 @@ std::vector<DrivableLanes> combineDrivableLanes(
 
   auto updated_drivable_lanes_vec = original_drivable_lanes_vec;
   for (auto & updated_drivable_lanes : updated_drivable_lanes_vec) {
-    // calculted corresponding index of new_drivable_lanes
+    // calculated corresponding index of new_drivable_lanes
     const auto new_drivable_lanes = [&]() -> std::optional<DrivableLanes> {
       for (const auto & new_drivable_lanes : new_drivable_lanes_vec) {
         for (const auto & ll : convert_to_lanes(updated_drivable_lanes)) {
