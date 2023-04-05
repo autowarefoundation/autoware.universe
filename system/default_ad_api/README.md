@@ -26,7 +26,7 @@ $ ros2 run default_ad_api guide.py
 The vehicle pose is not estimated. Plase set an initial pose or check GNSS.
 The route is not set. Please set a goal pose.
 The topic rate error is detected. Please check [control,planning] components.
-The vehicle is ready. Change the operation mode to autonomous.
+The vehicle is ready. Please change the operation mode to autonomous.
 The vehicle is driving autonomously.
 The vehicle has reached the goal of the route. Please reset a route.
 ```

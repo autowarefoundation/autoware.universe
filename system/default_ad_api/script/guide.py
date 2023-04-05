@@ -106,7 +106,7 @@ class GuideNode(Node):
         elif self.operation_mode.msg.mode == OperationModeState.REMOTE:
             return "The vehicle is driving by a remote operator."
         elif self.operation_mode.msg.is_autonomous_mode_available:
-            return "The vehicle is ready. Change the operation mode to autonomous."
+            return "The vehicle is ready. Please change the operation mode to autonomous."
         else:
             return self.check_autonomous_condition()
 
