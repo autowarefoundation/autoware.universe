@@ -206,7 +206,7 @@ TEST(boost_geometry, boost_toPolygon2d)
 
 TEST(boost_geometry, boost_toBoundingBox)
 {
-  using tier4_autoware_utils::toBoundingBox;
+  using tier4_autoware_utils::toFootprint;
 
   // from base link
   {
@@ -218,7 +218,7 @@ TEST(boost_geometry, boost_toBoundingBox)
     const double base_to_back = 1.0;
     const double width = 2.0;
 
-    const auto poly = toBoundingBox(base_link_pose, base_to_front, base_to_back, width);
+    const auto poly = toFootprint(base_link_pose, base_to_front, base_to_back, width);
     EXPECT_DOUBLE_EQ(poly.outer().at(0).x(), 3.0 / std::sqrt(2) + x);
     EXPECT_DOUBLE_EQ(poly.outer().at(0).y(), 5.0 / std::sqrt(2) + y);
     EXPECT_DOUBLE_EQ(poly.outer().at(1).x(), 5.0 / std::sqrt(2) + x);

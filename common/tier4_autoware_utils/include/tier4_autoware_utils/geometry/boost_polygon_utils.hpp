@@ -43,7 +43,7 @@ Polygon2d toPolygon2d(
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::DetectedObject & object);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::TrackedObject & object);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::PredictedObject & object);
-Polygon2d toBoundingBox(
+Polygon2d toFootprint(
   const geometry_msgs::msg::Pose & base_link_pose, const double base_to_front,
   const double base_to_rear, const double width);
 double getArea(const autoware_auto_perception_msgs::msg::Shape & shape);

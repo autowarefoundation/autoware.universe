@@ -198,7 +198,7 @@ tier4_autoware_utils::Polygon2d toPolygon2d(
     object.kinematics.initial_pose_with_covariance.pose, object.shape);
 }
 
-Polygon2d toBoundingBox(
+Polygon2d toFootprint(
   const geometry_msgs::msg::Pose & base_link_pose, const double base_to_front,
   const double base_to_rear, const double width)
 {
