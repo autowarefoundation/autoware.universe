@@ -20,6 +20,7 @@
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/pull_out/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "perception_utils/predicted_path_utils.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <route_handler/route_handler.hpp>
@@ -49,6 +50,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -78,7 +80,7 @@ using geometry_msgs::msg::Pose;
 using marker_utils::CollisionCheckDebug;
 using vehicle_info_util::VehicleInfo;
 
-struct FrenetCoordinate3d
+struct FrenetPoint
 {
   double length{0.0};    // longitudinal
   double distance{0.0};  // lateral
@@ -102,8 +104,6 @@ void getProjectedDistancePointFromPolygons(
 
 std::vector<Pose> convertToPoseArray(const PathWithLaneId & path);
 
-std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
-
 PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
 
 PredictedPath convertToPredictedPath(
@@ -112,25 +112,17 @@ PredictedPath convertToPredictedPath(
   const double acceleration, const double min_speed = 1.0);
 
 template <class T>
-FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<T> & pose_array, const Point & search_point_geom, const size_t seg_idx)
+FrenetPoint convertToFrenetPoint(
+  const T & points, const Point & search_point_geom, const size_t seg_idx)
 {
-  FrenetCoordinate3d frenet_coordinate;
+  FrenetPoint frenet_point;
 
   const double longitudinal_length =
-    motion_utils::calcLongitudinalOffsetToSegment(pose_array, seg_idx, search_point_geom);
-  frenet_coordinate.length =
-    motion_utils::calcSignedArcLength(pose_array, 0, seg_idx) + longitudinal_length;
-  frenet_coordinate.distance =
-    motion_utils::calcLateralOffset(pose_array, search_point_geom, seg_idx);
+    motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom);
+  frenet_point.length = motion_utils::calcSignedArcLength(points, 0, seg_idx) + longitudinal_length;
+  frenet_point.distance = motion_utils::calcLateralOffset(points, search_point_geom, seg_idx);
 
-  return frenet_coordinate;
-}
-
-inline FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom, const size_t seg_idx)
-{
-  return convertToFrenetCoordinate3d(path.points, search_point_geom, seg_idx);
+  return frenet_point;
 }
 
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
@@ -158,8 +150,6 @@ double getArcLengthToTargetLanelet(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
   const Pose & pose);
 
-bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_pt);
-
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
 bool calcObjectPolygon(
@@ -167,9 +157,6 @@ bool calcObjectPolygon(
 
 bool calcObjectPolygon(
   const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
-
-PredictedPath resamplePredictedPath(
-  const PredictedPath & input_path, const double resolution, const double duration);
 
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & path1, const PredictedPath & path2, const double start_time,
@@ -397,14 +384,11 @@ std::vector<PredictedPath> getPredictedPathFromObj(
 
 Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
 
-bool getEgoExpectedPoseAndConvertToPolygon(
-  const Pose & current_pose, const PredictedPath & pred_path,
-  tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
-  const VehicleInfo & ego_info, Pose & expected_pose, std::string & failed_reason);
+boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
 
-bool getObjectExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const PredictedObject & object, Polygon2d & obj_polygon,
-  const double & check_current_time, Pose & expected_pose, std::string & failed_reason);
+boost::optional<std::pair<Pose, Polygon2d>> getObjectExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const double current_time, const PredictedObject & object);
 
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
 
@@ -459,6 +443,8 @@ double calcLaneChangeBuffer(
 
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
+
+std::string convertToSnakeCase(const std::string & input_str);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

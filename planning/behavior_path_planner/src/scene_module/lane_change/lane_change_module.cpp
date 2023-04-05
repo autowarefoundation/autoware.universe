@@ -39,46 +39,38 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 #ifdef USE_OLD_ARCHITECTURE
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters)
-: SceneModuleInterface{name, node},
-  parameters_{std::move(parameters)},
-  uuid_left_{generateUUID()},
-  uuid_right_{generateUUID()}
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {"left", "right"})},
+  parameters_{std::move(parameters)}
 {
-  rtc_interface_left_ = std::make_shared<RTCInterface>(&node, "lane_change_left");
-  rtc_interface_right_ = std::make_shared<RTCInterface>(&node, "lane_change_right");
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "lane_change");
 }
 #else
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneChangeParameters> & parameters,
-  const std::shared_ptr<RTCInterface> & rtc_interface, Direction direction,
-  LaneChangeModuleType type)
-: SceneModuleInterface{name, node}, parameters_{parameters}, direction_{direction}, type_{type}
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
+  Direction direction, LaneChangeModuleType type)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  parameters_{parameters},
+  direction_{direction},
+  type_{type}
 {
-  rtc_interface_ptr_ = rtc_interface;
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
 }
 #endif
 
-void LaneChangeModule::onEntry()
+void LaneChangeModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
+#ifndef USE_OLD_ARCHITECTURE
   waitApproval();
 #endif
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
 
-void LaneChangeModule::onExit()
+void LaneChangeModule::processOnExit()
 {
   resetParameters();
-  current_state_ = ModuleStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
 }
 
 bool LaneChangeModule::isExecutionRequested() const
@@ -141,7 +133,7 @@ ModuleStatus LaneChangeModule::updateState()
 {
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE updateState");
   if (!isValidPath()) {
-    current_state_ = ModuleStatus::SUCCESS;
+    current_state_ = ModuleStatus::FAILURE;
     return current_state_;
   }
 
@@ -224,10 +216,10 @@ void LaneChangeModule::resetPathIfAbort()
     const auto lateral_shift = lane_change_utils::getLateralShift(*abort_path_);
     if (lateral_shift > 0.0) {
       removePreviousRTCStatusRight();
-      uuid_right_ = generateUUID();
+      uuid_map_.at("right") = generateUUID();
     } else if (lateral_shift < 0.0) {
       removePreviousRTCStatusLeft();
-      uuid_left_ = generateUUID();
+      uuid_map_.at("left") = generateUUID();
     }
 #else
     removeRTCStatus();
@@ -874,10 +866,6 @@ void LaneChangeModule::resetParameters()
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
 
-  clearWaitingApproval();
-  unlockNewModuleLaunch();
-  removeRTCStatus();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   object_debug_.clear();
   debug_marker_.markers.clear();
   resetPathCandidate();
