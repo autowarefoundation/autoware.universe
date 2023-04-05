@@ -85,7 +85,7 @@ class DummyTest(unittest.TestCase):
         # Wait until both dummy node "test_node" and real tested node are registered and then kill
         # both of them, if tested node does not register within `timeout` seconds test will fail
         start_time = time.time()
-        timeout = 2 # seconds
+        timeout = 2  # seconds
         timeout_msg = "Smoke test timeout has been reached ({}s)".format(timeout)
         print("waiting for Nodes to be ready")
         while len(test_node.get_node_names()) < 2:
