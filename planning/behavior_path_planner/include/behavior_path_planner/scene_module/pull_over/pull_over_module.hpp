@@ -35,6 +35,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -93,7 +94,7 @@ public:
   PullOverModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<PullOverParameters> & parameters,
-    const std::shared_ptr<RTCInterface> & rtc_interface);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   void updateModuleParams(const std::shared_ptr<PullOverParameters> & parameters)
   {
@@ -110,8 +111,8 @@ public:
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
 
   void setParameters(const std::shared_ptr<PullOverParameters> & parameters);
 

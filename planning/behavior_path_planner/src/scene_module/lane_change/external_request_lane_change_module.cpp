@@ -33,36 +33,26 @@
 namespace behavior_path_planner
 {
 #ifdef USE_OLD_ARCHITECTURE
-std::string getTopicName(const ExternalRequestLaneChangeModule::Direction & direction)
-{
-  const std::string direction_name =
-    direction == ExternalRequestLaneChangeModule::Direction::RIGHT ? "right" : "left";
-  return "ext_request_lane_change_" + direction_name;
-}
-
 ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
   const Direction & direction)
-: SceneModuleInterface{name, node}, parameters_{std::move(parameters)}, direction_{direction}
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
+  parameters_{std::move(parameters)},
+  direction_{direction}
 {
-  rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, getTopicName(direction));
   steering_factor_interface_ptr_ =
-    std::make_unique<SteeringFactorInterface>(&node, getTopicName(direction));
+    std::make_unique<SteeringFactorInterface>(&node, util::convertToSnakeCase(name));
 }
 
-void ExternalRequestLaneChangeModule::onEntry()
+void ExternalRequestLaneChangeModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
-  current_state_ = BT::NodeStatus::SUCCESS;
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
 
-void ExternalRequestLaneChangeModule::onExit()
+void ExternalRequestLaneChangeModule::processOnExit()
 {
   resetParameters();
-  current_state_ = BT::NodeStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
 }
 
 bool ExternalRequestLaneChangeModule::isExecutionRequested() const
@@ -143,7 +133,7 @@ BehaviorModuleOutput ExternalRequestLaneChangeModule::plan()
   }
 
   if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
-    const auto stop_point = util::insertStopPoint(0.1, &path);
+    const auto stop_point = util::insertStopPoint(0.1, path);
   }
 
   if (isAbortState()) {
@@ -174,7 +164,9 @@ void ExternalRequestLaneChangeModule::resetPathIfAbort()
 
   if (!is_abort_approval_requested_) {
     RCLCPP_DEBUG(getLogger(), "[abort] uuid is reset to request abort approval.");
-    uuid_ = generateUUID();
+    for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+      itr->second = generateUUID();
+    }
     is_abort_approval_requested_ = true;
     is_abort_path_approved_ = false;
     return;
@@ -399,7 +391,10 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
   return {found_valid_path, found_safe_path};
 }
 
-bool ExternalRequestLaneChangeModule::isSafe() const { return status_.is_safe; }
+bool ExternalRequestLaneChangeModule::isSafe() const
+{
+  return status_.is_safe;
+}
 
 bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) const
 {
@@ -672,12 +667,9 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
     {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
     lateral_buffer, ignore_unknown);
 
-  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
-    common_parameters.ego_nearest_yaw_threshold);
   return lane_change_utils::isLaneChangePathSafe(
-    path, dynamic_objects, dynamic_object_indices, current_pose, current_seg_idx, current_twist,
-    common_parameters, *parameters_, common_parameters.expected_front_deceleration_for_abort,
+    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
+    *parameters_, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     status_.lane_change_path.acceleration);
 }
@@ -739,10 +731,7 @@ void ExternalRequestLaneChangeModule::calcTurnSignalInfo()
 
 void ExternalRequestLaneChangeModule::resetParameters()
 {
-  clearWaitingApproval();
-  removeRTCStatus();
   resetPathCandidate();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   object_debug_.clear();
   debug_marker_.markers.clear();
 }
