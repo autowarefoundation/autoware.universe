@@ -560,7 +560,8 @@ bool isLaneChangePathSafe(
 
   const double check_start_time = check_at_prepare_phase ? 0.0 : lane_change_path.duration.prepare;
   const double check_end_time = lane_change_path.duration.sum();
-  const double & prepare_time = lane_change_parameter.lane_change_prepare_duration;
+  const double & prepare_duration =
+    check_at_prepare_phase ? lane_change_parameter.lane_change_prepare_duration : 0.0;
 
   const auto current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     path.points, current_pose, common_parameter.ego_nearest_dist_threshold,
@@ -568,7 +569,7 @@ bool isLaneChangePathSafe(
 
   const auto vehicle_predicted_path = util::convertToPredictedPath(
     path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
-    prepare_time, acceleration);
+    prepare_duration, acceleration);
   const auto & vehicle_info = common_parameter.vehicle_info;
 
   auto in_lane_object_indices = dynamic_objects_indices.target_lane;

@@ -130,7 +130,7 @@ double l2Norm(const Vector3 vector)
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
   const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double acceleration)
+  const double prepare_duration, const double acceleration)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
@@ -143,14 +143,15 @@ PredictedPath convertToPredictedPath(
   FrenetPoint vehicle_pose_frenet =
     convertToFrenetPoint(path.points, vehicle_pose.position, nearest_seg_idx);
   const double initial_velocity = std::abs(vehicle_twist.linear.x);
-  const double lane_change_velocity = std::max(initial_velocity + acceleration * prepare_time, 0.0);
+  const double lane_change_velocity =
+    std::max(initial_velocity + acceleration * prepare_duration, 0.0);
 
   // first point
   predicted_path.path.push_back(
     motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length));
 
   // prepare segment
-  for (double t = resolution; t < prepare_time; t += resolution) {
+  for (double t = resolution; t < prepare_duration; t += resolution) {
     const double length = initial_velocity * t + 0.5 * acceleration * t * t;
     predicted_path.path.push_back(
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
@@ -158,9 +159,9 @@ PredictedPath convertToPredictedPath(
 
   // lane changing segment
   const double offset =
-    initial_velocity * prepare_time + 0.5 * acceleration * prepare_time * prepare_time;
-  for (double t = prepare_time; t < duration; t += resolution) {
-    const double length = lane_change_velocity * (t - prepare_time) + offset;
+    initial_velocity * prepare_duration + 0.5 * acceleration * prepare_duration * prepare_duration;
+  for (double t = prepare_duration; t < duration; t += resolution) {
+    const double length = lane_change_velocity * (t - prepare_duration) + offset;
     predicted_path.path.push_back(
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
   }
