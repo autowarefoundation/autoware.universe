@@ -330,6 +330,62 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
   }
   // TODO(badai-nguyen): add checking neighbor map cell for point on the boundary
 
+  int neighbor_map_grid_index = -1;
+  neighbor_map_grid_index = static_cast<int>(
+    std::floor((point.x - distance_threshold - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
+
+  if (
+    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    neighbor_map_grid_index != map_grid_index) {
+    if (is_close_to_neighbor_voxels(
+          point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
+          current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid)) {
+      return true;
+    }
+  }
+
+  neighbor_map_grid_index = static_cast<int>(
+    std::floor((point.x + distance_threshold - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
+
+  if (
+    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    neighbor_map_grid_index != map_grid_index) {
+    if (is_close_to_neighbor_voxels(
+          point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
+          current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid)) {
+      return true;
+    }
+  }
+
+  neighbor_map_grid_index = static_cast<int>(
+    std::floor((point.x - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y - distance_threshold - origin_y_) / map_grid_size_y_));
+
+  if (
+    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    neighbor_map_grid_index != map_grid_index) {
+    if (is_close_to_neighbor_voxels(
+          point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
+          current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid)) {
+      return true;
+    }
+  }
+
+  neighbor_map_grid_index = static_cast<int>(
+    std::floor((point.x - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y + distance_threshold - origin_y_) / map_grid_size_y_));
+
+  if (
+    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    neighbor_map_grid_index != map_grid_index) {
+    if (is_close_to_neighbor_voxels(
+          point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
+          current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid)) {
+      return true;
+    }
+  }
   return false;
 }
 void VoxelGridDynamicMapLoader::timer_callback()
