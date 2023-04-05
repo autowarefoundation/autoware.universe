@@ -1228,7 +1228,7 @@ inline boost::optional<size_t> insertStopPoint(
   for (size_t i = 0; i < points_with_twist.size() - 1; ++i) {
     const auto curr_pose = tier4_autoware_utils::getPose(points_with_twist.at(i));
     const auto next_pose = tier4_autoware_utils::getPose(points_with_twist.at(i + 1));
-    const double length = tier4_autoware_utils::calcDistance3d(curr_pose, next_pose);
+    const double length = tier4_autoware_utils::calcDistance2d(curr_pose, next_pose);
     if (accumulated_length + length + overlap_threshold > distance_to_stop_point) {
       const double insert_length = distance_to_stop_point - accumulated_length;
       return insertStopPoint(i, insert_length, points_with_twist, overlap_threshold);
