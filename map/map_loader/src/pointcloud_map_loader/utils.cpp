@@ -54,6 +54,7 @@ std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
 {
   std::map<std::string, PCDFileMetadata> absolute_path_map;
   for (const auto & path : pcd_paths) {
+    std::cout << "KOJI ERROR replaceWithAbsolutePath :" << path << std::endl;
     std::string filename = path.substr(path.find_last_of("/\\") + 1);
     auto it = pcd_metadata_path.find(filename);
     if (it != pcd_metadata_path.end()) {
