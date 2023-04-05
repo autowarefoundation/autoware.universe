@@ -204,7 +204,7 @@ TEST(boost_geometry, boost_toPolygon2d)
   }
 }
 
-TEST(boost_geometry, boost_toBoundingBox)
+TEST(boost_geometry, boost_toFootprint)
 {
   using tier4_autoware_utils::toFootprint;
 
