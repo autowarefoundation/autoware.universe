@@ -84,7 +84,7 @@ class GuideNode(Node):
         elif self.localization.msg.state == LocalizationInitializationState.INITIALIZED:
             return self.check_routing()
         else:
-            return "The vehicle pose is not estimated. Plase set an initial pose or check GNSS."
+            return "The vehicle pose is not estimated. Please set an initial pose or check GNSS."
 
     def check_routing(self):
         if self.routing.msg is None:
