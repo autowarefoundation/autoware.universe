@@ -100,6 +100,9 @@ inline size_t findNearestSegmentIndexFromLaneId(
   return nearest_idx;
 }
 
+// @brief Calculates the path to be followed by the rear wheel center in order to make the vehicle center follow the input path
+// @param [in] path with position to be followed by the center of the vehicle
+// @param [out] PathWithLaneId to be followed by the rear wheel center follow to make the vehicle center follow the input path
 // NOTE: rear_to_cog is supposed to be positive
 autoware_auto_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double rear_to_cog,
