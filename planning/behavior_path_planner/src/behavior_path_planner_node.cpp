@@ -981,6 +981,9 @@ bool BehaviorPathPlannerNode::isDataReady()
 
   if (!current_scenario_) {
     return missing("scenario_topic");
+  } else {
+    std::cerr << " current_scenario_: " << current_scenario_->current_scenario << __FILE__
+              << __LINE__ << std::endl;
   }
 
   {
@@ -1000,18 +1003,22 @@ bool BehaviorPathPlannerNode::isDataReady()
   const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
 
   if (!planner_data_->dynamic_object) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return missing("dynamic_object");
   }
 
   if (!planner_data_->self_odometry) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return missing("self_odometry");
   }
 
   if (!planner_data_->self_acceleration) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return missing("self_acceleration");
   }
 
   if (!planner_data_->operation_mode) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return missing("operation_mode");
   }
 
@@ -1084,6 +1091,7 @@ void BehaviorPathPlannerNode::run()
   }
 #endif
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // run behavior planner
 #ifdef USE_OLD_ARCHITECTURE
   const auto output = bt_manager_->run(planner_data_);
@@ -1091,6 +1099,7 @@ void BehaviorPathPlannerNode::run()
   const auto output = planner_manager_->run(planner_data_);
 #endif
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // path handling
 #ifdef USE_OLD_ARCHITECTURE
   const auto path = getPath(output, planner_data_, bt_manager_);
@@ -1100,9 +1109,11 @@ void BehaviorPathPlannerNode::run()
   // update planner data
   planner_data_->prev_output_path = path;
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // compute turn signal
   computeTurnSignal(planner_data_, *path, output);
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // publish drivable bounds
   publish_bounds(*path);
 
@@ -1116,6 +1127,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->parameters.backward_path_length + planner_data_->parameters.input_path_interval);
 
   if (!path->points.empty()) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     path_publisher_->publish(*path);
   } else {
     RCLCPP_ERROR_THROTTLE(
@@ -1451,6 +1463,7 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const std::lock_guard<std::mutex> lock(mutex_map_);
   map_ptr_ = msg;
   has_received_map_ = true;

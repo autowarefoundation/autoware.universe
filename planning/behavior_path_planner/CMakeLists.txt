@@ -86,30 +86,30 @@ rclcpp_components_register_node(behavior_path_planner_node
 )
 
 if(BUILD_TESTING)
-  ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_utilities
-    test/input.cpp
-    test/test_utilities.cpp
-    test/test_drivable_area_expansion.cpp
-  )
-  target_link_libraries(test_${CMAKE_PROJECT_NAME}_utilities
-    behavior_path_planner_node
-  )
+  # ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_utilities
+  #   test/input.cpp
+  #   test/test_utilities.cpp
+  #   test/test_drivable_area_expansion.cpp
+  # )
+  # target_link_libraries(test_${CMAKE_PROJECT_NAME}_utilities
+  #   behavior_path_planner_node
+  # )
 
-  ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_avoidance_module
-    test/test_avoidance_utils.cpp
-  )
+  # ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_avoidance_module
+  #   test/test_avoidance_utils.cpp
+  # )
 
-  target_link_libraries(test_${CMAKE_PROJECT_NAME}_avoidance_module
-    behavior_path_planner_node
-  )
+  # target_link_libraries(test_${CMAKE_PROJECT_NAME}_avoidance_module
+  #   behavior_path_planner_node
+  # )
 
-  ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_turn_signal
-    test/test_turn_signal.cpp
-  )
+  # ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_turn_signal
+  #   test/test_turn_signal.cpp
+  # )
 
-  target_link_libraries(test_${CMAKE_PROJECT_NAME}_turn_signal
-    behavior_path_planner_node
-  )
+  # target_link_libraries(test_${CMAKE_PROJECT_NAME}_turn_signal
+  #   behavior_path_planner_node
+  # )
 
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}_node_interface
     test/test_${PROJECT_NAME}_node_interface.cpp

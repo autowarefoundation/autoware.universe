@@ -2619,6 +2619,7 @@ lanelet::ConstLanelets AvoidanceModule::getAdjacentLane(
 
   lanelet::ConstLanelet current_lane;
   if (!rh->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
       "failed to find closest lanelet within route!!!");
