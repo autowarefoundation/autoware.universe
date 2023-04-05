@@ -104,8 +104,8 @@ void getProjectedDistancePointFromPolygons(
 
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const double nearest_seg_idx, const double duration, const double resolution,
-  const double acceleration, const double min_speed = 1.0);
+  const size_t nearest_seg_idx, const double duration, const double resolution,
+  const double prepare_time, const double acceleration);
 
 template <class T>
 FrenetPoint convertToFrenetPoint(
@@ -145,14 +145,6 @@ double getSignedDistance(
 double getArcLengthToTargetLanelet(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
   const Pose & pose);
-
-bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
 
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & path1, const PredictedPath & path2, const double start_time,
@@ -303,7 +295,7 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   const std::shared_ptr<const PlannerData> & planner_data);
 
-PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
+PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 
 double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
@@ -367,11 +359,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
 Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
   const double & base_to_width);
-
-Polygon2d convertCylindricalObjectToGeometryPolygon(
-  const Pose & current_pose, const Shape & obj_shape);
-
-Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
 
 std::string getUuidStr(const PredictedObject & obj);
 

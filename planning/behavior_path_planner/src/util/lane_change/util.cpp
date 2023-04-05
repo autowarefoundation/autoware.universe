@@ -469,13 +469,9 @@ std::pair<bool, bool> getLaneChangePaths(
     }
     candidate_paths->push_back(*candidate_path);
 
-    const auto current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      candidate_path->path.points, pose, common_parameter.ego_nearest_dist_threshold,
-      common_parameter.ego_nearest_yaw_threshold);
-
     const auto is_safe = isLaneChangePathSafe(
-      *candidate_path, dynamic_objects, dynamic_object_indices, pose, current_seg_idx, twist,
-      common_parameter, parameter, common_parameter.expected_front_deceleration,
+      *candidate_path, dynamic_objects, dynamic_object_indices, pose, twist, common_parameter,
+      parameter, common_parameter.expected_front_deceleration,
       common_parameter.expected_rear_deceleration, ego_pose_before_collision, *debug_data,
       acceleration);
 
@@ -544,9 +540,8 @@ bool hasEnoughDistance(
 bool isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const PredictedObjects::ConstSharedPtr dynamic_objects,
   const LaneChangeTargetObjectIndices & dynamic_objects_indices, const Pose & current_pose,
-  const size_t current_seg_idx, const Twist & current_twist,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const double front_decel,
+  const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameter,
+  const LaneChangeParameters & lane_change_parameter, const double front_decel,
   const double rear_decel, Pose & ego_pose_before_collision,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double acceleration)
 {
@@ -560,18 +555,21 @@ bool isLaneChangePathSafe(
     return false;
   }
 
-  const double time_resolution = lane_change_parameters.prediction_time_resolution;
-  const auto check_at_prepare_phase =
-    lane_change_parameters.enable_collision_check_at_prepare_phase;
+  const double time_resolution = lane_change_parameter.prediction_time_resolution;
+  const auto check_at_prepare_phase = lane_change_parameter.enable_collision_check_at_prepare_phase;
 
   const double check_start_time = check_at_prepare_phase ? 0.0 : lane_change_path.duration.prepare;
   const double check_end_time = lane_change_path.duration.sum();
-  const double min_lc_speed{lane_change_parameters.minimum_lane_change_velocity};
+  const double & prepare_time = lane_change_parameter.lane_change_prepare_duration;
+
+  const auto current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, current_pose, common_parameter.ego_nearest_dist_threshold,
+    common_parameter.ego_nearest_yaw_threshold);
 
   const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, static_cast<double>(current_seg_idx), check_end_time,
-    time_resolution, acceleration, min_lc_speed);
-  const auto & vehicle_info = common_parameters.vehicle_info;
+    path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
+    prepare_time, acceleration);
+  const auto & vehicle_info = common_parameter.vehicle_info;
 
   auto in_lane_object_indices = dynamic_objects_indices.target_lane;
   in_lane_object_indices.insert(
@@ -625,13 +623,13 @@ bool isLaneChangePathSafe(
     const auto & obj = dynamic_objects->objects.at(i);
     auto current_debug_data = assignDebugData(obj);
     const auto predicted_paths =
-      util::getPredictedPathFromObj(obj, lane_change_parameters.use_all_predicted_path);
+      util::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
     for (const auto & obj_path : predicted_paths) {
       if (!util::isSafeInLaneletCollisionCheck(
             interpolated_ego, current_twist, check_durations, lane_change_path.duration.prepare,
-            obj, obj_path, common_parameters,
-            lane_change_parameters.prepare_phase_ignore_target_speed_thresh, front_decel,
-            rear_decel, ego_pose_before_collision, current_debug_data.second)) {
+            obj, obj_path, common_parameter,
+            lane_change_parameter.prepare_phase_ignore_target_speed_thresh, front_decel, rear_decel,
+            ego_pose_before_collision, current_debug_data.second)) {
         appendDebugInfo(current_debug_data, false);
         return false;
       }
@@ -639,7 +637,7 @@ bool isLaneChangePathSafe(
     appendDebugInfo(current_debug_data, true);
   }
 
-  if (!lane_change_parameters.use_predicted_path_outside_lanelet) {
+  if (!lane_change_parameter.use_predicted_path_outside_lanelet) {
     return true;
   }
 
@@ -649,11 +647,11 @@ bool isLaneChangePathSafe(
     current_debug_data.second.ego_predicted_path.push_back(vehicle_predicted_path);
 
     const auto predicted_paths =
-      util::getPredictedPathFromObj(obj, lane_change_parameters.use_all_predicted_path);
+      util::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
 
     if (!util::isSafeInFreeSpaceCollisionCheck(
           interpolated_ego, current_twist, check_durations, lane_change_path.duration.prepare, obj,
-          common_parameters, lane_change_parameters.prepare_phase_ignore_target_speed_thresh,
+          common_parameter, lane_change_parameter.prepare_phase_ignore_target_speed_thresh,
           front_decel, rear_decel, current_debug_data.second)) {
       appendDebugInfo(current_debug_data, false);
       return false;
@@ -913,7 +911,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
       return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
     };
 
-  const auto checkMiddle = [&](const auto & lane) -> std::optional<DrivableLanes> {
+  const auto check_middle = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (has_same_lane(drivable_lane.middle_lanes, lane)) {
         return drivable_lane;
@@ -922,7 +920,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
     return std::nullopt;
   };
 
-  const auto checkLeft = [&](const auto & lane) -> std::optional<DrivableLanes> {
+  const auto check_left = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (drivable_lane.left_lane.id() == lane.id()) {
         return drivable_lane;
@@ -931,7 +929,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
     return std::nullopt;
   };
 
-  const auto checkRight = [&](const auto & lane) -> std::optional<DrivableLanes> {
+  const auto check_right = [&](const auto & lane) -> std::optional<DrivableLanes> {
     for (const auto & drivable_lane : original_drivable_lanes) {
       if (drivable_lane.right_lane.id() == lane.id()) {
         return drivable_lane;
@@ -945,17 +943,17 @@ std::vector<DrivableLanes> generateDrivableLanes(
   for (size_t i = 0; i < current_lanes.size(); ++i) {
     const auto & current_lane = current_lanes.at(i);
 
-    const auto middle_drivable_lane = checkMiddle(current_lane);
+    const auto middle_drivable_lane = check_middle(current_lane);
     if (middle_drivable_lane) {
       drivable_lanes.at(i) = *middle_drivable_lane;
     }
 
-    const auto left_drivable_lane = checkLeft(current_lane);
+    const auto left_drivable_lane = check_left(current_lane);
     if (left_drivable_lane) {
       drivable_lanes.at(i) = *left_drivable_lane;
     }
 
-    const auto right_drivable_lane = checkRight(current_lane);
+    const auto right_drivable_lane = check_right(current_lane);
     if (right_drivable_lane) {
       drivable_lanes.at(i) = *right_drivable_lane;
     }
@@ -995,17 +993,17 @@ std::vector<DrivableLanes> generateDrivableLanes(
     const auto & lc_lane = lane_change_lanes.at(i);
     DrivableLanes drivable_lane;
 
-    const auto middle_drivable_lane = checkMiddle(lc_lane);
+    const auto middle_drivable_lane = check_middle(lc_lane);
     if (middle_drivable_lane) {
       drivable_lane = *middle_drivable_lane;
     }
 
-    const auto left_drivable_lane = checkLeft(lc_lane);
+    const auto left_drivable_lane = check_left(lc_lane);
     if (left_drivable_lane) {
       drivable_lane = *left_drivable_lane;
     }
 
-    const auto right_drivable_lane = checkRight(lc_lane);
+    const auto right_drivable_lane = check_right(lc_lane);
     if (right_drivable_lane) {
       drivable_lane = *right_drivable_lane;
     }
@@ -1019,6 +1017,75 @@ std::vector<DrivableLanes> generateDrivableLanes(
   }
 
   return drivable_lanes;
+}
+
+std::vector<DrivableLanes> combineDrivableLanes(
+  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
+  const std::vector<DrivableLanes> & new_drivable_lanes_vec)
+{
+  const auto has_same_lane =
+    [](const lanelet::ConstLanelet & target_lane, const lanelet::ConstLanelets & lanes) {
+      return std::find_if(lanes.begin(), lanes.end(), [&](const auto & ll) {
+               return ll.id() == target_lane.id();
+             }) != lanes.end();
+    };
+
+  const auto convert_to_lanes = [](const DrivableLanes & drivable_lanes) {
+    auto lanes = drivable_lanes.middle_lanes;
+    lanes.push_back(drivable_lanes.right_lane);
+    lanes.push_back(drivable_lanes.left_lane);
+    return lanes;
+  };
+
+  auto updated_drivable_lanes_vec = original_drivable_lanes_vec;
+  for (auto & updated_drivable_lanes : updated_drivable_lanes_vec) {
+    // calculated corresponding index of new_drivable_lanes
+    const auto new_drivable_lanes = [&]() -> std::optional<DrivableLanes> {
+      for (const auto & new_drivable_lanes : new_drivable_lanes_vec) {
+        for (const auto & ll : convert_to_lanes(updated_drivable_lanes)) {
+          if (has_same_lane(ll, convert_to_lanes(new_drivable_lanes))) {
+            return new_drivable_lanes;
+          }
+        }
+      }
+      return std::nullopt;
+    }();
+    if (!new_drivable_lanes) {
+      continue;
+    }
+
+    // update left lane
+    if (has_same_lane(updated_drivable_lanes.left_lane, convert_to_lanes(*new_drivable_lanes))) {
+      updated_drivable_lanes.left_lane = new_drivable_lanes->left_lane;
+    }
+    // update right lane
+    if (has_same_lane(updated_drivable_lanes.right_lane, convert_to_lanes(*new_drivable_lanes))) {
+      updated_drivable_lanes.right_lane = new_drivable_lanes->right_lane;
+    }
+    // update middle lanes
+    for (const auto & middle_lane : convert_to_lanes(*new_drivable_lanes)) {
+      if (!has_same_lane(middle_lane, convert_to_lanes(updated_drivable_lanes))) {
+        updated_drivable_lanes.middle_lanes.push_back(middle_lane);
+      }
+    }
+
+    // validate middle lanes
+    auto & middle_lanes = updated_drivable_lanes.middle_lanes;
+    if (has_same_lane(updated_drivable_lanes.right_lane, middle_lanes)) {
+      middle_lanes.erase(
+        std::remove(
+          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.right_lane),
+        std::cend(middle_lanes));
+    }
+    if (has_same_lane(updated_drivable_lanes.left_lane, middle_lanes)) {
+      middle_lanes.erase(
+        std::remove(
+          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.left_lane),
+        std::cend(middle_lanes));
+    }
+  }
+
+  return updated_drivable_lanes_vec;
 }
 
 std::optional<LaneChangePath> getAbortPaths(

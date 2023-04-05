@@ -85,9 +85,8 @@ std::pair<bool, bool> getLaneChangePaths(
 bool isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const PredictedObjects::ConstSharedPtr dynamic_objects,
   const LaneChangeTargetObjectIndices & dynamic_object_indices, const Pose & current_pose,
-  const size_t current_seg_idx, const Twist & current_twist,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const behavior_path_planner::LaneChangeParameters & lane_change_parameters,
+  const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameter,
+  const behavior_path_planner::LaneChangeParameters & lane_change_parameter,
   const double front_decel, const double rear_decel, Pose & ego_pose_before_collision,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data,
   const double acceleration = 0.0);
@@ -146,6 +145,10 @@ std::vector<DrivableLanes> generateDrivableLanes(
 std::vector<DrivableLanes> generateDrivableLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & lane_change_lanes);
+
+std::vector<DrivableLanes> combineDrivableLanes(
+  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
+  const std::vector<DrivableLanes> & new_drivable_lanes_vec);
 
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,

@@ -177,7 +177,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
   }
 
   if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
-    const auto stop_point = util::insertStopPoint(0.1, &path);
+    const auto stop_point = util::insertStopPoint(0.1, path);
   }
 
   if (isAbortState()) {
@@ -758,13 +758,11 @@ void LaneChangeModule::generateExtendedDrivableArea(PathWithLaneId & path)
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
-#ifdef USE_OLD_ARCHITECTURE
-  const auto drivable_lanes = lane_change_utils::generateDrivableLanes(
+  auto drivable_lanes = lane_change_utils::generateDrivableLanes(
     *route_handler, status_.current_lanes, status_.lane_change_lanes);
-#else
-  const auto drivable_lanes = lane_change_utils::generateDrivableLanes(
-    getPreviousModuleOutput().drivable_lanes, *route_handler, status_.current_lanes,
-    status_.lane_change_lanes);
+#ifndef USE_OLD_ARCHITECTURE
+  drivable_lanes = lane_change_utils::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_lanes, drivable_lanes);
 #endif
   const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
@@ -794,12 +792,9 @@ bool LaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) cons
     {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
     lateral_buffer, ignore_unknown);
 
-  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
-    common_parameters.ego_nearest_yaw_threshold);
   return lane_change_utils::isLaneChangePathSafe(
-    path, dynamic_objects, dynamic_object_indices, current_pose, current_seg_idx, current_twist,
-    common_parameters, *parameters_, common_parameters.expected_front_deceleration_for_abort,
+    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
+    *parameters_, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     status_.lane_change_path.acceleration);
 }
