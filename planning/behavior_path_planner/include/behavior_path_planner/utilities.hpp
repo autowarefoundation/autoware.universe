@@ -146,14 +146,6 @@ double getArcLengthToTargetLanelet(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
   const Pose & pose);
 
-bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
-
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & path1, const PredictedPath & path2, const double start_time,
   const double end_time, const double resolution);

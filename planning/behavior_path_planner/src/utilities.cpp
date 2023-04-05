@@ -385,51 +385,6 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
   return std::make_pair(target_objects, other_objects);
 }
 
-bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon)
-{
-  if (object.shape.type == Shape::BOUNDING_BOX) {
-    const double & length_m = object.shape.dimensions.x / 2;
-    const double & width_m = object.shape.dimensions.y / 2;
-    *object_polygon = convertBoundingBoxObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
-
-  } else if (object.shape.type == Shape::CYLINDER) {
-    *object_polygon = convertCylindricalObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape);
-  } else if (object.shape.type == Shape::POLYGON) {
-    *object_polygon = convertPolygonObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape);
-  } else {
-    RCLCPP_WARN(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), "Object shape unknown!");
-    return false;
-  }
-
-  return true;
-}
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon)
-{
-  if (object_shape.type == Shape::BOUNDING_BOX) {
-    const double & length_m = object_shape.dimensions.x / 2;
-    const double & width_m = object_shape.dimensions.y / 2;
-    *object_polygon =
-      convertBoundingBoxObjectToGeometryPolygon(object_pose, length_m, length_m, width_m);
-
-  } else if (object_shape.type == Shape::CYLINDER) {
-    *object_polygon = convertCylindricalObjectToGeometryPolygon(object_pose, object_shape);
-  } else if (object_shape.type == Shape::POLYGON) {
-    *object_polygon = convertPolygonObjectToGeometryPolygon(object_pose, object_shape);
-  } else {
-    RCLCPP_WARN(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), "Object shape unknown!");
-    return false;
-  }
-
-  return true;
-}
-
 std::vector<double> calcObjectsDistanceToPath(
   const PredictedObjects & objects, const PathWithLaneId & ego_path)
 {
