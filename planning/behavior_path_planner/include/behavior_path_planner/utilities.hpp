@@ -360,11 +360,6 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
   const double & base_to_width);
 
-Polygon2d convertCylindricalObjectToGeometryPolygon(
-  const Pose & current_pose, const Shape & obj_shape);
-
-Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
-
 std::string getUuidStr(const PredictedObject & obj);
 
 std::vector<PredictedPath> getPredictedPathFromObj(
