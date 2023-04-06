@@ -160,7 +160,7 @@ private:
   PathWithLaneId getCurrentPath() const;
   Pose calcRefinedGoal(const Pose & goal_pose) const;
   ParallelParkingParameters getGeometricPullOverParameters() const;
-  double calcSignedArchLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
+  double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
   void decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const;
   void decelerateBeforeSearchStart(const Pose & search_start_pose, PathWithLaneId & path) const;
   std::pair<double, double> calcDistanceToPathChange() const;
