@@ -15,8 +15,6 @@
       detection_area_length: 200.0 # [m]
       detection_area_angle_threshold: 0.785 # [rad]
       min_predicted_path_confidence: 0.05
-      walkway:
-        external_input_timeout: 1.0
       minimum_ego_predicted_velocity: 1.388 # [m/s]
       collision_start_margin_time: 4.0 # [s] this + state_transit_margin_time should be higher to account for collision with fast/accelerating object
       collision_end_margin_time: 6.0 # [s] this + state_transit_margin_time should be higher to account for collision with slow/decelerating object
