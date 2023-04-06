@@ -329,7 +329,7 @@ bool PullOverModule::isExecutionRequested() const
   }
   const double self_to_goal_arc_length =
     util::getSignedDistance(current_pose, goal_pose, current_lanes);
-  if (self_to_goal_arc_length > calcModuleRequestlength()) {
+  if (self_to_goal_arc_length > calcModuleRequestLength()) {
     return false;
   }
 
@@ -372,7 +372,7 @@ bool PullOverModule::isExecutionReady() const
   return true;
 }
 
-double PullOverModule::calcModuleRequestlength() const
+double PullOverModule::calcModuleRequestLength() const
 {
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
   if (!min_stop_distance) {
