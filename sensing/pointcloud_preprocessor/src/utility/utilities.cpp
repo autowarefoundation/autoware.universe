@@ -16,6 +16,9 @@
 
 #include <autoware_point_types/types.hpp>
 
+#include <algorithm>
+#include <cstring>
+
 namespace pointcloud_preprocessor::utils
 {
 void to_cgal_polygon(const geometry_msgs::msg::Polygon & polygon_in, PolygonCgal & polygon_out)
@@ -234,6 +237,105 @@ bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::Point
   same_layout &= field_time_stamp.datatype == sensor_msgs::msg::PointField::FLOAT64;
   same_layout &= field_time_stamp.count == 1;
   return same_layout;
+}
+
+std::optional<std::size_t> getXOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "x") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT32
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getYOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "y") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT32
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getZOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "z") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT32
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getIntensityOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "intensity") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT32
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getRingOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "ring") == 0
+              && field.datatype == sensor_msgs::msg::PointField::UINT16
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getAzimuthOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "azimuth") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT32
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getDistanceOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "distance") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT32
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getReturnTypeOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "return_type") == 0
+              && field.datatype == sensor_msgs::msg::PointField::UINT8
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
+}
+
+std::optional<std::size_t> getTimeStampOffset(const std::vector<sensor_msgs::msg::PointField> & fields)
+{
+  auto it = std::find_if(fields.begin(), fields.end(), 
+    [&](const auto& field) {
+      return std::strcmp(field.name.c_str(), "time_stamp") == 0
+              && field.datatype == sensor_msgs::msg::PointField::FLOAT64
+              && field.count == 1;
+    });
+  return (it != fields.end())? std::optional{it->offset} : std::nullopt; 
 }
 
 }  // namespace pointcloud_preprocessor::utils
