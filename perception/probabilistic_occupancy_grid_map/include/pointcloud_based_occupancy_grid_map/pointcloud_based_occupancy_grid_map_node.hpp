@@ -79,7 +79,8 @@ private:
     message_filters::sync_policies::ApproximateTime<PointCloud2, PointCloud2>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   using ApproxSync = message_filters::Synchronizer<ApproxSyncPolicy>;
-  std::shared_ptr<ApproxSync> sync_ptr_;
+  std::shared_ptr<Sync> sync_ptr_;
+  // std::shared_ptr<ApproxSync> sync_ptr_;
 
   std::shared_ptr<OccupancyGridMapUpdaterInterface> occupancy_grid_map_updater_ptr_;
 
