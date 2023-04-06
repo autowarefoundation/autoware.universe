@@ -372,7 +372,7 @@ bool PullOverModule::isExecutionReady() const
   return true;
 }
 
-double PullOverModule::calcModuleReuquestlength() const
+double PullOverModule::calcModuleRequestlength() const
 {
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
   if (!min_stop_distance) {
