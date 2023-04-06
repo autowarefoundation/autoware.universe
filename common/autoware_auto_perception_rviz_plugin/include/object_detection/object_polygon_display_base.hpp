@@ -298,7 +298,7 @@ public:
   {
     RosTopicDisplay::unsubscribe();
     pointcloud_subscription.reset ();
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Unsubscribe called");
+    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Unsubscribe called");
 
   }
 
@@ -628,18 +628,20 @@ protected:
     if (!m_publish_objs_pointcloud->getBool()) {
       return;
     }
-
+    pointCloudBuffer_mutex.lock();
     // Add a pointer to the new message to the front of the deque
     pointCloudBuffer.push_front(input_pointcloud_msg);
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Add poincloud to buffer");
 
     // If the deque has more than 5 elements, remove the oldest element from the back of the deque
     if (pointCloudBuffer.size() > 5) {
         pointCloudBuffer.pop_back();
-        RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Drop poincloud from buffer");
+        // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Drop poincloud from buffer");
 
     }
-    
-    std::string frame_id = input_pointcloud_msg.header.frame_id;
+    pointCloudBuffer_mutex.unlock();
+
+    // std::string frame_id = input_pointcloud_msg.header.frame_id;
     // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
 
     // add pointcloud to buffer
@@ -696,21 +698,24 @@ protected:
     throw std::runtime_error("Buffer is empty");
     }
 
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "buffer len is %ld", buffer.size());
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "buffer len is %ld", buffer.size());
 
     sensor_msgs::msg::PointCloud2 result  = buffer.front();
     rclcpp::Duration diff = timestamp - rclcpp::Time(result.header.stamp);
-      RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Set last getted pointcloud as result");
-
-    for (sensor_msgs::msg::PointCloud2 pointcloud : buffer){
-      RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Check pointcloud in buffer");
-      if (diff > (timestamp - rclcpp::Time(pointcloud.header.stamp))) {
-        diff = timestamp - rclcpp::Time(pointcloud.header.stamp);
-        result = pointcloud;
-        RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Update result");
+      // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Set last getted pointcloud as result");
+    
+    pointCloudBuffer_mutex.lock();
+    for (size_t i = 0; i != buffer.size(); i++){
+      // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Check pointcloud in buffer");
+      if (diff.nanoseconds() > (timestamp - rclcpp::Time(buffer[i].header.stamp)).nanoseconds()) {
+        diff = timestamp - rclcpp::Time(buffer[i].header.stamp);
+        result = buffer[i];
+        // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Update result");
       }
     }
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "return result");   
+    pointCloudBuffer_mutex.unlock();
+
+    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "return result");   
     return result;
   }
 
@@ -725,6 +730,7 @@ protected:
   std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common;
   rviz_common::ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node;
   std::deque<sensor_msgs::msg::PointCloud2> pointCloudBuffer;
+  std::mutex pointCloudBuffer_mutex;
 
 
 private:
