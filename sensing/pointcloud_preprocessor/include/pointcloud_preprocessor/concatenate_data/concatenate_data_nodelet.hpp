@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ private:
   std::map<std::string, double> offset_map_;
 
   void transformPointCloud(const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out);
-  Eigen::Matrix4f calcDelayCompensateTransform(
+  Eigen::Matrix4f computeTransformToAdjustForOldTimestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
   std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> combineClouds(
     sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
