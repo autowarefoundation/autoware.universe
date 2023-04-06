@@ -231,13 +231,14 @@ std::optional<LaneChangePath> constructCandidatePath(
     auto & point = shifted_path.path.points.at(i);
     if (i < *lane_change_end_idx) {
       point.lane_ids = replaceWithSortedIds(point.lane_ids, sorted_lane_ids);
-      point.point.longitudinal_velocity_mps = std::min(
-        point.point.longitudinal_velocity_mps,
-        lane_changing_start_point.point.longitudinal_velocity_mps);
+      point.point.longitudinal_velocity_mps = 13;
+      // std::min(
+      // point.point.longitudinal_velocity_mps,
+      // lane_changing_start_point.point.longitudinal_velocity_mps);
       continue;
     }
-    point.point.longitudinal_velocity_mps =
-      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_speed));
+    point.point.longitudinal_velocity_mps = 13;
+    // std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_speed));
     const auto nearest_idx =
       motion_utils::findNearestIndex(target_segment.points, point.point.pose);
     point.lane_ids = target_segment.points.at(*nearest_idx).lane_ids;
@@ -751,9 +752,10 @@ PathWithLaneId getPrepareSegment(
     prepare_segment.points, current_pose, 3.0, 1.0);
   util::clipPathLength(prepare_segment, current_seg_idx, prepare_distance, backward_path_length);
 
-  prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
-    prepare_segment.points.back().point.longitudinal_velocity_mps,
-    static_cast<float>(prepare_speed));
+  prepare_segment.points.back().point.longitudinal_velocity_mps = 13;
+  // std::min(
+  // prepare_segment.points.back().point.longitudinal_velocity_mps,
+  // static_cast<float>(prepare_speed));
 
   return prepare_segment;
 }
@@ -813,8 +815,8 @@ PathWithLaneId getTargetSegment(
 
   PathWithLaneId target_segment = route_handler.getCenterLinePath(target_lanelets, s_start, s_end);
   for (auto & point : target_segment.points) {
-    point.point.longitudinal_velocity_mps =
-      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_speed));
+    point.point.longitudinal_velocity_mps = lane_changing_speed;
+    // std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_speed));
   }
 
   return target_segment;
