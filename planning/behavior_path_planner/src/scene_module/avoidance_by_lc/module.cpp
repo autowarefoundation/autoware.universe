@@ -469,8 +469,7 @@ void AvoidanceByLCModule::fillObjectEnvelopePolygon(
     return;
   }
 
-  Polygon2d object_polygon{};
-  util::calcObjectPolygon(object_data.object, &object_polygon);
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
 
   if (!within(object_polygon, same_id_obj->envelope_poly)) {
     object_data.envelope_poly = createEnvelopePolygon(
@@ -680,7 +679,7 @@ BehaviorModuleOutput AvoidanceByLCModule::plan()
   }
 
   if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
-    const auto stop_point = util::insertStopPoint(0.1, &path);
+    const auto stop_point = util::insertStopPoint(0.1, path);
   }
 
   if (isAbortState()) {
@@ -1314,13 +1313,9 @@ bool AvoidanceByLCModule::isApprovedPathSafe(Pose & ego_pose_before_collision) c
     {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
     lateral_buffer, ignore_unknown);
 
-  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
-    common_parameters.ego_nearest_yaw_threshold);
   return lane_change_utils::isLaneChangePathSafe(
-    path, dynamic_objects, dynamic_object_indices, current_pose, current_seg_idx, current_twist,
-    common_parameters, *parameters_->lane_change,
-    common_parameters.expected_front_deceleration_for_abort,
+    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
+    *parameters_->lane_change, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     status_.lane_change_path.acceleration);
 }
