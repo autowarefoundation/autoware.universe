@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_MAP_LOADER__ID_MAP_LOADER_MODULE_HPP_
-#define POINTCLOUD_MAP_LOADER__ID_MAP_LOADER_MODULE_HPP_
+#ifndef POINTCLOUD_MAP_LOADER__SELECTED_MAP_LOADER_MODULE_HPP_
+#define POINTCLOUD_MAP_LOADER__SELECTED_MAP_LOADER_MODULE_HPP_
 
 #include "utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_map_msgs/msg/point_cloud_map_metadata.hpp"
-#include "autoware_map_msgs/srv/get_id_point_cloud_map.hpp"
+#include "autoware_map_msgs/srv/get_selected_point_cloud_map.hpp"
 
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
@@ -33,26 +33,27 @@
 #include <string>
 #include <vector>
 
-class IdMapLoaderModule
+class SelectedMapLoaderModule
 {
-  using GetIdPointCloudMap = autoware_map_msgs::srv::GetIdPointCloudMap;
+  using GetSelectedPointCloudMap = autoware_map_msgs::srv::GetSelectedPointCloudMap;
 
 public:
-  explicit IdMapLoaderModule(
+  explicit SelectedMapLoaderModule(
     rclcpp::Node * node, const std::map<std::string, PCDFileMetadata> & pcd_file_metadata_dict);
 
 private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<GetIdPointCloudMap>::SharedPtr get_id_pcd_maps_service_;
+  rclcpp::Service<GetSelectedPointCloudMap>::SharedPtr get_selected_pcd_maps_service_;
 
   rclcpp::Publisher<autoware_map_msgs::msg::PointCloudMapMetadata>::SharedPtr pub_metadata_;
 
-  bool onServiceGetIdPointCloudMap(
-    GetIdPointCloudMap::Request::SharedPtr req, GetIdPointCloudMap::Response::SharedPtr res);
+  bool onServiceGetSelectedPointCloudMap(
+    GetSelectedPointCloudMap::Request::SharedPtr req,
+    GetSelectedPointCloudMap::Response::SharedPtr res);
   autoware_map_msgs::msg::PointCloudMapCellWithID loadPointCloudMapCellWithID(
     const std::string & path, const std::string & map_id) const;
 };
 
-#endif  // POINTCLOUD_MAP_LOADER__ID_MAP_LOADER_MODULE_HPP_
+#endif  // POINTCLOUD_MAP_LOADER__SELECTED_MAP_LOADER_MODULE_HPP_
