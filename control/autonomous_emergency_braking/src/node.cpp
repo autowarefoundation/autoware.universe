@@ -438,8 +438,8 @@ void AEB::generateEgoPath(
 }
 
 void AEB::createObjectData(
-  const Path & ego_path, const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys, const rclcpp::Time & stamp,
-  std::vector<ObjectData> & objects)
+  const Path & ego_path, const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys,
+  const rclcpp::Time & stamp, std::vector<ObjectData> & objects)
 {
   // check if the predicted path has valid number of points
   if (ego_path.size() < 2 || ego_polys.empty()) {
@@ -508,15 +508,14 @@ void AEB::addMarker(
   debug_markers.markers.push_back(object_data_marker);
 }
 
-void AEB::addCollisionMarker(
-  const ObjectData & data, MarkerArray & debug_markers)
+void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers)
 {
-    auto point_marker = tier4_autoware_utils::createDefaultMarker(
+  auto point_marker = tier4_autoware_utils::createDefaultMarker(
     "base_link", data.stamp, "collision_point", 0, Marker::SPHERE,
     tier4_autoware_utils::createMarkerScale(0.3, 0.3, 0.3),
     tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.3));
-    point_marker.pose.position = data.position;
-    debug_markers.markers.push_back(point_marker);
+  point_marker.pose.position = data.position;
+  debug_markers.markers.push_back(point_marker);
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking

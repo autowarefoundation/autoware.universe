@@ -73,14 +73,9 @@ struct ObjectData
 class CollisionDataKeeper
 {
 public:
-  explicit CollisionDataKeeper(rclcpp::Clock::SharedPtr clock)
-  {
-    clock_ = clock;
-  }
+  explicit CollisionDataKeeper(rclcpp::Clock::SharedPtr clock) { clock_ = clock; }
 
-  void setTimeout(const double timeout_sec) {
-    timeout_sec_ = timeout_sec;
-  }
+  void setTimeout(const double timeout_sec) { timeout_sec_ = timeout_sec; }
 
   bool checkExpired()
   {
@@ -90,12 +85,10 @@ public:
     return (data_ == nullptr);
   }
 
-  void update(const ObjectData & data)
-  {
-    data_.reset(new ObjectData(data));
-  }
+  void update(const ObjectData & data) { data_.reset(new ObjectData(data)); }
 
-  ObjectData get() {
+  ObjectData get()
+  {
     if (data_) {
       return *data_;
     } else {
