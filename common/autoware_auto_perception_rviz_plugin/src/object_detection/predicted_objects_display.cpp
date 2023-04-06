@@ -180,13 +180,13 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     }
   }
 
-  if (pointCloudBuffer.empty())
-  { 
-    return markers; 
+  if (pointCloudBuffer.empty()) {
+    return markers;
   }
   // poincloud pub
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
-    getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud =
+    std::make_shared<sensor_msgs::msg::PointCloud2>(
+      getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
   processPointCloud(msg, closest_pointcloud);
 
   return markers;
@@ -219,7 +219,6 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
   ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::update(
     wall_dt, ros_dt);
 }
-
 
 bool PredictedObjectsDisplay::transformObjects(
   const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
@@ -255,7 +254,6 @@ void PredictedObjectsDisplay::processPointCloud(
   const PredictedObjects::ConstSharedPtr & input_objs_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
 {
-  
   if (!m_publish_objs_pointcloud->getBool()) {
     return;
   }
@@ -304,7 +302,7 @@ void PredictedObjectsDisplay::processPointCloud(
   pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
-  
+
   add_pointcloud(output_pointcloud_msg_ptr);
 }
 

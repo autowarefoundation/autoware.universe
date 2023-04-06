@@ -34,7 +34,6 @@ DetectedObjectsDisplay::DetectedObjectsDisplay()
 
 void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 {
-  
   clear_markers();
   int id = 0;
   for (const auto & object : msg->objects) {
@@ -86,14 +85,14 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       add_marker(twist_marker_ptr);
     }
   }
-  
-  if (pointCloudBuffer.empty())
-  {
-    return; 
+
+  if (pointCloudBuffer.empty()) {
+    return;
   }
   // poincloud pub
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
-    getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud =
+    std::make_shared<sensor_msgs::msg::PointCloud2>(
+      getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
   processPointCloud(msg, closest_pointcloud);
 }
 
@@ -149,7 +148,7 @@ void DetectedObjectsDisplay::processPointCloud(
   pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
 
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
-  
+
   add_pointcloud(output_pointcloud_msg_ptr);
 }
 

@@ -102,7 +102,8 @@ inline pcl::PointXYZRGB toPCL(const geometry_msgs::msg::Point & point)
 }
 
 // Define a custom comparator function to compare pointclouds by timestamp
-inline bool comparePointCloudsByTimestamp(const sensor_msgs::msg::PointCloud2 & pc1, const sensor_msgs::msg::PointCloud2 & pc2)
+inline bool comparePointCloudsByTimestamp(
+  const sensor_msgs::msg::PointCloud2 & pc1, const sensor_msgs::msg::PointCloud2 & pc2)
 {
   return (int(pc1.header.stamp.nanosec - pc2.header.stamp.nanosec)) < 0;
 }
@@ -161,12 +162,14 @@ public:
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
     m_publish_objs_pointcloud = new rviz_common::properties::BoolProperty(
-      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this, SLOT(updatePalette()));
+      "Publish Objects Pointcloud", true, "Enable/disable objects pointcloud publishing", this,
+      SLOT(updatePalette()));
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
       "Input for pointcloud visualization of objects detection pipeline.", this,
       SLOT(RosTopicDisplay::updateTopic()));
-    qos_profile_points_property = new rviz_common::properties::QosProfileProperty(m_default_pointcloud_topic, qos_profile_points);
+    qos_profile_points_property = new rviz_common::properties::QosProfileProperty(
+      m_default_pointcloud_topic, qos_profile_points);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
@@ -195,18 +198,17 @@ public:
     this->topic_property_->setValue(m_default_topic.c_str());
     this->topic_property_->setDescription("Topic to subscribe to.");
 
-    qos_profile_points_property->initialize(
-      [this](rclcpp::QoS profile) {
-        this->qos_profile_points = profile;
-        RosTopicDisplay::updateTopic();
-      });
-    
+    qos_profile_points_property->initialize([this](rclcpp::QoS profile) {
+      this->qos_profile_points = profile;
+      RosTopicDisplay::updateTopic();
+    });
+
     // get weak_ptr to properly init RosTopicProperty
     rviz_ros_node = this->context_->getRosNodeAbstraction();
-    
+
     m_default_pointcloud_topic->initialize(rviz_ros_node);
-    QString points_message_type = QString::fromStdString(
-      rosidl_generator_traits::name<sensor_msgs::msg::PointCloud2>());
+    QString points_message_type =
+      QString::fromStdString(rosidl_generator_traits::name<sensor_msgs::msg::PointCloud2>());
     m_default_pointcloud_topic->setMessageType(points_message_type);
 
     // get access to rviz node to sub and to pub to topics
@@ -248,7 +250,6 @@ public:
     points_subscribe();
   }
 
-
   void points_subscribe()
   {
     if (!m_publish_objs_pointcloud->getBool()) {
@@ -257,31 +258,27 @@ public:
 
     if (m_default_pointcloud_topic->isEmpty()) {
       RosTopicDisplay::setStatus(
-        rviz_common::properties::StatusProperty::Error,
-        "Topic",
+        rviz_common::properties::StatusProperty::Error, "Topic",
         QString("Error subscribing: Empty topic name"));
       return;
     }
 
     try {
       rclcpp::SubscriptionOptions sub_opts;
-      sub_opts.event_callbacks.message_lost_callback =
-        [&](rclcpp::QOSMessageLostInfo & info)
-        {
-          std::ostringstream sstm;
-          sstm << "Some messages were lost:\n>\tNumber of new lost messages: " <<
-            info.total_count_change << " \n>\tTotal number of messages lost: " <<
-            info.total_count;
-          RosTopicDisplay::setStatus(rviz_common::properties::StatusProperty::Warn, "Topic", QString(sstm.str().c_str()));
-        };
+      sub_opts.event_callbacks.message_lost_callback = [&](rclcpp::QOSMessageLostInfo & info) {
+        std::ostringstream sstm;
+        sstm << "Some messages were lost:\n>\tNumber of new lost messages: "
+             << info.total_count_change
+             << " \n>\tTotal number of messages lost: " << info.total_count;
+        RosTopicDisplay::setStatus(
+          rviz_common::properties::StatusProperty::Warn, "Topic", QString(sstm.str().c_str()));
+      };
 
-      rclcpp::Node::SharedPtr raw_node = this->context_->getRosNodeAbstraction().lock()->get_raw_node();
+      rclcpp::Node::SharedPtr raw_node =
+        this->context_->getRosNodeAbstraction().lock()->get_raw_node();
       pointcloud_subscription = raw_node->create_subscription<sensor_msgs::msg::PointCloud2>(
-        m_default_pointcloud_topic->getTopicStd(), 
-        rclcpp::SensorDataQoS(), 
-        std::bind(&ObjectPolygonDisplayBase::pointCloudCallback, 
-        this, 
-        std::placeholders::_1));
+        m_default_pointcloud_topic->getTopicStd(), rclcpp::SensorDataQoS(),
+        std::bind(&ObjectPolygonDisplayBase::pointCloudCallback, this, std::placeholders::_1));
       RosTopicDisplay::setStatus(rviz_common::properties::StatusProperty::Ok, "Topic", "OK");
     } catch (rclcpp::exceptions::InvalidTopicNameError & e) {
       RosTopicDisplay::setStatus(
@@ -290,13 +287,11 @@ public:
     }
   }
 
-
   void unsubscribe()
   {
     RosTopicDisplay::unsubscribe();
-    pointcloud_subscription.reset ();
+    pointcloud_subscription.reset();
     RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Unsubscribe called");
-
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
@@ -607,7 +602,7 @@ protected:
     if (object.shape.type == Shape::BOUNDING_BOX || object.shape.type == Shape::CYLINDER) {
       return std::hypot(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
     }
-    
+
     if (object.shape.type == Shape::POLYGON) {
       float max_dist = 0.0;
       for (const auto & point : object.shape.footprint.points) {
@@ -616,11 +611,11 @@ protected:
       }
       return max_dist;
     }
-    
+
     return std::nullopt;
   }
 
-  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg) 
+  void pointCloudCallback(const sensor_msgs::msg::PointCloud2 input_pointcloud_msg)
   {
     if (!m_publish_objs_pointcloud->getBool()) {
       return;
@@ -628,7 +623,7 @@ protected:
     pointCloudBuffer_mutex.lock();
     pointCloudBuffer.push_front(input_pointcloud_msg);
     if (pointCloudBuffer.size() > 5) {
-        pointCloudBuffer.pop_back();
+      pointCloudBuffer.pop_back();
     }
     pointCloudBuffer_mutex.unlock();
   }
@@ -677,16 +672,17 @@ protected:
   }
 
   // Function that returns the pointcloud with the nearest timestamp from a buffer of pointclouds
-  sensor_msgs::msg::PointCloud2 getNearestPointCloud(std::deque<sensor_msgs::msg::PointCloud2> & buffer, const rclcpp::Time & timestamp) 
+  sensor_msgs::msg::PointCloud2 getNearestPointCloud(
+    std::deque<sensor_msgs::msg::PointCloud2> & buffer, const rclcpp::Time & timestamp)
   {
     if (buffer.empty()) {
-    // Handle the case where the buffer is empty
-    throw std::runtime_error("Buffer is empty");
+      // Handle the case where the buffer is empty
+      throw std::runtime_error("Buffer is empty");
     }
-    sensor_msgs::msg::PointCloud2 result  = buffer.front();
+    sensor_msgs::msg::PointCloud2 result = buffer.front();
     rclcpp::Duration diff = timestamp - rclcpp::Time(result.header.stamp);
     pointCloudBuffer_mutex.lock();
-    for (size_t i = 0; i != buffer.size(); i++){
+    for (size_t i = 0; i != buffer.size(); i++) {
       if (diff.nanoseconds() > (timestamp - rclcpp::Time(buffer[i].header.stamp)).nanoseconds()) {
         diff = timestamp - rclcpp::Time(buffer[i].header.stamp);
         result = buffer[i];
@@ -706,7 +702,6 @@ protected:
   rviz_common::ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node;
   std::deque<sensor_msgs::msg::PointCloud2> pointCloudBuffer;
   std::mutex pointCloudBuffer_mutex;
-
 
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
@@ -749,4 +744,3 @@ private:
 }  // namespace autoware
 
 #endif  // OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
-
