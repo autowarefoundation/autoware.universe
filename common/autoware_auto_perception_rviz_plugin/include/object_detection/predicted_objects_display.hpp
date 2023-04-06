@@ -49,7 +49,6 @@ public:
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
-  // void onInitialize() override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {

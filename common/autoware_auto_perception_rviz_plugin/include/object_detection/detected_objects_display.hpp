@@ -41,7 +41,6 @@ public:
 
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
-  // void onInitialize() override;
   void processPointCloud(
     const DetectedObjects::ConstSharedPtr & input_objs_msg,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);

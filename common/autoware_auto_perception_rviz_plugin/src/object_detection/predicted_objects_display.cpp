@@ -182,16 +182,12 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
 
   if (pointCloudBuffer.empty())
   { 
-      // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Pointcloud buffer is empty");
     return markers; 
   }
   // poincloud pub
   sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(
     getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
-  // sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud = std::make_shared<sensor_msgs::msg::PointCloud2>(pointCloudBuffer.front());
-
   processPointCloud(msg, closest_pointcloud);
-  // processPointCloud(msg, pointCloudBuffer.front());
 
   return markers;
 }
@@ -269,8 +265,6 @@ void PredictedObjectsDisplay::processPointCloud(
         *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
     return;
   }
-  // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Objects transformed");
-
   // convert to pcl pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
@@ -304,8 +298,6 @@ void PredictedObjectsDisplay::processPointCloud(
 
     filterPolygon(neighbor_pointcloud, out_cloud, unified_object);
   }
-  // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Pointcloud filtered");
-
 
   sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
@@ -314,8 +306,6 @@ void PredictedObjectsDisplay::processPointCloud(
   output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
   
   add_pointcloud(output_pointcloud_msg_ptr);
-  // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Published");
-
 }
 
 }  // namespace object_detection

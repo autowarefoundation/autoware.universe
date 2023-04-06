@@ -167,7 +167,6 @@ public:
       "Input for pointcloud visualization of objects detection pipeline.", this,
       SLOT(RosTopicDisplay::updateTopic()));
     qos_profile_points_property = new rviz_common::properties::QosProfileProperty(m_default_pointcloud_topic, qos_profile_points);
-    // m_default_pointcloud_topic->setReadOnly(true);
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
@@ -217,8 +216,6 @@ public:
     tf_buffer = std::make_unique<tf2_ros::Buffer>(raw_node->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
-    // m_default_pointcloud_topic->setValue(m_default_pointcloud_topic->c_str());
-    
     point_cloud_common->initialize(this->context_, this->scene_node_);
   }
 
@@ -629,22 +626,11 @@ protected:
       return;
     }
     pointCloudBuffer_mutex.lock();
-    // Add a pointer to the new message to the front of the deque
     pointCloudBuffer.push_front(input_pointcloud_msg);
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Add poincloud to buffer");
-
-    // If the deque has more than 5 elements, remove the oldest element from the back of the deque
     if (pointCloudBuffer.size() > 5) {
         pointCloudBuffer.pop_back();
-        // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Drop poincloud from buffer");
-
     }
     pointCloudBuffer_mutex.unlock();
-
-    // std::string frame_id = input_pointcloud_msg.header.frame_id;
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "hello from poincloudCallback");
-
-    // add pointcloud to buffer
   }
 
   void filterPolygon(
@@ -697,34 +683,23 @@ protected:
     // Handle the case where the buffer is empty
     throw std::runtime_error("Buffer is empty");
     }
-
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "buffer len is %ld", buffer.size());
-
     sensor_msgs::msg::PointCloud2 result  = buffer.front();
     rclcpp::Duration diff = timestamp - rclcpp::Time(result.header.stamp);
-      // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Set last getted pointcloud as result");
-    
     pointCloudBuffer_mutex.lock();
     for (size_t i = 0; i != buffer.size(); i++){
-      // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Check pointcloud in buffer");
       if (diff.nanoseconds() > (timestamp - rclcpp::Time(buffer[i].header.stamp)).nanoseconds()) {
         diff = timestamp - rclcpp::Time(buffer[i].header.stamp);
         result = buffer[i];
-        // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Update result");
       }
     }
     pointCloudBuffer_mutex.unlock();
 
-    // RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "return result");   
     return result;
   }
 
   rviz_common::properties::RosTopicProperty * m_default_pointcloud_topic;
   // Property to enable/disable objects pointcloud publishing
   rviz_common::properties::BoolProperty * m_publish_objs_pointcloud;
-
-  // message_filters::Subscriber<MsgT> perception_objects_subscription;
-  // rclcpp::Subscriber<sensor_msgs::msg::PointCloud2> pointcloud_subscription;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_subscription;
   // plugin to visualize pointclouds
   std::unique_ptr<rviz_default_plugins::PointCloudCommon> point_cloud_common;
