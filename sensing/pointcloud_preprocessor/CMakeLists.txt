@@ -44,6 +44,7 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/utility/utilities.cpp
   src/concatenate_data/concatenate_data_nodelet.cpp
+  src/time_synchronizer/time_synchronizer_nodelet.cpp
   src/crop_box_filter/crop_box_filter_nodelet.cpp
   src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
   src/downsample_filter/random_downsample_filter_nodelet.cpp
@@ -69,6 +70,11 @@ target_link_libraries(pointcloud_preprocessor_filter
   ${OpenCV_LIBRARIES}
   ${PCL_LIBRARIES}
 )
+
+# ========== Time synchronizer ==========
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::PointCloudDataSynchronizerComponent"
+  EXECUTABLE time_synchronizer_node)
 
 # ========== Concatenate data ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
