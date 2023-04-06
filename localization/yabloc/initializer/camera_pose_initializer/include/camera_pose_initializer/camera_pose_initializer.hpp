@@ -46,6 +46,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 
   std::optional<Image::ConstSharedPtr> latest_image_msg_{std::nullopt};
+  lanelet::ConstLanelets const_lanelets_;
 
   void on_map(const HADMapBin & msg);
   void on_service(

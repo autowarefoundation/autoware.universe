@@ -14,7 +14,7 @@ public:
   MarkerModule(rclcpp::Node * node);
 
   void publish_marker(
-    const std::vector<int> scores, const std::vector<float> angles,
+    const std::vector<float> scores, const std::vector<float> angles,
     const Eigen::Vector3f & position);
 
 private:

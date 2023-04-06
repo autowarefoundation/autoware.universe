@@ -1,4 +1,5 @@
 #include "camera_pose_initializer/camera_pose_initializer.hpp"
+#include "camera_pose_initializer/lanelet_util.hpp"
 
 #include <ll2_decomposer/from_bin_msg.hpp>
 #include <opencv2/highgui.hpp>
@@ -106,10 +107,13 @@ bool CameraPoseInitializer::estimate_pose(
     }
   }
 
+  const std::optional<double> lane_angle_rad =
+    lanelet::get_current_direction(const_lanelets_, position);
+
   cv::Mat projected_image = projector_module_->project_image(semseg_image);
   cv::Mat vectormap_image = lane_image_->create_vectormap_image(position);
 
-  std::vector<int> scores;
+  std::vector<float> scores;
   std::vector<float> angles_rad;
 
   for (int i = -angle_resolution_; i < angle_resolution_; i++) {
@@ -120,9 +124,14 @@ bool CameraPoseInitializer::estimate_pose(
     cv::Mat rot = cv::getRotationMatrix2D(cv::Point2f(400, 400), angle_deg, 1);
     cv::Mat rotated_image;
     cv::warpAffine(projected_image, rotated_image, rot, vectormap_image.size());
-
     cv::Mat dst = bitwise_and_3ch(rotated_image, vectormap_image);
-    const int count = count_nonzero(dst);
+
+    // consider lanelet direction
+    float gain = 1;
+    if (lane_angle_rad) {
+      gain = 2 + std::cos((lane_angle_rad.value() - angle_rad) / 2.0);
+    }
+    const float score = gain * count_nonzero(dst);
 
     // DEBUG:
     constexpr bool imshow = false;
@@ -133,7 +142,7 @@ bool CameraPoseInitializer::estimate_pose(
       cv::waitKey(50);
     }
 
-    scores.push_back(count);
+    scores.push_back(score);
     angles_rad.push_back(angle_rad);
   }
 
@@ -152,6 +161,11 @@ void CameraPoseInitializer::on_map(const HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = ll2_decomposer::from_bin_msg(msg);
   lane_image_ = std::make_unique<LaneImage>(lanelet_map);
+
+  const_lanelets_.clear();
+  for (auto l : lanelet_map->laneletLayer) {
+    const_lanelets_.push_back(l);
+  }
 }
 
 void CameraPoseInitializer::on_service(

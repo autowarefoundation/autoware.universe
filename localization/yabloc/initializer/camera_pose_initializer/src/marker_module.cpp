@@ -11,7 +11,8 @@ MarkerModule::MarkerModule(rclcpp::Node * node)
 }
 
 void MarkerModule::publish_marker(
-  const std::vector<int> scores, const std::vector<float> angles, const Eigen::Vector3f & position)
+  const std::vector<float> scores, const std::vector<float> angles,
+  const Eigen::Vector3f & position)
 {
   const int N = scores.size();
   auto minmax = std::minmax_element(scores.begin(), scores.end());
