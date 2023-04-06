@@ -166,7 +166,7 @@ std::optional<LaneChangePath> constructCandidatePath(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double acceleration,
   const LaneChangePhaseInfo distance, const LaneChangePhaseInfo speed,
-  const LaneChangeParameters & lane_change_param)
+  const LaneChangeParameters & lane_change_param, const double lat_acc)
 {
   PathShifter path_shifter;
   path_shifter.setPath(target_lane_reference_path);
@@ -179,7 +179,7 @@ std::optional<LaneChangePath> constructCandidatePath(
   const auto lane_changing_speed = speed.lane_changing;
 
   path_shifter.setVelocity(lane_changing_speed);
-  path_shifter.setLateralAccelerationLimit(std::abs(lane_change_param.lane_changing_lateral_acc));
+  path_shifter.setLateralAccelerationLimit(std::abs(lat_acc));
 
   if (!path_shifter.generate(&shifted_path, offset_back)) {
     RCLCPP_DEBUG(
@@ -388,25 +388,40 @@ std::pair<bool, bool> getLaneChangePaths(
 
     // we assume constant speed during lane change
     const auto lane_changing_speed = prepare_speed;
-    const auto lane_changing_distance =
-      calcLaneChangingDistance(lane_changing_speed, shift_length, common_parameter, parameter);
+    const double max_speed = 60 / 3.6;  // TODO(murooka) use velocity from the input path
+    const double max_lane_changing_distance =
+      calcLaneChangingDistance(max_speed, shift_length, common_parameter, parameter);
 
-    if (lane_changing_distance + prepare_distance > dist_to_end_of_current_lanes) {
-      // total lane changing distance it too long
-      continue;
-    }
-
-    if (is_goal_in_route) {
+    // calculate lane_changing_distance
+    const double lane_changing_distance = [&]() {
+      const double tmp_lane_changing_distance =
+        std::min(max_lane_changing_distance, dist_to_end_of_current_lanes - prepare_distance);
+      if (!is_goal_in_route) {
+        return tmp_lane_changing_distance;
+      }
       const double s_start =
         lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
       const double s_goal =
         lanelet::utils::getArcCoordinates(target_lanelets, route_handler.getGoalPose()).length;
-      if (
-        s_start + lane_changing_distance + parameter.lane_change_finish_judge_buffer +
-          required_total_min_distance >
-        s_goal) {
-        continue;
-      }
+      return std::min(
+        tmp_lane_changing_distance,
+        s_goal - required_total_min_distance - parameter.lane_change_finish_judge_buffer - s_start);
+    }();
+    if (lane_changing_distance < 0) {
+      continue;
+    }
+
+    const double lat_acc = [&]() {
+      const double lane_changing_time = lane_changing_distance / lane_changing_speed;
+      return 8 * std::abs(shift_length) / std::pow(lane_changing_time, 2);
+    }();
+
+    std::cerr << max_lane_changing_distance << " " << lane_changing_distance << " " << lat_acc
+              << " " << parameter.lane_changing_lateral_acc << std::endl;
+
+    if (parameter.lane_changing_lateral_acc < std::abs(lat_acc)) {
+      // total lane changing distance it too long
+      continue;
     }
 
     const auto target_segment = getTargetSegment(
@@ -429,6 +444,7 @@ std::pair<bool, bool> getLaneChangePaths(
       lc_dist.lane_changing, forward_path_length, resample_interval, is_goal_in_route);
 
     if (target_lane_reference_path.points.empty()) {
+      std::cerr << "PO2" << std::endl;
       continue;
     }
 
@@ -439,9 +455,10 @@ std::pair<bool, bool> getLaneChangePaths(
 
     const auto candidate_path = constructCandidatePath(
       prepare_segment, target_segment, target_lane_reference_path, shift_line, original_lanelets,
-      target_lanelets, sorted_lane_ids, acceleration, lc_dist, lc_speed, parameter);
+      target_lanelets, sorted_lane_ids, acceleration, lc_dist, lc_speed, parameter, lat_acc);
 
     if (!candidate_path) {
+      std::cerr << "PO3" << std::endl;
       continue;
     }
 
@@ -456,6 +473,7 @@ std::pair<bool, bool> getLaneChangePaths(
 #endif
 
     if (!is_valid) {
+      std::cerr << "PO4" << std::endl;
       continue;
     }
 

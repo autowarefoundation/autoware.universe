@@ -64,7 +64,8 @@ std::optional<LaneChangePath> constructCandidatePath(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const double acceleration, const double prepare_distance, const double prepare_duration,
   const double prepare_speed, const double lane_change_distance, const double lane_changing_speed,
-  const BehaviorPathPlannerParameters & params, const LaneChangeParameters & lane_change_param);
+  const BehaviorPathPlannerParameters & params, const LaneChangeParameters & lane_change_param,
+  const double lat_acc);
 
 std::pair<bool, bool> getLaneChangePaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
