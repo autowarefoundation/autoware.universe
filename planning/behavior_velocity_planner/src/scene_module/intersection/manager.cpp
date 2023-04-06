@@ -51,8 +51,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".detection_area_angle_threshold");
   ip.min_predicted_path_confidence =
     node.declare_parameter<double>(ns + ".min_predicted_path_confidence");
-  ip.external_input_timeout =
-    node.declare_parameter<double>(ns + ".walkway.external_input_timeout");
+  ip.external_input_timeout = node.declare_parameter<double>(ns + ".external_input_timeout");
   ip.minimum_ego_predicted_velocity =
     node.declare_parameter<double>(ns + ".minimum_ego_predicted_velocity");
   ip.collision_start_margin_time =
