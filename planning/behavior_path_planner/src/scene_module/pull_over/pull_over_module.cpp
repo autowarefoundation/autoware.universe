@@ -1122,7 +1122,7 @@ void PullOverModule::decelerateForTurnSignal(const Pose & stop_pose, PathWithLan
       0.0, calcSignedArcLength(path.points, point.point.pose.position, stop_pose.position));
     const float decel_vel =
       std::min(point.point.longitudinal_velocity_mps, static_cast<float>(distance_to_stop / time));
-    const double distance_from_ego = calcSignedArchLengthFromEgo(path, stop_pose);
+    const double distance_from_ego = calcSignedArcLengthFromEgo(path, stop_pose);
     const auto min_decel_distance = calcFeasibleDecelDistance(decel_vel);
     if (!min_decel_distance) {
       continue;
