@@ -105,7 +105,7 @@ inline pcl::PointXYZRGB toPCL(const geometry_msgs::msg::Point & point)
 inline bool comparePointCloudsByTimestamp(
   const sensor_msgs::msg::PointCloud2 & pc1, const sensor_msgs::msg::PointCloud2 & pc2)
 {
-  return (int(pc1.header.stamp.nanosec - pc2.header.stamp.nanosec)) < 0;
+  return (static_cast<int>(pc1.header.stamp.nanosec - pc2.header.stamp.nanosec)) < 0;
 }
 
 /// \brief Base rviz plugin class for all object msg types. The class defines common properties
