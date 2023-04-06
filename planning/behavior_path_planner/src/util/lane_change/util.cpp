@@ -387,7 +387,7 @@ std::pair<bool, bool> getLaneChangePaths(
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanelets, lane_changing_start_pose);
 
     // we assume constant speed during lane change
-    const auto lane_changing_speed = prepare_speed;
+    // const auto lane_changing_speed = prepare_speed;
     const double max_speed = 60 / 3.6;  // TODO(murooka) use velocity from the input path
     const double max_lane_changing_distance =
       calcLaneChangingDistance(max_speed, shift_length, common_parameter, parameter);
@@ -411,18 +411,22 @@ std::pair<bool, bool> getLaneChangePaths(
       continue;
     }
 
+    /*
     const double lat_acc = [&]() {
       const double lane_changing_time = lane_changing_distance / lane_changing_speed;
       return 8 * std::abs(shift_length) / std::pow(lane_changing_time, 2);
     }();
-
-    std::cerr << max_lane_changing_distance << " " << lane_changing_distance << " " << lat_acc
-              << " " << parameter.lane_changing_lateral_acc << std::endl;
-
     if (parameter.lane_changing_lateral_acc < std::abs(lat_acc)) {
       // total lane changing distance it too long
       continue;
     }
+    */
+
+    const double lane_changing_speed = [&]() {
+      const double actual_lane_changing_time =
+        std::sqrt(8 * std::abs(shift_length) / parameter.lane_changing_lateral_acc);
+      return lane_changing_distance / actual_lane_changing_time;
+    }();
 
     const auto target_segment = getTargetSegment(
       route_handler, target_lanelets, forward_path_length, lane_changing_start_pose,
@@ -444,7 +448,6 @@ std::pair<bool, bool> getLaneChangePaths(
       lc_dist.lane_changing, forward_path_length, resample_interval, is_goal_in_route);
 
     if (target_lane_reference_path.points.empty()) {
-      std::cerr << "PO2" << std::endl;
       continue;
     }
 
@@ -455,10 +458,10 @@ std::pair<bool, bool> getLaneChangePaths(
 
     const auto candidate_path = constructCandidatePath(
       prepare_segment, target_segment, target_lane_reference_path, shift_line, original_lanelets,
-      target_lanelets, sorted_lane_ids, acceleration, lc_dist, lc_speed, parameter, lat_acc);
+      target_lanelets, sorted_lane_ids, acceleration, lc_dist, lc_speed, parameter,
+      parameter.lane_changing_lateral_acc);
 
     if (!candidate_path) {
-      std::cerr << "PO3" << std::endl;
       continue;
     }
 
@@ -473,7 +476,6 @@ std::pair<bool, bool> getLaneChangePaths(
 #endif
 
     if (!is_valid) {
-      std::cerr << "PO4" << std::endl;
       continue;
     }
 
