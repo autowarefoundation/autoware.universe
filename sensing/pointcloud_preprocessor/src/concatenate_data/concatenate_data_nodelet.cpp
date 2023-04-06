@@ -211,7 +211,15 @@ void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
   }
 }
 
-Eigen::Matrix4f PointCloudConcatenateDataSynchronizerComponent::calcDelayCompensateTransform(
+/**
+ * @brief compute transform to adjust for old timestamp
+ *
+ * @param old_stamp
+ * @param new_stamp
+ * @return Eigen::Matrix4f: transformation matrix from new_stamp to old_stamp
+ */
+Eigen::Matrix4f
+PointCloudConcatenateDataSynchronizerComponent::computeTransformToAdjustForOldTimestamp(
   const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp)
 {
   // return identity if no twist is available or old_stamp is newer than new_stamp
@@ -285,43 +293,50 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   if (pc_stamps.empty()) {
     return transformed_clouds;
   }
-  // sort stamps and get latest stamp
+  // sort stamps and get oldest stamp
   std::sort(pc_stamps.begin(), pc_stamps.end());
-  const auto latest_stamp = pc_stamps.back();
+  std::reverse(pc_stamps.begin(), pc_stamps.end());
+  const auto oldest_stamp = pc_stamps.back();
 
-  // Step2. Calculate compensation transform and concatenate with the latest stamp
+  // Step2. Calculate compensation transform and concatenate with the oldest stamp
   for (const auto & e : cloud_stdmap_) {
     if (e.second != nullptr) {
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
       transformPointCloud(e.second, transformed_cloud_ptr);
 
-      // calculate transforms to latest stamp
-      Eigen::Matrix4f delay_compensation_matrix = Eigen::Matrix4f::Identity();
+      // calculate transforms to oldest stamp
+      Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
+      rclcpp::Time transformed_stamp = rclcpp::Time(e.second->header.stamp);
       for (const auto & stamp : pc_stamps) {
-        const auto compensate_delay = calcDelayCompensateTransform(e.second->header.stamp, stamp);
-        delay_compensation_matrix = compensate_delay * delay_compensation_matrix;
+        const auto new_to_old_transform =
+          computeTransformToAdjustForOldTimestamp(stamp, transformed_stamp);
+        adjust_to_old_data_transform = new_to_old_transform * adjust_to_old_data_transform;
+        transformed_stamp = std::min(transformed_stamp, stamp);
       }
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_delay_compensated_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
       pcl_ros::transformPointCloud(
-        delay_compensation_matrix, *transformed_cloud_ptr,
+        adjust_to_old_data_transform, *transformed_cloud_ptr,
         *transformed_delay_compensated_cloud_ptr);
 
       // concatenate
       if (concat_cloud_ptr == nullptr) {
-        concat_cloud_ptr = transformed_delay_compensated_cloud_ptr;
+        concat_cloud_ptr =
+          std::make_shared<sensor_msgs::msg::PointCloud2>(*transformed_delay_compensated_cloud_ptr);
       } else {
         pcl::concatenatePointCloud(
           *concat_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concat_cloud_ptr);
       }
       // gather transformed clouds
+      transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
+      transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
       transformed_clouds[e.first] = transformed_delay_compensated_cloud_ptr;
     } else {
       not_subscribed_topic_names_.insert(e.first);
     }
   }
-  concat_cloud_ptr->header.stamp = latest_stamp;
+  concat_cloud_ptr->header.stamp = oldest_stamp;
   return transformed_clouds;
 }
 
