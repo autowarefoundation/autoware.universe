@@ -1099,7 +1099,7 @@ boost::optional<double> PullOverModule::calcFeasibleDecelDistance(
   return min_stop_distance;
 }
 
-double PullOverModule::calcSignedArchLengthFromEgo(
+double PullOverModule::calcSignedArcLengthFromEgo(
   const PathWithLaneId & path, const Pose & pose) const
 {
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
