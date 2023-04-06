@@ -167,7 +167,7 @@ private:
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
   boost::optional<double> calcFeasibleDecelDistance(const double target_velocity) const;
-  double calcModuleReuquestlength() const;
+  double calcModuleRequestlength() const;
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
 
   bool isStopped();
