@@ -329,7 +329,7 @@ bool PullOverModule::isExecutionRequested() const
   }
   const double self_to_goal_arc_length =
     util::getSignedDistance(current_pose, goal_pose, current_lanes);
-  if (self_to_goal_arc_length > calcModuleReuquestlength()) {
+  if (self_to_goal_arc_length > calcModuleRequestlength()) {
     return false;
   }
 
