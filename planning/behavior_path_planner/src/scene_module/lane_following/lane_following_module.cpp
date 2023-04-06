@@ -27,9 +27,13 @@ namespace behavior_path_planner
 LaneFollowingModule::LaneFollowingModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneFollowingParameters> & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+// RTCInterface is temporarily registered, but not used.
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})}, parameters_{parameters}
 {
   initParam();
+  // TODO(murooka) The following is temporary implementation for new architecture's refactoring
+  steering_factor_interface_ptr_ =
+    std::make_unique<SteeringFactorInterface>(&node, "lane_following");
 }
 
 void LaneFollowingModule::initParam()
@@ -37,9 +41,15 @@ void LaneFollowingModule::initParam()
   clearWaitingApproval();  // no need approval
 }
 
-bool LaneFollowingModule::isExecutionRequested() const { return true; }
+bool LaneFollowingModule::isExecutionRequested() const
+{
+  return true;
+}
 
-bool LaneFollowingModule::isExecutionReady() const { return true; }
+bool LaneFollowingModule::isExecutionReady() const
+{
+  return true;
+}
 
 BT::NodeStatus LaneFollowingModule::updateState()
 {
@@ -57,17 +67,15 @@ CandidateOutput LaneFollowingModule::planCandidate() const
 {
   return CandidateOutput(getReferencePath());
 }
-void LaneFollowingModule::onEntry()
+void LaneFollowingModule::processOnEntry()
 {
   initParam();
   current_state_ = BT::NodeStatus::RUNNING;
-  RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onEntry");
 }
-void LaneFollowingModule::onExit()
+void LaneFollowingModule::processOnExit()
 {
   initParam();
   current_state_ = BT::NodeStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onExit");
 }
 
 void LaneFollowingModule::setParameters(const std::shared_ptr<LaneFollowingParameters> & parameters)
@@ -134,9 +142,13 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     p.forward_path_length, p);
 
   // clip backward length
+  // NOTE: In order to keep backward_path_length at least, resampling interval is added to the
+  // backward.
   const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(reference_path.points);
-  util::clipPathLength(
-    reference_path, current_seg_idx, p.forward_path_length, p.backward_path_length);
+  reference_path.points = motion_utils::cropPoints(
+    reference_path.points, current_pose.position, current_seg_idx, p.forward_path_length,
+    p.backward_path_length + p.input_path_interval);
+
   const auto drivable_lanelets = getLaneletsFromPath(reference_path, route_handler);
   const auto drivable_lanes = util::generateDrivableLanes(drivable_lanelets);
 

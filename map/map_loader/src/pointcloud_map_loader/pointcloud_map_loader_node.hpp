@@ -38,9 +38,6 @@ public:
   explicit PointCloudMapLoaderNode(const rclcpp::NodeOptions & options);
 
 private:
-  // ros param
-  std::map<std::string, PCDFileMetadata> pcd_metadata_dict_;
-
   std::unique_ptr<PointcloudMapLoaderModule> pcd_map_loader_;
   std::unique_ptr<PointcloudMapLoaderModule> downsampled_pcd_map_loader_;
   std::unique_ptr<PartialMapLoaderModule> partial_map_loader_;
@@ -48,8 +45,8 @@ private:
 
   std::vector<std::string> getPcdPaths(
     const std::vector<std::string> & pcd_paths_or_directory) const;
-  std::map<std::string, PCDFileMetadata> generatePCDMetadata(
-    const std::vector<std::string> & pcd_paths) const;
+  std::map<std::string, PCDFileMetadata> getPCDMetadata(
+    const std::string & pcd_metadata_path, const std::vector<std::string> & pcd_paths) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_

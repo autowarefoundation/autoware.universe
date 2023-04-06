@@ -38,7 +38,6 @@
 #include <vector>
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::util::convertToGeometryPoseArray;
 using behavior_path_planner::util::removeOverlappingPoints;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -95,7 +94,10 @@ PathWithLaneId GeometricParallelParking::getArcPath() const
   return path;
 }
 
-bool GeometricParallelParking::isParking() const { return current_path_idx_ > 0; }
+bool GeometricParallelParking::isParking() const
+{
+  return current_path_idx_ > 0;
+}
 
 void GeometricParallelParking::setVelocityToArcPaths(
   std::vector<PathWithLaneId> & arc_paths, const double velocity, const bool set_stop_end)
@@ -295,7 +297,7 @@ bool GeometricParallelParking::planPullOut(
       paths.back().points.end(),
       road_center_line_path.points.begin() + 1,  // to avoid overlapped point
       road_center_line_path.points.end());
-    removeOverlappingPoints(paths.back());
+    paths.back() = removeOverlappingPoints(paths.back());
 
     // if the end point is the goal, set the velocity to 0
     if (!goal_is_behind) {

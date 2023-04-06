@@ -22,6 +22,7 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/distance/distance.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
@@ -43,6 +44,7 @@
 
 namespace behavior_path_planner
 {
+using motion_utils::calcDecelDistWithJerkAndAccConstraints;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
@@ -78,27 +80,17 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 #ifdef USE_OLD_ARCHITECTURE
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters)
-: SceneModuleInterface{name, node},
-  parameters_{std::move(parameters)},
-  uuid_left_{generateUUID()},
-  uuid_right_{generateUUID()}
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {"left", "right"})},
+  parameters_{std::move(parameters)}
 {
   using std::placeholders::_1;
-  rtc_interface_left_ = std::make_shared<RTCInterface>(&node, "avoidance_left"),
-  rtc_interface_right_ = std::make_shared<RTCInterface>(&node, "avoidance_right"),
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "avoidance");
 }
 #else
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
-  std::shared_ptr<RTCInterface> & rtc_interface_left,
-  std::shared_ptr<RTCInterface> & rtc_interface_right)
-: SceneModuleInterface{name, node},
-  parameters_{std::move(parameters)},
-  rtc_interface_left_{rtc_interface_left},
-  rtc_interface_right_{rtc_interface_right},
-  uuid_left_{generateUUID()},
-  uuid_right_{generateUUID()}
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
 {
   using std::placeholders::_1;
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "avoidance");
@@ -643,9 +635,7 @@ void AvoidanceModule::fillObjectEnvelopePolygon(
     return;
   }
 
-  Polygon2d object_polygon{};
-  util::calcObjectPolygon(object_data.object, &object_polygon);
-
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
   if (!within(object_polygon, same_id_obj->envelope_poly)) {
     object_data.envelope_poly =
       createEnvelopePolygon(object_data, closest_pose, parameters_->object_envelope_buffer);
@@ -3248,13 +3238,13 @@ void AvoidanceModule::addShiftLineIfApproved(const AvoidLineArray & shift_lines)
     const auto sl_back = shift_lines.back();
 
     if (getRelativeLengthFromPath(sl) > 0.0) {
-      left_shift_array_.push_back({uuid_left_, sl_front.start, sl_back.end});
+      left_shift_array_.push_back({uuid_map_.at("left"), sl_front.start, sl_back.end});
     } else if (getRelativeLengthFromPath(sl) < 0.0) {
-      right_shift_array_.push_back({uuid_right_, sl_front.start, sl_back.end});
+      right_shift_array_.push_back({uuid_map_.at("right"), sl_front.start, sl_back.end});
     }
 
-    uuid_left_ = generateUUID();
-    uuid_right_ = generateUUID();
+    uuid_map_.at("left") = generateUUID();
+    uuid_map_.at("right") = generateUUID();
     candidate_uuid_ = generateUUID();
 
     lockNewModuleLaunch();
@@ -3280,6 +3270,8 @@ void AvoidanceModule::addNewShiftLines(
   }
 
   const auto current_shift_lines = path_shifter.getShiftLines();
+  const auto new_shift_length = new_shift_lines.front().end_shift_length;
+  const auto new_shift_end_idx = new_shift_lines.front().end_idx;
 
   DEBUG_PRINT("min_start_idx = %lu", min_start_idx);
 
@@ -3296,10 +3288,25 @@ void AvoidanceModule::addNewShiftLines(
     if (sl.start_idx >= min_start_idx) {
       DEBUG_PRINT(
         "sl.start_idx = %lu, this sl starts after new proposal. remove this one.", sl.start_idx);
-    } else {
-      DEBUG_PRINT("sl.start_idx = %lu, no conflict. keep this one.", sl.start_idx);
-      future.push_back(sl);
+      continue;
     }
+
+    if (sl.end_idx >= new_shift_end_idx) {
+      if (
+        sl.end_shift_length > -1e-3 && new_shift_length > -1e-3 &&
+        sl.end_shift_length < new_shift_length) {
+        continue;
+      }
+
+      if (
+        sl.end_shift_length < 1e-3 && new_shift_length < 1e-3 &&
+        sl.end_shift_length > new_shift_length) {
+        continue;
+      }
+    }
+
+    DEBUG_PRINT("sl.start_idx = %lu, no conflict. keep this one.", sl.start_idx);
+    future.push_back(sl);
   }
 
   path_shifter.setShiftLines(future);
@@ -3579,26 +3586,14 @@ void AvoidanceModule::compensateDetectionLost(
   DEBUG_PRINT("object size: %lu -> %lu", old_size, now_objects.size());
 }
 
-void AvoidanceModule::onEntry()
+void AvoidanceModule::processOnEntry()
 {
-  DEBUG_PRINT("AVOIDANCE onEntry. wait approval!");
   initVariables();
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
-#endif
 }
 
-void AvoidanceModule::onExit()
+void AvoidanceModule::processOnExit()
 {
-  DEBUG_PRINT("AVOIDANCE onExit");
   initVariables();
-  current_state_ = ModuleStatus::SUCCESS;
-  clearWaitingApproval();
-  removeRTCStatus();
-  unlockNewModuleLaunch();
-  steering_factor_interface_ptr_->clearSteeringFactors();
 }
 
 void AvoidanceModule::initVariables()
@@ -3863,7 +3858,8 @@ void AvoidanceModule::updateAvoidanceDebugData(
   }
 }
 
-double AvoidanceModule::getFeasibleDecelDistance(const double target_velocity) const
+boost::optional<double> AvoidanceModule::getFeasibleDecelDistance(
+  const double target_velocity) const
 {
   const auto & a_now = planner_data_->self_acceleration->accel.accel.linear.x;
   const auto & a_lim = parameters_->max_deceleration;
@@ -3872,7 +3868,7 @@ double AvoidanceModule::getFeasibleDecelDistance(const double target_velocity) c
     getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
 }
 
-double AvoidanceModule::getMildDecelDistance(const double target_velocity) const
+boost::optional<double> AvoidanceModule::getMildDecelDistance(const double target_velocity) const
 {
   const auto & a_now = planner_data_->self_acceleration->accel.accel.linear.x;
   const auto & a_lim = parameters_->nominal_deceleration;
@@ -3943,11 +3939,11 @@ void AvoidanceModule::insertWaitPoint(
   }
 
   const auto stop_distance = getMildDecelDistance(0.0);
-
-  const auto insert_distance = std::max(start_longitudinal, stop_distance);
-
-  insertDecelPoint(
-    getEgoPosition(), insert_distance, 0.0, shifted_path.path, debug_data_.stop_pose);
+  if (stop_distance) {
+    const auto insert_distance = std::max(start_longitudinal, *stop_distance);
+    insertDecelPoint(
+      getEgoPosition(), insert_distance, 0.0, shifted_path.path, debug_data_.stop_pose);
+  }
 }
 
 void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
@@ -3964,9 +3960,11 @@ void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
   }
 
   const auto decel_distance = getMildDecelDistance(p->yield_velocity);
-
-  insertDecelPoint(
-    getEgoPosition(), decel_distance, p->yield_velocity, shifted_path.path, debug_data_.slow_pose);
+  if (decel_distance) {
+    insertDecelPoint(
+      getEgoPosition(), *decel_distance, p->yield_velocity, shifted_path.path,
+      debug_data_.slow_pose);
+  }
 }
 
 void AvoidanceModule::insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const
@@ -3992,8 +3990,10 @@ void AvoidanceModule::insertPrepareVelocity(const bool avoidable, ShiftedPath & 
   }
 
   const auto decel_distance = getFeasibleDecelDistance(0.0);
-
-  insertDecelPoint(getEgoPosition(), decel_distance, 0.0, shifted_path.path, debug_data_.slow_pose);
+  if (decel_distance) {
+    insertDecelPoint(
+      getEgoPosition(), *decel_distance, 0.0, shifted_path.path, debug_data_.slow_pose);
+  }
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() const

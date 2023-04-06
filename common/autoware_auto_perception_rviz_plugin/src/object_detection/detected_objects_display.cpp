@@ -24,6 +24,7 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
+
 DetectedObjectsDisplay::DetectedObjectsDisplay()
 : ObjectPolygonDisplayBase(
     "/perception/object_recognition/detection/objects",

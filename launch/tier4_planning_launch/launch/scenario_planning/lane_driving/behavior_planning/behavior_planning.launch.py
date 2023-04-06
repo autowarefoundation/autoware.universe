@@ -44,6 +44,8 @@ def launch_setup(context, *args, **kwargs):
         side_shift_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("avoidance_param_path").perform(context), "r") as f:
         avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("avoidance_by_lc_param_path").perform(context), "r") as f:
+        avoidance_by_lc_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_change_param_path").perform(context), "r") as f:
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_following_param_path").perform(context), "r") as f:
@@ -54,6 +56,8 @@ def launch_setup(context, *args, **kwargs):
         pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("drivable_area_expansion_param_path").perform(context), "r") as f:
         drivable_area_expansion_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("scene_module_manager_param_path").perform(context), "r") as f:
+        scene_module_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("behavior_path_planner_param_path").perform(context), "r") as f:
         behavior_path_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
@@ -83,11 +87,13 @@ def launch_setup(context, *args, **kwargs):
             nearest_search_param,
             side_shift_param,
             avoidance_param,
+            avoidance_by_lc_param,
             lane_change_param,
             lane_following_param,
             pull_over_param,
             pull_out_param,
             drivable_area_expansion_param,
+            scene_module_manager_param,
             behavior_path_planner_param,
             vehicle_param,
             {

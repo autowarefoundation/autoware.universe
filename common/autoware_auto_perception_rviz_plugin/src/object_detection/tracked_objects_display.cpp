@@ -24,6 +24,7 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
+
 TrackedObjectsDisplay::TrackedObjectsDisplay()
 : ObjectPolygonDisplayBase(
     "/perception/object_recognition/tracking/objects",
