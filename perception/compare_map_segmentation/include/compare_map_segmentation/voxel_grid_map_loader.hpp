@@ -103,6 +103,7 @@ protected:
   std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
+  bool debug_ = false;
 
 public:
   typedef VoxelGridEx<pcl::PointXYZ> VoxelGridPointXYZ;
