@@ -15,6 +15,7 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -399,32 +400,6 @@ std::vector<double> calcObjectsDistanceToPath(
   return distance_array;
 }
 
-PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
-{
-  PathWithLaneId filtered_path;
-  for (const auto & pt : input_path.points) {
-    if (filtered_path.points.empty()) {
-      filtered_path.points.push_back(pt);
-      continue;
-    }
-
-    constexpr double min_dist = 0.001;
-    if (
-      tier4_autoware_utils::calcDistance3d(filtered_path.points.back().point, pt.point) <
-      min_dist) {
-      filtered_path.points.back().lane_ids.push_back(pt.lane_ids.front());
-      filtered_path.points.back().point.longitudinal_velocity_mps = std::min(
-        pt.point.longitudinal_velocity_mps,
-        filtered_path.points.back().point.longitudinal_velocity_mps);
-    } else {
-      filtered_path.points.push_back(pt);
-    }
-  }
-  filtered_path.left_bound = input_path.left_bound;
-  filtered_path.right_bound = input_path.right_bound;
-  return filtered_path;
-}
-
 template <typename T>
 bool exists(std::vector<T> vec, T element)
 {
@@ -598,8 +573,9 @@ PathWithLaneId refinePathForGoal(
   const double search_radius_range, const double search_rad_range, const PathWithLaneId & input,
   const Pose & goal, const int64_t goal_lane_id)
 {
-  PathWithLaneId filtered_path, path_with_goal;
-  filtered_path = removeOverlappingPoints(input);
+  PathWithLaneId filtered_path = input;
+  PathWithLaneId path_with_goal;
+  filtered_path.points = motion_utils::removeOverlapPoints(filtered_path.points);
 
   // always set zero velocity at the end of path for safety
   if (!filtered_path.points.empty()) {
@@ -1731,6 +1707,13 @@ PathWithLaneId getCenterLinePath(
     route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
   const auto resampled_path_with_lane_id = motion_utils::resamplePath(
     raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
+
+  // convert centerline, which we consider as CoG center,  to rear wheel center
+  if (parameter.enable_cog_on_centerline) {
+    const double rear_to_cog = parameter.vehicle_length / 2 - parameter.rear_overhang;
+    return motion_utils::convertToRearWheelCenter(resampled_path_with_lane_id, rear_to_cog);
+  }
+
   return resampled_path_with_lane_id;
 }
 
@@ -2330,7 +2313,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
   return true;
 }
 
-double calcTotalLaneChangeDistance(
+double calcTotalLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
 {
   const double minimum_lane_change_distance =
@@ -2343,7 +2326,7 @@ double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
   const double length_to_intersection)
 {
-  return num_lane_change * calcTotalLaneChangeDistance(common_param) + length_to_intersection;
+  return num_lane_change * calcTotalLaneChangeLength(common_param) + length_to_intersection;
 }
 
 lanelet::ConstLanelets getLaneletsFromPath(
