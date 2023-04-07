@@ -15,6 +15,7 @@
 #ifndef MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 #define MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 
+#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/geometry/pose_deviation.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
@@ -1279,6 +1280,34 @@ inline boost::optional<size_t> insertStopPoint(
 }
 
 /**
+ * @brief Insert Stop point that is in the stop segment index
+ * @param stop_seg_idx segment index of the stop pose
+ * @param stop_point stop point
+ * @param points_with_twist output points of trajectory, path, ... (with velocity)
+ * @param overlap_threshold distance threshold, used to check if the inserted point is between start
+ * and end of nominated segment to be added in.
+ * @return index of stop point
+ */
+template <class T>
+boost::optional<size_t> insertStopPoint(
+  const size_t stop_seg_idx, const geometry_msgs::msg::Point & stop_point, T & points_with_twist,
+  const double overlap_threshold = 1e-3)
+{
+  const auto insert_idx =
+    motion_utils::insertTargetPoint(stop_seg_idx, stop_point, points_with_twist, overlap_threshold);
+
+  if (!insert_idx) {
+    return boost::none;
+  }
+
+  for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
+    tier4_autoware_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
+  }
+
+  return insert_idx;
+}
+
+/**
  * @brief Insert deceleration point from the source pose
  * @param src_point source point
  * @param distance_to_decel_point  distance to deceleration point from the src point
@@ -1348,6 +1377,28 @@ void insertOrientation(T & points, const bool is_driving_forward)
     // Initial orientation is same as the point after it
     tier4_autoware_utils::setOrientation(
       tier4_autoware_utils::getPose(points.at(1)).orientation, points.at(0));
+  }
+}
+
+/**
+ * @brief Remove points with invalid orientation differences from a given points container
+ * (trajectory, path, ...)
+ * @param points Points of trajectory, path, or other point container (input / output)
+ * @param max_yaw_diff Maximum acceptable yaw angle difference between two consecutive points in
+ * radians (default: M_PI_2)
+ */
+template <class T>
+void removeInvalidOrientationPoints(T & points, const double max_yaw_diff = M_PI_2)
+{
+  for (size_t i = 1; i < points.size();) {
+    const double yaw1 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i - 1)).orientation);
+    const double yaw2 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i)).orientation);
+
+    if (max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2))) {
+      points.erase(points.begin() + i);
+    } else {
+      ++i;
+    }
   }
 }
 
