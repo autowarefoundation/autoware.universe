@@ -85,14 +85,14 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   if (use_sequential_load) {
     {
       sub_pointcloud_metadata_ =
-        this->create_subscription<autoware_map_msgs::srv::PointCloudMapMetadata>(
+        this->create_subscription<autoware_map_msgs::msg::PointCloudMapMetaData>(
           "input/pointcloud_map_metadata", durable_qos,
-          std::bind(&ElevationMapLoaderNode::onPointCloudMapMetadata, this, _1));
+          std::bind(&ElevationMapLoaderNode::onPointCloudMapMetaData, this, _1));
       constexpr auto period_ns =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0));
       group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
       pcd_loader_client_ = create_client<autoware_map_msgs::srv::GetSelectedPointCloudMap>(
-        "service/get_selected_pcd_map", rmw_qos_profile_services_default, group_);
+        "service/get_selected_pointcloud_map", rmw_qos_profile_services_default, group_);
 
       while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
         RCLCPP_INFO(
@@ -198,12 +198,12 @@ void ElevationMapLoaderNode::onPointcloudMap(
   }
 }
 
-void ElevationMapLoaderNode::onPointCloudMapMetadata(
-  const autoware_map_msgs::srv::PointCloudMapMetadata pointcloud_map_metadata)
+void ElevationMapLoaderNode::onPointCloudMapMetaData(
+  const autoware_map_msgs::msg::PointCloudMapMetaData pointcloud_map_metadata)
 {
   RCLCPP_INFO(this->get_logger(), "subscribe pointcloud_map metadata");
   {
-    for (const auto & pointcloud_map_metadata : pointcloud_map_metadata.cell_metadata) {
+    for (const auto & pointcloud_map_metadata : pointcloud_map_metadata.pointcloud_map_metadata) {
       data_manager_.pointcloud_map_ids_.push_back(pointcloud_map_metadata.cell_id);
     }
   }
@@ -235,14 +235,12 @@ void ElevationMapLoaderNode::receiveMap()
   if (!pcd_loader_client_->service_is_ready()) {
     RCLCPP_INFO(
       this->get_logger(),
-      "Waiting for pcd map loader service. Check if the enable_differential_load in "
+      "Waiting for pcd map loader service. Check if the enable_selected_load in "
       "pointcloud_map_loader is set `true`.");
   }
-  std::vector<std::string> cached_ids{};
   for (const auto & pointcloud_map_id : data_manager_.pointcloud_map_ids_) {
     // update request
     request->cell_ids = {pointcloud_map_id};
-    request->cached_ids = cached_ids;
     // send a request to map_loader
     RCLCPP_INFO(this->get_logger(), "send a request to map_loader");
     auto result{pcd_loader_client_->async_send_request(
@@ -261,7 +259,6 @@ void ElevationMapLoaderNode::receiveMap()
     RCLCPP_INFO(this->get_logger(), "concat maps");
     for (const auto & new_pointcloud_with_id : result.get()->new_pointcloud_with_ids) {
       concatPointCloundMaps(pointcloud_map, new_pointcloud_with_id.pointcloud);
-      cached_ids.push_back(new_pointcloud_with_id.cell_id);
     }
   }
   RCLCPP_INFO(this->get_logger(), "finish receiving");

@@ -26,7 +26,7 @@
 
 #include "tier4_external_api_msgs/msg/map_hash.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_map_msgs/msg/point_cloud_cell_metadata.hpp>
+#include <autoware_map_msgs/msg/point_cloud_map_meta_data.hpp>
 #include <autoware_map_msgs/srv/get_selected_point_cloud_map.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -55,6 +55,7 @@ public:
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_pcl_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   bool use_lane_filter_ = false;
+  std::vector<std::string> pointcloud_map_ids_;
 };
 
 class ElevationMapLoaderNode : public rclcpp::Node
@@ -66,7 +67,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pointcloud_map_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::MapHash>::SharedPtr sub_map_hash_;
-  rclcpp::Subscription<autoware_map_msgs::srv::PointCloudMapMetadataArray>::SharedPtr
+  rclcpp::Subscription<autoware_map_msgs::msg::PointCloudMapMetaData>::SharedPtr
     sub_pointcloud_metadata_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_elevation_map_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_elevation_map_cloud_;
@@ -77,8 +78,8 @@ private:
   void onMapHash(const tier4_external_api_msgs::msg::MapHash::ConstSharedPtr map_hash);
   void timerCallback();
   void onVectorMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr vector_map);
-  void onPointCloudMapMetadata(
-    const autoware_map_msgs::srv::PointCloudMapMetadataArray pointcloud_map_metadata_array);
+  void onPointCloudMapMetaData(
+    const autoware_map_msgs::msg::PointCloudMapMetaData pointcloud_map_metadata);
   void receiveMap();
   void concatPointCloundMaps(
     sensor_msgs::msg::PointCloud2 & pointcloud_map,
@@ -110,7 +111,6 @@ private:
     lanelet::ConstLanelets road_lanelets_;
     float lane_margin_;
     bool use_lane_filter_;
-    std::vector<std::string> pointcloud_map_ids_
   };
   LaneFilter lane_filter_;
 };

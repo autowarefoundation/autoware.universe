@@ -322,12 +322,12 @@ class GroundSegmentationPipeline:
                     ("input/pointcloud_map", "/map/pointcloud_map"),
                     ("input/vector_map", "/map/vector_map"),
                     ("input/pointcloud_map_metadata", "/map/pointcloud_map_metadata"),
-                    ("service/get_selected_pcd_map", "/map/get_selected_pointcloud_map"),
+                    ("service/get_selected_pointcloud_map", "/map/get_selected_pointcloud_map"),
                 ],
                 parameters=[
                     {
-                        "use_lane_filter": False,
-                        "use_sequential_load": False,
+                        "use_lane_filter": True,
+                        "use_sequential_load": True,
                         "use_inpaint": True,
                         "inpaint_radius": 1.0,
                         "lane_margin": 2.0,
