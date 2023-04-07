@@ -122,80 +122,45 @@ using geometry_msgs::msg::PoseWithCovarianceStamped;
 using tf2::fromMsg;
 using tier4_autoware_utils::Point2d;
 
-std::vector<Pose> convertToPoseArray(const PathWithLaneId & path)
-{
-  std::vector<Pose> pose_array;
-  pose_array.reserve(path.points.size());
-  for (const auto & pt : path.points) {
-    pose_array.push_back(pt.point.pose);
-  }
-  return pose_array;
-}
-
 double l2Norm(const Vector3 vector)
 {
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
 }
 
-PoseArray convertToGeometryPoseArray(const PathWithLaneId & path)
-{
-  PoseArray converted_array;
-  converted_array.header = path.header;
-
-  converted_array.poses.reserve(path.points.size());
-  for (const auto & point_with_id : path.points) {
-    converted_array.poses.push_back(point_with_id.point.pose);
-  }
-  return converted_array;
-}
-
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const double nearest_seg_idx, const double duration, const double resolution,
-  const double acceleration, const double min_speed)
+  const size_t nearest_seg_idx, const double duration, const double resolution,
+  const double prepare_time, const double acceleration)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
   predicted_path.path.reserve(std::min(path.points.size(), static_cast<size_t>(100)));
+
   if (path.points.empty()) {
     return predicted_path;
   }
 
   FrenetPoint vehicle_pose_frenet =
     convertToFrenetPoint(path.points, vehicle_pose.position, nearest_seg_idx);
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  rclcpp::Time start_time = clock.now();
-  double vehicle_speed = std::abs(vehicle_twist.linear.x);
-  if (vehicle_speed < min_speed) {
-    vehicle_speed = min_speed;
-    RCLCPP_DEBUG_STREAM_THROTTLE(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), clock, 1000,
-      "cannot convert PathWithLaneId with zero velocity, using minimum value " << min_speed
-                                                                               << " [m/s] instead");
-  }
+  const double initial_velocity = std::abs(vehicle_twist.linear.x);
+  const double lane_change_velocity = std::max(initial_velocity + acceleration * prepare_time, 0.0);
 
-  double length = 0;
-  double prev_vehicle_speed = vehicle_speed;
-
-  // first point
-  predicted_path.path.push_back(
-    motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length));
-
-  for (double t = resolution; t < duration; t += resolution) {
-    double accelerated_velocity = prev_vehicle_speed + acceleration * t;
-    double travel_distance = 0;
-    if (accelerated_velocity < min_speed) {
-      travel_distance = min_speed * resolution;
-    } else {
-      travel_distance =
-        prev_vehicle_speed * resolution + 0.5 * acceleration * resolution * resolution;
-    }
-
-    length += travel_distance;
+  // prepare segment
+  for (double t = 0.0; t < prepare_time; t += resolution) {
+    const double length = initial_velocity * t + 0.5 * acceleration * t * t;
     predicted_path.path.push_back(
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
-    prev_vehicle_speed = accelerated_velocity;
   }
+
+  // lane changing segment
+  const double offset =
+    initial_velocity * prepare_time + 0.5 * acceleration * prepare_time * prepare_time;
+  for (double t = prepare_time; t < duration; t += resolution) {
+    const double length = lane_change_velocity * (t - prepare_time) + offset;
+    predicted_path.path.push_back(
+      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
+  }
+
   return predicted_path;
 }
 
@@ -414,51 +379,6 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
   }
 
   return std::make_pair(target_objects, other_objects);
-}
-
-bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon)
-{
-  if (object.shape.type == Shape::BOUNDING_BOX) {
-    const double & length_m = object.shape.dimensions.x / 2;
-    const double & width_m = object.shape.dimensions.y / 2;
-    *object_polygon = convertBoundingBoxObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
-
-  } else if (object.shape.type == Shape::CYLINDER) {
-    *object_polygon = convertCylindricalObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape);
-  } else if (object.shape.type == Shape::POLYGON) {
-    *object_polygon = convertPolygonObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape);
-  } else {
-    RCLCPP_WARN(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), "Object shape unknown!");
-    return false;
-  }
-
-  return true;
-}
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon)
-{
-  if (object_shape.type == Shape::BOUNDING_BOX) {
-    const double & length_m = object_shape.dimensions.x / 2;
-    const double & width_m = object_shape.dimensions.y / 2;
-    *object_polygon =
-      convertBoundingBoxObjectToGeometryPolygon(object_pose, length_m, length_m, width_m);
-
-  } else if (object_shape.type == Shape::CYLINDER) {
-    *object_polygon = convertCylindricalObjectToGeometryPolygon(object_pose, object_shape);
-  } else if (object_shape.type == Shape::POLYGON) {
-    *object_polygon = convertPolygonObjectToGeometryPolygon(object_pose, object_shape);
-  } else {
-    RCLCPP_WARN(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), "Object shape unknown!");
-    return false;
-  }
-
-  return true;
 }
 
 std::vector<double> calcObjectsDistanceToPath(
@@ -1387,19 +1307,6 @@ std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets)
   return ids;
 }
 
-Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id)
-{
-  Path path;
-  path.header = path_with_lane_id.header;
-  path.left_bound = path_with_lane_id.left_bound;
-  path.right_bound = path_with_lane_id.right_bound;
-  path.points.reserve(path_with_lane_id.points.size());
-  for (const auto & pt_with_lane_id : path_with_lane_id.points) {
-    path.points.push_back(pt_with_lane_id.point);
-  }
-  return path;
-}
-
 lanelet::Polygon3d getVehiclePolygon(
   const Pose & vehicle_pose, const double vehicle_width, const double base_link2front)
 {
@@ -1427,46 +1334,44 @@ lanelet::Polygon3d getVehiclePolygon(
   return llt_poly;
 }
 
-PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
+PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
 {
-  if (path->points.empty()) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
-      "failed to insert stop point. path points is empty.");
+  const size_t original_size = path.points.size();
+
+  // insert stop point
+  const auto insert_idx = motion_utils::insertStopPoint(length, path.points);
+  if (!insert_idx) {
     return PathPointWithLaneId();
   }
 
-  double accumulated_length = 0;
-  size_t insert_idx = 0;
-  Pose stop_pose;
-  for (size_t i = 1; i < path->points.size(); i++) {
-    const auto prev_pose = path->points.at(i - 1).point.pose;
-    const auto curr_pose = path->points.at(i).point.pose;
-    const double segment_length = tier4_autoware_utils::calcDistance3d(prev_pose, curr_pose);
-    accumulated_length += segment_length;
-    if (accumulated_length > length) {
-      insert_idx = i;
-      const double ratio = 1 - (accumulated_length - length) / segment_length;
-      stop_pose = tier4_autoware_utils::calcInterpolatedPose(prev_pose, curr_pose, ratio);
-      break;
+  // check if a stop point is inserted
+  if (path.points.size() == original_size) {
+    return path.points.at(*insert_idx);
+  }
+
+  if (*insert_idx == 0 || *insert_idx == original_size - 1) {
+    return path.points.at(*insert_idx);
+  }
+
+  // check lane ids of the inserted stop point
+  path.points.at(*insert_idx).lane_ids = {};
+  const auto & prev_lane_ids = path.points.at(*insert_idx - 1).lane_ids;
+  const auto & next_lane_ids = path.points.at(*insert_idx + 1).lane_ids;
+
+  for (const auto target_lane_id : prev_lane_ids) {
+    if (
+      std::find(next_lane_ids.begin(), next_lane_ids.end(), target_lane_id) !=
+      next_lane_ids.end()) {
+      path.points.at(*insert_idx).lane_ids.push_back(target_lane_id);
     }
   }
-  if (accumulated_length <= length) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
-      "failed to insert stop point. length is longer than path length");
-    return PathPointWithLaneId();
+
+  // If there is no lane ids, we are going to insert prev lane ids
+  if (path.points.at(*insert_idx).lane_ids.empty()) {
+    path.points.at(*insert_idx).lane_ids = prev_lane_ids;
   }
 
-  PathPointWithLaneId stop_point;
-  stop_point.lane_ids = path->points.at(insert_idx).lane_ids;
-  stop_point.point.pose = stop_pose;
-  path->points.insert(path->points.begin() + static_cast<int>(insert_idx), stop_point);
-  for (size_t i = insert_idx; i < path->points.size(); i++) {
-    path->points.at(i).point.longitudinal_velocity_mps = 0.0;
-    path->points.at(i).point.lateral_velocity_mps = 0.0;
-  }
-  return stop_point;
+  return path.points.at(*insert_idx);
 }
 
 double getSignedDistanceFromShoulderLeftBoundary(
@@ -1878,7 +1783,7 @@ PathWithLaneId setDecelerationVelocity(
     motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) + buffer;
   constexpr double eps{0.01};
   if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
-    const auto stop_point = util::insertStopPoint(stop_point_length, &reference_path);
+    const auto stop_point = util::insertStopPoint(stop_point_length, reference_path);
   }
 
   return reference_path;
@@ -1903,7 +1808,7 @@ PathWithLaneId setDecelerationVelocityForTurnSignal(
   const auto stop_point_length =
     motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position);
   if (stop_point_length > 0) {
-    const auto stop_point = util::insertStopPoint(stop_point_length, &reference_path);
+    const auto stop_point = util::insertStopPoint(stop_point_length, reference_path);
   }
 
   return reference_path;
@@ -2012,83 +1917,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
   return current_lanes;
 }
 
-Polygon2d convertBoundingBoxObjectToGeometryPolygon(
-  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
-  const double & base_to_width)
-{
-  const auto mapped_point = [](const double & length_scalar, const double & width_scalar) {
-    tf2::Vector3 map;
-    map.setX(length_scalar);
-    map.setY(width_scalar);
-    map.setZ(0.0);
-    map.setW(1.0);
-    return map;
-  };
-
-  // set vertices at map coordinate
-  const tf2::Vector3 p1_map = std::invoke(mapped_point, base_to_front, -base_to_width);
-  const tf2::Vector3 p2_map = std::invoke(mapped_point, base_to_front, base_to_width);
-  const tf2::Vector3 p3_map = std::invoke(mapped_point, -base_to_rear, base_to_width);
-  const tf2::Vector3 p4_map = std::invoke(mapped_point, -base_to_rear, -base_to_width);
-
-  // transform vertices from map coordinate to object coordinate
-  tf2::Transform tf_map2obj;
-  tf2::fromMsg(current_pose, tf_map2obj);
-  const tf2::Vector3 p1_obj = tf_map2obj * p1_map;
-  const tf2::Vector3 p2_obj = tf_map2obj * p2_map;
-  const tf2::Vector3 p3_obj = tf_map2obj * p3_map;
-  const tf2::Vector3 p4_obj = tf_map2obj * p4_map;
-
-  Polygon2d object_polygon;
-  object_polygon.outer().reserve(5);
-  object_polygon.outer().emplace_back(p1_obj.x(), p1_obj.y());
-  object_polygon.outer().emplace_back(p2_obj.x(), p2_obj.y());
-  object_polygon.outer().emplace_back(p3_obj.x(), p3_obj.y());
-  object_polygon.outer().emplace_back(p4_obj.x(), p4_obj.y());
-
-  object_polygon.outer().push_back(object_polygon.outer().front());
-
-  return object_polygon;
-}
-
-Polygon2d convertCylindricalObjectToGeometryPolygon(
-  const Pose & current_pose, const Shape & obj_shape)
-{
-  Polygon2d object_polygon;
-
-  const double obj_x = current_pose.position.x;
-  const double obj_y = current_pose.position.y;
-
-  constexpr int N = 20;
-  const double r = obj_shape.dimensions.x / 2;
-  object_polygon.outer().reserve(N + 1);
-  for (int i = 0; i < N; ++i) {
-    object_polygon.outer().emplace_back(
-      obj_x + r * std::cos(2.0 * M_PI / N * i), obj_y + r * std::sin(2.0 * M_PI / N * i));
-  }
-
-  object_polygon.outer().push_back(object_polygon.outer().front());
-
-  return object_polygon;
-}
-
-Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape)
-{
-  Polygon2d object_polygon;
-  tf2::Transform tf_map2obj;
-  fromMsg(current_pose, tf_map2obj);
-  const auto obj_points = obj_shape.footprint.points;
-  object_polygon.outer().reserve(obj_points.size() + 1);
-  for (const auto & obj_point : obj_points) {
-    tf2::Vector3 obj(obj_point.x, obj_point.y, obj_point.z);
-    tf2::Vector3 tf_obj = tf_map2obj * obj;
-    object_polygon.outer().emplace_back(tf_obj.x(), tf_obj.y());
-  }
-  object_polygon.outer().push_back(object_polygon.outer().front());
-
-  return object_polygon;
-}
-
 std::string getUuidStr(const PredictedObject & obj)
 {
   std::stringstream hex_value;
@@ -2180,12 +2008,12 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
   }
 
   const auto & i = ego_info;
-  const auto & front_m = i.max_longitudinal_offset_m;
-  const auto & width_m = i.vehicle_width_m / 2.0;
-  const auto & back_m = i.rear_overhang_m;
+  const auto & base_to_front = i.max_longitudinal_offset_m;
+  const auto & base_to_rear = i.rear_overhang_m;
+  const auto & width = i.vehicle_width_m;
 
   const auto ego_polygon =
-    util::convertBoundingBoxObjectToGeometryPolygon(*interpolated_pose, front_m, back_m, width_m);
+    tier4_autoware_utils::toFootprint(*interpolated_pose, base_to_front, base_to_rear, width);
 
   return std::make_pair(*interpolated_pose, ego_polygon);
 }
@@ -2506,7 +2334,7 @@ double calcTotalLaneChangeDistance(
   const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
 {
   const double minimum_lane_change_distance =
-    common_param.minimum_lane_change_prepare_distance + common_param.minimum_lane_change_length;
+    common_param.minimum_prepare_length + common_param.minimum_lane_changing_length;
   const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
   return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
 }
