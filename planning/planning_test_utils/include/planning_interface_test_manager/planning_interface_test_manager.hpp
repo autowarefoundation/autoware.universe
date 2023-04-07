@@ -67,6 +67,7 @@ using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::PoseStamped;
+using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using planning_interface::Route;
@@ -79,6 +80,7 @@ using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
+
 class PlanningIntefaceTestManager
 {
 public:
@@ -112,6 +114,7 @@ public:
   void publishExternalCrosswalkStates(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishExternalIntersectionStates(
     rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishInitialPoseData(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
@@ -179,7 +182,6 @@ private:
   rclcpp::Publisher<PathWithLaneId>::SharedPtr normal_path_with_lane_id_pub_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr abnormal_path_with_lane_id_pub_;
 
-
   std::string input_trajectory_name_;
   std::string input_parking_trajectory_name_;
   std::string input_lane_driving_trajectory_name_;
@@ -200,6 +202,9 @@ private:
   void publishNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbnormalRoute(
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
+
+  void set_initial_state_with_transform(Odometry::SharedPtr & odometry);
+  TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);
 };  // class PlanningIntefaceTestManager
 
 }  // namespace planning_test_utils

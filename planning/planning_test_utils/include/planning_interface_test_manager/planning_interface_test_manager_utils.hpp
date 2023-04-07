@@ -184,6 +184,8 @@ HADMapBin create_map_bin_msg(
   return map_bin_msg;
 }
 
+
+
 template <typename T>
 void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
@@ -320,33 +322,76 @@ void publishData<TFMessage>(
   spinSomeNodes(test_node, target_node);
 }
 
-void publishInitialPoseData(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<Odometry>::SharedPtr publisher)
-{
-  setPublisher(test_node, topic_name, publisher);
+// void publishTFData(
+//   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+//   rclcpp::Publisher<TFMessage>::SharedPtr publisher, Odometry odometry)
+// {
+//   tf.header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
+//   tf.header.frame_id = "base_link";
+//   tf.child_frame_id = "map";
 
-  const double position_x = 3722.16015625;
-  const double position_y = 73723.515625;
-  const double quaternion_x = 0.;
-  const double quaternion_y = 0.;
-  const double quaternion_z = 0.23311256049418302;
-  const double quaternion_w = 0.9724497591854532;
-  geometry_msgs::msg::Quaternion quaternion;
-  quaternion.x = quaternion_x;
-  quaternion.y = quaternion_y;
-  quaternion.z = quaternion_z;
-  quaternion.w = quaternion_w;
-  const double yaw = tf2::getYaw(quaternion);
+//   TFMessage tf_msg{};
+//   tf_msg.transforms.emplace_back(std::move(tf));
+//   setPublisher(test_node, topic_name, publisher);
+//   publisher->publish(tf_msg);
+//   spinSomeNodes(test_node, target_node);
+// }
+// TransformStamped tf;
+// tf.header.stamp = get_clock()->now();
+// tf.header.frame_id = origin_frame_id_;
+// tf.child_frame_id = simulated_frame_id_;
+// tf.transform.translation.x = odometry.pose.pose.position.x;
+// tf.transform.translation.y = odometry.pose.pose.position.y;
+// tf.transform.translation.z = odometry.pose.pose.position.z;
+// tf.transform.rotation = odometry.pose.pose.orientation;
 
-  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  const std::array<double, 3> start_pose{position_x, position_y, yaw};
-  current_odometry->pose.pose = create_pose_msg(start_pose);
-  current_odometry->header.frame_id = "map";
-  // current_odometry->header.frame_id = "base_link";
-  publisher->publish(*current_odometry);
-  spinSomeNodes(test_node, target_node);
-}
+// tf2_msgs::msg::TFMessage tf_msg{};
+// tf_msg.transforms.emplace_back(std::move(tf));
+// pub_tf_->publish(tf_msg);
+
+// void publishInitialPoseData(
+//   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+//   typename rclcpp::Publisher<Odometry>::SharedPtr publisher)
+// {
+//   const double position_x = 3722.16015625;
+//   const double position_y = 73723.515625;
+//   const double quaternion_x = 0.;
+//   const double quaternion_y = 0.;
+//   const double quaternion_z = 0.23311256049418302;
+//   const double quaternion_w = 0.9724497591854532;
+//   geometry_msgs::msg::Quaternion quaternion;
+//   quaternion.x = quaternion_x;
+//   quaternion.y = quaternion_y;
+//   quaternion.z = quaternion_z;
+//   quaternion.w = quaternion_w;
+//   const double yaw = tf2::getYaw(quaternion);
+
+//   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
+//   const std::array<double, 3> start_pose{position_x, position_y, yaw};
+//   current_odometry->pose.pose = create_pose_msg(start_pose);
+
+//   TransformStamped tf;
+//   tf.header.stamp = target_node->get_clock()->now();
+//   tf.header.frame_id = "odom";
+//   tf.child_frame_id = "base_link";
+//   tf.transform.translation.x = current_odometry->pose.pose.position.x;
+//   tf.transform.translation.y = current_odometry->pose.pose.position.y;
+//   tf.transform.translation.z = current_odometry->pose.pose.position.z;
+//   tf.transform.rotation = current_odometry->pose.pose.orientation;
+
+//   tf2_msgs::msg::TFMessage tf_msg{};
+//   tf_msg.transforms.emplace_back(std::move(tf));
+//   set_initial_state_with_transform(current_odometry, tf_msg);
+
+//   setPublisher(test_node, topic_name, publisher);
+
+//   current_odometry->header.frame_id = "map";
+//   std::string origin_frame_id = "odom";
+//   set_initial_state_with_transform(current_odometry, origin_frame_id, tf_buffer);
+//   // current_odometry->header.frame_id = "base_link";
+//   publisher->publish(*current_odometry);
+//   spinSomeNodes(test_node, target_node);
+// }
 
 void publishScenarioData(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
@@ -388,7 +433,6 @@ void setSubscriber<Trajectory>(
       // std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       count++;
     });
-  // subscriberが使用しているトピック名を表示する
   std::string used_topic_name = subscriber->get_topic_name();
   std::cerr << "The subscriber is using the topic: " << used_topic_name << std::endl;
 }

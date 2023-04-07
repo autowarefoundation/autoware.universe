@@ -22,6 +22,7 @@ PlanningIntefaceTestManager::PlanningIntefaceTestManager()
 {
   test_node_ = std::make_shared<rclcpp::Node>("planning_interface_test_node");
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(test_node_->get_clock());
+  tf_buffer_->setUsingDedicatedThread(true);
 }
 
 void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
@@ -120,7 +121,7 @@ void PlanningIntefaceTestManager::publishParkingScenario(
 void PlanningIntefaceTestManager::publishInitialPose(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishInitialPoseData(test_node_, target_node, topic_name, initial_pose_pub_);
+  publishInitialPoseData(target_node, topic_name);
 }
 
 void PlanningIntefaceTestManager::publishParkingState(
@@ -302,6 +303,74 @@ void PlanningIntefaceTestManager::publishAbnormalRoute(
 int PlanningIntefaceTestManager::getReceivedTopicNum()
 {
   return count_;
+}
+
+void PlanningIntefaceTestManager::publishInitialPoseData(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  const double position_x = 3722.16015625;
+  const double position_y = 73723.515625;
+  const double quaternion_x = 0.;
+  const double quaternion_y = 0.;
+  const double quaternion_z = 0.23311256049418302;
+  const double quaternion_w = 0.9724497591854532;
+  geometry_msgs::msg::Quaternion quaternion;
+  quaternion.x = quaternion_x;
+  quaternion.y = quaternion_y;
+  quaternion.z = quaternion_z;
+  quaternion.w = quaternion_w;
+  const double yaw = tf2::getYaw(quaternion);
+
+  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
+  const std::array<double, 3> start_pose{position_x, position_y, yaw};
+  current_odometry->pose.pose = test_utils::create_pose_msg(start_pose);
+  current_odometry->header.frame_id = "map";
+  std::string origin_frame_id = "odom";
+
+  TransformStamped tf;
+  tf.header.stamp = target_node->get_clock()->now();
+  tf.header.frame_id = "odom";
+  tf.child_frame_id = "base_link";
+  tf.transform.translation.x = position_x;
+  tf.transform.translation.y = position_y;
+  tf.transform.translation.z = 0;
+  tf.transform.rotation = quaternion;
+
+  tf2_msgs::msg::TFMessage tf_msg{};
+  tf_msg.transforms.emplace_back(std::move(tf));
+  set_initial_state_with_transform(current_odometry);
+
+  test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
+  initial_pose_pub_->publish(*current_odometry);
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
+void PlanningIntefaceTestManager::set_initial_state_with_transform(Odometry::SharedPtr & odometry)
+{
+  auto transform = get_transform_msg("odom", odometry->header.frame_id);
+  odometry->pose.pose.position.x =
+    odometry->pose.pose.position.x + transform.transform.translation.x;
+  odometry->pose.pose.position.y =
+    odometry->pose.pose.position.y + transform.transform.translation.y;
+  odometry->pose.pose.position.z =
+    odometry->pose.pose.position.z + transform.transform.translation.z;
+}
+
+TransformStamped PlanningIntefaceTestManager::get_transform_msg(
+  const std::string parent_frame, const std::string child_frame)
+{
+  TransformStamped transform;
+  while (true) {
+    try {
+      const auto time_point = tf2::TimePoint(std::chrono::milliseconds(0));
+      transform = tf_buffer_->lookupTransform(
+        parent_frame, child_frame, time_point, tf2::durationFromSec(0.0));
+      break;
+    } catch (tf2::TransformException & ex) {
+      rclcpp::sleep_for(std::chrono::milliseconds(500));
+    }
+  }
+  return transform;
 }
 
 }  // namespace planning_test_utils
