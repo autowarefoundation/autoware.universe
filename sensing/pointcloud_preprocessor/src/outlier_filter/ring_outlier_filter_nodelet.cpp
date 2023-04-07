@@ -45,8 +45,7 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
 }
 
 void RingOutlierFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices,
-  PointCloud2 & output)
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
   if (indices) {

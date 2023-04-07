@@ -106,8 +106,7 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
 }
 
 void BlockageDiagComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices,
-  PointCloud2 & output)
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
   if (indices) {

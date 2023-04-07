@@ -34,8 +34,7 @@ PointcloudAccumulatorComponent::PointcloudAccumulatorComponent(const rclcpp::Nod
 }
 
 void PointcloudAccumulatorComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices,
-  PointCloud2 & output)
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
   if (indices) {

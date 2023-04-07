@@ -39,8 +39,7 @@ VoxelGridOutlierFilterComponent::VoxelGridOutlierFilterComponent(
     std::bind(&VoxelGridOutlierFilterComponent::paramCallback, this, _1));
 }
 void VoxelGridOutlierFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices,
-  PointCloud2 & output)
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
   if (indices) {
