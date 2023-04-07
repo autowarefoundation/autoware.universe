@@ -635,9 +635,7 @@ void AvoidanceModule::fillObjectEnvelopePolygon(
     return;
   }
 
-  Polygon2d object_polygon{};
-  util::calcObjectPolygon(object_data.object, &object_polygon);
-
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
   if (!within(object_polygon, same_id_obj->envelope_poly)) {
     object_data.envelope_poly =
       createEnvelopePolygon(object_data, closest_pose, parameters_->object_envelope_buffer);
@@ -3272,6 +3270,8 @@ void AvoidanceModule::addNewShiftLines(
   }
 
   const auto current_shift_lines = path_shifter.getShiftLines();
+  const auto new_shift_length = new_shift_lines.front().end_shift_length;
+  const auto new_shift_end_idx = new_shift_lines.front().end_idx;
 
   DEBUG_PRINT("min_start_idx = %lu", min_start_idx);
 
@@ -3288,10 +3288,25 @@ void AvoidanceModule::addNewShiftLines(
     if (sl.start_idx >= min_start_idx) {
       DEBUG_PRINT(
         "sl.start_idx = %lu, this sl starts after new proposal. remove this one.", sl.start_idx);
-    } else {
-      DEBUG_PRINT("sl.start_idx = %lu, no conflict. keep this one.", sl.start_idx);
-      future.push_back(sl);
+      continue;
     }
+
+    if (sl.end_idx >= new_shift_end_idx) {
+      if (
+        sl.end_shift_length > -1e-3 && new_shift_length > -1e-3 &&
+        sl.end_shift_length < new_shift_length) {
+        continue;
+      }
+
+      if (
+        sl.end_shift_length < 1e-3 && new_shift_length < 1e-3 &&
+        sl.end_shift_length > new_shift_length) {
+        continue;
+      }
+    }
+
+    DEBUG_PRINT("sl.start_idx = %lu, no conflict. keep this one.", sl.start_idx);
+    future.push_back(sl);
   }
 
   path_shifter.setShiftLines(future);
@@ -3571,26 +3586,14 @@ void AvoidanceModule::compensateDetectionLost(
   DEBUG_PRINT("object size: %lu -> %lu", old_size, now_objects.size());
 }
 
-void AvoidanceModule::onEntry()
+void AvoidanceModule::processOnEntry()
 {
-  DEBUG_PRINT("AVOIDANCE onEntry. wait approval!");
   initVariables();
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
-#endif
 }
 
-void AvoidanceModule::onExit()
+void AvoidanceModule::processOnExit()
 {
-  DEBUG_PRINT("AVOIDANCE onExit");
   initVariables();
-  current_state_ = ModuleStatus::SUCCESS;
-  clearWaitingApproval();
-  removeRTCStatus();
-  unlockNewModuleLaunch();
-  steering_factor_interface_ptr_->clearSteeringFactors();
 }
 
 void AvoidanceModule::initVariables()

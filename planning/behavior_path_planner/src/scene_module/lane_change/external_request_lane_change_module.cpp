@@ -44,19 +44,15 @@ ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
     std::make_unique<SteeringFactorInterface>(&node, util::convertToSnakeCase(name));
 }
 
-void ExternalRequestLaneChangeModule::onEntry()
+void ExternalRequestLaneChangeModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
-  current_state_ = BT::NodeStatus::SUCCESS;
   current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
 
-void ExternalRequestLaneChangeModule::onExit()
+void ExternalRequestLaneChangeModule::processOnExit()
 {
   resetParameters();
-  current_state_ = BT::NodeStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
 }
 
 bool ExternalRequestLaneChangeModule::isExecutionRequested() const
@@ -137,7 +133,7 @@ BehaviorModuleOutput ExternalRequestLaneChangeModule::plan()
   }
 
   if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
-    const auto stop_point = util::insertStopPoint(0.1, &path);
+    const auto stop_point = util::insertStopPoint(0.1, path);
   }
 
   if (isAbortState()) {
@@ -297,7 +293,7 @@ PathWithLaneId ExternalRequestLaneChangeModule::getReferencePath() const
     util::calcLaneChangeBuffer(common_parameters, num_lane_change, 0.0);
 
   reference_path = util::setDecelerationVelocity(
-    *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
+    *route_handler, reference_path, current_lanes, parameters_->prepare_duration,
     lane_change_buffer);
 
   const auto drivable_lanes = util::generateDrivableLanes(current_lanes);
@@ -316,8 +312,8 @@ lanelet::ConstLanelets ExternalRequestLaneChangeModule::getLaneChangeLanes(
 {
   lanelet::ConstLanelets lane_change_lanes;
   const auto & route_handler = planner_data_->route_handler;
-  const auto minimum_lane_change_length = planner_data_->parameters.minimum_lane_change_length;
-  const auto lane_change_prepare_duration = parameters_->lane_change_prepare_duration;
+  const auto minimum_lane_changing_length = planner_data_->parameters.minimum_lane_changing_length;
+  const auto prepare_duration = parameters_->prepare_duration;
   const auto current_pose = getEgoPose();
   const auto current_twist = getEgoTwist();
 
@@ -329,7 +325,7 @@ lanelet::ConstLanelets ExternalRequestLaneChangeModule::getLaneChangeLanes(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanes, current_pose, &current_lane);
   const double lane_change_prepare_length =
-    std::max(current_twist.linear.x * lane_change_prepare_duration, minimum_lane_change_length);
+    std::max(current_twist.linear.x * prepare_duration, minimum_lane_changing_length);
   lanelet::ConstLanelets current_check_lanes =
     route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
   lanelet::ConstLanelet lane_change_lane;
@@ -440,9 +436,9 @@ bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) c
 bool ExternalRequestLaneChangeModule::isNearEndOfLane() const
 {
   const auto & current_pose = getEgoPose();
-  const auto minimum_lane_change_length = planner_data_->parameters.minimum_lane_change_length;
+  const auto minimum_lane_changing_length = planner_data_->parameters.minimum_lane_changing_length;
   const auto end_of_lane_buffer = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
-  const double threshold = end_of_lane_buffer + minimum_lane_change_length;
+  const double threshold = end_of_lane_buffer + minimum_lane_changing_length;
 
   return std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
          threshold;
@@ -654,6 +650,7 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
   const auto current_twist = getEgoTwist();
   const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameters = planner_data_->parameters;
+  const auto & lane_change_parameters = *parameters_;
   const auto & route_handler = planner_data_->route_handler;
   const auto path = status_.lane_change_path;
 
@@ -664,19 +661,15 @@ bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_
 
   std::unordered_map<std::string, CollisionCheckDebug> debug_data;
 
-  constexpr auto ignore_unknown{true};
   const auto lateral_buffer =
     lane_change_utils::calcLateralBufferForFiltering(common_parameters.vehicle_width);
   const auto dynamic_object_indices = lane_change_utils::filterObjectIndices(
     {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
-    lateral_buffer, ignore_unknown);
+    lane_change_parameters, lateral_buffer);
 
-  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
-    common_parameters.ego_nearest_yaw_threshold);
   return lane_change_utils::isLaneChangePathSafe(
-    path, dynamic_objects, dynamic_object_indices, current_pose, current_seg_idx, current_twist,
-    common_parameters, *parameters_, common_parameters.expected_front_deceleration_for_abort,
+    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
+    *parameters_, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
     status_.lane_change_path.acceleration);
 }
@@ -717,7 +710,7 @@ void ExternalRequestLaneChangeModule::calcTurnSignalInfo()
 
   turn_signal_info.desired_start_point = std::invoke([&]() {
     const auto blinker_start_duration = planner_data_->parameters.turn_signal_search_time;
-    const auto prepare_duration = parameters_->lane_change_prepare_duration;
+    const auto prepare_duration = parameters_->prepare_duration;
     const auto prepare_to_blinker_start_diff = prepare_duration - blinker_start_duration;
     if (prepare_to_blinker_start_diff < 1e-5) {
       return path.path.points.front().point.pose;
@@ -738,10 +731,7 @@ void ExternalRequestLaneChangeModule::calcTurnSignalInfo()
 
 void ExternalRequestLaneChangeModule::resetParameters()
 {
-  clearWaitingApproval();
-  removeRTCStatus();
   resetPathCandidate();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   object_debug_.clear();
   debug_marker_.markers.clear();
 }

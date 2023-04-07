@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE_BY_LC__MODULE_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE_BY_LC__MODULE_HPP_
 
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
+#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/util/avoidance_by_lc/module_data.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -49,20 +50,14 @@ using route_handler::Direction;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
-class LaneChangeModule : public SceneModuleInterface
+class AvoidanceByLCModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  LaneChangeModule(
+  AvoidanceByLCModule(
     const std::string & name, rclcpp::Node & node,
-    std::shared_ptr<LaneChangeParameters> parameters);
-#else
-  LaneChangeModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
-    Direction direction, LaneChangeModuleType type);
-#endif
+    const std::shared_ptr<AvoidanceByLCParameters> parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   ModuleStatus updateState() override;
@@ -71,20 +66,20 @@ public:
   CandidateOutput planCandidate() const override;
   void processOnEntry() override;
   void processOnExit() override;
+  void updateData() override;
 
   std::shared_ptr<LaneChangeDebugMsgArray> get_debug_msg_array() const;
-  void acceptVisitor(
-    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
+  void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
 #ifndef USE_OLD_ARCHITECTURE
-  void updateModuleParams(const std::shared_ptr<LaneChangeParameters> & parameters)
+  void updateModuleParams(const std::shared_ptr<AvoidanceByLCParameters> & parameters)
   {
     parameters_ = parameters;
   }
 #endif
 
 private:
-  std::shared_ptr<LaneChangeParameters> parameters_;
+  std::shared_ptr<AvoidanceByLCParameters> parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
@@ -97,18 +92,10 @@ private:
   bool is_abort_path_approved_{false};
   bool is_abort_approval_requested_{false};
   bool is_abort_condition_satisfied_{false};
-  bool is_activated_{false};
-
-#ifdef USE_OLD_ARCHITECTURE
-  UUID candidate_uuid_;
-#else
-  Direction direction_{Direction::NONE};
-  LaneChangeModuleType type_{LaneChangeModuleType::NORMAL};
-#endif
+  bool is_activated_ = false;
 
   void resetParameters();
 
-#ifdef USE_OLD_ARCHITECTURE
   void waitApprovalLeft(const double start_distance, const double finish_distance)
   {
     rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
@@ -129,20 +116,37 @@ private:
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         uuid_map_.at("left"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_map_.at("left");
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         uuid_map_.at("right"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_map_.at("right");
       return;
     }
 
     RCLCPP_WARN_STREAM(
       getLogger(),
       "Direction is UNKNOWN, start_distance = " << candidate.start_distance_to_path_change);
+  }
+
+  lanelet::ConstLanelets getCurrentLanes(const PathWithLaneId & path) const
+  {
+    const auto & route_handler = planner_data_->route_handler;
+    const auto & common_parameters = planner_data_->parameters;
+
+    lanelet::ConstLanelets reference_lanes{};
+    for (const auto & p : path.points) {
+      reference_lanes.push_back(
+        planner_data_->route_handler->getLaneletsFromId(p.lane_ids.front()));
+    }
+
+    lanelet::ConstLanelet current_lane;
+    lanelet::utils::query::getClosestLanelet(reference_lanes, getEgoPose(), &current_lane);
+
+    return route_handler->getLaneletSequence(
+      current_lane, getEgoPose(), common_parameters.backward_path_length,
+      common_parameters.forward_path_length);
   }
 
   void removePreviousRTCStatusLeft()
@@ -158,17 +162,29 @@ private:
       rtc_interface_ptr_map_.at("right")->removeCooperateStatus(uuid_map_.at("right"));
     }
   }
-#endif
 
+  AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
+  AvoidancePlanningData avoidance_data_;
+  mutable DebugData debug_data_;
+
+  ObjectDataArray registered_objects_;
+  mutable ObjectDataArray stopped_objects_;
+
+  void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
+  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
+  void fillObjectMovingTime(ObjectData & object_data) const;
+  void updateRegisteredObject(const ObjectDataArray & objects);
+  void compensateDetectionLost(
+    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
+  bool isTargetObjectType(const PredictedObject & object) const;
+
+  lanelet::ConstLanelets get_original_lanes() const;
   PathWithLaneId getReferencePath() const;
-#ifdef USE_OLD_ARCHITECTURE
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length) const;
-#endif
   std::pair<bool, bool> getSafePath(
     const lanelet::ConstLanelets & lane_change_lanes, const double check_distance,
     LaneChangePath & safe_path) const;
-  PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
 
   void updateLaneChangeStatus();
   void generateExtendedDrivableArea(PathWithLaneId & path);
@@ -186,10 +202,12 @@ private:
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
+  bool isAvoidancePlanRunning() const;
   bool isAbortState() const;
 
   // getter
-  Pose getEgoPose() const;
+  Point getEgoPosition() const { return planner_data_->self_odometry->pose.pose.position; }
+  Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
   Twist getEgoTwist() const;
   std_msgs::msg::Header getRouteHeader() const;
   void resetPathIfAbort();
@@ -201,4 +219,4 @@ private:
 };
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE_BY_LC__MODULE_HPP_

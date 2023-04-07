@@ -80,7 +80,7 @@ using geometry_msgs::msg::Pose;
 using marker_utils::CollisionCheckDebug;
 using vehicle_info_util::VehicleInfo;
 
-struct FrenetCoordinate3d
+struct FrenetPoint
 {
   double length{0.0};    // longitudinal
   double distance{0.0};  // lateral
@@ -102,37 +102,23 @@ void getProjectedDistancePointFromPolygons(
   Pose & point_on_object);
 // data conversions
 
-std::vector<Pose> convertToPoseArray(const PathWithLaneId & path);
-
-std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
-
-PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
-
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const double nearest_seg_idx, const double duration, const double resolution,
-  const double acceleration, const double min_speed = 1.0);
+  const size_t nearest_seg_idx, const double duration, const double resolution,
+  const double prepare_time, const double acceleration);
 
 template <class T>
-FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<T> & pose_array, const Point & search_point_geom, const size_t seg_idx)
+FrenetPoint convertToFrenetPoint(
+  const T & points, const Point & search_point_geom, const size_t seg_idx)
 {
-  FrenetCoordinate3d frenet_coordinate;
+  FrenetPoint frenet_point;
 
   const double longitudinal_length =
-    motion_utils::calcLongitudinalOffsetToSegment(pose_array, seg_idx, search_point_geom);
-  frenet_coordinate.length =
-    motion_utils::calcSignedArcLength(pose_array, 0, seg_idx) + longitudinal_length;
-  frenet_coordinate.distance =
-    motion_utils::calcLateralOffset(pose_array, search_point_geom, seg_idx);
+    motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom);
+  frenet_point.length = motion_utils::calcSignedArcLength(points, 0, seg_idx) + longitudinal_length;
+  frenet_point.distance = motion_utils::calcLateralOffset(points, search_point_geom, seg_idx);
 
-  return frenet_coordinate;
-}
-
-inline FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom, const size_t seg_idx)
-{
-  return convertToFrenetCoordinate3d(path.points, search_point_geom, seg_idx);
+  return frenet_point;
 }
 
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
@@ -159,14 +145,6 @@ double getSignedDistance(
 double getArcLengthToTargetLanelet(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
   const Pose & pose);
-
-bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
-
-bool calcObjectPolygon(
-  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
 
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & path1, const PredictedPath & path2, const double start_time,
@@ -307,8 +285,6 @@ PathWithLaneId refinePathForGoal(
   const double search_radius_range, const double search_rad_range, const PathWithLaneId & input,
   const Pose & goal, const int64_t goal_lane_id);
 
-PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path);
-
 bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal_id);
 
 // path management
@@ -317,7 +293,7 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   const std::shared_ptr<const PlannerData> & planner_data);
 
-PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
+PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 
 double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
@@ -377,15 +353,6 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
   const double forward_length, const double backward_length);
-
-Polygon2d convertBoundingBoxObjectToGeometryPolygon(
-  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
-  const double & base_to_width);
-
-Polygon2d convertCylindricalObjectToGeometryPolygon(
-  const Pose & current_pose, const Shape & obj_shape);
-
-Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
 
 std::string getUuidStr(const PredictedObject & obj);
 
