@@ -22,7 +22,7 @@ PlanningIntefaceTestManager::PlanningIntefaceTestManager()
 {
   test_node_ = std::make_shared<rclcpp::Node>("planning_interface_test_node");
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(test_node_->get_clock());
-  tf_buffer_->setUsingDedicatedThread(true);
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 }
 
 void PlanningIntefaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
@@ -149,6 +149,40 @@ void PlanningIntefaceTestManager::publishTF(
   test_utils::publishData<TFMessage>(test_node_, target_node, topic_name, TF_pub_);
 }
 
+void PlanningIntefaceTestManager::publishInitialPoseTF(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+
+  const double position_x = 3722.16015625;
+  const double position_y = 73723.515625;
+  const double quaternion_x = 0.;
+  const double quaternion_y = 0.;
+  const double quaternion_z = 0.23311256049418302;
+  const double quaternion_w = 0.9724497591854532;
+  geometry_msgs::msg::Quaternion quaternion;
+  quaternion.x = quaternion_x;
+  quaternion.y = quaternion_y;
+  quaternion.z = quaternion_z;
+  quaternion.w = quaternion_w;
+
+  
+  TransformStamped tf;
+  tf.header.stamp = target_node->get_clock()->now();
+  tf.header.frame_id = "odom";
+  tf.child_frame_id = "base_link";
+  tf.transform.translation.x = position_x;
+  tf.transform.translation.y = position_y;
+  tf.transform.translation.z = 0;
+  tf.transform.rotation = quaternion;
+
+  tf2_msgs::msg::TFMessage tf_msg{};
+  tf_msg.transforms.emplace_back(std::move(tf));
+
+  test_utils::setPublisher(test_node_, topic_name, initial_pose_tf_pub_);
+  initial_pose_tf_pub_->publish(tf_msg);
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
 void PlanningIntefaceTestManager::publishLateralOffset(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
@@ -229,6 +263,14 @@ void PlanningIntefaceTestManager::publishNominalRoute(
   test_utils::spinSomeNodes(test_node_, target_node);
 }
 
+void PlanningIntefaceTestManager::publisBehaviorNominalRoute(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::setPublisher(test_node_, topic_name, behavior_normal_route_pub_);
+  normal_route_pub_->publish(test_utils::makeBehaviorNormalRoute());
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
   test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
@@ -282,6 +324,15 @@ void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr t
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
+// test for normal working
+void PlanningIntefaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node)
+{
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  publishBehaviorNominalRoute(target_node, input_route_name_);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
+}
+
 // check to see if target node is dead.
 void PlanningIntefaceTestManager::testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node)
 {
@@ -325,20 +376,12 @@ void PlanningIntefaceTestManager::publishInitialPoseData(
   const std::array<double, 3> start_pose{position_x, position_y, yaw};
   current_odometry->pose.pose = test_utils::create_pose_msg(start_pose);
   current_odometry->header.frame_id = "map";
-  std::string origin_frame_id = "odom";
+  // std::string origin_frame_id = "odom";
 
-  TransformStamped tf;
-  tf.header.stamp = target_node->get_clock()->now();
-  tf.header.frame_id = "odom";
-  tf.child_frame_id = "base_link";
-  tf.transform.translation.x = position_x;
-  tf.transform.translation.y = position_y;
-  tf.transform.translation.z = 0;
-  tf.transform.rotation = quaternion;
 
-  tf2_msgs::msg::TFMessage tf_msg{};
-  tf_msg.transforms.emplace_back(std::move(tf));
-  set_initial_state_with_transform(current_odometry);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  // set_initial_state_with_transform(current_odometry);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 
   test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
   initial_pose_pub_->publish(*current_odometry);

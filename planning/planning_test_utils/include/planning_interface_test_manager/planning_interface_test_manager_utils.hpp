@@ -98,15 +98,15 @@ T generateTrajectory(
   return traj;
 }
 
-Pose create_pose_msg(const std::array<double, 3> & pose3d)
+Pose create_pose_msg(const std::array<double, 4> & pose3d)
 {
   Pose pose;
   tf2::Quaternion quat{};
-  quat.setRPY(0, 0, pose3d[2]);
+  quat.setRPY(0, 0, pose3d[3]);
   tf2::convert(quat, pose.orientation);
   pose.position.x = pose3d[0];
   pose.position.y = pose3d[1];
-  pose.position.z = 0.0;
+  pose.position.z = pose3d[2];
   return pose;
 }
 
@@ -115,6 +115,33 @@ Route::Message makeNormalRoute()
   const double pi = 3.1415926;
   const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
   const std::array<double, 3> goal_pose{8.0, 26.3, 0};
+  Route::Message route;
+  route.header.frame_id = "map";
+
+  route.start_pose = create_pose_msg(start_pose);
+  route.goal_pose = create_pose_msg(goal_pose);
+  return route;
+}
+
+Route::Message makeBehaviorNormalRoute()
+{
+  geometry_msgs::msg::Quaternion start_quaternion;
+  start_quaternion.x = 0;
+  start_quaternion.y = 0;
+  start_quaternion.z = 0.23311256049418302;
+  start_quaternion.w = 0.9724497591854532;
+  const double start_yaw = tf2::getYaw(start_quaternion);
+
+  geometry_msgs::msg::Quaternion goal_quaternion;
+  goal_quaternion.x = 0;
+  goal_quaternion.y = 0;
+  goal_quaternion.z = 0.23311256049418302;
+  goal_quaternion.w = 0.9724497591854532;
+  const double goal_yaw = tf2::getYaw(goal_quaternion);
+
+
+  const std::array<double, 3> start_pose{3722.16015625, 73723.515625, start_yaw};
+  const std::array<double, 3> goal_pose{3778.362060546875, 26.3, 0};
   Route::Message route;
   route.header.frame_id = "map";
 

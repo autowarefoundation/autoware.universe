@@ -43,6 +43,7 @@
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
+#include <tf2_ros/transform_listener.h>
 
 #include <boost/optional.hpp>
 
@@ -81,6 +82,7 @@ using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
 
+
 class PlanningIntefaceTestManager
 {
 public:
@@ -106,6 +108,7 @@ public:
   void publishTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishInitialPoseTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -134,6 +137,8 @@ public:
   void testWithNominalRoute(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node);
 
+  void testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node);
+
   int getReceivedTopicNum();
 
 private:
@@ -155,6 +160,7 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr route_pub_;
   rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
+  rclcpp::Publisher<TFMessage>::SharedPtr initial_pose_tf_pub_;
   rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr traffic_signals_pub_;
@@ -178,6 +184,9 @@ private:
   rclcpp::Publisher<LaneletRoute>::SharedPtr normal_route_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr abnormal_route_pub_;
 
+  // Publisher for testing(route)
+  rclcpp::Publisher<LaneletRoute>::SharedPtr behavior_normal_route_pub_;
+
   // Publisher for testing(PathWithLaneId)
   rclcpp::Publisher<PathWithLaneId>::SharedPtr normal_path_with_lane_id_pub_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr abnormal_path_with_lane_id_pub_;
@@ -194,6 +203,7 @@ private:
   std::string map_frame_ = "map";
   size_t count_{0};
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   void publishNominalTrajectory(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbnormalTrajectory(
     rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory);
@@ -202,6 +212,10 @@ private:
   void publishNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbnormalRoute(
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
+
+  void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  // void publishAbnormalRoute(
+  //   rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 
   void set_initial_state_with_transform(Odometry::SharedPtr & odometry);
   TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);

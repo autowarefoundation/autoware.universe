@@ -50,25 +50,38 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
      "--params-file", behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
      "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   auto test_target_node =
     std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
 
+  // test_manager->publishInitialPoseTF(test_target_node, "/tf");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
   // test_manager->publishInitialPose(test_target_node, "/initialpose3d");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishOccupancyGrid(
     test_target_node, "behavior_path_planner/input/occupancy_grid_map");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishLaneDrivingScenario(
     test_target_node, "behavior_path_planner/input/scenario");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishMap(test_target_node, "behavior_path_planner/input/vector_map");
-  test_manager->publishRoute(test_target_node, "behavior_path_planner/input/route");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  // test_manager->publishRoute(test_target_node, "behavior_path_planner/input/route");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishCostMap(test_target_node, "behavior_path_planner/input/costmap");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishLateralOffset(
     test_target_node, "behavior_path_planner/input/lateral_offset");
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // test_target_node → test_node_
   test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 
@@ -77,7 +90,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   test_manager->setRouteInputTopicName("/planning/mission_planning/route");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithBehaviorNormalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
