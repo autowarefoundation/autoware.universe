@@ -121,7 +121,7 @@ TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
   }
 
   const float percent = 1.0 * effect_num / total_num;
-  std::cout << "effect_num=" << effect_num << ",total_num=" << total_num
-            << ",percentage:" << percent << std::endl;
+  // std::cout << "effect_num=" << effect_num << ",total_num=" << total_num
+  //           << ",percentage:" << percent << std::endl;
   EXPECT_GE(percent, 0.9);
 }

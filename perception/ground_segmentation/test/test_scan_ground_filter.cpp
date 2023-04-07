@@ -114,7 +114,7 @@ public:
   {
     const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
     const auto config_path = share_dir + "/config/ground_segmentation.param.yaml";
-    std::cout << "config_path:" << config_path << std::endl;
+    // std::cout << "config_path:" << config_path << std::endl;
     YAML::Node config = YAML::LoadFile(config_path);
     auto params = config["/**"]["ros__parameters"]["common_ground_filter"]["parameters"];
     global_slope_max_angle_deg_ = params["global_slope_max_angle_deg"].as<float>();
@@ -178,14 +178,13 @@ TEST_F(ScanGroundFilterTest, TestCase1)
        iter_z(out_cloud, "z");
        iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
     const float z = *iter_z;
-    // std::cout<<"z="<<z<<std::endl;
     total_num += 1;
     if (z > min_noground_point_z) {
       effect_num += 1;
     }
   }
   const float percent = 1.0 * effect_num / total_num;
-  std::cout << "effect_num=" << effect_num << ",total_num=" << total_num
-            << ",percentage:" << percent << std::endl;
+  // std::cout << "effect_num=" << effect_num << ",total_num=" << total_num
+  //           << ",percentage:" << percent << std::endl;
   EXPECT_GE(percent, 0.9);
 }
