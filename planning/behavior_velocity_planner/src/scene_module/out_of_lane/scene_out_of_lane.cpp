@@ -115,11 +115,13 @@ bool OutOfLaneModule::modifyPathVelocity(
   for (const auto & point : points_to_insert) {
     auto path_idx = point.slowdown.target_path_idx;
     planning_utils::insertVelocity(*ego_data.path, point.point, point.slowdown.velocity, path_idx);
-    tier4_planning_msgs::msg::StopFactor stop_factor;
-    stop_factor.stop_pose = point.point.point.pose;
-    stop_factor.dist_to_stop_pose = motion_utils::calcSignedArcLength(
-      ego_data.path->points, ego_data.pose.position, point.point.point.pose.position);
-    planning_utils::appendStopReason(stop_factor, stop_reason);
+    if (point.slowdown.velocity == 0.0) {
+      tier4_planning_msgs::msg::StopFactor stop_factor;
+      stop_factor.stop_pose = point.point.point.pose;
+      stop_factor.dist_to_stop_pose = motion_utils::calcSignedArcLength(
+        ego_data.path->points, ego_data.pose.position, point.point.point.pose.position);
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+    }
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, point.point.point.pose,
       VelocityFactor::UNKNOWN);
