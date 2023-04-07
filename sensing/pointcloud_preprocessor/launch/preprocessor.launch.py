@@ -40,19 +40,52 @@ def generate_launch_description():
     tf_output_frame_param = DeclareLaunchArgument("tf_output_frame", default_value="base_link")
 
     # set concat filter as a component
-    concat_component = ComposableNode(
-        package=pkg,
-        plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
-        name="concatenate_filter",
-        remappings=[("output", "points_raw/concatenated")],
-        parameters=[
-            {
-                "input_topics": LaunchConfiguration("input_points_raw_list"),
-                "output_frame": LaunchConfiguration("tf_output_frame"),
-                "approximate_sync": True,
-            }
-        ],
-    )
+    # if you want to use single node, set use_single_node = True
+    use_single_node = False
+    if use_single_node:
+        sync_and_concat_component = ComposableNode(
+            package=pkg,
+            plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
+            name="sync_and_concatenate_filter",
+            remappings=[("output", "points_raw/concatenated")],
+            parameters=[
+                {
+                    "input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                }
+            ],
+        )
+        concat_components = [sync_and_concat_component]
+    else:
+        time_sync_component = ComposableNode(
+            package=pkg,
+            plugin="pointcloud_preprocessor::PointCloudDataSynchronizerComponent",
+            name="synchronizer_filter",
+            remappings=[("output", "points_raw/concatenated")],
+            parameters=[
+                {
+                    "input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                }
+            ],
+        )
+
+        concat_component = ComposableNode(
+            package=pkg,
+            plugin="pointcloud_preprocessor::PointCloudConcatenationComponent",
+            name="concatenate_filter",
+            remappings=[("output", "points_raw/concatenated")],
+            parameters=[
+                {
+                    "input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                }
+            ],
+        )
+        concat_components = [time_sync_component, concat_component]
 
     # set crop box filter as a component
     cropbox_component = ComposableNode(
@@ -93,7 +126,7 @@ def generate_launch_description():
         namespace=ns,
         package="rclcpp_components",
         executable="component_container",
-        composable_node_descriptions=[concat_component, cropbox_component],
+        composable_node_descriptions=concat_components + [cropbox_component],
         output="screen",
     )
 
