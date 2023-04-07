@@ -49,7 +49,7 @@ class DualReturnOutlierFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(
-    const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices,
     PointCloud2 & output);
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;

@@ -34,7 +34,7 @@ class VectorMapInsideAreaFilterComponent : public pointcloud_preprocessor::Filte
 {
 private:
   void filter(
-    const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices,
     PointCloud2 & output) override;
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;

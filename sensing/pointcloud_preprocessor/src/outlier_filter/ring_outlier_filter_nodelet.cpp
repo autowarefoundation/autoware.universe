@@ -45,10 +45,13 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
 }
 
 void RingOutlierFilterComponent::filter(
-  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices,
   PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
+  if (indices) {
+    RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
+  }
   stop_watch_ptr_->toc("processing_time", true);
   std::unordered_map<uint16_t, std::vector<std::size_t>> input_ring_map;
   input_ring_map.reserve(128);

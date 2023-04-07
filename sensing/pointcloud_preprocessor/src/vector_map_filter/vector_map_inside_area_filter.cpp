@@ -77,9 +77,13 @@ VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
 }
 
 void VectorMapInsideAreaFilterComponent::filter(
-  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices,
   PointCloud2 & output)
 {
+  if (indices) {
+    RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
+  }
+
   if (polygon_lanelets_.empty()) {
     output = *input;
     return;
