@@ -189,6 +189,8 @@ public:
   bool should_update_map() const;
   void request_update_map(const geometry_msgs::msg::Point & position);
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  bool is_close_to_next_map_grid(
+    const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
 
   inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
   {
