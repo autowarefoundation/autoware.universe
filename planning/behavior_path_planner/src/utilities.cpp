@@ -1858,7 +1858,10 @@ PathWithLaneId getCenterLinePath(
       lanelet::utils::getArcCoordinates(lanelet_sequence, route_handler.getGoalPose());
     s_forward = std::min(s_forward, goal_arc_coordinates.length - lane_change_buffer);
   }
-
+  if(s_forward<0.0)
+  {
+    RCLCPP_WARN(rclcpp::get_logger("behavior_path_planner"), "The forward distance is to small and the goal placement for lane change is invalid.");
+  }
   s_forward = std::max(s_forward, s_backward);
 
   return route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
