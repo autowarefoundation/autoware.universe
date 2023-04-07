@@ -10,12 +10,12 @@ A lanelet can be invalid (out of ODD) due to many motivations, either technical 
 Some examples of Invalid Lanelets
 
 - Closed road intentionally, due to construction work for example
-- Underpass road that goes under a railway, for safey reasons
+- Underpass road that goes under a railway, for safety reasons
 - Road with slope/inclination that the vehicle is not be able to drive autonomously due to technical limitations. And lots of other examples.
 
 ![invalid_lanelet_design.svg](docs%2Finvalid_lanelet%2Finvalid_lanelet_design.svg)
 
-A lanelet becomes invalid by adding a new tag under the revelant lanelet in the map file `<tag k="invalid_lanelet" v="yes"/>`.
+A lanelet becomes invalid by adding a new tag under the relevant lanelet in the map file `<tag k="invalid_lanelet" v="yes"/>`.
 
 The target of this module is to stop the vehicle before entering the invalid lanelet (with configurable stop margin) or keep the vehicle stationary if autonomous mode started inside an invalid lanelet. Then ask the human driver to take the responsibility of the driving task (Request to Cooperate "RTC")
 
