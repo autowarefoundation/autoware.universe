@@ -93,6 +93,7 @@ using point_cloud_msg_wrapper::PointCloud2Modifier;
  * checks their timestamps, and concatenates their fields together into a single
  * PointCloud output message.
  * \author Radu Bogdan Rusu
+ * \edited by Yoshi Ri
  */
 class PointCloudDataSynchronizerComponent : public rclcpp::Node
 {
@@ -111,8 +112,6 @@ public:
   virtual ~PointCloudDataSynchronizerComponent() {}
 
 private:
-  /** \brief The output PointCloud publisher. */
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_output_;
   /** \brief Delay Compensated PointCloud publisher*/
   std::map<std::string, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
     transformed_raw_pc_publisher_map_;
@@ -171,7 +170,7 @@ private:
   void twist_callback(const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr input);
   void timer_callback();
 
-  void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkSyncStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
