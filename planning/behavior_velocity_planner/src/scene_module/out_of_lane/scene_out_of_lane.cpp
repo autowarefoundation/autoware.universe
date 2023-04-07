@@ -44,6 +44,7 @@ OutOfLaneModule::OutOfLaneModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), params_(std::move(planner_param))
 {
+  velocity_factor_.init(VelocityFactor::UNKNOWN);
 }
 
 bool OutOfLaneModule::modifyPathVelocity(
@@ -119,6 +120,9 @@ bool OutOfLaneModule::modifyPathVelocity(
     stop_factor.dist_to_stop_pose = motion_utils::calcSignedArcLength(
       ego_data.path->points, ego_data.pose.position, point.point.point.pose.position);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_odometry->pose, point.point.point.pose,
+      VelocityFactor::UNKNOWN);
   }
   const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
 
