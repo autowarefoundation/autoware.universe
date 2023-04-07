@@ -56,7 +56,7 @@ double distance2D(const T p1, const U p2)
 }
 
 template <typename PointT>
-class VoxelGrid : public pcl::VoxelGrid<PointT>
+class VoxelGridEx : public pcl::VoxelGrid<PointT>
 {
 protected:
   using pcl::VoxelGrid<PointT>::downsample_all_data_;
@@ -105,7 +105,7 @@ protected:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
 
 public:
-  typedef VoxelGrid<pcl::PointXYZ> MultiVoxelGrid;
+  typedef VoxelGridEx<pcl::PointXYZ> VoxelGridPointXYZ;
   typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
   typedef typename PointCloud::Ptr PointCloudPtr;
   explicit VoxelGridMapLoader(
@@ -113,10 +113,10 @@ public:
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
   bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
-    MultiVoxelGrid & voxel) const;
+    VoxelGridPointXYZ & voxel) const;
   bool is_in_voxel(
     const pcl::PointXYZ & src_point, const pcl::PointXYZ & target_point,
-    const double distance_threshold, const PointCloudPtr & map, MultiVoxelGrid & voxel) const;
+    const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const;
 
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
   bool is_close_points(
@@ -130,7 +130,7 @@ class VoxelGridStaticMapLoader : public VoxelGridMapLoader
 {
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
-  MultiVoxelGrid voxel_grid_;
+  VoxelGridPointXYZ voxel_grid_;
   PointCloudPtr voxel_map_ptr_;
 
 public:
@@ -145,7 +145,7 @@ class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
 {
   struct MapGridVoxelInfo
   {
-    MultiVoxelGrid map_cell_voxel_grid;
+    VoxelGridPointXYZ map_cell_voxel_grid;
     PointCloudPtr map_cell_pc_ptr;
     float min_b_x, min_b_y, max_b_x, max_b_y;
   };
@@ -216,8 +216,11 @@ public:
       removeMapCell(map_cell_ids_to_remove.at(i));
     }
 
-    // update array:
+    updateVoxelGridArray();
+  }
 
+  inline void updateVoxelGridArray()
+  {
     origin_x_ = std::floor((current_position_.value().x - map_loader_radius_) / map_grid_size_x_) *
                 map_grid_size_x_;
     origin_y_ = std::floor((current_position_.value().y - map_loader_radius_) / map_grid_size_y_) *
@@ -228,15 +231,23 @@ public:
     map_grids_y_ = static_cast<int>(
       std::ceil((current_position_.value().y + map_loader_radius_ - origin_y_) / map_grid_size_y_));
 
+    if (map_grids_x_ * map_grids_y_ == 0) {
+      return;
+    }
+
+    (*mutex_ptr_).lock();
     current_voxel_grid_array_.assign(
       map_grids_x_ * map_grid_size_y_, std::make_shared<MapGridVoxelInfo>());
     for (const auto & kv : current_voxel_grid_dict_) {
       int index = static_cast<int>(
         std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +
         map_grids_x_ * std::floor((kv.second.min_b_y - origin_y_) / map_grid_size_y_));
-
+      if (index >= map_grids_x_ * map_grids_y_) {
+        continue;
+      }
       current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
     }
+    (*mutex_ptr_).unlock();
   }
 
   inline void removeMapCell(const std::string map_cell_id_to_remove)
@@ -255,7 +266,7 @@ public:
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
 
-    MultiVoxelGrid map_cell_voxel_grid_tmp;
+    VoxelGridPointXYZ map_cell_voxel_grid_tmp;
     PointCloudPtr map_cell_downsampled_pc_ptr_tmp;
 
     auto map_cell_voxel_input_tmp_ptr =

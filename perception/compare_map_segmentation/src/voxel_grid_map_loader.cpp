@@ -46,7 +46,7 @@ void VoxelGridMapLoader::publish_downsampled_map(
 
 bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
-  MultiVoxelGrid & voxel) const
+  VoxelGridPointXYZ & voxel) const
 {
   // check map downsampled pc
   if (map == NULL) {
@@ -202,7 +202,7 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
 
 bool VoxelGridMapLoader::is_in_voxel(
   const pcl::PointXYZ & src_point, const pcl::PointXYZ & target_point,
-  const double distance_threshold, const PointCloudPtr & map, MultiVoxelGrid & voxel) const
+  const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const
 {
   int voxel_index =
     voxel.getCentroidIndexAt(voxel.getGridCoordinates(src_point.x, src_point.y, src_point.z));
@@ -288,10 +288,10 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
     RCLCPP_INFO(logger_, "service not available, waiting again ...");
   }
 
-  timer_callback_group_ = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  map_update_timer_ = node->create_wall_timer(
-    std::chrono::milliseconds(timer_interval_ms),
-    std::bind(&VoxelGridDynamicMapLoader::timer_callback, this), timer_callback_group_);
+  const auto period_ns = rclcpp::Rate(timer_interval_ms).period();
+  map_update_timer_ = rclcpp::create_timer(
+    node, node->get_clock(), period_ns, std::bind(&VoxelGridDynamicMapLoader::timer_callback, this),
+    timer_callback_group_);
 }
 void VoxelGridDynamicMapLoader::onPoseInitializerCallback(
   autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg)
@@ -321,6 +321,9 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     std::floor((point.x - origin_x_) / map_grid_size_x_) +
     map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
 
+  if (map_grid_index >= current_voxel_grid_array_.size()) {
+    return false;
+  }
   if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
     if (is_close_to_neighbor_voxels(
           point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
