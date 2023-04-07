@@ -120,8 +120,7 @@ void PlanningIntefaceTestManager::publishParkingScenario(
 void PlanningIntefaceTestManager::publishInitialPose(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  test_utils::publishInitialPoseData(
-    test_node_, target_node, topic_name, initial_pose_pub_);
+  test_utils::publishInitialPoseData(test_node_, target_node, topic_name, initial_pose_pub_);
 }
 
 void PlanningIntefaceTestManager::publishParkingState(
@@ -160,6 +159,37 @@ void PlanningIntefaceTestManager::publishOperationModeState(
 {
   test_utils::publishData<OperationModeState>(
     test_node_, target_node, topic_name, operation_mode_state_pub_);
+}
+
+void PlanningIntefaceTestManager::publishTrafficSignals(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<TrafficSignalArray>(
+    test_node_, target_node, topic_name, traffic_signals_pub_);
+}
+void PlanningIntefaceTestManager::publishExternalTrafficSignals(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<TrafficSignalArray>(
+    test_node_, target_node, topic_name, external_traffic_signals_pub_);
+}
+void PlanningIntefaceTestManager::publishVirtualTrafficLightState(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<VirtualTrafficLightStateArray>(
+    test_node_, target_node, topic_name, virtual_traffic_light_states_pub_);
+}
+void PlanningIntefaceTestManager::publishExternalCrosswalkStates(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<CrosswalkStatus>(
+    test_node_, target_node, topic_name, external_crosswalk_states_pub_);
+}
+void PlanningIntefaceTestManager::publishExternalIntersectionStates(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishData<IntersectionStatus>(
+    test_node_, target_node, topic_name, external_intersection_states_pub_);
 }
 
 void PlanningIntefaceTestManager::setTrajectoryInputTopicName(std::string topic_name)

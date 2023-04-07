@@ -23,9 +23,10 @@
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
@@ -35,10 +36,13 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
+#include <tier4_api_msgs/msg/crosswalk_status.hpp>
+#include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <boost/optional.hpp>
 
@@ -55,7 +59,9 @@ namespace planning_test_utils
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_perception_msgs::msg::TrafficSignalArray;
 using autoware_auto_planning_msgs::msg::Path;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -66,12 +72,13 @@ using nav_msgs::msg::Odometry;
 using planning_interface::Route;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
+using tier4_api_msgs::msg::CrosswalkStatus;
+using tier4_api_msgs::msg::IntersectionStatus;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-
+using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
 class PlanningIntefaceTestManager
 {
 public:
@@ -99,16 +106,24 @@ public:
   void publishTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishExternalTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishVirtualTrafficLightState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishExternalCrosswalkStates(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishExternalIntersectionStates(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
   void setLaneDrivingTrajectoryInputTopicName(std::string topic_name);
   void setRouteInputTopicName(std::string topic_name);
+  void setPathInputTopicName(std::string topic_name);
 
   void setTrajectorySubscriber(std::string topic_name);
   void setScenarioSubscriber(std::string topic_name);
   void setPathWithLaneIdSubscriber(std::string topic_name);
   void setRouteSubscriber(std::string topic_name);
+  void setPathSubscriber(std::string topic_name);
 
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
@@ -139,12 +154,18 @@ private:
   rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
   rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
+  rclcpp::Publisher<TrafficSignalArray>::SharedPtr traffic_signals_pub_;
+  rclcpp::Publisher<TrafficSignalArray>::SharedPtr external_traffic_signals_pub_;
+  rclcpp::Publisher<VirtualTrafficLightStateArray>::SharedPtr virtual_traffic_light_states_pub_;
+  rclcpp::Publisher<CrosswalkStatus>::SharedPtr external_crosswalk_states_pub_;
+  rclcpp::Publisher<IntersectionStatus>::SharedPtr external_intersection_states_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
   rclcpp::Subscription<PathWithLaneId>::SharedPtr path_with_lane_id_sub_;
+  rclcpp::Subscription<Path>::SharedPtr path_sub_;
 
   // Publisher for testing(trajectory)
   rclcpp::Publisher<Trajectory>::SharedPtr normal_trajectory_pub_;
@@ -154,10 +175,16 @@ private:
   rclcpp::Publisher<LaneletRoute>::SharedPtr normal_route_pub_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr abnormal_route_pub_;
 
+  // Publisher for testing(PathWithLaneId)
+  rclcpp::Publisher<PathWithLaneId>::SharedPtr normal_path_with_lane_id_pub_;
+  rclcpp::Publisher<PathWithLaneId>::SharedPtr abnormal_path_with_lane_id_pub_;
+
+
   std::string input_trajectory_name_;
   std::string input_parking_trajectory_name_;
   std::string input_lane_driving_trajectory_name_;
   std::string input_route_name_;
+  std::string input_path_name_;
 
   // Node
   rclcpp::Node::SharedPtr test_node_;

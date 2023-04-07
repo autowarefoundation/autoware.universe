@@ -36,49 +36,75 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   const auto behavior_velocity_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_velocity_planner");
 
-  node_options.append_parameter_override(
-    "bt_tree_config_path", behavior_velocity_planner_dir + "/config/behavior_velocity_planner_tree.xml");
   node_options.arguments(
-    {"--ros-args", "--params-file",
-     behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml", "--params-file",
-     behavior_velocity_planner_dir + "/config/drivable_area_expansion.param.yaml", "--params-file",
-     behavior_velocity_planner_dir + "/config/avoidance/avoidance.param.yaml", "--params-file",
-     behavior_velocity_planner_dir + "/config/lane_following/lane_following.param.yaml",
-     "--params-file", behavior_velocity_planner_dir + "/config/lane_change/lane_change.param.yaml",
-     "--params-file", behavior_velocity_planner_dir + "/config/pull_out/pull_out.param.yaml",
-     "--params-file", behavior_velocity_planner_dir + "/config/pull_over/pull_over.param.yaml",
-     "--params-file", behavior_velocity_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+    {"--ros-args",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/blind_spot.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/crosswalk.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/detection_area.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/intersection.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/no_stopping_area.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/occlusion_spot.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/run_out.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/speed_bump.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/stop_line.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/traffic_light.param.param.yaml",
+     "--params-file",
+     behavior_velocity_planner_dir + "/config/virtual_traffic_light.param.param.yaml"});
 
   auto test_target_node =
     std::make_shared<behavior_velocity_planner::BehaviorPathPlannerNode>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "behavior_velocity_planner/input/odometry");
+  test_manager->publishAcceleration(
+      test_target_node, "behavior_velocity_planner/input/accel");
+  test_manager->publishPredictedObjects(
+    test_target_node, "behavior_velocity_planner/input/dynamic_objects");
+  test_manager->publishPointCloud(
+    test_target_node, "behavior_velocity_planner/input/no_ground_pointcloud");
+  test_manager->publishOdometry(
+    test_target_node, "behavior_velocity_planner/input/vehicle_odometry");
   test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner/input/accel");
-  test_manager->publishPredictedObjects(test_target_node, "behavior_velocity_planner/input/perception");
-  test_manager->publishOccupancyGrid(
-    test_target_node, "behavior_velocity_planner/input/occupancy_grid_map");
-  test_manager->publishLaneDrivingScenario(
-    test_target_node, "behavior_velocity_planner/input/scenario");
   test_manager->publishMap(test_target_node, "behavior_velocity_planner/input/vector_map");
-  test_manager->publishRoute(test_target_node, "behavior_velocity_planner/input/route");
-  test_manager->publishCostMap(test_target_node, "behavior_velocity_planner/input/costmap");
-  test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
-  test_manager->publishLateralOffset(
-    test_target_node, "behavior_velocity_planner/input/lateral_offset");
+  test_manager->publishTrafficSignals(
+    test_target_node, "behavior_velocity_planner/input/traffic_signals");
+  test_manager->publishExternalCrosswalkStates(
+    test_target_node, "behavior_velocity_planner/input/external_crosswalk_states");
+  test_manager->publishExternalIntersectionStates(
+    test_target_node, "behavior_velocity_planner/input/external_intersection_states");
+  test_manager->publishMaxVelocity(
+    test_target_node, "behavior_velocity_planner/input/external_velocity_limit_mps");
+  test_manager->publishExternalTrafficSignals(
+    test_target_node, "behavior_velocity_planner/input/external_traffic_signals");
+  test_manager->publishVirtualTrafficLightState(
+    test_target_node, "behavior_velocity_planner/input/virtual_traffic_light_states");
+  test_manager->publishTrafficL(
+    test_target_node, "behavior_velocity_planner/input/external_velocity_limit_mps");
+  test_manager->publishOccupancyGrid(
+    test_target_node, "behavior_velocity_planner/input/occupancy_grid");
 
   // test_target_node → test_node_
-  test_manager->setPathWithLaneIdSubscriber("behavior_velocity_planner/output/path");
+  test_manager->setPathSubscriber("behavior_velocity_planner/output/path");
 
   // setting topic name of subscribing topic
-
-  test_manager->setRouteInputTopicName("/planning/mission_planning/route");
+  test_manager->setPathWithLaneIdTopicName("/behavior_velocity_planner/input/path_with_lane_id");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithNominalPathWithLaneId(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
-  test_manager->testWithAbnormalRoute(test_target_node);
+  test_manager->testWithAbnormalPathWithLaneId(test_target_node);
   rclcpp::shutdown();
 }
