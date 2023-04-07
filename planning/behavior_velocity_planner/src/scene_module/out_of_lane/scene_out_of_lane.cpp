@@ -50,6 +50,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   debug_data_.reset_data();
+  *stop_reason = planning_utils::initializeStopReason(StopReason::OUT_OF_LANE);
   if (!path || path->points.size() < 2) return true;
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
@@ -113,6 +114,11 @@ bool OutOfLaneModule::modifyPathVelocity(
   for (const auto & point : points_to_insert) {
     auto path_idx = point.slowdown.target_path_idx;
     planning_utils::insertVelocity(*ego_data.path, point.point, point.slowdown.velocity, path_idx);
+    tier4_planning_msgs::msg::StopFactor stop_factor;
+    stop_factor.stop_pose = point.point.point.pose;
+    stop_factor.dist_to_stop_pose = motion_utils::calcSignedArcLength(
+      ego_data.path->points, ego_data.pose.position, point.point.point.pose.position);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
   }
   const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
 
