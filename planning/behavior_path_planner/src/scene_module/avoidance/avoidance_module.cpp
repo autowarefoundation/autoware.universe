@@ -2306,7 +2306,6 @@ bool AvoidanceModule::isSafePath(
     getAdjacentLane(path_shifter, forward_check_distance, backward_check_distance);
 
   auto path_with_current_velocity = shifted_path.path;
-  path_with_current_velocity = util::resamplePathWithSpline(path_with_current_velocity, 0.5);
 
   const size_t ego_idx = planner_data_->findEgoIndex(path_with_current_velocity.points);
   util::clipPathLength(path_with_current_velocity, ego_idx, forward_check_distance, 0.0);
