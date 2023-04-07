@@ -149,28 +149,27 @@ bool point_within_cgal_polys(
   return false;
 }
 
-
 bool is_data_layout_compatible_with_PointXYZI(const sensor_msgs::msg::PointCloud2 & input)
 {
-  using autoware_point_types::PointXYZI;
   using autoware_point_types::PointIndex;
+  using autoware_point_types::PointXYZI;
   if (input.fields.size() < 4) {
     return false;
   }
   bool same_layout = true;
-  const auto &field_x = input.fields.at(static_cast<size_t>(PointIndex::X));
+  const auto & field_x = input.fields.at(static_cast<size_t>(PointIndex::X));
   same_layout &= offsetof(PointXYZI, x) == field_x.offset;
   same_layout &= field_x.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_x.count == 1;
-  const auto& field_y = input.fields.at(static_cast<size_t>(PointIndex::Y));
+  const auto & field_y = input.fields.at(static_cast<size_t>(PointIndex::Y));
   same_layout &= offsetof(PointXYZI, y) == field_y.offset;
   same_layout &= field_y.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_y.count == 1;
-  const auto& field_z = input.fields.at(static_cast<size_t>(PointIndex::Z));
+  const auto & field_z = input.fields.at(static_cast<size_t>(PointIndex::Z));
   same_layout &= offsetof(PointXYZI, z) == field_z.offset;
   same_layout &= field_z.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_z.count == 1;
-  const auto& field_intensity = input.fields.at(static_cast<size_t>(PointIndex::Intensity));
+  const auto & field_intensity = input.fields.at(static_cast<size_t>(PointIndex::Intensity));
   same_layout &= offsetof(PointXYZI, intensity) == field_intensity.offset;
   same_layout &= field_intensity.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_intensity.count == 1;
@@ -179,45 +178,45 @@ bool is_data_layout_compatible_with_PointXYZI(const sensor_msgs::msg::PointCloud
 
 bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::PointCloud2 & input)
 {
-  using autoware_point_types::PointXYZIRADRT;
   using autoware_point_types::PointIndex;
+  using autoware_point_types::PointXYZIRADRT;
   if (input.fields.size() < 9) {
     return false;
   }
   bool same_layout = true;
-  const auto &field_x = input.fields.at(static_cast<size_t>(PointIndex::X));
+  const auto & field_x = input.fields.at(static_cast<size_t>(PointIndex::X));
   same_layout &= offsetof(PointXYZIRADRT, x) == field_x.offset;
   same_layout &= field_x.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_x.count == 1;
-  const auto& field_y = input.fields.at(static_cast<size_t>(PointIndex::Y));
+  const auto & field_y = input.fields.at(static_cast<size_t>(PointIndex::Y));
   same_layout &= offsetof(PointXYZIRADRT, y) == field_y.offset;
   same_layout &= field_y.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_y.count == 1;
-  const auto& field_z = input.fields.at(static_cast<size_t>(PointIndex::Z));
+  const auto & field_z = input.fields.at(static_cast<size_t>(PointIndex::Z));
   same_layout &= offsetof(PointXYZIRADRT, z) == field_z.offset;
   same_layout &= field_z.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_z.count == 1;
-  const auto& field_intensity = input.fields.at(static_cast<size_t>(PointIndex::Intensity));
+  const auto & field_intensity = input.fields.at(static_cast<size_t>(PointIndex::Intensity));
   same_layout &= offsetof(PointXYZIRADRT, intensity) == field_intensity.offset;
   same_layout &= field_intensity.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_intensity.count == 1;
-  const auto& field_ring = input.fields.at(static_cast<size_t>(PointIndex::Ring));
+  const auto & field_ring = input.fields.at(static_cast<size_t>(PointIndex::Ring));
   same_layout &= offsetof(PointXYZIRADRT, ring) == field_ring.offset;
   same_layout &= field_ring.datatype == sensor_msgs::msg::PointField::UINT16;
   same_layout &= field_ring.count == 1;
-  const auto& field_azimuth = input.fields.at(static_cast<size_t>(PointIndex::Azimuth));
+  const auto & field_azimuth = input.fields.at(static_cast<size_t>(PointIndex::Azimuth));
   same_layout &= offsetof(PointXYZIRADRT, azimuth) == field_azimuth.offset;
   same_layout &= field_azimuth.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_azimuth.count == 1;
-  const auto& field_distance = input.fields.at(static_cast<size_t>(PointIndex::Distance));
+  const auto & field_distance = input.fields.at(static_cast<size_t>(PointIndex::Distance));
   same_layout &= offsetof(PointXYZIRADRT, distance) == field_distance.offset;
   same_layout &= field_distance.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_distance.count == 1;
-  const auto& field_return_type = input.fields.at(static_cast<size_t>(PointIndex::ReturnType));
+  const auto & field_return_type = input.fields.at(static_cast<size_t>(PointIndex::ReturnType));
   same_layout &= offsetof(PointXYZIRADRT, return_type) == field_return_type.offset;
   same_layout &= field_return_type.datatype == sensor_msgs::msg::PointField::UINT8;
   same_layout &= field_return_type.count == 1;
-  const auto& field_time_stamp = input.fields.at(static_cast<size_t>(PointIndex::TimeStamp));
+  const auto & field_time_stamp = input.fields.at(static_cast<size_t>(PointIndex::TimeStamp));
   same_layout &= offsetof(PointXYZIRADRT, time_stamp) == field_time_stamp.offset;
   same_layout &= field_time_stamp.datatype == sensor_msgs::msg::PointField::FLOAT64;
   same_layout &= field_time_stamp.count == 1;
