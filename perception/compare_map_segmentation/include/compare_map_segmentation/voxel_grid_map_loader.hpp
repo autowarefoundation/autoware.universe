@@ -22,13 +22,8 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <pcl/common/centroid.h>
-#include <pcl/common/common.h>
-#include <pcl/common/io.h>
-#include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <unistd.h>
 
 #include <map>
 #include <memory>
@@ -59,8 +54,6 @@ template <typename PointT>
 class VoxelGridEx : public pcl::VoxelGrid<PointT>
 {
 protected:
-  using pcl::VoxelGrid<PointT>::downsample_all_data_;
-  using pcl::VoxelGrid<PointT>::input_;
   using pcl::VoxelGrid<PointT>::save_leaf_layout_;
   using pcl::VoxelGrid<PointT>::min_b_;
   using pcl::VoxelGrid<PointT>::max_b_;
