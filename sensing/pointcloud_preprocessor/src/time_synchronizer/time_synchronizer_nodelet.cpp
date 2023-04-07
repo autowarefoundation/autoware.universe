@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,40 +13,12 @@
 // limitations under the License.
 
 /*
- * Software License Agreement (BSD License)
+ * @brief PointCloudDataSynchronizerComponent class
  *
- *  Copyright (c) 2009, Willow Garage, Inc.
- *  All rights reserved.
+ * subscribe: pointclouds, twists
+ * publish: timestamp "synchronized" pointclouds
  *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: concatenate_data.cpp 35231 2011-01-14 05:33:20Z rusu $
- *
+ * @author Yoshi Ri
  */
 
 #include "pointcloud_preprocessor/time_synchronizer/time_synchronizer_nodelet.hpp"
@@ -61,6 +33,8 @@
 #include <utility>
 #include <vector>
 
+// postfix for output topics
+#define POSTFIX_NAME "_synchronized"
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace pointcloud_preprocessor
@@ -128,12 +102,6 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
     tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
   }
 
-  // Output Publishers
-  {
-    pub_output_ = this->create_publisher<PointCloud2>(
-      "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
-  }
-
   // Subscribers
   {
     RCLCPP_INFO_STREAM(
@@ -159,6 +127,8 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
       filters_[d] = this->create_subscription<sensor_msgs::msg::PointCloud2>(
         input_topics_[d], rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), cb);
     }
+
+    // Subscribe to the twist
     auto twist_cb =
       std::bind(&PointCloudDataSynchronizerComponent::twist_callback, this, std::placeholders::_1);
     sub_twist_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
@@ -168,7 +138,7 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
   // Transformed Raw PointCloud2 Publisher
   {
     for (auto & topic : input_topics_) {
-      std::string new_topic = topic + "_transformed";
+      std::string new_topic = topic + POSTFIX_NAME;
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
@@ -186,8 +156,8 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
 
   // Diagnostic Updater
   {
-    updater_.setHardwareID("concatenate_data_checker");
-    updater_.add("concat_status", this, &PointCloudDataSynchronizerComponent::checkConcatStatus);
+    updater_.setHardwareID("synchronize_data_checker");
+    updater_.add("concat_status", this, &PointCloudDataSynchronizerComponent::checkSyncStatus);
   }
 }
 
@@ -531,7 +501,7 @@ void PointCloudDataSynchronizerComponent::twist_callback(
   twist_ptr_queue_.push_back(twist_ptr);
 }
 
-void PointCloudDataSynchronizerComponent::checkConcatStatus(
+void PointCloudDataSynchronizerComponent::checkSyncStatus(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   for (const std::string & e : input_topics_) {
