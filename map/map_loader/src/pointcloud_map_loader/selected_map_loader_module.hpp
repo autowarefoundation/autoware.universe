@@ -19,7 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/msg/point_cloud_map_metadata.hpp"
+#include "autoware_map_msgs/msg/point_cloud_map_meta_data.hpp"
 #include "autoware_map_msgs/srv/get_selected_point_cloud_map.hpp"
 
 #include <pcl/common/common.h>
@@ -47,7 +47,7 @@ private:
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
   rclcpp::Service<GetSelectedPointCloudMap>::SharedPtr get_selected_pcd_maps_service_;
 
-  rclcpp::Publisher<autoware_map_msgs::msg::PointCloudMapMetadata>::SharedPtr pub_metadata_;
+  rclcpp::Publisher<autoware_map_msgs::msg::PointCloudMapMetaData>::SharedPtr pub_metadata_;
 
   bool onServiceGetSelectedPointCloudMap(
     GetSelectedPointCloudMap::Request::SharedPtr req,

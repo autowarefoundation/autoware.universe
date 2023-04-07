@@ -86,7 +86,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
     }
 
     if (enable_selected_load) {
-      selected_map_loader_ = std::make_unique<IdMapLoaderModule>(this, pcd_metadata_dict);
+      selected_map_loader_ = std::make_unique<SelectedMapLoaderModule>(this, pcd_metadata_dict);
     }
   }
 }
