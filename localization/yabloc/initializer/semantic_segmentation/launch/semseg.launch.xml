@@ -1,5 +1,5 @@
 <launch>
-    <arg name="model_path" default="$(find-pkg-share semantic_segmentation)/data/model_float32.pb"/>
+    <arg name="model_path" default="$(find-pkg-share semantic_segmentation)/data/saved_model/model_float32.pb"/>
     <arg name="imshow" default="false"/>
 
     <!-- ========================================= -->

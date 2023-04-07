@@ -1,3 +1,18 @@
 # Semantic Segmentation
 
-- [model file is here](https://drive.google.com/file/d/1lYe0BQOt0Q_cdEe5hmpWnO8jxtDbb48z/view?usp=sharing)
+This package includes multiple licenses.
+
+# Model
+
+[Original](https://github.com/openvinotoolkit/open_model_zoo/tree/master/models/intel/road-segmentation-adas-0001)
+: Apache-2.0 license
+
+[Converted](https://github.com/PINTO0309/PINTO_model_zoo/tree/main/136_road-segmentation-adas-0001)
+: MIT license
+
+The converted models is downloaded automatically when building.
+
+# Reference repositories
+
+* <https://github.com/openvinotoolkit/open_model_zoo>
+* <https://github.com/PINTO0309/PINTO_model_zoo>
