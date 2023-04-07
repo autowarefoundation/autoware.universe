@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>map4_localization_launch1</name>
+  <name>map4_localization_launch</name>
   <version>0.1.0</version>
-  <description>The map4_localization_launch1 package</description>
+  <description>The map4_localization_launch package</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
