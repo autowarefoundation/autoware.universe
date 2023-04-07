@@ -49,7 +49,7 @@
  *
  */
 
-#include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.hpp"
+#include "pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
 
@@ -60,6 +60,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#define POSTFIX_NAME "_synchronized"
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -168,7 +170,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   // Transformed Raw PointCloud2 Publisher
   {
     for (auto & topic : input_topics_) {
-      std::string new_topic = topic + "_transformed";
+      std::string new_topic = topic + POSTFIX_NAME;
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
