@@ -201,7 +201,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter<bool>("launch_speed_bump")) {
     planner_manager_.launchSceneModule(std::make_shared<SpeedBumpModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_out_of_lane", true)) {
+  if (this->declare_parameter<bool>("launch_out_of_lane")) {
     planner_manager_.launchSceneModule(std::make_shared<OutOfLaneModuleManager>(*this));
   }
 }
