@@ -45,14 +45,20 @@ function(download FILE_NAME FILE_HASH)
     else()
       message(STATUS "diff ${FILE_NAME}")
       message(STATUS "File hash changes. Downloading now ...")
-      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/lidar_apollo_instance_segmentation/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+      file(DOWNLOAD
+        https://awf.ml.dev.web.auto/perception/models/lidar_apollo_instance_segmentation/${FILE_NAME} ${FILE_PATH}
+        STATUS DOWNLOAD_STATUS TIMEOUT 300
+      )
       list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
       list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
     endif()
   else()
     message(STATUS "not found ${FILE_NAME}")
     message(STATUS "File doesn't exists. Downloading now ...")
-    file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/lidar_apollo_instance_segmentation/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+    file(DOWNLOAD
+      https://awf.ml.dev.web.auto/perception/models/lidar_apollo_instance_segmentation/${FILE_NAME} ${FILE_PATH}
+      STATUS DOWNLOAD_STATUS TIMEOUT 300
+    )
     list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
     list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
   endif()
@@ -94,6 +100,18 @@ target_link_libraries(${PROJECT_NAME}
   ${tier4_debug_msgs_TARGETS}
   ${tier4_perception_msgs_TARGETS}
 )
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+
+  # These don't pass yet, disable them for now
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_flake8_FOUND TRUE)
+  set(ament_cmake_pep257_FOUND TRUE)
+  set(ament_cmake_uncrustify_FOUND TRUE)
+
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
