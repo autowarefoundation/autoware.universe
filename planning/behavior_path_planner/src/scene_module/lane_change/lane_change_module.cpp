@@ -86,8 +86,8 @@ bool LaneChangeModule::isExecutionRequested() const
   const auto current_lanes =
     util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
   const auto lane_change_lanes = lane_change_utils::getLaneChangeLanes(
-    planner_data_, current_lanes, lane_change_lane_length_,
-    parameters_->lane_change_prepare_duration, direction_, type_);
+    planner_data_, current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
+    direction_, type_);
 #endif
 
   if (lane_change_lanes.empty()) {
@@ -114,8 +114,8 @@ bool LaneChangeModule::isExecutionReady() const
   const auto current_lanes =
     util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
   const auto lane_change_lanes = lane_change_utils::getLaneChangeLanes(
-    planner_data_, current_lanes, lane_change_lane_length_,
-    parameters_->lane_change_prepare_duration, direction_, type_);
+    planner_data_, current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
+    direction_, type_);
 #endif
 
   if (lane_change_lanes.empty()) {
@@ -145,7 +145,7 @@ ModuleStatus LaneChangeModule::updateState()
   }
 
   if (isAbortConditionSatisfied()) {
-    if ((isNearEndOfLane() && isCurrentSpeedLow()) || !is_within_current_lane) {
+    if ((isNearEndOfLane() && isCurrentVelocityLow()) || !is_within_current_lane) {
       current_state_ = ModuleStatus::RUNNING;
       return current_state_;
     }
@@ -176,7 +176,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
     status_.is_valid_path = true;
   }
 
-  if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
+  if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentVelocityLow())) {
     const auto stop_point = util::insertStopPoint(0.1, path);
   }
 
@@ -254,8 +254,8 @@ CandidateOutput LaneChangeModule::planCandidate() const
   const auto current_lanes =
     util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
   const auto lane_change_lanes = lane_change_utils::getLaneChangeLanes(
-    planner_data_, current_lanes, lane_change_lane_length_,
-    parameters_->lane_change_prepare_duration, direction_, type_);
+    planner_data_, current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
+    direction_, type_);
 #endif
 
   if (lane_change_lanes.empty()) {
@@ -334,8 +334,8 @@ void LaneChangeModule::updateLaneChangeStatus()
   status_.current_lanes =
     util::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
   status_.lane_change_lanes = lane_change_utils::getLaneChangeLanes(
-    planner_data_, status_.current_lanes, lane_change_lane_length_,
-    parameters_->lane_change_prepare_duration, direction_, type_);
+    planner_data_, status_.current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
+    direction_, type_);
 #endif
 
   // Find lane change path
@@ -547,13 +547,13 @@ bool LaneChangeModule::isValidPath(const PathWithLaneId & path) const
 bool LaneChangeModule::isNearEndOfLane() const
 {
   const auto & current_pose = getEgoPose();
-  const double threshold = util::calcTotalLaneChangeDistance(planner_data_->parameters);
+  const double threshold = util::calcTotalLaneChangeLength(planner_data_->parameters);
 
   return std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
          threshold;
 }
 
-bool LaneChangeModule::isCurrentSpeedLow() const
+bool LaneChangeModule::isCurrentVelocityLow() const
 {
   constexpr double threshold_ms = 10.0 * 1000 / 3600;
   return getEgoTwist().linear.x < threshold_ms;
