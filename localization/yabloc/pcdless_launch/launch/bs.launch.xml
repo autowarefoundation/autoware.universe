@@ -10,7 +10,5 @@
     <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
     <arg name="sign_board_labels" default="[sign-board]"/>
 
-    <arg name="initialpose_cov_xx_yy" default="[1.0,0.25]"/>
-
     <include file="$(find-pkg-share pcdless_launch)/launch/pcdless.launch.xml"/>
 </launch>

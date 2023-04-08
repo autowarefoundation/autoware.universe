@@ -1,6 +1,6 @@
 <launch>
     <!-- NOTE: -->
-    <arg name="standalone" default="false" description="set false if it launches as multi pose estimator"/>
+    <arg name="standalone" description="[true,false] Set to true if not connected to Autoware's P/C."/>
     <arg name="use_sim_time" default="true"/>
 
     <!-- source camera image topics -->
@@ -20,7 +20,9 @@
         <!-- initializer -->
         <group>
             <push-ros-namespace namespace="initializer"/>
-            <include file="$(find-pkg-share pcdless_launch)/launch/impl/initializer.launch.xml"/>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/initializer.launch.xml">
+                <arg name="skip_autoware_pose_initializer" value="$(var standalone)"/>
+            </include>
         </group>
 
         <!-- particle filter -->

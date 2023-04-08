@@ -1,4 +1,6 @@
 <launch>
+    <arg name="standalone" description="Set to true if not connected to Autoware's P/C."/>
+
     <include file="$(find-pkg-share pcdless_launch)/launch/pcdless.launch.xml">
         <arg name="min_segment_length" value="1.5"/>
         <arg name="max_segment_distance" value="30.0"/>
@@ -7,6 +9,7 @@
         <arg name="static_linear_covariance" value="0.04"/>
         <arg name="static_angular_covariance" value="0.006"/>
         <arg name="static_scale_factor" value="-1.0"/>
+        <arg name="standalone" value="$(var standalone)"/>
 
         <arg name="road_marking_labels" value="[cross_walk, zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
         <arg name="sign_board_labels" value="[sign-board]"/>

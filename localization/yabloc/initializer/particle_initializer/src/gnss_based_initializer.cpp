@@ -3,6 +3,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
 namespace pcdless::particle_initializer
@@ -13,25 +14,31 @@ public:
   using NavPVT = ublox_msgs::msg::NavPVT;
   using NavSatFix = sensor_msgs::msg::NavSatFix;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   GnssBasedPoseInitializer() : Node("gnss_based_initializer")
   {
     using std::placeholders::_1;
 
     // Subscriber
-    auto navpvt_cb = std::bind(&GnssBasedPoseInitializer::on_navpvt, this, _1);
-    sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, navpvt_cb);
-
+    auto on_navpvt = std::bind(&GnssBasedPoseInitializer::on_navpvt, this, _1);
+    auto on_pf_pose = [this](const PoseStamped &) -> void { pf_is_initialized_ = true; };
+    sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, on_navpvt);
+    sub_pf_pose_ = create_subscription<PoseStamped>("pf_pose", 10, on_pf_pose);
     // Publisher
-    pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
+    pub_pose_stamped_ = this->create_publisher<PoseCovStamped>("pose_cov", 10);
   }
 
 private:
-  rclcpp::Subscription<ublox_msgs::msg::NavPVT>::SharedPtr sub_navpvt_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
+  rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
+  rclcpp::Subscription<PoseStamped>::SharedPtr sub_pf_pose_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_stamped_;
+  bool pf_is_initialized_{false};
 
   void on_navpvt(const NavPVT & msg)
   {
+    if (pf_is_initialized_) return;
+
     const int FIX_FLAG = NavPVT::CARRIER_PHASE_FIXED;
     const int FLOAT_FLAG = NavPVT::CARRIER_PHASE_FLOAT;
     if (!(msg.flags & FIX_FLAG) & !(msg.flags & FLOAT_FLAG)) return;
@@ -41,14 +48,15 @@ private:
     float theta = std::atan2(vel_xy.y(), vel_xy.x());
 
     Eigen::Vector3f position = ublox_to_position(msg);
-    geometry_msgs::msg::PoseStamped pose;
+
+    PoseCovStamped pose;
     pose.header.frame_id = "map";
     pose.header.stamp = common::ublox_time_to_stamp(msg);
-    pose.pose.position.x = position.x();
-    pose.pose.position.y = position.y();
-    pose.pose.position.z = 0;
-    pose.pose.orientation.w = std::cos(theta / 2.f);
-    pose.pose.orientation.z = std::sin(theta / 2.f);
+    pose.pose.pose.position.x = position.x();
+    pose.pose.pose.position.y = position.y();
+    pose.pose.pose.position.z = 0;
+    pose.pose.pose.orientation.w = std::cos(theta / 2.f);
+    pose.pose.pose.orientation.z = std::sin(theta / 2.f);
     pub_pose_stamped_->publish(pose);
   }
 

@@ -39,7 +39,7 @@
     </node>
 
     <!-- pose twist fuser-->
-    <node name="pose_twist_fuser" pkg="twist_converter" exec="pose_twist_fuser" output="log" args="--ros-args --log-level warn">
+    <node if="false" name="pose_twist_fuser" pkg="twist_converter" exec="pose_twist_fuser" output="log" args="--ros-args --log-level warn">
         <remap from="twist" to="/localization/trajectory/kalman/twist"/>
         <remap from="pose" to="/localization/pf/particle_pose"/>
         <remap from="odometry" to="/localization/kinematic_state"/>
