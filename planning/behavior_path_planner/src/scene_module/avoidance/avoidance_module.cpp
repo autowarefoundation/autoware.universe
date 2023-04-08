@@ -754,7 +754,8 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * Condition2: there is enough space to avoid.
    */
   for (const auto & o : data.target_objects) {
-    if (o.avoid_required && o.is_avoidable) {
+    const auto enough_space = o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
+    if (o.avoid_required && enough_space) {
       data.avoid_required = true;
       data.stop_target_object = o;
       break;
