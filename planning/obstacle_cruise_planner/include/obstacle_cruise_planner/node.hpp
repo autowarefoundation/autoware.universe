@@ -57,18 +57,20 @@ private:
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle, const double precise_lateral_dist) const;
   bool isStopObstacle(const uint8_t label) const;
+  bool isInsideCruiseObstacle(const uint8_t label) const;
+  bool isOutsideCruiseObstacle(const uint8_t label) const;
   bool isCruiseObstacle(const uint8_t label) const;
   bool isSlowDownObstacle(const uint8_t label) const;
-  std::optional<geometry_msgs::msg::Point> isObstacleForStop(
+  std::optional<geometry_msgs::msg::Point> createCollisionPointForStopObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const double precise_lat_dist) const;
+    const Obstacle & obstacle) const;
   std::optional<CruiseObstacle> createCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle, const double precise_lat_dist);
-  std::optional<std::vector<PointWithStamp>> isInsideObstacleForCruise(
+  std::optional<std::vector<PointWithStamp>> createCollisionPointsForInsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
-  std::optional<std::vector<PointWithStamp>> isOutsideObstacleForCruise(
+  std::optional<std::vector<PointWithStamp>> createCollisionPointsForOutsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
   bool isObstacleCrossing(
@@ -96,11 +98,10 @@ private:
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   double min_behavior_stop_margin_;
-  double obstacle_velocity_threshold_from_cruise_to_stop_;
-  double obstacle_velocity_threshold_from_stop_to_cruise_;
 
   std::vector<int> stop_obstacle_types_;
-  std::vector<int> cruise_obstacle_types_;
+  std::vector<int> inside_cruise_obstacle_types_;
+  std::vector<int> outside_cruise_obstacle_types_;
   std::vector<int> slow_down_obstacle_types_;
 
   // parameter callback result
@@ -150,25 +151,25 @@ private:
   std::vector<CruiseObstacle> prev_cruise_obstacles_;
   std::vector<SlowDownObstacle> prev_slow_down_obstacles_;
 
-  // obstacle filtering parameter
-  struct ObstacleFilteringParam
+  // behavior determination parameter
+  struct BehaviorDeterminationParam
   {
-    ObstacleFilteringParam() = default;
-    explicit ObstacleFilteringParam(rclcpp::Node & node);
+    BehaviorDeterminationParam() = default;
+    explicit BehaviorDeterminationParam(rclcpp::Node & node);
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
-    double rough_max_lat_margin;
     double decimate_trajectory_step_length;
+    // hyesteresis for stop and cruise
+    double obstacle_velocity_threshold_from_cruise_to_stop;
+    double obstacle_velocity_threshold_from_stop_to_cruise;
     // inside
     double crossing_obstacle_velocity_threshold;
     double collision_time_margin;
     // outside
-    double outside_rough_max_lat_margin;
     double outside_obstacle_min_velocity_threshold;
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
-    std::vector<int> ignored_outside_obstacle_types;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
     // prediction resampling
@@ -182,7 +183,7 @@ private:
     double max_lat_margin_for_cruise;
     double max_lat_margin_for_slow_down;
   };
-  ObstacleFilteringParam obstacle_filtering_param_;
+  BehaviorDeterminationParam behavior_determination_param_;
 
   std::unordered_map<std::string, bool> need_to_clear_vel_limit_{
     {"cruise", false}, {"slow_down", false}};

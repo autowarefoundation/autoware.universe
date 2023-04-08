@@ -45,41 +45,44 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
     [this](const Trajectory::ConstSharedPtr msg) { smoothed_trajectory_ptr_ = msg; });
 
   // parameter
-  dense_resampling_time_interval_ =
-    node.declare_parameter<double>("optimization_based_planner.dense_resampling_time_interval");
-  sparse_resampling_time_interval_ =
-    node.declare_parameter<double>("optimization_based_planner.sparse_resampling_time_interval");
+  dense_resampling_time_interval_ = node.declare_parameter<double>(
+    "cruise.optimization_based_planner.dense_resampling_time_interval");
+  sparse_resampling_time_interval_ = node.declare_parameter<double>(
+    "cruise.optimization_based_planner.sparse_resampling_time_interval");
   dense_time_horizon_ =
-    node.declare_parameter<double>("optimization_based_planner.dense_time_horizon");
-  max_time_horizon_ = node.declare_parameter<double>("optimization_based_planner.max_time_horizon");
+    node.declare_parameter<double>("cruise.optimization_based_planner.dense_time_horizon");
+  max_time_horizon_ =
+    node.declare_parameter<double>("cruise.optimization_based_planner.max_time_horizon");
 
-  t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
-  velocity_margin_ = node.declare_parameter<double>("optimization_based_planner.velocity_margin");
+  t_dangerous_ = node.declare_parameter<double>("cruise.optimization_based_planner.t_dangerous");
+  velocity_margin_ =
+    node.declare_parameter<double>("cruise.optimization_based_planner.velocity_margin");
 
   replan_vel_deviation_ =
-    node.declare_parameter<double>("optimization_based_planner.replan_vel_deviation");
-  engage_velocity_ = node.declare_parameter<double>("optimization_based_planner.engage_velocity");
+    node.declare_parameter<double>("cruise.optimization_based_planner.replan_vel_deviation");
+  engage_velocity_ =
+    node.declare_parameter<double>("cruise.optimization_based_planner.engage_velocity");
   engage_acceleration_ =
-    node.declare_parameter<double>("optimization_based_planner.engage_acceleration");
+    node.declare_parameter<double>("cruise.optimization_based_planner.engage_acceleration");
   engage_exit_ratio_ =
-    node.declare_parameter<double>("optimization_based_planner.engage_exit_ratio");
-  stop_dist_to_prohibit_engage_ =
-    node.declare_parameter<double>("optimization_based_planner.stop_dist_to_prohibit_engage");
+    node.declare_parameter<double>("cruise.optimization_based_planner.engage_exit_ratio");
+  stop_dist_to_prohibit_engage_ = node.declare_parameter<double>(
+    "cruise.optimization_based_planner.stop_dist_to_prohibit_engage");
 
   const double max_s_weight =
-    node.declare_parameter<double>("optimization_based_planner.max_s_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.max_s_weight");
   const double max_v_weight =
-    node.declare_parameter<double>("optimization_based_planner.max_v_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.max_v_weight");
   const double over_s_safety_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_s_safety_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.over_s_safety_weight");
   const double over_s_ideal_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_s_ideal_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.over_s_ideal_weight");
   const double over_v_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_v_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.over_v_weight");
   const double over_a_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_a_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.over_a_weight");
   const double over_j_weight =
-    node.declare_parameter<double>("optimization_based_planner.over_j_weight");
+    node.declare_parameter<double>("cruise.optimization_based_planner.over_j_weight");
 
   // velocity optimizer
   velocity_optimizer_ptr_ = std::make_shared<VelocityOptimizer>(

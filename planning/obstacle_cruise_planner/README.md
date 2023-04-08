@@ -62,7 +62,6 @@ struct Obstacle
   ObjectClassification classification;
   std::string uuid;
   Shape shape;
-  double rough_lat_dist_to_traj;  // for efficient calculation
   std::vector<PredictedPath> predicted_paths;
 };
 ```
@@ -103,7 +102,7 @@ The roughly selected obstacles inside the detection area are considered as insid
 This two-step detection is used for calculation efficiency since collision checking of polygons is heavy.
 Boost.Geometry is used as a library to check collision among polygons.
 
-In the `obstacle_filtering` namespace,
+In the `behavior_determination` namespace,
 
 | Parameter                         | Type   | Description                                                                         |
 | --------------------------------- | ------ | ----------------------------------------------------------------------------------- |
@@ -124,7 +123,7 @@ $$
 t_1 - t_2 > \mathrm{margin\_for\_collision\_time}
 $$
 
-In the `obstacle_filtering` namespace,
+In the `behavior_determination` namespace,
 
 | Parameter                                | Type   | Description                                                                   |
 | ---------------------------------------- | ------ | ----------------------------------------------------------------------------- |
@@ -138,7 +137,7 @@ Near Cut-in vehicles are defined as vehicle objects
 
 - whose predicted path's footprints from the current time to `max_prediction_time_for_collision_check` overlap with the detection area longer than `ego_obstacle_overlap_time_threshold`.
 
-In the `obstacle_filtering` namespace,
+In the `behavior_determination` namespace,
 
 | Parameter                                 | Type   | Description                                                              |
 | ----------------------------------------- | ------ | ------------------------------------------------------------------------ |
@@ -319,9 +318,9 @@ In order to keep the closest stop obstacle in the target obstacles, we check whe
 If the previous closest stop obstacle is remove from the lists, we keep it in the lists for `stop_obstacle_hold_time_threshold` seconds.
 Note that if a new stop obstacle appears and the previous closest obstacle removes from the lists, we do not add it to the target obstacles again.
 
-| Parameter                                              | Type   | Description                                        |
-| ------------------------------------------------------ | ------ | -------------------------------------------------- |
-| `obstacle_filtering.stop_obstacle_hold_time_threshold` | double | maximum time for holding closest stop obstacle [s] |
+| Parameter                                                  | Type   | Description                                        |
+| ---------------------------------------------------------- | ------ | -------------------------------------------------- |
+| `behavior_determination.stop_obstacle_hold_time_threshold` | double | maximum time for holding closest stop obstacle [s] |
 
 ## How To Debug
 

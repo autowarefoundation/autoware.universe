@@ -60,72 +60,73 @@ PIDBasedPlanner::PIDBasedPlanner(
 : PlannerInterface(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
 {
   min_accel_during_cruise_ =
-    node.declare_parameter<double>("pid_based_planner.min_accel_during_cruise");
+    node.declare_parameter<double>("cruise.pid_based_planner.min_accel_during_cruise");
 
   use_velocity_limit_based_planner_ =
-    node.declare_parameter<bool>("pid_based_planner.use_velocity_limit_based_planner");
+    node.declare_parameter<bool>("cruise.pid_based_planner.use_velocity_limit_based_planner");
 
   {  // velocity limit based planner
     const double kp =
-      node.declare_parameter<double>("pid_based_planner.velocity_limit_based_planner.kp");
+      node.declare_parameter<double>("cruise.pid_based_planner.velocity_limit_based_planner.kp");
     const double ki =
-      node.declare_parameter<double>("pid_based_planner.velocity_limit_based_planner.ki");
+      node.declare_parameter<double>("cruise.pid_based_planner.velocity_limit_based_planner.ki");
     const double kd =
-      node.declare_parameter<double>("pid_based_planner.velocity_limit_based_planner.kd");
+      node.declare_parameter<double>("cruise.pid_based_planner.velocity_limit_based_planner.kd");
     velocity_limit_based_planner_param_.pid_vel_controller =
       std::make_unique<PIDController>(kp, ki, kd);
 
     velocity_limit_based_planner_param_.output_ratio_during_accel = node.declare_parameter<double>(
-      "pid_based_planner.velocity_limit_based_planner.output_ratio_during_accel");
+      "cruise.pid_based_planner.velocity_limit_based_planner.output_ratio_during_accel");
     velocity_limit_based_planner_param_.vel_to_acc_weight = node.declare_parameter<double>(
-      "pid_based_planner.velocity_limit_based_planner.vel_to_acc_weight");
+      "cruise.pid_based_planner.velocity_limit_based_planner.vel_to_acc_weight");
 
     velocity_limit_based_planner_param_.enable_jerk_limit_to_output_acc =
       node.declare_parameter<bool>(
-        "pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc");
+        "cruise.pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc");
 
     velocity_limit_based_planner_param_.disable_target_acceleration = node.declare_parameter<bool>(
-      "pid_based_planner.velocity_limit_based_planner.disable_target_acceleration");
+      "cruise.pid_based_planner.velocity_limit_based_planner.disable_target_acceleration");
   }
 
   {  // velocity insertion based planner
     // pid controller for acc
-    const double kp_acc =
-      node.declare_parameter<double>("pid_based_planner.velocity_insertion_based_planner.kp_acc");
-    const double ki_acc =
-      node.declare_parameter<double>("pid_based_planner.velocity_insertion_based_planner.ki_acc");
-    const double kd_acc =
-      node.declare_parameter<double>("pid_based_planner.velocity_insertion_based_planner.kd_acc");
+    const double kp_acc = node.declare_parameter<double>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.kp_acc");
+    const double ki_acc = node.declare_parameter<double>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.ki_acc");
+    const double kd_acc = node.declare_parameter<double>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.kd_acc");
     velocity_insertion_based_planner_param_.pid_acc_controller =
       std::make_unique<PIDController>(kp_acc, ki_acc, kd_acc);
 
     // pid controller for jerk
-    const double kp_jerk =
-      node.declare_parameter<double>("pid_based_planner.velocity_insertion_based_planner.kp_jerk");
-    const double ki_jerk =
-      node.declare_parameter<double>("pid_based_planner.velocity_insertion_based_planner.ki_jerk");
-    const double kd_jerk =
-      node.declare_parameter<double>("pid_based_planner.velocity_insertion_based_planner.kd_jerk");
+    const double kp_jerk = node.declare_parameter<double>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.kp_jerk");
+    const double ki_jerk = node.declare_parameter<double>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.ki_jerk");
+    const double kd_jerk = node.declare_parameter<double>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.kd_jerk");
     velocity_insertion_based_planner_param_.pid_jerk_controller =
       std::make_unique<PIDController>(kp_jerk, ki_jerk, kd_jerk);
 
     velocity_insertion_based_planner_param_.output_acc_ratio_during_accel =
       node.declare_parameter<double>(
-        "pid_based_planner.velocity_insertion_based_planner.output_acc_ratio_during_accel");
+        "cruise.pid_based_planner.velocity_insertion_based_planner.output_acc_ratio_during_accel");
     velocity_insertion_based_planner_param_.output_jerk_ratio_during_accel =
       node.declare_parameter<double>(
-        "pid_based_planner.velocity_insertion_based_planner.output_jerk_ratio_during_accel");
+        "cruise.pid_based_planner.velocity_insertion_based_planner.output_jerk_ratio_during_accel");
 
-    velocity_insertion_based_planner_param_.enable_jerk_limit_to_output_acc =
-      node.declare_parameter<bool>(
-        "pid_based_planner.velocity_insertion_based_planner.enable_jerk_limit_to_output_acc");
+    velocity_insertion_based_planner_param_
+      .enable_jerk_limit_to_output_acc = node.declare_parameter<bool>(
+      "cruise.pid_based_planner.velocity_insertion_based_planner.enable_jerk_limit_to_output_acc");
   }
 
   min_cruise_target_vel_ =
-    node.declare_parameter<double>("pid_based_planner.min_cruise_target_vel");
-  time_to_evaluate_rss_ = node.declare_parameter<double>("pid_based_planner.time_to_evaluate_rss");
+    node.declare_parameter<double>("cruise.pid_based_planner.min_cruise_target_vel");
+  time_to_evaluate_rss_ =
+    node.declare_parameter<double>("cruise.pid_based_planner.time_to_evaluate_rss");
   const auto error_function_type =
-    node.declare_parameter<std::string>("pid_based_planner.error_function_type");
+    node.declare_parameter<std::string>("cruise.pid_based_planner.error_function_type");
   error_func_ = [&]() -> std::function<double(double)> {
     if (error_function_type == "linear") {
       return [](const double val) { return val; };
@@ -136,8 +137,8 @@ PIDBasedPlanner::PIDBasedPlanner(
   }();
 
   // low pass filter
-  const double lpf_normalized_error_cruise_dist_gain =
-    node.declare_parameter<double>("pid_based_planner.lpf_normalized_error_cruise_dist_gain");
+  const double lpf_normalized_error_cruise_dist_gain = node.declare_parameter<double>(
+    "cruise.pid_based_planner.lpf_normalized_error_cruise_dist_gain");
   lpf_normalized_error_cruise_dist_ptr_ =
     std::make_shared<LowpassFilter1d>(lpf_normalized_error_cruise_dist_gain);
   lpf_dist_to_obstacle_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
@@ -615,7 +616,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
 void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & parameters)
 {
   tier4_autoware_utils::updateParam<double>(
-    parameters, "pid_based_planner.min_accel_during_cruise", min_accel_during_cruise_);
+    parameters, "cruise.pid_based_planner.min_accel_during_cruise", min_accel_during_cruise_);
 
   {  // velocity limit based planner
     auto & p = velocity_limit_based_planner_param_;
@@ -625,25 +626,27 @@ void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & paramet
     double kd = p.pid_vel_controller->getKd();
 
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_limit_based_planner.kp", kp);
+      parameters, "cruise.pid_based_planner.velocity_limit_based_planner.kp", kp);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_limit_based_planner.ki", ki);
+      parameters, "cruise.pid_based_planner.velocity_limit_based_planner.ki", ki);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_limit_based_planner.kd", kd);
+      parameters, "cruise.pid_based_planner.velocity_limit_based_planner.kd", kd);
     p.pid_vel_controller->updateParam(kp, ki, kd);
 
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_limit_based_planner.output_ratio_during_accel",
+      parameters, "cruise.pid_based_planner.velocity_limit_based_planner.output_ratio_during_accel",
       p.output_ratio_during_accel);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.vel_to_acc_weight", p.vel_to_acc_weight);
+      parameters, "cruise.pid_based_planner.vel_to_acc_weight", p.vel_to_acc_weight);
 
     tier4_autoware_utils::updateParam<bool>(
-      parameters, "pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc",
+      parameters,
+      "cruise.pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc",
       p.enable_jerk_limit_to_output_acc);
 
     tier4_autoware_utils::updateParam<bool>(
-      parameters, "pid_based_planner.velocity_limit_based_planner.disable_target_acceleration",
+      parameters,
+      "cruise.pid_based_planner.velocity_limit_based_planner.disable_target_acceleration",
       p.disable_target_acceleration);
   }
 
@@ -656,11 +659,11 @@ void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & paramet
     double kd_acc = p.pid_acc_controller->getKd();
 
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_insertion_based_planner.kp_acc", kp_acc);
+      parameters, "cruise.pid_based_planner.velocity_insertion_based_planner.kp_acc", kp_acc);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_insertion_based_planner.ki_acc", ki_acc);
+      parameters, "cruise.pid_based_planner.velocity_insertion_based_planner.ki_acc", ki_acc);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_insertion_based_planner.kd_acc", kd_acc);
+      parameters, "cruise.pid_based_planner.velocity_insertion_based_planner.kd_acc", kd_acc);
     p.pid_acc_controller->updateParam(kp_acc, ki_acc, kd_acc);
 
     // pid controller for jerk
@@ -669,31 +672,31 @@ void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & paramet
     double kd_jerk = p.pid_jerk_controller->getKd();
 
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_insertion_based_planner.kp_jerk", kp_jerk);
+      parameters, "cruise.pid_based_planner.velocity_insertion_based_planner.kp_jerk", kp_jerk);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_insertion_based_planner.ki_jerk", ki_jerk);
+      parameters, "cruise.pid_based_planner.velocity_insertion_based_planner.ki_jerk", ki_jerk);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "pid_based_planner.velocity_insertion_based_planner.kd_jerk", kd_jerk);
+      parameters, "cruise.pid_based_planner.velocity_insertion_based_planner.kd_jerk", kd_jerk);
     p.pid_jerk_controller->updateParam(kp_jerk, ki_jerk, kd_jerk);
 
     tier4_autoware_utils::updateParam<double>(
       parameters,
-      "pid_based_planner.velocity_insertion_based_planner.output_acc_ratio_during_accel",
+      "cruise.pid_based_planner.velocity_insertion_based_planner.output_acc_ratio_during_accel",
       p.output_acc_ratio_during_accel);
     tier4_autoware_utils::updateParam<double>(
       parameters,
-      "pid_based_planner.velocity_insertion_based_planner.output_jerk_ratio_during_accel",
+      "cruise.pid_based_planner.velocity_insertion_based_planner.output_jerk_ratio_during_accel",
       p.output_jerk_ratio_during_accel);
 
     tier4_autoware_utils::updateParam<bool>(
       parameters,
-      "pid_based_planner.velocity_insertion_based_planner.enable_jerk_limit_to_output_acc",
+      "cruise.pid_based_planner.velocity_insertion_based_planner.enable_jerk_limit_to_output_acc",
       p.enable_jerk_limit_to_output_acc);
   }
 
   // min_cruise_target_vel
   tier4_autoware_utils::updateParam<double>(
-    parameters, "pid_based_planner.min_cruise_target_vel", min_cruise_target_vel_);
+    parameters, "cruise.pid_based_planner.min_cruise_target_vel", min_cruise_target_vel_);
   tier4_autoware_utils::updateParam<double>(
-    parameters, "pid_based_planner.time_to_evaluate_rss", time_to_evaluate_rss_);
+    parameters, "cruise.pid_based_planner.time_to_evaluate_rss", time_to_evaluate_rss_);
 }

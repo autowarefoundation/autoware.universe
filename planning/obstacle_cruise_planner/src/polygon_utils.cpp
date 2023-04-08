@@ -62,13 +62,12 @@ Polygon2d createOneStepPolygon(
 }
 
 PointWithStamp calcNearestCollisionPoint(
-  const size_t & first_within_idx, const std::vector<PointWithStamp> & collision_points,
+  const size_t first_within_idx, const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & decimated_traj_points, const double vehicle_lon_offset,
   const bool is_driving_forward)
 {
-  const size_t seg_idx = first_within_idx - 1;
-  const size_t prev_idx = seg_idx == decimated_traj_points.size() - 1 ? seg_idx - 1 : seg_idx;
-  const size_t next_idx = seg_idx == decimated_traj_points.size() - 1 ? seg_idx : seg_idx + 1;
+  const size_t prev_idx = first_within_idx == 0 ? first_within_idx : first_within_idx - 1;
+  const size_t next_idx = first_within_idx == 0 ? first_within_idx + 1 : first_within_idx;
 
   std::vector<geometry_msgs::msg::Pose> segment_points{
     decimated_traj_points.at(prev_idx).pose, decimated_traj_points.at(next_idx).pose};
@@ -183,35 +182,6 @@ std::vector<PointWithStamp> getCollisionPoints(
       collision_points.push_back(nearest_collision_point);
       collision_index.push_back(collision_info->first);
     }
-  }
-
-  return collision_points;
-}
-
-// NOTE: max_lat_dist is used for effecient calculation to supress boost::geometry's polygon
-// calculation.
-std::vector<PointWithStamp> willCollideWithSurroundObstacle(
-  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
-  const rclcpp::Time & current_time, const double max_lat_dist,
-  const double ego_obstacle_overlap_time_threshold,
-  const double max_prediction_time_for_collision_check, std::vector<size_t> & collision_index,
-  const double vehicle_lon_offset, const bool is_driving_forward)
-{
-  const auto collision_points = getCollisionPoints(
-    traj_points, traj_polygons, obstacle_stamp, predicted_path, shape, current_time,
-    vehicle_lon_offset, is_driving_forward, collision_index, max_lat_dist,
-    max_prediction_time_for_collision_check);
-
-  if (collision_points.empty()) {
-    return {};
-  }
-
-  const double overlap_time =
-    (rclcpp::Time(collision_points.back().stamp) - rclcpp::Time(collision_points.front().stamp))
-      .seconds();
-  if (overlap_time < ego_obstacle_overlap_time_threshold) {
-    return {};
   }
 
   return collision_points;

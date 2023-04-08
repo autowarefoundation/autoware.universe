@@ -45,14 +45,6 @@ std::vector<PointWithStamp> getCollisionPoints(
   const double max_lat_dist = std::numeric_limits<double>::max(),
   const double max_prediction_time_for_collision_check = std::numeric_limits<double>::max());
 
-std::vector<PointWithStamp> willCollideWithSurroundObstacle(
-  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
-  const rclcpp::Time & current_time, const double max_lat_dist,
-  const double ego_obstacle_overlap_time_threshold,
-  const double max_prediction_time_for_collision_check, std::vector<size_t> & collision_index,
-  const double vehicle_lon_offset, const bool is_driving_forward);
-
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
   const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin = 0.0);

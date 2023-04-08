@@ -51,7 +51,7 @@ struct Obstacle
 {
   Obstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_rough_lat_dist_to_traj)
+    const geometry_msgs::msg::Pose & arg_pose)
   : stamp(arg_stamp),
     pose(arg_pose),
     orientation_reliable(true),
@@ -59,8 +59,7 @@ struct Obstacle
     twist_reliable(true),
     classification(object.classification.at(0)),
     uuid(tier4_autoware_utils::toHexString(object.object_id)),
-    shape(object.shape),
-    rough_lat_dist_to_traj(arg_rough_lat_dist_to_traj)
+    shape(object.shape)
   {
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {
@@ -78,7 +77,6 @@ struct Obstacle
   ObjectClassification classification;
   std::string uuid;
   Shape shape;
-  double rough_lat_dist_to_traj;  // for efficient calculation
   std::vector<PredictedPath> predicted_paths;
 };
 
