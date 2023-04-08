@@ -83,8 +83,8 @@ private:
   PlannerData createPlannerData(const std::vector<TrajectoryPoint> & traj_points) const;
 
   // void checkConsistency(
-  //   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-  //   const std::vector<TrajectoryPoint> & traj_points, std::vector<Obstacle> & target_obstacles);
+  //    const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
+  //    const std::vector<TrajectoryPoint> & traj_points, std::vector<Obstacle> & obstacles);
   void publishVelocityLimit(
     const std::optional<VelocityLimit> & vel_limit, const std::string & module_name);
   void publishDebugMarker() const;

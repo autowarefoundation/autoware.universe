@@ -700,7 +700,7 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
 
   // TODO(murooka)
   // Check target obstacles' consistency
-  // checkConsistency(stamp, predicted_objects, traj, target_obstacles);
+  // checkConsistency(obstacle.stamp, predicted_objects, traj_points, target_obstacles);
 
   const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
   return CruiseObstacle{obstacle.uuid, obstacle.pose, obstacle_projected_vel, *collision_points};
@@ -839,6 +839,16 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     return std::nullopt;
   }
 
+  // check obstacle velocity
+  // NOTE: If precise_lat_dist is 0, always plan stop
+  constexpr double epsilon = 1e-6;
+  if (epsilon < precise_lat_dist) {
+    const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
+    if (p.obstacle_velocity_threshold_from_stop_to_cruise <= obstacle_projected_vel) {
+      return std::nullopt;
+    }
+  }
+
   const auto collision_point =
     createCollisionPointForStopObstacle(traj_points, traj_polys, obstacle);
   if (!collision_point) {
@@ -924,10 +934,10 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
 /*
 void ObstacleCruisePlannerNode::checkConsistency(
   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-  const Trajectory & traj, std::vector<Obstacle> & target_obstacles)
+  const std::vector<TrajectoryPoint> & traj_points, std::vector<Obstacle> & obstacles)
 {
   const auto current_closest_obstacle =
-    obstacle_cruise_utils::getClosestStopObstacle(traj, target_obstacles);
+    obstacle_cruise_utils::getClosestStopObstacle(traj_points, obstacles);
 
   // If previous closest obstacle ptr is not set
   if (!prev_closest_obstacle_ptr_) {
@@ -952,13 +962,13 @@ void ObstacleCruisePlannerNode::checkConsistency(
   }
 
   // Previous closest obstacle is in the perception lists
-  const auto target_obstacle_itr = std::find_if(
-    target_obstacles.begin(), target_obstacles.end(), [&](const Obstacle target_obstacle) {
-      return target_obstacle.uuid == prev_closest_obstacle_ptr_->uuid;
+  const auto obstacle_itr = std::find_if(
+    obstacles.begin(), obstacles.end(), [&](const Obstacle obstacle) {
+      return obstacle.uuid == prev_closest_obstacle_ptr_->uuid;
     });
 
   // Previous closest obstacle is both in the perception lists and target obstacles
-  if (target_obstacle_itr != target_obstacles.end()) {
+  if (obstacle_itr != obstacles.end()) {
     if (current_closest_obstacle) {
       if ((current_closest_obstacle->uuid == prev_closest_obstacle_ptr_->uuid)) {
         // prev_closest_obstacle is current_closest_obstacle just return the target obstacles(in
@@ -979,7 +989,7 @@ void ObstacleCruisePlannerNode::checkConsistency(
       predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
         obstacle_velocity_threshold_from_stop_to_cruise_ &&
       elapsed_time < behavior_determination_param_.stop_obstacle_hold_time_threshold) {
-      target_obstacles.push_back(*prev_closest_obstacle_ptr_);
+      obstacles.push_back(*prev_closest_obstacle_ptr_);
       return;
     }
 
