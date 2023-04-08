@@ -763,6 +763,7 @@ std::optional<std::vector<PointWithStamp>> ObstacleCruisePlannerNode::isOutsideO
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::willCollideWithSurroundObstacle(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
+    // TODO(murooka)
     vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_max_lat_margin,
     obstacle_filtering_param_.ego_obstacle_overlap_time_threshold,
     obstacle_filtering_param_.max_prediction_time_for_collision_check, collision_index,

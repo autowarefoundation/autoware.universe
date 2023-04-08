@@ -86,25 +86,24 @@ PointWithStamp calcNearestCollisionPoint(
   const size_t min_idx = std::min_element(dist_vec.begin(), dist_vec.end()) - dist_vec.begin();
   return collision_points.at(min_idx);
 }
-}  // namespace
 
-namespace polygon_utils
-{
+// NOTE: max_lat_dist is used for effecient calculation to supress boost::geometry's polygon
+// calculation.
 std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const geometry_msgs::msg::Pose & pose, const rclcpp::Time & stamp, const Shape & shape,
-  const double max_dist)
+  const geometry_msgs::msg::Pose & object_pose, const rclcpp::Time & object_time,
+  const Shape & object_shape, const double max_lat_dist = std::numeric_limits<double>::max())
 {
-  const auto obstacle_polygon = tier4_autoware_utils::toPolygon2d(pose, shape);
+  const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object_pose, object_shape);
   for (size_t i = 0; i < traj_polygons.size(); ++i) {
     const double approximated_dist =
-      tier4_autoware_utils::calcDistance2d(traj_points.at(i).pose, pose);
-    if (approximated_dist > max_dist) {
+      tier4_autoware_utils::calcDistance2d(traj_points.at(i).pose, object_pose);
+    if (approximated_dist > max_lat_dist) {
       continue;
     }
 
     std::vector<Polygon2d> collision_polygons;
-    boost::geometry::intersection(traj_polygons.at(i), obstacle_polygon, collision_polygons);
+    boost::geometry::intersection(traj_polygons.at(i), obj_polygon, collision_polygons);
 
     std::vector<PointWithStamp> collision_geom_points;
     bool has_collision = false;
@@ -114,7 +113,7 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
 
         for (const auto & collision_point : collision_polygon.outer()) {
           PointWithStamp collision_geom_point;
-          collision_geom_point.stamp = stamp;  // TODO(murooka) stamp with same stamp?
+          collision_geom_point.stamp = object_time;
           collision_geom_point.point.x = collision_point.x();
           collision_geom_point.point.y = collision_point.y();
           collision_geom_points.push_back(collision_geom_point);
@@ -131,14 +130,16 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
 
   return std::nullopt;
 }
+}  // namespace
 
+namespace polygon_utils
+{
 std::optional<geometry_msgs::msg::Point> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const double vehicle_lon_offset, const bool is_driving_forward,
-  const double max_dist)
+  const Obstacle & obstacle, const double vehicle_lon_offset, const bool is_driving_forward)
 {
-  const auto collision_info = getCollisionIndex(
-    traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape, max_dist);
+  const auto collision_info =
+    getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
   if (collision_info) {
     const auto nearest_collision_point = calcNearestCollisionPoint(
       collision_info->first, collision_info->second, traj_points, vehicle_lon_offset,
@@ -149,11 +150,13 @@ std::optional<geometry_msgs::msg::Point> getCollisionPoint(
   return std::nullopt;
 }
 
+// NOTE: max_lat_dist is used for effecient calculation to supress boost::geometry's polygon
+// calculation.
 std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
   const rclcpp::Time & current_time, const double vehicle_lon_offset, const bool is_driving_forward,
-  std::vector<size_t> & collision_index, const double max_dist,
+  std::vector<size_t> & collision_index, const double max_lat_dist,
   const double max_prediction_time_for_collision_check)
 {
   std::vector<PointWithStamp> collision_points;
@@ -172,7 +175,7 @@ std::vector<PointWithStamp> getCollisionPoints(
     }
 
     const auto collision_info = getCollisionIndex(
-      traj_points, traj_polygons, predicted_path.path.at(i), object_time, shape, max_dist);
+      traj_points, traj_polygons, predicted_path.path.at(i), object_time, shape, max_lat_dist);
     if (collision_info) {
       const auto nearest_collision_point = calcNearestCollisionPoint(
         collision_info->first, collision_info->second, traj_points, vehicle_lon_offset,
@@ -185,17 +188,19 @@ std::vector<PointWithStamp> getCollisionPoints(
   return collision_points;
 }
 
+// NOTE: max_lat_dist is used for effecient calculation to supress boost::geometry's polygon
+// calculation.
 std::vector<PointWithStamp> willCollideWithSurroundObstacle(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
-  const rclcpp::Time & current_time, const double max_dist,
+  const rclcpp::Time & current_time, const double max_lat_dist,
   const double ego_obstacle_overlap_time_threshold,
   const double max_prediction_time_for_collision_check, std::vector<size_t> & collision_index,
   const double vehicle_lon_offset, const bool is_driving_forward)
 {
   const auto collision_points = getCollisionPoints(
     traj_points, traj_polygons, obstacle_stamp, predicted_path, shape, current_time,
-    vehicle_lon_offset, is_driving_forward, collision_index, max_dist,
+    vehicle_lon_offset, is_driving_forward, collision_index, max_lat_dist,
     max_prediction_time_for_collision_check);
 
   if (collision_points.empty()) {

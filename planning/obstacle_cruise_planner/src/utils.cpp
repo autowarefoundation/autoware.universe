@@ -21,10 +21,10 @@ namespace obstacle_cruise_utils
 namespace
 {
 std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
-  const PredictedPath & predicted_path, const rclcpp::Time & obstacle_base_time,
+  const PredictedPath & predicted_path, const rclcpp::Time & obj_base_time,
   const rclcpp::Time & current_time)
 {
-  const double rel_time = (current_time - obstacle_base_time).seconds();
+  const double rel_time = (current_time - obj_base_time).seconds();
   if (rel_time < 0.0) {
     return std::nullopt;
   }
@@ -37,7 +37,7 @@ std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
 }
 
 std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
-  const std::vector<PredictedPath> & predicted_paths, const rclcpp::Time & obstacle_base_time,
+  const std::vector<PredictedPath> & predicted_paths, const rclcpp::Time & obj_base_time,
   const rclcpp::Time & current_time)
 {
   if (predicted_paths.empty()) {
@@ -48,13 +48,13 @@ std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
     predicted_paths.begin(), predicted_paths.end(),
     [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
-  return getCurrentObjectPoseFromPredictedPath(*predicted_path, obstacle_base_time, current_time);
+  return getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
 }
 }  // namespace
 
 visualization_msgs::msg::Marker getObjectMarker(
-  const geometry_msgs::msg::Pose & obstacle_pose, size_t idx, const std::string & ns,
-  const double r, const double g, const double b)
+  const geometry_msgs::msg::Pose & obj_pose, size_t idx, const std::string & ns, const double r,
+  const double g, const double b)
 {
   const auto current_time = rclcpp::Clock().now();
 
@@ -63,19 +63,19 @@ visualization_msgs::msg::Marker getObjectMarker(
     tier4_autoware_utils::createMarkerScale(2.0, 2.0, 2.0),
     tier4_autoware_utils::createMarkerColor(r, g, b, 0.8));
 
-  marker.pose = obstacle_pose;
+  marker.pose = obj_pose;
 
   return marker;
 }
 
 PoseWithStamp getCurrentObjectPose(
-  const PredictedObject & predicted_object, const rclcpp::Time & obstacle_base_time,
+  const PredictedObject & predicted_object, const rclcpp::Time & obj_base_time,
   const rclcpp::Time & current_time, const bool use_prediction)
 {
   const auto & pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
 
   if (!use_prediction) {
-    return PoseWithStamp{obstacle_base_time, pose};
+    return PoseWithStamp{obj_base_time, pose};
   }
 
   std::vector<PredictedPath> predicted_paths;
@@ -83,15 +83,15 @@ PoseWithStamp getCurrentObjectPose(
     predicted_paths.push_back(path);
   }
   const auto interpolated_pose =
-    getCurrentObjectPoseFromPredictedPaths(predicted_paths, obstacle_base_time, current_time);
+    getCurrentObjectPoseFromPredictedPaths(predicted_paths, obj_base_time, current_time);
 
   if (!interpolated_pose) {
     RCLCPP_WARN(
       rclcpp::get_logger("ObstacleCruisePlanner"), "Failed to find the interpolated obstacle pose");
-    return PoseWithStamp{obstacle_base_time, pose};
+    return PoseWithStamp{obj_base_time, pose};
   }
 
-  return PoseWithStamp{obstacle_base_time, *interpolated_pose};
+  return PoseWithStamp{obj_base_time, *interpolated_pose};
 }
 
 std::optional<StopObstacle> getClosestStopObstacle(

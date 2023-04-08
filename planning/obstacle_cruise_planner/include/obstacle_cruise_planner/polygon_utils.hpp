@@ -33,27 +33,22 @@ namespace bg = boost::geometry;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
-std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
-  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const geometry_msgs::msg::Pose & pose, const rclcpp::Time & stamp, const Shape & shape,
-  const double max_dist = std::numeric_limits<double>::max());
-
 std::optional<geometry_msgs::msg::Point> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const double vehicle_lon_offset, const bool is_driving_forward,
-  const double max_dist = std::numeric_limits<double>::max());
+  const Obstacle & obstacle, const double vehicle_lon_offset, const bool is_driving_forward);
 
 std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
   const rclcpp::Time & current_time, const double vehicle_lon_offset, const bool is_driving_forward,
-  std::vector<size_t> & collision_index, const double max_dist = std::numeric_limits<double>::max(),
+  std::vector<size_t> & collision_index,
+  const double max_lat_dist = std::numeric_limits<double>::max(),
   const double max_prediction_time_for_collision_check = std::numeric_limits<double>::max());
 
 std::vector<PointWithStamp> willCollideWithSurroundObstacle(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
-  const rclcpp::Time & current_time, const double max_dist,
+  const rclcpp::Time & current_time, const double max_lat_dist,
   const double ego_obstacle_overlap_time_threshold,
   const double max_prediction_time_for_collision_check, std::vector<size_t> & collision_index,
   const double vehicle_lon_offset, const bool is_driving_forward);

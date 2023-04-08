@@ -30,11 +30,11 @@
 namespace obstacle_cruise_utils
 {
 Marker getObjectMarker(
-  const geometry_msgs::msg::Pose & obstacle_pose, size_t idx, const std::string & ns,
-  const double r, const double g, const double b);
+  const geometry_msgs::msg::Pose & obj_pose, size_t idx, const std::string & ns, const double r,
+  const double g, const double b);
 
 PoseWithStamp getCurrentObjectPose(
-  const PredictedObject & predicted_object, const rclcpp::Time & obstacle_base_time,
+  const PredictedObject & predicted_object, const rclcpp::Time & obj_base_time,
   const rclcpp::Time & current_time, const bool use_prediction);
 
 std::optional<StopObstacle> getClosestStopObstacle(
