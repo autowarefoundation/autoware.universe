@@ -96,9 +96,9 @@ public:
   ~Cluster2D() {}
 
   void cluster(
-    const float * inferred_data,
-    const pcl::PointCloud<pcl::PointXYZI>::Ptr & pc_ptr, const pcl::PointIndices & valid_indices,
-    float objectness_thresh, bool use_all_grids_for_clustering);
+    const float * inferred_data, const pcl::PointCloud<pcl::PointXYZI>::Ptr & pc_ptr,
+    const pcl::PointIndices & valid_indices, float objectness_thresh,
+    bool use_all_grids_for_clustering);
 
   void filter(const float * inferred_data);
   void classify(const float * inferred_data);

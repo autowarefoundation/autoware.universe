@@ -55,7 +55,7 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   input_d_ = cuda_utils::make_unique<float[]>(input_size);
   const auto output_dims = trt_common_->getBindingDimensions(1);
   output_size_ = std::accumulate(
-      output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
+    output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
   output_d_ = cuda_utils::make_unique<float[]>(output_size_);
   output_h_ = cuda_utils::make_unique_host<float[]>(output_size_, cudaHostAllocPortable);
 
@@ -126,15 +126,16 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
     feature_generator_->generate(pcl_pointcloud_raw_ptr);
 
   CHECK_CUDA_ERROR(cudaMemcpy(
-    input_d_.get(), feature_map_ptr->map_data.data(), feature_map_ptr->map_data.size() * sizeof(float), cudaMemcpyHostToDevice));
+    input_d_.get(), feature_map_ptr->map_data.data(),
+    feature_map_ptr->map_data.size() * sizeof(float), cudaMemcpyHostToDevice));
 
   std::vector<void *> buffers = {input_d_.get(), output_d_.get()};
 
   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
 
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_h_.get(), output_d_.get(), sizeof(float) * output_size_,
-    cudaMemcpyDeviceToHost, *stream_));
+    output_h_.get(), output_d_.get(), sizeof(float) * output_size_, cudaMemcpyDeviceToHost,
+    *stream_));
   cudaStreamSynchronize(*stream_);
 
   // post process
