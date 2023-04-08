@@ -125,6 +125,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     return planner_data.traj_points;
   }
 
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), enable_debug_info_,
+    "stop planning");
+
   // Get Closest Stop Obstacle
   const auto closest_stop_obstacle =
     obstacle_cruise_utils::getClosestStopObstacle(planner_data.traj_points, stop_obstacles);
@@ -141,9 +145,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   const double closest_obstacle_dist = motion_utils::calcSignedArcLength(
     planner_data.traj_points, 0, closest_stop_obstacle->collision_point);
 
-  const auto ego_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    planner_data.traj_points, planner_data.ego_pose, ego_nearest_param_.dist_threshold,
-    ego_nearest_param_.yaw_threshold);
+  const auto ego_segment_idx =
+    ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
   const auto negative_dist_to_ego = motion_utils::calcSignedArcLength(
     planner_data.traj_points, planner_data.ego_pose.position, ego_segment_idx, 0);
   const double dist_to_ego = -negative_dist_to_ego;
@@ -252,9 +255,8 @@ double PlannerInterface::calcDistanceToCollisionPoint(
                           ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                           : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
-  const size_t ego_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    planner_data.traj_points, planner_data.ego_pose, ego_nearest_param_.dist_threshold,
-    ego_nearest_param_.yaw_threshold);
+  const size_t ego_segment_idx =
+    ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
 
   const size_t collision_segment_idx =
     motion_utils::findNearestSegmentIndex(planner_data.traj_points, collision_point);
@@ -264,11 +266,4 @@ double PlannerInterface::calcDistanceToCollisionPoint(
     collision_segment_idx);
 
   return dist_to_collision_point - offset;
-}
-
-std::optional<VelocityLimit> PlannerInterface::getSlowDownVelocityLimit(
-  [[maybe_unused]] const PlannerData & planner_data,
-  [[maybe_unused]] const std::vector<SlowDownObstacle> & slow_downobstacles)
-{
-  return std::nullopt;
 }

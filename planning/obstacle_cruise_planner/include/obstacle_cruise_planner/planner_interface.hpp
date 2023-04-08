@@ -47,9 +47,12 @@ public:
 
   PlannerInterface() = default;
 
-  void setParam(const bool is_showing_debug_info, const double min_behavior_stop_margin)
+  void setParam(
+    const bool enable_debug_info, const bool enable_calculation_time_info,
+    const double min_behavior_stop_margin)
   {
-    is_showing_debug_info_ = is_showing_debug_info;
+    enable_debug_info_ = enable_debug_info;
+    enable_calculation_time_info_ = enable_calculation_time_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
   }
 
@@ -57,11 +60,15 @@ public:
     const PlannerData & planner_data, const std::vector<StopObstacle> & stop_obstacles);
 
   virtual std::vector<TrajectoryPoint> generateCruiseTrajectory(
-    const PlannerData & planner_data, const std::vector<CruiseObstacle> & cruise_obstacles,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const std::vector<CruiseObstacle> & cruise_obstacles,
     std::optional<VelocityLimit> & vel_limit) = 0;
 
   std::optional<VelocityLimit> getSlowDownVelocityLimit(
-    const PlannerData & planner_data, const std::vector<SlowDownObstacle> & slow_downobstacles);
+    const PlannerData & planner_data, const std::vector<SlowDownObstacle> & slow_downobstacles)
+  {
+    return std::nullopt;
+  }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
   {
@@ -81,7 +88,8 @@ public:
 
 protected:
   // Parameters
-  bool is_showing_debug_info_{false};
+  bool enable_debug_info_{false};
+  bool enable_calculation_time_info_{false};
   LongitudinalInfo longitudinal_info_;
   double min_behavior_stop_margin_;
 
@@ -95,7 +103,7 @@ protected:
 
   EgoNearestParam ego_nearest_param_;
 
-  mutable std::shared_ptr<DebugData> debug_data_ptr_{nullptr};
+  mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
   // debug info
   StopPlanningDebugInfo stop_planning_debug_info_;

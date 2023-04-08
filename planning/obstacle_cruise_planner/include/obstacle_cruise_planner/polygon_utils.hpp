@@ -60,7 +60,7 @@ std::vector<PointWithStamp> willCollideWithSurroundObstacle(
 
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info);
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin = 0.0);
 }  // namespace polygon_utils
 
 #endif  // OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_

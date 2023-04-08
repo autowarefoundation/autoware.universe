@@ -46,39 +46,40 @@ private:
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
-  bool isStopObstacle(const uint8_t label) const;
-  bool isCruiseObstacle(const uint8_t label) const;
-  bool isSlowDownObstacle(const uint8_t label) const;
-
   // main functions
-  std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points);
+  std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
-  std::optional<std::vector<TrajectoryPoint>> resampleExtendedTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points, const size_t ego_seg_idx) const;
+  std::vector<TrajectoryPoint> decimateTrajectoryPoints(
+    const std::vector<TrajectoryPoint> & traj_points) const;
   std::optional<StopObstacle> createStopObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const double precise_lateral_dist);
+    const Obstacle & obstacle, const double precise_lateral_dist) const;
+  bool isStopObstacle(const uint8_t label) const;
+  bool isCruiseObstacle(const uint8_t label) const;
+  bool isSlowDownObstacle(const uint8_t label) const;
+  std::optional<geometry_msgs::msg::Point> isObstacleForStop(
+    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
+    const Obstacle & obstacle, const double precise_lat_dist) const;
   std::optional<CruiseObstacle> createCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle);
-  std::optional<std::vector<PointWithStamp>> filterInsideCruiseObstacle(
+    const Obstacle & obstacle, const double precise_lat_dist);
+  std::optional<std::vector<PointWithStamp>> isInsideObstacleForCruise(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const PredictedPath & resampled_predicted_path);
+    const Obstacle & obstacle) const;
+  std::optional<std::vector<PointWithStamp>> isOutsideObstacleForCruise(
+    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
+    const Obstacle & obstacle) const;
   bool isObstacleCrossing(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle) const;
   double calcCollisionTimeMargin(
     const std::vector<PointWithStamp> & collision_points,
     const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const;
-  std::optional<std::vector<PointWithStamp>> filterOutsideCruiseObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const PredictedPath & resampled_predicted_path);
   std::optional<SlowDownObstacle> createSlowDownObstacle(
     const Obstacle & obstacle, const double precise_lat_dist);
   PlannerData createPlannerData(const std::vector<TrajectoryPoint> & traj_points) const;
 
-  // member Functions
   // void checkConsistency(
   //   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
   //   const std::vector<TrajectoryPoint> & traj_points, std::vector<Obstacle> & target_obstacles);
@@ -88,15 +89,12 @@ private:
   void publishDebugInfo() const;
   void publishCalculationTime(const double calculation_time) const;
 
-  bool isStopObstacle(const uint8_t label);
-  bool isCruiseObstacle(const uint8_t label);
-  bool isSlowDownObstacle(const uint8_t label);
-
   bool isFrontCollideObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
-    const size_t first_collision_idx);
+    const size_t first_collision_idx) const;
 
-  bool is_showing_debug_info_;
+  bool enable_debug_info_;
+  bool enable_calculation_time_info_;
   double min_behavior_stop_margin_;
   double obstacle_velocity_threshold_from_cruise_to_stop_;
   double obstacle_velocity_threshold_from_stop_to_cruise_;
@@ -159,13 +157,13 @@ private:
     explicit ObstacleFilteringParam(rclcpp::Node & node);
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
-    double rough_detection_area_expand_width;
+    double rough_max_lat_margin;
     double decimate_trajectory_step_length;
     // inside
     double crossing_obstacle_velocity_threshold;
     double collision_time_margin;
     // outside
-    double outside_rough_detection_area_expand_width;
+    double outside_rough_max_lat_margin;
     double outside_obstacle_min_velocity_threshold;
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
@@ -179,6 +177,10 @@ private:
     // goal extension
     double goal_extension_length;
     double goal_extension_interval;
+    // max lateral margin
+    double max_lat_margin_for_stop;
+    double max_lat_margin_for_cruise;
+    double max_lat_margin_for_slow_down;
   };
   ObstacleFilteringParam obstacle_filtering_param_;
 
@@ -188,7 +190,6 @@ private:
   EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
-  bool disable_stop_planning_{false};
   bool enable_slow_down_planning_{false};
 };
 }  // namespace motion_planning

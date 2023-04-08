@@ -33,12 +33,12 @@ geometry_msgs::msg::Point calcOffsetPosition(
 
 Polygon2d createOneStepPolygon(
   const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose & next_step_pose,
-  const vehicle_info_util::VehicleInfo & vehicle_info)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
 {
   Polygon2d polygon;
 
   const double base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const double width = vehicle_info.vehicle_width_m / 2.0;
+  const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
   const double base_to_rear = vehicle_info.rear_overhang_m;
 
   // base step
@@ -66,36 +66,24 @@ PointWithStamp calcNearestCollisionPoint(
   const std::vector<TrajectoryPoint> & decimated_traj_points, const double vehicle_lon_offset,
   const bool is_driving_forward)
 {
-  std::vector<geometry_msgs::msg::Point> segment_points(2);
-  if (first_within_idx == 0) {
-    const auto & traj_front_pose = decimated_traj_points.at(0).pose;
-    const auto front_pos =
-      tier4_autoware_utils::calcOffsetPose(traj_front_pose, vehicle_lon_offset, 0.0, 0.0).position;
-    if (is_driving_forward) {
-      segment_points.at(0) = traj_front_pose.position;
-      segment_points.at(1) = front_pos;
-    } else {
-      segment_points.at(0) = front_pos;
-      segment_points.at(1) = traj_front_pose.position;
-    }
-  } else {
-    const size_t seg_idx = first_within_idx - 1;
-    segment_points.at(0) = decimated_traj_points.at(seg_idx).pose.position;
-    segment_points.at(1) = decimated_traj_points.at(seg_idx + 1).pose.position;
+  const size_t seg_idx = first_within_idx - 1;
+  const size_t prev_idx = seg_idx == decimated_traj_points.size() - 1 ? seg_idx - 1 : seg_idx;
+  const size_t next_idx = seg_idx == decimated_traj_points.size() - 1 ? seg_idx : seg_idx + 1;
+
+  std::vector<geometry_msgs::msg::Pose> segment_points{
+    decimated_traj_points.at(prev_idx).pose, decimated_traj_points.at(next_idx).pose};
+  if (!is_driving_forward) {
+    std::reverse(segment_points.begin(), segment_points.end());
   }
 
-  size_t min_idx = 0;
-  double min_dist = std::numeric_limits<double>::max();
-  for (size_t cp_idx = 0; cp_idx < collision_points.size(); ++cp_idx) {
-    const auto & collision_point = collision_points.at(cp_idx);
+  std::vector<double> dist_vec;
+  for (const auto & collision_point : collision_points) {
     const double dist =
       motion_utils::calcLongitudinalOffsetToSegment(segment_points, 0, collision_point.point);
-    if (dist < min_dist) {
-      min_dist = dist;
-      min_idx = cp_idx;
-    }
+    dist_vec.push_back(dist);
   }
 
+  const size_t min_idx = std::min_element(dist_vec.begin(), dist_vec.end()) - dist_vec.begin();
   return collision_points.at(min_idx);
 }
 }  // namespace
@@ -226,16 +214,18 @@ std::vector<PointWithStamp> willCollideWithSurroundObstacle(
 
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
 {
   std::vector<Polygon2d> polygons;
 
   for (size_t i = 0; i < traj_points.size(); ++i) {
     const auto polygon = [&]() {
       if (i == 0) {
-        return createOneStepPolygon(traj_points.at(i).pose, traj_points.at(i).pose, vehicle_info);
+        return createOneStepPolygon(
+          traj_points.at(i).pose, traj_points.at(i).pose, vehicle_info, lat_margin);
       }
-      return createOneStepPolygon(traj_points.at(i - 1).pose, traj_points.at(i).pose, vehicle_info);
+      return createOneStepPolygon(
+        traj_points.at(i - 1).pose, traj_points.at(i).pose, vehicle_info, lat_margin);
     }();
 
     polygons.push_back(polygon);

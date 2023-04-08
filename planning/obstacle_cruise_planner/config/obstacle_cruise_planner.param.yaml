@@ -3,7 +3,7 @@
     common:
       planning_algorithm: "pid_base" # currently supported algorithm is "pid_base"
 
-      is_showing_debug_info: false
+      enable_debug_info: false
       disable_stop_planning: false # true
 
       # longitudinal info
@@ -42,8 +42,8 @@
         pedestrian: true
 
     obstacle_filtering:
-      rough_detection_area_expand_width : 3.0 # rough lateral margin for rough detection area expansion [m]
-      detection_area_expand_width : 0.0 # lateral margin for precise detection area expansion
+      rough_max_lat_margin : 3.0 # rough lateral margin for rough detection area expansion [m]
+      max_lat_margin : 0.0 # lateral margin for precise detection area expansion
       decimate_trajectory_step_length : 2.0 # longitudinal step length to calculate trajectory polygon for collision checking
 
       # if crossing vehicle is decided as target obstacles or not
@@ -51,7 +51,7 @@
       crossing_obstacle_traj_angle_threshold : 1.22 # [rad] = 70 [deg], yaw threshold of crossing obstacle against the nearest trajectory point for cruise or stop
       collision_time_margin : 8.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
 
-      outside_rough_detection_area_expand_width : 0.5 # rough lateral margin for rough detection area expansion for obstacles outside the trajectory [m]
+      outside_rough_max_lat_margin : 0.5 # rough lateral margin for rough detection area expansion for obstacles outside the trajectory [m]
       outside_obstacle_min_velocity_threshold : 3.0 # minimum velocity threshold of obstacles outside the trajectory to cruise or stop [m/s]
       ego_obstacle_overlap_time_threshold : 1.0 #  time threshold to decide cut-in obstacle for cruise or stop [s]
       max_prediction_time_for_collision_check : 20.0 # prediction time to check collision between obstacle and ego

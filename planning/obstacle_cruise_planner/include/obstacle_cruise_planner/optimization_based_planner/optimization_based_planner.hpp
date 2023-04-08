@@ -40,24 +40,27 @@ public:
     const std::shared_ptr<DebugData> debug_data_ptr);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
-    const PlannerData & planner_data, const std::vector<CruiseObstacle> & obstacles,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const std::vector<CruiseObstacle> & obstacles,
     std::optional<VelocityLimit> & vel_limit) override;
 
 private:
   // Member Functions
   std::vector<double> createTimeVector();
   std::tuple<double, double> calcInitialMotion(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points);
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const std::vector<TrajectoryPoint> & prev_traj_points);
 
-  bool checkHasReachedGoal(const PlannerData & planner_data);
-
-  std::optional<SBoundaries> getSBoundaries(
-    const PlannerData & planner_data, const std::vector<CruiseObstacle> & obstacles,
-    const std::vector<double> & time_vec);
+  bool checkHasReachedGoal(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points);
 
   std::optional<SBoundaries> getSBoundaries(
-    const PlannerData & planner_data, const CruiseObstacle & object,
-    const std::vector<double> & time_vec, const double traj_length);
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const std::vector<CruiseObstacle> & obstacles, const std::vector<double> & time_vec);
+
+  std::optional<SBoundaries> getSBoundaries(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const CruiseObstacle & object, const std::vector<double> & time_vec, const double traj_length);
 
   std::optional<SBoundaries> getSBoundariesForOnTrajectoryObject(
     const PlannerData & planner_data, const std::vector<double> & time_vec,
@@ -67,7 +70,9 @@ private:
     const PlannerData & planner_data, const std::vector<double> & time_vec,
     const double safety_distance, const CruiseObstacle & object, const double traj_length);
 
-  bool checkOnTrajectory(const PlannerData & planner_data, const PointWithStamp & point);
+  bool checkOnTrajectory(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const PointWithStamp & point);
 
   std::optional<double> calcTrajectoryLengthFromCurrentPose(
     const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & ego_pose);

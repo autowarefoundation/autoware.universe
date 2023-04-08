@@ -15,6 +15,7 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 #define OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 
+#include "motion_utils/motion_utils.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -90,8 +91,8 @@ struct StopObstacle
   {
   }
   std::string uuid;
-  geometry_msgs::msg::Pose pose;
-  double velocity;  // signed projected velocity to trajectory
+  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
+  double velocity;                // signed projected velocity to trajectory
   geometry_msgs::msg::Point collision_point;
 };
 
@@ -104,9 +105,9 @@ struct CruiseObstacle
   {
   }
   std::string uuid;
-  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
-  double velocity;                // signed projected velocity to trajectory
-  std::vector<PointWithStamp> collision_points;
+  geometry_msgs::msg::Pose pose;                 // interpolated with the current stamp
+  double velocity;                               // signed projected velocity to trajectory
+  std::vector<PointWithStamp> collision_points;  // time-series collision points
 };
 
 struct SlowDownObstacle
@@ -208,6 +209,27 @@ struct EgoNearestParam
   {
     dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
     yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
+  }
+
+  TrajectoryPoint calcInterpolatedPoint(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return motion_utils::calcInterpolatedPoint(
+      motion_utils::convertToTrajectory(traj_points), pose, dist_threshold, yaw_threshold);
+  }
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
   }
 
   double dist_threshold;

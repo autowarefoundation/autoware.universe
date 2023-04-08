@@ -18,58 +18,8 @@
 
 namespace obstacle_cruise_utils
 {
-visualization_msgs::msg::Marker getObjectMarker(
-  const geometry_msgs::msg::Pose & obstacle_pose, size_t idx, const std::string & ns,
-  const double r, const double g, const double b)
+namespace
 {
-  const auto current_time = rclcpp::Clock().now();
-
-  auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, ns, idx, visualization_msgs::msg::Marker::SPHERE,
-    tier4_autoware_utils::createMarkerScale(2.0, 2.0, 2.0),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.8));
-
-  marker.pose = obstacle_pose;
-
-  return marker;
-}
-
-std::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const std::vector<TrajectoryPoint> & traj_points, const size_t start_idx,
-  const double target_length)
-{
-  if (traj_points.empty()) {
-    return {};
-  }
-
-  size_t search_idx = start_idx;
-  double length_to_search_idx = 0.0;
-  for (; search_idx < traj_points.size(); ++search_idx) {
-    length_to_search_idx = motion_utils::calcSignedArcLength(traj_points, start_idx, search_idx);
-    if (length_to_search_idx > target_length) {
-      break;
-    } else if (search_idx == traj_points.size() - 1) {
-      return {};
-    }
-  }
-
-  if (search_idx == 0 && !traj_points.empty()) {
-    return traj_points.at(0).pose;
-  }
-
-  const auto & pre_pose = traj_points.at(search_idx - 1).pose;
-  const auto & next_pose = traj_points.at(search_idx).pose;
-
-  geometry_msgs::msg::Pose target_pose;
-
-  // lerp position
-  const double seg_length =
-    tier4_autoware_utils::calcDistance2d(pre_pose.position, next_pose.position);
-  const double lerp_ratio = (length_to_search_idx - target_length) / seg_length;
-
-  return tier4_autoware_utils::calcInterpolatedPose(pre_pose, next_pose, lerp_ratio);
-}
-
 std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
   const PredictedPath & predicted_path, const rclcpp::Time & obstacle_base_time,
   const rclcpp::Time & current_time)
@@ -100,15 +50,32 @@ std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
 
   return getCurrentObjectPoseFromPredictedPath(*predicted_path, obstacle_base_time, current_time);
 }
+}  // namespace
+
+visualization_msgs::msg::Marker getObjectMarker(
+  const geometry_msgs::msg::Pose & obstacle_pose, size_t idx, const std::string & ns,
+  const double r, const double g, const double b)
+{
+  const auto current_time = rclcpp::Clock().now();
+
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, ns, idx, visualization_msgs::msg::Marker::SPHERE,
+    tier4_autoware_utils::createMarkerScale(2.0, 2.0, 2.0),
+    tier4_autoware_utils::createMarkerColor(r, g, b, 0.8));
+
+  marker.pose = obstacle_pose;
+
+  return marker;
+}
 
 PoseWithStamp getCurrentObjectPose(
-  const PredictedObject & predicted_object, const rclcpp::Time & stamp,
+  const PredictedObject & predicted_object, const rclcpp::Time & obstacle_base_time,
   const rclcpp::Time & current_time, const bool use_prediction)
 {
   const auto & pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
 
   if (!use_prediction) {
-    return PoseWithStamp{stamp, pose};
+    return PoseWithStamp{obstacle_base_time, pose};
   }
 
   std::vector<PredictedPath> predicted_paths;
@@ -116,15 +83,15 @@ PoseWithStamp getCurrentObjectPose(
     predicted_paths.push_back(path);
   }
   const auto interpolated_pose =
-    getCurrentObjectPoseFromPredictedPaths(predicted_paths, stamp, current_time);
+    getCurrentObjectPoseFromPredictedPaths(predicted_paths, obstacle_base_time, current_time);
 
   if (!interpolated_pose) {
     RCLCPP_WARN(
       rclcpp::get_logger("ObstacleCruisePlanner"), "Failed to find the interpolated obstacle pose");
-    return PoseWithStamp{stamp, pose};
+    return PoseWithStamp{obstacle_base_time, pose};
   }
 
-  return PoseWithStamp{stamp, *interpolated_pose};
+  return PoseWithStamp{obstacle_base_time, *interpolated_pose};
 }
 
 std::optional<StopObstacle> getClosestStopObstacle(
@@ -146,14 +113,5 @@ std::optional<StopObstacle> getClosestStopObstacle(
     }
   }
   return closest_stop_obstacle;
-}
-
-TrajectoryPoint calcInterpolatedPoint(
-  const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose,
-  const EgoNearestParam & ego_nearest_param)
-{
-  return motion_utils::calcInterpolatedPoint(
-    motion_utils::convertToTrajectory(traj_points), pose, ego_nearest_param.dist_threshold,
-    ego_nearest_param.yaw_threshold);
 }
 }  // namespace obstacle_cruise_utils

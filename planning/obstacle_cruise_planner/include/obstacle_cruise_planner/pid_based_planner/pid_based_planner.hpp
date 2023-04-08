@@ -54,7 +54,8 @@ public:
     const std::shared_ptr<DebugData> debug_data_ptr);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
-    const PlannerData & planner_data, const std::vector<CruiseObstacle> & obstacles,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const std::vector<CruiseObstacle> & obstacles,
     std::optional<VelocityLimit> & vel_limit) override;
 
   void updateParam(const std::vector<rclcpp::Parameter> & parameters) override;
@@ -70,7 +71,8 @@ private:
     const PlannerData & planner_data, const std::vector<CruiseObstacle> & obstacles);
 
   std::vector<TrajectoryPoint> planCruise(
-    const PlannerData & planner_data, std::optional<VelocityLimit> & vel_limit,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    std::optional<VelocityLimit> & vel_limit,
     const std::optional<CruiseObstacleInfo> & cruise_obstacle_info);
 
   // velocity limit based planner
@@ -79,7 +81,8 @@ private:
 
   // velocity insertion based planner
   std::vector<TrajectoryPoint> doCruiseWithTrajectory(
-    const PlannerData & planner_data, const CruiseObstacleInfo & cruise_obstacle_info);
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const CruiseObstacleInfo & cruise_obstacle_info);
   std::vector<TrajectoryPoint> getAccelerationLimitedTrajectory(
     const std::vector<TrajectoryPoint> traj, const geometry_msgs::msg::Pose & start_pose,
     const double v0, const double a0, const double target_acc,

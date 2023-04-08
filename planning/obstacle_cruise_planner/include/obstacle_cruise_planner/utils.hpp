@@ -33,20 +33,8 @@ Marker getObjectMarker(
   const geometry_msgs::msg::Pose & obstacle_pose, size_t idx, const std::string & ns,
   const double r, const double g, const double b);
 
-std::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const std::vector<TrajectoryPoint> & traj_points, const size_t start_idx,
-  const double target_length);
-
-std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
-  const PredictedPath & predicted_path, const rclcpp::Time & obstacle_base_time,
-  const rclcpp::Time & current_time);
-
-std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
-  const std::vector<PredictedPath> & predicted_paths, const rclcpp::Time & obstacle_base_time,
-  const rclcpp::Time & current_time);
-
 PoseWithStamp getCurrentObjectPose(
-  const PredictedObject & predicted_object, const rclcpp::Time & stamp,
+  const PredictedObject & predicted_object, const rclcpp::Time & obstacle_base_time,
   const rclcpp::Time & current_time, const bool use_prediction);
 
 std::optional<StopObstacle> getClosestStopObstacle(
@@ -92,7 +80,7 @@ size_t getIndexWithLongitudinalOffset(
     return points.size() - 1;
   }
 
-  for (size_t i = *start_idx; i > 0; --i) {
+  for (size_t i = *start_idx; 0 < i; --i) {
     const double segment_length =
       tier4_autoware_utils::calcDistance2d(points.at(i - 1), points.at(i));
     sum_length += segment_length;
@@ -108,10 +96,6 @@ size_t getIndexWithLongitudinalOffset(
   }
   return 0;
 }
-
-TrajectoryPoint calcInterpolatedPoint(
-  const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose,
-  const EgoNearestParam & ego_nearest_param);
 }  // namespace obstacle_cruise_utils
 
 #endif  // OBSTACLE_CRUISE_PLANNER__UTILS_HPP_

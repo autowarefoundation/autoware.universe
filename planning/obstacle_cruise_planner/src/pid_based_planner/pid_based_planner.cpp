@@ -149,8 +149,8 @@ PIDBasedPlanner::PIDBasedPlanner(
 }
 
 std::vector<TrajectoryPoint> PIDBasedPlanner::generateCruiseTrajectory(
-  const PlannerData & planner_data, const std::vector<CruiseObstacle> & obstacles,
-  std::optional<VelocityLimit> & vel_limit)
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+  const std::vector<CruiseObstacle> & obstacles, std::optional<VelocityLimit> & vel_limit)
 {
   stop_watch_.tic(__func__);
   cruise_planning_debug_info_.reset();
@@ -159,11 +159,12 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::generateCruiseTrajectory(
   const auto cruise_obstacle_info = calcObstacleToCruise(planner_data, obstacles);
 
   // plan cruise
-  const auto cruise_traj_points = planCruise(planner_data, vel_limit, cruise_obstacle_info);
+  const auto cruise_traj_points =
+    planCruise(planner_data, stop_traj_points, vel_limit, cruise_obstacle_info);
 
   const double calculation_time = stop_watch_.toc(__func__);
   RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
+    rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), enable_calculation_time_info_,
     "  %s := %f [ms]", __func__, calculation_time);
 
   prev_traj_points_ = cruise_traj_points;
@@ -285,31 +286,31 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calcObstacle
 }
 
 std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
-  const PlannerData & planner_data, std::optional<VelocityLimit> & vel_limit,
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+  std::optional<VelocityLimit> & vel_limit,
   const std::optional<CruiseObstacleInfo> & cruise_obstacle_info)
 {
   // do cruise
   if (cruise_obstacle_info) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
+      rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), enable_debug_info_,
       "cruise planning");
 
     {  // update debug marker
       // virtual wall marker for cruise
       const double error_cruise_dist = cruise_obstacle_info->error_cruise_dist;
       const double dist_to_obstacle = cruise_obstacle_info->dist_to_obstacle;
-      const size_t ego_idx = findEgoIndex(planner_data.traj_points, planner_data.ego_pose);
+      const size_t ego_idx = findEgoIndex(stop_traj_points, planner_data.ego_pose);
       const double abs_ego_offset = planner_data.is_driving_forward
                                       ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                       : std::abs(vehicle_info_.min_longitudinal_offset_m);
       const double dist_to_rss_wall =
         std::min(error_cruise_dist + abs_ego_offset, dist_to_obstacle + abs_ego_offset);
       const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
-        planner_data.traj_points, dist_to_rss_wall, ego_idx);
+        stop_traj_points, dist_to_rss_wall, ego_idx);
 
       const auto markers = motion_utils::createSlowDownVirtualWallMarker(
-        planner_data.traj_points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time,
-        0);
+        stop_traj_points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time, 0);
       tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->cruise_wall_marker);
 
       // cruise obstacle
@@ -318,12 +319,13 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
 
     // do cruise planning
     if (!use_velocity_limit_based_planner_) {
-      const auto cruise_traj = doCruiseWithTrajectory(planner_data, *cruise_obstacle_info);
+      const auto cruise_traj =
+        doCruiseWithTrajectory(planner_data, stop_traj_points, *cruise_obstacle_info);
       return cruise_traj;
     }
 
     vel_limit = doCruiseWithVelocityLimit(planner_data, *cruise_obstacle_info);
-    return planner_data.traj_points;
+    return stop_traj_points;
   }
 
   // reset previous cruise data if adaptive cruise is not enabled
@@ -338,7 +340,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
     motion_utils::createDeletedSlowDownVirtualWallMarker(planner_data.current_time, 0);
   tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->cruise_wall_marker);
 
-  return planner_data.traj_points;
+  return stop_traj_points;
 }
 
 VelocityLimit PIDBasedPlanner::doCruiseWithVelocityLimit(
@@ -399,7 +401,7 @@ VelocityLimit PIDBasedPlanner::doCruiseWithVelocityLimit(
     CruisePlanningDebugInfo::TYPE::CRUISE_TARGET_ACCELERATION, target_acc);
 
   RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
+    rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), enable_debug_info_,
     "target_velocity %f", positive_target_vel);
 
   // set target longitudinal motion
@@ -411,7 +413,8 @@ VelocityLimit PIDBasedPlanner::doCruiseWithVelocityLimit(
 }
 
 std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
-  const PlannerData & planner_data, const CruiseObstacleInfo & cruise_obstacle_info)
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+  const CruiseObstacleInfo & cruise_obstacle_info)
 {
   const auto & p = velocity_insertion_based_planner_param_;
 
@@ -473,14 +476,13 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
     //     *smoothed_trajectory_ptr_, planner_data.ego_pose, nearest_dist_deviation_threshold_,
     //     nearest_yaw_deviation_threshold_);
     // }
-    return obstacle_cruise_utils::calcInterpolatedPoint(
-      prev_traj_points_, planner_data.ego_pose, ego_nearest_param_);
+    return ego_nearest_param_.calcInterpolatedPoint(prev_traj_points_, planner_data.ego_pose);
   }();
   const double v0 = prev_traj_closest_point.longitudinal_velocity_mps;
   const double a0 = prev_traj_closest_point.acceleration_mps2;
 
   auto cruise_traj_points = getAccelerationLimitedTrajectory(
-    planner_data.traj_points, planner_data.ego_pose, v0, a0, target_acc, target_jerk_ratio);
+    stop_traj_points, planner_data.ego_pose, v0, a0, target_acc, target_jerk_ratio);
 
   const auto zero_vel_idx_opt = motion_utils::searchZeroVelocityIndex(cruise_traj_points);
   if (!zero_vel_idx_opt) {

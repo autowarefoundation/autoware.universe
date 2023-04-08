@@ -54,16 +54,16 @@ struct PlannerData
 ```cpp
 struct Obstacle
 {
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;
+  rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
+  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
   bool orientation_reliable;
-  double velocity;
-  bool velocity_reliable;
+  Twist twist;
+  bool twist_reliable;
   ObjectClassification classification;
   std::string uuid;
+  Shape shape;
+  double rough_lat_dist_to_traj;  // for efficient calculation
   std::vector<PredictedPath> predicted_paths;
-  std::vector<geometry_msgs::msg::PointStamped> collision_points;
-  bool has_stopped;
 };
 ```
 
@@ -93,9 +93,9 @@ By default, unknown and vehicles are obstacles to cruise and stop, and non vehic
 
 #### Inside the detection area
 
-To calculate obstacles inside the detection area, firstly, obstacles whose distance to the trajectory is less than `rough_detection_area_expand_width` are selected.
+To calculate obstacles inside the detection area, firstly, obstacles whose distance to the trajectory is less than `rough_max_lat_margin` are selected.
 Then, the detection area, which is a trajectory with some lateral margin, is calculated as shown in the figure.
-The detection area width is a vehicle's width + `detection_area_expand_width`, and it is represented as a polygon resampled with `decimate_trajectory_step_length` longitudinally.
+The detection area width is a vehicle's width + `max_lat_margin`, and it is represented as a polygon resampled with `decimate_trajectory_step_length` longitudinally.
 The roughly selected obstacles inside the detection area are considered as inside the detection area.
 
 ![detection_area](./image/detection_area.png)
@@ -105,11 +105,11 @@ Boost.Geometry is used as a library to check collision among polygons.
 
 In the `obstacle_filtering` namespace,
 
-| Parameter                           | Type   | Description                                                                         |
-| ----------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `rough_detection_area_expand_width` | double | rough lateral margin for rough detection area expansion [m]                         |
-| `detection_area_expand_width`       | double | lateral margin for precise detection area expansion [m]                             |
-| `decimate_trajectory_step_length`   | double | longitudinal step length to calculate trajectory polygon for collision checking [m] |
+| Parameter                         | Type   | Description                                                                         |
+| --------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `rough_max_lat_margin`            | double | rough lateral margin for rough detection area expansion [m]                         |
+| `max_lat_margin`                  | double | lateral margin for precise detection area expansion [m]                             |
+| `decimate_trajectory_step_length` | double | longitudinal step length to calculate trajectory polygon for collision checking [m] |
 
 #### Far crossing vehicles
 
@@ -218,16 +218,33 @@ The core algorithm implementation `generateTrajectory` depends on the designated
 
 ```plantuml
 @startuml
-title trajectoryCallback
+title onTrajectory
 start
 
-group createPlannerData
-  :filterObstacles;
+group convertToObstacles
+  :check obstacle's label;
+  :check obstacle is in front of ego;
+  :check obstacle's lateral deviation to trajectory;
+  :create obstacle instance;
 end group
 
-:generateTrajectory;
+group determineEgoBehaviorAgainstObstacles
+  :resampleExtendedTrajectory;
+  group for each obstacle
+    :createCruiseObstacle;
+    :createStopObstacle;
+    :createSlowDownObstacle;
+  end group
+  :update previous obstacles
+end group
 
-:publishVelocityLimit;
+:createPlannerData;
+
+:generateStopTrajectory;
+
+:generateCruiseTrajectory;
+
+:getSlowDownVelocityLimit;
 
 :publish trajectory;
 
