@@ -2,6 +2,9 @@
   ros__parameters:
     verbose: false
 
+    groot_zmq_publisher_port: 1666
+    groot_zmq_server_port: 1667
+
     planning_hz: 10.0
     backward_path_length: 5.0
     forward_path_length: 300.0
@@ -20,6 +23,7 @@
     turn_signal_on_swerving: true
 
     enable_akima_spline_first: false
+    enable_cog_on_centerline: false
     input_path_interval: 2.0
     output_path_interval: 2.0
 
