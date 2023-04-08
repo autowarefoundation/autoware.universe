@@ -8,9 +8,6 @@
 	path = standalone/septentrio_gnss_driver
 	url = https://github.com/tier4/septentrio_gnss_driver.git
 	branch = tier4/ros2
-[submodule "standalone/sample_vehicle_launch"]
-	path = standalone/sample_vehicle_launch
-	url = https://github.com/autowarefoundation/sample_vehicle_launch.git
 [submodule "standalone/tier4_autoware_msgs"]
 	path = standalone/tier4_autoware_msgs
 	url = https://github.com/tier4/tier4_autoware_msgs.git
