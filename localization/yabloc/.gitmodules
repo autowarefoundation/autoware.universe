@@ -11,3 +11,6 @@
 [submodule "standalone/tier4_autoware_msgs"]
 	path = standalone/tier4_autoware_msgs
 	url = https://github.com/tier4/tier4_autoware_msgs.git
+[submodule "standalone/autoware_msgs"]
+	path = standalone/autoware_msgs
+	url = https://github.com/autowarefoundation/autoware_msgs.git
