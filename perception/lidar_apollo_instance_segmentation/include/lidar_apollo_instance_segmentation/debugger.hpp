@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__DEBUGGER_HPP_
+#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__DEBUGGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -32,3 +33,5 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr instance_pointcloud_pub_;
 };
 }  // namespace lidar_apollo_instance_segmentation
+
+#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__DEBUGGER_HPP_

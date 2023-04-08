@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__DETECTOR_HPP_
+#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__DETECTOR_HPP_
 
 #include "cluster2d.hpp"
 #include "feature_generator.hpp"
@@ -71,3 +72,5 @@ private:
   StreamUniquePtr stream_{makeCudaStream()};
 };
 }  // namespace lidar_apollo_instance_segmentation
+
+#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__DETECTOR_HPP_

@@ -11,9 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__LOG_TABLE_HPP_
+#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__LOG_TABLE_HPP_
 
 namespace lidar_apollo_instance_segmentation
 {
 float calcApproximateLog(float num);
 }  // namespace lidar_apollo_instance_segmentation
+
+#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__LOG_TABLE_HPP_
