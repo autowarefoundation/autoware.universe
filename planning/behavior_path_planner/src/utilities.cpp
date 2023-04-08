@@ -1823,7 +1823,6 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
     // RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     std::cerr << "failed to find closest lanelet within route!!!" << std::endl;
     return {};  // TODO(Horibe) what should be returned?
   }

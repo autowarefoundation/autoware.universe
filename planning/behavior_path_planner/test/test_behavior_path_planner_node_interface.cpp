@@ -39,16 +39,27 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   node_options.append_parameter_override(
     "bt_tree_config_path", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml");
   node_options.arguments(
-    {"--ros-args", "--params-file",
-     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml", "--params-file",
-     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml", "--params-file",
-     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml", "--params-file",
-     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml", "--params-file",
+    {"--ros-args",
+     "--params-file",
+     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
+     "--params-file",
      behavior_path_planner_dir + "/config/lane_following/lane_following.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
-     "--params-file", behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+     "--params-file",
+     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
+     "--params-file",
+     behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   auto test_target_node =
@@ -86,8 +97,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 
   // setting topic name of subscribing topic
-
-  test_manager->setRouteInputTopicName("/planning/mission_planning/route");
+  test_manager->setRouteInputTopicName("behavior_path_planner/input/route");
 
   // test for normal trajectory
   ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));

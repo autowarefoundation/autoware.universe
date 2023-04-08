@@ -139,13 +139,19 @@ Route::Message makeBehaviorNormalRoute()
   goal_quaternion.w = 0.9724497591854532;
   const double goal_yaw = tf2::getYaw(goal_quaternion);
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const std::array<double, 4> start_pose{3722.16015625, 73723.515625, 0., start_yaw};
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const std::array<double, 4> goal_pose{3778.362060546875, 26.3, 0., goal_yaw};
   Route::Message route;
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   route.header.frame_id = "map";
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   route.start_pose = create_pose_msg(start_pose);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   route.goal_pose = create_pose_msg(goal_pose);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   return route;
 }
 
@@ -223,6 +229,7 @@ void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<LaneletRoute>> & publisher)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   rclcpp::QoS custom_qos_profile{rclcpp::KeepLast(1)};
   custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
   custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);

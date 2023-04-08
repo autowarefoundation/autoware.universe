@@ -266,9 +266,13 @@ void PlanningIntefaceTestManager::publishNominalRoute(
 void PlanningIntefaceTestManager::publishBehaviorNominalRoute(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::setPublisher(test_node_, topic_name, behavior_normal_route_pub_);
-  normal_route_pub_->publish(test_utils::makeBehaviorNormalRoute());
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  behavior_normal_route_pub_->publish(test_utils::makeBehaviorNormalRoute());
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node);
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 }
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
