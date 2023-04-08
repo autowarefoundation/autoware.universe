@@ -113,8 +113,8 @@ Pose create_pose_msg(const std::array<double, 4> & pose3d)
 Route::Message makeNormalRoute()
 {
   const double pi = 3.1415926;
-  const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
-  const std::array<double, 3> goal_pose{8.0, 26.3, 0};
+  const std::array<double, 4> start_pose{5.5, 4., 0., pi * 0.5};
+  const std::array<double, 4> goal_pose{8.0, 26.3, 0, 0};
   Route::Message route;
   route.header.frame_id = "map";
 
@@ -139,9 +139,8 @@ Route::Message makeBehaviorNormalRoute()
   goal_quaternion.w = 0.9724497591854532;
   const double goal_yaw = tf2::getYaw(goal_quaternion);
 
-
-  const std::array<double, 3> start_pose{3722.16015625, 73723.515625, start_yaw};
-  const std::array<double, 3> goal_pose{3778.362060546875, 26.3, 0};
+  const std::array<double, 4> start_pose{3722.16015625, 73723.515625, 0., start_yaw};
+  const std::array<double, 4> goal_pose{3778.362060546875, 26.3, 0., goal_yaw};
   Route::Message route;
   route.header.frame_id = "map";
 
@@ -210,8 +209,6 @@ HADMapBin create_map_bin_msg(
 
   return map_bin_msg;
 }
-
-
 
 template <typename T>
 void setPublisher(
@@ -301,7 +298,7 @@ void publishData<Odometry>(
 
   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
   const double pi = 3.1415926;
-  const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
+  const std::array<double, 4> start_pose{5.5, 4., pi * 0.5};
   current_odometry->pose.pose = create_pose_msg(start_pose);
   current_odometry->header.frame_id = "map";
   // current_odometry->header.frame_id = "base_link";
@@ -456,12 +453,10 @@ void setSubscriber<Trajectory>(
   // qos.best_effort() ;
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   subscriber = test_node->create_subscription<Trajectory>(
-    topic_name, rclcpp::QoS{1}, [&count](const typename Trajectory::SharedPtr) {
-      // std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+    topic_name, rclcpp::QoS{1},
+    [&count](const typename Trajectory::SharedPtr msg [[maybe_unused]]) {
       count++;
     });
-  std::string used_topic_name = subscriber->get_topic_name();
-  std::cerr << "The subscriber is using the topic: " << used_topic_name << std::endl;
 }
 
 }  // namespace test_utils

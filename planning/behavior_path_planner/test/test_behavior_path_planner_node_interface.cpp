@@ -90,7 +90,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
   test_manager->setRouteInputTopicName("/planning/mission_planning/route");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithBehaviorNormalRoute(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point

@@ -263,7 +263,7 @@ void PlanningIntefaceTestManager::publishNominalRoute(
   test_utils::spinSomeNodes(test_node_, target_node);
 }
 
-void PlanningIntefaceTestManager::publisBehaviorNominalRoute(
+void PlanningIntefaceTestManager::publishBehaviorNominalRoute(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::setPublisher(test_node_, topic_name, behavior_normal_route_pub_);
@@ -373,7 +373,7 @@ void PlanningIntefaceTestManager::publishInitialPoseData(
   const double yaw = tf2::getYaw(quaternion);
 
   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  const std::array<double, 3> start_pose{position_x, position_y, yaw};
+  const std::array<double, 4> start_pose{position_x, position_y, yaw};
   current_odometry->pose.pose = test_utils::create_pose_msg(start_pose);
   current_odometry->header.frame_id = "map";
   // std::string origin_frame_id = "odom";
