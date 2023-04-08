@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.17)
 project(lidar_apollo_instance_segmentation)
 
 find_package(ament_cmake REQUIRED)
-find_package(cuda_utils REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(pcl_conversions REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -23,6 +22,7 @@ if(NOT ${tensorrt_common_FOUND})
   )
   return()
 endif()
+find_package(cuda_utils REQUIRED)
 
 
 # download weight files
