@@ -3168,7 +3168,9 @@ CandidateOutput AvoidanceModule::planCandidate() const
   auto shifted_path = data.candidate_path;
 
   if (!data.safe_new_sl.empty()) {  // clip from shift start index for visualize
-    clipByMinStartIdx(data.safe_new_sl, shifted_path.path);
+    util::clipPathLength(
+      shifted_path.path, data.safe_new_sl.front().start_idx, 0.0,
+      std::numeric_limits<double>::max());
 
     const auto sl = getNonStraightShiftLine(data.safe_new_sl);
     const auto sl_front = data.safe_new_sl.front();
