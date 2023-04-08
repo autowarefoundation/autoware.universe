@@ -23,6 +23,8 @@
 
 #include <memory>
 
+namespace lidar_apollo_instance_segmentation
+{
 class LidarInstanceSegmentationInterface
 {
 public:
@@ -48,3 +50,4 @@ private:
 public:
   explicit LidarInstanceSegmentationNode(const rclcpp::NodeOptions & node_options);
 };
+}  // namespace lidar_apollo_instance_segmentation

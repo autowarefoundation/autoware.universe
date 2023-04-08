@@ -18,6 +18,8 @@
 
 #include <cmath>
 
+namespace lidar_apollo_instance_segmentation
+{
 FeatureMapInterface::FeatureMapInterface(
   const int _channels, const int _width, const int _height, const int _range)
 : channels(_channels),
@@ -166,3 +168,4 @@ void FeatureMapWithConstantAndIntensity::resetMap([[maybe_unused]] std::vector<f
     nonempty_data[i] = 0.0f;
   }
 }
+}  // namespace lidar_apollo_instance_segmentation

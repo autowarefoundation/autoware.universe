@@ -15,6 +15,8 @@
 #include <memory>
 #include <vector>
 
+namespace lidar_apollo_instance_segmentation
+{
 struct FeatureMapInterface
 {
 public:
@@ -63,3 +65,4 @@ struct FeatureMapWithConstantAndIntensity : public FeatureMapInterface
   void initializeMap(std::vector<float> & map) override;
   void resetMap(std::vector<float> & map) override;
 };
+}  // namespace lidar_apollo_instance_segmentation

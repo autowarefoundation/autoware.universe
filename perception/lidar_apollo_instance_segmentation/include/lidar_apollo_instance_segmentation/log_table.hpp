@@ -13,4 +13,7 @@
 // limitations under the License.
 #pragma once
 
+namespace lidar_apollo_instance_segmentation
+{
 float calcApproximateLog(float num);
+}  // namespace lidar_apollo_instance_segmentation

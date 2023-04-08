@@ -18,6 +18,8 @@
 
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
+namespace lidar_apollo_instance_segmentation
+{
 class Debugger
 {
 public:
@@ -29,3 +31,4 @@ public:
 private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr instance_pointcloud_pub_;
 };
+}  // namespace lidar_apollo_instance_segmentation

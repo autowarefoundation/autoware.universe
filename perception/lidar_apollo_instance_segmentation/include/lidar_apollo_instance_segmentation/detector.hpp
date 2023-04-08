@@ -18,19 +18,23 @@
 #include "feature_generator.hpp"
 #include "lidar_apollo_instance_segmentation/node.hpp"
 
-#include <TrtNet.hpp>
-
+#include <cuda_utils/cuda_unique_ptr.hpp>
+#include <cuda_utils/stream_unique_ptr.hpp>
 #include <pcl/common/transforms.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
+#include <tensorrt_common/tensorrt_common.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
-#endif
 #include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
 #include <string>
+
+namespace lidar_apollo_instance_segmentation
+{
+using cuda_utils::CudaUniquePtr;
+using cuda_utils::CudaUniquePtrHost;
+using cuda_utils::makeCudaStream;
+using cuda_utils::StreamUniquePtr;
 
 class LidarApolloInstanceSegmentation : public LidarInstanceSegmentationInterface
 {
@@ -46,8 +50,9 @@ private:
     const sensor_msgs::msg::PointCloud2 & input, sensor_msgs::msg::PointCloud2 & transformed_cloud,
     float z_offset);
 
+  std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
+
   rclcpp::Node * node_;
-  std::unique_ptr<Tn::trtNet> net_ptr_;
   std::shared_ptr<Cluster2D> cluster2d_;
   std::shared_ptr<FeatureGenerator> feature_generator_;
   float score_threshold_;
@@ -56,4 +61,12 @@ private:
   tf2_ros::TransformListener tf_listener_;
   std::string target_frame_;
   float z_offset_;
+
+  size_t output_size_;
+  CudaUniquePtr<float[]> input_d_;
+  CudaUniquePtr<float[]> output_d_;
+  CudaUniquePtrHost<float[]> output_h_;
+
+  StreamUniquePtr stream_{makeCudaStream()};
 };
+}  // namespace lidar_apollo_instance_segmentation

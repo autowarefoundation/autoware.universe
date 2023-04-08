@@ -24,6 +24,8 @@ inline float normalizeIntensity(float intensity)
 }
 }  // namespace
 
+namespace lidar_apollo_instance_segmentation
+{
 FeatureGenerator::FeatureGenerator(
   const int width, const int height, const int range, const bool use_intensity_feature,
   const bool use_constant_feature)
@@ -96,3 +98,4 @@ std::shared_ptr<FeatureMapInterface> FeatureGenerator::generate(
   }
   return map_ptr_;
 }
+}  // namespace lidar_apollo_instance_segmentation

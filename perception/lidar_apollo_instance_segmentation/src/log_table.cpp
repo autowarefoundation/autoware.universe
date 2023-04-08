@@ -35,6 +35,8 @@ struct LogTable
 
 static ::LogTable log_table;
 
+namespace lidar_apollo_instance_segmentation
+{
 float calcApproximateLog(float num)
 {
   int integer_num = static_cast<int>(num * 10.0);
@@ -43,3 +45,4 @@ float calcApproximateLog(float num)
   }
   return std::log(static_cast<float>(1.0 + num));
 }
+}  // namespace lidar_apollo_instance_segmentation

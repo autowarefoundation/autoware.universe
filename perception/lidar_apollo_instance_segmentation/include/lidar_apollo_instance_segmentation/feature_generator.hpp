@@ -22,6 +22,8 @@
 
 #include <memory>
 
+namespace lidar_apollo_instance_segmentation
+{
 class FeatureGenerator
 {
 private:
@@ -40,3 +42,4 @@ public:
   std::shared_ptr<FeatureMapInterface> generate(
     const pcl::PointCloud<pcl::PointXYZI>::Ptr & pc_ptr);
 };
+}  // namespace lidar_apollo_instance_segmentation
