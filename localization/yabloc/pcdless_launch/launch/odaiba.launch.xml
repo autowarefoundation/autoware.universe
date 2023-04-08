@@ -1,14 +1,14 @@
 <launch>
-    <arg name="min_segment_length" default="1.5" description="[m]"/>
-    <arg name="max_segment_distance" default="30.0" description="[m]"/>
-    <arg name="ignore_less_than_float" default="true" description="GNSS-RTK is enabled?"/>
+    <include file="$(find-pkg-share pcdless_launch)/launch/pcdless.launch.xml">
+        <arg name="min_segment_length" value="1.5"/>
+        <arg name="max_segment_distance" value="30.0"/>
+        <arg name="ignore_less_than_float" value="true"/>
 
-    <arg name="static_linear_covariance" default="0.04"/>
-    <arg name="static_angular_covariance" default="0.006"/>
-    <arg name="static_scale_factor" default="-1.0" description="if negative value, static_scale_factor is not used"/>
+        <arg name="static_linear_covariance" value="0.04"/>
+        <arg name="static_angular_covariance" value="0.006"/>
+        <arg name="static_scale_factor" value="-1.0"/>
 
-    <arg name="road_marking_labels" default="[cross_walk, zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
-    <arg name="sign_board_labels" default="[sign-board]"/>
-
-    <include file="$(find-pkg-share pcdless_launch)/launch/pcdless.launch.xml"/>
+        <arg name="road_marking_labels" value="[cross_walk, zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
+        <arg name="sign_board_labels" value="[sign-board]"/>
+    </include>
 </launch>
