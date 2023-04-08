@@ -498,6 +498,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     }
 
     // 3. Check if rough lateral distance is smaller than the threshold
+    // TODO(murooka) use max of all lat margins
     const double lat_dist_from_obstacle_to_traj =
       motion_utils::calcLateralOffset(traj_points, current_obstacle_pose.pose.position);
     const double obstacle_max_length = calcObstacleMaxLength(predicted_object.shape);
