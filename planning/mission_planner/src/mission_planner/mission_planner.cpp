@@ -300,17 +300,34 @@ bool MissionPlanner::checkRerouteSafety(
   auto lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_ptr_, lanelet_map_ptr_);
 
-  // compute distance from the start_idx to end_idx
-  double accumulated_length = 0.0;
-  for (size_t i = start_idx; i < end_idx; ++i) {
+  // compute distance from the current pose to the end of the current lanelet
+  const auto current_pose = target_route.start_pose;
+  const auto primitives = original_route.segments.at(start_idx).primitives;
+  lanelet::ConstLanelets start_lanelets;
+  for (const auto & primitive : primitives) {
+    const auto lanelet = lanelet_map_ptr_->laneletLayer.get(primitive.id);
+    start_lanelets.push_back(lanelet);
+  }
+  lanelet::ConstLanelet closest_lanelet;
+  lanelet::utils::query::getClosestLanelet(start_lanelets, current_pose, &closest_lanelet);
+  const auto & centerline_2d = lanelet::utils::to2D(closest_lanelet.centerline());
+  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
+  const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
+    centerline_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
+  const double dist_to_current_pose = arc_coordinates.length;
+  const double lanelet_length = lanelet::utils::getLaneletLength2d(closest_lanelet);
+  double accumulated_length = lanelet_length - dist_to_current_pose;
+
+  // compute distance from the start_idx+1 to end_idx
+  for (size_t i = start_idx + 1; i < end_idx; ++i) {
     const auto primitives = original_route.segments.at(i).primitives;
     if (primitives.empty()) {
       break;
     }
 
     const auto front_primitive = primitives.front();
-    const auto & target_lanelet = lanelet_map_ptr_->laneletLayer.get(front_primitive.id);
-    accumulated_length += lanelet::utils::getLaneletLength2d(target_lanelet);
+    const auto & lanelet = lanelet_map_ptr_->laneletLayer.get(front_primitive.id);
+    accumulated_length += lanelet::utils::getLaneletLength2d(lanelet);
   }
 
   // check safety
