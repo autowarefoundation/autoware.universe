@@ -1648,13 +1648,6 @@ PredictedObjects filterObjectsByVelocity(
   return filtered;
 }
 
-void shiftPose(Pose * pose, double shift_length)
-{
-  auto yaw = tf2::getYaw(pose->orientation);
-  pose->position.x -= std::sin(yaw) * shift_length;
-  pose->position.y += std::cos(yaw) * shift_length;
-}
-
 PathWithLaneId getCenterLinePathFromRootLanelet(
   const lanelet::ConstLanelet & root_lanelet,
   const std::shared_ptr<const PlannerData> & planner_data)
@@ -1898,15 +1891,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
     route_handler->getLaneletSequence(current_lane, pose, backward_length, forward_length);
 
   return current_lanes;
-}
-
-std::string getUuidStr(const PredictedObject & obj)
-{
-  std::stringstream hex_value;
-  for (const auto & uuid : obj.object_id.uuid) {
-    hex_value << std::hex << std::setfill('0') << std::setw(2) << +uuid;
-  }
-  return hex_value.str();
 }
 
 template <typename Pythagoras>
