@@ -14,8 +14,14 @@
 
 #include "mission_planner.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/route_checker.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <array>
@@ -75,6 +81,10 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   sub_odometry_ = create_subscription<Odometry>(
     "/localization/kinematic_state", rclcpp::QoS(1),
     std::bind(&MissionPlanner::on_odometry, this, std::placeholders::_1));
+  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
+  vector_map_subscriber_ = create_subscription<HADMapBin>(
+    "~/input/vector_map", qos_transient_local,
+    std::bind(&MissionPlanner::onMap, this, std::placeholders::_1));
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
@@ -236,6 +246,85 @@ void MissionPlanner::on_set_route_points(
   change_route(route);
   change_state(RouteState::Message::SET);
   res->status.success = true;
+}
+
+bool MissionPlanner::checkRerouteSafety(
+  const LaneletRoute & original_route, const LaneletRoute & target_route)
+{
+  if (original_route.segments.empty() || target_route.segments.empty() || !map_ptr_ || !odometry_) {
+    return false;
+  }
+
+  // find the index of the original route that has same idx with the front segment of the new route
+  const auto target_front_primitives = target_route.segments.front().primitives;
+
+  auto hasSamePrimitives = [](
+                             const std::vector<LaneletPrimitive> & original_primitives,
+                             const std::vector<LaneletPrimitive> & target_primitives) {
+    bool is_same = false;
+    for (const auto & primitive : original_primitives) {
+      const auto has_same = [&](const auto & p) { return p.id == primitive.id; };
+      is_same = std::find_if(target_primitives.begin(), target_primitives.end(), has_same) !=
+                target_primitives.end();
+    }
+    return is_same;
+  };
+
+  // find idx that matches the target primitives
+  size_t start_idx = original_route.segments.size();
+  for (size_t i = 0; i < original_route.segments.size(); ++i) {
+    const auto & original_primitives = original_route.segments.at(i).primitives;
+    if (hasSamePrimitives(original_primitives, target_front_primitives)) {
+      start_idx = i;
+      break;
+    }
+  }
+
+  // find last idx that matches the target primitives
+  size_t end_idx = start_idx;
+  for (size_t i = 1; i < target_route.segments.size(); ++i) {
+    const size_t original_route_idx = start_idx + i;
+    if (original_route_idx > original_route.segments.size() - 1) {
+      break;
+    }
+
+    const auto & original_primitives = original_route.segments.at(original_route_idx).primitives;
+    const auto & target_primitives = target_route.segments.at(i).primitives;
+    if (!hasSamePrimitives(original_primitives, target_primitives)) {
+      end_idx = original_route_idx + 1;
+      break;
+    }
+  }
+
+  // create map
+  auto lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
+  lanelet::utils::conversion::fromBinMsg(*map_ptr_, lanelet_map_ptr_);
+
+  // compute distance from the start_idx to end_idx
+  double accumulated_length = 0.0;
+  for (size_t i = start_idx; i < end_idx; ++i) {
+    const auto primitives = original_route.segments.at(i).primitives;
+    if (primitives.empty()) {
+      break;
+    }
+
+    const auto front_primitive = primitives.front();
+    const auto & target_lanelet = lanelet_map_ptr_->laneletLayer.get(front_primitive.id);
+    accumulated_length += lanelet::utils::getLaneletLength2d(target_lanelet);
+  }
+
+  // check safety
+  const auto current_velocity = odometry_->twist.twist.linear.x;
+  if (accumulated_length > current_velocity * 10.0) {
+    return true;
+  }
+
+  return false;
+}
+
+void MissionPlanner::onMap(const HADMapBin::ConstSharedPtr msg)
+{
+  map_ptr_ = msg;
 }
 
 }  // namespace mission_planner

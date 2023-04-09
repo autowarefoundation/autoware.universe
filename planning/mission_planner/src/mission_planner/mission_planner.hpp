@@ -22,6 +22,7 @@
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/route_handler.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -40,6 +41,8 @@ namespace mission_planner
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 using PoseWithUuidStamped = autoware_planning_msgs::msg::PoseWithUuidStamped;
 using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
+using LaneletPrimitive = autoware_planning_msgs::msg::LaneletPrimitive;
+using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
 using SetRoutePoints = planning_interface::SetRoutePoints;
 using SetRoute = planning_interface::SetRoute;
@@ -63,6 +66,7 @@ private:
   PoseStamped transform_pose(const PoseStamped & input);
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
   Odometry::ConstSharedPtr odometry_;
   void on_odometry(const Odometry::ConstSharedPtr msg);
 
@@ -87,6 +91,10 @@ private:
   void on_set_route_points(
     const SetRoutePoints::Service::Request::SharedPtr req,
     const SetRoutePoints::Service::Response::SharedPtr res);
+
+  bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
+  void onMap(const HADMapBin::ConstSharedPtr msg);
+  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
 };
 
 }  // namespace mission_planner
