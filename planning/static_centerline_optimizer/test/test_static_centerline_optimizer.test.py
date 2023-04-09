@@ -45,7 +45,8 @@ def generate_test_description():
             {"end_lanelet_id": 216},
             os.path.join(
                 get_package_share_directory("mission_planner"),
-                "config/mission_planner.param.yaml",
+                "config",
+                "mission_planner.param.yaml",
             ),
             os.path.join(
                 get_package_share_directory("static_centerline_optimizer"),
