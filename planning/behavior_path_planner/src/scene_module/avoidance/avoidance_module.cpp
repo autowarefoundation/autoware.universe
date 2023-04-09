@@ -1076,7 +1076,11 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
       o.reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
       debug.unavoidable_objects.push_back(o);
-      continue;
+      if (o.avoid_required) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     const auto is_object_on_right = isOnRight(o);
@@ -1085,7 +1089,11 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::SAME_DIRECTION_SHIFT);
       o.reason = AvoidanceDebugFactor::SAME_DIRECTION_SHIFT;
       debug.unavoidable_objects.push_back(o);
-      continue;
+      if (o.avoid_required) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     const auto avoiding_shift = shift_length - current_ego_shift;
@@ -1115,7 +1123,11 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
           debug.unavoidable_objects.push_back(o);
-          continue;
+          if (o.avoid_required) {
+            break;
+          } else {
+            continue;
+          }
         }
       }
 
@@ -1129,7 +1141,11 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
           debug.unavoidable_objects.push_back(o);
-          continue;
+          if (o.avoid_required) {
+            break;
+          } else {
+            continue;
+          }
         }
       }
     }
