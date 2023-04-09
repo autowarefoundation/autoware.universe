@@ -710,7 +710,7 @@ double calcLaneChangingLength(
   const double lane_changing_velocity, const double shift_length,
   const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param)
 {
-  const double lateral_acc = lane_changing_speed < lc_param.lateral_acc_switching_velocity
+  const double lateral_acc = lane_changing_velocity < lc_param.lateral_acc_switching_velocity
                                ? lc_param.lane_changing_lateral_acc_at_low_velocity
                                : lc_param.lane_changing_lateral_acc;
   const auto required_time = PathShifter::calcShiftTimeFromJerk(
