@@ -12,9 +12,15 @@ cd pcdless_ws
 
 git clone git@github.com:tier4/VectorMapVisualLocalizer.git src/vector_map_visual_localizer --recursive
 
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_SOPHUS_TESTS=OFF
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 source install/setup.bash
+```
+
+<details><summary>The author often use this build command</summary><div>
+
+```shell
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --continue-on-error
 ```
 
 * (optional) ccache `(--cmake-args) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
@@ -22,6 +28,15 @@ source install/setup.bash
 * (optional) clang-tidy `(--cmake-args) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
 
 * (optional) test `(--cmake-args) -DBUILD_TESTING=ON`
+
+</div></details>
+
+## Submodule
+
+* [external/autoware_auto_msgs](https://github.com/tier4/autoware_auto_msgs)
+* [external/autoware_msgs](https://github.com/autowarefoundation/autoware_msgs.git)
+* [external/septentrio_gnss_driver](https://github.com/tier4/septentrio_gnss_driver.git)
+* [external/tier4_autoware_msgs](https://github.com/tier4/tier4_autoware_msgs.git)
 
 ## Architecture
 

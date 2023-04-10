@@ -1,13 +1,12 @@
-[submodule "src/autoware_auto_msgs"]
-	path = standalone/autoware_auto_msgs
+[submodule "external/autoware_auto_msgs"]
+	path = external/autoware_auto_msgs
 	url = git@github.com:tier4/autoware_auto_msgs.git
-[submodule "standalone/septentrio_gnss_driver"]
-	path = standalone/septentrio_gnss_driver
-	url = https://github.com/tier4/septentrio_gnss_driver.git
-	branch = tier4/ros2
-[submodule "standalone/tier4_autoware_msgs"]
-	path = standalone/tier4_autoware_msgs
-	url = https://github.com/tier4/tier4_autoware_msgs.git
-[submodule "standalone/autoware_msgs"]
-	path = standalone/autoware_msgs
+[submodule "external/autoware_msgs"]
+	path = external/autoware_msgs
 	url = https://github.com/autowarefoundation/autoware_msgs.git
+[submodule "external/septentrio_gnss_driver"]
+	path = external/septentrio_gnss_driver
+	url = https://github.com/tier4/septentrio_gnss_driver.git
+[submodule "external/tier4_autoware_msgs"]
+	path = external/tier4_autoware_msgs
+	url = https://github.com/tier4/tier4_autoware_msgs.git
