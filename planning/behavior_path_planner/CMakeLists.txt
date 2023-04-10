@@ -16,12 +16,14 @@ set(common_src
   src/behavior_path_planner_node.cpp
   src/scene_module/scene_module_visitor.cpp
   src/scene_module/avoidance/avoidance_module.cpp
+  src/scene_module/avoidance_by_lc/module.cpp
   src/scene_module/pull_out/pull_out_module.cpp
   src/scene_module/pull_over/pull_over_module.cpp
   src/scene_module/side_shift/side_shift_module.cpp
   src/scene_module/lane_change/lane_change_module.cpp
   src/scene_module/lane_change/external_request_lane_change_module.cpp
   src/turn_signal_decider.cpp
+  src/util/safety_check.cpp
   src/util/avoidance/util.cpp
   src/util/lane_change/util.cpp
   src/util/side_shift/util.cpp
@@ -62,6 +64,7 @@ else()
   ament_auto_add_library(behavior_path_planner_node SHARED
     src/planner_manager.cpp
     src/scene_module/avoidance/manager.cpp
+    src/scene_module/avoidance_by_lc/manager.cpp
     src/scene_module/pull_out/manager.cpp
     src/scene_module/pull_over/manager.cpp
     src/scene_module/side_shift/manager.cpp
