@@ -5,6 +5,8 @@
 
 ## How to build
 
+**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the autoware workspace.
+
 ```bash
 mkdir pcdless_ws/src -p
 
@@ -37,6 +39,8 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_E
 * [external/autoware_msgs](https://github.com/autowarefoundation/autoware_msgs.git)
 * [external/septentrio_gnss_driver](https://github.com/tier4/septentrio_gnss_driver.git)
 * [external/tier4_autoware_msgs](https://github.com/tier4/tier4_autoware_msgs.git)
+
+**NOTE:** Someday this localizer will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
 
 ## Architecture
 
@@ -96,13 +100,13 @@ The link contains *rosbag* and *lanelet2* but *pointcloud*.
 
 **NOTE:** `use_sim_time` is TRUE as default.
 
-### with ROSBAG
+### Run with ROSBAG
 
 ![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
 
 ```bash
-ros2 launch pcdless_launch odaiba_launch.xml 
-
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=true
+ros2 launch pcdless_launch rviz.launch.xml
 ros2 launch autoware_launch logging_simulator.launch.xml \
   system:=false \
   localizaton:=false \
@@ -119,24 +123,30 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 ros2 bag play sample_odaiba --clock 100
 ```
 
-### in real world
+### Run in real world
 
 ![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
 
+**You have to change autoware.universe branch.**
+
 ```bash
-ros2 launch pcdless_launch odaiba_launch.xml use_sim_time:=false
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=true use_sim_time:=false
+ros2 launch pcdless_launch rviz.launch.xml
 ros2 launch autoware_launch autoware.launch.xml \
   rviz:=false
 ```
 
-### Rviz
-
-**NOTE:** This project contains original rviz plugins.
+### Run with AWSIM (<u>UNDER CONSTRACTION</u>)
 
 ```bash
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=true 
 ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch autoware_launch e2e_simulator.launch.xml
 ```
 
+## Visualization
+
+**NOTE:** This project contains original rviz plugins.
 ![how_to_launch_with_rosbag](docs/rviz_description.png)
 
 |  index | topic name | description |
