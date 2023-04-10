@@ -62,7 +62,7 @@ SelectedMapLoaderModule::SelectedMapLoaderModule(
 
 bool SelectedMapLoaderModule::onServiceGetSelectedPointCloudMap(
   GetSelectedPointCloudMap::Request::SharedPtr req,
-  GetSelectedPointCloudMap::Response::SharedPtr res)
+  GetSelectedPointCloudMap::Response::SharedPtr res) const
 {
   const auto request_ids = req->cell_ids;
   for (const auto & request_id : request_ids) {
