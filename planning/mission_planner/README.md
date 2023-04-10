@@ -30,8 +30,8 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 | `/planning/routing/clear_route`      | autoware_adapi_v1_msgs/srv/ClearRoute             | route clear request               |
 | `/planning/routing/set_route_points` | autoware_adapi_v1_msgs/srv/SetRoutePoints         | route request with pose waypoints |
 | `/planning/routing/set_route`        | autoware_planning_msgs/srv/SetRoute               | route request with HAD map format |
-| `~/srv/set_mrm`                      | autoware_planning_msgs/srv/SetPoseWithUuidStamped | set emergency route               |
-| `~/srv/clear_mrm`                    | std_srvs/srv/Trigger                              | clear emergency route             |
+| `~/srv/set_mrm_goal`                 | autoware_planning_msgs/srv/SetPoseWithUuidStamped | set emergency route               |
+| `~/srv/clear_mrm_goal`               | std_srvs/srv/Trigger                              | clear emergency route             |
 
 ### Subscriptions
 
