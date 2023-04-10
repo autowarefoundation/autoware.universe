@@ -55,7 +55,7 @@ Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.co
 | enable_downsampled_whole_load | bool        | A flag to enable downsampled pointcloud map publishing                            | false         |
 | enable_partial_load           | bool        | A flag to enable partial pointcloud map server                                    | false         |
 | enable_differential_load      | bool        | A flag to enable differential pointcloud map server                               | false         |
-| enable_selected_load      | bool        | A flag to enable selected pointcloud map server                               | false         |
+| enable_selected_load          | bool        | A flag to enable selected pointcloud map server                                   | false         |
 | leaf_size                     | float       | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 | pcd_paths_or_directory        | std::string | Path(s) to pointcloud map file or directory                                       |               |
 | pcd_metadata_path             | std::string | Path to pointcloud metadata file                                                  |               |
