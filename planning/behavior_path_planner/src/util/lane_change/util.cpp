@@ -710,8 +710,11 @@ double calcLaneChangingLength(
   const double lane_changing_velocity, const double shift_length,
   const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param)
 {
+  const double lateral_acc = lane_changing_velocity < lc_param.lateral_acc_switching_velocity
+                               ? lc_param.lane_changing_lateral_acc_at_low_velocity
+                               : lc_param.lane_changing_lateral_acc;
   const auto required_time = PathShifter::calcShiftTimeFromJerk(
-    shift_length, lc_param.lane_changing_lateral_jerk, lc_param.lane_changing_lateral_acc);
+    shift_length, lc_param.lane_changing_lateral_jerk, lateral_acc);
 
   const double & min_lane_change_length = com_param.minimum_lane_changing_length;
   const double lane_changing_length =
@@ -833,11 +836,12 @@ bool isEgoWithinOriginalLane(
 {
   const auto lane_length = lanelet::utils::getLaneletLength2d(current_lanes);
   const auto lane_poly = lanelet::utils::getPolygonFromArcLength(current_lanes, 0, lane_length);
+  const auto base_link2front = common_param.base_link2front;
+  const auto base_link2rear = common_param.base_link2rear;
+  const auto vehicle_width = common_param.vehicle_width;
   const auto vehicle_poly =
-    util::getVehiclePolygon(current_pose, common_param.vehicle_width, common_param.base_link2front);
-  return boost::geometry::within(
-    lanelet::utils::to2D(vehicle_poly).basicPolygon(),
-    lanelet::utils::to2D(lane_poly).basicPolygon());
+    tier4_autoware_utils::toFootprint(current_pose, base_link2front, base_link2rear, vehicle_width);
+  return boost::geometry::within(vehicle_poly, lanelet::utils::to2D(lane_poly).basicPolygon());
 }
 
 void get_turn_signal_info(
