@@ -305,14 +305,9 @@ double getSignedDistanceFromRightBoundary(
 
 // misc
 
-lanelet::Polygon3d getVehiclePolygon(
-  const Pose & vehicle_pose, const double vehicle_width, const double base_link2front);
-
 std::vector<Polygon2d> getTargetLaneletPolygons(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, const double check_length,
   const std::string & target_type);
-
-void shiftPose(Pose * pose, double shift_length);
 
 PathWithLaneId getCenterLinePathFromRootLanelet(
   const lanelet::ConstLanelet & root_lanelet,
@@ -353,8 +348,6 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
   const double forward_length, const double backward_length);
-
-std::string getUuidStr(const PredictedObject & obj);
 
 std::vector<PredictedPath> getPredictedPathFromObj(
   const PredictedObject & obj, const bool & is_use_all_predicted_path);

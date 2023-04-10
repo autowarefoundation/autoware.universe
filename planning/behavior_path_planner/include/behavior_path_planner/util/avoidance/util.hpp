@@ -69,17 +69,8 @@ std::vector<size_t> concatParentIds(
 
 double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 
-void clipByMinStartIdx(const AvoidLineArray & shift_lines, PathWithLaneId & path);
-
-void fillLongitudinalAndLengthByClosestFootprint(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
-  ObjectData & obj);
-
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj);
-
-double calcOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
 
 double calcEnvelopeOverhangDistance(
   const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
@@ -91,10 +82,6 @@ void setEndData(
 void setStartData(
   AvoidLine & al, const double start_shift_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist);
-
-std::string getUuidStr(const ObjectData & obj);
-
-std::vector<std::string> getUuidStr(const ObjectDataArray & objs);
 
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
