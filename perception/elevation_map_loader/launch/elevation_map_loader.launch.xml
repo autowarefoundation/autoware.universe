@@ -3,6 +3,7 @@
   <arg name="param_file_path" default="$(find-pkg-share elevation_map_loader)/config/elevation_map_parameters.yaml"/>
   <arg name="use_lane_filter" default="false"/>
   <arg name="use_sequential_load" default="false"/>
+  <arg name="sequential_map_load_num" default="1"/>
   <arg name="use_inpaint" default="true"/>
   <arg name="inpaint_radius" default="1.0"/>
 
@@ -17,5 +18,6 @@
     <param name="param_file_path" value="$(var param_file_path)"/>
     <param name="use_lane_filter" value="$(var use_lane_filter)"/>
     <param name="use_sequential_load" value="$(var use_sequential_load)"/>
+    <param name="sequential_map_load_num" value="$(var sequential_map_load_num)"/>
   </node>
 </launch>

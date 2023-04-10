@@ -327,7 +327,8 @@ class GroundSegmentationPipeline:
                 parameters=[
                     {
                         "use_lane_filter": True,
-                        "use_sequential_load": True,
+                        "use_sequential_load": False,
+                        "sequential_map_load_num": 1,
                         "use_inpaint": True,
                         "inpaint_radius": 1.0,
                         "lane_margin": 2.0,

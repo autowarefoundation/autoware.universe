@@ -100,8 +100,10 @@ private:
   std::string elevation_map_directory_;
   bool use_inpaint_;
   float inpaint_radius_;
+  long unsigned int sequential_map_load_num_;
   bool use_elevation_map_cloud_publisher_;
   std::string param_file_path_;
+  bool is_map_metadata_received_ = false;
   bool is_map_received_ = false;
   bool is_elevation_map_published_ = false;
 

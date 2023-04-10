@@ -20,11 +20,11 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 ### Input
 
-| Name                   | Type                                         | Description                                |
-| ---------------------- | -------------------------------------------- | ------------------------------------------ |
-| `input/pointcloud_map` | `sensor_msgs::msg::PointCloud2`              | The point cloud map                        |
-| `input/vector_map`     | `autoware_auto_mapping_msgs::msg::HADMapBin` | (Optional) The binary data of lanelet2 map |
-| `input/vector_map`     | `autoware_auto_mapping_msgs::msg::HADMapBin` | (Optional) The binary data of lanelet2 map |
+| Name                            | Type                                            | Description                                |
+| ------------------------------- | ----------------------------------------------- | ------------------------------------------ |
+| `input/pointcloud_map`          | `sensor_msgs::msg::PointCloud2`                 | The point cloud map                        |
+| `input/vector_map`              | `autoware_auto_mapping_msgs::msg::HADMapBin`    | (Optional) The binary data of lanelet2 map |
+| `input/pointcloud_map_metadata` | `autoware_map_msgs::msg::PointCloudMapMetaData` | (Optional) The metadata of point cloud map |
 
 ### Output
 
@@ -35,9 +35,9 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 ### Service
 
-| Name                           | Type                                               | Description                                                                                                                                  |
-| ------------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `service/get_selected_pcd_map` | `autoware_map_msgs::srv::GetSelectedPointCloudMap` | (Optional) service to request point cloud map. If pointcloud_map_loader sends id pointcloud map loading via ROS 2 service, use this service. |
+| Name                           | Type                                               | Description                                                                                                                               |
+| ------------------------------ | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `service/get_selected_pcd_map` | `autoware_map_msgs::srv::GetSelectedPointCloudMap` | (Optional) service to request point cloud map. If pointcloud_map_loader uses selected pointcloud map loading via ROS 2 service, use this. |
 
 ## Parameters
 
@@ -55,6 +55,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 | use_lane_filter                   | bool        | Whether to filter elevation_map with vector_map                                                                                   | false         |
 | lane_margin                       | float       | Margin distance from the lane polygon of the area to be included in the inpainting mask [m]. Used only when use_lane_filter=True. | 0.0           |
 | use_sequential_load               | bool        | Whether to get point cloud map by service                                                                                         | false         |
+| sequential_map_load_num           | int         | The number of point cloud maps to load at once (only used when use_sequential_load is set true)                                   | 1             |
 
 ### GridMap parameters
 
