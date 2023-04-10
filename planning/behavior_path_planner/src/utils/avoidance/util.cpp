@@ -403,24 +403,6 @@ bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_
   return (is_object_on_right == std::signbit(shift_length));
 }
 
-ShiftedPath toShiftedPath(const PathWithLaneId & path)
-{
-  ShiftedPath out;
-  out.path = path;
-  out.shift_length.resize(path.points.size());
-  std::fill(out.shift_length.begin(), out.shift_length.end(), 0.0);
-  return out;
-}
-
-ShiftLineArray toShiftLineArray(const AvoidLineArray & avoid_points)
-{
-  ShiftLineArray shift_lines;
-  for (const auto & ap : avoid_points) {
-    shift_lines.push_back(ap);
-  }
-  return shift_lines;
-}
-
 size_t findPathIndexFromArclength(
   const std::vector<double> & path_arclength_arr, const double target_arc)
 {
@@ -434,17 +416,6 @@ size_t findPathIndexFromArclength(
     }
   }
   return path_arclength_arr.size() - 1;
-}
-
-std::vector<size_t> concatParentIds(
-  const std::vector<size_t> & ids1, const std::vector<size_t> & ids2)
-{
-  std::set<size_t> id_set{ids1.begin(), ids1.end()};
-  for (const auto id : ids2) {
-    id_set.insert(id);
-  }
-  const auto v = std::vector<size_t>{id_set.begin(), id_set.end()};
-  return v;
 }
 
 double lerpShiftLengthOnArc(double arc, const AvoidLine & ap)
@@ -1216,5 +1187,14 @@ double getLateralMarginFromVelocity(
   }
 
   return p->target_velocity_matrix.back();
+}
+
+ShiftedPath toShiftedPath(const PathWithLaneId & path)
+{
+  ShiftedPath out;
+  out.path = path;
+  out.shift_length.resize(path.points.size());
+  std::fill(out.shift_length.begin(), out.shift_length.end(), 0.0);
+  return out;
 }
 }  // namespace behavior_path_planner

@@ -214,39 +214,22 @@ private:
   double getShiftLength(
     const ObjectData & object, const bool & is_object_on_right, const double & avoid_margin) const;
 
-  // shift point generation: combiner
-  AvoidLineArray combineRawShiftLinesWithUniqueCheck(
-    const AvoidLineArray & base_lines, const AvoidLineArray & added_lines) const;
-
   // shift point generation: merger
   AvoidLineArray mergeShiftLines(const AvoidLineArray & raw_shift_lines, DebugData & debug) const;
   void generateTotalShiftLine(
     const AvoidLineArray & avoid_points, ShiftLineData & shift_line_data) const;
   AvoidLineArray extractShiftLinesFromLine(ShiftLineData & shift_line_data) const;
-  std::vector<size_t> calcParentIds(
-    const AvoidLineArray & parent_candidates, const AvoidLine & child) const;
 
   // shift point generation: trimmers
   AvoidLineArray trimShiftLine(const AvoidLineArray & shift_lines, DebugData & debug) const;
-  void quantizeShiftLine(AvoidLineArray & shift_lines, const double interval) const;
-  void trimSmallShiftLine(AvoidLineArray & shift_lines, const double shift_diff_thres) const;
-  void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
   void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
-  void trimTooSharpShift(AvoidLineArray & shift_lines) const;
   void trimSharpReturn(AvoidLineArray & shift_lines) const;
 
   // shift point generation: return-shift generator
   void addReturnShiftLineFromEgo(
     AvoidLineArray & sl_candidates, AvoidLineArray & current_raw_shift_lines) const;
 
-  // -- for shift point operations --
-  void alignShiftLinesOrder(
-    AvoidLineArray & shift_lines, const bool recalculate_start_length = true) const;
-  AvoidLineArray fillAdditionalInfo(const AvoidLineArray & shift_lines) const;
-  AvoidLine fillAdditionalInfo(const AvoidLine & shift_line) const;
   AvoidLine getNonStraightShiftLine(const AvoidLineArray & shift_lines) const;
-  void fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const;
-  void fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const;
 
   // -- for new shift point approval --
   AvoidLineArray findNewShiftLine(
@@ -264,9 +247,6 @@ private:
 
   // turn signal
   TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path) const;
-
-  // intersection (old)
-  boost::optional<AvoidLine> calcIntersectionShiftLine(const AvoidancePlanningData & data) const;
 
   // debug
   mutable DebugData debug_data_;
@@ -345,11 +325,6 @@ private:
   }
 
   float getMinimumAvoidanceEgoSpeed() const { return parameters_->target_velocity_matrix.front(); }
-
-  float getMaximumAvoidanceEgoSpeed() const
-  {
-    return parameters_->target_velocity_matrix.at(parameters_->col_size - 1);
-  }
 
   double getNominalPrepareDistance() const
   {

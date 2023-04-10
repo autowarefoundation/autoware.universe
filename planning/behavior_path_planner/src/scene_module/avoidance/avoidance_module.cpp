@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/marker_util/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
+#include "behavior_path_planner/utils/avoidance/shift_line_utils.hpp"
 #include "behavior_path_planner/utils/avoidance/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/safety_check.hpp"
@@ -566,7 +567,9 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
  */
 void AvoidanceModule::updateRegisteredRawShiftLines()
 {
-  fillAdditionalInfoFromPoint(registered_raw_shift_lines_);
+  shift_line_utils::fillAdditionalInfoFromPoint(
+    avoidance_data_.reference_path, avoidance_data_.ego_closest_path_index,
+    registered_raw_shift_lines_);
 
   AvoidLineArray avoid_lines;
   const int margin = 0;
@@ -600,8 +603,8 @@ AvoidLineArray AvoidanceModule::applyPreProcessToRawShiftLines(
    *               shift, because it cannot handle the case like "we don't have to avoid
    *               the object anymore".
    */
-  auto total_raw_shift_lines =
-    combineRawShiftLinesWithUniqueCheck(registered_raw_shift_lines_, current_raw_shift_lines);
+  auto total_raw_shift_lines = shift_line_utils::combineRawShiftLinesWithUniqueCheck(
+    registered_raw_shift_lines_, current_raw_shift_lines);
 
   printShiftLines(current_raw_shift_lines, "current_raw_shift_lines");
   printShiftLines(registered_raw_shift_lines_, "registered_raw_shift_lines");
@@ -654,7 +657,9 @@ void AvoidanceModule::registerRawShiftLines(const AvoidLineArray & future)
 
   const auto old_size = registered_raw_shift_lines_.size();
 
-  const auto future_with_info = fillAdditionalInfo(future);
+  auto future_with_info = future;
+  shift_line_utils::fillAdditionalInfo(avoidance_data_.reference_path, future_with_info);
+  shift_line_utils::alignShiftLinesOrder(future_with_info, getCurrentBaseShift(), true);
   printShiftLines(future_with_info, "future_with_info");
   printShiftLines(registered_raw_shift_lines_, "registered_raw_shift_lines_");
   printShiftLines(current_raw_shift_lines_, "current_raw_shift_lines_");
@@ -875,47 +880,10 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
 
   debug_avoidance_initializer_for_shift_line_ = std::move(avoidance_debug_msg_array);
   debug_avoidance_initializer_for_shift_line_time_ = clock_->now();
-  fillAdditionalInfoFromLongitudinal(avoid_lines);
+  shift_line_utils::fillAdditionalInfoFromLongitudinal(
+    data.reference_path, data.ego_closest_path_index, avoid_lines);
 
   return avoid_lines;
-}
-
-AvoidLineArray AvoidanceModule::fillAdditionalInfo(const AvoidLineArray & shift_lines) const
-{
-  if (shift_lines.empty()) {
-    return shift_lines;
-  }
-
-  auto out_points = shift_lines;
-
-  const auto & path = avoidance_data_.reference_path;
-  const auto arclength = avoidance_data_.arclength_from_ego;
-
-  // calc longitudinal
-  for (auto & sl : out_points) {
-    sl.start_idx = findNearestIndex(path.points, sl.start.position);
-    sl.start_longitudinal = arclength.at(sl.start_idx);
-    sl.end_idx = findNearestIndex(path.points, sl.end.position);
-    sl.end_longitudinal = arclength.at(sl.end_idx);
-  }
-
-  // sort by longitudinal
-  std::sort(out_points.begin(), out_points.end(), [](auto a, auto b) {
-    return a.end_longitudinal < b.end_longitudinal;
-  });
-
-  // calc relative lateral length
-  out_points.front().start_shift_length = getCurrentBaseShift();
-  for (size_t i = 1; i < shift_lines.size(); ++i) {
-    out_points.at(i).start_shift_length = shift_lines.at(i - 1).end_shift_length;
-  }
-
-  return out_points;
-}
-AvoidLine AvoidanceModule::fillAdditionalInfo(const AvoidLine & shift_line) const
-{
-  const auto ret = fillAdditionalInfo(AvoidLineArray{shift_line});
-  return ret.front();
 }
 
 AvoidLine AvoidanceModule::getNonStraightShiftLine(const AvoidLineArray & shift_lines) const
@@ -927,85 +895,6 @@ AvoidLine AvoidanceModule::getNonStraightShiftLine(const AvoidLineArray & shift_
   }
 
   return {};
-}
-
-void AvoidanceModule::fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const
-{
-  if (shift_lines.empty()) {
-    return;
-  }
-
-  const auto & path = avoidance_data_.reference_path;
-  const auto arclength = util::calcPathArcLengthArray(path);
-  const auto dist_path_front_to_ego =
-    calcSignedArcLength(path.points, 0, avoidance_data_.ego_closest_path_index);
-
-  // calc longitudinal
-  for (auto & sl : shift_lines) {
-    sl.start_idx = findNearestIndex(path.points, sl.start.position);
-    sl.start_longitudinal = arclength.at(sl.start_idx) - dist_path_front_to_ego;
-    sl.end_idx = findNearestIndex(path.points, sl.end.position);
-    sl.end_longitudinal = arclength.at(sl.end_idx) - dist_path_front_to_ego;
-  }
-}
-
-void AvoidanceModule::fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const
-{
-  const auto & path = avoidance_data_.reference_path;
-  const auto arclength = util::calcPathArcLengthArray(path);
-  const auto path_front_to_ego =
-    calcSignedArcLength(path.points, 0, avoidance_data_.ego_closest_path_index);
-
-  for (auto & sl : shift_lines) {
-    sl.start_idx = findPathIndexFromArclength(arclength, sl.start_longitudinal + path_front_to_ego);
-    sl.start = path.points.at(sl.start_idx).point.pose;
-    sl.end_idx = findPathIndexFromArclength(arclength, sl.end_longitudinal + path_front_to_ego);
-    sl.end = path.points.at(sl.end_idx).point.pose;
-  }
-}
-/*
- * combineRawShiftLinesWithUniqueCheck
- *
- * Combine points A into B. If shift_line of A which has same object_id and
- * similar shape is already in B, it will not be added into B.
- */
-AvoidLineArray AvoidanceModule::combineRawShiftLinesWithUniqueCheck(
-  const AvoidLineArray & base_lines, const AvoidLineArray & added_lines) const
-{
-  // TODO(Horibe) parametrize
-  const auto isSimilar = [](const AvoidLine & a, const AvoidLine & b) {
-    using tier4_autoware_utils::calcDistance2d;
-    if (calcDistance2d(a.start, b.start) > 1.0) {
-      return false;
-    }
-    if (calcDistance2d(a.end, b.end) > 1.0) {
-      return false;
-    }
-    if (std::abs(a.end_shift_length - b.end_shift_length) > 0.5) {
-      return false;
-    }
-    return true;
-  };
-  const auto hasSameObjectId = [](const auto & a, const auto & b) {
-    return a.object.object.object_id == b.object.object.object_id;
-  };
-
-  auto combined = base_lines;  // initialized
-  for (const auto & added_line : added_lines) {
-    bool skip = false;
-
-    for (const auto & base_line : base_lines) {
-      if (hasSameObjectId(added_line, base_line) && isSimilar(added_line, base_line)) {
-        skip = true;
-        break;
-      }
-    }
-    if (!skip) {
-      combined.push_back(added_line);
-    }
-  }
-
-  return combined;
 }
 
 void AvoidanceModule::generateTotalShiftLine(
@@ -1174,11 +1063,11 @@ AvoidLineArray AvoidanceModule::mergeShiftLines(
 
   // set parent id
   for (auto & al : merged_shift_lines) {
-    al.parent_ids = calcParentIds(raw_shift_lines, al);
+    al.parent_ids = shift_line_utils::calcParentIds(raw_shift_lines, al);
   }
 
   // sort by distance from ego.
-  alignShiftLinesOrder(merged_shift_lines);
+  shift_line_utils::alignShiftLinesOrder(merged_shift_lines, getCurrentLinearShift());
 
   // debug visualize
   {
@@ -1217,39 +1106,6 @@ AvoidLineArray AvoidanceModule::mergeShiftLines(
   return merged_shift_lines;
 }
 
-std::vector<size_t> AvoidanceModule::calcParentIds(
-  const AvoidLineArray & parent_candidates, const AvoidLine & child) const
-{
-  // Get the ID of the original AP whose transition area overlaps with the given AP,
-  // and set it to the parent id.
-  std::set<uint64_t> ids;
-  for (const auto & al : parent_candidates) {
-    const auto p_s = al.start_longitudinal;
-    const auto p_e = al.end_longitudinal;
-    const auto has_overlap = !(p_e < child.start_longitudinal || child.end_longitudinal < p_s);
-
-    if (!has_overlap) {
-      continue;
-    }
-
-    // Id the shift is overlapped, insert the shift point. Additionally, the shift which refers
-    // to the same object id (created by the same object) will be set.
-    //
-    // Why? : think that there are two shifts, avoiding and .
-    // If you register only the avoiding shift, the return-to-center shift will not be generated
-    // when you get too close to or over the obstacle. The return-shift can be handled with
-    // addReturnShift(), but it maybe reasonable to register the return-to-center shift for the
-    // object at the same time as registering the avoidance shift to remove the complexity of the
-    // addReturnShift().
-    for (const auto & al_local : parent_candidates) {
-      if (al_local.object.object.object_id == al.object.object.object_id) {
-        ids.insert(al_local.id);
-      }
-    }
-  }
-  return std::vector<size_t>(ids.begin(), ids.end());
-}
-
 /*
  * Remove unnecessary avoid points
  * - Combine avoid points that have almost same gradient
@@ -1267,13 +1123,14 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
   AvoidLineArray sl_array_trimmed = shift_lines;
 
   // sort shift points from front to back.
-  alignShiftLinesOrder(sl_array_trimmed);
+  shift_line_utils::alignShiftLinesOrder(sl_array_trimmed, getCurrentLinearShift());
 
   // - Combine avoid points that have almost same gradient.
   // this is to remove the noise.
   {
     const auto CHANGE_SHIFT_THRESHOLD_FOR_NOISE = 0.1;
-    trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD_FOR_NOISE);
+    shift_line_utils::trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD_FOR_NOISE);
+    shift_line_utils::alignShiftLinesOrder(sl_array_trimmed, getCurrentLinearShift());
     debug.trim_similar_grad_shift = sl_array_trimmed;
     printShiftLines(sl_array_trimmed, "after trim_similar_grad_shift");
   }
@@ -1282,7 +1139,8 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
   // This is to remove the noise coming from detection accuracy, interpolation, resampling, etc.
   {
     constexpr double QUANTIZATION_DISTANCE = 0.2;
-    quantizeShiftLine(sl_array_trimmed, QUANTIZATION_DISTANCE);
+    shift_line_utils::quantizeShiftLine(sl_array_trimmed, QUANTIZATION_DISTANCE);
+    shift_line_utils::alignShiftLinesOrder(sl_array_trimmed, getCurrentLinearShift());
     printShiftLines(sl_array_trimmed, "after sl_array_trimmed");
     debug.quantized = sl_array_trimmed;
   }
@@ -1298,7 +1156,8 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
   // - Combine avoid points that have almost same gradient (again)
   {
     const auto CHANGE_SHIFT_THRESHOLD = 0.2;
-    trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
+    shift_line_utils::trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
+    shift_line_utils::alignShiftLinesOrder(sl_array_trimmed, getCurrentLinearShift());
     debug.trim_similar_grad_shift_second = sl_array_trimmed;
     printShiftLines(sl_array_trimmed, "after trim_similar_grad_shift_second");
   }
@@ -1315,143 +1174,13 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
   // - Combine avoid points that have almost same gradient (again)
   {
     const auto CHANGE_SHIFT_THRESHOLD = 0.2;
-    trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
+    shift_line_utils::trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
+    shift_line_utils::alignShiftLinesOrder(sl_array_trimmed, getCurrentLinearShift());
     debug.trim_similar_grad_shift_third = sl_array_trimmed;
     printShiftLines(sl_array_trimmed, "after trim_similar_grad_shift_second");
   }
 
   return sl_array_trimmed;
-}
-
-void AvoidanceModule::alignShiftLinesOrder(
-  AvoidLineArray & shift_lines, const bool recalculate_start_length) const
-{
-  if (shift_lines.empty()) {
-    return;
-  }
-
-  // sort shift points from front to back.
-  std::sort(shift_lines.begin(), shift_lines.end(), [](auto a, auto b) {
-    return a.end_longitudinal < b.end_longitudinal;
-  });
-
-  // calc relative length
-  // NOTE: the input shift point must not have conflict range. Otherwise relative
-  // length value will be broken.
-  if (recalculate_start_length) {
-    shift_lines.front().start_shift_length = getCurrentLinearShift();
-    for (size_t i = 1; i < shift_lines.size(); ++i) {
-      shift_lines.at(i).start_shift_length = shift_lines.at(i - 1).end_shift_length;
-    }
-  }
-}
-
-void AvoidanceModule::quantizeShiftLine(AvoidLineArray & shift_lines, const double interval) const
-{
-  if (interval < 1.0e-5) {
-    return;  // no need to process
-  }
-
-  for (auto & sl : shift_lines) {
-    sl.end_shift_length = std::round(sl.end_shift_length / interval) * interval;
-  }
-
-  alignShiftLinesOrder(shift_lines);
-}
-
-void AvoidanceModule::trimSmallShiftLine(
-  AvoidLineArray & shift_lines, const double shift_diff_thres) const
-{
-  AvoidLineArray shift_lines_orig = shift_lines;
-  shift_lines.clear();
-
-  shift_lines.push_back(shift_lines_orig.front());  // Take the first one anyway (think later)
-
-  for (size_t i = 1; i < shift_lines_orig.size(); ++i) {
-    auto sl_now = shift_lines_orig.at(i);
-    const auto sl_prev = shift_lines.back();
-    const auto shift_diff = sl_now.end_shift_length - sl_prev.end_shift_length;
-
-    auto sl_modified = sl_now;
-
-    // remove the shift point if the length is almost same as the previous one.
-    if (std::abs(shift_diff) < shift_diff_thres) {
-      sl_modified.end_shift_length = sl_prev.end_shift_length;
-      sl_modified.start_shift_length = sl_prev.end_shift_length;
-      DEBUG_PRINT(
-        "i = %lu, relative shift = %f is small. set with relative shift = 0.", i, shift_diff);
-    } else {
-      DEBUG_PRINT("i = %lu, shift = %f is large. take this one normally.", i, shift_diff);
-    }
-
-    shift_lines.push_back(sl_modified);
-  }
-
-  alignShiftLinesOrder(shift_lines);
-
-  DEBUG_PRINT("size %lu -> %lu", shift_lines_orig.size(), shift_lines.size());
-}
-
-void AvoidanceModule::trimSimilarGradShiftLine(
-  AvoidLineArray & avoid_lines, const double change_shift_dist_threshold) const
-{
-  AvoidLineArray avoid_lines_orig = avoid_lines;
-  avoid_lines.clear();
-
-  avoid_lines.push_back(avoid_lines_orig.front());  // Take the first one anyway (think later)
-
-  // Save the points being merged. When merging consecutively, also check previously merged points.
-  AvoidLineArray being_merged_points;
-
-  for (size_t i = 1; i < avoid_lines_orig.size(); ++i) {
-    const auto al_now = avoid_lines_orig.at(i);
-    const auto al_prev = avoid_lines.back();
-
-    being_merged_points.push_back(al_prev);  // This point is about to be merged.
-
-    auto combined_al = al_prev;
-    setEndData(
-      combined_al, al_now.end_shift_length, al_now.end, al_now.end_idx, al_now.end_longitudinal);
-    combined_al.parent_ids = concatParentIds(combined_al.parent_ids, al_prev.parent_ids);
-
-    const auto has_large_length_change = [&]() {
-      for (const auto & original : being_merged_points) {
-        const auto longitudinal = original.end_longitudinal - combined_al.start_longitudinal;
-        const auto new_length =
-          combined_al.getGradient() * longitudinal + combined_al.start_shift_length;
-        const bool has_large_change =
-          std::abs(new_length - original.end_shift_length) > change_shift_dist_threshold;
-
-        DEBUG_PRINT(
-          "original.end_shift_length: %f, original.end_longitudinal: %f, "
-          "combined_al.start_longitudinal: "
-          "%f, combined_al.Gradient: %f, new_length: %f, has_large_change: %d",
-          original.end_shift_length, original.end_longitudinal, combined_al.start_longitudinal,
-          combined_al.getGradient(), new_length, has_large_change);
-
-        if (std::abs(new_length - original.end_shift_length) > change_shift_dist_threshold) {
-          return true;
-        }
-      }
-      return false;
-    }();
-
-    if (has_large_length_change) {
-      // If this point is merged with the previous points, it makes a large changes.
-      // Do not merge this.
-      avoid_lines.push_back(al_now);
-      being_merged_points.clear();
-      DEBUG_PRINT("use this point. has_large_length_change = %d", has_large_length_change);
-    } else {
-      avoid_lines.back() = combined_al;  // Update the last points by merging the current point
-      being_merged_points.push_back(al_prev);
-      DEBUG_PRINT("trim! has_large_length_change = %d", has_large_length_change);
-    }
-  }
-
-  alignShiftLinesOrder(avoid_lines);
-
-  DEBUG_PRINT("size %lu -> %lu", avoid_lines_orig.size(), avoid_lines.size());
 }
 
 /**
@@ -1523,7 +1252,8 @@ void AvoidanceModule::trimMomentaryReturn(AvoidLineArray & shift_lines) const
       setStartData(
         sl_modified, sl_now.end_shift_length, sl_now.start, sl_now.start_idx,
         sl_now.start_longitudinal);
-      sl_modified.parent_ids = concatParentIds(sl_modified.parent_ids, sl_now.parent_ids);
+      sl_modified.parent_ids =
+        shift_line_utils::concatParentIds(sl_modified.parent_ids, sl_now.parent_ids);
       shift_lines.push_back(sl_modified);
       ++i;  // skip next shift point
       continue;
@@ -1574,7 +1304,8 @@ void AvoidanceModule::trimMomentaryReturn(AvoidLineArray & shift_lines) const
       findPathIndexFromArclength(arclength, sl_next_modified.start_longitudinal);
     sl_next_modified.start =
       avoidance_data_.reference_path.points.at(sl_next_modified.start_idx).point.pose;
-    sl_next_modified.parent_ids = calcParentIds(current_raw_shift_lines_, sl_next_modified);
+    sl_next_modified.parent_ids =
+      shift_line_utils::calcParentIds(current_raw_shift_lines_, sl_next_modified);
 
     // Straight shift point
     if (sl_next_modified.start_idx > sl_now.start_idx) {  // the case where a straight route exists.
@@ -1583,7 +1314,8 @@ void AvoidanceModule::trimMomentaryReturn(AvoidLineArray & shift_lines) const
       setEndData(
         sl_now_modified, sl_prev_length, sl_next_modified.start, sl_next_modified.start_idx,
         sl_next_modified.start_longitudinal);
-      sl_now_modified.parent_ids = calcParentIds(current_raw_shift_lines_, sl_now_modified);
+      sl_now_modified.parent_ids =
+        shift_line_utils::calcParentIds(current_raw_shift_lines_, sl_now_modified);
       shift_lines.push_back(sl_now_modified);
     }
     shift_lines.push_back(sl_next_modified);
@@ -1597,7 +1329,7 @@ void AvoidanceModule::trimMomentaryReturn(AvoidLineArray & shift_lines) const
     i = next_avoid_idx;  // skip shifting until next_avoid_idx.
   }
 
-  alignShiftLinesOrder(shift_lines);
+  shift_line_utils::alignShiftLinesOrder(shift_lines, getCurrentLinearShift());
 
   DEBUG_PRINT("trimMomentaryReturn: size %lu -> %lu", shift_lines_orig.size(), shift_lines.size());
 }
@@ -1627,7 +1359,8 @@ void AvoidanceModule::trimSharpReturn(AvoidLineArray & shift_lines) const
     setEndData(
       sl_modified, sl_next.end_shift_length, sl_next.end, sl_next.end_idx,
       sl_next.end_longitudinal);
-    sl_modified.parent_ids = concatParentIds(sl_modified.parent_ids, sl_now.parent_ids);
+    sl_modified.parent_ids =
+      shift_line_utils::concatParentIds(sl_modified.parent_ids, sl_now.parent_ids);
     return sl_modified;
   };
 
@@ -1738,54 +1471,9 @@ void AvoidanceModule::trimSharpReturn(AvoidLineArray & shift_lines) const
     }
   }
 
-  alignShiftLinesOrder(shift_lines);
+  shift_line_utils::alignShiftLinesOrder(shift_lines, getCurrentLinearShift());
 
   DEBUG_PRINT("trimSharpReturn: size %lu -> %lu", shift_lines_orig.size(), shift_lines.size());
-}
-
-void AvoidanceModule::trimTooSharpShift(AvoidLineArray & avoid_lines) const
-{
-  if (avoid_lines.empty()) {
-    return;
-  }
-
-  AvoidLineArray avoid_lines_orig = avoid_lines;
-  avoid_lines.clear();
-
-  const auto isInJerkLimit = [this](const auto & al) {
-    const auto required_jerk = path_shifter_.calcJerkFromLatLonDistance(
-      al.getRelativeLength(), al.getRelativeLongitudinal(), getSharpAvoidanceEgoSpeed());
-    return std::fabs(required_jerk) < parameters_->max_lateral_jerk;
-  };
-
-  for (size_t i = 0; i < avoid_lines_orig.size(); ++i) {
-    auto al_now = avoid_lines_orig.at(i);
-
-    if (isInJerkLimit(al_now)) {
-      avoid_lines.push_back(al_now);
-      continue;
-    }
-
-    DEBUG_PRINT("over jerk is detected: i = %lu", i);
-    printShiftLines(AvoidLineArray{al_now}, "points with over jerk");
-
-    // The avoidance_point_now exceeds jerk limit, so merge it with the next avoidance_point.
-    for (size_t j = i + 1; j < avoid_lines_orig.size(); ++j) {
-      auto al_next = avoid_lines_orig.at(j);
-      setEndData(
-        al_now, al_next.end_shift_length, al_next.end, al_next.end_idx, al_next.end_longitudinal);
-      if (isInJerkLimit(al_now)) {
-        avoid_lines.push_back(al_now);
-        DEBUG_PRINT("merge finished. i = %lu, j = %lu", i, j);
-        i = j;  // skip check until j index.
-        break;
-      }
-    }
-  }
-
-  alignShiftLinesOrder(avoid_lines);
-
-  DEBUG_PRINT("size %lu -> %lu", avoid_lines_orig.size(), avoid_lines.size());
 }
 
 /*
@@ -1822,24 +1510,28 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
 
   // If it has a shift point, add return shift from the existing last shift point.
   // If not, add return shift from ego point. (prepare distance is considered for both.)
-  ShiftLine last_sl;  // the return-shift will be generated after the last shift point.
+  AvoidLine last_sl;  // the return-shift will be generated after the last shift point.
   {
     // avoidance points: Yes, shift points: No -> select last avoidance point.
     if (has_candidate_point && !has_registered_point) {
-      alignShiftLinesOrder(sl_candidates, false);
+      shift_line_utils::alignShiftLinesOrder(sl_candidates, getCurrentLinearShift(), false);
       last_sl = sl_candidates.back();
     }
 
     // avoidance points: No, shift points: Yes -> select last shift point.
     if (!has_candidate_point && has_registered_point) {
-      last_sl = fillAdditionalInfo(AvoidLine{path_shifter_.getLastShiftLine().get()});
+      last_sl = shift_line_utils::toAvoidLine(path_shifter_.getLastShiftLine().get());
+      last_sl.start_shift_length = getCurrentBaseShift();
+      shift_line_utils::fillAdditionalInfo(avoidance_data_.reference_path, last_sl);
     }
 
     // avoidance points: Yes, shift points: Yes -> select the last one from both.
     if (has_candidate_point && has_registered_point) {
-      alignShiftLinesOrder(sl_candidates, false);
+      shift_line_utils::alignShiftLinesOrder(sl_candidates, getCurrentLinearShift(), false);
       const auto & al = sl_candidates.back();
-      const auto & sl = fillAdditionalInfo(AvoidLine{path_shifter_.getLastShiftLine().get()});
+      auto sl = shift_line_utils::toAvoidLine(path_shifter_.getLastShiftLine().get());
+      sl.start_shift_length = getCurrentBaseShift();
+      shift_line_utils::fillAdditionalInfo(avoidance_data_.reference_path, sl);
       last_sl = (sl.end_longitudinal > al.end_longitudinal) ? sl : al;
     }
 
@@ -2592,83 +2284,6 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
   return centerline_path;
 }
 
-boost::optional<AvoidLine> AvoidanceModule::calcIntersectionShiftLine(
-  const AvoidancePlanningData & data) const
-{
-  boost::optional<PathPointWithLaneId> intersection_point{};
-  for (const auto & p : avoidance_data_.reference_path.points) {
-    for (const auto & id : p.lane_ids) {
-      const lanelet::ConstLanelet ll = planner_data_->route_handler->getLaneletsFromId(id);
-      std::string turn_direction = ll.attributeOr("turn_direction", "else");
-      if (turn_direction == "right" || turn_direction == "left") {
-        intersection_point = p;
-        RCLCPP_INFO(getLogger(), "intersection is found.");
-        break;
-      }
-    }
-    if (intersection_point) {
-      break;
-    }
-  }
-
-  const auto calcBehindPose = [&data](const Point & p, const double dist) {
-    const auto & path = data.reference_path;
-    const size_t start = findNearestIndex(path.points, p);
-    double sum = 0.0;
-    for (size_t i = start - 1; i > 1; --i) {
-      sum += calcDistance2d(path.points.at(i), path.points.at(i + 1));
-      if (sum > dist) {
-        return path.points.at(i).point.pose;
-      }
-    }
-    return path.points.at(0).point.pose;
-  };
-
-  const auto intersection_shift_line = [&]() {
-    boost::optional<AvoidLine> shift_line{};
-    if (!intersection_point) {
-      RCLCPP_INFO(getLogger(), "No intersection.");
-      return shift_line;
-    }
-
-    const double ego_to_intersection_dist = calcSignedArcLength(
-      data.reference_path.points, getEgoPosition(), intersection_point->point.pose.position);
-
-    if (ego_to_intersection_dist <= 5.0) {
-      RCLCPP_INFO(getLogger(), "No enough margin to intersection.");
-      return shift_line;
-    }
-
-    // Search obstacles around the intersection.
-    // If it exists, use its shift distance on the intersection.
-    constexpr double intersection_obstacle_check_dist = 10.0;
-    constexpr double intersection_shift_margin = 1.0;
-
-    double shift_length = 0.0;  // default (no obstacle) is zero.
-    for (const auto & obj : avoidance_data_.target_objects) {
-      if (
-        std::abs(obj.longitudinal - ego_to_intersection_dist) > intersection_obstacle_check_dist) {
-        continue;
-      }
-      if (isOnRight(obj)) {
-        continue;  // TODO(Horibe) Now only think about the left side obstacle.
-      }
-      shift_length = std::min(shift_length, obj.overhang_dist - intersection_shift_margin);
-    }
-    RCLCPP_INFO(getLogger(), "Intersection shift_length = %f", shift_length);
-
-    AvoidLine p{};
-    p.end_shift_length = shift_length;
-    p.start =
-      calcBehindPose(intersection_point->point.pose.position, intersection_obstacle_check_dist);
-    p.end = intersection_point->point.pose;
-    shift_line = p;
-    return shift_line;
-  }();
-
-  return intersection_shift_line;
-}
-
 BehaviorModuleOutput AvoidanceModule::plan()
 {
   const auto & data = avoidance_data_;
@@ -2864,7 +2479,7 @@ void AvoidanceModule::addShiftLineIfApproved(const AvoidLineArray & shift_lines)
 void AvoidanceModule::addNewShiftLines(
   PathShifter & path_shifter, const AvoidLineArray & new_shift_lines) const
 {
-  ShiftLineArray future = toShiftLineArray(new_shift_lines);
+  ShiftLineArray future = shift_line_utils::toShiftLineArray(new_shift_lines);
 
   size_t min_start_idx = std::numeric_limits<size_t>::max();
   for (const auto & sl : new_shift_lines) {

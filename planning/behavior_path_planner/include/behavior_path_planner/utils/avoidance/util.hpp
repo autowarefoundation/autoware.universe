@@ -63,13 +63,6 @@ bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_
 size_t findPathIndexFromArclength(
   const std::vector<double> & path_arclength_arr, const double target_arc);
 
-ShiftedPath toShiftedPath(const PathWithLaneId & path);
-
-ShiftLineArray toShiftLineArray(const AvoidLineArray & avoid_points);
-
-std::vector<size_t> concatParentIds(
-  const std::vector<size_t> & ids1, const std::vector<size_t> & ids2);
-
 double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
@@ -131,6 +124,8 @@ void filterTargetObjects(
 
 double getLateralMarginFromVelocity(
   const double velocity, const std::shared_ptr<AvoidanceParameters> & parameters);
+
+ShiftedPath toShiftedPath(const PathWithLaneId & path);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTIL_HPP_
