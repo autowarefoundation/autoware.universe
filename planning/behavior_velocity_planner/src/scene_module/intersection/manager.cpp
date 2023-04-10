@@ -27,7 +27,8 @@
 namespace behavior_velocity_planner
 {
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName()),
+  occlusion_rtc_interface_(&node, "intersection_occlusion")
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
@@ -115,7 +116,8 @@ void IntersectionModuleManager::launchNewModules(
 
   const auto lanelets =
     planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
-  bool is_first_intersection_primitive = true;
+  // run occlusion detection only in the first intersection
+  bool enable_occlusion_detection = true;
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -136,14 +138,13 @@ void IntersectionModuleManager::launchNewModules(
     const auto assoc_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     registerModule(std::make_shared<IntersectionModule>(
-      module_id, lane_id, planner_data_, intersection_param_, assoc_ids,
-      is_first_intersection_primitive, node_, logger_.get_child("intersection_module"), clock_,
-      rtc_interface_ptr_));
+      module_id, lane_id, planner_data_, intersection_param_, assoc_ids, enable_occlusion_detection,
+      node_, logger_.get_child("intersection_module"), clock_, rtc_interface_ptr_));
     generateUUID(module_id);
     updateRTCStatus(
       getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
 
-    is_first_intersection_primitive = false;
+    enable_occlusion_detection = false;
   }
 }
 

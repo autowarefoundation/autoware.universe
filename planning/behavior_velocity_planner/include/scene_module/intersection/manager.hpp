@@ -38,6 +38,9 @@ public:
 
 private:
   IntersectionModule::PlannerParam intersection_param_;
+  // additional for INTERSECTION_OCCLUSION
+  RTCInterface occlusion_rtc_interface_;
+  std::unordered_map<int64_t, UUID> occlusion_map_uuid_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
@@ -47,6 +50,8 @@ private:
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 
   void sendRTC(const Time & stamp) override;
+  void setActivation() override;
+  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface

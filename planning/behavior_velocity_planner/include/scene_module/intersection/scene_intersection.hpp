@@ -132,7 +132,7 @@ public:
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<int> & assoc_ids,
     const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock, std::shared_ptr<RTCInterface> rtc_interface_ptr);
+    const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -144,6 +144,9 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
   const std::set<int> & getAssocIds() const { return assoc_ids_; }
+
+  bool getOcclusionSafety() const { return occlusion_stop_required_; /* TODO(Mamoru Sobue) */ }
+  bool getOcclusionDistance() const { return 0.0; /* TODO(Mamoru Sobue) */ }
 
 private:
   rclcpp::Node & node_;

@@ -63,8 +63,8 @@ IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const std::set<int> & assoc_ids,
   const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock, std::shared_ptr<RTCInterface> rtc_interface_ptr)
-: SceneModuleInterface(module_id, logger, clock, rtc_interface_ptr),
+  const rclcpp::Clock::SharedPtr clock, std::shared_ptr<RTCInterface> occlusion_rtc_interface_ptr)
+: SceneModuleInterface(module_id, logger, clock),
   node_(node),
   lane_id_(lane_id),
   is_go_out_(false),
