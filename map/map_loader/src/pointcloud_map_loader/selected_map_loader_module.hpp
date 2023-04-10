@@ -51,7 +51,7 @@ private:
 
   bool onServiceGetSelectedPointCloudMap(
     GetSelectedPointCloudMap::Request::SharedPtr req,
-    GetSelectedPointCloudMap::Response::SharedPtr res);
+    GetSelectedPointCloudMap::Response::SharedPtr res) const;
   autoware_map_msgs::msg::PointCloudMapCellWithID loadPointCloudMapCellWithID(
     const std::string & path, const std::string & map_id) const;
 };
