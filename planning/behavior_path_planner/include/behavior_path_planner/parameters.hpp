@@ -20,7 +20,8 @@
 struct ModuleConfigParameters
 {
   bool enable_module{false};
-  bool enable_simultaneous_execution{false};
+  bool enable_simultaneous_execution_as_approved_module{false};
+  bool enable_simultaneous_execution_as_candidate_module{false};
   uint8_t priority{0};
   uint8_t max_module_size{0};
 };
@@ -44,8 +45,8 @@ struct BehaviorPathPlannerParameters
   double backward_length_buffer_for_end_of_lane;
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
-  double minimum_lane_change_length;
-  double minimum_lane_change_prepare_distance;
+  double minimum_lane_changing_length;
+  double minimum_prepare_length;
 
   double minimum_pull_over_length;
   double minimum_pull_out_length;
@@ -61,6 +62,7 @@ struct BehaviorPathPlannerParameters
   bool turn_signal_on_swerving;
 
   double enable_akima_spline_first;
+  double enable_cog_on_centerline;
   double input_path_interval;
   double output_path_interval;
 

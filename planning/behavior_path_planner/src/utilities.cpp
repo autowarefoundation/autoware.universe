@@ -15,6 +15,7 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -145,12 +146,8 @@ PredictedPath convertToPredictedPath(
   const double initial_velocity = std::abs(vehicle_twist.linear.x);
   const double lane_change_velocity = std::max(initial_velocity + acceleration * prepare_time, 0.0);
 
-  // first point
-  predicted_path.path.push_back(
-    motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length));
-
   // prepare segment
-  for (double t = resolution; t < prepare_time; t += resolution) {
+  for (double t = 0.0; t < prepare_time; t += resolution) {
     const double length = initial_velocity * t + 0.5 * acceleration * t * t;
     predicted_path.path.push_back(
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
@@ -403,32 +400,6 @@ std::vector<double> calcObjectsDistanceToPath(
   return distance_array;
 }
 
-PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
-{
-  PathWithLaneId filtered_path;
-  for (const auto & pt : input_path.points) {
-    if (filtered_path.points.empty()) {
-      filtered_path.points.push_back(pt);
-      continue;
-    }
-
-    constexpr double min_dist = 0.001;
-    if (
-      tier4_autoware_utils::calcDistance3d(filtered_path.points.back().point, pt.point) <
-      min_dist) {
-      filtered_path.points.back().lane_ids.push_back(pt.lane_ids.front());
-      filtered_path.points.back().point.longitudinal_velocity_mps = std::min(
-        pt.point.longitudinal_velocity_mps,
-        filtered_path.points.back().point.longitudinal_velocity_mps);
-    } else {
-      filtered_path.points.push_back(pt);
-    }
-  }
-  filtered_path.left_bound = input_path.left_bound;
-  filtered_path.right_bound = input_path.right_bound;
-  return filtered_path;
-}
-
 template <typename T>
 bool exists(std::vector<T> vec, T element)
 {
@@ -602,8 +573,9 @@ PathWithLaneId refinePathForGoal(
   const double search_radius_range, const double search_rad_range, const PathWithLaneId & input,
   const Pose & goal, const int64_t goal_lane_id)
 {
-  PathWithLaneId filtered_path, path_with_goal;
-  filtered_path = removeOverlappingPoints(input);
+  PathWithLaneId filtered_path = input;
+  PathWithLaneId path_with_goal;
+  filtered_path.points = motion_utils::removeOverlapPoints(filtered_path.points);
 
   // always set zero velocity at the end of path for safety
   if (!filtered_path.points.empty()) {
@@ -1311,33 +1283,6 @@ std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets)
   return ids;
 }
 
-lanelet::Polygon3d getVehiclePolygon(
-  const Pose & vehicle_pose, const double vehicle_width, const double base_link2front)
-{
-  tf2::Vector3 front_left, front_right, rear_left, rear_right;
-  front_left.setValue(base_link2front, vehicle_width / 2, 0);
-  front_right.setValue(base_link2front, -vehicle_width / 2, 0);
-  rear_left.setValue(0, vehicle_width / 2, 0);
-  rear_right.setValue(0, -vehicle_width / 2, 0);
-
-  tf2::Transform tf;
-  tf2::fromMsg(vehicle_pose, tf);
-  const auto front_left_transformed = tf * front_left;
-  const auto front_right_transformed = tf * front_right;
-  const auto rear_left_transformed = tf * rear_left;
-  const auto rear_right_transformed = tf * rear_right;
-
-  lanelet::Polygon3d llt_poly;
-  auto toPoint3d = [](const tf2::Vector3 & v) { return lanelet::Point3d(0, v.x(), v.y(), v.z()); };
-  llt_poly.reserve(4);
-  llt_poly.push_back(toPoint3d(front_left_transformed));
-  llt_poly.push_back(toPoint3d(front_right_transformed));
-  llt_poly.push_back(toPoint3d(rear_right_transformed));
-  llt_poly.push_back(toPoint3d(rear_left_transformed));
-
-  return llt_poly;
-}
-
 PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
 {
   const size_t original_size = path.points.size();
@@ -1676,13 +1621,6 @@ PredictedObjects filterObjectsByVelocity(
   return filtered;
 }
 
-void shiftPose(Pose * pose, double shift_length)
-{
-  auto yaw = tf2::getYaw(pose->orientation);
-  pose->position.x -= std::sin(yaw) * shift_length;
-  pose->position.y += std::cos(yaw) * shift_length;
-}
-
 PathWithLaneId getCenterLinePathFromRootLanelet(
   const lanelet::ConstLanelet & root_lanelet,
   const std::shared_ptr<const PlannerData> & planner_data)
@@ -1735,6 +1673,13 @@ PathWithLaneId getCenterLinePath(
     route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
   const auto resampled_path_with_lane_id = motion_utils::resamplePath(
     raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
+
+  // convert centerline, which we consider as CoG center,  to rear wheel center
+  if (parameter.enable_cog_on_centerline) {
+    const double rear_to_cog = parameter.vehicle_length / 2 - parameter.rear_overhang;
+    return motion_utils::convertToRearWheelCenter(resampled_path_with_lane_id, rear_to_cog);
+  }
+
   return resampled_path_with_lane_id;
 }
 
@@ -1919,15 +1864,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
     route_handler->getLaneletSequence(current_lane, pose, backward_length, forward_length);
 
   return current_lanes;
-}
-
-std::string getUuidStr(const PredictedObject & obj)
-{
-  std::stringstream hex_value;
-  for (const auto & uuid : obj.object_id.uuid) {
-    hex_value << std::hex << std::setfill('0') << std::setw(2) << +uuid;
-  }
-  return hex_value.str();
 }
 
 template <typename Pythagoras>
@@ -2334,11 +2270,11 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
   return true;
 }
 
-double calcTotalLaneChangeDistance(
+double calcTotalLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
 {
   const double minimum_lane_change_distance =
-    common_param.minimum_lane_change_prepare_distance + common_param.minimum_lane_change_length;
+    common_param.minimum_prepare_length + common_param.minimum_lane_changing_length;
   const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
   return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
 }
@@ -2347,7 +2283,7 @@ double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
   const double length_to_intersection)
 {
-  return num_lane_change * calcTotalLaneChangeDistance(common_param) + length_to_intersection;
+  return num_lane_change * calcTotalLaneChangeLength(common_param) + length_to_intersection;
 }
 
 lanelet::ConstLanelets getLaneletsFromPath(

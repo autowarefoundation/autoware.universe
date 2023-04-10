@@ -87,6 +87,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
   adaptor.init_srv(srv_set_mrm_goal_, this, &MissionPlanner::on_set_mrm_goal);
   adaptor.init_srv(srv_clear_mrm_goal_, this, &MissionPlanner::on_clear_mrm_goal);
+  adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
   change_state(RouteState::Message::UNSET);
 }
@@ -258,6 +259,12 @@ void MissionPlanner::on_clear_mrm_goal(
   // TODO(Yutaka Shimizu): reroute for MRM
   (void)req;
   (void)res;
+}
+
+void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
+{
+  // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
+  arrival_checker_.modify_goal(*msg);
 }
 
 }  // namespace mission_planner

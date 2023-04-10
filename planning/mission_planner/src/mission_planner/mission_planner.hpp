@@ -97,6 +97,9 @@ private:
   void on_clear_mrm_goal(
     const ClearMrmGoal::Service::Request::SharedPtr req,
     const ClearMrmGoal::Service::Response::SharedPtr res);
+
+  component_interface_utils::Subscription<ModifiedGoal>::SharedPtr sub_modified_goal_;
+  void on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg);
 };
 
 }  // namespace mission_planner

@@ -331,8 +331,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "pull_out.";
     p.config_pull_out.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_pull_out.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_pull_out.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_pull_out.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_pull_out.priority = declare_parameter<int>(ns + "priority");
     p.config_pull_out.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -340,8 +342,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "pull_over.";
     p.config_pull_over.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_pull_over.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_pull_over.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_pull_over.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_pull_over.priority = declare_parameter<int>(ns + "priority");
     p.config_pull_over.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -349,8 +353,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "side_shift.";
     p.config_side_shift.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_side_shift.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_side_shift.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_side_shift.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_side_shift.priority = declare_parameter<int>(ns + "priority");
     p.config_side_shift.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -358,8 +364,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "lane_change_left.";
     p.config_lane_change_left.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_lane_change_left.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_lane_change_left.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_lane_change_left.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_lane_change_left.priority = declare_parameter<int>(ns + "priority");
     p.config_lane_change_left.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -367,8 +375,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "lane_change_right.";
     p.config_lane_change_right.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_lane_change_right.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_lane_change_right.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_lane_change_right.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_lane_change_right.priority = declare_parameter<int>(ns + "priority");
     p.config_lane_change_right.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -377,8 +387,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     const std::string ns = "external_request_lane_change_right.";
     p.config_ext_request_lane_change_right.enable_module =
       declare_parameter<bool>(ns + "enable_module");
-    p.config_ext_request_lane_change_right.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_ext_request_lane_change_right.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_ext_request_lane_change_right.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_ext_request_lane_change_right.priority = declare_parameter<int>(ns + "priority");
     p.config_ext_request_lane_change_right.max_module_size =
       declare_parameter<int>(ns + "max_module_size");
@@ -388,8 +400,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     const std::string ns = "external_request_lane_change_left.";
     p.config_ext_request_lane_change_left.enable_module =
       declare_parameter<bool>(ns + "enable_module");
-    p.config_ext_request_lane_change_left.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_ext_request_lane_change_left.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_ext_request_lane_change_left.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_ext_request_lane_change_left.priority = declare_parameter<int>(ns + "priority");
     p.config_ext_request_lane_change_left.max_module_size =
       declare_parameter<int>(ns + "max_module_size");
@@ -398,8 +412,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "avoidance.";
     p.config_avoidance.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_avoidance.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_avoidance.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_avoidance.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_avoidance.priority = declare_parameter<int>(ns + "priority");
     p.config_avoidance.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -407,8 +423,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   {
     const std::string ns = "avoidance_by_lc.";
     p.config_avoidance_by_lc.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_avoidance_by_lc.enable_simultaneous_execution =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution");
+    p.config_avoidance_by_lc.enable_simultaneous_execution_as_approved_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
+    p.config_avoidance_by_lc.enable_simultaneous_execution_as_candidate_module =
+      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
     p.config_avoidance_by_lc.priority = declare_parameter<int>(ns + "priority");
     p.config_avoidance_by_lc.max_module_size = declare_parameter<int>(ns + "max_module_size");
   }
@@ -446,10 +464,9 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_out");
-  p.minimum_lane_change_length =
-    declare_parameter<double>("lane_change.minimum_lane_change_length");
-  p.minimum_lane_change_prepare_distance =
-    declare_parameter<double>("lane_change.minimum_lane_change_prepare_distance");
+  p.minimum_lane_changing_length =
+    declare_parameter<double>("lane_change.minimum_lane_changing_length");
+  p.minimum_prepare_length = declare_parameter<double>("lane_change.minimum_prepare_length");
 
   p.minimum_pull_over_length = declare_parameter<double>("minimum_pull_over_length");
   p.refine_goal_search_radius_range = declare_parameter<double>("refine_goal_search_radius_range");
@@ -465,6 +482,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_signal_on_swerving = declare_parameter<bool>("turn_signal_on_swerving");
 
   p.enable_akima_spline_first = declare_parameter<bool>("enable_akima_spline_first");
+  p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
   p.input_path_interval = declare_parameter<double>("input_path_interval");
   p.output_path_interval = declare_parameter<double>("output_path_interval");
   p.visualize_maximum_drivable_area = declare_parameter<bool>("visualize_maximum_drivable_area");
@@ -716,28 +734,42 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   const auto parameter = [](std::string && name) { return "lane_change." + name; };
 
   // trajectory generation
-  p.lane_change_prepare_duration =
-    declare_parameter<double>(parameter("lane_change_prepare_duration"));
-  p.lane_changing_safety_check_duration =
-    declare_parameter<double>(parameter("lane_changing_safety_check_duration"));
+  p.prepare_duration = declare_parameter<double>(parameter("prepare_duration"));
   p.lane_changing_lateral_jerk = declare_parameter<double>(parameter("lane_changing_lateral_jerk"));
   p.lane_changing_lateral_acc = declare_parameter<double>(parameter("lane_changing_lateral_acc"));
+  p.lane_changing_lateral_acc_at_low_velocity =
+    declare_parameter<double>(parameter("lane_changing_lateral_acc_at_low_velocity"));
+  p.lateral_acc_switching_velocity =
+    declare_parameter<double>(parameter("lateral_acc_switching_velocity"));
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
-  p.minimum_lane_change_velocity =
-    declare_parameter<double>(parameter("minimum_lane_change_velocity"));
+  p.minimum_lane_changing_velocity =
+    declare_parameter<double>(parameter("minimum_lane_changing_velocity"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
   p.maximum_deceleration = declare_parameter<double>(parameter("maximum_deceleration"));
   p.lane_change_sampling_num = declare_parameter<int>(parameter("lane_change_sampling_num"));
 
   // collision check
-  p.enable_collision_check_at_prepare_phase =
-    declare_parameter<bool>(parameter("enable_collision_check_at_prepare_phase"));
-  p.prepare_phase_ignore_target_speed_thresh =
-    declare_parameter<double>(parameter("prepare_phase_ignore_target_speed_thresh"));
+  p.enable_prepare_segment_collision_check =
+    declare_parameter<bool>(parameter("enable_prepare_segment_collision_check"));
+  p.prepare_segment_ignore_object_velocity_thresh =
+    declare_parameter<double>(parameter("prepare_segment_ignore_object_velocity_thresh"));
   p.use_predicted_path_outside_lanelet =
     declare_parameter<bool>(parameter("use_predicted_path_outside_lanelet"));
   p.use_all_predicted_path = declare_parameter<bool>(parameter("use_all_predicted_path"));
+
+  // target object
+  {
+    std::string ns = "lane_change.target_object.";
+    p.check_car = declare_parameter<bool>(ns + "car");
+    p.check_truck = declare_parameter<bool>(ns + "truck");
+    p.check_bus = declare_parameter<bool>(ns + "bus");
+    p.check_trailer = declare_parameter<bool>(ns + "trailer");
+    p.check_unknown = declare_parameter<bool>(ns + "unknown");
+    p.check_bicycle = declare_parameter<bool>(ns + "bicycle");
+    p.check_motorcycle = declare_parameter<bool>(ns + "motorcycle");
+    p.check_pedestrian = declare_parameter<bool>(ns + "pedestrian");
+  }
 
   // abort
   p.enable_cancel_lane_change = declare_parameter<bool>(parameter("enable_cancel_lane_change"));
@@ -1535,6 +1567,8 @@ void BehaviorPathPlannerNode::onLateralOffset(const LateralOffset::ConstSharedPt
 SetParametersResult BehaviorPathPlannerNode::onSetParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
+  using tier4_autoware_utils::updateParam;
+
   rcl_interfaces::msg::SetParametersResult result;
 
   if (!lane_change_param_ptr_ && !avoidance_param_ptr_) {
@@ -1547,65 +1581,65 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
   result.reason = "success";
 
   try {
-    update_param(
+    updateParam(
       parameters, "avoidance.publish_debug_marker", avoidance_param_ptr_->publish_debug_marker);
-    update_param(
+    updateParam(
       parameters, "lane_change.publish_debug_marker", lane_change_param_ptr_->publish_debug_marker);
     // Drivable area expansion parameters
     using drivable_area_expansion::DrivableAreaExpansionParameters;
     const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::ENABLED_PARAM,
       planner_data_->drivable_area_expansion_parameters.enabled);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_DYN_OBJECTS_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_dynamic_objects);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
       planner_data_->drivable_area_expansion_parameters.expansion_method);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_dist);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_FRONT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_front_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_REAR,
       planner_data_->drivable_area_expansion_parameters.ego_extra_rear_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_LEFT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_left_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_RIGHT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_right_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_front_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_REAR,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_rear_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_LEFT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_left_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_RIGHT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_right_offset);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::MAX_EXP_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_expansion_distance);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::MAX_PATH_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_path_arc_length);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.extra_arc_length);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
-    update_param(
+    updateParam(
       parameters, DrivableAreaExpansionParameters::EXTRA_COMPENSATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.compensate_extra_dist);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {

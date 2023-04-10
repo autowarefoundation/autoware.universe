@@ -17,6 +17,7 @@
 
 #include <rclcpp/qos.hpp>
 
+#include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <autoware_planning_msgs/srv/set_pose_with_uuid_stamped.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
@@ -33,6 +34,15 @@ struct ClearMrmGoal
 {
   using Service = std_srvs::srv::Trigger;
   static constexpr char name[] = "~/srv/clear_mrm_goal";
+};
+
+struct ModifiedGoal
+{
+  using Message = autoware_planning_msgs::msg::PoseWithUuidStamped;
+  static constexpr char name[] = "input/modified_goal";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
 }  // namespace mission_planner
