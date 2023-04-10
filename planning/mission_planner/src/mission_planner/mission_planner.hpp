@@ -19,6 +19,7 @@
 
 #include <component_interface_specs/planning.hpp>
 #include <component_interface_utils/rclcpp.hpp>
+#include <mission_planner/mission_planner_interface.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -92,9 +93,11 @@ private:
     const SetRoutePoints::Service::Request::SharedPtr req,
     const SetRoutePoints::Service::Response::SharedPtr res);
 
+  component_interface_utils::Subscription<ModifiedGoal>::SharedPtr sub_modified_goal_;
+  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
+  void on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg);
   bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
   void onMap(const HADMapBin::ConstSharedPtr msg);
-  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
 };
 
 }  // namespace mission_planner

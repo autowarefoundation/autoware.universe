@@ -96,6 +96,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_clear_route_, this, &MissionPlanner::on_clear_route);
   adaptor.init_srv(srv_set_route_, this, &MissionPlanner::on_set_route);
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
+  adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
   change_state(RouteState::Message::UNSET);
 }
@@ -355,6 +356,13 @@ bool MissionPlanner::checkRerouteSafety(
 void MissionPlanner::onMap(const HADMapBin::ConstSharedPtr msg)
 {
   map_ptr_ = msg;
+}
+
+// NOTE: The route interface should be mutually exclusive by callback group.
+void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
+{
+  // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
+  arrival_checker_.modify_goal(*msg);
 }
 
 }  // namespace mission_planner
