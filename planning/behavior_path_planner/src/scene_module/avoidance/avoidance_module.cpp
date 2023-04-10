@@ -1691,7 +1691,7 @@ bool AvoidanceModule::isSafePath(
   const auto & forward_check_distance = p->object_check_forward_distance;
   const auto & backward_check_distance = p->safety_check_backward_distance;
   const auto check_lanes =
-    getAdjacentLane(path_shifter, forward_check_distance, backward_check_distance);
+    getShiftSideLanes(planner_data_, path_shifter, forward_check_distance, backward_check_distance);
 
   auto path_with_current_velocity = shifted_path.path;
 
@@ -1884,59 +1884,6 @@ bool AvoidanceModule::isEnoughMargin(
   }
 
   return false;
-}
-
-lanelet::ConstLanelets AvoidanceModule::getAdjacentLane(
-  const PathShifter & path_shifter, const double forward_distance,
-  const double backward_distance) const
-{
-  const auto & rh = planner_data_->route_handler;
-
-  bool has_left_shift = false;
-  bool has_right_shift = false;
-
-  for (const auto & sp : path_shifter.getShiftLines()) {
-    if (sp.end_shift_length > 0.01) {
-      has_left_shift = true;
-      continue;
-    }
-
-    if (sp.end_shift_length < -0.01) {
-      has_right_shift = true;
-      continue;
-    }
-  }
-
-  lanelet::ConstLanelet current_lane;
-  if (!rh->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
-      "failed to find closest lanelet within route!!!");
-    return {};  // TODO(Satoshi Ota)
-  }
-
-  const auto ego_succeeding_lanes =
-    rh->getLaneletSequence(current_lane, getEgoPose(), backward_distance, forward_distance);
-
-  lanelet::ConstLanelets check_lanes{};
-  for (const auto & lane : ego_succeeding_lanes) {
-    const auto opt_left_lane = rh->getLeftLanelet(lane);
-    if (has_left_shift && opt_left_lane) {
-      check_lanes.push_back(opt_left_lane.get());
-    }
-
-    const auto opt_right_lane = rh->getRightLanelet(lane);
-    if (has_right_shift && opt_right_lane) {
-      check_lanes.push_back(opt_right_lane.get());
-    }
-
-    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
-    if (has_right_shift && !right_opposite_lanes.empty()) {
-      check_lanes.push_back(right_opposite_lanes.front());
-    }
-  }
-
-  return check_lanes;
 }
 
 ObjectDataArray AvoidanceModule::getAdjacentLaneObjects(

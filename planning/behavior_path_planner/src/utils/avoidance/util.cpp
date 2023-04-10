@@ -694,6 +694,60 @@ lanelet::ConstLanelets getTargetLanelets(
   return target_lanelets;
 }
 
+lanelet::ConstLanelets getShiftSideLanes(
+  const std::shared_ptr<const PlannerData> & planner_data, const PathShifter & path_shifter,
+  const double forward_distance, const double backward_distance)
+{
+  const auto & rh = planner_data->route_handler;
+  const auto & pose = planner_data->self_odometry->pose.pose;
+
+  bool has_left_shift = false;
+  bool has_right_shift = false;
+
+  for (const auto & sp : path_shifter.getShiftLines()) {
+    if (sp.end_shift_length > 0.01) {
+      has_left_shift = true;
+      continue;
+    }
+
+    if (sp.end_shift_length < -0.01) {
+      has_right_shift = true;
+      continue;
+    }
+  }
+
+  lanelet::ConstLanelet current_lane;
+  if (!rh->getClosestLaneletWithinRoute(pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
+      "failed to find closest lanelet within route!!!");
+    return {};  // TODO(Satoshi Ota)
+  }
+
+  const auto ego_succeeding_lanes =
+    rh->getLaneletSequence(current_lane, pose, backward_distance, forward_distance);
+
+  lanelet::ConstLanelets check_lanes{};
+  for (const auto & lane : ego_succeeding_lanes) {
+    const auto opt_left_lane = rh->getLeftLanelet(lane);
+    if (has_left_shift && opt_left_lane) {
+      check_lanes.push_back(opt_left_lane.get());
+    }
+
+    const auto opt_right_lane = rh->getRightLanelet(lane);
+    if (has_right_shift && opt_right_lane) {
+      check_lanes.push_back(opt_right_lane.get());
+    }
+
+    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
+    if (has_right_shift && !right_opposite_lanes.empty()) {
+      check_lanes.push_back(right_opposite_lanes.front());
+    }
+  }
+
+  return check_lanes;
+}
+
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
   boost::optional<Pose> & p_out)

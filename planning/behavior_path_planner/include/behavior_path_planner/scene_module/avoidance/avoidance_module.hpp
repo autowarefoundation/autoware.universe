@@ -292,10 +292,6 @@ private:
 
   // ========= safety check ==============
 
-  lanelet::ConstLanelets getAdjacentLane(
-    const PathShifter & path_shifter, const double forward_distance,
-    const double backward_distance) const;
-
   bool isSafePath(
     const PathShifter & path_shifter, ShiftedPath & shifted_path, DebugData & debug) const;
 
