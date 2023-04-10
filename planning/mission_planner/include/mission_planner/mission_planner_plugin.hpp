@@ -41,7 +41,7 @@ public:
   virtual bool ready() const = 0;
   virtual LaneletRoute plan(const RoutePoints & points) = 0;
   virtual MarkerArray visualize(const LaneletRoute & route) const = 0;
-  virtual void updateRoute(const LaneletRoute& route) = 0;
+  virtual void updateRoute(const LaneletRoute & route) = 0;
 };
 
 }  // namespace mission_planner

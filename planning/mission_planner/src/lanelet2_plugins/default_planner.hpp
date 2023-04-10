@@ -76,7 +76,7 @@ private:
     const double search_margin = 2.0);
   bool is_goal_valid(const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets);
   Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
-  void updateRoute(const PlannerPlugin::LaneletRoute& route);
+  void updateRoute(const PlannerPlugin::LaneletRoute & route);
 };
 
 }  // namespace mission_planner::lanelet2

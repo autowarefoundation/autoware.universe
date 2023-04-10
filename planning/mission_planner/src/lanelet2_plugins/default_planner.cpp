@@ -453,7 +453,7 @@ geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   return refined_goal;
 }
 
-void DefaultPlanner::updateRoute(const PlannerPlugin::LaneletRoute& route)
+void DefaultPlanner::updateRoute(const PlannerPlugin::LaneletRoute & route)
 {
   route_handler_.setRoute(route);
 }
