@@ -70,8 +70,9 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
   output.header = input->header;
 }
 
-void VoxelDistanceBasedCompareMapFilterComponent::input_target_callback(
-  const PointCloud2ConstPtr map)
+//******************************* Static map loader *****************************
+void VoxelDistanceBasedStaticMapLoader::onMapCallback(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr map)
 {
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
@@ -97,8 +98,84 @@ void VoxelDistanceBasedCompareMapFilterComponent::input_target_callback(
   tree_->setInputCloud(map_ptr_);
 }
 
-rcl_interfaces::msg::SetParametersResult VoxelDistanceBasedCompareMapFilterComponent::paramCallback(
-  const std::vector<rclcpp::Parameter> & p)
+bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
+  const pcl::PointXYZ & point, const double distance_threshold)
+{
+  const int index =
+    voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
+  if (index != -1) {
+    // voxel which contain the point is exist
+    return true;
+  }
+  std::vector<int> nn_indices(1);  // nn means nearest neighbor
+  std::vector<float> nn_distances(1);
+  if (
+    tree_->radiusSearch(
+      pcl::PointXYZ(point.x, point.y, point.z), distance_threshold, nn_indices, nn_distances, 1) ==
+    0) {
+    return false;
+  }
+  return true;
+}
+
+//******************************* Dynamic map loader ***********************************
+bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
+  const pcl::PointXYZ & point, const double distance_threshold)
+{
+  if (current_voxel_grid_dict_.size() == 0) {
+    return false;
+  }
+
+  const int map_grid_index = static_cast<int>(
+    std::floor((point.x - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
+
+  if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
+    return false;
+  }
+
+  if (
+    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    is_close_to_neighbor_voxels(
+      point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid,
+      current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree)) {
+    return true;
+  }
+  return false;
+}
+
+// *************************************************************************************
+VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterComponent(
+  const rclcpp::NodeOptions & options)
+: Filter("VoxelDistanceBasedCompareMapFilter", options)
+{
+  // initilize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ =
+      std::make_unique<DebugPublisher>(this, "voxel_distance_based_compare_map_filter");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
+  distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
+  bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
+  if (use_dynamic_map_loading) {
+    rclcpp::CallbackGroup::SharedPtr main_callback_group;
+    main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    voxel_distance_based_map_loader_ = std::make_unique<VoxelDistanceBasedDynamicMapLoader>(
+      this, distance_threshold_, &tf_input_frame_, &mutex_, main_callback_group);
+  } else {
+    voxel_distance_based_map_loader_ = std::make_unique<VoxelDistanceBasedStaticMapLoader>(
+      this, distance_threshold_, &tf_input_frame_, &mutex_);
+  }
+}
+
+void VoxelDistanceBasedCompareMapFilterComponent::filter(
+  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
 

@@ -23,6 +23,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <pcl/search/pcl_search.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -106,6 +107,9 @@ public:
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex);
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
   bool is_close_to_neighbor_voxels(
+    const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
+    pcl::search::Search<pcl::PointXYZ>::Ptr tree) const;
+  bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
     VoxelGridPointXYZ & voxel) const;
   bool is_in_voxel(
@@ -137,6 +141,7 @@ public:
 // *************** for Dynamic and Differential Map loader Voxel Grid Filter *************
 class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
 {
+protected:
   struct MapGridVoxelInfo
   {
     VoxelGridPointXYZ map_cell_voxel_grid;
