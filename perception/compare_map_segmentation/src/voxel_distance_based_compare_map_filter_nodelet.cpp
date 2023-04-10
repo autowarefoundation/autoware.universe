@@ -178,21 +178,21 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
   PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
-
-  if (get_param(p, "distance_threshold", distance_threshold_)) {
-    voxel_grid_.setLeafSize(distance_threshold_, distance_threshold_, distance_threshold_);
-    voxel_grid_.setSaveLeafLayout(true);
-    if (set_map_in_voxel_grid_) {
-      voxel_grid_.filter(*voxel_map_ptr_);
+  stop_watch_ptr_->toc("processing_time", true);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*input, *pcl_input);
+  pcl_output->points.reserve(pcl_input->points.size());
+  for (size_t i = 0; i < pcl_input->points.size(); ++i) {
+    if (voxel_distance_based_map_loader_->is_close_to_map(
+          pcl_input->points.at(i), distance_threshold_)) {
+      continue;
     }
     RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", distance_threshold_);
   }
 
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
-
-  return result;
+  pcl::toROSMsg(*pcl_output, output);
+  output.header = input->header;
 }
 }  // namespace compare_map_segmentation
 
