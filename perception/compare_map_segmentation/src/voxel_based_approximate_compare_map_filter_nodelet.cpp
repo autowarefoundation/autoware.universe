@@ -102,6 +102,7 @@ void VoxelBasedApproximateCompareMapFilterComponent::filter(
   PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
+  stop_watch_ptr_->toc("processing_time", true);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*input, *pcl_input);
@@ -115,6 +116,16 @@ void VoxelBasedApproximateCompareMapFilterComponent::filter(
   }
   pcl::toROSMsg(*pcl_output, output);
   output.header = input->header;
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 }  // namespace compare_map_segmentation
