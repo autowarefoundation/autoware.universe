@@ -126,7 +126,7 @@ public:
 //*************************** for Static Map loader Voxel Grid Filter *************
 class VoxelGridStaticMapLoader : public VoxelGridMapLoader
 {
-private:
+protected:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
   VoxelGridPointXYZ voxel_grid_;
   PointCloudPtr voxel_map_ptr_;
