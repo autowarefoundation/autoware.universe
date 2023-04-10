@@ -75,6 +75,7 @@ class PointcloudMapFilterPipeline:
                         "map_loader_radius": self.map_loader_radius,
                         "publish_debug_pcd": self.publish_debug_pcd,
                         "input_frame": "map",
+                        "debug": self.debug,
                     }
                 ],
                 extra_arguments=[
@@ -131,6 +132,7 @@ class PointcloudMapFilterPipeline:
                         "map_loader_radius": self.map_loader_radius,
                         "publish_debug_pcd": self.publish_debug_pcd,
                         "input_frame": "map",
+                        "debug": self.debug,
                     }
                 ],
                 extra_arguments=[

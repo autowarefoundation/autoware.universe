@@ -134,8 +134,8 @@ private:
 public:
   explicit VoxelGridStaticMapLoader(
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex);
-  void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
-  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  virtual void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
+  virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
 };
 
 // *************** for Dynamic and Differential Map loader Voxel Grid Filter *************
@@ -147,6 +147,7 @@ protected:
     VoxelGridPointXYZ map_cell_voxel_grid;
     PointCloudPtr map_cell_pc_ptr;
     float min_b_x, min_b_y, max_b_x, max_b_y;
+    pcl::search::Search<pcl::PointXYZ>::Ptr map_cell_kdtree;
   };
 
   typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
@@ -200,12 +201,12 @@ public:
   void timer_callback();
   bool should_update_map() const;
   void request_update_map(const geometry_msgs::msg::Point & position);
-  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
   /** \brief Check if point close to map pointcloud in the */
   bool is_close_to_next_map_grid(
     const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
 
-  inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
+  virtual inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
   {
     pcl::PointCloud<pcl::PointXYZ> output;
     for (const auto & kv : current_voxel_grid_dict_) {
@@ -236,7 +237,7 @@ public:
   }
 
   /** Update loaded map grid array for fast searching*/
-  inline void updateVoxelGridArray()
+  virtual inline void updateVoxelGridArray()
   {
     origin_x_ = std::floor((current_position_.value().x - map_loader_radius_) / map_grid_size_x_) *
                 map_grid_size_x_;
@@ -274,7 +275,7 @@ public:
     (*mutex_ptr_).unlock();
   }
 
-  inline void addMapCellAndFilter(
+  virtual inline void addMapCellAndFilter(
     const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;

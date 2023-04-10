@@ -74,6 +74,7 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
 void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr map)
 {
+  RCLCPP_INFO(logger_, "Voxelization for Static Map Loader ");
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
@@ -88,6 +89,8 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   voxel_grid_.filter(*voxel_map_ptr_);
   // kdtree
   map_ptr_ = map_pcl_ptr;
+
+  RCLCPP_INFO(logger_, "Create tree for Static Map Loader ");
   if (!tree_) {
     if (map_ptr_->isOrganized()) {
       tree_.reset(new pcl::search::OrganizedNeighbor<pcl::PointXYZ>());
@@ -101,21 +104,19 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  const int index =
-    voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
-  if (index != -1) {
-    // voxel which contain the point is exist
-    return true;
-  }
-  std::vector<int> nn_indices(1);  // nn means nearest neighbor
-  std::vector<float> nn_distances(1);
-  if (
-    tree_->radiusSearch(
-      pcl::PointXYZ(point.x, point.y, point.z), distance_threshold, nn_indices, nn_distances, 1) ==
-    0) {
+  if (voxel_map_ptr_ == NULL) {
     return false;
   }
-  return true;
+  if (map_ptr_ == NULL) {
+    return false;
+  }
+  if (tree_ == NULL) {
+    return false;
+  }
+  if (is_close_to_neighbor_voxels(point, distance_threshold, voxel_grid_, tree_)) {
+    return true;
+  }
+  return false;
 }
 
 //******************************* Dynamic map loader ***********************************
@@ -133,7 +134,6 @@ bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
   if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
     return false;
   }
-
   if (
     current_voxel_grid_array_.at(map_grid_index) != NULL &&
     is_close_to_neighbor_voxels(

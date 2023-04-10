@@ -49,11 +49,14 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
   pcl::search::Search<pcl::PointXYZ>::Ptr tree) const
 {
+  // RCLCPP_INFO(logger_,"point coordinate: x: %f y: %f z: %f", point.x, point.y, point.z);
   const int index = voxel.getCentroidIndexAt(voxel.getGridCoordinates(point.x, point.y, point.z));
   if (index != -1) {
     return true;
   }
-
+  if (tree == NULL) {
+    return false;
+  }
   std::vector<int> nn_indices(1);
   std::vector<float> nn_distances(1);
   if (tree->radiusSearch(point, distance_threshold, nn_indices, nn_distances, 1) == 0) {

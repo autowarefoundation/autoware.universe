@@ -21,6 +21,9 @@
 #include <pcl/search/pcl_search.h>
 
 #include <map>
+#include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace compare_map_segmentation
@@ -38,15 +41,16 @@ private:
   PointCloudConstPtr map_ptr_;
   double distance_threshold_;
   pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
-  pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_;
+  VoxelGridPointXYZ voxel_grid_;
 
 public:
   explicit VoxelDistanceBasedStaticMapLoader(
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex)
   : VoxelGridStaticMapLoader(node, leaf_size, tf_map_input_frame, mutex)
   {
+    RCLCPP_INFO(logger_, "VoxelDistanceBasedStaticMapLoader initialized.\n");
   }
-  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
   void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
 };
 
@@ -54,18 +58,6 @@ public:
 class VoxelDistanceBasedDynamicMapLoader : public VoxelGridDynamicMapLoader
 {
 protected:
-  struct MapGridVoxelInfo
-  {
-    VoxelGridPointXYZ map_cell_voxel_grid;
-    // PointCloudPtr map_cell_pc_ptr;
-    pcl::search::Search<pcl::PointXYZ>::Ptr map_cell_kdtree;
-    float min_b_x, min_b_y, max_b_x, max_b_y;
-  };
-
-  typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
-  VoxelGridDict current_voxel_grid_dict_;
-  std::vector<std::shared_ptr<MapGridVoxelInfo>> current_voxel_grid_array_;
-
 private:
   PointCloudConstPtr map_ptr_;
   /* data */
@@ -75,11 +67,12 @@ public:
     rclcpp::CallbackGroup::SharedPtr main_callback_group)
   : VoxelGridDynamicMapLoader(node, leaf_size, tf_map_input_frame, mutex, main_callback_group)
   {
+    RCLCPP_INFO(logger_, "VoxelDistanceBasedDynamicMapLoader initialized.\n");
   }
-  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 
   inline void addMapCellAndFilter(
-    const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
+    const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add) override
   {
     map_grid_size_x_ = map_cell_to_add.max_x - map_cell_to_add.min_x;
     map_grid_size_y_ = map_cell_to_add.max_y - map_cell_to_add.min_y;
@@ -108,6 +101,9 @@ public:
       &(map_cell_voxel_grid_tmp.leaf_layout_), map_cell_voxel_grid_tmp.get_min_b(),
       map_cell_voxel_grid_tmp.get_max_b(), map_cell_voxel_grid_tmp.get_div_b(),
       map_cell_voxel_grid_tmp.get_divb_mul(), map_cell_voxel_grid_tmp.get_inverse_leaf_size());
+
+    current_voxel_grid_list_item.map_cell_pc_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>);
+    current_voxel_grid_list_item.map_cell_pc_ptr = std::move(map_cell_downsampled_pc_ptr_tmp);
 
     // add kdtree
     pcl::search::Search<pcl::PointXYZ>::Ptr tree_tmp;
