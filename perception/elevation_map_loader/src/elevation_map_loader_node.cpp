@@ -273,7 +273,7 @@ void ElevationMapLoaderNode::receiveMap()
 
     // concat maps
     for (const auto & new_pointcloud_with_id : result.get()->new_pointcloud_with_ids) {
-      concatPointCloundMaps(pointcloud_map, new_pointcloud_with_id.pointcloud);
+      concatPointCloudMaps(pointcloud_map, new_pointcloud_with_id.pointcloud);
     }
   }
   RCLCPP_INFO(this->get_logger(), "finish receiving");
@@ -281,7 +281,7 @@ void ElevationMapLoaderNode::receiveMap()
   data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 }
 
-void ElevationMapLoaderNode::concatPointCloundMaps(
+void ElevationMapLoaderNode::concatPointCloudMaps(
   sensor_msgs::msg::PointCloud2 & pointcloud_map,
   const sensor_msgs::msg::PointCloud2 & new_pointcloud)
 {
