@@ -613,7 +613,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
   return acc_limited_traj_points;
 }
 
-void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & parameters)
+void PIDBasedPlanner::updateCruiseParam(const std::vector<rclcpp::Parameter> & parameters)
 {
   tier4_autoware_utils::updateParam<double>(
     parameters, "cruise.pid_based_planner.min_accel_during_cruise", min_accel_during_cruise_);

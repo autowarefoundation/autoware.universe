@@ -194,6 +194,14 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
   return motion_utils::convertToTrajectoryPointArray(resampled_traj);
 }
+
+geometry_msgs::msg::Point toGeomPoint(const tier4_autoware_utils::Point2d & point)
+{
+  geometry_msgs::msg::Point geom_point;
+  geom_point.x = point.x();
+  geom_point.y = point.y();
+  return geom_point;
+}
 }  // namespace
 
 namespace motion_planning
@@ -319,6 +327,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
   debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
   debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
+  debug_slow_down_wall_marker_pub_ = create_publisher<MarkerArray>("~/slow_down/virtual_wall", 1);
   debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
   debug_stop_planning_info_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
@@ -436,17 +445,18 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // 5. Cruise planning
   std::optional<VelocityLimit> cruise_vel_limit;
-  const auto output_traj_points = planner_ptr_->generateCruiseTrajectory(
+  const auto cruise_traj_points = planner_ptr_->generateCruiseTrajectory(
     planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
   publishVelocityLimit(cruise_vel_limit, "cruise");
 
   // 6. Slow down planning
-  const auto slow_down_vel_limit =
-    planner_ptr_->getSlowDownVelocityLimit(planner_data, slow_down_obstacles);
+  std::optional<VelocityLimit> slow_down_vel_limit;
+  const auto slow_down_traj_points = planner_ptr_->generateSlowDownTrajectory(
+    planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit);
   publishVelocityLimit(slow_down_vel_limit, "slow_down");
 
   // 7. Publish trajectory
-  const auto output_traj = createTrajectory(output_traj_points, msg->header);
+  const auto output_traj = createTrajectory(slow_down_traj_points, msg->header);
   trajectory_pub_->publish(output_traj);
 
   // 8. Publish debug data
@@ -609,7 +619,8 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
       stop_obstacles.push_back(*stop_obstacle);
       continue;
     }
-    const auto slow_down_obstacle = createSlowDownObstacle(obstacle, precise_lat_dist);
+    const auto slow_down_obstacle =
+      createSlowDownObstacle(decimated_traj_points, obstacle, precise_lat_dist);
     if (slow_down_obstacle) {
       slow_down_obstacles.push_back(*slow_down_obstacle);
       continue;
@@ -918,17 +929,85 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
 }
 
 std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacle(
-  [[maybe_unused]] const Obstacle & obstacle, [[maybe_unused]] const double precise_lat_dist)
+  const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
+  const double precise_lat_dist)
 {
+  const auto & object_id = obstacle.uuid.substr(0, 4);
   const auto & p = behavior_determination_param_;
+
   if (
     !enable_slow_down_planning_ || !isSlowDownObstacle(obstacle.classification.label) ||
     p.max_lat_margin_for_slow_down < precise_lat_dist) {
     return std::nullopt;
   }
 
-  // TODO(murooka) implement this
-  return std::nullopt;
+  const auto obstacle_poly = obstacle.toPolygon();
+
+  // calculate collision points with trajectory with lateral stop margin
+  const auto traj_polys_with_lat_margin = polygon_utils::createOneStepPolygons(
+    traj_points, vehicle_info_, p.max_lat_margin_for_slow_down);
+
+  std::vector<Polygon2d> front_collision_polygons;
+  size_t front_seg_idx = 0;
+  std::vector<Polygon2d> back_collision_polygons;
+  size_t back_seg_idx = 0;
+  for (size_t i = 0; i < traj_polys_with_lat_margin.size(); ++i) {
+    std::vector<Polygon2d> collision_polygons;
+    bg::intersection(traj_polys_with_lat_margin.at(i), obstacle_poly, collision_polygons);
+
+    if (!collision_polygons.empty()) {
+      if (front_collision_polygons.empty()) {
+        front_collision_polygons = collision_polygons;
+        front_seg_idx = i == 0 ? i : i - 1;
+      }
+      back_collision_polygons = collision_polygons;
+      back_seg_idx = i == 0 ? i : i - 1;
+    } else {
+      if (!front_collision_polygons.empty()) {
+        break;  // for efficient calculation
+      }
+    }
+  }
+
+  if (front_collision_polygons.empty() || back_collision_polygons.empty()) {
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), enable_debug_info_,
+      "[SlowDown] Ignore obstacle (%s) since there is no collision point", object_id.c_str());
+    return std::nullopt;
+  }
+
+  // calculate front collision point
+  double front_min_dist = std::numeric_limits<double>::max();
+  geometry_msgs::msg::Point front_collision_point;
+  for (const auto & collision_poly : front_collision_polygons) {
+    for (const auto & collision_point : collision_poly.outer()) {
+      const auto collision_geom_point = toGeomPoint(collision_point);
+      const double dist = motion_utils::calcLongitudinalOffsetToSegment(
+        traj_points, front_seg_idx, collision_geom_point);
+      if (dist < front_min_dist) {
+        front_min_dist = dist;
+        front_collision_point = collision_geom_point;
+      }
+    }
+  }
+
+  // calculate back collision point
+  double back_max_dist = std::numeric_limits<double>::min();
+  geometry_msgs::msg::Point back_collision_point;
+  for (const auto & collision_poly : back_collision_polygons) {
+    for (const auto & collision_point : collision_poly.outer()) {
+      const auto collision_geom_point = toGeomPoint(collision_point);
+      const double dist = motion_utils::calcLongitudinalOffsetToSegment(
+        traj_points, back_seg_idx, collision_geom_point);
+      if (back_max_dist < dist) {
+        back_max_dist = dist;
+        back_collision_point = collision_geom_point;
+      }
+    }
+  }
+
+  return SlowDownObstacle(
+    obstacle.uuid, obstacle.pose, precise_lat_dist, front_collision_point, back_collision_point);
 }
 
 void ObstacleCruisePlannerNode::checkConsistency(
@@ -1096,7 +1175,7 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
   // obstacles to cruise
   for (size_t i = 0; i < debug_data_ptr_->obstacles_to_cruise.size(); ++i) {
     const auto marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 0.7, 0.7, 0.0);
+      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.7, 0.0);
     debug_marker.markers.push_back(marker);
   }
 
@@ -1104,6 +1183,14 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
   for (size_t i = 0; i < debug_data_ptr_->obstacles_to_stop.size(); ++i) {
     const auto marker = obstacle_cruise_utils::getObjectMarker(
       debug_data_ptr_->obstacles_to_stop.at(i).pose, i, "obstacles_to_stop", 1.0, 0.0, 0.0);
+    debug_marker.markers.push_back(marker);
+  }
+
+  // obstacles to slow down
+  for (size_t i = 0; i < debug_data_ptr_->obstacles_to_slow_down.size(); ++i) {
+    const auto marker = obstacle_cruise_utils::getObjectMarker(
+      debug_data_ptr_->obstacles_to_slow_down.at(i).pose, i, "obstacles_to_slow_down", 0.7, 0.7,
+      0.0);
     debug_marker.markers.push_back(marker);
   }
 
@@ -1152,6 +1239,7 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
   // 2. publish virtual wall for cruise and stop
   debug_cruise_wall_marker_pub_->publish(debug_data_ptr_->cruise_wall_marker);
   debug_stop_wall_marker_pub_->publish(debug_data_ptr_->stop_wall_marker);
+  debug_slow_down_wall_marker_pub_->publish(debug_data_ptr_->slow_down_wall_marker);
 
   // 3. print calculation time
   const double calculation_time = stop_watch_.toc(__func__);

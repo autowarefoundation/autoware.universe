@@ -58,7 +58,7 @@ public:
     const std::vector<CruiseObstacle> & obstacles,
     std::optional<VelocityLimit> & vel_limit) override;
 
-  void updateParam(const std::vector<rclcpp::Parameter> & parameters) override;
+  void updateCruiseParam(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
   Float32MultiArrayStamped getCruisePlanningDebugMessage(
