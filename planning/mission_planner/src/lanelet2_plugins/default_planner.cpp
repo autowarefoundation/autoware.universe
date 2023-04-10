@@ -458,6 +458,11 @@ void DefaultPlanner::updateRoute(const PlannerPlugin::LaneletRoute & route)
   route_handler_.setRoute(route);
 }
 
+void DefaultPlanner::clearRoute()
+{
+  route_handler_.clearRoute();
+}
+
 }  // namespace mission_planner::lanelet2
 
 #include <pluginlib/class_list_macros.hpp>
