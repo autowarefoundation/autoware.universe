@@ -6,8 +6,6 @@
 #include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/point_cloud.h>
 #include <tf2_ros/transform_broadcaster.h>
 
 namespace pcdless::path_monitor
@@ -32,12 +30,15 @@ public:
 
     pose_topic_ = pub_pose_stamped_->get_topic_name();
 
-    client_ = create_client<Ground>("ground");
+    service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    client_ =
+      create_client<Ground>("ground", rmw_qos_profile_services_default, service_callback_group_);
   }
 
 private:
   rclcpp::Client<Ground>::SharedPtr client_;
 
+  rclcpp::CallbackGroup::SharedPtr service_callback_group_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::string pose_topic_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
@@ -68,10 +69,10 @@ private:
     request->point.x = xyz.x();
     request->point.y = xyz.y();
     request->point.z = xyz.z();
-    auto cb_ground = [this](rclcpp::Client<Ground>::SharedFuture result) {
+    auto on_ground = [this](rclcpp::Client<Ground>::SharedFuture result) {
       ground_pose_ = result.get()->pose;
     };
-    auto result = client_->async_send_request(request, cb_ground);
+    auto result = client_->async_send_request(request, on_ground);
   }
 
   void on_fix(const sensor_msgs::msg::NavSatFix & msg)
@@ -106,7 +107,10 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::path_monitor::Fix2Pose>());
+  auto node = std::make_shared<pcdless::path_monitor::Fix2Pose>();
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node);
+  executor.spin();
   rclcpp::shutdown();
   return 0;
 }
