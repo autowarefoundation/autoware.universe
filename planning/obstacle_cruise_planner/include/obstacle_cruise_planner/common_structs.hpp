@@ -80,51 +80,56 @@ struct Obstacle
   std::vector<PredictedPath> predicted_paths;
 };
 
-struct StopObstacle
+struct TargetObstacleInterface
 {
-  StopObstacle(
+  TargetObstacleInterface(
     const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
-    const geometry_msgs::msg::Point & arg_collision_point)
-  : uuid(arg_uuid),
-    stamp(arg_stamp),
-    pose(arg_pose),
-    velocity(arg_velocity),
-    collision_point(arg_collision_point)
+    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity)
+  : uuid(arg_uuid), stamp(arg_stamp), pose(arg_pose), velocity(arg_velocity)
   {
   }
   rclcpp::Time stamp;
   std::string uuid;
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
   double velocity;                // signed projected velocity to trajectory
+};
+
+struct StopObstacle : public TargetObstacleInterface
+{
+  StopObstacle(
+    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
+    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
+    const geometry_msgs::msg::Point arg_collision_point)
+  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_velocity),
+    collision_point(arg_collision_point)
+  {
+  }
   geometry_msgs::msg::Point collision_point;
 };
 
-struct CruiseObstacle
+struct CruiseObstacle : public TargetObstacleInterface
 {
   CruiseObstacle(
-    const std::string & arg_uuid, const geometry_msgs::msg::Pose & arg_pose,
-    const double arg_velocity, const std::vector<PointWithStamp> & arg_collision_points)
-  : uuid(arg_uuid), pose(arg_pose), velocity(arg_velocity), collision_points(arg_collision_points)
+    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
+    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
+    const std::vector<PointWithStamp> & arg_collision_points)
+  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_velocity),
+    collision_points(arg_collision_points)
   {
   }
-  std::string uuid;
-  geometry_msgs::msg::Pose pose;                 // interpolated with the current stamp
-  double velocity;                               // signed projected velocity to trajectory
   std::vector<PointWithStamp> collision_points;  // time-series collision points
 };
 
-struct SlowDownObstacle
+struct SlowDownObstacle : public TargetObstacleInterface
 {
   SlowDownObstacle(
-    const std::string & arg_uuid, const geometry_msgs::msg::Pose & arg_pose,
-    const double arg_velocity, const geometry_msgs::msg::Point & arg_collision_point)
-  : uuid(arg_uuid), pose(arg_pose), velocity(arg_velocity), collision_point(arg_collision_point)
+    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
+    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
+    const geometry_msgs::msg::Point arg_collision_point)
+  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_velocity),
+    collision_point(arg_collision_point)
   {
   }
-  std::string uuid;
-  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
-  double velocity;                // signed projected velocity to trajectory
   geometry_msgs::msg::Point collision_point;
 };
 

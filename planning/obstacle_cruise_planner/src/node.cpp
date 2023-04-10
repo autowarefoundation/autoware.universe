@@ -702,7 +702,8 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
   }
 
   const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
-  return CruiseObstacle{obstacle.uuid, obstacle.pose, obstacle_projected_vel, *collision_points};
+  return CruiseObstacle{
+    obstacle.uuid, obstacle.stamp, obstacle.pose, obstacle_projected_vel, *collision_points};
 }
 
 std::optional<std::vector<PointWithStamp>>
