@@ -313,8 +313,13 @@ bool MissionPlanner::checkRerouteSafety(
     const auto lanelet = lanelet_map_ptr_->laneletLayer.get(primitive.id);
     start_lanelets.push_back(lanelet);
   }
+
+  // get closest lanelet in start lanelets
   lanelet::ConstLanelet closest_lanelet;
-  lanelet::utils::query::getClosestLanelet(start_lanelets, current_pose, &closest_lanelet);
+  if (!lanelet::utils::query::getClosestLanelet(start_lanelets, current_pose, &closest_lanelet)) {
+    return false;
+  }
+
   const auto & centerline_2d = lanelet::utils::to2D(closest_lanelet.centerline());
   const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
   const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
