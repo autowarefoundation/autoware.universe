@@ -82,9 +82,9 @@ private:
     const Obstacle & obstacle, const double precise_lat_dist);
   PlannerData createPlannerData(const std::vector<TrajectoryPoint> & traj_points) const;
 
-  // void checkConsistency(
-  //    const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-  //    const std::vector<TrajectoryPoint> & traj_points, std::vector<Obstacle> & obstacles);
+  void checkConsistency(
+    const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
+    const std::vector<TrajectoryPoint> & traj_points, std::vector<StopObstacle> & stop_obstacles);
   void publishVelocityLimit(
     const std::optional<VelocityLimit> & vel_limit, const std::string & module_name);
   void publishDebugMarker() const;
@@ -192,6 +192,9 @@ private:
 
   bool is_driving_forward_{true};
   bool enable_slow_down_planning_{false};
+
+  // previous closest obstacle
+  std::shared_ptr<StopObstacle> prev_closest_stop_obstacle_ptr_{nullptr};
 };
 }  // namespace motion_planning
 

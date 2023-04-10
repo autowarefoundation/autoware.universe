@@ -83,11 +83,17 @@ struct Obstacle
 struct StopObstacle
 {
   StopObstacle(
-    const std::string & arg_uuid, const geometry_msgs::msg::Pose & arg_pose,
-    const double arg_velocity, const geometry_msgs::msg::Point & arg_collision_point)
-  : uuid(arg_uuid), pose(arg_pose), velocity(arg_velocity), collision_point(arg_collision_point)
+    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
+    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
+    const geometry_msgs::msg::Point & arg_collision_point)
+  : uuid(arg_uuid),
+    stamp(arg_stamp),
+    pose(arg_pose),
+    velocity(arg_velocity),
+    collision_point(arg_collision_point)
   {
   }
+  rclcpp::Time stamp;
   std::string uuid;
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
   double velocity;                // signed projected velocity to trajectory

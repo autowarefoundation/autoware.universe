@@ -616,6 +616,9 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
     }
   }
 
+  // Check target obstacles' consistency
+  checkConsistency(objects_ptr_->header.stamp, *objects_ptr_, traj_points, stop_obstacles);
+
   // update previous obstacles
   prev_stop_obstacles_ = stop_obstacles;
   prev_cruise_obstacles_ = cruise_obstacles;
@@ -697,10 +700,6 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
   for (const auto & cp : *collision_points) {
     debug_data_ptr_->collision_points.push_back(cp.point);
   }
-
-  // TODO(murooka)
-  // Check target obstacles' consistency
-  // checkConsistency(obstacle.stamp, predicted_objects, traj_points, target_obstacles);
 
   const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
   return CruiseObstacle{obstacle.uuid, obstacle.pose, obstacle_projected_vel, *collision_points};
@@ -859,7 +858,8 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   debug_data_ptr_->collision_points.push_back(*collision_point);
 
   const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
-  return StopObstacle{obstacle.uuid, obstacle.pose, obstacle_projected_vel, *collision_point};
+  return StopObstacle{
+    obstacle.uuid, obstacle.stamp, obstacle.pose, obstacle_projected_vel, *collision_point};
 }
 
 std::optional<geometry_msgs::msg::Point>
@@ -931,18 +931,18 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   return std::nullopt;
 }
 
-/*
 void ObstacleCruisePlannerNode::checkConsistency(
   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-  const std::vector<TrajectoryPoint> & traj_points, std::vector<Obstacle> & obstacles)
+  const std::vector<TrajectoryPoint> & traj_points, std::vector<StopObstacle> & stop_obstacles)
 {
-  const auto current_closest_obstacle =
-    obstacle_cruise_utils::getClosestStopObstacle(traj_points, obstacles);
+  const auto current_closest_stop_obstacle =
+    obstacle_cruise_utils::getClosestStopObstacle(traj_points, stop_obstacles);
 
   // If previous closest obstacle ptr is not set
-  if (!prev_closest_obstacle_ptr_) {
-    if (current_closest_obstacle) {
-      prev_closest_obstacle_ptr_ = std::make_shared<Obstacle>(*current_closest_obstacle);
+  if (!prev_closest_stop_obstacle_ptr_) {
+    if (current_closest_stop_obstacle) {
+      prev_closest_stop_obstacle_ptr_ =
+        std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
     }
     return;
   }
@@ -952,7 +952,7 @@ void ObstacleCruisePlannerNode::checkConsistency(
     predicted_objects.objects.begin(), predicted_objects.objects.end(),
     [&](PredictedObject predicted_object) {
       return tier4_autoware_utils::toHexString(predicted_object.object_id) ==
-             prev_closest_obstacle_ptr_->uuid;
+             prev_closest_stop_obstacle_ptr_->uuid;
     });
 
   // If previous closest obstacle is not in the current perception lists
@@ -963,44 +963,45 @@ void ObstacleCruisePlannerNode::checkConsistency(
 
   // Previous closest obstacle is in the perception lists
   const auto obstacle_itr = std::find_if(
-    obstacles.begin(), obstacles.end(), [&](const Obstacle obstacle) {
-      return obstacle.uuid == prev_closest_obstacle_ptr_->uuid;
-    });
+    stop_obstacles.begin(), stop_obstacles.end(),
+    [&](const auto & obstacle) { return obstacle.uuid == prev_closest_stop_obstacle_ptr_->uuid; });
 
   // Previous closest obstacle is both in the perception lists and target obstacles
-  if (obstacle_itr != obstacles.end()) {
-    if (current_closest_obstacle) {
-      if ((current_closest_obstacle->uuid == prev_closest_obstacle_ptr_->uuid)) {
-        // prev_closest_obstacle is current_closest_obstacle just return the target obstacles(in
-        // target obstacles)
-        prev_closest_obstacle_ptr_ = std::make_shared<Obstacle>(*current_closest_obstacle);
+  if (obstacle_itr != stop_obstacles.end()) {
+    if (current_closest_stop_obstacle) {
+      if ((current_closest_stop_obstacle->uuid == prev_closest_stop_obstacle_ptr_->uuid)) {
+        // prev_closest_obstacle is current_closest_stop_obstacle just return the target
+        // obstacles(in target obstacles)
+        prev_closest_stop_obstacle_ptr_ =
+          std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
       } else {
         // New obstacle becomes new stop obstacle
-        prev_closest_obstacle_ptr_ = std::make_shared<Obstacle>(*current_closest_obstacle);
+        prev_closest_stop_obstacle_ptr_ =
+          std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
       }
     } else {
       // Previous closest stop obstacle becomes cruise obstacle
-      prev_closest_obstacle_ptr_ = nullptr;
+      prev_closest_stop_obstacle_ptr_ = nullptr;
     }
   } else {
     // prev obstacle is not in the target obstacles, but in the perception list
-    const double elapsed_time = (current_time - prev_closest_obstacle_ptr_->stamp).seconds();
+    const double elapsed_time = (current_time - prev_closest_stop_obstacle_ptr_->stamp).seconds();
     if (
       predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
-        obstacle_velocity_threshold_from_stop_to_cruise_ &&
+        behavior_determination_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
       elapsed_time < behavior_determination_param_.stop_obstacle_hold_time_threshold) {
-      obstacles.push_back(*prev_closest_obstacle_ptr_);
+      stop_obstacles.push_back(*prev_closest_stop_obstacle_ptr_);
       return;
     }
 
-    if (current_closest_obstacle) {
-      prev_closest_obstacle_ptr_ = std::make_shared<Obstacle>(*current_closest_obstacle);
+    if (current_closest_stop_obstacle) {
+      prev_closest_stop_obstacle_ptr_ =
+        std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
     } else {
-      prev_closest_obstacle_ptr_ = nullptr;
+      prev_closest_stop_obstacle_ptr_ = nullptr;
     }
   }
 }
-*/
 
 bool ObstacleCruisePlannerNode::isObstacleCrossing(
   const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle) const
