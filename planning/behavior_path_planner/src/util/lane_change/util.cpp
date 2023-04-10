@@ -19,6 +19,7 @@
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/util/safety_check.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -620,7 +621,7 @@ bool isLaneChangePathSafe(
     const auto predicted_paths =
       util::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
     for (const auto & obj_path : predicted_paths) {
-      if (!util::isSafeInLaneletCollisionCheck(
+      if (!util::safety_check::isSafeInLaneletCollisionCheck(
             interpolated_ego, current_twist, check_durations, lane_change_path.duration.prepare,
             obj, obj_path, common_parameter,
             lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel,
@@ -644,7 +645,7 @@ bool isLaneChangePathSafe(
     const auto predicted_paths =
       util::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
 
-    if (!util::isSafeInFreeSpaceCollisionCheck(
+    if (!util::safety_check::isSafeInFreeSpaceCollisionCheck(
           interpolated_ego, current_twist, check_durations, lane_change_path.duration.prepare, obj,
           common_parameter, lane_change_parameter.prepare_segment_ignore_object_velocity_thresh,
           front_decel, rear_decel, current_debug_data.second)) {
@@ -1444,4 +1445,25 @@ lanelet::ConstLanelets getLaneChangeLanes(
 
   return {};
 }
+
+std::vector<PredictedPath> getPredictedPathFromObj(
+  const PredictedObject & obj, const bool is_use_all_predicted_path)
+{
+  if (!is_use_all_predicted_path) {
+    const auto max_confidence_path = std::max_element(
+      obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+      [](const auto & path1, const auto & path2) { return path1.confidence < path2.confidence; });
+    if (max_confidence_path != obj.kinematics.predicted_paths.end()) {
+      return {*max_confidence_path};
+    }
+  }
+
+  std::vector<PredictedPath> predicted_path_vec;
+  std::copy_if(
+    obj.kinematics.predicted_paths.cbegin(), obj.kinematics.predicted_paths.cend(),
+    std::back_inserter(predicted_path_vec),
+    [](const PredictedPath & path) { return !path.path.empty(); });
+  return predicted_path_vec;
+}
+
 }  // namespace behavior_path_planner::lane_change_utils
