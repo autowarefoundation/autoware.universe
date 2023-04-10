@@ -36,7 +36,7 @@ autoware_map_msgs::msg::PointCloudMapMetaData createMetadata(
     cell_metadata_with_id.metadata.max_x = metadata.max.x;
     cell_metadata_with_id.metadata.max_y = metadata.max.y;
 
-    metadata_msg.pointcloud_map_metadata.push_back(cell_metadata_with_id);
+    metadata_msg.metadata_list.push_back(cell_metadata_with_id);
   }
 
   return metadata_msg;
