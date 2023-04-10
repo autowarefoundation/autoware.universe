@@ -176,15 +176,19 @@ void Net::infer(std::vector<void *> & buffers, const int batch_size)
   cudaStreamSynchronize(stream_);
 }
 
-std::vector<int> Net::getInputSize()
+Size Net::getInputSize()
 {
   auto dims = engine_->getBindingDimensions(0);
   return {dims.d[1], dims.d[2], dims.d[3]};
 }
 
-std::vector<int> Net::getOutputScoreSize()
+Dims Net::getOutputDimensions(const std::string & name) const
 {
-  auto dims = engine_->getBindingDimensions(1);
+  auto index = engine_->getBindingIndex(name.c_str());
+  if (index == -1) {
+    return {};
+  }
+  auto dims = engine_->getBindingDimensions(index);
   return {dims.d[1], dims.d[2]};
 }
 

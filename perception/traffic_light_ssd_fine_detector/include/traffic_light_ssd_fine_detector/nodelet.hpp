@@ -97,11 +97,14 @@ private:
   double score_thresh_;
 
   int tlr_id_;
-  int channel_;
-  int width_;
-  int height_;
+  ssd::Size size_;
   int class_num_;
   int detection_per_class_;
+  std::string head1_name_;
+  std::string head2_name_;
+  ssd::Dims head1_dims_;
+  ssd::Dims head2_dims_;
+  bool score_first_{true};
 
   std::vector<float> mean_;
   std::vector<float> std_;

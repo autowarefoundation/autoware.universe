@@ -55,6 +55,19 @@ private:
   bool verbose_{false};
 };
 
+struct Size
+{
+  int channel, width, height;
+  int dims() const { return channel * width * height; }
+  int area() const { return width * height; }
+};
+
+struct Dims
+{
+  int dim1, dim2;
+  int d() const { return dim1 * dim2; }
+};
+
 class Net
 {
 public:
@@ -75,9 +88,10 @@ public:
   void infer(std::vector<void *> & buffers, const int batch_size);
 
   // Get (c, h, w) size of the fixed input
-  std::vector<int> getInputSize();
+  Size getInputSize();
 
-  std::vector<int> getOutputScoreSize();
+  // Get output dimensions by name
+  Dims getOutputDimensions(const std::string &) const;
 
   // Get max allowed batch size
   int getMaxBatchSize();
