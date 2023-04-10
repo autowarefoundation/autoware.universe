@@ -1,19 +1,15 @@
 <launch>
-    <arg name="reference_bags_path" default=""/>
+    <arg name="input_overlayed_pose" description=""/>
+    <let name="input_ground" value="/localization/map/ground"/>
+    <let name="input_projected_lsd_cloud" value="/localization/imgproc/projected_lsd_cloud"/>
+    <let name="input_ll2_sign_board" value="/localization/map/ll2_sign_board"/>
+    <let name="input_ll2_road_marking" value="/localization/map/ll2_road_marking"/>
 
     <!-- overlay monitor -->
-    <arg name="input_particle_pose" default="/localization/pose_twist_fusion_filter/pose"/>
-    <arg name="input_ground" default="/localization/map/ground"/>
-    <arg name="input_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
-    <arg name="input_ll2_sign_board" default="/localization/map/ll2_sign_board"/>
-    <arg name="input_ll2_road_marking" default="/localization/map/ll2_road_marking"/>
-    <arg name="output_projectedmarker" default="projected_marker"/>
-    <arg name="output_overlay_image" default="overlay_image"/>
-
     <node name="overlay" pkg="overlay_monitor" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="src_image" to="/sensing/camera/undistorted/image_raw"/>
         <remap from="src_info" to="$(var resized_info)"/>
-        <remap from="particle_pose" to="$(var input_particle_pose)"/>
+        <remap from="particle_pose" to="$(var input_overlayed_pose)"/>
 
         <remap from="ground" to="$(var input_ground)"/>
         <remap from="projected_lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
@@ -21,40 +17,19 @@
         <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
     </node>
 
-    <!-- covariance monitor -->
-    <arg name="input_particles" default="/localization/pf/predicted_particles"/>
-    <arg name="output_cov_diag" default="cov_diag"/>
-    <arg name="output_pose_with_cov" default="pose_with_cov"/>
-
-    <node name="covariance" pkg="covariance_monitor" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="particles" to="$(var input_particles)"/>
-        <remap from="particle_pose" to="$(var input_particle_pose)"/>
-        <remap from="cov_diag" to="$(var output_cov_diag)"/>
-        <remap from="pose_with_cov" to="$(var output_pose_with_cov)"/>
-    </node>
-
-    <!-- ape monitor-->
-    <arg name="input_pose_with_cov" default="pose_with_cov"/>
-    <arg name="output_ape_diag" default="ape_diag"/>
-
-    <node name="ape" pkg="ape_monitor" exec="ape_node" output="screen" args="--ros-args --log-level warn">
-        <param name="reference_bags_path" value="$(var reference_bags_path)"/>
-        <remap from="pose_with_cov" to="$(var input_pose_with_cov)"/>
-        <remap from="ape_diag" to="$(var output_ape_diag)"/>
-    </node>
-
     <!-- fix to pose -->
     <node name="fix_to_pose" pkg="path_monitor" exec="fix_to_pose" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
+        <remap from="ground" to="/localization/map/ground"/>
     </node>
 
     <!-- pose to path -->
-    <node name="pose_to_path" pkg="path_monitor" exec="pose_to_path" output="log" args="--ros-args --log-level info">
+    <node name="pose_to_path" pkg="path_monitor" exec="pose_to_path" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /localization/particle_pose]"/>
-        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /localization/particle_path]"/>
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose,/localization/pf/pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path,/localization/pf/path]"/>
     </node>
 
 </launch>

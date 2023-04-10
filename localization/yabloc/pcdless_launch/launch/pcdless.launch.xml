@@ -40,7 +40,6 @@
         <group>
             <push-ros-namespace namespace="imgproc"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/imgproc.launch.xml">
-                <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="src_image" value="$(var src_image)"/>
                 <arg name="src_info" value="$(var src_info)"/>
                 <arg name="resized_image" value="$(var resized_image)"/>
@@ -58,7 +57,7 @@
         <group>
             <push-ros-namespace namespace="validation"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/validation.launch.xml">
-                <arg name="input_particle_pose" value="$(var input_pose)"/>
+                <arg name="input_overlayed_pose" value="$(var input_pose)"/>
             </include>
         </group>
 

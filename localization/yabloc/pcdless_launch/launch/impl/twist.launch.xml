@@ -28,21 +28,8 @@
         </node>
     </group>
 
-    <node name="twist_visualizer" pkg="twist_estimator" exec="twist_visualizer_node" output="screen" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <remap from="/vehicle/status/twist" to="/localization/twist/kalman/twist"/>
-    </node>
-
     <!-- velocity report converter -->
     <node name="velocity_report_node" pkg="twist_converter" exec="velocity_report_converter" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
-
-    <!-- pose twist fuser-->
-    <node if="false" name="pose_twist_fuser" pkg="twist_converter" exec="pose_twist_fuser" output="log" args="--ros-args --log-level warn">
-        <remap from="twist" to="/localization/trajectory/kalman/twist"/>
-        <remap from="pose" to="/localization/pf/particle_pose"/>
-        <remap from="odometry" to="/localization/kinematic_state"/>
-    </node>
-
 </launch>
