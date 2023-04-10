@@ -24,6 +24,7 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include <algorithm>
 #include <array>
 #include <random>
 
@@ -261,6 +262,10 @@ bool MissionPlanner::checkRerouteSafety(
   auto hasSamePrimitives = [](
                              const std::vector<LaneletPrimitive> & original_primitives,
                              const std::vector<LaneletPrimitive> & target_primitives) {
+    if (original_primitives.size() != target_primitives.size()) {
+      return false;
+    }
+
     bool is_same = false;
     for (const auto & primitive : original_primitives) {
       const auto has_same = [&](const auto & p) { return p.id == primitive.id; };
@@ -325,9 +330,12 @@ bool MissionPlanner::checkRerouteSafety(
       break;
     }
 
-    const auto front_primitive = primitives.front();
-    const auto & lanelet = lanelet_map_ptr_->laneletLayer.get(front_primitive.id);
-    accumulated_length += lanelet::utils::getLaneletLength2d(lanelet);
+    std::vector<double> lanelets_length(primitives.size());
+    for (const auto & primitive : primitives) {
+      const auto & lanelet = lanelet_map_ptr_->laneletLayer.get(primitive.id);
+      lanelets_length.push_back(lanelet::utils::getLaneletLength2d(lanelet));
+    }
+    accumulated_length += *std::min_element(lanelets_length.begin(), lanelets_length.end());
   }
 
   // check safety
