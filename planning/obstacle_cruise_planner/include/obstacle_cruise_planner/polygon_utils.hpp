@@ -35,12 +35,12 @@ using tier4_autoware_utils::Polygon2d;
 
 std::optional<geometry_msgs::msg::Point> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const double vehicle_lon_offset, const bool is_driving_forward);
+  const Obstacle & obstacle, const bool is_driving_forward);
 
 std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
-  const rclcpp::Time & current_time, const double vehicle_lon_offset, const bool is_driving_forward,
+  const rclcpp::Time & current_time, const bool is_driving_forward,
   std::vector<size_t> & collision_index,
   const double max_lat_dist = std::numeric_limits<double>::max(),
   const double max_prediction_time_for_collision_check = std::numeric_limits<double>::max());

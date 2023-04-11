@@ -751,7 +751,7 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::getCollisionPoints(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-    vehicle_info_.max_longitudinal_offset_m, is_driving_forward_, collision_index);
+    is_driving_forward_, collision_index);
   return collision_points;
 }
 
@@ -788,7 +788,7 @@ ObstacleCruisePlannerNode::createCollisionPointsForOutsideCruiseObstacle(
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::getCollisionPoints(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-    vehicle_info_.max_longitudinal_offset_m, is_driving_forward_, collision_index,
+    is_driving_forward_, collision_index,
     vehicle_info_.vehicle_width_m + p.max_lat_margin_for_cruise,
     p.max_prediction_time_for_collision_check);
   if (collision_points.empty()) {
@@ -885,7 +885,7 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
     std::vector<size_t> collision_index;
     const auto collision_points = polygon_utils::getCollisionPoints(
       traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-      vehicle_info_.max_longitudinal_offset_m, is_driving_forward_, collision_index);
+      is_driving_forward_, collision_index);
     if (collision_points.empty()) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_,
@@ -913,8 +913,7 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
   const auto traj_polys_with_lat_margin =
     polygon_utils::createOneStepPolygons(traj_points, vehicle_info_, p.max_lat_margin_for_stop);
   const auto collision_point = polygon_utils::getCollisionPoint(
-    traj_points, traj_polys_with_lat_margin, obstacle, vehicle_info_.max_longitudinal_offset_m,
-    is_driving_forward_);
+    traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_);
   return collision_point;
 }
 

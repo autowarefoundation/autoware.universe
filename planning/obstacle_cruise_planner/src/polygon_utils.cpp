@@ -63,8 +63,7 @@ Polygon2d createOneStepPolygon(
 
 PointWithStamp calcNearestCollisionPoint(
   const size_t first_within_idx, const std::vector<PointWithStamp> & collision_points,
-  const std::vector<TrajectoryPoint> & decimated_traj_points, const double vehicle_lon_offset,
-  const bool is_driving_forward)
+  const std::vector<TrajectoryPoint> & decimated_traj_points, const bool is_driving_forward)
 {
   const size_t prev_idx = first_within_idx == 0 ? first_within_idx : first_within_idx - 1;
   const size_t next_idx = first_within_idx == 0 ? first_within_idx + 1 : first_within_idx;
@@ -135,14 +134,13 @@ namespace polygon_utils
 {
 std::optional<geometry_msgs::msg::Point> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const double vehicle_lon_offset, const bool is_driving_forward)
+  const Obstacle & obstacle, const bool is_driving_forward)
 {
   const auto collision_info =
     getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
   if (collision_info) {
     const auto nearest_collision_point = calcNearestCollisionPoint(
-      collision_info->first, collision_info->second, traj_points, vehicle_lon_offset,
-      is_driving_forward);
+      collision_info->first, collision_info->second, traj_points, is_driving_forward);
     return nearest_collision_point.point;
   }
 
@@ -154,7 +152,7 @@ std::optional<geometry_msgs::msg::Point> getCollisionPoint(
 std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
-  const rclcpp::Time & current_time, const double vehicle_lon_offset, const bool is_driving_forward,
+  const rclcpp::Time & current_time, const bool is_driving_forward,
   std::vector<size_t> & collision_index, const double max_lat_dist,
   const double max_prediction_time_for_collision_check)
 {
@@ -177,8 +175,7 @@ std::vector<PointWithStamp> getCollisionPoints(
       traj_points, traj_polygons, predicted_path.path.at(i), object_time, shape, max_lat_dist);
     if (collision_info) {
       const auto nearest_collision_point = calcNearestCollisionPoint(
-        collision_info->first, collision_info->second, traj_points, vehicle_lon_offset,
-        is_driving_forward);
+        collision_info->first, collision_info->second, traj_points, is_driving_forward);
       collision_points.push_back(nearest_collision_point);
       collision_index.push_back(collision_info->first);
     }
