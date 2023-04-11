@@ -837,7 +837,7 @@ PathWithLaneId PullOverModule::generateStopPath()
                     : (closest_start_pose_ ? closest_start_pose_.value() : *search_start_pose);
 
   // if stop pose is closer than min_stop_distance, stop as soon as possible
-  const double ego_to_stop_distance = calcSignedArchLengthFromEgo(reference_path, stop_pose);
+  const double ego_to_stop_distance = calcSignedArcLengthFromEgo(reference_path, stop_pose);
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
   if (ego_to_stop_distance < min_stop_distance) {
     return generateFeasibleStopPath();
@@ -1139,7 +1139,7 @@ void PullOverModule::decelerateForTurnSignal(const Pose & stop_pose, PathWithLan
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
 
   if (*min_stop_distance && min_stop_distance < stop_point_length) {
-    const auto stop_point = util::insertStopPoint(stop_point_length, &path);
+    const auto stop_point = util::insertStopPoint(stop_point_length, path);
   }
 }
 
