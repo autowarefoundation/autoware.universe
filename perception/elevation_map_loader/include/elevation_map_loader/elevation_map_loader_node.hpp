@@ -81,7 +81,7 @@ private:
   void onPointCloudMapMetaData(
     const autoware_map_msgs::msg::PointCloudMapMetaData pointcloud_map_metadata);
   void receiveMap();
-  void concatPointCloudMaps(
+  void concatenatePointCloudMaps(
     sensor_msgs::msg::PointCloud2 & pointcloud_map,
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & new_pointcloud_with_ids)
     const;

@@ -101,8 +101,8 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
         "service/get_selected_pointcloud_map", rmw_qos_profile_services_default, group_);
 
       while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-        RCLCPP_INFO(
-          this->get_logger(),
+        RCLCPP_DEBUG_THROTTLE(
+          this->get_logger(), *get_clock(), 5000,
           "Waiting for pcd map loader service. Check if the enable_selected_load in "
           "pointcloud_map_loader is set `true`.");
       }
@@ -171,7 +171,7 @@ void ElevationMapLoaderNode::timerCallback()
     ElevationMapLoaderNode::receiveMap();
     // flag to make receiveMap() called only once.
     is_map_received_ = true;
-    RCLCPP_INFO(this->get_logger(), "receive service with pointcloud_map");
+    RCLCPP_DEBUG(this->get_logger(), "receive service with pointcloud_map");
   }
   if (data_manager_.isInitialized() && !is_elevation_map_published_) {
     publish();
@@ -215,13 +215,11 @@ void ElevationMapLoaderNode::onPointCloudMapMetaData(
       throw std::runtime_error("PCD metadata is invalid");
     }
     if (sequential_map_load_num_ > pointcloud_map_metadata.metadata_list.size()) {
-      RCLCPP_ERROR(
+      RCLCPP_WARN(
         this->get_logger(),
         "The following range is not met: sequential_map_load_num <= %lu (number of all point cloud "
         "map cells)",
         pointcloud_map_metadata.metadata_list.size());
-      throw std::runtime_error(
-        "sequential_map_load_num is larger than number of point cloud map cells");
     }
     for (const auto & pointcloud_map_cell_metadata : pointcloud_map_metadata.metadata_list) {
       data_manager_.pointcloud_map_ids_.push_back(pointcloud_map_cell_metadata.cell_id);
@@ -250,8 +248,8 @@ void ElevationMapLoaderNode::receiveMap()
   // create a loading request with mode = 1
   auto request = std::make_shared<autoware_map_msgs::srv::GetSelectedPointCloudMap::Request>();
   if (!pcd_loader_client_->service_is_ready()) {
-    RCLCPP_INFO(
-      this->get_logger(),
+    RCLCPP_DEBUG_THROTTLE(
+      this->get_logger(), *get_clock(), 5000,
       "Waiting for pcd map loader service. Check if the enable_selected_load in "
       "pointcloud_map_loader is set `true`.");
   }
@@ -263,29 +261,29 @@ void ElevationMapLoaderNode::receiveMap()
     request->cell_ids = getRequestIDs(map_id_counter);
 
     // send a request to map_loader
-    RCLCPP_INFO(this->get_logger(), "send a request to map_loader");
+    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *get_clock(), 5000, "send a request to map_loader");
     auto result{pcd_loader_client_->async_send_request(
       request,
       [](rclcpp::Client<autoware_map_msgs::srv::GetSelectedPointCloudMap>::SharedFuture) {})};
     std::future_status status = result.wait_for(std::chrono::seconds(0));
     while (status != std::future_status::ready) {
-      RCLCPP_INFO(this->get_logger(), "waiting response");
+      RCLCPP_DEBUG_THROTTLE(this->get_logger(), *get_clock(), 5000, "waiting response");
       if (!rclcpp::ok()) {
         return;
       }
       status = result.wait_for(std::chrono::seconds(1));
     }
 
-    // concat maps
-    concatPointCloudMaps(pointcloud_map, result.get()->new_pointcloud_with_ids);
+    // concatenate maps
+    concatenatePointCloudMaps(pointcloud_map, result.get()->new_pointcloud_with_ids);
   }
-  RCLCPP_INFO(this->get_logger(), "finish receiving");
+  RCLCPP_DEBUG(this->get_logger(), "finish receiving");
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(pointcloud_map, map_pcl);
   data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 }
 
-void ElevationMapLoaderNode::concatPointCloudMaps(
+void ElevationMapLoaderNode::concatenatePointCloudMaps(
   sensor_msgs::msg::PointCloud2 & pointcloud_map,
   const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & new_pointcloud_with_ids)
   const
