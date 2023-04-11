@@ -167,7 +167,7 @@ public:
     m_default_pointcloud_topic = new rviz_common::properties::RosTopicProperty(
       "Input pointcloud topic", QString::fromStdString(default_pointcloud_topic), "",
       "Input for pointcloud visualization of objects detection pipeline.", this,
-      SLOT(RosTopicDisplay::updateTopic()));
+      SLOT(updateTopic()));
     qos_profile_points_property = new rviz_common::properties::QosProfileProperty(
       m_default_pointcloud_topic, qos_profile_points);
     // iterate over default values to create and initialize the properties.
@@ -240,7 +240,7 @@ public:
     point_cloud_common->reset();
   }
 
-  virtual void subscribe()
+  void subscribe()
   {
     if (!RosTopicDisplay::isEnabled()) {
       return;
@@ -248,6 +248,14 @@ public:
 
     RosTopicDisplay::subscribe();
     points_subscribe();
+  }
+
+  void updateTopic() override
+  {
+    unsubscribe();
+    reset();
+    subscribe();
+    this->context_->queueRender();
   }
 
   void points_subscribe()
