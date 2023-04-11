@@ -11,8 +11,10 @@
     launch_no_stopping_area: true
     launch_run_out: false
     launch_speed_bump: false
+    launch_out_of_lane: true
     forward_path_length: 1000.0
     backward_path_length: 5.0
+    stop_line_extend_length: 5.0
     max_accel: -2.8
     max_jerk: -5.0
     system_delay: 0.5
