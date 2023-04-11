@@ -316,7 +316,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     object_data.object = object;
     avoidance_debug_msg.object_id = toHexString(object_data.object.object_id);
 
-    if (!isTargetObjectType(object)) {
+    if (!isTargetObjectType(object, parameters_)) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE);
       object_data.reason = AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE;
       data.other_objects.push_back(object_data);
@@ -327,7 +327,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
 
     // Calc envelop polygon.
-    fillObjectEnvelopePolygon(object_closest_pose, object_data);
+    fillObjectEnvelopePolygon(object_data, registered_objects_, object_closest_pose, parameters_);
 
     // calc object centroid.
     object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
@@ -337,7 +337,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     avoidance_debug_msg.longitudinal_distance = object_data.longitudinal;
 
     // Calc moving time.
-    fillObjectMovingTime(object_data);
+    fillObjectMovingTime(object_data, stopped_objects_, parameters_);
 
     // Calc lateral deviation from path to target object.
     object_data.lateral = calcLateralDeviation(object_closest_pose, object_pose.position);
@@ -618,77 +618,6 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
       std::make_shared<lanelet::ConstLineStrings3d>(debug_linestring);
     debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(data.current_lanelets);
     debug.expanded_lanelets = std::make_shared<lanelet::ConstLanelets>(expanded_lanelets);
-  }
-}
-
-void AvoidanceModule::fillObjectEnvelopePolygon(
-  const Pose & closest_pose, ObjectData & object_data) const
-{
-  using boost::geometry::within;
-
-  const auto id = object_data.object.object_id;
-  const auto same_id_obj = std::find_if(
-    registered_objects_.begin(), registered_objects_.end(),
-    [&id](const auto & o) { return o.object.object_id == id; });
-
-  if (same_id_obj == registered_objects_.end()) {
-    object_data.envelope_poly =
-      createEnvelopePolygon(object_data, closest_pose, parameters_->object_envelope_buffer);
-    return;
-  }
-
-  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
-  if (!within(object_polygon, same_id_obj->envelope_poly)) {
-    object_data.envelope_poly =
-      createEnvelopePolygon(object_data, closest_pose, parameters_->object_envelope_buffer);
-    return;
-  }
-
-  object_data.envelope_poly = same_id_obj->envelope_poly;
-}
-
-void AvoidanceModule::fillObjectMovingTime(ObjectData & object_data) const
-{
-  const auto & object_vel =
-    object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const auto is_faster_than_threshold = object_vel > parameters_->threshold_speed_object_is_stopped;
-
-  const auto id = object_data.object.object_id;
-  const auto same_id_obj = std::find_if(
-    stopped_objects_.begin(), stopped_objects_.end(),
-    [&id](const auto & o) { return o.object.object_id == id; });
-
-  const auto is_new_object = same_id_obj == stopped_objects_.end();
-
-  if (!is_faster_than_threshold) {
-    object_data.last_stop = clock_->now();
-    object_data.move_time = 0.0;
-    if (is_new_object) {
-      object_data.stop_time = 0.0;
-      object_data.last_move = clock_->now();
-      stopped_objects_.push_back(object_data);
-    } else {
-      same_id_obj->stop_time = (clock_->now() - same_id_obj->last_move).seconds();
-      same_id_obj->last_stop = clock_->now();
-      same_id_obj->move_time = 0.0;
-      object_data.stop_time = same_id_obj->stop_time;
-    }
-    return;
-  }
-
-  if (is_new_object) {
-    object_data.move_time = std::numeric_limits<double>::max();
-    object_data.stop_time = 0.0;
-    object_data.last_move = clock_->now();
-    return;
-  }
-
-  object_data.last_stop = same_id_obj->last_stop;
-  object_data.move_time = (clock_->now() - same_id_obj->last_stop).seconds();
-  object_data.stop_time = 0.0;
-
-  if (object_data.move_time > parameters_->threshold_time_object_is_moving) {
-    stopped_objects_.erase(same_id_obj);
   }
 }
 
@@ -2403,7 +2332,7 @@ bool AvoidanceModule::isEnoughMargin(
   const auto & v_ego_lon = getLongitudinalVelocity(p_ref, getPose(p_ego), v_ego);
   const auto & v_obj = object.object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
-  if (!isTargetObjectType(object.object)) {
+  if (!isTargetObjectType(object.object, parameters_)) {
     return true;
   }
 
@@ -3454,9 +3383,9 @@ void AvoidanceModule::updateData()
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
 
-  // TODO(Horibe): this is not tested yet, disable now.
-  updateRegisteredObject(avoidance_data_.target_objects);
-  compensateDetectionLost(avoidance_data_.target_objects, avoidance_data_.other_objects);
+  updateRegisteredObject(registered_objects_, avoidance_data_.target_objects, parameters_);
+  compensateDetectionLost(
+    registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
 
   std::sort(
     avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
@@ -3486,109 +3415,6 @@ void AvoidanceModule::updateData()
   fillShiftLine(avoidance_data_, debug_data_);
 }
 
-/*
- * updateRegisteredObject
- *
- * Same object is observed this time -> update registered object with the new one.
- * Not observed -> increment the lost_count. if it exceeds the threshold, remove it.
- * How to check if it is same object?
- *   - it has same ID
- *   - it has different id, but sn object is found around similar position
- */
-void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects)
-{
-  const auto updateIfDetectedNow = [&now_objects, this](auto & registered_object) {
-    const auto & n = now_objects;
-    const auto r_id = registered_object.object.object_id;
-    const auto same_id_obj = std::find_if(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-
-    // same id object is detected. update registered.
-    if (same_id_obj != n.end()) {
-      registered_object = *same_id_obj;
-      return true;
-    }
-
-    constexpr auto POS_THR = 1.5;
-    const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
-    const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
-      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
-    });
-
-    // same id object is not detected, but object is found around registered. update registered.
-    if (similar_pos_obj != n.end()) {
-      registered_object = *similar_pos_obj;
-      return true;
-    }
-
-    // Same ID nor similar position object does not found.
-    return false;
-  };
-
-  // -- check registered_objects, remove if lost_count exceeds limit. --
-  for (int i = static_cast<int>(registered_objects_.size()) - 1; i >= 0; --i) {
-    auto & r = registered_objects_.at(i);
-
-    // registered object is not detected this time. lost count up.
-    if (!updateIfDetectedNow(r)) {
-      r.lost_time = (clock_->now() - r.last_seen).seconds();
-    } else {
-      r.last_seen = clock_->now();
-      r.lost_time = 0.0;
-    }
-
-    // lost count exceeds threshold. remove object from register.
-    if (r.lost_time > parameters_->object_last_seen_threshold) {
-      registered_objects_.erase(registered_objects_.begin() + i);
-    }
-  }
-
-  const auto isAlreadyRegistered = [this](const auto & n_id) {
-    const auto & r = registered_objects_;
-    return std::any_of(
-      r.begin(), r.end(), [&n_id](const auto & o) { return o.object.object_id == n_id; });
-  };
-
-  // -- check now_objects, add it if it has new object id --
-  for (const auto & now_obj : now_objects) {
-    if (!isAlreadyRegistered(now_obj.object.object_id)) {
-      registered_objects_.push_back(now_obj);
-    }
-  }
-}
-
-/*
- * CompensateDetectionLost
- *
- * add registered object if the now_objects does not contain the same object_id.
- *
- */
-void AvoidanceModule::compensateDetectionLost(
-  ObjectDataArray & now_objects, ObjectDataArray & other_objects) const
-{
-  const auto old_size = now_objects.size();  // for debug
-
-  const auto isDetectedNow = [&](const auto & r_id) {
-    const auto & n = now_objects;
-    return std::any_of(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-  };
-
-  const auto isIgnoreObject = [&](const auto & r_id) {
-    const auto & n = other_objects;
-    return std::any_of(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-  };
-
-  for (const auto & registered : registered_objects_) {
-    if (
-      !isDetectedNow(registered.object.object_id) && !isIgnoreObject(registered.object.object_id)) {
-      now_objects.push_back(registered);
-    }
-  }
-  DEBUG_PRINT("object size: %lu -> %lu", old_size, now_objects.size());
-}
-
 void AvoidanceModule::processOnEntry()
 {
   initVariables();
@@ -3616,22 +3442,6 @@ void AvoidanceModule::initVariables()
   current_raw_shift_lines_ = {};
   original_unique_id = 0;
   is_avoidance_maneuver_starts = false;
-}
-
-bool AvoidanceModule::isTargetObjectType(const PredictedObject & object) const
-{
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
-  const auto t = util::getHighestProbLabel(object.classification);
-  const auto is_object_type =
-    ((t == ObjectClassification::CAR && parameters_->avoid_car) ||
-     (t == ObjectClassification::TRUCK && parameters_->avoid_truck) ||
-     (t == ObjectClassification::BUS && parameters_->avoid_bus) ||
-     (t == ObjectClassification::TRAILER && parameters_->avoid_trailer) ||
-     (t == ObjectClassification::UNKNOWN && parameters_->avoid_unknown) ||
-     (t == ObjectClassification::BICYCLE && parameters_->avoid_bicycle) ||
-     (t == ObjectClassification::MOTORCYCLE && parameters_->avoid_motorcycle) ||
-     (t == ObjectClassification::PEDESTRIAN && parameters_->avoid_pedestrian));
-  return is_object_type;
 }
 
 TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) const

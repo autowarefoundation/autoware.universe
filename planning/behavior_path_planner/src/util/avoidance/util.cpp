@@ -699,6 +699,23 @@ lanelet::ConstLanelets getTargetLanelets(
   return target_lanelets;
 }
 
+bool isTargetObjectType(
+  const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  const auto t = util::getHighestProbLabel(object.classification);
+  const auto is_object_type =
+    ((t == ObjectClassification::CAR && parameters->avoid_car) ||
+     (t == ObjectClassification::TRUCK && parameters->avoid_truck) ||
+     (t == ObjectClassification::BUS && parameters->avoid_bus) ||
+     (t == ObjectClassification::TRAILER && parameters->avoid_trailer) ||
+     (t == ObjectClassification::UNKNOWN && parameters->avoid_unknown) ||
+     (t == ObjectClassification::BICYCLE && parameters->avoid_bicycle) ||
+     (t == ObjectClassification::MOTORCYCLE && parameters->avoid_motorcycle) ||
+     (t == ObjectClassification::PEDESTRIAN && parameters->avoid_pedestrian));
+  return is_object_type;
+}
+
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
   boost::optional<Pose> & p_out)
@@ -728,5 +745,164 @@ void insertDecelPoint(
   insertVelocity(path, velocity);
 
   p_out = getPose(path.points.at(insert_idx.get()));
+}
+
+void fillObjectEnvelopePolygon(
+  ObjectData & object_data, const ObjectDataArray & registered_objects, const Pose & closest_pose,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  using boost::geometry::within;
+
+  const auto id = object_data.object.object_id;
+  const auto same_id_obj = std::find_if(
+    registered_objects.begin(), registered_objects.end(),
+    [&id](const auto & o) { return o.object.object_id == id; });
+
+  if (same_id_obj == registered_objects.end()) {
+    object_data.envelope_poly =
+      createEnvelopePolygon(object_data, closest_pose, parameters->object_envelope_buffer);
+    return;
+  }
+
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
+
+  if (!within(object_polygon, same_id_obj->envelope_poly)) {
+    object_data.envelope_poly =
+      createEnvelopePolygon(object_data, closest_pose, parameters->object_envelope_buffer);
+    return;
+  }
+
+  object_data.envelope_poly = same_id_obj->envelope_poly;
+}
+
+void fillObjectMovingTime(
+  ObjectData & object_data, ObjectDataArray & stopped_objects,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto & object_vel =
+    object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
+  const auto is_faster_than_threshold = object_vel > parameters->threshold_speed_object_is_stopped;
+
+  const auto id = object_data.object.object_id;
+  const auto same_id_obj = std::find_if(
+    stopped_objects.begin(), stopped_objects.end(),
+    [&id](const auto & o) { return o.object.object_id == id; });
+
+  const auto is_new_object = same_id_obj == stopped_objects.end();
+  const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
+
+  if (!is_faster_than_threshold) {
+    object_data.last_stop = now;
+    object_data.move_time = 0.0;
+    if (is_new_object) {
+      stopped_objects.push_back(object_data);
+    } else {
+      same_id_obj->last_stop = now;
+      same_id_obj->move_time = 0.0;
+    }
+    return;
+  }
+
+  if (is_new_object) {
+    object_data.move_time = std::numeric_limits<double>::max();
+    return;
+  }
+
+  object_data.last_stop = same_id_obj->last_stop;
+  object_data.move_time = (now - same_id_obj->last_stop).seconds();
+
+  if (object_data.move_time > parameters->threshold_time_object_is_moving) {
+    stopped_objects.erase(same_id_obj);
+  }
+}
+
+void updateRegisteredObject(
+  ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto updateIfDetectedNow = [&now_objects](auto & registered_object) {
+    const auto & n = now_objects;
+    const auto r_id = registered_object.object.object_id;
+    const auto same_id_obj = std::find_if(
+      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
+
+    // same id object is detected. update registered.
+    if (same_id_obj != n.end()) {
+      registered_object = *same_id_obj;
+      return true;
+    }
+
+    constexpr auto POS_THR = 1.5;
+    const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
+    const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
+      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
+    });
+
+    // same id object is not detected, but object is found around registered. update registered.
+    if (similar_pos_obj != n.end()) {
+      registered_object = *similar_pos_obj;
+      return true;
+    }
+
+    // Same ID nor similar position object does not found.
+    return false;
+  };
+
+  const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
+
+  // -- check registered_objects, remove if lost_count exceeds limit. --
+  for (int i = static_cast<int>(registered_objects.size()) - 1; i >= 0; --i) {
+    auto & r = registered_objects.at(i);
+
+    // registered object is not detected this time. lost count up.
+    if (!updateIfDetectedNow(r)) {
+      r.lost_time = (now - r.last_seen).seconds();
+    } else {
+      r.last_seen = now;
+      r.lost_time = 0.0;
+    }
+
+    // lost count exceeds threshold. remove object from register.
+    if (r.lost_time > parameters->object_last_seen_threshold) {
+      registered_objects.erase(registered_objects.begin() + i);
+    }
+  }
+
+  const auto isAlreadyRegistered = [&](const auto & n_id) {
+    const auto & r = registered_objects;
+    return std::any_of(
+      r.begin(), r.end(), [&n_id](const auto & o) { return o.object.object_id == n_id; });
+  };
+
+  // -- check now_objects, add it if it has new object id --
+  for (const auto & now_obj : now_objects) {
+    if (!isAlreadyRegistered(now_obj.object.object_id)) {
+      registered_objects.push_back(now_obj);
+    }
+  }
+}
+
+void compensateDetectionLost(
+  const ObjectDataArray & registered_objects, ObjectDataArray & now_objects,
+  ObjectDataArray & other_objects)
+{
+  const auto isDetectedNow = [&](const auto & r_id) {
+    const auto & n = now_objects;
+    return std::any_of(
+      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
+  };
+
+  const auto isIgnoreObject = [&](const auto & r_id) {
+    const auto & n = other_objects;
+    return std::any_of(
+      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
+  };
+
+  for (const auto & registered : registered_objects) {
+    if (
+      !isDetectedNow(registered.object.object_id) && !isIgnoreObject(registered.object.object_id)) {
+      now_objects.push_back(registered);
+    }
+  }
 }
 }  // namespace behavior_path_planner

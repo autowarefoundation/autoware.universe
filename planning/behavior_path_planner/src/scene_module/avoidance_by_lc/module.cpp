@@ -143,8 +143,10 @@ void AvoidanceByLCModule::updateData()
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
 
-  updateRegisteredObject(avoidance_data_.target_objects);
-  compensateDetectionLost(avoidance_data_.target_objects, avoidance_data_.other_objects);
+  updateRegisteredObject(
+    registered_objects_, avoidance_data_.target_objects, parameters_->avoidance);
+  compensateDetectionLost(
+    registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
 
   std::sort(
     avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
@@ -235,7 +237,7 @@ void AvoidanceByLCModule::fillAvoidanceTargetObjects(
     ObjectData object_data;
     object_data.object = object;
 
-    if (!isTargetObjectType(object)) {
+    if (!isTargetObjectType(object, parameters_->avoidance)) {
       data.other_objects.push_back(object_data);
       continue;
     }
@@ -244,7 +246,8 @@ void AvoidanceByLCModule::fillAvoidanceTargetObjects(
     const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
 
     // Calc envelop polygon.
-    fillObjectEnvelopePolygon(object_closest_pose, object_data);
+    fillObjectEnvelopePolygon(
+      object_data, registered_objects_, object_closest_pose, parameters_->avoidance);
 
     // calc object centroid.
     object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
@@ -253,7 +256,7 @@ void AvoidanceByLCModule::fillAvoidanceTargetObjects(
     fillLongitudinalAndLengthByClosestEnvelopeFootprint(data.reference_path, ego_pos, object_data);
 
     // Calc moving time.
-    fillObjectMovingTime(object_data);
+    fillObjectMovingTime(object_data, stopped_objects_, parameters_->avoidance);
 
     if (object_data.move_time > parameters_->avoidance->threshold_time_object_is_moving) {
       data.other_objects.push_back(object_data);
@@ -272,6 +275,14 @@ void AvoidanceByLCModule::fillAvoidanceTargetObjects(
 
     // Target object is behind the path goal -> ignore.
     if (object_data.longitudinal > dist_to_goal) {
+      data.other_objects.push_back(object_data);
+      continue;
+    }
+
+    if (
+      object_data.longitudinal + object_data.length / 2 +
+        parameters_->avoidance->object_check_goal_distance >
+      dist_to_goal) {
       data.other_objects.push_back(object_data);
       continue;
     }
@@ -451,157 +462,6 @@ void AvoidanceByLCModule::fillAvoidanceTargetObjects(
 
     // set data
     data.target_objects.push_back(object_data);
-  }
-}
-
-void AvoidanceByLCModule::fillObjectEnvelopePolygon(
-  const Pose & closest_pose, ObjectData & object_data) const
-{
-  using boost::geometry::within;
-
-  const auto id = object_data.object.object_id;
-  const auto same_id_obj = std::find_if(
-    registered_objects_.begin(), registered_objects_.end(),
-    [&id](const auto & o) { return o.object.object_id == id; });
-
-  if (same_id_obj == registered_objects_.end()) {
-    object_data.envelope_poly = createEnvelopePolygon(
-      object_data, closest_pose, parameters_->avoidance->object_envelope_buffer);
-    return;
-  }
-
-  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
-
-  if (!within(object_polygon, same_id_obj->envelope_poly)) {
-    object_data.envelope_poly = createEnvelopePolygon(
-      object_data, closest_pose, parameters_->avoidance->object_envelope_buffer);
-    return;
-  }
-
-  object_data.envelope_poly = same_id_obj->envelope_poly;
-}
-
-void AvoidanceByLCModule::fillObjectMovingTime(ObjectData & object_data) const
-{
-  const auto & object_vel =
-    object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const auto is_faster_than_threshold =
-    object_vel > parameters_->avoidance->threshold_speed_object_is_stopped;
-
-  const auto id = object_data.object.object_id;
-  const auto same_id_obj = std::find_if(
-    stopped_objects_.begin(), stopped_objects_.end(),
-    [&id](const auto & o) { return o.object.object_id == id; });
-
-  const auto is_new_object = same_id_obj == stopped_objects_.end();
-
-  if (!is_faster_than_threshold) {
-    object_data.last_stop = clock_->now();
-    object_data.move_time = 0.0;
-    if (is_new_object) {
-      stopped_objects_.push_back(object_data);
-    } else {
-      same_id_obj->last_stop = clock_->now();
-      same_id_obj->move_time = 0.0;
-    }
-    return;
-  }
-
-  if (is_new_object) {
-    object_data.move_time = std::numeric_limits<double>::max();
-    return;
-  }
-
-  object_data.last_stop = same_id_obj->last_stop;
-  object_data.move_time = (clock_->now() - same_id_obj->last_stop).seconds();
-
-  if (object_data.move_time > parameters_->avoidance->threshold_time_object_is_moving) {
-    stopped_objects_.erase(same_id_obj);
-  }
-}
-
-void AvoidanceByLCModule::updateRegisteredObject(const ObjectDataArray & now_objects)
-{
-  const auto updateIfDetectedNow = [&now_objects, this](auto & registered_object) {
-    const auto & n = now_objects;
-    const auto r_id = registered_object.object.object_id;
-    const auto same_id_obj = std::find_if(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-
-    // same id object is detected. update registered.
-    if (same_id_obj != n.end()) {
-      registered_object = *same_id_obj;
-      return true;
-    }
-
-    constexpr auto POS_THR = 1.5;
-    const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
-    const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
-      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
-    });
-
-    // same id object is not detected, but object is found around registered. update registered.
-    if (similar_pos_obj != n.end()) {
-      registered_object = *similar_pos_obj;
-      return true;
-    }
-
-    // Same ID nor similar position object does not found.
-    return false;
-  };
-
-  // -- check registered_objects, remove if lost_count exceeds limit. --
-  for (int i = static_cast<int>(registered_objects_.size()) - 1; i >= 0; --i) {
-    auto & r = registered_objects_.at(i);
-
-    // registered object is not detected this time. lost count up.
-    if (!updateIfDetectedNow(r)) {
-      r.lost_time = (clock_->now() - r.last_seen).seconds();
-    } else {
-      r.last_seen = clock_->now();
-      r.lost_time = 0.0;
-    }
-
-    // lost count exceeds threshold. remove object from register.
-    if (r.lost_time > parameters_->avoidance->object_last_seen_threshold) {
-      registered_objects_.erase(registered_objects_.begin() + i);
-    }
-  }
-
-  const auto isAlreadyRegistered = [this](const auto & n_id) {
-    const auto & r = registered_objects_;
-    return std::any_of(
-      r.begin(), r.end(), [&n_id](const auto & o) { return o.object.object_id == n_id; });
-  };
-
-  // -- check now_objects, add it if it has new object id --
-  for (const auto & now_obj : now_objects) {
-    if (!isAlreadyRegistered(now_obj.object.object_id)) {
-      registered_objects_.push_back(now_obj);
-    }
-  }
-}
-
-void AvoidanceByLCModule::compensateDetectionLost(
-  ObjectDataArray & now_objects, ObjectDataArray & other_objects) const
-{
-  const auto isDetectedNow = [&](const auto & r_id) {
-    const auto & n = now_objects;
-    return std::any_of(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-  };
-
-  const auto isIgnoreObject = [&](const auto & r_id) {
-    const auto & n = other_objects;
-    return std::any_of(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-  };
-
-  for (const auto & registered : registered_objects_) {
-    if (
-      !isDetectedNow(registered.object.object_id) && !isIgnoreObject(registered.object.object_id)) {
-      now_objects.push_back(registered);
-    }
   }
 }
 
@@ -1329,22 +1189,6 @@ void AvoidanceByLCModule::updateOutputTurnSignal(BehaviorModuleOutput & output)
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
 
   util::lane_change::get_turn_signal_info(status_.lane_change_path, &output.turn_signal_info);
-}
-
-bool AvoidanceByLCModule::isTargetObjectType(const PredictedObject & object) const
-{
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
-  const auto t = util::getHighestProbLabel(object.classification);
-  const auto is_object_type =
-    ((t == ObjectClassification::CAR && parameters_->avoidance->avoid_car) ||
-     (t == ObjectClassification::TRUCK && parameters_->avoidance->avoid_truck) ||
-     (t == ObjectClassification::BUS && parameters_->avoidance->avoid_bus) ||
-     (t == ObjectClassification::TRAILER && parameters_->avoidance->avoid_trailer) ||
-     (t == ObjectClassification::UNKNOWN && parameters_->avoidance->avoid_unknown) ||
-     (t == ObjectClassification::BICYCLE && parameters_->avoidance->avoid_bicycle) ||
-     (t == ObjectClassification::MOTORCYCLE && parameters_->avoidance->avoid_motorcycle) ||
-     (t == ObjectClassification::PEDESTRIAN && parameters_->avoidance->avoid_pedestrian));
-  return is_object_type;
 }
 
 void AvoidanceByLCModule::resetParameters()
