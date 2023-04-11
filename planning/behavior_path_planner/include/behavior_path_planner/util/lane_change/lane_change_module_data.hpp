@@ -28,7 +28,9 @@ struct LaneChangeParameters
   // trajectory generation
   double prepare_duration{2.0};
   double lane_changing_lateral_jerk{0.5};
-  double lane_changing_lateral_acc{0.5};
+  double lane_changing_lateral_acc{0.315};
+  double lane_changing_lateral_acc_at_low_velocity{0.15};
+  double lateral_acc_switching_velocity{0.4};
   double lane_change_finish_judge_buffer{3.0};
   double minimum_lane_changing_velocity{5.6};
   double prediction_time_resolution{0.5};
@@ -36,8 +38,8 @@ struct LaneChangeParameters
   int lane_change_sampling_num{10};
 
   // collision check
-  bool enable_collision_check_at_prepare_phase{true};
-  double prepare_phase_ignore_target_speed_thresh{0.1};
+  bool enable_prepare_segment_collision_check{true};
+  double prepare_segment_ignore_object_velocity_thresh{0.1};
   bool use_predicted_path_outside_lanelet{false};
   bool use_all_predicted_path{false};
 

@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -286,6 +286,17 @@ void RouteHandler::setRouteLanelets(const lanelet::ConstLanelets & path_lanelets
     route_lanelets_.push_back(lanelet_map_ptr_->laneletLayer.get(id));
   }
   is_handler_ready_ = true;
+}
+
+void RouteHandler::clearRoute()
+{
+  route_lanelets_.clear();
+  preferred_lanelets_.clear();
+  start_lanelets_.clear();
+  goal_lanelets_.clear();
+  route_msg_ = LaneletRoute();
+  is_route_msg_ready_ = false;
+  is_handler_ready_ = false;
 }
 
 void RouteHandler::setLaneletsFromRouteMsg()
@@ -722,6 +733,14 @@ bool RouteHandler::getClosestLaneletWithinRoute(
   const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
 {
   return lanelet::utils::query::getClosestLanelet(route_lanelets_, search_pose, closest_lanelet);
+}
+
+bool RouteHandler::getClosestLaneletWithConstrainsWithinRoute(
+  const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
+  const double yaw_threshold) const
+{
+  return lanelet::utils::query::getClosestLaneletWithConstrains(
+    route_lanelets_, search_pose, closest_lanelet, dist_threshold, yaw_threshold);
 }
 
 bool RouteHandler::getNextLaneletWithinRoute(

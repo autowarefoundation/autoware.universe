@@ -18,7 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
 #include <behavior_path_planner/turn_signal_decider.hpp>
@@ -67,11 +67,7 @@ public:
     rtc_interface_ptr_map_(rtc_interface_ptr_map)
   {
 #ifdef USE_OLD_ARCHITECTURE
-    std::string module_ns;
-    module_ns.resize(name.size());
-    std::transform(name.begin(), name.end(), module_ns.begin(), tolower);
-
-    const auto ns = std::string("~/debug/") + module_ns;
+    const auto ns = std::string("~/debug/") + util::convertToSnakeCase(name);
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
 #endif
 

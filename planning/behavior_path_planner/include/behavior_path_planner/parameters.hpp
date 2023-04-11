@@ -20,7 +20,8 @@
 struct ModuleConfigParameters
 {
   bool enable_module{false};
-  bool enable_simultaneous_execution{false};
+  bool enable_simultaneous_execution_as_approved_module{false};
+  bool enable_simultaneous_execution_as_candidate_module{false};
   uint8_t priority{0};
   uint8_t max_module_size{0};
 };
@@ -61,6 +62,7 @@ struct BehaviorPathPlannerParameters
   bool turn_signal_on_swerving;
 
   double enable_akima_spline_first;
+  double enable_cog_on_centerline;
   double input_path_interval;
   double output_path_interval;
 
