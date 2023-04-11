@@ -14,7 +14,7 @@ This has been developed as a new location stack for [Autoware](https://github.co
 * [external/tier4_autoware_msgs](https://github.com/tier4/tier4_autoware_msgs.git)
 
 **NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the autoware workspace.
-Someday this localizer will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
+Someday this will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
 
 ## Architecture
 
@@ -37,20 +37,26 @@ This localizer requires following topics to work.
 
 |  topic name  |  msg type  | description |
 | ---- | ---- | -- |
-|  `/tf_static`      | `tf2_msgs/msg/TFMessage`                   | published from `vehicle_interface` ?  |
+|  `/tf_static`      | `tf2_msgs/msg/TFMessage`                   | published from `sensor_kit`  |
 |  `/map/vector_map` | `autoware_auto_mapping_msgs/msg/HADMapBin` | published from `/map/lanelet2_map_loader` |
 
 #### about tf_static
 
-* XX1のデータだと `/base_link` から `/traffic_light_left_camera/camera_optical_link` のtf_staticがいる。
-  * 厳密にはsubscribeしているcamera_infoの`frame_id`を参照して座標変換している
-  * `/sensing/camera/traffic_light` 以外のカメラを使う場合は、それのcamera_infoの`frame_id`へのtf_staticがpublishされている必要がある。
-  * `ros2 run tf2_ros tf2_echo base_link traffic_light_left_camera/camera_optical_link`
+Some nodes requires `/tf_static` from `/base_link` to the frame_id of `/sensing/camera/traffic_light/image_raw/compressed` (e.g. `/traffic_light_left_camera/camera_optical_link`).
+You can verify that the tf_static is correct with the following command.
 
-* 実験用車両とかだと、pilot-auto側でもtf_staticを簡単に流せないことがあるので、回避策を用意している。
-* `override_extrinsic`をtrueにすると、undistort_nodeの中でcamera_infoのframe_idを書き換えて、別の外部パラメータを使える。
-  * デフォルトでは`override_extrinsic=false`
-  * `override_extrinsic=true`だと`impl/imgproc.launch.xml`の中で上書き用のtf_statcがpublishされる
+```shell
+ros2 run tf2_ros tf2_echo base_link traffic_light_left_camera/camera_optical_link
+```
+
+If the wrong `/tf_static` are broadcasted because you are using a prototype vehicle, it is useful to give the frame_id in `override_camera_frame_id`.
+If you give it a non-empty string, `/imgproc/undistort_node` will rewrite the frame_id in camera_info.
+For example, you can give a different tf_static as follows.
+
+```shell
+ros2 launch pcdless_launch odaiba_launch.xml override_camera_frame_id:=fake_camera_optical_link
+ros2 run tf2_ros static_transform_publisher --frame-id base_link --child-frame-id fake_camera_optical_link --roll -1.57 --yaw -1.570
+```
 
 ### Output
 

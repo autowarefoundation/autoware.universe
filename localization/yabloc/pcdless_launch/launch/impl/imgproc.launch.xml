@@ -15,32 +15,20 @@
 
     <arg name="target_height_ratio" default="0.85"/>
 
+    <arg name="override_camera_frame_id" default="" description="Value for overriding the camera's frame_id. 
+        Use when another static_tf is to be read
+        if it is blank (default) camera frame_id is not overridden."/>
 
     <!-- undistort & resize -->
-    <arg name="override_extrinsic" default="false" description="Value for overriding the camera's frame_id. Use when another static_tf is to be read."/>
-    <group if="$(var override_extrinsic)"> 
-        <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level info">
-            <param name="use_sim_time" value="$(var use_sim_time)"/>
-            <param name="width" value="800"/>
-            <param name="override_frame_id" value="override_camera_frame"/>
-            <param name="use_sensor_qos" value="$(var use_sensor_qos)"/>
+    <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="width" value="800"/>
+        <param name="override_frame_id" value="$(var override_camera_frame_id)"/>
+        <param name="use_sensor_qos" value="$(var use_sensor_qos)"/>
 
-            <remap from="src_image" to="$(var src_image)"/>
-            <remap from="src_info" to="$(var src_info)"/>
-        </node>
-        <node name="override_static_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--x 1.121  --y -0.056 --z 1.974 --roll -1.551 --pitch 0.006 --yaw -1.580 --frame-id  base_link --child-frame-id override_camera_frame"/>
-    </group>
-    <group unless="$(var override_extrinsic)"> 
-        <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level info">
-            <param name="use_sim_time" value="$(var use_sim_time)"/>
-            <param name="width" value="800"/>
-            <param name="override_frame_id" value=""/>
-            <param name="use_sensor_qos" value="$(var use_sensor_qos)"/>
-
-            <remap from="src_image" to="$(var src_image)"/>
-            <remap from="src_info" to="$(var src_info)"/>
-        </node>
-    </group>
+        <remap from="src_image" to="$(var src_image)"/>
+        <remap from="src_info" to="$(var src_info)"/>
+    </node>
 
     <!-- line segment detector -->
     <arg name="output_lsd_image" default="lsd_image"/>
