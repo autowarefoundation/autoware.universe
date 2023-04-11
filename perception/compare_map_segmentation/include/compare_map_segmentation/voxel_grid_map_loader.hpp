@@ -15,9 +15,9 @@
 #ifndef COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
 #define COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
 
+#include <component_interface_specs/localization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -31,7 +31,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-// create map loader interface for static and dynamic map
 
 template <typename T, typename U>
 double distance3D(const T p1, const U p2)
