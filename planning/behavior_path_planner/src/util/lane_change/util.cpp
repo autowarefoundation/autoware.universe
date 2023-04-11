@@ -19,6 +19,7 @@
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/util/safety_check.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -110,7 +111,7 @@ std::vector<int64_t> replaceWithSortedIds(
 }
 }  // namespace
 
-namespace behavior_path_planner::lane_change_utils
+namespace behavior_path_planner::util::lane_change
 {
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using lanelet::ArcCoordinates;
@@ -458,7 +459,7 @@ std::pair<bool, bool> getLaneChangePaths(
 
     if (candidate_paths->empty()) {
       // only compute dynamic object indices once
-      const auto backward_lanes = lane_change_utils::getExtendedTargetLanesForCollisionCheck(
+      const auto backward_lanes = util::lane_change::getExtendedTargetLanesForCollisionCheck(
         route_handler, target_lanelets.front(), pose, check_length);
       dynamic_object_indices = filterObjectIndices(
         {*candidate_path}, *dynamic_objects, backward_lanes, pose,
@@ -620,7 +621,7 @@ bool isLaneChangePathSafe(
     const auto predicted_paths =
       util::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
     for (const auto & obj_path : predicted_paths) {
-      if (!util::isSafeInLaneletCollisionCheck(
+      if (!util::safety_check::isSafeInLaneletCollisionCheck(
             interpolated_ego, current_twist, check_durations, lane_change_path.duration.prepare,
             obj, obj_path, common_parameter,
             lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel,
@@ -644,7 +645,7 @@ bool isLaneChangePathSafe(
     const auto predicted_paths =
       util::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
 
-    if (!util::isSafeInFreeSpaceCollisionCheck(
+    if (!util::safety_check::isSafeInFreeSpaceCollisionCheck(
           interpolated_ego, current_twist, check_durations, lane_change_path.duration.prepare, obj,
           common_parameter, lane_change_parameter.prepare_segment_ignore_object_velocity_thresh,
           front_decel, rear_decel, current_debug_data.second)) {
@@ -710,8 +711,11 @@ double calcLaneChangingLength(
   const double lane_changing_velocity, const double shift_length,
   const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param)
 {
+  const double lateral_acc = lane_changing_velocity < lc_param.lateral_acc_switching_velocity
+                               ? lc_param.lane_changing_lateral_acc_at_low_velocity
+                               : lc_param.lane_changing_lateral_acc;
   const auto required_time = PathShifter::calcShiftTimeFromJerk(
-    shift_length, lc_param.lane_changing_lateral_jerk, lc_param.lane_changing_lateral_acc);
+    shift_length, lc_param.lane_changing_lateral_jerk, lateral_acc);
 
   const double & min_lane_change_length = com_param.minimum_lane_changing_length;
   const double lane_changing_length =
@@ -1441,4 +1445,4 @@ lanelet::ConstLanelets getLaneChangeLanes(
 
   return {};
 }
-}  // namespace behavior_path_planner::lane_change_utils
+}  // namespace behavior_path_planner::util::lane_change
