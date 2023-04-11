@@ -118,7 +118,7 @@ void RingOutlierFilterComponent::faster_filter(
 
       if (isCluster(
             input, std::make_pair(indices[walk_first_idx], indices[walk_last_idx]),
-            walk_last_idx - walk_first_idx + 1, transform_info)) {
+            walk_last_idx - walk_first_idx + 1)) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
           auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
           auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
@@ -145,7 +145,7 @@ void RingOutlierFilterComponent::faster_filter(
 
     if (isCluster(
           input, std::make_pair(indices[walk_first_idx], indices[walk_last_idx]),
-          walk_last_idx - walk_first_idx + 1, transform_info)) {
+          walk_last_idx - walk_first_idx + 1)) {
       for (int i = walk_first_idx; i <= walk_last_idx; i++) {
         auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
         auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
