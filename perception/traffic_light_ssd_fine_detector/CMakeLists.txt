@@ -119,11 +119,20 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   ### ssd ###
+  cuda_add_library(gather_topk_plugin SHARED
+    lib/src/plugins/gather_topk_kernel.cu
+    lib/src/plugins/gather_topk.cpp
+  )
+
   ament_auto_add_library(ssd SHARED
     lib/src/trt_ssd.cpp
   )
 
   target_include_directories(ssd PUBLIC
+    lib/include
+  )
+
+  target_include_directories(gather_topk_plugin PUBLIC
     lib/include
   )
 
@@ -134,6 +143,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${CUDA_LIBRARIES}
     ${CUBLAS_LIBRARIES}
     ${CUDNN_LIBRARY}
+    gather_topk_plugin
   )
 
   ament_auto_add_library(traffic_light_ssd_fine_detector_nodelet SHARED
@@ -144,6 +154,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${OpenCV_LIB}
     stdc++fs
     ssd
+    gather_topk_plugin
   )
 
   rclcpp_components_register_node(traffic_light_ssd_fine_detector_nodelet
@@ -154,6 +165,14 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   ament_auto_package(INSTALL_TO_SHARE
     data
     launch
+  )
+
+  install(
+    TARGETS
+      gather_topk_plugin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
   )
 
 else()

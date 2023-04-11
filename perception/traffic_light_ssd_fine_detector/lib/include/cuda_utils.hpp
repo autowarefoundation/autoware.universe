@@ -22,6 +22,8 @@
 #define CUDA_UTILS_HPP_
 
 #include <./cuda_runtime_api.h>
+#include <cublas_v2.h>
+#include <cuda.h>
 
 #include <memory>
 #include <sstream>
@@ -29,6 +31,13 @@
 #include <type_traits>
 
 #define CHECK_CUDA_ERROR(e) (cuda::check_error(e, __FILE__, __LINE__))
+
+#define CUDA_1D_KERNEL_LOOP(i, n) \
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); i += blockDim.x * gridDim.x)
+
+#define THREADS_PER_BLOCK 512
+
+#define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
 
 namespace cuda
 {
@@ -50,7 +59,8 @@ template <typename T>
 using unique_ptr = std::unique_ptr<T, deleter>;
 
 // auto array = cuda::make_unique<float[]>(n);
-// ::cudaMemcpy(array.get(), src_array, sizeof(float)*n, ::cudaMemcpyHostToDevice);
+// ::cudaMemcpy(array.get(), src_array, sizeof(float)*n,
+// ::cudaMemcpyHostToDevice);
 template <typename T>
 typename std::enable_if<std::is_array<T>::value, cuda::unique_ptr<T>>::type make_unique(
   const std::size_t n)
@@ -62,7 +72,8 @@ typename std::enable_if<std::is_array<T>::value, cuda::unique_ptr<T>>::type make
 }
 
 // auto value = cuda::make_unique<my_class>();
-// ::cudaMemcpy(value.get(), src_value, sizeof(my_class), ::cudaMemcpyHostToDevice);
+// ::cudaMemcpy(value.get(), src_value, sizeof(my_class),
+// ::cudaMemcpyHostToDevice);
 template <typename T>
 cuda::unique_ptr<T> make_unique()
 {
