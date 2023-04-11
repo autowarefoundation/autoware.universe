@@ -83,8 +83,9 @@ private:
   void receiveMap();
   void concatPointCloudMaps(
     sensor_msgs::msg::PointCloud2 & pointcloud_map,
-    const sensor_msgs::msg::PointCloud2 & new_pointcloud);
-
+    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & new_pointcloud_with_ids)
+    const;
+  std::vector<std::string> getRequestIDs(const unsigned int map_id_counter) const;
   void publish();
   void createElevationMap();
   void setVerbosityLevelToDebugIfFlagSet();
@@ -100,7 +101,7 @@ private:
   std::string elevation_map_directory_;
   bool use_inpaint_;
   float inpaint_radius_;
-  long unsigned int sequential_map_load_num_;
+  unsigned int sequential_map_load_num_;
   bool use_elevation_map_cloud_publisher_;
   std::string param_file_path_;
   bool is_map_metadata_received_ = false;

@@ -55,7 +55,12 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   param_file_path_ = this->declare_parameter("param_file_path", "path_default");
   map_frame_ = this->declare_parameter("map_frame", "map");
   bool use_sequential_load = this->declare_parameter<bool>("use_sequential_load", true);
-  sequential_map_load_num_ = this->declare_parameter<int>("sequential_map_load_num", 1);
+  int sequential_map_load_num_int = this->declare_parameter<int>("sequential_map_load_num", 1);
+  if (sequential_map_load_num_int > 0) {
+    sequential_map_load_num_ = (unsigned int)sequential_map_load_num_int;
+  } else {
+    throw std::runtime_error("sequential_map_load_num should be larger than 0.");
+  }
   use_inpaint_ = this->declare_parameter("use_inpaint", true);
   inpaint_radius_ = this->declare_parameter("inpaint_radius", 0.3);
   use_elevation_map_cloud_publisher_ =
@@ -209,6 +214,15 @@ void ElevationMapLoaderNode::onPointCloudMapMetaData(
         this->get_logger(), "PCD metadata size: %lu", pointcloud_map_metadata.metadata_list.size());
       throw std::runtime_error("PCD metadata is invalid");
     }
+    if (sequential_map_load_num_ > pointcloud_map_metadata.metadata_list.size()) {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "The following range is not met: sequential_map_load_num <= %lu (number of all point cloud "
+        "map cells)",
+        pointcloud_map_metadata.metadata_list.size());
+      throw std::runtime_error(
+        "sequential_map_load_num is larger than number of point cloud map cells");
+    }
     for (const auto & pointcloud_map_cell_metadata : pointcloud_map_metadata.metadata_list) {
       data_manager_.pointcloud_map_ids_.push_back(pointcloud_map_cell_metadata.cell_id);
     }
@@ -232,7 +246,6 @@ void ElevationMapLoaderNode::onVectorMap(
 
 void ElevationMapLoaderNode::receiveMap()
 {
-  pcl::PointCloud<pcl::PointXYZ> map_pcl;
   sensor_msgs::msg::PointCloud2 pointcloud_map;
   // create a loading request with mode = 1
   auto request = std::make_shared<autoware_map_msgs::srv::GetSelectedPointCloudMap::Request>();
@@ -242,21 +255,13 @@ void ElevationMapLoaderNode::receiveMap()
       "Waiting for pcd map loader service. Check if the enable_selected_load in "
       "pointcloud_map_loader is set `true`.");
   }
+
   // request PCD maps in batches of sequential_map_load_num
-  for (long unsigned int map_id_counter = 0;
-       map_id_counter < data_manager_.pointcloud_map_ids_.size();
+  for (unsigned int map_id_counter = 0; map_id_counter < data_manager_.pointcloud_map_ids_.size();
        map_id_counter += sequential_map_load_num_) {
     // get ids to request
-    std::vector<std::string> pointcloud_map_ids = {
-      data_manager_.pointcloud_map_ids_.at(map_id_counter)};
-    for (long unsigned int i = 1; i < sequential_map_load_num_; i++) {
-      if (map_id_counter + i < data_manager_.pointcloud_map_ids_.size()) {
-        pointcloud_map_ids.push_back(data_manager_.pointcloud_map_ids_.at(map_id_counter + i));
-      }
-    }
+    request->cell_ids = getRequestIDs(map_id_counter);
 
-    // update request
-    request->cell_ids = pointcloud_map_ids;
     // send a request to map_loader
     RCLCPP_INFO(this->get_logger(), "send a request to map_loader");
     auto result{pcd_loader_client_->async_send_request(
@@ -272,27 +277,43 @@ void ElevationMapLoaderNode::receiveMap()
     }
 
     // concat maps
-    for (const auto & new_pointcloud_with_id : result.get()->new_pointcloud_with_ids) {
-      concatPointCloudMaps(pointcloud_map, new_pointcloud_with_id.pointcloud);
-    }
+    concatPointCloudMaps(pointcloud_map, result.get()->new_pointcloud_with_ids);
   }
   RCLCPP_INFO(this->get_logger(), "finish receiving");
+  pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(pointcloud_map, map_pcl);
   data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 }
 
 void ElevationMapLoaderNode::concatPointCloudMaps(
   sensor_msgs::msg::PointCloud2 & pointcloud_map,
-  const sensor_msgs::msg::PointCloud2 & new_pointcloud)
+  const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & new_pointcloud_with_ids)
+  const
 {
-  if (pointcloud_map.width == 0) {
-    pointcloud_map = new_pointcloud;
-  } else {
-    pointcloud_map.width += new_pointcloud.width;
-    pointcloud_map.row_step += new_pointcloud.row_step;
-    pointcloud_map.data.insert(
-      pointcloud_map.data.end(), new_pointcloud.data.begin(), new_pointcloud.data.end());
+  for (const auto & new_pointcloud_with_id : new_pointcloud_with_ids) {
+    if (pointcloud_map.width == 0) {
+      pointcloud_map = new_pointcloud_with_id.pointcloud;
+    } else {
+      pointcloud_map.width += new_pointcloud_with_id.pointcloud.width;
+      pointcloud_map.row_step += new_pointcloud_with_id.pointcloud.row_step;
+      pointcloud_map.data.insert(
+        pointcloud_map.data.end(), new_pointcloud_with_id.pointcloud.data.begin(),
+        new_pointcloud_with_id.pointcloud.data.end());
+    }
   }
+}
+
+std::vector<std::string> ElevationMapLoaderNode::getRequestIDs(
+  const unsigned int map_id_counter) const
+{
+  std::vector<std::string> pointcloud_map_ids = {
+    data_manager_.pointcloud_map_ids_.at(map_id_counter)};
+  for (unsigned int i = 1; i < sequential_map_load_num_; i++) {
+    if (map_id_counter + i < data_manager_.pointcloud_map_ids_.size()) {
+      pointcloud_map_ids.push_back(data_manager_.pointcloud_map_ids_.at(map_id_counter + i));
+    }
+  }
+  return pointcloud_map_ids;
 }
 
 void ElevationMapLoaderNode::createElevationMap()
