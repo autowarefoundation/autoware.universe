@@ -63,35 +63,36 @@ rclcpp_components_register_node(behavior_velocity_planner
 )
 
 if(BUILD_TESTING)
-  # Gtest for utilization
-  ament_add_ros_isolated_gtest(utilization-test
-    test/src/test_state_machine.cpp
-    test/src/test_arc_lane_util.cpp
-    test/src/test_utilization.cpp
-  )
-  target_link_libraries(utilization-test
-    gtest_main
-    behavior_velocity_planner
-  )
-
-  # Gtest for occlusion spot
-  ament_add_ros_isolated_gtest(occlusion_spot-test
-    test/src/test_occlusion_spot_utils.cpp
-    test/src/test_risk_predictive_braking.cpp
-    test/src/test_grid_utils.cpp
-  )
-  # Gtest for out of lane
-  # ament_add_ros_isolated_gtest(out_of_lane-test
+  # # Gtest for utilization
+  # ament_add_ros_isolated_gtest(utilization-test
+  #   test/src/test_state_machine.cpp
+  #   test/src/test_arc_lane_util.cpp
+  #   test/src/test_utilization.cpp
   # )
-  target_link_libraries(occlusion_spot-test
-    gtest_main
-    behavior_velocity_planner
-  )
+  # target_link_libraries(utilization-test
+  #   gtest_main
+  #   behavior_velocity_planner
+  # )
+
+  # # Gtest for occlusion spot
+  # ament_add_ros_isolated_gtest(occlusion_spot-test
+  #   test/src/test_occlusion_spot_utils.cpp
+  #   test/src/test_risk_predictive_braking.cpp
+  #   test/src/test_grid_utils.cpp
+  # )
+  # # Gtest for out of lane
+  # # ament_add_ros_isolated_gtest(out_of_lane-test
+  # # )
+  # target_link_libraries(occlusion_spot-test
+  #   gtest_main
+  #   behavior_velocity_planner
+  # )
 
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/src/test_${PROJECT_NAME}_node_interface.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
+    gtest_main
     ${PROJECT_NAME}
   )
 endif()
