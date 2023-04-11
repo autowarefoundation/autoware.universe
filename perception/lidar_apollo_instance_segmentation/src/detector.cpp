@@ -98,7 +98,8 @@ bool LidarApolloInstanceSegmentation::transformCloud(
   pcl::PointCloud<pcl::PointXYZI> pointcloud_with_z_offset;
   Eigen::Affine3f z_up_translation(Eigen::Translation3f(0, 0, z_offset));
   Eigen::Matrix4f z_up_transform = z_up_translation.matrix();
-  tier4_autoware_utils::transformPointCloud(pcl_transformed_cloud, pcl_transformed_cloud, z_up_transform);
+  tier4_autoware_utils::transformPointCloud(
+    pcl_transformed_cloud, pcl_transformed_cloud, z_up_transform);
 
   pcl::toROSMsg(pcl_transformed_cloud, transformed_cloud);
 

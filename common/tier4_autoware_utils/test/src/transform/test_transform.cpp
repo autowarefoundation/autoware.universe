@@ -33,7 +33,7 @@ TEST(system, transform_point_cloud)
   pcl::PointCloud<pcl::PointXYZI> cloud_transformed;
   tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform);
 
-  pcl::PointXYZI pt1_gt(89603.187500, 42270.878906, -13.056946, 4 );
+  pcl::PointXYZI pt1_gt(89603.187500, 42270.878906, -13.056946, 4);
   pcl::PointXYZI pt2_gt(89588.960938, 42335.179688, -12.225426, 5);
 
   constexpr float float_error = 0.0001;

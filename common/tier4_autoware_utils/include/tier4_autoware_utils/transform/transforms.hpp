@@ -31,8 +31,7 @@ void transformPointCloud(
     cloud_out = cloud_in;
   }
 
-  if (cloud_out.width == 0 || cloud_out.height == 0)
-    return;
+  if (cloud_out.width == 0 || cloud_out.height == 0) return;
 
   if (cloud_in.is_dense) {
     for (std::size_t i = 0; i < cloud_out.size(); ++i) {
@@ -78,4 +77,4 @@ void transformPointCloud(
 
 }  // namespace tier4_autoware_utils
 
-#endif  // BUILD_TRANSFORMS_HPP
+#endif  // TIER4_AUTOWARE_UTILS__TRANSFORM__TRANSFORMS_HPP_
