@@ -135,15 +135,8 @@ MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
   if (lanelet2_map_projector_type == "MGRS") {
     lanelet::projection::MGRSProjector projector{};
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
-    std::string mgrs_grid = projector.getProjectedMGRSGrid();
-    if (mgrs_grid != "31NAA") {
-      // Because when there is only local coordinate
-      // the projector will set default coordinate to [0.0,0.0], which is mgrs grid zone 31NAA
-      // This position is in the sea, so we will not process it
-      // We might need to fix it in the lanelet
-      map_projector_type_msg.type = "MGRS";
-      map_projector_type_msg.mgrs_grid = mgrs_grid;
-    }
+    map_projector_type_msg.type = "MGRS";
+    map_projector_type_msg.mgrs_grid = projector.getProjectedMGRSGrid();
   } else if (lanelet2_map_projector_type == "UTM") {
     map_projector_type_msg.type = "UTM";
     map_projector_type_msg.map_origin.latitude = map_origin_lat;
