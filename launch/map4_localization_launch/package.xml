@@ -8,8 +8,9 @@
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
   <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
+  <authomaintainerr email="ryohei.sasaki@map.jp">Ryohei Sasaki</maintainer>
   <license>Apache License 2.0</license>
-  <author email="yamato.ando@tier4.jp">Yamato Ando</author>
+  <author email="ryohei.sasaki@map.jp">Ryohei Sasaki</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
