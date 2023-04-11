@@ -123,6 +123,11 @@ void updateRegisteredObject(
 void compensateDetectionLost(
   const ObjectDataArray & registered_objects, ObjectDataArray & now_objects,
   ObjectDataArray & other_objects);
+
+void filterTargetObjects(
+  ObjectDataArray & objects, AvoidancePlanningData & data, DebugData & debug,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTIL__AVOIDANCE__UTIL_HPP_

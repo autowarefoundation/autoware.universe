@@ -170,6 +170,9 @@ private:
   ObjectDataArray registered_objects_;
   mutable ObjectDataArray stopped_objects_;
 
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
 
   lanelet::ConstLanelets get_original_lanes() const;

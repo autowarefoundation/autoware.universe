@@ -172,9 +172,9 @@ private:
     }
   }
 
-  /**
-   * object pre-process
-   */
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
 
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
