@@ -1,37 +1,10 @@
-# Vector Map Visual Localization
+# YabLoc
 
-* Supporting `Ubuntu22.04` + `ROS2 humble` now.
-  * Some branches might support `ROS2 galactic`.
+**YabLoc** is camera-baed localization with vector map.
 
-## How to build
+This has been developed as a new location stack for [Autoware](https://github.com/autowarefoundation/autoware).
 
-**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the autoware workspace.
-
-```bash
-mkdir pcdless_ws/src -p
-
-cd pcdless_ws
-
-git clone git@github.com:tier4/VectorMapVisualLocalizer.git src/vector_map_visual_localizer --recursive
-
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-
-source install/setup.bash
-```
-
-<details><summary>The author often use this build command</summary><div>
-
-```shell
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --continue-on-error
-```
-
-* (optional) ccache `(--cmake-args) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
-
-* (optional) clang-tidy `(--cmake-args) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
-
-* (optional) test `(--cmake-args) -DBUILD_TESTING=ON`
-
-</div></details>
+![thumbnail](docs/yabloc_thumbnail.jpg)
 
 ## Submodule
 
@@ -40,7 +13,8 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_E
 * [external/septentrio_gnss_driver](https://github.com/tier4/septentrio_gnss_driver.git)
 * [external/tier4_autoware_msgs](https://github.com/tier4/tier4_autoware_msgs.git)
 
-**NOTE:** Someday this localizer will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
+**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the autoware workspace.
+Someday this localizer will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
 
 ## Architecture
 
@@ -70,7 +44,7 @@ This localizer requires following topics to work.
 
 * XX1のデータだと `/base_link` から `/traffic_light_left_camera/camera_optical_link` のtf_staticがいる。
   * 厳密にはsubscribeしているcamera_infoの`frame_id`を参照して座標変換している
-  * `/sensing/camera/traffic_light` 以外のカメラを使う場合は、それのcamera_infoの`frame_id`へのtf_staticがpublishされているかに注意
+  * `/sensing/camera/traffic_light` 以外のカメラを使う場合は、それのcamera_infoの`frame_id`へのtf_staticがpublishされている必要がある。
   * `ros2 run tf2_ros tf2_echo base_link traffic_light_left_camera/camera_optical_link`
 
 * 実験用車両とかだと、pilot-auto側でもtf_staticを簡単に流せないことがあるので、回避策を用意している。
@@ -80,15 +54,43 @@ This localizer requires following topics to work.
 
 ### Output
 
-* デバッグととかに便利なものたち
-
 |  topic name  |  msg type  | description |
 | ---- | ---- | -- |
-|  `/localicazation/validation/overlay_image`      | `sensor_msgs/msg/Image`  | Really nice image for demonstration  |
-|  `/localicazation/pf/cost_map_image`             | `sensor_msgs/msg/Image`  | Visualization of cost map for debug  |
-|  `/localicazation/pf/predicted_particles_marker` | `visualization_msgs/msg/MarkerArray`  | Particles of particle filter |
-|  `/localicazation/imgproc/lsd_image`             | `sensor_msgs/msg/Image`  | image |
-|  `/localicazation/imgproc/projected_lsd_image`   | `sensor_msgs/msg/Image`  | image |
+|  `/localicazation/pf/pose`                       | `geometry_msgs/msg/PoseStamped`      | estimated pose  |
+|  `/localicazation/validation/overlay_image`      | `sensor_msgs/msg/Image`              | really nice image for demonstration  |
+|  `/localicazation/pf/cost_map_image`             | `sensor_msgs/msg/Image`              | visualization of cost map for debug  |
+|  `/localicazation/pf/predicted_particles_marker` | `visualization_msgs/msg/MarkerArray` | particles of particle filter |
+|  `/localicazation/imgproc/lsd_image`             | `sensor_msgs/msg/Image`              | image |
+|  `/localicazation/imgproc/projected_lsd_image`   | `sensor_msgs/msg/Image`              | image |
+
+## How to build
+
+**Supporting `Ubuntu 22.04` + `ROS2 humble` now.
+Some branches might support `ROS2 galactic`.**
+
+**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the Autoware workspace.
+
+```bash
+mkdir yabloc_ws/src -p
+cd yabloc_ws
+git clone git@github.com:tier4/YabLoc.git src/YabLoc --recursive
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
+```
+
+<details><summary>The author often use this build command</summary><div>
+
+```shell
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --continue-on-error
+```
+
+* (optional) ccache `(--cmake-args) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
+
+* (optional) clang-tidy `(--cmake-args) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+
+* (optional) test `(--cmake-args) -DBUILD_TESTING=ON`
+
+</div></details>
 
 ## Sample data
 
@@ -136,7 +138,7 @@ ros2 launch autoware_launch autoware.launch.xml \
   rviz:=false
 ```
 
-### Run with AWSIM (<u>UNDER CONSTRACTION</u>)
+### Run with AWSIM (UNDER CONSTRACTION)
 
 ```bash
 ros2 launch pcdless_launch odaiba_launch.xml standalone:=true 
@@ -146,17 +148,18 @@ ros2 launch autoware_launch e2e_simulator.launch.xml
 
 ## Visualization
 
-**NOTE:** This project contains original rviz plugins.
-![how_to_launch_with_rosbag](docs/rviz_description.png)
+(This project contains original rviz plugins.)
+
+![rviz](docs/rviz_description.png)
 
 |  index | topic name | description |
 | ---- | ---- | -- |
-| 1  |  `/localicazation/validation/overlay_image`     | **Really nice image for demonstration**  |
-| 2  |  `/localicazation/imgproc/segmented_image`      | グラフセグメンテーションの結果。黄色い領域が路面判定されている。 |
-| 3  |  `/localicazation/pf/cost_map_image`            | LL2から生成されたコストマップ。明るさが強度、色相が方位を表す。 |
-| 4  |  `/localicazation/imgproc/lsd_image`            | 線分抽出の結果 |
-| 5  |  `/localicazation/map/ground_status`            | 地面高さ・勾配推定(どうでもいい) |
-| 6  |  `/localicazation/twist/kalman/status`          | RTKの状態やwheelなど。バイアス推定の結果も。 |
-| 7  |  `/localicazation/pf/predicted_particle_marker` | パーティクルの分布。赤が嬉しい、青は嫌い。 |
-| 8  |  `/localicazation/pf/gnss/range_marker`         | GNSSの観測。RTKがFIXだと円が小さくなる。 |
-| 9  |  `/localicazation/pf/scored_cloud`              | 観測した線分を推定結果で逆投影した分布。赤がLL2とよくマッチ。青は嫌い。 |
+| 1  |  `/localicazation/validation/overlay_image`     | Projection of lanelet2 (yellow lines) onto image based on estimated pose. If they match well with the actual road markings, it means that the localization performs well.  |
+| 2  |  `/localicazation/imgproc/segmented_image`      | result of graph-based segmetation. yellow area is identified as the road surface.|
+| 3  |  `/localicazation/pf/cost_map_image`            | cost map generated from lanelet2. |
+| 4  |  `/localicazation/imgproc/lsd_image`            | detected line segments |
+| 5  |  `/localicazation/map/ground_status`            | ground height and tilt estimatation status |
+| 6  |  `/localicazation/twist/kalman/status`          | twist estimation status |
+| 7  |  `/localicazation/pf/predicted_particle_marker` | particle distribution of particle fitler (red means a probable candidate) |
+| 8  |  `/localicazation/pf/gnss/range_marker`         | particle weight distribution by GNSS |
+| 9  |  `/localicazation/pf/scored_cloud`              | 3D projected line segments. the color means the how match they are  |
