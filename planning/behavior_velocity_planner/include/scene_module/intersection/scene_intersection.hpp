@@ -177,14 +177,14 @@ private:
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
   const UUID occlusion_uuid_;
-  bool occlusion_safety_ = false;
+  bool occlusion_safety_;
   double occlusion_stop_distance_;
-  bool occlusion_activated_ = false;
+  bool occlusion_activated_;
   // for first stop in two-phase stop
   const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): uuid_で置き換えるかも
-  bool occlusion_first_stop_safety_ = false;
+  bool occlusion_first_stop_safety_;
   double occlusion_first_stop_distance_;
-  bool occlusion_first_stop_activated_ = false;
+  bool occlusion_first_stop_activated_;
 
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop

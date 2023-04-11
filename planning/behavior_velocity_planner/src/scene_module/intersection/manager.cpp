@@ -137,12 +137,23 @@ void IntersectionModuleManager::launchNewModules(
 
     const auto assoc_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
-    registerModule(std::make_shared<IntersectionModule>(
+    const auto new_module = std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_, assoc_ids, enable_occlusion_detection,
-      node_, logger_.get_child("intersection_module"), clock_));
+      node_, logger_.get_child("intersection_module"), clock_);
+    const auto occlusion_uuid = new_module->getOcclusionUUID();
+    const auto occlusion_first_stop_uuid = new_module->getOcclusionFirstStopUUID();
+    registerModule(std::move(new_module));
+    // default
     generateUUID(module_id);
     updateRTCStatus(
       getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+    // occlusion
+    occlusion_rtc_interface_.updateCooperateStatus(
+      occlusion_uuid, true, std::numeric_limits<double>::lowest(),
+      std::numeric_limits<double>::lowest(), path.header.stamp);
+    rtc_interface_.updateCooperateStatus(
+      occlusion_first_stop_uuid, true, std::numeric_limits<double>::lowest(),
+      std::numeric_limits<double>::lowest(), path.header.stamp);
 
     enable_occlusion_detection = false;
   }
@@ -190,9 +201,10 @@ bool IntersectionModuleManager::hasSameParentLaneletAndTurnDirectionWithRegister
 void IntersectionModuleManager::sendRTC(const Time & stamp)
 {
   for (const auto & scene_module : scene_modules_) {
+    // default
     const UUID uuid = getUUID(scene_module->getModuleId());
     updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), stamp);
-
+    // occlusion
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     const auto occlusion_safety = intersection_module->getOcclusionSafety();
@@ -214,12 +226,15 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
 void IntersectionModuleManager::setActivation()
 {
   for (const auto & scene_module : scene_modules_) {
+    // default
     scene_module->setActivation(rtc_interface_.isActivated(getUUID(scene_module->getModuleId())));
     // occlusion
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     intersection_module->setOcclusionActivation(
       occlusion_rtc_interface_.isActivated(occlusion_uuid));
+    RCLCPP_INFO(
+      logger_, "occlusion_activated_ = %d", occlusion_rtc_interface_.isActivated(occlusion_uuid));
     const auto occlusion_first_stop_uuid = intersection_module->getOcclusionFirstStopUUID();
     intersection_module->setOcclusionFirstStopActivation(
       rtc_interface_.isActivated(occlusion_first_stop_uuid));
@@ -237,8 +252,10 @@ void IntersectionModuleManager::deleteExpiredModules(
 
   for (const auto & scene_module : copied_scene_modules) {
     if (isModuleExpired(scene_module)) {
+      // default
       removeRTCStatus(getUUID(scene_module->getModuleId()));
       removeUUID(scene_module->getModuleId());
+      // occlusion
       const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
       const auto occlusion_uuid = intersection_module->getOcclusionUUID();
       const auto occlusion_first_uuid = intersection_module->getOcclusionFirstStopUUID();

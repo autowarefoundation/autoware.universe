@@ -67,6 +67,7 @@ public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
   : module_id_(module_id),
+    activated_(false),
     safe_(false),
     distance_(std::numeric_limits<double>::lowest()),
     logger_(logger),
