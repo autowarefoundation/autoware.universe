@@ -35,42 +35,46 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->declareVehicleInfoParams(node_options);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->declareNearestSearchDistanceParams(node_options);
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const auto behavior_velocity_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_velocity_planner");
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto motion_velocity_smoother_dir =
+    ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  node_options.arguments(
-    {"--ros-args",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/blind_spot.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/crosswalk.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/detection_area.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/intersection.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/no_stopping_area.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/occlusion_spot.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/run_out.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/speed_bump.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/stop_line.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/traffic_light.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/virtual_traffic_light.param.param.yaml",
-     "--params-file",
-     behavior_velocity_planner_dir + "/config/out_of_lane.param.yaml"});
+  const std::vector<std::string> params_files = {
+    planning_test_utils_dir + "/config/common.param.yaml",
+    planning_test_utils_dir + "/config/nearest_search.param.yaml",
+    motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
+    motion_velocity_smoother_dir + "/config/Analytical.param.yaml",
+    planning_test_utils_dir + "/config/nearest_search.param.yaml",
+    behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
+    behavior_velocity_planner_dir + "/config/blind_spot.param.yaml",
+    behavior_velocity_planner_dir + "/config/crosswalk.param.yaml",
+    behavior_velocity_planner_dir + "/config/detection_area.param.yaml",
+    behavior_velocity_planner_dir + "/config/intersection.param.yaml",
+    behavior_velocity_planner_dir + "/config/no_stopping_area.param.yaml",
+    behavior_velocity_planner_dir + "/config/occlusion_spot.param.yaml",
+    behavior_velocity_planner_dir + "/config/run_out.param.yaml",
+    behavior_velocity_planner_dir + "/config/speed_bump.param.yaml",
+    behavior_velocity_planner_dir + "/config/stop_line.param.yaml",
+    behavior_velocity_planner_dir + "/config/traffic_light.param.yaml",
+    behavior_velocity_planner_dir + "/config/virtual_traffic_light.param.yaml",
+    behavior_velocity_planner_dir + "/config/out_of_lane.param.yaml"};
+
+  std::vector<const char *> arguments;
+  arguments.push_back("--ros-args");
+  arguments.push_back("--params-file");
+  for (const auto & param_file : params_files) {
+    arguments.push_back(param_file.c_str());
+    arguments.push_back("--params-file");
+  }
+  arguments.pop_back();
+
+  node_options.arguments(std::vector<std::string>{arguments.begin(), arguments.end()});
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   auto test_target_node =
