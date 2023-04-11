@@ -152,7 +152,6 @@ void PlanningIntefaceTestManager::publishTF(
 void PlanningIntefaceTestManager::publishInitialPoseTF(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-
   const double position_x = 3722.16015625;
   const double position_y = 73723.515625;
   const double quaternion_x = 0.;
@@ -165,7 +164,6 @@ void PlanningIntefaceTestManager::publishInitialPoseTF(
   quaternion.z = quaternion_z;
   quaternion.w = quaternion_w;
 
-  
   TransformStamped tf;
   tf.header.stamp = target_node->get_clock()->now();
   tf.header.frame_id = "odom";
@@ -377,11 +375,10 @@ void PlanningIntefaceTestManager::publishInitialPoseData(
   const double yaw = tf2::getYaw(quaternion);
 
   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  const std::array<double, 4> start_pose{position_x, position_y, yaw};
+  const std::array<double, 4> start_pose{position_x, position_y, 0, yaw};
   current_odometry->pose.pose = test_utils::create_pose_msg(start_pose);
   current_odometry->header.frame_id = "map";
   // std::string origin_frame_id = "odom";
-
 
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // set_initial_state_with_transform(current_odometry);

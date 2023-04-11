@@ -1153,12 +1153,15 @@ void BehaviorPathPlannerNode::run()
   // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (route_ptr) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     planner_data_->route_handler->setRoute(*route_ptr);
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time) {
+      std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
 #ifdef USE_OLD_ARCHITECTURE
+      std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       bt_manager_->resetBehaviorTree();
 #else
       planner_manager_->reset();
@@ -1168,6 +1171,7 @@ void BehaviorPathPlannerNode::run()
 
 #ifndef USE_OLD_ARCHITECTURE
   if (planner_data_->operation_mode->mode != OperationModeState::AUTONOMOUS) {
+    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     planner_manager_->resetRootLanelet(planner_data_);
   }
 #endif
@@ -1207,6 +1211,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->parameters.forward_path_length,
     planner_data_->parameters.backward_path_length + planner_data_->parameters.input_path_interval);
 
+  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (!path->points.empty()) {
     std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     path_publisher_->publish(*path);

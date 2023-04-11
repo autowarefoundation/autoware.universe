@@ -27,12 +27,15 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <boost/optional.hpp>
 
@@ -40,6 +43,7 @@
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
@@ -49,7 +53,9 @@ namespace test_utils
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
+using autoware_planning_msgs::msg::LaneletSegment;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
@@ -60,6 +66,7 @@ using tf2_msgs::msg::TFMessage;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_planning_msgs::msg::Scenario;
+using unique_identifier_msgs::msg::UUID;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
@@ -123,35 +130,105 @@ Route::Message makeNormalRoute()
   return route;
 }
 
+// geometry_msgs::msg::Quaternion start_quaternion;
+// start_quaternion.x = 0;
+// start_quaternion.y = 0;
+// start_quaternion.z = 0.23311256049418302;
+// start_quaternion.w = 0.9724497591854532;
+// const double start_yaw = tf2::getYaw(start_quaternion);
+
+// geometry_msgs::msg::Quaternion goal_quaternion;
+// goal_quaternion.x = 0;
+// goal_quaternion.y = 0;
+// goal_quaternion.z = -0.5107480274693206;
+// goal_quaternion.w = 0.8597304533609346;
+// const double goal_yaw = tf2::getYaw(goal_quaternion);
+
+// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+// const std::array<double, 4> start_pose{3722.16015625, 73723.515625, 0., start_yaw};
+// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+// const std::array<double, 4> goal_pose{3778.362060546875, 73721.2734375, 0., goal_yaw};
+// Route::Message route;
+// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+// route.header.frame_id = "map";
+
+// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+// route.start_pose = create_pose_msg(start_pose);
+// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+// route.goal_pose = create_pose_msg(goal_pose);
+// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 Route::Message makeBehaviorNormalRoute()
 {
-  geometry_msgs::msg::Quaternion start_quaternion;
-  start_quaternion.x = 0;
-  start_quaternion.y = 0;
-  start_quaternion.z = 0.23311256049418302;
-  start_quaternion.w = 0.9724497591854532;
-  const double start_yaw = tf2::getYaw(start_quaternion);
-
-  geometry_msgs::msg::Quaternion goal_quaternion;
-  goal_quaternion.x = 0;
-  goal_quaternion.y = 0;
-  goal_quaternion.z = 0.23311256049418302;
-  goal_quaternion.w = 0.9724497591854532;
-  const double goal_yaw = tf2::getYaw(goal_quaternion);
-
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  const std::array<double, 4> start_pose{3722.16015625, 73723.515625, 0., start_yaw};
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  const std::array<double, 4> goal_pose{3778.362060546875, 26.3, 0., goal_yaw};
+  // Route::Message型の変数を宣言します。
   Route::Message route;
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+
+  // メッセージのheaderフィールドを設定します。
+  route.header.stamp.sec = 0;
+  route.header.stamp.nanosec = 0;
   route.header.frame_id = "map";
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  route.start_pose = create_pose_msg(start_pose);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  route.goal_pose = create_pose_msg(goal_pose);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+  // メッセージのstart_poseフィールドを設定します。
+  route.start_pose.position.x = 3722.16015625;
+  route.start_pose.position.y = 73723.515625;
+  route.start_pose.position.z = 0.0;
+  route.start_pose.orientation.x = 0.0;
+  route.start_pose.orientation.y = 0.0;
+  route.start_pose.orientation.z = 0.233112560494183;
+  route.start_pose.orientation.w = 0.9724497591854532;
+
+  // メッセージのgoal_poseフィールドを設定します。
+  route.goal_pose.position.x = 3778.362060546875;
+  route.goal_pose.position.y = 73721.2734375;
+  route.goal_pose.position.z = 19.410820582355534;
+  route.goal_pose.orientation.x = 0.0;
+  route.goal_pose.orientation.y = 0.0;
+  route.goal_pose.orientation.z = -0.5107480274693206;
+  route.goal_pose.orientation.w = 0.8597304533609347;
+
+  // メッセージのsegmentsフィールドを設定します。
+  LaneletPrimitive primitive1;
+  primitive1.id = 9102;
+  primitive1.primitive_type = "lane";
+  LaneletSegment segment1;
+  segment1.preferred_primitive.id = 9102;
+  segment1.primitives.push_back(primitive1);
+
+  LaneletPrimitive primitive2;
+  primitive2.id = 9178;
+  primitive2.primitive_type = "lane";
+  LaneletSegment segment2;
+  segment2.preferred_primitive.id = 9178;
+  segment2.primitives.push_back(primitive2);
+
+  LaneletPrimitive primitive3;
+  primitive3.id = 54;
+  primitive3.primitive_type = "lane";
+  LaneletSegment segment3;
+  segment3.preferred_primitive.id = 54;
+  segment3.primitives.push_back(primitive3);
+
+  LaneletPrimitive primitive4;
+  primitive4.id = 112;
+  primitive4.primitive_type = "lane";
+  LaneletSegment segment4;
+  segment4.preferred_primitive.id = 112;
+  segment4.primitives.push_back(primitive4);
+
+  route.segments.push_back(segment1);
+  route.segments.push_back(segment2);
+  route.segments.push_back(segment3);
+  route.segments.push_back(segment4);
+
+  // メッセージのuuidフィールドを設定します。
+  route.uuid.uuid = {210, 87, 16, 126, 98, 151, 58, 28, 252, 221, 230, 92, 122, 170, 46, 6};
+
+  // メッセージのallow_modificationフィールドを設定します。
+  route.allow_modification = false;
+  size_t primitive_size{0};
+  for (const auto & route_section : route.segments) {
+    primitive_size += route_section.primitives.size();
+  }
+  std::cerr << "primitive size: " << primitive_size << std::endl;
   return route;
 }
 
@@ -461,9 +538,7 @@ void setSubscriber<Trajectory>(
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   subscriber = test_node->create_subscription<Trajectory>(
     topic_name, rclcpp::QoS{1},
-    [&count](const typename Trajectory::SharedPtr msg [[maybe_unused]]) {
-      count++;
-    });
+    [&count](const typename Trajectory::SharedPtr msg [[maybe_unused]]) { count++; });
 }
 
 }  // namespace test_utils
