@@ -245,6 +245,11 @@ void PlanningIntefaceTestManager::setRouteInputTopicName(std::string topic_name)
   input_route_name_ = topic_name;
 }
 
+void PlanningIntefaceTestManager::setPathWithLaneIdTopicName(std::string topic_name)
+{
+  input_path_with_lane_id_name_ = topic_name;
+}
+
 void PlanningIntefaceTestManager::publishNominalTrajectory(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
@@ -286,6 +291,11 @@ void PlanningIntefaceTestManager::setScenarioSubscriber(std::string topic_name)
 void PlanningIntefaceTestManager::setPathWithLaneIdSubscriber(std::string topic_name)
 {
   test_utils::setSubscriber(test_node_, topic_name, path_with_lane_id_sub_, count_);
+}
+
+void PlanningIntefaceTestManager::setPathSubscriber(std::string topic_name)
+{
+  test_utils::setSubscriber(test_node_, topic_name, path_sub_, count_);
 }
 
 // test for normal working
@@ -343,6 +353,21 @@ void PlanningIntefaceTestManager::publishAbnormalRoute(
   test_utils::setPublisher(test_node_, input_route_name_, abnormal_route_pub_);
   abnormal_route_pub_->publish(abnormal_route);
   test_utils::spinSomeNodes(test_node_, target_node);
+}
+
+void PlanningIntefaceTestManager::publishNominalPathWithLaneId(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::setPublisher(test_node_, topic_name, normal_path_with_lane_id_pub_);
+  normal_path_with_lane_id_pub_->publish(PathWithLaneId{});
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
+// test for normal working
+void PlanningIntefaceTestManager::testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node)
+{
+  publishNominalPathWithLaneId(target_node, input_path_with_lane_id_name_);
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 int PlanningIntefaceTestManager::getReceivedTopicNum()

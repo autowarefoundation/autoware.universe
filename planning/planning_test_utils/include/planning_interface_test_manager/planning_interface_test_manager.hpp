@@ -43,12 +43,12 @@
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
-#include <tf2_ros/transform_listener.h>
 
 #include <boost/optional.hpp>
 
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #include <time.h>
 
 #include <chrono>
@@ -81,7 +81,6 @@ using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
-
 
 class PlanningIntefaceTestManager
 {
@@ -124,6 +123,7 @@ public:
   void setLaneDrivingTrajectoryInputTopicName(std::string topic_name);
   void setRouteInputTopicName(std::string topic_name);
   void setPathInputTopicName(std::string topic_name);
+  void setPathWithLaneIdTopicName(std::string topic_name);
 
   void setTrajectorySubscriber(std::string topic_name);
   void setScenarioSubscriber(std::string topic_name);
@@ -138,6 +138,8 @@ public:
   void testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node);
 
   void testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node);
+
+  void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();
 
@@ -196,6 +198,7 @@ private:
   std::string input_lane_driving_trajectory_name_;
   std::string input_route_name_;
   std::string input_path_name_;
+  std::string input_path_with_lane_id_name_;
 
   // Node
   rclcpp::Node::SharedPtr test_node_;
@@ -214,6 +217,7 @@ private:
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 
   void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   // void publishAbnormalRoute(
   //   rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 
