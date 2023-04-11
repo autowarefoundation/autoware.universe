@@ -104,9 +104,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   setSafe(true);
   setDistance(std::numeric_limits<double>::lowest());
   // occlusion
-  occlusion_stop_required_ = false;
+  occlusion_safety_ = true;
   occlusion_stop_distance_ = std::numeric_limits<double>::lowest();
-  occlusion_first_stop_required_ = false;
+  occlusion_first_stop_safety_ = true;
   occlusion_first_stop_distance_ = std::numeric_limits<double>::lowest();
 
   /* get current pose */
@@ -367,15 +367,15 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
                                                      : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
 
-  /* set RTC respectively */
+  /* set RTC request respectively */
   if (occlusion_stop_required) {
     if (first_phase_stop_required) {
-      occlusion_first_stop_required_ = true;
+      occlusion_first_stop_safety_ = false;
       occlusion_first_stop_distance_ = motion_utils::calcSignedArcLength(
         path->points, planner_data_->current_odometry->pose.position,
         path->points.at(stop_line_idx.value()).point.pose.position);
     }
-    occlusion_stop_required_ = true;
+    occlusion_safety_ = false;
     occlusion_stop_distance_ = motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_odometry->pose.position,
       path->points.at(occlusion_stop_line_idx.value()).point.pose.position);
@@ -401,15 +401,17 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     if (!occlusion_first_stop_activated_) {
       planning_utils::setVelocityFromIndex(stop_line_idx.value(), 0.0 /* [m/s] */, path);
-      occlusion_first_stop_required_ = true;
       debug_data_.occlusion_first_stop_wall_pose =
         planning_utils::getAheadPose(stop_line_idx.value(), baselink2front, *path);
     }
 
-    planning_utils::setVelocityFromIndex(occlusion_stop_line_idx.value(), 0.0 /* [m/s] */, path);
-    occlusion_stop_required_ = true;
+    const auto reconciled_occlusion_stop_line_idx =
+      occlusion_stop_required
+        ? occlusion_stop_line_idx.value()
+        : stop_line_idx.value();  // because intersection module may miss real occlusion
+    planning_utils::setVelocityFromIndex(reconciled_occlusion_stop_line_idx, 0.0 /* [m/s] */, path);
     debug_data_.occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(occlusion_stop_line_idx.value(), baselink2front, *path);
+      planning_utils::getAheadPose(reconciled_occlusion_stop_line_idx, baselink2front, *path);
 
     RCLCPP_DEBUG(logger_, "not activated. stop at the line.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
@@ -420,7 +422,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     is_go_out_ = false;
 
     planning_utils::setVelocityFromIndex(stop_line_idx.value(), 0.0 /* [m/s] */, path);
-    collision_stop_required_ = true;
     debug_data_.collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx.value(), baselink2front, *path);
 

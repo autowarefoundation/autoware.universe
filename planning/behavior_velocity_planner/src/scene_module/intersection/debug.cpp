@@ -162,7 +162,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       module_id_, now, 0.3, 0.0, 0.0, 0.5, 0.0, 0.0),
     &debug_marker_array, now);
 
-  if (occlusion_stop_required_) {
+  if (!occlusion_safety_) {
     debug_marker_array.markers.push_back(createPointMarkerArray(
       debug_data_.nearest_occlusion_point, "nearest_occlusion", module_id_, 0.5, 0.5, 0.0));
     debug_marker_array.markers.push_back(createPointMarkerArray(
@@ -205,13 +205,13 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
 
   int32_t uid = planning_utils::bitShift(module_id_);
   // TODO(Mamoru Sobue): collision stop pose depends on before/after occlusion clearance
-  if (collision_stop_required_ || occlusion_first_stop_required_) {
+  if (!activated_ || !occlusion_first_stop_activated_) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
         {debug_data_.collision_stop_wall_pose}, "intersection", now, uid),
       &wall_marker, now);
   }
-  if (occlusion_stop_required_) {
+  if (!occlusion_activated_) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
         {debug_data_.occlusion_stop_wall_pose}, "intersection_occlusion", now, uid + 1),

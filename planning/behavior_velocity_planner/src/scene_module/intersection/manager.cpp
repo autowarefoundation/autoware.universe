@@ -192,6 +192,7 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
   for (const auto & scene_module : scene_modules_) {
     const UUID uuid = getUUID(scene_module->getModuleId());
     updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), stamp);
+
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     const auto occlusion_safety = intersection_module->getOcclusionSafety();

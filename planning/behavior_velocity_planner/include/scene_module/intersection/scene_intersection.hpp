@@ -146,10 +146,10 @@ public:
   const std::set<int> & getAssocIds() const { return assoc_ids_; }
 
   UUID getOcclusionUUID() const { return occlusion_uuid_; }
-  bool getOcclusionSafety() const { return !occlusion_stop_required_; }
+  bool getOcclusionSafety() const { return occlusion_safety_; }
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
   UUID getOcclusionFirstStopUUID() const { return occlusion_first_stop_uuid_; }
-  bool getOcclusionFirstStopSafety() const { return !occlusion_first_stop_required_; }
+  bool getOcclusionFirstStopSafety() const { return !occlusion_first_stop_safety_; }
   double getOcclusionFirstStopDistance() const { return occlusion_first_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
   void setOcclusionFirstStopActivation(const bool activation)
@@ -162,7 +162,6 @@ private:
   const int64_t lane_id_;
   std::string turn_direction_;
   bool is_go_out_ = false;
-  bool collision_stop_required_ = false;
   // Parameter
   PlannerParam planner_param_;
   std::optional<util::IntersectionLanelets> intersection_lanelets_;
@@ -178,12 +177,12 @@ private:
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
   const UUID occlusion_uuid_;
-  bool occlusion_stop_required_ = false;
+  bool occlusion_safety_ = false;
   double occlusion_stop_distance_;
   bool occlusion_activated_ = false;
   // for first stop in two-phase stop
   const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): uuid_で置き換えるかも
-  bool occlusion_first_stop_required_ = false;
+  bool occlusion_first_stop_safety_ = false;
   double occlusion_first_stop_distance_;
   bool occlusion_first_stop_activated_ = false;
 
