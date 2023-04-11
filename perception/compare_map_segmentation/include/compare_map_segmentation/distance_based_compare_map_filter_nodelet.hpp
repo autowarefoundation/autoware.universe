@@ -65,6 +65,42 @@ public:
     RCLCPP_INFO(logger_, "DistanceBasedDynamicMapLoader initialized.\n");
   }
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
+
+  inline void addMapCellAndFilter(
+    const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add) override
+  {
+    map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
+    map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
+
+    pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
+    pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
+
+    auto map_cell_voxel_input_tmp_ptr =
+      std::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_cell_pc_tmp);
+
+    MapGridVoxelInfo current_voxel_grid_list_item;
+    current_voxel_grid_list_item.min_b_x = map_cell_to_add.metadata.min_x;
+    current_voxel_grid_list_item.min_b_y = map_cell_to_add.metadata.min_y;
+    current_voxel_grid_list_item.max_b_x = map_cell_to_add.metadata.max_x;
+    current_voxel_grid_list_item.max_b_y = map_cell_to_add.metadata.max_y;
+
+    // add kdtree
+    pcl::search::Search<pcl::PointXYZ>::Ptr tree_tmp;
+    if (!tree_tmp) {
+      if (map_cell_voxel_input_tmp_ptr->isOrganized()) {
+        tree_tmp.reset(new pcl::search::OrganizedNeighbor<pcl::PointXYZ>());
+      } else {
+        tree_tmp.reset(new pcl::search::KdTree<pcl::PointXYZ>(false));
+      }
+    }
+    tree_tmp->setInputCloud(map_cell_voxel_input_tmp_ptr);
+    current_voxel_grid_list_item.map_cell_kdtree = tree_tmp;
+
+    // add
+    (*mutex_ptr_).lock();
+    current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
+    (*mutex_ptr_).unlock();
+  }
 };
 
 // ****************************************************************************************

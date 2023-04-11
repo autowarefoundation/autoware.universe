@@ -74,7 +74,35 @@ bool DistanceBasedStaticMapLoader::is_close_to_map(
 bool DistanceBasedDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  return true;
+  if (current_voxel_grid_dict_.size() == 0) {
+    return false;
+  }
+  if (!isFinite(point)) {
+    return false;
+  }
+
+  const int map_grid_index = static_cast<int>(
+    std::floor((point.x - origin_x_) / map_grid_size_x_) +
+    map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
+
+  if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
+    return false;
+  }
+  if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
+    if (current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree == NULL) {
+      return false;
+    }
+    std::vector<int> nn_indices(1);
+    std::vector<float> nn_distances(1);
+    if (!current_voxel_grid_array_.at(map_grid_index)
+           ->map_cell_kdtree->nearestKSearch(point, 1, nn_indices, nn_distances)) {
+      return false;
+    }
+    if (nn_distances[0] <= distance_threshold) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ****************************************************************************************
@@ -82,13 +110,13 @@ bool DistanceBasedDynamicMapLoader::is_close_to_map(
 DistanceBasedCompareMapFilterComponent::DistanceBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
 : Filter("DistanceBasedCompareMapFilter", options)
-{  // initialize debug tool
+{
+  // initialize debug tool
   {
     using tier4_autoware_utils::DebugPublisher;
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ =
-      std::make_unique<DebugPublisher>(this, "voxel_based_approximate_compare_map_filter");
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "distance_based_compare_map_filter");
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }

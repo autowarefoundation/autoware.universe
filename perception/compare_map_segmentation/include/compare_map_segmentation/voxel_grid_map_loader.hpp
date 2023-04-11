@@ -206,7 +206,7 @@ public:
   bool is_close_to_next_map_grid(
     const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
 
-  virtual inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
+  inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
   {
     pcl::PointCloud<pcl::PointXYZ> output;
     for (const auto & kv : current_voxel_grid_dict_) {
