@@ -51,9 +51,6 @@ public:
   void updateCooperateStatus(
     const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
     const rclcpp::Time & stamp);
-  void updateCooperateStatus(
-    const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
-    const rclcpp::Time & stamp, const Module internal_module);
   void removeCooperateStatus(const UUID & uuid);
   void clearCooperateStatus();
   bool isActivated(const UUID & uuid);

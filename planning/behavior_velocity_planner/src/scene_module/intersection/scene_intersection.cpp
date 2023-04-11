@@ -63,7 +63,7 @@ IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const std::set<int> & assoc_ids,
   const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock, std::shared_ptr<RTCInterface> occlusion_rtc_interface_ptr)
+  const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   node_(node),
   lane_id_(lane_id),
@@ -99,6 +99,16 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   debug_data_ = DebugData();
   *stop_reason = planning_utils::initializeStopReason(StopReason::INTERSECTION);
 
+  /* set default RTC */
+  // safe_, distance_
+  setSafe(true);
+  setDistance(std::numeric_limits<double>::lowest());
+  // occlusion
+  occlusion_stop_required_ = false;
+  occlusion_stop_distance_ = std::numeric_limits<double>::lowest();
+  occlusion_first_stop_required_ = false;
+  occlusion_first_stop_distance_ = std::numeric_limits<double>::lowest();
+
   /* get current pose */
   const geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
 
@@ -115,16 +125,12 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   if (!splineInterpolate(*path, interval, path_ip, logger_)) {
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    setSafe(true);
-    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
   const auto lane_interval_ip_opt = util::findLaneIdsInterval(path_ip, assoc_ids_);
   if (!lane_interval_ip_opt) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    setSafe(true);
-    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
   const auto lane_interval_ip = lane_interval_ip_opt.value();
@@ -170,8 +176,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    setSafe(true);
-    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
   const size_t closest_idx = closest_idx_opt.get();
@@ -268,8 +272,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   /* a flag if front stop line is not occlusion */
   bool stuck_stop_required = false;
   bool collision_stop_required = false;
-  [[maybe_unused]] bool first_phase_stop_required = false;
-  [[maybe_unused]] bool occlusion_stop_required = false;
+  bool first_phase_stop_required = false;
+  bool occlusion_stop_required = false;
 
   /* calculate final stop lines */
   std::optional<size_t> stop_line_idx = collision_stop_line_idx_opt;
@@ -303,9 +307,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
         occlusion_state_ = OcclusionState::WAIT_FIRST_STOP_LINE;
       }
-      first_phase_stop_required = true;
+      static const bool enable_occlusion_two_phase_stop_ = true;  // TODO(Mamoru Sobue)
+      first_phase_stop_required = enable_occlusion_two_phase_stop_;
       occlusion_stop_required = true;
-      stop_line_idx = collision_stop_line_idx_opt;
+      stop_line_idx = enable_occlusion_two_phase_stop_ ? collision_stop_line_idx_opt
+                                                       : occlusion_stop_line_idx_opt;
       occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
       // insert creep velocity [collision_stop_line, occlusion_stop_line)
       insert_creep_during_occlusion =
@@ -349,8 +355,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   if (!stop_line_idx) {
     RCLCPP_DEBUG(logger_, "detection_area is empty");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    setSafe(true);
-    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
 
@@ -365,27 +369,17 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* set RTC respectively */
   if (occlusion_stop_required) {
-    /* occlusion */
-    tier4_rtc_msgs::msg::Module mod;
-    mod.type = tier4_rtc_msgs::msg::Module::INTERSECTION_OCCLUSION;
-    updateRTCStatus(occlusion_uuid_, false, 0.0 /* TOOD(Mamoru Sobue) */, clock_->now(), mod);
-    /* collision(first_stop) */
     if (first_phase_stop_required) {
-      tier4_rtc_msgs::msg::Module mod;
-      mod.type = tier4_rtc_msgs::msg::Module::INTERSECTION;
-      updateRTCStatus(
-        occlusion_first_stop_uuid_, false, 0.0 /* TODO(Mamoru Sobue)*/, clock_->now(), mod);
-    } else {
-      setSafe(collision_state_machine_.getState() == StateMachine::State::GO);
-      setDistance(motion_utils::calcSignedArcLength(
+      occlusion_first_stop_required_ = true;
+      occlusion_first_stop_distance_ = motion_utils::calcSignedArcLength(
         path->points, planner_data_->current_odometry->pose.position,
-        path->points.at(stop_line_idx.value()).point.pose.position));
+        path->points.at(stop_line_idx.value()).point.pose.position);
     }
+    occlusion_stop_required_ = true;
+    occlusion_stop_distance_ = motion_utils::calcSignedArcLength(
+      path->points, planner_data_->current_odometry->pose.position,
+      path->points.at(occlusion_stop_line_idx.value()).point.pose.position);
   } else {
-    /* occlusion  */
-    tier4_rtc_msgs::msg::Module mod;
-    mod.type = tier4_rtc_msgs::msg::Module::INTERSECTION_OCCLUSION;
-    updateRTCStatus(occlusion_uuid_, true, 0.0 /* TOOD(Mamoru Sobue) */, clock_->now(), mod);
     /* collision */
     setSafe(collision_state_machine_.getState() == StateMachine::State::GO);
     setDistance(motion_utils::calcSignedArcLength(
@@ -393,7 +387,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       path->points.at(stop_line_idx.value()).point.pose.position));
   }
 
-  if (occlusion_stop_required && !isActivated(occlusion_uuid_)) {
+  /* make decision */
+  if (!occlusion_activated_) {
+    is_go_out_ = false;
     /* in case of creeping */
     if (insert_creep_during_occlusion) {
       const auto [start, end] = insert_creep_during_occlusion.value();
@@ -403,9 +399,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       }
     }
 
-    if (
-      first_phase_stop_required &&
-      !isActivated(occlusion_first_stop_uuid_) /* (and two phase stop is enabled)*/) {
+    if (!occlusion_first_stop_activated_) {
       planning_utils::setVelocityFromIndex(stop_line_idx.value(), 0.0 /* [m/s] */, path);
       occlusion_first_stop_required_ = true;
       debug_data_.occlusion_first_stop_wall_pose =
@@ -422,8 +416,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     return true;
   }
 
-  if (!isActivated(/*uuid_*/) /* collision*/) {
-    // if RTC says intersection entry is 'dangerous', insert stop_line(v == 0.0) in this block
+  if (!isActivated() /* collision*/) {
     is_go_out_ = false;
 
     planning_utils::setVelocityFromIndex(stop_line_idx.value(), 0.0 /* [m/s] */, path);

@@ -145,8 +145,17 @@ public:
 
   const std::set<int> & getAssocIds() const { return assoc_ids_; }
 
-  bool getOcclusionSafety() const { return occlusion_stop_required_; /* TODO(Mamoru Sobue) */ }
-  bool getOcclusionDistance() const { return 0.0; /* TODO(Mamoru Sobue) */ }
+  UUID getOcclusionUUID() const { return occlusion_uuid_; }
+  bool getOcclusionSafety() const { return !occlusion_stop_required_; }
+  double getOcclusionDistance() const { return occlusion_stop_distance_; }
+  UUID getOcclusionFirstStopUUID() const { return occlusion_first_stop_uuid_; }
+  bool getOcclusionFirstStopSafety() const { return !occlusion_first_stop_required_; }
+  double getOcclusionFirstStopDistance() const { return occlusion_first_stop_distance_; }
+  void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
+  void setOcclusionFirstStopActivation(const bool activation)
+  {
+    occlusion_first_stop_activated_ = activation;
+  }
 
 private:
   rclcpp::Node & node_;
@@ -167,10 +176,16 @@ private:
   std::optional<geometry_msgs::msg::Pose> prev_occlusion_stop_line_pose_;
   OcclusionState occlusion_state_;
   // NOTE: uuid_ is base member
-  const UUID occlusion_uuid_;             // for occlusion clearance decision
-  const UUID occlusion_first_stop_uuid_;  // for first stop in two-phase stop
+  // for occlusion clearance decision
+  const UUID occlusion_uuid_;
   bool occlusion_stop_required_ = false;
+  double occlusion_stop_distance_;
+  bool occlusion_activated_ = false;
+  // for first stop in two-phase stop
+  const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): uuid_で置き換えるかも
   bool occlusion_first_stop_required_ = false;
+  double occlusion_first_stop_distance_;
+  bool occlusion_first_stop_activated_ = false;
 
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop

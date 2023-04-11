@@ -26,6 +26,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace behavior_velocity_planner
 {
@@ -49,8 +50,10 @@ private:
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 
+  /* called from SceneModuleInterfaceWithRTC::plan */
   void sendRTC(const Time & stamp) override;
   void setActivation() override;
+  /* called from SceneModuleInterface::updateSceneModuleInstances */
   void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
