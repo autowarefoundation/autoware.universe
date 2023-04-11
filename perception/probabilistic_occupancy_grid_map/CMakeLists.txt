@@ -64,6 +64,12 @@ rclcpp_components_register_node(grid_map_fusion
   EXECUTABLE grid_map_fusion_node
 )
 
+# Tests
+if(BUILD_TESTING)
+  ament_add_gtest(costmap_unit_tests
+    test/cost_value_test.cpp)
+  target_include_directories(costmap_unit_tests PRIVATE "include")
+endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
