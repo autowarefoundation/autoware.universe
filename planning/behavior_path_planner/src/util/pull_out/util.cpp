@@ -14,10 +14,10 @@
 
 #include "behavior_path_planner/util/pull_out/util.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/util/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -45,7 +45,9 @@ PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLa
   // skip overlapping point
   path.points.insert(path.points.end(), next(path2.points.begin()), path2.points.end());
 
-  return util::removeOverlappingPoints(path);
+  PathWithLaneId filtered_path = path;
+  filtered_path.points = motion_utils::removeOverlapPoints(filtered_path.points);
+  return filtered_path;
 }
 
 PathWithLaneId getBackwardPath(
