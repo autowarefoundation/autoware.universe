@@ -393,7 +393,7 @@ void TrajectorySamplerNode::pathCallback(
     std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count();
   const auto gui_time_ms =
     std::chrono::duration_cast<std::chrono::milliseconds>(gui_end - gui_begin).count();
-  std::printf(" runtime = %2.2fms | gui time = %2.2fms", calc_time_ms, gui_time_ms);
+  std::printf(" runtime = %ldms | gui time = %ldms", calc_time_ms, gui_time_ms);
   std::cout << std::endl;
   gui_.setPerformances(trajectories.size(), calc_time_ms, gui_time_ms);
 }

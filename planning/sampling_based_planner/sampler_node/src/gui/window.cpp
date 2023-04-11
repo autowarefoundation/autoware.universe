@@ -167,7 +167,10 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   pruning_nb_violations_max_line_ = new QCPItemStraightLine(ui_->pruning_tab_plot);
 }
 
-MainWindow::~MainWindow() { delete ui_; }
+MainWindow::~MainWindow()
+{
+  delete ui_;
+}
 
 void MainWindow::setStatus(
   const size_t nb_trajs, const double compute_time_ms, const double plot_time_ms)
@@ -208,14 +211,16 @@ void MainWindow::plotSelected(const sampler_common::Trajectory & trajectory)
   }
   output_pos_curve_->setData(xs, ys);
   ui_->output_vel->graph(0)->setData(
-    QVector<double>::fromStdVector(trajectory.times),
-    QVector<double>::fromStdVector(trajectory.longitudinal_velocities));
+    QVector<double>(trajectory.times.begin(), trajectory.times.end()),
+    QVector<double>(
+      trajectory.longitudinal_velocities.begin(), trajectory.longitudinal_velocities.end()));
   ui_->output_acc->graph(0)->setData(
-    QVector<double>::fromStdVector(trajectory.times),
-    QVector<double>::fromStdVector(trajectory.longitudinal_accelerations));
+    QVector<double>(trajectory.times.begin(), trajectory.times.end()),
+    QVector<double>(
+      trajectory.longitudinal_accelerations.begin(), trajectory.longitudinal_accelerations.end()));
   // TODO(Maxime CLEMENT): uncomment once jerk is calculated
-  // ui_->output_jerk->graph(0)->setData(QVector<double>::fromStdVector(trajectory.times),
-  // QVector<double>::fromStdVector(trajectory.jerks));
+  // ui_->output_jerk->graph(0)->setData(QVector<double>(trajectory.times.begin(),
+  // trajectory.times.end()), QVector<double>(trajectory.jerks.begin(), trajectory.jerks.end()));
   ui_->output_pos->replot();
   ui_->output_pos->rescaleAxes();
   ui_->output_vel->replot();
@@ -316,7 +321,7 @@ void MainWindow::fillCandidatesTable(const std::vector<sampler_common::Trajector
     table->setItem(
       i, 1, new QTableWidgetItem(tr("%1").arg(candidate.constraint_results.isValid())));
     auto * item = new QTableWidgetItem();
-    item->setData(Qt::ItemDataRole::DisplayRole, qVariantFromValue(candidate.cost));
+    item->setData(Qt::ItemDataRole::DisplayRole, QVariant::fromValue(candidate.cost));
     table->setItem(i, 2, item);
     table->setItem(i, 3, new QTableWidgetItem(tr("%1").arg(QString::fromStdString(candidate.tag))));
   }
@@ -378,14 +383,16 @@ void MainWindow::plotCandidate(const sampler_common::Trajectory & trajectory)
   }
   cand_pos_curve_->setData(xs, ys);
   ui_->cand_vel->graph(0)->setData(
-    QVector<double>::fromStdVector(trajectory.times),
-    QVector<double>::fromStdVector(trajectory.longitudinal_velocities));
+    QVector<double>(trajectory.times.begin(), trajectory.times.end()),
+    QVector<double>(
+      trajectory.longitudinal_velocities.begin(), trajectory.longitudinal_velocities.end()));
   ui_->cand_acc->graph(0)->setData(
-    QVector<double>::fromStdVector(trajectory.times),
-    QVector<double>::fromStdVector(trajectory.longitudinal_accelerations));
+    QVector<double>(trajectory.times.begin(), trajectory.times.end()),
+    QVector<double>(
+      trajectory.longitudinal_accelerations.begin(), trajectory.longitudinal_accelerations.end()));
   ui_->cand_jerk->graph(0)->setData(
-    QVector<double>::fromStdVector(trajectory.lengths),
-    QVector<double>::fromStdVector(trajectory.curvatures));
+    QVector<double>(trajectory.times.begin(), trajectory.times.end()),
+    QVector<double>(trajectory.curvatures.begin(), trajectory.curvatures.end()));
 
   ui_->cand_pos->rescaleAxes();
   ui_->cand_pos->replot();
@@ -485,9 +492,10 @@ void MainWindow::plotFrenetCandidates(
 {
   frenet_candidates_ = frenet_candidates;
 
+  /* TODO(Maxime): plot frenet candidates
   for (const auto & candidate : frenet_candidates) {
-    // TODO(Maxime): plot frenet candidates
   }
+  */
 }
 
 }  // namespace sampler_node::gui

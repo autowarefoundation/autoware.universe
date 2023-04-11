@@ -99,7 +99,8 @@ void Plotter::plotReferencePath(const std::vector<Point> & reference_path)
 
 void Plotter::plotReferencePath(const std::vector<double> & xs, const std::vector<double> & ys)
 {
-  reference_path_->setData(QVector<double>::fromStdVector(xs), QVector<double>::fromStdVector(ys));
+  reference_path_->setData(
+    QVector<double>(xs.begin(), xs.end()), QVector<double>(ys.begin(), ys.end()));
 }
 
 void Plotter::plotTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories)
@@ -127,7 +128,6 @@ void Plotter::plotFrenetTrajectories(const std::vector<frenet_planner::Trajector
     QVector<double> ss;
     QVector<double> ds;
     QVector<double> ts;
-    constexpr double time_resolution = 0.1;
     for (const auto t : trajectory.times) {
       ts.push_back(t);
       ss.push_back(trajectory.longitudinal_polynomial->position(t));
