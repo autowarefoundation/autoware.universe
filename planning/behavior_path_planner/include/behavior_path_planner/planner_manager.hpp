@@ -126,6 +126,8 @@ private:
     const SceneModulePtr & module_ptr, const std::shared_ptr<PlannerData> & planner_data,
     const BehaviorModuleOutput & previous_module_output) const
   {
+    stop_watch_.tic(module_ptr->name());
+
     module_ptr->setData(planner_data);
     module_ptr->setPreviousModuleOutput(previous_module_output);
 
@@ -136,6 +138,8 @@ private:
     module_ptr->updateState();
 
     module_ptr->publishRTCStatus();
+
+    processing_time_.at(module_ptr->name()) += stop_watch_.toc(module_ptr->name(), true);
 
     return result;
   }
@@ -174,9 +178,9 @@ private:
 
   void clearCandidateModules()
   {
-    for (auto & m : candidate_module_ptrs_) {
+    std::for_each(candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [this](auto & m) {
       deleteExpiredModules(m);
-    }
+    });
     candidate_module_ptrs_.clear();
   }
 
