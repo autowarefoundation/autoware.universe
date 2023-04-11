@@ -27,6 +27,7 @@
 #include <autoware_adapi_v1_msgs/msg/turn_indicator.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_projection/UTM.h>
 
 #include <unordered_map>
 

@@ -65,6 +65,19 @@ void VehicleNode::kinematic_state(
     vehicle_kinematic_.geographic_pose.position.longitude = projected_gps_point.lon;
     vehicle_kinematic_.geographic_pose.position.altitude = projected_gps_point.ele;
   }
+  if (map_projector_info_->type == "UTM") {
+    lanelet::GPSPoint position{
+      map_projector_info_->map_origin.latitude, map_projector_info_->map_origin.longitude};
+    lanelet::Origin origin{position};
+    lanelet::projection::UtmProjector projector{origin};
+    lanelet::GPSPoint projected_gps_point =
+      projector.reverse(toBasicPoint3dPt(msg_ptr->pose.pose.position));
+    vehicle_kinematic_.geographic_pose.header = msg_ptr->header;
+    vehicle_kinematic_.geographic_pose.header.frame_id = "global";
+    vehicle_kinematic_.geographic_pose.position.latitude = projected_gps_point.lat;
+    vehicle_kinematic_.geographic_pose.position.longitude = projected_gps_point.lon;
+    vehicle_kinematic_.geographic_pose.position.altitude = projected_gps_point.ele;
+  }
 }
 
 Eigen::Vector3d VehicleNode::toBasicPoint3dPt(const geometry_msgs::msg::Point src)
