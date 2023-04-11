@@ -294,7 +294,8 @@ bool MPC::getData(
   if (std::fabs(data->yaw_err) > m_admissible_yaw_error_rad) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "yaw error is over limit. error = %f deg, limit %f deg",
-      tier4_autoware_utils::RAD2DEG * data->yaw_err, tier4_autoware_utils::RAD2DEG * m_admissible_yaw_error_rad);
+      tier4_autoware_utils::RAD2DEG * data->yaw_err,
+      tier4_autoware_utils::RAD2DEG * m_admissible_yaw_error_rad);
     return false;
   }
 
