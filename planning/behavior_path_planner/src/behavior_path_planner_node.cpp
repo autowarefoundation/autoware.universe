@@ -104,7 +104,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   scenario_subscriber_ = create_subscription<Scenario>(
     "~/input/scenario", 1,
     [this](const Scenario::ConstSharedPtr msg) {
-      std::cerr << "scenario_subscriber_ callback" << std::endl;
       current_scenario_ = std::make_shared<Scenario>(*msg);
     },
     createSubscriptionOptions(this));
@@ -1060,15 +1059,11 @@ bool BehaviorPathPlannerNode::isDataReady()
 
   if (!current_scenario_) {
     return missing("scenario_topic");
-  } else {
-    std::cerr << " current_scenario_: " << current_scenario_->current_scenario << " " << __FILE__
-              << __LINE__ << std::endl;
   }
 
   {
     std::lock_guard<std::mutex> lk_route(mutex_route_);
     if (!route_ptr_) {
-      std::cerr << " route_ptr_ is missing " << __FILE__ << __LINE__ << std::endl;
       return missing("route");
     }
   }
@@ -1076,7 +1071,6 @@ bool BehaviorPathPlannerNode::isDataReady()
   {
     std::lock_guard<std::mutex> lk_map(mutex_map_);
     if (!map_ptr_) {
-      std::cerr << " map_ptr is missing " << __FILE__ << __LINE__ << std::endl;
       return missing("map");
     }
   }
@@ -1084,22 +1078,18 @@ bool BehaviorPathPlannerNode::isDataReady()
   const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
 
   if (!planner_data_->dynamic_object) {
-    std::cerr << " dynamic_object is missing " << __FILE__ << __LINE__ << std::endl;
     return missing("dynamic_object");
   }
 
   if (!planner_data_->self_odometry) {
-    std::cerr << " self_odometry is missing " << __FILE__ << __LINE__ << std::endl;
     return missing("self_odometry");
   }
 
   if (!planner_data_->self_acceleration) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return missing("self_acceleration");
   }
 
   if (!planner_data_->operation_mode) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     return missing("operation_mode");
   }
 
@@ -1111,7 +1101,7 @@ void BehaviorPathPlannerNode::run()
   if (!isDataReady()) {
     return;
   }
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
 
   // behavior_path_planner runs only in LANE DRIVING scenario.
@@ -1153,15 +1143,12 @@ void BehaviorPathPlannerNode::run()
   // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (route_ptr) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     planner_data_->route_handler->setRoute(*route_ptr);
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time) {
-      std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
 #ifdef USE_OLD_ARCHITECTURE
-      std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
       bt_manager_->resetBehaviorTree();
 #else
       planner_manager_->reset();
@@ -1171,12 +1158,10 @@ void BehaviorPathPlannerNode::run()
 
 #ifndef USE_OLD_ARCHITECTURE
   if (planner_data_->operation_mode->mode != OperationModeState::AUTONOMOUS) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     planner_manager_->resetRootLanelet(planner_data_);
   }
 #endif
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // run behavior planner
 #ifdef USE_OLD_ARCHITECTURE
   const auto output = bt_manager_->run(planner_data_);
@@ -1184,7 +1169,6 @@ void BehaviorPathPlannerNode::run()
   const auto output = planner_manager_->run(planner_data_);
 #endif
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // path handling
 #ifdef USE_OLD_ARCHITECTURE
   const auto path = getPath(output, planner_data_, bt_manager_);
@@ -1194,11 +1178,9 @@ void BehaviorPathPlannerNode::run()
   // update planner data
   planner_data_->prev_output_path = path;
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // compute turn signal
   computeTurnSignal(planner_data_, *path, output);
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // publish drivable bounds
   publish_bounds(*path);
 
@@ -1211,9 +1193,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->parameters.forward_path_length,
     planner_data_->parameters.backward_path_length + planner_data_->parameters.input_path_interval);
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   if (!path->points.empty()) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     path_publisher_->publish(*path);
   } else {
     RCLCPP_ERROR_THROTTLE(
@@ -1549,14 +1529,12 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   const std::lock_guard<std::mutex> lock(mutex_map_);
   map_ptr_ = msg;
   has_received_map_ = true;
 }
 void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
-  std::cerr << "route is subscribed " << __FILE__ << __LINE__ << std::endl;
   const std::lock_guard<std::mutex> lock(mutex_route_);
   route_ptr_ = msg;
   has_received_route_ = true;

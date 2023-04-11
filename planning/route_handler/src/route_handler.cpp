@@ -302,14 +302,12 @@ void RouteHandler::clearRoute()
 void RouteHandler::setLaneletsFromRouteMsg()
 {
   if (!is_route_msg_ready_ || !is_map_msg_ready_) {
-    std::cerr << "setLaneletsFromRouteMsg() finished (msg is not ready)" << std::endl;
     return;
   }
   route_lanelets_.clear();
   preferred_lanelets_.clear();
   const bool is_route_valid = lanelet::utils::route::isRouteValid(route_msg_, lanelet_map_ptr_);
   if (!is_route_valid) {
-    std::cerr << "setLaneletsFromRouteMsg() finished (is_route_valid = false)" << std::endl;
     return;
   }
 
@@ -318,10 +316,6 @@ void RouteHandler::setLaneletsFromRouteMsg()
     primitive_size += route_section.primitives.size();
   }
   route_lanelets_.reserve(primitive_size);
-  for (const auto & route_section : route_msg_.segments) {
-    primitive_size += route_section.primitives.size();
-  }
-  std::cerr << "primitive size: " << primitive_size << std::endl;
 
   for (const auto & route_section : route_msg_.segments) {
     for (const auto & primitive : route_section.primitives) {
@@ -350,11 +344,6 @@ void RouteHandler::setLaneletsFromRouteMsg()
     }
   }
   is_handler_ready_ = true;
-  std::cerr << "Number of Lanelets in route_lanelets_: " << route_lanelets_.size() << std::endl;
-  for (const auto & llt : route_lanelets_) {
-    std::cerr << "Lanelet ID: " << llt.id() << std::endl;
-  }
-  std::cerr << "setLaneletsFromRouteMsg() finished" << std::endl;
 }
 
 lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id id) const
@@ -604,7 +593,6 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
 {
   lanelet::ConstLanelets lanelet_sequence;
   if (!exists(route_lanelets_, lanelet)) {
-    std::cerr << "function: " << __PRETTY_FUNCTION__ << ", return lanelet_sequence" << std::endl;
     return lanelet_sequence;
   }
 
@@ -621,19 +609,15 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   // loop check
   if (!lanelet_sequence_forward.empty() && !lanelet_sequence_backward.empty()) {
     if (lanelet_sequence_backward.back().id() == lanelet_sequence_forward.front().id()) {
-      std::cerr << "function: " << __PRETTY_FUNCTION__ << ", return lanelet_sequence_forward"
-                << std::endl;
       return lanelet_sequence_forward;
     }
   }
-
   lanelet_sequence.insert(
     lanelet_sequence.end(), lanelet_sequence_backward.begin(), lanelet_sequence_backward.end());
   lanelet_sequence.push_back(lanelet);
   lanelet_sequence.insert(
     lanelet_sequence.end(), lanelet_sequence_forward.begin(), lanelet_sequence_forward.end());
 
-  std::cerr << "function: " << __PRETTY_FUNCTION__ << ", return lanelet_sequence" << std::endl;
   return lanelet_sequence;
 }
 

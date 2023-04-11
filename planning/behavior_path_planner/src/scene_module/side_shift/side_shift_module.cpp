@@ -213,7 +213,6 @@ void SideShiftModule::updateData()
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(reference_pose, &current_lane)) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     RCLCPP_ERROR_THROTTLE(
       getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
   }

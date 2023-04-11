@@ -66,33 +66,22 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithEmptyRouteInput)
     std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
 
   // test_manager->publishInitialPoseTF(test_target_node, "/tf");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
   // test_manager->publishInitialPose(test_target_node, "/initialpose3d");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishOccupancyGrid(
     test_target_node, "behavior_path_planner/input/occupancy_grid_map");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishLaneDrivingScenario(
     test_target_node, "behavior_path_planner/input/scenario");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishMap(test_target_node, "behavior_path_planner/input/vector_map");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // test_manager->publishRoute(test_target_node, "behavior_path_planner/input/route");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishCostMap(test_target_node, "behavior_path_planner/input/costmap");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishLateralOffset(
     test_target_node, "behavior_path_planner/input/lateral_offset");
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // test_target_node → test_node_
   test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 

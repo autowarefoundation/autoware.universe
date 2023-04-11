@@ -130,105 +130,48 @@ Route::Message makeNormalRoute()
   return route;
 }
 
-// geometry_msgs::msg::Quaternion start_quaternion;
-// start_quaternion.x = 0;
-// start_quaternion.y = 0;
-// start_quaternion.z = 0.23311256049418302;
-// start_quaternion.w = 0.9724497591854532;
-// const double start_yaw = tf2::getYaw(start_quaternion);
-
-// geometry_msgs::msg::Quaternion goal_quaternion;
-// goal_quaternion.x = 0;
-// goal_quaternion.y = 0;
-// goal_quaternion.z = -0.5107480274693206;
-// goal_quaternion.w = 0.8597304533609346;
-// const double goal_yaw = tf2::getYaw(goal_quaternion);
-
-// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-// const std::array<double, 4> start_pose{3722.16015625, 73723.515625, 0., start_yaw};
-// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-// const std::array<double, 4> goal_pose{3778.362060546875, 73721.2734375, 0., goal_yaw};
-// Route::Message route;
-// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-// route.header.frame_id = "map";
-
-// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-// route.start_pose = create_pose_msg(start_pose);
-// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-// route.goal_pose = create_pose_msg(goal_pose);
-// std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 Route::Message makeBehaviorNormalRoute()
 {
-  // Route::Message型の変数を宣言します。
   Route::Message route;
-
-  // メッセージのheaderフィールドを設定します。
-  route.header.stamp.sec = 0;
-  route.header.stamp.nanosec = 0;
   route.header.frame_id = "map";
 
-  // メッセージのstart_poseフィールドを設定します。
-  route.start_pose.position.x = 3722.16015625;
-  route.start_pose.position.y = 73723.515625;
-  route.start_pose.position.z = 0.0;
-  route.start_pose.orientation.x = 0.0;
-  route.start_pose.orientation.y = 0.0;
-  route.start_pose.orientation.z = 0.233112560494183;
-  route.start_pose.orientation.w = 0.9724497591854532;
+  Pose start_pose;
+  start_pose.position.x = 3722.16015625;
+  start_pose.position.y = 73723.515625;
+  start_pose.orientation.z = 0.233112560494183;
+  start_pose.orientation.w = 0.9724497591854532;
+  route.start_pose = start_pose;
 
-  // メッセージのgoal_poseフィールドを設定します。
-  route.goal_pose.position.x = 3778.362060546875;
-  route.goal_pose.position.y = 73721.2734375;
-  route.goal_pose.position.z = 19.410820582355534;
-  route.goal_pose.orientation.x = 0.0;
-  route.goal_pose.orientation.y = 0.0;
-  route.goal_pose.orientation.z = -0.5107480274693206;
-  route.goal_pose.orientation.w = 0.8597304533609347;
+  Pose goal_pose;
+  goal_pose.position.x = 3778.362060546875;
+  goal_pose.position.y = 73721.2734375;
+  goal_pose.orientation.z = -0.5107480274693206;
+  goal_pose.orientation.w = 0.8597304533609347;
+  route.goal_pose = goal_pose;
 
-  // メッセージのsegmentsフィールドを設定します。
-  LaneletPrimitive primitive1;
-  primitive1.id = 9102;
-  primitive1.primitive_type = "lane";
-  LaneletSegment segment1;
-  segment1.preferred_primitive.id = 9102;
-  segment1.primitives.push_back(primitive1);
-
-  LaneletPrimitive primitive2;
-  primitive2.id = 9178;
-  primitive2.primitive_type = "lane";
-  LaneletSegment segment2;
-  segment2.preferred_primitive.id = 9178;
-  segment2.primitives.push_back(primitive2);
-
-  LaneletPrimitive primitive3;
-  primitive3.id = 54;
-  primitive3.primitive_type = "lane";
-  LaneletSegment segment3;
-  segment3.preferred_primitive.id = 54;
-  segment3.primitives.push_back(primitive3);
-
-  LaneletPrimitive primitive4;
-  primitive4.id = 112;
-  primitive4.primitive_type = "lane";
-  LaneletSegment segment4;
-  segment4.preferred_primitive.id = 112;
-  segment4.primitives.push_back(primitive4);
-
-  route.segments.push_back(segment1);
-  route.segments.push_back(segment2);
-  route.segments.push_back(segment3);
-  route.segments.push_back(segment4);
-
-  // メッセージのuuidフィールドを設定します。
-  route.uuid.uuid = {210, 87, 16, 126, 98, 151, 58, 28, 252, 221, 230, 92, 122, 170, 46, 6};
-
-  // メッセージのallow_modificationフィールドを設定します。
-  route.allow_modification = false;
-  size_t primitive_size{0};
-  for (const auto & route_section : route.segments) {
-    primitive_size += route_section.primitives.size();
+  for (int i = 0; i < 4; i++) {
+    LaneletPrimitive primitive;
+    LaneletSegment segment;
+    if (i == 0) {
+      primitive.id = 9102;
+    } else if (i == 1) {
+      primitive.id = 9178;
+    } else if (i == 2) {
+      primitive.id = 54;
+    } else {
+      primitive.id = 112;
+    }
+    primitive.primitive_type = "lane";
+    segment.preferred_primitive.id = primitive.id;
+    segment.primitives.push_back(primitive);
+    route.segments.push_back(segment);
   }
-  std::cerr << "primitive size: " << primitive_size << std::endl;
+
+  std::array<uint8_t, 16> uuid_bytes{210, 87,  16,  126, 98,  151, 58, 28,
+                                     252, 221, 230, 92,  122, 170, 46, 6};
+  route.uuid.uuid = uuid_bytes;
+
+  route.allow_modification = false;
   return route;
 }
 

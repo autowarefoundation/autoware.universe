@@ -264,13 +264,9 @@ void PlanningIntefaceTestManager::publishNominalRoute(
 void PlanningIntefaceTestManager::publishBehaviorNominalRoute(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::setPublisher(test_node_, topic_name, behavior_normal_route_pub_);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   behavior_normal_route_pub_->publish(test_utils::makeBehaviorNormalRoute());
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 }
 
 void PlanningIntefaceTestManager::setTrajectorySubscriber(std::string topic_name)
@@ -320,18 +316,14 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
 // test for normal working
 void PlanningIntefaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   publishNominalRoute(target_node, input_route_name_);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // test for normal working
 void PlanningIntefaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   publishBehaviorNominalRoute(target_node, input_route_name_);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
@@ -380,9 +372,7 @@ void PlanningIntefaceTestManager::publishInitialPoseData(
   current_odometry->header.frame_id = "map";
   // std::string origin_frame_id = "odom";
 
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   // set_initial_state_with_transform(current_odometry);
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 
   test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
   initial_pose_pub_->publish(*current_odometry);

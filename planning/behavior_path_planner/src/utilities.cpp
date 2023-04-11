@@ -26,14 +26,11 @@
 
 #include <boost/assign/list_of.hpp>
 
-#include <tf2/utils.h>
-
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
-#include <functional>
 
 namespace
 {
@@ -1513,7 +1510,6 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
       "failed to find closest lanelet within route!!!");
@@ -1551,7 +1547,6 @@ lanelet::ConstLineStrings3d getMaximumDrivableArea(
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
       "failed to find closest lanelet within route!!!");
@@ -1787,17 +1782,13 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
   const auto current_pose = planner_data->self_odometry->pose.pose;
   const auto & common_parameters = planner_data->parameters;
 
-  double yaw = tf2::getYaw(current_pose.orientation);
-  std::cerr << "Current Pose - x: " << current_pose.position.x << ", y: " << current_pose.position.y
-            << ", z: " << current_pose.position.z << ", yaw: " << yaw * 180 / M_PI << std::endl;
-  std::cout << "Called from: " << std::string_view(__PRETTY_FUNCTION__) << std::endl;
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
     // RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
     std::cerr << "failed to find closest lanelet within route!!!" << std::endl;
     return {};  // TODO(Horibe) what should be returned?
   }
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
+
   // For current_lanes with desired length
   return route_handler->getLaneletSequence(
     current_lane, current_pose, common_parameters.backward_path_length,
@@ -1862,7 +1853,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
 {
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
-    std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
       "failed to find closest lanelet within route!!!");
