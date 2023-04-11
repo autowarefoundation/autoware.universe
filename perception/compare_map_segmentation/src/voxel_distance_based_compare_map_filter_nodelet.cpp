@@ -74,7 +74,6 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
 void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr map)
 {
-  RCLCPP_INFO(logger_, "Voxelization for Static Map Loader ");
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
@@ -90,7 +89,6 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   // kdtree
   map_ptr_ = map_pcl_ptr;
 
-  RCLCPP_INFO(logger_, "Create tree for Static Map Loader ");
   if (!tree_) {
     if (map_ptr_->isOrganized()) {
       tree_.reset(new pcl::search::OrganizedNeighbor<pcl::PointXYZ>());
