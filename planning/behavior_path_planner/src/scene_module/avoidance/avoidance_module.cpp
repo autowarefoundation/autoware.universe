@@ -53,9 +53,11 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcInterpolatedPose;
 using tier4_autoware_utils::calcLateralDeviation;
 using tier4_autoware_utils::calcLongitudinalDeviation;
+using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
+using tier4_autoware_utils::toHexString;
 using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
 namespace
@@ -312,7 +314,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
     ObjectData object_data;
     object_data.object = object;
-    avoidance_debug_msg.object_id = getUuidStr(object_data);
+    avoidance_debug_msg.object_id = toHexString(object_data.object.object_id);
 
     if (!isTargetObjectType(object)) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE);
@@ -1063,7 +1065,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         avoidance_debug_msg_array.push_back(avoidance_debug_msg);
       };
 
-    avoidance_debug_msg.object_id = getUuidStr(o);
+    avoidance_debug_msg.object_id = toHexString(o.object.object_id);
     avoidance_debug_msg.longitudinal_distance = o.longitudinal;
     avoidance_debug_msg.lateral_distance_from_centerline = o.lateral;
     avoidance_debug_msg.to_furthest_linestring_distance = o.to_road_shoulder_distance;
@@ -2306,7 +2308,6 @@ bool AvoidanceModule::isSafePath(
     getAdjacentLane(path_shifter, forward_check_distance, backward_check_distance);
 
   auto path_with_current_velocity = shifted_path.path;
-  path_with_current_velocity = util::resamplePathWithSpline(path_with_current_velocity, 0.5);
 
   const size_t ego_idx = planner_data_->findEgoIndex(path_with_current_velocity.points);
   util::clipPathLength(path_with_current_velocity, ego_idx, forward_check_distance, 0.0);
@@ -3145,6 +3146,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
   output.reference_path = getPreviousModuleOutput().reference_path;
+  path_reference_ = getPreviousModuleOutput().reference_path;
 
   const size_t ego_idx = planner_data_->findEgoIndex(output.path->points);
   util::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
@@ -3168,7 +3170,9 @@ CandidateOutput AvoidanceModule::planCandidate() const
   auto shifted_path = data.candidate_path;
 
   if (!data.safe_new_sl.empty()) {  // clip from shift start index for visualize
-    clipByMinStartIdx(data.safe_new_sl, shifted_path.path);
+    util::clipPathLength(
+      shifted_path.path, data.safe_new_sl.front().start_idx, 0.0,
+      std::numeric_limits<double>::max());
 
     const auto sl = getNonStraightShiftLine(data.safe_new_sl);
     const auto sl_front = data.safe_new_sl.front();
@@ -3410,7 +3414,7 @@ Pose AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
   // ego_pose.
   Pose unshifted_pose = motion_utils::calcInterpolatedPoint(prev_path.path, ego_pose).point.pose;
 
-  util::shiftPose(&unshifted_pose, -prev_path.shift_length.at(closest));
+  unshifted_pose = calcOffsetPose(unshifted_pose, 0.0, -prev_path.shift_length.at(closest), 0.0);
   unshifted_pose.orientation = ego_pose.orientation;
 
   return unshifted_pose;
@@ -3525,7 +3529,6 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
   // -- check registered_objects, remove if lost_count exceeds limit. --
   for (int i = static_cast<int>(registered_objects_.size()) - 1; i >= 0; --i) {
     auto & r = registered_objects_.at(i);
-    const std::string s = getUuidStr(r);
 
     // registered object is not detected this time. lost count up.
     if (!updateIfDetectedNow(r)) {
