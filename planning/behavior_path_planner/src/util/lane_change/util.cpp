@@ -473,7 +473,7 @@ bool getLaneChangePaths(
       common_parameter.expected_rear_deceleration, ego_pose_before_collision, *debug_data,
       acceleration);
 
-    if (is_valid && is_safe) {
+    if (is_safe) {
       return true;
     }
   }
