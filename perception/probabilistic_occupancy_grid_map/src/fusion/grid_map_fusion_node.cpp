@@ -102,6 +102,12 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   for (size_t i = 0; i < input_offset_sec_.size(); ++i) {
     offset_map_[input_topics_[i]] = input_offset_sec_[i];
   }
+
+  // init dict
+  for (size_t i = 0; i < input_topics_.size(); ++i) {
+    gridmap_dict_[input_topics_[i]] = nullptr;
+    gridmap_dict_tmp_[input_topics_[i]] = nullptr;
+  }
 }
 
 /**
@@ -135,6 +141,7 @@ void GridMapFusionNode::onGridMap(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg,
   const std::string & topic_name)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   const bool is_already_subscribed_this = (gridmap_dict_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
     std::begin(gridmap_dict_tmp_), std::end(gridmap_dict_tmp_),
@@ -159,7 +166,7 @@ void GridMapFusionNode::onGridMap(
     gridmap_dict_[topic_name] = occupancy_grid_msg;  // add to buffer
 
     // check if all topics are subscribed
-    const bool is_subscribed_all = std::all_of(
+    bool is_subscribed_all = std::all_of(
       std::begin(gridmap_dict_), std::end(gridmap_dict_),
       [](const auto & e) { return e.second != nullptr; });
     // Then, go to publish
@@ -221,6 +228,7 @@ void GridMapFusionNode::publish()
   builtin_interfaces::msg::Time latest_stamp;
   double height;
   bool grid_map_dict_is_empty = true;
+
   // merge available gridmap
   for (const auto & e : gridmap_dict_) {
     if (e.second != nullptr) {
