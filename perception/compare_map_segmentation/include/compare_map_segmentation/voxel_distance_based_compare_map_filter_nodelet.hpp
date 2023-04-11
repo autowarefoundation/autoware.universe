@@ -74,8 +74,8 @@ public:
   inline void addMapCellAndFilter(
     const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add) override
   {
-    map_grid_size_x_ = map_cell_to_add.max_x - map_cell_to_add.min_x;
-    map_grid_size_y_ = map_cell_to_add.max_y - map_cell_to_add.min_y;
+    map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
+    map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
 
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
@@ -92,10 +92,10 @@ public:
     map_cell_voxel_grid_tmp.filter(*map_cell_downsampled_pc_ptr_tmp);
 
     MapGridVoxelInfo current_voxel_grid_list_item;
-    current_voxel_grid_list_item.min_b_x = map_cell_to_add.min_x;
-    current_voxel_grid_list_item.min_b_y = map_cell_to_add.min_y;
-    current_voxel_grid_list_item.max_b_x = map_cell_to_add.max_x;
-    current_voxel_grid_list_item.max_b_y = map_cell_to_add.max_y;
+    current_voxel_grid_list_item.min_b_x = map_cell_to_add.metadata.min_x;
+    current_voxel_grid_list_item.min_b_y = map_cell_to_add.metadata.min_y;
+    current_voxel_grid_list_item.max_b_x = map_cell_to_add.metadata.max_x;
+    current_voxel_grid_list_item.max_b_y = map_cell_to_add.metadata.max_y;
 
     current_voxel_grid_list_item.map_cell_voxel_grid.set_voxel_grid(
       &(map_cell_voxel_grid_tmp.leaf_layout_), map_cell_voxel_grid_tmp.get_min_b(),
