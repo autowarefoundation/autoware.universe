@@ -1319,6 +1319,61 @@ int RouteHandler::getNumLaneToPreferredLane(
   return 0;  // TODO(Horibe) check if return 0 is appropriate.
 }
 
+double RouteHandler::getLateralDistanceToPreferredLane(
+  const lanelet::ConstLanelet & lanelet, const Direction direction) const
+{
+  if (exists(preferred_lanelets_, lanelet)) {
+    return 0.0;
+  }
+
+  double accumulated_distance = 0.0;
+  lanelet::ConstLanelet current_lanelet = lanelet;
+
+  if ((direction == Direction::NONE) || (direction == Direction::RIGHT)) {
+    const auto & right_lanes =
+      lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet);
+    for (const auto & right : right_lanes) {
+      const auto & current_centerline = current_lanelet.centerline();
+      const auto & next_centerline = right.centerline();
+      if (current_centerline.empty() || next_centerline.empty()) {
+        return -accumulated_distance;
+      }
+      const auto & curr_pt = current_centerline[0];
+      const auto & next_pt = next_centerline[0];
+      accumulated_distance += lanelet::geometry::distance2d(to2D(curr_pt), to2D(next_pt));
+
+      if (exists(preferred_lanelets_, right)) {
+        return -accumulated_distance;
+      }
+      current_lanelet = right;
+    }
+  }
+
+  accumulated_distance = 0.0;
+  current_lanelet = lanelet;
+  if ((direction == Direction::NONE) || (direction == Direction::LEFT)) {
+    const auto & left_lanes =
+      lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet);
+    for (const auto & left : left_lanes) {
+      const auto & current_centerline = current_lanelet.centerline();
+      const auto & next_centerline = left.centerline();
+      if (current_centerline.empty() || next_centerline.empty()) {
+        return accumulated_distance;
+      }
+      const auto & curr_pt = current_centerline[0];
+      const auto & next_pt = next_centerline[0];
+      accumulated_distance += lanelet::geometry::distance2d(to2D(curr_pt), to2D(next_pt));
+
+      if (exists(preferred_lanelets_, left)) {
+        return accumulated_distance;
+      }
+      current_lanelet = left;
+    }
+  }
+
+  return 0.0;
+}
+
 bool RouteHandler::isInPreferredLane(const PoseStamped & pose) const
 {
   lanelet::ConstLanelet lanelet;
