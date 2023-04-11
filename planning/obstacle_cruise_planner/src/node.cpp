@@ -73,7 +73,7 @@ PredictedPath resampleHighestConfidencePredictedPath(
   const std::vector<PredictedPath> & predicted_paths, const double time_interval,
   const double time_horizon)
 {
-  // get higheset confidence path
+  // get highest confidence path
   const auto reliable_path = std::max_element(
     predicted_paths.begin(), predicted_paths.end(),
     [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });

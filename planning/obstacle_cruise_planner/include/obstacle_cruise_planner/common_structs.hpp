@@ -88,8 +88,8 @@ struct TargetObstacleInterface
   : uuid(arg_uuid), stamp(arg_stamp), pose(arg_pose), velocity(arg_velocity)
   {
   }
-  rclcpp::Time stamp;
   std::string uuid;
+  rclcpp::Time stamp;
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
   double velocity;                // signed projected velocity to trajectory
 };

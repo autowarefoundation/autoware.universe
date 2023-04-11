@@ -65,7 +65,8 @@ public:
     std::optional<VelocityLimit> & vel_limit) = 0;
 
   std::optional<VelocityLimit> getSlowDownVelocityLimit(
-    const PlannerData & planner_data, const std::vector<SlowDownObstacle> & slow_downobstacles)
+    [[maybe_unused]] const PlannerData & planner_data,
+    [[maybe_unused]] const std::vector<SlowDownObstacle> & slow_down_obstacles)
   {
     return std::nullopt;
   }

@@ -86,7 +86,7 @@ PointWithStamp calcNearestCollisionPoint(
   return collision_points.at(min_idx);
 }
 
-// NOTE: max_lat_dist is used for effecient calculation to supress boost::geometry's polygon
+// NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon
 // calculation.
 std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
@@ -149,7 +149,7 @@ std::optional<geometry_msgs::msg::Point> getCollisionPoint(
   return std::nullopt;
 }
 
-// NOTE: max_lat_dist is used for effecient calculation to supress boost::geometry's polygon
+// NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon
 // calculation.
 std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
