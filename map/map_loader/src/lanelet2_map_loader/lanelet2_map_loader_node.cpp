@@ -100,6 +100,21 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     if (errors.empty()) {
       return map;
     }
+  } else if (lanelet2_map_projector_type == "local") {
+    // Use MGRSProjector as parser
+    lanelet::projection::MGRSProjector projector{};
+    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
+
+    // overwrite local_x, local_y
+    for (lanelet::Point3d point : map->pointLayer) {
+      if (point.hasAttribute("local_x")) {
+        point.x() = point.attribute("local_x").asDouble().value();
+      }
+      if (point.hasAttribute("local_y")) {
+        point.y() = point.attribute("local_y").asDouble().value();
+      }
+    }
+    return map;
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("map_loader"), "lanelet2_map_projector_type is not supported");
     return nullptr;
@@ -133,6 +148,8 @@ MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
     map_projector_type_msg.type = "UTM";
     map_projector_type_msg.map_origin.latitude = map_origin_lat;
     map_projector_type_msg.map_origin.longitude = map_origin_lon;
+  } else if (lanelet2_map_projector_type == "local") {
+    map_projector_type_msg.type = "local";
   }
   return map_projector_type_msg;
 }
