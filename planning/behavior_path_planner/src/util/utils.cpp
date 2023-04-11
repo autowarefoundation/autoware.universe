@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include "behavior_path_planner/util/drivable_area_expansion/drivable_area_expansion.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
@@ -524,7 +524,7 @@ bool setGoal(
     return true;
   } catch (std::out_of_range & ex) {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "failed to set goal: " << ex.what());
     return false;
   }
@@ -1337,7 +1337,7 @@ double getSignedDistanceFromShoulderLeftBoundary(
 
   } else {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "closest shoulder lanelet not found.");
   }
 
@@ -1391,7 +1391,7 @@ std::optional<double> getSignedDistanceFromShoulderLeftBoundary(
 
   if (!found_neighbor_shoulder_bound) {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "neighbor shoulder bound to footprint is not found.");
     return {};
   }
@@ -1411,7 +1411,7 @@ double getSignedDistanceFromRightBoundary(
       right_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
   } else {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "closest shoulder lanelet not found.");
   }
 
@@ -1511,7 +1511,7 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
     RCLCPP_ERROR(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "failed to find closest lanelet within route!!!");
     return {};  // TODO(Horibe) What should be returned?
   }
@@ -1548,7 +1548,7 @@ lanelet::ConstLineStrings3d getMaximumDrivableArea(
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
     RCLCPP_ERROR(
-      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "failed to find closest lanelet within route!!!");
     return {};
   }
@@ -1738,31 +1738,6 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
-// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
-// function
-PathWithLaneId setDecelerationVelocityForTurnSignal(
-  const PathWithLaneId & input, const Pose target_pose, const double turn_light_on_threshold_time)
-{
-  auto reference_path = input;
-
-  for (auto & point : reference_path.points) {
-    const auto arclength_to_target = std::max(
-      0.0, motion_utils::calcSignedArcLength(
-             reference_path.points, point.point.pose.position, target_pose.position));
-    point.point.longitudinal_velocity_mps = std::min(
-      point.point.longitudinal_velocity_mps,
-      static_cast<float>(arclength_to_target / turn_light_on_threshold_time));
-  }
-
-  const auto stop_point_length =
-    motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position);
-  if (stop_point_length > 0) {
-    const auto stop_point = util::insertStopPoint(stop_point_length, reference_path);
-  }
-
-  return reference_path;
-}
-
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification)
 {
   std::uint8_t label = ObjectClassification::UNKNOWN;
@@ -1849,10 +1824,11 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const Pose & pose, const double forward_length,
-  const double backward_length)
+  const double backward_length, const double dist_threshold, const double yaw_threshold)
 {
   lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
+  if (!route_handler->getClosestLaneletWithConstrainsWithinRoute(
+        pose, &current_lane, dist_threshold, yaw_threshold)) {
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
       "failed to find closest lanelet within route!!!");

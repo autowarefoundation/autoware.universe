@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTIL__UTILS_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTIL__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
@@ -309,9 +309,6 @@ PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
   const double buffer, const double deceleration_interval);
 
-PathWithLaneId setDecelerationVelocityForTurnSignal(
-  const PathWithLaneId & input, const Pose target_pose, const double turn_light_on_threshold_time);
-
 // object label
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
@@ -328,7 +325,9 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
-  const double forward_length, const double backward_length);
+  const double forward_length, const double backward_length,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
 
 std::vector<PredictedPath> getPredictedPathFromObj(
   const PredictedObject & obj, const bool & is_use_all_predicted_path);
@@ -351,4 +350,4 @@ lanelet::ConstLanelets getLaneletsFromPath(
 std::string convertToSnakeCase(const std::string & input_str);
 }  // namespace behavior_path_planner::util
 
-#endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__UTIL__UTILS_HPP_
