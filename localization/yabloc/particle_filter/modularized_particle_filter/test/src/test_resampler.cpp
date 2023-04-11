@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-namespace mpf = modularized_particle_filter;
+namespace mpf = pcdless::modularized_particle_filter;
 using Particle = modularized_particle_filter_msgs::msg::Particle;
 using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
 using OptParticleArray = std::optional<ParticleArray>;

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-namespace mpf = modularized_particle_filter;
+namespace mpf = pcdless::modularized_particle_filter;
 
 class PredictorTestSuite : public ::testing::Test
 {
