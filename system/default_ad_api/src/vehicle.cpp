@@ -29,7 +29,7 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
   adaptor.init_sub(sub_steering_, this, &VehicleNode::steering_status);
   adaptor.init_sub(sub_gear_state_, this, &VehicleNode::gear_status);
   adaptor.init_sub(sub_turn_indicator_, this, &VehicleNode::turn_indicator_status);
-  adaptor.init_sub(sub_mgrs_grid_, this, &VehicleNode::mgrs_grid_data);
+  adaptor.init_sub(sub_map_projector_info_, this, &VehicleNode::map_projector_info);
   adaptor.init_sub(sub_hazard_light_, this, &VehicleNode::hazard_light_status);
   adaptor.init_sub(sub_energy_level_, this, &VehicleNode::energy_status);
   adaptor.init_sub(sub_door_status_, this, &VehicleNode::door_status);
@@ -56,9 +56,9 @@ void VehicleNode::kinematic_state(
   vehicle_kinematic_.twist.header = msg_ptr->header;
   vehicle_kinematic_.twist.header.frame_id = msg_ptr->child_frame_id;
   vehicle_kinematic_.twist.twist = msg_ptr->twist;
-  if (!mgrs_grid_.empty()) {
+  if (map_projector_info_->type == "MGRS") {
     lanelet::GPSPoint projected_gps_point = lanelet::projection::MGRSProjector::reverse(
-      toBasicPoint3dPt(msg_ptr->pose.pose.position), mgrs_grid_);
+      toBasicPoint3dPt(msg_ptr->pose.pose.position), map_projector_info_->mgrs_grid);
     vehicle_kinematic_.geographic_pose.header = msg_ptr->header;
     vehicle_kinematic_.geographic_pose.header.frame_id = "global";
     vehicle_kinematic_.geographic_pose.position.latitude = projected_gps_point.lat;
@@ -106,9 +106,9 @@ void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr m
     mapping(hazard_light_type_, msg_ptr->report, ApiHazardLight::UNKNOWN);
 }
 
-void VehicleNode::mgrs_grid_data(const vehicle_interface::MGRSGrid::Message::ConstSharedPtr msg_ptr)
+void VehicleNode::map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr)
 {
-  mgrs_grid_ = msg_ptr->data;
+  map_projector_info_ = msg_ptr;
 }
 
 void VehicleNode::energy_status(

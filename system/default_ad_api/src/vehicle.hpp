@@ -28,7 +28,6 @@
 
 #include <lanelet2_core/primitives/Lanelet.h>
 
-#include <string>
 #include <unordered_map>
 
 // This file should be included after messages.
@@ -51,6 +50,7 @@ private:
   using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
   using VehicleDoorStatus = vehicle_interface::DoorStatus::Message;
   using ApiDoorStatus = autoware_adapi_v1_msgs::msg::DoorStatus;
+  using MapProjectorInfo = vehicle_interface::MapProjectorInfo::Message;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
     {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
@@ -98,12 +98,12 @@ private:
   Sub<vehicle_interface::GearStatus> sub_gear_state_;
   Sub<vehicle_interface::TurnIndicatorStatus> sub_turn_indicator_;
   Sub<vehicle_interface::HazardLightStatus> sub_hazard_light_;
-  Sub<vehicle_interface::MGRSGrid> sub_mgrs_grid_;
+  Sub<vehicle_interface::MapProjectorInfo> sub_map_projector_info_;
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
   Sub<vehicle_interface::DoorStatus> sub_door_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::string mgrs_grid_;
+  MapProjectorInfo::ConstSharedPtr map_projector_info_;
   autoware_ad_api::vehicle::VehicleKinematic::Message vehicle_kinematic_;
   autoware_ad_api::vehicle::VehicleState::Message vehicle_state_;
   autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_;
@@ -113,7 +113,7 @@ private:
   void steering_status(const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr);
   void gear_status(const GearReport::ConstSharedPtr msg_ptr);
   void turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr);
-  void mgrs_grid_data(const vehicle_interface::MGRSGrid::Message::ConstSharedPtr msg_ptr);
+  void map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr);
   void hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr);
   void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
   void door_status(const VehicleDoorStatus::ConstSharedPtr msg_ptr);
