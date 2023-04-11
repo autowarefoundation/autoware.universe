@@ -14,13 +14,13 @@
 
 #include "behavior_path_planner/scene_module/avoidance_by_lc/module.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/util/avoidance/util.hpp"
 #include "behavior_path_planner/util/lane_change/util.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -989,14 +989,14 @@ std::pair<bool, bool> AvoidanceByLCModule::getSafePath(
   // find candidate paths
   LaneChangePaths valid_paths;
 #ifdef USE_OLD_ARCHITECTURE
-  const auto [found_valid_path, found_safe_path] = util::lane_change::getLaneChangePaths(
+  const auto found_safe_path = util::lane_change::getLaneChangePaths(
     *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_->lane_change, check_distance,
     &valid_paths, &object_debug_);
 #else
   const auto o_front = avoidance_data_.target_objects.front();
   const auto direction = isOnRight(o_front) ? Direction::LEFT : Direction::RIGHT;
-  const auto [found_valid_path, found_safe_path] = util::lane_change::getLaneChangePaths(
+  const auto found_safe_path = util::lane_change::getLaneChangePaths(
     *getPreviousModuleOutput().path, *route_handler, current_lanes, lane_change_lanes, current_pose,
     current_twist, planner_data_->dynamic_object, common_parameters, *parameters_->lane_change,
     check_distance, direction, &valid_paths, &object_debug_);
@@ -1009,7 +1009,7 @@ std::pair<bool, bool> AvoidanceByLCModule::getSafePath(
     debug_marker_.markers.clear();
   }
 
-  if (!found_valid_path) {
+  if (valid_paths.empty()) {
     return {false, false};
   }
 
@@ -1020,7 +1020,7 @@ std::pair<bool, bool> AvoidanceByLCModule::getSafePath(
     safe_path = valid_paths.front();
   }
 
-  return {found_valid_path, found_safe_path};
+  return {true, found_safe_path};
 }
 
 bool AvoidanceByLCModule::isSafe() const

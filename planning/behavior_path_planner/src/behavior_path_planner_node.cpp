@@ -15,8 +15,8 @@
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -725,6 +725,14 @@ LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
     declare_parameter<std::vector<std::string>>("lane_following.drivable_area_types_to_skip");
   p.lane_change_prepare_duration =
     declare_parameter<double>("lane_following.lane_change_prepare_duration");
+
+  // finding closest lanelet
+  {
+    p.distance_threshold =
+      declare_parameter<double>("lane_following.closest_lanelet.distance_threshold");
+    p.yaw_threshold = declare_parameter<double>("lane_following.closest_lanelet.yaw_threshold");
+  }
+
   return p;
 }
 
@@ -830,13 +838,14 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
 
   {
     std::string ns = "pull_over.";
-    p.request_length = declare_parameter<double>(ns + "request_length");
+    p.minimum_request_length = declare_parameter<double>(ns + "minimum_request_length");
     p.th_stopped_velocity = declare_parameter<double>(ns + "th_stopped_velocity");
     p.th_arrived_distance = declare_parameter<double>(ns + "th_arrived_distance");
     p.th_stopped_time = declare_parameter<double>(ns + "th_stopped_time");
     p.margin_from_boundary = declare_parameter<double>(ns + "margin_from_boundary");
     p.decide_path_distance = declare_parameter<double>(ns + "decide_path_distance");
     p.maximum_deceleration = declare_parameter<double>(ns + "maximum_deceleration");
+    p.maximum_jerk = declare_parameter<double>(ns + "maximum_jerk");
     // goal research
     p.enable_goal_research = declare_parameter<bool>(ns + "enable_goal_research");
     p.search_priority = declare_parameter<std::string>(ns + "search_priority");
