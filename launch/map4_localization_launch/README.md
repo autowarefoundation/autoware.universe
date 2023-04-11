@@ -6,7 +6,7 @@ Eagleye provides a cost-effective alternative to LiDAR and point cloud-based loc
 
 Autoware users will be able to choose between their existing LiDAR and point cloud-based localization stacks or GNSS/IMU-based eagleye localizer, depending on their specific needs and operating environment.
 
-There are two ways to utilize eagleye results with the autoware localization stack.
+In addition to the LiDAR-based solution provided by `tier4_localization_launch` (shown in the first row of the following table), there are two ways to utilize eagleye in `map4_localization_launch` with the autoware localization stack.
 
 localization launch  | twist estimator | pose estimator
 -- | -- | --
