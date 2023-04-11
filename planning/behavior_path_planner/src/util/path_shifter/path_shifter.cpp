@@ -14,8 +14,8 @@
 
 #include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -55,6 +55,7 @@ namespace behavior_path_planner
 
 using motion_utils::findNearestIndex;
 using motion_utils::insertOrientation;
+using motion_utils::removeInvalidOrientationPoints;
 
 void PathShifter::setPath(const PathWithLaneId & path)
 {
@@ -63,9 +64,15 @@ void PathShifter::setPath(const PathWithLaneId & path)
   updateShiftLinesIndices(shift_lines_);
   sortShiftLinesAlongPath(shift_lines_);
 }
-void PathShifter::setVelocity(const double velocity) { velocity_ = velocity; }
+void PathShifter::setVelocity(const double velocity)
+{
+  velocity_ = velocity;
+}
 
-void PathShifter::setLateralAccelerationLimit(const double acc) { acc_limit_ = acc; }
+void PathShifter::setLateralAccelerationLimit(const double acc)
+{
+  acc_limit_ = acc;
+}
 
 void PathShifter::addShiftLine(const ShiftLine & line)
 {
@@ -137,6 +144,7 @@ bool PathShifter::generate(
 
   const bool is_driving_forward = true;
   insertOrientation(shifted_path->path.points, is_driving_forward);
+  removeInvalidOrientationPoints(shifted_path->path.points);
 
   // DEBUG
   RCLCPP_DEBUG_STREAM_THROTTLE(
@@ -473,8 +481,7 @@ void PathShifter::shiftBaseLength(ShiftedPath * path, double offset) const
   }
 }
 
-double PathShifter::calcShiftTimeFromJerkAndJerk(
-  const double lateral, const double jerk, const double acc)
+double PathShifter::calcShiftTimeFromJerk(const double lateral, const double jerk, const double acc)
 {
   const double j = std::abs(jerk);
   const double a = std::abs(acc);

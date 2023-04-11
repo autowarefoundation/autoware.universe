@@ -14,10 +14,10 @@
 
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/util/create_vehicle_footprint.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
 #include "behavior_path_planner/util/pull_out/util.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -38,11 +38,10 @@ namespace behavior_path_planner
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<PullOutParameters> & parameters)
-: SceneModuleInterface{name, node},
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
-  rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_out");
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_out");
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
@@ -64,12 +63,11 @@ PullOutModule::PullOutModule(
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<PullOutParameters> & parameters,
-  const std::shared_ptr<RTCInterface> & rtc_interface)
-: SceneModuleInterface{name, node},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
-  rtc_interface_ptr_ = rtc_interface;
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_out");
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
@@ -102,15 +100,8 @@ BehaviorModuleOutput PullOutModule::run()
   return plan();
 }
 
-void PullOutModule::onEntry()
+void PullOutModule::processOnEntry()
 {
-  RCLCPP_DEBUG(getLogger(), "PULL_OUT onEntry");
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::SUCCESS;
-#else
-  current_state_ = ModuleStatus::IDLE;
-#endif
-
   // initialize when receiving new route
   if (
     last_route_received_time_ == nullptr ||
@@ -137,15 +128,10 @@ void PullOutModule::onEntry()
   updatePullOutStatus();
 }
 
-void PullOutModule::onExit()
+void PullOutModule::processOnExit()
 {
-  clearWaitingApproval();
-  removeRTCStatus();
-  steering_factor_interface_ptr_->clearSteeringFactors();
   resetPathCandidate();
   resetPathReference();
-  current_state_ = ModuleStatus::SUCCESS;
-  RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }
 
 bool PullOutModule::isExecutionRequested() const
@@ -188,7 +174,10 @@ bool PullOutModule::isExecutionRequested() const
   return true;
 }
 
-bool PullOutModule::isExecutionReady() const { return true; }
+bool PullOutModule::isExecutionReady() const
+{
+  return true;
+}
 
 // this runs only when RUNNING
 ModuleStatus PullOutModule::updateState()
@@ -290,7 +279,10 @@ BehaviorModuleOutput PullOutModule::plan()
   return output;
 }
 
-CandidateOutput PullOutModule::planCandidate() const { return CandidateOutput{}; }
+CandidateOutput PullOutModule::planCandidate() const
+{
+  return CandidateOutput{};
+}
 
 std::shared_ptr<PullOutPlannerBase> PullOutModule::getCurrentPlanner() const
 {
@@ -736,7 +728,9 @@ void PullOutModule::checkBackFinished()
     // request pull_out approval
     waitApproval();
     removeRTCStatus();
-    uuid_ = generateUUID();
+    for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+      itr->second = generateUUID();
+    }
     current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   }
 }

@@ -10,18 +10,20 @@ find_package(magic_enum CONFIG REQUIRED)
 set(COMPILE_WITH_OLD_ARCHITECTURE TRUE)
 
 set(common_src
-  src/utilities.cpp
-  src/path_utilities.cpp
   src/steering_factor_interface.cpp
   src/behavior_path_planner_node.cpp
   src/scene_module/scene_module_visitor.cpp
   src/scene_module/avoidance/avoidance_module.cpp
+  src/scene_module/avoidance_by_lc/module.cpp
   src/scene_module/pull_out/pull_out_module.cpp
   src/scene_module/pull_over/pull_over_module.cpp
   src/scene_module/side_shift/side_shift_module.cpp
   src/scene_module/lane_change/lane_change_module.cpp
   src/scene_module/lane_change/external_request_lane_change_module.cpp
   src/turn_signal_decider.cpp
+  src/util/utils.cpp
+  src/util/path_utils.cpp
+  src/util/safety_check.cpp
   src/util/avoidance/util.cpp
   src/util/lane_change/util.cpp
   src/util/side_shift/util.cpp
@@ -62,6 +64,7 @@ else()
   ament_auto_add_library(behavior_path_planner_node SHARED
     src/planner_manager.cpp
     src/scene_module/avoidance/manager.cpp
+    src/scene_module/avoidance_by_lc/manager.cpp
     src/scene_module/pull_out/manager.cpp
     src/scene_module/pull_over/manager.cpp
     src/scene_module/side_shift/manager.cpp
@@ -88,7 +91,7 @@ rclcpp_components_register_node(behavior_path_planner_node
 if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_utilities
     test/input.cpp
-    test/test_utilities.cpp
+    test/test_utils.cpp
     test/test_drivable_area_expansion.cpp
   )
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_utilities

@@ -69,17 +69,8 @@ std::vector<size_t> concatParentIds(
 
 double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 
-void clipByMinStartIdx(const AvoidLineArray & shift_lines, PathWithLaneId & path);
-
-void fillLongitudinalAndLengthByClosestFootprint(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
-  ObjectData & obj);
-
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj);
-
-double calcOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
 
 double calcEnvelopeOverhangDistance(
   const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
@@ -91,10 +82,6 @@ void setEndData(
 void setStartData(
   AvoidLine & al, const double start_shift_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist);
-
-std::string getUuidStr(const ObjectData & obj);
-
-std::vector<std::string> getUuidStr(const ObjectDataArray & objs);
 
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
@@ -113,10 +100,6 @@ bool isCentroidWithinLanelets(
 lanelet::ConstLanelets getTargetLanelets(
   const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
   const double left_offset, const double right_offset);
-
-double calcDecelDistWithJerkAndAccConstraints(
-  const double current_vel, const double target_vel, const double current_acc, const double acc_min,
-  const double jerk_acc, const double jerk_dec);
 
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,

@@ -129,15 +129,6 @@ protected:
       points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
       p->ego_nearest_yaw_threshold);
   }
-
-  template <class T>
-  size_t findEgoIndex(const std::vector<T> & points) const
-  {
-    const auto & p = planner_data_;
-    return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
-      p->ego_nearest_yaw_threshold);
-  }
 };
 
 class SceneModuleManagerInterface
@@ -149,7 +140,7 @@ public:
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 1);
     if (!node.has_parameter("is_publish_debug_path")) {
-      is_publish_debug_path_ = node.declare_parameter("is_publish_debug_path", false);
+      is_publish_debug_path_ = node.declare_parameter<bool>("is_publish_debug_path");
     } else {
       is_publish_debug_path_ = node.get_parameter("is_publish_debug_path").as_bool();
     }
@@ -306,16 +297,6 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
-      p->ego_nearest_yaw_threshold);
-  }
-
-  template <class T>
-  size_t findEgoIndex(
-    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose) const
-  {
-    const auto & p = planner_data_;
-    return motion_utils::findFirstNearestIndexWithSoftConstraints(
       points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
       p->ego_nearest_yaw_threshold);
   }

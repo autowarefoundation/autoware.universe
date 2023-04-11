@@ -145,8 +145,8 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
     node_->create_publisher<MarkerArray>("debug/goal_footprint", durable_qos);
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
-  param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
-  param_.enable_correct_goal_pose = node_->declare_parameter("enable_correct_goal_pose", false);
+  param_.goal_angle_threshold_deg = node_->declare_parameter<double>("goal_angle_threshold_deg");
+  param_.enable_correct_goal_pose = node_->declare_parameter<bool>("enable_correct_goal_pose");
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -163,7 +163,10 @@ void DefaultPlanner::initialize(rclcpp::Node * node, const HADMapBin::ConstShare
   map_callback(msg);
 }
 
-bool DefaultPlanner::ready() const { return is_graph_ready_; }
+bool DefaultPlanner::ready() const
+{
+  return is_graph_ready_;
+}
 
 void DefaultPlanner::map_callback(const HADMapBin::ConstSharedPtr msg)
 {
@@ -409,6 +412,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
+  route_handler_.setRouteLanelets(all_route_lanelets);
 
   auto goal_pose = points.back();
   if (param_.enable_correct_goal_pose) {
@@ -447,6 +451,16 @@ geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   Pose refined_goal = goal;
   refined_goal.position.z = goal_height;
   return refined_goal;
+}
+
+void DefaultPlanner::updateRoute(const PlannerPlugin::LaneletRoute & route)
+{
+  route_handler_.setRoute(route);
+}
+
+void DefaultPlanner::clearRoute()
+{
+  route_handler_.clearRoute();
 }
 
 }  // namespace mission_planner::lanelet2

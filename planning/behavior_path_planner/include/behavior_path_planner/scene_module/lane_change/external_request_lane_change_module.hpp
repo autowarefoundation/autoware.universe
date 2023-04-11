@@ -67,8 +67,8 @@ public:
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
 
   std::shared_ptr<LaneChangeDebugMsgArray> get_debug_msg_array() const;
   void acceptVisitor(
@@ -121,7 +121,7 @@ protected:
   bool isValidPath(const PathWithLaneId & path) const;
   bool isApprovedPathSafe(Pose & ego_pose_before_collision) const;
   bool isNearEndOfLane() const;
-  bool isCurrentSpeedLow() const;
+  bool isCurrentVelocityLow() const;
   bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
   bool isAbortState() const;
