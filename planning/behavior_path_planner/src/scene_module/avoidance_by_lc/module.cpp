@@ -989,14 +989,14 @@ std::pair<bool, bool> AvoidanceByLCModule::getSafePath(
   // find candidate paths
   LaneChangePaths valid_paths;
 #ifdef USE_OLD_ARCHITECTURE
-  const auto found_safe_path = lane_change_utils::getLaneChangePaths(
+  const auto found_safe_path = util::lane_change::getLaneChangePaths(
     *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_->lane_change, check_distance,
     &valid_paths, &object_debug_);
 #else
   const auto o_front = avoidance_data_.target_objects.front();
   const auto direction = isOnRight(o_front) ? Direction::LEFT : Direction::RIGHT;
-  const auto found_safe_path = lane_change_utils::getLaneChangePaths(
+  const auto found_safe_path = utils::lane_change::getLaneChangePaths(
     *getPreviousModuleOutput().path, *route_handler, current_lanes, lane_change_lanes, current_pose,
     current_twist, planner_data_->dynamic_object, common_parameters, *parameters_->lane_change,
     check_distance, direction, &valid_paths, &object_debug_);

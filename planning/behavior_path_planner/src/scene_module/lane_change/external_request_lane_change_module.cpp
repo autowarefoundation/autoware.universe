@@ -365,7 +365,7 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
 
   // find candidate paths
   LaneChangePaths valid_paths;
-  const auto found_safe_path = lane_change_utils::getLaneChangePaths(
+  const auto found_safe_path = util::lane_change::getLaneChangePaths(
     *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_, check_distance, &valid_paths,
     &object_debug_);
