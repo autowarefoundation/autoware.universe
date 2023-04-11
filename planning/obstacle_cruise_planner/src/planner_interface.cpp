@@ -270,7 +270,8 @@ double PlannerInterface::calcDistanceToCollisionPoint(
 
 std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points,
-  const std::vector<SlowDownObstacle> & obstacles, std::optional<VelocityLimit> & vel_limit)
+  const std::vector<SlowDownObstacle> & obstacles,
+  [[maybe_unused]] std::optional<VelocityLimit> & vel_limit)
 {
   // stop_watch_.tic(__func__);
   const auto & p = slow_down_param_;

@@ -1006,8 +1006,10 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
     }
   }
 
-  return SlowDownObstacle(
-    obstacle.uuid, obstacle.pose, precise_lat_dist, front_collision_point, back_collision_point);
+  const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
+  return SlowDownObstacle{obstacle.uuid,          obstacle.stamp,   obstacle.pose,
+                          obstacle_projected_vel, precise_lat_dist, front_collision_point,
+                          back_collision_point};
 }
 
 void ObstacleCruisePlannerNode::checkConsistency(
