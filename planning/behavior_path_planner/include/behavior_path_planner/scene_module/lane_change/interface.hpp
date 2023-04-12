@@ -16,7 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__INTERFACE_HPP_
 
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
-#include "behavior_path_planner/scene_module/lane_change/module_template.hpp"
+#include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
+#include "behavior_path_planner/scene_module/lane_change/normal.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
@@ -55,7 +56,7 @@ public:
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<LaneChangeParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
-    std::unique_ptr<LaneChangeModuleTemplate> && module_type);
+    std::unique_ptr<LaneChangeBase> && module_type);
 
   void processOnEntry() override;
   void processOnExit() override;
@@ -78,7 +79,7 @@ public:
 
 private:
   std::shared_ptr<LaneChangeParameters> parameters_;
-  std::unique_ptr<LaneChangeModuleTemplate> module_type_;
+  std::unique_ptr<LaneChangeBase> module_type_;
 
   void resetPathIfAbort();
 

@@ -33,7 +33,7 @@ LaneChangeInterface::LaneChangeInterface(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneChangeParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
-  std::unique_ptr<LaneChangeModuleTemplate> && module_type)
+  std::unique_ptr<LaneChangeBase> && module_type)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   module_type_{std::move(module_type)}

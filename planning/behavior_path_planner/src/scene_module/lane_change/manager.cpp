@@ -39,7 +39,7 @@ std::shared_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
 {
   return std::make_shared<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    std::make_unique<LaneChangeModuleTemplate>(parameters_, direction_));
+    std::make_unique<NormalLaneChange>(parameters_, direction_));
 }
 
 void LaneChangeModuleManager::updateModuleParams(

@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/lane_change/interface.hpp"
-#include "behavior_path_planner/scene_module/lane_change/module_template.hpp"
+#include "behavior_path_planner/scene_module/lane_change/normal.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/util/lane_change/util.hpp"
 #include "behavior_path_planner/util/path_utils.hpp"
@@ -29,13 +28,13 @@
 
 namespace behavior_path_planner
 {
-LaneChangeModuleTemplate::LaneChangeModuleTemplate(
+NormalLaneChange::NormalLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction)
-: parameters_{parameters}, direction_{direction}
+  : LaneChangeBase(parameters, direction)
 {
 }
 
-void LaneChangeModuleTemplate::updateLaneChangeStatus(
+void NormalLaneChange::updateLaneChangeStatus(
   const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & previous_module_path)
 {
   status_.current_lanes = util::getCurrentLanesFromPath(prev_module_reference_path, planner_data_);
@@ -59,41 +58,7 @@ void LaneChangeModuleTemplate::updateLaneChangeStatus(
   status_.lane_change_path.path.header = getRouteHeader();
 }
 
-#ifdef USE_OLD_ARCHITECTURE
-lanelet::ConstLanelets LaneChangeModuleTemplate::getLaneChangeLanes(
-  const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length) const
-{
-  lanelet::ConstLanelets lane_change_lanes;
-  const auto & route_handler = planner_data_->route_handler;
-  const auto minimum_lane_change_length = planner_data_->parameters.minimum_lane_changing_length;
-  const auto lane_change_prepare_duration = parameters_->prepare_duration;
-  const auto current_pose = getEgoPose();
-  const auto current_twist = getEgoTwist();
-
-  if (current_lanes.empty()) {
-    return lane_change_lanes;
-  }
-
-  // Get lane change lanes
-  lanelet::ConstLanelet current_lane;
-  lanelet::utils::query::getClosestLanelet(current_lanes, current_pose, &current_lane);
-  const double lane_change_prepare_length =
-    std::max(current_twist.linear.x * lane_change_prepare_duration, minimum_lane_change_length);
-  lanelet::ConstLanelets current_check_lanes =
-    route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
-  const auto lane_change_lane = route_handler->getLaneChangeTarget(current_check_lanes);
-  if (lane_change_lane) {
-    lane_change_lanes = route_handler->getLaneletSequence(
-      lane_change_lane.get(), current_pose, lane_change_lane_length, lane_change_lane_length);
-  } else {
-    lane_change_lanes.clear();
-  }
-
-  return lane_change_lanes;
-}
-#endif
-
-std::pair<bool, bool> LaneChangeModuleTemplate::getSafePath(
+std::pair<bool, bool> NormalLaneChange::getSafePath(
   const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & prev_module_path,
   LaneChangePath & safe_path) const
 {
@@ -135,61 +100,7 @@ std::pair<bool, bool> LaneChangeModuleTemplate::getSafePath(
   return {found_valid_path, found_safe_path};
 }
 
-bool LaneChangeModuleTemplate::isSafe() const
-{
-  return status_.is_safe;
-}
-
-bool LaneChangeModuleTemplate::isValidPath() const
-{
-  return status_.is_valid_path;
-}
-
-bool LaneChangeModuleTemplate::isValidPath(const PathWithLaneId & path) const
-{
-  const auto & route_handler = planner_data_->route_handler;
-
-  // check lane departure
-  const auto drivable_lanes = util::lane_change::generateDrivableLanes(
-    *route_handler, util::extendLanes(route_handler, status_.current_lanes),
-    util::extendLanes(route_handler, status_.lane_change_lanes));
-  const auto expanded_lanes = util::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset);
-  const auto lanelets = util::transformToLanelets(expanded_lanes);
-
-  // check path points are in any lanelets
-  for (const auto & point : path.points) {
-    bool is_in_lanelet = false;
-    for (const auto & lanelet : lanelets) {
-      if (lanelet::utils::isInLanelet(point.point.pose, lanelet)) {
-        is_in_lanelet = true;
-        break;
-      }
-    }
-    if (!is_in_lanelet) {
-      return false;
-    }
-  }
-
-  // check relative angle
-  if (!util::checkPathRelativeAngle(path, M_PI)) {
-    return false;
-  }
-
-  return true;
-}
-
-bool LaneChangeModuleTemplate::isNearEndOfLane() const
-{
-  const auto & current_pose = getEgoPose();
-  const double threshold = util::calcTotalLaneChangeLength(planner_data_->parameters);
-
-  return std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
-         threshold;
-}
-
-PathWithLaneId LaneChangeModuleTemplate::generatePlannedPath(
+PathWithLaneId NormalLaneChange::generatePlannedPath(
   const std::vector<DrivableLanes> & prev_drivable_lanes)
 {
   auto path = getLaneChangePath().path;
@@ -206,13 +117,36 @@ PathWithLaneId LaneChangeModuleTemplate::generatePlannedPath(
   return path;
 }
 
-bool LaneChangeModuleTemplate::isCurrentSpeedLow() const
+void NormalLaneChange::generateExtendedDrivableArea(
+  const std::vector<DrivableLanes> & prev_drivable_lanes, PathWithLaneId & path)
 {
-  constexpr double threshold_ms = 10.0 * 1000 / 3600;
-  return getEgoTwist().linear.x < threshold_ms;
+  const auto & common_parameters = planner_data_->parameters;
+  const auto & route_handler = planner_data_->route_handler;
+  const auto drivable_lanes = util::lane_change::generateDrivableLanes(
+    prev_drivable_lanes, *route_handler, status_.current_lanes, status_.lane_change_lanes);
+  const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
+  const auto expanded_lanes = util::expandLanelets(
+    shorten_lanes, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
+  util::generateDrivableArea(path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+}
+bool NormalLaneChange::hasFinishedLaneChange() const
+{
+  const auto & current_pose = getEgoPose();
+  const auto & lane_change_path = status_.lane_change_path.path;
+  const auto & lane_change_end = status_.lane_change_path.shift_line.end;
+  const double dist_to_lane_change_end = motion_utils::calcSignedArcLength(
+    lane_change_path.points, current_pose.position, lane_change_end.position);
+  return dist_to_lane_change_end + parameters_->lane_change_finish_judge_buffer < 0.0;
 }
 
-bool LaneChangeModuleTemplate::isCancelConditionSatisfied()
+PathWithLaneId NormalLaneChange::getReferencePath() const
+{
+  return util::getCenterLinePathFromRootLanelet(status_.lane_change_lanes.front(), planner_data_);
+}
+
+
+bool NormalLaneChange::isCancelConditionSatisfied()
 {
   current_lane_change_state_ = LaneChangeStates::Normal;
 
@@ -248,7 +182,7 @@ bool LaneChangeModuleTemplate::isCancelConditionSatisfied()
   return false;
 }
 
-bool LaneChangeModuleTemplate::isAbortConditionSatisfied(const Pose & pose)
+bool NormalLaneChange::isAbortConditionSatisfied(const Pose & pose)
 {
   const auto & common_parameters = planner_data_->parameters;
 
@@ -269,105 +203,17 @@ bool LaneChangeModuleTemplate::isAbortConditionSatisfied(const Pose & pose)
   return true;
 }
 
-PathWithLaneId LaneChangeModuleTemplate::getReferencePath() const
+void NormalLaneChange::resetParameters()
 {
-  return util::getCenterLinePathFromRootLanelet(status_.lane_change_lanes.front(), planner_data_);
+  is_abort_path_approved_ = false;
+  is_abort_approval_requested_ = false;
+  current_lane_change_state_ = LaneChangeStates::Normal;
+  abort_path_ = nullptr;
+
+  object_debug_.clear();
 }
 
-bool LaneChangeModuleTemplate::isStopState() const
-{
-  return current_lane_change_state_ == LaneChangeStates::Stop;
-}
-
-bool LaneChangeModuleTemplate::isAbortState() const
-{
-  if (!parameters_->enable_abort_lane_change) {
-    return false;
-  }
-
-  const auto is_within_current_lane = util::lane_change::isEgoWithinOriginalLane(
-    status_.current_lanes, getEgoPose(), planner_data_->parameters);
-
-  if (!is_within_current_lane) {
-    return false;
-  }
-
-  if (current_lane_change_state_ != LaneChangeStates::Abort) {
-    return false;
-  }
-
-  if (!abort_path_) {
-    return false;
-  }
-
-  return true;
-}
-
-bool LaneChangeModuleTemplate::hasFinishedLaneChange() const
-{
-  const auto & current_pose = getEgoPose();
-  const auto & lane_change_path = status_.lane_change_path.path;
-  const auto & lane_change_end = status_.lane_change_path.shift_line.end;
-  const double dist_to_lane_change_end = motion_utils::calcSignedArcLength(
-    lane_change_path.points, current_pose.position, lane_change_end.position);
-  return dist_to_lane_change_end + parameters_->lane_change_finish_judge_buffer < 0.0;
-}
-
-Pose LaneChangeModuleTemplate::getEgoPose() const
-{
-  return planner_data_->self_odometry->pose.pose;
-}
-Twist LaneChangeModuleTemplate::getEgoTwist() const
-{
-  return planner_data_->self_odometry->twist.twist;
-}
-std_msgs::msg::Header LaneChangeModuleTemplate::getRouteHeader() const
-{
-  return planner_data_->route_handler->getRouteHeader();
-}
-void LaneChangeModuleTemplate::generateExtendedDrivableArea(
-  const std::vector<DrivableLanes> & prev_drivable_lanes, PathWithLaneId & path)
-{
-  const auto & common_parameters = planner_data_->parameters;
-  const auto & route_handler = planner_data_->route_handler;
-  const auto drivable_lanes = util::lane_change::generateDrivableLanes(
-    prev_drivable_lanes, *route_handler, status_.current_lanes, status_.lane_change_lanes);
-  const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
-  const auto expanded_lanes = util::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-  util::generateDrivableArea(path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
-}
-
-bool LaneChangeModuleTemplate::isApprovedPathSafe(Pose & ego_pose_before_collision) const
-{
-  const auto current_pose = getEgoPose();
-  const auto current_twist = getEgoTwist();
-  const auto & dynamic_objects = planner_data_->dynamic_object;
-  const auto & common_parameters = planner_data_->parameters;
-  const auto & lane_change_parameters = *parameters_;
-  const auto & route_handler = planner_data_->route_handler;
-  const auto & path = status_.lane_change_path;
-
-  // get lanes used for detection
-  const auto check_lanes = util::lane_change::getExtendedTargetLanesForCollisionCheck(
-    *route_handler, path.target_lanelets.front(), current_pose, check_distance_);
-
-  std::unordered_map<std::string, CollisionCheckDebug> debug_data;
-  const auto lateral_buffer =
-    util::lane_change::calcLateralBufferForFiltering(common_parameters.vehicle_width);
-  const auto dynamic_object_indices = util::lane_change::filterObjectIndices(
-    {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
-    lane_change_parameters, lateral_buffer);
-
-  return util::lane_change::isLaneChangePathSafe(
-    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
-    *parameters_, common_parameters.expected_front_deceleration_for_abort,
-    common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
-    status_.lane_change_path.acceleration);
-}
-
-TurnSignalInfo LaneChangeModuleTemplate::updateOutputTurnSignal()
+TurnSignalInfo NormalLaneChange::updateOutputTurnSignal()
 {
   calcTurnSignalInfo();
   TurnSignalInfo turn_signal_info;
@@ -388,7 +234,35 @@ TurnSignalInfo LaneChangeModuleTemplate::updateOutputTurnSignal()
   return turn_signal_info;
 }
 
-void LaneChangeModuleTemplate::calcTurnSignalInfo()
+bool NormalLaneChange::isApprovedPathSafe(Pose & ego_pose_before_collision) const
+{
+  const auto current_pose = getEgoPose();
+  const auto current_twist = getEgoTwist();
+  const auto & dynamic_objects = planner_data_->dynamic_object;
+  const auto & common_parameters = planner_data_->parameters;
+  const auto & lane_change_parameters = *parameters_;
+  const auto & route_handler = planner_data_->route_handler;
+  const auto & path = status_.lane_change_path;
+
+  // get lanes used for detection
+  const auto check_lanes = util::lane_change::getExtendedTargetLanesForCollisionCheck(
+    *route_handler, path.target_lanelets.front(), current_pose, check_distance_);
+
+  CollisionCheckDebugMap debug_data;
+  const auto lateral_buffer =
+    util::lane_change::calcLateralBufferForFiltering(common_parameters.vehicle_width);
+  const auto dynamic_object_indices = util::lane_change::filterObjectIndices(
+    {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
+    lane_change_parameters, lateral_buffer);
+
+  return util::lane_change::isLaneChangePathSafe(
+    path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
+    *parameters_, common_parameters.expected_front_deceleration_for_abort,
+    common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
+    status_.lane_change_path.acceleration);
+}
+
+void NormalLaneChange::calcTurnSignalInfo()
 {
   const auto get_blinker_pose =
     [](const PathWithLaneId & path, const lanelet::ConstLanelets & lanes, const double length) {
@@ -430,13 +304,54 @@ void LaneChangeModuleTemplate::calcTurnSignalInfo()
   status_.lane_change_path.turn_signal_info = turn_signal_info;
 }
 
-void LaneChangeModuleTemplate::resetParameters()
+bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 {
-  is_abort_path_approved_ = false;
-  is_abort_approval_requested_ = false;
-  current_lane_change_state_ = LaneChangeStates::Normal;
-  abort_path_ = nullptr;
+  const auto & route_handler = planner_data_->route_handler;
 
-  object_debug_.clear();
+  // check lane departure
+  const auto drivable_lanes = util::lane_change::generateDrivableLanes(
+    *route_handler, util::extendLanes(route_handler, status_.current_lanes),
+    util::extendLanes(route_handler, status_.lane_change_lanes));
+  const auto expanded_lanes = util::expandLanelets(
+    drivable_lanes, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset);
+  const auto lanelets = util::transformToLanelets(expanded_lanes);
+
+  // check path points are in any lanelets
+  for (const auto & point : path.points) {
+    bool is_in_lanelet = false;
+    for (const auto & lanelet : lanelets) {
+      if (lanelet::utils::isInLanelet(point.point.pose, lanelet)) {
+        is_in_lanelet = true;
+        break;
+      }
+    }
+    if (!is_in_lanelet) {
+      return false;
+    }
+  }
+
+  // check relative angle
+  if (!util::checkPathRelativeAngle(path, M_PI)) {
+    return false;
+  }
+
+  return true;
 }
+
+bool NormalLaneChange::isNearEndOfLane() const
+{
+  const auto & current_pose = getEgoPose();
+  const double threshold = util::calcTotalLaneChangeLength(planner_data_->parameters);
+
+  return std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
+         threshold;
+}
+
+bool NormalLaneChange::isCurrentSpeedLow() const
+{
+  constexpr double threshold_ms = 10.0 * 1000 / 3600;
+  return getEgoTwist().linear.x < threshold_ms;
+}
+
 }  // namespace behavior_path_planner
