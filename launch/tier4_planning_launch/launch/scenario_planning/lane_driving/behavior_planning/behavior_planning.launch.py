@@ -1,4 +1,4 @@
-# Copyright 2021 Tier IV, Inc. All rights reserved.
+# Copyright 2021-2023 TIER IV, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ def launch_setup(context, *args, **kwargs):
         side_shift_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("avoidance_param_path").perform(context), "r") as f:
         avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("avoidance_by_lc_param_path").perform(context), "r") as f:
+        avoidance_by_lc_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_change_param_path").perform(context), "r") as f:
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_following_param_path").perform(context), "r") as f:
@@ -85,6 +87,7 @@ def launch_setup(context, *args, **kwargs):
             nearest_search_param,
             side_shift_param,
             avoidance_param,
+            avoidance_by_lc_param,
             lane_change_param,
             lane_following_param,
             pull_over_param,
@@ -147,6 +150,8 @@ def launch_setup(context, *args, **kwargs):
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("speed_bump_param_path").perform(context), "r") as f:
         speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("out_of_lane_param_path").perform(context), "r") as f:
+        out_of_lane_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("behavior_velocity_planner_param_path").perform(context), "r"
     ) as f:
@@ -215,6 +220,7 @@ def launch_setup(context, *args, **kwargs):
             vehicle_param,
             run_out_param,
             speed_bump_param,
+            out_of_lane_param,
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,

@@ -17,7 +17,7 @@
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -130,7 +130,10 @@ void BehaviorTreeManager::resetNotRunningModulePathCandidate()
   }
 }
 
-void BehaviorTreeManager::resetBehaviorTree() { bt_tree_.haltTree(); }
+void BehaviorTreeManager::resetBehaviorTree()
+{
+  bt_tree_.haltTree();
+}
 
 void BehaviorTreeManager::addGrootMonitoring(
   BT::Tree * tree, uint16_t publisher_port, uint16_t server_port, uint16_t max_msg_per_second)

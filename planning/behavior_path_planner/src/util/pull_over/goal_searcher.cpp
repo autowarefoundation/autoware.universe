@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/util/pull_over/goal_searcher.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
 #include "behavior_path_planner/util/pull_over/util.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
@@ -84,6 +84,9 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
 
     const double offset_from_center_line = distance_from_left_bound.value() + margin_from_boundary;
     const Pose original_search_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
+    const double longitudinal_distance_from_original_goal =
+      std::abs(motion_utils::calcSignedArcLength(
+        center_line_path.points, original_goal_pose.position, original_search_pose.position));
     original_search_poses.push_back(original_search_pose);  // for createAreaPolygon
     Pose search_pose{};
     // search goal_pose in lateral direction
@@ -109,8 +112,7 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
       goal_candidate.id = goal_id;
       goal_id++;
       // use longitudinal_distance as distance_from_original_goal
-      goal_candidate.distance_from_original_goal = std::abs(motion_utils::calcSignedArcLength(
-        center_line_path.points, original_goal_pose.position, search_pose.position));
+      goal_candidate.distance_from_original_goal = longitudinal_distance_from_original_goal;
       goal_candidates.push_back(goal_candidate);
     }
   }

@@ -14,9 +14,9 @@
 
 #include "behavior_path_planner/util/avoidance/util.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -365,7 +365,10 @@ std::vector<Point> updateBoundary(
 }
 }  // namespace
 
-bool isOnRight(const ObjectData & obj) { return obj.lateral < 0.0; }
+bool isOnRight(const ObjectData & obj)
+{
+  return obj.lateral < 0.0;
+}
 
 double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin)
@@ -436,43 +439,6 @@ double lerpShiftLengthOnArc(double arc, const AvoidLine & ap)
   return 0.0;
 }
 
-void clipByMinStartIdx(const AvoidLineArray & shift_lines, PathWithLaneId & path)
-{
-  if (path.points.empty()) {
-    return;
-  }
-
-  size_t min_start_idx = std::numeric_limits<size_t>::max();
-  for (const auto & sl : shift_lines) {
-    min_start_idx = std::min(min_start_idx, sl.start_idx);
-  }
-  min_start_idx = std::min(min_start_idx, path.points.size() - 1);
-  path.points =
-    std::vector<PathPointWithLaneId>{path.points.begin() + min_start_idx, path.points.end()};
-}
-
-void fillLongitudinalAndLengthByClosestFootprint(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
-  ObjectData & obj)
-{
-  tier4_autoware_utils::Polygon2d object_poly{};
-  util::calcObjectPolygon(object, &object_poly);
-
-  const double distance = motion_utils::calcSignedArcLength(
-    path.points, ego_pos, object.kinematics.initial_pose_with_covariance.pose.position);
-  double min_distance = distance;
-  double max_distance = distance;
-  for (const auto & p : object_poly.outer()) {
-    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const double arc_length = motion_utils::calcSignedArcLength(path.points, ego_pos, point);
-    min_distance = std::min(min_distance, arc_length);
-    max_distance = std::max(max_distance, arc_length);
-  }
-  obj.longitudinal = min_distance;
-  obj.length = max_distance - min_distance;
-  return;
-}
-
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj)
 {
@@ -489,37 +455,6 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   obj.longitudinal = min_distance;
   obj.length = max_distance - min_distance;
   return;
-}
-
-double calcOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose)
-{
-  double largest_overhang = isOnRight(object_data) ? -100.0 : 100.0;  // large number
-
-  tier4_autoware_utils::Polygon2d object_poly{};
-  util::calcObjectPolygon(object_data.object, &object_poly);
-
-  for (const auto & p : object_poly.outer()) {
-    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const auto lateral = tier4_autoware_utils::calcLateralDeviation(base_pose, point);
-
-    const auto & overhang_pose_on_right = [&overhang_pose, &largest_overhang, &point, &lateral]() {
-      if (lateral > largest_overhang) {
-        overhang_pose = point;
-      }
-      return std::max(largest_overhang, lateral);
-    };
-
-    const auto & overhang_pose_on_left = [&overhang_pose, &largest_overhang, &point, &lateral]() {
-      if (lateral < largest_overhang) {
-        overhang_pose = point;
-      }
-      return std::min(largest_overhang, lateral);
-    };
-
-    largest_overhang = isOnRight(object_data) ? overhang_pose_on_right() : overhang_pose_on_left();
-  }
-  return largest_overhang;
 }
 
 double calcEnvelopeOverhangDistance(
@@ -570,25 +505,6 @@ void setStartData(
   ap.start_longitudinal = start_dist;
 }
 
-std::string getUuidStr(const ObjectData & obj)
-{
-  std::stringstream hex_value;
-  for (const auto & uuid : obj.object.object_id.uuid) {
-    hex_value << std::hex << std::setfill('0') << std::setw(2) << +uuid;
-  }
-  return hex_value.str();
-}
-
-std::vector<std::string> getUuidStr(const ObjectDataArray & objs)
-{
-  std::vector<std::string> uuids;
-  uuids.reserve(objs.size());
-  for (const auto & o : objs) {
-    uuids.push_back(getUuidStr(o));
-  }
-  return uuids;
-}
-
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer)
 {
@@ -597,8 +513,7 @@ Polygon2d createEnvelopePolygon(
   using tier4_autoware_utils::Polygon2d;
   using Box = bg::model::box<Point2d>;
 
-  Polygon2d object_polygon{};
-  util::calcObjectPolygon(object_data.object, &object_polygon);
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
 
   const auto toPolygon2d = [](const geometry_msgs::msg::Polygon & polygon) {
     Polygon2d ret{};

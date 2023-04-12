@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
 
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -458,7 +458,8 @@ std::vector<Pose> interpolatePose(
     std::sin(tf2::getYaw(end_pose.orientation)), new_s);
   for (size_t i = 0; i < interpolated_x.size(); ++i) {
     Pose pose{};
-    pose = util::lerpByPose(end_pose, start_pose, (base_s.back() - new_s.at(i)) / base_s.back());
+    pose = tier4_autoware_utils::calcInterpolatedPose(
+      end_pose, start_pose, (base_s.back() - new_s.at(i)) / base_s.back());
     pose.position.x = interpolated_x.at(i);
     pose.position.y = interpolated_y.at(i);
     pose.position.z = end_pose.position.z;
