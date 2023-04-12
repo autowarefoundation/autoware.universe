@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/scene_module/lane_change/external_request_lane_change_module.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/util/lane_change/util.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/util/path_utils.hpp"
+#include "behavior_path_planner/util/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -365,7 +365,7 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
 
   // find candidate paths
   LaneChangePaths valid_paths;
-  const auto [found_valid_path, found_safe_path] = util::lane_change::getLaneChangePaths(
+  const auto found_safe_path = util::lane_change::getLaneChangePaths(
     *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_, check_distance, &valid_paths,
     &object_debug_);
@@ -377,7 +377,7 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
     debug_marker_.markers.clear();
   }
 
-  if (!found_valid_path) {
+  if (valid_paths.empty()) {
     return {false, false};
   }
 
@@ -388,7 +388,7 @@ std::pair<bool, bool> ExternalRequestLaneChangeModule::getSafePath(
     safe_path = valid_paths.front();
   }
 
-  return {found_valid_path, found_safe_path};
+  return {true, found_safe_path};
 }
 
 bool ExternalRequestLaneChangeModule::isSafe() const
