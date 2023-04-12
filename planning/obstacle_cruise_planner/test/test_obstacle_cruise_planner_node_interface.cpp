@@ -35,8 +35,13 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   const auto obstacle_cruise_planner_dir =
     ament_index_cpp::get_package_share_directory("obstacle_cruise_planner");
 
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("planning_test_utils");
+
   node_options.arguments(
-    {"--ros-args", "--params-file",
+    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/common.param.yaml",
+     "--params-file", planning_test_utils_dir + "/config/nearest_search.param.yaml",
+     planning_test_utils_dir + "/config/vehicle_info.param.yaml", "--params-file",
      obstacle_cruise_planner_dir + "/config/default_common.param.yaml", "--params-file",
      obstacle_cruise_planner_dir + "/config/obstacle_cruise_planner.param.yaml"});
 
