@@ -36,8 +36,9 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
     ament_index_cpp::get_package_share_directory("freespace_planner");
 
   node_options.arguments(
-    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/vehicle_info.param.yaml",
-     "--params-file", freespace_planner_dir + "/config/freespace_planner.param.yaml"});
+    {"--ros-args", "--params-file",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     freespace_planner_dir + "/config/freespace_planner.param.yaml"});
 
   auto test_target_node = std::make_shared<freespace_planner::FreespacePlannerNode>(node_options);
 
