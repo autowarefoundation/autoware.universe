@@ -75,13 +75,14 @@ WIP
 
 #### Parameters
 
-| Name                            | Type  | Description                                                                                  | Default value |
-| :------------------------------ | :---- | :------------------------------------------------------------------------------------------- | :------------ |
-| `use_dynamic_map_loading`       | bool  | map loading mode selection, `true` for dynamic map loading, `false` for static map loading   | true          |
-| `distance_threshold`            | float | VoxelGrid's leaf_size also the threshold to check distance between input point and map point | 0.5           |
-| `map_update_distance_threshold` | float | Threshold of vehicle movement distance when map update is necessary [m]                      | 10.0          |
-| `map_loader_radius`             | float | Radius of map need to be loaded (in dynamic map loading) [m]                                 | 150.0         |
-| `timer_interval_ms`             | int   | time interval of timer to check if update the map is necessary (in dynamic map loading) [ms] | 100           |
+| Name                            | Type  | Description                                                                                                                             | Default value |
+| :------------------------------ | :---- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `use_dynamic_map_loading`       | bool  | map loading mode selection, `true` for dynamic map loading, `false` for static map loading                                              | true          |
+| `distance_threshold`            | float | VoxelGrid's leaf_size also the threshold to check distance between input point and map point                                            | 0.5           |
+| `map_update_distance_threshold` | float | Threshold of vehicle movement distance when map update is necessary (in dynamic map loading) [m]                                        | 10.0          |
+| `map_loader_radius`             | float | Radius of map need to be loaded (in dynamic map loading) [m]                                                                            | 150.0         |
+| `timer_interval_ms`             | int   | time interval of timer to check if update the map is necessary (in dynamic map loading) [ms]                                            | 100           |
+| `publish_debug_pcd`             | bool  | Enable to publish voxelized updated map in `debug/downsampled_map/pointcloud` for debugging. It might cause additional computation cost | false         |
 
 ## Assumptions / Known limits
 

@@ -23,7 +23,7 @@ VoxelGridMapLoader::VoxelGridMapLoader(
 
   downsampled_map_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "debug/downsampled_map/pointcloud", rclcpp::QoS{1}.transient_local());
-  debug_ = node->declare_parameter<bool>("debug", false);
+  debug_ = node->declare_parameter<bool>("publish_debug_pcd");
 }
 
 bool VoxelGridMapLoader::is_close_points(
