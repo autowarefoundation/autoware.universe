@@ -127,32 +127,6 @@ void PlanningInterfaceTestManager::publishTF(
   test_utils::publishData<TFMessage>(test_node_, target_node, topic_name, TF_pub_);
 }
 
-void PlanningInterfaceTestManager::publishInitialPoseTF(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  geometry_msgs::msg::Quaternion quaternion;
-  quaternion.x = 0.;
-  quaternion.y = 0.;
-  quaternion.z = 0.23311256049418302;
-  quaternion.w = 0.9724497591854532;
-
-  TransformStamped tf;
-  tf.header.stamp = target_node->get_clock()->now();
-  tf.header.frame_id = "odom";
-  tf.child_frame_id = "base_link";
-  tf.transform.translation.x = 3722.16015625;
-  tf.transform.translation.y = 73723.515625;
-  tf.transform.translation.z = 0;
-  tf.transform.rotation = quaternion;
-
-  tf2_msgs::msg::TFMessage tf_msg{};
-  tf_msg.transforms.emplace_back(std::move(tf));
-
-  test_utils::setPublisher(test_node_, topic_name, initial_pose_tf_pub_);
-  initial_pose_tf_pub_->publish(tf_msg);
-  test_utils::spinSomeNodes(test_node_, target_node);
-}
-
 void PlanningInterfaceTestManager::publishLateralOffset(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
@@ -195,6 +169,46 @@ void PlanningInterfaceTestManager::publishExternalIntersectionStates(
 {
   test_utils::publishData<IntersectionStatus>(
     test_node_, target_node, topic_name, external_intersection_states_pub_);
+}
+
+void PlanningInterfaceTestManager::publishInitialPoseData(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
+  const std::array<double, 4> start_pose{
+    3722.16015625, 73723.515625, 0.233112560494183, 0.9724497591854532};
+  current_odometry->pose.pose = test_utils::createPose(start_pose);
+  current_odometry->header.frame_id = "map";
+
+  test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
+  initial_pose_pub_->publish(*current_odometry);
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
+void PlanningInterfaceTestManager::publishInitialPoseTF(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  geometry_msgs::msg::Quaternion quaternion;
+  quaternion.x = 0.;
+  quaternion.y = 0.;
+  quaternion.z = 0.23311256049418302;
+  quaternion.w = 0.9724497591854532;
+
+  TransformStamped tf;
+  tf.header.stamp = target_node->get_clock()->now();
+  tf.header.frame_id = "odom";
+  tf.child_frame_id = "base_link";
+  tf.transform.translation.x = 3722.16015625;
+  tf.transform.translation.y = 73723.515625;
+  tf.transform.translation.z = 0;
+  tf.transform.rotation = quaternion;
+
+  tf2_msgs::msg::TFMessage tf_msg{};
+  tf_msg.transforms.emplace_back(std::move(tf));
+
+  test_utils::setPublisher(test_node_, topic_name, initial_pose_tf_pub_);
+  initial_pose_tf_pub_->publish(tf_msg);
+  test_utils::spinSomeNodes(test_node_, target_node);
 }
 
 void PlanningInterfaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
@@ -342,20 +356,6 @@ void PlanningInterfaceTestManager::testWithNominalPathWithLaneId(
 int PlanningInterfaceTestManager::getReceivedTopicNum()
 {
   return count_;
-}
-
-void PlanningInterfaceTestManager::publishInitialPoseData(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  const std::array<double, 4> start_pose{
-    3722.16015625, 73723.515625, 0.233112560494183, 0.9724497591854532};
-  current_odometry->pose.pose = test_utils::createPose(start_pose);
-  current_odometry->header.frame_id = "map";
-
-  test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
-  initial_pose_pub_->publish(*current_odometry);
-  test_utils::spinSomeNodes(test_node_, target_node);
 }
 
 }  // namespace planning_test_utils
