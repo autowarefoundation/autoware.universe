@@ -279,7 +279,10 @@ public:
    * @param lane change direction
    * @return number of lanes from input to the preferred lane
    */
-  double getLateralDistanceToPreferredLane(
+  double getTotalLateralDistanceToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
+  std::vector<double> getLateralIntervalsToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
   bool getClosestLaneletWithinRoute(
