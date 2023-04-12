@@ -29,17 +29,20 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
 
   auto node_options = rclcpp::NodeOptions{};
 
-  test_manager->declareVehicleInfoParams(node_options);
-  test_manager->declareNearestSearchDistanceParams(node_options);
   node_options.append_parameter_override("enable_slow_down", false);
 
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto obstacle_stop_planner_dir =
     ament_index_cpp::get_package_share_directory("obstacle_stop_planner");
 
   node_options.arguments(
-    {"--ros-args", "--params-file", obstacle_stop_planner_dir + "/config/common.param.yaml",
-     "--params-file", obstacle_stop_planner_dir + "/config/adaptive_cruise_control.param.yaml",
-     "--params-file", obstacle_stop_planner_dir + "/config/obstacle_stop_planner.param.yaml"});
+    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/common.param.yaml",
+     "--params-file", planning_test_utils_dir + "/config/nearest_search.param.yaml",
+     planning_test_utils_dir + "/config/vehicle_info.param.yaml",
+     obstacle_stop_planner_dir + "/config/common.param.yaml", "--params-file",
+     obstacle_stop_planner_dir + "/config/adaptive_cruise_control.param.yaml", "--params-file",
+     obstacle_stop_planner_dir + "/config/obstacle_stop_planner.param.yaml"});
 
   auto test_target_node = std::make_shared<motion_planning::ObstacleStopPlannerNode>(node_options);
 
