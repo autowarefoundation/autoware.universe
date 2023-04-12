@@ -13,7 +13,7 @@ This package convert from [radar_msgs/msg/RadarTracks](https://github.com/ros-pe
   - `~/input/radar_objects` (radar_msgs/msg/RadarTracks.msg): Input radar topic
   - `~/input/odometry` (nav_msgs/msg/Odometry.msg): Ego vehicle odometry topic
 - Output
-  - `~/output/radar_deteceted_objects` (autoware_auto_perception_msgs/msg/DetectedObject.idl): The topic converted to Autoware's message
+  - `~/output/radar_detected_objects` (autoware_auto_perception_msgs/msg/DetectedObject.idl): The topic converted to Autoware's message
   - `~/output/radar_tracked_objects` (autoware_auto_perception_msgs/msg/TrackedObject.idl): The topic converted to Autoware's message
 
 ### Parameters
