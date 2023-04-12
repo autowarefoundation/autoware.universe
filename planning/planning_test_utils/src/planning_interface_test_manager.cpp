@@ -394,11 +394,8 @@ void PlanningInterfaceTestManager::publishInitialPoseData(
 
   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
   const std::array<double, 4> start_pose{position_x, position_y, 0, yaw};
-  current_odometry->pose.pose = test_utils::create_pose_msg(start_pose);
+  current_odometry->pose.pose = test_utils::createPose(start_pose);
   current_odometry->header.frame_id = "map";
-  // std::string origin_frame_id = "odom";
-
-  // set_initial_state_with_transform(current_odometry);
 
   test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
   initial_pose_pub_->publish(*current_odometry);

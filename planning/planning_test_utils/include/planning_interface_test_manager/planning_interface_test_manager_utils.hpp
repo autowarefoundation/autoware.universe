@@ -78,6 +78,11 @@ geometry_msgs::msg::Pose createPose(
   return p;
 }
 
+geometry_msgs::msg::Pose createPose(const std::array<double, 4> & pose3d)
+{
+  return createPose(pose3d[0], pose3d[1], pose3d[2], 0.0, 0.0, pose3d[3]);
+}
+
 template <class T>
 T generateTrajectory(
   const size_t num_points, const double point_interval, const double velocity = 0.0,
@@ -104,11 +109,6 @@ T generateTrajectory(
   }
 
   return traj;
-}
-
-geometry_msgs::msg::Pose createPose(const std::array<double, 4> & pose3d)
-{
-  return createPose(pose3d[0], pose3d[1], pose3d[2], 0.0, 0.0, pose3d[3]);
 }
 
 Route::Message makeNormalRoute()
@@ -173,23 +173,6 @@ OccupancyGrid constructCostMap(size_t width, size_t height, double resolution)
   return costmap_msg;
 }
 
-HADMapBin constructCostMap(
-  const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
-{
-  std::string format_version{}, map_version{};
-  lanelet::io_handlers::AutowareOsmParser::parseVersions(
-    lanelet2_filename, &format_version, &map_version);
-
-  HADMapBin map_bin_msg;
-  map_bin_msg.header.stamp = now;
-  map_bin_msg.header.frame_id = "map";
-  map_bin_msg.format_version = format_version;
-  map_bin_msg.map_version = map_version;
-  lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
-
-  return map_bin_msg;
-}
-
 void spinSomeNodes(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node,
   const int repeat_count = 1)
@@ -202,7 +185,7 @@ void spinSomeNodes(
   }
 }
 
-lanelet::LaneletMapPtr load_map(const std::string & lanelet2_filename)
+lanelet::LaneletMapPtr loadMap(const std::string & lanelet2_filename)
 {
   lanelet::ErrorMessages errors{};
   lanelet::projection::MGRSProjector projector{};
@@ -217,7 +200,7 @@ lanelet::LaneletMapPtr load_map(const std::string & lanelet2_filename)
   return nullptr;
 }
 
-HADMapBin constructCostMap(
+HADMapBin createMapBinMsg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
 {
   std::string format_version{}, map_version{};
@@ -235,33 +218,82 @@ HADMapBin constructCostMap(
 }
 
 template <typename T>
+void createPublisherWithQoS(
+  rclcpp::Node::SharedPtr test_node, std::string topic_name,
+  std::shared_ptr<rclcpp::Publisher<T>> & publisher)
+{
+  if constexpr (std::is_same_v<T, LaneletRoute>) {
+    rclcpp::QoS custom_qos_profile{rclcpp::KeepLast(1)};
+    custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    publisher = rclcpp::create_publisher<T>(test_node, topic_name, custom_qos_profile);
+  } else if constexpr (std::is_same_v<T, HADMapBin>) {
+    rclcpp::QoS qos(rclcpp::KeepLast(1));
+    qos.reliable();
+    qos.transient_local();
+    publisher = rclcpp::create_publisher<T>(test_node, topic_name, qos);
+  } else {
+    publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
+  }
+}
+
+template <typename T>
 void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<T>> & publisher)
 {
-  publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
+  createPublisherWithQoS(test_node, topic_name, publisher);
 }
 
-template <>
-void setPublisher(
-  rclcpp::Node::SharedPtr test_node, std::string topic_name,
-  std::shared_ptr<rclcpp::Publisher<LaneletRoute>> & publisher)
+template <typename T>
+T generateObject(rclcpp::Node::SharedPtr target_node)
 {
-  rclcpp::QoS custom_qos_profile{rclcpp::KeepLast(1)};
-  custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-  custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-  publisher = rclcpp::create_publisher<LaneletRoute>(test_node, topic_name, custom_qos_profile);
-}
+  if constexpr (std::is_same_v<T, HADMapBin>) {
+    const auto planning_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("planning_test_utils");
+    const auto lanelet2_path = planning_test_utils_dir + "/map/lanelet2_map.osm";
+    double center_line_resolution = 5.0;
+    // load map from file
+    const auto map = loadMap(lanelet2_path);
+    if (!map) {
+      return autoware_auto_mapping_msgs::msg::HADMapBin_<std::allocator<void>>{};
+    }
 
-template <>
-void setPublisher(
-  rclcpp::Node::SharedPtr test_node, std::string topic_name,
-  std::shared_ptr<rclcpp::Publisher<HADMapBin>> & publisher)
-{
-  rclcpp::QoS qos(rclcpp::KeepLast(1));
-  qos.reliable();
-  qos.transient_local();
-  publisher = rclcpp::create_publisher<HADMapBin>(test_node, topic_name, qos);
+    // overwrite centerline
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
+
+    // create map bin msg
+    const auto map_bin_msg = createMapBinMsg(map, lanelet2_path, rclcpp::Clock(RCL_ROS_TIME).now());
+    return map_bin_msg;
+  } else if constexpr (std::is_same_v<T, Trajectory>) {
+    std::shared_ptr<Trajectory> trajectory = std::make_shared<Trajectory>();
+    trajectory->header.stamp = target_node->now();
+    return *trajectory;
+  } else if constexpr (std::is_same_v<T, Odometry>) {
+    std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
+    const double pi = 3.1415926;
+    const std::array<double, 4> start_pose{5.5, 4., pi * 0.5};
+    current_odometry->pose.pose = createPose(start_pose);
+    current_odometry->header.frame_id = "map";
+    return *current_odometry;
+  } else if constexpr (std::is_same_v<T, OccupancyGrid>) {
+    auto costmap_msg = constructCostMap(150, 150, 0.2);
+    costmap_msg.header.frame_id = "map";
+    return costmap_msg;
+  } else if constexpr (std::is_same_v<T, LaneletRoute>) {
+    return makeNormalRoute();
+  } else if constexpr (std::is_same_v<T, TFMessage>) {
+    TransformStamped tf;
+    tf.header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
+    tf.header.frame_id = "base_link";
+    tf.child_frame_id = "map";
+
+    TFMessage tf_msg{};
+    tf_msg.transforms.emplace_back(std::move(tf));
+    return tf_msg;
+  } else {
+    return T{};
+  }
 }
 
 template <typename T>
@@ -270,101 +302,8 @@ void publishData(
   typename rclcpp::Publisher<T>::SharedPtr publisher)
 {
   setPublisher(test_node, topic_name, publisher);
-  publisher->publish(T{});
-  spinSomeNodes(test_node, target_node);
-}
-
-template <>
-void publishData<HADMapBin>(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<HADMapBin>::SharedPtr publisher)
-{
-  setPublisher(test_node, topic_name, publisher);
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("planning_test_utils");
-
-  const auto lanelet2_path = planning_test_utils_dir + "/map/lanelet2_map.osm";
-  double center_line_resolution = 5.0;
-  // load map from file
-  const auto map = load_map(lanelet2_path);
-  if (!map) {
-    return;
-  }
-
-  // overwrite centerline
-  lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
-
-  // create map bin msg
-  const auto map_bin_msg = constructCostMap(map, lanelet2_path, rclcpp::Clock(RCL_ROS_TIME).now());
-  publisher->publish(map_bin_msg);
-  spinSomeNodes(test_node, target_node);
-}
-
-template <>
-void publishData<Trajectory>(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<Trajectory>::SharedPtr publisher)
-{
-  setPublisher(test_node, topic_name, publisher);
-  std::shared_ptr<Trajectory> trajectory = std::make_shared<Trajectory>();
-  trajectory->header.stamp = target_node->now();
-  publisher->publish(*trajectory);
-  spinSomeNodes(test_node, target_node);
-}
-
-template <>
-void publishData<Odometry>(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<Odometry>::SharedPtr publisher)
-{
-  setPublisher(test_node, topic_name, publisher);
-
-  std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  const double pi = 3.1415926;
-  const std::array<double, 4> start_pose{5.5, 4., pi * 0.5};
-  current_odometry->pose.pose = create_pose_msg(start_pose);
-  current_odometry->header.frame_id = "map";
-  publisher->publish(*current_odometry);
-  spinSomeNodes(test_node, target_node);
-}
-
-template <>
-void publishData<OccupancyGrid>(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<OccupancyGrid>::SharedPtr publisher)
-{
-  setPublisher(test_node, topic_name, publisher);
-  std::shared_ptr<OccupancyGrid> current_occupancy_grid = std::make_shared<OccupancyGrid>();
-  auto costmap_msg = constructCostMap(150, 150, 0.2);
-  costmap_msg.header.frame_id = "map";
-  publisher->publish(costmap_msg);
-  spinSomeNodes(test_node, target_node);
-}
-
-template <>
-void publishData<LaneletRoute>(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<LaneletRoute>::SharedPtr publisher)
-{
-  setPublisher(test_node, topic_name, publisher);
-  publisher->publish(makeNormalRoute());
-  spinSomeNodes(test_node, target_node);
-}
-
-template <>
-void publishData<TFMessage>(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<TFMessage>::SharedPtr publisher)
-{
-  TransformStamped tf;
-  tf.header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
-  tf.header.frame_id = "base_link";
-  tf.child_frame_id = "map";
-
-  TFMessage tf_msg{};
-  tf_msg.transforms.emplace_back(std::move(tf));
-  setPublisher(test_node, topic_name, publisher);
-  publisher->publish(tf_msg);
+  T object = generateObject<T>(target_node);
+  publisher->publish(object);
   spinSomeNodes(test_node, target_node);
 }
 
@@ -382,23 +321,25 @@ void publishScenarioData(
 }
 
 template <typename T>
+void createSubscription(
+  rclcpp::Node::SharedPtr test_node, std::string topic_name,
+  std::function<void(const typename T::SharedPtr)> callback,
+  std::shared_ptr<rclcpp::Subscription<T>> & subscriber)
+{
+  if constexpr (std::is_same_v<T, Trajectory>) {
+    subscriber = test_node->create_subscription<T>(topic_name, rclcpp::QoS{1}, callback);
+  } else {
+    subscriber = test_node->create_subscription<T>(topic_name, 10, callback);
+  }
+}
+
+template <typename T>
 void setSubscriber(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Subscription<T>> & subscriber, size_t & count)
 {
-  // Count the number of topic received.
-  subscriber = test_node->create_subscription<T>(
-    topic_name, 10, [&count](const typename T::SharedPtr) { count++; });
-}
-
-template <>
-void setSubscriber<Trajectory>(
-  rclcpp::Node::SharedPtr test_node, std::string topic_name,
-  std::shared_ptr<rclcpp::Subscription<Trajectory>> & subscriber, size_t & count)
-{
-  subscriber = test_node->create_subscription<Trajectory>(
-    topic_name, rclcpp::QoS{1},
-    [&count](const typename Trajectory::SharedPtr msg [[maybe_unused]]) { count++; });
+  createSubscription(
+    test_node, topic_name, [&count](const typename T::SharedPtr) { count++; }, subscriber);
 }
 
 }  // namespace test_utils
