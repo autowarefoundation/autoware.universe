@@ -48,10 +48,11 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   test_manager->publishOccupancyGrid(test_target_node, "freespace_planner/input/occupancy_grid");
   test_manager->publishParkingScenario(test_target_node, "freespace_planner/input/scenario");
 
-  test_manager->setRouteInputTopicName("/planning/mission_planning/route");
+  // set subscriber with topic name: freespace_planner → test_node_
+  test_manager->setRouteInputTopicName("freespace_planner/input/route");
 
-  // test_target_node → test_node_
-  test_manager->setTrajectorySubscriber("/freespace_planner/output/trajectory");
+  // set freespace_planner's input topic name(this topic is changed to test node)
+  test_manager->setTrajectorySubscriber("freespace_planner/output/trajectory");
 
   // test for normal route
   ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));
