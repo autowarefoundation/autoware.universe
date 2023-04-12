@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "behavior_path_planner/scene_module/lane_change/normal.hpp"
+
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/util/lane_change/util.hpp"
 #include "behavior_path_planner/util/path_utils.hpp"
@@ -30,7 +31,7 @@ namespace behavior_path_planner
 {
 NormalLaneChange::NormalLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction)
-  : LaneChangeBase(parameters, direction)
+: LaneChangeBase(parameters, direction)
 {
 }
 
@@ -144,7 +145,6 @@ PathWithLaneId NormalLaneChange::getReferencePath() const
 {
   return util::getCenterLinePathFromRootLanelet(status_.lane_change_lanes.front(), planner_data_);
 }
-
 
 bool NormalLaneChange::isCancelConditionSatisfied()
 {

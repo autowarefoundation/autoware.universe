@@ -53,7 +53,8 @@ class LaneChangeBase
 public:
   LaneChangeBase(const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction)
   : parameters_{parameters}, direction_{direction}
-  {}
+  {
+  }
 
   virtual void updateLaneChangeStatus(
     const PathWithLaneId & prev_module_reference_path,

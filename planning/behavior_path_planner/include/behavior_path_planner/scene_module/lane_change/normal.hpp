@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MODULE_TEMPLATE_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MODULE_TEMPLATE_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
 
@@ -32,7 +32,7 @@ using route_handler::Direction;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
-class NormalLaneChange:public LaneChangeBase
+class NormalLaneChange : public LaneChangeBase
 {
 public:
   NormalLaneChange(const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction);
@@ -73,7 +73,6 @@ protected:
   bool isNearEndOfLane() const override;
 
   bool isCurrentSpeedLow() const override;
-
 };
 }  // namespace behavior_path_planner
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MODULE_TEMPLATE_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
