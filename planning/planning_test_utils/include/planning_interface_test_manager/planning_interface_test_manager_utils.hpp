@@ -48,6 +48,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace test_utils
 {
@@ -105,16 +106,9 @@ T generateTrajectory(
   return traj;
 }
 
-Pose create_pose_msg(const std::array<double, 4> & pose3d)
+geometry_msgs::msg::Pose createPose(const std::array<double, 4> & pose3d)
 {
-  Pose pose;
-  tf2::Quaternion quat{};
-  quat.setRPY(0, 0, pose3d[3]);
-  tf2::convert(quat, pose.orientation);
-  pose.position.x = pose3d[0];
-  pose.position.y = pose3d[1];
-  pose.position.z = pose3d[2];
-  return pose;
+  return createPose(pose3d[0], pose3d[1], pose3d[2], 0.0, 0.0, pose3d[3]);
 }
 
 Route::Message makeNormalRoute()
@@ -124,47 +118,34 @@ Route::Message makeNormalRoute()
   const std::array<double, 4> goal_pose{8.0, 26.3, 0, 0};
   Route::Message route;
   route.header.frame_id = "map";
-
-  route.start_pose = create_pose_msg(start_pose);
-  route.goal_pose = create_pose_msg(goal_pose);
+  route.start_pose = createPose(start_pose);
+  route.goal_pose = createPose(goal_pose);
   return route;
+}
+
+LaneletSegment createLaneletSegment(int id)
+{
+  LaneletPrimitive primitive;
+  primitive.id = id;
+  primitive.primitive_type = "lane";
+  LaneletSegment segment;
+  segment.preferred_primitive.id = id;
+  segment.primitives.push_back(primitive);
+  return segment;
 }
 
 Route::Message makeBehaviorNormalRoute()
 {
   Route::Message route;
   route.header.frame_id = "map";
+  route.start_pose =
+    createPose({3722.16015625, 73723.515625, 0.233112560494183, 0.9724497591854532});
+  route.goal_pose =
+    createPose({3778.362060546875, 73721.2734375, -0.5107480274693206, 0.8597304533609347});
 
-  Pose start_pose;
-  start_pose.position.x = 3722.16015625;
-  start_pose.position.y = 73723.515625;
-  start_pose.orientation.z = 0.233112560494183;
-  start_pose.orientation.w = 0.9724497591854532;
-  route.start_pose = start_pose;
-
-  Pose goal_pose;
-  goal_pose.position.x = 3778.362060546875;
-  goal_pose.position.y = 73721.2734375;
-  goal_pose.orientation.z = -0.5107480274693206;
-  goal_pose.orientation.w = 0.8597304533609347;
-  route.goal_pose = goal_pose;
-
-  for (int i = 0; i < 4; i++) {
-    LaneletPrimitive primitive;
-    LaneletSegment segment;
-    if (i == 0) {
-      primitive.id = 9102;
-    } else if (i == 1) {
-      primitive.id = 9178;
-    } else if (i == 2) {
-      primitive.id = 54;
-    } else {
-      primitive.id = 112;
-    }
-    primitive.primitive_type = "lane";
-    segment.preferred_primitive.id = primitive.id;
-    segment.primitives.push_back(primitive);
-    route.segments.push_back(segment);
+  std::vector<int> primitive_ids = {9102, 9178, 54, 112};
+  for (int id : primitive_ids) {
+    route.segments.push_back(createLaneletSegment(id));
   }
 
   std::array<uint8_t, 16> uuid_bytes{210, 87,  16,  126, 98,  151, 58, 28,
@@ -175,7 +156,7 @@ Route::Message makeBehaviorNormalRoute()
   return route;
 }
 
-OccupancyGrid construct_cost_map(size_t width, size_t height, double resolution)
+OccupancyGrid constructCostMap(size_t width, size_t height, double resolution)
 {
   nav_msgs::msg::OccupancyGrid costmap_msg{};
 
@@ -190,6 +171,23 @@ OccupancyGrid construct_cost_map(size_t width, size_t height, double resolution)
     costmap_msg.data.push_back(0.0);
   }
   return costmap_msg;
+}
+
+HADMapBin constructCostMap(
+  const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
+{
+  std::string format_version{}, map_version{};
+  lanelet::io_handlers::AutowareOsmParser::parseVersions(
+    lanelet2_filename, &format_version, &map_version);
+
+  HADMapBin map_bin_msg;
+  map_bin_msg.header.stamp = now;
+  map_bin_msg.header.frame_id = "map";
+  map_bin_msg.format_version = format_version;
+  map_bin_msg.map_version = map_version;
+  lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
+
+  return map_bin_msg;
 }
 
 void spinSomeNodes(
@@ -219,7 +217,7 @@ lanelet::LaneletMapPtr load_map(const std::string & lanelet2_filename)
   return nullptr;
 }
 
-HADMapBin create_map_bin_msg(
+HADMapBin constructCostMap(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
 {
   std::string format_version{}, map_version{};
@@ -249,7 +247,6 @@ void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<LaneletRoute>> & publisher)
 {
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   rclcpp::QoS custom_qos_profile{rclcpp::KeepLast(1)};
   custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
   custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
@@ -298,8 +295,7 @@ void publishData<HADMapBin>(
   lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
 
   // create map bin msg
-  const auto map_bin_msg =
-    create_map_bin_msg(map, lanelet2_path, rclcpp::Clock(RCL_ROS_TIME).now());
+  const auto map_bin_msg = constructCostMap(map, lanelet2_path, rclcpp::Clock(RCL_ROS_TIME).now());
   publisher->publish(map_bin_msg);
   spinSomeNodes(test_node, target_node);
 }
@@ -339,7 +335,7 @@ void publishData<OccupancyGrid>(
 {
   setPublisher(test_node, topic_name, publisher);
   std::shared_ptr<OccupancyGrid> current_occupancy_grid = std::make_shared<OccupancyGrid>();
-  auto costmap_msg = construct_cost_map(150, 150, 0.2);
+  auto costmap_msg = constructCostMap(150, 150, 0.2);
   costmap_msg.header.frame_id = "map";
   publisher->publish(costmap_msg);
   spinSomeNodes(test_node, target_node);
