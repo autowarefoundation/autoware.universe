@@ -298,7 +298,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       insert_creep_during_occlusion =
         std::make_pair(closest_idx, occlusion_stop_line_idx_opt.value());
       prev_occlusion_stop_line_pose_ =
-        path_ip.points.at(occlusion_stop_line_idx_opt.value()).point.pose;
+        path_ip.points.at(occlusion_stop_line_idx_ip_opt.value()).point.pose;
       occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
     } else {
       const double dist_collision_stop_line = motion_utils::calcSignedArcLength(
@@ -325,14 +325,13 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     // previously occlusion existed, but now it is clear
     const auto new_collision_stop_line_idx = motion_utils::findNearestIndex(
       path->points, prev_occlusion_stop_line_pose_.value(), 3.0, M_PI_4);
+    stop_line_idx = new_collision_stop_line_idx.get();
     occlusion_state_ = OcclusionState::CLEARED;
     if (new_collision_stop_line_idx && has_collision) {
       // do collision checking at previous occlusion stop line
       collision_stop_required = true;
-      stop_line_idx = new_collision_stop_line_idx.get();
     } else {
       collision_stop_required = false;
-      stop_line_idx = new_collision_stop_line_idx ? new_collision_stop_line_idx.get() : 0;
     }
   } else if (is_stuck && stuck_line_idx_opt) {
     stuck_stop_required = true;
