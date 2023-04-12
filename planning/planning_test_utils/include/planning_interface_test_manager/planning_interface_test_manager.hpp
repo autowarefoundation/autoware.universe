@@ -82,10 +82,10 @@ using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
 
-class PlanningIntefaceTestManager
+class PlanningInterfaceTestManager
 {
 public:
-  PlanningIntefaceTestManager();
+  PlanningInterfaceTestManager();
 
   void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
   void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
@@ -218,12 +218,10 @@ private:
 
   void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  // void publishAbnormalRoute(
-  //   rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 
   void set_initial_state_with_transform(Odometry::SharedPtr & odometry);
   TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);
-};  // class PlanningIntefaceTestManager
+};  // class PlanningInterfaceTestManager
 
 }  // namespace planning_test_utils
 
