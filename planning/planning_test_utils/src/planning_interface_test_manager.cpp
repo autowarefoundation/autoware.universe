@@ -130,24 +130,18 @@ void PlanningInterfaceTestManager::publishTF(
 void PlanningInterfaceTestManager::publishInitialPoseTF(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  const double position_x = 3722.16015625;
-  const double position_y = 73723.515625;
-  const double quaternion_x = 0.;
-  const double quaternion_y = 0.;
-  const double quaternion_z = 0.23311256049418302;
-  const double quaternion_w = 0.9724497591854532;
   geometry_msgs::msg::Quaternion quaternion;
-  quaternion.x = quaternion_x;
-  quaternion.y = quaternion_y;
-  quaternion.z = quaternion_z;
-  quaternion.w = quaternion_w;
+  quaternion.x = 0.;
+  quaternion.y = 0.;
+  quaternion.z = 0.23311256049418302;
+  quaternion.w = 0.9724497591854532;
 
   TransformStamped tf;
   tf.header.stamp = target_node->get_clock()->now();
   tf.header.frame_id = "odom";
   tf.child_frame_id = "base_link";
-  tf.transform.translation.x = position_x;
-  tf.transform.translation.y = position_y;
+  tf.transform.translation.x = 3722.16015625;
+  tf.transform.translation.y = 73723.515625;
   tf.transform.translation.z = 0;
   tf.transform.rotation = quaternion;
 
@@ -362,34 +356,6 @@ void PlanningInterfaceTestManager::publishInitialPoseData(
   test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
   initial_pose_pub_->publish(*current_odometry);
   test_utils::spinSomeNodes(test_node_, target_node);
-}
-
-void PlanningInterfaceTestManager::set_initial_state_with_transform(Odometry::SharedPtr & odometry)
-{
-  auto transform = get_transform_msg("odom", odometry->header.frame_id);
-  odometry->pose.pose.position.x =
-    odometry->pose.pose.position.x + transform.transform.translation.x;
-  odometry->pose.pose.position.y =
-    odometry->pose.pose.position.y + transform.transform.translation.y;
-  odometry->pose.pose.position.z =
-    odometry->pose.pose.position.z + transform.transform.translation.z;
-}
-
-TransformStamped PlanningInterfaceTestManager::get_transform_msg(
-  const std::string parent_frame, const std::string child_frame)
-{
-  TransformStamped transform;
-  while (true) {
-    try {
-      const auto time_point = tf2::TimePoint(std::chrono::milliseconds(0));
-      transform = tf_buffer_->lookupTransform(
-        parent_frame, child_frame, time_point, tf2::durationFromSec(0.0));
-      break;
-    } catch (tf2::TransformException & ex) {
-      rclcpp::sleep_for(std::chrono::milliseconds(500));
-    }
-  }
-  return transform;
 }
 
 }  // namespace planning_test_utils
