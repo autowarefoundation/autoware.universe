@@ -1326,10 +1326,9 @@ double RouteHandler::getLateralDistanceToPreferredLane(
     return 0.0;
   }
 
-  double accumulated_distance = 0.0;
-  lanelet::ConstLanelet current_lanelet = lanelet;
-
   if ((direction == Direction::NONE) || (direction == Direction::RIGHT)) {
+    double accumulated_distance = 0.0;
+    lanelet::ConstLanelet current_lanelet = lanelet;
     const auto & right_lanes =
       lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet);
     for (const auto & right : right_lanes) {
@@ -1349,9 +1348,9 @@ double RouteHandler::getLateralDistanceToPreferredLane(
     }
   }
 
-  accumulated_distance = 0.0;
-  current_lanelet = lanelet;
   if ((direction == Direction::NONE) || (direction == Direction::LEFT)) {
+    double accumulated_distance = 0.0;
+    lanelet::ConstLanelet current_lanelet = lanelet;
     const auto & left_lanes =
       lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet);
     for (const auto & left : left_lanes) {
