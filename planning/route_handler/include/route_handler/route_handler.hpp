@@ -270,6 +270,18 @@ public:
   int getNumLaneToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
+  /**
+   * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
+   * the distance to the preferred lane from the give lane.
+   * The distance is computed from the front point of the centerline of the given lane to
+   * the front point of the preferred lane.
+   * @param Desired lanelet to query
+   * @param lane change direction
+   * @return number of lanes from input to the preferred lane
+   */
+  double getLateralDistanceToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   bool getClosestLaneletWithConstrainsWithinRoute(
@@ -328,11 +340,10 @@ private:
   lanelet::ConstLanelets start_lanelets_;
   lanelet::ConstLanelets goal_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
-  LaneletRoute route_msg_;
+  std::shared_ptr<LaneletRoute> route_ptr_{nullptr};
 
   rclcpp::Logger logger_{rclcpp::get_logger("route_handler")};
 
-  bool is_route_msg_ready_{false};
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
 
