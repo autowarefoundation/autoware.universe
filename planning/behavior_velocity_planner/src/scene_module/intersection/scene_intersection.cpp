@@ -283,7 +283,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   std::optional<size_t> occlusion_first_stop_line_idx = collision_stop_line_idx_opt;
   std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
   if (occlusion_stop_line_idx_opt) {
-    if (!collision_stop_line_idx_opt /* or two_phase stop is disabled*/) {
+    if (!collision_stop_line_idx_opt) {
       occlusion_stop_required = true;
       stop_line_idx = occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
       prev_occlusion_stop_line_pose_ =
@@ -323,11 +323,21 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     }
   } else if (prev_occlusion_stop_line_pose_) {
     // previously occlusion existed, but now it is clear
-    const auto new_collision_stop_line_idx = motion_utils::findNearestIndex(
+    const auto prev_occlusion_stop_pose_idx = motion_utils::findNearestIndex(
       path->points, prev_occlusion_stop_line_pose_.value(), 3.0, M_PI_4);
-    stop_line_idx = new_collision_stop_line_idx.get();
+    if (!util::isOverTargetIndex(
+          *path, closest_idx, current_pose, collision_stop_line_idx_opt.value())) {
+      stop_line_idx = collision_stop_line_idx_opt.value();
+      prev_occlusion_stop_line_pose_ = std::nullopt;
+    } else if (!util::isOverTargetIndex(
+                 *path, closest_idx, current_pose, prev_occlusion_stop_pose_idx.get())) {
+      stop_line_idx = prev_occlusion_stop_pose_idx.get();
+    } else {
+      // TODO(Mamoru Sobue): consider static occlusion limit stop line
+      prev_occlusion_stop_line_pose_ = std::nullopt;
+    }
     occlusion_state_ = OcclusionState::CLEARED;
-    if (new_collision_stop_line_idx && has_collision) {
+    if (stop_line_idx && has_collision) {
       // do collision checking at previous occlusion stop line
       collision_stop_required = true;
     } else {

@@ -233,8 +233,6 @@ void IntersectionModuleManager::setActivation()
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     intersection_module->setOcclusionActivation(
       occlusion_rtc_interface_.isActivated(occlusion_uuid));
-    RCLCPP_INFO(
-      logger_, "occlusion_activated_ = %d", occlusion_rtc_interface_.isActivated(occlusion_uuid));
     const auto occlusion_first_stop_uuid = intersection_module->getOcclusionFirstStopUUID();
     intersection_module->setOcclusionFirstStopActivation(
       rtc_interface_.isActivated(occlusion_first_stop_uuid));
