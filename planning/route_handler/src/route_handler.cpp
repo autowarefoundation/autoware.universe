@@ -353,6 +353,7 @@ lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id 
 Header RouteHandler::getRouteHeader() const
 {
   if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getRouteHeader: Route has not been set yet");
     return Header();
   }
   return route_ptr_->header;
@@ -361,6 +362,7 @@ Header RouteHandler::getRouteHeader() const
 UUID RouteHandler::getRouteUuid() const
 {
   if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
     UUID();
   }
   return route_ptr_->uuid;
@@ -410,6 +412,7 @@ lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
 Pose RouteHandler::getGoalPose() const
 {
   if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getGoalPose: Route has not been set yet");
     Pose();
   }
   return route_ptr_->goal_pose;
