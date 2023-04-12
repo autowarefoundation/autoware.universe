@@ -149,7 +149,7 @@ public:
   bool getOcclusionSafety() const { return occlusion_safety_; }
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
   UUID getOcclusionFirstStopUUID() const { return occlusion_first_stop_uuid_; }
-  bool getOcclusionFirstStopSafety() const { return !occlusion_first_stop_safety_; }
+  bool getOcclusionFirstStopSafety() const { return occlusion_first_stop_safety_; }
   double getOcclusionFirstStopDistance() const { return occlusion_first_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
   void setOcclusionFirstStopActivation(const bool activation)
