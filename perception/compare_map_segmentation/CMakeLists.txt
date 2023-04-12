@@ -47,6 +47,7 @@ ament_target_dependencies(compare_map_segmentation
   tier4_autoware_utils
   autoware_map_msgs
   component_interface_specs
+  component_interface_utils
 )
 
 if(OPENMP_FOUND)

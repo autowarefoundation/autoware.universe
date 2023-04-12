@@ -271,11 +271,10 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
-  sub_pose_initializer_state_ =
-    node->create_subscription<autoware_adapi_v1_msgs::msg::LocalizationInitializationState>(
-      "initialization_state", rclcpp::QoS{1},
-      std::bind(
-        &VoxelGridDynamicMapLoader::onPoseInitializerCallback, this, std::placeholders::_1));
+  const auto localization_node = component_interface_utils::NodeAdaptor(node);
+  localization_node.init_sub(
+    sub_pose_initializer_state_,
+    std::bind(&VoxelGridDynamicMapLoader::onPoseInitializerCallback, this, std::placeholders::_1));
 
   sub_estimated_pose_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "pose_with_covariance", rclcpp::QoS{1},
@@ -298,10 +297,10 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
     timer_callback_group_);
 }
 void VoxelGridDynamicMapLoader::onPoseInitializerCallback(
-  autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg)
+  InitializationState::Message::SharedPtr msg)
 {
   initialization_state_.state = msg->state;
-  if (msg->state != autoware_adapi_v1_msgs::msg::LocalizationInitializationState::INITIALIZED) {
+  if (msg->state != InitializationState::Message::INITIALIZED) {
     current_position_ = std::nullopt;
     last_updated_position_ = std::nullopt;
     RCLCPP_INFO(logger_, "Initializing pose... Reset the position of Vehicle");
@@ -341,6 +340,8 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     return false;
   }
 
+  // Compare point with map grid that point belong to
+
   int map_grid_index = static_cast<int>(
     std::floor((point.x - origin_x_) / map_grid_size_x_) +
     map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
@@ -356,7 +357,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     return true;
   }
 
-  // Check neighbor map cells if point close to map cell boundary
+  // Compare point with the neighbor map cells if point close to map cell boundary
 
   if (is_close_to_next_map_grid(
         pcl::PointXYZ(point.x - distance_threshold, point.y, point.z), map_grid_index,
@@ -387,8 +388,7 @@ void VoxelGridDynamicMapLoader::timer_callback()
 {
   if (
     current_position_ == std::nullopt ||
-    initialization_state_.state !=
-      autoware_adapi_v1_msgs::msg::LocalizationInitializationState::INITIALIZED) {
+    initialization_state_.state != InitializationState::Message::INITIALIZED) {
     return;
   }
   if (last_updated_position_ == std::nullopt) {

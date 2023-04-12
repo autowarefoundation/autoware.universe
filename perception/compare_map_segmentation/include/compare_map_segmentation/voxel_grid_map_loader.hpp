@@ -16,6 +16,7 @@
 #define COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
 
 #include <component_interface_specs/localization.hpp>
+#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
@@ -146,12 +147,16 @@ class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
   typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
 
 private:
+  using InitializationState = localization_interface::InitializationState;
+
+  /** \brief Map to hold loaded map grid id and it's voxel filter */
   VoxelGridDict current_voxel_grid_dict_;
+
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     sub_estimated_pose_;
-  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::LocalizationInitializationState>::SharedPtr
+  component_interface_utils::Subscription<InitializationState>::SharedPtr
     sub_pose_initializer_state_;
-  autoware_adapi_v1_msgs::msg::LocalizationInitializationState initialization_state_;
+  InitializationState::Message initialization_state_;
   std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
   std::optional<geometry_msgs::msg::Point> last_updated_position_ = std::nullopt;
   rclcpp::TimerBase::SharedPtr map_update_timer_;
@@ -161,12 +166,23 @@ private:
     map_update_client_;
   rclcpp::CallbackGroup::SharedPtr client_callback_group_;
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
+
+  /** Map grid size. It might be defined by using metadata */
   double map_grid_size_x_ = -1.0;
   double map_grid_size_y_ = -1.0;
+
+  /** \brief Array to hold loaded map grid positions for fast map grid searching.
+   */
   std::vector<std::shared_ptr<MapGridVoxelInfo>> current_voxel_grid_array_;
+
+  /** \brief Array size in x axis */
   int map_grids_x_;
+  /** \brief Array size in y axis */
   int map_grids_y_;
+
+  /** \brief x-cooridate of map grid which should belong to array[0][0] */
   float origin_x_;
+  /** \brief y-cooridate of map grid which should belong to array[0][0] */
   float origin_y_;
 
 public:
@@ -174,13 +190,13 @@ public:
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex,
     rclcpp::CallbackGroup::SharedPtr main_callback_group);
   void onEstimatedPoseCallback(geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose);
-  void onPoseInitializerCallback(
-    autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg);
+  void onPoseInitializerCallback(InitializationState::Message::SharedPtr msg);
 
   void timer_callback();
   bool should_update_map() const;
   void request_update_map(const geometry_msgs::msg::Point & position);
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  /** \brief Check if point close to map pointcloud in the */
   bool is_close_to_next_map_grid(
     const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
 
@@ -214,6 +230,7 @@ public:
     updateVoxelGridArray();
   }
 
+  /** Update loaded map grid array for fast searching*/
   inline void updateVoxelGridArray()
   {
     origin_x_ = std::floor((current_position_.value().x - map_loader_radius_) / map_grid_size_x_) *
