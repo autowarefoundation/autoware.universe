@@ -138,6 +138,7 @@ void MotionNode::on_is_start_requested(
   const control_interface::IsStartRequested::Message::ConstSharedPtr msg)
 {
   is_start_requested_ = msg->data;
+  update_state();
 }
 
 void MotionNode::on_accept(
