@@ -164,8 +164,8 @@ Reroute here means changing the route while driving. Unlike route setting, it is
 And there are three use cases that require reroute.
 
 - Route change API
-- MRM API
-- Modify Goal
+- Emergency route
+- Goal modification
 
 ![rerouting_interface](./media/rerouting_interface.svg)
 
@@ -176,14 +176,14 @@ And there are three use cases that require reroute.
 
 This is route change that the application makes using the API. It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a mrm route, normal rerouting by this api is not allowed.
 
-#### MRM API
+#### Emergency route
 
 - `set_mrm_route`
 - `clear_mrm_route`
 
 This API for the MRM that pulls over the road shoulder. It has to be stopped as soon as possible, so a reroute is required. The mrm route has priority over the normal route. And if mrm route is cleared, try to return to the normal route also with a rerouting safety check.
 
-##### Modify Goal
+##### Goal modification
 
 - `modified_goal`
 
