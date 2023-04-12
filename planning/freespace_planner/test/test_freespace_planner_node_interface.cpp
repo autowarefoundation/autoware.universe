@@ -54,10 +54,10 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   // set freespace_planner's input topic name(this topic is changed to test node)
   test_manager->setTrajectorySubscriber("freespace_planner/output/trajectory");
 
-  // test for normal route
-  ASSERT_NO_THROW(test_manager->testWithNominalRoute(test_target_node));
+  // test with normal route
+  ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  // test for route with empty/one point/overlapping point
-  // test_manager->testWithAbnormalRoute(test_target_node);
+  // test with empty route
+  test_manager->testWithAbnormalRoute(test_target_node);
 }
