@@ -169,3 +169,19 @@ ros2 launch autoware_launch e2e_simulator.launch.xml
 | 7  |  `/localicazation/pf/predicted_particle_marker` | particle distribution of particle fitler (red means a probable candidate) |
 | 8  |  `/localicazation/pf/gnss/range_marker`         | particle weight distribution by GNSS |
 | 9  |  `/localicazation/pf/scored_cloud`              | 3D projected line segments. the color means the how match they are  |
+
+## How to set initialpose
+
+### 1. When YabLoc works `standalone:=true`  (without Autoware's pose_initializer)
+
+1. 2D Pose Estimate in Rviz
+
+You can inidcate x, y and yaw manually in rviz.
+
+2. GNSS Doppler initialization
+
+If doppler (`ublox_msgs/msg/navpvt`) is available and the vehicle moves enough fast, YabLoc will estiamte the initial pose **automatically**.
+
+### 2. When Yabloc works `standalone:=false` (through Autoware's pose_initializer)
+
+<u>UNDER CONSTRUCTION</u>

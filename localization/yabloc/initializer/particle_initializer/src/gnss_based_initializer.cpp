@@ -23,13 +23,16 @@ public:
     // Subscriber
     auto on_navpvt = std::bind(&GnssBasedPoseInitializer::on_navpvt, this, _1);
     auto on_pf_pose = [this](const PoseStamped &) -> void { pf_is_initialized_ = true; };
+    auto on_initialpose = [this](const PoseCovStamped & msg) { pub_pose_stamped_->publish(msg); };
     sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, on_navpvt);
     sub_pf_pose_ = create_subscription<PoseStamped>("pf_pose", 10, on_pf_pose);
+    sub_initialpose_ = create_subscription<PoseCovStamped>("/initialpose", 10, on_initialpose);
     // Publisher
     pub_pose_stamped_ = this->create_publisher<PoseCovStamped>("pose_cov", 10);
   }
 
 private:
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pf_pose_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_stamped_;
