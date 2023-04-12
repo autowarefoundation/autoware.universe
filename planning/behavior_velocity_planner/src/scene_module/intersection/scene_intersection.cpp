@@ -182,7 +182,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /*
   if (stop_lines_idx_opt) {
-    const auto stop_line_idx = stop_lines_idx_opt.value().collision_stop_line;
+    const auto stop_line_idx = stop_lines_idx_opt.value().default_stop_line;
     const auto pass_judge_line_idx = stop_lines_idx_opt.value().pass_judge_line;
 
     const bool is_over_pass_judge_line =
@@ -227,7 +227,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* calculate dynamic collision around detection area */
   /* set stop lines for base_link */
-  const auto collision_stop_line_idx_opt =
+  const auto default_stop_line_idx_opt =
     first_detection_area
       ? util::generateCollisionStopLine(
           lane_id_, first_detection_area.value(), planner_data_, planner_param_.stop_line_margin,
@@ -276,14 +276,14 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   bool occlusion_stop_required = false;
 
   /* calculate final stop lines */
-  std::optional<size_t> stop_line_idx = collision_stop_line_idx_opt;
+  std::optional<size_t> stop_line_idx = default_stop_line_idx_opt;
   std::optional<size_t> occlusion_stop_line_idx =
-    collision_stop_line_idx_opt;  // TODO(Mamoru Sobue): maybe different position depending on the
-                                  // flag
-  std::optional<size_t> occlusion_first_stop_line_idx = collision_stop_line_idx_opt;
+    default_stop_line_idx_opt;  // TODO(Mamoru Sobue): maybe different position depending on the
+                                // flag
+  std::optional<size_t> occlusion_first_stop_line_idx = default_stop_line_idx_opt;
   std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
   if (occlusion_stop_line_idx_opt) {
-    if (!collision_stop_line_idx_opt) {
+    if (!default_stop_line_idx_opt) {
       occlusion_stop_required = true;
       stop_line_idx = occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
       prev_occlusion_stop_line_pose_ =
@@ -301,10 +301,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
         path_ip.points.at(occlusion_stop_line_idx_ip_opt.value()).point.pose;
       occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
     } else {
-      const double dist_collision_stop_line = motion_utils::calcSignedArcLength(
+      const double dist_default_stop_line = motion_utils::calcSignedArcLength(
         path_ip.points, current_pose.position,
-        path->points.at(collision_stop_line_idx_opt.value()).point.pose.position);
-      if (dist_collision_stop_line < planner_param_.stop_overshoot_margin) {
+        path->points.at(default_stop_line_idx_opt.value()).point.pose.position);
+      if (dist_default_stop_line < planner_param_.stop_overshoot_margin) {
         // start waiting at the first stop line
         before_creep_state_machine_.setStateWithMarginTime(
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
@@ -314,9 +314,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       occlusion_stop_required = true;
       occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
       stop_line_idx = occlusion_first_stop_line_idx;
-      // insert creep velocity [collision_stop_line, occlusion_stop_line)
+      // insert creep velocity [default_stop_line, occlusion_stop_line)
       insert_creep_during_occlusion =
-        std::make_pair(collision_stop_line_idx_opt.value(), occlusion_stop_line_idx_opt.value());
+        std::make_pair(default_stop_line_idx_opt.value(), occlusion_stop_line_idx_opt.value());
       prev_occlusion_stop_line_pose_ =
         path_ip.points.at(occlusion_stop_line_idx_ip_opt.value()).point.pose;
       occlusion_state_ = OcclusionState::BEFORE_FIRST_STOP_LINE;
@@ -326,8 +326,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     const auto prev_occlusion_stop_pose_idx = motion_utils::findNearestIndex(
       path->points, prev_occlusion_stop_line_pose_.value(), 3.0, M_PI_4);
     if (!util::isOverTargetIndex(
-          *path, closest_idx, current_pose, collision_stop_line_idx_opt.value())) {
-      stop_line_idx = collision_stop_line_idx_opt.value();
+          *path, closest_idx, current_pose, default_stop_line_idx_opt.value())) {
+      stop_line_idx = default_stop_line_idx_opt.value();
       prev_occlusion_stop_line_pose_ = std::nullopt;
     } else if (!util::isOverTargetIndex(
                  *path, closest_idx, current_pose, prev_occlusion_stop_pose_idx.get())) {
@@ -354,12 +354,12 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       (dist_stuck_stopline > planner_param_.common.stop_overshoot_margin);
     if (!is_over_stuck_stopline) {
       stop_line_idx = stuck_line_idx;
-    } else if (is_over_stuck_stopline && collision_stop_line_idx_opt) {
-      stop_line_idx = collision_stop_line_idx_opt.value();
+    } else if (is_over_stuck_stopline && default_stop_line_idx_opt) {
+      stop_line_idx = default_stop_line_idx_opt.value();
     }
   } else if (has_collision) {
     collision_stop_required = true;
-    stop_line_idx = collision_stop_line_idx_opt;
+    stop_line_idx = default_stop_line_idx_opt;
   }
 
   if (!stop_line_idx) {
@@ -1153,7 +1153,7 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
         min_cost_projection_ind = projection_ind;
         nearest_occlusion_point.x = origin.x + i * reso;
         nearest_occlusion_point.y = origin.y + j * reso;
-        nearest_occlusion_point.z = origin.z + 2 * distance_max * pixel / max_cost_pixel;
+        nearest_occlusion_point.z = origin.z + distance_max * pixel / max_cost_pixel;
       }
     }
   }
@@ -1174,7 +1174,7 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   cv::rotate(distance_grid, distance_grid, cv::ROTATE_90_COUNTERCLOCKWISE);
   cv::rotate(distance_grid_heatmap, distance_grid_heatmap, cv::ROTATE_90_COUNTERCLOCKWISE);
   grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 1>(
-    distance_grid, "elevation", occlusion_grid, origin.z - distance_max /* elevation for 0 */,
+    distance_grid, "elevation", occlusion_grid, origin.z /* elevation for 0 */,
     origin.z + distance_max /* elevation for 255 */);
   grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 3>(
     distance_grid_heatmap, "color", occlusion_grid);

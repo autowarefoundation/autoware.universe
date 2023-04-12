@@ -28,13 +28,13 @@
         collision_end_margin_time: 6.0 # [s] this + state_transit_margin_time should be higher to account for collision with slow/decelerating object
         keep_detection_vel_thr: 0.833 # == 3.0km/h. keep detection if ego is ego.vel < keep_detection_vel_thr
       occlusion_detection_area_length: 70.0 # [m]
-      occlusion_creep_velocity: 0.555 # the creep velocity to occlusion limit stop line
+      occlusion_creep_velocity: 0.8333 # the creep velocity to occlusion limit stop line
       extra_occlusion_margin: 0.0
       occlusion:
         free_space_max: 43
         occupied_min: 58
         do_dp: true
-      before_creep_stop_time: 1.5 # [s]
+      before_creep_stop_time: 1.0 # [s]
       min_vehicle_brake_for_rss: -2.5 # [m/s^2]
       max_vehicle_velocity_for_rss: 16.66 # [m/s] == 60kmph
       max_entry_for_occlusion_clerance: 0.1 # [m] maximum entry into the frist detection area lanelet
