@@ -89,7 +89,6 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
       "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1),
       createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/path_with_lane_id" << std::endl;
 
   // Subscribers
   sub_predicted_objects_ =
@@ -97,87 +96,58 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/dynamic_objects", 1,
       std::bind(&BehaviorVelocityPlannerNode::onPredictedObjects, this, _1),
       createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/dynamic_objects" << std::endl;
-
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1),
     createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/no_ground_pointcloud" << std::endl;
-
   sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/vehicle_odometry" << std::endl;
-
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::onAcceleration, this, _1),
     createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/accel" << std::endl;
-
   sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
     createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/vector_map" << std::endl;
-
   sub_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/traffic_signals" << std::endl;
-
   sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
     "~/input/external_crosswalk_states", 1,
     std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1),
     createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/external_crosswalk_states" << std::endl;
-
   sub_external_intersection_states_ =
     this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
       "~/input/external_intersection_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
-  std::cerr << "Subscribed to: ~/input/external_intersection_states" << std::endl;
-
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
-  std::cerr << "Subscribed to: ~/input/external_velocity_limit_mps" << std::endl;
-
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
       "~/input/external_traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1),
       createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/external_traffic_signals" << std::endl;
-
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
       createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/virtual_traffic_light_states" << std::endl;
-
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     "~/input/occupancy_grid", 1, std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
     createSubscriptionOptions(this));
-  std::cerr << "Subscribed to: ~/input/occupancy_grid" << std::endl;
 
   // set velocity smoother param
   onParam();
-  std::cerr << "Velocity smoother parameters have been set." << std::endl;
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
-  std::cerr << "Created publisher for: ~/output/path" << std::endl;
-
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
-  std::cerr << "Created publisher for: ~/output/stop_reason" << std::endl;
-
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);
-  std::cerr << "Created publisher for: ~/debug/path" << std::endl;
 
   // Parameters
   forward_path_length_ = this->declare_parameter<double>("forward_path_length");
@@ -192,108 +162,85 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
-
   if (this->declare_parameter<bool>("launch_crosswalk")) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
     planner_manager_.launchSceneModule(std::make_shared<WalkwayModuleManager>(*this));
-    std::cerr << "Launched CrosswalkModuleManager and WalkwayModuleManager." << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_traffic_light")) {
     planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
-    std::cerr << "Launched TrafficLightModuleManager." << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_intersection")) {
     // intersection module should be before merge from private to declare intersection parameters
     planner_manager_.launchSceneModule(std::make_shared<IntersectionModuleManager>(*this));
     planner_manager_.launchSceneModule(std::make_shared<MergeFromPrivateModuleManager>(*this));
-    std::cerr << "Launched IntersectionModuleManager and MergeFromPrivateModuleManager."
-              << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_blind_spot")) {
     planner_manager_.launchSceneModule(std::make_shared<BlindSpotModuleManager>(*this));
-    std::cerr << "Launched BlindSpotModuleManager." << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_detection_area")) {
     planner_manager_.launchSceneModule(std::make_shared<DetectionAreaModuleManager>(*this));
-    std::cerr << "Launched DetectionAreaModuleManager." << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_virtual_traffic_light")) {
     planner_manager_.launchSceneModule(std::make_shared<VirtualTrafficLightModuleManager>(*this));
-    std::cerr << "Launched VirtualTrafficLightModuleManager." << std::endl;
   }
-
   // this module requires all the stop line.Therefore this modules should be placed at the bottom.
   if (this->declare_parameter<bool>("launch_no_stopping_area")) {
     planner_manager_.launchSceneModule(std::make_shared<NoStoppingAreaModuleManager>(*this));
-    std::cerr << "Launched NoStoppingAreaModuleManager." << std::endl;
   }
-
   // permanent stop line module should be after no stopping area
   if (this->declare_parameter<bool>("launch_stop_line")) {
     planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
-    std::cerr << "Launched StopLineModuleManager." << std::endl;
   }
-
   // to calculate ttc it's better to be after stop line
   if (this->declare_parameter<bool>("launch_occlusion_spot")) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
-    std::cerr << "Launched OcclusionSpotModuleManager." << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_run_out")) {
     planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
-    std::cerr << "Launched RunOutModuleManager." << std::endl;
   }
   if (this->declare_parameter<bool>("launch_speed_bump")) {
     planner_manager_.launchSceneModule(std::make_shared<SpeedBumpModuleManager>(*this));
-    std::cerr << "Launched SpeedBumpModuleManager." << std::endl;
   }
-
   if (this->declare_parameter<bool>("launch_out_of_lane")) {
     planner_manager_.launchSceneModule(std::make_shared<OutOfLaneModuleManager>(*this));
-    std::cerr << "Launched OutOfLaneModuleManager." << std::endl;
   }
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
 bool BehaviorVelocityPlannerNode::isDataReady(
-  const PlannerData planner_data, [[maybe_unused]] rclcpp::Clock clock) const
+  const PlannerData planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
 
   // from callbacks
   if (!d.current_odometry) {
-    RCLCPP_ERROR(get_logger(), "Waiting for current odometry");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current odometry");
     return false;
   }
 
   if (!d.current_velocity) {
-    RCLCPP_ERROR(get_logger(), "Waiting for current velocity");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current velocity");
     return false;
   }
   if (!d.current_acceleration) {
-    RCLCPP_ERROR(get_logger(), "Waiting for current acceleration");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current acceleration");
     return false;
   }
   if (!d.predicted_objects) {
-    RCLCPP_ERROR(get_logger(), "Waiting for predicted_objects");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for predicted_objects");
     return false;
   }
   if (!d.no_ground_pointcloud) {
-    RCLCPP_ERROR(get_logger(), "Waiting for pointcloud");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for pointcloud");
     return false;
   }
   if (!map_ptr_) {
-    RCLCPP_ERROR(get_logger(), "Waiting for the initialization of map");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for the initialization of map");
     return false;
   }
   if (!d.velocity_smoother_) {
-    RCLCPP_ERROR(get_logger(), "Waiting for the initialization of velocity smoother");
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
     return false;
   }
   return true;
@@ -456,7 +403,6 @@ void BehaviorVelocityPlannerNode::onTrigger(
   std::unique_lock<std::mutex> lk(mutex_);
 
   if (!isDataReady(planner_data_, *get_clock())) {
-    std::cerr << "Error: Planner data is not ready!" << std::endl;
     return;
   }
 

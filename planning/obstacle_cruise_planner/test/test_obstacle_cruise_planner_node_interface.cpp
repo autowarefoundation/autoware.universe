@@ -45,13 +45,14 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "obstacle_cruise_planner/input/odometry");
+  test_manager->publishPointCloud(test_target_node, "obstacle_cruise_planner/input/vector_map");
   test_manager->publishPredictedObjects(test_target_node, "obstacle_cruise_planner/input/objects");
   test_manager->publishAcceleration(test_target_node, "obstacle_cruise_planner/input/acceleration");
 
-  //  test_node_ → test_target_node
+  // set subscriber for test_target_node
   test_manager->setTrajectorySubscriber("obstacle_cruise_planner/output/trajectory");
 
-  //  test_target_node → test_node_
+  // setting topic name of subscribing topic
   test_manager->setTrajectoryInputTopicName("obstacle_cruise_planner/input/trajectory");
 
   // test for normal trajectory

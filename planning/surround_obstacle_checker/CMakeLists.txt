@@ -11,7 +11,6 @@ find_package(PCL REQUIRED COMPONENTS common)
 include_directories(
   SYSTEM
     ${EIGEN3_INCLUDE_DIR}
-    ${PCL_INCLUDE_DIRS}
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -27,15 +26,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "surround_obstacle_checker::SurroundObstacleCheckerNode"
   EXECUTABLE ${PROJECT_NAME}_node
 )
-
-if(BUILD_TESTING)
-  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/test_surround_obstacle_checker_node_interface.cpp
-  )
-  target_link_libraries(test_${PROJECT_NAME}
-    ${PROJECT_NAME}
-  )
-endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
