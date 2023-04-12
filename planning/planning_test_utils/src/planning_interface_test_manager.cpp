@@ -260,6 +260,22 @@ void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
   test_utils::spinSomeNodes(test_node_, target_node);
 }
 
+void PlanningInterfaceTestManager::publishAbnormalTrajectory(
+  rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
+{
+  test_utils::setPublisher(test_node_, input_trajectory_name_, abnormal_trajectory_pub_);
+  abnormal_trajectory_pub_->publish(abnormal_trajectory);
+  test_utils::spinSomeNodes(test_node_, target_node);
+}
+
+void PlanningInterfaceTestManager::publishAbnormalRoute(
+  rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route)
+{
+  test_utils::setPublisher(test_node_, input_route_name_, abnormal_route_pub_);
+  abnormal_route_pub_->publish(abnormal_route);
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
+}
+
 void PlanningInterfaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
   test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
@@ -301,14 +317,6 @@ void PlanningInterfaceTestManager::testWithAbnormalTrajectory(rclcpp::Node::Shar
     target_node, test_utils::generateTrajectory<Trajectory>(10, 0.0, 0.0, 0.0, 0.0, 1)));
 }
 
-void PlanningInterfaceTestManager::publishAbnormalTrajectory(
-  rclcpp::Node::SharedPtr target_node, const Trajectory & abnormal_trajectory)
-{
-  test_utils::setPublisher(test_node_, input_trajectory_name_, abnormal_trajectory_pub_);
-  abnormal_trajectory_pub_->publish(abnormal_trajectory);
-  test_utils::spinSomeNodes(test_node_, target_node);
-}
-
 // test for normal working
 void PlanningInterfaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
@@ -327,14 +335,7 @@ void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::Sh
 void PlanningInterfaceTestManager::testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node)
 {
   ASSERT_NO_THROW(publishAbnormalRoute(target_node, LaneletRoute{}));
-}
-
-void PlanningInterfaceTestManager::publishAbnormalRoute(
-  rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route)
-{
-  test_utils::setPublisher(test_node_, input_route_name_, abnormal_route_pub_);
-  abnormal_route_pub_->publish(abnormal_route);
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
