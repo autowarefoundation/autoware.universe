@@ -752,6 +752,8 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * if the both of following two conditions are satisfied, the module surely avoid the object.
    * Condition1: there is risk to collide with object without avoidance.
    * Condition2: there is enough space to avoid.
+   * In TOO_LARGE_JERK condition, it is possible to avoid object by deceleration even if the flag
+   * is_avoidable is FALSE. So, the module inserts stop point for such a object.
    */
   for (const auto & o : data.target_objects) {
     const auto enough_space = o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
