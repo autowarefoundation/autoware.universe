@@ -21,7 +21,7 @@
 
 #include <vector>
 
-TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
+TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 {
   rclcpp::init(0, nullptr);
 
@@ -29,17 +29,17 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
 
   auto node_options = rclcpp::NodeOptions{};
 
-  node_options.append_parameter_override("enable_slow_down", false);
-
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto obstacle_stop_planner_dir =
     ament_index_cpp::get_package_share_directory("obstacle_stop_planner");
 
+  node_options.append_parameter_override("enable_slow_down", false);
+
   node_options.arguments(
     {"--ros-args", "--params-file", planning_test_utils_dir + "/config/common.param.yaml",
      "--params-file", planning_test_utils_dir + "/config/nearest_search.param.yaml",
-     planning_test_utils_dir + "/config/vehicle_info.param.yaml",
+     "--params-file", planning_test_utils_dir + "/config/vehicle_info.param.yaml", "--params-file",
      obstacle_stop_planner_dir + "/config/common.param.yaml", "--params-file",
      obstacle_stop_planner_dir + "/config/adaptive_cruise_control.param.yaml", "--params-file",
      obstacle_stop_planner_dir + "/config/obstacle_stop_planner.param.yaml"});
@@ -54,10 +54,10 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   test_manager->publishExpandStopRange(
     test_target_node, "obstacle_stop_planner/input/expand_stop_range");
 
-  // set subscriber for test_target_node
+  // set subscriber with topic name: obstacle stop planner → test_node_
   test_manager->setTrajectorySubscriber("obstacle_stop_planner/output/trajectory");
 
-  // setting topic name of subscribing topic
+  // set obstacle stop planner's input topic name(this topic is changed to test node):
   test_manager->setTrajectoryInputTopicName("obstacle_stop_planner/input/trajectory");
 
   // test for normal trajectory

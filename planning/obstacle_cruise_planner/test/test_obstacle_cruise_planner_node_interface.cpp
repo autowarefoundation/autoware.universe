@@ -21,7 +21,7 @@
 
 #include <vector>
 
-TEST(PlanningModuleInterfaceTest, testWithVariousTrajectoryInput)
+TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 {
   rclcpp::init(0, nullptr);
 
