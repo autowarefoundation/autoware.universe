@@ -1338,8 +1338,8 @@ double RouteHandler::getLateralDistanceToPreferredLane(
       if (current_centerline.empty() || next_centerline.empty()) {
         return -accumulated_distance;
       }
-      const auto & curr_pt = current_centerline[0];
-      const auto & next_pt = next_centerline[0];
+      const auto & curr_pt = current_centerline.front();
+      const auto & next_pt = next_centerline.front();
       accumulated_distance += lanelet::geometry::distance2d(to2D(curr_pt), to2D(next_pt));
 
       if (exists(preferred_lanelets_, right)) {
