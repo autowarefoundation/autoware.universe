@@ -1,3 +1,5 @@
+<!-- cspell: ignore mmclassification mmcv -->
+
 # traffic_light_classifier
 
 ## Purpose
@@ -145,7 +147,7 @@ $ mim train mmcls YOUR_CONFIG.py [--resume-from YOUR_CHECKPOINT.pth]
 
 ### step 3. Export onnx model
 
-In exporting onnx, use `mmclassificatoin/tools/deployment/pytorch2onnx.py` or [open-mmlab/mmdeploy](https://github.com/open-mmlab/mmdeploy.git).
+In exporting onnx, use `mmclassification/tools/deployment/pytorch2onnx.py` or [open-mmlab/mmdeploy](https://github.com/open-mmlab/mmdeploy.git).
 
 ```shell
 cd ~/mmclassification/tools/deployment
