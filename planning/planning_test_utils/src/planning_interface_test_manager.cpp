@@ -288,7 +288,7 @@ void PlanningInterfaceTestManager::setPathSubscriber(std::string topic_name)
 void PlanningInterfaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
   publishNominalTrajectory(target_node, input_trajectory_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 2);
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // check to see if target node is dead.
