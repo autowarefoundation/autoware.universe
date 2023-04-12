@@ -25,28 +25,6 @@ PlanningInterfaceTestManager::PlanningInterfaceTestManager()
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 }
 
-void PlanningInterfaceTestManager::declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
-{
-  // for vehicle info
-  node_options.append_parameter_override("wheel_radius", 0.5);
-  node_options.append_parameter_override("wheel_width", 0.2);
-  node_options.append_parameter_override("wheel_base", 3.0);
-  node_options.append_parameter_override("wheel_tread", 2.0);
-  node_options.append_parameter_override("front_overhang", 1.0);
-  node_options.append_parameter_override("rear_overhang", 1.0);
-  node_options.append_parameter_override("left_overhang", 0.5);
-  node_options.append_parameter_override("right_overhang", 0.5);
-  node_options.append_parameter_override("vehicle_height", 1.5);
-  node_options.append_parameter_override("max_steer_angle", 0.7);
-}
-
-void PlanningInterfaceTestManager::declareNearestSearchDistanceParams(
-  rclcpp::NodeOptions & node_options)
-{
-  node_options.append_parameter_override("ego_nearest_dist_threshold", 3.0);
-  node_options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
-}
-
 void PlanningInterfaceTestManager::publishOdometry(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
@@ -341,10 +319,6 @@ void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::Sh
 void PlanningInterfaceTestManager::testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node)
 {
   ASSERT_NO_THROW(publishAbnormalRoute(target_node, LaneletRoute{}));
-  // ASSERT_NO_THROW(
-  //   publishAbnormalRoute(target_node, test_utils::generateRoute<LaneletRoute>(1, 0.0)));
-  // ASSERT_NO_THROW(publishAbnormalRoute(
-  //   target_node, test_utils::generateRoute<LaneletRoute>(10, 0.0, 0.0, 0.0, 0.0, 1)));
 }
 
 void PlanningInterfaceTestManager::publishAbnormalRoute(
@@ -379,21 +353,9 @@ int PlanningInterfaceTestManager::getReceivedTopicNum()
 void PlanningInterfaceTestManager::publishInitialPoseData(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  const double position_x = 3722.16015625;
-  const double position_y = 73723.515625;
-  const double quaternion_x = 0.;
-  const double quaternion_y = 0.;
-  const double quaternion_z = 0.23311256049418302;
-  const double quaternion_w = 0.9724497591854532;
-  geometry_msgs::msg::Quaternion quaternion;
-  quaternion.x = quaternion_x;
-  quaternion.y = quaternion_y;
-  quaternion.z = quaternion_z;
-  quaternion.w = quaternion_w;
-  const double yaw = tf2::getYaw(quaternion);
-
   std::shared_ptr<Odometry> current_odometry = std::make_shared<Odometry>();
-  const std::array<double, 4> start_pose{position_x, position_y, 0, yaw};
+  const std::array<double, 4> start_pose{
+    3722.16015625, 73723.515625, 0.233112560494183, 0.9724497591854532};
   current_odometry->pose.pose = test_utils::createPose(start_pose);
   current_odometry->header.frame_id = "map";
 
