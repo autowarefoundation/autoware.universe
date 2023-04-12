@@ -71,6 +71,10 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
   const auto current_lanes =
     util::getCurrentLanesFromPath(prev_module_reference_path, planner_data_);
 
+  if (current_lanes.empty()) {
+    return std::make_pair(false, false);
+  }
+
   const auto lane_change_lanes = util::lane_change::getLaneChangeLanes(
     planner_data_, current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
     direction_, type_);
@@ -82,12 +86,12 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
   // find candidate paths
   LaneChangePaths valid_paths;
 
-  const auto [found_valid_path, found_safe_path] = util::lane_change::getLaneChangePaths(
+  const auto found_safe_path = util::lane_change::getLaneChangePaths(
     prev_module_path, *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_, check_distance_, direction_,
     &valid_paths, &object_debug_);
 
-  if (!found_valid_path) {
+  if (valid_paths.empty()) {
     return {false, false};
   }
 
@@ -98,7 +102,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
     safe_path = valid_paths.front();
   }
 
-  return {found_valid_path, found_safe_path};
+  return {true, found_safe_path};
 }
 
 PathWithLaneId NormalLaneChange::generatePlannedPath(
