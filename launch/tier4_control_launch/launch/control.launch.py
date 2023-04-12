@@ -157,10 +157,14 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # vehicle cmd gate
-    vehicle_cmd_gate_component = ComposableNode(
+    from launch_ros.actions import Node
+
+    vehicle_cmd_gate_component = Node(
         package="vehicle_cmd_gate",
-        plugin="vehicle_cmd_gate::VehicleCmdGate",
+        executable="vehicle_cmd_gate",
+        # plugin="vehicle_cmd_gate::VehicleCmdGate",
         name="vehicle_cmd_gate",
+        prefix="konsole -e gdb -ex run --args",
         remappings=[
             ("input/steering", "/vehicle/status/steering_status"),
             ("input/operation_mode", "/system/operation_mode/state"),
@@ -206,7 +210,7 @@ def launch_setup(context, *args, **kwargs):
                 ),
             },
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # operation mode transition manager
@@ -297,7 +301,6 @@ def launch_setup(context, *args, **kwargs):
             controller_component,
             lane_departure_component,
             shift_decider_component,
-            vehicle_cmd_gate_component,
             operation_mode_transition_manager_component,
         ],
     )
@@ -306,6 +309,7 @@ def launch_setup(context, *args, **kwargs):
         [
             PushRosNamespace("control"),
             container,
+            vehicle_cmd_gate_component,
             external_cmd_selector_loader,
             external_cmd_converter_loader,
             obstacle_collision_checker_loader,
