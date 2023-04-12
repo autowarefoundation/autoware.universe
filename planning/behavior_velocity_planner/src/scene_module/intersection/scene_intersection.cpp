@@ -277,7 +277,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* calculate final stop lines */
   std::optional<size_t> stop_line_idx = collision_stop_line_idx_opt;
-  std::optional<size_t> occlusion_stop_line_idx = std::nullopt;
+  std::optional<size_t> occlusion_stop_line_idx =
+    collision_stop_line_idx_opt;  // TODO(Mamoru Sobue): maybe different position depending on the
+                                  // flag
+  std::optional<size_t> occlusion_first_stop_line_idx = collision_stop_line_idx_opt;
   std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
   if (occlusion_stop_line_idx_opt) {
     if (!collision_stop_line_idx_opt /* or two_phase stop is disabled*/) {
@@ -307,12 +310,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
         occlusion_state_ = OcclusionState::WAIT_FIRST_STOP_LINE;
       }
-      static const bool enable_occlusion_two_phase_stop_ = true;  // TODO(Mamoru Sobue)
-      first_phase_stop_required = enable_occlusion_two_phase_stop_;
+      first_phase_stop_required = true;
       occlusion_stop_required = true;
-      stop_line_idx = enable_occlusion_two_phase_stop_ ? collision_stop_line_idx_opt
-                                                       : occlusion_stop_line_idx_opt;
       occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
+      stop_line_idx = occlusion_first_stop_line_idx;
       // insert creep velocity [collision_stop_line, occlusion_stop_line)
       insert_creep_during_occlusion =
         std::make_pair(collision_stop_line_idx_opt.value(), occlusion_stop_line_idx_opt.value());
@@ -400,9 +401,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     }
 
     if (!occlusion_first_stop_activated_) {
-      planning_utils::setVelocityFromIndex(stop_line_idx.value(), 0.0 /* [m/s] */, path);
+      planning_utils::setVelocityFromIndex(
+        occlusion_first_stop_line_idx.value(), 0.0 /* [m/s] */, path);
       debug_data_.occlusion_first_stop_wall_pose =
-        planning_utils::getAheadPose(stop_line_idx.value(), baselink2front, *path);
+        planning_utils::getAheadPose(occlusion_first_stop_line_idx.value(), baselink2front, *path);
     }
 
     const auto reconciled_occlusion_stop_line_idx =
