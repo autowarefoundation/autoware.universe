@@ -144,6 +144,7 @@ public:
   void testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node);
 
   void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
+  void testWithAbnormalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();
 
