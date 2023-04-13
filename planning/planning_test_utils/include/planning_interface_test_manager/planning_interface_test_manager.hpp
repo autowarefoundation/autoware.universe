@@ -222,6 +222,7 @@ private:
 
   void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishAbNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void set_initial_state_with_transform(Odometry::SharedPtr & odometry);
   TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);
