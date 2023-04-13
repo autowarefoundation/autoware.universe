@@ -504,7 +504,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   const auto ego_is_stopped = std::abs(current_status_cmd.longitudinal.speed) < 1e-3;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
-  if (!ego_is_stopped && mode.is_in_transition) {
+  if (mode.is_in_transition) {
     filter_on_transition_.filterAll(dt, current_steer_, out);
   } else {
     filter_.filterAll(dt, current_steer_, out);
