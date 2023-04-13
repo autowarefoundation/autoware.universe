@@ -16,6 +16,7 @@
 #define COMPARE_MAP_SEGMENTATION__VOXEL_DISTANCE_BASED_COMPARE_MAP_FILTER_NODELET_HPP_  // NOLINT
 
 #include "pointcloud_preprocessor/filter.hpp"
+#include "voxel_grid_map_loader.hpp"
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
@@ -51,7 +52,7 @@ public:
     RCLCPP_INFO(logger_, "VoxelDistanceBasedStaticMapLoader initialized.\n");
   }
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
-  void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
+  void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map) override;
 };
 
 //******************************* Dynamic map loader ***********************************
@@ -134,20 +135,8 @@ protected:
   void input_target_callback(const PointCloud2ConstPtr map);
 
 private:
-  // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
-  PointCloudPtr voxel_map_ptr_;
-  PointCloudConstPtr map_ptr_;
+  std::unique_ptr<VoxelGridMapLoader> voxel_distance_based_map_loader_;
   double distance_threshold_;
-  pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
-  pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_;
-  bool set_map_in_voxel_grid_;
-
-  /** \brief Parameter service callback result : needed to be hold */
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-
-  /** \brief Parameter service callback */
-  rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW

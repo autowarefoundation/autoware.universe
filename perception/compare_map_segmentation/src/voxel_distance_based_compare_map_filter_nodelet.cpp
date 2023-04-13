@@ -22,53 +22,6 @@
 
 namespace compare_map_segmentation
 {
-using pointcloud_preprocessor::get_param;
-
-VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterComponent(
-  const rclcpp::NodeOptions & options)
-: Filter("VoxelDistanceBasedCompareMapFilter", options)
-{
-  distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
-
-  using std::placeholders::_1;
-  sub_map_ = this->create_subscription<PointCloud2>(
-    "map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&VoxelDistanceBasedCompareMapFilterComponent::input_target_callback, this, _1));
-
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&VoxelDistanceBasedCompareMapFilterComponent::paramCallback, this, _1));
-}
-
-void VoxelDistanceBasedCompareMapFilterComponent::filter(
-  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
-  PointCloud2 & output)
-{
-  std::scoped_lock lock(mutex_);
-  if (voxel_map_ptr_ == NULL || map_ptr_ == NULL || tree_ == NULL) {
-    output = *input;
-    return;
-  }
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*input, *pcl_input);
-  pcl_output->points.reserve(pcl_input->points.size());
-  for (size_t i = 0; i < pcl_input->points.size(); ++i) {
-    const int index = voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(
-      pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
-    if (index == -1) {                 // empty voxel
-      std::vector<int> nn_indices(1);  // nn means nearest neighbor
-      std::vector<float> nn_distances(1);
-      if (
-        tree_->radiusSearch(
-          pcl_input->points.at(i), distance_threshold_, nn_indices, nn_distances, 1) == 0) {
-        pcl_output->points.push_back(pcl_input->points.at(i));
-      }
-    }
-  }
-
-  pcl::toROSMsg(*pcl_output, output);
-  output.header = input->header;
-}
 
 //******************************* Static map loader *****************************
 void VoxelDistanceBasedStaticMapLoader::onMapCallback(
@@ -78,8 +31,9 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 
-  std::scoped_lock lock(mutex_);
-  tf_input_frame_ = map_pcl_ptr->header.frame_id;
+  (*mutex_ptr_).lock();
+  map_ptr_ = map_pcl_ptr;
+  *tf_map_input_frame_ = map_ptr_->header.frame_id;
   // voxel
   voxel_map_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ>);
   voxel_grid_.setLeafSize(distance_threshold_, distance_threshold_, distance_threshold_);
@@ -97,6 +51,7 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
+  (*mutex_ptr_).unlock();
 }
 
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(

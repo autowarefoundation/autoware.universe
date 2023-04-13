@@ -23,8 +23,8 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <pcl/search/pcl_search.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/search/pcl_search.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <map>
@@ -151,8 +151,6 @@ protected:
   };
 
   typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
-
-private:
   using InitializationState = localization_interface::InitializationState;
 
   /** \brief Map to hold loaded map grid id and it's voxel filter */
