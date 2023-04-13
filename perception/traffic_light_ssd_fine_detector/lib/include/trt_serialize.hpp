@@ -40,7 +40,7 @@ struct Serializer<
   T, typename std::enable_if<
        std::is_arithmetic<T>::value || std::is_enum<T>::value || std::is_pod<T>::value>::type>
 {
-  static size_t serialized_size(T const & value) { return sizeof(T); }
+  static size_t serialized_size(T const &) { return sizeof(T); }
   static void serialize(void ** buffer, T const & value)
   {
     ::memcpy(*buffer, &value, sizeof(T));
@@ -105,6 +105,12 @@ struct Serializer<
 };  // struct Serializer
 
 }  // namespace
+
+template <typename T>
+inline size_t serialized_size(T const & value)
+{
+  return Serializer<T>::serialized_size(value);
+}
 
 template <typename T>
 inline void serialize_value(void ** buffer, T const & value)

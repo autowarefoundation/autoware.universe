@@ -25,6 +25,7 @@
 #include <cublas_v2.h>
 #include <cuda.h>
 
+#include <algorithm>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -38,6 +39,13 @@
 #define THREADS_PER_BLOCK 512
 
 #define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
+
+inline int GET_BLOCKS(const int N)
+{
+  int optimal_block_num = DIVUP(N, THREADS_PER_BLOCK);
+  constexpr int max_block_num = 4096;
+  return std::min(optimal_block_num, max_block_num);
+}
 
 namespace cuda
 {
