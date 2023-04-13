@@ -251,7 +251,7 @@ T generateObject(rclcpp::Node::SharedPtr target_node)
   if constexpr (std::is_same_v<T, HADMapBin>) {
     const auto planning_test_utils_dir =
       ament_index_cpp::get_package_share_directory("planning_test_utils");
-    const auto lanelet2_path = planning_test_utils_dir + "/map/lanelet2_map.osm";
+    const auto lanelet2_path = planning_test_utils_dir + "/test_map/lanelet2_map.osm";
     double center_line_resolution = 5.0;
     // load map from file
     const auto map = loadMap(lanelet2_path);
@@ -340,6 +340,21 @@ void setSubscriber(
 {
   createSubscription(
     test_node, topic_name, [&count](const typename T::SharedPtr) { count++; }, subscriber);
+}
+
+void updateNodeOptions(
+  rclcpp::NodeOptions & node_options, const std::vector<std::string> & params_files)
+{
+  std::vector<const char *> arguments;
+  arguments.push_back("--ros-args");
+  arguments.push_back("--params-file");
+  for (const auto & param_file : params_files) {
+    arguments.push_back(param_file.c_str());
+    arguments.push_back("--params-file");
+  }
+  arguments.pop_back();
+
+  node_options.arguments(std::vector<std::string>{arguments.begin(), arguments.end()});
 }
 
 }  // namespace test_utils
