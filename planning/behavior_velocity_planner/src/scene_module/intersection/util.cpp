@@ -125,6 +125,37 @@ std::optional<size_t> getDuplicatedPointIdx(
   return std::nullopt;
 }
 
+[[maybe_unused]] static std::optional<size_t> generateStaticPassJudgeLine(
+  const lanelet::CompoundPolygon3d & first_detection_area,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double ip_interval,
+  const std::pair<size_t, size_t> lane_interval,
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto pass_judge_line_idx_ip =
+    util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
+  if (!pass_judge_line_idx_ip) {
+    return std::nullopt;
+  }
+  const int base2front_idx_dist =
+    std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / ip_interval);
+  const int idx = static_cast<int>(pass_judge_line_idx_ip.value()) - base2front_idx_dist;
+  if (idx < 0) {
+    return std::nullopt;
+  }
+  const auto & insert_point = path_ip.points.at(static_cast<size_t>(idx)).point.pose;
+  const auto duplicate_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
+  if (duplicate_idx_opt) {
+    return duplicate_idx_opt;
+  } else {
+    const auto insert_idx_opt = util::insertPoint(insert_point, original_path);
+    if (!insert_idx_opt) {
+      return std::nullopt;
+    }
+    return insert_idx_opt;
+  }
+}
+
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon)

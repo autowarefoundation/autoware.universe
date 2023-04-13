@@ -153,6 +153,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const auto & occlusion_attention_area = intersection_lanelets_.value().occlusion_attention_area;
   const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area;
   const auto & first_detection_area = intersection_lanelets_.value().first_detection_area;
+  const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting;
   debug_data_.detection_area = detection_area;
   debug_data_.adjacent_area = intersection_lanelets_.value().adjacent_area;
 
@@ -161,6 +162,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   if (intersection_area) {
     const auto intersection_area_2d = intersection_area.value();
     debug_data_.intersection_area = toGeomPoly(intersection_area_2d);
+  }
+
+  if (conflicting_lanelets.empty()) {
+    RCLCPP_DEBUG(logger_, "conflicting area is empty");
+    return false;
   }
 
   if (!detection_divisions_.has_value()) {
@@ -1186,20 +1192,21 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   const auto nearest_occlusion_projection_pose =
     path_ip.points.at(min_cost_projection_ind.value()).point.pose;
   debug_data_.nearest_occlusion_projection_point = nearest_occlusion_projection_pose.position;
-  const double wall_ang =
+  const double tan_wall_ang = std::tan(
     tf2::getYaw(path_ip.points.at(min_cost_projection_ind.value()).point.pose.orientation) -
-    M_PI / 2.0;
-  const double projection_ang = std::atan2(
+    M_PI / 2.0);
+  const double tan_projection_ang = std::atan2(
     nearest_occlusion_projection_pose.position.y - nearest_occlusion_point.y,
     nearest_occlusion_projection_pose.position.x - nearest_occlusion_point.x);
-  const double tan_projection_diff_ang = std::fabs(std::tan(wall_ang - projection_ang));
+  const double tan_diff_ang =
+    std::fabs((tan_wall_ang - tan_projection_ang) / (1 + tan_wall_ang * tan_projection_ang));
 
   const auto first_detection_area_idx =
     util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
   if (!first_detection_area_idx) {
     return std::nullopt;
   }
-  const double footprint_offset = vehicle_width / 2.0 * tan_projection_diff_ang;
+  const double footprint_offset = vehicle_width / 2.0 * tan_diff_ang;
   const size_t baselink_ind = static_cast<size_t>(std::max<int>(
     0, min_cost_projection_ind.value() - std::ceil((baselink2front + footprint_offset) / interval) +
          std::ceil(extra_occlusion_margin / interval)));
