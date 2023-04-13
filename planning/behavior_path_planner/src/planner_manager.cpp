@@ -73,7 +73,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
      * STEP4: if there is module that should be launched, execute the module
      */
     const auto [highest_priority_module, candidate_modules_output] =
-      runCandidateModules(request_modules, data, approved_modules_output);
+      runRequestModules(request_modules, data, approved_modules_output);
     if (!highest_priority_module) {
       processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
       return approved_modules_output;
@@ -235,20 +235,26 @@ SceneModulePtr PlannerManager::selectHighestPriorityModule(
   return request_modules.front();
 }
 
-std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runCandidateModules(
+std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModules(
   const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
   const BehaviorModuleOutput & previous_module_output)
 {
+  // modules that are filtered by simultaneous executable condition.
   std::vector<SceneModulePtr> executable_modules;
-  std::vector<SceneModulePtr> waiting_approved_modules;
-  std::vector<SceneModulePtr> already_approved_modules;
-  std::unordered_map<std::string, BehaviorModuleOutput> results;
 
-  auto sorted_request_modules = request_modules;
+  // modules that are not approved after running yet.
+  std::vector<SceneModulePtr> waiting_approved_modules;
+
+  // modules that are already approved after running.
+  std::vector<SceneModulePtr> already_approved_modules;
+
+  // all request modules planning results.
+  std::unordered_map<std::string, BehaviorModuleOutput> results;
 
   /**
    * sort by priority. sorted_request_modules.front() is the highest priority module.
    */
+  auto sorted_request_modules = request_modules;
   sortByPriority(sorted_request_modules);
 
   /**
@@ -360,16 +366,20 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
   /**
    * execute all approved modules.
    */
-  for (const auto & module_ptr : approved_module_ptrs_) {
-    output = run(module_ptr, data, output);
-    results.emplace(module_ptr->name(), output);
-  }
+  std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [&](const auto & m) {
+    output = run(m, data, output);
+    results.emplace(m->name(), output);
+  });
 
   /**
-   * pop waiting approve module. push it back candidate modules.
+   * pop waiting approve module. push it back candidate modules. if waiting approve module is found
+   * in iteration std::find_if, not only the module but also the next one are removed from
+   * approved_module_ptrs_ since the next module's input (= waiting approve module's output) maybe
+   * change significantly. And, only the waiting approve module is pushed back to
+   * candidate_module_ptrs_.
    */
   {
-    const auto waiting_approval_modules = [this](const auto & m) { return m->isWaitingApproval(); };
+    const auto waiting_approval_modules = [](const auto & m) { return m->isWaitingApproval(); };
 
     const auto itr = std::find_if(
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(), waiting_approval_modules);
@@ -393,10 +403,11 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::FAILURE; });
 
-    std::for_each(itr, approved_module_ptrs_.end(), [this](auto & m) {
-      deleteExpiredModules(m);
+    std::for_each(itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+
+    if (itr != approved_module_ptrs_.end()) {
       clearCandidateModules();
-    });
+    }
 
     approved_module_ptrs_.erase(itr, approved_module_ptrs_.end());
   }
@@ -504,7 +515,7 @@ BehaviorModuleOutput PlannerManager::getReferencePath(
 }
 
 void PlannerManager::updateCandidateModules(
-  const std::vector<SceneModulePtr> & candidate_modules,
+  const std::vector<SceneModulePtr> & request_modules,
   const SceneModulePtr & highest_priority_module)
 {
   const auto exist = [](const auto & module_ptr, const auto & module_ptrs) {
@@ -520,7 +531,7 @@ void PlannerManager::updateCandidateModules(
    */
   {
     const auto candidate_to_remove = [&](auto & itr) {
-      if (!exist(itr, candidate_modules)) {
+      if (!exist(itr, request_modules)) {
         deleteExpiredModules(itr);
         return true;
       }
@@ -537,7 +548,7 @@ void PlannerManager::updateCandidateModules(
   /**
    * register running candidate modules
    */
-  for (const auto & m : candidate_modules) {
+  for (const auto & m : request_modules) {
     if (
       m->name() == highest_priority_module->name() &&
       !highest_priority_module->isWaitingApproval()) {
