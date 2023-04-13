@@ -964,6 +964,12 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   const double baselink2front, const double vehicle_width, const double extra_occlusion_margin,
   const double max_entry_for_occlusion_clerance) const
 {
+  const auto first_detection_area_idx =
+    util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
+  if (!first_detection_area_idx) {
+    return std::nullopt;
+  }
+
   const int width = occ_grid.info.width;
   const int height = occ_grid.info.height;
   const double reso = occ_grid.info.resolution;
@@ -1200,12 +1206,6 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
     nearest_occlusion_projection_pose.position.x - nearest_occlusion_point.x);
   const double tan_diff_ang =
     std::fabs((tan_wall_ang - tan_projection_ang) / (1 + tan_wall_ang * tan_projection_ang));
-
-  const auto first_detection_area_idx =
-    util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
-  if (!first_detection_area_idx) {
-    return std::nullopt;
-  }
   const double footprint_offset = vehicle_width / 2.0 * tan_diff_ang;
   const size_t baselink_ind = static_cast<size_t>(std::max<int>(
     0, min_cost_projection_ind.value() - std::ceil((baselink2front + footprint_offset) / interval) +
