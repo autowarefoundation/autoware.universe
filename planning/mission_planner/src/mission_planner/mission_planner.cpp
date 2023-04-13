@@ -239,6 +239,7 @@ void MissionPlanner::on_set_route_points(
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
   route.uuid.uuid = generate_random_id();
+  route.allow_modification = req->option.allow_goal_modification;
 
   // Update route.
   change_route(route);
