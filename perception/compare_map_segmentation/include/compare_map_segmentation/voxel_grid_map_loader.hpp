@@ -190,7 +190,7 @@ public:
     rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex,
     rclcpp::CallbackGroup::SharedPtr main_callback_group);
   void onEstimatedPoseCallback(geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose);
-  void onPoseInitializerCallback(InitializationState::Message::SharedPtr msg);
+  void onPoseInitializerCallback(const InitializationState::Message::ConstSharedPtr msg);
 
   void timer_callback();
   bool should_update_map() const;

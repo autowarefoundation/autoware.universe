@@ -273,8 +273,7 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
 
   const auto localization_node = component_interface_utils::NodeAdaptor(node);
   localization_node.init_sub(
-    sub_pose_initializer_state_,
-    std::bind(&VoxelGridDynamicMapLoader::onPoseInitializerCallback, this, std::placeholders::_1));
+    sub_pose_initializer_state_, this, &VoxelGridDynamicMapLoader::onPoseInitializerCallback);
 
   sub_estimated_pose_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "pose_with_covariance", rclcpp::QoS{1},
@@ -297,7 +296,7 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
     timer_callback_group_);
 }
 void VoxelGridDynamicMapLoader::onPoseInitializerCallback(
-  InitializationState::Message::SharedPtr msg)
+  const InitializationState::Message::ConstSharedPtr msg)
 {
   initialization_state_.state = msg->state;
   if (msg->state != InitializationState::Message::INITIALIZED) {
