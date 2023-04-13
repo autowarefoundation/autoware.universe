@@ -514,83 +514,26 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   // target object
   {
-    std::string ns = "avoidance.target_object.motorcycle.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::MOTORCYCLE, o);
-  }
+    const auto get_object_param = [&](std::string && ns) {
+      ObjectParameter param{};
+      param.enable = declare_parameter<bool>("avoidance.target_object." + ns + "enable");
+      param.envelope_buffer_margin =
+        declare_parameter<double>("avoidance.target_object." + ns + "envelope_buffer_margin");
+      param.safety_buffer_lateral =
+        declare_parameter<double>("avoidance.target_object." + ns + "safety_buffer_lateral");
+      param.safety_buffer_longitudinal =
+        declare_parameter<double>("avoidance.target_object." + ns + "safety_buffer_longitudinal");
+      return param;
+    };
 
-  {
-    std::string ns = "avoidance.target_object.car.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::CAR, o);
-  }
-
-  {
-    std::string ns = "avoidance.target_object.truck.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::TRUCK, o);
-  }
-
-  {
-    std::string ns = "avoidance.target_object.trailer.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::TRAILER, o);
-  }
-
-  {
-    std::string ns = "avoidance.target_object.bus.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::BUS, o);
-  }
-
-  {
-    std::string ns = "avoidance.target_object.pedestrian.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::PEDESTRIAN, o);
-  }
-
-  {
-    std::string ns = "avoidance.target_object.bicycle.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::BICYCLE, o);
-  }
-
-  {
-    std::string ns = "avoidance.target_object.unknown.";
-    ObjectParameter o{};
-    o.enable = declare_parameter<bool>(ns + "enable");
-    o.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
-    o.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
-    o.safety_buffer_longitudinal = declare_parameter<double>(ns + "safety_buffer_longitudinal");
-    p.object_parameters.emplace(ObjectClassification::UNKNOWN, o);
+    p.object_parameters.emplace(ObjectClassification::MOTORCYCLE, get_object_param("motorcycle."));
+    p.object_parameters.emplace(ObjectClassification::CAR, get_object_param("car."));
+    p.object_parameters.emplace(ObjectClassification::TRUCK, get_object_param("truck."));
+    p.object_parameters.emplace(ObjectClassification::TRAILER, get_object_param("trailer."));
+    p.object_parameters.emplace(ObjectClassification::BUS, get_object_param("bus."));
+    p.object_parameters.emplace(ObjectClassification::PEDESTRIAN, get_object_param("pedestrian."));
+    p.object_parameters.emplace(ObjectClassification::BICYCLE, get_object_param("bicycle."));
+    p.object_parameters.emplace(ObjectClassification::UNKNOWN, get_object_param("unknown."));
   }
 
   // target filtering
