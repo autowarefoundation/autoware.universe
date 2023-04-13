@@ -64,6 +64,9 @@ public:
   TurnSignalInfo updateOutputTurnSignal() override;
 
 protected:
+  lanelet::ConstLanelets getLaneChangeLanes(
+    const lanelet::ConstLanelets & current_lanes) const override;
+
   bool isApprovedPathSafe(Pose & ego_pose_before_collision) const override;
 
   void calcTurnSignalInfo() override;

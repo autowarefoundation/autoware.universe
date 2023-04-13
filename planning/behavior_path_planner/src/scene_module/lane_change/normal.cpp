@@ -39,9 +39,7 @@ void NormalLaneChange::updateLaneChangeStatus(
   const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & previous_module_path)
 {
   status_.current_lanes = util::getCurrentLanesFromPath(prev_module_reference_path, planner_data_);
-  status_.lane_change_lanes = util::lane_change::getLaneChangeLanes(
-    planner_data_, status_.current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
-    direction_, type_);
+  status_.lane_change_lanes = getLaneChangeLanes(status_.current_lanes);
 
   // Find lane change path
   const auto [found_valid_path, found_safe_path] =
@@ -75,9 +73,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
     return std::make_pair(false, false);
   }
 
-  const auto lane_change_lanes = util::lane_change::getLaneChangeLanes(
-    planner_data_, current_lanes, lane_change_lane_length_, parameters_->prepare_duration,
-    direction_, type_);
+  const auto lane_change_lanes = getLaneChangeLanes(current_lanes);
 
   if (lane_change_lanes.empty()) {
     return std::make_pair(false, false);
@@ -236,6 +232,36 @@ TurnSignalInfo NormalLaneChange::updateOutputTurnSignal()
   turn_signal_info.desired_end_point = status_.lane_change_path.turn_signal_info.desired_end_point;
 
   return turn_signal_info;
+}
+
+lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
+  const lanelet::ConstLanelets & current_lanes) const
+{
+  if (current_lanes.empty()) {
+    return {};
+  }
+  // Get lane change lanes
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(current_lanes, getEgoPose(), &current_lane);
+
+  const auto minimum_lane_changing_length = planner_data_->parameters.minimum_lane_changing_length;
+
+  const auto lane_change_prepare_length =
+    std::max(getEgoVelocity() * parameters_->prepare_duration, minimum_lane_changing_length);
+
+  const auto & route_handler = getRouteHandler();
+
+  const auto current_check_lanes =
+    route_handler->getLaneletSequence(current_lane, getEgoPose(), 0.0, lane_change_prepare_length);
+
+  const auto lane_change_lane = route_handler->getLaneChangeTarget(current_check_lanes, direction_);
+
+  if (lane_change_lane) {
+    return route_handler->getLaneletSequence(
+      lane_change_lane.get(), getEgoPose(), lane_change_lane_length_, lane_change_lane_length_);
+  }
+
+  return {};
 }
 
 bool NormalLaneChange::isApprovedPathSafe(Pose & ego_pose_before_collision) const

@@ -136,11 +136,16 @@ public:
 
   const Twist & getEgoTwist() const { return planner_data_->self_odometry->twist.twist; }
 
+  std::shared_ptr<RouteHandler> getRouteHandler() const { return planner_data_->route_handler; }
+
   double getEgoVelocity() const { return getEgoTwist().linear.x; }
 
   const Direction & getDirection() const { return direction_; }
 
 protected:
+  virtual lanelet::ConstLanelets getLaneChangeLanes(
+    const lanelet::ConstLanelets & current_lanes) const = 0;
+
   virtual bool isApprovedPathSafe(Pose & ego_pose_before_collision) const = 0;
 
   virtual void calcTurnSignalInfo() = 0;

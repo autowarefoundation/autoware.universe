@@ -18,6 +18,7 @@
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
 #include "behavior_path_planner/scene_module/lane_change/normal.hpp"
+#include "behavior_path_planner/scene_module/lane_change/external_request.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
