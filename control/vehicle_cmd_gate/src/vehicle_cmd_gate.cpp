@@ -424,9 +424,6 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
-  std::cout << "[publish] @ " << this->get_clock()->now().nanoseconds() / 1e6 << "ms" << std::endl;
-  std::cout << "\taccel in = " << commands.control.longitudinal.acceleration
-            << " out = " << filtered_commands.control.longitudinal.acceleration << std::endl;
   control_cmd_pub_->publish(filtered_commands.control);
   pause_->publish();
 
