@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,25 +51,76 @@ struct GridAndStride
   int stride;
 };
 
+/**
+ * @class TrtYoloX
+ * @brief TensorRT YOLOX for faster inference
+ * @warning  Regarding quantization, we recommend use MinMax calibration due to accuracy drop with
+ * Entropy calibration.
+ */
 class TrtYoloX
 {
 public:
+  /**
+     * @brief Construct TrtYoloX.
+     * @param[in] mode_path ONNX model_path
+     * @param[in] precision precision for inference
+     * @param[in] calibration_images path for calibration files (only require for quantization)
+     * @param[in] num_class classifier-ed num
+     * @param[in] score_threshold threshold for detection
+     * @param[in] nms_threshold threshold for NMS
+     * @param[in] cache_dir unused variable
+     * @param[in] batch_config configuration for batched execution
+     * @param[in] max_workspace_size maximum workspace for building TensorRT engine
+     * @param[in] scale scaling factor for preprocess
+     * @param[in] buildConfig configuration including precision, calibration method, DLA, remaining fp16 for first layer,  remaining fp16 for last layer and profiler for builder
+     * @param[in] cuda whether use cuda gpu for preprocessing
+     */
   TrtYoloX(
-    const std::string & model_path, const std::string & precision, const int num_class = 8,
-    const float score_threshold = 0.3, const float nms_threshold = 0.7,
-    const std::string & cache_dir = "",
-    const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
-    const size_t max_workspace_size = (1 << 30));
+      const std::string & model_path, const std::string & precision, const int num_class = 8,
+      const float score_threshold = 0.3, const float nms_threshold = 0.7,
+      const std::string & cache_dir = "",
+      const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
+      const size_t max_workspace_size = (1 << 30),
+      const std::string & calibration_image_list_file = std::string(),
+      const double scale = 1.0,
+      const tensorrt_common::BuildConfig buildConfig = {"fp32", nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION, -1, false, false, false}, const bool cuda = false);
 
+  /**
+   * @brief Deconstruct TrtYoloX
+   */
+  ~TrtYoloX();
+
+  /**
+   * @brief run inference including pre-process and post-process
+   * @param[out] objects results for object detection
+   * @param[in] images batched images
+   */
   bool doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects);
 
-private:
+  /**
+   * @brief allocate buffer for preprocess on GPU
+   * @param[in] width original image width
+   * @param[in] height original image height
+   * @warning if we don't allocate buffers using it, "preprocess_gpu" allocates buffers at the beginning
+   */
+  void init_preproces_buffer(int width, int height);
+
+  /**
+   * @brief output TensorRT profiles for each layer
+   */
+  void print_profiling(void);
+
+ private:
   void preprocess(const std::vector<cv::Mat> & images);
+
+  // NOTE: Current support is only a single batch image
+  void preprocess_gpu(const std::vector<cv::Mat> & images);
+
   bool feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects);
   bool feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects);
   void decodeOutputs(float * prob, ObjectArray & objects, float scale, cv::Size & img_size) const;
   void generateGridsAndStride(
-    const int target_w, const int target_h, std::vector<int> & strides,
+    const int target_w, const int target_h, const std::vector<int> & strides,
     std::vector<GridAndStride> & grid_strides) const;
   void generateYoloxProposals(
     std::vector<GridAndStride> grid_strides, float * feat_blob, float prob_threshold,
@@ -117,6 +168,21 @@ private:
   float nms_threshold_;
 
   CudaUniquePtrHost<float[]> out_prob_h_;
+
+  // flag whether prepreceses are performed on GPU
+  bool use_gpu_preprocess_;
+  // host buffer for preprecessing on GPU
+  unsigned char* m_h_img_;
+  // device buffer for preprecessing on GPU
+  unsigned char* m_d_img_;
+  // normalization factor used for preprocessing
+  double norm_factor_;
+
+  std::vector<int> output_strides_;
+
+  int src_width_;
+  int src_height_;
+
 };
 
 }  // namespace tensorrt_yolox

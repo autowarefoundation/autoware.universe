@@ -62,6 +62,7 @@ download(label.txt 9ceadca8b72b6169ee6aabb861fe3e1e)
 # tensorrt_yolox
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/tensorrt_yolox.cpp
+  src/preprocess.cu
 )
 
 ament_target_dependencies(${PROJECT_NAME}
