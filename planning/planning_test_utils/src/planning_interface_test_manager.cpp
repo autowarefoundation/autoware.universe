@@ -290,6 +290,14 @@ void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
+void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::setPublisher(test_node_, topic_name, abnormal_path_with_lane_id_pub_);
+  normal_path_with_lane_id_pub_->publish(PathWithLaneId{});
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
+}
+
 void PlanningInterfaceTestManager::setTrajectorySubscriber(std::string topic_name)
 {
   test_utils::setSubscriber(test_node_, topic_name, traj_sub_, count_);
@@ -361,6 +369,14 @@ void PlanningInterfaceTestManager::testWithNominalPathWithLaneId(
   std::cerr << __FILE__ << ": " << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node, 5);
   std::cerr << __FILE__ << ": " << __LINE__ << std::endl;
+}
+
+// check to see if target node is dead.
+void PlanningInterfaceTestManager::testWithAbnormalPathWithLaneId(
+  rclcpp::Node::SharedPtr target_node)
+{
+  publishAbNominalPathWithLaneId(target_node, input_path_with_lane_id_name_);
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 int PlanningInterfaceTestManager::getReceivedTopicNum()

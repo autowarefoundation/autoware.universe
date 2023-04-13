@@ -86,6 +86,7 @@ if(BUILD_TESTING)
   target_link_libraries(occlusion_spot-test
     gtest_main
     behavior_velocity_planner
+  )
 
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/src/test_${PROJECT_NAME}_node_interface.cpp

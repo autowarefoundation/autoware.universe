@@ -122,6 +122,6 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test with empty path_with_lane_id
-  // test_manager->testWithAbnormalPathWithLaneId(test_target_node);
+  test_manager->testWithAbnormalPathWithLaneId(test_target_node);
   rclcpp::shutdown();
 }
