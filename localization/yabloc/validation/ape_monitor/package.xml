@@ -3,9 +3,9 @@
 <package format="3">
   <name>ape_monitor</name>
   <version>0.0.0</version>
-  <description>validation library for pcd-less localizer </description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
-  <license>Apache 2</license>
+  <description>compute absolute-pose-error</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

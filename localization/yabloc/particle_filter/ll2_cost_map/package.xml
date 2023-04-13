@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>ll2_cost_map</name>
   <version>0.1.0</version>
-  <description>The cost map library</description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
-  <license>TODO</license>
+  <description>The package converts cost map from lanelet2</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 

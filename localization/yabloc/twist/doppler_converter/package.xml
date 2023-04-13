@@ -3,8 +3,10 @@
 <package format="3">
   <name>doppler_converter</name>
   <version>0.0.0</version>
-  <description>doppler converter for pcd-less localizer </description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
+  <description>doppler converter from septentrio to ublox </description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
+
   <license>Apache 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

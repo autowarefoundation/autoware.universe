@@ -3,9 +3,9 @@
 <package format="3">
   <name>undistort</name>
   <version>0.0.0</version>
-  <description>image processing library for vector map visual localizer</description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
-  <license>Apache 2</license>
+  <description>undistort and resize</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>camera_pose_initializer</name>
-  <version>0.1.0</version>
+  <version>0.0.0</version>
   <description>The pose initializer based on semantic matching</description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
-  <license>TODO</license>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 

@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>modularized_particle_filter</name>
   <version>0.1.0</version>
   <description>The modularized_particle_filter package</description>
-  <maintainer email="todo@todo.todo">hiroki</maintainer>
-  <license>TODO</license>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>

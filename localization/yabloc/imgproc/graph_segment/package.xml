@@ -3,18 +3,16 @@
 <package format="3">
   <name>graph_segment</name>
   <version>0.0.0</version>
-  <description>image processing library for vector map visual localizer</description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
-  <license>Apache 2</license>
+  <description>graph based segmentation</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
-
   <depend>pcdless_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>

@@ -1,8 +1,8 @@
 # YabLoc
 
-**YabLoc** is camera-baed localization with vector map.
+**YabLoc** is vision-baed localization with vector map.
 
-This has been developed as a new location stack for [Autoware](https://github.com/autowarefoundation/autoware).
+This has been developed as a new localization stack for [Autoware](https://github.com/autowarefoundation/autoware).
 
 ![thumbnail](docs/yabloc_thumbnail.jpg)
 
@@ -55,7 +55,11 @@ For example, you can give a different tf_static as follows.
 
 ```shell
 ros2 launch pcdless_launch odaiba_launch.xml override_camera_frame_id:=fake_camera_optical_link
-ros2 run tf2_ros static_transform_publisher --frame-id base_link --child-frame-id fake_camera_optical_link --roll -1.57 --yaw -1.570
+ros2 run tf2_ros static_transform_publisher \
+  --frame-id base_link \
+  --child-frame-id fake_camera_optical_link \
+  --roll -1.57 \
+  --yaw -1.570
 ```
 
 ### Output
@@ -185,3 +189,7 @@ If doppler (`ublox_msgs/msg/navpvt`) is available and the vehicle moves enough f
 ### 2. When Yabloc works `standalone:=false` (through Autoware's pose_initializer)
 
 <u>UNDER CONSTRUCTION</u>
+
+## License
+
+YabLoc is licensed under Apache License 2.0.

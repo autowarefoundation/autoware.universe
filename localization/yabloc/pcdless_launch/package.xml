@@ -4,8 +4,8 @@
   <name>pcdless_launch</name>
   <version>0.0.0</version>
   <description>launch files for vector map visual localization</description>
-  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
-  <license>Apache 2</license>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
 
 
   <buildtool_depend>ament_cmake</buildtool_depend>
