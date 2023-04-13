@@ -279,14 +279,9 @@ void PlanningInterfaceTestManager::publishAbnormalRoute(
 void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  std::cerr << __FILE__ << ": " << __LINE__ << std::endl;
   test_utils::setPublisher(test_node_, topic_name, normal_path_with_lane_id_pub_);
-  std::cerr << __FILE__ << ": " << __LINE__ << std::endl;
-  std::cerr << "Publisher is publishing messages to the topic: "
-            << normal_path_with_lane_id_pub_->get_topic_name() << std::endl;
   normal_path_with_lane_id_pub_->publish(test_utils::loadPathWithLaneIdInYaml());
 
-  std::cerr << __FILE__ << ": " << __LINE__ << std::endl;
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 

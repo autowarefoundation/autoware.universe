@@ -368,46 +368,6 @@ void updateNodeOptions(
   node_options.arguments(std::vector<std::string>{arguments.begin(), arguments.end()});
 }
 
-void printPathWithLaneId(const PathWithLaneId & path_msg)
-{
-  std::cout << "Header:" << std::endl;
-  std::cout << "  stamp:" << std::endl;
-  std::cout << "    sec: " << path_msg.header.stamp.sec << std::endl;
-  std::cout << "    nanosec: " << path_msg.header.stamp.nanosec << std::endl;
-  std::cout << "  frame_id: " << path_msg.header.frame_id << std::endl;
-
-  std::cout << "Points:" << std::endl;
-  for (const auto & point_with_lane_id : path_msg.points) {
-    std::cout << "  point with lane id:" << std::endl;
-    const auto & point = point_with_lane_id.point;
-    std::cout << "    pose:" << std::endl;
-    std::cout << "      position: [" << point.pose.position.x << ", " << point.pose.position.y
-              << ", " << point.pose.position.z << "]" << std::endl;
-    std::cout << "      orientation: [" << point.pose.orientation.x << ", "
-              << point.pose.orientation.y << ", " << point.pose.orientation.z << ", "
-              << point.pose.orientation.w << "]" << std::endl;
-    std::cout << "    longitudinal_velocity_mps: " << point.longitudinal_velocity_mps << std::endl;
-    std::cout << "    lateral_velocity_mps: " << point.lateral_velocity_mps << std::endl;
-    std::cout << "    heading_rate_rps: " << point.heading_rate_rps << std::endl;
-    std::cout << "    is_final: " << (point.is_final ? "true" : "false") << std::endl;
-    std::cout << "    lane_ids: ";
-    for (const auto & lane_id : point_with_lane_id.lane_ids) {
-      std::cout << lane_id << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  std::cout << "Left bound:" << std::endl;
-  for (const auto & point : path_msg.left_bound) {
-    std::cout << "  point: [" << point.x << ", " << point.y << ", " << point.z << "]" << std::endl;
-  }
-
-  std::cout << "Right bound:" << std::endl;
-  for (const auto & point : path_msg.right_bound) {
-    std::cout << "  point: [" << point.x << ", " << point.y << ", " << point.z << "]" << std::endl;
-  }
-}
-
 PathWithLaneId loadPathWithLaneIdInYaml()
 {
   const auto planning_test_utils_dir =
@@ -467,8 +427,6 @@ PathWithLaneId loadPathWithLaneIdInYaml()
 
     path_msg.right_bound.push_back(point);
   }
-  // Output the value of path_msg before returning it
-  // printPathWithLaneId(path_msg);
   return path_msg;
 }
 
