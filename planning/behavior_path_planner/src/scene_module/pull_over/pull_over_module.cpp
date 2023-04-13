@@ -1131,6 +1131,9 @@ void PullOverModule::decelerateForTurnSignal(const Pose & stop_pose, PathWithLan
     const double distance_from_ego = calcSignedArcLengthFromEgo(path, stop_pose);
     const auto min_decel_distance = calcFeasibleDecelDistance(decel_vel);
 
+    // when current velocity alrealdy lower than decel_vel, min_decel_distance will be 0.0,
+    // and do not need to decelerate.
+    // skip next process to avoid inserting decel point at the same current position.
     constexpr double eps_distance = 0.1;
     if (!min_decel_distance || *min_decel_distance < eps_distance) {
       continue;
