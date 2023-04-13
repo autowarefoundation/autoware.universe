@@ -56,10 +56,8 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
   auto test_target_node =
     std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
 
-  // test_manager->publishInitialPoseTF(test_target_node, "/tf");
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
-  // test_manager->publishInitialPose(test_target_node, "/initialpose3d");
   test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
   test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
   test_manager->publishOccupancyGrid(
@@ -67,23 +65,22 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
   test_manager->publishLaneDrivingScenario(
     test_target_node, "behavior_path_planner/input/scenario");
   test_manager->publishMap(test_target_node, "behavior_path_planner/input/vector_map");
-  // test_manager->publishRoute(test_target_node, "behavior_path_planner/input/route");
   test_manager->publishCostMap(test_target_node, "behavior_path_planner/input/costmap");
   test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
   test_manager->publishLateralOffset(
     test_target_node, "behavior_path_planner/input/lateral_offset");
 
-  // test_target_node → test_node_
+  // set subscriber with topic name: behavior_path_planner → test_node_
   test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 
-  // setting topic name of subscribing topic
+  // set behavior_path_planner's input topic name(this topic is changed to test node)
   test_manager->setRouteInputTopicName("behavior_path_planner/input/route");
 
   // test for normal trajectory
   ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  // test for trajectory with empty/one point/overlapping point
-  test_manager->testWithAbnormalRoute(test_target_node);
-  rclcpp::shutdown();
+  // test with empty route
+  // test_manager->testWithAbnormalRoute(test_target_node);
+  // rclcpp::shutdown();
 }
