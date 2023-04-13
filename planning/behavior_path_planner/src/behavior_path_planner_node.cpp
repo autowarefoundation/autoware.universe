@@ -251,13 +251,13 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       register_and_create_publisher(manager);
     }
 
-    // if (p.config_lane_change_right.enable_module) {
-    //   const std::string module_topic = "lane_change_right";
-    //   auto manager = std::make_shared<LaneChangeModuleManager>(
-    //     this, module_topic, p.config_lane_change_right, lane_change_param_ptr_,
-    //     route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL);
-    //   register_and_create_publisher(manager);
-    // }
+    if (p.config_lane_change_right.enable_module) {
+      const std::string module_topic = "lane_change_right";
+      auto manager = std::make_shared<LaneChangeModuleManager>(
+        this, module_topic, p.config_lane_change_right, lane_change_param_ptr_,
+        route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL);
+      register_and_create_publisher(manager);
+    }
 
     // if (p.config_ext_request_lane_change_right.enable_module) {
     //   const std::string module_topic = "external_request_lane_change_right";
