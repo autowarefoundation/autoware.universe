@@ -1764,7 +1764,7 @@ BehaviorModuleOutput getReferencePath(
   constexpr double extra_margin = 10.0;
   const double backward_length = p.backward_path_length + extra_margin;
   const auto current_lanes_with_backward_margin = route_handler->getLaneletSequence(
-    current_lane, current_pose, p.forward_path_length, backward_length);
+    current_lane, current_pose, backward_length, p.forward_path_length);
   reference_path = getCenterLinePath(
     *route_handler, current_lanes_with_backward_margin, current_pose, backward_length,
     p.forward_path_length, p);
