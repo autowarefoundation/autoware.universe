@@ -105,6 +105,8 @@ double calcMinimumDistanceToStop(
 std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   const PlannerData & planner_data, const std::vector<StopObstacle> & stop_obstacles)
 {
+  stop_watch_.tic(__func__);
+
   stop_planning_debug_info_.reset();
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.ego_vel);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.ego_acc);
@@ -245,6 +247,11 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_VELOCITY, 0.0);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_ACCELERATION, 0.0);
 
+  const double calculation_time = stop_watch_.toc(__func__);
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger("ObstacleCruisePlanner::SlowDownPlanner"), enable_calculation_time_info_,
+    "  %s := %f [ms]", __func__, calculation_time);
+
   return output_traj_points;
 }
 
@@ -273,12 +280,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
   const std::vector<SlowDownObstacle> & obstacles,
   [[maybe_unused]] std::optional<VelocityLimit> & vel_limit)
 {
-  // stop_watch_.tic(__func__);
-  const auto & p = slow_down_param_;
-
+  stop_watch_.tic(__func__);
   auto slow_down_traj_points = cruise_traj_points;
 
-  const double lon_dist_from_start_to_ego = [&]() {
+  const double dist_to_ego = [&]() {
     const size_t ego_seg_idx =
       ego_nearest_param_.findSegmentIndex(slow_down_traj_points, planner_data.ego_pose);
     return motion_utils::calcSignedArcLength(
@@ -298,83 +303,111 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     }
     return std::nullopt;
   };
+  const auto add_slow_down_marker =
+    [&](const size_t obstacle_idx, const auto slow_down_traj_idx, const bool is_start) {
+      if (!slow_down_traj_idx) return;
+
+      const int id = obstacle_idx * 2 + (is_start ? 0 : 1);
+      const auto text = is_start ? "obstacle slow down start" : "obstacle slow down end";
+      const auto pose = slow_down_traj_points.at(*slow_down_traj_idx).pose;
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        pose, text, planner_data.current_time, id, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
+    };
 
   for (size_t i = 0; i < obstacles.size(); ++i) {
     const auto & obstacle = obstacles.at(i);
 
     // calculate slow down velocity
-    const double ratio = std::clamp(
-      (std::abs(obstacle.precise_lat_dist) - p.min_lat_margin) /
-        (p.max_lat_margin - p.min_lat_margin),
-      0.0, 1.0);
-    const double slow_down_vel =
-      p.min_ego_velocity + ratio * (p.max_ego_velocity - p.min_ego_velocity);
+    const double slow_down_vel = calculateSlowDownVelocity(obstacle);
 
-    const double limited_front_lon_dist = [&]() {
-      // calculate deceleration
-      const double front_lon_dist = motion_utils::calcSignedArcLength(
-                                      slow_down_traj_points, 0, obstacle.front_collision_point) -
-                                    abs_ego_offset;
-      const double front_lon_dist_from_ego = front_lon_dist - lon_dist_from_start_to_ego;
-      const double slow_down_acc =
-        -(std::pow(planner_data.ego_vel, 2) - std::pow(slow_down_vel, 2)) / 2.0 /
-        front_lon_dist_from_ego;
-      const double limited_slow_down_acc =
-        std::clamp(slow_down_acc, longitudinal_info_.min_accel, longitudinal_info_.max_accel);
-
-      // calculate lon_dist backwards from limited_slow_down_acc
-      const double limited_front_lon_dist_from_ego =
-        -(std::pow(planner_data.ego_vel, 2) - std::pow(slow_down_vel, 2)) / 2.0 /
-        limited_slow_down_acc;
-      return limited_front_lon_dist_from_ego + lon_dist_from_start_to_ego;
-    }();
-
-    // insert front slow down velocity
+    // calculate slow down start distance, and insert slow down velocity
+    const double dist_to_slow_down_start = calculateDistanceToSlowDownWithAccConstraint(
+      planner_data, slow_down_traj_points, obstacle, dist_to_ego, slow_down_vel);
     const auto slow_down_start_idx =
-      insert_slow_down_to_trajectory(limited_front_lon_dist, slow_down_vel);
+      insert_slow_down_to_trajectory(dist_to_slow_down_start, slow_down_vel);
     if (!slow_down_start_idx) {
       continue;
     }
 
-    // calculate back lon_dist
-    const double back_lon_dist =
-      motion_utils::calcSignedArcLength(slow_down_traj_points, 0, obstacle.back_collision_point);
-    const auto slow_down_end_idx = [&]() -> std::optional<size_t> {
-      if (limited_front_lon_dist < back_lon_dist) {
-        // insert back slow down velocity
-        // NOTE: slow_down_start_idx will not be wrong since inserted back point is after inserted
-        // front point.
-        return insert_slow_down_to_trajectory(back_lon_dist, slow_down_vel);
-      }
-      return std::nullopt;
-    }();
+    // calculate slow down end distance, and insert slow down velocity
+    const double dist_to_slow_down_end =
+      motion_utils::calcSignedArcLength(slow_down_traj_points, 0, obstacle.back_collision_point) -
+      abs_ego_offset;
+    // NOTE: slow_down_start_idx will not be wrong since inserted back point is after inserted
+    // front point.
+    const auto slow_down_end_idx =
+      dist_to_slow_down_start < dist_to_slow_down_end
+        ? insert_slow_down_to_trajectory(dist_to_slow_down_end, slow_down_vel)
+        : std::nullopt;
 
-    // insert slow down velocity between slow down start and end
+    // insert slow down velocity between slow start and end
     if (slow_down_end_idx) {
       for (size_t i = *slow_down_start_idx; i <= *slow_down_end_idx; ++i) {
         slow_down_traj_points.at(i).longitudinal_velocity_mps = slow_down_vel;
       }
-    } else {
-      std::cerr << "no end idx" << std::endl;
     }
 
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);
 
-    {  // virtual wall marker for stop obstacle
-      const auto marker_pose = limited_front_lon_dist < lon_dist_from_start_to_ego &&
-                                   lon_dist_from_start_to_ego < back_lon_dist
-                                 ? planner_data.ego_pose
-                                 : slow_down_traj_points.at(*slow_down_start_idx).pose;
-      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
-        marker_pose, "obstacle slow down", planner_data.current_time, i, abs_ego_offset);
-      tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
-    }
+    // virtual wall marker for stop obstacle
+    add_slow_down_marker(i, slow_down_start_idx, true);
+    add_slow_down_marker(i, slow_down_end_idx, false);
   }
 
-  // const double calculation_time = stop_watch_.toc(__func__);
-  // RCLCPP_INFO_EXPRESSION(
-  //   rclcpp::get_logger("ObstacleCruisePlanner::SlowDownPlanner"), enable_calculation_time_info_,
-  //   "  %s := %f [ms]", __func__, calculation_time);
+  const double calculation_time = stop_watch_.toc(__func__);
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger("ObstacleCruisePlanner::SlowDownPlanner"), enable_calculation_time_info_,
+    "  %s := %f [ms]", __func__, calculation_time);
 
   return slow_down_traj_points;
+}
+
+double PlannerInterface::calculateSlowDownVelocity(const SlowDownObstacle & obstacle) const
+{
+  const auto & p = slow_down_param_;
+
+  const double ratio = std::clamp(
+    (std::abs(obstacle.precise_lat_dist) - p.min_lat_margin) /
+      (p.max_lat_margin - p.min_lat_margin),
+    0.0, 1.0);
+  const double slow_down_vel =
+    p.min_ego_velocity + ratio * (p.max_ego_velocity - p.min_ego_velocity);
+
+  return slow_down_vel;
+}
+
+double PlannerInterface::calculateDistanceToSlowDownWithAccConstraint(
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
+  const SlowDownObstacle & obstacle, const double dist_to_ego, const double slow_down_vel) const
+{
+  const auto & p = slow_down_param_;
+  const double abs_ego_offset = planner_data.is_driving_forward
+                                  ? std::abs(vehicle_info_.max_longitudinal_offset_m)
+                                  : std::abs(vehicle_info_.min_longitudinal_offset_m);
+
+  // calculate distance between start of path and slow down point
+  const double dist_to_slow_down =
+    motion_utils::calcSignedArcLength(traj_points, 0, obstacle.front_collision_point) -
+    abs_ego_offset;
+  if (std::abs(planner_data.ego_vel) < std::abs(slow_down_vel)) {
+    return dist_to_slow_down;
+  }
+
+  // calculate deceleration
+  const double dist_to_slow_down_from_ego = dist_to_slow_down - dist_to_ego;
+  const double limited_slow_down_acc = [&]() {
+    if (dist_to_slow_down_from_ego <= 0.0) {
+      return p.max_deceleration;
+    }
+    const double slow_down_acc = -(std::pow(planner_data.ego_vel, 2) - std::pow(slow_down_vel, 2)) /
+                                 2.0 / dist_to_slow_down_from_ego;
+    return std::max(slow_down_acc, p.max_deceleration);
+  }();
+
+  // calculate lon_dist backwards from limited decleration
+  const double limited_dist_to_slow_down_from_ego =
+    -(std::pow(planner_data.ego_vel, 2) - std::pow(slow_down_vel, 2)) / 2.0 / limited_slow_down_acc;
+
+  return limited_dist_to_slow_down_from_ego + dist_to_ego;
 }

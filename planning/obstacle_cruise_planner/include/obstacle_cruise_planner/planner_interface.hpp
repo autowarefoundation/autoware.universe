@@ -94,6 +94,11 @@ protected:
   LongitudinalInfo longitudinal_info_;
   double min_behavior_stop_margin_;
 
+  // stop watch
+  tier4_autoware_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;
+
   // Publishers
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reasons_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
@@ -150,6 +155,11 @@ protected:
   }
 
 private:
+  double calculateSlowDownVelocity(const SlowDownObstacle & obstacle) const;
+  double calculateDistanceToSlowDownWithAccConstraint(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
+    const SlowDownObstacle & obstacle, const double dist_to_ego, const double slow_down_vel) const;
+
   struct SlowDownInfo
   {
     // NOTE: Acceleration limit is applied to lon_dist not to occur sudden brake.
@@ -165,6 +175,7 @@ private:
       min_lat_margin = node.declare_parameter<double>("slow_down.min_lat_margin");
       max_ego_velocity = node.declare_parameter<double>("slow_down.max_ego_velocity");
       min_ego_velocity = node.declare_parameter<double>("slow_down.min_ego_velocity");
+      max_deceleration = node.declare_parameter<double>("slow_down.max_deceleration");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -177,12 +188,15 @@ private:
         parameters, "slow_down.max_ego_velocity", max_ego_velocity);
       tier4_autoware_utils::updateParam<double>(
         parameters, "slow_down.min_ego_velocity", min_ego_velocity);
+      tier4_autoware_utils::updateParam<double>(
+        parameters, "slow_down.max_deceleration", max_deceleration);
     }
 
     double max_lat_margin;
     double min_lat_margin;
     double max_ego_velocity;
     double min_ego_velocity;
+    double max_deceleration;
   };
   SlowDownParam slow_down_param_;
 };

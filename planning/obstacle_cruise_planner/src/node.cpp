@@ -707,11 +707,6 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
     return std::nullopt;
   }
 
-  // For debug
-  for (const auto & cp : *collision_points) {
-    debug_data_ptr_->collision_points.push_back(cp.point);
-  }
-
   const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
   return CruiseObstacle{
     obstacle.uuid, obstacle.stamp, obstacle.pose, obstacle_projected_vel, *collision_points};
@@ -866,9 +861,6 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     return std::nullopt;
   }
 
-  // For debug
-  debug_data_ptr_->collision_points.push_back(*collision_point);
-
   const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
   return StopObstacle{
     obstacle.uuid, obstacle.stamp, obstacle.pose, obstacle_projected_vel, *collision_point};
@@ -963,7 +955,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
       back_collision_polygons = collision_polygons;
       back_seg_idx = i == 0 ? i : i - 1;
     } else {
-      if (!front_collision_polygons.empty()) {
+      if (!back_collision_polygons.empty()) {
         break;  // for efficient calculation
       }
     }
@@ -992,8 +984,8 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   }
 
   // calculate back collision point
-  double back_max_dist = std::numeric_limits<double>::min();
-  geometry_msgs::msg::Point back_collision_point;
+  double back_max_dist = -std::numeric_limits<double>::max();
+  geometry_msgs::msg::Point back_collision_point = front_collision_point;
   for (const auto & collision_poly : back_collision_polygons) {
     for (const auto & collision_point : collision_poly.outer()) {
       const auto collision_geom_point = toGeomPoint(collision_point);
@@ -1175,25 +1167,69 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
   MarkerArray debug_marker;
 
   // obstacles to cruise
+  std::vector<geometry_msgs::msg::Point> stop_collision_points;
   for (size_t i = 0; i < debug_data_ptr_->obstacles_to_cruise.size(); ++i) {
-    const auto marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.7, 0.0);
-    debug_marker.markers.push_back(marker);
+    // obstacle
+    const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
+      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.3, 0.0);
+    debug_marker.markers.push_back(obstacle_marker);
+
+    // collision points
+    for (size_t j = 0; j < debug_data_ptr_->obstacles_to_cruise.at(i).collision_points.size();
+         ++j) {
+      stop_collision_points.push_back(
+        debug_data_ptr_->obstacles_to_cruise.at(i).collision_points.at(j).point);
+    }
+  }
+  for (size_t i = 0; i < stop_collision_points.size(); ++i) {
+    auto collision_point_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", now(), "cruise_collision_points", i, Marker::SPHERE,
+      tier4_autoware_utils::createMarkerScale(0.25, 0.25, 0.25),
+      tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    collision_point_marker.pose.position = stop_collision_points.at(i);
+    debug_marker.markers.push_back(collision_point_marker);
   }
 
   // obstacles to stop
   for (size_t i = 0; i < debug_data_ptr_->obstacles_to_stop.size(); ++i) {
-    const auto marker = obstacle_cruise_utils::getObjectMarker(
+    // obstacle
+    const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
       debug_data_ptr_->obstacles_to_stop.at(i).pose, i, "obstacles_to_stop", 1.0, 0.0, 0.0);
-    debug_marker.markers.push_back(marker);
+    debug_marker.markers.push_back(obstacle_marker);
+
+    // collision point
+    auto collision_point_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", now(), "stop_collision_points", 0, Marker::SPHERE,
+      tier4_autoware_utils::createMarkerScale(0.25, 0.25, 0.25),
+      tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    collision_point_marker.pose.position = debug_data_ptr_->obstacles_to_stop.at(i).collision_point;
+    debug_marker.markers.push_back(collision_point_marker);
   }
 
   // obstacles to slow down
   for (size_t i = 0; i < debug_data_ptr_->obstacles_to_slow_down.size(); ++i) {
-    const auto marker = obstacle_cruise_utils::getObjectMarker(
+    // obstacle
+    const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
       debug_data_ptr_->obstacles_to_slow_down.at(i).pose, i, "obstacles_to_slow_down", 0.7, 0.7,
       0.0);
-    debug_marker.markers.push_back(marker);
+    debug_marker.markers.push_back(obstacle_marker);
+
+    // collision points
+    auto front_collision_point_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", now(), "slow_down_collision_points", i * 2 + 0, Marker::SPHERE,
+      tier4_autoware_utils::createMarkerScale(0.25, 0.25, 0.25),
+      tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    front_collision_point_marker.pose.position =
+      debug_data_ptr_->obstacles_to_slow_down.at(i).front_collision_point;
+    auto back_collision_point_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", now(), "slow_down_collision_points", i * 2 + 1, Marker::SPHERE,
+      tier4_autoware_utils::createMarkerScale(0.25, 0.25, 0.25),
+      tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    back_collision_point_marker.pose.position =
+      debug_data_ptr_->obstacles_to_slow_down.at(i).back_collision_point;
+
+    debug_marker.markers.push_back(front_collision_point_marker);
+    debug_marker.markers.push_back(back_collision_point_marker);
   }
 
   // intentionally ignored obstacles to cruise or stop
@@ -1223,17 +1259,6 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
       }
     }
     debug_marker.markers.push_back(marker);
-  }
-
-  {  // collision points
-    for (size_t i = 0; i < debug_data_ptr_->collision_points.size(); ++i) {
-      auto marker = tier4_autoware_utils::createDefaultMarker(
-        "map", now(), "collision_points", i, Marker::SPHERE,
-        tier4_autoware_utils::createMarkerScale(0.25, 0.25, 0.25),
-        tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
-      marker.pose.position = debug_data_ptr_->collision_points.at(i);
-      debug_marker.markers.push_back(marker);
-    }
   }
 
   debug_marker_pub_->publish(debug_marker);
