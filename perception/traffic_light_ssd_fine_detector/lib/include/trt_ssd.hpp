@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -55,17 +56,18 @@ private:
   bool verbose_{false};
 };
 
-struct Size
+struct Shape
 {
   int channel, width, height;
-  int dims() const { return channel * width * height; }
-  int area() const { return width * height; }
+  inline int size() const { return channel * width * height; }
+  inline int area() const { return width * height; }
 };
 
-struct Dims
+class Dims2 : public nvinfer1::Dims2
 {
-  int dim1, dim2;
-  int d() const { return dim1 * dim2; }
+public:
+  Dims2(const int32_t d0, const int32_t d1) : nvinfer1::Dims2(d0, d1) {}
+  inline int size() const { return d[0] * d[1]; }
 };
 
 class Net
@@ -88,16 +90,25 @@ public:
   void infer(std::vector<void *> & buffers, const int batch_size);
 
   // Get (c, h, w) size of the fixed input
-  Size getInputSize();
+  Shape getInputShape() const;
 
   // Get output dimensions by name
-  Dims getOutputDimensions(const std::string &) const;
+  std::optional<Dims2> getOutputDimensions(const std::string &) const;
 
   // Get max allowed batch size
-  int getMaxBatchSize();
+  inline int getMaxBatchSize() const
+  {
+    return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
+  }
 
   // Get max number of detections
-  int getMaxDetections();
+  inline int getMaxDetections() const { return engine_->getBindingDimensions(1).d[1]; }
+
+  // Get binding index of specified name
+  inline int getBindingIndex(const std::string & name) const
+  {
+    return engine_->getBindingIndex(name.c_str());
+  }
 
 private:
   unique_ptr<nvinfer1::IRuntime> runtime_ = nullptr;

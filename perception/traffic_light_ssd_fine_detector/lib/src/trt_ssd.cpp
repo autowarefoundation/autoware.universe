@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <trt_ssd.hpp>
+#include "trt_ssd.hpp"
+
+#include "gather_topk.hpp"
+#include "grid_priors.hpp"
 
 #include <NvOnnxConfig.h>
 #include <NvOnnxParser.h>
@@ -176,30 +179,20 @@ void Net::infer(std::vector<void *> & buffers, const int batch_size)
   cudaStreamSynchronize(stream_);
 }
 
-Size Net::getInputSize()
+Shape Net::getInputShape() const
 {
   auto dims = engine_->getBindingDimensions(0);
   return {dims.d[1], dims.d[2], dims.d[3]};
 }
 
-Dims Net::getOutputDimensions(const std::string & name) const
+std::optional<Dims2> Net::getOutputDimensions(const std::string & name) const
 {
-  auto index = engine_->getBindingIndex(name.c_str());
+  auto index = getBindingIndex(name);
   if (index == -1) {
-    return {};
+    return std::nullopt;
   }
   auto dims = engine_->getBindingDimensions(index);
-  return {dims.d[1], dims.d[2]};
-}
-
-int Net::getMaxBatchSize()
-{
-  return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
-}
-
-int Net::getMaxDetections()
-{
-  return engine_->getBindingDimensions(1).d[1];
+  return Dims2(dims.d[1], dims.d[2]);
 }
 
 }  // namespace ssd

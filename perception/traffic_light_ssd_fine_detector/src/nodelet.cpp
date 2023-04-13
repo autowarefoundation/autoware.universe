@@ -50,14 +50,9 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const std::string mode = this->declare_parameter("mode", "FP32");
   head1_name_ = this->declare_parameter("head1_name", "scores");
   head2_name_ = this->declare_parameter("head2_name", "boxes");
-
-  if (head1_name_.find("score") != std::string::npos) {
-    score_first_ = true;
-  } else if (head2_name_.find("score") != std::string::npos) {
-    score_first_ = false;
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Names of heads must contain score and box");
-  }
+  boxes_first_ = this->declare_parameter("boxes_first", false);
+  use_softmax_ = this->declare_parameter("use_softmax", false);
+  denormalize_boxes_ = this->declare_parameter("denormalize_boxes", true);
 
   fs::path engine_path{onnx_file};
   engine_path.replace_extension("engine");
@@ -89,16 +84,28 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
     net_ptr_->save(engine_path);
   }
 
-  size_ = net_ptr_->getInputSize();
+  input_shape_ = net_ptr_->getInputShape();
   head1_dims_ = net_ptr_->getOutputDimensions(head1_name_);
   head2_dims_ = net_ptr_->getOutputDimensions(head2_name_);
+  if (!head1_dims_ || !head2_dims_) {
+    RCLCPP_ERROR(
+      this->get_logger(), "Either name of head1: %s or head2: %s is invalid.", head1_name_.c_str(),
+      head2_name_.c_str());
+  }
+  const int head1_index = net_ptr_->getBindingIndex(head1_name_);
+  const int head2_index = net_ptr_->getBindingIndex(head2_name_);
+  if (head1_index != 1 || head2_index != 2) {
+    RCLCPP_ERROR(
+      get_logger(), "Output order is wrong: (%d): %s, (%d): %s", head1_index, head1_name_.c_str(),
+      head2_index, head2_name_.c_str());
+  }
 
-  if (score_first_) {
-    detection_per_class_ = head1_dims_.dim1;
-    class_num_ = head1_dims_.dim2;
+  if (boxes_first_) {
+    detection_per_class_ = head2_dims_->d[0];
+    class_num_ = head2_dims_->d[1];
   } else {
-    detection_per_class_ = head2_dims_.dim1;
-    class_num_ = head2_dims_.dim1;
+    detection_per_class_ = head1_dims_->d[0];
+    class_num_ = head1_dims_->d[1];
   }
 
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
@@ -163,9 +170,9 @@ void TrafficLightSSDFineDetectorNodelet::callback(
   const int batch_size = net_ptr_->getMaxBatchSize();
   while (num_rois != 0) {
     const int num_infer = (num_rois / batch_size > 0) ? batch_size : num_rois % batch_size;
-    auto data_d = cuda::make_unique<float[]>(num_infer * size_.dims());
-    auto head1_d = cuda::make_unique<float[]>(num_infer * head1_dims_.d());
-    auto head2_d = cuda::make_unique<float[]>(num_infer * head2_dims_.d());
+    auto data_d = cuda::make_unique<float[]>(num_infer * input_shape_.size());
+    auto head1_d = cuda::make_unique<float[]>(num_infer * head1_dims_->size());
+    auto head2_d = cuda::make_unique<float[]>(num_infer * head2_dims_->size());
     std::vector<void *> buffers{data_d.get(), head1_d.get(), head2_d.get()};
     std::vector<cv::Point> lts, rbs;
     std::vector<cv::Mat> cropped_imgs;
@@ -181,7 +188,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
 
-    std::vector<float> data(num_infer * size_.dims());
+    std::vector<float> data(num_infer * input_shape_.size());
     if (!cvMat2CnnInput(cropped_imgs, num_infer, data)) {
       RCLCPP_ERROR(this->get_logger(), "Fail to preprocess image");
       return;
@@ -198,21 +205,21 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     auto scores = std::make_unique<float[]>(num_infer * detection_per_class_ * class_num_);
     auto boxes = std::make_unique<float[]>(num_infer * detection_per_class_ * 4);
-    if (score_first_) {
-      // (scores, boxes) order
-      cudaMemcpy(
-        scores.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_.d(),
-        cudaMemcpyDeviceToHost);
-      cudaMemcpy(
-        boxes.get(), head2_d.get(), sizeof(float) * num_infer * head2_dims_.d(),
-        cudaMemcpyDeviceToHost);
-    } else {
+    if (boxes_first_) {
       // (boxes, scores) order
       cudaMemcpy(
-        boxes.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_.d(),
+        boxes.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_->size(),
         cudaMemcpyDeviceToHost);
       cudaMemcpy(
-        scores.get(), head2_d.get(), sizeof(float) * num_infer * head2_dims_.d(),
+        scores.get(), head2_d.get(), sizeof(float) * num_infer * head2_dims_->size(),
+        cudaMemcpyDeviceToHost);
+    } else {
+      // (scores, boxes) order
+      cudaMemcpy(
+        scores.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_->size(),
+        cudaMemcpyDeviceToHost);
+      cudaMemcpy(
+        boxes.get(), head2_d.get(), sizeof(float) * num_infer * head2_dims_->size(),
         cudaMemcpyDeviceToHost);
     }
     // Get Output
@@ -258,7 +265,7 @@ bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
     // cv::Mat rgb;
     // cv::cvtColor(in_imgs.at(i), rgb, CV_BGR2RGB);
     cv::Mat resized;
-    cv::resize(in_imgs.at(i), resized, cv::Size(size_.width, size_.height));
+    cv::resize(in_imgs.at(i), resized, cv::Size(input_shape_.width, input_shape_.height));
 
     cv::Mat pixels;
     resized.convertTo(pixels, CV_32FC3, 1.0 / 255, 0);
@@ -271,9 +278,10 @@ bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
       return false;
     }
 
-    for (int c = 0; c < size_.channel; ++c) {
-      for (int j = 0, hw = size_.area(); j < hw; ++j) {
-        data[i * size_.dims() + c * hw + j] = (img[size_.channel * j + 2 - c] - mean_[c]) / std_[c];
+    for (int c = 0; c < input_shape_.channel; ++c) {
+      for (int j = 0, hw = input_shape_.area(); j < hw; ++j) {
+        data[i * input_shape_.size() + c * hw + j] =
+          (img[input_shape_.channel * j + 2 - c] - mean_[c]) / std_[c];
       }
     }
   }
@@ -293,14 +301,24 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     for (int j = 0; j < detection_per_class_; ++j) {
       tlr_scores.push_back(scores[i * detection_per_class_ * class_num_ + tlr_id + j * class_num_]);
     }
+    if (use_softmax_) {
+      calculateSoftmax(tlr_scores);
+    }
     std::vector<float>::iterator iter = std::max_element(tlr_scores.begin(), tlr_scores.end());
     size_t index = std::distance(tlr_scores.begin(), iter);
     size_t box_index = i * detection_per_class_ * 4 + index * 4;
     cv::Point lt, rb;
-    lt.x = boxes[box_index] * in_imgs.at(i).cols;
-    lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
-    rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
-    rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
+    if (denormalize_boxes_) {
+      lt.x = boxes[box_index] * in_imgs.at(i).cols;
+      lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
+      rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
+      rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
+    } else {
+      lt.x = boxes[box_index];
+      lt.y = boxes[box_index + 1];
+      rb.x = boxes[box_index + 2];
+      rb.y = boxes[box_index + 3];
+    }
     fitInFrame(lt, rb, cv::Size(in_imgs.at(i).cols, in_imgs.at(i).rows));
     det.x = lt.x;
     det.y = lt.y;
@@ -311,6 +329,16 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     detections.push_back(det);
   }
   return true;
+}
+
+void TrafficLightSSDFineDetectorNodelet::calculateSoftmax(std::vector<float> & scores) const
+{
+  float exp_sum = std::accumulate(
+    scores.begin(), scores.end(), 0.0, [](float acc, float e) { return acc + exp(e); });
+
+  for (auto & e : scores) {
+    e = exp(e) / exp_sum;
+  }
 }
 
 bool TrafficLightSSDFineDetectorNodelet::rosMsg2CvMat(

@@ -48,6 +48,11 @@ def generate_launch_description():
     add_launch_arg(
         "label_file", os.path.join(ssd_fine_detector_share_dir, "data", "voc_labels_tl.txt")
     )
+    add_launch_arg("head1_name", "scores")
+    add_launch_arg("head2_name", "boxes")
+    add_launch_arg("boxes_first", "False")
+    add_launch_arg("use_softmax", "False")
+    add_launch_arg("denormalize_boxes", "True")
     add_launch_arg("fine_detector_precision", "FP32")
     add_launch_arg("score_thresh", "0.7")
     add_launch_arg("max_batch_size", "8")
@@ -197,6 +202,11 @@ def generate_launch_description():
     ssd_fine_detector_param = create_parameter_dict(
         "onnx_file",
         "label_file",
+        "head1_name",
+        "head2_name",
+        "boxes_first",
+        "use_softmax",
+        "denormalize_boxes",
         "score_thresh",
         "max_batch_size",
         "approximate_sync",

@@ -94,6 +94,9 @@ public:
   nvinfer1::IPluginV2 * deserializePlugin(
     const char * name, const void * serialData, size_t serialLength) noexcept override;
 };  // class GatherTopkCreator
+
+REGISTER_TENSORRT_PLUGIN(GatherTopkCreator);
+
 }  // namespace ssd
 
 #endif  // GATHER_TOPK_HPP_
