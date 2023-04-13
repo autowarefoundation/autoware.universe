@@ -285,17 +285,17 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
         "avoidance", create_publisher<Path>(path_reference_name_space + "avoidance", 1));
     }
 
-    // if (p.config_avoidance_by_lc.enable_module) {
-    //   auto manager = std::make_shared<AvoidanceByLCModuleManager>(
-    //     this, "avoidance_by_lane_change", p.config_avoidance_by_lc, avoidance_by_lc_param_ptr_);
-    //   planner_manager_->registerSceneModuleManager(manager);
-    //   path_candidate_publishers_.emplace(
-    //     "avoidance_by_lane_change",
-    //     create_publisher<Path>(path_candidate_name_space + "avoidance_by_lane_change", 1));
-    //   path_reference_publishers_.emplace(
-    //     "avoidance_by_lane_change",
-    //     create_publisher<Path>(path_reference_name_space + "avoidance_by_lane_change", 1));
-    // }
+    if (p.config_avoidance_by_lc.enable_module) {
+      auto manager = std::make_shared<AvoidanceByLCModuleManager>(
+        this, "avoidance_by_lane_change", p.config_avoidance_by_lc, avoidance_by_lc_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+      path_candidate_publishers_.emplace(
+        "avoidance_by_lane_change",
+        create_publisher<Path>(path_candidate_name_space + "avoidance_by_lane_change", 1));
+      path_reference_publishers_.emplace(
+        "avoidance_by_lane_change",
+        create_publisher<Path>(path_reference_name_space + "avoidance_by_lane_change", 1));
+    }
   }
 #endif
 
