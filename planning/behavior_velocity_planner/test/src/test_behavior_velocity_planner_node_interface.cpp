@@ -46,7 +46,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
     node_options,
     {planning_test_utils_dir + "/config/test_common.param.yaml",
      planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-     planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
      motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
      motion_velocity_smoother_dir + "/config/Analytical.param.yaml",
      behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
@@ -68,54 +68,53 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
     std::make_shared<behavior_velocity_planner::BehaviorVelocityPlannerNode>(node_options);
 
   // publish necessary topics from test_manager
+  test_manager->publishTF(test_target_node, "/tf");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner/input/accel");
+  test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner_node/input/accel");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishPredictedObjects(
-    test_target_node, "behavior_velocity_planner/input/dynamic_objects");
+    test_target_node, "behavior_velocity_planner_node/input/dynamic_objects");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishPointCloud(
-    test_target_node, "behavior_velocity_planner/input/no_ground_pointcloud");
+    test_target_node, "behavior_velocity_planner_node/input/no_ground_pointcloud");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishOdometry(
-    test_target_node, "behavior_velocity_planner/input/vehicle_odometry");
+    test_target_node, "behavior_velocity_planner_node/input/vehicle_odometry");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner/input/accel");
+  test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner_node/input/accel");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->publishMap(test_target_node, "behavior_velocity_planner/input/vector_map");
+  test_manager->publishMap(test_target_node, "behavior_velocity_planner_node/input/vector_map");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishTrafficSignals(
-    test_target_node, "behavior_velocity_planner/input/traffic_signals");
+    test_target_node, "behavior_velocity_planner_node/input/traffic_signals");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishExternalCrosswalkStates(
-    test_target_node, "behavior_velocity_planner/input/external_crosswalk_states");
+    test_target_node, "behavior_velocity_planner_node/input/external_crosswalk_states");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishExternalIntersectionStates(
-    test_target_node, "behavior_velocity_planner/input/external_intersection_states");
+    test_target_node, "behavior_velocity_planner_node/input/external_intersection_states");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishMaxVelocity(
-    test_target_node, "behavior_velocity_planner/input/external_velocity_limit_mps");
+    test_target_node, "behavior_velocity_planner_node/input/external_velocity_limit_mps");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishExternalTrafficSignals(
-    test_target_node, "behavior_velocity_planner/input/external_traffic_signals");
+    test_target_node, "behavior_velocity_planner_node/input/external_traffic_signals");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishVirtualTrafficLightState(
-    test_target_node, "behavior_velocity_planner/input/virtual_traffic_light_states");
-  std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->publishTrafficSignals(
-    test_target_node, "behavior_velocity_planner/input/traffic_signals");
+    test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
   test_manager->publishOccupancyGrid(
-    test_target_node, "behavior_velocity_planner/input/occupancy_grid");
+    test_target_node, "behavior_velocity_planner_node/input/occupancy_grid");
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
 
   // set subscriber with topic name: behavior_velocity_planner → test_node_
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->setPathSubscriber("behavior_velocity_planner/output/path");
+  test_manager->setPathSubscriber("behavior_velocity_planner_node/output/path");
 
   // set behavior_velocity_planner node's input topic name(this topic is changed to test node)
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
-  test_manager->setPathWithLaneIdTopicName("/behavior_velocity_planner/input/path_with_lane_id");
+  test_manager->setPathWithLaneIdTopicName(
+    "behavior_velocity_planner_node/input/path_with_lane_id");
 
   // test with nominal path_with_lane_id
   std::cerr << "print debug " << __FILE__ << __LINE__ << std::endl;
