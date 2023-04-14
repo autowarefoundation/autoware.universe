@@ -50,26 +50,8 @@ struct PolygonPoint
   };
 };
 
-bool isOnRight(const ObjectData & obj);
-
-bool isTargetObjectType(
-  const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters);
-
-double calcShiftLength(
-  const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
-
-bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length);
-
-size_t findPathIndexFromArclength(
-  const std::vector<double> & path_arclength_arr, const double target_arc);
-
-double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
-
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj);
-
-double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
 
 void setEndData(
   AvoidLine & al, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
@@ -79,27 +61,11 @@ void setStartData(
   AvoidLine & al, const double start_shift_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist);
 
-Polygon2d createEnvelopePolygon(
-  const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
-
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const std::shared_ptr<const PlannerData> planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters, const ObjectDataArray & objects,
   const double vehicle_length, const bool enable_bound_clipping, const bool disable_path_update);
-
-double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
-
-bool isCentroidWithinLanelets(
-  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
-
-lanelet::ConstLanelets getTargetLanelets(
-  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
-  const double left_offset, const double right_offset);
-
-lanelet::ConstLanelets getShiftSideLanes(
-  const std::shared_ptr<const PlannerData> & planner_data, const PathShifter & path_shifter,
-  const double forward_distance, const double backward_distance);
 
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
@@ -126,8 +92,42 @@ void filterTargetObjects(
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
+bool isOnRight(const ObjectData & obj);
+
+bool isTargetObjectType(
+  const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters);
+
+bool isCentroidWithinLanelets(
+  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
+
+bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length);
+
+size_t findPathIndexFromArclength(
+  const std::vector<double> & path_arclength_arr, const double target_arc);
+
+double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
+
+double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
+
+double calcShiftLength(
+  const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
+
 double getLateralMarginFromVelocity(
   const double velocity, const std::shared_ptr<AvoidanceParameters> & parameters);
+
+double calcEnvelopeOverhangDistance(
+  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
+
+lanelet::ConstLanelets getTargetLanelets(
+  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
+  const double left_offset, const double right_offset);
+
+lanelet::ConstLanelets getShiftSideLanes(
+  const std::shared_ptr<const PlannerData> & planner_data, const PathShifter & path_shifter,
+  const double forward_distance, const double backward_distance);
+
+Polygon2d createEnvelopePolygon(
+  const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
 
 ShiftedPath toShiftedPath(const PathWithLaneId & path);
 }  // namespace behavior_path_planner
