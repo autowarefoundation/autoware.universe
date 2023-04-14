@@ -54,7 +54,7 @@ test_nearest_search.param.yaml trajectory_follower_node.param.yaml"
     TEST_PARAM_FILENAMES "test_controller_info_pure_pursuit.param.yaml"
     TARGET_INFIX "pure_pursuit"
   )
-  
+
 endif()
 
 ament_auto_package(

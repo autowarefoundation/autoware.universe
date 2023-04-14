@@ -46,7 +46,9 @@ def resolve_node(context, *args, **kwargs):
             "test",
             file_name,
         )
-        for file_name in shlex.split(LaunchConfiguration("arg_test_param_filenames").perform(context))
+        for file_name in shlex.split(
+            LaunchConfiguration("arg_test_param_filenames").perform(context)
+        )
     ]
 
     parameters.extend(parameters_test)
@@ -73,7 +75,9 @@ def generate_test_description():
         "arg_param_filenames", default_value=["test.param.yaml"], description="Test param file"
     )
     arg_test_param_filenames = DeclareLaunchArgument(
-        "arg_test_param_filenames", default_value=["test.param.yaml"], description="Test only param file"
+        "arg_test_param_filenames",
+        default_value=["test.param.yaml"],
+        description="Test only param file",
     )
     arg_executable_arguments = DeclareLaunchArgument(
         "arg_executable_arguments", default_value=[""], description="Tested executable arguments"
