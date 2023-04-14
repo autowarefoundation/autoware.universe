@@ -289,4 +289,68 @@ bool isSafeInFreeSpaceCollisionCheck(
   }
   return true;
 }
+
+double getRSSLongitudinalDistance(
+  const double v_ego, const double v_obj, const bool is_front_object, const double accel_for_rss,
+  const double idling_time)
+{
+  const auto opposite_lane_vehicle = v_obj < 0.0;
+
+  /**
+   * object and ego already pass each other.
+   * =======================================
+   *                          Ego-->
+   * ---------------------------------------
+   *       <--Obj
+   * =======================================
+   */
+  if (!is_front_object && opposite_lane_vehicle) {
+    return 0.0;
+  }
+
+  /**
+   * object drive opposite direction.
+   * =======================================
+   *       Ego-->
+   * ---------------------------------------
+   *                          <--Obj
+   * =======================================
+   */
+  if (is_front_object && opposite_lane_vehicle) {
+    return v_ego * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
+           std::pow(v_ego + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) +
+           std::abs(v_obj) * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
+           std::pow(v_obj + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss);
+  }
+
+  /**
+   * object is in front of ego, and drive same direction.
+   * =======================================
+   *       Ego-->
+   * ---------------------------------------
+   *                          Obj-->
+   * =======================================
+   */
+  if (is_front_object && !opposite_lane_vehicle) {
+    return v_ego * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
+           std::pow(v_ego + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) -
+           std::pow(v_obj, 2.0) / (2.0 * accel_for_rss);
+  }
+
+  /**
+   * object is behind ego, and drive same direction.
+   * =======================================
+   *                          Ego-->
+   * ---------------------------------------
+   *       Obj-->
+   * =======================================
+   */
+  if (!is_front_object && !opposite_lane_vehicle) {
+    return v_obj * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
+           std::pow(v_obj + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) -
+           std::pow(v_ego, 2.0) / (2.0 * accel_for_rss);
+  }
+
+  return 0.0;
+}
 }  // namespace behavior_path_planner::util::safety_check

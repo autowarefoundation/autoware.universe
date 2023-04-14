@@ -128,6 +128,9 @@ void filterTargetObjects(
   ObjectDataArray & objects, AvoidancePlanningData & data, DebugData & debug,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
+
+double getLateralMarginFromVelocity(
+  const double velocity, const std::shared_ptr<AvoidanceParameters> & parameters);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTIL_HPP_

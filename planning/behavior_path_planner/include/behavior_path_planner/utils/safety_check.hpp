@@ -126,6 +126,13 @@ bool isSafeInFreeSpaceCollisionCheck(
   const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
   const double rear_decel, CollisionCheckDebug & debug);
 
+/**
+ * @brief Calculate rss longitudinal margin from given parameters.
+ * @return rss longitudinal distance.
+ */
+double getRSSLongitudinalDistance(
+  const double v_ego, const double v_obj, const bool is_front_object, const double accel_for_rss,
+  const double idling_time);
 }  // namespace behavior_path_planner::util::safety_check
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECK_HPP_

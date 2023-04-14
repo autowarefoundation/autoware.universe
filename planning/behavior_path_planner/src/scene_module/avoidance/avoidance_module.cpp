@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/safety_check.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -2158,7 +2159,8 @@ bool AvoidanceModule::isEnoughMargin(
 
   const auto shift_length = calcLateralDeviation(p_ref, getPoint(p_ego));
   const auto lateral_distance = std::abs(object.overhang_dist - shift_length) - 0.5 * vehicle_width;
-  const auto lateral_margin = getLateralMarginFromVelocity(std::abs(v_ego_lon - v_obj_lon));
+  const auto lateral_margin =
+    getLateralMarginFromVelocity(std::abs(v_ego_lon - v_obj_lon), parameters_);
 
   if (lateral_distance > lateral_margin * hysteresis_factor) {
     return true;
@@ -2166,8 +2168,9 @@ bool AvoidanceModule::isEnoughMargin(
 
   const auto lon_deviation = calcLongitudinalDeviation(getPose(p_ego), p_obj.get().position);
   const auto is_front_object = lon_deviation > 0.0;
-  const auto longitudinal_margin =
-    getRSSLongitudinalDistance(v_ego_lon, v_obj_lon, is_front_object);
+  const auto longitudinal_margin = util::safety_check::getRSSLongitudinalDistance(
+    v_ego_lon, v_obj_lon, is_front_object, parameters_->safety_check_accel_for_rss,
+    parameters_->safety_check_idling_time);
   const auto vehicle_offset = is_front_object ? base_link2front : base_link2rear;
   const auto longitudinal_distance =
     std::abs(lon_deviation) - vehicle_offset - 0.5 * object.object.shape.dimensions.x;
@@ -2189,103 +2192,6 @@ bool AvoidanceModule::isEnoughMargin(
   }
 
   return false;
-}
-
-double AvoidanceModule::getLateralMarginFromVelocity(const double velocity) const
-{
-  const auto & p = parameters_;
-
-  if (p->col_size < 2 || p->col_size * 2 != p->target_velocity_matrix.size()) {
-    throw std::logic_error("invalid matrix col size.");
-  }
-
-  if (velocity < p->target_velocity_matrix.front()) {
-    return p->target_velocity_matrix.at(p->col_size);
-  }
-
-  if (velocity > p->target_velocity_matrix.at(p->col_size - 1)) {
-    return p->target_velocity_matrix.back();
-  }
-
-  for (size_t i = 1; i < p->col_size; ++i) {
-    if (velocity < p->target_velocity_matrix.at(i)) {
-      const auto v1 = p->target_velocity_matrix.at(i - 1);
-      const auto v2 = p->target_velocity_matrix.at(i);
-      const auto m1 = p->target_velocity_matrix.at(i - 1 + p->col_size);
-      const auto m2 = p->target_velocity_matrix.at(i + p->col_size);
-
-      const auto v_clamp = std::clamp(velocity, v1, v2);
-      return m1 + (m2 - m1) * (v_clamp - v1) / (v2 - v1);
-    }
-  }
-
-  return p->target_velocity_matrix.back();
-}
-
-double AvoidanceModule::getRSSLongitudinalDistance(
-  const double v_ego, const double v_obj, const bool is_front_object) const
-{
-  const auto & accel_for_rss = parameters_->safety_check_accel_for_rss;
-  const auto & idling_time = parameters_->safety_check_idling_time;
-
-  const auto opposite_lane_vehicle = v_obj < 0.0;
-
-  /**
-   * object and ego already pass each other.
-   * =======================================
-   *                          Ego-->
-   * ---------------------------------------
-   *       <--Obj
-   * =======================================
-   */
-  if (!is_front_object && opposite_lane_vehicle) {
-    return 0.0;
-  }
-
-  /**
-   * object drive opposite direction.
-   * =======================================
-   *       Ego-->
-   * ---------------------------------------
-   *                          <--Obj
-   * =======================================
-   */
-  if (is_front_object && opposite_lane_vehicle) {
-    return v_ego * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
-           std::pow(v_ego + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) +
-           std::abs(v_obj) * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
-           std::pow(v_obj + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss);
-  }
-
-  /**
-   * object is in front of ego, and drive same direction.
-   * =======================================
-   *       Ego-->
-   * ---------------------------------------
-   *                          Obj-->
-   * =======================================
-   */
-  if (is_front_object && !opposite_lane_vehicle) {
-    return v_ego * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
-           std::pow(v_ego + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) -
-           std::pow(v_obj, 2.0) / (2.0 * accel_for_rss);
-  }
-
-  /**
-   * object is behind ego, and drive same direction.
-   * =======================================
-   *                          Ego-->
-   * ---------------------------------------
-   *       Obj-->
-   * =======================================
-   */
-  if (!is_front_object && !opposite_lane_vehicle) {
-    return v_obj * idling_time + 0.5 * accel_for_rss * std::pow(idling_time, 2.0) +
-           std::pow(v_obj + accel_for_rss * idling_time, 2.0) / (2.0 * accel_for_rss) -
-           std::pow(v_ego, 2.0) / (2.0 * accel_for_rss);
-  }
-
-  return 0.0;
 }
 
 lanelet::ConstLanelets AvoidanceModule::getAdjacentLane(

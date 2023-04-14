@@ -1185,4 +1185,36 @@ void filterTargetObjects(
     data.target_objects.push_back(o);
   }
 }
+
+double getLateralMarginFromVelocity(
+  const double velocity, const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto & p = parameters;
+
+  if (p->col_size < 2 || p->col_size * 2 != p->target_velocity_matrix.size()) {
+    throw std::logic_error("invalid matrix col size.");
+  }
+
+  if (velocity < p->target_velocity_matrix.front()) {
+    return p->target_velocity_matrix.at(p->col_size);
+  }
+
+  if (velocity > p->target_velocity_matrix.at(p->col_size - 1)) {
+    return p->target_velocity_matrix.back();
+  }
+
+  for (size_t i = 1; i < p->col_size; ++i) {
+    if (velocity < p->target_velocity_matrix.at(i)) {
+      const auto v1 = p->target_velocity_matrix.at(i - 1);
+      const auto v2 = p->target_velocity_matrix.at(i);
+      const auto m1 = p->target_velocity_matrix.at(i - 1 + p->col_size);
+      const auto m2 = p->target_velocity_matrix.at(i + p->col_size);
+
+      const auto v_clamp = std::clamp(velocity, v1, v2);
+      return m1 + (m2 - m1) * (v_clamp - v1) / (v2 - v1);
+    }
+  }
+
+  return p->target_velocity_matrix.back();
+}
 }  // namespace behavior_path_planner

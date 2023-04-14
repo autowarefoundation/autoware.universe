@@ -277,11 +277,6 @@ private:
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
 
-  double getLateralMarginFromVelocity(const double velocity) const;
-
-  double getRSSLongitudinalDistance(
-    const double v_ego, const double v_obj, const bool is_front_object) const;
-
   ObjectDataArray getAdjacentLaneObjects(const lanelet::ConstLanelets & adjacent_lanes) const;
 
   // ========= plan ======================
