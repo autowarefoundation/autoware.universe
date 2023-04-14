@@ -8,6 +8,7 @@
   />
   <arg name="use_pointcloud_container" default="true" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
+  <arg name="fusion_config" default="$(find-pkg-share probabilistic_occupancy_grid_map)/config/fusion_map.param.yaml"/>
 
   <!-- occupancy grid map in each sensor module -->
   <group>
@@ -64,6 +65,7 @@
     <push-ros-namespace namespace="occupancy_grid_map_fusion"/>
     <node name="grid_map_fusion_node" exec="grid_map_fusion_node" pkg="probabilistic_occupancy_grid_map" output="screen">
       <remap from="~/output/occupancy_grid_map" to="/perception/occupancy_grid_map/fusion/map"/>
+      <param name="fusion_method" value="overwrite"/>
     </node>
   </group>
 </launch>

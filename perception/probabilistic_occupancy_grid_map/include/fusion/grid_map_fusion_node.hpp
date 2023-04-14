@@ -15,6 +15,7 @@
 #ifndef FUSION__GRID_MAP_FUSION_NODE_HPP_
 #define FUSION__GRID_MAP_FUSION_NODE_HPP_
 
+#include "fusion/single_frame_fusion_policy.hpp"
 #include "pointcloud_based_occupancy_grid_map/occupancy_grid_map.hpp"
 #include "updater/occupancy_grid_map_binary_bayes_filter_updater.hpp"
 #include "updater/occupancy_grid_map_updater_interface.hpp"
@@ -63,11 +64,14 @@ private:
     const std::string & frame_id, const builtin_interfaces::msg::Time & stamp,
     const float & robot_pose_z, const nav2_costmap_2d::Costmap2D & occupancy_grid_map);
 
-  nav2_costmap_2d::Costmap2D OccupancyGridMapToCostmap2D(
+  nav2_costmap_2d::Costmap2D OccupancyGridMsgToCostmap2D(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid_map);
-  // void MsgToOccupancyGridMap(
-  //   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg, OccupancyGridMap &
-  //   occupancy_grid_map);
+  OccupancyGridMap OccupancyGridMsgToGridMap(
+    const nav_msgs::msg::OccupancyGrid & occupancy_grid_map);
+  OccupancyGridMap SingleFrameOccupancyFusion(
+    std::vector<OccupancyGridMap> & occupancy_grid_maps,
+    const builtin_interfaces::msg::Time latest_stamp);
+
   void updateGridMap(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg);
 
   void setPeriod(const int64_t new_period);
@@ -76,13 +80,15 @@ private:
 
 private:
   // Publisher and Subscribers
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr occupancy_grid_map_pub_;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr fused_map_pub_;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr single_frame_pub_;
   std::vector<rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr> grid_map_subs_;
 
   // Topics manager
   std::size_t num_input_topics_{1};
   std::vector<std::string> input_topics_;
   std::vector<double> input_offset_sec_;
+  std::vector<double> input_topic_weights_;
 
   // TF
   tf2_ros::Buffer tf_buffer_;
@@ -110,6 +116,7 @@ private:
   float fusion_map_length_x_;
   float fusion_map_length_y_;
   float fusion_map_resolution_;
+  fusion_policy::FusionMethod fusion_method_;
 };
 
 }  // namespace grid_map_fusion

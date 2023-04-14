@@ -74,6 +74,18 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   fusion_map_length_y_ = declare_parameter("fusion_map_length_y", 100.0);
   fusion_map_resolution_ = declare_parameter("fusion_map_resolution", 0.5);
 
+  // set fusion method
+  std::string fusion_method_str = declare_parameter("fusion_method", "overwrite");
+  if (fusion_method_str == "overwrite") {
+    fusion_method_ = fusion_policy::FusionMethod::OVERWRITE;
+  } else if (fusion_method_str == "log-odds") {
+    fusion_method_ = fusion_policy::FusionMethod::LOG_ODDS;
+  } else if (fusion_method_str == "dempster-shafer") {
+    fusion_method_ = fusion_policy::FusionMethod::DEMPSTER_SHAFER;
+  } else {
+    throw std::runtime_error("The fusion method is not supported.");
+  }
+
   // sub grid_map
   grid_map_subs_.resize(num_input_topics_);
   for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
@@ -84,8 +96,10 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   }
 
   // pub grid_map
-  occupancy_grid_map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
+  fused_map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
     "~/output/occupancy_grid_map", rclcpp::QoS{1}.best_effort());
+  single_frame_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
+    "~/debug/single_frame_map", rclcpp::QoS{1}.best_effort());
 
   // updater
   occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
@@ -225,27 +239,37 @@ void GridMapFusionNode::timer_callback()
  */
 void GridMapFusionNode::publish()
 {
-  builtin_interfaces::msg::Time latest_stamp;
-  double height;
-  bool grid_map_dict_is_empty = true;
+  builtin_interfaces::msg::Time latest_stamp = get_clock()->now();
+  double height = 0.0;
 
   // merge available gridmap
+  std::vector<OccupancyGridMap> subscribed_maps;
   for (const auto & e : gridmap_dict_) {
     if (e.second != nullptr) {
-      updateGridMap(e.second);
+      subscribed_maps.push_back(GridMapFusionNode::OccupancyGridMsgToGridMap(*e.second));
       latest_stamp = e.second->header.stamp;
       height = e.second->info.origin.position.z;
-      grid_map_dict_is_empty = false;
     }
   }
 
-  if (grid_map_dict_is_empty) {
+  // return if empty
+  if (subscribed_maps.empty()) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "No grid map is subscribed. Please check the topic name and the topic type.");
     return;
   }
 
+  // fusion map
+  // single frame gridmap fusion
+  auto fused_map = SingleFrameOccupancyFusion(subscribed_maps, latest_stamp);
+  // multi frame gridmap fusion
+  occupancy_grid_map_updater_ptr_->update(fused_map);
+
   // publish
-  occupancy_grid_map_pub_->publish(
+  fused_map_pub_->publish(
     OccupancyGridMapToMsgPtr(map_frame_, latest_stamp, height, *occupancy_grid_map_updater_ptr_));
+  single_frame_pub_->publish(OccupancyGridMapToMsgPtr(map_frame_, latest_stamp, height, fused_map));
 
   // copy 2nd temp to temp buffer
   gridmap_dict_ = gridmap_dict_tmp_;
@@ -254,19 +278,70 @@ void GridMapFusionNode::publish()
   });
 }
 
+OccupancyGridMap GridMapFusionNode::SingleFrameOccupancyFusion(
+  std::vector<OccupancyGridMap> & occupancy_grid_maps,
+  const builtin_interfaces::msg::Time latest_stamp)
+{
+  // if only single map
+  if (occupancy_grid_maps.size() == 1) {
+    return occupancy_grid_maps[0];
+  }
+
+  // get map to gridmap_origin_frame_ transform
+  Pose gridmap_origin{};
+  try {
+    gridmap_origin = utils::getPose(latest_stamp, tf_buffer_, gridmap_origin_frame_, map_frame_);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN_STREAM(get_logger(), ex.what());
+    return occupancy_grid_maps[0];
+  }
+
+  // init fused map with calculated origin
+  OccupancyGridMap fused_map(
+    occupancy_grid_maps[0].getSizeInCellsX(), occupancy_grid_maps[0].getSizeInCellsY(),
+    occupancy_grid_maps[0].getResolution());
+  fused_map.updateOrigin(
+    gridmap_origin.position.x - fused_map.getSizeInMetersX() / 2,
+    gridmap_origin.position.y - fused_map.getSizeInMetersY() / 2);
+
+  // fix origin of each map
+  for (auto & map : occupancy_grid_maps) {
+    map.updateOrigin(fused_map.getOriginX(), fused_map.getOriginY());
+  }
+
+  // assume map is same size and resolutions
+  for (unsigned int x = 0; x < fused_map.getSizeInCellsX(); x++) {
+    for (unsigned int y = 0; y < fused_map.getSizeInCellsY(); y++) {
+      // get cost of each map
+      std::vector<unsigned char> costs;
+      for (auto & map : occupancy_grid_maps) {
+        costs.push_back(map.getCost(x, y));
+      }
+
+      // set fusion policy
+      auto fused_cost = fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_);
+
+      // set max cost to fused map
+      fused_map.setCost(x, y, fused_cost);
+    }
+  }
+
+  return fused_map;
+}
+
 void GridMapFusionNode::updateGridMap(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg)
 {
   // get updater map origin
 
   // origin is set to current updater map
-  auto map_for_update = OccupancyGridMapToCostmap2D(*occupancy_grid_msg);
+  auto map_for_update = OccupancyGridMsgToCostmap2D(*occupancy_grid_msg);
 
   // update
   occupancy_grid_map_updater_ptr_->update(map_for_update);
 }
 
-nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMapToCostmap2D(
+nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMsgToCostmap2D(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid_map)
 {
   nav2_costmap_2d::Costmap2D costmap2d(
@@ -283,6 +358,25 @@ nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMapToCostmap2D(
   }
 
   return costmap2d;
+}
+
+OccupancyGridMap GridMapFusionNode::OccupancyGridMsgToGridMap(
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid_map)
+{
+  OccupancyGridMap gridmap(
+    occupancy_grid_map.info.width, occupancy_grid_map.info.height,
+    occupancy_grid_map.info.resolution);
+  gridmap.updateOrigin(
+    occupancy_grid_map.info.origin.position.x, occupancy_grid_map.info.origin.position.y);
+
+  for (unsigned int i = 0; i < occupancy_grid_map.info.width; i++) {
+    for (unsigned int j = 0; j < occupancy_grid_map.info.height; j++) {
+      const unsigned int index = i + j * occupancy_grid_map.info.width;
+      gridmap.setCost(
+        i, j, occupancy_cost_value::inverse_cost_translation_table[occupancy_grid_map.data[index]]);
+    }
+  }
+  return gridmap;
 }
 
 nav_msgs::msg::OccupancyGrid::UniquePtr GridMapFusionNode::OccupancyGridMapToMsgPtr(
