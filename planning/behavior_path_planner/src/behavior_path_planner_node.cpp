@@ -436,7 +436,7 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
 {
   SideShiftParameters p{};
 
-  std::string ns = "side_shift.";
+  const std::string ns = "side_shift.";
 
   p.min_distance_to_start_shifting =
     declare_parameter<double>(ns + "min_distance_to_start_shifting");
@@ -451,6 +451,7 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
     declare_parameter<double>(ns + "drivable_area_left_bound_offset");
   p.drivable_area_types_to_skip =
     declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
+  p.publish_debug_marker = declare_parameter<bool>(ns + "publish_debug_marker");
 
   return p;
 }

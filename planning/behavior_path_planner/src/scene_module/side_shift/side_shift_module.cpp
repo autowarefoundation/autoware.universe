@@ -63,7 +63,8 @@ SideShiftModule::SideShiftModule(
 void SideShiftModule::initVariables()
 {
   reference_path_ = PathWithLaneId();
-  debug_data_.path_shifter = nullptr;
+  debug_data_.path_shifter.reset();
+  debug_marker_.markers.clear();
   start_pose_reset_request_ = false;
   requested_lateral_offset_ = 0.0;
   inserted_lateral_offset_ = 0.0;
@@ -292,8 +293,13 @@ BehaviorModuleOutput SideShiftModule::plan()
   prev_output_ = shifted_path;
   path_reference_ = getPreviousModuleOutput().reference_path;
 
-  *debug_data_.path_shifter = std::make_shared<PathShifter>(path_shifter_);
-  setDebugMarkersVisualization();
+  debug_data_.path_shifter = std::make_shared<PathShifter>(path_shifter_);
+
+  if (parameters_->publish_debug_marker) {
+    setDebugMarkersVisualization();
+  } else {
+    debug_marker_.markers.clear();
+  }
 
   return output;
 }
