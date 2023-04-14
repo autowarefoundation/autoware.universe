@@ -54,6 +54,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
   bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
   bool enable_differential_load = declare_parameter<bool>("enable_differential_load");
+  bool enable_selected_load = declare_parameter<bool>("enable_selected_load");
 
   if (enable_whole_load) {
     std::string publisher_name = "output/pointcloud_map";
@@ -83,6 +84,10 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       differential_map_loader_ =
         std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict);
     }
+
+    if (enable_selected_load) {
+      selected_map_loader_ = std::make_unique<SelectedMapLoaderModule>(this, pcd_metadata_dict);
+    }
   }
 }
 
@@ -96,7 +101,7 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
     }
 
     pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
-    pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict_, pcd_paths);
+    pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict, pcd_paths);
     RCLCPP_INFO_STREAM(get_logger(), "Loaded PCD metadata: " << pcd_metadata_path);
   } else {
     // An exception when using a single file PCD map so that the users do not have to provide
