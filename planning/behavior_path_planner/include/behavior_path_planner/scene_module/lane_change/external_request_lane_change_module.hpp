@@ -125,6 +125,7 @@ protected:
   bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
   bool isAbortState() const;
+  std_msgs::msg::Header getRouteHeader() const;
 
   // debug
   mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;

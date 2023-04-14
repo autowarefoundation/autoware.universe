@@ -189,6 +189,7 @@ private:
   bool isAbortState() const;
 
   // getter
+  std_msgs::msg::Header getRouteHeader() const;
   void resetPathIfAbort();
 
   // debug

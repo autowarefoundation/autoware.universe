@@ -338,9 +338,12 @@ protected:
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
 
-  Point getEgoPosition() const { return planner_data_->self_odometry->pose.pose.position; }
-  Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-  Twist getEgoTwist() const { planner_data_->self_odometry->twist.twist; }
+  geometry_msgs::msg::Point getEgoPosition() const
+  {
+    return planner_data_->self_odometry->pose.pose.position;
+  }
+  geometry_msgs::msg::Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
+  geometry_msgs::msg::Twist getEgoTwist() const { planner_data_->self_odometry->twist.twist; }
   double getEgoSpeed() const
   {
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
