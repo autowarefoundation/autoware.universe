@@ -125,7 +125,7 @@ std::optional<size_t> getDuplicatedPointIdx(
   return std::nullopt;
 }
 
-[[maybe_unused]] static std::optional<size_t> generateStaticPassJudgeLine(
+std::optional<size_t> generateStaticPassJudgeLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double ip_interval,

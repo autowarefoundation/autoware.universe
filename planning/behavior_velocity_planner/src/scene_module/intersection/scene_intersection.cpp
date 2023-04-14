@@ -187,29 +187,24 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
   const size_t closest_idx = closest_idx_opt.get();
 
-  /*
-  if (stop_lines_idx_opt) {
-    const auto stop_line_idx = stop_lines_idx_opt.value().default_stop_line;
-    const auto pass_judge_line_idx = stop_lines_idx_opt.value().pass_judge_line;
+  const auto static_pass_judge_line_opt =
+    first_detection_area
+      ? util::generateStaticPassJudgeLine(
+          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_)
+      : std::nullopt;
 
+  if (static_pass_judge_line_opt) {
+    const auto pass_judge_line_idx = static_pass_judge_line_opt.value();
     const bool is_over_pass_judge_line =
       util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
-
-    // if ego is over the pass judge line before collision is detected, keep going
-    const double current_velocity = planner_data_->current_velocity->twist.linear.x;
-    if (
-      is_over_pass_judge_line && is_go_out_ &&
-      current_velocity > planner_param_.collision_detection.keep_detection_vel_thr) {
+    // if ego is over the pass judge line and not stopped
+    const bool is_vehicle_stopped = planner_data_->isVehicleStopped();
+    if (is_over_pass_judge_line && is_go_out_ && !is_vehicle_stopped) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
-      setSafe(true);
-      setDistance(motion_utils::calcSignedArcLength(
-        path->points, planner_data_->current_odometry->pose.position,
-        path->points.at(stop_line_idx).point.pose.position));
       return true;
     }
   }
-  */
 
   /* get dynamic object */
   const auto objects_ptr = planner_data_->predicted_objects;
