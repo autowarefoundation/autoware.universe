@@ -109,14 +109,12 @@ public:
     // for occlusion detectionas
     double occlusion_detection_area_length;  //! used for occlusion detection
     double occlusion_creep_velocity;         //! the creep velocity to occlusion limit stop lline
-    double extra_occlusion_margin;
     int occlusion_free_space_max;
     int occlusion_occupied_min;
     bool occlusion_do_dp;
     double before_creep_stop_time;
     double min_vehicle_brake_for_rss;
     double max_vehicle_velocity_for_rss;
-    double max_entry_for_occlusion_clerance;
   };
 
   enum OcclusionState {
@@ -322,8 +320,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double interval,
     const std::pair<size_t, size_t> & lane_interval,
     const std::vector<util::DetectionLaneDivision> & lane_divisions,
-    const double occlusion_dist_thr, const double baselink2front, const double vehicle_width,
-    const double extra_occlusion_margin, const double max_entry_for_occlusion_clerance) const;
+    const double occlusion_dist_thr) const;
 
   // Debug
   mutable DebugData debug_data_;

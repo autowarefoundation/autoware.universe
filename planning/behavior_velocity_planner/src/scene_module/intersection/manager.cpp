@@ -79,9 +79,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".collision_detection.keep_detection_vel_thr");
   // for occlusion detection
   ip.occlusion_detection_area_length =
-    node.declare_parameter(ns + ".occlusion_detection_area_length", 200.0);
-  ip.occlusion_creep_velocity = node.declare_parameter(ns + ".occlusion_creep_velocity", 0.833);
-  ip.extra_occlusion_margin = node.declare_parameter<double>(ns + ".extra_occlusion_margin");
+    node.declare_parameter<double>(ns + ".occlusion_detection_area_length");
+  ip.occlusion_creep_velocity = node.declare_parameter<double>(ns + ".occlusion_creep_velocity");
   ip.occlusion_free_space_max = node.declare_parameter<int>(ns + ".occlusion.free_space_max");
   ip.occlusion_occupied_min = node.declare_parameter<int>(ns + ".occlusion.occupied_min");
   ip.occlusion_do_dp = node.declare_parameter<bool>(ns + ".occlusion.do_dp");
@@ -89,8 +88,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.min_vehicle_brake_for_rss = node.declare_parameter<double>(ns + ".min_vehicle_brake_for_rss");
   ip.max_vehicle_velocity_for_rss =
     node.declare_parameter<double>(ns + ".max_vehicle_velocity_for_rss");
-  ip.max_entry_for_occlusion_clerance =
-    node.declare_parameter<double>(ns + ".max_entry_for_occlusion_clerance");
 }
 
 void IntersectionModuleManager::launchNewModules(

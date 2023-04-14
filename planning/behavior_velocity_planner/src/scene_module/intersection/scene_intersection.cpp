@@ -206,7 +206,14 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     }
   }
 
+  /* considering lane change in the intersection, these lanelets are generated from the path */
+  const auto ego_lane_with_next_lane =
+    getEgoLaneWithNextLane(*path, planner_data_->vehicle_info_.vehicle_width_m);
+  const auto ego_lane = ego_lane_with_next_lane.front();
+  debug_data_.ego_lane = ego_lane.polygon3d();
+
   /* get dynamic object */
+  // TODO(Mamoru Sobue): filter objects on detection area here
   const auto objects_ptr = planner_data_->predicted_objects;
 
   /* considering lane change in the intersection, these lanelets are generated from the path */
@@ -245,7 +252,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     ego_lane_with_next_lane, objects_ptr, closest_idx, time_delay);
 
   /* check occlusion on detection lane */
-  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto first_inside_detection_idx_ip_opt =
     first_detection_area ? util::getFirstPointInsidePolygon(
                              path_ip, lane_interval_ip_opt.value(), first_detection_area.value())
@@ -263,8 +269,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       ? findNearestOcclusionProjectedPosition(
           *planner_data_->occupancy_grid, occlusion_attention_area, first_detection_area.value(),
           path_ip, interval, lane_detection_interval_ip, detection_divisions_.value(),
-          occlusion_dist_thr, baselink2front, planner_data_->vehicle_info_.vehicle_width_m,
-          planner_param_.extra_occlusion_margin, planner_param_.max_entry_for_occlusion_clerance)
+          occlusion_dist_thr)
       : std::nullopt;
   const std::optional<size_t> occlusion_stop_line_idx_opt =
     occlusion_stop_line_idx_ip_opt
@@ -401,6 +406,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
 
   /* make decision */
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   if (!occlusion_activated_) {
     is_go_out_ = false;
     /* in case of creeping */
@@ -957,9 +963,8 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double interval,
   const std::pair<size_t, size_t> & lane_interval,
-  const std::vector<util::DetectionLaneDivision> & lane_divisions, const double occlusion_dist_thr,
-  const double baselink2front, const double vehicle_width, const double extra_occlusion_margin,
-  const double max_entry_for_occlusion_clerance) const
+  const std::vector<util::DetectionLaneDivision> & lane_divisions,
+  const double occlusion_dist_thr) const
 {
   const auto first_detection_area_idx =
     util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
@@ -967,6 +972,8 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
     return std::nullopt;
   }
 
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  const double vehicle_width = planner_data_->vehicle_info_.vehicle_width_m;
   const int width = occ_grid.info.width;
   const int height = occ_grid.info.height;
   const double reso = occ_grid.info.resolution;
@@ -1204,14 +1211,10 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   const double tan_diff_ang =
     std::fabs((tan_wall_ang - tan_projection_ang) / (1 + tan_wall_ang * tan_projection_ang));
   const double footprint_offset = vehicle_width / 2.0 * tan_diff_ang;
-  const size_t baselink_ind = static_cast<size_t>(std::max<int>(
-    0, min_cost_projection_ind.value() - std::ceil((baselink2front + footprint_offset) / interval) +
-         std::ceil(extra_occlusion_margin / interval)));
   const size_t baselink_max_entry_ind = static_cast<size_t>(std::max<int>(
-    0, first_detection_area_idx.value() + std::ceil(max_entry_for_occlusion_clerance / interval) -
-         std::ceil((baselink2front + footprint_offset) / interval) +
-         std::ceil(extra_occlusion_margin / interval)));
-  return std::make_optional<size_t>(std::min<size_t>(baselink_ind, baselink_max_entry_ind));
+    0,
+    first_detection_area_idx.value() - std::ceil((baselink2front + footprint_offset) / interval)));
+  return std::make_optional<size_t>(baselink_max_entry_ind);
 }
 
 }  // namespace behavior_velocity_planner
