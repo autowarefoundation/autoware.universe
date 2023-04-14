@@ -236,6 +236,11 @@ void PlanningInterfaceTestManager::setPathWithLaneIdTopicName(std::string topic_
   input_path_with_lane_id_name_ = topic_name;
 }
 
+void PlanningInterfaceTestManager::setPathTopicName(std::string topic_name)
+{
+  input_path_name_ = topic_name;
+}
+
 void PlanningInterfaceTestManager::publishNominalTrajectory(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
@@ -290,6 +295,14 @@ void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
 {
   test_utils::setPublisher(test_node_, topic_name, abnormal_path_with_lane_id_pub_);
   normal_path_with_lane_id_pub_->publish(PathWithLaneId{});
+  test_utils::spinSomeNodes(test_node_, target_node, 5);
+}
+
+void PlanningInterfaceTestManager::PublishNominalPath(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::setPublisher(test_node_, topic_name, normal_path_pub_);
+  normal_path_pub_->publish(Path{});
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 

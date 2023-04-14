@@ -128,6 +128,7 @@ public:
   void setRouteInputTopicName(std::string topic_name);
   void setPathInputTopicName(std::string topic_name);
   void setPathWithLaneIdTopicName(std::string topic_name);
+  void setPathTopicName(std::string topic_name);
 
   void setTrajectorySubscriber(std::string topic_name);
   void setScenarioSubscriber(std::string topic_name);
@@ -145,6 +146,9 @@ public:
 
   void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
+
+  void testWithNominalPath(rclcpp::Node::SharedPtr target_node);
+  void testWithAbnormalPath(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();
 
@@ -198,6 +202,10 @@ private:
   rclcpp::Publisher<PathWithLaneId>::SharedPtr normal_path_with_lane_id_pub_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr abnormal_path_with_lane_id_pub_;
 
+  // Publisher for testing(Path)
+  rclcpp::Publisher<Path>::SharedPtr normal_path_pub_;
+  rclcpp::Publisher<Path>::SharedPtr abnormal_path_pub_;
+
   std::string input_trajectory_name_;
   std::string input_parking_trajectory_name_;
   std::string input_lane_driving_trajectory_name_;
@@ -224,6 +232,9 @@ private:
   void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+
+  void publishNominalPath(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishAbnormalPath(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void set_initial_state_with_transform(Odometry::SharedPtr & odometry);
   TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);

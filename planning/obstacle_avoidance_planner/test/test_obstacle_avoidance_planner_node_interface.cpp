@@ -46,23 +46,18 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "obstacle_avoidance_planner/input/odometry");
-  test_manager->publishPointCloud(test_target_node, "obstacle_avoidance_planner/input/vector_map");
-  test_manager->publishPredictedObjects(
-    test_target_node, "obstacle_avoidance_planner/input/objects");
-  test_manager->publishAcceleration(
-    test_target_node, "obstacle_avoidance_planner/input/acceleration");
 
   // set subscriber with topic name: obstacle_stop_planner → test_node_
   test_manager->setTrajectorySubscriber("obstacle_avoidance_planner/output/path");
 
   // set obstacle_stop_planner's input topic name(this topic is changed to test node)
-  test_manager->setTrajectoryInputTopicName("obstacle_avoidance_planner/input/path");
+  test_manager->setTrajectoryInputPathName("obstacle_avoidance_planner/input/trajectory");
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithNominalPath(test_target_node));
 
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
-  test_manager->testWithAbnormalTrajectory(test_target_node);
+  test_manager->testWithAbnormalPath(test_target_node);
 }
