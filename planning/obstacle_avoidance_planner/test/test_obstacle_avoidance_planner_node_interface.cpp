@@ -48,10 +48,10 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   test_manager->publishOdometry(test_target_node, "obstacle_avoidance_planner/input/odometry");
 
   // set subscriber with topic name: obstacle_stop_planner → test_node_
-  test_manager->setTrajectorySubscriber("obstacle_avoidance_planner/output/path");
+  test_manager->setTrajectorySubscriber("obstacle_avoidance_planner/output/trajectory");
 
   // set obstacle_stop_planner's input topic name(this topic is changed to test node)
-  test_manager->setTrajectoryInputPathName("obstacle_avoidance_planner/input/trajectory");
+  test_manager->setPathInputTopicName("obstacle_avoidance_planner/input/path");
 
   // test for normal trajectory
   ASSERT_NO_THROW(test_manager->testWithNominalPath(test_target_node));
