@@ -122,6 +122,16 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
     gridmap_dict_[input_topics_[i]] = nullptr;
     gridmap_dict_tmp_[input_topics_[i]] = nullptr;
   }
+
+  // debug tools
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ptr_ = std::make_unique<DebugPublisher>(this, "grid_map_fusion");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
 }
 
 /**
@@ -239,6 +249,7 @@ void GridMapFusionNode::timer_callback()
  */
 void GridMapFusionNode::publish()
 {
+  stop_watch_ptr_->toc("processing_time", true);
   builtin_interfaces::msg::Time latest_stamp = get_clock()->now();
   double height = 0.0;
 
@@ -276,6 +287,16 @@ void GridMapFusionNode::publish()
   std::for_each(std::begin(gridmap_dict_tmp_), std::end(gridmap_dict_tmp_), [](auto & e) {
     e.second = nullptr;
   });
+
+  // add processing time for debug
+  if (debug_publisher_ptr_ && stop_watch_ptr_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 OccupancyGridMap GridMapFusionNode::SingleFrameOccupancyFusion(
