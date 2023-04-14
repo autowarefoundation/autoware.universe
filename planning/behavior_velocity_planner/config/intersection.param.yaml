@@ -23,5 +23,5 @@
       enable_front_car_decel_prediction: false # By default this feature is disabled
       stop_overshoot_margin: 0.5 # [m] overshoot margin for stuck, collision detection
 
-    merge_from_private_road:
+    merge_from_private:
       stop_duration_sec: 1.0
