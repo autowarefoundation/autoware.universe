@@ -94,6 +94,9 @@ void PlanningIntefaceTestManager::publishAbnormalTrajectory(
   test_utils::spinSomeNodes(test_node_, target_node);
 }
 
-int PlanningIntefaceTestManager::getReceivedTopicNum() { return count_; }
+int PlanningIntefaceTestManager::getReceivedTopicNum()
+{
+  return count_;
+}
 
 }  // namespace planning_test_manager
