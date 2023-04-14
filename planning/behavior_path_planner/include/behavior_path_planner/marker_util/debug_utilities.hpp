@@ -14,7 +14,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__MARKER_UTIL__DEBUG_UTILITIES_HPP_
 #define BEHAVIOR_PATH_PLANNER__MARKER_UTIL__DEBUG_UTILITIES_HPP_
 
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -80,7 +80,10 @@ constexpr std::array<std::array<float, 3>, 10> colorsList()
           magenta, medium_orchid, light_pink, light_yellow, light_steel_blue};
 }
 
-inline int64_t bitShift(int64_t original_id) { return original_id << (sizeof(int32_t) * 8 / 2); }
+inline int64_t bitShift(int64_t original_id)
+{
+  return original_id << (sizeof(int32_t) * 8 / 2);
+}
 
 MarkerArray createPoseMarkerArray(
   const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,

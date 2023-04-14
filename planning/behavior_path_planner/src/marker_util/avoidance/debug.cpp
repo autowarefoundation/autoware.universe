@@ -14,8 +14,8 @@
 
 #include "behavior_path_planner/marker_util/avoidance/debug.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <tf2/utils.h>
 
@@ -26,7 +26,6 @@ namespace marker_utils::avoidance_marker
 {
 
 using behavior_path_planner::AvoidLine;
-using behavior_path_planner::util::shiftPose;
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
@@ -249,15 +248,14 @@ MarkerArray createAvoidLineMarkerArray(
       auto marker_s = basic_marker;
       marker_s.id = id++;
       marker_s.pose = sl.start;
-      // shiftPose(&marker_s.pose, current_shift);  // old
-      shiftPose(&marker_s.pose, sl.start_shift_length);
+      marker_s.pose = calcOffsetPose(marker_s.pose, 0.0, sl.start_shift_length, 0.0);
       msg.markers.push_back(marker_s);
 
       // end point
       auto marker_e = basic_marker;
       marker_e.id = id++;
       marker_e.pose = sl.end;
-      shiftPose(&marker_e.pose, sl.end_shift_length);
+      marker_e.pose = calcOffsetPose(marker_e.pose, 0.0, sl.end_shift_length, 0.0);
       msg.markers.push_back(marker_e);
 
       // start-to-end line
@@ -337,7 +335,45 @@ MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::st
   return msg;
 }
 
-MarkerArray createTargetObjectsMarkerArray(
+MarkerArray createAvoidableTargetObjectsMarkerArray(
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
+{
+  MarkerArray msg;
+  msg.markers.reserve(objects.size() * 3);
+
+  appendMarkerArray(
+    createObjectsCubeMarkerArray(
+      objects, ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
+      createMarkerColor(1.0, 1.0, 0.0, 0.8)),
+    &msg);
+
+  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
+
+  {
+    for (const auto & object : objects) {
+      const auto pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
+
+      {
+        auto marker = createDefaultMarker(
+          "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns + "_envelope_polygon", 0L,
+          Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0),
+          createMarkerColor(1.0, 1.0, 1.0, 0.999));
+
+        for (const auto & p : object.envelope_poly.outer()) {
+          marker.points.push_back(createPoint(p.x(), p.y(), pos.z));
+        }
+
+        marker.points.push_back(marker.points.front());
+        marker.id = uuidToInt32(object.object.object_id);
+        msg.markers.push_back(marker);
+      }
+    }
+  }
+
+  return msg;
+}
+
+MarkerArray createUnavoidableTargetObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
   MarkerArray msg;

@@ -40,15 +40,27 @@ class SceneModuleManagerInterface
 {
 public:
   SceneModuleManagerInterface(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
+    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
+    const std::vector<std::string> & rtc_types)
   : node_(node),
     clock_(*node->get_clock()),
     logger_(node->get_logger().get_child(name)),
     name_(name),
     max_module_num_(config.max_module_size),
     priority_(config.priority),
-    enable_simultaneous_execution_(config.enable_simultaneous_execution)
+    enable_simultaneous_execution_as_approved_module_(
+      config.enable_simultaneous_execution_as_approved_module),
+    enable_simultaneous_execution_as_candidate_module_(
+      config.enable_simultaneous_execution_as_candidate_module)
   {
+    for (const auto & rtc_type : rtc_types) {
+      const auto snake_case_name = util::convertToSnakeCase(name);
+      const auto rtc_interface_name =
+        rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
+      rtc_interface_ptr_map_.emplace(
+        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
+    }
+
     pub_debug_marker_ = node->create_publisher<MarkerArray>("~/debug/" + name, 20);
   }
 
@@ -84,14 +96,18 @@ public:
     registered_modules_.push_back(module_ptr);
   }
 
-  void deleteModules(const SceneModulePtr & module_ptr)
+  void deleteModules(SceneModulePtr & module_ptr)
   {
     module_ptr->onExit();
     module_ptr->publishRTCStatus();
 
     const auto itr = std::find(registered_modules_.begin(), registered_modules_.end(), module_ptr);
 
-    registered_modules_.erase(itr);
+    if (itr != registered_modules_.end()) {
+      registered_modules_.erase(itr);
+    }
+
+    module_ptr.reset();
 
     pub_debug_marker_->publish(MarkerArray{});
   }
@@ -128,7 +144,15 @@ public:
 
   bool canLaunchNewModule() const { return registered_modules_.size() < max_module_num_; }
 
-  bool isSimultaneousExecutable() const { return enable_simultaneous_execution_; }
+  bool isSimultaneousExecutableAsApprovedModule() const
+  {
+    return enable_simultaneous_execution_as_approved_module_;
+  }
+
+  bool isSimultaneousExecutableAsCandidateModule() const
+  {
+    return enable_simultaneous_execution_as_candidate_module_;
+  }
 
   void setData(const std::shared_ptr<PlannerData> & planner_data) { planner_data_ = planner_data; }
 
@@ -174,12 +198,16 @@ protected:
 
   SceneModulePtr idling_module_;
 
+  std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
+
 private:
   size_t max_module_num_;
 
   size_t priority_;
 
-  bool enable_simultaneous_execution_{false};
+  bool enable_simultaneous_execution_as_approved_module_{false};
+
+  bool enable_simultaneous_execution_as_candidate_module_{false};
 };
 
 }  // namespace behavior_path_planner

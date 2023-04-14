@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__MARKER_UTIL__AVOIDANCE__DEBUG_HPP_
 
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
@@ -58,7 +58,11 @@ MarkerArray createAvoidLineMarkerArray(
 
 MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::string && ns);
 
-MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
+MarkerArray createAvoidableTargetObjectsMarkerArray(
+  const ObjectDataArray & objects, std::string && ns);
+
+MarkerArray createUnavoidableTargetObjectsMarkerArray(
+  const ObjectDataArray & objects, std::string && ns);
 
 MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
 

@@ -23,14 +23,16 @@
 
 namespace behavior_path_planner
 {
-
+using route_handler::Direction;
 LaneChangeModuleManager::LaneChangeModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-  std::shared_ptr<LaneChangeParameters> parameters)
-: SceneModuleManagerInterface(node, name, config), parameters_{std::move(parameters)}
+  std::shared_ptr<LaneChangeParameters> parameters, const Direction direction,
+  const LaneChangeModuleType type)
+: SceneModuleManagerInterface(node, name, config, {""}),
+  parameters_{std::move(parameters)},
+  direction_{direction},
+  type_{type}
 {
-  rtc_interface_left_ = std::make_shared<RTCInterface>(node, name + "_left");
-  rtc_interface_right_ = std::make_shared<RTCInterface>(node, name + "_right");
 }
 
 void LaneChangeModuleManager::updateModuleParams(
@@ -40,7 +42,7 @@ void LaneChangeModuleManager::updateModuleParams(
 
   [[maybe_unused]] auto p = parameters_;
 
-  [[maybe_unused]] std::string ns = "lane_change.";
+  [[maybe_unused]] const std::string ns = name_ + ".";
   // updateParam<bool>(parameters, ns + ..., ...);
 
   std::for_each(registered_modules_.begin(), registered_modules_.end(), [&p](const auto & m) {

@@ -2,6 +2,8 @@
   <!-- Parameter files -->
   <arg name="fault_injection_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
+  <arg name="pose_initializer_param_path"/>
+  <arg name="pose_initializer_common_param_path"/>
 
   <arg name="launch_dummy_perception"/>
   <arg name="launch_dummy_vehicle"/>
@@ -37,11 +39,14 @@
   <group unless="$(var scenario_simulation)">
     <!-- Occupancy Grid -->
     <push-ros-namespace namespace="occupancy_grid_map"/>
-    <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/laserscan_based_occupancy_grid_map.launch.py">
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/probabilistic_occupancy_grid_map.launch.xml">
       <arg name="input_obstacle_pointcloud" value="true"/>
       <arg name="input_obstacle_and_raw_pointcloud" value="false"/>
       <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
       <arg name="output" value="/perception/occupancy_grid_map/map"/>
+      <arg name="method" value="laserscan_based_occupancy_grid_map"/>
+      <arg name="map_origin" value="base_link"/>
+      <arg name="scan_origin" value="base_link"/>
     </include>
   </group>
 
@@ -98,17 +103,15 @@
   <!-- Dummy localization -->
   <group if="$(var launch_dummy_localization)">
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-      <arg name="gnss_enabled" value="false"/>
-      <arg name="ndt_enabled" value="false"/>
-      <arg name="ekf_enabled" value="false"/>
-      <arg name="stop_check_enabled" value="false"/>
+      <arg name="common_config_file" value="$(var pose_initializer_common_param_path)"/>
+      <arg name="config_file" value="$(var pose_initializer_param_path)"/>
     </include>
   </group>
 
   <!-- Diagnostic Converter -->
   <group if="$(var launch_diagnostic_converter)">
     <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen">
-      <param name="diagnostic_topics" value="[/diagnostic/planning_evaluator/metrics]"/>
+      <param name="diagnostic_topics" value="[/diagnostic/planning_evaluator/metrics, /diagnostics_err]"/>
     </node>
   </group>
 

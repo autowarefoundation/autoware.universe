@@ -14,9 +14,9 @@
 
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/util/side_shift/util.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/side_shift/util.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -31,19 +31,29 @@ using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
 using motion_utils::findNearestSegmentIndex;
 using tier4_autoware_utils::calcDistance2d;
+using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::getPoint;
 
+#ifdef USE_OLD_ARCHITECTURE
 SideShiftModule::SideShiftModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<SideShiftParameters> & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})}, parameters_{parameters}
 {
   using std::placeholders::_1;
-
-#ifdef USE_OLD_ARCHITECTURE
   lateral_offset_subscriber_ = node.create_subscription<LateralOffset>(
     "~/input/lateral_offset", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
+#else
+SideShiftModule::SideShiftModule(
+  const std::string & name, rclcpp::Node & node,
+  const std::shared_ptr<SideShiftParameters> & parameters,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{parameters}
+{
 #endif
+
+  // TODO(murooka) The following is temporary implementation for new architecture's refactoring
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "side_shift");
 
   // If lateral offset is subscribed, it approves side shift module automatically
   clearWaitingApproval();
@@ -64,20 +74,16 @@ void SideShiftModule::initVariables()
   resetPathReference();
 }
 
-void SideShiftModule::onEntry()
+void SideShiftModule::processOnEntry()
 {
   // write me... (Don't initialize variables, otherwise lateral offset gets zero on entry.)
   start_pose_reset_request_ = false;
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::IDLE;
-#endif
 }
 
-void SideShiftModule::onExit()
+void SideShiftModule::processOnExit()
 {
   // write me...
   initVariables();
-  current_state_ = ModuleStatus::SUCCESS;
 }
 
 void SideShiftModule::setParameters(const std::shared_ptr<SideShiftParameters> & parameters)
@@ -432,7 +438,7 @@ Pose SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
 
   Pose unshifted_pose = ego_pose;
 
-  util::shiftPose(&unshifted_pose, -prev_path.shift_length.at(closest));
+  unshifted_pose = calcOffsetPose(unshifted_pose, 0.0, -prev_path.shift_length.at(closest), 0.0);
   unshifted_pose.orientation = ego_pose.orientation;
 
   return unshifted_pose;
