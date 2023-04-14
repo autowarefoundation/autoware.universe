@@ -39,7 +39,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
 
   node_options.arguments(
     {"--ros-args", "--params-file",
-     motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
+     motion_velocity_smoother_dir + "/config/test_default_motion_velocity_smoother.param.yaml",
      "--params-file", motion_velocity_smoother_dir + "/config/default_common.param.yaml",
      "--params-file", motion_velocity_smoother_dir + "/config/JerkFiltered.param.yaml"});
 

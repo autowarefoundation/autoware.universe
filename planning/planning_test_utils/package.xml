@@ -33,6 +33,7 @@
   <depend>tier4_planning_msgs</depend>
   <depend>tier4_v2x_msgs</depend>
   <depend>unique_identifier_msgs</depend>
+  <depend>yaml_cpp_vendor</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
