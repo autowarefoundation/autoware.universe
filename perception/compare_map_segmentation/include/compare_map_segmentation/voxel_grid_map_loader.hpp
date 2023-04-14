@@ -180,9 +180,9 @@ private:
   /** \brief Array size in y axis */
   int map_grids_y_;
 
-  /** \brief x-cooridate of map grid which should belong to array[0][0] */
+  /** \brief x-coordinate of map grid which should belong to array[0][0] */
   float origin_x_;
-  /** \brief y-cooridate of map grid which should belong to array[0][0] */
+  /** \brief y-coordinate of map grid which should belong to array[0][0] */
   float origin_y_;
 
 public:
