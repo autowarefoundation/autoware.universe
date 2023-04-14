@@ -36,8 +36,8 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
     ament_index_cpp::get_package_share_directory("obstacle_velocity_limiter");
 
   node_options.arguments(
-    {"--ros-args", planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-     "--params-file",
+    {"--ros-args", "--params-file",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
      obstacle_velocity_limiter_dir + "/config/default_obstacle_velocity_limiter.param.yaml"});
 
   auto test_target_node =
