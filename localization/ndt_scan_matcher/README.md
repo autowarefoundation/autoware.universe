@@ -228,9 +228,9 @@ Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample
 | single file |           true            |            true            |  at once (standard)  |
 | single file |           true            |           false            |  **does NOT work**   |
 | single file |           false           |         true/false         |  at once (standard)  |
-|  splitted   |           true            |            true            |     dynamically      |
-|  splitted   |           true            |           false            |  **does NOT work**   |
-|  splitted   |           false           |         true/false         |  at once (standard)  |
+| split files |           true            |            true            |     dynamically      |
+| split files |           true            |           false            |  **does NOT work**   |
+| split files |           false           |         true/false         |  at once (standard)  |
 
 ## Scan matching score based on de-grounded LiDAR scan
 
