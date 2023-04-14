@@ -186,16 +186,15 @@ bool isSafeInLaneletCollisionCheck(
 
   const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
   const auto object_speed = object_twist.linear.x;
-  const auto ignore_check_at_time = [&](const double current_time) {
-    return (
-      (current_time < prepare_duration) &&
-      (object_speed < prepare_phase_ignore_target_speed_thresh));
-  };
+
+  if(object_twist.linear.x < prepare_phase_ignore_target_speed_thresh) {
+    return true;
+  }
 
   for (size_t i = 0; i < check_duration.size(); ++i) {
     const auto current_time = check_duration.at(i);
 
-    if (ignore_check_at_time(current_time)) {
+    if (current_time < prepare_duration) {
       continue;
     }
 
@@ -248,16 +247,15 @@ bool isSafeInFreeSpaceCollisionCheck(
 {
   const auto obj_polygon = tier4_autoware_utils::toPolygon2d(target_object);
   const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
-  const auto object_speed = object_twist.linear.x;
-  const auto ignore_check_at_time = [&](const double current_time) {
-    return (
-      (current_time < prepare_duration) &&
-      (object_speed < prepare_phase_ignore_target_speed_thresh));
-  };
+
+  if(object_twist.linear.x < prepare_phase_ignore_target_speed_thresh) {
+    return true;
+  }
+
   for (size_t i = 0; i < check_duration.size(); ++i) {
     const auto current_time = check_duration.at(i);
 
-    if (ignore_check_at_time(current_time)) {
+    if (current_time < prepare_duration) {
       continue;
     }
     const auto & ego_info = interpolated_ego.at(i);
