@@ -5,6 +5,7 @@
   <version>0.1.0</version>
   <description>ROS2 node for testing interface of the nodes in planning module</description>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
+  <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
   <license>Apache License 2.0</license>
 
   <author email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</author>
@@ -32,6 +33,8 @@
   <depend>tier4_planning_msgs</depend>
   <depend>tier4_v2x_msgs</depend>
   <depend>unique_identifier_msgs</depend>
+  <depend>yaml_cpp_vendor</depend>
+
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
