@@ -77,17 +77,20 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".collision_detection.collision_end_margin_time");
   ip.collision_detection.keep_detection_vel_thr =
     node.declare_parameter<double>(ns + ".collision_detection.keep_detection_vel_thr");
-  // for occlusion detection
-  ip.occlusion_detection_area_length =
-    node.declare_parameter<double>(ns + ".occlusion_detection_area_length");
-  ip.occlusion_creep_velocity = node.declare_parameter<double>(ns + ".occlusion_creep_velocity");
-  ip.occlusion_free_space_max = node.declare_parameter<int>(ns + ".occlusion.free_space_max");
-  ip.occlusion_occupied_min = node.declare_parameter<int>(ns + ".occlusion.occupied_min");
-  ip.occlusion_do_dp = node.declare_parameter<bool>(ns + ".occlusion.do_dp");
-  ip.before_creep_stop_time = node.declare_parameter<double>(ns + ".before_creep_stop_time");
-  ip.min_vehicle_brake_for_rss = node.declare_parameter<double>(ns + ".min_vehicle_brake_for_rss");
-  ip.max_vehicle_velocity_for_rss =
-    node.declare_parameter<double>(ns + ".max_vehicle_velocity_for_rss");
+
+  ip.occlusion.occlusion_detection_area_length =
+    node.declare_parameter<double>(ns + ".occlusion.occlusion_detection_area_length");
+  ip.occlusion.occlusion_creep_velocity =
+    node.declare_parameter<double>(ns + ".occlusion.occlusion_creep_velocity");
+  ip.occlusion.free_space_max = node.declare_parameter<int>(ns + ".occlusion.free_space_max");
+  ip.occlusion.occupied_min = node.declare_parameter<int>(ns + ".occlusion.occupied_min");
+  ip.occlusion.do_dp = node.declare_parameter<bool>(ns + ".occlusion.do_dp");
+  ip.occlusion.before_creep_stop_time =
+    node.declare_parameter<double>(ns + ".occlusion.before_creep_stop_time");
+  ip.occlusion.min_vehicle_brake_for_rss =
+    node.declare_parameter<double>(ns + ".occlusion.min_vehicle_brake_for_rss");
+  ip.occlusion.max_vehicle_velocity_for_rss =
+    node.declare_parameter<double>(ns + ".occlusion.max_vehicle_velocity_for_rss");
 }
 
 void IntersectionModuleManager::launchNewModules(

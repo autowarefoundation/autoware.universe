@@ -106,15 +106,17 @@ public:
       double collision_end_margin_time;       //! end margin time to check collision
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
     } collision_detection;
-    // for occlusion detectionas
-    double occlusion_detection_area_length;  //! used for occlusion detection
-    double occlusion_creep_velocity;         //! the creep velocity to occlusion limit stop lline
-    int occlusion_free_space_max;
-    int occlusion_occupied_min;
-    bool occlusion_do_dp;
-    double before_creep_stop_time;
-    double min_vehicle_brake_for_rss;
-    double max_vehicle_velocity_for_rss;
+    struct Occlusion
+    {
+      double occlusion_detection_area_length;  //! used for occlusion detection
+      double occlusion_creep_velocity;         //! the creep velocity to occlusion limit stop lline
+      int free_space_max;
+      int occupied_min;
+      bool do_dp;
+      double before_creep_stop_time;
+      double min_vehicle_brake_for_rss;
+      double max_vehicle_velocity_for_rss;
+    } occlusion;
   };
 
   enum OcclusionState {

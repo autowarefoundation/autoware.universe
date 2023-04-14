@@ -84,7 +84,7 @@ IntersectionModule::IntersectionModule(
   turn_direction_ = assigned_lanelet.attributeOr("turn_direction", "else");
   collision_state_machine_.setMarginTime(
     planner_param_.collision_detection.state_transit_margin_time);
-  before_creep_state_machine_.setMarginTime(planner_param_.before_creep_stop_time);
+  before_creep_state_machine_.setMarginTime(planner_param_.occlusion.before_creep_stop_time);
   // TODO(Mamoru Sobue): maybe optional is better
   before_creep_state_machine_.setState(StateMachine::State::STOP);
   if (enable_occlusion_detection) {
@@ -216,12 +216,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   // TODO(Mamoru Sobue): filter objects on detection area here
   const auto objects_ptr = planner_data_->predicted_objects;
 
-  /* considering lane change in the intersection, these lanelets are generated from the path */
-  const auto ego_lane_with_next_lane =
-    getEgoLaneWithNextLane(*path, planner_data_->vehicle_info_.vehicle_width_m);
-  const auto ego_lane = ego_lane_with_next_lane.front();
-  debug_data_.ego_lane = ego_lane.polygon3d();
-
   /* check stuck vehicle */
   const auto stuck_vehicle_detect_area =
     generateStuckVehicleDetectAreaPolygon(*path, ego_lane_with_next_lane, closest_idx);
@@ -262,8 +256,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
           first_inside_detection_idx_ip_opt.value(), std::get<1>(lane_interval_ip_opt.value()))
       : lane_interval_ip_opt.value();
   const double occlusion_dist_thr = std::fabs(
-    std::pow(planner_param_.max_vehicle_velocity_for_rss, 2) /
-    (2 * planner_param_.min_vehicle_brake_for_rss));
+    std::pow(planner_param_.occlusion.max_vehicle_velocity_for_rss, 2) /
+    (2 * planner_param_.occlusion.min_vehicle_brake_for_rss));
   const auto occlusion_stop_line_idx_ip_opt =
     (enable_occlusion_detection_ && first_detection_area && !occlusion_attention_lanelets.empty())
       ? findNearestOcclusionProjectedPosition(
@@ -414,7 +408,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       const auto [start, end] = insert_creep_during_occlusion.value();
       for (size_t i = start; i < end; ++i) {
         planning_utils::setVelocityFromIndex(
-          i, planner_param_.occlusion_creep_velocity /* [m/s] */, path);
+          i, planner_param_.occlusion.occlusion_creep_velocity /* [m/s] */, path);
       }
     }
 
@@ -1031,8 +1025,8 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
       const int idx = y * width + x;
       const unsigned char intensity = occ_grid.data.at(idx);
       if (
-        planner_param_.occlusion_free_space_max <= intensity &&
-        intensity < planner_param_.occlusion_occupied_min) {
+        planner_param_.occlusion.free_space_max <= intensity &&
+        intensity < planner_param_.occlusion.occupied_min) {
         unknown_mask.at<unsigned char>(height - 1 - y, x) = 255;
       }
     }
@@ -1128,7 +1122,7 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
           double new_dist = prev_cost + std::hypot(dy, dx);
           const int new_projection_ind = projection_ind_grid.at<int>(height - 1 - idx_y, idx_x);
           const double cur_dist = pixel2dist(pixel);
-          if (planner_param_.occlusion_do_dp && cur_dist < new_dist) {
+          if (planner_param_.occlusion.do_dp && cur_dist < new_dist) {
             new_dist = cur_dist;
             if (new_projection_ind > 0) {
               projection_ind = std::min<int>(prev_projection_ind, new_projection_ind);
