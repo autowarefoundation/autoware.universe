@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    lateral_controller_mode: "pure_pursuit"
+    longitudinal_controller_mode: "pid"

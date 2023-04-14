@@ -40,6 +40,17 @@ def resolve_node(context, *args, **kwargs):
         for file_name in shlex.split(LaunchConfiguration("arg_param_filenames").perform(context))
     ]
 
+    parameters_test = [
+        os.path.join(
+            get_package_share_directory(LaunchConfiguration("arg_package").perform(context)),
+            "test",
+            file_name,
+        )
+        for file_name in shlex.split(LaunchConfiguration("arg_test_param_filenames").perform(context))
+    ]
+
+    parameters.extend(parameters_test)
+
     smoke_test_node = Node(
         package=LaunchConfiguration("arg_package"),
         executable=LaunchConfiguration("arg_package_exe"),
@@ -61,6 +72,9 @@ def generate_test_description():
     arg_param_filenames = DeclareLaunchArgument(
         "arg_param_filenames", default_value=["test.param.yaml"], description="Test param file"
     )
+    arg_test_param_filenames = DeclareLaunchArgument(
+        "arg_test_param_filenames", default_value=["test.param.yaml"], description="Test only param file"
+    )
     arg_executable_arguments = DeclareLaunchArgument(
         "arg_executable_arguments", default_value=[""], description="Tested executable arguments"
     )
@@ -70,6 +84,7 @@ def generate_test_description():
             arg_package,
             arg_package_exe,
             arg_param_filenames,
+            arg_test_param_filenames,
             arg_executable_arguments,
             OpaqueFunction(function=resolve_node),
             launch_testing.actions.ReadyToTest(),
