@@ -187,7 +187,7 @@ bool isSafeInLaneletCollisionCheck(
   const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
   const auto object_speed = object_twist.linear.x;
 
-  if(object_twist.linear.x < prepare_phase_ignore_target_speed_thresh) {
+  if (object_twist.linear.x < prepare_phase_ignore_target_speed_thresh) {
     return true;
   }
 
@@ -248,7 +248,7 @@ bool isSafeInFreeSpaceCollisionCheck(
   const auto obj_polygon = tier4_autoware_utils::toPolygon2d(target_object);
   const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
 
-  if(object_twist.linear.x < prepare_phase_ignore_target_speed_thresh) {
+  if (object_twist.linear.x < prepare_phase_ignore_target_speed_thresh) {
     return true;
   }
 
