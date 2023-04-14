@@ -93,21 +93,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".max_entry_for_occlusion_clerance");
 }
 
-MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
-{
-  const std::string ns(getModuleName());
-  auto & mp = merge_from_private_area_param_;
-  mp.stop_duration_sec = node.declare_parameter<double>(ns + ".stop_duration_sec");
-  mp.detection_area_length =
-    node.get_parameter("intersection.common.detection_area_length").as_double();
-  mp.detection_area_right_margin =
-    node.get_parameter("intersection.common.detection_area_right_margin").as_double();
-  mp.detection_area_left_margin =
-    node.get_parameter("intersection.common.detection_area_left_margin").as_double();
-  mp.stop_line_margin = node.get_parameter("intersection.common.stop_line_margin").as_double();
-}
-
 void IntersectionModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
@@ -269,14 +254,14 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
 {
   const std::string ns(getModuleName());
   auto & mp = merge_from_private_area_param_;
-  mp.stop_duration_sec =
-    node.declare_parameter(ns + ".merge_from_private_area.stop_duration_sec", 1.0);
-  mp.detection_area_length = node.get_parameter("intersection.detection_area_length").as_double();
+  mp.stop_duration_sec = node.declare_parameter<double>(ns + ".stop_duration_sec");
+  mp.detection_area_length =
+    node.get_parameter("intersection.common.detection_area_length").as_double();
   mp.detection_area_right_margin =
-    node.get_parameter("intersection.detection_area_right_margin").as_double();
+    node.get_parameter("intersection.common.detection_area_right_margin").as_double();
   mp.detection_area_left_margin =
-    node.get_parameter("intersection.detection_area_left_margin").as_double();
-  mp.stop_line_margin = node.get_parameter("intersection.stop_line_margin").as_double();
+    node.get_parameter("intersection.common.detection_area_left_margin").as_double();
+  mp.stop_line_margin = node.get_parameter("intersection.common.stop_line_margin").as_double();
 }
 
 void MergeFromPrivateModuleManager::launchNewModules(

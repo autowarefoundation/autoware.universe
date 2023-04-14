@@ -125,7 +125,6 @@ public:
     WAIT_FIRST_STOP_LINE,
     CREEP_SECOND_STOP_LINE,
     CLEARED,
->>>>>>> b391479b7d (migrated)
   };
 
   IntersectionModule(

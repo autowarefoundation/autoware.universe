@@ -82,7 +82,8 @@ IntersectionModule::IntersectionModule(
   const auto & assigned_lanelet =
     planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   turn_direction_ = assigned_lanelet.attributeOr("turn_direction", "else");
-  collision_state_machine_.setMarginTime(planner_param_.state_transit_margin_time);
+  collision_state_machine_.setMarginTime(
+    planner_param_.collision_detection.state_transit_margin_time);
   before_creep_state_machine_.setMarginTime(planner_param_.before_creep_stop_time);
   // TODO(Mamoru Sobue): maybe optional is better
   before_creep_state_machine_.setState(StateMachine::State::STOP);
@@ -225,24 +226,25 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
   const std::optional<size_t> stuck_line_idx_opt =
-    first_conflicting_area ? util::generateStuckStopLine(
-                               first_conflicting_area.value(), planner_data_,
-                               planner_param_.stop_line_margin, planner_param_.use_stuck_stopline,
-                               path, path_ip, interval, lane_interval_ip, logger_.get_child("util"))
-                           : std::nullopt;
+    first_conflicting_area
+      ? util::generateStuckStopLine(
+          first_conflicting_area.value(), planner_data_, planner_param_.common.stop_line_margin,
+          planner_param_.stuck_vehicle.use_stuck_stopline, path, path_ip, interval,
+          lane_interval_ip, logger_.get_child("util"))
+      : std::nullopt;
 
   /* calculate dynamic collision around detection area */
   /* set stop lines for base_link */
   const auto default_stop_line_idx_opt =
-    first_detection_area
-      ? util::generateCollisionStopLine(
-          lane_id_, first_detection_area.value(), planner_data_, planner_param_.stop_line_margin,
-          path, path_ip, interval, lane_interval_ip, logger_.get_child("util"))
-      : std::nullopt;
-  const double time_delay =
-    is_go_out_
-      ? 0.0
-      : (planner_param_.state_transit_margin_time - collision_state_machine_.getDuration());
+    first_detection_area ? util::generateCollisionStopLine(
+                             lane_id_, first_detection_area.value(), planner_data_,
+                             planner_param_.common.stop_line_margin, path, path_ip, interval,
+                             lane_interval_ip, logger_.get_child("util"))
+                         : std::nullopt;
+  const double time_delay = is_go_out_
+                              ? 0.0
+                              : (planner_param_.collision_detection.state_transit_margin_time -
+                                 collision_state_machine_.getDuration());
   const bool has_collision = checkCollision(
     lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, ego_lane,
     ego_lane_with_next_lane, objects_ptr, closest_idx, time_delay);
@@ -310,7 +312,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       const double dist_default_stop_line = motion_utils::calcSignedArcLength(
         path_ip.points, current_pose.position,
         path->points.at(default_stop_line_idx_opt.value()).point.pose.position);
-      if (dist_default_stop_line < planner_param_.stop_overshoot_margin) {
+      if (dist_default_stop_line < planner_param_.common.stop_overshoot_margin) {
         // start waiting at the first stop line
         before_creep_state_machine_.setStateWithMarginTime(
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
