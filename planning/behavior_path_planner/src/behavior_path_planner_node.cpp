@@ -15,8 +15,8 @@
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/util/drivable_area_expansion/map_utils.hpp"
-#include "behavior_path_planner/util/path_utils.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -328,108 +328,29 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 
   p.verbose = declare_parameter<bool>("verbose");
 
-  {
-    const std::string ns = "pull_out.";
-    p.config_pull_out.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_pull_out.enable_simultaneous_execution_as_approved_module =
+  const auto get_scene_module_manager_param = [&](std::string && ns) {
+    ModuleConfigParameters config;
+    config.enable_module = declare_parameter<bool>(ns + "enable_module");
+    config.enable_simultaneous_execution_as_approved_module =
       declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_pull_out.enable_simultaneous_execution_as_candidate_module =
+    config.enable_simultaneous_execution_as_candidate_module =
       declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_pull_out.priority = declare_parameter<int>(ns + "priority");
-    p.config_pull_out.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
+    config.priority = declare_parameter<int>(ns + "priority");
+    config.max_module_size = declare_parameter<int>(ns + "max_module_size");
+    return config;
+  };
 
-  {
-    const std::string ns = "pull_over.";
-    p.config_pull_over.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_pull_over.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_pull_over.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_pull_over.priority = declare_parameter<int>(ns + "priority");
-    p.config_pull_over.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "side_shift.";
-    p.config_side_shift.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_side_shift.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_side_shift.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_side_shift.priority = declare_parameter<int>(ns + "priority");
-    p.config_side_shift.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "lane_change_left.";
-    p.config_lane_change_left.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_lane_change_left.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_lane_change_left.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_lane_change_left.priority = declare_parameter<int>(ns + "priority");
-    p.config_lane_change_left.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "lane_change_right.";
-    p.config_lane_change_right.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_lane_change_right.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_lane_change_right.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_lane_change_right.priority = declare_parameter<int>(ns + "priority");
-    p.config_lane_change_right.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "external_request_lane_change_right.";
-    p.config_ext_request_lane_change_right.enable_module =
-      declare_parameter<bool>(ns + "enable_module");
-    p.config_ext_request_lane_change_right.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_ext_request_lane_change_right.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_ext_request_lane_change_right.priority = declare_parameter<int>(ns + "priority");
-    p.config_ext_request_lane_change_right.max_module_size =
-      declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "external_request_lane_change_left.";
-    p.config_ext_request_lane_change_left.enable_module =
-      declare_parameter<bool>(ns + "enable_module");
-    p.config_ext_request_lane_change_left.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_ext_request_lane_change_left.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_ext_request_lane_change_left.priority = declare_parameter<int>(ns + "priority");
-    p.config_ext_request_lane_change_left.max_module_size =
-      declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "avoidance.";
-    p.config_avoidance.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_avoidance.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_avoidance.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_avoidance.priority = declare_parameter<int>(ns + "priority");
-    p.config_avoidance.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
-
-  {
-    const std::string ns = "avoidance_by_lc.";
-    p.config_avoidance_by_lc.enable_module = declare_parameter<bool>(ns + "enable_module");
-    p.config_avoidance_by_lc.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    p.config_avoidance_by_lc.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    p.config_avoidance_by_lc.priority = declare_parameter<int>(ns + "priority");
-    p.config_avoidance_by_lc.max_module_size = declare_parameter<int>(ns + "max_module_size");
-  }
+  p.config_pull_out = get_scene_module_manager_param("pull_out.");
+  p.config_pull_over = get_scene_module_manager_param("pull_over.");
+  p.config_side_shift = get_scene_module_manager_param("side_shift.");
+  p.config_lane_change_left = get_scene_module_manager_param("lane_change_left.");
+  p.config_lane_change_right = get_scene_module_manager_param("lane_change_right.");
+  p.config_ext_request_lane_change_right =
+    get_scene_module_manager_param("external_request_lane_change_right.");
+  p.config_ext_request_lane_change_left =
+    get_scene_module_manager_param("external_request_lane_change_left.");
+  p.config_avoidance = get_scene_module_manager_param("avoidance.");
+  p.config_avoidance_by_lc = get_scene_module_manager_param("avoidance_by_lc.");
 
   // vehicle info
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
@@ -556,6 +477,8 @@ AvoidanceByLCParameters BehaviorPathPlannerNode::getAvoidanceByLCParam(
 
 AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 {
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+
   AvoidanceParameters p{};
   // general params
   {
@@ -573,7 +496,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       declare_parameter<double>(ns + "drivable_area_left_bound_offset");
     p.drivable_area_types_to_skip =
       declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
-    p.object_envelope_buffer = declare_parameter<double>(ns + "object_envelope_buffer");
     p.enable_bound_clipping = declare_parameter<bool>(ns + "enable_bound_clipping");
     p.enable_avoidance_over_same_direction =
       declare_parameter<bool>(ns + "enable_avoidance_over_same_direction");
@@ -592,15 +514,26 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   // target object
   {
-    std::string ns = "avoidance.target_object.";
-    p.avoid_car = declare_parameter<bool>(ns + "car");
-    p.avoid_truck = declare_parameter<bool>(ns + "truck");
-    p.avoid_bus = declare_parameter<bool>(ns + "bus");
-    p.avoid_trailer = declare_parameter<bool>(ns + "trailer");
-    p.avoid_unknown = declare_parameter<bool>(ns + "unknown");
-    p.avoid_bicycle = declare_parameter<bool>(ns + "bicycle");
-    p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
-    p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
+    const auto get_object_param = [&](std::string && ns) {
+      ObjectParameter param{};
+      param.enable = declare_parameter<bool>("avoidance.target_object." + ns + "enable");
+      param.envelope_buffer_margin =
+        declare_parameter<double>("avoidance.target_object." + ns + "envelope_buffer_margin");
+      param.safety_buffer_lateral =
+        declare_parameter<double>("avoidance.target_object." + ns + "safety_buffer_lateral");
+      param.safety_buffer_longitudinal =
+        declare_parameter<double>("avoidance.target_object." + ns + "safety_buffer_longitudinal");
+      return param;
+    };
+
+    p.object_parameters.emplace(ObjectClassification::MOTORCYCLE, get_object_param("motorcycle."));
+    p.object_parameters.emplace(ObjectClassification::CAR, get_object_param("car."));
+    p.object_parameters.emplace(ObjectClassification::TRUCK, get_object_param("truck."));
+    p.object_parameters.emplace(ObjectClassification::TRAILER, get_object_param("trailer."));
+    p.object_parameters.emplace(ObjectClassification::BUS, get_object_param("bus."));
+    p.object_parameters.emplace(ObjectClassification::PEDESTRIAN, get_object_param("pedestrian."));
+    p.object_parameters.emplace(ObjectClassification::BICYCLE, get_object_param("bicycle."));
+    p.object_parameters.emplace(ObjectClassification::UNKNOWN, get_object_param("unknown."));
   }
 
   // target filtering
@@ -643,8 +576,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     std::string ns = "avoidance.avoidance.lateral.";
     p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
-    p.lateral_collision_safety_buffer =
-      declare_parameter<double>(ns + "lateral_collision_safety_buffer");
     p.lateral_passable_safety_buffer =
       declare_parameter<double>(ns + "lateral_passable_safety_buffer");
     p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
@@ -658,8 +589,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     std::string ns = "avoidance.avoidance.longitudinal.";
     p.prepare_time = declare_parameter<double>(ns + "prepare_time");
-    p.longitudinal_collision_safety_buffer =
-      declare_parameter<double>(ns + "longitudinal_collision_safety_buffer");
     p.min_prepare_distance = declare_parameter<double>(ns + "min_prepare_distance");
     p.min_avoidance_distance = declare_parameter<double>(ns + "min_avoidance_distance");
     p.min_nominal_avoidance_speed = declare_parameter<double>(ns + "min_nominal_avoidance_speed");
