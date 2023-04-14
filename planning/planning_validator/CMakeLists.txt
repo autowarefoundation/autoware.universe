@@ -4,8 +4,6 @@ project(planning_validator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(rosidl_default_generators REQUIRED)
-
 ament_auto_add_library(planning_validator_helpers SHARED
   src/utils.cpp
   src/debug_marker.cpp
