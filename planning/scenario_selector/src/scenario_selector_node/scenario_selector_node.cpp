@@ -392,17 +392,6 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
 
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&ScenarioSelectorNode::onTimer, this));
-
-  // Wait for first tf
-  while (rclcpp::ok()) {
-    try {
-      tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
-      break;
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_DEBUG(this->get_logger(), "waiting for initial pose...");
-      rclcpp::sleep_for(std::chrono::milliseconds(100));
-    }
-  }
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
