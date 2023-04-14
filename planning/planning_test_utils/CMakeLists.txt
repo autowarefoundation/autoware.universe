@@ -10,5 +10,5 @@ ament_auto_add_library(planning_test_utils SHARED
 
 ament_auto_package(INSTALL_TO_SHARE
   config
-  map
+  test_map
 )

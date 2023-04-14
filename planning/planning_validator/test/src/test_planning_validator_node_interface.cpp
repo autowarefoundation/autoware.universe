@@ -34,8 +34,9 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
     ament_index_cpp::get_package_share_directory("planning_validator");
 
   node_options.arguments(
-    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/vehicle_info.param.yaml",
-     "--params-file", planning_validator_dir + "/config/planning_validator.param.yaml"});
+    {"--ros-args", "--params-file",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     planning_validator_dir + "/config/planning_validator.param.yaml"});
 
   auto test_target_node = std::make_shared<planning_validator::PlanningValidator>(node_options);
 
