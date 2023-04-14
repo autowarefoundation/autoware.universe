@@ -134,6 +134,8 @@ private:
     const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
+
+  rclcpp::Time latest_lateral_offset_stamp_;
 };
 
 }  // namespace behavior_path_planner
