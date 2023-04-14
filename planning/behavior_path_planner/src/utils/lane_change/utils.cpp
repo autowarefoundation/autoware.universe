@@ -1421,4 +1421,4 @@ std::string getStrDirection(const std::string & name, const Direction direction)
   return "";
 }
 
-}  // namespace behavior_path_planner::util::lane_change
+}  // namespace behavior_path_planner::utils::lane_change

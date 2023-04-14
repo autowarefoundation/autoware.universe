@@ -19,7 +19,7 @@
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/utils/lane_change/util.hpp"
+#include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -99,7 +99,7 @@ public:
       return false;
     }
 
-    const auto is_within_current_lane = util::lane_change::isEgoWithinOriginalLane(
+    const auto is_within_current_lane = utils::lane_change::isEgoWithinOriginalLane(
       status_.current_lanes, getEgoPose(), planner_data_->parameters);
 
     if (!is_within_current_lane) {

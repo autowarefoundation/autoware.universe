@@ -15,7 +15,7 @@
 #include "behavior_path_planner/scene_module/lane_change/normal.hpp"
 
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utils/lane_change/util.hpp"
+#include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -82,7 +82,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
   // find candidate paths
   LaneChangePaths valid_paths;
 
-  const auto found_safe_path = util::lane_change::getLaneChangePaths(
+  const auto found_safe_path = utils::lane_change::getLaneChangePaths(
     prev_module_path, *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
     planner_data_->dynamic_object, common_parameters, *parameters_, check_distance_, direction_,
     &valid_paths, &object_debug_);
@@ -123,7 +123,7 @@ void NormalLaneChange::generateExtendedDrivableArea(
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
-  const auto drivable_lanes = util::lane_change::generateDrivableLanes(
+  const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     prev_drivable_lanes, *route_handler, status_.current_lanes, status_.lane_change_lanes);
   const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
@@ -159,7 +159,7 @@ bool NormalLaneChange::isCancelConditionSatisfied()
 
   if (!is_path_safe) {
     const auto & common_parameters = planner_data_->parameters;
-    const bool is_within_original_lane = util::lane_change::isEgoWithinOriginalLane(
+    const bool is_within_original_lane = utils::lane_change::isEgoWithinOriginalLane(
       status_.current_lanes, getEgoPose(), common_parameters);
 
     if (isNearEndOfLane() && isCurrentSpeedLow()) {
@@ -186,7 +186,7 @@ bool NormalLaneChange::isAbortConditionSatisfied(const Pose & pose)
 {
   const auto & common_parameters = planner_data_->parameters;
 
-  const auto found_abort_path = util::lane_change::getAbortPaths(
+  const auto found_abort_path = utils::lane_change::getAbortPaths(
     planner_data_, status_.lane_change_path, pose, common_parameters, *parameters_);
 
   if (!found_abort_path && !is_abort_path_approved_) {
@@ -275,17 +275,17 @@ bool NormalLaneChange::isApprovedPathSafe(Pose & ego_pose_before_collision) cons
   const auto & path = status_.lane_change_path;
 
   // get lanes used for detection
-  const auto check_lanes = util::lane_change::getExtendedTargetLanesForCollisionCheck(
+  const auto check_lanes = utils::lane_change::getExtendedTargetLanesForCollisionCheck(
     *route_handler, path.target_lanelets.front(), current_pose, check_distance_);
 
   CollisionCheckDebugMap debug_data;
   const auto lateral_buffer =
-    util::lane_change::calcLateralBufferForFiltering(common_parameters.vehicle_width);
-  const auto dynamic_object_indices = util::lane_change::filterObjectIndices(
+    utils::lane_change::calcLateralBufferForFiltering(common_parameters.vehicle_width);
+  const auto dynamic_object_indices = utils::lane_change::filterObjectIndices(
     {path}, *dynamic_objects, check_lanes, current_pose, common_parameters.forward_path_length,
     lane_change_parameters, lateral_buffer);
 
-  return util::lane_change::isLaneChangePathSafe(
+  return utils::lane_change::isLaneChangePathSafe(
     path, dynamic_objects, dynamic_object_indices, current_pose, current_twist, common_parameters,
     *parameters_, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
@@ -339,7 +339,7 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
   const auto & route_handler = planner_data_->route_handler;
 
   // check lane departure
-  const auto drivable_lanes = util::lane_change::generateDrivableLanes(
+  const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, util::extendLanes(route_handler, status_.current_lanes),
     util::extendLanes(route_handler, status_.lane_change_lanes));
   const auto expanded_lanes = util::expandLanelets(

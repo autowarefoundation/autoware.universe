@@ -15,7 +15,7 @@
 #include "behavior_path_planner/scene_module/lane_change/external_request.hpp"
 
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utils/lane_change/util.hpp"
+#include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>

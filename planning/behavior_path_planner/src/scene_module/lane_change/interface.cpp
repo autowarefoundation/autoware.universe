@@ -15,7 +15,7 @@
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utils/lane_change/util.hpp"
+#include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <algorithm>
@@ -27,7 +27,7 @@
 
 namespace behavior_path_planner
 {
-using util::lane_change::getLateralShift;
+using utils::lane_change::getLateralShift;
 
 LaneChangeInterface::LaneChangeInterface(
   const std::string & name, rclcpp::Node & node,
