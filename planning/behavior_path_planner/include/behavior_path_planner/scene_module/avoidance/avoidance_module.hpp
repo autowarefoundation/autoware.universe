@@ -17,7 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -172,17 +172,10 @@ private:
     }
   }
 
-  /**
-   * object pre-process
-   */
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
-
-  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
-
-  void fillObjectMovingTime(ObjectData & object_data) const;
-
-  void compensateDetectionLost(
-    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
 
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
@@ -209,7 +202,6 @@ private:
   AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
-  void updateRegisteredObject(const ObjectDataArray & objects);
 
   // ========= shift line generator ======
 
@@ -275,8 +267,6 @@ private:
 
   // intersection (old)
   boost::optional<AvoidLine> calcIntersectionShiftLine(const AvoidancePlanningData & data) const;
-
-  bool isTargetObjectType(const PredictedObject & object) const;
 
   // debug
   mutable DebugData debug_data_;
