@@ -1,4 +1,4 @@
-<!-- cspell: ignore mmclassification mmcv -->
+<!-- cspell: ignore mmclassification -->
 
 # traffic_light_classifier
 
