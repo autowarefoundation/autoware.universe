@@ -1,5 +1,3 @@
-<!-- cspell: ignore mmclassification -->
-
 # traffic_light_classifier
 
 ## Purpose
