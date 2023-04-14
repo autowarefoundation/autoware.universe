@@ -126,11 +126,6 @@ protected:
   bool hasFinishedLaneChange() const;
   bool isAbortState() const;
 
-  // getter
-  Pose getEgoPose() const;
-  Twist getEgoTwist() const;
-  std_msgs::msg::Header getRouteHeader() const;
-
   // debug
   mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
   mutable std::vector<LaneChangePath> debug_valid_path_;
