@@ -37,10 +37,10 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   node_options.append_parameter_override("enable_slow_down", false);
 
   node_options.arguments(
-    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/common.param.yaml",
-     "--params-file", planning_test_utils_dir + "/config/nearest_search.param.yaml",
-     "--params-file", planning_test_utils_dir + "/config/vehicle_info.param.yaml", "--params-file",
-     obstacle_stop_planner_dir + "/config/common.param.yaml", "--params-file",
+    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/test_common.param.yaml",
+     "--params-file", planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+     "--params-file", planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+     "--params-file", obstacle_stop_planner_dir + "/config/common.param.yaml", "--params-file",
      obstacle_stop_planner_dir + "/config/adaptive_cruise_control.param.yaml", "--params-file",
      obstacle_stop_planner_dir + "/config/obstacle_stop_planner.param.yaml"});
 

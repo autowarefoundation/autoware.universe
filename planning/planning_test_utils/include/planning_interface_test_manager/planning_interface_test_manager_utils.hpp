@@ -26,6 +26,8 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
@@ -42,6 +44,7 @@
 #include <lanelet2_io/Io.h>
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
+#include <yaml-cpp/yaml.h>
 
 #include <algorithm>
 #include <limits>
@@ -53,16 +56,20 @@
 namespace test_utils
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using planning_interface::Route;
+using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::createQuaternionFromRPY;
@@ -251,7 +258,7 @@ T generateObject(rclcpp::Node::SharedPtr target_node)
   if constexpr (std::is_same_v<T, HADMapBin>) {
     const auto planning_test_utils_dir =
       ament_index_cpp::get_package_share_directory("planning_test_utils");
-    const auto lanelet2_path = planning_test_utils_dir + "/map/lanelet2_map.osm";
+    const auto lanelet2_path = planning_test_utils_dir + "/test_map/lanelet2_map.osm";
     double center_line_resolution = 5.0;
     // load map from file
     const auto map = loadMap(lanelet2_path);
@@ -291,6 +298,10 @@ T generateObject(rclcpp::Node::SharedPtr target_node)
     TFMessage tf_msg{};
     tf_msg.transforms.emplace_back(std::move(tf));
     return tf_msg;
+  } else if constexpr (std::is_same_v<T, PointCloud2>) {
+    PointCloud2 point_cloud_msg{};
+    point_cloud_msg.header.frame_id = "base_link";
+    return point_cloud_msg;
   } else {
     return T{};
   }
@@ -340,6 +351,83 @@ void setSubscriber(
 {
   createSubscription(
     test_node, topic_name, [&count](const typename T::SharedPtr) { count++; }, subscriber);
+}
+
+void updateNodeOptions(
+  rclcpp::NodeOptions & node_options, const std::vector<std::string> & params_files)
+{
+  std::vector<const char *> arguments;
+  arguments.push_back("--ros-args");
+  arguments.push_back("--params-file");
+  for (const auto & param_file : params_files) {
+    arguments.push_back(param_file.c_str());
+    arguments.push_back("--params-file");
+  }
+  arguments.pop_back();
+
+  node_options.arguments(std::vector<std::string>{arguments.begin(), arguments.end()});
+}
+
+PathWithLaneId loadPathWithLaneIdInYaml()
+{
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto yaml_path = planning_test_utils_dir + "/config/path_with_lane_id_data.yaml";
+  YAML::Node yaml_node = YAML::LoadFile(yaml_path);
+  PathWithLaneId path_msg;
+
+  // Convert YAML data to PathWithLaneId message
+  // Fill the header
+  path_msg.header.stamp.sec = yaml_node["header"]["stamp"]["sec"].as<int>();
+  path_msg.header.stamp.nanosec = yaml_node["header"]["stamp"]["nanosec"].as<uint32_t>();
+  path_msg.header.frame_id = yaml_node["header"]["frame_id"].as<std::string>();
+
+  // Fill the points
+  for (const auto & point_node : yaml_node["points"]) {
+    PathPointWithLaneId point;
+    // Fill the PathPoint data
+    point.point.pose.position.x = point_node["point"]["pose"]["position"]["x"].as<double>();
+    point.point.pose.position.y = point_node["point"]["pose"]["position"]["y"].as<double>();
+    point.point.pose.position.z = point_node["point"]["pose"]["position"]["z"].as<double>();
+    point.point.pose.orientation.x = point_node["point"]["pose"]["orientation"]["x"].as<double>();
+    point.point.pose.orientation.y = point_node["point"]["pose"]["orientation"]["y"].as<double>();
+    point.point.pose.orientation.z = point_node["point"]["pose"]["orientation"]["z"].as<double>();
+    point.point.pose.orientation.w = point_node["point"]["pose"]["orientation"]["w"].as<double>();
+    point.point.longitudinal_velocity_mps =
+      point_node["point"]["longitudinal_velocity_mps"].as<float>();
+    point.point.lateral_velocity_mps = point_node["point"]["lateral_velocity_mps"].as<float>();
+    point.point.heading_rate_rps = point_node["point"]["heading_rate_rps"].as<float>();
+    point.point.is_final = point_node["point"]["is_final"].as<bool>();
+    // Fill the lane_ids
+    for (const auto & lane_id_node : point_node["lane_ids"]) {
+      point.lane_ids.push_back(lane_id_node.as<int64_t>());
+    }
+
+    path_msg.points.push_back(point);
+  }
+
+  // Fill the left_bound
+  for (const auto & point_node : yaml_node["left_bound"]) {
+    Point point;
+    // Fill the Point data (left_bound)
+    point.x = point_node["x"].as<double>();
+    point.y = point_node["y"].as<double>();
+    point.z = point_node["z"].as<double>();
+
+    path_msg.left_bound.push_back(point);
+  }
+
+  // Fill the right_bound
+  for (const auto & point_node : yaml_node["right_bound"]) {
+    Point point;
+    // Fill the Point data
+    point.x = point_node["x"].as<double>();
+    point.y = point_node["y"].as<double>();
+    point.z = point_node["z"].as<double>();
+
+    path_msg.right_bound.push_back(point);
+  }
+  return path_msg;
 }
 
 }  // namespace test_utils
