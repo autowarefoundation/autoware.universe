@@ -48,7 +48,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   test_manager->publishOdometry(test_target_node, "obstacle_avoidance_planner/input/odometry");
 
   // set subscriber with topic name: obstacle_stop_planner → test_node_
-  test_manager->setTrajectorySubscriber("obstacle_avoidance_planner/output/trajectory");
+  test_manager->setTrajectorySubscriber("obstacle_avoidance_planner/output/path");
 
   // set obstacle_stop_planner's input topic name(this topic is changed to test node)
   test_manager->setPathInputTopicName("obstacle_avoidance_planner/input/path");
