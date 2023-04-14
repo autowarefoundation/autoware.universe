@@ -37,6 +37,8 @@ class NormalLaneChange : public LaneChangeBase
 public:
   NormalLaneChange(const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction);
 
+  ~NormalLaneChange() override = default;
+
   void updateLaneChangeStatus(
     const PathWithLaneId & prev_module_reference_path,
     const PathWithLaneId & previous_module_path) override;

@@ -32,11 +32,11 @@
 
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <algorithm>
 
 namespace behavior_path_planner
 {
@@ -56,6 +56,8 @@ public:
   : parameters_{parameters}, direction_{direction}
   {
   }
+
+  virtual ~LaneChangeBase() = default;
 
   virtual void updateLaneChangeStatus(
     const PathWithLaneId & prev_module_reference_path,

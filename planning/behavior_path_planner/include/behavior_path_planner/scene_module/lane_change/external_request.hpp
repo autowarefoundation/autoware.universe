@@ -27,6 +27,8 @@ public:
   ExternalRequestLaneChange(
     const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction);
 
+  ~ExternalRequestLaneChange() override = default;
+
 protected:
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes) const override;
