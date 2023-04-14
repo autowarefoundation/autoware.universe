@@ -298,7 +298,7 @@ void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
-void PlanningInterfaceTestManager::PublishNominalPath(
+void PlanningInterfaceTestManager::publishNominalPath(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::setPublisher(test_node_, topic_name, normal_path_pub_);
