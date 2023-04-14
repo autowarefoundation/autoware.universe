@@ -36,6 +36,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 namespace behavior_path_planner
 {
@@ -152,9 +153,20 @@ protected:
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
-  virtual bool isNearEndOfLane() const = 0;
+  bool isNearEndOfLane() const
+  {
+    const auto & current_pose = getEgoPose();
+    const double threshold = util::calcTotalLaneChangeLength(planner_data_->parameters);
 
-  virtual bool isCurrentSpeedLow() const = 0;
+    return (std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) -
+            threshold) < planner_data_->parameters.backward_length_buffer_for_end_of_lane;
+  }
+
+  bool isCurrentSpeedLow() const
+  {
+    constexpr double threshold_ms = 10.0 * 1000 / 3600;
+    return getEgoTwist().linear.x < threshold_ms;
+  }
 
   LaneChangeStatus status_{};
   PathShifter path_shifter_{};

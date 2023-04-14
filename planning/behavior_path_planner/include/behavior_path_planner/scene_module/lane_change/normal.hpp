@@ -72,10 +72,6 @@ protected:
   void calcTurnSignalInfo() override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
-
-  bool isNearEndOfLane() const override;
-
-  bool isCurrentSpeedLow() const override;
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_

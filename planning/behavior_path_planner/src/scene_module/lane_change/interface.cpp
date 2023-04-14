@@ -130,7 +130,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   path_reference_ = std::make_shared<PathWithLaneId>(reference_path);
   *prev_approved_path_ = *getPreviousModuleOutput().path;
-  module_type_->updateOutputTurnSignal();
+  output.turn_signal_info = module_type_->updateOutputTurnSignal();
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
 
