@@ -35,9 +35,10 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
     ament_index_cpp::get_package_share_directory("obstacle_avoidance_planner");
 
   node_options.arguments(
-    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/vehicle_info.param.yaml",
-     "--params-file", planning_test_utils_dir + "/config/common.param.yaml", "--params-file",
-     planning_test_utils_dir + "/config/nearest_search.param.yaml", "--params-file",
+    {"--ros-args", "--params-file",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     planning_test_utils_dir + "/config/test_common.param.yaml", "--params-file",
+     planning_test_utils_dir + "/config/test_nearest_search.param.yaml", "--params-file",
      obstacle_avoidance_planner_dir + "/config/obstacle_avoidance_planner.param.yaml"});
 
   auto test_target_node =
