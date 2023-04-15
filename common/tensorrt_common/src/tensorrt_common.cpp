@@ -30,7 +30,7 @@ bool contain(const std::string & s, const T & v)
 {
   return s.find(v) != std::string::npos;
 }
-}
+}  // anonymous namespace
 
 namespace tensorrt_common
 {
@@ -65,6 +65,24 @@ nvinfer1::Dims get_input_dims(const std::string & onnx_file_path)
   return input->getDimensions();
 }
 
+bool is_valid_precision_string(const std::string& precision)
+{
+  if (std::find(valid_precisions.begin(), valid_precisions.end(), precision)
+      == valid_precisions.end()) {
+    std::stringstream message;
+    message << "Invalid precision was specified: " << precision << std::endl
+            << "Valid string is one of: [";
+    for (const auto & s : valid_precisions) {
+      message << s << ", ";
+      }
+    message << "] (case sensitive)" << std::endl;
+    std::cerr << message.str();
+    return false;
+  } else {
+    return true;
+  }
+}
+
 TrtCommon::TrtCommon(
   const std::string & model_path, const std::string & precision,
   std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator,
@@ -79,6 +97,10 @@ TrtCommon::TrtCommon(
   model_profiler_("Model"),
   host_profiler_("Host")
 {
+  // Check given precision is valid one
+  if (!is_valid_precision_string(precision)) {
+    return;
+  }
   build_config_ = std::make_unique<const BuildConfig>(build_config);
 
   for (const auto & plugin_path : plugin_paths) {
@@ -118,9 +140,10 @@ void TrtCommon::setup()
     std::string ext;
     std::string calib_name = "";
     if (precision_ == "int8") {
-      if (build_config_->calib_type == nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) {
+      if (build_config_->calib_type_str == "Entropy") {
         calib_name = "EntropyV2-";
-      } else if (build_config_->calib_type == nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) {
+      } else if (build_config_->calib_type_str == "Legacy"
+                 || build_config_->calib_type_str == "Percentile") {
         calib_name = "Legacy-";
       } else {
         calib_name = "MinMax-";
@@ -147,9 +170,6 @@ void TrtCommon::setup()
     }
     cache_engine_path.replace_extension(ext);
 
-    ////////////////////////////////////////////////////////////////////////
-    // XXX: Flag may need to switch whether printing network?
-    ////////////////////////////////////////////////////////////////////////
     //Output Network Information
     print_network_info(model_file_path_);
 
@@ -295,7 +315,7 @@ void TrtCommon::print_network_info(const std::string & onnx_file_path)
       std::cout << std::endl;
     } else if (ltype == nvinfer1::LayerType::kRESIZE) {
       std::cout << "L" << i << " [resize]" << std::endl;
-    } 
+    }
   }
   std::cout << "Total " << total_gflops << " GFLOPs" <<std::endl;
   std::cout << "Total " << total_params/1000.0/1000.0 << " M params" << std::endl;
@@ -367,7 +387,8 @@ bool TrtCommon::buildEngineFromOnnx(
       std::string name = layer->getName();
       nvinfer1::ITensor* out = layer->getOutput(0);
       if (build_config_->clip_value != 0.0) {
-        std::cout << "Set max value for outputs : " << build_config_->clip_value << "  " << name << std::endl;
+        std::cout << "Set max value for outputs : " << build_config_->clip_value
+                  << "  " << name << std::endl;
         out->setDynamicRange(0.0, build_config_->clip_value);
       }
 
@@ -378,7 +399,8 @@ bool TrtCommon::buildEngineFromOnnx(
           first = false;
         }
         if (last) {
-          if(contain(name, "reg_preds") || contain(name, "cls_preds") || contain(name, "obj_preds")) {
+          if(contain(name, "reg_preds") || contain(name, "cls_preds")
+             || contain(name, "obj_preds")) {
             layer->setPrecision(nvinfer1::DataType::kHALF);
             std::cout << "Set kHALF in " << name << std::endl;
           }
@@ -483,20 +505,20 @@ bool TrtCommon::setBindingDimensions(const int32_t index, const nvinfer1::Dims &
 
 bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
 {
-  std::chrono::high_resolution_clock::time_point inference_start, inference_end;
-  if (build_config_->profile_per_layer) {
-    inference_start = std::chrono::high_resolution_clock::now();
-  }
-
-  bool ret = context_->enqueueV2(bindings, stream, input_consumed);
 
   if (build_config_->profile_per_layer) {
-    inference_end = std::chrono::high_resolution_clock::now();
+    auto inference_start = std::chrono::high_resolution_clock::now();
+
+    bool ret = context_->enqueueV2(bindings, stream, input_consumed);
+
+    auto inference_end = std::chrono::high_resolution_clock::now();
     host_profiler_.reportLayerTime(
         "inference",
         std::chrono::duration<float, std::milli>(inference_end - inference_start).count());
+    return ret;
+  } else {
+    return context_->enqueueV2(bindings, stream, input_consumed);
   }
-  return ret;
 }
 
 void TrtCommon::print_profiling()

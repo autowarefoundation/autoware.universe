@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TENSORRT_LOGGING_H
-#define TENSORRT_LOGGING_H
+#ifndef TENSORRT_COMMON__LOGGER_HPP_
+#define TENSORRT_COMMON__LOGGER_HPP_
 
 #include "NvInferRuntimeCommon.h"
 #include <cassert>
@@ -498,4 +498,4 @@ inline LogStreamConsumer LOG_FATAL(const Logger& logger)
 } // anonymous namespace
 } // namespace tensorrt_common
 
-#endif // TENSORRT_LOGGING_H
+#endif // TENSORRT_COMMON__LOGGER_HPP_

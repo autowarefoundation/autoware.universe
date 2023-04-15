@@ -32,6 +32,7 @@ namespace fs = ::std::experimental::filesystem;
 #include <sstream>
 #include <string>
 #include <vector>
+#include <sstream>
 #include <tensorrt_common/logger.hpp>
 #include <tensorrt_common/simple_profiler.hpp>
 
@@ -39,15 +40,12 @@ namespace tensorrt_common
 {
 /**
  * @struct BuildConfig
- * @brief TensorRT builder information
+ * @brief Configuration to provide fine control regarding TensorRT builder
  */
-struct BuildConfig {
-  // operation precision that will be used
-  // valid string is one of: ["fp32", "fp16", "int8"]
-  std::string precison;
-
+struct BuildConfig
+{
   // type for calibration
-  nvinfer1::CalibrationAlgoType calib_type;
+  std::string calib_type_str;
 
   // DLA core ID that the process uses
   int dla_core_id;
@@ -58,51 +56,34 @@ struct BuildConfig {
   // flag for partial quanitzation in last layer
   bool quantize_last_layer;   //For partial quantization
 
+  // flag for per-layer profiler using IProfiler
+  bool profile_per_layer;
+
   // clip value for implicit quantization
   double clip_value; //For implicit quantization
 
-  // flag for per-layer profiler using IProfiler
-  bool profile_per_layer;
+  // Supported calibration type
+  const std::array<std::string, 4> valid_calib_type = {"Entropy", "Legacy", "Percentile", "MinMax"};
+
+  BuildConfig()
+      : calib_type_str("MinMax"), dla_core_id(-1), quantize_first_layer(false),
+        quantize_last_layer(false), profile_per_layer(false), clip_value(0.0)
+  {
+    if (std::find(valid_calib_type.begin(), valid_calib_type.end(), calib_type_str)
+        == valid_calib_type.end()) {
+      std::stringstream message;
+      message << "Invalid calibration type was specified: " << calib_type_str << std::endl
+              << "Valid value is one of: [Entropy, (Legacy | Percentile), MinMax]" << std::endl
+              << "Default calibration type will be used: MinMax" << std::endl;
+      std::cerr << message.str();
+    }
+  }
 };
 
-// class Logger : public nvinfer1::ILogger  // NOLINT
-// {
-// public:
-//   Logger() : Logger(Severity::kINFO) {}
-
-//   explicit Logger(Severity severity) : reportable_severity_(severity) {}
-
-//   void log(Severity severity, const char * msg) noexcept override
-//   {
-//     // suppress messages with severity enum value greater than the reportable
-//     if (severity > reportable_severity_) {
-//       return;
-//     }
-
-//     switch (severity) {
-//       case Severity::kINTERNAL_ERROR:
-//         RCLCPP_ERROR_STREAM(logger_, msg);
-//         break;
-//       case Severity::kERROR:
-//         RCLCPP_ERROR_STREAM(logger_, msg);
-//         break;
-//       case Severity::kWARNING:
-//         RCLCPP_WARN_STREAM(logger_, msg);
-//         break;
-//       case Severity::kINFO:
-//         RCLCPP_INFO_STREAM(logger_, msg);
-//         break;
-//       default:
-//         RCLCPP_INFO_STREAM(logger_, msg);
-//         break;
-//     }
-//   }
-
-//   Severity reportable_severity_{Severity::kWARNING};
-//   rclcpp::Logger logger_{rclcpp::get_logger("tensorrt_common")};
-// };
-
 nvinfer1::Dims get_input_dims(const std::string & onnx_file_path);
+
+const std::array<std::string, 3> valid_precisions = {"fp32", "fp16", "int8"};
+bool is_valid_precision_string(const std::string& precision);
 
 template <typename T>
 struct InferDeleter  // NOLINT
@@ -145,14 +126,8 @@ public:
     const std::string & model_path, const std::string & precision,
     std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator = nullptr,
     const BatchConfig & batch_config = {1, 1, 1}, const size_t max_workspace_size = (16 << 20),
-    const BuildConfig & buildConfig = {"fp32", nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION,
-          -1, false, false},
+    const BuildConfig & buildConfig = BuildConfig(),
     const std::vector<std::string> & plugin_paths = {});
-
-  /**
-   * @brief Deconstruct TrtCommon
-   */
-  ~TrtCommon();
 
   /**
    * @brief Load TensorRT engine
@@ -212,36 +187,13 @@ public:
   BatchConfig batch_config_;
   size_t max_workspace_size_;
   bool is_initialized_{false};
-  // //////////////////////////////////////////////////
-  // FIXME: tensorrt_yoloxにあるSimpleProfilerをここで参照したら循環する
-  // //////////////////////////////////////////////////
+
   // profiler for per-layer
-  //SimpleProfiler m_model_profiler;
   SimpleProfiler model_profiler_;
   // profiler for whole model
-  //SimpleProfiler m_host_profiler;
   SimpleProfiler host_profiler_;
 
   std::unique_ptr<const BuildConfig> build_config_;
-
-  // // type for calibration
-  // //nvinfer1::CalibrationAlgoType m_calibType;
-  // nvinfer1::CalibrationAlgoType calib_type_;
-  // // flag for dla
-  // //int m_dla;
-  // int dla_core_id_;
-  // // flag for partial quanitzation in first layer
-  // //bool m_first;
-  // bool quantize_first_layer_;
-  // // flag for partial quanitzation in last layer
-  // //bool m_last;
-  // bool quantize_last_layer_;
-  // // clip value for implicit quantization
-  // //double m_clip;
-  // double clip_value_;
-  // // flag for per-layer profiler using IProfiler
-  // //bool m_prof;
-  // bool profile_per_layer_;
 };
 
 }  // namespace tensorrt_common

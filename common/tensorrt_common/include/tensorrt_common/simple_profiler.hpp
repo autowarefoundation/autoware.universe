@@ -23,7 +23,6 @@
 
 namespace tensorrt_common
 {
-
 struct LayerInfo
 {
   int in_c;

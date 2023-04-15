@@ -20,15 +20,14 @@ namespace tensorrt_common
 using namespace nvinfer1;
 
 SimpleProfiler::SimpleProfiler(std::string name,
-                               const std::vector<SimpleProfiler>& src_profilers) :
-    m_name(name)
+                               const std::vector<SimpleProfiler>& src_profilers)
+    : m_name(name)
 {
   float total_time = 0.0;
   m_index = 0;
   for (const auto& src_profiler : src_profilers) {
     for (const auto& rec : src_profiler.m_profile) {
       auto it = m_profile.find(rec.first);
-
       if (it == m_profile.end()) {
         m_profile.insert(rec);
       } else {
@@ -42,7 +41,6 @@ SimpleProfiler::SimpleProfiler(std::string name,
 
 void SimpleProfiler::reportLayerTime(const char* layerName, float ms) noexcept
 {
-
   m_profile[layerName].count++;
   m_profile[layerName].time += ms;
   if (m_profile[layerName].min_time == -1.0) {

@@ -103,7 +103,7 @@ std::vector<std::string> load_image_list(const std::string& filename, const std:
     }
   return fileList;
 }
-}  // namespace
+}  // anonymous namespace
 
 namespace tensorrt_yolox
 {
@@ -128,13 +128,15 @@ TrtYoloX::TrtYoloX(
     fs::path calibration_table{model_path};
     std::string calibName = "";
     std::string ext = "";
-    if (build_config.calib_type == nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) {
+    if (build_config.calib_type_str == "Entropy") {
       ext = "EntropyV2-";
-    } else if (build_config.calib_type == nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) {
+    } else if (build_config.calib_type_str == "Legacy"
+               || build_config.calib_type_str == "Percentile") {
       ext = "Legacy-";
     } else {
       ext = "MinMax-";
     }
+
     ext += "calibration.table";
     calibration_table.replace_extension(ext);
     fs::path histogram_table{model_path};
@@ -142,12 +144,14 @@ TrtYoloX::TrtYoloX(
     histogram_table.replace_extension(ext);
 
     std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator;
-    if (build_config.calib_type == nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) {
+    if (build_config.calib_type_str == "Entropy") {
       calibrator.reset(
           new tensorrt_yolox::Int8EntropyCalibrator(stream, calibration_table, norm_factor_));
-    } else if (build_config.calib_type == nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) {
-      double quantile = 0.999999;
-      double cutoff = 0.999999;
+
+    } else if (build_config.calib_type_str == "Legacy"
+               || build_config.calib_type_str == "Percentile") {
+      const double quantile = 0.999999;
+      const double cutoff = 0.999999;
       calibrator.reset(
           new tensorrt_yolox::Int8LegacyCalibrator(stream, calibration_table, histogram_table,
                                                    norm_factor_, true, quantile, cutoff));
@@ -155,6 +159,7 @@ TrtYoloX::TrtYoloX(
       calibrator.reset(
           new tensorrt_yolox::Int8MinMaxCalibrator(stream, calibration_table, norm_factor_));
     }
+
     trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
         model_path, precision, std::move(calibrator), batch_config, max_workspace_size, build_config);
   } else {
@@ -225,35 +230,24 @@ TrtYoloX::TrtYoloX(
   }
   if (use_gpu_preprocess) {
     use_gpu_preprocess_ = true;
-    m_h_img_ = NULL;
-    m_d_img_ = NULL;
-
+    image_buf_h_ = nullptr;
+    image_buf_d_ = nullptr;
   } else {
     use_gpu_preprocess_ = false;
   }
 }
 
-TrtYoloX::~TrtYoloX()
-{
-  if (use_gpu_preprocess_) {
-    if (m_h_img_) CHECK_CUDA_ERROR(cudaFreeHost(m_h_img_));
-    if (m_d_img_) CHECK_CUDA_ERROR(cudaFree(m_d_img_));
-  }
-}
-
 void TrtYoloX::init_preproces_buffer(int width, int height)
 {
-  //if size of source input has benn changed...
+  // if size of source input has benn changed...
   if (src_width_ != -1 || src_height_ != -1) {
     if (width != src_width_ || height != src_height_) {
-      //Free cuda memory to reallocate
-      if (m_h_img_) {
-        CHECK_CUDA_ERROR(cudaFreeHost(m_h_img_));
-        m_h_img_ = NULL;
+      // Free cuda memory to reallocate
+      if (image_buf_h_) {
+        image_buf_h_.reset();
       }
-      if (m_d_img_) {
-        CHECK_CUDA_ERROR(cudaFree(m_d_img_));
-        m_d_img_ = NULL;
+      if (image_buf_d_) {
+        image_buf_d_.reset();
       }
     }
   }
@@ -261,17 +255,19 @@ void TrtYoloX::init_preproces_buffer(int width, int height)
   src_height_ = height;
   if (use_gpu_preprocess_) {
     auto input_dims = trt_common_->getBindingDimensions(0);
-    if (!m_h_img_) {
+    if (!image_buf_h_) {
       trt_common_->setBindingDimensions(0, input_dims);
       scales_.clear();
     }
     const float input_height = static_cast<float>(input_dims.d[2]);
     const float input_width = static_cast<float>(input_dims.d[3]);
-    if (!m_h_img_) {
+    if (!image_buf_h_) {
       const float scale = std::min(input_width / width, input_height / height);
       scales_.emplace_back(scale);
-      CHECK_CUDA_ERROR(cudaMallocHost((void **)&m_h_img_, sizeof(unsigned char) * width * height * 3));
-      CHECK_CUDA_ERROR(cudaMalloc((void **)&m_d_img_, sizeof(unsigned char) * width * height * 3));
+      image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+          width * height * 3, cudaHostAllocWriteCombined);
+      image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(
+          width * height * 3);
     }
   }
 }
@@ -279,49 +275,50 @@ void TrtYoloX::init_preproces_buffer(int width, int height)
 void TrtYoloX::preprocess_gpu(const std::vector<cv::Mat> & images)
 {
   const auto batch_size = images.size();
+  // Currently only supports single batch in cuda preprocessing
+  assert(batch_size == 1);
   auto input_dims = trt_common_->getBindingDimensions(0);
-  //Current support is only single batch in cuda preprocessing
-  assert(batch_size==1);
   input_dims.d[0] = batch_size;
   for (const auto & image : images) {
-    //if size of source input has benn changed...
+    // if size of source input has been changed...
     int width = image.cols;
     int height = image.rows;
     if (src_width_ != -1 || src_height_ != -1) {
       if (width != src_width_ || height != src_height_) {
         //Free cuda memory to reallocate
-        if (m_h_img_) {
-          CHECK_CUDA_ERROR(cudaFreeHost(m_h_img_));
-          m_h_img_ = NULL;
+        if (image_buf_h_) {
+          image_buf_h_.reset();
         }
-        if (m_d_img_) {
-          CHECK_CUDA_ERROR(cudaFree(m_d_img_));
-          m_d_img_ = NULL;
+        if (image_buf_d_) {
+          image_buf_d_.reset();
         }
       }
     }
     src_width_ = width;
     src_height_ = height;
   }
-  if (!m_h_img_) {
+  if (!image_buf_h_) {
     trt_common_->setBindingDimensions(0, input_dims);
     scales_.clear();
   }
   const float input_height = static_cast<float>(input_dims.d[2]);
   const float input_width = static_cast<float>(input_dims.d[3]);
   for (const auto & image : images) {
-    if (!m_h_img_) {
+    if (!image_buf_h_) {
       const float scale = std::min(input_width / image.cols, input_height / image.rows);
       scales_.emplace_back(scale);
-      CHECK_CUDA_ERROR(cudaMallocHost((void **)&m_h_img_, sizeof(unsigned char) * image.cols * image.rows * 3));
-      CHECK_CUDA_ERROR(cudaMalloc((void **)&m_d_img_, sizeof(unsigned char) *   image.cols * image.rows * 3));
+      image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(image.cols * image.rows * 3,
+                                                                  cudaHostAllocWriteCombined);
+      image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3);
     }
-    //Copy into pinned memory
-    memcpy(m_h_img_, &image.data[0], image.cols * image.rows * 3 *sizeof(unsigned char));
-    //Copy into device memory
-    CHECK_CUDA_ERROR(cudaMemcpyAsync(m_d_img_ , m_h_img_ , image.cols * image.rows * 3 * sizeof(unsigned char), cudaMemcpyHostToDevice, *stream_));
-    //Preprcess on GPU
-    resize_bilinear_letterbox_nhwc_to_nchw32_gpu(input_d_.get(), m_d_img_,
+    // Copy into pinned memory
+    memcpy(image_buf_h_.get(), &image.data[0], image.cols * image.rows * 3 * sizeof(unsigned char));
+    // Copy into device memory
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(image_buf_d_.get(), image_buf_h_.get(),
+                                     image.cols * image.rows * 3 * sizeof(unsigned char),
+                                     cudaMemcpyHostToDevice, *stream_));
+    // Preprcess on GPU
+    resize_bilinear_letterbox_nhwc_to_nchw32_gpu(input_d_.get(), image_buf_d_.get(),
                                                  input_width, input_height, 3,
                                                  image.cols, image.rows, 3,
                                                  (float)norm_factor_,
@@ -501,9 +498,9 @@ void TrtYoloX::decodeOutputs(
       y1 = (objects[i].y_offset + objects[i].height) / scale_y;
     } else {
       x0 = (objects[i].x_offset) / scale;
-     y0 = (objects[i].y_offset) / scale;
-     x1 = (objects[i].x_offset + objects[i].width) / scale;
-     y1 = (objects[i].y_offset + objects[i].height) / scale;
+      y0 = (objects[i].y_offset) / scale;
+      x1 = (objects[i].x_offset + objects[i].width) / scale;
+      y1 = (objects[i].y_offset + objects[i].height) / scale;
     }
     // clip
     x0 = std::clamp(x0, 0.f, static_cast<float>(img_size.width - 1));

@@ -34,8 +34,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef CALIBRATOR_HPP_
-#define CALIBRATOR_HPP_
+#ifndef TENSORRT_YOLOX__CALIBRATOR_HPP_
+#define TENSORRT_YOLOX__CALIBRATOR_HPP_
+
 #include "cuda_utils/cuda_check_error.hpp"
 #include "cuda_utils/cuda_unique_ptr.hpp"
 
@@ -127,8 +128,10 @@ class ImageStream
 
     for (int i = 0; i < batch_size_; ++i) {
       auto image =
-          cv::imread(calibration_images_[batch_size_ * current_batch_ + i].c_str(), cv::IMREAD_COLOR);
-      std::cout << current_batch_ << " " << i << " Preprocess " << calibration_images_[batch_size_ * current_batch_ + i].c_str() << std::endl;
+          cv::imread(calibration_images_[batch_size_ * current_batch_ + i].c_str(),
+                     cv::IMREAD_COLOR);
+      std::cout << current_batch_ << " " << i << " Preprocess "
+                << calibration_images_[batch_size_ * current_batch_ + i].c_str() << std::endl;
       auto input = preprocess({image}, input_dims_, scale);
       batch_.insert(
           batch_.begin() + i * input_dims_.d[1] * input_dims_.d[2] * input_dims_.d[3], input.begin(),
@@ -138,6 +141,7 @@ class ImageStream
     ++current_batch_;
     return true;
   }
+
   /**
    * @brief Reset calibration
    */
@@ -163,8 +167,11 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
 {
  public:
   Int8LegacyCalibrator(
-      ImageStream & stream, const std::string calibration_cache_file, const std::string histogram_cache_file, double scale = 1.0, bool read_cache = true, double quantile = 0.999999, double cutoff = 0.999999)
-      : stream_(stream), calibration_cache_file_(calibration_cache_file), histogranm_cache_file_(histogram_cache_file), read_cache_(read_cache)
+      ImageStream & stream, const std::string calibration_cache_file,
+      const std::string histogram_cache_file, double scale = 1.0, bool read_cache = true,
+      double quantile = 0.999999, double cutoff = 0.999999)
+      : stream_(stream), calibration_cache_file_(calibration_cache_file),
+        histogranm_cache_file_(histogram_cache_file), read_cache_(read_cache)
   {
     auto d = stream_.getInputDims();
     input_count_ = stream_.getBatchSize() * d.d[1] * d.d[2] * d.d[3];
@@ -189,7 +196,6 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
       default :
         std::cout << "No CalibrationAlgType" << std::endl;
         break;
-
     }
   }
   int getBatchSize() const noexcept override { return stream_.getBatchSize(); }
@@ -308,7 +314,8 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
 {
  public:
   Int8EntropyCalibrator(
-      ImageStream & stream, const std::string calibration_cache_file, double scale=1.0, bool read_cache = true )
+      ImageStream & stream, const std::string calibration_cache_file,
+      double scale=1.0, bool read_cache = true)
       : stream_(stream), calibration_cache_file_(calibration_cache_file), read_cache_(read_cache)
   {
     auto d = stream_.getInputDims();
@@ -332,7 +339,6 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
       default :
         std::cout << "No CalibrationAlgType" << std::endl;
         break;
-
     }
   }
   int getBatchSize() const noexcept override { return stream_.getBatchSize(); }
@@ -408,7 +414,8 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
 {
  public:
   Int8MinMaxCalibrator(
-      ImageStream & stream, const std::string calibration_cache_file, double scale=1.0, bool read_cache = true )
+      ImageStream & stream, const std::string calibration_cache_file,
+      double scale=1.0, bool read_cache = true )
       : stream_(stream), calibration_cache_file_(calibration_cache_file), read_cache_(read_cache)
   {
     auto d = stream_.getInputDims();
@@ -432,7 +439,6 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
       default :
         std::cout << "No CalibrationAlgType" << std::endl;
         break;
-
     }
   }
   int getBatchSize() const noexcept override { return stream_.getBatchSize(); }
@@ -469,13 +475,9 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
     }
 
     length = calib_cache_.size();
-    if (length)
-    {
+    if (length) {
       std::cout << "Using cached calibration table to build the engine" << std::endl;
-    }
-
-    else
-    {
+    } else {
       std::cout << "New calibration table will be created to build the engine" << std::endl;
     }
     return length ? &calib_cache_[0] : nullptr;
@@ -499,4 +501,4 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
 };
 }  // namespace tensorrt_yolox
 
-#endif  // CALIBRATOR_HPP_
+#endif  // TENSORRT_YOLOX__CALIBRATOR_HPP_

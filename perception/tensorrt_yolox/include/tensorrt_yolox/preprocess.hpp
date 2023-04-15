@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef TENSORRT_YOLOX__PREPROCESS_HPP_
+#define TENSORRT_YOLOX__PREPROCESS_HPP_
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <curand.h>
@@ -107,5 +110,6 @@ extern void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(float *dst, unsigned ch
                                                          int d_w, int d_h, int d_c,
                                                          int s_w, int s_h, int s_c,
                                                          float norm, cudaStream_t stream);
-
 }  // namespace tensorrt_yolox
+
+#endif  // TENSORRT_YOLOX__PREPROCESS_HPP_
