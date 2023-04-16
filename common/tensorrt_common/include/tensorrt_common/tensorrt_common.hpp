@@ -68,6 +68,14 @@ struct BuildConfig
   BuildConfig()
       : calib_type_str("MinMax"), dla_core_id(-1), quantize_first_layer(false),
         quantize_last_layer(false), profile_per_layer(false), clip_value(0.0)
+  {}
+
+  explicit BuildConfig(const std::string & calib_type_str, const int dla_core_id=-1,
+                       const bool quantize_first_layer=false, const bool quantize_last_layer=false,
+                       const bool profile_per_layer=false, const double clip_value=0.0)
+      : calib_type_str(calib_type_str), dla_core_id(dla_core_id),
+        quantize_first_layer(quantize_first_layer), quantize_last_layer(quantize_last_layer),
+        profile_per_layer(profile_per_layer), clip_value(clip_value)
   {
     if (std::find(valid_calib_type.begin(), valid_calib_type.end(), calib_type_str)
         == valid_calib_type.end()) {

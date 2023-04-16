@@ -386,7 +386,7 @@ bool TrtCommon::buildEngineFromOnnx(
       auto ltype = layer->getType();
       std::string name = layer->getName();
       nvinfer1::ITensor* out = layer->getOutput(0);
-      if (build_config_->clip_value != 0.0) {
+      if (build_config_->clip_value > 0.0) {
         std::cout << "Set max value for outputs : " << build_config_->clip_value
                   << "  " << name << std::endl;
         out->setDynamicRange(0.0, build_config_->clip_value);
