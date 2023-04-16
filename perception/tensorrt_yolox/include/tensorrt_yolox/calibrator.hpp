@@ -57,14 +57,14 @@ namespace tensorrt_yolox
 {
 class ImageStream
 {
- public:
+public:
   ImageStream(
-      int batch_size, nvinfer1::Dims input_dims, const std::vector<std::string> calibration_images)
-      : batch_size_(batch_size),
-        calibration_images_(calibration_images),
-        current_batch_(0),
-        max_batches_(calibration_images.size() / batch_size_),
-        input_dims_(input_dims)
+    int batch_size, nvinfer1::Dims input_dims, const std::vector<std::string> calibration_images)
+  : batch_size_(batch_size),
+    calibration_images_(calibration_images),
+    current_batch_(0),
+    max_batches_(calibration_images.size() / batch_size_),
+    input_dims_(input_dims)
   {
     batch_.resize(batch_size_ * input_dims_.d[1] * input_dims_.d[2] * input_dims_.d[3]);
   }
@@ -84,7 +84,8 @@ class ImageStream
    * @param[in] norm normalization (0.0-1.0)
    * @return vector<float> preprocessed data
    */
-  std::vector<float> preprocess(const std::vector<cv::Mat> & images, nvinfer1::Dims input_dims, double norm)
+  std::vector<float> preprocess(
+    const std::vector<cv::Mat> & images, nvinfer1::Dims input_dims, double norm)
   {
     std::vector<float> input_h_;
     const auto batch_size = images.size();
@@ -102,11 +103,12 @@ class ImageStream
       cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
       const auto bottom = input_height - dst_image.rows;
       const auto right = input_width - dst_image.cols;
-      copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
+      copyMakeBorder(
+        dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
       dst_images.emplace_back(dst_image);
     }
     const auto chw_images =
-        cv::dnn::blobFromImages(dst_images, norm, cv::Size(), cv::Scalar(), false, false, CV_32F);
+      cv::dnn::blobFromImages(dst_images, norm, cv::Size(), cv::Scalar(), false, false, CV_32F);
 
     const auto data_length = chw_images.total();
     input_h_.reserve(data_length);
@@ -128,14 +130,13 @@ class ImageStream
 
     for (int i = 0; i < batch_size_; ++i) {
       auto image =
-          cv::imread(calibration_images_[batch_size_ * current_batch_ + i].c_str(),
-                     cv::IMREAD_COLOR);
+        cv::imread(calibration_images_[batch_size_ * current_batch_ + i].c_str(), cv::IMREAD_COLOR);
       std::cout << current_batch_ << " " << i << " Preprocess "
                 << calibration_images_[batch_size_ * current_batch_ + i].c_str() << std::endl;
       auto input = preprocess({image}, input_dims_, scale);
       batch_.insert(
-          batch_.begin() + i * input_dims_.d[1] * input_dims_.d[2] * input_dims_.d[3], input.begin(),
-          input.end());
+        batch_.begin() + i * input_dims_.d[1] * input_dims_.d[2] * input_dims_.d[3], input.begin(),
+        input.end());
     }
 
     ++current_batch_;
@@ -147,7 +148,7 @@ class ImageStream
    */
   void reset() { current_batch_ = 0; }
 
- private:
+private:
   int batch_size_;
   std::vector<std::string> calibration_images_;
   int current_batch_;
@@ -155,7 +156,6 @@ class ImageStream
   nvinfer1::Dims input_dims_;
   std::vector<float> batch_;
 };
-
 
 /**Percentile calibration using legacy calibrator*/
 /**
@@ -165,13 +165,15 @@ class ImageStream
  */
 class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
 {
- public:
+public:
   Int8LegacyCalibrator(
-      ImageStream & stream, const std::string calibration_cache_file,
-      const std::string histogram_cache_file, double scale = 1.0, bool read_cache = true,
-      double quantile = 0.999999, double cutoff = 0.999999)
-      : stream_(stream), calibration_cache_file_(calibration_cache_file),
-        histogranm_cache_file_(histogram_cache_file), read_cache_(read_cache)
+    ImageStream & stream, const std::string calibration_cache_file,
+    const std::string histogram_cache_file, double scale = 1.0, bool read_cache = true,
+    double quantile = 0.999999, double cutoff = 0.999999)
+  : stream_(stream),
+    calibration_cache_file_(calibration_cache_file),
+    histogranm_cache_file_(histogram_cache_file),
+    read_cache_(read_cache)
   {
     auto d = stream_.getInputDims();
     input_count_ = stream_.getBatchSize() * d.d[1] * d.d[2] * d.d[3];
@@ -181,19 +183,19 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
     cutoff_ = cutoff;
     auto algType = getAlgorithm();
     switch (algType) {
-      case(nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION):
         std::cout << "CalibratioAlgoType : kLEGACY_CALIBRATION" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION):
         std::cout << "CalibratioAlgoType : kENTROPY_CALIBRATION" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2) :
+      case (nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2):
         std::cout << "CalibratioAlgoType : kENTROPY_CALIBRATION_2" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION):
         std::cout << "CalibratioAlgoType : kMINMAX_CALIBRATION" << std::endl;
         break;
-      default :
+      default:
         std::cout << "No CalibrationAlgType" << std::endl;
         break;
     }
@@ -212,7 +214,7 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
     }
     try {
       CHECK_CUDA_ERROR(cudaMemcpy(
-          device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
+        device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
     } catch (const std::exception & e) {
       // Do nothing
     }
@@ -227,18 +229,14 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
     input >> std::noskipws;
     if (read_cache_ && input.good()) {
       std::copy(
-          std::istream_iterator<char>(input), std::istream_iterator<char>(),
-          std::back_inserter(calib_cache_));
+        std::istream_iterator<char>(input), std::istream_iterator<char>(),
+        std::back_inserter(calib_cache_));
     }
 
     length = calib_cache_.size();
-    if (length)
-    {
+    if (length) {
       std::cout << "Using cached calibration table to build the engine" << std::endl;
-    }
-
-    else
-    {
+    } else {
       std::cout << "New calibration table will be created to build the engine" << std::endl;
     }
     return length ? &calib_cache_[0] : nullptr;
@@ -262,36 +260,32 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
     return cutoff_;
   }
 
-  const void* readHistogramCache(std::size_t & length) noexcept
+  const void * readHistogramCache(std::size_t & length) noexcept
   {
     hist_cache_.clear();
     std::ifstream input(histogranm_cache_file_, std::ios::binary);
     input >> std::noskipws;
     if (read_cache_ && input.good()) {
       std::copy(
-          std::istream_iterator<char>(input), std::istream_iterator<char>(),
-          std::back_inserter(hist_cache_));
+        std::istream_iterator<char>(input), std::istream_iterator<char>(),
+        std::back_inserter(hist_cache_));
     }
 
     length = hist_cache_.size();
-    if (length)
-    {
+    if (length) {
       std::cout << "Using cached histogram table to build the engine" << std::endl;
-    }
-
-    else
-    {
+    } else {
       std::cout << "New histogram table will be created to build the engine" << std::endl;
     }
     return length ? &hist_cache_[0] : nullptr;
   }
-  void writeHistogramCache(void const* ptr, std::size_t length) noexcept
+  void writeHistogramCache(void const * ptr, std::size_t length) noexcept
   {
     std::ofstream output(histogranm_cache_file_, std::ios::binary);
     output.write(reinterpret_cast<const char *>(ptr), length);
   }
 
- private:
+private:
   ImageStream stream_;
   const std::string calibration_cache_file_;
   const std::string histogranm_cache_file_;
@@ -312,11 +306,11 @@ class Int8LegacyCalibrator : public nvinfer1::IInt8LegacyCalibrator
  */
 class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
 {
- public:
+public:
   Int8EntropyCalibrator(
-      ImageStream & stream, const std::string calibration_cache_file,
-      double scale=1.0, bool read_cache = true)
-      : stream_(stream), calibration_cache_file_(calibration_cache_file), read_cache_(read_cache)
+    ImageStream & stream, const std::string calibration_cache_file, double scale = 1.0,
+    bool read_cache = true)
+  : stream_(stream), calibration_cache_file_(calibration_cache_file), read_cache_(read_cache)
   {
     auto d = stream_.getInputDims();
     input_count_ = stream_.getBatchSize() * d.d[1] * d.d[2] * d.d[3];
@@ -324,19 +318,19 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
     scale_ = scale;
     auto algType = getAlgorithm();
     switch (algType) {
-      case(nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION):
         std::cout << "CalibratioAlgoType : kLEGACY_CALIBRATION" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION):
         std::cout << "CalibratioAlgoType : kENTROPY_CALIBRATION" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2) :
+      case (nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2):
         std::cout << "CalibratioAlgoType : kENTROPY_CALIBRATION_2" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION):
         std::cout << "CalibratioAlgoType : kMINMAX_CALIBRATION" << std::endl;
         break;
-      default :
+      default:
         std::cout << "No CalibrationAlgType" << std::endl;
         break;
     }
@@ -355,7 +349,7 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
     }
     try {
       CHECK_CUDA_ERROR(cudaMemcpy(
-          device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
+        device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
     } catch (const std::exception & e) {
       // Do nothing
     }
@@ -370,18 +364,14 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
     input >> std::noskipws;
     if (read_cache_ && input.good()) {
       std::copy(
-          std::istream_iterator<char>(input), std::istream_iterator<char>(),
-          std::back_inserter(calib_cache_));
+        std::istream_iterator<char>(input), std::istream_iterator<char>(),
+        std::back_inserter(calib_cache_));
     }
 
     length = calib_cache_.size();
-    if (length)
-    {
+    if (length) {
       std::cout << "Using cached calibration table to build the engine" << std::endl;
-    }
-
-    else
-    {
+    } else {
       std::cout << "New calibration table will be created to build the engine" << std::endl;
     }
     return length ? &calib_cache_[0] : nullptr;
@@ -393,7 +383,7 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
     output.write(reinterpret_cast<const char *>(cache), length);
   }
 
- private:
+private:
   ImageStream stream_;
   const std::string calibration_cache_file_;
   bool read_cache_{true};
@@ -404,7 +394,6 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
   double scale_;
 };
 
-
 /**
  * @class Int8MinMaxCalibrator
  * @brief Calibrator for MinMax
@@ -412,11 +401,11 @@ class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2
  */
 class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
 {
- public:
+public:
   Int8MinMaxCalibrator(
-      ImageStream & stream, const std::string calibration_cache_file,
-      double scale=1.0, bool read_cache = true )
-      : stream_(stream), calibration_cache_file_(calibration_cache_file), read_cache_(read_cache)
+    ImageStream & stream, const std::string calibration_cache_file, double scale = 1.0,
+    bool read_cache = true)
+  : stream_(stream), calibration_cache_file_(calibration_cache_file), read_cache_(read_cache)
   {
     auto d = stream_.getInputDims();
     input_count_ = stream_.getBatchSize() * d.d[1] * d.d[2] * d.d[3];
@@ -424,19 +413,19 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
     scale_ = scale;
     auto algType = getAlgorithm();
     switch (algType) {
-      case(nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION):
         std::cout << "CalibratioAlgoType : kLEGACY_CALIBRATION" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION):
         std::cout << "CalibratioAlgoType : kENTROPY_CALIBRATION" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2) :
+      case (nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2):
         std::cout << "CalibratioAlgoType : kENTROPY_CALIBRATION_2" << std::endl;
         break;
-      case(nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION) :
+      case (nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION):
         std::cout << "CalibratioAlgoType : kMINMAX_CALIBRATION" << std::endl;
         break;
-      default :
+      default:
         std::cout << "No CalibrationAlgType" << std::endl;
         break;
     }
@@ -455,7 +444,7 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
     }
     try {
       CHECK_CUDA_ERROR(cudaMemcpy(
-          device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
+        device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
     } catch (const std::exception & e) {
       // Do nothing
     }
@@ -470,8 +459,8 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
     input >> std::noskipws;
     if (read_cache_ && input.good()) {
       std::copy(
-          std::istream_iterator<char>(input), std::istream_iterator<char>(),
-          std::back_inserter(calib_cache_));
+        std::istream_iterator<char>(input), std::istream_iterator<char>(),
+        std::back_inserter(calib_cache_));
     }
 
     length = calib_cache_.size();
@@ -489,7 +478,7 @@ class Int8MinMaxCalibrator : public nvinfer1::IInt8MinMaxCalibrator
     output.write(reinterpret_cast<const char *>(cache), length);
   }
 
- private:
+private:
   ImageStream stream_;
   const std::string calibration_cache_file_;
   bool read_cache_{true};

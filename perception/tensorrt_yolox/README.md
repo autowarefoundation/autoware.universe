@@ -41,7 +41,7 @@ Zheng Ge, Songtao Liu, Feng Wang, Zeming Li, Jian Sun, "YOLOX: Exceeding YOLO Se
 ### Node Parameters
 
 | Name                          | Type   | Default Value | Description                                                                                                                                                              |
-|-------------------------------|--------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ----------------------------- | ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `model_path`                  | string | ""            | The onnx file name for yolox model                                                                                                                                       |
 | `label_path`                  | string | ""            | The label file with label names for detected objects written on it                                                                                                       |
 | `precision`                   | string | "fp16"        | The inference mode: "fp32", "fp16", "int8"                                                                                                                               |

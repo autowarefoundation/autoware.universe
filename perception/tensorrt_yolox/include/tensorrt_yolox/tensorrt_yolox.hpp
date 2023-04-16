@@ -61,30 +61,31 @@ class TrtYoloX
 {
 public:
   /**
-     * @brief Construct TrtYoloX.
-     * @param[in] mode_path ONNX model_path
-     * @param[in] precision precision for inference
-     * @param[in] num_class classifier-ed num
-     * @param[in] score_threshold threshold for detection
-     * @param[in] nms_threshold threshold for NMS
-     * @param[in] build_config configuration including precision, calibration method, DLA, remaining fp16 for first layer,  remaining fp16 for last layer and profiler for builder
-     * @param[in] use_gpu_preprocess whether use cuda gpu for preprocessing
-     * @param[in] calibration_image_list_file path for calibration files (only require for quantization)
-     * @param[in] norm_factor scaling factor for preprocess
-     * @param[in] cache_dir unused variable
-     * @param[in] batch_config configuration for batched execution
-     * @param[in] max_workspace_size maximum workspace for building TensorRT engine
-     */
+   * @brief Construct TrtYoloX.
+   * @param[in] mode_path ONNX model_path
+   * @param[in] precision precision for inference
+   * @param[in] num_class classifier-ed num
+   * @param[in] score_threshold threshold for detection
+   * @param[in] nms_threshold threshold for NMS
+   * @param[in] build_config configuration including precision, calibration method, DLA, remaining
+   * fp16 for first layer,  remaining fp16 for last layer and profiler for builder
+   * @param[in] use_gpu_preprocess whether use cuda gpu for preprocessing
+   * @param[in] calibration_image_list_file path for calibration files (only require for
+   * quantization)
+   * @param[in] norm_factor scaling factor for preprocess
+   * @param[in] cache_dir unused variable
+   * @param[in] batch_config configuration for batched execution
+   * @param[in] max_workspace_size maximum workspace for building TensorRT engine
+   */
   TrtYoloX(
-      const std::string & model_path, const std::string & precision, const int num_class = 8,
-      const float score_threshold = 0.3, const float nms_threshold = 0.7,
-      const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
-      const bool use_gpu_preprocess = false,
-      const std::string & calibration_image_list_file = std::string(),
-      const double norm_factor = 1.0,
-      const std::string & cache_dir = "",
-      const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
-      const size_t max_workspace_size = (1 << 30));
+    const std::string & model_path, const std::string & precision, const int num_class = 8,
+    const float score_threshold = 0.3, const float nms_threshold = 0.7,
+    const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
+    const bool use_gpu_preprocess = false,
+    const std::string & calibration_image_list_file = std::string(), const double norm_factor = 1.0,
+    const std::string & cache_dir = "",
+    const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
+    const size_t max_workspace_size = (1 << 30));
 
   /**
    * @brief run inference including pre-process and post-process
@@ -97,7 +98,8 @@ public:
    * @brief allocate buffer for preprocess on GPU
    * @param[in] width original image width
    * @param[in] height original image height
-   * @warning if we don't allocate buffers using it, "preprocess_gpu" allocates buffers at the beginning
+   * @warning if we don't allocate buffers using it, "preprocess_gpu" allocates buffers at the
+   * beginning
    */
   void init_preproces_buffer(int width, int height);
 
@@ -106,7 +108,7 @@ public:
    */
   void print_profiling(void);
 
- private:
+private:
   void preprocess(const std::vector<cv::Mat> & images);
 
   // NOTE: Currently only supports a single batch image

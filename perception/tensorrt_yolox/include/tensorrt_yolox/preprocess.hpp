@@ -15,11 +15,11 @@
 #ifndef TENSORRT_YOLOX__PREPROCESS_HPP_
 #define TENSORRT_YOLOX__PREPROCESS_HPP_
 
+#include <cublas_v2.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <curand.h>
-#include <cublas_v2.h>
 #include <cuda_runtime_api.h>
+#include <curand.h>
 
 namespace tensorrt_yolox
 {
@@ -35,8 +35,9 @@ namespace tensorrt_yolox
  * @param[in] s_c channel for input image
  * @param[in] stream cuda stream
  */
-extern void resize_bilinear_gpu(unsigned char *dst, unsigned char*src, int d_w, int d_h, int d_c,
-                                int s_w, int s_h, int s_c,  cudaStream_t stream);
+extern void resize_bilinear_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  cudaStream_t stream);
 
 /**
  * @brief Letterbox a image on gpus
@@ -50,8 +51,9 @@ extern void resize_bilinear_gpu(unsigned char *dst, unsigned char*src, int d_w, 
  * @param[in] s_c channel for input image
  * @param[in] stream cuda stream
  */
-extern void letterbox_gpu(unsigned char *dst, unsigned char*src, int d_w, int d_h, int d_c,
-                          int s_w, int s_h, int s_c,  cudaStream_t stream);
+extern void letterbox_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  cudaStream_t stream);
 
 /**
  * @brief NHWC to NHWC conversion
@@ -62,8 +64,8 @@ extern void letterbox_gpu(unsigned char *dst, unsigned char*src, int d_w, int d_
  * @param[in] d_c channel for a image
  * @param[in] stream cuda stream
  */
-extern void nchw_to_nhwc_gpu(unsigned char *dst, unsigned char*src, int d_w, int d_h, int d_c,
-                             cudaStream_t stream);
+extern void nchw_to_nhwc_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream);
 
 /**
  * @brief Unsigned char to float32 for inference
@@ -74,8 +76,8 @@ extern void nchw_to_nhwc_gpu(unsigned char *dst, unsigned char*src, int d_w, int
  * @param[in] d_c channel for a image
  * @param[in] stream cuda stream
  */
-extern void to_float_gpu(float *dst32, unsigned char*src, int d_w, int d_h, int d_c,
-                         cudaStream_t stream);
+extern void to_float_gpu(
+  float * dst32, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream);
 
 /**
  * @brief Resize and letterbox a image using bilinear interpolation on gpus
@@ -89,12 +91,13 @@ extern void to_float_gpu(float *dst32, unsigned char*src, int d_w, int d_h, int 
  * @param[in] s_c channel for input
  * @param[in] stream cuda stream
  */
-extern void resize_bilinear_letterbox_gpu(unsigned char *dst, unsigned char*src,
-                                          int d_w, int d_h, int d_c,
-                                          int s_w, int s_h, int s_c, cudaStream_t stream);
+extern void resize_bilinear_letterbox_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  cudaStream_t stream);
 
 /**
- * @brief Optimized preprocessing including resize, letterbox, nhwc2nchw, toFloat and normalization for YOLOX on gpus
+ * @brief Optimized preprocessing including resize, letterbox, nhwc2nchw, toFloat and normalization
+ * for YOLOX on gpus
  * @param[out] dst processsed image
  * @param[in] src image
  * @param[in] d_w width for output
@@ -106,10 +109,9 @@ extern void resize_bilinear_letterbox_gpu(unsigned char *dst, unsigned char*src,
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-extern void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(float *dst, unsigned char*src,
-                                                         int d_w, int d_h, int d_c,
-                                                         int s_w, int s_h, int s_c,
-                                                         float norm, cudaStream_t stream);
+extern void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(
+  float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  float norm, cudaStream_t stream);
 }  // namespace tensorrt_yolox
 
 #endif  // TENSORRT_YOLOX__PREPROCESS_HPP_

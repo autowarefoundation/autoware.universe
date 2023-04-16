@@ -43,10 +43,10 @@ nvinfer1::Dims get_input_dims(const std::string & onnx_file_path)
   }
 
   const auto explicitBatch =
-      1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
 
   auto network =
-      TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
+    TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
   if (!network) {
     logger_.log(nvinfer1::ILogger::Severity::kERROR, "Fail to create network");
   }
@@ -59,22 +59,24 @@ nvinfer1::Dims get_input_dims(const std::string & onnx_file_path)
   auto parser = TrtUniquePtr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, logger_));
   if (!parser->parseFromFile(
         onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR))) {
+    logger_.log(nvinfer1::ILogger::Severity::kERROR, "Fail to parse ONNX");
   }
 
   const auto input = network->getInput(0);
   return input->getDimensions();
 }
 
-bool is_valid_precision_string(const std::string& precision)
+bool is_valid_precision_string(const std::string & precision)
 {
-  if (std::find(valid_precisions.begin(), valid_precisions.end(), precision)
-      == valid_precisions.end()) {
+  if (
+    std::find(valid_precisions.begin(), valid_precisions.end(), precision) ==
+    valid_precisions.end()) {
     std::stringstream message;
     message << "Invalid precision was specified: " << precision << std::endl
             << "Valid string is one of: [";
     for (const auto & s : valid_precisions) {
       message << s << ", ";
-      }
+    }
     message << "] (case sensitive)" << std::endl;
     std::cerr << message.str();
     return false;
@@ -85,9 +87,8 @@ bool is_valid_precision_string(const std::string& precision)
 
 TrtCommon::TrtCommon(
   const std::string & model_path, const std::string & precision,
-  std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator,
-  const BatchConfig & batch_config, const size_t max_workspace_size,
-  const BuildConfig & build_config,
+  std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator, const BatchConfig & batch_config,
+  const size_t max_workspace_size, const BuildConfig & build_config,
   const std::vector<std::string> & plugin_paths)
 : model_file_path_(model_path),
   calibrator_(std::move(calibrator)),
@@ -142,41 +143,43 @@ void TrtCommon::setup()
     if (precision_ == "int8") {
       if (build_config_->calib_type_str == "Entropy") {
         calib_name = "EntropyV2-";
-      } else if (build_config_->calib_type_str == "Legacy"
-                 || build_config_->calib_type_str == "Percentile") {
+      } else if (
+        build_config_->calib_type_str == "Legacy" ||
+        build_config_->calib_type_str == "Percentile") {
         calib_name = "Legacy-";
       } else {
         calib_name = "MinMax-";
       }
     }
     if (build_config_->dla_core_id != -1) {
-      ext =  "DLA" + std::to_string(build_config_->dla_core_id) + "-" + calib_name + precision_;
+      ext = "DLA" + std::to_string(build_config_->dla_core_id) + "-" + calib_name + precision_;
       if (build_config_->quantize_first_layer) {
         ext += "-firstFP16";
       }
       if (build_config_->quantize_last_layer) {
         ext += "-lastFP16";
       }
-      ext += "-batch" + std::to_string(batch_config_[0]) +".engine";
+      ext += "-batch" + std::to_string(batch_config_[0]) + ".engine";
     } else {
-      ext =  calib_name + precision_;
+      ext = calib_name + precision_;
       if (build_config_->quantize_first_layer) {
         ext += "-firstFP16";
       }
       if (build_config_->quantize_last_layer) {
         ext += "-lastFP16";
       }
-      ext += "-batch" + std::to_string(batch_config_[0]) +".engine";
+      ext += "-batch" + std::to_string(batch_config_[0]) + ".engine";
     }
     cache_engine_path.replace_extension(ext);
 
-    //Output Network Information
+    // Output Network Information
     print_network_info(model_file_path_);
 
     if (fs::exists(cache_engine_path)) {
-      std::cout << "Loading... " <<  cache_engine_path << std::endl;loadEngine(cache_engine_path);
+      std::cout << "Loading... " << cache_engine_path << std::endl;
+      loadEngine(cache_engine_path);
     } else {
-      std::cout << "Building... " <<  cache_engine_path << std::endl;
+      std::cout << "Building... " << cache_engine_path << std::endl;
       logger_.log(nvinfer1::ILogger::Severity::kINFO, "Start build engine");
       buildEngineFromOnnx(model_file_path_, cache_engine_path);
       logger_.log(nvinfer1::ILogger::Severity::kINFO, "End build engine");
@@ -204,7 +207,8 @@ void TrtCommon::setup()
   json_path.replace_extension(j_ext);
   std::string ret = getLayerInformation(nvinfer1::LayerInformationFormat::kJSON);
   std::ofstream os(json_path, std::ofstream::trunc);
-  os << ret << std::flush;is_initialized_ = true;
+  os << ret << std::flush;
+  is_initialized_ = true;
 }
 
 bool TrtCommon::loadEngine(const std::string & engine_file_path)
@@ -223,14 +227,14 @@ void TrtCommon::print_network_info(const std::string & onnx_file_path)
   auto builder = TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
   if (!builder) {
     logger_.log(nvinfer1::ILogger::Severity::kERROR, "Fail to create builder");
-    return ;
+    return;
   }
 
   const auto explicitBatch =
-      1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
 
   auto network =
-      TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
+    TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
   if (!network) {
     logger_.log(nvinfer1::ILogger::Severity::kERROR, "Fail to create network");
     return;
@@ -253,14 +257,14 @@ void TrtCommon::print_network_info(const std::string & onnx_file_path)
 
   auto parser = TrtUniquePtr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, logger_));
   if (!parser->parseFromFile(
-          onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR))) {
+        onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR))) {
     return;
   }
   int num = network->getNbLayers();
   float total_gflops = 0.0;
   int total_params = 0;
   for (int i = 0; i < num; i++) {
-    nvinfer1::ILayer *layer = network->getLayer(i);
+    nvinfer1::ILayer * layer = network->getLayer(i);
     auto ltype = layer->getType();
     std::string name = layer->getName();
     if (build_config_->profile_per_layer) {
@@ -269,31 +273,32 @@ void TrtCommon::print_network_info(const std::string & onnx_file_path)
     if (ltype == nvinfer1::LayerType::kCONSTANT) {
       continue;
     }
-    nvinfer1::ITensor* in = layer->getInput(0);
+    nvinfer1::ITensor * in = layer->getInput(0);
     nvinfer1::Dims dim_in = in->getDimensions();
-    nvinfer1::ITensor* out = layer->getOutput(0);
+    nvinfer1::ITensor * out = layer->getOutput(0);
     nvinfer1::Dims dim_out = out->getDimensions();
 
     if (ltype == nvinfer1::LayerType::kCONVOLUTION) {
-      nvinfer1::IConvolutionLayer* conv =  (nvinfer1::IConvolutionLayer*)layer;
+      nvinfer1::IConvolutionLayer * conv = (nvinfer1::IConvolutionLayer *)layer;
       nvinfer1::Dims k_dims = conv->getKernelSizeNd();
       nvinfer1::Dims s_dims = conv->getStrideNd();
       int groups = conv->getNbGroups();
       int stride = s_dims.d[0];
-      int num_weights = (dim_in.d[1]/groups) * dim_out.d[1] * k_dims.d[0] * k_dims.d[1];
-      float gflops = (2 * num_weights) * (dim_in.d[3]/stride * dim_in.d[2]/stride /1e9);;
+      int num_weights = (dim_in.d[1] / groups) * dim_out.d[1] * k_dims.d[0] * k_dims.d[1];
+      float gflops = (2 * num_weights) * (dim_in.d[3] / stride * dim_in.d[2] / stride / 1e9);
+      ;
       total_gflops += gflops;
       total_params += num_weights;
-      std::cout << "L" << i << " [conv " << k_dims.d[0] << "x" << k_dims.d[1]
-                << " (" << groups << ") "
-                << "/" << s_dims.d[0] <<  "] "
-                << dim_in.d[3] << "x" << dim_in.d[2] << "x" << dim_in.d[1]
-                << " -> " << dim_out.d[3] << "x" << dim_out.d[2] << "x" << dim_out.d[1];
+      std::cout << "L" << i << " [conv " << k_dims.d[0] << "x" << k_dims.d[1] << " (" << groups
+                << ") "
+                << "/" << s_dims.d[0] << "] " << dim_in.d[3] << "x" << dim_in.d[2] << "x"
+                << dim_in.d[1] << " -> " << dim_out.d[3] << "x" << dim_out.d[2] << "x"
+                << dim_out.d[1];
       std::cout << " weights:" << num_weights;
       std::cout << " GFLOPs:" << gflops;
       std::cout << std::endl;
     } else if (ltype == nvinfer1::LayerType::kPOOLING) {
-      nvinfer1::IPoolingLayer* pool =  (nvinfer1::IPoolingLayer*)layer;
+      nvinfer1::IPoolingLayer * pool = (nvinfer1::IPoolingLayer *)layer;
       auto p_type = pool->getPoolingType();
       nvinfer1::Dims dim_stride = pool->getStrideNd();
       nvinfer1::Dims dim_window = pool->getWindowSizeNd();
@@ -306,24 +311,23 @@ void TrtCommon::print_network_info(const std::string & onnx_file_path)
       } else if (p_type == nvinfer1::PoolingType::kMAX_AVERAGE_BLEND) {
         std::cout << "max avg blend ";
       }
-      float gflops = dim_in.d[1] * dim_window.d[0] / dim_stride.d[0]
-                     * dim_window.d[1] / dim_stride.d[1]
-                     * dim_in.d[2] * dim_in.d[3] / 1e9;
+      float gflops = dim_in.d[1] * dim_window.d[0] / dim_stride.d[0] * dim_window.d[1] /
+                     dim_stride.d[1] * dim_in.d[2] * dim_in.d[3] / 1e9;
       total_gflops += gflops;
-      std::cout <<"pool " << dim_window.d[0] << "x" << dim_window.d[1] << "]";
+      std::cout << "pool " << dim_window.d[0] << "x" << dim_window.d[1] << "]";
       std::cout << " GFLOPs:" << gflops;
       std::cout << std::endl;
     } else if (ltype == nvinfer1::LayerType::kRESIZE) {
       std::cout << "L" << i << " [resize]" << std::endl;
     }
   }
-  std::cout << "Total " << total_gflops << " GFLOPs" <<std::endl;
-  std::cout << "Total " << total_params/1000.0/1000.0 << " M params" << std::endl;
+  std::cout << "Total " << total_gflops << " GFLOPs" << std::endl;
+  std::cout << "Total " << total_params / 1000.0 / 1000.0 << " M params" << std::endl;
   return;
 }
 
 bool TrtCommon::buildEngineFromOnnx(
-    const std::string & onnx_file_path, const std::string & output_engine_file_path)
+  const std::string & onnx_file_path, const std::string & output_engine_file_path)
 {
   auto builder = TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
   if (!builder) {
@@ -332,10 +336,10 @@ bool TrtCommon::buildEngineFromOnnx(
   }
 
   const auto explicitBatch =
-      1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
 
   auto network =
-      TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
+    TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
   if (!network) {
     logger_.log(nvinfer1::ILogger::Severity::kERROR, "Fail to create network");
     return false;
@@ -350,9 +354,10 @@ bool TrtCommon::buildEngineFromOnnx(
   int num_available_dla = builder->getNbDLACores();
   if (build_config_->dla_core_id != -1) {
     if (num_available_dla > 0) {
-      std::cout << "###" << num_available_dla <<" DLAs are supported! ###" << std::endl;
+      std::cout << "###" << num_available_dla << " DLAs are supported! ###" << std::endl;
     } else {
-      std::cout << "###Warninig : " << "No DLA is supported! ###" <<std::endl;
+      std::cout << "###Warninig : "
+                << "No DLA is supported! ###" << std::endl;
     }
     config->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
     config->setDLACore(build_config_->dla_core_id);
@@ -378,17 +383,17 @@ bool TrtCommon::buildEngineFromOnnx(
   const int num = network->getNbLayers();
   bool first = build_config_->quantize_first_layer;
   bool last = build_config_->quantize_last_layer;
-  //Partial Quantization
+  // Partial Quantization
   if (precision_ == "int8") {
     network->getInput(0)->setDynamicRange(0, 255.0);
     for (int i = 0; i < num; i++) {
-      nvinfer1::ILayer *layer = network->getLayer(i);
+      nvinfer1::ILayer * layer = network->getLayer(i);
       auto ltype = layer->getType();
       std::string name = layer->getName();
-      nvinfer1::ITensor* out = layer->getOutput(0);
+      nvinfer1::ITensor * out = layer->getOutput(0);
       if (build_config_->clip_value > 0.0) {
-        std::cout << "Set max value for outputs : " << build_config_->clip_value
-                  << "  " << name << std::endl;
+        std::cout << "Set max value for outputs : " << build_config_->clip_value << "  " << name
+                  << std::endl;
         out->setDynamicRange(0.0, build_config_->clip_value);
       }
 
@@ -399,8 +404,9 @@ bool TrtCommon::buildEngineFromOnnx(
           first = false;
         }
         if (last) {
-          if(contain(name, "reg_preds") || contain(name, "cls_preds")
-             || contain(name, "obj_preds")) {
+          if (
+            contain(name, "reg_preds") || contain(name, "cls_preds") ||
+            contain(name, "obj_preds")) {
             layer->setPrecision(nvinfer1::DataType::kHALF);
             std::cout << "Set kHALF in " << name << std::endl;
           }
@@ -415,22 +421,21 @@ bool TrtCommon::buildEngineFromOnnx(
   const auto input_height = input_dims.d[2];
   const auto input_width = input_dims.d[3];
 
-  if (batch_config_.at(0) > 1
-      && (batch_config_.at(0) == batch_config_.at(2))) {
+  if (batch_config_.at(0) > 1 && (batch_config_.at(0) == batch_config_.at(2))) {
     // Attention : below API is deprecated in TRT8.4
     builder->setMaxBatchSize(batch_config_.at(2));
   } else {
     if (build_config_->profile_per_layer) {
       auto profile = builder->createOptimizationProfile();
       profile->setDimensions(
-          network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMIN,
-          nvinfer1::Dims4{batch_config_.at(0), input_channel, input_height, input_width});
+        network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMIN,
+        nvinfer1::Dims4{batch_config_.at(0), input_channel, input_height, input_width});
       profile->setDimensions(
-          network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kOPT,
-          nvinfer1::Dims4{batch_config_.at(1), input_channel, input_height, input_width});
+        network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kOPT,
+        nvinfer1::Dims4{batch_config_.at(1), input_channel, input_height, input_width});
       profile->setDimensions(
-          network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMAX,
-          nvinfer1::Dims4{batch_config_.at(2), input_channel, input_height, input_width});
+        network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMAX,
+        nvinfer1::Dims4{batch_config_.at(2), input_channel, input_height, input_width});
       config->addOptimizationProfile(profile);
     }
   }
@@ -505,7 +510,6 @@ bool TrtCommon::setBindingDimensions(const int32_t index, const nvinfer1::Dims &
 
 bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
 {
-
   if (build_config_->profile_per_layer) {
     auto inference_start = std::chrono::high_resolution_clock::now();
 
@@ -513,8 +517,8 @@ bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * i
 
     auto inference_end = std::chrono::high_resolution_clock::now();
     host_profiler_.reportLayerTime(
-        "inference",
-        std::chrono::duration<float, std::milli>(inference_end - inference_start).count());
+      "inference",
+      std::chrono::duration<float, std::milli>(inference_end - inference_start).count());
     return ret;
   } else {
     return context_->enqueueV2(bindings, stream, input_consumed);
@@ -532,8 +536,7 @@ std::string TrtCommon::getLayerInformation(nvinfer1::LayerInformationFormat form
 {
   auto runtime = std::unique_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
   auto inspector = std::unique_ptr<nvinfer1::IEngineInspector>(engine_->createEngineInspector());
-  if (context_ != nullptr)
-  {
+  if (context_ != nullptr) {
     inspector->setExecutionContext(&(*context_));
   }
   std::string result = inspector->getEngineInformation(format);

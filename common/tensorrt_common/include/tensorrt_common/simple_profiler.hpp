@@ -16,10 +16,11 @@
 #define TENSORRT_COMMON__SIMPLE_PROFILER_HPP_
 
 #include <NvInfer.h>
-#include <vector>
-#include <string>
+
 #include <iostream>
 #include <map>
+#include <string>
+#include <vector>
 
 namespace tensorrt_common
 {
@@ -41,7 +42,7 @@ struct LayerInfo
  */
 class SimpleProfiler : public nvinfer1::IProfiler
 {
- public:
+public:
   struct Record
   {
     float time{0};
@@ -49,20 +50,21 @@ class SimpleProfiler : public nvinfer1::IProfiler
     float min_time{-1.0};
     int index;
   };
-  SimpleProfiler(std::string name,
-                 const std::vector<SimpleProfiler>& src_profilers = std::vector<SimpleProfiler>());
+  SimpleProfiler(
+    std::string name,
+    const std::vector<SimpleProfiler> & src_profilers = std::vector<SimpleProfiler>());
 
-  void reportLayerTime(const char* layerName, float ms) noexcept override;
+  void reportLayerTime(const char * layerName, float ms) noexcept override;
 
-  void setProfDict(nvinfer1::ILayer *layer) noexcept;
+  void setProfDict(nvinfer1::ILayer * layer) noexcept;
 
-  friend std::ostream& operator<<(std::ostream& out, SimpleProfiler& value);
+  friend std::ostream & operator<<(std::ostream & out, SimpleProfiler & value);
 
- private:
+private:
   std::string m_name;
   std::map<std::string, Record> m_profile;
   int m_index;
-  std::map<std::string, LayerInfo>m_layer_dict;
+  std::map<std::string, LayerInfo> m_layer_dict;
 };
-} // namespace tensorrt_common
-#endif  // TENSORRT_COMMON__TENSORRT_COMMON_HPP_
+}  // namespace tensorrt_common
+#endif  // TENSORRT_COMMON__SIMPLE_PROFILER_HPP_

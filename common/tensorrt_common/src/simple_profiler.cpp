@@ -13,20 +13,19 @@
 // limitations under the License.
 
 #include <tensorrt_common/simple_profiler.hpp>
+
 #include <iomanip>
 
 namespace tensorrt_common
 {
-using namespace nvinfer1;
 
-SimpleProfiler::SimpleProfiler(std::string name,
-                               const std::vector<SimpleProfiler>& src_profilers)
-    : m_name(name)
+SimpleProfiler::SimpleProfiler(std::string name, const std::vector<SimpleProfiler> & src_profilers)
+: m_name(name)
 {
   float total_time = 0.0;
   m_index = 0;
-  for (const auto& src_profiler : src_profilers) {
-    for (const auto& rec : src_profiler.m_profile) {
+  for (const auto & src_profiler : src_profilers) {
+    for (const auto & rec : src_profiler.m_profile) {
       auto it = m_profile.find(rec.first);
       if (it == m_profile.end()) {
         m_profile.insert(rec);
@@ -39,7 +38,7 @@ SimpleProfiler::SimpleProfiler(std::string name,
   }
 }
 
-void SimpleProfiler::reportLayerTime(const char* layerName, float ms) noexcept
+void SimpleProfiler::reportLayerTime(const char * layerName, float ms) noexcept
 {
   m_profile[layerName].count++;
   m_profile[layerName].time += ms;
@@ -52,16 +51,16 @@ void SimpleProfiler::reportLayerTime(const char* layerName, float ms) noexcept
   }
 }
 
-void SimpleProfiler::setProfDict(nvinfer1::ILayer *layer) noexcept
+void SimpleProfiler::setProfDict(nvinfer1::ILayer * layer) noexcept
 {
   std::string name = layer->getName();
   m_layer_dict[name];
   m_layer_dict[name].type = layer->getType();
   if (layer->getType() == nvinfer1::LayerType::kCONVOLUTION) {
-    nvinfer1::IConvolutionLayer* conv =  (nvinfer1::IConvolutionLayer*)layer;
-    nvinfer1::ITensor* in = layer->getInput(0);
+    nvinfer1::IConvolutionLayer * conv = (nvinfer1::IConvolutionLayer *)layer;
+    nvinfer1::ITensor * in = layer->getInput(0);
     nvinfer1::Dims dim_in = in->getDimensions();
-    nvinfer1::ITensor* out = layer->getOutput(0);
+    nvinfer1::ITensor * out = layer->getOutput(0);
     nvinfer1::Dims dim_out = out->getDimensions();
     nvinfer1::Dims k_dims = conv->getKernelSizeNd();
     nvinfer1::Dims s_dims = conv->getStrideNd();
@@ -70,24 +69,23 @@ void SimpleProfiler::setProfDict(nvinfer1::ILayer *layer) noexcept
     int kernel = k_dims.d[0];
     m_layer_dict[name].in_c = dim_in.d[1];
     m_layer_dict[name].out_c = dim_out.d[1];
-    m_layer_dict[name].w= dim_in.d[3];
+    m_layer_dict[name].w = dim_in.d[3];
     m_layer_dict[name].h = dim_in.d[2];
-    m_layer_dict[name].k = kernel;;
+    m_layer_dict[name].k = kernel;
+    ;
     m_layer_dict[name].stride = stride;
     m_layer_dict[name].groups = groups;
   }
 }
 
-
-std::ostream& operator<<(std::ostream& out, SimpleProfiler& value)
+std::ostream & operator<<(std::ostream & out, SimpleProfiler & value)
 {
   out << "========== " << value.m_name << " profile ==========" << std::endl;
   float totalTime = 0;
   std::string layerNameStr = "Operation";
 
   int maxLayerNameLength = static_cast<int>(layerNameStr.size());
-  for (const auto& elem : value.m_profile)
-  {
+  for (const auto & elem : value.m_profile) {
     totalTime += elem.second.time;
     maxLayerNameLength = std::max(maxLayerNameLength, static_cast<int>(elem.first.size()));
   }
@@ -104,29 +102,33 @@ std::ostream& operator<<(std::ostream& out, SimpleProfiler& value)
     out << std::setw(12) << "Invocations"
         << " , ";
     out << std::setw(12) << "Runtime[ms]"
-      	<< " , ";
+        << " , ";
     out << std::setw(12) << "Avg Runtime[ms]"
-      	<< " ,";
+        << " ,";
     out << std::setw(12) << "Min Runtime[ms]" << std::endl;
   }
   int index = value.m_index;
   for (int i = 0; i < index; i++) {
-    for (const auto& elem : value.m_profile){
+    for (const auto & elem : value.m_profile) {
       if (elem.second.index == i) {
         out << i << ",   ";
         out << std::setw(maxLayerNameLength) << elem.first << ",";
-        out << std::setw(12) << std::fixed << std::setprecision(1) << (elem.second.time * 100.0F / totalTime) << "%"
+        out << std::setw(12) << std::fixed << std::setprecision(1)
+            << (elem.second.time * 100.0F / totalTime) << "%"
             << ",";
         out << std::setw(12) << elem.second.count << ",";
         out << std::setw(12) << std::fixed << std::setprecision(2) << elem.second.time << ", ";
-        out << std::setw(12) << std::fixed << std::setprecision(2) << elem.second.time/elem.second.count << ", ";
-        out << std::setw(12) << std::fixed << std::setprecision(2) << elem.second.min_time << std::endl;
+        out << std::setw(12) << std::fixed << std::setprecision(2)
+            << elem.second.time / elem.second.count << ", ";
+        out << std::setw(12) << std::fixed << std::setprecision(2) << elem.second.min_time
+            << std::endl;
       }
     }
   }
   out.flags(old_settings);
   out.precision(old_precision);
-  out << "========== " << value.m_name << " total runtime = " << totalTime << " ms ==========" << std::endl;
+  out << "========== " << value.m_name << " total runtime = " << totalTime
+      << " ms ==========" << std::endl;
   return out;
 }
 }  // namespace tensorrt_common

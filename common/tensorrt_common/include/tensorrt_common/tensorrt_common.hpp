@@ -28,13 +28,13 @@ namespace fs = ::std::filesystem;
 namespace fs = ::std::experimental::filesystem;
 #endif
 
+#include <tensorrt_common/logger.hpp>
+#include <tensorrt_common/simple_profiler.hpp>
+
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <tensorrt_common/logger.hpp>
-#include <tensorrt_common/simple_profiler.hpp>
 
 namespace tensorrt_common
 {
@@ -51,34 +51,44 @@ struct BuildConfig
   int dla_core_id;
 
   // flag for partial quanitzation in first layer
-  bool quantize_first_layer;  //For partial quantization
+  bool quantize_first_layer;  // For partial quantization
 
   // flag for partial quanitzation in last layer
-  bool quantize_last_layer;   //For partial quantization
+  bool quantize_last_layer;  // For partial quantization
 
   // flag for per-layer profiler using IProfiler
   bool profile_per_layer;
 
   // clip value for implicit quantization
-  double clip_value; //For implicit quantization
+  double clip_value;  // For implicit quantization
 
   // Supported calibration type
   const std::array<std::string, 4> valid_calib_type = {"Entropy", "Legacy", "Percentile", "MinMax"};
 
   BuildConfig()
-      : calib_type_str("MinMax"), dla_core_id(-1), quantize_first_layer(false),
-        quantize_last_layer(false), profile_per_layer(false), clip_value(0.0)
-  {}
-
-  explicit BuildConfig(const std::string & calib_type_str, const int dla_core_id=-1,
-                       const bool quantize_first_layer=false, const bool quantize_last_layer=false,
-                       const bool profile_per_layer=false, const double clip_value=0.0)
-      : calib_type_str(calib_type_str), dla_core_id(dla_core_id),
-        quantize_first_layer(quantize_first_layer), quantize_last_layer(quantize_last_layer),
-        profile_per_layer(profile_per_layer), clip_value(clip_value)
+  : calib_type_str("MinMax"),
+    dla_core_id(-1),
+    quantize_first_layer(false),
+    quantize_last_layer(false),
+    profile_per_layer(false),
+    clip_value(0.0)
   {
-    if (std::find(valid_calib_type.begin(), valid_calib_type.end(), calib_type_str)
-        == valid_calib_type.end()) {
+  }
+
+  explicit BuildConfig(
+    const std::string & calib_type_str, const int dla_core_id = -1,
+    const bool quantize_first_layer = false, const bool quantize_last_layer = false,
+    const bool profile_per_layer = false, const double clip_value = 0.0)
+  : calib_type_str(calib_type_str),
+    dla_core_id(dla_core_id),
+    quantize_first_layer(quantize_first_layer),
+    quantize_last_layer(quantize_last_layer),
+    profile_per_layer(profile_per_layer),
+    clip_value(clip_value)
+  {
+    if (
+      std::find(valid_calib_type.begin(), valid_calib_type.end(), calib_type_str) ==
+      valid_calib_type.end()) {
       std::stringstream message;
       message << "Invalid calibration type was specified: " << calib_type_str << std::endl
               << "Valid value is one of: [Entropy, (Legacy | Percentile), MinMax]" << std::endl
@@ -91,7 +101,7 @@ struct BuildConfig
 nvinfer1::Dims get_input_dims(const std::string & onnx_file_path);
 
 const std::array<std::string, 3> valid_precisions = {"fp32", "fp16", "int8"};
-bool is_valid_precision_string(const std::string& precision);
+bool is_valid_precision_string(const std::string & precision);
 
 template <typename T>
 struct InferDeleter  // NOLINT
@@ -127,7 +137,8 @@ public:
    * @param[in] calibrator pointer for any type of INT8 calibrator
    * @param[in] batch_config configuration for batched execution
    * @param[in] max_workspace_size maximum workspace for building TensorRT engine
-   * @param[in] buildConfig configuration including precision, calibration method, dla, remaining fp16 for first layer,  remaining fp16 for last layer and profiler for builder
+   * @param[in] buildConfig configuration including precision, calibration method, dla, remaining
+   * fp16 for first layer,  remaining fp16 for last layer and profiler for builder
    * @param[in] plugin_paths path for custom plugin
    */
   TrtCommon(
@@ -149,7 +160,7 @@ public:
    * @param[in] onnx_file_path path for a onnx file
    * @warning This function is based on darknet log.
    */
-  void print_network_info(const std::string & onnx_file_path) ;
+  void print_network_info(const std::string & onnx_file_path);
 
   /**
    * @brief build TensorRT engine from ONNX
@@ -157,7 +168,7 @@ public:
    * @param[in] output_engine_file_path path for a engine file
    */
   bool buildEngineFromOnnx(
-      const std::string & onnx_file_path, const std::string & output_engine_file_path);
+    const std::string & onnx_file_path, const std::string & output_engine_file_path);
 
   /**
    * @brief setup for TensorRT execution including building and loading engine
@@ -181,7 +192,7 @@ public:
    */
   std::string getLayerInformation(nvinfer1::LayerInformationFormat format);
 
- private:
+private:
   Logger logger_;
   fs::path model_file_path_;
   TrtUniquePtr<nvinfer1::IRuntime> runtime_;
