@@ -123,8 +123,9 @@ void NormalLaneChange::generateExtendedDrivableArea(
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
-  const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
-    prev_drivable_lanes, *route_handler, status_.current_lanes, status_.lane_change_lanes);
+  auto drivable_lanes = utils::lane_change::generateDrivableLanes(
+    *route_handler, status_.current_lanes, status_.lane_change_lanes);
+  drivable_lanes = utils::lane_change::combineDrivableLanes(prev_drivable_lanes, drivable_lanes);
   const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
