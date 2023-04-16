@@ -16,6 +16,115 @@ This has been developed as a new localization stack for [Autoware](https://githu
 **NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the autoware workspace.
 Someday this will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
 
+## How to build
+
+**Supporting `Ubuntu 22.04` + `ROS2 humble` now.
+Some branches might support `ROS2 galactic`.**
+
+**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the Autoware workspace.
+
+```shell
+mkdir yabloc_ws/src -p
+cd yabloc_ws
+git clone git@github.com:tier4/YabLoc.git src/YabLoc --recursive
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
+```
+
+<details><summary>The author often use this build command</summary><div>
+
+```shell
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --continue-on-error
+```
+
+* (optional) ccache `(--cmake-args) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
+
+* (optional) clang-tidy `(--cmake-args) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+
+* (optional) test `(--cmake-args) -DBUILD_TESTING=ON`
+
+</div></details>
+
+## Quick Start Demo
+
+ROSBAG made by AWSIM: [Google drive link](https://drive.google.com/drive/folders/1XVWfkDoz-0fncYC-_I6cmv1gkB6EfJ2Y?usp=share_link)
+
+![how_to_launch_with_rosbag](docs/how_to_launch_quick_start_demo.drawio.svg)
+
+```shell
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=true
+ros2 launch pcdless_launch rviz.launch.xml
+ros2 bag play awsim_yabloc_rosbag_sample
+```
+
+## Demo with Autoware
+
+**NOTE:** `use_sim_time` is TRUE as default.
+
+### Run with standard ROSBAG
+
+Sample data: [Google drive link](https://drive.google.com/drive/folders/1uNxQ2uPFEGbYXUODQMc7GRO5r9c3Fj6o?usp=share_link)
+
+The link contains *rosbag* and *lanelet2* but *pointcloud*.
+
+![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
+
+```shell
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=true
+ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch autoware_launch logging_simulator.launch.xml \
+  system:=false \
+  localizaton:=false \
+  sensing:=false \
+  perception:=false \
+  planning:=false \
+  control:=false \
+  rviz:=false \
+  vehicle_model:=jpntaxi \ 
+  sensor_model:=aip_xx1 \
+  vehicle_id:=5 \
+  map_path:=$HOME/Maps/odaiba
+
+ros2 bag play sample_odaiba --clock 100
+```
+
+### Run in real world
+
+![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
+
+```shell
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=true use_sim_time:=false
+ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch autoware_launch autoware.launch.xml \
+  rviz:=false
+```
+
+### Run with AWSIM <ins>(UNDER CONSTRACTION)</ins>
+
+**You have to change autoware.universe branch.**
+
+```shell
+ros2 launch pcdless_launch odaiba_launch.xml standalone:=false
+ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch autoware_launch e2e_simulator.launch.xml
+```
+
+## How to set initialpose
+
+### 1. When YabLoc works `standalone:=true`  (without Autoware's pose_initializer)
+
+1. 2D Pose Estimate in Rviz
+
+You can inidcate x, y and yaw manually in rviz.
+
+2. GNSS Doppler initialization
+
+If doppler (`ublox_msgs/msg/navpvt`) is available and the vehicle moves enough fast, YabLoc will estiamte the initial pose **automatically**.
+
+### 2. When Yabloc works `standalone:=false` (through Autoware's pose_initializer)
+
+<ins>UNDER CONSTRUCTION</ins>
+
 ## Architecture
 
 ![node_diagram](docs/node_diagram.png)
@@ -73,89 +182,6 @@ ros2 run tf2_ros static_transform_publisher \
 |  `/localicazation/imgproc/lsd_image`             | `sensor_msgs/msg/Image`              | image |
 |  `/localicazation/imgproc/projected_lsd_image`   | `sensor_msgs/msg/Image`              | image |
 
-## How to build
-
-**Supporting `Ubuntu 22.04` + `ROS2 humble` now.
-Some branches might support `ROS2 galactic`.**
-
-**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the Autoware workspace.
-
-```bash
-mkdir yabloc_ws/src -p
-cd yabloc_ws
-git clone git@github.com:tier4/YabLoc.git src/YabLoc --recursive
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-source install/setup.bash
-```
-
-<details><summary>The author often use this build command</summary><div>
-
-```shell
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --continue-on-error
-```
-
-* (optional) ccache `(--cmake-args) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
-
-* (optional) clang-tidy `(--cmake-args) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
-
-* (optional) test `(--cmake-args) -DBUILD_TESTING=ON`
-
-</div></details>
-
-## Sample data
-
- [Google drive link](https://drive.google.com/drive/folders/1uNxQ2uPFEGbYXUODQMc7GRO5r9c3Fj6o?usp=share_link)
-
-The link contains *rosbag* and *lanelet2* but *pointcloud*.
-
-## How to execute
-
-**NOTE:** `use_sim_time` is TRUE as default.
-
-### Run with ROSBAG
-
-![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
-
-```bash
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=true
-ros2 launch pcdless_launch rviz.launch.xml
-ros2 launch autoware_launch logging_simulator.launch.xml \
-  system:=false \
-  localizaton:=false \
-  sensing:=false \
-  perception:=false \
-  planning:=false \
-  control:=false \
-  rviz:=false \
-  vehicle_model:=jpntaxi \ 
-  sensor_model:=aip_xx1 \
-  vehicle_id:=5 \
-  map_path:=$HOME/Maps/odaiba
-
-ros2 bag play sample_odaiba --clock 100
-```
-
-### Run in real world
-
-![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
-
-**You have to change autoware.universe branch.**
-
-```bash
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=true use_sim_time:=false
-ros2 launch pcdless_launch rviz.launch.xml
-ros2 launch autoware_launch autoware.launch.xml \
-  rviz:=false
-```
-
-### Run with AWSIM (UNDER CONSTRACTION)
-
-```bash
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=true 
-ros2 launch pcdless_launch rviz.launch.xml
-ros2 launch autoware_launch e2e_simulator.launch.xml
-```
-
 ## Visualization
 
 (This project contains original rviz plugins.)
@@ -173,22 +199,6 @@ ros2 launch autoware_launch e2e_simulator.launch.xml
 | 7  |  `/localicazation/pf/predicted_particle_marker` | particle distribution of particle fitler (red means a probable candidate) |
 | 8  |  `/localicazation/pf/gnss/range_marker`         | particle weight distribution by GNSS |
 | 9  |  `/localicazation/pf/scored_cloud`              | 3D projected line segments. the color means the how match they are  |
-
-## How to set initialpose
-
-### 1. When YabLoc works `standalone:=true`  (without Autoware's pose_initializer)
-
-1. 2D Pose Estimate in Rviz
-
-You can inidcate x, y and yaw manually in rviz.
-
-2. GNSS Doppler initialization
-
-If doppler (`ublox_msgs/msg/navpvt`) is available and the vehicle moves enough fast, YabLoc will estiamte the initial pose **automatically**.
-
-### 2. When Yabloc works `standalone:=false` (through Autoware's pose_initializer)
-
-<u>UNDER CONSTRUCTION</u>
 
 ## License
 
