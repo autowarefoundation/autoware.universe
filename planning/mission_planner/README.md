@@ -181,7 +181,7 @@ This is route change that the application makes using the API. It is used when c
 - `set_mrm_route`
 - `clear_mrm_route`
 
-This API for the MRM that pulls over the road shoulder. It has to be stopped as soon as possible, so a reroute is required. The mrm route has priority over the normal route. And if mrm route is cleared, try to return to the normal route also with a rerouting safety check.
+This interface for the MRM that pulls over the road shoulder. It has to be stopped as soon as possible, so a reroute is required. The MRM route has priority over the normal route. And if MRM route is cleared, try to return to the normal route also with a rerouting safety check.
 
 ##### Goal modification
 
