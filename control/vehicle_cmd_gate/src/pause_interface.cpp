@@ -24,24 +24,23 @@ PauseInterface::PauseInterface(rclcpp::Node * node) : node_(node)
   adaptor.init_pub(pub_is_paused_);
   adaptor.init_pub(pub_is_start_requested_);
 
-  is_paused_ = false;
+  pause_state_.data = false;
+  pause_state_.requested_sources.clear();
   is_start_requested_ = false;
   publish();
 }
 
 bool PauseInterface::is_paused()
 {
-  return is_paused_;
+  return pause_state_.data;
 }
 
 void PauseInterface::publish()
 {
-  if (prev_is_paused_ != is_paused_) {
-    IsPaused::Message msg;
-    msg.stamp = node_->now();
-    msg.data = is_paused_;
-    pub_is_paused_->publish(msg);
-    prev_is_paused_ = is_paused_;
+  if (prev_pause_map_ != pause_map_) {
+    update_pause_state();
+    pub_is_paused_->publish(pause_state_);
+    prev_pause_map_ = pause_map_;
   }
 
   if (prev_is_start_requested_ != is_start_requested_) {
@@ -61,8 +60,24 @@ void PauseInterface::update(const AckermannControlCommand & control)
 void PauseInterface::on_pause(
   const SetPause::Service::Request::SharedPtr req, const SetPause::Service::Response::SharedPtr res)
 {
-  is_paused_ = req->pause;
+  pause_map_[req->request_source] = req->pause;
   res->status.success = true;
 }
 
+void PauseInterface::update_pause_state()
+{
+  pause_state_.stamp = node_->now();
+  pause_state_.requested_sources.clear();
+  pause_state_.data = false;
+
+  if (pause_map_.empty()) {
+    return;
+  }
+  for (auto & itr : pause_map_) {
+    if (itr.second) {
+      pause_state_.data = true;
+      pause_state_.requested_sources.push_back(itr.first);
+    }
+  }
+}
 }  // namespace vehicle_cmd_gate

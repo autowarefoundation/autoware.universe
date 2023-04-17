@@ -21,6 +21,9 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
+#include <string>
+#include <unordered_map>
+
 namespace vehicle_cmd_gate
 {
 
@@ -40,10 +43,11 @@ public:
   void update(const AckermannControlCommand & control);
 
 private:
-  bool is_paused_;
   bool is_start_requested_;
-  std::optional<bool> prev_is_paused_;
   std::optional<bool> prev_is_start_requested_;
+  IsPaused::Message pause_state_;
+  std::unordered_map<std::string, bool> pause_map_;
+  std::optional<std::unordered_map<std::string, bool>> prev_pause_map_;
 
   rclcpp::Node * node_;
   component_interface_utils::Service<SetPause>::SharedPtr srv_set_pause_;
@@ -53,6 +57,8 @@ private:
   void on_pause(
     const SetPause::Service::Request::SharedPtr req,
     const SetPause::Service::Response::SharedPtr res);
+
+  void update_pause_state();
 };
 
 }  // namespace vehicle_cmd_gate
