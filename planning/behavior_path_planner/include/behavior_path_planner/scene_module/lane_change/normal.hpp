@@ -45,8 +45,7 @@ public:
 
   PathWithLaneId generatePlannedPath() override;
 
-  void generateExtendedDrivableArea(
-    const std::vector<DrivableLanes> & prev_drivable_lanes, PathWithLaneId & path) override;
+  void generateExtendedDrivableArea(PathWithLaneId & path) override;
 
   bool hasFinishedLaneChange() const override;
 
@@ -61,8 +60,16 @@ public:
   TurnSignalInfo updateOutputTurnSignal() override;
 
 protected:
+  lanelet::ConstLanelets getCurrentLanes() const override;
+
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes) const override;
+
+  std::pair<LaneChangePaths, bool> getLaneChangePaths(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const override;
+
+  std::vector<DrivableLanes> getDrivableLanes() const override;
 
   bool isApprovedPathSafe(Pose & ego_pose_before_collision) const override;
 

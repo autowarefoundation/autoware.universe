@@ -68,8 +68,7 @@ public:
 
   virtual PathWithLaneId generatePlannedPath() = 0;
 
-  virtual void generateExtendedDrivableArea(
-    const std::vector<DrivableLanes> & prev_drivable_lanes, PathWithLaneId & path) = 0;
+  virtual void generateExtendedDrivableArea(PathWithLaneId & path) = 0;
 
   virtual bool hasFinishedLaneChange() const = 0;
 
@@ -156,8 +155,16 @@ public:
   const Direction & getDirection() const { return direction_; }
 
 protected:
+  virtual lanelet::ConstLanelets getCurrentLanes() const = 0;
+
   virtual lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes) const = 0;
+
+  virtual std::pair<LaneChangePaths, bool> getLaneChangePaths(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const = 0;
+
+  virtual std::vector<DrivableLanes> getDrivableLanes() const = 0;
 
   virtual bool isApprovedPathSafe(Pose & ego_pose_before_collision) const = 0;
 
