@@ -50,7 +50,10 @@ FeatureMap::FeatureMap(const int32_t width, const int32_t height, const int32_t 
   count_data = &(map_data[0]) + width * height * 2;
   nonempty_data = &(map_data[0]) + width * height * 3;
 }
-void FeatureMap::initializeMap(std::vector<float> & map) { (void)map; }
+void FeatureMap::initializeMap(std::vector<float> & map)
+{
+  (void)map;
+}
 void FeatureMap::resetMap(std::vector<float> & map)
 {
   const int32_t size = width * height;
@@ -74,7 +77,10 @@ FeatureMapWithIntensity::FeatureMapWithIntensity(
   mean_intensity_data = &(map_data[0]) + width * height * 4;
   nonempty_data = &(map_data[0]) + width * height * 5;
 }
-void FeatureMapWithIntensity::initializeMap(std::vector<float> & map) { (void)map; }
+void FeatureMapWithIntensity::initializeMap(std::vector<float> & map)
+{
+  (void)map;
+}
 void FeatureMapWithIntensity::resetMap(std::vector<float> & map)
 {
   const int32_t size = width * height;
