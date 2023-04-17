@@ -378,9 +378,6 @@ void MapBasedDetector::mapCallback(
     lanelet::AutowareTrafficLightConstPtr tl = *tl_itr;
 
     auto lights = tl->trafficLights();
-    for (const auto & light : lights) {
-      trafficLightId2RegulatoryEleId_[light.id()] = tl->id();
-    }
     for (auto lsp : lights) {
       if (!lsp.isLineString()) {  // traffic lights must be linestrings
         continue;
