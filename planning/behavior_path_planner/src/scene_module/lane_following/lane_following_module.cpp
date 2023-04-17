@@ -31,9 +31,6 @@ LaneFollowingModule::LaneFollowingModule(
 : SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})}, parameters_{parameters}
 {
   initParam();
-  // TODO(murooka) The following is temporary implementation for new architecture's refactoring
-  steering_factor_interface_ptr_ =
-    std::make_unique<SteeringFactorInterface>(&node, "lane_following");
 }
 
 void LaneFollowingModule::initParam()
@@ -98,6 +95,6 @@ BehaviorModuleOutput LaneFollowingModule::getReferencePath() const
     return {};  // TODO(Horibe)
   }
 
-  return util::getReferencePath(current_lane, parameters_, planner_data_);
+  return utils::getReferencePath(current_lane, parameters_, planner_data_);
 }
 }  // namespace behavior_path_planner
