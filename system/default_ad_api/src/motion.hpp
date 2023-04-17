@@ -45,7 +45,7 @@ private:
 
   enum class State { Unknown, Pausing, Paused, Starting, Resuming, Resumed, Moving };
   State state_;
-  std::optional<bool> is_paused_;
+  std::optional<bool> is_paused_by_node_;
   std::optional<bool> is_start_requested_;
 
   double stop_check_duration_;

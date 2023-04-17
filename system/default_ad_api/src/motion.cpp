@@ -42,12 +42,12 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 
 void MotionNode::update_state()
 {
-  if (!is_paused_ || !is_start_requested_) {
+  if (!is_paused_by_node_ || !is_start_requested_) {
     return;
   }
 
   const auto get_next_state = [this]() {
-    if (is_paused_.value()) {
+    if (is_paused_by_node_.value()) {
       if (!is_start_requested_.value()) {
         return State::Paused;
       } else {
@@ -112,6 +112,7 @@ void MotionNode::change_pause(bool pause)
   if (!is_calling_set_pause_ && cli_set_pause_->service_is_ready()) {
     const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
     req->pause = pause;
+    req->request_source = "default_ad_api";
     is_calling_set_pause_ = true;
     cli_set_pause_->async_send_request(req, [this](auto) { is_calling_set_pause_ = false; });
   }
@@ -131,7 +132,9 @@ void MotionNode::on_timer()
 
 void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg)
 {
-  is_paused_ = msg->data;
+  is_paused_by_node_ = msg->data && std::find(
+                                      msg->requested_sources.begin(), msg->requested_sources.end(),
+                                      "default_ad_api") != msg->requested_sources.end();
 }
 
 void MotionNode::on_is_start_requested(
