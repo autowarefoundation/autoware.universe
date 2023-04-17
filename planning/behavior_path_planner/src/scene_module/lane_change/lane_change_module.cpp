@@ -41,9 +41,6 @@ LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters)
 : SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {"left", "right"})},
   parameters_{std::move(parameters)}
-{
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "lane_change");
-}
 #else
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node,
@@ -54,10 +51,9 @@ LaneChangeModule::LaneChangeModule(
   parameters_{parameters},
   direction_{direction},
   type_{type}
-{
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
-}
 #endif
+{
+}
 
 void LaneChangeModule::processOnEntry()
 {
@@ -741,14 +737,6 @@ void LaneChangeModule::updateSteeringFactorPtr(
     {selected_path.shift_line.start, selected_path.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
-}
-Pose LaneChangeModule::getEgoPose() const
-{
-  return planner_data_->self_odometry->pose.pose;
-}
-Twist LaneChangeModule::getEgoTwist() const
-{
-  return planner_data_->self_odometry->twist.twist;
 }
 std_msgs::msg::Header LaneChangeModule::getRouteHeader() const
 {

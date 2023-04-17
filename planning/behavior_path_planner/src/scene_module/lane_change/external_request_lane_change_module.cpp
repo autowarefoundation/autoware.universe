@@ -40,8 +40,6 @@ ExternalRequestLaneChangeModule::ExternalRequestLaneChangeModule(
   parameters_{std::move(parameters)},
   direction_{direction}
 {
-  steering_factor_interface_ptr_ =
-    std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name));
 }
 
 void ExternalRequestLaneChangeModule::processOnEntry()
@@ -618,14 +616,6 @@ void ExternalRequestLaneChangeModule::updateSteeringFactorPtr(
     {selected_path.shift_line.start, selected_path.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
-}
-Pose ExternalRequestLaneChangeModule::getEgoPose() const
-{
-  return planner_data_->self_odometry->pose.pose;
-}
-Twist ExternalRequestLaneChangeModule::getEgoTwist() const
-{
-  return planner_data_->self_odometry->twist.twist;
 }
 std_msgs::msg::Header ExternalRequestLaneChangeModule::getRouteHeader() const
 {

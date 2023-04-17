@@ -54,8 +54,6 @@ AvoidanceByLCModule::AvoidanceByLCModule(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{parameters}
 {
-  steering_factor_interface_ptr_ =
-    std::make_unique<SteeringFactorInterface>(&node, "avoidance_by_lane_change");
 }
 
 void AvoidanceByLCModule::processOnEntry()
@@ -921,11 +919,6 @@ void AvoidanceByLCModule::updateSteeringFactorPtr(
     {selected_path.shift_line.start, selected_path.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
-}
-
-Twist AvoidanceByLCModule::getEgoTwist() const
-{
-  return planner_data_->self_odometry->twist.twist;
 }
 
 std_msgs::msg::Header AvoidanceByLCModule::getRouteHeader() const
