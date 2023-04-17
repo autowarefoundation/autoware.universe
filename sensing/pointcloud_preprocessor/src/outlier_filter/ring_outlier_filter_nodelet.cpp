@@ -171,7 +171,7 @@ void RingOutlierFilterComponent::faster_filter(
   output.header.frame_id = tf_input_frame_;
 
   output.fields.resize(4);  // x, y, z, intensity
-  std::copy(input->fields.begin(), input->fields.begin() + 4, output.fields.begin());
+  std::copy(input->fields.begin(), input->fields.begin() + static_cast<size_t>(autoware_point_types::PointIndex::Intensity) + 1, output.fields.begin());
 
   output.height = 1;
   output.is_bigendian = input->is_bigendian;
