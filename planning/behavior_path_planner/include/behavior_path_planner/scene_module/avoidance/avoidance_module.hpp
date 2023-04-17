@@ -413,7 +413,6 @@ private:
 
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
 
-
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
 
   // TODO(Horibe): think later.
