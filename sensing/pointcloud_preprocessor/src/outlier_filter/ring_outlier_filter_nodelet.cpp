@@ -168,9 +168,7 @@ void RingOutlierFilterComponent::faster_filter(
 
   output.data.resize(output_size);
 
-  // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
-  // == true`
-  output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
+  output.header.frame_id = tf_input_frame_;
 
   output.fields.resize(4);  // x, y, z, intensity
   std::copy(input->fields.begin(), input->fields.begin() + 4, output.fields.begin());
