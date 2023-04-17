@@ -70,7 +70,7 @@ private:
     const nav_msgs::msg::OccupancyGrid & occupancy_grid_map);
   OccupancyGridMap SingleFrameOccupancyFusion(
     std::vector<OccupancyGridMap> & occupancy_grid_maps,
-    const builtin_interfaces::msg::Time latest_stamp);
+    const builtin_interfaces::msg::Time latest_stamp, const std::vector<double> & weights);
 
   void updateGridMap(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg);
 
@@ -91,6 +91,7 @@ private:
   std::vector<std::string> input_topics_;
   std::vector<double> input_offset_sec_;
   std::vector<double> input_topic_weights_;
+  std::map<std::string, double> input_topic_weights_map_;
 
   // TF
   tf2_ros::Buffer tf_buffer_;

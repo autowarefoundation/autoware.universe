@@ -37,6 +37,7 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
     "/perception/occupancy_grid_map/top_lidar/map", "/perception/occupancy_grid_map/left_lidar/map",
     "/perception/occupancy_grid_map/right_lidar/map"};
   const double temp_input_map_number = 3;
+  const std::vector<double> temp_input_weights = {0.5, 0.25, 0.25};
 
   // get input topics
   num_input_topics_ =
@@ -57,6 +58,21 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   input_topics_ = get_parameter("input_topics").as_string_array();
   if (num_input_topics_ != input_topics_.size()) {
     throw std::runtime_error("The number of input topics does not match the number of topics.");
+  }
+  input_topic_weights_ = declare_parameter("input_topic_weights", temp_input_weights);
+
+  if (input_topic_weights_.empty()) {  // no topic weight is set
+    // set equal weight
+    for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
+      input_topic_weights_map_[input_topics_.at(topic_i)] = 1.0 / num_input_topics_;
+    }
+  } else if (num_input_topics_ == input_topic_weights_.size()) {
+    // set weight to map
+    for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
+      input_topic_weights_map_[input_topics_.at(topic_i)] = input_topic_weights_.at(topic_i);
+    }
+  } else {
+    throw std::runtime_error("The number of weights does not match the number of topics.");
   }
 
   // Set fusion parameters
@@ -255,9 +271,11 @@ void GridMapFusionNode::publish()
 
   // merge available gridmap
   std::vector<OccupancyGridMap> subscribed_maps;
+  std::vector<double> weights;
   for (const auto & e : gridmap_dict_) {
     if (e.second != nullptr) {
       subscribed_maps.push_back(GridMapFusionNode::OccupancyGridMsgToGridMap(*e.second));
+      weights.push_back(input_topic_weights_map_[e.first]);
       latest_stamp = e.second->header.stamp;
       height = e.second->info.origin.position.z;
     }
@@ -273,7 +291,7 @@ void GridMapFusionNode::publish()
 
   // fusion map
   // single frame gridmap fusion
-  auto fused_map = SingleFrameOccupancyFusion(subscribed_maps, latest_stamp);
+  auto fused_map = SingleFrameOccupancyFusion(subscribed_maps, latest_stamp, weights);
   // multi frame gridmap fusion
   occupancy_grid_map_updater_ptr_->update(fused_map);
 
@@ -301,7 +319,7 @@ void GridMapFusionNode::publish()
 
 OccupancyGridMap GridMapFusionNode::SingleFrameOccupancyFusion(
   std::vector<OccupancyGridMap> & occupancy_grid_maps,
-  const builtin_interfaces::msg::Time latest_stamp)
+  const builtin_interfaces::msg::Time latest_stamp, const std::vector<double> & weights)
 {
   // if only single map
   if (occupancy_grid_maps.size() == 1) {
@@ -340,7 +358,7 @@ OccupancyGridMap GridMapFusionNode::SingleFrameOccupancyFusion(
       }
 
       // set fusion policy
-      auto fused_cost = fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_);
+      auto fused_cost = fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_, weights);
 
       // set max cost to fused map
       fused_map.setCost(x, y, fused_cost);
@@ -350,6 +368,11 @@ OccupancyGridMap GridMapFusionNode::SingleFrameOccupancyFusion(
   return fused_map;
 }
 
+/**
+ * @brief Update occupancy grid map with asynchronous input (currently unused)
+ *
+ * @param occupancy_grid_msg
+ */
 void GridMapFusionNode::updateGridMap(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg)
 {

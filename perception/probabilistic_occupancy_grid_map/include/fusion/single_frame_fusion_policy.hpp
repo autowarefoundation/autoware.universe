@@ -119,7 +119,7 @@ namespace log_odds_fusion
  * @param probabilities : probabilities of occupancy [0, 1]
  * @return double
  */
-double logOddsFusion(std::vector<double> & probabilities)
+double logOddsFusion(const std::vector<double> & probabilities)
 {
   double log_odds = 0.0;
   for (auto & probability : probabilities) {
@@ -135,7 +135,7 @@ double logOddsFusion(std::vector<double> & probabilities)
  * @param weights : weights of probabilities
  * @return double
  */
-double logOddsFusion(std::vector<double> & probabilities, std::vector<double> & weights)
+double logOddsFusion(const std::vector<double> & probabilities, const std::vector<double> & weights)
 {
   // check if the size of probabilities and weights are the same
   if (probabilities.size() != weights.size()) {
@@ -254,7 +254,7 @@ struct dempsterShaferOccupancy
  * @param probability
  * @return double
  */
-double dempsterShaferFusion(std::vector<double> & probability)
+double dempsterShaferFusion(const std::vector<double> & probability)
 {
   dempsterShaferOccupancy result;  // init with unknown
   for (auto & p : probability) {
@@ -270,7 +270,8 @@ double dempsterShaferFusion(std::vector<double> & probability)
  * @param reliability
  * @return double
  */
-double dempsterShaferFusion(std::vector<double> & probability, std::vector<double> & reliability)
+double dempsterShaferFusion(
+  const std::vector<double> & probability, const std::vector<double> & reliability)
 {
   // check if the size of probabilities and weights are the same
   if (probability.size() != reliability.size()) {
@@ -292,7 +293,7 @@ double dempsterShaferFusion(std::vector<double> & probability, std::vector<doubl
 enum class FusionMethod { OVERWRITE, LOG_ODDS, DEMPSTER_SHAFER };
 
 unsigned char singleFrameOccupancyFusion(
-  std::vector<unsigned char> & occupancy, FusionMethod method)
+  const std::vector<unsigned char> & occupancy, FusionMethod method)
 {
   if (method == FusionMethod::OVERWRITE) {
     return overwrite_fusion::overwriteFusion(occupancy);
@@ -309,7 +310,8 @@ unsigned char singleFrameOccupancyFusion(
 }
 
 unsigned char singleFrameOccupancyFusion(
-  std::vector<unsigned char> & occupancy, FusionMethod method, std::vector<double> & reliability)
+  const std::vector<unsigned char> & occupancy, FusionMethod method,
+  const std::vector<double> & reliability)
 {
   if (method == FusionMethod::OVERWRITE) {
     return overwrite_fusion::overwriteFusion(occupancy);
