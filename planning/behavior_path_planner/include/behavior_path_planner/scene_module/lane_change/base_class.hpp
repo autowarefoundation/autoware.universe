@@ -158,9 +158,9 @@ protected:
   bool isNearEndOfLane() const
   {
     const auto & current_pose = getEgoPose();
-    const double threshold = util::calcTotalLaneChangeLength(planner_data_->parameters);
+    const double threshold = utils::calcTotalLaneChangeLength(planner_data_->parameters);
 
-    return (std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) -
+    return (std::max(0.0, utils::getDistanceToEndOfLane(current_pose, status_.current_lanes)) -
             threshold) < planner_data_->parameters.backward_length_buffer_for_end_of_lane;
   }
 
