@@ -10,8 +10,8 @@ In addition to the LiDAR-based solution provided by `tier4_localization_launch` 
 
 localization launch  | twist estimator | pose estimator
 -- | -- | --
-tier4_localization_launch| gyro_odometry | ndt
-map4_localization_launch/eagleye_twist_localization_launch| eagleye_rt(gyro/odom/gnss fusion) | ndt
+tier4_localization_launch| gyro_odometry | ndt_scan_matcher
+map4_localization_launch/eagleye_twist_localization_launch| eagleye_rt(gyro/odom/gnss fusion) | ndt_scan_matcher
 map4_localization_launch/eagleye_pose_twist_localization_launch| eagleye_rt(gyro/odom/gnss fusion) | eagleye_rt(gyro/odom/gnss fusion)
 
 ## Structure
