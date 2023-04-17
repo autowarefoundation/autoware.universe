@@ -2521,7 +2521,7 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
 void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & path)
 {
   const auto ego_idx = avoidance_data_.ego_closest_path_index;
-  const auto N = path.shift_length.size();
+  const auto N = path.path.points.size();
 
   if (!ego_velocity_starting_avoidance_ptr_) {
     ego_velocity_starting_avoidance_ptr_ = std::make_shared<double>(getEgoSpeed());
@@ -3047,7 +3047,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
     ss << "i = " << i << ", id = " << candidate.id;
     const auto pfx = ss.str().c_str();
 
-    if (prev_reference_.points.size() != prev_linear_shift_path_.path.points.size()) {
+    if (prev_reference_.points.size() != prev_linear_shift_path_.shift_length.size()) {
       throw std::logic_error("prev_reference_ and prev_linear_shift_path_ must have same size.");
     }
 
@@ -3455,7 +3455,7 @@ boost::optional<double> AvoidanceModule::getMildDecelDistance(const double targe
 
 double AvoidanceModule::getRelativeLengthFromPath(const AvoidLine & avoid_line) const
 {
-  if (prev_reference_.points.size() != prev_linear_shift_path_.path.points.size()) {
+  if (prev_reference_.points.size() != prev_linear_shift_path_.shift_length.size()) {
     throw std::logic_error("prev_reference_ and prev_linear_shift_path_ must have same size.");
   }
 
