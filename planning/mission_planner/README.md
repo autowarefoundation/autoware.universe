@@ -174,7 +174,7 @@ And there are three use cases that require reroute.
 - `change_route_points`
 - `change_route`
 
-This is route change that the application makes using the API. It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a mrm route, normal rerouting by this api is not allowed.
+This is route change that the application makes using the API. It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a MRM route, normal rerouting by this interface is not allowed.
 
 #### Emergency route
 
