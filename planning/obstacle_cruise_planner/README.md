@@ -7,7 +7,9 @@ The `obstacle_cruise_planner` package has following modules.
 - Stop planning
   - stop when there is a static obstacle near the trajectory.
 - Cruise planning
-  - slow down when there is a dynamic obstacle to cruise near the trajectory
+  - cruise a dynamic obstacle in front of the ego.
+- Slow down planning
+  - slow down when there is a static/dynamic obstacle near the trajectory.
 
 ## Interfaces
 
@@ -33,8 +35,9 @@ The `obstacle_cruise_planner` package has following modules.
 Design for the following functions is defined here.
 
 - Obstacle candidates selection
-- Obstacle stop planning
-- Adaptive cruise planning
+- Stop planning
+- Cruise planning
+- Slow down planning
 
 A data structure for cruise and stop planning is as follows.
 This planner data is created first, and then sent to the planning algorithm.
@@ -162,13 +165,13 @@ When it stops at the end of the trajectory, and obstacle is on the same point, t
 When inserting the stop point, the required acceleration for the ego to stop in front of the stop point is calculated.
 If the acceleration is less than `common.min_strong_accel`, the stop planning will be cancelled since this package does not assume a strong sudden brake for emergency.
 
-### Adaptive cruise planning
+### Cruise planning
 
 | Parameter                     | Type   | Description                                    |
 | ----------------------------- | ------ | ---------------------------------------------- |
 | `common.safe_distance_margin` | double | minimum distance with obstacles for cruise [m] |
 
-The role of the adaptive cruise planning is keeping a safe distance with dynamic vehicle objects with smoothed velocity transition.
+The role of the cruise planning is keeping a safe distance with dynamic vehicle objects with smoothed velocity transition.
 This includes not only cruising a front vehicle, but also reacting a cut-in and cut-out vehicle.
 
 The safe distance is calculated dynamically based on the Responsibility-Sensitive Safety (RSS) by the following equation.
@@ -205,6 +208,29 @@ $$
 | `w_{acc}`         | `output_ratio_during_accel`             |
 | `lpf(val)`        | apply low-pass filter to `val`          |
 | `pid(val)`        | apply pid to `val`                      |
+
+### Slow down planning
+
+| Parameter                    | Type   | Description                                                         |
+| ---------------------------- | ------ | ------------------------------------------------------------------- |
+| `slow_down.min_lat_velocity` | double | minimum velocity to linearly calculate slow down velocity [m]       |
+| `slow_down.max_lat_velocity` | double | maximum velocity to linearly calculate slow down velocity [m]       |
+| `slow_down.min_lat_margin`   | double | minimum lateral margin to linearly calculate slow down velocity [m] |
+| `slow_down.max_lat_margin`   | double | maximum lateral margin to linearly calculate slow down velocity [m] |
+
+The role of the slow down planning is inserting slow down velocity in the trajectory where the trajectory points are close to the obstacles.
+The slow down velocity is calculated by linear interpolation as follows.
+
+![slow_down_velocity_calculation](./media/slow_down_velocity_calculation.svg)
+
+| Variable    | Description                                       |
+| ----------- | ------------------------------------------------- |
+| `v_{out}`   | calculated velocity for slow down                 |
+| `v_{min}`   | `slow_down.min_lat_velocity`                      |
+| `v_{max}`   | `slow_down.max_lat_velocity`                      |
+| `l_{min}`   | `slow_down.min_lat_margin`                        |
+| `l_{max}`   | `slow_down.max_lat_margin`                        |
+| `l_{max}^'` | `behavior_determination.slow_down.max_lat_margin` |
 
 ## Implementation
 
@@ -279,7 +305,7 @@ It is the obstacle among obstacle candidates whose velocity is less than `obstac
 
 Note that, as explained in the stop planning design, a stop planning which requires a strong acceleration (less than `common.min_strong_accel`) will be canceled.
 
-#### Adaptive cruise planning
+#### Cruise planning
 
 In the `pid_based_planner` namespace,
 
