@@ -39,7 +39,7 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     num_points_threshold_ = static_cast<int>(declare_parameter("num_points_threshold", 4));
     max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
     max_points_num_per_ring_ =
-      static_cast<size_t>(declare_parameter("max_points_num_per_ring", 2000));
+      static_cast<size_t>(declare_parameter("max_points_num_per_ring", 4000));
   }
 
   using std::placeholders::_1;
