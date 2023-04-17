@@ -2521,7 +2521,7 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
 void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & path)
 {
   const auto ego_idx = avoidance_data_.ego_closest_path_index;
-  const auto N = path.path.points.size();
+  const auto N = path.shift_length.size();
 
   if (!ego_velocity_starting_avoidance_ptr_) {
     ego_velocity_starting_avoidance_ptr_ = std::make_shared<double>(getEgoSpeed());
@@ -2575,7 +2575,8 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
 
   // apply velocity limit
   constexpr size_t V_LIM_APPLY_IDX_MARGIN = 0;
-  for (size_t i = insert_idx + V_LIM_APPLY_IDX_MARGIN; i < N; ++i) {
+  for (size_t i = insert_idx + V_LIM_APPLY_IDX_MARGIN; i < std::min(path.path.points.size(), N);
+       ++i) {
     path.path.points.at(i).point.longitudinal_velocity_mps =
       std::min(path.path.points.at(i).point.longitudinal_velocity_mps, static_cast<float>(vmax));
   }
