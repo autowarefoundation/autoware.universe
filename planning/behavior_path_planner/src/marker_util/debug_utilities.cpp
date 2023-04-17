@@ -14,15 +14,15 @@
 
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
 
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 namespace marker_utils
 {
 using behavior_path_planner::ShiftLine;
-using behavior_path_planner::util::calcPathArcLengthArray;
+using behavior_path_planner::utils::calcPathArcLengthArray;
 using std_msgs::msg::ColorRGBA;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;

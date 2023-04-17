@@ -18,9 +18,9 @@
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
-#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -189,8 +189,6 @@ private:
   bool isAbortState() const;
 
   // getter
-  Pose getEgoPose() const;
-  Twist getEgoTwist() const;
   std_msgs::msg::Header getRouteHeader() const;
   void resetPathIfAbort();
 
