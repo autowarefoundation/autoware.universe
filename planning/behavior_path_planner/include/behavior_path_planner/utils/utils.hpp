@@ -18,6 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/utils/lane_following/module_data.hpp"
 #include "behavior_path_planner/utils/pull_out/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "perception_utils/predicted_path_utils.hpp"
@@ -54,7 +55,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner::util
+namespace behavior_path_planner::utils
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
@@ -309,6 +310,11 @@ PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
   const double buffer, const double deceleration_interval);
 
+BehaviorModuleOutput getReferencePath(
+  const lanelet::ConstLanelet & current_lane,
+  const std::shared_ptr<LaneFollowingParameters> & parameters,
+  const std::shared_ptr<const PlannerData> & planner_data);
+
 // object label
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
@@ -348,6 +354,6 @@ lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
 
 std::string convertToSnakeCase(const std::string & input_str);
-}  // namespace behavior_path_planner::util
+}  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
