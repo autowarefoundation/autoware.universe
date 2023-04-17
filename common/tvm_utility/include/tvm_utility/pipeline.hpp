@@ -23,6 +23,7 @@
 #include <tvm_vendor/tvm/runtime/packed_func.h>
 #include <tvm_vendor/tvm/runtime/registry.h>
 
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -320,7 +321,7 @@ public:
    * @param[in] version_from Earliest supported model version.
    * @return The version status.
    */
-  Version version_check(const std::array<char, 3> & version_from) const
+  Version version_check(const std::array<int8_t, 3> & version_from) const
   {
     auto x{config_.modelzoo_version[0]};
     auto y{config_.modelzoo_version[1]};
