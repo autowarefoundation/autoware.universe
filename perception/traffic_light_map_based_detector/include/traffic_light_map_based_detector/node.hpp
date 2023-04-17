@@ -51,8 +51,11 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace traffic_light
@@ -70,6 +73,10 @@ private:
     double max_vibration_height;
     double max_vibration_width;
     double max_vibration_depth;
+    double min_timestamp_offset;
+    double max_timestamp_offset;
+    double timestamp_sample_len;
+    double max_detection_range;
   };
 
   struct IdLessThan
@@ -87,6 +94,8 @@ private:
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr route_sub_;
 
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
+    expect_roi_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr viz_pub_;
 
   tf2_ros::Buffer tf_buffer_;
@@ -100,30 +109,90 @@ private:
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
+  std::map<lanelet::Id, lanelet::Id> trafficLightId2RegulatoryEleId_;
   Config config_;
-
+  /**
+   * @brief Calculated the transform from map to frame_id at timestamp t
+   *
+   * @param t           specified timestamp
+   * @param frame_id    specified target frame id
+   * @param tf          calculated transform
+   * @return true       calculation succeed
+   * @return false      calculation failed
+   */
+  bool getTransform(const rclcpp::Time & t, const std::string & frame_id, tf2::Transform & tf);
+  /**
+   * @brief callback function for the map message
+   *
+   * @param input_msg
+   */
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg);
+  /**
+   * @brief callback function for the camera info message. The main process function of the node
+   *
+   * @param input_msg
+   */
   void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
+  /**
+   * @brief callback function for the route message
+   *
+   * @param input_msg
+   */
   void routeCallback(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr input_msg);
+  /**
+   * @brief Get the Visible Traffic Lights object
+   *
+   * @param all_traffic_lights      all the traffic lights in the route or in the map
+   * @param tf_map2camera           the transformation from map to camera
+   * @param pinhole_camera_model    pinhole model calculated from camera_info
+   * @param visible_traffic_lights  the visible traffic lights object
+   */
   void getVisibleTrafficLights(
-    const TrafficLightSet & all_traffic_lights, const geometry_msgs::msg::Pose & camera_pose,
+    const TrafficLightSet & all_traffic_lights, const tf2::Transform & tf_map2camera,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
     std::vector<lanelet::ConstLineString3d> & visible_traffic_lights);
-  bool isInDistanceRange(
-    const geometry_msgs::msg::Point & tl_point, const geometry_msgs::msg::Point & camera_point,
-    const double max_distance_range) const;
-  bool isInAngleRange(
-    const double & tl_yaw, const double & camera_yaw, const double max_angle_range) const;
-  bool isInImageFrame(
-    const image_geometry::PinholeCameraModel & pinhole_camera_model,
-    const geometry_msgs::msg::Point & point) const;
+  /**
+   * @brief Get the Traffic Light Roi from one tf
+   *
+   * @param tf_map2camera         the transformation from map to camera
+   * @param pinhole_camera_model  pinhole model calculated from camera_info
+   * @param traffic_light         lanelet traffic light object
+   * @param config                offset configuration
+   * @param roi                   computed result result
+   * @return true                 the computation succeed
+   * @return false                the computation failed
+   */
   bool getTrafficLightRoi(
-    const geometry_msgs::msg::Pose & camera_pose,
+    const tf2::Transform & tf_map2camera,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
     const lanelet::ConstLineString3d traffic_light, const Config & config,
-    autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi);
+    autoware_auto_perception_msgs::msg::TrafficLightRoi & roi);
+  /**
+   * @brief Calculate one traffic light roi for every tf and return the roi containing all of them
+   *
+   * @param tf_map2camera_vec     the transformation vector
+   * @param pinhole_camera_model  pinhole model calculated from camera_info
+   * @param traffic_light         lanelet traffic light object
+   * @param config                offset configuration
+   * @param roi                   computed result result
+   * @return true                 the computation succeed
+   * @return false                the computation failed
+   */
+  bool getTrafficLightRoi(
+    const std::vector<tf2::Transform> & tf_map2camera_vec,
+    const image_geometry::PinholeCameraModel & pinhole_camera_model,
+    const lanelet::ConstLineString3d traffic_light, const Config & config,
+    autoware_auto_perception_msgs::msg::TrafficLightRoi & roi);
+  /**
+   * @brief Publish the traffic lights for visualization
+   *
+   * @param tf_map2camera           the transformation from map to camera
+   * @param cam_info_header         header of the camera_info message
+   * @param visible_traffic_lights  the visible traffic light object vector
+   * @param pub                     publisher
+   */
   void publishVisibleTrafficLights(
-    const geometry_msgs::msg::PoseStamped camera_pose_stamped,
+    const tf2::Transform & tf_map2camera, const std_msgs::msg::Header & cam_info_header,
     const std::vector<lanelet::ConstLineString3d> & visible_traffic_lights,
     const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub);
 };
