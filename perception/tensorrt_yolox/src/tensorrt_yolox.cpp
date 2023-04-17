@@ -64,7 +64,7 @@ std::vector<std::string> load_list_from_text_file(const std::string & filename)
 
   std::ifstream f(filename);
   if (!f) {
-    std::cout << "failed to open " << filename;
+    std::cout << "failed to open " << filename << std::endl;
     assert(0);
   }
 
