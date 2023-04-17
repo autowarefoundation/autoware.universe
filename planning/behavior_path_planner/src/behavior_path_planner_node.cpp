@@ -1125,14 +1125,20 @@ void BehaviorPathPlannerNode::run()
   // NOTE: In order to keep backward_path_length at least, resampling interval is added to the
   // backward.
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-  const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
-  path->points = motion_utils::cropPoints(
-    path->points, current_pose.position, current_seg_idx,
-    planner_data_->parameters.forward_path_length,
-    planner_data_->parameters.backward_path_length + planner_data_->parameters.input_path_interval);
-
   if (!path->points.empty()) {
-    path_publisher_->publish(*path);
+    const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
+    path->points = motion_utils::cropPoints(
+      path->points, current_pose.position, current_seg_idx,
+      planner_data_->parameters.forward_path_length,
+      planner_data_->parameters.backward_path_length +
+        planner_data_->parameters.input_path_interval);
+
+    if (!path->points.empty()) {
+      path_publisher_->publish(*path);
+    } else {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
+    }
   } else {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -1473,6 +1479,11 @@ void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 }
 void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
+  if (msg->segments.empty()) {
+    RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
+    return;
+  }
+
   const std::lock_guard<std::mutex> lock(mutex_route_);
   route_ptr_ = msg;
   has_received_route_ = true;
