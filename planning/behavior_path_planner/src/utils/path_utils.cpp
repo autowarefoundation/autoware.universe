@@ -492,11 +492,9 @@ Pose getUnshiftedEgoPose(const Pose & ego_pose, const ShiftedPath & prev_path)
 // TODO(Horibe) clean up functions: there is a similar code in util as well.
 PathWithLaneId calcCenterLinePath(
   const std::shared_ptr<const PlannerData> & planner_data, const Pose & ref_pose,
-  const double longest_dist_to_shift_line,
-  const std::optional<PathWithLaneId> & prev_module_path = std::nullopt)
+  const double longest_dist_to_shift_line, const std::optional<PathWithLaneId> & prev_module_path)
 {
   const auto & p = planner_data->parameters;
-  const auto & ego_pose = planner_data->self_odometry->pose.pose;
   const auto & route_handler = planner_data->route_handler;
 
   PathWithLaneId centerline_path;
