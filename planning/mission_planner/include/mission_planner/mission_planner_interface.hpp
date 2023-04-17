@@ -27,13 +27,13 @@ namespace mission_planner
 struct SetMrmGoal
 {
   using Service = autoware_planning_msgs::srv::SetPoseWithUuidStamped;
-  static constexpr char name[] = "~/srv/set_mrm_goal";
+  static constexpr char name[] = "~/srv/set_mrm_route";
 };
 
 struct ClearMrmGoal
 {
   using Service = std_srvs::srv::Trigger;
-  static constexpr char name[] = "~/srv/clear_mrm_goal";
+  static constexpr char name[] = "~/srv/clear_mrm_route";
 };
 
 struct ModifiedGoal

@@ -85,8 +85,8 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_clear_route_, this, &MissionPlanner::on_clear_route);
   adaptor.init_srv(srv_set_route_, this, &MissionPlanner::on_set_route);
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
-  adaptor.init_srv(srv_set_mrm_goal_, this, &MissionPlanner::on_set_mrm_goal);
-  adaptor.init_srv(srv_clear_mrm_goal_, this, &MissionPlanner::on_clear_mrm_goal);
+  adaptor.init_srv(srv_set_mrm_route_, this, &MissionPlanner::on_set_mrm_route);
+  adaptor.init_srv(srv_clear_mrm_route_, this, &MissionPlanner::on_clear_mrm_route);
   adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
   change_state(RouteState::Message::UNSET);
@@ -242,7 +242,7 @@ void MissionPlanner::on_set_route_points(
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
-void MissionPlanner::on_set_mrm_goal(
+void MissionPlanner::on_set_mrm_route(
   const SetMrmGoal::Service::Request::SharedPtr req,
   const SetMrmGoal::Service::Response::SharedPtr res)
 {
@@ -252,7 +252,7 @@ void MissionPlanner::on_set_mrm_goal(
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
-void MissionPlanner::on_clear_mrm_goal(
+void MissionPlanner::on_clear_mrm_route(
   const ClearMrmGoal::Service::Request::SharedPtr req,
   const ClearMrmGoal::Service::Response::SharedPtr res)
 {
