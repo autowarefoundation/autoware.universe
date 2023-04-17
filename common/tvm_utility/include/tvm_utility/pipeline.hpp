@@ -201,7 +201,7 @@ typedef struct
 typedef struct
 {
   // Network info
-  std::array<char, 3> modelzoo_version;
+  std::array<int8_t, 3> modelzoo_version;
   std::string network_name;
   std::string network_backend;
 
@@ -345,7 +345,7 @@ private:
   tvm::runtime::PackedFunc execute;
   tvm::runtime::PackedFunc get_output;
   // Latest supported model version.
-  const std::array<char, 3> version_up_to{2, 1, 0};
+  const std::array<int8_t, 3> version_up_to{2, 1, 0};
 };
 
 template <
