@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 
-#include "behavior_path_planner/util/create_vehicle_footprint.hpp"
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/util/path_utils.hpp"
-#include "behavior_path_planner/util/pull_over/util.hpp"
-#include "behavior_path_planner/util/utils.hpp"
+#include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/pull_over/util.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -65,8 +65,6 @@ PullOverModule::PullOverModule(
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
 #endif
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_over");
-
   LaneDepartureChecker lane_departure_checker{};
   lane_departure_checker.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
 
@@ -162,7 +160,7 @@ void PullOverModule::onTimer()
   mutex_.unlock();
 
   // generate valid pull over path candidates and calculate closest start pose
-  const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
+  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -316,7 +314,7 @@ bool PullOverModule::isExecutionRequested() const
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
   }
-  const auto & current_lanes = util::getCurrentLanes(planner_data_);
+  const auto & current_lanes = utils::getCurrentLanes(planner_data_);
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
@@ -328,7 +326,7 @@ bool PullOverModule::isExecutionRequested() const
     return false;
   }
   const double self_to_goal_arc_length =
-    util::getSignedDistance(current_pose, goal_pose, current_lanes);
+    utils::getSignedDistance(current_pose, goal_pose, current_lanes);
   if (self_to_goal_arc_length > calcModuleRequestLength()) {
     return false;
   }
@@ -416,7 +414,7 @@ Pose PullOverModule::calcRefinedGoal(const Pose & goal_pose) const
     center_pose.orientation = tf2::toMsg(tf_quat);
   }
 
-  const auto distance_from_left_bound = util::getSignedDistanceFromShoulderLeftBoundary(
+  const auto distance_from_left_bound = utils::getSignedDistanceFromShoulderLeftBoundary(
     planner_data_->route_handler->getShoulderLanelets(), vehicle_footprint_, center_pose);
   if (!distance_from_left_bound) {
     RCLCPP_ERROR(getLogger(), "fail to calculate refined goal");
@@ -501,10 +499,10 @@ BehaviorModuleOutput PullOverModule::plan()
   resetPathCandidate();
   resetPathReference();
 
-  status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
+  status_.current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   status_.pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
   status_.lanes =
-    util::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_over_lanes);
+    utils::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_over_lanes);
 
   // Check if it needs to decide path
   if (status_.is_safe) {
@@ -620,12 +618,12 @@ BehaviorModuleOutput PullOverModule::plan()
     // generate drivable area for each partial path
     for (auto & path : status_.pull_over_path->partial_paths) {
       const size_t ego_idx = planner_data_->findEgoIndex(path.points);
-      util::clipPathLength(path, ego_idx, planner_data_->parameters);
-      const auto shorten_lanes = util::cutOverlappedLanes(path, status_.lanes);
-      const auto expanded_lanes = util::expandLanelets(
+      utils::clipPathLength(path, ego_idx, planner_data_->parameters);
+      const auto shorten_lanes = utils::cutOverlappedLanes(path, status_.lanes);
+      const auto expanded_lanes = utils::expandLanelets(
         shorten_lanes, parameters_->drivable_area_left_bound_offset,
         parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-      util::generateDrivableArea(
+      utils::generateDrivableArea(
         path, expanded_lanes, planner_data_->parameters.vehicle_length, planner_data_);
     }
   }
@@ -839,7 +837,7 @@ PathWithLaneId PullOverModule::generateStopPath()
   // if stop pose is closer than min_stop_distance, stop as soon as possible
   const double ego_to_stop_distance = calcSignedArcLengthFromEgo(reference_path, stop_pose);
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
-  if (ego_to_stop_distance < min_stop_distance) {
+  if (min_stop_distance && ego_to_stop_distance < *min_stop_distance) {
     return generateFeasibleStopPath();
   }
 
@@ -859,12 +857,12 @@ PathWithLaneId PullOverModule::generateStopPath()
   }
 
   // generate drivable area
-  const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
-  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
-  const auto expanded_lanes = util::expandLanelets(
+  const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
+  const auto shorten_lanes = utils::cutOverlappedLanes(reference_path, drivable_lanes);
+  const auto expanded_lanes = utils::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-  util::generateDrivableArea(
+  utils::generateDrivableArea(
     reference_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
@@ -897,12 +895,12 @@ PathWithLaneId PullOverModule::generateFeasibleStopPath()
   }
 
   // generate drivable area
-  const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
-  const auto shorten_lanes = util::cutOverlappedLanes(stop_path, drivable_lanes);
-  const auto expanded_lanes = util::expandLanelets(
+  const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
+  const auto shorten_lanes = utils::cutOverlappedLanes(stop_path, drivable_lanes);
+  const auto expanded_lanes = utils::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-  util::generateDrivableArea(
+  utils::generateDrivableArea(
     stop_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 
   return stop_path;
@@ -937,7 +935,7 @@ bool PullOverModule::isStopped(
   }
   bool is_stopped = true;
   for (const auto & odometry : odometry_buffer) {
-    const double ego_vel = util::l2Norm(odometry->twist.twist.linear);
+    const double ego_vel = utils::l2Norm(odometry->twist.twist.linear);
     if (ego_vel > parameters_->th_stopped_velocity) {
       is_stopped = false;
       break;
@@ -1022,7 +1020,7 @@ bool PullOverModule::checkCollision(const PathWithLaneId & path) const
   }
 
   if (parameters_->use_object_recognition) {
-    if (util::checkCollisionBetweenPathFootprintsAndObjects(
+    if (utils::checkCollisionBetweenPathFootprintsAndObjects(
           vehicle_footprint_, path, *(planner_data_->dynamic_object),
           parameters_->object_recognition_collision_check_margin)) {
       return true;
@@ -1093,8 +1091,14 @@ boost::optional<double> PullOverModule::calcFeasibleDecelDistance(
     return 0.0;
   }
 
-  const auto min_stop_distance = calcDecelDistWithJerkAndAccConstraints(
+  auto min_stop_distance = calcDecelDistWithJerkAndAccConstraints(
     v_now, target_velocity, a_now, -a_lim, j_lim, -1.0 * j_lim);
+
+  if (!min_stop_distance) {
+    return {};
+  }
+
+  min_stop_distance = std::max(*min_stop_distance, 0.0);
 
   return min_stop_distance;
 }
@@ -1118,17 +1122,22 @@ void PullOverModule::decelerateForTurnSignal(const Pose & stop_pose, PathWithLan
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
 
   for (auto & point : path.points) {
-    const auto distance_to_stop = std::max(
+    const double distance_to_stop = std::max(
       0.0, calcSignedArcLength(path.points, point.point.pose.position, stop_pose.position));
     const float decel_vel =
       std::min(point.point.longitudinal_velocity_mps, static_cast<float>(distance_to_stop / time));
     const double distance_from_ego = calcSignedArcLengthFromEgo(path, stop_pose);
     const auto min_decel_distance = calcFeasibleDecelDistance(decel_vel);
-    if (!min_decel_distance) {
+
+    // when current velocity already lower than decel_vel, min_decel_distance will be 0.0,
+    // and do not need to decelerate.
+    // skip next process to avoid inserting decel point at the same current position.
+    constexpr double eps_distance = 0.1;
+    if (!min_decel_distance || *min_decel_distance < eps_distance) {
       continue;
     }
 
-    if (0.0 < *min_decel_distance && *min_decel_distance < distance_from_ego) {
+    if (*min_decel_distance < distance_from_ego) {
       point.point.longitudinal_velocity_mps = decel_vel;
     } else {
       insertDecelPoint(current_pose.position, *min_decel_distance, decel_vel, path.points);
@@ -1138,8 +1147,8 @@ void PullOverModule::decelerateForTurnSignal(const Pose & stop_pose, PathWithLan
   const double stop_point_length = calcSignedArcLength(path.points, 0, stop_pose.position);
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
 
-  if (*min_stop_distance && min_stop_distance < stop_point_length) {
-    const auto stop_point = util::insertStopPoint(stop_point_length, path);
+  if (min_stop_distance && *min_stop_distance < stop_point_length) {
+    const auto stop_point = utils::insertStopPoint(stop_point_length, path);
   }
 }
 
