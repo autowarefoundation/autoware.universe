@@ -512,13 +512,13 @@ PathWithLaneId calcCenterLinePath(
 
   const lanelet::ConstLanelets current_lanes = [&]() {
     if (!prev_module_path) {
-      return util::calcLaneAroundPose(
+      return utils::calcLaneAroundPose(
         route_handler, ref_pose, p.forward_path_length, backward_length);
     }
-    return util::getCurrentLanesFromPath(*prev_module_path, planner_data);
+    return utils::getCurrentLanesFromPath(*prev_module_path, planner_data);
   }();
 
-  centerline_path = util::getCenterLinePath(
+  centerline_path = utils::getCenterLinePath(
     *route_handler, current_lanes, ref_pose, backward_length, p.forward_path_length, p);
 
   centerline_path.header = route_handler->getRouteHeader();

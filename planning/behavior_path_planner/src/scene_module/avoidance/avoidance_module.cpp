@@ -193,7 +193,7 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
   AvoidancePlanningData data;
 
   // reference pose
-  const auto reference_pose = util::getUnshiftedEgoPose(getEgoPose(), prev_output_);
+  const auto reference_pose = utils::getUnshiftedEgoPose(getEgoPose(), prev_output_);
   data.reference_pose = reference_pose;
 
   // special for avoidance: take behind distance upt ot shift-start-point if it exist.
@@ -211,9 +211,9 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
   // center line path (output of this function must have size > 1)
 #ifdef USE_OLD_ARCHITECTURE
   const auto center_path =
-    util::calcCenterLinePath(planner_data_, reference_pose, longest_dist_to_shift_line);
+    utils::calcCenterLinePath(planner_data_, reference_pose, longest_dist_to_shift_line);
 #else
-  const auto center_path = util::calcCenterLinePath(
+  const auto center_path = utils::calcCenterLinePath(
     planner_data_, reference_pose, longest_dist_to_shift_line,
     *getPreviousModuleOutput().reference_path);
 #endif

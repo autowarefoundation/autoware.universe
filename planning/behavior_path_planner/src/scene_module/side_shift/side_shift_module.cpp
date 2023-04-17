@@ -201,12 +201,12 @@ void SideShiftModule::updateData()
 
   const auto reference_pose = prev_output_.shift_length.empty()
                                 ? planner_data_->self_odometry->pose.pose
-                                : util::getUnshiftedEgoPose(getEgoPose(), prev_output_);
+                                : utils::getUnshiftedEgoPose(getEgoPose(), prev_output_);
 #ifdef USE_OLD_ARCHITECTURE
   const auto centerline_path =
-    util::calcCenterLinePath(planner_data_, reference_pose, longest_dist_to_shift_line);
+    utils::calcCenterLinePath(planner_data_, reference_pose, longest_dist_to_shift_line);
 #else
-  const auto centerline_path = util::calcCenterLinePath(
+  const auto centerline_path = utils::calcCenterLinePath(
     planner_data_, reference_pose, longest_dist_to_shift_line,
     *getPreviousModuleOutput().reference_path);
 #endif
