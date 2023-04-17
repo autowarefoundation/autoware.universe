@@ -39,16 +39,11 @@ public:
 
   ~NormalLaneChange() override = default;
 
-  void updateLaneChangeStatus(
-    const PathWithLaneId & prev_module_reference_path,
-    const PathWithLaneId & previous_module_path) override;
+  void updateLaneChangeStatus() override;
 
-  std::pair<bool, bool> getSafePath(
-    const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & prev_module_path,
-    LaneChangePath & safe_path) const override;
+  std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
 
-  PathWithLaneId generatePlannedPath(
-    const std::vector<DrivableLanes> & prev_drivable_lanes) override;
+  PathWithLaneId generatePlannedPath() override;
 
   void generateExtendedDrivableArea(
     const std::vector<DrivableLanes> & prev_drivable_lanes, PathWithLaneId & path) override;

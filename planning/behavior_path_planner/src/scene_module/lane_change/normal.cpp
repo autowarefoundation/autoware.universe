@@ -35,17 +35,13 @@ NormalLaneChange::NormalLaneChange(
 {
 }
 
-void NormalLaneChange::updateLaneChangeStatus(
-  const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & previous_module_path)
+void NormalLaneChange::updateLaneChangeStatus()
 {
-  status_.current_lanes = utils::getCurrentLanesFromPath(prev_module_reference_path, planner_data_);
-  status_.lane_change_lanes = getLaneChangeLanes(status_.current_lanes);
-
-  // Find lane change path
-  const auto [found_valid_path, found_safe_path] =
-    getSafePath(prev_module_reference_path, previous_module_path, status_.lane_change_path);
+  const auto [found_valid_path, found_safe_path] = getSafePath(status_.lane_change_path);
 
   // Update status
+  status_.current_lanes = status_.lane_change_path.reference_lanelets;
+  status_.lane_change_lanes = status_.lane_change_path.target_lanelets;
   status_.is_valid_path = found_valid_path;
   status_.is_safe = found_safe_path;
   status_.lane_follow_lane_ids = utils::getIds(status_.current_lanes);
@@ -57,17 +53,10 @@ void NormalLaneChange::updateLaneChangeStatus(
   status_.lane_change_path.path.header = getRouteHeader();
 }
 
-std::pair<bool, bool> NormalLaneChange::getSafePath(
-  const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & prev_module_path,
-  LaneChangePath & safe_path) const
+std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) const
 {
-  const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_odometry->pose.pose;
-  const auto current_twist = planner_data_->self_odometry->twist.twist;
-  const auto & common_parameters = planner_data_->parameters;
-
   const auto current_lanes =
-    utils::getCurrentLanesFromPath(prev_module_reference_path, planner_data_);
+    utils::getCurrentLanesFromPath(*prev_module_reference_path_, planner_data_);
 
   if (current_lanes.empty()) {
     return std::make_pair(false, false);
@@ -79,13 +68,15 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
     return std::make_pair(false, false);
   }
 
+  const auto & common_parameters = planner_data_->parameters;
+
   // find candidate paths
   LaneChangePaths valid_paths;
 
   const auto found_safe_path = utils::lane_change::getLaneChangePaths(
-    prev_module_path, *route_handler, current_lanes, lane_change_lanes, current_pose, current_twist,
-    planner_data_->dynamic_object, common_parameters, *parameters_, check_distance_, direction_,
-    &valid_paths, &object_debug_);
+    *prev_module_path_, *getRouteHandler(), current_lanes, lane_change_lanes, getEgoPose(),
+    getEgoTwist(), planner_data_->dynamic_object, common_parameters, *parameters_, check_distance_,
+    direction_, &valid_paths, &object_debug_);
 
   if (valid_paths.empty()) {
     return {false, false};
@@ -101,11 +92,10 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(
   return {true, found_safe_path};
 }
 
-PathWithLaneId NormalLaneChange::generatePlannedPath(
-  const std::vector<DrivableLanes> & prev_drivable_lanes)
+PathWithLaneId NormalLaneChange::generatePlannedPath()
 {
   auto path = getLaneChangePath().path;
-  generateExtendedDrivableArea(prev_drivable_lanes, path);
+  generateExtendedDrivableArea(*prev_drivable_lanes_, path);
 
   if (isAbortState()) {
     return path;
