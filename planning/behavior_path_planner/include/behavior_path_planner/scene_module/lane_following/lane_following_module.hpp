@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_FOLLOWING__LANE_FOLLOWING_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/util/lane_following/module_data.hpp"
+#include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -42,8 +42,8 @@ public:
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
 
   void setParameters(const std::shared_ptr<LaneFollowingParameters> & parameters);
   void acceptVisitor(
@@ -54,7 +54,7 @@ public:
 private:
   std::shared_ptr<LaneFollowingParameters> parameters_;
 
-  PathWithLaneId getReferencePath() const;
+  BehaviorModuleOutput getReferencePath() const;
   void initParam();
 };
 }  // namespace behavior_path_planner

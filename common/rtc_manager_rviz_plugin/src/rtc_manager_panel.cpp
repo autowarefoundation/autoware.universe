@@ -25,8 +25,14 @@
 
 namespace rviz_plugins
 {
-inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
-inline bool uint2bool(uint8_t var) { return var == static_cast<uint8_t>(0) ? false : true; }
+inline std::string Bool2String(const bool var)
+{
+  return var ? "True" : "False";
+}
+inline bool uint2bool(uint8_t var)
+{
+  return var == static_cast<uint8_t>(0) ? false : true;
+}
 using std::placeholders::_1;
 using std::placeholders::_2;
 
@@ -40,10 +46,10 @@ std::string getModuleName(const uint8_t module_type)
       return "lane_change_right";
     }
     case Module::EXT_REQUEST_LANE_CHANGE_LEFT: {
-      return "ext_request_lane_change_left";
+      return "external_request_lane_change_left";
     }
     case Module::EXT_REQUEST_LANE_CHANGE_RIGHT: {
-      return "ext_request_lane_change_right";
+      return "external_request_lane_change_right";
     }
     case Module::AVOIDANCE_BY_LC_LEFT: {
       return "avoidance_by_lane_change_left";
@@ -326,12 +332,30 @@ void RTCManagerPanel::onClickCommandRequest(const uint8_t command)
   client_rtc_commands_->async_send_request(executable_cooperate_commands_request);
 }
 
-void RTCManagerPanel::onClickExecuteVelChange() { onClickChangeRequest(false, Command::ACTIVATE); }
-void RTCManagerPanel::onClickWaitVelChange() { onClickChangeRequest(false, Command::DEACTIVATE); }
-void RTCManagerPanel::onClickExecutePathChange() { onClickChangeRequest(true, Command::ACTIVATE); }
-void RTCManagerPanel::onClickWaitPathChange() { onClickChangeRequest(true, Command::DEACTIVATE); }
-void RTCManagerPanel::onClickExecution() { onClickCommandRequest(Command::ACTIVATE); }
-void RTCManagerPanel::onClickWait() { onClickCommandRequest(Command::DEACTIVATE); }
+void RTCManagerPanel::onClickExecuteVelChange()
+{
+  onClickChangeRequest(false, Command::ACTIVATE);
+}
+void RTCManagerPanel::onClickWaitVelChange()
+{
+  onClickChangeRequest(false, Command::DEACTIVATE);
+}
+void RTCManagerPanel::onClickExecutePathChange()
+{
+  onClickChangeRequest(true, Command::ACTIVATE);
+}
+void RTCManagerPanel::onClickWaitPathChange()
+{
+  onClickChangeRequest(true, Command::DEACTIVATE);
+}
+void RTCManagerPanel::onClickExecution()
+{
+  onClickCommandRequest(Command::ACTIVATE);
+}
+void RTCManagerPanel::onClickWait()
+{
+  onClickCommandRequest(Command::DEACTIVATE);
+}
 
 void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg)
 {

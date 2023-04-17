@@ -52,10 +52,14 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::LANE_CHANGE_LEFT;
   } else if (module_name == "lane_change_right") {
     module.type = Module::LANE_CHANGE_RIGHT;
-  } else if (module_name == "ext_request_lane_change_left") {
+  } else if (module_name == "external_request_lane_change_left") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_LEFT;
-  } else if (module_name == "ext_request_lane_change_right") {
+  } else if (module_name == "external_request_lane_change_right") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_RIGHT;
+  } else if (module_name == "avoidance_by_lane_change_left") {
+    module.type = Module::AVOIDANCE_BY_LC_LEFT;
+  } else if (module_name == "avoidance_by_lane_change_right") {
+    module.type = Module::AVOIDANCE_BY_LC_RIGHT;
   } else if (module_name == "avoidance_left") {
     module.type = Module::AVOIDANCE_LEFT;
   } else if (module_name == "avoidance_right") {
@@ -274,7 +278,10 @@ bool RTCInterface::isRegistered(const UUID & uuid)
   return itr != registered_status_.statuses.end();
 }
 
-void RTCInterface::lockCommandUpdate() { is_locked_ = true; }
+void RTCInterface::lockCommandUpdate()
+{
+  is_locked_ = true;
+}
 
 void RTCInterface::unlockCommandUpdate()
 {
@@ -282,8 +289,14 @@ void RTCInterface::unlockCommandUpdate()
   updateCooperateCommandStatus(stored_commands_);
 }
 
-rclcpp::Logger RTCInterface::getLogger() const { return logger_; }
+rclcpp::Logger RTCInterface::getLogger() const
+{
+  return logger_;
+}
 
-bool RTCInterface::isLocked() const { return is_locked_; }
+bool RTCInterface::isLocked() const
+{
+  return is_locked_;
+}
 
 }  // namespace rtc_interface

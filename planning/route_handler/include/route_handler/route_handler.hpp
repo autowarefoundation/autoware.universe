@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public:
   void setMap(const HADMapBin & map_msg);
   void setRoute(const LaneletRoute & route_msg);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
+  void clearRoute();
 
   // const methods
 
@@ -269,9 +270,34 @@ public:
   int getNumLaneToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
+  /**
+   * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
+   * the distance to the preferred lane from the give lane.
+   * The total distance is computed from the front point of the centerline of the given lane to
+   * the front point of the preferred lane.
+   * @param lanelet lanelet to query
+   * @param direction change direction
+   * @return number of lanes from input to the preferred lane
+   */
+  double getTotalLateralDistanceToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
+  /**
+   * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
+   * the distance to the preferred lane from the give lane.
+   * This computes each lateral interval to the preferred lane from the given lanelet
+   * @param lanelet lanelet to query
+   * @param direction change direction
+   * @return number of lanes from input to the preferred lane
+   */
+  std::vector<double> getLateralIntervalsToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
-
+  bool getClosestLaneletWithConstrainsWithinRoute(
+    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
+    const double yaw_threshold) const;
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids & ids) const;
   lanelet::ConstLanelets getLaneletSequence(
@@ -325,11 +351,10 @@ private:
   lanelet::ConstLanelets start_lanelets_;
   lanelet::ConstLanelets goal_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
-  LaneletRoute route_msg_;
+  std::shared_ptr<LaneletRoute> route_ptr_{nullptr};
 
   rclcpp::Logger logger_{rclcpp::get_logger("route_handler")};
 
-  bool is_route_msg_ready_{false};
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
 

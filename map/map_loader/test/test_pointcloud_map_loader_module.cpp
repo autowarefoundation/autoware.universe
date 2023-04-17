@@ -24,7 +24,6 @@
 #include <pcl/point_types.h>
 
 #include <chrono>
-#include <filesystem>
 #include <memory>
 
 using std::chrono_literals::operator""ms;
@@ -57,13 +56,7 @@ protected:
     pcl::io::savePCDFileASCII(temp_pcd_path, cloud);
   }
 
-  void TearDown() override
-  {
-    // Delete the temporary PCD file
-    std::filesystem::remove(temp_pcd_path);
-
-    rclcpp::shutdown();
-  }
+  void TearDown() override { rclcpp::shutdown(); }
 };
 
 TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest)
@@ -83,7 +76,7 @@ TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest)
 
   auto pointcloud_sub = node->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map_no_downsample", durable_qos,
-    [pointcloud_received, pointcloud_msg](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+    [pointcloud_received, pointcloud_msg](const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) {
       *pointcloud_received = true;
       *pointcloud_msg = *msg;
     });
