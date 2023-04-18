@@ -394,6 +394,32 @@ void PlanningInterfaceTestManager::testWithAbnormalPathWithLaneId(
   test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
+// put all abnormal ego pose related tests in this functions to run all tests with one line code
+void PlanningInterfaceTestManager::testRouteWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node)
+{
+  testOffTrackFromRoute(target_node);
+}
+
+// put all abnormal ego pose related tests in this functions to run all tests with one line code
+void PlanningInterfaceTestManager::testPathWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node)
+{
+  testOffTrackFromPath(target_node);
+}
+
+// put all abnormal ego pose related tests in this functions to run all tests with one line code
+void PlanningInterfaceTestManager::testPathWithLaneIdWithInvalidEgoPose(
+  rclcpp::Node::SharedPtr target_node)
+{
+  testOffTrackFromPathWithLaneId(target_node);
+}
+
+// put all abnormal ego pose related tests in this functions to run all tests with one line code
+void PlanningInterfaceTestManager::testTrajectoryWithInvalidEgoPose(
+  rclcpp::Node::SharedPtr target_node)
+{
+  testOffTrackFromTrajectory(target_node);
+}
+
 void PlanningInterfaceTestManager::testOffTrackFromRoute(rclcpp::Node::SharedPtr target_node)
 {
   if (input_route_name_.empty()) {

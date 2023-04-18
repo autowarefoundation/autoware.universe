@@ -149,6 +149,12 @@ public:
   void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
 
+  // for invalid ego poses, contains some tests inside.
+  void testRouteWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+  void testPathWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+  void testPathWithLaneIdWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+  void testTrajectoryWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+
   // ego vehicle is located far from trajectory
   void testOffTrackFromRoute(rclcpp::Node::SharedPtr target_node);
   void testOffTrackFromPath(rclcpp::Node::SharedPtr target_node);

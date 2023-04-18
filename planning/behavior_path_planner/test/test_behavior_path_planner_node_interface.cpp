@@ -118,7 +118,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   // make sure behavior_path_planner is running
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  ASSERT_NO_THROW(test_manager->testOffTrackFromRoute(test_target_node));
+  ASSERT_NO_THROW(test_manager->testRouteWithInvalidEgoPose(test_target_node));
 
   rclcpp::shutdown();
 }
