@@ -5,7 +5,7 @@
 ### Detection area
 
 Green polygons which is a detection area is visualized by `detection_polygons` in the `~/debug/marker` topic.
-For each behavior, if `behavior_determination.*.max_lat_margin` is not zero, the polygons are expanded with the additional width.
+To determine each behavior (cruise, stop, and slow down), if `behavior_determination.*.max_lat_margin` is not zero, the polygons are expanded with the additional width.
 
 ![detection_area](../media/detection_area.png)
 
@@ -17,7 +17,7 @@ Red points which are collision points with obstacle are visualized by `*_collisi
 
 ### Obstacle for cruise
 
-Orange sphere which is a obstacle for cruise is visualized by `obstacles_to_cruise` in the `~/debug/marker` topic.
+Orange sphere which is an obstacle for cruise is visualized by `obstacles_to_cruise` in the `~/debug/marker` topic.
 
 Orange wall which means a safe distance to cruise if the ego's front meets the wall is visualized in the `~/debug/cruise/virtual_wall` topic.
 
@@ -25,7 +25,7 @@ Orange wall which means a safe distance to cruise if the ego's front meets the w
 
 ### Obstacle for stop
 
-Red sphere which is a obstacle for stop is visualized by `obstacles_to_stop` in the `~/debug/marker` topic.
+Red sphere which is an obstacle for stop is visualized by `obstacles_to_stop` in the `~/debug/marker` topic.
 
 Red wall which means a safe distance to stop if the ego's front meets the wall is visualized in the `~/virtual_wall` topic.
 
@@ -33,7 +33,7 @@ Red wall which means a safe distance to stop if the ego's front meets the wall i
 
 ### Obstacle for slow down
 
-Yello sphere which is a obstacle for slow_down is visualized by `obstacles_to_slow_down` in the `~/debug/marker` topic.
+Yellow sphere which is an obstacle for slow_down is visualized by `obstacles_to_slow_down` in the `~/debug/marker` topic.
 
 Yellow wall which means a safe distance to slow_down if the ego's front meets the wall is visualized in the `~/debug/slow_down/virtual_wall` topic.
 

@@ -155,7 +155,7 @@ Crossing obstacle is the object whose orientation's yaw angle against the ego's 
 | ------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------- |
 | `behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold` | double | maximum angle against the ego's trajectory to judge the obstacle is crossing the trajectory [rad] |
 
-#### \*2: Enough collision time margin
+##### \*2: Enough collision time margin
 
 We predict the collision area and its time by the ego with a constant velocity motion and the obstacle with its predicted path.
 Then, we calculate a collision time margin which is the difference of the time when the ego will be inside the collision area and the obstacle will be inside the collision area.
@@ -294,7 +294,7 @@ end group
 
 :generateCruiseTrajectory;
 
-:getSlowDownVelocityLimit;
+:generateSlowDownTrajectory;
 
 :publish trajectory;
 
@@ -349,30 +349,6 @@ The target velocity and acceleration is respectively calculated with the PID con
 ### Optimization-based planner
 
 under construction
-
-#### Slow down planning
-
-### Others
-
-#### Distance calculation between obstacle and trajectory
-
-To calculate obstacles inside the, firstly, obstacles whose distance to the trajectory is less than `rough_max_lat_margin` are selected.
-Then, the detection area, which is a trajectory with some lateral margin, is calculated as shown in the figure.
-The detection area width is a vehicle's width + `max_lat_margin`, and it is represented as a polygon resampled with `behavior_determination.decimate_trajectory_step_length` longitudinally.
-The roughly selected obstacles inside the detection area are considered as inside the detection area.
-
-![detection_area](./image/detection_area.png)
-
-This two-step detection is used for calculation efficiency since collision checking of polygons is heavy.
-Boost.Geometry is used as a library to check collision among polygons.
-
-In the `behavior_determination` namespace,
-
-| Parameter                                                | Type   | Description                                                                         |
-| -------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `rough_max_lat_margin`                                   | double | rough lateral margin for rough detection area expansion [m]                         |
-| `max_lat_margin`                                         | double | lateral margin for precise detection area expansion [m]                             |
-| `behavior_determination.decimate_trajectory_step_length` | double | longitudinal step length to calculate trajectory polygon for collision checking [m] |
 
 ## Minor functions
 
