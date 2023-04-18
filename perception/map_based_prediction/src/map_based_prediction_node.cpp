@@ -462,10 +462,10 @@ ObjectClassification::_label_type changeLabelForPrediction(
       object.kinematics.twist_with_covariance.twist.linear.x > max_velocity_for_human_mps;
     // fast, human-like object: like segway
     if (within_road_lanelet && high_speed_object) {
-      return label; // currently do nothing
+      return label;  // currently do nothing
       // return ObjectClassification::MOTORCYCLE;
     } else if (high_speed_object) {
-      return label; // currently do nothing
+      return label;  // currently do nothing
       // fast human outside road lanelet will move like unknown object
       // return ObjectClassification::UNKNOWN;
     } else {
