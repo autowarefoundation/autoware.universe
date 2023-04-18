@@ -219,7 +219,6 @@ private:
   void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-
 };  // class PlanningInterfaceTestManager
 
 }  // namespace planning_test_utils
