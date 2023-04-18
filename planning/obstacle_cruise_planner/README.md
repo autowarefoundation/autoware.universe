@@ -358,7 +358,7 @@ under construction
 
 To calculate obstacles inside the, firstly, obstacles whose distance to the trajectory is less than `rough_max_lat_margin` are selected.
 Then, the detection area, which is a trajectory with some lateral margin, is calculated as shown in the figure.
-The detection area width is a vehicle's width + `max_lat_margin`, and it is represented as a polygon resampled with `decimate_trajectory_step_length` longitudinally.
+The detection area width is a vehicle's width + `max_lat_margin`, and it is represented as a polygon resampled with `behavior_determination.decimate_trajectory_step_length` longitudinally.
 The roughly selected obstacles inside the detection area are considered as inside the detection area.
 
 ![detection_area](./image/detection_area.png)
@@ -368,11 +368,11 @@ Boost.Geometry is used as a library to check collision among polygons.
 
 In the `behavior_determination` namespace,
 
-| Parameter                         | Type   | Description                                                                         |
-| --------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `rough_max_lat_margin`            | double | rough lateral margin for rough detection area expansion [m]                         |
-| `max_lat_margin`                  | double | lateral margin for precise detection area expansion [m]                             |
-| `decimate_trajectory_step_length` | double | longitudinal step length to calculate trajectory polygon for collision checking [m] |
+| Parameter                                                | Type   | Description                                                                         |
+| -------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `rough_max_lat_margin`                                   | double | rough lateral margin for rough detection area expansion [m]                         |
+| `max_lat_margin`                                         | double | lateral margin for precise detection area expansion [m]                             |
+| `behavior_determination.decimate_trajectory_step_length` | double | longitudinal step length to calculate trajectory polygon for collision checking [m] |
 
 ## Minor functions
 
