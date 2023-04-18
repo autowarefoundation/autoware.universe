@@ -31,7 +31,8 @@ ShiftPullOver::ShiftPullOver(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map)
 : PullOverPlannerBase{node, parameters},
   lane_departure_checker_{lane_departure_checker},
-  occupancy_grid_map_{occupancy_grid_map}
+  occupancy_grid_map_{occupancy_grid_map},
+  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
 }
 boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
@@ -43,8 +44,8 @@ boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
   const double jerk_resolution = std::abs(max_jerk - min_jerk) / pull_over_sampling_num;
 
   // get road and shoulder lanes
-  const auto road_lanes = util::getExtendedCurrentLanes(planner_data_);
-  const auto shoulder_lanes = pull_over_utils::getPullOverLanes(*route_handler);
+  const auto road_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  const auto shoulder_lanes = pull_over_utils::getPullOverLanes(*route_handler, left_side_parking_);
   if (road_lanes.empty() || shoulder_lanes.empty()) {
     return {};
   }
@@ -103,7 +104,7 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     tier4_autoware_utils::calcOffsetPose(goal_pose, -after_pull_over_straight_distance, 0, 0);
 
   // generate road lane reference path to shift end
-  const auto road_lane_reference_path_to_shift_end = util::resamplePathWithSpline(
+  const auto road_lane_reference_path_to_shift_end = utils::resamplePathWithSpline(
     generateReferencePath(road_lanes, shift_end_pose), resample_interval_);
 
   // calculate shift length
@@ -134,6 +135,8 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   ShiftedPath shifted_path{};
   const bool offset_back = true;  // offset front side from reference path
   if (!path_shifter.generate(&shifted_path, offset_back)) return {};
+  shifted_path.path.points = motion_utils::removeOverlapPoints(shifted_path.path.points);
+  motion_utils::insertOrientation(shifted_path.path.points, true);
 
   // set same orientation, because the reference center line orientation is not same to the
   shifted_path.path.points.back().point.pose.orientation = shift_end_pose.orientation;
@@ -143,7 +146,7 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
 
   // interpolate between shift end pose to goal pose
   std::vector<Pose> interpolated_poses =
-    util::interpolatePose(shifted_path.path.points.back().point.pose, goal_pose, 0.5);
+    utils::interpolatePose(shifted_path.path.points.back().point.pose, goal_pose, 0.5);
   for (const auto & pose : interpolated_poses) {
     PathPointWithLaneId p = shifted_path.path.points.back();
     p.point.pose = pose;
@@ -203,12 +206,12 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
 
   // check if the parking path will leave lanes
   const auto drivable_lanes =
-    util::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
-  const auto expanded_lanes = util::expandLanelets(
+    utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
+  const auto expanded_lanes = utils::expandLanelets(
     drivable_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
   if (lane_departure_checker_.checkPathWillLeaveLane(
-        util::transformToLanelets(expanded_lanes), pull_over_path.getParkingPath())) {
+        utils::transformToLanelets(expanded_lanes), pull_over_path.getParkingPath())) {
     return {};
   }
 

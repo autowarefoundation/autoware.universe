@@ -775,8 +775,7 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
     p.decide_path_distance = declare_parameter<double>(ns + "decide_path_distance");
     p.maximum_deceleration = declare_parameter<double>(ns + "maximum_deceleration");
     p.maximum_jerk = declare_parameter<double>(ns + "maximum_jerk");
-    // goal research
-    p.enable_goal_research = declare_parameter<bool>(ns + "enable_goal_research");
+    // goal search
     p.search_priority = declare_parameter<std::string>(ns + "search_priority");
     p.forward_goal_search_length = declare_parameter<double>(ns + "forward_goal_search_length");
     p.backward_goal_search_length = declare_parameter<double>(ns + "backward_goal_search_length");
@@ -864,6 +863,17 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
         get_logger(), "maximum_deceleration cannot be negative value. Given parameter: "
                         << p.maximum_deceleration << std::endl
                         << "Terminating the program...");
+      exit(EXIT_FAILURE);
+    }
+
+    const std::string parking_policy_name = declare_parameter<std::string>(ns + "parking_policy");
+    if (parking_policy_name == "left_side") {
+      p.parking_policy = ParkingPolicy::LEFT_SIDE;
+    } else if (parking_policy_name == "right_side") {
+      p.parking_policy = ParkingPolicy::RIGHT_SIDE;
+    } else {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "[pull_over] invalid parking_policy: " << parking_policy_name << std::endl);
       exit(EXIT_FAILURE);
     }
   }
@@ -1125,14 +1135,20 @@ void BehaviorPathPlannerNode::run()
   // NOTE: In order to keep backward_path_length at least, resampling interval is added to the
   // backward.
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-  const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
-  path->points = motion_utils::cropPoints(
-    path->points, current_pose.position, current_seg_idx,
-    planner_data_->parameters.forward_path_length,
-    planner_data_->parameters.backward_path_length + planner_data_->parameters.input_path_interval);
-
   if (!path->points.empty()) {
-    path_publisher_->publish(*path);
+    const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
+    path->points = motion_utils::cropPoints(
+      path->points, current_pose.position, current_seg_idx,
+      planner_data_->parameters.forward_path_length,
+      planner_data_->parameters.backward_path_length +
+        planner_data_->parameters.input_path_interval);
+
+    if (!path->points.empty()) {
+      path_publisher_->publish(*path);
+    } else {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
+    }
   } else {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -1158,7 +1174,7 @@ void BehaviorPathPlannerNode::run()
 
   if (planner_data_->parameters.visualize_maximum_drivable_area) {
     const auto maximum_drivable_area = marker_utils::createFurthestLineStringMarkerArray(
-      util::getMaximumDrivableArea(planner_data_));
+      utils::getMaximumDrivableArea(planner_data_));
     debug_maximum_drivable_area_publisher_->publish(maximum_drivable_area);
   }
 
@@ -1345,7 +1361,7 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = util::toPath(*path_candidate_ptr);
+  output = utils::toPath(*path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();
   output.header.stamp = this->now();
@@ -1389,7 +1405,7 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
     connected_path = modifyPathForSmoothGoalConnection(*path, planner_data);
   }
 
-  const auto resampled_path = util::resamplePathWithSpline(
+  const auto resampled_path = utils::resamplePathWithSpline(
     connected_path, planner_data->parameters.output_path_interval,
     keepInputPoints(module_status_ptr_vec));
   return std::make_shared<PathWithLaneId>(resampled_path);
@@ -1473,6 +1489,11 @@ void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 }
 void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
+  if (msg->segments.empty()) {
+    RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
+    return;
+  }
+
   const std::lock_guard<std::mutex> lock(mutex_route_);
   route_ptr_ = msg;
   has_received_route_ = true;
@@ -1598,13 +1619,13 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   {
     lanelet::ConstLanelet goal_lanelet;
     if (planner_data->route_handler->getGoalLanelet(&goal_lanelet)) {
-      refined_goal = util::refineGoal(goal, goal_lanelet);
+      refined_goal = utils::refineGoal(goal, goal_lanelet);
     } else {
       refined_goal = goal;
     }
   }
 
-  auto refined_path = util::refinePathForGoal(
+  auto refined_path = utils::refinePathForGoal(
     planner_data->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
     goal_lane_id);
   refined_path.header.frame_id = "map";
