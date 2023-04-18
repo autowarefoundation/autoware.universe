@@ -223,7 +223,6 @@ bool getLaneChangePaths(
   const auto backward_path_length = common_parameter.backward_path_length;
   const auto forward_path_length = common_parameter.forward_path_length;
   const auto prepare_duration = parameter.prepare_duration;
-  const auto minimum_prepare_length = common_parameter.minimum_prepare_length;
   const auto minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
   const auto lane_change_sampling_num = parameter.lane_change_sampling_num;
 
@@ -283,9 +282,8 @@ bool getLaneChangePaths(
     const double acceleration = (prepare_velocity - current_velocity) / prepare_duration;
 
     // get path on original lanes
-    const double prepare_length = std::max(
-      current_velocity * prepare_duration + 0.5 * acceleration * std::pow(prepare_duration, 2),
-      minimum_prepare_length);
+    const double prepare_length =
+      current_velocity * prepare_duration + 0.5 * acceleration * std::pow(prepare_duration, 2);
 
     if (prepare_length < target_length) {
       RCLCPP_DEBUG(
@@ -340,22 +338,6 @@ bool getLaneChangePaths(
         rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
         "lane changing path too long");
       continue;
-    }
-
-    if (is_goal_in_route) {
-      const double s_start =
-        lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
-      const double s_goal =
-        lanelet::utils::getArcCoordinates(target_lanelets, route_handler.getGoalPose()).length;
-      if (
-        s_start + lane_changing_length + parameter.lane_change_finish_judge_buffer +
-          required_total_min_length >
-        s_goal) {
-        RCLCPP_DEBUG(
-          rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
-          "length of lane changing path is longer than length to goal!!");
-        continue;
-      }
     }
 
     const auto target_segment = getTargetSegment(
