@@ -17,8 +17,8 @@
 
 #include <rclcpp/qos.hpp>
 
+#include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
-#include <autoware_planning_msgs/srv/set_pose_with_uuid_stamped.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
 namespace mission_planner
@@ -26,7 +26,7 @@ namespace mission_planner
 
 struct SetMrmRoute
 {
-  using Service = autoware_planning_msgs::srv::SetPoseWithUuidStamped;
+  using Service = autoware_adapi_v1_msgs::srv::SetRoutePoints;
   static constexpr char name[] = "~/srv/set_mrm_route";
 };
 
