@@ -65,9 +65,16 @@ protected:
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes) const override;
 
-  std::pair<LaneChangePaths, bool> getLaneChangePaths(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const override;
+  int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
+
+  PathWithLaneId getPrepareSegment(
+    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
+    const double prepare_length, const double prepare_velocity) const override;
+
+  bool getLaneChangePaths(
+    const lanelet::ConstLanelets & original_lanelets,
+    const lanelet::ConstLanelets & target_lanelets,
+    LaneChangePaths * candidate_paths) const override;
 
   std::vector<DrivableLanes> getDrivableLanes() const override;
 

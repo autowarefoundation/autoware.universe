@@ -160,9 +160,15 @@ protected:
   virtual lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes) const = 0;
 
-  virtual std::pair<LaneChangePaths, bool> getLaneChangePaths(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const = 0;
+  virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
+
+  virtual PathWithLaneId getPrepareSegment(
+    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
+    const double prepare_length, const double prepare_velocity) const = 0;
+
+  virtual bool getLaneChangePaths(
+    const lanelet::ConstLanelets & original_lanelets,
+    const lanelet::ConstLanelets & target_lanelets, LaneChangePaths * candidate_paths) const = 0;
 
   virtual std::vector<DrivableLanes> getDrivableLanes() const = 0;
 
@@ -202,7 +208,7 @@ protected:
   PathWithLaneId prev_approved_path_{};
 
   double lane_change_lane_length_{200.0};
-  double check_distance_{100.0};
+  double check_length_{100.0};
 
   bool is_abort_path_approved_{false};
   bool is_abort_approval_requested_{false};
