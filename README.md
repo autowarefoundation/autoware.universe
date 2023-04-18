@@ -1,3 +1,3 @@
 # Pilot.Auto
 
-See [Github Pages](https://autowarefoundation.github.io/autoware-documentation/main/).
+See [GitHub Pages](https://autowarefoundation.github.io/autoware-documentation/main/).

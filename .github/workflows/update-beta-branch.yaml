@@ -82,7 +82,7 @@ jobs:
 
       - name: Create PR
         id: create-pr
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
           commit-message: "chore: update beta branch for ${{ env.BASE_BRANCH }}"
@@ -107,8 +107,6 @@ jobs:
 
       - name: Enable auto-merge
         if: ${{ steps.create-pr.outputs.pull-request-operation == 'created' }}
-        uses: peter-evans/enable-pull-request-automerge@v2
-        with:
-          token: ${{ steps.generate-token.outputs.token }}
-          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
-          merge-method: squash
+        run: gh pr merge --squash --auto "${{ steps.create-pr.outputs.pull-request-number }}"
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

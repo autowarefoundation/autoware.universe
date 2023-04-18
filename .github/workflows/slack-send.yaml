@@ -3,7 +3,6 @@ on:
   workflow_run:
     workflows:
       - build-main
-      - build-humble
     types:
       - completed
 
