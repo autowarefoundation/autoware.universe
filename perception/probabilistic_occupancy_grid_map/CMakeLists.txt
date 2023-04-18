@@ -68,7 +68,10 @@ rclcpp_components_register_node(grid_map_fusion
 if(BUILD_TESTING)
   ament_add_gtest(costmap_unit_tests
     test/cost_value_test.cpp)
+  ament_add_gtest(fusion_policy_unit_tests
+    test/fusion_policy_test.cpp)
   target_include_directories(costmap_unit_tests PRIVATE "include")
+  target_include_directories(fusion_policy_unit_tests PRIVATE "include")
 endif()
 
 ament_auto_package(

@@ -20,6 +20,9 @@
 #include <stdexcept>
 #include <vector>
 
+/*min and max prob threshold to prevent log-odds to diverge*/
+#define EPSILON_PROB 0.03
+
 namespace fusion_policy
 {
 
@@ -123,7 +126,8 @@ double logOddsFusion(const std::vector<double> & probabilities)
 {
   double log_odds = 0.0;
   for (auto & probability : probabilities) {
-    log_odds += std::log(probability / (1.0 - probability));
+    const double p = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, probability));
+    log_odds += std::log(p / (1.0 - p));
   }
   return 1.0 / (1.0 + std::exp(-log_odds));
 }
@@ -148,7 +152,8 @@ double logOddsFusion(const std::vector<double> & probabilities, const std::vecto
 
   double log_odds = 0.0;
   for (size_t i = 0; i < probabilities.size(); i++) {
-    log_odds += weights[i] * std::log(probabilities[i] / (1.0 - probabilities[i]));
+    const double p = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, probabilities[i]));
+    log_odds += weights[i] * std::log(p / (1.0 - p));
   }
   return 1.0 / (1.0 + std::exp(-log_odds));
 }
