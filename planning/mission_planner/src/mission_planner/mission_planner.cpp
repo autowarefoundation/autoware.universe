@@ -250,8 +250,8 @@ void MissionPlanner::on_set_route_points(
 
 // NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_set_mrm_route(
-  const SetMrmGoal::Service::Request::SharedPtr req,
-  const SetMrmGoal::Service::Response::SharedPtr res)
+  const SetMrmRoute::Service::Request::SharedPtr req,
+  const SetMrmRoute::Service::Response::SharedPtr res)
 {
   // TODO(Yutaka Shimizu): reroute for MRM
   (void)req;
@@ -260,8 +260,8 @@ void MissionPlanner::on_set_mrm_route(
 
 // NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_clear_mrm_route(
-  const ClearMrmGoal::Service::Request::SharedPtr req,
-  const ClearMrmGoal::Service::Response::SharedPtr res)
+  const ClearMrmRoute::Service::Request::SharedPtr req,
+  const ClearMrmRoute::Service::Response::SharedPtr res)
 {
   // TODO(Yutaka Shimizu): reroute for MRM
   (void)req;
