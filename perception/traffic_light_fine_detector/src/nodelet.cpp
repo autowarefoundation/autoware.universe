@@ -73,7 +73,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
   float nms_threshold = declare_parameter("fine_detection_nms_thresh", 0.65);
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
 
-  if (readLabelFile(label_path, tlr_id_, num_class)) {
+  if (!readLabelFile(label_path, tlr_id_, num_class)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
   }
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
