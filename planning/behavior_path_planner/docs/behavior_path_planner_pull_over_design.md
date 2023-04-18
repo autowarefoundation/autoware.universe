@@ -125,7 +125,6 @@ searched for in certain range of the shoulder lane.
 | Name                            | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
 | :------------------------------ | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
 | search_priority                 | [-]  | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
-| enable_goal_research            | [-]  | double | flag whether to search goal                                                                                                                                                                                              | true           |
 | forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
 | backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
 | goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
@@ -212,7 +211,7 @@ Generate two backward arc paths.
 ### freespace parking
 
 If the vehicle gets stuck with `lane_parking`, run `freespace_parking`.
-To run this feature, you need to set `parking_lot` to the map, `activate_by_scenario` of [costmap_generator](../costmap_generator/README.md) to `false` and `enable_freespace_parking` to `true`
+To run this feature, you need to set `parking_lot` to the map, `activate_by_scenario` of [costmap_generator](../../costmap_generator/README.md) to `false` and `enable_freespace_parking` to `true`
 
 ![pull_over_freespace_parking_flowchart](../image/pull_over_freespace_parking_flowchart.drawio.svg)
 \*Series execution with `avoidance_module` in the flowchart is under development.
