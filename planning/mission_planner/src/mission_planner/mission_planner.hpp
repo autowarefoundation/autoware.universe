@@ -75,7 +75,9 @@ private:
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   void clear_route();
+  void clear_mrm_route();
   void change_route(const LaneletRoute & route);
+  void change_mrm_route(const LaneletRoute & route);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
@@ -103,7 +105,7 @@ private:
     const SetMrmRoute::Service::Request::SharedPtr req,
     const SetMrmRoute::Service::Response::SharedPtr res);
   void on_clear_mrm_route(
-    const ClearMrmRoute::Service::Request::SharedPtr req,
+    [[maybe_unused]] const ClearMrmRoute::Service::Request::SharedPtr req,
     const ClearMrmRoute::Service::Response::SharedPtr res);
 
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};
@@ -123,6 +125,7 @@ private:
 
   std::shared_ptr<LaneletRoute> original_route_{nullptr};
   std::shared_ptr<LaneletRoute> normal_route_{nullptr};
+  std::shared_ptr<LaneletRoute> mrm_route_{nullptr};
 };
 
 }  // namespace mission_planner
