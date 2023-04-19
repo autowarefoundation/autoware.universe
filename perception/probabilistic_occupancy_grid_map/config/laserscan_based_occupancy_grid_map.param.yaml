@@ -5,7 +5,7 @@
     # center of the grid map
     gridmap_origin_frame: "base_link"
     # ray-tracing center: main sensor frame is preferable like: "velodyne_top"
-    scan_origin_frame: "velodyne_top"
+    scan_origin_frame: "base_link"
 
     use_height_filter: true
     enable_single_frame_mode: false
