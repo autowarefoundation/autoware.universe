@@ -102,13 +102,12 @@ Lowering the cutoff frequency of the low-pass filter for lateral velocity will m
 
 For the additional information, here we show how we calculate lateral velocity.
 
-| lateral velocity calculation method                           | equation                           | description                                                                                                                                                                                                                   |
-| ------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**applied**] time derivative of lateral distance             | $\dfrac{\Delta d_{lat}}{\Delta t}$ | Currently, we use this method to deal with winding roads. Since this time differentiation easily becomes noisy, we also use a low-pass filter to get smoothed velocity.    |
-| [not applied] Object Velocity Projection to Lateral Direction | $v_{obj} \sin(\theta)$ | Normally, object velocities are less noisy than the time derivative of lateral distance. But the yaw difference $\theta$ between the lane and object directions sometimes becomes discontinuous, so we did not adopt this method. |
+| lateral velocity calculation method                           | equation                           | description                                                                                                                                                                                                                       |
+| ------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**applied**] time derivative of lateral distance             | $\dfrac{\Delta d_{lat}}{\Delta t}$ | Currently, we use this method to deal with winding roads. Since this time differentiation easily becomes noisy, we also use a low-pass filter to get smoothed velocity.                                                           |
+| [not applied] Object Velocity Projection to Lateral Direction | $v_{obj} \sin(\theta)$             | Normally, object velocities are less noisy than the time derivative of lateral distance. But the yaw difference $\theta$ between the lane and object directions sometimes becomes discontinuous, so we did not adopt this method. |
 
 Currently, we use the upper method with a low-pass filter to calculate lateral velocity.
-
 
 ### Path prediction for crosswalk users
 
