@@ -29,23 +29,27 @@ void PlanningInterfaceTestManager::publishOdometry(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<Odometry>(test_node_, target_node, topic_name, odom_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishOdometry(rclcpp::Node::SharedPtr target_node)
 {
   publishOdometry(target_node, input_odometry_name_);
+  test_utils::publishToTargetNode(test_node_, target_node, input_odometry_name_);
 }
 
 void PlanningInterfaceTestManager::publishMaxVelocity(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<VelocityLimit>(test_node_, target_node, topic_name, max_velocity_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishPointCloud(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<PointCloud2>(test_node_, target_node, topic_name, point_cloud_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishAcceleration(
@@ -53,6 +57,7 @@ void PlanningInterfaceTestManager::publishAcceleration(
 {
   test_utils::publishData<AccelWithCovarianceStamped>(
     test_node_, target_node, topic_name, acceleration_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishPredictedObjects(
@@ -60,6 +65,7 @@ void PlanningInterfaceTestManager::publishPredictedObjects(
 {
   test_utils::publishData<PredictedObjects>(
     test_node_, target_node, topic_name, predicted_objects_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishExpandStopRange(
@@ -67,24 +73,28 @@ void PlanningInterfaceTestManager::publishExpandStopRange(
 {
   test_utils::publishData<ExpandStopRange>(
     test_node_, target_node, topic_name, expand_stop_range_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishOccupancyGrid(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<OccupancyGrid>(test_node_, target_node, topic_name, occupancy_grid_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishCostMap(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<OccupancyGrid>(test_node_, target_node, topic_name, cost_map_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishMap(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<HADMapBin>(test_node_, target_node, topic_name, map_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishLaneDrivingScenario(
@@ -92,6 +102,7 @@ void PlanningInterfaceTestManager::publishLaneDrivingScenario(
 {
   test_utils::publishScenarioData(
     test_node_, target_node, topic_name, lane_driving_scenario_pub_, Scenario::LANEDRIVING);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishParkingScenario(
@@ -99,17 +110,20 @@ void PlanningInterfaceTestManager::publishParkingScenario(
 {
   test_utils::publishScenarioData(
     test_node_, target_node, topic_name, parking_scenario_pub_, Scenario::PARKING);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishInitialPose(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   publishInitialPoseData(target_node, topic_name);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishInitialPose(rclcpp::Node::SharedPtr target_node)
 {
   publishInitialPose(target_node, input_initial_pose_name_);
+  test_utils::publishToTargetNode(test_node_, target_node, input_initial_pose_name_);
 }
 
 void PlanningInterfaceTestManager::publishParkingState(
@@ -117,30 +131,35 @@ void PlanningInterfaceTestManager::publishParkingState(
 {
   test_utils::publishData<std_msgs::msg::Bool>(
     test_node_, target_node, topic_name, parking_state_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishTrajectory(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<Trajectory>(test_node_, target_node, topic_name, trajectory_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishRoute(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<LaneletRoute>(test_node_, target_node, topic_name, route_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishTF(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<TFMessage>(test_node_, target_node, topic_name, TF_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishLateralOffset(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<LateralOffset>(test_node_, target_node, topic_name, lateral_offset_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishOperationModeState(
@@ -148,6 +167,7 @@ void PlanningInterfaceTestManager::publishOperationModeState(
 {
   test_utils::publishData<OperationModeState>(
     test_node_, target_node, topic_name, operation_mode_state_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishTrafficSignals(
@@ -161,24 +181,28 @@ void PlanningInterfaceTestManager::publishExternalTrafficSignals(
 {
   test_utils::publishData<TrafficSignalArray>(
     test_node_, target_node, topic_name, external_traffic_signals_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 void PlanningInterfaceTestManager::publishVirtualTrafficLightState(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<VirtualTrafficLightStateArray>(
     test_node_, target_node, topic_name, virtual_traffic_light_states_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 void PlanningInterfaceTestManager::publishExternalCrosswalkStates(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<CrosswalkStatus>(
     test_node_, target_node, topic_name, external_crosswalk_states_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 void PlanningInterfaceTestManager::publishExternalIntersectionStates(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishData<IntersectionStatus>(
     test_node_, target_node, topic_name, external_intersection_states_pub_);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishInitialPoseData(
@@ -195,7 +219,7 @@ void PlanningInterfaceTestManager::publishInitialPoseData(
 
   test_utils::setPublisher(test_node_, topic_name, initial_pose_pub_);
   initial_pose_pub_->publish(*current_odometry);
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishInitialPoseTF(
@@ -221,7 +245,7 @@ void PlanningInterfaceTestManager::publishInitialPoseTF(
 
   test_utils::setPublisher(test_node_, topic_name, initial_pose_tf_pub_);
   initial_pose_tf_pub_->publish(tf_msg);
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
@@ -264,7 +288,7 @@ void PlanningInterfaceTestManager::publishNominalTrajectory(
 {
   test_utils::setPublisher(test_node_, topic_name, normal_trajectory_pub_);
   normal_trajectory_pub_->publish(test_utils::generateTrajectory<Trajectory>(10, 1.0));
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishAbnormalTrajectory(
@@ -272,7 +296,7 @@ void PlanningInterfaceTestManager::publishAbnormalTrajectory(
 {
   test_utils::setPublisher(test_node_, input_trajectory_name_, abnormal_trajectory_pub_);
   abnormal_trajectory_pub_->publish(abnormal_trajectory);
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::publishToTargetNode(test_node_, target_node, input_trajectory_name_);
 }
 
 void PlanningInterfaceTestManager::publishNominalRoute(
@@ -280,7 +304,7 @@ void PlanningInterfaceTestManager::publishNominalRoute(
 {
   test_utils::setPublisher(test_node_, topic_name, normal_route_pub_);
   normal_route_pub_->publish(test_utils::makeNormalRoute());
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
@@ -288,7 +312,7 @@ void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
 {
   test_utils::setPublisher(test_node_, topic_name, behavior_normal_route_pub_);
   behavior_normal_route_pub_->publish(test_utils::makeBehaviorNormalRoute());
-  test_utils::spinSomeNodes(test_node_, target_node);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name);
 }
 
 void PlanningInterfaceTestManager::publishAbnormalRoute(
@@ -296,7 +320,7 @@ void PlanningInterfaceTestManager::publishAbnormalRoute(
 {
   test_utils::setPublisher(test_node_, input_route_name_, abnormal_route_pub_);
   abnormal_route_pub_->publish(abnormal_route);
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name, 5);
 }
 
 void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
@@ -304,8 +328,7 @@ void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
 {
   test_utils::setPublisher(test_node_, topic_name, normal_path_with_lane_id_pub_);
   normal_path_with_lane_id_pub_->publish(test_utils::loadPathWithLaneIdInYaml());
-
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name, 5);
 }
 
 void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
@@ -313,7 +336,7 @@ void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
 {
   test_utils::setPublisher(test_node_, topic_name, abnormal_path_with_lane_id_pub_);
   normal_path_with_lane_id_pub_->publish(PathWithLaneId{});
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
+  test_utils::publishToTargetNode(test_node_, target_node, topic_name, 5);
 }
 
 void PlanningInterfaceTestManager::setTrajectorySubscriber(std::string topic_name)
