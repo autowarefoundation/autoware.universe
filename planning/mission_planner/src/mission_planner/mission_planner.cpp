@@ -433,9 +433,11 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
 void MissionPlanner::on_change_route(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
+  change_state(RouteState::Message::CHANGING);
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
 
   if (!odometry_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
@@ -476,13 +478,16 @@ void MissionPlanner::on_change_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
 {
+  change_state(RouteState::Message::CHANGING);
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
 
   if (!planner_->ready()) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
@@ -504,6 +509,7 @@ void MissionPlanner::on_change_route_points(
   // Plan route.
   LaneletRoute new_route = planner_->plan(points);
   if (new_route.segments.empty()) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
   }
