@@ -15,6 +15,8 @@
 #ifndef FUSION__SINGLE_FRAME_FUSION_POLICY_HPP_
 #define FUSION__SINGLE_FRAME_FUSION_POLICY_HPP_
 
+#include "cost_value.hpp"
+
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -71,11 +73,9 @@ enum State : unsigned char { UNKNOWN = 0U, FREE = 1U, OCCUPIED = 2U };
  */
 State getApproximateState(const unsigned char & occupancy)
 {
-  constexpr unsigned char occupied_threshold_ = 180;
-  constexpr unsigned char free_threshold_ = 50;
-  if (occupancy >= occupied_threshold_) {
+  if (occupancy >= occupancy_cost_value::OCCUPIED_THRESHOLD) {
     return State::OCCUPIED;
-  } else if (occupancy <= free_threshold_) {
+  } else if (occupancy <= occupancy_cost_value::FREE_THRESHOLD) {
     return State::FREE;
   } else {
     return State::UNKNOWN;

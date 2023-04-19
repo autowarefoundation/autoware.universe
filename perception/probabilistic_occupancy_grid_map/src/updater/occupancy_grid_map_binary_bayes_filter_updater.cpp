@@ -28,15 +28,18 @@ inline unsigned char OccupancyGridMapBBFUpdater::applyBBF(
   float pz{};
   float not_pz{};
   float po_hat{};
-  if (z == occupancy_cost_value::LETHAL_OBSTACLE) {
+  /* get approximate binary state [occupied, free, unknown] from [0-255] cost value*/
+  const unsigned char z_ = utils::getApproximateOccupancyState(z);
+
+  if (z_ == occupancy_cost_value::LETHAL_OBSTACLE) {
     pz = probability_matrix_(Index::OCCUPIED, Index::OCCUPIED);
     not_pz = probability_matrix_(Index::FREE, Index::OCCUPIED);
     po_hat = ((po * pz) / ((po * pz) + ((1.f - po) * not_pz)));
-  } else if (z == occupancy_cost_value::FREE_SPACE) {
+  } else if (z_ == occupancy_cost_value::FREE_SPACE) {
     pz = 1.f - probability_matrix_(Index::FREE, Index::FREE);
     not_pz = 1.f - probability_matrix_(Index::OCCUPIED, Index::FREE);
     po_hat = ((po * pz) / ((po * pz) + ((1.f - po) * not_pz)));
-  } else if (z == occupancy_cost_value::NO_INFORMATION) {
+  } else if (z_ == occupancy_cost_value::NO_INFORMATION) {
     constexpr float inv_v_ratio = 1.f / 10.f;
     po_hat = ((po + (0.5f * inv_v_ratio)) / ((1.f * inv_v_ratio) + 1.f));
   }

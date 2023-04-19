@@ -16,6 +16,7 @@
 #define UPDATER__OCCUPANCY_GRID_MAP_BINARY_BAYES_FILTER_UPDATER_HPP_
 
 #include "updater/occupancy_grid_map_updater_interface.hpp"
+#include "utils/utils.hpp"
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>

@@ -59,6 +59,9 @@ static const unsigned char NO_INFORMATION = 128;  // 0.5 * 255
 static const unsigned char LETHAL_OBSTACLE = 255;
 static const unsigned char FREE_SPACE = 0;
 
+static const unsigned char OCCUPIED_THRESHOLD = 180;
+static const unsigned char FREE_THRESHOLD = 50;
+
 struct CostTranslationTable
 {
   CostTranslationTable()
