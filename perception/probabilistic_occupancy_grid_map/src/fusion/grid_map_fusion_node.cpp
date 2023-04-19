@@ -39,40 +39,45 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   const double temp_input_map_number = 3;
   const std::vector<double> temp_input_weights = {0.5, 0.25, 0.25};
 
-  // get input topics
-  num_input_topics_ =
-    static_cast<std::size_t>(declare_parameter("input_map_number", temp_input_map_number));
-  if (num_input_topics_ < 1) {
-    RCLCPP_WARN(
-      this->get_logger(), "minimum num_input_topics_ is 1. current num_input_topics_ is %zu",
-      num_input_topics_);
-    num_input_topics_ = 1;
-  }
-  if (num_input_topics_ > 12) {
-    RCLCPP_WARN(
-      this->get_logger(), "maximum num_input_topics_ is 12. current num_input_topics_ is %zu",
-      num_input_topics_);
-    num_input_topics_ = 12;
-  }
-  declare_parameter("input_topics", temp_input_topics);
-  input_topics_ = get_parameter("input_topics").as_string_array();
-  if (num_input_topics_ != input_topics_.size()) {
-    throw std::runtime_error("The number of input topics does not match the number of topics.");
-  }
-  input_topic_weights_ = declare_parameter("input_topic_weights", temp_input_weights);
+  /* load input parameters */
+  {
+    num_input_topics_ =
+      static_cast<std::size_t>(declare_parameter("input_sensor_num", temp_input_map_number));
+    if (num_input_topics_ < 1) {
+      RCLCPP_WARN(
+        this->get_logger(), "minimum num_input_topics_ is 1. current num_input_topics_ is %zu",
+        num_input_topics_);
+      num_input_topics_ = 1;
+    }
+    if (num_input_topics_ > 12) {
+      RCLCPP_WARN(
+        this->get_logger(), "maximum num_input_topics_ is 12. current num_input_topics_ is %zu",
+        num_input_topics_);
+      num_input_topics_ = 12;
+    }
+    // get input topics
+    declare_parameter("each_ogm_output_topics", temp_input_topics);
+    input_topics_ = get_parameter("each_ogm_output_topics").as_string_array();
+    if (num_input_topics_ != input_topics_.size()) {
+      throw std::runtime_error("The number of input topics does not match the number of topics.");
+    }
+    // get input topic reliabilities
+    declare_parameter("each_ogm_reliabilities", temp_input_weights);
+    input_topic_weights_ = get_parameter("each_ogm_reliabilities").as_double_array();
 
-  if (input_topic_weights_.empty()) {  // no topic weight is set
-    // set equal weight
-    for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
-      input_topic_weights_map_[input_topics_.at(topic_i)] = 1.0 / num_input_topics_;
+    if (input_topic_weights_.empty()) {  // no topic weight is set
+      // set equal weight
+      for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
+        input_topic_weights_map_[input_topics_.at(topic_i)] = 1.0 / num_input_topics_;
+      }
+    } else if (num_input_topics_ == input_topic_weights_.size()) {
+      // set weight to map
+      for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
+        input_topic_weights_map_[input_topics_.at(topic_i)] = input_topic_weights_.at(topic_i);
+      }
+    } else {
+      throw std::runtime_error("The number of weights does not match the number of topics.");
     }
-  } else if (num_input_topics_ == input_topic_weights_.size()) {
-    // set weight to map
-    for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
-      input_topic_weights_map_[input_topics_.at(topic_i)] = input_topic_weights_.at(topic_i);
-    }
-  } else {
-    throw std::runtime_error("The number of weights does not match the number of topics.");
   }
 
   // Set fusion parameters
