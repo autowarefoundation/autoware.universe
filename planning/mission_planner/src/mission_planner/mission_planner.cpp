@@ -302,17 +302,21 @@ void MissionPlanner::on_set_mrm_route(
   const SetMrmRoute::Service::Request::SharedPtr req,
   const SetMrmRoute::Service::Response::SharedPtr res)
 {
+  change_state(RouteState::Message::CHANGING);
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
 
   if (!planner_->ready()) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (!normal_route_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
   }
@@ -333,6 +337,7 @@ void MissionPlanner::on_set_mrm_route(
   // Plan route.
   LaneletRoute new_route = planner_->plan(points);
   if (new_route.segments.empty()) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
   }
@@ -360,21 +365,26 @@ void MissionPlanner::on_clear_mrm_route(
   [[maybe_unused]] const ClearMrmRoute::Service::Request::SharedPtr req,
   const ClearMrmRoute::Service::Response::SharedPtr res)
 {
+  change_state(RouteState::Message::CHANGING);
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
 
   if (!planner_->ready()) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (!normal_route_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
   }
   if (!mrm_route_) {
+    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Mrm route is not set.");
   }
@@ -383,6 +393,7 @@ void MissionPlanner::on_clear_mrm_route(
   if (checkRerouteSafety(*mrm_route_, *normal_route_)) {
     clear_mrm_route();
     change_route(*normal_route_);
+    change_state(RouteState::Message::SET);
     res->success = true;
     return;
   }
@@ -395,8 +406,9 @@ void MissionPlanner::on_clear_mrm_route(
   // Plan route.
   LaneletRoute new_route = planner_->plan(points);
   if (new_route.segments.empty() || !checkRerouteSafety(*mrm_route_, new_route)) {
-    change_mrm_route(*mrm_route_);
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "Reroute with normal goal failed.");
+    change_mrm_route(*mrm_route_);
+    change_state(RouteState::Message::SET);
     res->success = false;
     return;
   }
@@ -407,6 +419,7 @@ void MissionPlanner::on_clear_mrm_route(
 
   clear_mrm_route();
   change_route(new_route);
+  change_state(RouteState::Message::SET);
 
   res->success = true;
 }
