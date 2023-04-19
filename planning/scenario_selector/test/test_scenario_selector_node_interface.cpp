@@ -75,7 +75,6 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectoryParkingMode)
   auto test_target_node = std::make_shared<ScenarioSelectorNode>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "input/odometry");
   test_manager->publishAcceleration(test_target_node, "input/acceleration");
   test_manager->publishParkingState(test_target_node, "is_parking_completed");
   test_manager->publishTrajectory(test_target_node, "input/lane_driving/trajectory");
