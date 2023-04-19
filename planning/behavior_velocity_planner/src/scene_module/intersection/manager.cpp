@@ -78,6 +78,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.collision_detection.keep_detection_vel_thr =
     node.declare_parameter<double>(ns + ".collision_detection.keep_detection_vel_thr");
 
+  ip.occlusion.enable = node.declare_parameter<bool>(ns + ".occlusion.enable");
   ip.occlusion.occlusion_detection_area_length =
     node.declare_parameter<double>(ns + ".occlusion.occlusion_detection_area_length");
   ip.occlusion.occlusion_creep_velocity =
@@ -102,7 +103,7 @@ void IntersectionModuleManager::launchNewModules(
   const auto lanelets =
     planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
   // run occlusion detection only in the first intersection
-  bool enable_occlusion_detection = true;
+  bool enable_occlusion_detection = intersection_param_.occlusion.enable;
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();

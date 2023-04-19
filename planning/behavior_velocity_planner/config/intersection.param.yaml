@@ -29,6 +29,7 @@
         keep_detection_vel_thr: 0.833 # == 3.0km/h. keep detection if ego is ego.vel < keep_detection_vel_thr
 
       occlusion:
+        enable: true
         occlusion_detection_area_length: 70.0 # [m]
         occlusion_creep_velocity: 0.8333 # the creep velocity to occlusion limit stop line
         free_space_max: 43
