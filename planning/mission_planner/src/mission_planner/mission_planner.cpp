@@ -75,7 +75,6 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   plugin_loader_("mission_planner", "mission_planner::PlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
-  initialize_route_(false),
   original_route_(nullptr),
   normal_route_(nullptr)
 {
@@ -166,11 +165,6 @@ void MissionPlanner::change_route(const LaneletRoute & route)
   pub_marker_->publish(planner_->visualize(route));
   planner_->updateRoute(route);
 
-  // update (initialize) route
-  if (!initialize_route_) {
-    original_route_ = std::make_shared<LaneletRoute>(route);
-    initialize_route_ = true;
-  }
   // update normal route
   normal_route_ = std::make_shared<LaneletRoute>(route);
 }
@@ -226,6 +220,7 @@ void MissionPlanner::on_set_route(
   // Update route.
   change_route(route);
   change_state(RouteState::Message::SET);
+  original_route_ = std::make_shared<LaneletRoute>(route);
   res->status.success = true;
 }
 
@@ -277,6 +272,7 @@ void MissionPlanner::on_set_route_points(
   // Update route.
   change_route(route);
   change_state(RouteState::Message::SET);
+  original_route_ = std::make_shared<LaneletRoute>(route);
   res->status.success = true;
 }
 
