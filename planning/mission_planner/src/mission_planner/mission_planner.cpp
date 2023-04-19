@@ -75,8 +75,10 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   plugin_loader_("mission_planner", "mission_planner::PlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
+  is_emergency_{false},
   original_route_(nullptr),
-  normal_route_(nullptr)
+  normal_route_(nullptr),
+  mrm_route_{nullptr}
 {
   map_frame_ = declare_parameter<std::string>("map_frame");
   reroute_time_threshold_ = declare_parameter<double>("reroute_time_threshold");
@@ -220,6 +222,11 @@ void MissionPlanner::on_set_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
+  if (is_emergency_) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Cannot set route because of the emergency state");
+    return;
+  }
 
   // Use temporary pose stamped for transform.
   PoseStamped pose;
@@ -263,6 +270,11 @@ void MissionPlanner::on_set_route_points(
   if (!odometry_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+  if (is_emergency_) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Cannot set route points because of the emergency state");
+    return;
   }
 
   // Use temporary pose stamped for transform.
@@ -352,11 +364,13 @@ void MissionPlanner::on_set_mrm_route(
     change_mrm_route(new_route);
     change_state(RouteState::Message::SET);
     res->status.success = true;
+    is_emergency_ = true;
   } else {
     // failed to reroute
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
     res->status.success = false;
+    is_emergency_ = false;
   }
 }
 
@@ -395,6 +409,7 @@ void MissionPlanner::on_clear_mrm_route(
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
     res->success = true;
+    is_emergency_ = false;
     return;
   }
 
@@ -410,6 +425,7 @@ void MissionPlanner::on_clear_mrm_route(
     change_mrm_route(*mrm_route_);
     change_state(RouteState::Message::SET);
     res->success = false;
+    is_emergency_ = true;
     return;
   }
   new_route.header.stamp = odometry_->header.stamp;
@@ -422,6 +438,7 @@ void MissionPlanner::on_clear_mrm_route(
   change_state(RouteState::Message::SET);
 
   res->success = true;
+  is_emergency_ = false;
 }
 
 void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
@@ -440,6 +457,11 @@ void MissionPlanner::on_change_route(
     change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+  if (is_emergency_) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Cannot change route because of the emergency state");
+    return;
   }
 
   // Use temporary pose stamped for transform.
@@ -490,6 +512,12 @@ void MissionPlanner::on_change_route_points(
     change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+  if (is_emergency_) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "Cannot change route points because of the emergency state");
+    return;
   }
 
   // Use temporary pose stamped for transform.

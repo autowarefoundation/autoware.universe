@@ -123,6 +123,7 @@ private:
   double reroute_time_threshold_{10.0};
   bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
 
+  bool is_emergency_{false};
   std::shared_ptr<LaneletRoute> original_route_{nullptr};
   std::shared_ptr<LaneletRoute> normal_route_{nullptr};
   std::shared_ptr<LaneletRoute> mrm_route_{nullptr};
