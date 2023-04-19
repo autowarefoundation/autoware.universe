@@ -22,10 +22,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -55,9 +54,7 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  PlannerManager(
-    rclcpp::Node & node, const std::shared_ptr<LaneFollowingParameters> & parameters,
-    const bool verbose);
+  PlannerManager(rclcpp::Node & node, const bool verbose);
 
   /**
    * @brief run all candidate and approved modules.
@@ -185,6 +182,32 @@ private:
   }
 
   /**
+   * @brief get reference path from root_lanelet_ centerline.
+   * @param planner data.
+   * @return reference path.
+   */
+  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const
+  {
+    const auto & route_handler = data->route_handler;
+    const auto & pose = data->self_odometry->pose.pose;
+    const auto p = data->parameters;
+
+    constexpr double extra_margin = 10.0;
+    const auto backward_length =
+      std::max(p.backward_path_length, p.backward_path_length + extra_margin);
+
+    const auto lanelet_sequence = route_handler->getLaneletSequence(
+      root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
+
+    lanelet::ConstLanelet closest_lane{};
+    if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+      return {};
+    }
+
+    return utils::getReferencePath(closest_lane, data);
+  }
+
+  /**
    * @brief stop and unregister the module from manager.
    * @param module.
    */
@@ -279,13 +302,6 @@ private:
   BehaviorModuleOutput runApprovedModules(const std::shared_ptr<PlannerData> & data);
 
   /**
-   * @brief get reference path from root_lanelet_ centerline.
-   * @param planner data.
-   * @return reference path.
-   */
-  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const;
-
-  /**
    * @brief select a module that should be execute at first.
    * @param modules that make execution request.
    * @return the highest priority module.
@@ -320,8 +336,6 @@ private:
     const BehaviorModuleOutput & previous_module_output);
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
-
-  std::shared_ptr<LaneFollowingParameters> parameters_;
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 

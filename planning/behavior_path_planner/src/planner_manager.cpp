@@ -27,11 +27,8 @@
 namespace behavior_path_planner
 {
 
-PlannerManager::PlannerManager(
-  rclcpp::Node & node, const std::shared_ptr<LaneFollowingParameters> & parameters,
-  const bool verbose)
-: parameters_{parameters},
-  logger_(node.get_logger().get_child("planner_manager")),
+PlannerManager::PlannerManager(rclcpp::Node & node, const bool verbose)
+: logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
   verbose_{verbose}
 {
@@ -389,10 +386,7 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       candidate_module_ptrs_.push_back(*itr);
     }
 
-    approved_module_ptrs_.erase(
-      std::remove_if(
-        approved_module_ptrs_.begin(), approved_module_ptrs_.end(), waiting_approval_modules),
-      approved_module_ptrs_.end());
+    approved_module_ptrs_.erase(itr, approved_module_ptrs_.end());
   }
 
   /**
@@ -427,91 +421,58 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     return results.at(output_module_name);
   }();
 
+  const auto not_success_itr = std::find_if(
+    approved_module_ptrs_.rbegin(), approved_module_ptrs_.rend(),
+    [](const auto & m) { return m->getCurrentStatus() != ModuleStatus::SUCCESS; });
+
+  // convert reverse iterator -> iterator
+  const auto success_itr = std::prev(not_success_itr).base() - 1;
+
   /**
-   * 1.remove success modules. these modules' outputs are used as valid plan.
-   * 2.update root lanelet if lane change module succeeded path planning, and finished correctly.
+   * there is no succeeded module. return.
    */
-  {
-    const auto itr = std::find_if(
-      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-      [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::SUCCESS; });
+  if (success_itr == approved_module_ptrs_.end()) {
+    return approved_modules_output;
+  }
 
-    if (itr == approved_module_ptrs_.begin()) {
-      if ((*itr)->name().find("lane_change") != std::string::npos) {
-        root_lanelet_ = updateRootLanelet(data);
-      }
+  const auto lane_change_itr = std::find_if(
+    success_itr, approved_module_ptrs_.end(),
+    [](const auto & m) { return m->name().find("lane_change") != std::string::npos; });
 
-      clearCandidateModules();
-      deleteExpiredModules(*itr);
-      approved_module_ptrs_.erase(itr);
-    }
+  /**
+   * remove success modules according to Last In First Out(LIFO) policy. when the next module is in
+   * ModuleStatus::RUNNING, the previous module keeps running even if it is in
+   * ModuleStatus::SUCCESS.
+   */
+  if (lane_change_itr == approved_module_ptrs_.end()) {
+    std::for_each(
+      success_itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+
+    approved_module_ptrs_.erase(success_itr, approved_module_ptrs_.end());
+    clearCandidateModules();
+
+    return approved_modules_output;
+  }
+
+  /**
+   * as an exception, when there is lane change module is in succeeded modules, it doesn't remove
+   * any modules if module whose status is NOT ModuleStatus::SUCCESS exists. this is because the
+   * root lanelet is updated at the moment of lane change module's unregistering, and that causes
+   * change First In module's input.
+   */
+  if (not_success_itr == approved_module_ptrs_.rend()) {
+    std::for_each(
+      success_itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+
+    approved_module_ptrs_.erase(success_itr, approved_module_ptrs_.end());
+    clearCandidateModules();
+
+    root_lanelet_ = updateRootLanelet(data);
+
+    return approved_modules_output;
   }
 
   return approved_modules_output;
-}
-
-BehaviorModuleOutput PlannerManager::getReferencePath(
-  const std::shared_ptr<PlannerData> & data) const
-{
-  PathWithLaneId reference_path{};
-
-  constexpr double extra_margin = 10.0;
-
-  const auto & route_handler = data->route_handler;
-  const auto & pose = data->self_odometry->pose.pose;
-  const auto p = data->parameters;
-
-  reference_path.header = route_handler->getRouteHeader();
-
-  const auto backward_length =
-    std::max(p.backward_path_length, p.backward_path_length + extra_margin);
-
-  const auto lanelet_sequence = route_handler->getLaneletSequence(
-    root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
-
-  lanelet::ConstLanelet closest_lane{};
-  if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-    return {};
-  }
-
-  const auto current_lanes =
-    route_handler->getLaneletSequence(closest_lane, pose, backward_length, p.forward_path_length);
-
-  reference_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
-
-  // clip backward length
-  const size_t current_seg_idx = data->findEgoSegmentIndex(reference_path.points);
-  util::clipPathLength(
-    reference_path, current_seg_idx, p.forward_path_length, p.backward_path_length);
-  const auto drivable_lanelets = util::getLaneletsFromPath(reference_path, route_handler);
-  const auto drivable_lanes = util::generateDrivableLanes(drivable_lanelets);
-
-  {
-    const int num_lane_change =
-      std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
-
-    const double lane_change_buffer = util::calcLaneChangeBuffer(p, num_lane_change);
-
-    reference_path = util::setDecelerationVelocity(
-      *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
-      lane_change_buffer);
-  }
-
-  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
-
-  const auto expanded_lanes = util::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-
-  util::generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, data);
-
-  BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(reference_path);
-  output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
-  output.drivable_lanes = drivable_lanes;
-
-  return output;
 }
 
 void PlannerManager::updateCandidateModules(

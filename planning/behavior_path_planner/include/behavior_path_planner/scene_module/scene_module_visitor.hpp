@@ -31,6 +31,8 @@ class AvoidanceByLCModule;
 class LaneChangeModule;
 #ifdef USE_OLD_ARCHITECTURE
 class ExternalRequestLaneChangeModule;
+#else
+class LaneChangeInterface;
 #endif
 class LaneFollowingModule;
 class PullOutModule;
@@ -48,6 +50,8 @@ public:
   void visitLaneChangeModule(const LaneChangeModule * module) const;
 #ifdef USE_OLD_ARCHITECTURE
   void visitExternalRequestLaneChangeModule(const ExternalRequestLaneChangeModule * module) const;
+#else
+  void visitLaneChangeInterface(const LaneChangeInterface * interface) const;
 #endif
   void visitAvoidanceModule(const AvoidanceModule * module) const;
   void visitAvoidanceByLCModule(const AvoidanceByLCModule * module) const;

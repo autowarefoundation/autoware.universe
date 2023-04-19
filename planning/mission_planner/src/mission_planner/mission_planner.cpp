@@ -24,26 +24,29 @@
 namespace
 {
 
+using autoware_adapi_v1_msgs::msg::RoutePrimitive;
+using autoware_adapi_v1_msgs::msg::RouteSegment;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletSegment;
 
-LaneletPrimitive convert(const LaneletPrimitive & p)
+LaneletPrimitive convert(const RoutePrimitive & in)
 {
-  LaneletPrimitive primitive;
-  primitive.id = p.id;
-  primitive.primitive_type = p.primitive_type;
-  return primitive;
+  LaneletPrimitive out;
+  out.id = in.id;
+  out.primitive_type = in.type;
+  return out;
 }
 
-LaneletSegment convert(const LaneletSegment & s)
+LaneletSegment convert(const RouteSegment & in)
 {
-  LaneletSegment segment;
-  segment.preferred_primitive.id = s.preferred_primitive.id;
-  segment.primitives.push_back(convert(s.preferred_primitive));
-  for (const auto & p : s.primitives) {
-    segment.primitives.push_back(convert(p));
+  LaneletSegment out;
+  out.primitives.reserve(in.alternatives.size() + 1);
+  out.primitives.push_back(convert(in.preferred));
+  for (const auto & primitive : in.alternatives) {
+    out.primitives.push_back(convert(primitive));
   }
-  return segment;
+  out.preferred_primitive = convert(in.preferred);
+  return out;
 }
 
 std::array<uint8_t, 16> generate_random_id()
@@ -87,6 +90,8 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
   adaptor.init_srv(srv_change_route_, this, &MissionPlanner::on_change_route);
   adaptor.init_srv(srv_change_route_points_, this, &MissionPlanner::on_change_route_points);
+  adaptor.init_srv(srv_set_mrm_route_, this, &MissionPlanner::on_set_mrm_route);
+  adaptor.init_srv(srv_clear_mrm_route_, this, &MissionPlanner::on_clear_mrm_route);
   adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
   change_state(RouteState::Message::UNSET);
@@ -186,6 +191,7 @@ void MissionPlanner::on_set_route(
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
   route.uuid.uuid = generate_random_id();
+  route.allow_modification = req->option.allow_goal_modification;
 
   // Update route.
   change_route(route);
@@ -236,6 +242,7 @@ void MissionPlanner::on_set_route_points(
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
   route.uuid.uuid = generate_random_id();
+  route.allow_modification = req->option.allow_goal_modification;
 
   // Update route.
   change_route(route);
@@ -244,6 +251,25 @@ void MissionPlanner::on_set_route_points(
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
+void MissionPlanner::on_set_mrm_route(
+  const SetMrmRoute::Service::Request::SharedPtr req,
+  const SetMrmRoute::Service::Response::SharedPtr res)
+{
+  // TODO(Yutaka Shimizu): reroute for MRM
+  (void)req;
+  (void)res;
+}
+
+// NOTE: The route interface should be mutually exclusive by callback group.
+void MissionPlanner::on_clear_mrm_route(
+  const ClearMrmRoute::Service::Request::SharedPtr req,
+  const ClearMrmRoute::Service::Response::SharedPtr res)
+{
+  // TODO(Yutaka Shimizu): reroute for MRM
+  (void)req;
+  (void)res;
+}
+
 void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
 {
   // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
