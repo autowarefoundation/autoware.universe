@@ -15,6 +15,8 @@
 #ifndef SAMPLER_COMMON__STRUCTURES_HPP_
 #define SAMPLER_COMMON__STRUCTURES_HPP_
 
+#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+
 #include <eigen3/Eigen/Core>
 #include <interpolation/linear_interpolation.hpp>
 
@@ -32,9 +34,10 @@
 
 namespace sampler_common
 {
-using Point = boost::geometry::model::d2::point_xy<double>;
-using Polygon = boost::geometry::model::polygon<Point>;
-using MultiPolygon = boost::geometry::model::multi_polygon<Polygon>;
+// TODO(Maxime): directly use the tier4 types
+using Point = tier4_autoware_utils::Point2d;
+using Polygon = tier4_autoware_utils::Polygon2d;
+using MultiPolygon = tier4_autoware_utils::MultiPolygon2d;
 
 // TODO(Maxime CLEMENT): split in multiple files
 /// @brief data about constraint check results of a given path
@@ -67,13 +70,13 @@ struct FrenetPoint
 struct State
 {
   Point pose{};
+  FrenetPoint frenet{0.0, 0.0};
   double curvature{};
   double heading{};
 };
 
 struct Configuration : State
 {
-  FrenetPoint frenet{0.0, 0.0};
   double velocity{};
   double acceleration{};
 };
@@ -265,7 +268,7 @@ struct Trajectory : Path
     std::vector<double> ys;
     xs.reserve(points.size());
     ys.reserve(points.size());
-    for (const auto p : points) {
+    for (const auto & p : points) {
       xs.push_back(p.x());
       ys.push_back(p.y());
     }
@@ -301,7 +304,7 @@ struct Trajectory : Path
     std::vector<double> ys;
     xs.reserve(points.size());
     ys.reserve(points.size());
-    for (const auto p : points) {
+    for (const auto & p : points) {
       xs.push_back(p.x());
       ys.push_back(p.y());
     }

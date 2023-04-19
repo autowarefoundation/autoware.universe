@@ -18,6 +18,7 @@ from launch.actions import GroupAction
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
+from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
@@ -61,6 +62,29 @@ def launch_setup(context, *args, **kwargs):
             vehicle_info_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    from launch_ros.actions import Node  # TODO(Maxime): change to a composable node
+
+    # path sampler
+    with open(LaunchConfiguration("path_sampler_param_path").perform(context), "r") as f:
+        path_sampler_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    path_sampler_node = Node(
+        package="path_sampler",
+        executable="path_sampler_exe",
+        name="path_sampler",
+        namespace="",
+        remappings=[
+            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/output/path", "obstacle_avoidance_planner/trajectory"),
+        ],
+        parameters=[
+            nearest_search_param,
+            path_sampler_param,
+            vehicle_info_param,
+        ],
+        prefix="konsole -e gdb -ex run --args",
     )
 
     # obstacle velocity limiter
@@ -136,17 +160,29 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_stop_planner",
         namespace="",
         remappings=[
-            ("~/output/trajectory", "sampling_planner/trajectory"),
+            ("~/output/stop_reason", "/planning/scenario_planning/status/stop_reason"),
+            ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
+            ("~/output/max_velocity", "/planning/scenario_planning/max_velocity_candidates"),
+            (
+                "~/output/velocity_limit_clear_command",
+                "/planning/scenario_planning/clear_velocity_limit",
+            ),
+            ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
+            ("~/input/acceleration", "/localization/acceleration"),
+            (
+                "~/input/pointcloud",
+                "/perception/obstacle_segmentation/pointcloud",
+            ),
             ("~/input/objects", "/perception/object_recognition/objects"),
-            ("~/input/steer", "/vehicle/status/steering_status"),
-            ("~/input/path", LaunchConfiguration("input_path_topic")),
-            ("~/input/vector_map", LaunchConfiguration("input_map_topic")),
-            ("~/input/route", LaunchConfiguration("input_route_topic")),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/trajectory", "obstacle_velocity_limiter/trajectory"),
         ],
         parameters=[
+            nearest_search_param,
             common_param,
+            obstacle_stop_planner_param,
+            obstacle_stop_planner_acc_param,
             vehicle_info_param,
-            sampler_node_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -196,7 +232,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
-            obstacle_avoidance_planner_component,
+            # obstacle_avoidance_planner_component,
             obstacle_velocity_limiter_component,
         ],
     )
@@ -228,10 +264,14 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             container,
+            path_sampler_node,
+            obstacle_stop_planner_loader,
+            obstacle_cruise_planner_loader,
+            obstacle_cruise_planner_relay_loader,
             surround_obstacle_checker_loader,
         ]
     )
-    return [group, sampler_node]
+    return [group]
 
 
 def generate_launch_description():

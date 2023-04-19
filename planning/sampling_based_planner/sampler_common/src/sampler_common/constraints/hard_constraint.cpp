@@ -111,8 +111,12 @@ void checkHardConstraints(Path & path, const Constraints & constraints)
           footprint, constraints.obstacle_polygons, constraints.collision_distance_buffer)) {
       path.constraint_results.collision = false;
     }
-    if (collideWithPolygons(footprint, constraints.drivable_polygons)) {
-      path.constraint_results.drivable_area = false;
+    // TODO(Maxime): improve (footprint polygon is not well formed)
+    for (const auto & p : footprint.outer()) {
+      if (!boost::geometry::within(p, constraints.drivable_polygons)) {
+        path.constraint_results.drivable_area = false;
+        break;
+      }
     }
   }
   if (!satisfyMinMax(

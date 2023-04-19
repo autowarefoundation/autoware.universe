@@ -6,9 +6,8 @@ autoware_package()
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(QCustomPlot REQUIRED)
-find_package(OpenCV REQUIRED)  # used for drivable area
 
-### Sampler node
+### Sampler nodes
 ament_auto_add_library(sampler_node SHARED
   DIRECTORY src
 )
@@ -16,12 +15,11 @@ ament_auto_add_library(sampler_node SHARED
 target_link_libraries(sampler_node
   Qt5::Widgets
   ${QCustomPlot_LIBRARIES}
-  ${OpenCV_LIBRARIES}
 )
 
 rclcpp_components_register_node(sampler_node
   PLUGIN "sampler_node::TrajectorySamplerNode"
-  EXECUTABLE trajectory_sampler_node_exe
+  EXECUTABLE sampler_node_exe
 )
 
 rclcpp_components_register_node(sampler_node

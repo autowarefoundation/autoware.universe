@@ -20,7 +20,7 @@
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/calculate_sampling_parameters.hpp"
 #include "sampler_node/parameters.hpp"
-#include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
+#include "sampler_node/utils/obstacles.hpp"
 
 #include <Eigen/Core>
 #include <autoware_control_toolbox/splines/bsplines_smoother.hpp>
@@ -47,7 +47,8 @@ void prepareConstraints(
   [[maybe_unused]] const lanelet::LaneletMap & map,
   [[maybe_unused]] const lanelet::Ids & drivable_ids,
   [[maybe_unused]] const lanelet::Ids & prefered_ids,
-  const nav_msgs::msg::OccupancyGrid & drivable_area)
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
   constraints.obstacle_polygons.clear();
   constraints.dynamic_obstacles.clear();
@@ -63,7 +64,12 @@ void prepareConstraints(
       constraints.obstacle_polygons.push_back(utils::predictedObjectToPolygon(object));
     }
   }
-  constraints.drivable_polygons = utils::occupancyGridToPolygons(drivable_area);
+  sampler_common::Polygon drivable_area_polygon;
+  for (const auto & p : right_bound) drivable_area_polygon.outer().emplace_back(p.x, p.y);
+  for (auto it = left_bound.rbegin(); it != left_bound.rend(); ++it)
+    drivable_area_polygon.outer().emplace_back(it->x, it->y);
+  drivable_area_polygon.outer().push_back(drivable_area_polygon.outer().front());
+  constraints.drivable_polygons = {drivable_area_polygon};
   constraints.prefered_polygons = constraints.drivable_polygons;
 }
 

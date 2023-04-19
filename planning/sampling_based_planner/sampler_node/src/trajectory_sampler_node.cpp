@@ -24,7 +24,7 @@
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/trajectory_generation.hpp"
-#include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
+#include "sampler_node/utils/obstacles.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -306,11 +306,15 @@ void TrajectorySamplerNode::pathCallback(
   const auto calc_begin = std::chrono::steady_clock::now();
   const auto current_state = getCurrentEgoConfiguration();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
-  if (msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state) {
+  if (
+    msg->points.size() < 2 || msg->left_bound.empty() || msg->right_bound.empty() ||
+    !current_state) {
     RCLCPP_INFO(
       get_logger(),
-      "[pathCallback] incomplete inputs: current_state: %d | drivable_area: %d | path points: %ld",
-      current_state.has_value(), !msg->drivable_area.data.empty(), msg->points.size());
+      "[pathCallback] incomplete inputs: current_state: %d | drivable_area(l/r): %d/%d | path "
+      "points: %ld",
+      current_state.has_value(), !msg->left_bound.empty(), !msg->right_bound.empty(),
+      msg->points.size());
     return;
   }
 
@@ -318,7 +322,7 @@ void TrajectorySamplerNode::pathCallback(
   const auto planning_configuration = getPlanningConfiguration(*current_state, path_spline);
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
-    msg->drivable_area);
+    msg->left_bound, msg->right_bound);
   params_.constraints.distance_to_end = path_spline.lastS() - planning_configuration.frenet.s;
   gui_.setConstraints(params_.constraints);
 
