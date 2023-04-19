@@ -181,7 +181,7 @@ private:
   double occlusion_stop_distance_;
   bool occlusion_activated_;
   // for first stop in two-phase stop
-  const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): uuid_で置き換えるかも
+  const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): replace with uuid_
   bool occlusion_first_stop_safety_;
   double occlusion_first_stop_distance_;
   bool occlusion_first_stop_activated_;
