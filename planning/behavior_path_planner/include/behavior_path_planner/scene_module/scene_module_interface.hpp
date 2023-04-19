@@ -18,7 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/util/utils.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
 #include <behavior_path_planner/turn_signal_decider.hpp>
@@ -64,10 +64,12 @@ public:
     is_waiting_approval_{false},
     is_locked_new_module_launch_{false},
     current_state_{ModuleStatus::SUCCESS},
-    rtc_interface_ptr_map_(rtc_interface_ptr_map)
+    rtc_interface_ptr_map_(rtc_interface_ptr_map),
+    steering_factor_interface_ptr_(
+      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
   {
 #ifdef USE_OLD_ARCHITECTURE
-    const auto ns = std::string("~/debug/") + util::convertToSnakeCase(name);
+    const auto ns = std::string("~/debug/") + utils::convertToSnakeCase(name);
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
 #endif
 
@@ -113,7 +115,7 @@ public:
   virtual BehaviorModuleOutput planWaitingApproval()
   {
     BehaviorModuleOutput out;
-    out.path = util::generateCenterLinePath(planner_data_);
+    out.path = utils::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
     path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
@@ -253,7 +255,7 @@ public:
   /**
    * @brief set planner data
    */
-  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
+  virtual void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
 
 #ifdef USE_OLD_ARCHITECTURE
   void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
@@ -299,7 +301,7 @@ protected:
   {
     std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map;
     for (const auto & rtc_type : rtc_types) {
-      const auto snake_case_name = util::convertToSnakeCase(name);
+      const auto snake_case_name = utils::convertToSnakeCase(name);
       const auto rtc_interface_name =
         rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
       rtc_interface_ptr_map.emplace(
@@ -338,11 +340,23 @@ protected:
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
 
+  geometry_msgs::msg::Point getEgoPosition() const
+  {
+    return planner_data_->self_odometry->pose.pose.position;
+  }
+  geometry_msgs::msg::Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
+  geometry_msgs::msg::Twist getEgoTwist() const
+  {
+    return planner_data_->self_odometry->twist.twist;
+  }
+  double getEgoSpeed() const
+  {
+    return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
+  }
+
   rclcpp::Clock::SharedPtr clock_;
 
   std::shared_ptr<const PlannerData> planner_data_;
-
-  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
   bool is_waiting_approval_;
   bool is_locked_new_module_launch_;
@@ -355,6 +369,8 @@ protected:
   ModuleStatus current_state_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
+
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
   mutable MarkerArray debug_marker_;
 };
