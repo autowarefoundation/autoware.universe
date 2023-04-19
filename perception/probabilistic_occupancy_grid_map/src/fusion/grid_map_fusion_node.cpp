@@ -29,20 +29,9 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
-  // temporary parameters
-  const double temp_match_threshold_sec = 0.01;                       // 10ms
-  const double temp_timeout_sec = 0.1;                                // 100ms
-  const std::vector<double> temp_input_offset_sec = {0.0, 0.0, 0.0};  // 0ms
-  const std::vector<std::string> temp_input_topics = {
-    "/perception/occupancy_grid_map/top_lidar/map", "/perception/occupancy_grid_map/left_lidar/map",
-    "/perception/occupancy_grid_map/right_lidar/map"};
-  const double temp_input_map_number = 3;
-  const std::vector<double> temp_input_weights = {0.5, 0.25, 0.25};
-
   /* load input parameters */
   {
-    num_input_topics_ =
-      static_cast<std::size_t>(declare_parameter("input_sensor_num", temp_input_map_number));
+    num_input_topics_ = static_cast<std::size_t>(declare_parameter("input_sensor_num", 3));
     if (num_input_topics_ < 1) {
       RCLCPP_WARN(
         this->get_logger(), "minimum num_input_topics_ is 1. current num_input_topics_ is %zu",
@@ -56,13 +45,13 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
       num_input_topics_ = 12;
     }
     // get input topics
-    declare_parameter("each_ogm_output_topics", temp_input_topics);
+    declare_parameter("each_ogm_output_topics", std::vector<std::string>{});
     input_topics_ = get_parameter("each_ogm_output_topics").as_string_array();
     if (num_input_topics_ != input_topics_.size()) {
       throw std::runtime_error("The number of input topics does not match the number of topics.");
     }
     // get input topic reliabilities
-    declare_parameter("each_ogm_reliabilities", temp_input_weights);
+    declare_parameter("each_ogm_reliabilities", std::vector<double>{});
     input_topic_weights_ = get_parameter("each_ogm_reliabilities").as_double_array();
 
     if (input_topic_weights_.empty()) {  // no topic weight is set
@@ -80,12 +69,17 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
     }
   }
 
-  // Set fusion parameters
-  match_threshold_sec_ = declare_parameter<double>("match_threshold_ms", temp_match_threshold_sec);
-  timeout_sec_ = declare_parameter<double>("timeout_sec", temp_timeout_sec);
-  input_offset_sec_ = declare_parameter("input_offset_sec", temp_input_offset_sec);
+  // Set fusion timing parameters
+  match_threshold_sec_ = declare_parameter<double>("match_threshold_ms", 0.01);
+  timeout_sec_ = declare_parameter<double>("timeout_sec", 0.1);
+  input_offset_sec_ = declare_parameter("input_offset_sec", std::vector<double>{});
   if (!input_offset_sec_.empty() && num_input_topics_ != input_offset_sec_.size()) {
     throw std::runtime_error("The number of offsets does not match the number of topics.");
+  } else if (input_offset_sec_.empty()) {
+    // if there are not input offset, set 0.0
+    for (std::size_t topic_i = 0; topic_i < num_input_topics_; ++topic_i) {
+      input_offset_sec_.push_back(0.0);
+    }
   }
   // Set fusion map parameters
   map_frame_ = declare_parameter("map_frame_", "map");
