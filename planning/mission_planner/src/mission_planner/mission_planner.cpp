@@ -394,7 +394,8 @@ void MissionPlanner::on_clear_mrm_route(
 
   // Plan route.
   LaneletRoute new_route = planner_->plan(points);
-  if (new_route.segments.empty()) {
+  if (new_route.segments.empty() || !checkRerouteSafety(*mrm_route_, new_route)) {
+    change_mrm_route(*mrm_route_);
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "Reroute with normal goal failed.");
     res->success = false;
     return;
@@ -402,7 +403,7 @@ void MissionPlanner::on_clear_mrm_route(
   new_route.header.stamp = odometry_->header.stamp;
   new_route.header.frame_id = map_frame_;
   new_route.uuid.uuid = generate_random_id();
-  new_route.allow_modification = true;
+  new_route.allow_modification = normal_route_->allow_modification;
 
   clear_mrm_route();
   change_route(new_route);
