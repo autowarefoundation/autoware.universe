@@ -57,6 +57,8 @@
   <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
+  <depend>perception_utils</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>

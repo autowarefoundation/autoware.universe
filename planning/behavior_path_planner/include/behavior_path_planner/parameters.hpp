@@ -17,10 +17,14 @@
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <string>
+#include <vector>
+
 struct ModuleConfigParameters
 {
   bool enable_module{false};
-  bool enable_simultaneous_execution{false};
+  bool enable_simultaneous_execution_as_approved_module{false};
+  bool enable_simultaneous_execution_as_candidate_module{false};
   uint8_t priority{0};
   uint8_t max_module_size{0};
 };
@@ -30,6 +34,7 @@ struct BehaviorPathPlannerParameters
   bool verbose;
 
   ModuleConfigParameters config_avoidance;
+  ModuleConfigParameters config_avoidance_by_lc;
   ModuleConfigParameters config_pull_out;
   ModuleConfigParameters config_pull_over;
   ModuleConfigParameters config_side_shift;
@@ -43,8 +48,15 @@ struct BehaviorPathPlannerParameters
   double backward_length_buffer_for_end_of_lane;
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
-  double minimum_lane_change_length;
-  double minimum_lane_change_prepare_distance;
+
+  // lane change parameters
+  double lane_changing_lateral_jerk{0.5};
+  double lane_changing_lateral_acc{0.315};
+  double lane_changing_lateral_acc_at_low_velocity{0.15};
+  double lateral_acc_switching_velocity{0.4};
+  double minimum_lane_changing_velocity{5.6};
+  double minimum_lane_changing_length;
+  double minimum_prepare_length;
 
   double minimum_pull_over_length;
   double minimum_pull_out_length;
@@ -60,6 +72,7 @@ struct BehaviorPathPlannerParameters
   bool turn_signal_on_swerving;
 
   double enable_akima_spline_first;
+  double enable_cog_on_centerline;
   double input_path_interval;
   double output_path_interval;
 
@@ -94,6 +107,14 @@ struct BehaviorPathPlannerParameters
 
   double rear_vehicle_reaction_time;
   double rear_vehicle_safety_time_margin;
+
+  // lane following
+  double drivable_area_right_bound_offset;
+  double drivable_area_left_bound_offset;
+  std::vector<std::string> drivable_area_types_to_skip;
+
+  // lane change
+  double lane_change_prepare_duration;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_

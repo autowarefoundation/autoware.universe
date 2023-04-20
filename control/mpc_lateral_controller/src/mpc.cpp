@@ -24,9 +24,6 @@
 #include <utility>
 #include <vector>
 
-#define DEG2RAD 3.1415926535 / 180.0
-#define RAD2DEG 180.0 / 3.1415926535
-
 namespace autoware::motion::control::mpc_lateral_controller
 {
 using namespace std::literals::chrono_literals;
@@ -273,7 +270,7 @@ bool MPC::getData(
   data->nearest_idx = static_cast<int>(nearest_idx);
   data->steer = static_cast<double>(current_steer.steering_tire_angle);
   data->lateral_err = MPCUtils::calcLateralError(current_pose, data->nearest_pose);
-  data->yaw_err = autoware::common::helper_functions::wrap_angle(
+  data->yaw_err = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(current_pose.orientation) - tf2::getYaw(data->nearest_pose.orientation));
 
   /* get predicted steer */
@@ -284,8 +281,8 @@ bool MPC::getData(
   *m_steer_prediction_prev = data->predicted_steer;
 
   /* check error limit */
-  const double dist_err = autoware::common::geometry::distance_2d<double>(
-    current_pose.position, data->nearest_pose.position);
+  const double dist_err =
+    tier4_autoware_utils::calcDistance2d(current_pose.position, data->nearest_pose.position);
   if (dist_err > m_admissible_position_error) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "position error is over limit. error = %fm, limit: %fm",
@@ -297,7 +294,8 @@ bool MPC::getData(
   if (std::fabs(data->yaw_err) > m_admissible_yaw_error_rad) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "yaw error is over limit. error = %f deg, limit %f deg",
-      RAD2DEG * data->yaw_err, RAD2DEG * m_admissible_yaw_error_rad);
+      tier4_autoware_utils::rad2deg(data->yaw_err),
+      tier4_autoware_utils::rad2deg(m_admissible_yaw_error_rad));
     return false;
   }
 
@@ -594,7 +592,7 @@ MPCMatrix MPC::generateMPCMatrix(
     /* get reference input (feed-forward) */
     m_vehicle_model_ptr->setCurvature(ref_smooth_k);
     m_vehicle_model_ptr->calculateReferenceInput(Uref);
-    if (std::fabs(Uref(0, 0)) < DEG2RAD * m_param.zero_ff_steer_deg) {
+    if (std::fabs(Uref(0, 0)) < tier4_autoware_utils::deg2rad(m_param.zero_ff_steer_deg)) {
       Uref(0, 0) = 0.0;  // ignore curvature noise
     }
     m.Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
