@@ -185,10 +185,10 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     angular_velocity_queue_ptr = std::make_shared<Vector3Deque>(vehicle_angular_velocity_queue_);
   }
 
-  if (points.data.empty() || vehicle_velocity_queue_.empty()) {
+  if (points.data.empty() || vehicle_velocity_queue_.empty() || angular_velocity_queue_ptr->empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 10000 /* ms */,
-      "input_pointcloud->points or vehicle_velocity_queue_ is empty.");
+      "input_pointcloud->points or velocity or angular velocity is empty.");
     return false;
   }
 
