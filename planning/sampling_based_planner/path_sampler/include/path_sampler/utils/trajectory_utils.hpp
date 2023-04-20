@@ -108,6 +108,9 @@ inline std::vector<TrajectoryPoint> convertToTrajectoryPoints(const sampler_comm
     p.pose.orientation.x = quat.x();
     p.pose.orientation.y = quat.y();
     p.pose.orientation.z = quat.z();
+    p.longitudinal_velocity_mps = 0.0;
+    p.lateral_velocity_mps = 0.0;
+    p.heading_rate_rps = 0.0;
     traj_points.push_back(p);
   }
   return traj_points;

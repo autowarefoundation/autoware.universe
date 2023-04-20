@@ -86,8 +86,8 @@ struct DebugData
 {
   std::vector<sampler_common::Path> sampled_candidates{};
   size_t previous_sampled_candidates_nb = 0UL;
-  std::vector<tier4_autoware_utils::Polygon2d> drivable_areas{};
   std::vector<tier4_autoware_utils::Polygon2d> obstacles{};
+  std::vector<tier4_autoware_utils::MultiPoint2d> footprints{};
 };
 
 struct TrajectoryParam

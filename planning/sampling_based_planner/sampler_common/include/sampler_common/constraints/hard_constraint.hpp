@@ -21,13 +21,8 @@
 
 namespace sampler_common::constraints
 {
-
 /// @brief Check if the path satisfies the hard constraints
-void checkHardConstraints(Path & path, const Constraints & constraints);
-/// @brief Check if the trajectory satisfies the hard constraints
-void checkHardConstraints(Trajectory & traj, const Constraints & constraints);
-/// @brief Check if the trajectory satisfies the velocity hard constraints
-void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints);
+MultiPoint2d checkHardConstraints(Path & path, const Constraints & constraints);
 }  // namespace sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_

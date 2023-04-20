@@ -22,7 +22,6 @@
 namespace sampler_common::transform
 {
 using sampler_common::FrenetPoint;
-using sampler_common::Point;
 
 class Spline
 {
@@ -35,7 +34,7 @@ class Spline
 public:
   Spline() = default;
   Spline(const std::vector<double> & base_index, const std::vector<double> & base_value);
-  explicit Spline(const std::vector<Point> & points);
+  explicit Spline(const std::vector<Point2d> & points);
   bool interpolate(
     const std::vector<double> & base_index, const std::vector<double> & base_value,
     const std::vector<double> & return_index, std::vector<double> & return_value);
@@ -63,15 +62,15 @@ class Spline2D
   Spline x_spline_{};
   Spline y_spline_{};
 
-  std::vector<Point> original_points_{};
+  std::vector<Point2d> original_points_{};
 
 public:
   Spline2D() = default;
   Spline2D(const std::vector<double> & x, const std::vector<double> & y);
-  [[nodiscard]] FrenetPoint frenet_naive(const Point & p, const double precision = 0.01) const;
-  [[nodiscard]] FrenetPoint frenet(const Point & p, const double precision = 0.01) const;
-  [[nodiscard]] Point cartesian(const double s) const;
-  [[nodiscard]] Point cartesian(const FrenetPoint & fp) const;
+  [[nodiscard]] FrenetPoint frenet_naive(const Point2d & p, const double precision = 0.01) const;
+  [[nodiscard]] FrenetPoint frenet(const Point2d & p, const double precision = 0.01) const;
+  [[nodiscard]] Point2d cartesian(const double s) const;
+  [[nodiscard]] Point2d cartesian(const FrenetPoint & fp) const;
   [[nodiscard]] double curvature(const double s) const;
   [[nodiscard]] double yaw(const double s) const;
   [[nodiscard]] double firstS() const { return s_.empty() ? 0.0 : s_.front(); }

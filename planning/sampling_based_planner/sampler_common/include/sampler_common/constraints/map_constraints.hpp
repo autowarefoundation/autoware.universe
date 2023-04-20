@@ -19,12 +19,14 @@
 
 #include <boost/geometry/algorithms/within.hpp>
 
+#include <vector>
+
 namespace sampler_common::constraints
 {
 struct MapConstraints
 {
   MapConstraints(
-    const Point & ego_pose, const lanelet::LaneletMapConstPtr & map_ptr,
+    const Point2d & ego_pose, const lanelet::LaneletMapConstPtr & map_ptr,
     const std::vector<lanelet::Ids> route_ids)
   {
   }
@@ -50,7 +52,7 @@ struct MapConstraints
     return cost;
   }
 
-  std::vector<Polygon> drivable_polygons;
+  MultiPolygon2d drivable_polygons;
   std::vector<double> polygon_costs;
 };
 }  // namespace sampler_common::constraints

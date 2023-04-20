@@ -19,7 +19,6 @@ if(BUILD_TESTING)
   ament_add_gtest(test_sampler_common
     test/test_transform.cpp
     test/test_structures.cpp
-    test/test_footprint.cpp
   )
 
   target_link_libraries(test_sampler_common

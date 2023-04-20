@@ -26,7 +26,7 @@ Spline::Spline(const std::vector<double> & base_index, const std::vector<double>
   generateSpline(base_index, base_value);
 }
 
-Spline::Spline(const std::vector<Point> & points)
+Spline::Spline(const std::vector<Point2d> & points)
 {
   std::vector<double> xs;
   std::vector<double> ys;
@@ -196,7 +196,7 @@ std::vector<double> Spline2D::arcLength(
 }
 
 // @brief Convert the given point to the Frenet frame of this spline
-FrenetPoint Spline2D::frenet_naive(const Point & p, double precision) const
+FrenetPoint Spline2D::frenet_naive(const Point2d & p, double precision) const
 {
   // TODO(Maxime CLEMENT) Implement fast algorithm from https://hal.inria.fr/inria-00518379/document
   // Naive approach: sample points along the splines and return the closest one
@@ -223,9 +223,9 @@ FrenetPoint Spline2D::frenet_naive(const Point & p, double precision) const
   return {arc_length, closest_d};
 }
 
-FrenetPoint Spline2D::frenet(const Point & p, const double precision) const
+FrenetPoint Spline2D::frenet(const Point2d & p, const double precision) const
 {
-  const auto distance = [&](const Point & p2) {
+  const auto distance = [&](const Point2d & p2) {
     return std::hypot(p.x() - p2.x(), p.y() - p2.y());
   };
   size_t min_i{};
@@ -283,12 +283,12 @@ FrenetPoint Spline2D::frenet(const Point & p, const double precision) const
   return {best_s, min_dist};
 }
 
-Point Spline2D::cartesian(const double s) const
+Point2d Spline2D::cartesian(const double s) const
 {
   return {x_spline_.value(s, s_), y_spline_.value(s, s_)};
 }
 
-Point Spline2D::cartesian(const FrenetPoint & fp) const
+Point2d Spline2D::cartesian(const FrenetPoint & fp) const
 {
   const auto heading = yaw(fp.s);
   const auto x = x_spline_.value(fp.s, s_);

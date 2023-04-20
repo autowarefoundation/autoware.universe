@@ -72,8 +72,7 @@ std::vector<sampler_common::Path> generateBezierPaths(
     const auto beziers =
       bezier_sampler::sample(initial_state, target_state, params.sampling.bezier);
 
-    constexpr double step =
-      0.01;  // TODO(Maxime CLEMENT): calculate from params.sampling.resolution
+    const auto step = std::min(0.1, params.sampling.resolution / target_length);
     for (const auto & bezier : beziers) {
       sampler_common::Path path;
       path.lengths.push_back(0.0);

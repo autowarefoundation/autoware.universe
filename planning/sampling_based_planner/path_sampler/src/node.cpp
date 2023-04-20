@@ -115,16 +115,7 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
       declare_parameter<bool>("preprocessing.force_zero_initial_heading");
     params_.preprocessing.smooth_reference =
       declare_parameter<bool>("preprocessing.smooth_reference_trajectory");
-    // const auto half_wheel_tread = vehicle_info_.wheel_tread_m / 2.0;
-    const auto left_offset = vehicle_info_.vehicle_width_m / 2.0;
-    const auto right_offset = -vehicle_info_.vehicle_width_m / 2.0;
-    // const auto right_offset = -(half_wheel_tread + vehicle_info_.right_overhang_m);
-    const auto rear_offset = -vehicle_info_.rear_overhang_m;
-    const auto front_offset = vehicle_info_.wheel_base_m + vehicle_info_.front_overhang_m;
-    params_.constraints.vehicle_offsets.left_rear = Eigen::Vector2d(rear_offset, left_offset);
-    params_.constraints.vehicle_offsets.left_front = Eigen::Vector2d(front_offset, left_offset);
-    params_.constraints.vehicle_offsets.right_rear = Eigen::Vector2d(rear_offset, right_offset);
-    params_.constraints.vehicle_offsets.right_front = Eigen::Vector2d(front_offset, right_offset);
+    params_.constraints.ego_footprint = vehicle_info_.createFootprint();
 
     // parameter for debug info
     time_keeper_ptr_->enable_calculation_time_info =
@@ -345,9 +336,12 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
       std::make_move_iterator(paths.end()));
   }
   */
+  debug_data_.footprints.clear();
   for (auto & path : candidate_paths) {
     // TODO(Maxime): resample the path ?
-    sampler_common::constraints::checkHardConstraints(path, params_.constraints);
+    const auto footprint =
+      sampler_common::constraints::checkHardConstraints(path, params_.constraints);
+    debug_data_.footprints.push_back(footprint);
     sampler_common::constraints::calculateCost(path, params_.constraints, path_spline);
   }
   const auto best_path_idx = [](const auto & paths) {
@@ -383,7 +377,6 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   time_keeper_ptr_->toc(__func__, "    ");
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
   debug_data_.sampled_candidates = candidate_paths;
-  debug_data_.drivable_areas = params_.constraints.drivable_polygons;
   debug_data_.obstacles = params_.constraints.obstacle_polygons;
   return trajectory;
 }
@@ -403,6 +396,7 @@ void PathSampler::applyInputVelocity(
   const std::vector<TrajectoryPoint> & input_traj_points,
   const geometry_msgs::msg::Pose & ego_pose) const
 {
+  if (output_traj_points.empty()) return;
   time_keeper_ptr_->tic(__func__);
 
   // crop forward for faster calculation
@@ -478,7 +472,7 @@ void PathSampler::publishDebugMarkerOfOptimization(
     m.id = 0UL;
     m.type = m.LINE_STRIP;
     m.color.a = 1.0;
-    m.scale.x = 0.1;
+    m.scale.x = 0.02;
     m.ns = "candidates";
     for (const auto & c : debug_data_.sampled_candidates) {
       m.points.clear();
@@ -494,19 +488,20 @@ void PathSampler::publishDebugMarkerOfOptimization(
       markers.markers.push_back(m);
       ++m.id;
     }
-    m.scale.x = 0.5;
-    m.ns = "drivable_areas";
-    m.id = 0UL;
-    m.color.r = 0.0;
-    m.color.g = 0.0;
-    m.color.b = 1.0;
-    for (const auto & da : debug_data_.drivable_areas) {
+    if (debug_data_.footprints.size() == 1UL) {
+      m.ns = "footprints";
+      m.id = 0UL;
+      m.type = m.POINTS;
       m.points.clear();
-      for (const auto & p : da.outer())
+      m.color.r = 1.0;
+      m.color.g = 0.0;
+      m.color.b = 1.0;
+      m.scale.y = 0.02;
+      for (const auto & p : debug_data_.footprints.front())
         m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
       markers.markers.push_back(m);
-      ++m.id;
     }
+    m.type = m.LINE_STRIP;
     m.ns = "obstacles";
     m.id = 0UL;
     m.color.r = 1.0;
@@ -540,26 +535,39 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
 {
   time_keeper_ptr_->tic(__func__);
 
-  const auto & joint_start_pose = optimized_traj_points.back().pose;
+  const auto & joint_start_pose = optimized_traj_points.front().pose;
+  const auto & joint_end_pose = optimized_traj_points.back().pose;
 
-  // calculate end idx of optimized points on path points
+  // calculate start idx of optimized points on path points
   const size_t joint_start_traj_seg_idx =
     trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
 
   // crop trajectory for extension
   constexpr double joint_traj_length_for_smoothing = 5.0;
-  const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
+  const auto joint_end_upto_traj_point_idx = trajectory_utils::getPointIndexAfter(
     traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
     joint_traj_length_for_smoothing);
 
+  // calculate prepended trajectory points
+  const auto prepended_traj_points = [&]() {
+    if (joint_start_traj_seg_idx == 0UL) return traj_points;
+    const auto pre_traj = std::vector<TrajectoryPoint>(
+      traj_points.begin(), traj_points.begin() + joint_start_traj_seg_idx);
+    return concatVectors(pre_traj, optimized_traj_points);
+  }();
+
+  // calculate end idx of optimized points on path points
+  const size_t joint_end_traj_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(traj_points, joint_end_pose, ego_nearest_param_);
+
   // calculate full trajectory points
   const auto full_traj_points = [&]() {
-    if (!joint_end_traj_point_idx) {
-      return optimized_traj_points;
+    if (!joint_end_upto_traj_point_idx) {
+      return prepended_traj_points;
     }
     const auto extended_traj_points = std::vector<TrajectoryPoint>{
-      traj_points.begin() + *joint_end_traj_point_idx, traj_points.end()};
-    return concatVectors(optimized_traj_points, extended_traj_points);
+      traj_points.begin() + *joint_end_upto_traj_point_idx, traj_points.end()};
+    return concatVectors(prepended_traj_points, extended_traj_points);
   }();
 
   // resample trajectory points
@@ -567,7 +575,7 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
     full_traj_points, traj_param_.output_delta_arc_length);
 
   // update velocity on joint
-  for (size_t i = joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+  for (size_t i = joint_end_traj_seg_idx + 1; i <= joint_end_upto_traj_point_idx; ++i) {
     if (hasZeroVelocity(traj_points.at(i))) {
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.

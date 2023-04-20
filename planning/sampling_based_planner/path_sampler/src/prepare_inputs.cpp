@@ -36,14 +36,14 @@ void prepareConstraints(
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
-  constraints.obstacle_polygons = sampler_common::MultiPolygon();
+  constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
   for (auto & dynamic_obstacle_polygon :
        geometry_utils::PredictedObjectsToPolygons(predicted_objects)) {
     boost::geometry::correct(dynamic_obstacle_polygon);
     constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
   }
 
-  sampler_common::Polygon drivable_area_polygon;
+  sampler_common::Polygon2d drivable_area_polygon;
   for (const auto & p : right_bound) drivable_area_polygon.outer().emplace_back(p.x, p.y);
   for (auto it = left_bound.rbegin(); it != left_bound.rend(); ++it)
     drivable_area_polygon.outer().emplace_back(it->x, it->y);
@@ -53,33 +53,28 @@ void prepareConstraints(
 }
 
 frenet_planner::SamplingParameters prepareSamplingParameters(
-  const sampler_common::State & initial_state,
-  const double base_length, const sampler_common::transform::Spline2D & path_spline,
-  const Parameters & params)
+  const sampler_common::State & initial_state, const double base_length,
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.resolution = params.sampling.resolution;
-  (void)initial_state;
-  (void)base_length;
-  (void)path_spline;
-  // TODO(Maxime): populate sampling parameters
-  /*
-  const auto max_s =
-    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
+  const auto max_s = path_spline.lastS();
+  frenet_planner::SamplingParameter p;
   for (const auto target_length : params.sampling.target_lengths) {
-    const auto target_s =
-      path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length - base_length);
-    // Prevent a target past the end of the reference path
-    if (target_s < max_s)
-      sampling_parameters.target_longitudinal_positions.push_back(target_s);
-    else
-      break;
+    p.target_state.position.s = std::min(
+      max_s, path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length - base_length));
+    for (const auto target_lat_pos : params.sampling.frenet.target_lateral_positions) {
+      p.target_state.position.d = target_lat_pos;
+      for (const auto target_lat_vel : params.sampling.frenet.target_lateral_velocities) {
+        p.target_state.lateral_velocity = target_lat_vel;
+        for (const auto target_lat_acc : params.sampling.frenet.target_lateral_accelerations) {
+          p.target_state.lateral_acceleration = target_lat_acc;
+          sampling_parameters.parameters.push_back(p);
+        }
+      }
+    }
+    if (p.target_state.position.s == max_s) break;
   }
-  // Stopping case
-  if (sampling_parameters.target_longitudinal_positions.empty()) {
-    sampling_parameters.target_longitudinal_positions = {max_s};
-  }
-  */
   return sampling_parameters;
 }
 

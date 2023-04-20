@@ -35,9 +35,11 @@
 namespace sampler_common
 {
 // TODO(Maxime): directly use the tier4 types
-using Point = tier4_autoware_utils::Point2d;
-using Polygon = tier4_autoware_utils::Polygon2d;
-using MultiPolygon = tier4_autoware_utils::MultiPolygon2d;
+using tier4_autoware_utils::LinearRing2d;
+using tier4_autoware_utils::MultiPoint2d;
+using tier4_autoware_utils::MultiPolygon2d;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
 
 // TODO(Maxime CLEMENT): split in multiple files
 /// @brief data about constraint check results of a given path
@@ -69,7 +71,7 @@ struct FrenetPoint
 
 struct State
 {
-  Point pose{};
+  Point2d pose{};
   FrenetPoint frenet{0.0, 0.0};
   double curvature{};
   double heading{};
@@ -84,7 +86,7 @@ struct Configuration : State
 /// @brief Path
 struct Path
 {
-  std::vector<Point> points{};
+  std::vector<Point2d> points{};
   std::vector<double> curvatures{};
   std::vector<double> yaws{};
   std::vector<double> jerks{};
@@ -326,7 +328,7 @@ struct Trajectory : Path
 
 struct DynamicObstacle
 {
-  std::vector<Polygon> footprint_per_time;
+  std::vector<Polygon2d> footprint_per_time;
   double time_step;  // [s] time step between each footprint
 };
 
@@ -357,16 +359,10 @@ struct Constraints
     double max_curvature;
     double max_yaw_rate;
   } hard{};
-  struct
-  {
-    Eigen::Vector2d left_rear;
-    Eigen::Vector2d left_front;
-    Eigen::Vector2d right_rear;
-    Eigen::Vector2d right_front;
-  } vehicle_offsets{};
-  MultiPolygon obstacle_polygons;
-  MultiPolygon drivable_polygons;
-  MultiPolygon prefered_polygons;
+  LinearRing2d ego_footprint;
+  MultiPolygon2d obstacle_polygons;
+  MultiPolygon2d drivable_polygons;
+  MultiPolygon2d prefered_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
 
   double distance_to_end;  // [m] current distance along the reference path between ego and the end
