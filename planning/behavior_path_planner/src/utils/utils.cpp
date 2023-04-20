@@ -2005,6 +2005,10 @@ double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
   const double length_to_intersection)
 {
+  if (shift_intervals.empty()) {
+    return 0.0;
+  }
+
   const double & vel = common_param.minimum_lane_changing_velocity;
 
   double accumulated_length =
