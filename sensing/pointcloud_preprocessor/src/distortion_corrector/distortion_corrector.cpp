@@ -235,9 +235,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
 
-  // For performance, avoid transform computation if unnecessary
-  bool need_transform = points.header.frame_id != base_link_frame_;
-
   // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
   double velocity_stamp = rclcpp::Time(velocity_it->header.stamp).seconds();
   double angular_velocity_stamp = rclcpp::Time(angular_velocity_it->header.stamp).seconds();
@@ -247,6 +244,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   tf2::Transform baselink_tf_odom{};
   tf2::Vector3 point{};
   tf2::Vector3 undistorted_point{};
+
+  // For performance, avoid transform computation if unnecessary
+  bool need_transform = points.header.frame_id != base_link_frame_;
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     while (velocity_it != std::end(vehicle_velocity_queue_) - 1 &&
