@@ -76,7 +76,8 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     "clip_value", 0.0,
     ("If positive value is specified, "
      "the value of each layer output will be clipped between [0.0, clip_value]. "
-     "This option is valid only when precision==int8"));
+     "This option is valid only when precision==int8 and used to manually specify "
+     "the dynamic range instead of using any calibration"));
   bool preprocess_on_gpu = declare_parameter_with_description(
     "preprocess_on_gpu", true, "If true, pre-processing is performed on GPU");
   std::string calibration_image_list_path = declare_parameter_with_description(
