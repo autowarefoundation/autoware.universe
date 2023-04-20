@@ -52,7 +52,7 @@ ROSBAG made by AWSIM: [Google drive link](https://drive.google.com/drive/folders
 ![how_to_launch_with_rosbag](docs/how_to_launch_quick_start_demo.drawio.svg)
 
 ```shell
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=true
+ros2 launch pcdless_launch sample_launch.xml
 ros2 launch pcdless_launch rviz.launch.xml
 ros2 bag play awsim_yabloc_rosbag_sample
 ```
@@ -70,7 +70,7 @@ The link contains *rosbag* and *lanelet2* but *pointcloud*.
 ![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
 
 ```shell
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=true
+ros2 launch pcdless_launch sample_launch.xml
 ros2 launch pcdless_launch rviz.launch.xml
 ros2 launch autoware_launch logging_simulator.launch.xml \
   system:=false \
@@ -93,7 +93,7 @@ ros2 bag play sample_odaiba --clock 100
 ![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
 
 ```shell
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=true use_sim_time:=false
+ros2 launch pcdless_launch sample_launch.xml use_sim_time:=false
 ros2 launch pcdless_launch rviz.launch.xml
 ros2 launch autoware_launch autoware.launch.xml \
   rviz:=false
@@ -104,14 +104,14 @@ ros2 launch autoware_launch autoware.launch.xml \
 **You have to change autoware.universe branch.**
 
 ```shell
-ros2 launch pcdless_launch odaiba_launch.xml standalone:=false
+ros2 launch pcdless_launch sample_launch.xml standalone:=false
 ros2 launch pcdless_launch rviz.launch.xml
 ros2 launch autoware_launch e2e_simulator.launch.xml
 ```
 
 ## How to set initialpose
 
-### 1. When YabLoc works `standalone:=true`  (without Autoware's pose_initializer)
+### 1. When YabLoc works `standalone:=true`(default)  (without Autoware's pose_initializer)
 
 1. 2D Pose Estimate in Rviz
 
@@ -163,7 +163,7 @@ If you give it a non-empty string, `/imgproc/undistort_node` will rewrite the fr
 For example, you can give a different tf_static as follows.
 
 ```shell
-ros2 launch pcdless_launch odaiba_launch.xml override_camera_frame_id:=fake_camera_optical_link
+ros2 launch pcdless_launch sample_launch.xml override_camera_frame_id:=fake_camera_optical_link
 ros2 run tf2_ros static_transform_publisher \
   --frame-id base_link \
   --child-frame-id fake_camera_optical_link \
