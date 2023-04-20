@@ -450,7 +450,8 @@ ObjectClassification::_label_type changeLabelForPrediction(
       return ObjectClassification::MOTORCYCLE;
     } else if (high_speed_object) {
       // high speed object outside road lanelet will move like unknown object
-      return ObjectClassification::UNKNOWN;
+      // return ObjectClassification::UNKNOWN; // temporary disabled
+      return label;
     } else {
       return ObjectClassification::BICYCLE;
     }
