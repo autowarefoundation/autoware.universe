@@ -140,7 +140,7 @@ void TwistEstimator::publish_twist(const Imu & imu)
   }
 }
 
-void TwistEstimator::on_velocity_report(const TwistStamped & msg)
+void TwistEstimator::on_velocity_report(const VelocityReport & msg)
 {
   static bool first_subscirbe = true;
   if (first_subscirbe) {

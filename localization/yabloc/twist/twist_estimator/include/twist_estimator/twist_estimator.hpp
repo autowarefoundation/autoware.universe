@@ -84,7 +84,7 @@ private:
   void on_timer();
 
   void on_imu(const Imu & msg);
-  void on_velocity_report(const TwistStamped & msg);
+  void on_velocity_report(const VelocityReport & msg);
   void on_navpvt(const NavPVT & msg);
 
   void predict();

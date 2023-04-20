@@ -17,6 +17,7 @@
   <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>ublox_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
 
   <depend>pcdless_common</depend>
 
