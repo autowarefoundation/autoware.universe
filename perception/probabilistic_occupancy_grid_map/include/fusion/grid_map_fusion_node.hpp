@@ -17,7 +17,7 @@
 
 #include "fusion/single_frame_fusion_policy.hpp"
 #include "pointcloud_based_occupancy_grid_map/occupancy_grid_map.hpp"
-#include "updater/occupancy_grid_map_binary_bayes_filter_updater.hpp"
+#include "updater/occupancy_grid_map_log_odds_bayes_filter_updater.hpp"
 #include "updater/occupancy_grid_map_updater_interface.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
@@ -47,7 +47,7 @@ namespace grid_map_fusion
 {
 
 using costmap_2d::OccupancyGridMap;
-using costmap_2d::OccupancyGridMapBBFUpdater;
+using costmap_2d::OccupancyGridMapLOBFUpdater;
 using costmap_2d::OccupancyGridMapUpdaterInterface;
 using geometry_msgs::msg::Pose;
 

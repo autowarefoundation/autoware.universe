@@ -20,7 +20,7 @@
 namespace grid_map_fusion
 {
 using costmap_2d::OccupancyGridMap;
-using costmap_2d::OccupancyGridMapBBFUpdater;
+using costmap_2d::OccupancyGridMapLOBFUpdater;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 
@@ -117,7 +117,7 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
     "~/debug/single_frame_map", rclcpp::QoS{1}.best_effort());
 
   // updater
-  occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
+  occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapLOBFUpdater>(
     fusion_map_length_x_ / fusion_map_resolution_, fusion_map_length_y_ / fusion_map_resolution_,
     fusion_map_resolution_);
 

@@ -50,8 +50,9 @@ rclcpp_components_register_node(laserscan_based_occupancy_grid_map
 # GridMapFusionNode
 ament_auto_add_library(grid_map_fusion SHARED
   src/fusion/grid_map_fusion_node.cpp
+  src/fusion/single_frame_fusion_policy.cpp
   src/pointcloud_based_occupancy_grid_map/occupancy_grid_map.cpp
-  src/updater/occupancy_grid_map_binary_bayes_filter_updater.cpp
+  src/updater/occupancy_grid_map_log_odds_bayes_filter_updater.cpp
   src/utils/utils.cpp
 )
 
@@ -69,7 +70,9 @@ if(BUILD_TESTING)
   ament_add_gtest(costmap_unit_tests
     test/cost_value_test.cpp)
   ament_add_gtest(fusion_policy_unit_tests
-    test/fusion_policy_test.cpp)
+    test/fusion_policy_test.cpp
+    src/fusion/single_frame_fusion_policy.cpp
+  )
   target_include_directories(costmap_unit_tests PRIVATE "include")
   target_include_directories(fusion_policy_unit_tests PRIVATE "include")
 endif()
