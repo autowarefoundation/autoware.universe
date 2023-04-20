@@ -197,9 +197,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     const auto pass_judge_line_idx = static_pass_judge_line_opt.value();
     const bool is_over_pass_judge_line =
       util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
+    const double vel = std::fabs(planner_data_->current_velocity->twist.linear.x);
+    const bool keep_detection = (vel < planner_param_.collision_detection.keep_detection_vel_thr);
     // if ego is over the pass judge line and not stopped
-    const bool is_vehicle_stopped = planner_data_->isVehicleStopped();
-    if (is_over_pass_judge_line && is_go_out_ && !is_vehicle_stopped) {
+    if (is_over_pass_judge_line && is_go_out_ && !keep_detection) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       return true;
@@ -371,7 +372,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
 
   const std::string occlusion_state = std::string(magic_enum::enum_name(occlusion_state_));
-  RCLCPP_INFO(logger_, "occlusion state: OcclusionState::%s", occlusion_state.c_str());
+  RCLCPP_DEBUG(logger_, "occlusion state: OcclusionState::%s", occlusion_state.c_str());
 
   /* for collision and stuck state */
   collision_state_machine_.setStateWithMarginTime(
