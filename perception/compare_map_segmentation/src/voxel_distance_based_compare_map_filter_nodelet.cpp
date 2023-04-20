@@ -102,7 +102,7 @@ VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterC
   const rclcpp::NodeOptions & options)
 : Filter("VoxelDistanceBasedCompareMapFilter", options)
 {
-  // initilize debug tool
+  // initialize debug tool
   {
     using tier4_autoware_utils::DebugPublisher;
     using tier4_autoware_utils::StopWatch;
