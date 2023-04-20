@@ -138,7 +138,7 @@ std::optional<size_t> generateStaticPassJudgeLine(
     return std::nullopt;
   }
   const int base2front_idx_dist =
-    std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / ip_interval);
+    std::ceil(planner_data->vehicle_info_.vehicle_length_m / ip_interval);
   const int idx = static_cast<int>(pass_judge_line_idx_ip.value()) - base2front_idx_dist;
   if (idx < 0) {
     return std::nullopt;
