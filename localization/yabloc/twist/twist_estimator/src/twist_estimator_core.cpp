@@ -34,10 +34,10 @@ TwistEstimator::TwistEstimator()
 
   auto cb_imu = std::bind(&TwistEstimator::on_imu, this, _1);
   auto cb_pvt = std::bind(&TwistEstimator::on_navpvt, this, _1);
-  auto cb_twist = std::bind(&TwistEstimator::on_twist_stamped, this, _1);
+  auto cb_velocity = std::bind(&TwistEstimator::on_velocity_report, this, _1);
 
   sub_imu_ = create_subscription<Imu>("/sensing/imu/tamagawa/imu_raw", 10, cb_imu);
-  sub_twist_stamped_ = create_subscription<TwistStamped>("/vehicle/status/twist", 10, cb_twist);
+  sub_velocity_report_ = create_subscription<VelocityReport>("/vehicle/status/velocity_report", 10, cb_velocity);
   sub_navpvt_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_pvt);
 
   pub_twist_ = create_publisher<TwistStamped>("twist", 10);
@@ -140,17 +140,17 @@ void TwistEstimator::publish_twist(const Imu & imu)
   }
 }
 
-void TwistEstimator::on_twist_stamped(const TwistStamped & msg)
+void TwistEstimator::on_velocity_report(const TwistStamped & msg)
 {
   static bool first_subscirbe = true;
   if (first_subscirbe) {
-    float wheel = msg.twist.linear.x;
+    float wheel = msg.longitudinal_velocity;
     state_[VELOCITY] = wheel;
     RCLCPP_INFO_STREAM(get_logger(), "first twist subscription: " << state_[VELOCITY]);
     first_subscirbe = false;
     return;
   }
-  const float wheel = msg.twist.linear.x;
+  const float wheel = msg.longitudinal_velocity;
   last_wheel_vel_ = wheel;
 
   if (std::abs(wheel) < stop_vel_threshold_) return;

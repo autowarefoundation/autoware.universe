@@ -19,6 +19,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -35,6 +36,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using TwistCovStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
+  using VelocityReport = autoware_auto_vehicle_msgs::msg::VelocityReport;
   using Imu = sensor_msgs::msg::Imu;
   using NavPVT = ublox_msgs::msg::NavPVT;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
@@ -59,7 +61,7 @@ private:
 
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
-  rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_stamped_;
+  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_report_;
 
   std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};
 
@@ -82,7 +84,7 @@ private:
   void on_timer();
 
   void on_imu(const Imu & msg);
-  void on_twist_stamped(const TwistStamped & msg);
+  void on_velocity_report(const TwistStamped & msg);
   void on_navpvt(const NavPVT & msg);
 
   void predict();

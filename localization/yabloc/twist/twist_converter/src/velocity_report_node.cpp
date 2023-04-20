@@ -19,45 +19,47 @@
 
 namespace pcdless::velocity_conveter
 {
-class VelocityReportDecoder : public rclcpp::Node
+
+class VelocityReportEncoder : public rclcpp::Node
 {
 public:
-  using TwistStamped = geometry_msgs::msg::TwistStamped;
   using Velocity = autoware_auto_vehicle_msgs::msg::VelocityReport;
+  using TwistStamped = geometry_msgs::msg::TwistStamped;
 
-  VelocityReportDecoder() : Node("vehicle_report")
+  VelocityReportEncoder() : Node("vehicle_report")
   {
     using std::placeholders::_1;
 
     // Subscriber
-    auto cb_velocity = std::bind(&VelocityReportDecoder::on_velocity, this, _1);
-    sub_velocity_ =
-      create_subscription<Velocity>("/vehicle/status/velocity_status", 10, cb_velocity);
+    auto cb_twist = std::bind(&VelocityReportEncoder::on_twist, this, _1);
+    sub_twist_ =
+      create_subscription<TwistStamped>("/vehicle/status/twist", 10, cb_twist);
 
     // Publisher
-    pub_twist_stamped_ = create_publisher<TwistStamped>("/vehicle/status/twist", 10);
+    pub_velocity_report_ = create_publisher<Velocity>("/vehicle/status/velocity_status", 10);
   }
 
 private:
-  rclcpp::Subscription<Velocity>::SharedPtr sub_velocity_;
-  rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_stamped_;
+  rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_;
+  rclcpp::Publisher<Velocity>::SharedPtr pub_velocity_report_;
 
-  void on_velocity(const Velocity & msg)
+  void on_twist(const TwistStamped & msg)
   {
-    TwistStamped ts;
-    ts.header = msg.header;
-    ts.twist.linear.x = msg.longitudinal_velocity;
-    ts.twist.linear.y = msg.lateral_velocity;
-    ts.twist.angular.z = msg.heading_rate;
-    pub_twist_stamped_->publish(ts);
+    VelocityReport velocity_report;
+    velocity_report.header = msg.header;
+    velocity_report.longitudinal_velocity = msg.twist.linear.x;
+    velocity_report.lateral_velocity = msg.twist.linear.y;
+    velocity_report.heading_rate = msg.heading_rate;
+    pub_twist_stamped_->publish(velocity_report);
   }
 };
+
 }  // namespace pcdless::velocity_conveter
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::velocity_conveter::VelocityReportDecoder>());
+  rclcpp::spin(std::make_shared<pcdless::velocity_conveter::VelocityReportEncoder>());
   rclcpp::shutdown();
   return 0;
 }
