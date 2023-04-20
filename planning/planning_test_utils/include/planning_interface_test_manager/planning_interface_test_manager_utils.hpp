@@ -250,10 +250,6 @@ void setPublisher(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<T>> & publisher)
 {
-  if (topic_name.empty()) {
-    throw std::runtime_error(
-      std::string("Topic name for ") + typeid(*publisher).name() + " is empty");
-  }
   createPublisherWithQoS(test_node, topic_name, publisher);
 }
 
@@ -433,10 +429,27 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   return path_msg;
 }
 
-void publishToTargetNode(
+void spinSomeNodeWithTopicCheck(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
   const int repeat_count = 1)
 {
+  if (target_node->count_subscribers(topic_name) == 0) {
+    throw std::runtime_error("No subscriber for " + topic_name);
+  }
+  test_utils::spinSomeNodes(test_node, target_node, repeat_count);
+}
+
+template <typename T>
+void publishToTargetNode(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<T>::SharedPtr publisher, T data, const int repeat_count = 1)
+{
+  test_utils::setPublisher<T>(test_node, topic_name, publisher);
+  publisher->publish(data);
+  if (topic_name.empty()) {
+    throw std::runtime_error(
+      std::string("Topic name for ") + typeid(*publisher).name() + " is empty");
+  }
   if (target_node->count_subscribers(topic_name) == 0) {
     throw std::runtime_error("No subscriber for " + topic_name);
   }
