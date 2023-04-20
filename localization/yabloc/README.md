@@ -6,7 +6,13 @@ This has been developed as a new localization stack for [Autoware](https://githu
 
 ![thumbnail](docs/yabloc_thumbnail.jpg)
 
-## Submodule
+## Installation
+
+### Prerequisites
+
+**Supporting `Ubuntu 22.04` + `ROS2 humble` now.**
+
+### Submodules
 
 * [external/autoware_auto_msgs](https://github.com/tier4/autoware_auto_msgs)
 * [external/autoware_msgs](https://github.com/autowarefoundation/autoware_msgs.git)
@@ -16,12 +22,7 @@ This has been developed as a new localization stack for [Autoware](https://githu
 **NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the autoware workspace.
 Someday this will be located in the workspace where Autoware blongs. These submodules will be removed at the time.
 
-## How to build
-
-**Supporting `Ubuntu 22.04` + `ROS2 humble` now.
-Some branches might support `ROS2 galactic`.**
-
-**NOTE:** Currently, this software is assumed to be built in a separate workspace in order not to contaminate the Autoware workspace.
+### How to build
 
 ```shell
 mkdir yabloc_ws/src -p
@@ -47,7 +48,7 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_E
 
 ## Quick Start Demo
 
-ROSBAG made by AWSIM: [Google drive link](https://drive.google.com/drive/folders/1XVWfkDoz-0fncYC-_I6cmv1gkB6EfJ2Y?usp=share_link)
+rosbag made by AWSIM: [Google drive link](https://drive.google.com/drive/folders/1XVWfkDoz-0fncYC-_I6cmv1gkB6EfJ2Y?usp=share_link)
 
 ![how_to_launch_with_rosbag](docs/how_to_launch_quick_start_demo.drawio.svg)
 
@@ -61,11 +62,9 @@ ros2 bag play awsim_yabloc_rosbag_sample
 
 **NOTE:** `use_sim_time` is TRUE as default.
 
-### Run with standard ROSBAG
+### Run with rosbag
 
-Sample data: [Google drive link](https://drive.google.com/drive/folders/1uNxQ2uPFEGbYXUODQMc7GRO5r9c3Fj6o?usp=share_link)
-
-The link contains *rosbag* and *lanelet2* but *pointcloud*.
+<details><summary>click to open </summary><div>
 
 ![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
 
@@ -80,15 +79,19 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
   planning:=false \
   control:=false \
   rviz:=false \
-  vehicle_model:=jpntaxi \ 
-  sensor_model:=aip_xx1 \
-  vehicle_id:=5 \
+  vehicle_model:=sample_vehicle \ 
+  sensor_model:=sample_sensor_kit \
+  vehicle_id:=default \
   map_path:=$HOME/Maps/odaiba
 
-ros2 bag play sample_odaiba --clock 100
+ros2 bag play your_rosbag --clock 100
 ```
 
+</div></details>
+
 ### Run in real world
+
+<details><summary>click to open </summary><div>
 
 ![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
 
@@ -99,7 +102,11 @@ ros2 launch autoware_launch autoware.launch.xml \
   rviz:=false
 ```
 
-### Run with AWSIM <ins>(UNDER CONSTRACTION)</ins>
+</div></details>
+
+### Run with [AWSIM](https://github.com/tier4/AWSIM) <ins>(UNDER CONSTRACTION)</ins>
+
+<details><summary>click to open </summary><div>
 
 **You have to change autoware.universe branch.**
 
@@ -109,11 +116,13 @@ ros2 launch pcdless_launch rviz.launch.xml
 ros2 launch autoware_launch e2e_simulator.launch.xml
 ```
 
-## How to set initialpose
+</div></details>
+
+## How to set initial pose
 
 ### 1. When YabLoc works `standalone:=true`(default)  (without Autoware's pose_initializer)
 
-1. 2D Pose Estimate in Rviz
+1. `2D Pose Estimate` in Rviz
 
 You can inidcate x, y and yaw manually in rviz.
 
@@ -127,11 +136,11 @@ If doppler (`ublox_msgs/msg/navpvt`) is available and the vehicle moves enough f
 
 ## Architecture
 
-![node_diagram](docs/node_diagram.png)
+![node_diagram](docs/yabloc_architecture.drawio.svg)
 
-### Input topics from sesnors
+### Input topics
 
-This localizer requires following topics to work.
+from sesnors
 
 |  topic name  |  msg type  | description |
 | ---- | ---- | -- |
@@ -142,14 +151,15 @@ This localizer requires following topics to work.
 |  `/sensing/gnss/septentrio/poscovgeodetic`            |  `septentrio_gnss_driver_msgs/msg/PosCovGeodetic` | If you use Septentrio |
 |  `/vehicle/status/velocity_status`                    |  `autoware_auto_vehicle_msgs/msg/VelocityReport`  |  |
 
-### Input topics from autoware
-
+from autoware
 |  topic name  |  msg type  | description |
 | ---- | ---- | -- |
 |  `/tf_static`      | `tf2_msgs/msg/TFMessage`                   | published from `sensor_kit`  |
 |  `/map/vector_map` | `autoware_auto_mapping_msgs/msg/HADMapBin` | published from `/map/lanelet2_map_loader` |
 
 #### about tf_static
+
+<details><summary>click to open</summary><div>
 
 Some nodes requires `/tf_static` from `/base_link` to the frame_id of `/sensing/camera/traffic_light/image_raw/compressed` (e.g. `/traffic_light_left_camera/camera_optical_link`).
 You can verify that the tf_static is correct with the following command.
@@ -171,7 +181,9 @@ ros2 run tf2_ros static_transform_publisher \
   --yaw -1.570
 ```
 
-### Output
+</div></details>
+
+### Output topics
 
 |  topic name  |  msg type  | description |
 | ---- | ---- | -- |
@@ -184,7 +196,7 @@ ros2 run tf2_ros static_transform_publisher \
 
 ## Visualization
 
-(This project contains original rviz plugins.)
+This project contains original rviz plugins. [rviz2_overlay_plugins](./rviz2_plugins/rviz2_overlay_plugins/README.md)
 
 ![rviz](docs/rviz_description.png)
 
