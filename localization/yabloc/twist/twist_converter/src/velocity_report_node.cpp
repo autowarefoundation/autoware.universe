@@ -45,12 +45,12 @@ private:
 
   void on_twist(const TwistStamped & msg)
   {
-    VelocityReport velocity_report;
+    Velocity velocity_report;
     velocity_report.header = msg.header;
     velocity_report.longitudinal_velocity = msg.twist.linear.x;
     velocity_report.lateral_velocity = msg.twist.linear.y;
-    velocity_report.heading_rate = msg.heading_rate;
-    pub_twist_stamped_->publish(velocity_report);
+    velocity_report.heading_rate = msg.twist.angular.z;
+    pub_velocity_report_->publish(velocity_report);
   }
 };
 

@@ -37,7 +37,7 @@ TwistEstimator::TwistEstimator()
   auto cb_velocity = std::bind(&TwistEstimator::on_velocity_report, this, _1);
 
   sub_imu_ = create_subscription<Imu>("/sensing/imu/tamagawa/imu_raw", 10, cb_imu);
-  sub_velocity_report_ = create_subscription<VelocityReport>("/vehicle/status/velocity_report", 10, cb_velocity);
+  sub_velocity_report_ = create_subscription<VelocityReport>("/vehicle/status/velocity_status", 10, cb_velocity);
   sub_navpvt_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_pvt);
 
   pub_twist_ = create_publisher<TwistStamped>("twist", 10);
