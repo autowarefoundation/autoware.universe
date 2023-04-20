@@ -84,7 +84,7 @@ VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapF
     stop_watch_ptr_->tic("processing_time");
   }
 
-  distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
+  distance_threshold_ = declare_parameter<double>("distance_threshold");
   bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
   if (use_dynamic_map_loading) {
     rclcpp::CallbackGroup::SharedPtr main_callback_group;

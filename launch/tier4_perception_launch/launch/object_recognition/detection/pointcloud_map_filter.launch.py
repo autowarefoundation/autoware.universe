@@ -57,7 +57,7 @@ class PointcloudMapFilterPipeline:
         components.append(
             ComposableNode(
                 package="compare_map_segmentation",
-                plugin="compare_map_segmentation::VoxelBasedCompareMapFilterComponent",
+                plugin="compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent",
                 name="voxel_based_compare_map_filter",
                 remappings=[
                     ("input", LaunchConfiguration("input_topic")),
@@ -113,7 +113,7 @@ class PointcloudMapFilterPipeline:
         components.append(
             ComposableNode(
                 package="compare_map_segmentation",
-                plugin="compare_map_segmentation::VoxelBasedCompareMapFilterComponent",
+                plugin="compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent",
                 name="voxel_based_compare_map_filter",
                 remappings=[
                     ("input", down_sample_topic),

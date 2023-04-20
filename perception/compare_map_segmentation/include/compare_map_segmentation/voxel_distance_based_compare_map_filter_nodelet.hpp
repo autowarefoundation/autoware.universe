@@ -37,12 +37,8 @@ typedef typename PointCloud::ConstPtr PointCloudConstPtr;
 class VoxelDistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 {
 private:
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
-  PointCloudPtr voxel_map_ptr_;
   PointCloudConstPtr map_ptr_;
-  double distance_threshold_;
   pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
-  VoxelGridPointXYZ voxel_grid_;
 
 public:
   explicit VoxelDistanceBasedStaticMapLoader(

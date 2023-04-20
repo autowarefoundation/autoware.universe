@@ -36,7 +36,7 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   // voxel
   voxel_map_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ>);
-  voxel_grid_.setLeafSize(distance_threshold_, distance_threshold_, distance_threshold_);
+  voxel_grid_.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, voxel_leaf_size_);
   voxel_grid_.setInputCloud(map_pcl_ptr);
   voxel_grid_.setSaveLeafLayout(true);
   voxel_grid_.filter(*voxel_map_ptr_);
@@ -113,7 +113,7 @@ VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterC
     stop_watch_ptr_->tic("processing_time");
   }
 
-  distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
+  distance_threshold_ = declare_parameter<double>("distance_threshold");
   bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
   if (use_dynamic_map_loading) {
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
@@ -141,11 +141,21 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
           pcl_input->points.at(i), distance_threshold_)) {
       continue;
     }
-    RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", distance_threshold_);
+    pcl_output->points.push_back(pcl_input->points.at(i));
   }
 
   pcl::toROSMsg(*pcl_output, output);
   output.header = input->header;
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 }  // namespace compare_map_segmentation
 
