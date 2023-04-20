@@ -1,4 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+'''
+Script to publish only the topics necessary to make the localization component work from rosbag.
+
+e.g. $ ./play_rosbag_for_loc.py <your_rosbag_path> -o 
+'''
 import os
 import subprocess
 import argparse
@@ -13,14 +18,10 @@ TOPICS = [
     '/sensing/gnss/ublox/nav_sat_fix',
     '/sensing/gnss/ublox/navpvt',
     '/sensing/imu/tamagawa/imu_raw',
-    '/sensing/lidar/left/velodyne_packets',
-    '/sensing/lidar/right/velodyne_packets',
-    '/sensing/lidar/rear/velodyne_packets',
     '/sensing/lidar/top/velodyne_packets',
     '/sensing/camera/traffic_light/camera_info',
     '/sensing/camera/traffic_light/image_raw/compressed',
-    '/vehicle/status/gear_status',
-    '/vehicle/status/steering_status',
+    # .universe
     '/vehicle/status/velocity_status',
     # .iv
     '/vehicle/status/twist',
@@ -41,7 +42,8 @@ OVERRIDE_TEXT = '''
 def doesRosbagIncludeTopics(rosbag):
     reader = SequentialReader()
     bag_storage_otions = StorageOptions(uri=rosbag, storage_id="sqlite3")
-    bag_converter_options = ConverterOptions(input_serialization_format="cdr", output_serialization_format="cdr")
+    bag_converter_options = ConverterOptions(
+        input_serialization_format="cdr", output_serialization_format="cdr")
     reader.open(bag_storage_otions, bag_converter_options)
 
     included = []
@@ -57,13 +59,13 @@ def printCommand(command):
     for c in command[0:idx]:
         print(c, end=' ')
     print(command[idx])
-    for c in command[idx+1:]:
+    for c in command[idx + 1:]:
         print('\t', c)
     print('\033[0m')
 
     print('The following topics are not included in rosbag')
     for t in TOPICS:
-        if not t in command[idx+1:]:
+        if not t in command[idx + 1:]:
             print('\t', t)
 
 
@@ -81,8 +83,10 @@ def makeOverrideYaml(yaml_path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('rosbag', help='rosbag file to replay')
-    parser.add_argument('-r', '--rate', default='1.0', help='rate at which to play back messages. Valid range > 0.0.')
-    parser.add_argument('-o', '--override', action='store_true', help='qos profile overrides')
+    parser.add_argument('-r', '--rate', default='1.0',
+                        help='rate at which to play back messages. Valid range > 0.0.')
+    parser.add_argument('-o', '--override',
+                        action='store_true', help='qos profile overrides')
 
     args = parser.parse_args()
 

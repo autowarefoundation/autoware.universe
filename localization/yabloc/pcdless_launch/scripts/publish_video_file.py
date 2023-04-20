@@ -1,4 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+'''
+This node reads a video file and publishes it as an image topic.
+
+e.g. publish_video_file.py video.mp4
+'''
 from sensor_msgs.msg import Image
 from rclpy.node import Node
 import rclpy
@@ -10,7 +15,8 @@ from cv_bridge import CvBridge
 class Mp4Publisher(Node):
     def __init__(self, mp4_file):
         super().__init__('mp4_publisher')
-        self.publisher_ = self.create_publisher(Image, '/sensing/camera/undistorted/image_raw', 10)
+        self.publisher_ = self.create_publisher(
+            Image, '/sensing/camera/undistorted/image_raw', 10)
         self.timer_ = self.create_timer(0.1, self.timer_callback)
         self.video_ = cv2.VideoCapture(mp4_file)
         self.bridge_ = CvBridge()
