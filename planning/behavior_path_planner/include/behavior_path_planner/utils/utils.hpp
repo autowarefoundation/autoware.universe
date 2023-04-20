@@ -339,8 +339,12 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 double calcTotalLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const bool include_buffer = true);
 
-double calcLaneChangeBuffer(
-  const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
+double calcLaneChangingTime(
+  const double lane_changing_velocity, const double shift_length,
+  const BehaviorPathPlannerParameters & common_parameter);
+
+double calcMinimumLaneChangeLength(
+  const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
   const double length_to_intersection = 0.0);
 
 lanelet::ConstLanelets getLaneletsFromPath(

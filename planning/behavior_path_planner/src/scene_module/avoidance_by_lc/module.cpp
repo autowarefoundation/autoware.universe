@@ -459,7 +459,10 @@ BehaviorModuleOutput AvoidanceByLCModule::planWaitingApproval()
 
   if (!avoidance_data_.target_objects.empty()) {
     const auto to_front_object_distance = avoidance_data_.target_objects.front().longitudinal;
-    const auto lane_change_buffer = planner_data_->parameters.minimum_lane_changing_length;
+    const double shift_length = status_.lane_change_path.shift_line.end_shift_length -
+                                status_.lane_change_path.shift_line.start_shift_length;
+    const double lane_change_buffer =
+      utils::calcMinimumLaneChangeLength(planner_data_->parameters, {shift_length});
 
     boost::optional<Pose> p_insert{};
     insertDecelPoint(
@@ -535,15 +538,14 @@ PathWithLaneId AvoidanceByLCModule::getReferencePath() const
       common_parameters.forward_path_length, common_parameters);
   }
 
-  const int num_lane_change =
-    std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
-
   reference_path = utils::getCenterLinePath(
     *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters, 0.0);
 
+  const auto shift_intervals =
+    route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
   const double lane_change_buffer =
-    utils::calcLaneChangeBuffer(common_parameters, num_lane_change, 0.0);
+    utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
 
   reference_path = utils::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->lane_change->prepare_duration,
@@ -566,7 +568,7 @@ lanelet::ConstLanelets AvoidanceByLCModule::getLaneChangeLanes(
 {
   lanelet::ConstLanelets lane_change_lanes;
   const auto & route_handler = planner_data_->route_handler;
-  const auto minimum_lane_changing_length = planner_data_->parameters.minimum_lane_changing_length;
+  const auto minimum_prepare_length = planner_data_->parameters.minimum_prepare_length;
   const auto prepare_duration = parameters_->lane_change->prepare_duration;
   const auto current_pose = getEgoPose();
   const auto current_twist = getEgoTwist();
@@ -586,7 +588,7 @@ lanelet::ConstLanelets AvoidanceByLCModule::getLaneChangeLanes(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanes, current_pose, &current_lane);
   const double lane_change_prepare_length =
-    std::max(current_twist.linear.x * prepare_duration, minimum_lane_changing_length);
+    std::max(current_twist.linear.x * prepare_duration, minimum_prepare_length);
   lanelet::ConstLanelets current_check_lanes =
     route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
   lanelet::ConstLanelet lane_change_lane;
