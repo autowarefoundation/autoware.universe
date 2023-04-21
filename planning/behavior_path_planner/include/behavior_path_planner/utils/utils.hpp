@@ -336,9 +336,6 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
-double calcTotalLaneChangeLength(
-  const BehaviorPathPlannerParameters & common_param, const bool include_buffer = true);
-
 double calcLaneChangingTime(
   const double lane_changing_velocity, const double shift_length,
   const BehaviorPathPlannerParameters & common_parameter);
@@ -351,6 +348,10 @@ lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
 
 std::string convertToSnakeCase(const std::string & input_str);
+
+std::vector<DrivableLanes> combineDrivableLanes(
+  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
+  const std::vector<DrivableLanes> & new_drivable_lanes_vec);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_

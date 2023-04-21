@@ -1116,22 +1116,53 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
 double getDistanceToNextTrafficLight(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
 {
-  const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
-
   lanelet::ConstLanelet current_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
     return std::numeric_limits<double>::max();
   }
 
-  double distance = 0;
-  bool is_after_current_lanelet = false;
+  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
+  const auto to_object = lanelet::geometry::toArcCoordinates(
+    lanelet::utils::to2D(current_lanelet.centerline()),
+    lanelet::utils::to2D(lanelet_point).basicPoint());
+
+  for (const auto & element : current_lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
+    lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
+
+    const auto to_stop_line = lanelet::geometry::toArcCoordinates(
+      lanelet::utils::to2D(current_lanelet.centerline()),
+      lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
+
+    const auto distance_object_to_stop_line = to_stop_line.length - to_object.length;
+
+    if (distance_object_to_stop_line > 0.0) {
+      return distance_object_to_stop_line;
+    }
+  }
+
+  double distance = lanelet::utils::getLaneletLength3d(current_lanelet);
+
+  bool found_current_lane = false;
   for (const auto & llt : lanelets) {
-    if (llt == current_lanelet) {
-      is_after_current_lanelet = true;
+    if (llt.id() == current_lanelet.id()) {
+      found_current_lane = true;
+      continue;
     }
-    if (is_after_current_lanelet && !llt.regulatoryElementsAs<lanelet::TrafficLight>().empty()) {
-      return distance - arc_coordinates.length;
+
+    if (!found_current_lane) {
+      continue;
     }
+
+    for (const auto & element : llt.regulatoryElementsAs<lanelet::TrafficLight>()) {
+      lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
+
+      const auto to_stop_line = lanelet::geometry::toArcCoordinates(
+        lanelet::utils::to2D(llt.centerline()),
+        lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
+
+      return distance + to_stop_line.length - to_object.length;
+    }
+
     distance += lanelet::utils::getLaneletLength3d(llt);
   }
 
@@ -1973,15 +2004,6 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
   return true;
 }
 
-double calcTotalLaneChangeLength(
-  const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
-{
-  const double minimum_lane_change_distance =
-    common_param.minimum_prepare_length + common_param.minimum_lane_changing_length;
-  const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
-  return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
-}
-
 double calcLaneChangingTime(
   const double lane_changing_velocity, const double shift_length,
   const BehaviorPathPlannerParameters & common_parameter)
@@ -2050,4 +2072,82 @@ std::string convertToSnakeCase(const std::string & input_str)
   }
   return output_str;
 }
+
+std::vector<DrivableLanes> combineDrivableLanes(
+  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
+  const std::vector<DrivableLanes> & new_drivable_lanes_vec)
+{
+  const auto has_same_lane =
+    [](const lanelet::ConstLanelet & target_lane, const lanelet::ConstLanelets & lanes) {
+      return std::find_if(lanes.begin(), lanes.end(), [&](const auto & ll) {
+               return ll.id() == target_lane.id();
+             }) != lanes.end();
+    };
+
+  const auto convert_to_lanes = [](const DrivableLanes & drivable_lanes) {
+    auto lanes = drivable_lanes.middle_lanes;
+    lanes.push_back(drivable_lanes.right_lane);
+    lanes.push_back(drivable_lanes.left_lane);
+    return lanes;
+  };
+
+  auto updated_drivable_lanes_vec = original_drivable_lanes_vec;
+  size_t new_drivable_lanes_idx = 0;
+  for (auto & updated_drivable_lanes : updated_drivable_lanes_vec) {
+    // calculated corresponding index of new_drivable_lanes
+    const auto opt_new_drivable_lanes_idx = [&]() -> std::optional<size_t> {
+      for (size_t n_idx = 0; n_idx < new_drivable_lanes_vec.size(); ++n_idx) {
+        for (const auto & ll : convert_to_lanes(updated_drivable_lanes)) {
+          if (has_same_lane(ll, convert_to_lanes(new_drivable_lanes_vec.at(n_idx)))) {
+            return n_idx;
+          }
+        }
+      }
+      return std::nullopt;
+    }();
+    if (!opt_new_drivable_lanes_idx) {
+      continue;
+    }
+    new_drivable_lanes_idx = *opt_new_drivable_lanes_idx;
+    const auto & new_drivable_lanes = new_drivable_lanes_vec.at(new_drivable_lanes_idx);
+
+    // update left lane
+    if (has_same_lane(updated_drivable_lanes.left_lane, convert_to_lanes(new_drivable_lanes))) {
+      updated_drivable_lanes.left_lane = new_drivable_lanes.left_lane;
+    }
+    // update right lane
+    if (has_same_lane(updated_drivable_lanes.right_lane, convert_to_lanes(new_drivable_lanes))) {
+      updated_drivable_lanes.right_lane = new_drivable_lanes.right_lane;
+    }
+    // update middle lanes
+    for (const auto & middle_lane : convert_to_lanes(new_drivable_lanes)) {
+      if (!has_same_lane(middle_lane, convert_to_lanes(updated_drivable_lanes))) {
+        updated_drivable_lanes.middle_lanes.push_back(middle_lane);
+      }
+    }
+
+    // validate middle lanes
+    auto & middle_lanes = updated_drivable_lanes.middle_lanes;
+    if (has_same_lane(updated_drivable_lanes.right_lane, middle_lanes)) {
+      middle_lanes.erase(
+        std::remove(
+          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.right_lane),
+        std::cend(middle_lanes));
+    }
+    if (has_same_lane(updated_drivable_lanes.left_lane, middle_lanes)) {
+      middle_lanes.erase(
+        std::remove(
+          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.left_lane),
+        std::cend(middle_lanes));
+    }
+  }
+  // NOTE: If original_drivable_lanes_vec is shorter than new_drivable_lanes_vec, push back remained
+  // new_drivable_lanes_vec.
+  updated_drivable_lanes_vec.insert(
+    updated_drivable_lanes_vec.end(), new_drivable_lanes_vec.begin() + new_drivable_lanes_idx + 1,
+    new_drivable_lanes_vec.end());
+
+  return updated_drivable_lanes_vec;
+}
+
 }  // namespace behavior_path_planner::utils
