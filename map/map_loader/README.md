@@ -76,7 +76,11 @@ The node projects lan/lon coordinates into MGRS coordinates.
 
 ### Feature
 
-lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray.
+lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. There are 3 types of map can be loaded in autoware. Please makesure you selected the correct lanelet2_map_projector_type when you launch this package.
+
+- MGRS
+- UTM
+- local
 
 ### How to Run
 
@@ -89,3 +93,12 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 ### Published Topics
 
 - ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
+
+### Parameters
+
+| Name                        | Type   | Description                                                  | Default value |
+| :-------------------------- | :----- | :----------------------------------------------------------- | :------------ |
+| lanelet2_map_projector_type | string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
+| latitude                    | double | Latitude of map_origin, only using in UTM map projector      | 0.0           |
+| longitude                   | double | A flag to enable partial pointcloud map server               | 0.0           |
+| center_line_resolution      | double | Define the reolution of the lanelet center line              | 5.0           |
