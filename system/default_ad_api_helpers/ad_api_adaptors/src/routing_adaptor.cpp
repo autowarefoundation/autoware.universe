@@ -103,8 +103,8 @@ void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
 void RoutingAdaptor::on_reroute(const PoseStamped::ConstSharedPtr pose)
 {
   const auto route = std::make_shared<SetRoutePoints::Service::Request>();
-  route_->header = pose->header;
-  route_->goal = pose->pose;
+  route->header = pose->header;
+  route->goal = pose->pose;
   cli_reroute_->async_send_request(route);
 }
 
