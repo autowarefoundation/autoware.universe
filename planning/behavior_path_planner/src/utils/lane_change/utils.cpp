@@ -244,18 +244,18 @@ bool getLaneChangePaths(
     utils::getArcLengthToTargetLanelet(original_lanelets, target_lanelets.front(), pose);
 
 #ifdef USE_OLD_ARCHITECTURE
-  const auto num_to_preferred_lane =
-    std::abs(route_handler.getNumLaneToPreferredLane(target_lanelets.back()));
+  const auto shift_intervals =
+    route_handler.getLateralIntervalsToPreferredLane(target_lanelets.back());
 #else
   const auto get_opposite_direction =
     (direction == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
-  const auto num_to_preferred_lane = std::abs(
-    route_handler.getNumLaneToPreferredLane(target_lanelets.back(), get_opposite_direction));
+  const auto shift_intervals = route_handler.getLateralIntervalsToPreferredLane(
+    target_lanelets.back(), get_opposite_direction);
 #endif
-  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanelets.back());
-
   const auto required_total_min_length =
-    utils::calcLaneChangeBuffer(common_parameter, num_to_preferred_lane);
+    utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
+
+  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanelets.back());
 
   const auto dist_to_end_of_current_lanes =
     utils::getDistanceToEndOfLane(pose, original_lanelets) - required_total_min_length;
@@ -945,83 +945,6 @@ std::vector<DrivableLanes> generateDrivableLanes(
   return drivable_lanes;
 }
 
-std::vector<DrivableLanes> combineDrivableLanes(
-  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
-  const std::vector<DrivableLanes> & new_drivable_lanes_vec)
-{
-  const auto has_same_lane =
-    [](const lanelet::ConstLanelet & target_lane, const lanelet::ConstLanelets & lanes) {
-      return std::find_if(lanes.begin(), lanes.end(), [&](const auto & ll) {
-               return ll.id() == target_lane.id();
-             }) != lanes.end();
-    };
-
-  const auto convert_to_lanes = [](const DrivableLanes & drivable_lanes) {
-    auto lanes = drivable_lanes.middle_lanes;
-    lanes.push_back(drivable_lanes.right_lane);
-    lanes.push_back(drivable_lanes.left_lane);
-    return lanes;
-  };
-
-  auto updated_drivable_lanes_vec = original_drivable_lanes_vec;
-  size_t new_drivable_lanes_idx = 0;
-  for (auto & updated_drivable_lanes : updated_drivable_lanes_vec) {
-    // calculated corresponding index of new_drivable_lanes
-    const auto opt_new_drivable_lanes_idx = [&]() -> std::optional<size_t> {
-      for (size_t n_idx = 0; n_idx < new_drivable_lanes_vec.size(); ++n_idx) {
-        for (const auto & ll : convert_to_lanes(updated_drivable_lanes)) {
-          if (has_same_lane(ll, convert_to_lanes(new_drivable_lanes_vec.at(n_idx)))) {
-            return n_idx;
-          }
-        }
-      }
-      return std::nullopt;
-    }();
-    if (!opt_new_drivable_lanes_idx) {
-      continue;
-    }
-    new_drivable_lanes_idx = *opt_new_drivable_lanes_idx;
-    const auto & new_drivable_lanes = new_drivable_lanes_vec.at(new_drivable_lanes_idx);
-
-    // update left lane
-    if (has_same_lane(updated_drivable_lanes.left_lane, convert_to_lanes(new_drivable_lanes))) {
-      updated_drivable_lanes.left_lane = new_drivable_lanes.left_lane;
-    }
-    // update right lane
-    if (has_same_lane(updated_drivable_lanes.right_lane, convert_to_lanes(new_drivable_lanes))) {
-      updated_drivable_lanes.right_lane = new_drivable_lanes.right_lane;
-    }
-    // update middle lanes
-    for (const auto & middle_lane : convert_to_lanes(new_drivable_lanes)) {
-      if (!has_same_lane(middle_lane, convert_to_lanes(updated_drivable_lanes))) {
-        updated_drivable_lanes.middle_lanes.push_back(middle_lane);
-      }
-    }
-
-    // validate middle lanes
-    auto & middle_lanes = updated_drivable_lanes.middle_lanes;
-    if (has_same_lane(updated_drivable_lanes.right_lane, middle_lanes)) {
-      middle_lanes.erase(
-        std::remove(
-          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.right_lane),
-        std::cend(middle_lanes));
-    }
-    if (has_same_lane(updated_drivable_lanes.left_lane, middle_lanes)) {
-      middle_lanes.erase(
-        std::remove(
-          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.left_lane),
-        std::cend(middle_lanes));
-    }
-  }
-  // NOTE: If original_drivable_lanes_vec is shorter than new_drivable_lanes_vec, push back remained
-  // new_drivable_lanes_vec.
-  updated_drivable_lanes_vec.insert(
-    updated_drivable_lanes_vec.end(), new_drivable_lanes_vec.begin() + new_drivable_lanes_idx + 1,
-    new_drivable_lanes_vec.end());
-
-  return updated_drivable_lanes_vec;
-}
-
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,
   [[maybe_unused]] const Pose & ego_pose_before_collision,
@@ -1035,7 +958,7 @@ std::optional<LaneChangePath> getAbortPaths(
 
   const auto ego_nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const auto ego_nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
-  const double minimum_lane_change_length = utils::calcLaneChangeBuffer(common_param, 1);
+  const double minimum_lane_change_length = 30.0;  // temporary
 
   const auto & lane_changing_path = selected_path.path;
   const auto lane_changing_end_pose_idx = std::invoke([&]() {
@@ -1099,8 +1022,7 @@ std::optional<LaneChangePath> getAbortPaths(
     lanelet::utils::getArcCoordinates(reference_lanelets, abort_return_pose);
   const PathWithLaneId reference_lane_segment = std::invoke([&]() {
     const double minimum_lane_changing_length =
-      common_param.backward_length_buffer_for_end_of_lane +
-      common_param.minimum_lane_changing_length;
+      common_param.backward_length_buffer_for_end_of_lane + 16.5;
 
     const double s_start = arc_position.length;
     double s_end =
@@ -1172,8 +1094,9 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   const Pose & current_pose, const double abort_return_dist,
   const BehaviorPathPlannerParameters & common_param)
 {
+  const double minimum_lane_changing_length = 16.5;
   const auto minimum_lane_change_length = common_param.minimum_prepare_length +
-                                          common_param.minimum_lane_changing_length +
+                                          minimum_lane_changing_length +
                                           common_param.backward_length_buffer_for_end_of_lane;
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {

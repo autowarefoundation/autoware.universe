@@ -253,7 +253,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWa
     const std::vector<Pose> & pose = {debug_data_.virtual_wall_pose};
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        pose, "merge_from_private_road", now, module_id_),
+        pose, "merge_from_private_road", now),
       &wall_marker, now);
   }
 
