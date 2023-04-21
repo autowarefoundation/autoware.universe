@@ -49,7 +49,6 @@ Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.co
 
 ### Parameters
 
-
 | Name                          | Type        | Description                                                                       | Default value |
 | :---------------------------- | :---------- | :-------------------------------------------------------------------------------- | :------------ |
 | enable_whole_load             | bool        | A flag to enable raw pointcloud map publishing                                    | true          |
@@ -155,10 +154,10 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 
 ### Parameters
 
-| Name                        | Type   | Description                                                  | Default value |
-| :-------------------------- | :----- | :----------------------------------------------------------- | :------------ |
-| lanelet2_map_projector_type | string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
-| latitude                    | double | Latitude of map_origin, only using in UTM map projector      | 0.0           |
-| longitude                   | double | Longitude of map_origin, only using in UTM map projector     | 0.0           |
-| center_line_resolution      | double | Define the reolution of the lanelet center line              | 5.0           |
-| lanelet2_map_path           | string | The lanelet2 map path                                        | None          |
+| Name                        | Type        | Description                                                  | Default value |
+| :-------------------------- | :---------- | :----------------------------------------------------------- | :------------ |
+| lanelet2_map_projector_type | std::string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
+| latitude                    | double      | Latitude of map_origin, only using in UTM map projector      | 0.0           |
+| longitude                   | double      | Longitude of map_origin, only using in UTM map projector     | 0.0           |
+| center_line_resolution      | double      | Define the reolution of the lanelet center line              | 5.0           |
+| lanelet2_map_path           | std::string | The lanelet2 map path                                        | None          |
