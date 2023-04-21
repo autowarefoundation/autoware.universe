@@ -1752,17 +1752,17 @@ double calcYawDeviation(
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
       std::cerr << e.what() << std::endl;
-      return std::nan("");
+      return 0.0;
     }
   }
 
-  if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+  if (overlap_removed_points.size() < 1) {
+    const std::runtime_error e("points size is less than 1");
     if (throw_exception) {
       throw e;
     }
     std::cerr << e.what() << std::endl;
-    return std::nan("");
+    return 0.0;
   }
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, pose.position);
