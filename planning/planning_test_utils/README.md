@@ -60,6 +60,25 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 }
 ```
 
+## Implemented tests
+
+| Node name                                                 | Test name                                      | exception input     | output                                          | Exceptional trajectory/route/path_with_lane_id pattern | Current test result       |
+| --------------------------------------------------------- | ---------------------------------------------- | ------------------- | ----------------------------------------------- | ------------------------------------------------------ | ------------------------- |
+| planning_validator                                        | NodeTestWithExceptionTrajectory                | trajectory          | trajectory                                      | Empty, single point, path with duplicate points        |                           |
+| motion_velocity_smoother                                  | NodeTestWithExceptionTrajectory                | trajectory          | trajectory                                      | Empty, single point, path with duplicate points        | Commented out due to fail |
+| obstacle_cruise_planner                                   | NodeTestWithExceptionTrajectory                | trajectory          | trajectory                                      | Empty, single point, path with duplicate points        |                           |
+| obstacle_stop_planner                                     | NodeTestWithExceptionTrajectory                | trajectory          | trajectory                                      | Empty, single point, path with duplicate points        |                           |
+| obstacle_velocity_limiter                                 | NodeTestWithExceptionTrajectory                | trajectory          | trajectory                                      | Empty, single point, path with duplicate points        |                           |
+| obstacle_avoidance_planner                                | NodeTestWithExceptionTrajectory                | trajectory          | trajectory                                      | Empty, single point, path with duplicate points        |                           |
+| scenario_selector                                         | NodeTestWithExceptionTrajectoryLaneDrivingMode |
+| NodeTestWithExceptionTrajectoryParkingMode                | trajectory                                     | scenario            | Empty, single point, path with duplicate points |
+| There are 2 patterns of scenarios:LANEDRIVING and PARKING |                                                |
+| freespace_planner                                         | NodeTestWithExceptionRoute                     | route               | trajectory                                      | Empty route                                            |                           |
+| behavior_path_planner                                     | NodeTestWithExceptionRoute                     | route, ego position | path_with_lane_id                               | Empty route, TBD                                       |                           |
+| behavior_velocity_planner                                 | NodeTestWithExceptionPathWithLaneID            | path_with_lane_id   | path                                            | Empty path                                             |                           |
+
 ## Assumptions / Known limits
+
+When launch a node, the parameters are loaded from the package's parameter file, which is located in the config directory.Please be aware that if there are missing parameters, the node can't be launched during testing.
 
 ## Future extensions / Unimplemented parts
