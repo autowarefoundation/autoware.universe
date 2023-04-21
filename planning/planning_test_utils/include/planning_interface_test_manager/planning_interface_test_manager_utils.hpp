@@ -181,7 +181,8 @@ OccupancyGrid constructCostMap(size_t width, size_t height, double resolution)
   return costmap_msg;
 }
 
-TFMessage makeTFMsg(rclcpp::Node::SharedPtr target_node){
+TFMessage makeTFMsg(rclcpp::Node::SharedPtr target_node)
+{
   TFMessage tf_msg;
   geometry_msgs::msg::Quaternion quaternion;
   quaternion.x = 0.;
