@@ -38,13 +38,14 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 
 ### Parameters
 
-| Name                          | Type  | Description                                                                       | Default value |
-| :---------------------------- | :---- | :-------------------------------------------------------------------------------- | :------------ |
-| enable_whole_load             | bool  | A flag to enable raw pointcloud map publishing                                    | true          |
-| enable_downsampled_whole_load | bool  | A flag to enable downsampled pointcloud map publishing                            | false         |
-| enable_partial_load           | bool  | A flag to enable partial pointcloud map server                                    | false         |
-| enable_differential_load      | bool  | A flag to enable differential pointcloud map server                               | false         |
-| leaf_size                     | float | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
+| Name                          | Type   | Description                                                                       | Default value |
+| :---------------------------- | :----- | :-------------------------------------------------------------------------------- | :------------ |
+| enable_whole_load             | bool   | A flag to enable raw pointcloud map publishing                                    | true          |
+| enable_downsampled_whole_load | bool   | A flag to enable downsampled pointcloud map publishing                            | false         |
+| enable_partial_load           | bool   | A flag to enable partial pointcloud map server                                    | false         |
+| enable_differential_load      | bool   | A flag to enable differential pointcloud map server                               | false         |
+| leaf_size                     | float  | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
+| pointcloud_map_path           | string | The pointcloud map path                                                           | None          |
 
 ### Interfaces
 
@@ -100,5 +101,6 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 | :-------------------------- | :----- | :----------------------------------------------------------- | :------------ |
 | lanelet2_map_projector_type | string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
 | latitude                    | double | Latitude of map_origin, only using in UTM map projector      | 0.0           |
-| longitude                   | double | A flag to enable partial pointcloud map server               | 0.0           |
+| longitude                   | double | Longitude of map_origin, only using in UTM map projector     | 0.0           |
 | center_line_resolution      | double | Define the reolution of the lanelet center line              | 5.0           |
+| lanelet2_map_path           | string | The lanelet2 map path                                        | None          |
