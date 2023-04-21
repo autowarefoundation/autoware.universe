@@ -454,18 +454,16 @@ bool MissionPlanner::checkRerouteSafety(
   // find last idx that matches the target primitives
   size_t end_idx = start_idx;
   for (size_t i = 1; i < target_route.segments.size(); ++i) {
-    const size_t original_route_idx = start_idx + i;
-    if (original_route_idx > original_route.segments.size() - 1) {
-      end_idx = original_route_idx + 1;
+    if (start_idx + 1 > original_route.segments.size() - 1) {
       break;
     }
 
-    const auto & original_primitives = original_route.segments.at(original_route_idx).primitives;
+    const auto & original_primitives = original_route.segments.at(start_idx + i).primitives;
     const auto & target_primitives = target_route.segments.at(i).primitives;
     if (!hasSamePrimitives(original_primitives, target_primitives)) {
-      end_idx = original_route_idx + 1;
       break;
     }
+    end_idx = start_idx + i;
   }
 
   // create map
@@ -496,7 +494,7 @@ bool MissionPlanner::checkRerouteSafety(
   double accumulated_length = lanelet_length - dist_to_current_pose;
 
   // compute distance from the start_idx+1 to end_idx
-  for (size_t i = start_idx + 1; i < end_idx; ++i) {
+  for (size_t i = start_idx + 1; i <= end_idx; ++i) {
     const auto primitives = original_route.segments.at(i).primitives;
     if (primitives.empty()) {
       break;
