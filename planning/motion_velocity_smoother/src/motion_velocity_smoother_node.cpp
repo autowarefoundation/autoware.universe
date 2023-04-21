@@ -826,16 +826,31 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & t
   trajectory_utils::applyMaximumVelocityLimit(
     0, traj.size(), max_velocity_with_deceleration_, traj);
 
-  const size_t closest_idx = findNearestIndexFromEgo(traj);
+  // insert the point that has external limited velocity
+  const auto & current_pose = current_odometry_ptr_->pose.pose;
+  const size_t closest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    traj, current_pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+  const auto inserted_index =
+    motion_utils::insertTargetPoint(closest_seg_idx, external_velocity_limit_.dist, traj);
+  if (!inserted_index) {
+    return;
+  }
+  const double original_vel = traj.at(*inserted_index).longitudinal_velocity_mps;
+  traj.at(*inserted_index).longitudinal_velocity_mps =
+    std::min(external_velocity_limit_.velocity, original_vel);
 
-  double dist = 0.0;
-  for (size_t idx = closest_idx; idx < traj.size() - 1; ++idx) {
-    dist += tier4_autoware_utils::calcDistance2d(traj.at(idx), traj.at(idx + 1));
+  // distance from base link to the closest trajectory point ahead of ego vehicle
+  double dist = tier4_autoware_utils::calcLongitudinalDeviation(
+    current_pose, traj.at(closest_seg_idx + 1).pose.position);
+  for (size_t idx = closest_seg_idx + 1; idx < traj.size() - 1; ++idx) {
     if (dist > external_velocity_limit_.dist) {
       trajectory_utils::applyMaximumVelocityLimit(
-        idx + 1, traj.size(), external_velocity_limit_.velocity, traj);
+        idx, traj.size(), external_velocity_limit_.velocity, traj);
       return;
     }
+
+    dist += tier4_autoware_utils::calcDistance2d(traj.at(idx), traj.at(idx + 1));
   }
   traj.back().longitudinal_velocity_mps = std::min(
     traj.back().longitudinal_velocity_mps, static_cast<float>(external_velocity_limit_.velocity));
