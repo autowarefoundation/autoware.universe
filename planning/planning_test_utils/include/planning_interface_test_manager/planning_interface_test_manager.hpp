@@ -94,7 +94,8 @@ public:
   void publishOdometry(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void publishInitialPose(rclcpp::Node::SharedPtr target_node);
-  void publishInitialPose(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishInitialPose(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift);
 
   void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
