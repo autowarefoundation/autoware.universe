@@ -456,6 +456,7 @@ bool MissionPlanner::checkRerouteSafety(
   for (size_t i = 1; i < target_route.segments.size(); ++i) {
     const size_t original_route_idx = start_idx + i;
     if (original_route_idx > original_route.segments.size() - 1) {
+      end_idx = original_route_idx + 1;
       break;
     }
 
@@ -502,9 +503,10 @@ bool MissionPlanner::checkRerouteSafety(
     }
 
     std::vector<double> lanelets_length(primitives.size());
-    for (const auto & primitive : primitives) {
+    for (size_t primitive_idx = 0; primitive_idx < primitives.size(); ++primitive_idx) {
+      const auto & primitive = primitives.at(primitive_idx);
       const auto & lanelet = lanelet_map_ptr_->laneletLayer.get(primitive.id);
-      lanelets_length.push_back(lanelet::utils::getLaneletLength2d(lanelet));
+      lanelets_length.at(primitive_idx) = (lanelet::utils::getLaneletLength2d(lanelet));
     }
     accumulated_length += *std::min_element(lanelets_length.begin(), lanelets_length.end());
   }
