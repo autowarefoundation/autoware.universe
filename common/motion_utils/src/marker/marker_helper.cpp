@@ -141,11 +141,6 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWall
   visualization_msgs::msg::MarkerArray wall_marker;
 
   const auto max_id = id + static_cast<int32_t>(previous_virtual_walls_nb);
-
-  if (poses.size() == 0) {
-    return wall_marker;
-  }
-
   for (const auto & p : poses) {
     appendMarkerArray(
       function_create_wall_marker(p, module_name, now, id++, longitudinal_offset), &wall_marker);
