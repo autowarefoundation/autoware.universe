@@ -1756,8 +1756,8 @@ double calcYawDeviation(
     }
   }
 
-  if (overlap_removed_points.size() < 1) {
-    const std::runtime_error e("points size is less than 1");
+  if (overlap_removed_points.size() <= 1) {
+    const std::runtime_error e("points size is less than 2");
     if (throw_exception) {
       throw e;
     }
