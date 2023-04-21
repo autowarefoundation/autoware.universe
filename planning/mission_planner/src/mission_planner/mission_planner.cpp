@@ -91,7 +91,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 
   auto qos_transient_local = rclcpp::QoS{1}.transient_local();
   vector_map_subscriber_ = create_subscription<HADMapBin>(
-    "~/input/vector_map", qos_transient_local,
+    "input/vector_map", qos_transient_local,
     std::bind(&MissionPlanner::onMap, this, std::placeholders::_1));
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
