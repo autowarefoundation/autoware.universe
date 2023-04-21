@@ -288,18 +288,6 @@ Scenario makeScenarioMsg(const std::string scenario)
   return scenario_msg;
 }
 
-void spinSomeNodes(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node,
-  const int repeat_count = 1)
-{
-  for (int i = 0; i < repeat_count; i++) {
-    rclcpp::spin_some(test_node);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-    rclcpp::spin_some(target_node);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-  }
-}
-
 template <typename T>
 void createPublisherWithQoS(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
@@ -348,6 +336,35 @@ void setSubscriber(
 {
   createSubscription(
     test_node, topic_name, [&count](const typename T::ConstSharedPtr) { count++; }, subscriber);
+}
+
+void spinSomeNodes(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node,
+  const int repeat_count = 1)
+{
+  for (int i = 0; i < repeat_count; i++) {
+    rclcpp::spin_some(test_node);
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+    rclcpp::spin_some(target_node);
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+  }
+}
+
+template <typename T>
+void publishToTargetNode(
+  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
+  typename rclcpp::Publisher<T>::SharedPtr publisher, T data, const int repeat_count = 1)
+{
+  test_utils::setPublisher<T>(test_node, topic_name, publisher);
+  publisher->publish(data);
+  if (topic_name.empty()) {
+    throw std::runtime_error(
+      std::string("Topic name for ") + typeid(*publisher).name() + " is empty");
+  }
+  if (target_node->count_subscribers(topic_name) == 0) {
+    throw std::runtime_error("No subscriber for " + topic_name);
+  }
+  test_utils::spinSomeNodes(test_node, target_node, repeat_count);
 }
 
 void updateNodeOptions(
@@ -425,23 +442,6 @@ PathWithLaneId loadPathWithLaneIdInYaml()
     path_msg.right_bound.push_back(point);
   }
   return path_msg;
-}
-
-template <typename T>
-void publishToTargetNode(
-  rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<T>::SharedPtr publisher, T data, const int repeat_count = 1)
-{
-  test_utils::setPublisher<T>(test_node, topic_name, publisher);
-  publisher->publish(data);
-  if (topic_name.empty()) {
-    throw std::runtime_error(
-      std::string("Topic name for ") + typeid(*publisher).name() + " is empty");
-  }
-  if (target_node->count_subscribers(topic_name) == 0) {
-    throw std::runtime_error("No subscriber for " + topic_name);
-  }
-  test_utils::spinSomeNodes(test_node, target_node, repeat_count);
 }
 
 }  // namespace test_utils

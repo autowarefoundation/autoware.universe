@@ -323,11 +323,10 @@ void PlanningInterfaceTestManager::testWithNominalTrajectory(rclcpp::Node::Share
 // check to see if target node is dead.
 void PlanningInterfaceTestManager::testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
-  ASSERT_NO_THROW(publishAbnormalTrajectory(target_node, Trajectory{}));
-  ASSERT_NO_THROW(
-    publishAbnormalTrajectory(target_node, test_utils::generateTrajectory<Trajectory>(1, 0.0)));
-  ASSERT_NO_THROW(publishAbnormalTrajectory(
-    target_node, test_utils::generateTrajectory<Trajectory>(10, 0.0, 0.0, 0.0, 0.0, 1)));
+  publishAbnormalTrajectory(target_node, Trajectory{});
+  publishAbnormalTrajectory(target_node, test_utils::generateTrajectory<Trajectory>(1, 0.0));
+  publishAbnormalTrajectory(
+    target_node, test_utils::generateTrajectory<Trajectory>(10, 0.0, 0.0, 0.0, 0.0, 1));
 }
 
 // test for normal working
@@ -345,7 +344,7 @@ void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::Sh
 // check to see if target node is dead.
 void PlanningInterfaceTestManager::testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node)
 {
-  ASSERT_NO_THROW(publishAbnormalRoute(target_node, LaneletRoute{}));
+  publishAbnormalRoute(target_node, LaneletRoute{});
 }
 
 // test for normal working
