@@ -65,20 +65,20 @@ public:
 
   visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
     const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
-    int32_t id, const double longitudinal_offset = 0.0);
+    const double longitudinal_offset = 0.0);
 
   visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
     const std::vector<Pose> & slow_down_poses, const std::string & module_name,
-    const rclcpp::Time & now, int32_t id, const double longitudinal_offset = 0.0);
+    const rclcpp::Time & now, const double longitudinal_offset = 0.0);
 
   visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
     const std::vector<Pose> & dead_line_poses, const std::string & module_name,
-    const rclcpp::Time & now, int32_t id, const double longitudinal_offset = 0.0);
+    const rclcpp::Time & now, const double longitudinal_offset = 0.0);
 
 private:
   visualization_msgs::msg::MarkerArray handleVirtualWallMarker(
     const std::vector<Pose> & poses, const std::string & module_name, const rclcpp::Time & now,
-    int32_t id, create_wall_function function_create_wall_marker,
+    create_wall_function function_create_wall_marker,
     delete_wall_function function_delete_wall_marker, size_t & previous_virtual_walls_nb,
     const double longitudinal_offset = 0.0);
 

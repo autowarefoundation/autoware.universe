@@ -134,13 +134,15 @@ visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWallMarker(
   const std::vector<Pose> & poses, const std::string & module_name, const rclcpp::Time & now,
-  int32_t id, create_wall_function function_create_wall_marker,
+  create_wall_function function_create_wall_marker,
   delete_wall_function function_delete_wall_marker, size_t & previous_virtual_walls_nb,
   const double longitudinal_offset)
 {
   visualization_msgs::msg::MarkerArray wall_marker;
 
-  const auto max_id = id + static_cast<int32_t>(previous_virtual_walls_nb);
+  int32_t id = 0;
+  const auto max_id = static_cast<int32_t>(previous_virtual_walls_nb);
+
   for (const auto & p : poses) {
     appendMarkerArray(
       function_create_wall_marker(p, module_name, now, id++, longitudinal_offset), &wall_marker);
@@ -156,37 +158,36 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWall
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createStopVirtualWallMarker(
   const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
-  int32_t id, const double longitudinal_offset)
+  const double longitudinal_offset)
 {
   create_wall_function creator = motion_utils::createStopVirtualWallMarker;
   delete_wall_function deleter = motion_utils::createDeletedStopVirtualWallMarker;
 
   return handleVirtualWallMarker(
-    stop_poses, module_name, now, id, creator, deleter, previous_stop_poses_nb_,
-    longitudinal_offset);
+    stop_poses, module_name, now, creator, deleter, previous_stop_poses_nb_, longitudinal_offset);
 }
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createSlowDownVirtualWallMarker(
   const std::vector<Pose> & slow_down_poses, const std::string & module_name,
-  const rclcpp::Time & now, int32_t id, const double longitudinal_offset)
+  const rclcpp::Time & now, const double longitudinal_offset)
 {
   create_wall_function creator = motion_utils::createSlowDownVirtualWallMarker;
   delete_wall_function deleter = motion_utils::createDeletedSlowDownVirtualWallMarker;
 
   return handleVirtualWallMarker(
-    slow_down_poses, module_name, now, id, creator, deleter, previous_slow_down_poses_nb_,
+    slow_down_poses, module_name, now, creator, deleter, previous_slow_down_poses_nb_,
     longitudinal_offset);
 }
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createDeadLineVirtualWallMarker(
   const std::vector<Pose> & dead_line_poses, const std::string & module_name,
-  const rclcpp::Time & now, int32_t id, const double longitudinal_offset)
+  const rclcpp::Time & now, const double longitudinal_offset)
 {
   create_wall_function creator = motion_utils::createDeadLineVirtualWallMarker;
   delete_wall_function deleter = motion_utils::createDeletedDeadLineVirtualWallMarker;
 
   return handleVirtualWallMarker(
-    dead_line_poses, module_name, now, id, creator, deleter, previous_dead_line_poses_nb_,
+    dead_line_poses, module_name, now, creator, deleter, previous_dead_line_poses_nb_,
     longitudinal_offset);
 }
 
