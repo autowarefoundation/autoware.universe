@@ -224,26 +224,8 @@ void PlanningInterfaceTestManager::publishInitialPoseData(
 void PlanningInterfaceTestManager::publishInitialPoseTF(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
-  geometry_msgs::msg::Quaternion quaternion;
-  quaternion.x = 0.;
-  quaternion.y = 0.;
-  quaternion.z = 0.23311256049418302;
-  quaternion.w = 0.9724497591854532;
-
-  TransformStamped tf;
-  tf.header.stamp = target_node->get_clock()->now();
-  tf.header.frame_id = "odom";
-  tf.child_frame_id = "base_link";
-  tf.transform.translation.x = 3722.16015625;
-  tf.transform.translation.y = 73723.515625;
-  tf.transform.translation.z = 0;
-  tf.transform.rotation = quaternion;
-
-  tf2_msgs::msg::TFMessage tf_msg{};
-  tf_msg.transforms.emplace_back(std::move(tf));
-
   test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, initial_pose_tf_pub_, tf_msg);
+    test_node_, target_node, topic_name, initial_pose_tf_pub_, test_utils::makeTFMsg(target_node));
 }
 
 void PlanningInterfaceTestManager::setTrajectoryInputTopicName(std::string topic_name)
@@ -286,7 +268,7 @@ void PlanningInterfaceTestManager::publishNominalTrajectory(
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, normal_trajectory_pub_,
-    test_utils::generateTrajectory<Trajectory>(10, 1.0));
+    test_utils::generateTrajectory<Trajectory>(10, 1.0), 5);
 }
 
 void PlanningInterfaceTestManager::publishAbnormalTrajectory(
@@ -300,7 +282,7 @@ void PlanningInterfaceTestManager::publishNominalRoute(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, normal_route_pub_, test_utils::makeNormalRoute());
+    test_node_, target_node, topic_name, normal_route_pub_, test_utils::makeNormalRoute(), 5);
 }
 
 void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
@@ -308,16 +290,14 @@ void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, behavior_normal_route_pub_,
-    test_utils::makeBehaviorNormalRoute());
+    test_utils::makeBehaviorNormalRoute(), 5);
 }
 
 void PlanningInterfaceTestManager::publishAbnormalRoute(
   rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route)
 {
-  test_utils::setPublisher(test_node_, input_route_name_, abnormal_route_pub_);
-  abnormal_route_pub_->publish(abnormal_route);
   test_utils::publishToTargetNode(
-    test_node_, target_node, input_route_name_, abnormal_route_pub_, abnormal_route);
+    test_node_, target_node, input_route_name_, abnormal_route_pub_, abnormal_route, 5);
 }
 
 void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
@@ -325,14 +305,14 @@ void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, normal_path_with_lane_id_pub_,
-    test_utils::loadPathWithLaneIdInYaml());
+    test_utils::loadPathWithLaneIdInYaml(), 5);
 }
 
 void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, abnormal_path_with_lane_id_pub_, PathWithLaneId{});
+    test_node_, target_node, topic_name, abnormal_path_with_lane_id_pub_, PathWithLaneId{}, 5);
 }
 
 void PlanningInterfaceTestManager::setTrajectorySubscriber(std::string topic_name)
@@ -363,7 +343,6 @@ void PlanningInterfaceTestManager::setPathSubscriber(std::string topic_name)
 void PlanningInterfaceTestManager::testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node)
 {
   publishNominalTrajectory(target_node, input_trajectory_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 2);
 }
 
 // check to see if target node is dead.
@@ -380,21 +359,18 @@ void PlanningInterfaceTestManager::testWithAbnormalTrajectory(rclcpp::Node::Shar
 void PlanningInterfaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
   publishNominalRoute(target_node, input_route_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // test for normal working
 void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node)
 {
   publishBehaviorNominalRoute(target_node, input_route_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // check to see if target node is dead.
 void PlanningInterfaceTestManager::testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node)
 {
   ASSERT_NO_THROW(publishAbnormalRoute(target_node, LaneletRoute{}));
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // test for normal working
@@ -402,7 +378,6 @@ void PlanningInterfaceTestManager::testWithNominalPathWithLaneId(
   rclcpp::Node::SharedPtr target_node)
 {
   publishNominalPathWithLaneId(target_node, input_path_with_lane_id_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // check to see if target node is dead.
@@ -410,7 +385,6 @@ void PlanningInterfaceTestManager::testWithAbnormalPathWithLaneId(
   rclcpp::Node::SharedPtr target_node)
 {
   publishAbNominalPathWithLaneId(target_node, input_path_with_lane_id_name_);
-  test_utils::spinSomeNodes(test_node_, target_node, 5);
 }
 
 // put all abnormal ego pose related tests in this functions to run all tests with one line code

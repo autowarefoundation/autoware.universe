@@ -181,6 +181,27 @@ OccupancyGrid constructCostMap(size_t width, size_t height, double resolution)
   return costmap_msg;
 }
 
+TFMessage makeTFMsg(rclcpp::Node::SharedPtr target_node){
+  TFMessage tf_msg;
+  geometry_msgs::msg::Quaternion quaternion;
+  quaternion.x = 0.;
+  quaternion.y = 0.;
+  quaternion.z = 0.23311256049418302;
+  quaternion.w = 0.9724497591854532;
+
+  TransformStamped tf;
+  tf.header.stamp = target_node->get_clock()->now();
+  tf.header.frame_id = "odom";
+  tf.child_frame_id = "base_link";
+  tf.transform.translation.x = 3722.16015625;
+  tf.transform.translation.y = 73723.515625;
+  tf.transform.translation.z = 0;
+  tf.transform.rotation = quaternion;
+
+  tf_msg.transforms.emplace_back(std::move(tf));
+  return tf_msg;
+}
+
 void spinSomeNodes(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node,
   const int repeat_count = 1)
