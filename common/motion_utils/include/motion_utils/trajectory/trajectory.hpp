@@ -15,6 +15,7 @@
 #ifndef MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 #define MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 
+#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/geometry/pose_deviation.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
@@ -273,17 +274,13 @@ boost::optional<size_t> findNearestIndex(
 
   for (size_t i = 0; i < points.size(); ++i) {
     const auto squared_dist = tier4_autoware_utils::calcSquaredDistance2d(points.at(i), pose);
-    if (squared_dist > max_squared_dist) {
+    if (squared_dist > max_squared_dist || squared_dist >= min_squared_dist) {
       continue;
     }
 
     const auto yaw =
       tier4_autoware_utils::calcYawDeviation(tier4_autoware_utils::getPose(points.at(i)), pose);
     if (std::fabs(yaw) > max_yaw) {
-      continue;
-    }
-
-    if (squared_dist >= min_squared_dist) {
       continue;
     }
 
@@ -1211,6 +1208,39 @@ inline boost::optional<size_t> insertStopPoint(
 }
 
 /**
+ * @brief Insert stop point from the front point of the path
+ * @param distance_to_stop_point distance to stop point from the front point of the path
+ * @param points_with_twist output points of trajectory, path, ... (with velocity)
+ * @param overlap_threshold distance threshold, used to check if the inserted point is between start
+ * and end of nominated segment to be added in.
+ * @return index of stop point
+ */
+template <class T>
+inline boost::optional<size_t> insertStopPoint(
+  const double distance_to_stop_point, T & points_with_twist, const double overlap_threshold = 1e-3)
+{
+  validateNonEmpty(points_with_twist);
+
+  if (distance_to_stop_point < 0.0) {
+    return boost::none;
+  }
+
+  double accumulated_length = 0;
+  for (size_t i = 0; i < points_with_twist.size() - 1; ++i) {
+    const auto curr_pose = tier4_autoware_utils::getPose(points_with_twist.at(i));
+    const auto next_pose = tier4_autoware_utils::getPose(points_with_twist.at(i + 1));
+    const double length = tier4_autoware_utils::calcDistance2d(curr_pose, next_pose);
+    if (accumulated_length + length + overlap_threshold > distance_to_stop_point) {
+      const double insert_length = distance_to_stop_point - accumulated_length;
+      return insertStopPoint(i, insert_length, points_with_twist, overlap_threshold);
+    }
+    accumulated_length += length;
+  }
+
+  return boost::none;
+}
+
+/**
  * @brief Insert Stop point from the source pose
  * @param src_pose source pose
  * @param distance_to_stop_point  distance to stop point from the src point
@@ -1250,6 +1280,70 @@ inline boost::optional<size_t> insertStopPoint(
 }
 
 /**
+ * @brief Insert Stop point that is in the stop segment index
+ * @param stop_seg_idx segment index of the stop pose
+ * @param stop_point stop point
+ * @param points_with_twist output points of trajectory, path, ... (with velocity)
+ * @param overlap_threshold distance threshold, used to check if the inserted point is between start
+ * and end of nominated segment to be added in.
+ * @return index of stop point
+ */
+template <class T>
+boost::optional<size_t> insertStopPoint(
+  const size_t stop_seg_idx, const geometry_msgs::msg::Point & stop_point, T & points_with_twist,
+  const double overlap_threshold = 1e-3)
+{
+  const auto insert_idx =
+    motion_utils::insertTargetPoint(stop_seg_idx, stop_point, points_with_twist, overlap_threshold);
+
+  if (!insert_idx) {
+    return boost::none;
+  }
+
+  for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
+    tier4_autoware_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
+  }
+
+  return insert_idx;
+}
+
+/**
+ * @brief Insert deceleration point from the source pose
+ * @param src_point source point
+ * @param distance_to_decel_point  distance to deceleration point from the src point
+ * @param velocity velocity of stop point
+ * @param points_with_twist output points of trajectory, path, ... (with velocity)
+ */
+template <class T>
+boost::optional<size_t> insertDecelPoint(
+  const geometry_msgs::msg::Point & src_point, const double distance_to_decel_point,
+  const double velocity, T & points_with_twist)
+{
+  const auto decel_point =
+    calcLongitudinalOffsetPoint(points_with_twist, src_point, distance_to_decel_point);
+
+  if (!decel_point) {
+    return {};
+  }
+
+  const auto seg_idx = findNearestSegmentIndex(points_with_twist, decel_point.get());
+  const auto insert_idx = insertTargetPoint(seg_idx, decel_point.get(), points_with_twist);
+
+  if (!insert_idx) {
+    return {};
+  }
+
+  for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
+    const auto & original_velocity =
+      tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.at(i));
+    tier4_autoware_utils::setLongitudinalVelocity(
+      std::min(original_velocity, velocity), points_with_twist.at(i));
+  }
+
+  return insert_idx;
+}
+
+/**
  * @brief Insert orientation to each point in points container (trajectory, path, ...)
  * @param points points of trajectory, path, ... (input / output)
  * @param is_driving_forward  flag indicating the order of points is forward or backward
@@ -1283,6 +1377,28 @@ void insertOrientation(T & points, const bool is_driving_forward)
     // Initial orientation is same as the point after it
     tier4_autoware_utils::setOrientation(
       tier4_autoware_utils::getPose(points.at(1)).orientation, points.at(0));
+  }
+}
+
+/**
+ * @brief Remove points with invalid orientation differences from a given points container
+ * (trajectory, path, ...)
+ * @param points Points of trajectory, path, or other point container (input / output)
+ * @param max_yaw_diff Maximum acceptable yaw angle difference between two consecutive points in
+ * radians (default: M_PI_2)
+ */
+template <class T>
+void removeInvalidOrientationPoints(T & points, const double max_yaw_diff = M_PI_2)
+{
+  for (size_t i = 1; i < points.size();) {
+    const double yaw1 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i - 1)).orientation);
+    const double yaw2 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i)).orientation);
+
+    if (max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2))) {
+      points.erase(points.begin() + i);
+    } else {
+      ++i;
+    }
   }
 }
 
@@ -1535,6 +1651,82 @@ boost::optional<double> calcDistanceToForwardStopPoint(
     calcSignedArcLength(points_with_twist, pose.position, *nearest_segment_idx, *stop_idx);
 
   return std::max(0.0, closest_stop_dist);
+}
+
+// NOTE: Points after forward length from the point will be cropped
+//       forward_length is assumed to be positive.
+template <typename T>
+T cropForwardPoints(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  double sum_length =
+    -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
+    sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (forward_length < sum_length) {
+      const size_t end_idx = i;
+      return T{points.begin(), points.begin() + end_idx};
+    }
+  }
+
+  return points;
+}
+
+// NOTE: Points before backward length from the point will be cropped
+//       backward_length is assumed to be positive.
+template <typename T>
+T cropBackwardPoints(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double backward_length)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  double sum_length =
+    -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  for (int i = target_seg_idx; 0 < i; --i) {
+    sum_length -= tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (sum_length < -backward_length) {
+      const size_t begin_idx = i;
+      return T{points.begin() + begin_idx, points.end()};
+    }
+  }
+
+  return points;
+}
+
+template <typename T>
+T cropPoints(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length, const double backward_length)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  // NOTE: Cropping forward must be done first in order to keep target_seg_idx.
+  const auto cropped_forward_points =
+    cropForwardPoints(points, target_pos, target_seg_idx, forward_length);
+
+  const size_t modified_target_seg_idx =
+    std::min(target_seg_idx, cropped_forward_points.size() - 2);
+  const auto cropped_points = cropBackwardPoints(
+    cropped_forward_points, target_pos, modified_target_seg_idx, backward_length);
+
+  if (cropped_points.size() < 2) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
+      ". Return original points since cropped_points size is less than 2.");
+    return points;
+  }
+
+  return cropped_points;
 }
 }  // namespace motion_utils
 

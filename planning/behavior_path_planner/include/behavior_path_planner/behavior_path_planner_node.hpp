@@ -30,6 +30,7 @@
 #else
 #include "behavior_path_planner/planner_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/avoidance_by_lc/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
 #include "behavior_path_planner/scene_module/pull_out/manager.hpp"
 #include "behavior_path_planner/scene_module/pull_over/manager.hpp"
@@ -38,12 +39,13 @@
 
 #include "behavior_path_planner/steering_factor_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/util/lane_following/module_data.hpp"
-#include "behavior_path_planner/util/pull_out/pull_out_parameters.hpp"
-#include "behavior_path_planner/util/pull_over/pull_over_parameters.hpp"
-#include "behavior_path_planner/util/side_shift/side_shift_parameters.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance_by_lc/module_data.hpp"
+#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/utils/lane_following/module_data.hpp"
+#include "behavior_path_planner/utils/pull_out/pull_out_parameters.hpp"
+#include "behavior_path_planner/utils/pull_over/pull_over_parameters.hpp"
+#include "behavior_path_planner/utils/side_shift/side_shift_parameters.hpp"
 
 #include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -69,18 +71,6 @@
 #include <mutex>
 #include <string>
 #include <vector>
-
-template <typename T>
-inline void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
-{
-  const auto it = std::find_if(
-    parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
-  if (it != parameters.cend()) {
-    value = static_cast<T>(it->template get_value<T>());
-  }
-}
 
 namespace behavior_path_planner
 {
@@ -149,20 +139,19 @@ private:
 
   TurnSignalDecider turn_signal_decider_;
 
-  std::mutex mutex_pd_;  // mutex for planner_data_
-  std::mutex mutex_bt_;  // mutex for bt_manager_
+  std::mutex mutex_pd_;       // mutex for planner_data_
+  std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
+  std::mutex mutex_map_;      // mutex for has_received_map_ and map_ptr_
+  std::mutex mutex_route_;    // mutex for has_received_route_ and route_ptr_
 
   // setup
   bool isDataReady();
 
-  // update planner data
-  std::shared_ptr<PlannerData> createLatestPlannerData();
-
   // parameters
   std::shared_ptr<AvoidanceParameters> avoidance_param_ptr_;
+  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lc_param_ptr_;
   std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
-  std::shared_ptr<LaneFollowingParameters> lane_following_param_ptr_;
   std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
   std::shared_ptr<PullOverParameters> pull_over_param_ptr_;
 
@@ -174,10 +163,12 @@ private:
 
   AvoidanceParameters getAvoidanceParam();
   LaneChangeParameters getLaneChangeParam();
-  LaneFollowingParameters getLaneFollowingParam();
   SideShiftParameters getSideShiftParam();
   PullOverParameters getPullOverParam();
   PullOutParameters getPullOutParam();
+  AvoidanceByLCParameters getAvoidanceByLCParam(
+    const std::shared_ptr<AvoidanceParameters> & avoidance_param,
+    const std::shared_ptr<LaneChangeParameters> & lane_change_param);
 
   // callback
   void onOdometry(const Odometry::ConstSharedPtr msg);
@@ -195,7 +186,8 @@ private:
    * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
    */
   PathWithLaneId modifyPathForSmoothGoalConnection(
-    const PathWithLaneId & path) const;  // (TODO) move to util
+    const PathWithLaneId & path,
+    const std::shared_ptr<PlannerData> & planner_data) const;  // (TODO) move to util
   OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
   /**
@@ -206,8 +198,15 @@ private:
   /**
    * @brief extract path from behavior tree output
    */
+#ifdef USE_OLD_ARCHITECTURE
   PathWithLaneId::SharedPtr getPath(
-    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
+    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> & planner_data,
+    const std::shared_ptr<BehaviorTreeManager> & bt_manager);
+#else
+  PathWithLaneId::SharedPtr getPath(
+    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> & planner_data,
+    const std::shared_ptr<PlannerManager> & planner_manager);
+#endif
 
   /**
    * @brief skip smooth goal connection
@@ -242,27 +241,34 @@ private:
   /**
    * @brief publish debug messages
    */
-  void publishSceneModuleDebugMsg();
+#ifdef USE_OLD_ARCHITECTURE
+  void publishSceneModuleDebugMsg(
+    const std::shared_ptr<SceneModuleVisitor> & debug_messages_data_ptr);
+#endif
 
   /**
    * @brief publish path candidate
    */
 #ifdef USE_OLD_ARCHITECTURE
   void publishPathCandidate(
-    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules);
+    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules,
+    const std::shared_ptr<PlannerData> & planner_data);
 #else
   void publishPathCandidate(
-    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers);
+    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
+    const std::shared_ptr<PlannerData> & planner_data);
 
   void publishPathReference(
-    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers);
+    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
+    const std::shared_ptr<PlannerData> & planner_data);
 #endif
 
   /**
    * @brief convert path with lane id to path for publish path candidate
    */
   Path convertToPath(
-    const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready);
+    const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready,
+    const std::shared_ptr<PlannerData> & planner_data);
 };
 }  // namespace behavior_path_planner
 

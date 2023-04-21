@@ -16,17 +16,18 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/util/geometric_parallel_parking/geometric_parallel_parking.hpp"
-#include "behavior_path_planner/util/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
-#include "behavior_path_planner/util/pull_over/freespace_pull_over.hpp"
-#include "behavior_path_planner/util/pull_over/geometric_pull_over.hpp"
-#include "behavior_path_planner/util/pull_over/goal_searcher.hpp"
-#include "behavior_path_planner/util/pull_over/pull_over_parameters.hpp"
-#include "behavior_path_planner/util/pull_over/shift_pull_over.hpp"
+#include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
+#include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "behavior_path_planner/utils/pull_over/freespace_pull_over.hpp"
+#include "behavior_path_planner/utils/pull_over/geometric_pull_over.hpp"
+#include "behavior_path_planner/utils/pull_over/goal_searcher.hpp"
+#include "behavior_path_planner/utils/pull_over/pull_over_parameters.hpp"
+#include "behavior_path_planner/utils/pull_over/shift_pull_over.hpp"
 
 #include <freespace_planning_algorithms/astar_search.hpp>
 #include <freespace_planning_algorithms/rrtstar.hpp>
 #include <lane_departure_checker/lane_departure_checker.hpp>
+#include <motion_utils/distance/distance.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
@@ -35,6 +36,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -54,7 +56,7 @@ using freespace_planning_algorithms::PlannerCommonParam;
 using freespace_planning_algorithms::RRTStar;
 using freespace_planning_algorithms::RRTStarParam;
 
-enum PathType {
+enum class PathType {
   NONE = 0,
   SHIFT,
   ARC_FORWARD,
@@ -93,7 +95,7 @@ public:
   PullOverModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<PullOverParameters> & parameters,
-    const std::shared_ptr<RTCInterface> & rtc_interface);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   void updateModuleParams(const std::shared_ptr<PullOverParameters> & parameters)
   {
@@ -110,8 +112,8 @@ public:
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
 
   void setParameters(const std::shared_ptr<PullOverParameters> & parameters);
 
@@ -150,13 +152,25 @@ private:
   std::unique_ptr<rclcpp::Time> last_increment_time_;
   std::unique_ptr<Pose> last_approved_pose_;
 
+  // approximate distance from the start point to the end point of pull_over.
+  // this is used as an assumed value to decelerate, etc., before generating the actual path.
+  double approximate_pull_over_distance_{20.0};
+
+  bool left_side_parking_{true};
+  bool enable_goal_search_{false};
+
   bool incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
   Pose calcRefinedGoal(const Pose & goal_pose) const;
   ParallelParkingParameters getGeometricPullOverParameters() const;
+  double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
+  void decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const;
+  void decelerateBeforeSearchStart(const Pose & search_start_pose, PathWithLaneId & path) const;
   std::pair<double, double> calcDistanceToPathChange() const;
   PathWithLaneId generateStopPath();
-  PathWithLaneId generateEmergencyStopPath();
+  PathWithLaneId generateFeasibleStopPath();
+  boost::optional<double> calcFeasibleDecelDistance(const double target_velocity) const;
+  double calcModuleRequestLength() const;
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
 
   bool isStopped();
@@ -169,6 +183,11 @@ private:
 
   bool checkCollision(const PathWithLaneId & path) const;
   bool hasEnoughDistance(const PullOverPath & pull_over_path) const;
+  bool isCrossingPossible(
+    const lanelet::ConstLanelet & start_lane, const lanelet::ConstLanelet & end_lane) const;
+  bool isCrossingPossible(
+    const Pose & start_pose, const Pose & end_pose, const lanelet::ConstLanelets lanes) const;
+  bool isCrossingPossible(const PullOverPath & pull_over_path) const;
 
   TurnSignalInfo calcTurnSignalInfo() const;
 
@@ -189,6 +208,11 @@ private:
   void onFreespaceParkingTimer();
   rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
+
+  // temporary
+  // flag for the interface which do not support `allow_goal_modification`
+  // when the goal is in `road_shoulder`, always allow goal modification temporarily
+  bool checkOriginalGoalIsInShoulder() const;
 };
 }  // namespace behavior_path_planner
 

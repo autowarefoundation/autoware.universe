@@ -14,6 +14,37 @@
 
 #include "converter_node.hpp"
 
+#include <regex>
+
+namespace
+{
+std::string removeInvalidTopicString(const std::string & input_string)
+{
+  std::regex pattern{R"([a-zA-Z0-9/_]+)"};
+
+  std::string result;
+  for (std::sregex_iterator itr(std::begin(input_string), std::end(input_string), pattern), end;
+       itr != end; ++itr) {
+    result += itr->str();
+  }
+  return result;
+}
+
+std::string removeUnitString(const std::string & input_string)
+{
+  for (size_t i = 0; i < input_string.size(); ++i) {
+    if (input_string.at(i) == '[') {
+      if (i != 0 && input_string.at(i - 1) == ' ') {
+        // Blank is also removed
+        return std::string{input_string.begin(), input_string.begin() + i - 1};
+      }
+      return std::string{input_string.begin(), input_string.begin() + i};
+    }
+  }
+  return input_string;
+}
+}  // namespace
+
 namespace diagnostic_converter
 {
 DiagnosticConverter::DiagnosticConverter(const rclcpp::NodeOptions & node_options)
@@ -41,8 +72,8 @@ void DiagnosticConverter::onDiagnostic(
   for (const auto & status : diag_msg->status) {
     std::string status_topic = base_topic + (status.name.empty() ? "" : "_" + status.name);
     for (const auto & key_value : status.values) {
-      getPublisher(status_topic + "_" + key_value.key, diag_idx)
-        ->publish(createUserDefinedValue(key_value));
+      const auto valid_topic_name = removeInvalidTopicString(status_topic + "_" + key_value.key);
+      getPublisher(valid_topic_name, diag_idx)->publish(createUserDefinedValue(key_value));
     }
   }
 }
@@ -51,7 +82,7 @@ UserDefinedValue DiagnosticConverter::createUserDefinedValue(const KeyValue & ke
 {
   UserDefinedValue param_msg;
   param_msg.type.data = UserDefinedValueType::DOUBLE;
-  param_msg.value = key_value.value;
+  param_msg.value = removeUnitString(key_value.value);
   return param_msg;
 }
 

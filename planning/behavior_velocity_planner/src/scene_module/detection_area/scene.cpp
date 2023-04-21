@@ -154,7 +154,9 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   const double dist_from_ego_to_stop = calcSignedArcLength(
     original_path.points, self_pose.position, current_seg_idx, stop_pose.position,
     stop_line_seg_idx);
-  if (state_ != State::STOP && dist_from_ego_to_stop < 0.0) {
+  if (
+    state_ != State::STOP &&
+    dist_from_ego_to_stop < -planner_param_.distance_to_judge_over_stop_line) {
     setSafe(true);
     return true;
   }
@@ -285,7 +287,7 @@ std::vector<geometry_msgs::msg::Point> DetectionAreaModule::getObstaclePoints() 
                                   (circle.first.y() - p.y) * (circle.first.y() - p.y);
       if (squared_dist <= circle.second) {
         if (bg::within(Point2d{p.x, p.y}, poly.basicPolygon())) {
-          obstacle_points.push_back(planning_utils::toRosPoint(p));
+          obstacle_points.push_back(tier4_autoware_utils::createPoint(p.x, p.y, p.z));
           // get all obstacle point becomes high computation cost so skip if any point is found
           break;
         }
@@ -326,6 +328,12 @@ bool DetectionAreaModule::hasEnoughBrakingDistance(
   const double delay_response_time = planner_data_->delay_response_time;
   const double pass_judge_line_distance =
     planning_utils::calcJudgeLineDistWithAccLimit(current_velocity, max_acc, delay_response_time);
+
+  // prevent from being judged as not having enough distance when the current velocity is zero
+  // and the vehicle crosses the stop line
+  if (current_velocity < 1e-3) {
+    return true;
+  }
 
   return arc_lane_utils::calcSignedDistance(self_pose, line_pose.position) >
          pass_judge_line_distance;
