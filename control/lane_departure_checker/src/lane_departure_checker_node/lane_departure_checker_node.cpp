@@ -126,25 +126,25 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   using std::placeholders::_1;
 
   // Node Parameter
-  node_param_.update_rate = declare_parameter("update_rate", 10.0);
-  node_param_.visualize_lanelet = declare_parameter("visualize_lanelet", false);
-  node_param_.include_right_lanes = declare_parameter("include_right_lanes", false);
-  node_param_.include_left_lanes = declare_parameter("include_left_lanes", false);
-  node_param_.include_opposite_lanes = declare_parameter("include_opposite_lanes", false);
-  node_param_.include_conflicting_lanes = declare_parameter("include_conflicting_lanes", false);
+  node_param_.update_rate = declare_parameter<double>("update_rate");
+  node_param_.visualize_lanelet = declare_parameter<bool>("visualize_lanelet");
+  node_param_.include_right_lanes = declare_parameter<bool>("include_right_lanes");
+  node_param_.include_left_lanes = declare_parameter<bool>("include_left_lanes");
+  node_param_.include_opposite_lanes = declare_parameter<bool>("include_opposite_lanes");
+  node_param_.include_conflicting_lanes = declare_parameter<bool>("include_conflicting_lanes");
 
   // Vehicle Info
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_length_m_ = vehicle_info.vehicle_length_m;
 
   // Core Parameter
-  param_.footprint_margin_scale = declare_parameter("footprint_margin_scale", 1.0);
-  param_.resample_interval = declare_parameter("resample_interval", 0.3);
-  param_.max_deceleration = declare_parameter("max_deceleration", 3.0);
-  param_.delay_time = declare_parameter("delay_time", 0.3);
-  param_.max_lateral_deviation = declare_parameter("max_lateral_deviation", 1.0);
-  param_.max_longitudinal_deviation = declare_parameter("max_longitudinal_deviation", 1.0);
-  param_.max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 30.0);
+  param_.footprint_margin_scale = declare_parameter<double>("footprint_margin_scale");
+  param_.resample_interval = declare_parameter<double>("resample_interval");
+  param_.max_deceleration = declare_parameter<double>("max_deceleration");
+  param_.delay_time = declare_parameter<double>("delay_time");
+  param_.max_lateral_deviation = declare_parameter<double>("max_lateral_deviation");
+  param_.max_longitudinal_deviation = declare_parameter<double>("max_longitudinal_deviation");
+  param_.max_yaw_deviation_deg = declare_parameter<double>("max_yaw_deviation_deg");
   param_.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   param_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   param_.min_braking_distance = declare_parameter<double>("min_braking_distance");
@@ -183,9 +183,6 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 
   updater_.add("trajectory_deviation", this, &LaneDepartureCheckerNode::checkTrajectoryDeviation);
 
-  // Wait for first self pose
-  self_pose_listener_.waitForFirstPose();
-
   // Timer
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
   timer_ = rclcpp::create_timer(
@@ -207,7 +204,10 @@ void LaneDepartureCheckerNode::onLaneletMapBin(const HADMapBin::ConstSharedPtr m
   shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
 }
 
-void LaneDepartureCheckerNode::onRoute(const LaneletRoute::ConstSharedPtr msg) { route_ = msg; }
+void LaneDepartureCheckerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
+{
+  route_ = msg;
+}
 
 void LaneDepartureCheckerNode::onReferenceTrajectory(const Trajectory::ConstSharedPtr msg)
 {
@@ -221,11 +221,6 @@ void LaneDepartureCheckerNode::onPredictedTrajectory(const Trajectory::ConstShar
 
 bool LaneDepartureCheckerNode::isDataReady()
 {
-  if (!current_pose_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_pose...");
-    return false;
-  }
-
   if (!current_odom_) {
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_twist msg...");
     return false;
@@ -261,7 +256,7 @@ bool LaneDepartureCheckerNode::isDataTimeout()
   const auto now = this->now();
 
   constexpr double th_pose_timeout = 1.0;
-  const auto pose_time_diff = rclcpp::Time(current_pose_->header.stamp) - now;
+  const auto pose_time_diff = rclcpp::Time(current_odom_->header.stamp) - now;
   if (pose_time_diff.seconds() > th_pose_timeout) {
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "pose is timeout...");
     return true;
@@ -292,8 +287,6 @@ void LaneDepartureCheckerNode::onTimer()
   std::map<std::string, double> processing_time_map;
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("Total");
-
-  current_pose_ = self_pose_listener_.getCurrentPose();
 
   if (!isDataReady()) {
     return;
@@ -337,7 +330,6 @@ void LaneDepartureCheckerNode::onTimer()
   processing_time_map["Node: getRouteLanelets"] = stop_watch.toc(true);
 
   input_.current_odom = current_odom_;
-  input_.current_pose = current_pose_;
   input_.lanelet_map = lanelet_map_;
   input_.route = route_;
   input_.route_lanelets = route_lanelets_;
@@ -471,7 +463,7 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
 
   visualization_msgs::msg::MarkerArray marker_array;
 
-  const auto base_link_z = current_pose_->pose.position.z;
+  const auto base_link_z = current_odom_->pose.pose.position.z;
 
   if (node_param_.visualize_lanelet) {
     // Route Lanelets

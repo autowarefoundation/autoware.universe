@@ -43,6 +43,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 | `nms_iou_target_class_names`    | list[string] | -             | target classes for IoU-based Non Maximum Suppression          |
 | `nms_iou_search_distance_2d`    | double       | -             | If two objects are farther than the value, NMS isn't applied. |
 | `nms_iou_threshold`             | double       | -             | IoU threshold for the IoU-based Non Maximum Suppression       |
+| `build_only`                    | bool         | `false`       | shutdown the node after TensorRT engine file is built         |
 
 ## Assumptions / Known limits
 
@@ -113,7 +114,7 @@ Example:
 
 [1] Yin, Tianwei, Xingyi Zhou, and Philipp Krähenbühl. "Center-based 3d object detection and tracking." arXiv preprint arXiv:2006.11275 (2020).
 
-[2] Lang, Alex H., et al. "Pointpillars: Fast encoders for object detection from point clouds." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.
+[2] Lang, Alex H., et al. "PointPillars: Fast encoders for object detection from point clouds." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.
 
 [3] <https://github.com/tianweiy/CenterPoint>
 

@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__DATA_MANAGER_HPP_
 
 #include "behavior_path_planner/parameters.hpp"
-#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -31,6 +31,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
@@ -52,6 +53,7 @@ using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
+using tier4_planning_msgs::msg::LateralOffset;
 using PlanResult = PathWithLaneId::SharedPtr;
 
 struct BoolStamped
@@ -105,6 +107,9 @@ struct BehaviorModuleOutput
   TurnSignalInfo turn_signal_info{};
 
   std::optional<PoseWithUuidStamped> modified_goal{};
+
+  // drivable lanes
+  std::vector<DrivableLanes> drivable_lanes;
 };
 
 struct CandidateOutput
@@ -123,6 +128,8 @@ struct PlannerData
   AccelWithCovarianceStamped::ConstSharedPtr self_acceleration{};
   PredictedObjects::ConstSharedPtr dynamic_object{};
   OccupancyGrid::ConstSharedPtr occupancy_grid{};
+  OccupancyGrid::ConstSharedPtr costmap{};
+  LateralOffset::ConstSharedPtr lateral_offset{};
   OperationModeState::ConstSharedPtr operation_mode{};
   PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};

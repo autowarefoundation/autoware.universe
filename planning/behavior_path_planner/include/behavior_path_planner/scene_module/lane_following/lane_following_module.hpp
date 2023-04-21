@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_FOLLOWING__LANE_FOLLOWING_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,39 +30,27 @@ namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-struct LaneFollowingParameters
-{
-  double lane_change_prepare_duration;
-  // drivable area expansion
-  double drivable_area_right_bound_offset;
-  double drivable_area_left_bound_offset;
-  std::vector<std::string> drivable_area_types_to_skip{};
-};
-
 class LaneFollowingModule : public SceneModuleInterface
 {
 public:
-  LaneFollowingModule(
-    const std::string & name, rclcpp::Node & node, const LaneFollowingParameters & parameters);
+  LaneFollowingModule(const std::string & name, rclcpp::Node & node);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
 
-  void setParameters(const LaneFollowingParameters & parameters);
+  void setParameters(const std::shared_ptr<LaneFollowingParameters> & parameters);
   void acceptVisitor(
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
   {
   }
 
 private:
-  LaneFollowingParameters parameters_;
-
-  PathWithLaneId getReferencePath() const;
+  BehaviorModuleOutput getReferencePath() const;
   void initParam();
 };
 }  // namespace behavior_path_planner

@@ -360,7 +360,7 @@ $$
 To realize collision-free trajectory planning, we have to formulate constraints that the vehicle is inside the road and also does not collide with obstacles in linear equations.
 For linearity, we implemented some methods to approximate the vehicle shape with a set of circles, that is reliable and easy to implement.
 
-- 1. Bibycle Model
+- 1. Bicycle Model
 - 2. Uniform Circles
 - 3. Fitting Uniform Circles
 
@@ -443,42 +443,3 @@ $$
 \in \boldsymbol{R}^{3N_{ref} \times D_v + N_{ref}}
 \end{align}
 $$
-
-#### Two-step soft constraints
-
-$$
-\begin{align}
-\boldsymbol{v}' =
-  \begin{pmatrix}
-    \boldsymbol{v} \\
-    \boldsymbol{\lambda}^{soft_1} \\
-    \boldsymbol{\lambda}^{soft_2} \\
-  \end{pmatrix}
-  \in \boldsymbol{R}^{D_v + 2N_{slack}}
-\end{align}
-$$
-
-$*$ depends on whether to use L2 norm or L-infinity optimization.
-
-$$
-\begin{align}
-    A_{blk} & =
-    \begin{pmatrix}
-        A^{soft_1}_{blk} \\
-        A^{soft_2}_{blk} \\
-    \end{pmatrix}\\
-    & =
-    \begin{pmatrix}
-        C_1^{soft_1} B & & \\
-        -C_1^{soft_1} B & \Huge{*} & \Huge{O} \\
-        O & & \\
-        C_1^{soft_2} B & & \\
-        -C_1^{soft_2} B & \Huge{O} & \Huge{*} \\
-        O & &
-    \end{pmatrix}
-    \in \boldsymbol{R}^{6 N_{ref} \times D_v + 2 N_{slack}}
-\end{align}
-$$
-
-$N_{slack}$ is $N_{circle}$ when L2 optimization, or $1$ when L-infinity optimization.
-$N_{circle}$ is the number of circles to check collision.
