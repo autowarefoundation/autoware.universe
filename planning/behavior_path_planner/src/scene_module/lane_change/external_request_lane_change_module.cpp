@@ -281,14 +281,14 @@ PathWithLaneId ExternalRequestLaneChangeModule::getReferencePath() const
       common_parameters.forward_path_length, common_parameters);
   }
 
-  const int num_lane_change =
-    std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
   reference_path = utils::getCenterLinePath(
     *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters, 0.0);
 
+  const auto shift_intervals =
+    route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
   const double lane_change_buffer =
-    utils::calcLaneChangeBuffer(common_parameters, num_lane_change, 0.0);
+    utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
 
   reference_path = utils::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->prepare_duration,
@@ -434,9 +434,9 @@ bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) c
 bool ExternalRequestLaneChangeModule::isNearEndOfLane() const
 {
   const auto & current_pose = getEgoPose();
-  const auto minimum_lane_changing_length = planner_data_->parameters.minimum_lane_changing_length;
-  const auto end_of_lane_buffer = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
-  const double threshold = end_of_lane_buffer + minimum_lane_changing_length;
+  const auto & shift_length = status_.lane_change_path.shift_line.end_shift_length;
+  const auto threshold =
+    utils::calcMinimumLaneChangeLength(planner_data_->parameters, {shift_length});
 
   return std::max(0.0, utils::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
          threshold;
