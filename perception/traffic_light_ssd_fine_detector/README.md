@@ -50,14 +50,19 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 
 ### Node Parameters
 
-| Name               | Type   | Default Value                  | Description                                                          |
-| ------------------ | ------ | ------------------------------ | -------------------------------------------------------------------- |
-| `onnx_file`        | string | "./data/mb2-ssd-lite-tlr.onnx" | The onnx file name for yolo model                                    |
-| `label_file`       | string | "./data/voc_labels_tl.txt"     | The label file with label names for detected objects written on it   |
-| `mode`             | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |
-| `max_batch_size`   | int    | 8                              | The size of the batch processed at one time by inference by TensorRT |
-| `approximate_sync` | bool   | false                          | Flag for whether to ues approximate sync policy                      |
-| `build_only`       | bool   | false                          | shutdown node after TensorRT engine file is built                    |
+| Name                | Type   | Default Value                  | Description                                                          |
+| ------------------- | ------ | ------------------------------ | -------------------------------------------------------------------- |
+| `onnx_file`         | string | "./data/mb2-ssd-lite-tlr.onnx" | The onnx file name for yolo model                                    |
+| `label_file`        | string | "./data/voc_labels_tl.txt"     | The label file with label names for detected objects written on it   |
+| `head1_name`        | string | "scores"                       | The name of first output head                                        |
+| `head2_name`        | string | "boxes"                        | The name of second output head                                       |
+| `boxes_first`       | bool   | false                          | Indicates whether first output head is for boxes                     |
+| `use_softmax`       | bool   | false                          | Indicates whether use sofrmax for output scores                      |
+| `denormalize_boxes` | bool   | true                           | Indicates whether should denormalize output boxes with image size    |
+| `mode`              | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |
+| `max_batch_size`    | int    | 8                              | The size of the batch processed at one time by inference by TensorRT |
+| `approximate_sync`  | bool   | false                          | Flag for whether to ues approximate sync policy                      |
+| `build_only`        | bool   | false                          | shutdown node after TensorRT engine file is built                    |
 
 ## Assumptions / Known limits
 
