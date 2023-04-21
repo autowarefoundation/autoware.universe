@@ -190,7 +190,6 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
         std::numeric_limits<double>::lowest(), stamp);
       // send {default, occlusion} RTC status
     } else {
-      rtc_interface_.clearCooperateStatus();
       // occlusion
       const auto occlusion_safety = intersection_module->getOcclusionSafety();
       const auto occlusion_distance = intersection_module->getOcclusionDistance();
@@ -204,7 +203,6 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
         occlusion_first_stop_uuid, occlusion_first_stop_safety, occlusion_first_stop_distance,
         occlusion_first_stop_distance, stamp);
       // send {first_stop, occlusion} RTC status
-      // rtc_interface_.removeCooperateStatus(uuid);
     }
   }
   rtc_interface_.publishCooperateStatus(stamp);  // publishRTCStatus()
