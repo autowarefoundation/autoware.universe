@@ -325,6 +325,17 @@ private:
     const std::vector<util::DetectionLaneDivision> & lane_divisions,
     const double occlusion_dist_thr) const;
 
+  bool isRunningOverStaticPassJudgeLine(
+    PathWithLaneId * path, const PathWithLaneId & path_ip, const size_t closest_idx,
+    const double interval, const std::pair<size_t, size_t> & lane_interval_ip) const;
+  std::pair<std::optional<size_t>, bool> getStuckLineIndex(
+    PathWithLaneId * path, const PathWithLaneId & path_ip, const double interval,
+    const lanelet::ConstLanelets & ego_lane_with_next_lane, const size_t closest_idx,
+    const std::pair<size_t, size_t> & lane_interval_ip) const;
+  std::pair<std::optional<size_t>, std::optional<size_t>> getOcclusionStopLineIndex(
+    PathWithLaneId * path, const PathWithLaneId & path_ip, const double interval,
+    const std::pair<size_t, size_t> & lane_interval_ip) const;
+
   // Debug
   mutable DebugData debug_data_;
 
