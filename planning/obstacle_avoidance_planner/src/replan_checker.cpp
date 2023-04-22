@@ -27,6 +27,10 @@ ReplanChecker::ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_ne
 {
   max_path_shape_around_ego_lat_dist_ =
     node->declare_parameter<double>("replan.max_path_shape_around_ego_lat_dist");
+  max_path_shape_forward_lat_dist_ =
+    node->declare_parameter<double>("replan.max_path_shape_forward_lat_dist");
+  max_path_shape_forward_lon_dist_ =
+    node->declare_parameter<double>("replan.max_path_shape_forward_lon_dist");
   max_ego_moving_dist_ = node->declare_parameter<double>("replan.max_ego_moving_dist");
   max_goal_moving_dist_ = node->declare_parameter<double>("replan.max_goal_moving_dist");
   max_delta_time_sec_ = node->declare_parameter<double>("replan.max_delta_time_sec");
@@ -38,12 +42,16 @@ void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)
 
   updateParam<double>(
     parameters, "replan.max_path_shape_around_ego_lat_dist", max_path_shape_around_ego_lat_dist_);
+  updateParam<double>(
+    parameters, "replan.max_path_shape_forward_lat_dist", max_path_shape_forward_lat_dist_);
+  updateParam<double>(
+    parameters, "replan.max_path_shape_forward_lon_dist", max_path_shape_forward_lon_dist_);
   updateParam<double>(parameters, "replan.max_ego_moving_dist", max_ego_moving_dist_);
   updateParam<double>(parameters, "replan.max_goal_moving_dist", max_goal_moving_dist_);
   updateParam<double>(parameters, "replan.max_delta_time_sec", max_delta_time_sec_);
 }
 
-bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
+bool ReplanChecker::isResetRequired(const PlannerData & planner_data) const
 {
   const auto & p = planner_data;
 
@@ -56,7 +64,8 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
 
     // path shape changes
     if (isPathAroundEgoChanged(planner_data, prev_traj_points)) {
-      RCLCPP_INFO(logger_, "Replan with resetting optimization since path shape changed.");
+      RCLCPP_INFO(
+        logger_, "Replan with resetting optimization since path shape around ego changed.");
       return true;
     }
 
@@ -79,20 +88,18 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
     return false;
   }();
 
-  // update previous information required in this function
-  prev_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(p.traj_points);
-  prev_ego_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(p.ego_pose);
-
   return reset_required;
 }
 
-bool ReplanChecker::isReplanRequired(const rclcpp::Time & current_time)
+bool ReplanChecker::isReplanRequired(
+  const PlannerData & planner_data, const rclcpp::Time & current_time) const
 {
   const bool replan_required = [&]() {
     // guard for invalid variables
     if (!prev_replanned_time_ptr_ || !prev_traj_points_ptr_) {
       return true;
     }
+    const auto & prev_traj_points = *prev_traj_points_ptr_;
 
     // time elapses
     const double delta_time_sec = (current_time - *prev_replanned_time_ptr_).seconds();
@@ -100,15 +107,32 @@ bool ReplanChecker::isReplanRequired(const rclcpp::Time & current_time)
       return true;
     }
 
+    // path shape changes
+    if (isPathForwardChanged(planner_data, prev_traj_points)) {
+      RCLCPP_INFO(logger_, "Replan since path forward shape changed.");
+      return true;
+    }
+
     return false;
   }();
 
+  return replan_required;
+}
+
+void ReplanChecker::updateData(
+  const PlannerData & planner_data, const bool is_replan_required,
+  const rclcpp::Time & current_time)
+{
+  const auto & p = planner_data;
+
   // update previous information required in this function
-  if (replan_required) {
+  prev_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(p.traj_points);
+  prev_ego_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(p.ego_pose);
+
+  // update previous information required in this function
+  if (is_replan_required) {
     prev_replanned_time_ptr_ = std::make_shared<rclcpp::Time>(current_time);
   }
-
-  return replan_required;
 }
 
 bool ReplanChecker::isPathAroundEgoChanged(
@@ -130,6 +154,33 @@ bool ReplanChecker::isPathAroundEgoChanged(
 
   const double diff_ego_lat_offset = prev_ego_lat_offset - ego_lat_offset;
   if (std::abs(diff_ego_lat_offset) < max_path_shape_around_ego_lat_dist_) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ReplanChecker::isPathForwardChanged(
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & prev_traj_points) const
+{
+  const auto & p = planner_data;
+
+  // calculate forward point of previous trajectory points
+  const auto prev_ego_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
+  const auto & prev_forward_point = motion_utils::calcLongitudinalOffsetPoint(
+    prev_traj_points, prev_ego_seg_idx, max_path_shape_forward_lon_dist_);
+  if (!prev_forward_point) {
+    return false;
+  }
+
+  // calculate lateral offset of current trajectory points to prev forward point
+  const auto forward_seg_idx =
+    motion_utils::findNearestSegmentIndex(p.traj_points, *prev_forward_point);
+  const double forward_lat_offset =
+    motion_utils::calcLateralOffset(p.traj_points, *prev_forward_point, forward_seg_idx);
+
+  if (std::abs(forward_lat_offset) < max_path_shape_forward_lat_dist_) {
     return false;
   }
 
