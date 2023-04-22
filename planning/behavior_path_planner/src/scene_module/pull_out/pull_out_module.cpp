@@ -310,9 +310,12 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   auto stop_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
   const auto drivable_lanes =
     utils::generateDrivableLanesWithShoulderLanes(current_lanes, pull_out_lanes);
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(stop_path, status_.lanes);
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
+  const auto expanded_lanes = utils::expandLanelets(
+    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
   utils::generateDrivableArea(
-    stop_path, target_drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+    stop_path, expanded_lanes, planner_data_->parameters.vehicle_length, planner_data_);
   for (auto & p : stop_path.points) {
     p.point.longitudinal_velocity_mps = 0.0;
   }
