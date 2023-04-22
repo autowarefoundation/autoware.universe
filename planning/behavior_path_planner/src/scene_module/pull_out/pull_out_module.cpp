@@ -198,7 +198,7 @@ BehaviorModuleOutput PullOutModule::plan()
     path = status_.backward_path;
   }
 
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(path, status_.lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
   utils::generateDrivableArea(
     path, target_drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
 
@@ -310,7 +310,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   auto stop_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
   const auto drivable_lanes =
     utils::generateDrivableLanesWithShoulderLanes(current_lanes, pull_out_lanes);
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(stop_path, status_.lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(stop_path, status_.lanes);
   utils::generateDrivableArea(
     stop_path, target_drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
   for (auto & p : stop_path.points) {
@@ -518,7 +518,7 @@ PathWithLaneId PullOutModule::generateStopPath() const
   path.points.push_back(toPathPointWithLaneId(moved_pose));
 
   // generate drivable area
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(path, status_.lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
   utils::generateDrivableArea(
     path, target_drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
 

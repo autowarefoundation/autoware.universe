@@ -354,7 +354,7 @@ protected:
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   }
 
-  std::vector<DrivableLanes> getNonoverlappingExpandedLanes(
+  std::vector<DrivableLanes> getNonOverlappingExpandedLanes(
     PathWithLaneId & path, const std::vector<DrivableLanes> & lanes) const
   {
     const auto & dp = planner_data_->drivable_area_expansion_parameters;

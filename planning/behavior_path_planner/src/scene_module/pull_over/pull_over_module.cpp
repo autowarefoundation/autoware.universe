@@ -618,7 +618,7 @@ BehaviorModuleOutput PullOverModule::plan()
     for (auto & path : status_.pull_over_path->partial_paths) {
       const size_t ego_idx = planner_data_->findEgoIndex(path.points);
       utils::clipPathLength(path, ego_idx, planner_data_->parameters);
-      const auto target_drivable_lanes = getNonoverlappingExpandedLanes(path, status_.lanes);
+      const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
       utils::generateDrivableArea(
         path, target_drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
     }
@@ -854,7 +854,7 @@ PathWithLaneId PullOverModule::generateStopPath()
 
   // generate drivable area
   const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(reference_path, drivable_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
   utils::generateDrivableArea(
     reference_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 
@@ -889,7 +889,7 @@ PathWithLaneId PullOverModule::generateFeasibleStopPath()
 
   // generate drivable area
   const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(stop_path, drivable_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(stop_path, drivable_lanes);
   utils::generateDrivableArea(
     stop_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 

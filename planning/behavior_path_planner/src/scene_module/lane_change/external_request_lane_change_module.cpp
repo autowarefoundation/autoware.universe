@@ -295,7 +295,7 @@ PathWithLaneId ExternalRequestLaneChangeModule::getReferencePath() const
     lane_change_buffer);
 
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(reference_path, drivable_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
   utils::generateDrivableArea(
     reference_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 
@@ -399,7 +399,7 @@ bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) c
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, utils::extendLanes(route_handler, status_.current_lanes),
     utils::extendLanes(route_handler, status_.lane_change_lanes));
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(path, drivable_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, drivable_lanes);
   const auto lanelets = utils::transformToLanelets(target_drivable_lanes);
 
   // check path points are in any lanelets
@@ -622,7 +622,7 @@ void ExternalRequestLaneChangeModule::generateExtendedDrivableArea(PathWithLaneI
   const auto & route_handler = planner_data_->route_handler;
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, status_.current_lanes, status_.lane_change_lanes);
-  const auto target_drivable_lanes = getNonoverlappingExpandedLanes(path, drivable_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, drivable_lanes);
   utils::generateDrivableArea(
     path, drivable_lanes, common_parameters.vehicle_length, planner_data_);
 }
