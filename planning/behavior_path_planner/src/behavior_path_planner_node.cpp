@@ -1495,13 +1495,13 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     using drivable_area_expansion::DrivableAreaExpansionParameters;
     const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
     updateParam(
-      parameters, DrivableAreaExpansionParameters::drivable_area_right_bound_offset_PARAM,
+      parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_RIGHT_BOUND_OFFSET_PARAM,
       planner_data_->drivable_area_expansion_parameters.drivable_area_right_bound_offset);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::drivable_area_left_bound_offset_PARAM,
+      parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_LEFT_BOUND_OFFSET_PARAM,
       planner_data_->drivable_area_expansion_parameters.drivable_area_left_bound_offset);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::drivable_area_types_to_skip_PARAM,
+      parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_TYPES_TO_SKIP_PARAM,
       planner_data_->drivable_area_expansion_parameters.drivable_area_types_to_skip);
     updateParam(
       parameters, DrivableAreaExpansionParameters::ENABLED_PARAM,

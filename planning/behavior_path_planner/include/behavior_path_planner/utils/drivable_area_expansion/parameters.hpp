@@ -28,9 +28,9 @@ namespace drivable_area_expansion
 
 struct DrivableAreaExpansionParameters
 {
-  static constexpr auto drivable_area_right_bound_offset_PARAM = "drivable_area_right_bound_offset";
-  static constexpr auto drivable_area_left_bound_offset_PARAM = "drivable_area_left_bound_offset";
-  static constexpr auto drivable_area_types_to_skip_PARAM = "drivable_area_types_to_skip";
+  static constexpr auto DRIVABLE_AREA_RIGHT_BOUND_OFFSET_PARAM = "drivable_area_right_bound_offset";
+  static constexpr auto DRIVABLE_AREA_LEFT_BOUND_OFFSET_PARAM = "drivable_area_left_bound_offset";
+  static constexpr auto DRIVABLE_AREA_TYPES_TO_SKIP_PARAM = "drivable_area_types_to_skip";
   static constexpr auto ENABLED_PARAM = "dynamic_expansion.enabled";
   static constexpr auto EGO_EXTRA_OFFSET_FRONT =
     "dynamic_expansion.ego.extra_footprint_offset.front";
@@ -90,11 +90,11 @@ struct DrivableAreaExpansionParameters
   void init(rclcpp::Node & node)
   {
     drivable_area_right_bound_offset =
-      node.declare_parameter<double>(drivable_area_right_bound_offset_PARAM);
+      node.declare_parameter<double>(DRIVABLE_AREA_RIGHT_BOUND_OFFSET_PARAM);
     drivable_area_left_bound_offset =
-      node.declare_parameter<double>(drivable_area_left_bound_offset_PARAM);
+      node.declare_parameter<double>(DRIVABLE_AREA_LEFT_BOUND_OFFSET_PARAM);
     drivable_area_types_to_skip =
-      node.declare_parameter<std::vector<std::string>>(drivable_area_types_to_skip_PARAM);
+      node.declare_parameter<std::vector<std::string>>(DRIVABLE_AREA_TYPES_TO_SKIP_PARAM);
     enabled = node.declare_parameter<bool>(ENABLED_PARAM);
     max_expansion_distance = node.declare_parameter<double>(MAX_EXP_DIST_PARAM);
     max_path_arc_length = node.declare_parameter<double>(MAX_PATH_ARC_LENGTH_PARAM);
