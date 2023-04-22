@@ -899,11 +899,10 @@ void MPTOptimizer::avoidSuddenSteering(
     std::min(ego_idx + static_cast<size_t>(max_bound_fixing_idx), ref_points.size());
 
   for (size_t i = 0; i < max_fixed_bound_idx; ++i) {
-    auto & current_bounds = ref_points.at(i).bounds;
     const auto & prev_bounds = prev_ref_points_ptr_->at(prev_idx + i).bounds;
 
-    current_bounds.upper_bound = prev_bounds.upper_bound;
-    current_bounds.lower_bound = prev_bounds.lower_bound;
+    ref_points.at(i).bounds.upper_bound = prev_bounds.upper_bound;
+    ref_points.at(i).bounds.lower_bound = prev_bounds.lower_bound;
   }
 }
 
