@@ -66,6 +66,12 @@ protected:
   void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
+  // TODO(atsushi421): Temporary Implementation: Remove this interface when all the filter nodes conform
+  // to new API
+  virtual void faster_filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+    const TransformInfo & transform_info);
+
 private:
   double voxel_size_x_;
   double voxel_size_y_;

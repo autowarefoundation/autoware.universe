@@ -74,22 +74,25 @@ VoxelGridDownsampleFilterComponent::VoxelGridDownsampleFilterComponent(
     std::bind(&VoxelGridDownsampleFilterComponent::paramCallback, this, _1));
 }
 
+// TODO(atsushi421): Temporary Implementation: Delete this function definition when all the filter nodes
+// conform to new API.
 void VoxelGridDownsampleFilterComponent::filter(
   const PointCloud2ConstPtr & input, const IndicesPtr & /*indices*/, PointCloud2 & output)
 {
-  std::scoped_lock lock(mutex_);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*input, *pcl_input);
-  pcl_output->points.reserve(pcl_input->points.size());
-  pcl::VoxelGrid<pcl::PointXYZ> filter;
-  filter.setInputCloud(pcl_input);
-  // filter.setSaveLeafLayout(true);
-  filter.setLeafSize(voxel_size_x_, voxel_size_y_, voxel_size_z_);
-  filter.filter(*pcl_output);
+  (void)input;
+  (void)output;
+}
 
-  pcl::toROSMsg(*pcl_output, output);
-  output.header = input->header;
+// TODO(atsushi421): Temporary Implementation: Rename this function to `filter()` when all the filter
+// nodes conform to new API. Then delete the old `filter()` defined above.
+void VoxelGridDownsampleFilterComponent::faster_filter(
+  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  PointCloud2 & output, const TransformInfo & transform_info)
+{
+  // TODO(atsushi421): not implemented
+  (void)input;
+  (void)output;
+  (void)transform_info;
 }
 
 rcl_interfaces::msg::SetParametersResult VoxelGridDownsampleFilterComponent::paramCallback(
