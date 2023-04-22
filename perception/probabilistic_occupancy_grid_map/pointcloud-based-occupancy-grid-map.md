@@ -78,13 +78,35 @@ Using the previous occupancy grid map, update the existence probability using a 
 
 ### Node Parameters
 
-| Name                | Type   | Description                                                                                                                      |
-| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `map_frame`         | string | map frame                                                                                                                        |
-| `base_link_frame`   | string | base_link frame                                                                                                                  |
-| `use_height_filter` | bool   | whether to height filter for `~/input/obstacle_pointcloud` and `~/input/raw_pointcloud`? By default, the height is set to -1~2m. |
-| `map_length`        | double | The length of the map. -100 if it is 50~50[m]                                                                                    |
-| `map_resolution`    | double | The map cell resolution [m]                                                                                                      |
+| Name                                           | Type   | Description                                                                                                                                  |
+| ---------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `map_frame`                                    | string | map frame                                                                                                                                    |
+| `base_link_frame`                              | string | base_link frame                                                                                                                              |
+| `use_height_filter`                            | bool   | whether to height filter for `~/input/obstacle_pointcloud` and `~/input/raw_pointcloud`? By default, the height is set to -1~2m.             |
+| `map_length`                                   | double | The length of the map. -100 if it is 50~50[m]                                                                                                |
+| `map_resolution`                               | double | The map cell resolution [m]                                                                                                                  |
+| `filter_obstacle_pointcloud_by_raw_pointcloud` | bool   | If you set it to "true," you will use the obstacle point cloud that is part of the raw point cloud. This is useful in a multi-sensor system. |
+| `map_frame`                                    | string | The tf frame for the OGM coordinate definition.                                                                                              |
+| `base_link_frame`                              | string | The tf frame for the sensor origin.                                                                                                          |
+| `gridmap_origin_frame`                         | string | The tf frame for the OGM center origin.                                                                                                      |
+
+```yaml
+/**:
+  ros__parameters:
+    map_length: 100.0 # [m]
+    map_resolution: 0.5 # [m]
+
+    use_height_filter: true
+    enable_single_frame_mode: true
+    # use sensor pointcloud to filter obstacle pointcloud
+    filter_obstacle_pointcloud_by_raw_pointcloud: true
+
+    # grid map coordinate
+    map_frame: "map"
+    base_link_frame: "base_link"
+    # center of the grid map
+    gridmap_origin_frame: "base_link"
+```
 
 ## Assumptions / Known limits
 

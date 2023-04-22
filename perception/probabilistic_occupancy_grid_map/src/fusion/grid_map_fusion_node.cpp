@@ -31,7 +31,13 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
 {
   /* load input parameters */
   {
-    num_input_topics_ = static_cast<std::size_t>(declare_parameter("input_sensor_num", 3));
+    // get input topics
+    declare_parameter("each_ogm_output_topics", std::vector<std::string>{});
+    input_topics_ = get_parameter("each_ogm_output_topics").as_string_array();
+    if (input_topics_.empty()) {
+      throw std::runtime_error("The number of input topics must larger than 0.");
+    }
+    num_input_topics_ = input_topics_.size();
     if (num_input_topics_ < 1) {
       RCLCPP_WARN(
         this->get_logger(), "minimum num_input_topics_ is 1. current num_input_topics_ is %zu",
@@ -43,12 +49,6 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
         this->get_logger(), "maximum num_input_topics_ is 12. current num_input_topics_ is %zu",
         num_input_topics_);
       num_input_topics_ = 12;
-    }
-    // get input topics
-    declare_parameter("each_ogm_output_topics", std::vector<std::string>{});
-    input_topics_ = get_parameter("each_ogm_output_topics").as_string_array();
-    if (num_input_topics_ != input_topics_.size()) {
-      throw std::runtime_error("The number of input topics does not match the number of topics.");
     }
     // get input topic reliabilities
     declare_parameter("each_ogm_reliabilities", std::vector<double>{});

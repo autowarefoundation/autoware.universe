@@ -6,7 +6,6 @@
       fusion_map_resolution: 0.5 # [m]
 
       # Setting1: tune ogm creation parameters
-      input_sensor_num: 3 # number of input sensors
       obstacle_pointcloud_topic: "/perception/obstacle_segmentation/single_frame/pointcloud_raw"
       each_raw_pointcloud_topics:
         - "/sensing/lidar/top/outlier_filtered/pointcloud_synchronized"
