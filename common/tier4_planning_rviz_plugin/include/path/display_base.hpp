@@ -211,8 +211,12 @@ public:
 
 protected:
   virtual void visualizeDrivableArea([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
-  virtual void preprocessMessageDetail([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
-  virtual void processMessageDetail(
+  virtual void preProcessMessageDetail() {}
+  virtual void preVisualizePathFootprintDetail(
+    [[maybe_unused]] const typename T::ConstSharedPtr msg_ptr)
+  {
+  }
+  virtual void visualizePathFootprintDetail(
     [[maybe_unused]] const typename T::ConstSharedPtr msg_ptr, [[maybe_unused]] const size_t p_idx)
   {
   }
@@ -230,6 +234,8 @@ protected:
         "Message contained invalid floating point values (nans or infs)");
       return;
     }
+
+    preProcessMessageDetail();
 
     Ogre::Vector3 position;
     Ogre::Quaternion orientation;
@@ -406,7 +412,7 @@ protected:
 
     const float offset_from_baselink = property_offset_.getFloat();
 
-    preprocessMessageDetail(msg_ptr);
+    preVisualizePathFootprintDetail(msg_ptr);
 
     for (size_t p_idx = 0; p_idx < msg_ptr->points.size(); p_idx++) {
       const auto & point = msg_ptr->points.at(p_idx);
@@ -481,7 +487,7 @@ protected:
         }
       }
 
-      processMessageDetail(msg_ptr, p_idx);
+      visualizePathFootprintDetail(msg_ptr, p_idx);
     }
 
     footprint_manual_object_->end();
