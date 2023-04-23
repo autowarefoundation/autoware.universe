@@ -54,7 +54,7 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
   const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
   const int densification_num_past_frames =
-    this->declare_parameter("densification_num_past_frames", 1);
+    this->declare_parameter("densification_num_past_frames", 0);
 
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   has_twist_ = this->declare_parameter("has_twist", false);

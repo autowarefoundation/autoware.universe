@@ -17,10 +17,6 @@
     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param name="score_threshold" value="$(var score_threshold)"/>
-    <param name="yaw_norm_threshold" value="$(var yaw_norm_threshold)"/>
-    <param name="densification_world_frame_id" value="map"/>
-    <param name="densification_num_past_frames" value="0"/>
-    <param name="trt_precision" value="fp16"/>
     <param name="has_twist" value="$(var has_twist)"/>
     <param from="$(var model_param_path)"/>
 
