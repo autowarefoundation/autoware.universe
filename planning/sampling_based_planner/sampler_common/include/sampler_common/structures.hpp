@@ -34,7 +34,6 @@
 
 namespace sampler_common
 {
-// TODO(Maxime): directly use the tier4 types
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::MultiPolygon2d;
@@ -339,9 +338,6 @@ struct Constraints
     double lateral_deviation_weight;
     double longitudinal_deviation_weight;
     double length_weight;
-    double velocity_deviation_weight;
-    double velocity_weight;
-    double jerk_weight;
     double curvature_weight;
     double yaw_rate_weight;
   } soft{};
@@ -349,15 +345,8 @@ struct Constraints
   {
     double min_lateral_deviation;
     double max_lateral_deviation;
-    double min_velocity;
-    double max_velocity;
-    double min_acceleration;
-    double max_acceleration;
-    double min_jerk;
-    double max_jerk;
     double min_curvature;
     double max_curvature;
-    double max_yaw_rate;
   } hard{};
   LinearRing2d ego_footprint;
   MultiPolygon2d obstacle_polygons;

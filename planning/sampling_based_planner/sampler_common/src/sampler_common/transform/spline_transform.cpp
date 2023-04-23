@@ -196,10 +196,9 @@ std::vector<double> Spline2D::arcLength(
 }
 
 // @brief Convert the given point to the Frenet frame of this spline
+// @details sample points along the splines and return the closest one
 FrenetPoint Spline2D::frenet_naive(const Point2d & p, double precision) const
 {
-  // TODO(Maxime CLEMENT) Implement fast algorithm from https://hal.inria.fr/inria-00518379/document
-  // Naive approach: sample points along the splines and return the closest one
   double closest_d = std::numeric_limits<double>::max();
   double arc_length = std::numeric_limits<double>::min();
   for (double s = s_.front(); s < s_.back(); s += precision) {
@@ -223,6 +222,9 @@ FrenetPoint Spline2D::frenet_naive(const Point2d & p, double precision) const
   return {arc_length, closest_d};
 }
 
+// @brief Convert the given point to the Frenet frame of this spline
+// @details find closest point in the lookup table
+// @warning can fail if the original points are not smooth or if some points are very far apart
 FrenetPoint Spline2D::frenet(const Point2d & p, const double precision) const
 {
   const auto distance = [&](const Point2d & p2) {
@@ -230,8 +232,6 @@ FrenetPoint Spline2D::frenet(const Point2d & p, const double precision) const
   };
   size_t min_i{};
   auto min_dist = std::numeric_limits<double>::max();
-  // find closest point in the lookup table
-  // /!\ can fail if the original points are not smooth or if some points are very far apart
   for (size_t i = 0; i < original_points_.size(); ++i) {
     const auto dist = distance(original_points_[i]);
     if (dist <= min_dist) {

@@ -84,8 +84,6 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
       declare_parameter<double>("constraints.soft.lateral_deviation_weight");
     params_.constraints.soft.longitudinal_deviation_weight =
       declare_parameter<double>("constraints.soft.longitudinal_deviation_weight");
-    params_.constraints.soft.jerk_weight =
-      declare_parameter<double>("constraints.soft.jerk_weight");
     params_.constraints.soft.length_weight =
       declare_parameter<double>("constraints.soft.length_weight");
     params_.constraints.soft.curvature_weight =
@@ -145,7 +143,6 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
   updateParam(
     parameters, "constraints.soft.longitudinal_deviation_weight",
     params_.constraints.soft.longitudinal_deviation_weight);
-  updateParam(parameters, "constraints.soft.jerk_weight", params_.constraints.soft.jerk_weight);
   updateParam(parameters, "constraints.soft.length_weight", params_.constraints.soft.length_weight);
   updateParam(
     parameters, "constraints.soft.curvature_weight", params_.constraints.soft.curvature_weight);
@@ -323,19 +320,6 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   params_.constraints.distance_to_end = path_spline.lastS() - planning_state.frenet.s;
 
   auto candidate_paths = generateCandidatePaths(planning_state, path_spline, params_);
-  /* TODO(Maxime): reimplement reusing the previous path
-  const auto updated_prev_path = updatePreviousPath(
-    prev_path_, planning_state, params_.preprocessing.reuse_max_deviation);
-  auto reusable_paths = sampler_common::calculateReusablePaths(
-    updated_prev_path, params_.preprocessing.reuse_lengths);
-  for (auto & reusable_path: reusable_paths) {
-    auto paths = generateCandidatePaths(
-      reusable_path.planning_state, reusable_path.path, path_spline, *path_ptr, params_);
-    candidate_paths.insert(
-      candidate_paths.end(), std::make_move_iterator(paths.begin()),
-      std::make_move_iterator(paths.end()));
-  }
-  */
   debug_data_.footprints.clear();
   for (auto & path : candidate_paths) {
     // TODO(Maxime): resample the path ?

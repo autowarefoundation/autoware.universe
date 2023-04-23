@@ -18,7 +18,6 @@
 #include "motion_utils/motion_utils.hpp"
 #include "path_sampler/common_structs.hpp"
 #include "path_sampler/parameters.hpp"
-#include "path_sampler/replan_checker.hpp"
 #include "path_sampler/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
@@ -45,9 +44,6 @@ protected:  // for the static_centerline_optimizer package
   vehicle_info_util::VehicleInfo vehicle_info_{};
   mutable DebugData debug_data_{};
   mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_{nullptr};
-
-  // core algorithms
-  std::shared_ptr<ReplanChecker> replan_checker_ptr_{nullptr};
 
   // parameters
   TrajectoryParam traj_param_{};

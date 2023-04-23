@@ -55,28 +55,4 @@ void calculateCost(
   lateral_deviation_sum += std::abs(fp.d);
   path.cost += constraints.soft.lateral_deviation_weight * lateral_deviation_sum;
 }
-
-void calculateCost(
-  Trajectory & trajectory, const Constraints & constraints, const transform::Spline2D & reference)
-{
-  Path & path = trajectory;
-  calculateCost(path, constraints, reference);
-
-  // calculateVelocityCost(trajectory, constraints);
-  const auto avg_vel =
-    std::accumulate(
-      trajectory.longitudinal_velocities.begin(), trajectory.longitudinal_velocities.end(), 0.0) /
-    trajectory.longitudinal_velocities.size();
-  trajectory.cost += avg_vel * constraints.soft.velocity_weight;
-  // lateral deviation
-  auto deviation = 0.0;
-  for (const auto & p : trajectory.points) deviation += std::abs(reference.frenet(p, 0.2).d);
-  trajectory.cost +=
-    (deviation / trajectory.points.size()) * constraints.soft.lateral_deviation_weight;
-  // jerk
-  auto jerk_sum = 0.0;
-  for (const auto jerk : trajectory.jerks) jerk_sum += std::abs(jerk);
-  const auto avg_jerk = jerk_sum / trajectory.jerks.size();
-  trajectory.cost += avg_jerk * constraints.soft.jerk_weight;
-}
 }  // namespace sampler_common::constraints
