@@ -166,25 +166,30 @@ bool ReplanChecker::isPathForwardChanged(
   const auto & p = planner_data;
 
   // calculate forward point of previous trajectory points
-  const auto prev_ego_seg_idx =
+  const size_t prev_ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
-  const auto & prev_forward_point = motion_utils::calcLongitudinalOffsetPoint(
-    prev_traj_points, prev_ego_seg_idx, max_path_shape_forward_lon_dist_);
-  if (!prev_forward_point) {
-    return false;
+
+  // check if distance is larger than the threshold
+  constexpr double lon_dist_interval = 10.0;
+  for (double lon_dist = lon_dist_interval; lon_dist <= max_path_shape_forward_lon_dist_;
+       lon_dist += lon_dist_interval) {
+    const auto prev_forward_point =
+      motion_utils::calcLongitudinalOffsetPoint(prev_traj_points, prev_ego_seg_idx, lon_dist);
+    if (!prev_forward_point) {
+      continue;
+    }
+
+    // calculate lateral offset of current trajectory points to prev forward point
+    const auto forward_seg_idx =
+      motion_utils::findNearestSegmentIndex(p.traj_points, *prev_forward_point);
+    const double forward_lat_offset =
+      motion_utils::calcLateralOffset(p.traj_points, *prev_forward_point, forward_seg_idx);
+    if (max_path_shape_forward_lat_dist_ < std::abs(forward_lat_offset)) {
+      return true;
+    }
   }
 
-  // calculate lateral offset of current trajectory points to prev forward point
-  const auto forward_seg_idx =
-    motion_utils::findNearestSegmentIndex(p.traj_points, *prev_forward_point);
-  const double forward_lat_offset =
-    motion_utils::calcLateralOffset(p.traj_points, *prev_forward_point, forward_seg_idx);
-
-  if (std::abs(forward_lat_offset) < max_path_shape_forward_lat_dist_) {
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 bool ReplanChecker::isPathGoalChanged(
