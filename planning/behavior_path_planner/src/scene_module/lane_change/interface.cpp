@@ -117,7 +117,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   resetPathReference();
 
   module_type_->setPreviousDrivableLanes(getPreviousModuleOutput().drivable_lanes);
-  const auto path = module_type_->generatePlannedPath();
+  auto output = module_type_->generatePlannedPath();
 
   if (!module_type_->isValidPath()) {
     return {};
@@ -129,8 +129,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   const auto reference_path = module_type_->getReferencePath();
 
-  BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(path);
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
   output.turn_signal_info = module_type_->updateOutputTurnSignal();
 
