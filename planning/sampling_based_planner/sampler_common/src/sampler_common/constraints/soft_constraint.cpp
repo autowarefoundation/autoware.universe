@@ -34,14 +34,6 @@ void calculateLengthCost(Path & path, const Constraints & constraints)
 {
   if (!path.lengths.empty()) path.cost -= constraints.soft.length_weight * path.lengths.back();
 }
-void calculateYawRateCost(Trajectory & traj, const Constraints & constraints)
-{
-  double yaw_rate_sum = 0.0;
-  for (auto i = 0lu; i < traj.curvatures.size(); ++i)
-    yaw_rate_sum += std::abs(traj.curvatures[i] * traj.longitudinal_velocities[i]);
-  traj.cost +=
-    constraints.soft.yaw_rate_weight * yaw_rate_sum / static_cast<double>(traj.curvatures.size());
-}
 
 void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference)

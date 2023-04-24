@@ -91,8 +91,8 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
     params_.sampling.enable_frenet = declare_parameter<bool>("sampling.enable_frenet");
     params_.sampling.enable_bezier = declare_parameter<bool>("sampling.enable_bezier");
     params_.sampling.resolution = declare_parameter<double>("sampling.resolution");
-    params_.sampling.minimum_committed_length =
-      declare_parameter<double>("sampling.minimum_committed_length");
+    params_.sampling.previous_path_reuse_points_nb =
+      declare_parameter<int>("sampling.previous_path_reuse_points_nb");
     params_.sampling.target_lengths =
       declare_parameter<std::vector<double>>("sampling.target_lengths");
     params_.sampling.frenet.target_lateral_positions =
@@ -150,7 +150,8 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
   updateParam(parameters, "sampling.enable_bezier", params_.sampling.enable_bezier);
   updateParam(parameters, "sampling.resolution", params_.sampling.resolution);
   updateParam(
-    parameters, "sampling.minimum_committed_length", params_.sampling.minimum_committed_length);
+    parameters, "sampling.previous_path_reuse_points_nb",
+    params_.sampling.previous_path_reuse_points_nb);
   updateParam(parameters, "sampling.target_lengths", params_.sampling.target_lengths);
   updateParam(
     parameters, "sampling.frenet.target_lateral_positions",
@@ -319,7 +320,26 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   prepareConstraints(params_.constraints, *in_objects_ptr_, p.left_bound, p.right_bound);
   params_.constraints.distance_to_end = path_spline.lastS() - planning_state.frenet.s;
 
-  auto candidate_paths = generateCandidatePaths(planning_state, path_spline, params_);
+  auto candidate_paths = generateCandidatePaths(planning_state, path_spline, 0.0, params_);
+  if (prev_path_ && !prev_path_->lengths.empty()) {
+    const auto prev_path_length = prev_path_->lengths.back();
+    const auto reuse_step = prev_path_length / params_.sampling.previous_path_reuse_points_nb;
+    for (double reuse_length = reuse_step; reuse_length <= prev_path_length;
+         reuse_length += reuse_step) {
+      sampler_common::State reuse_state;
+      size_t reuse_idx;
+      for (reuse_idx = 0;
+           reuse_idx < prev_path_->lengths.size() && prev_path_->lengths[reuse_idx] < reuse_length;
+           ++reuse_idx)
+        ;
+      reuse_state.curvature = prev_path_->curvatures[reuse_idx];
+      reuse_state.pose = prev_path_->points[reuse_idx];
+      reuse_state.heading = prev_path_->yaws[reuse_idx];
+      reuse_state.frenet = path_spline.frenet(reuse_state.pose);
+      auto paths = generateCandidatePaths(reuse_state, path_spline, reuse_length, params_);
+      candidate_paths.insert(candidate_paths.end(), paths.begin(), paths.end());
+    }
+  }
   debug_data_.footprints.clear();
   for (auto & path : candidate_paths) {
     // TODO(Maxime): resample the path ?
@@ -344,7 +364,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   if (selected_path_idx) {
     const auto & selected_path = candidate_paths[*selected_path_idx];
     trajectory = trajectory_utils::convertToTrajectoryPoints(selected_path);
-    prev_path_ = std::make_shared<std::vector<TrajectoryPoint>>(trajectory);
+    prev_path_ = selected_path;
   } else {
     std::printf("No valid path found (out of %lu) outputing input path \n", candidate_paths.size());
     int coll = 0;
@@ -363,16 +383,6 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   debug_data_.sampled_candidates = candidate_paths;
   debug_data_.obstacles = params_.constraints.obstacle_polygons;
   return trajectory;
-}
-
-std::vector<TrajectoryPoint> PathSampler::getPrevOptimizedTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points) const
-{
-  if (prev_path_) {
-    return *prev_path_;
-  }
-
-  return traj_points;
 }
 
 void PathSampler::applyInputVelocity(

@@ -32,11 +32,14 @@ namespace path_sampler
  * @brief generate candidate paths for the given problem inputs
  * @param [in] initial_state initial ego state
  * @param [in] path_spline spline of the reference path
- * @return generated candidate paths
+ * @param [in] base_length base length of the reuse path (= 0.0 if not reusing a previous path)
+ * @param [in] params parameters
+ * @return candidate paths
  */
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
+  const sampler_common::transform::Spline2D & path_spline, const double base_length,
+  const Parameters & params);
 
 std::vector<sampler_common::Path> generateBezierPaths(
   const sampler_common::State & initial_state, const double base_length,

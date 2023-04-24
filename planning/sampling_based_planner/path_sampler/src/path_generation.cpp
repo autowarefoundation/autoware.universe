@@ -33,11 +33,10 @@ namespace path_sampler
 {
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+  const sampler_common::transform::Spline2D & path_spline, const double base_length,
+  const Parameters & params)
 {
   std::vector<sampler_common::Path> paths;
-  sampler_common::Path base_path;  // TODO(Maxime)
-  const auto base_length = base_path.lengths.empty() ? 0.0 : base_path.lengths.back();
   const auto move_to_paths = [&](auto & paths_to_move) {
     paths.insert(
       paths.end(), std::make_move_iterator(paths_to_move.begin()),

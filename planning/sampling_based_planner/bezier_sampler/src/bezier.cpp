@@ -25,15 +25,18 @@ Bezier::Bezier(Eigen::Matrix<double, 6, 2> control_points)
 Bezier::Bezier(const std::vector<Eigen::Vector2d> & control_points)
 {
   if (control_points.size() != 6) {
-    // TODO(Maxime CLEMENT): error handling or exception
     std::cerr << "Trying to initialize a quintic bezier curve with " << control_points.size()
-              << " control points." << std::endl;
+              << " (!= 6) control points." << std::endl;
+  } else {
+    control_points_ << control_points[0], control_points[1], control_points[2], control_points[3],
+      control_points[4], control_points[5];
   }
-  control_points_ << control_points[0], control_points[1], control_points[2], control_points[3],
-    control_points[4], control_points[5];
 }
 
-const Eigen::Matrix<double, 6, 2> & Bezier::getControlPoints() const { return control_points_; }
+const Eigen::Matrix<double, 6, 2> & Bezier::getControlPoints() const
+{
+  return control_points_;
+}
 
 Eigen::Vector2d Bezier::value(const double t) const
 {

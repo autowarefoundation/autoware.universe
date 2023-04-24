@@ -28,7 +28,7 @@ struct Parameters
     bool enable_frenet{};
     bool enable_bezier{};
     double resolution{};
-    double minimum_committed_length{};
+    int previous_path_reuse_points_nb{};
     std::vector<double> target_lengths{};
     struct
     {

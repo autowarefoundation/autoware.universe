@@ -55,7 +55,7 @@ protected:  // for the static_centerline_optimizer package
   PredictedObjects::SharedPtr in_objects_ptr_;
 
   // variables for previous information
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_path_;
+  std::optional<sampler_common::Path> prev_path_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
@@ -92,8 +92,6 @@ protected:  // for the static_centerline_optimizer package
 
   // sub-functions of generateTrajectory
   std::vector<TrajectoryPoint> generatePath(const PlannerData & planner_data);
-  std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points) const;
   void applyInputVelocity(
     std::vector<TrajectoryPoint> & output_traj_points,
     const std::vector<TrajectoryPoint> & input_traj_points,
