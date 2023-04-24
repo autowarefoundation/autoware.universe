@@ -123,7 +123,6 @@ public:
   std::string * tf_map_input_frame_;
 };
 
-//*************************** for Static Map loader Voxel Grid Filter *************
 class VoxelGridStaticMapLoader : public VoxelGridMapLoader
 {
 protected:
@@ -138,7 +137,6 @@ public:
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
 };
 
-// *************** for Dynamic and Differential Map loader Voxel Grid Filter *************
 class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
 {
 protected:

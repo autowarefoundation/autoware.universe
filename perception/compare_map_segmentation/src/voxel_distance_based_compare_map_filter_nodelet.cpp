@@ -23,7 +23,6 @@
 namespace compare_map_segmentation
 {
 
-//******************************* Static map loader *****************************
 void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr map)
 {
@@ -72,7 +71,6 @@ bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
   return false;
 }
 
-//******************************* Dynamic map loader ***********************************
 bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
@@ -97,7 +95,6 @@ bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
   return false;
 }
 
-// *************************************************************************************
 VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
 : Filter("VoxelDistanceBasedCompareMapFilter", options)

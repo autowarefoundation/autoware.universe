@@ -23,7 +23,6 @@
 namespace compare_map_segmentation
 {
 
-// ******************************Static Map Loader ***************************************
 bool VoxelBasedApproximateStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, [[maybe_unused]] const double distance_threshold)
 {
@@ -39,7 +38,6 @@ bool VoxelBasedApproximateStaticMapLoader::is_close_to_map(
   }
 }
 
-// ******************************  Dynamic Map Loader ************************************
 bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, [[maybe_unused]] const double distance_threshold)
 {
@@ -67,7 +65,6 @@ bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
   }
   return false;
 }
-// ****************************************************************************************
 
 VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)

@@ -33,7 +33,7 @@ namespace compare_map_segmentation
 typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
 typedef typename PointCloud::Ptr PointCloudPtr;
 typedef typename PointCloud::ConstPtr PointCloudConstPtr;
-//******************************* Static map loader *****************************
+
 class VoxelDistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 {
 private:
@@ -51,7 +51,6 @@ public:
   void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map) override;
 };
 
-//******************************* Dynamic map loader ***********************************
 class VoxelDistanceBasedDynamicMapLoader : public VoxelGridDynamicMapLoader
 {
 protected:
@@ -121,7 +120,6 @@ public:
   }
 };
 
-// *************************************************************************************
 class VoxelDistanceBasedCompareMapFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:

@@ -28,7 +28,6 @@
 namespace compare_map_segmentation
 {
 
-// ******************************Static Map Loader ***************************************
 class VoxelBasedApproximateStaticMapLoader : public VoxelGridStaticMapLoader
 {
 public:
@@ -41,7 +40,6 @@ public:
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 };
 
-// ******************************  Dynamic Map Loader ************************************
 class VoxelBasedApproximateDynamicMapLoader : public VoxelGridDynamicMapLoader
 {
 public:
@@ -54,8 +52,6 @@ public:
   }
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 };
-
-// ****************************************************************************************
 
 class VoxelBasedApproximateCompareMapFilterComponent : public pointcloud_preprocessor::Filter
 {

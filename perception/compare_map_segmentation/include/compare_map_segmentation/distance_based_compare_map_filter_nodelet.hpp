@@ -33,7 +33,6 @@ typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
 typedef typename PointCloud::Ptr PointCloudPtr;
 typedef typename PointCloud::ConstPtr PointCloudConstPtr;
 
-// ******************************Static Map Loader ***************************************
 class DistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 {
 private:
@@ -51,8 +50,6 @@ public:
   void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map) override;
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 };
-
-// ******************************  Dynamic Map Loader ************************************
 
 class DistanceBasedDynamicMapLoader : public VoxelGridDynamicMapLoader
 {
@@ -102,8 +99,6 @@ public:
     (*mutex_ptr_).unlock();
   }
 };
-
-// ****************************************************************************************
 
 class DistanceBasedCompareMapFilterComponent : public pointcloud_preprocessor::Filter
 {

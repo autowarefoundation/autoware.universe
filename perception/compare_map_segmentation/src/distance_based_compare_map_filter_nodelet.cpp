@@ -23,7 +23,6 @@
 namespace compare_map_segmentation
 {
 
-// ******************************Static Map Loader ***************************************
 void DistanceBasedStaticMapLoader::onMapCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr map)
 {
@@ -70,7 +69,6 @@ bool DistanceBasedStaticMapLoader::is_close_to_map(
   return true;
 }
 
-// ******************************  Dynamic Map Loader ************************************
 bool DistanceBasedDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
@@ -104,8 +102,6 @@ bool DistanceBasedDynamicMapLoader::is_close_to_map(
   }
   return false;
 }
-
-// ****************************************************************************************
 
 DistanceBasedCompareMapFilterComponent::DistanceBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
