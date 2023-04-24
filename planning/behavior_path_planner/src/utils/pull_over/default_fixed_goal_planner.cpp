@@ -26,21 +26,22 @@
 namespace behavior_path_planner
 {
 
-// DefaultFixedGoalPlanner::DefaultFixedGoalPlanner(){}
-
 BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   const std::shared_ptr<const PlannerData> & planner_data) const
 {
-  BehaviorModuleOutput output = getReferencePath(planner_data);
+  auto output = getReferencePath(planner_data);
+  if (!output) {
+    return {};
+  }
   const PathWithLaneId smoothed_path =
-    modifyPathForSmoothGoalConnection(*(output.path), planner_data);
+    modifyPathForSmoothGoalConnection(*(output->path), planner_data);
 
-  output.path = std::make_shared<PathWithLaneId>(smoothed_path);
-  output.reference_path = std::make_shared<PathWithLaneId>(smoothed_path);
-  return output;
+  output->path = std::make_shared<PathWithLaneId>(smoothed_path);
+  output->reference_path = std::make_shared<PathWithLaneId>(smoothed_path);
+  return *output;
 }
 
-BehaviorModuleOutput DefaultFixedGoalPlanner::getReferencePath(
+boost::optional<BehaviorModuleOutput> DefaultFixedGoalPlanner::getReferencePath(
   const std::shared_ptr<const PlannerData> & planner_data) const
 {
   const auto & route_handler = planner_data->route_handler;
