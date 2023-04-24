@@ -39,6 +39,8 @@ The manager has sub-managers for each scene module, and its main task is
 
 Additionally, the manager generates root reference path, and if any other modules don't request execution, the path is used as the planning result of `behavior_path_planner`.
 
+![manager_overview](../image/manager/manager_overview.svg)
+
 ### Sub-managers
 
 The sub-manager's main task is
@@ -48,6 +50,8 @@ The sub-manager's main task is
 - pass scene module's instance to the manager.
 - delete expired scene module instance from `registered_modules_`.
 - publish debug markers.
+
+![sub_managers](../image/manager/sub_managers.svg)
 
 Sub-manager is registered on the manager with the following function.
 
@@ -89,6 +93,8 @@ struct ModuleConfigParameters
 
 Scene modules receives necessary data and RTC command, and outputs candidate path(s), reference path and RTC cooperate status. When multiple modules run in series, the output of the previous module is received as input and the information is used to generate a new modified path, as shown in the following figure. And, when one module is running alone, it receives a reference path generated from the centerline of the lane in which Ego is currently driving as previous module output.
 
+![scene_module](../image/manager/scene_module.svg)
+
 | I/O | Type                                          | Description                                                                                                                                                                     |
 | :-- | :-------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | IN  | `behavior_path_planner::BehaviorModuleOutput` | previous module output. contains data necessary for path planning.                                                                                                              |
@@ -102,10 +108,10 @@ Scene modules receives necessary data and RTC command, and outputs candidate pat
 
 Scene modules running on the manager are stored on the **candidate modules stack** or **approved modules stack** depending on the condition whether the path modification has been approved or not.
 
-| Stack             | Approval condition | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| :---------------- | :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| candidate modules | Not approved       | The candidate modules whose modified path has not been approved by [RTC](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/rtc_interface/README.md) is stored in vector `candidate_module_ptrs_` in the manager. The candidate modules stack is updated in the following order. 1. The manager selects only those modules that can be executed based on the configuration of the sub-manager whose scene module requests execution. 2. Determines the execution priority. 3. Executes them as candidate module. All of these modules receive the decided (approved) path from approved modules stack and **RUN in PARALLEL**. |
-| approved modules  | Already approved   | When the path modification is approved via RTC commands, the manager moves the candidate module to approved modules stack. These modules are stored in `approved_module_ptrs_`. In this stack, all scene modules **RUN in SERIES**.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Stack             | Approval condition | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| :---------------- | :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| candidate modules | Not approved       | The candidate modules whose modified path has not been approved by [RTC](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/rtc_interface/README.md) is stored in vector `candidate_module_ptrs_` in the manager. The candidate modules stack is updated in the following order. 1. The manager selects only those modules that can be executed based on the configuration of the sub-manager whose scene module requests execution. 2. Determines the execution priority. 3. Executes them as candidate module. All of these modules receive the decided (approved) path from approved modules stack and **RUN in PARALLEL**. <br>![candidate_modules_stack](../image/manager/candidate_modules_stack.svg) |
+| approved modules  | Already approved   | When the path modification is approved via RTC commands, the manager moves the candidate module to approved modules stack. These modules are stored in `approved_module_ptrs_`. In this stack, all scene modules **RUN in SERIES**. <br>![approved_modules_stack](../image/manager/approved_modules_stack.svg)                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ## Process flow
 
@@ -113,15 +119,25 @@ There are 5 steps in one process:
 
 **Step1.** At first, the manager set latest planner data, and run all approved modules and get output path. At this time, the manager checks module status and removes expired modules from approved modules stack.
 
+![process_step1](../image/manager/process_step1.svg)
+
 **Step2.** Input approved modules output and necessary data to all registered modules, and the modules judge the necessity of path modification based on it. The manager checks which module makes execution request.
+
+![process_step2](../image/manager/process_step2.svg)
 
 **Step3.** Check request module existence.
 
 **Step4.** The manager decides which module to execute as candidate modules from the modules that requested to execute path modification.
 
+![process_step4](../image/manager/process_step4.svg)
+
 **Step5.** Decides the priority order of execution among candidate modules. And, run all candidate modules. Each modules outputs reference path and RTC cooperate status.
 
+![process_step5](../image/manager/process_step5.svg)
+
 **Step6.** Move approved module to approved modules stack from candidate modules stack.
+
+![process_step6](../image/manager/process_step6.svg)
 
 and, within a single planning cycle, these steps are repeated until the following conditions are satisfied.
 
@@ -408,17 +424,29 @@ This is because module C is planning output path with the output of module B as 
 
 As a result, the module A's output is used as approved modules stack.
 
+![waiting_approve](../image/manager/waiting_approve.svg)
+
 ### Failure modules
 
 The failure modules return the status `ModuleStatus::FAILURE`. The manager removes the module from approved modules stack as well as waiting approval modules, but the failure module is not moved to candidate modules stack.
 
 As a result, the module A's output is used as approved modules stack.
 
+![failure_modules](../image/manager/failure_modules.svg)
+
 ### Succeeded modules
 
 The succeeded modules return the status `ModuleStatus::SUCCESS`. The manager removes those modules based on **Last In First Out** policy. In other words, if a module added later to approved modules stack is still running (is in `ModuleStatus::RUNNING`), the manager doesn't remove the succeeded module. The reason for this is the same as in removal for waiting approval modules, and is to prevent sudden changes of the running module's output.
 
+![success_modules_remove](../image/manager/success_modules_remove.svg)
+
+![success_modules_skip](../image/manager/success_modules_skip.svg)
+
 As an exception, if **Lane Change** module returns status `ModuleStatus::SUCCESS`, the manager doesn't remove any modules until all modules is in status `ModuleStatus::SUCCESS`. This is because when the manager removes the **Lane Change** (normal LC, external LC, avoidance by LC) module as succeeded module, the manager updates the information of the lane Ego is currently driving in, so root reference path (= module A's input path) changes significantly at that moment.
+
+![lane_change_remove](../image/manager/lane_change_remove.svg)
+
+![lane_change_skip](../image/manager/lane_change_skip.svg)
 
 When the manager removes succeeded modules, the last added module's output is used as approved modules stack.
 
