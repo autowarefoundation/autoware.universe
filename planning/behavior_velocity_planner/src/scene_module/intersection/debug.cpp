@@ -204,23 +204,33 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   const auto now = this->clock_->now();
 
   // TODO(Mamoru Sobue): collision stop pose depends on before/after occlusion clearance
+  std::vector<geometry_msgs::msg::Pose> virt_wall_poses;
   if (!activated_) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.collision_stop_wall_pose}, "intersection", now),
-      &wall_marker, now);
+    virt_wall_poses.push_back(debug_data_.collision_stop_wall_pose);
   }
   if (!occlusion_first_stop_activated_) {
+    virt_wall_poses.push_back(debug_data_.occlusion_first_stop_wall_pose);
+  }
+  if (!virt_wall_poses.empty()) {
+    RCLCPP_INFO(logger_, "virt_wall_poses size is %ld", virt_wall_poses.size());
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.occlusion_first_stop_wall_pose}, "intersection", now),
+        virt_wall_poses, "intersection", now),
       &wall_marker, now);
   }
   if (!occlusion_activated_) {
     appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
+      virtual_wall_marker_creator_occlusion_->createStopVirtualWallMarker(
         {debug_data_.occlusion_stop_wall_pose}, "intersection_occlusion", now),
       &wall_marker, now);
+  }
+
+  auto id = 0;
+  for (auto & marker : wall_marker.markers) {
+    if (marker.action == visualization_msgs::msg::Marker::ADD) {
+      marker.id = id;
+      id++;
+    }
   }
   return wall_marker;
 }
