@@ -1,6 +1,7 @@
 name: update-codeowners-from-packages
 
 on:
+  pull_request:
   schedule:
     - cron: 0 0 * * *
   workflow_dispatch:
@@ -24,11 +25,10 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Run update-codeowners-from-packages
-        uses: autowarefoundation/autoware-github-actions/update-codeowners-from-packages@v1
+        uses: isamu-takagi/autoware-github-actions/update-codeowners-from-packages@feat/code-owners-advanced-settings
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          global-codeowners: "@autowarefoundation/autoware-global-codeowners"
           pr-labels: |
             bot
             update-codeowners-from-packages
-          auto-merge-method: squash
+          # auto-merge-method: squash
