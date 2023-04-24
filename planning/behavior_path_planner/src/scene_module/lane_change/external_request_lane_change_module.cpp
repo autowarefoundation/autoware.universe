@@ -281,26 +281,23 @@ PathWithLaneId ExternalRequestLaneChangeModule::getReferencePath() const
       common_parameters.forward_path_length, common_parameters);
   }
 
-  const int num_lane_change =
-    std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
   reference_path = utils::getCenterLinePath(
     *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters, 0.0);
 
+  const auto shift_intervals =
+    route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
   const double lane_change_buffer =
-    utils::calcLaneChangeBuffer(common_parameters, num_lane_change, 0.0);
+    utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
 
   reference_path = utils::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->prepare_duration,
     lane_change_buffer);
 
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
-  const auto shorten_lanes = utils::cutOverlappedLanes(reference_path, drivable_lanes);
-  const auto expanded_lanes = utils::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
   utils::generateDrivableArea(
-    reference_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+    reference_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -397,14 +394,15 @@ bool ExternalRequestLaneChangeModule::isSafe() const
 bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) const
 {
   const auto & route_handler = planner_data_->route_handler;
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
 
   // check lane departure
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, utils::extendLanes(route_handler, status_.current_lanes),
     utils::extendLanes(route_handler, status_.lane_change_lanes));
   const auto expanded_lanes = utils::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset);
+    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
   const auto lanelets = utils::transformToLanelets(expanded_lanes);
 
   // check path points are in any lanelets
@@ -434,9 +432,9 @@ bool ExternalRequestLaneChangeModule::isValidPath(const PathWithLaneId & path) c
 bool ExternalRequestLaneChangeModule::isNearEndOfLane() const
 {
   const auto & current_pose = getEgoPose();
-  const auto minimum_lane_changing_length = planner_data_->parameters.minimum_lane_changing_length;
-  const auto end_of_lane_buffer = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
-  const double threshold = end_of_lane_buffer + minimum_lane_changing_length;
+  const auto & shift_length = status_.lane_change_path.shift_line.end_shift_length;
+  const auto threshold =
+    utils::calcMinimumLaneChangeLength(planner_data_->parameters, {shift_length});
 
   return std::max(0.0, utils::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
          threshold;
@@ -625,12 +623,12 @@ void ExternalRequestLaneChangeModule::generateExtendedDrivableArea(PathWithLaneI
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, status_.current_lanes, status_.lane_change_lanes);
   const auto expanded_lanes = utils::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset);
-
+    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
   utils::generateDrivableArea(
     path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
