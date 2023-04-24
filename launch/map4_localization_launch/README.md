@@ -8,11 +8,11 @@ Autoware users will be able to choose between their existing LiDAR and point clo
 
 In addition to the LiDAR-based solution provided by `tier4_localization_launch` (shown in the first row of the following table), there are two ways to utilize eagleye in `map4_localization_launch` with the autoware localization stack.
 
-localization launch  | twist estimator | pose estimator
--- | -- | --
-tier4_localization_launch| gyro_odometry | ndt_scan_matcher
-map4_localization_launch/eagleye_twist_localization_launch| eagleye_rt(gyro/odom/gnss fusion) | ndt_scan_matcher
-map4_localization_launch/eagleye_pose_twist_localization_launch| eagleye_rt(gyro/odom/gnss fusion) | eagleye_rt(gyro/odom/gnss fusion)
+| localization launch                                             | twist estimator                   | pose estimator                    |
+| --------------------------------------------------------------- | --------------------------------- | --------------------------------- |
+| tier4_localization_launch                                       | gyro_odometry                     | ndt_scan_matcher                  |
+| map4_localization_launch/eagleye_twist_localization_launch      | eagleye_rt(gyro/odom/gnss fusion) | ndt_scan_matcher                  |
+| map4_localization_launch/eagleye_pose_twist_localization_launch | eagleye_rt(gyro/odom/gnss fusion) | eagleye_rt(gyro/odom/gnss fusion) |
 
 ## Structure
 

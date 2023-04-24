@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <launch>
   <arg name="output_pose_with_cov_name" default="/localization/pose_estimator/pose_with_covariance"/>
   <node pkg="eagleye_fix2pose" name="fix2pose_node" exec="fix2pose">
     <!-- /eagleye/fix or  /GNSS/fix(GNSS pose only mode)-->
-    <remap from="eagleye/fix" to="eagleye/fix" />
+    <remap from="eagleye/fix" to="eagleye/fix"/>
     <remap from="eagleye/pose_with_covariance" to="$(var output_pose_with_cov_name)"/>
     <!-- plane rectangular coordinate number -->
     <param name="plane" value="7"/>
@@ -27,8 +26,5 @@
     <param name="fix_gnss_status" value="0"/>
     <!-- Minimum covariance of the pose topics to be published(if fix_judgement_type is 0)-->
     <param name="fix_std_pos_thres" value="0.1"/>
-
-
   </node>
-
 </launch>
