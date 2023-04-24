@@ -2522,8 +2522,13 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
 
     current_drivable_lanes_vec.push_back(current_drivable_lanes);
   }
+
+#ifdef USE_OLD_ARCHITECTURE
+  output.drivable_lanes = current_drivable_lanes_vec;
+#else
   output.drivable_lanes = utils::combineDrivableLanes(
     getPreviousModuleOutput().drivable_lanes, current_drivable_lanes_vec);
+#endif
 
   {
     const auto & p = planner_data_->parameters;
