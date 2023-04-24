@@ -113,8 +113,6 @@ BehaviorModuleOutput LaneChangeModule::plan()
   resetPathReference();
   is_activated_ = isActivated();
 
-  auto output = module_type_->generateOutput();
-
   if (!module_type_->isValidPath()) {
     return {};
   }
@@ -123,7 +121,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
     resetPathIfAbort();
   }
 
-  output.turn_signal_info = module_type_->updateOutputTurnSignal();
+  auto output = module_type_->generateOutput();
 
   path_reference_ = getPreviousModuleOutput().reference_path;
   prev_approved_path_ = *output.path;

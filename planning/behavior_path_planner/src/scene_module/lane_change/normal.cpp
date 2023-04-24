@@ -100,6 +100,9 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
     const auto stop_point = utils::insertStopPoint(0.1, *output.path);
   }
 
+  output.reference_path = std::make_shared<PathWithLaneId>(getReferencePath());
+  output.turn_signal_info = updateOutputTurnSignal();
+
   return output;
 }
 
