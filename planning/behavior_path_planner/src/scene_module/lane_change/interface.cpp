@@ -117,7 +117,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   resetPathReference();
 
   module_type_->setPreviousDrivableLanes(getPreviousModuleOutput().drivable_lanes);
-  auto output = module_type_->generatePlannedPath();
+  auto output = module_type_->generateOutput();
 
   if (!module_type_->isValidPath()) {
     return {};

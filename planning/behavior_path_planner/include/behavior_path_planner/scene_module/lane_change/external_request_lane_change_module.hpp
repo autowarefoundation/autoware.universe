@@ -110,7 +110,7 @@ protected:
     LaneChangePath & safe_path) const;
 
   void updateLaneChangeStatus();
-  void generateExtendedDrivableArea(BehaviorModuleOutput & output);
+  void extendOutputDrivableArea(BehaviorModuleOutput & output);
   void updateOutputTurnSignal(BehaviorModuleOutput & output);
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
   void updateSteeringFactorPtr(

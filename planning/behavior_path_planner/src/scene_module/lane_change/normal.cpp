@@ -85,12 +85,12 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   return {true, found_safe_path};
 }
 
-BehaviorModuleOutput NormalLaneChange::generatePlannedPath()
+BehaviorModuleOutput NormalLaneChange::generateOutput()
 {
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(getLaneChangePath().path);
 
-  generateExtendedDrivableArea(output);
+  extendOutputDrivableArea(output);
 
   if (isAbortState()) {
     return output;
@@ -103,7 +103,7 @@ BehaviorModuleOutput NormalLaneChange::generatePlannedPath()
   return output;
 }
 
-void NormalLaneChange::generateExtendedDrivableArea(BehaviorModuleOutput & output)
+void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & dp = planner_data_->drivable_area_expansion_parameters;

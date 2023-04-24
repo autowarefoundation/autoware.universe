@@ -146,7 +146,7 @@ BehaviorModuleOutput ExternalRequestLaneChangeModule::plan()
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
 
-  generateExtendedDrivableArea(output);
+  extendOutputDrivableArea(output);
 
   updateOutputTurnSignal(output);
 
@@ -620,7 +620,7 @@ std_msgs::msg::Header ExternalRequestLaneChangeModule::getRouteHeader() const
 {
   return planner_data_->route_handler->getRouteHeader();
 }
-void ExternalRequestLaneChangeModule::generateExtendedDrivableArea(BehaviorModuleOutput & output)
+void ExternalRequestLaneChangeModule::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto & route_handler = planner_data_->route_handler;
@@ -632,7 +632,7 @@ void ExternalRequestLaneChangeModule::generateExtendedDrivableArea(BehaviorModul
     dp.drivable_area_types_to_skip);
 
   utils::generateDrivableArea(
-    output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+    *output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
 
 bool ExternalRequestLaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) const

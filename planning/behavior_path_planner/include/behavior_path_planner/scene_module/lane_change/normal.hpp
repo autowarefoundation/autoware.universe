@@ -43,9 +43,9 @@ public:
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
 
-  BehaviorModuleOutput generatePlannedPath() override;
+  BehaviorModuleOutput generateOutput() override;
 
-  void generateExtendedDrivableArea(BehaviorModuleOutput & output) override;
+  void extendOutputDrivableArea(BehaviorModuleOutput & output) override;
 
   bool hasFinishedLaneChange() const override;
 
