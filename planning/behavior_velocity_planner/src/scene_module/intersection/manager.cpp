@@ -187,7 +187,7 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
         occlusion_uuid, true, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), stamp);
       // send {default, occlusion} RTC status
-      rtc_interface_.removeCooperateStatus(occlusion_first_stop_uuid);
+      // rtc_interface_.removeCooperateStatus(occlusion_first_stop_uuid);
     } else {
       // occlusion
       const auto occlusion_safety = intersection_module->getOcclusionSafety();
@@ -202,7 +202,7 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
         occlusion_first_stop_uuid, occlusion_first_stop_safety, occlusion_first_stop_distance,
         occlusion_first_stop_distance, stamp);
       // send {first_stop, occlusion} RTC status
-      rtc_interface_.removeCooperateStatus(uuid);
+      // rtc_interface_.removeCooperateStatus(uuid);
     }
   }
   rtc_interface_.publishCooperateStatus(stamp);  // publishRTCStatus()
@@ -212,16 +212,22 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
 void IntersectionModuleManager::setActivation()
 {
   for (const auto & scene_module : scene_modules_) {
-    // default
-    scene_module->setActivation(rtc_interface_.isActivated(getUUID(scene_module->getModuleId())));
-    // occlusion
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
-    intersection_module->setOcclusionActivation(
-      occlusion_rtc_interface_.isActivated(occlusion_uuid));
     const auto occlusion_first_stop_uuid = intersection_module->getOcclusionFirstStopUUID();
-    intersection_module->setOcclusionFirstStopActivation(
-      rtc_interface_.isActivated(occlusion_first_stop_uuid));
+    const bool is_occluded = intersection_module->isOccluded();
+    if (!is_occluded) {
+      // default
+      scene_module->setActivation(rtc_interface_.isActivated(getUUID(scene_module->getModuleId())));
+      intersection_module->setOcclusionActivation(
+        occlusion_rtc_interface_.isActivated(occlusion_uuid));
+    } else {
+      // occlusion
+      intersection_module->setOcclusionActivation(
+        occlusion_rtc_interface_.isActivated(occlusion_uuid));
+      intersection_module->setOcclusionFirstStopActivation(
+        rtc_interface_.isActivated(occlusion_first_stop_uuid));
+    }
   }
 }
 
