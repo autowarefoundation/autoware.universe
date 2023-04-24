@@ -190,10 +190,26 @@ void SideShiftModule::updateData()
     prev_reference_ = *getPreviousModuleOutput().path;
   }
 
+  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
+  const auto longest_dist_to_shift_line = [&]() {
+    double max_dist = 0.0;
+    for (const auto & pnt : path_shifter_.getShiftLines()) {
+      max_dist = std::max(max_dist, tier4_autoware_utils::calcDistance2d(getEgoPose(), pnt.start));
+    }
+    return max_dist;
+  }();
+
   const auto reference_pose = prev_output_.shift_length.empty()
                                 ? planner_data_->self_odometry->pose.pose
-                                : getUnshiftedEgoPose(prev_output_);
-  const auto centerline_path = calcCenterLinePath(planner_data_, reference_pose);
+                                : utils::getUnshiftedEgoPose(getEgoPose(), prev_output_);
+#ifdef USE_OLD_ARCHITECTURE
+  const auto centerline_path =
+    utils::calcCenterLinePath(planner_data_, reference_pose, longest_dist_to_shift_line);
+#else
+  const auto centerline_path = utils::calcCenterLinePath(
+    planner_data_, reference_pose, longest_dist_to_shift_line,
+    *getPreviousModuleOutput().reference_path);
+#endif
 
   constexpr double resample_interval = 1.0;
 #ifdef USE_OLD_ARCHITECTURE
@@ -222,10 +238,13 @@ void SideShiftModule::updateData()
   path_shifter_.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
 
 #ifndef USE_OLD_ARCHITECTURE
-  if (planner_data_->lateral_offset != nullptr) {
+  if (
+    planner_data_->lateral_offset != nullptr &&
+    planner_data_->lateral_offset->stamp != latest_lateral_offset_stamp_) {
     if (isReadyForNextRequest(parameters_->shift_request_time_limit)) {
       lateral_offset_change_request_ = true;
       requested_lateral_offset_ = planner_data_->lateral_offset->lateral_offset;
+      latest_lateral_offset_stamp_ = planner_data_->lateral_offset->stamp;
     }
   }
 #endif
@@ -400,45 +419,25 @@ double SideShiftModule::getClosestShiftLength() const
 
 void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
 {
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
   const auto itr = std::minmax_element(path->shift_length.begin(), path->shift_length.end());
 
   constexpr double threshold = 0.1;
   constexpr double margin = 0.5;
   const double left_offset = std::max(
-    *itr.second + (*itr.first > threshold ? margin : 0.0),
-    parameters_->drivable_area_left_bound_offset);
+    *itr.second + (*itr.first > threshold ? margin : 0.0), dp.drivable_area_left_bound_offset);
   const double right_offset = -std::min(
-    *itr.first - (*itr.first < -threshold ? margin : 0.0),
-    -parameters_->drivable_area_right_bound_offset);
+    *itr.first - (*itr.first < -threshold ? margin : 0.0), -dp.drivable_area_right_bound_offset);
 
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanelets_);
   const auto shorten_lanes = utils::cutOverlappedLanes(path->path, drivable_lanes);
-  const auto expanded_lanes = utils::expandLanelets(
-    shorten_lanes, left_offset, right_offset, parameters_->drivable_area_types_to_skip);
+  const auto expanded_lanes =
+    utils::expandLanelets(shorten_lanes, left_offset, right_offset, dp.drivable_area_types_to_skip);
 
   {
     const auto & p = planner_data_->parameters;
     utils::generateDrivableArea(path->path, expanded_lanes, p.vehicle_length, planner_data_);
   }
-}
-
-// NOTE: this function is ported from avoidance.
-Pose SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
-{
-  const auto ego_pose = getEgoPose();
-  if (prev_path.path.points.empty()) {
-    return ego_pose;
-  }
-
-  // un-shifted fot current ideal pose
-  const auto closest = motion_utils::findNearestIndex(prev_path.path.points, ego_pose.position);
-
-  Pose unshifted_pose = ego_pose;
-
-  unshifted_pose = calcOffsetPose(unshifted_pose, 0.0, -prev_path.shift_length.at(closest), 0.0);
-  unshifted_pose.orientation = ego_pose.orientation;
-
-  return unshifted_pose;
 }
 
 PathWithLaneId SideShiftModule::extendBackwardLength(const PathWithLaneId & original_path) const
@@ -483,41 +482,4 @@ PathWithLaneId SideShiftModule::extendBackwardLength(const PathWithLaneId & orig
 
   return extended_path;
 }
-
-// NOTE: this function is ported from avoidance.
-PathWithLaneId SideShiftModule::calcCenterLinePath(
-  const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const
-{
-  const auto & p = planner_data->parameters;
-  const auto & route_handler = planner_data->route_handler;
-
-  PathWithLaneId centerline_path;
-
-  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
-  const auto longest_dist_to_shift_line = [&]() {
-    double max_dist = 0.0;
-    for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(max_dist, tier4_autoware_utils::calcDistance2d(getEgoPose(), pnt.start));
-    }
-    return max_dist;
-  }();
-  const auto extra_margin = 10.0;  // Since distance does not consider arclength, but just line.
-  const auto backward_length =
-    std::max(p.backward_path_length, longest_dist_to_shift_line + extra_margin);
-
-  RCLCPP_DEBUG(
-    getLogger(),
-    "p.backward_path_length = %f, longest_dist_to_shift_line = %f, backward_length = %f",
-    p.backward_path_length, longest_dist_to_shift_line, backward_length);
-
-  const lanelet::ConstLanelets current_lanes =
-    utils::calcLaneAroundPose(route_handler, pose, p.forward_path_length, backward_length);
-  centerline_path = utils::getCenterLinePath(
-    *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
-
-  centerline_path.header = route_handler->getRouteHeader();
-
-  return centerline_path;
-}
-
 }  // namespace behavior_path_planner

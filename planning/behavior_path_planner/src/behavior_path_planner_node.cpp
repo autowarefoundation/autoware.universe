@@ -121,7 +121,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   {
     avoidance_param_ptr_ = std::make_shared<AvoidanceParameters>(getAvoidanceParam());
     lane_change_param_ptr_ = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
-    lane_following_param_ptr_ = std::make_shared<LaneFollowingParameters>(getLaneFollowingParam());
     pull_out_param_ptr_ = std::make_shared<PullOutParameters>(getPullOutParam());
     pull_over_param_ptr_ = std::make_shared<PullOverParameters>(getPullOverParam());
     side_shift_param_ptr_ = std::make_shared<SideShiftParameters>(getSideShiftParam());
@@ -152,8 +151,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
 
-    auto lane_following_module =
-      std::make_shared<LaneFollowingModule>("LaneFollowing", *this, lane_following_param_ptr_);
+    auto lane_following_module = std::make_shared<LaneFollowingModule>("LaneFollowing", *this);
     bt_manager_->registerSceneModule(lane_following_module);
 
     auto ext_request_lane_change_right_module =
@@ -201,8 +199,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
     const auto & p = planner_data_->parameters;
-    planner_manager_ =
-      std::make_shared<PlannerManager>(*this, lane_following_param_ptr_, p.verbose);
+    planner_manager_ = std::make_shared<PlannerManager>(*this, p.verbose);
 
     const auto register_and_create_publisher = [&](const auto & manager) {
       const auto & module_name = manager->getModuleName();
@@ -379,14 +376,24 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   // ROS parameters
   p.backward_path_length = declare_parameter<double>("backward_path_length") + backward_offset;
   p.forward_path_length = declare_parameter<double>("forward_path_length");
+
+  // lane change parameters
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
+  p.lane_changing_lateral_jerk =
+    declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
+  p.lane_changing_lateral_acc = declare_parameter<double>("lane_change.lane_changing_lateral_acc");
+  p.lane_changing_lateral_acc_at_low_velocity =
+    declare_parameter<double>("lane_change.lane_changing_lateral_acc_at_low_velocity");
+  p.lateral_acc_switching_velocity =
+    declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
+  p.minimum_lane_changing_velocity =
+    declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
+
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_out");
-  p.minimum_lane_changing_length =
-    declare_parameter<double>("lane_change.minimum_lane_changing_length");
   p.minimum_prepare_length = declare_parameter<double>("lane_change.minimum_prepare_length");
 
   p.minimum_pull_over_length = declare_parameter<double>("minimum_pull_over_length");
@@ -425,6 +432,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.rear_vehicle_reaction_time = declare_parameter<double>("rear_vehicle_reaction_time");
   p.rear_vehicle_safety_time_margin = declare_parameter<double>("rear_vehicle_safety_time_margin");
 
+  // lane change
+  p.lane_change_prepare_duration =
+    declare_parameter<double>("lane_change.lane_change_prepare_duration");
+
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
     RCLCPP_WARN_STREAM(
       get_logger(), "Lane change buffer must be more than 1 meter. Modifying the buffer.");
@@ -444,13 +455,7 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
   p.shifting_lateral_jerk = declare_parameter<double>(ns + "shifting_lateral_jerk");
   p.min_shifting_distance = declare_parameter<double>(ns + "min_shifting_distance");
   p.min_shifting_speed = declare_parameter<double>(ns + "min_shifting_speed");
-  p.drivable_area_right_bound_offset =
-    declare_parameter<double>(ns + "drivable_area_right_bound_offset");
   p.shift_request_time_limit = declare_parameter<double>(ns + "shift_request_time_limit");
-  p.drivable_area_left_bound_offset =
-    declare_parameter<double>(ns + "drivable_area_left_bound_offset");
-  p.drivable_area_types_to_skip =
-    declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
 
   return p;
 }
@@ -490,12 +495,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       declare_parameter<double>(ns + "detection_area_right_expand_dist");
     p.detection_area_left_expand_dist =
       declare_parameter<double>(ns + "detection_area_left_expand_dist");
-    p.drivable_area_right_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_right_bound_offset");
-    p.drivable_area_left_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_left_bound_offset");
-    p.drivable_area_types_to_skip =
-      declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
     p.enable_bound_clipping = declare_parameter<bool>(ns + "enable_bound_clipping");
     p.enable_avoidance_over_same_direction =
       declare_parameter<bool>(ns + "enable_avoidance_over_same_direction");
@@ -643,28 +642,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   return p;
 }
 
-LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
-{
-  LaneFollowingParameters p{};
-  p.drivable_area_right_bound_offset =
-    declare_parameter<double>("lane_following.drivable_area_right_bound_offset");
-  p.drivable_area_left_bound_offset =
-    declare_parameter<double>("lane_following.drivable_area_left_bound_offset");
-  p.drivable_area_types_to_skip =
-    declare_parameter<std::vector<std::string>>("lane_following.drivable_area_types_to_skip");
-  p.lane_change_prepare_duration =
-    declare_parameter<double>("lane_following.lane_change_prepare_duration");
-
-  // finding closest lanelet
-  {
-    p.distance_threshold =
-      declare_parameter<double>("lane_following.closest_lanelet.distance_threshold");
-    p.yaw_threshold = declare_parameter<double>("lane_following.closest_lanelet.yaw_threshold");
-  }
-
-  return p;
-}
-
 LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 {
   LaneChangeParameters p{};
@@ -672,16 +649,8 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   // trajectory generation
   p.prepare_duration = declare_parameter<double>(parameter("prepare_duration"));
-  p.lane_changing_lateral_jerk = declare_parameter<double>(parameter("lane_changing_lateral_jerk"));
-  p.lane_changing_lateral_acc = declare_parameter<double>(parameter("lane_changing_lateral_acc"));
-  p.lane_changing_lateral_acc_at_low_velocity =
-    declare_parameter<double>(parameter("lane_changing_lateral_acc_at_low_velocity"));
-  p.lateral_acc_switching_velocity =
-    declare_parameter<double>(parameter("lateral_acc_switching_velocity"));
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
-  p.minimum_lane_changing_velocity =
-    declare_parameter<double>(parameter("minimum_lane_changing_velocity"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
   p.maximum_deceleration = declare_parameter<double>(parameter("maximum_deceleration"));
   p.lane_change_sampling_num = declare_parameter<int>(parameter("lane_change_sampling_num"));
@@ -714,14 +683,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
   p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
-
-  // drivable area expansion
-  p.drivable_area_right_bound_offset =
-    declare_parameter<double>(parameter("drivable_area_right_bound_offset"));
-  p.drivable_area_left_bound_offset =
-    declare_parameter<double>(parameter("drivable_area_left_bound_offset"));
-  p.drivable_area_types_to_skip =
-    declare_parameter<std::vector<std::string>>(parameter("drivable_area_types_to_skip"));
 
   // debug marker
   p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
@@ -775,8 +736,7 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
     p.decide_path_distance = declare_parameter<double>(ns + "decide_path_distance");
     p.maximum_deceleration = declare_parameter<double>(ns + "maximum_deceleration");
     p.maximum_jerk = declare_parameter<double>(ns + "maximum_jerk");
-    // goal research
-    p.enable_goal_research = declare_parameter<bool>(ns + "enable_goal_research");
+    // goal search
     p.search_priority = declare_parameter<std::string>(ns + "search_priority");
     p.forward_goal_search_length = declare_parameter<double>(ns + "forward_goal_search_length");
     p.backward_goal_search_length = declare_parameter<double>(ns + "backward_goal_search_length");
@@ -841,13 +801,6 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
     p.use_predicted_path_outside_lanelet =
       declare_parameter<bool>(ns + "use_predicted_path_outside_lanelet");
     p.use_all_predicted_path = declare_parameter<bool>(ns + "use_all_predicted_path");
-    // drivable area
-    p.drivable_area_right_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_right_bound_offset");
-    p.drivable_area_left_bound_offset =
-      declare_parameter<double>(ns + "drivable_area_left_bound_offset");
-    p.drivable_area_types_to_skip =
-      declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
     // debug
     p.print_debug_info = declare_parameter<bool>(ns + "print_debug_info");
 
@@ -864,6 +817,17 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
         get_logger(), "maximum_deceleration cannot be negative value. Given parameter: "
                         << p.maximum_deceleration << std::endl
                         << "Terminating the program...");
+      exit(EXIT_FAILURE);
+    }
+
+    const std::string parking_policy_name = declare_parameter<std::string>(ns + "parking_policy");
+    if (parking_policy_name == "left_side") {
+      p.parking_policy = ParkingPolicy::LEFT_SIDE;
+    } else if (parking_policy_name == "right_side") {
+      p.parking_policy = ParkingPolicy::RIGHT_SIDE;
+    } else {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "[pull_over] invalid parking_policy: " << parking_policy_name << std::endl);
       exit(EXIT_FAILURE);
     }
   }
@@ -956,13 +920,6 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.backward_search_resolution = declare_parameter<double>(ns + "backward_search_resolution");
   p.backward_path_update_duration = declare_parameter<double>(ns + "backward_path_update_duration");
   p.ignore_distance_from_lane_end = declare_parameter<double>(ns + "ignore_distance_from_lane_end");
-  // drivable area
-  p.drivable_area_right_bound_offset =
-    declare_parameter<double>(ns + "drivable_area_right_bound_offset");
-  p.drivable_area_left_bound_offset =
-    declare_parameter<double>(ns + "drivable_area_left_bound_offset");
-  p.drivable_area_types_to_skip =
-    declare_parameter<std::vector<std::string>>(ns + "drivable_area_types_to_skip");
 
   // validation of parameters
   if (p.pull_out_sampling_num < 1) {
@@ -1537,6 +1494,15 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     // Drivable area expansion parameters
     using drivable_area_expansion::DrivableAreaExpansionParameters;
     const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_RIGHT_BOUND_OFFSET_PARAM,
+      planner_data_->drivable_area_expansion_parameters.drivable_area_right_bound_offset);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_LEFT_BOUND_OFFSET_PARAM,
+      planner_data_->drivable_area_expansion_parameters.drivable_area_left_bound_offset);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_TYPES_TO_SKIP_PARAM,
+      planner_data_->drivable_area_expansion_parameters.drivable_area_types_to_skip);
     updateParam(
       parameters, DrivableAreaExpansionParameters::ENABLED_PARAM,
       planner_data_->drivable_area_expansion_parameters.enabled);

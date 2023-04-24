@@ -38,7 +38,7 @@
 #include <string>
 #include <vector>
 
-namespace
+namespace behavior_path_planner::utils::lane_change
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -49,74 +49,10 @@ using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
-std::vector<std::vector<int64_t>> getSortedLaneIds(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const double rough_shift_length)
-{
-  std::vector<std::vector<int64_t>> sorted_lane_ids{};
-  sorted_lane_ids.reserve(target_lanes.size());
-  const auto get_sorted_lane_ids = [&](const lanelet::ConstLanelet & target_lane) {
-    const auto routing_graph_ptr = route_handler.getRoutingGraphPtr();
-    lanelet::ConstLanelet lane;
-    if (rough_shift_length < 0.0) {
-      // lane change to the left, so I wan to take the lane right to target
-      const auto has_target_right = routing_graph_ptr->right(target_lane);
-      if (has_target_right) {
-        lane = *has_target_right;
-      }
-    } else if (rough_shift_length > 0.0) {
-      const auto has_target_left = routing_graph_ptr->left(target_lane);
-      if (has_target_left) {
-        lane = *has_target_left;
-      }
-    } else {
-      lane = target_lane;
-    }
-
-    const auto find_same_id = std::find_if(
-      current_lanes.cbegin(), current_lanes.cend(),
-      [&lane](const lanelet::ConstLanelet & orig) { return orig.id() == lane.id(); });
-
-    if (find_same_id == current_lanes.cend()) {
-      return std::vector{target_lane.id()};
-    }
-
-    if (target_lane.id() > find_same_id->id()) {
-      return std::vector{find_same_id->id(), target_lane.id()};
-    }
-
-    return std::vector{target_lane.id(), find_same_id->id()};
-  };
-
-  std::transform(
-    target_lanes.cbegin(), target_lanes.cend(), std::back_inserter(sorted_lane_ids),
-    get_sorted_lane_ids);
-
-  return sorted_lane_ids;
-}
-
-std::vector<int64_t> replaceWithSortedIds(
-  const std::vector<int64_t> & original_lane_ids,
-  const std::vector<std::vector<int64_t>> & sorted_lane_ids)
-{
-  for (const auto original_id : original_lane_ids) {
-    for (const auto & sorted_id : sorted_lane_ids) {
-      if (std::find(sorted_id.cbegin(), sorted_id.cend(), original_id) != sorted_id.cend()) {
-        return sorted_id;
-      }
-    }
-  }
-  return original_lane_ids;
-}
-}  // namespace
-
-namespace behavior_path_planner::utils::lane_change
-{
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using lanelet::ArcCoordinates;
-using utils::getHighestProbLabel;
 
-inline double calcLaneChangeResampleInterval(
+double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity)
 {
   constexpr auto min_resampling_points{30.0};
@@ -166,6 +102,7 @@ std::optional<LaneChangePath> constructCandidatePath(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double acceleration,
   const LaneChangePhaseInfo lane_change_length, const LaneChangePhaseInfo lane_change_velocity,
+  const BehaviorPathPlannerParameters & common_parameter,
   const LaneChangeParameters & lane_change_param)
 {
   PathShifter path_shifter;
@@ -177,9 +114,12 @@ std::optional<LaneChangePath> constructCandidatePath(
   bool offset_back = false;
 
   const auto lane_changing_velocity = lane_change_velocity.lane_changing;
+  const auto lateral_acc = lane_changing_velocity < common_parameter.lateral_acc_switching_velocity
+                             ? common_parameter.lane_changing_lateral_acc_at_low_velocity
+                             : common_parameter.lane_changing_lateral_acc;
 
   path_shifter.setVelocity(lane_changing_velocity);
-  path_shifter.setLateralAccelerationLimit(std::abs(lane_change_param.lane_changing_lateral_acc));
+  path_shifter.setLateralAccelerationLimit(std::abs(lateral_acc));
 
   if (!path_shifter.generate(&shifted_path, offset_back)) {
     RCLCPP_DEBUG(
@@ -283,8 +223,7 @@ bool getLaneChangePaths(
   const auto backward_path_length = common_parameter.backward_path_length;
   const auto forward_path_length = common_parameter.forward_path_length;
   const auto prepare_duration = parameter.prepare_duration;
-  const auto minimum_prepare_length = common_parameter.minimum_prepare_length;
-  const auto minimum_lane_changing_velocity = parameter.minimum_lane_changing_velocity;
+  const auto minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
   const auto lane_change_sampling_num = parameter.lane_change_sampling_num;
 
   // get velocity
@@ -305,18 +244,18 @@ bool getLaneChangePaths(
     utils::getArcLengthToTargetLanelet(original_lanelets, target_lanelets.front(), pose);
 
 #ifdef USE_OLD_ARCHITECTURE
-  const auto num_to_preferred_lane =
-    std::abs(route_handler.getNumLaneToPreferredLane(target_lanelets.back()));
+  const auto shift_intervals =
+    route_handler.getLateralIntervalsToPreferredLane(target_lanelets.back());
 #else
   const auto get_opposite_direction =
     (direction == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
-  const auto num_to_preferred_lane = std::abs(
-    route_handler.getNumLaneToPreferredLane(target_lanelets.back(), get_opposite_direction));
+  const auto shift_intervals = route_handler.getLateralIntervalsToPreferredLane(
+    target_lanelets.back(), get_opposite_direction);
 #endif
-  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanelets.back());
-
   const auto required_total_min_length =
-    utils::calcLaneChangeBuffer(common_parameter, num_to_preferred_lane);
+    utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
+
+  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanelets.back());
 
   const auto dist_to_end_of_current_lanes =
     utils::getDistanceToEndOfLane(pose, original_lanelets) - required_total_min_length;
@@ -343,9 +282,8 @@ bool getLaneChangePaths(
     const double acceleration = (prepare_velocity - current_velocity) / prepare_duration;
 
     // get path on original lanes
-    const double prepare_length = std::max(
-      current_velocity * prepare_duration + 0.5 * acceleration * std::pow(prepare_duration, 2),
-      minimum_prepare_length);
+    const double prepare_length =
+      current_velocity * prepare_duration + 0.5 * acceleration * std::pow(prepare_duration, 2);
 
     if (prepare_length < target_length) {
       RCLCPP_DEBUG(
@@ -386,35 +324,20 @@ bool getLaneChangePaths(
       break;
     }
 
+    // calculate shift length
     const auto shift_length =
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanelets, lane_changing_start_pose);
 
     // we assume constant velocity during lane change
     const auto lane_changing_velocity = prepare_velocity;
     const auto lane_changing_length =
-      calcLaneChangingLength(lane_changing_velocity, shift_length, common_parameter, parameter);
+      calcLaneChangingLength(lane_changing_velocity, shift_length, common_parameter);
 
     if (lane_changing_length + prepare_length > dist_to_end_of_current_lanes) {
       RCLCPP_DEBUG(
         rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
         "lane changing path too long");
       continue;
-    }
-
-    if (is_goal_in_route) {
-      const double s_start =
-        lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
-      const double s_goal =
-        lanelet::utils::getArcCoordinates(target_lanelets, route_handler.getGoalPose()).length;
-      if (
-        s_start + lane_changing_length + parameter.lane_change_finish_judge_buffer +
-          required_total_min_length >
-        s_goal) {
-        RCLCPP_DEBUG(
-          rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
-          "length of lane changing path is longer than length to goal!!");
-        continue;
-      }
     }
 
     const auto target_segment = getTargetSegment(
@@ -450,7 +373,8 @@ bool getLaneChangePaths(
 
     const auto candidate_path = constructCandidatePath(
       prepare_segment, target_segment, target_lane_reference_path, shift_line, original_lanelets,
-      target_lanelets, sorted_lane_ids, acceleration, lc_length, lc_velocity, parameter);
+      target_lanelets, sorted_lane_ids, acceleration, lc_length, lc_velocity, common_parameter,
+      parameter);
 
     if (!candidate_path) {
       RCLCPP_DEBUG(
@@ -462,11 +386,11 @@ bool getLaneChangePaths(
 #ifdef USE_OLD_ARCHITECTURE
     const auto is_valid = hasEnoughLength(
       *candidate_path, original_lanelets, target_lanelets, pose, route_handler,
-      common_parameter.minimum_lane_changing_length);
+      minimum_lane_changing_velocity, common_parameter);
 #else
     const auto is_valid = hasEnoughLength(
       *candidate_path, original_lanelets, target_lanelets, pose, route_handler,
-      common_parameter.minimum_lane_changing_length, direction);
+      minimum_lane_changing_velocity, common_parameter, direction);
 #endif
 
     if (!is_valid) {
@@ -500,37 +424,32 @@ bool getLaneChangePaths(
   return false;
 }
 
-#ifdef USE_OLD_ARCHITECTURE
 bool hasEnoughLength(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
   [[maybe_unused]] const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const RouteHandler & route_handler, const double minimum_lane_change_length)
-#else
-bool hasEnoughLength(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  [[maybe_unused]] const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const RouteHandler & route_handler, const double minimum_lane_change_length,
-  const Direction direction)
-#endif
+  const RouteHandler & route_handler, const double minimum_lane_changing_velocity,
+  const BehaviorPathPlannerParameters & common_parameter, const Direction direction)
 {
-  const double lane_change_total_length = path.length.sum();
-#ifdef USE_OLD_ARCHITECTURE
-  const int num = std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back()));
-#else
-  const int num = std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back(), direction));
-#endif
-  const auto overall_graphs = route_handler.getOverallGraphPtr();
+  const double lane_change_length = path.length.sum();
+  const auto shift_intervals =
+    route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
 
-  const double lane_change_required_length = static_cast<double>(num) * minimum_lane_change_length;
+  double minimum_lane_change_length_to_preferred_lane = 0.0;
+  for (const auto & shift_length : shift_intervals) {
+    const auto lane_changing_time =
+      utils::calcLaneChangingTime(minimum_lane_changing_velocity, shift_length, common_parameter);
+    minimum_lane_change_length_to_preferred_lane +=
+      minimum_lane_changing_velocity * lane_changing_time + common_parameter.minimum_prepare_length;
+  }
 
-  if (lane_change_total_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
+  if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
   }
 
   const auto goal_pose = route_handler.getGoalPose();
   if (
     route_handler.isInGoalRouteSection(current_lanes.back()) &&
-    lane_change_total_length + lane_change_required_length >
+    lane_change_length + minimum_lane_change_length_to_preferred_lane >
       utils::getSignedDistance(current_pose, goal_pose, current_lanes)) {
     return false;
   }
@@ -541,7 +460,7 @@ bool hasEnoughLength(
   }
 
   if (
-    lane_change_total_length + lane_change_required_length >
+    lane_change_length + minimum_lane_change_length_to_preferred_lane >
     utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
     return false;
   }
@@ -724,17 +643,11 @@ PathWithLaneId getPrepareSegment(
 
 double calcLaneChangingLength(
   const double lane_changing_velocity, const double shift_length,
-  const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param)
+  const BehaviorPathPlannerParameters & common_parameter)
 {
-  const double lateral_acc = lane_changing_velocity < lc_param.lateral_acc_switching_velocity
-                               ? lc_param.lane_changing_lateral_acc_at_low_velocity
-                               : lc_param.lane_changing_lateral_acc;
-  const auto required_time = PathShifter::calcShiftTimeFromJerk(
-    shift_length, lc_param.lane_changing_lateral_jerk, lateral_acc);
-
-  const double & min_lane_change_length = com_param.minimum_lane_changing_length;
-  const double lane_changing_length =
-    std::max(lane_changing_velocity * required_time, min_lane_change_length);
+  const auto required_time =
+    utils::calcLaneChangingTime(lane_changing_velocity, shift_length, common_parameter);
+  const auto lane_changing_length = lane_changing_velocity * required_time;
 
   RCLCPP_DEBUG(
     rclcpp::get_logger("behavior_path_planner")
@@ -1032,83 +945,6 @@ std::vector<DrivableLanes> generateDrivableLanes(
   return drivable_lanes;
 }
 
-std::vector<DrivableLanes> combineDrivableLanes(
-  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
-  const std::vector<DrivableLanes> & new_drivable_lanes_vec)
-{
-  const auto has_same_lane =
-    [](const lanelet::ConstLanelet & target_lane, const lanelet::ConstLanelets & lanes) {
-      return std::find_if(lanes.begin(), lanes.end(), [&](const auto & ll) {
-               return ll.id() == target_lane.id();
-             }) != lanes.end();
-    };
-
-  const auto convert_to_lanes = [](const DrivableLanes & drivable_lanes) {
-    auto lanes = drivable_lanes.middle_lanes;
-    lanes.push_back(drivable_lanes.right_lane);
-    lanes.push_back(drivable_lanes.left_lane);
-    return lanes;
-  };
-
-  auto updated_drivable_lanes_vec = original_drivable_lanes_vec;
-  size_t new_drivable_lanes_idx = 0;
-  for (auto & updated_drivable_lanes : updated_drivable_lanes_vec) {
-    // calculated corresponding index of new_drivable_lanes
-    const auto opt_new_drivable_lanes_idx = [&]() -> std::optional<size_t> {
-      for (size_t n_idx = 0; n_idx < new_drivable_lanes_vec.size(); ++n_idx) {
-        for (const auto & ll : convert_to_lanes(updated_drivable_lanes)) {
-          if (has_same_lane(ll, convert_to_lanes(new_drivable_lanes_vec.at(n_idx)))) {
-            return n_idx;
-          }
-        }
-      }
-      return std::nullopt;
-    }();
-    if (!opt_new_drivable_lanes_idx) {
-      continue;
-    }
-    new_drivable_lanes_idx = *opt_new_drivable_lanes_idx;
-    const auto & new_drivable_lanes = new_drivable_lanes_vec.at(new_drivable_lanes_idx);
-
-    // update left lane
-    if (has_same_lane(updated_drivable_lanes.left_lane, convert_to_lanes(new_drivable_lanes))) {
-      updated_drivable_lanes.left_lane = new_drivable_lanes.left_lane;
-    }
-    // update right lane
-    if (has_same_lane(updated_drivable_lanes.right_lane, convert_to_lanes(new_drivable_lanes))) {
-      updated_drivable_lanes.right_lane = new_drivable_lanes.right_lane;
-    }
-    // update middle lanes
-    for (const auto & middle_lane : convert_to_lanes(new_drivable_lanes)) {
-      if (!has_same_lane(middle_lane, convert_to_lanes(updated_drivable_lanes))) {
-        updated_drivable_lanes.middle_lanes.push_back(middle_lane);
-      }
-    }
-
-    // validate middle lanes
-    auto & middle_lanes = updated_drivable_lanes.middle_lanes;
-    if (has_same_lane(updated_drivable_lanes.right_lane, middle_lanes)) {
-      middle_lanes.erase(
-        std::remove(
-          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.right_lane),
-        std::cend(middle_lanes));
-    }
-    if (has_same_lane(updated_drivable_lanes.left_lane, middle_lanes)) {
-      middle_lanes.erase(
-        std::remove(
-          std::begin(middle_lanes), std::end(middle_lanes), updated_drivable_lanes.left_lane),
-        std::cend(middle_lanes));
-    }
-  }
-  // NOTE: If original_drivable_lanes_vec is shorter than new_drivable_lanes_vec, push back remained
-  // new_drivable_lanes_vec.
-  updated_drivable_lanes_vec.insert(
-    updated_drivable_lanes_vec.end(), new_drivable_lanes_vec.begin() + new_drivable_lanes_idx + 1,
-    new_drivable_lanes_vec.end());
-
-  return updated_drivable_lanes_vec;
-}
-
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,
   [[maybe_unused]] const Pose & ego_pose_before_collision,
@@ -1122,7 +958,7 @@ std::optional<LaneChangePath> getAbortPaths(
 
   const auto ego_nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const auto ego_nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
-  const double minimum_lane_change_length = utils::calcLaneChangeBuffer(common_param, 1);
+  const double minimum_lane_change_length = 30.0;  // temporary
 
   const auto & lane_changing_path = selected_path.path;
   const auto lane_changing_end_pose_idx = std::invoke([&]() {
@@ -1186,8 +1022,7 @@ std::optional<LaneChangePath> getAbortPaths(
     lanelet::utils::getArcCoordinates(reference_lanelets, abort_return_pose);
   const PathWithLaneId reference_lane_segment = std::invoke([&]() {
     const double minimum_lane_changing_length =
-      common_param.backward_length_buffer_for_end_of_lane +
-      common_param.minimum_lane_changing_length;
+      common_param.backward_length_buffer_for_end_of_lane + 16.5;
 
     const double s_start = arc_position.length;
     double s_end =
@@ -1201,7 +1036,7 @@ std::optional<LaneChangePath> getAbortPaths(
     PathWithLaneId ref = route_handler->getCenterLinePath(reference_lanelets, s_start, s_end);
     ref.points.back().point.longitudinal_velocity_mps = std::min(
       ref.points.back().point.longitudinal_velocity_mps,
-      static_cast<float>(lane_change_param.minimum_lane_changing_velocity));
+      static_cast<float>(common_param.minimum_lane_changing_velocity));
     return ref;
   });
 
@@ -1259,8 +1094,9 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   const Pose & current_pose, const double abort_return_dist,
   const BehaviorPathPlannerParameters & common_param)
 {
+  const double minimum_lane_changing_length = 16.5;
   const auto minimum_lane_change_length = common_param.minimum_prepare_length +
-                                          common_param.minimum_lane_changing_length +
+                                          minimum_lane_changing_length +
                                           common_param.backward_length_buffer_for_end_of_lane;
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
@@ -1421,4 +1257,63 @@ std::string getStrDirection(const std::string & name, const Direction direction)
   return "";
 }
 
+std::vector<std::vector<int64_t>> getSortedLaneIds(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const double rough_shift_length)
+{
+  std::vector<std::vector<int64_t>> sorted_lane_ids{};
+  sorted_lane_ids.reserve(target_lanes.size());
+  const auto get_sorted_lane_ids = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto routing_graph_ptr = route_handler.getRoutingGraphPtr();
+    lanelet::ConstLanelet lane;
+    if (rough_shift_length < 0.0) {
+      // lane change to the left, so i wan to take the lane right to target
+      const auto has_target_right = routing_graph_ptr->right(target_lane);
+      if (has_target_right) {
+        lane = *has_target_right;
+      }
+    } else if (rough_shift_length > 0.0) {
+      const auto has_target_left = routing_graph_ptr->left(target_lane);
+      if (has_target_left) {
+        lane = *has_target_left;
+      }
+    } else {
+      lane = target_lane;
+    }
+
+    const auto find_same_id = std::find_if(
+      current_lanes.cbegin(), current_lanes.cend(),
+      [&lane](const lanelet::ConstLanelet & orig) { return orig.id() == lane.id(); });
+
+    if (find_same_id == current_lanes.cend()) {
+      return std::vector{target_lane.id()};
+    }
+
+    if (target_lane.id() > find_same_id->id()) {
+      return std::vector{find_same_id->id(), target_lane.id()};
+    }
+
+    return std::vector{target_lane.id(), find_same_id->id()};
+  };
+
+  std::transform(
+    target_lanes.cbegin(), target_lanes.cend(), std::back_inserter(sorted_lane_ids),
+    get_sorted_lane_ids);
+
+  return sorted_lane_ids;
+}
+
+std::vector<int64_t> replaceWithSortedIds(
+  const std::vector<int64_t> & original_lane_ids,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids)
+{
+  for (const auto original_id : original_lane_ids) {
+    for (const auto & sorted_id : sorted_lane_ids) {
+      if (std::find(sorted_id.cbegin(), sorted_id.cend(), original_id) != sorted_id.cend()) {
+        return sorted_id;
+      }
+    }
+  }
+  return original_lane_ids;
+}
 }  // namespace behavior_path_planner::utils::lane_change
