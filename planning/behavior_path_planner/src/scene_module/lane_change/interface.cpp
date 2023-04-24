@@ -125,8 +125,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   }
 
   module_type_->setPreviousDrivableLanes(getPreviousModuleOutput().drivable_lanes);
-  const auto output = module_type_->generateOutput();
-  *path_reference_ = *output.reference_path;
+  auto output = module_type_->generateOutput();
+  path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
 
   updateSteeringFactorPtr(output);
