@@ -48,14 +48,22 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_E
 
 ## Quick Start Demo
 
-rosbag made by AWSIM: [Google drive link](https://drive.google.com/drive/folders/1XVWfkDoz-0fncYC-_I6cmv1gkB6EfJ2Y?usp=share_link)
-
 ![how_to_launch_with_rosbag](docs/how_to_launch_quick_start_demo.drawio.svg)
 
+sample rosbag: [Google Drive link](https://drive.google.com/file/d/1UqULyfidxcA5JidfHWAsSqNy8itampAX/view?usp=share_link)
+
 ```shell
+# terminal 1
+source install/setup.bash
 ros2 launch pcdless_launch sample_launch.xml
+
+# terminal 2
+source install/setup.bash
 ros2 launch pcdless_launch rviz.launch.xml
-ros2 bag play awsim_yabloc_rosbag_sample
+
+# terminal 3
+source install/setup.bash
+ros2 bag play awsim_yabloc_rosbag_sample_0.db3 -s sqlite3
 ```
 
 ## Demo with Autoware
