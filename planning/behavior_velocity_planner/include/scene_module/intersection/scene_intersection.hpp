@@ -332,8 +332,6 @@ private:
 
   std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
     std::make_shared<motion_utils::VirtualWallMarkerCreator>();
-  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_occlusion_ =
-    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr occlusion_grid_pub_;
 };
 }  // namespace behavior_velocity_planner
