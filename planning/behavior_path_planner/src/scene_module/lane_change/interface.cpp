@@ -352,7 +352,7 @@ BehaviorModuleOutput LaneChangeBTInterface::planWaitingApproval()
   }
 
   BehaviorModuleOutput out;
-  *out.path = *prev_approved_path_;
+  out.path = std::make_shared<PathWithLaneId>(*prev_approved_path_);
   out.reference_path = getPreviousModuleOutput().reference_path;
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
