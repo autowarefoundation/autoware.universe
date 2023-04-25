@@ -48,8 +48,6 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const std::string onnx_file = this->declare_parameter<std::string>("onnx_file");
   const std::string label_file = this->declare_parameter<std::string>("label_file");
   const std::string mode = this->declare_parameter("mode", "FP32");
-  head1_name_ = this->declare_parameter("head1_name", "scores");
-  head2_name_ = this->declare_parameter("head2_name", "boxes");
   is_box_first_ = this->declare_parameter("is_box_first", false);
   is_box_normalized_ = this->declare_parameter("is_box_normalized", true);
 
@@ -84,28 +82,15 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   }
 
   input_shape_ = net_ptr_->getInputShape();
-  head1_dims_ = net_ptr_->getOutputDimensions(head1_name_);
-  head2_dims_ = net_ptr_->getOutputDimensions(head2_name_);
-  if (!head1_dims_ || !head2_dims_) {
-    RCLCPP_ERROR(
-      this->get_logger(), "Either name of head1: %s or head2: %s is invalid.", head1_name_.c_str(),
-      head2_name_.c_str());
-  }
-  const int head1_index = net_ptr_->getBindingIndex(head1_name_);
-  const int head2_index = net_ptr_->getBindingIndex(head2_name_);
-  if (head1_index != 1 || head2_index != 2) {
-    RCLCPP_ERROR(
-      get_logger(), "Output order is wrong: (%d): %s, (%d): %s", head1_index, head1_name_.c_str(),
-      head2_index, head2_name_.c_str());
-  }
-
   if (is_box_first_) {
-    detection_per_class_ = head2_dims_->d[0];
-    class_num_ = head2_dims_->d[1];
+    box_dims_ = net_ptr_->getOutputDimensions(1);
+    score_dims_ = net_ptr_->getOutputDimensions(2);
   } else {
-    detection_per_class_ = head1_dims_->d[0];
-    class_num_ = head1_dims_->d[1];
+    score_dims_ = net_ptr_->getOutputDimensions(1);
+    box_dims_ = net_ptr_->getOutputDimensions(2);
   }
+  detection_per_class_ = score_dims_->d[0];
+  class_num_ = score_dims_->d[1];
 
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
   score_thresh_ = this->declare_parameter<double>("score_thresh", 0.7);
@@ -170,9 +155,14 @@ void TrafficLightSSDFineDetectorNodelet::callback(
   while (num_rois != 0) {
     const int num_infer = (num_rois / batch_size > 0) ? batch_size : num_rois % batch_size;
     auto data_d = cuda::make_unique<float[]>(num_infer * input_shape_.size());
-    auto head1_d = cuda::make_unique<float[]>(num_infer * head1_dims_->size());
-    auto head2_d = cuda::make_unique<float[]>(num_infer * head2_dims_->size());
-    std::vector<void *> buffers{data_d.get(), head1_d.get(), head2_d.get()};
+    auto box_d = cuda::make_unique<float[]>(num_infer * box_dims_->size());
+    auto score_d = cuda::make_unique<float[]>(num_infer * score_dims_->size());
+    std::vector<void *> buffers;
+    if (is_box_first_) {
+      buffers = {data_d.get(), box_d.get(), score_d.get()};
+    } else {
+      buffers = {data_d.get(), score_d.get(), box_d.get()};
+    }
     std::vector<cv::Point> lts, rbs;
     std::vector<cv::Mat> cropped_imgs;
 
@@ -204,23 +194,12 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     auto scores = std::make_unique<float[]>(num_infer * detection_per_class_ * class_num_);
     auto boxes = std::make_unique<float[]>(num_infer * detection_per_class_ * 4);
-    if (is_box_first_) {
-      // (boxes, scores) order
-      cudaMemcpy(
-        boxes.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_->size(),
-        cudaMemcpyDeviceToHost);
-      cudaMemcpy(
-        scores.get(), head2_d.get(), sizeof(float) * num_infer * head2_dims_->size(),
-        cudaMemcpyDeviceToHost);
-    } else {
-      // (scores, boxes) order
-      cudaMemcpy(
-        scores.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_->size(),
-        cudaMemcpyDeviceToHost);
-      cudaMemcpy(
-        boxes.get(), head2_d.get(), sizeof(float) * num_infer * head2_dims_->size(),
-        cudaMemcpyDeviceToHost);
-    }
+    cudaMemcpy(
+      boxes.get(), box_d.get(), sizeof(float) * num_infer * box_dims_->size(),
+      cudaMemcpyDeviceToHost);
+    cudaMemcpy(
+      scores.get(), score_d.get(), sizeof(float) * num_infer * score_dims_->size(),
+      cudaMemcpyDeviceToHost);
     // Get Output
     std::vector<Detection> detections;
     if (!cnnOutput2BoxDetection(

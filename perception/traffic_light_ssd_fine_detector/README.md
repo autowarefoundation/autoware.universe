@@ -54,8 +54,6 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 | ------------------- | ------ | ------------------------------ | -------------------------------------------------------------------- |
 | `onnx_file`         | string | "./data/mb2-ssd-lite-tlr.onnx" | The onnx file name for yolo model                                    |
 | `label_file`        | string | "./data/voc_labels_tl.txt"     | The label file with label names for detected objects written on it   |
-| `head1_name`        | string | "scores"                       | The name of first output head                                        |
-| `head2_name`        | string | "boxes"                        | The name of second output head                                       |
 | `is_box_first`      | bool   | false                          | Indicates whether first output head is for boxes                     |
 | `is_box_normalized` | bool   | true                           | Indicates whether output boxes have been normalized into `[0, 1]`    |
 | `mode`              | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |

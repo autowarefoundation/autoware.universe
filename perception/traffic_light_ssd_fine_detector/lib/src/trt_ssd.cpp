@@ -185,14 +185,13 @@ Shape Net::getInputShape() const
   return {dims.d[1], dims.d[2], dims.d[3]};
 }
 
-std::optional<Dims2> Net::getOutputDimensions(const std::string & name) const
+std::optional<Dims2> Net::getOutputDimensions(const size_t index) const
 {
-  auto index = getBindingIndex(name);
-  if (index == -1) {
-    return std::nullopt;
+  if (index == 1 || index == 2) {
+    auto dims = engine_->getBindingDimensions(index);
+    return Dims2(dims.d[1], dims.d[2]);
   }
-  auto dims = engine_->getBindingDimensions(index);
-  return Dims2(dims.d[1], dims.d[2]);
+  return std::nullopt;
 }
 
 }  // namespace ssd

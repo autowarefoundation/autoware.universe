@@ -92,8 +92,8 @@ public:
   // Get (c, h, w) size of the fixed input
   Shape getInputShape() const;
 
-  // Get output dimensions by name
-  std::optional<Dims2> getOutputDimensions(const std::string &) const;
+  // Get output dimensions by index
+  std::optional<Dims2> getOutputDimensions(const size_t index) const;
 
   // Get max allowed batch size
   inline int getMaxBatchSize() const

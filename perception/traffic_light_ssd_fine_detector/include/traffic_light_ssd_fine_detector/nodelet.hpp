@@ -100,10 +100,8 @@ private:
   ssd::Shape input_shape_;
   int class_num_;
   int detection_per_class_;
-  std::string head1_name_;
-  std::string head2_name_;
-  std::optional<ssd::Dims2> head1_dims_;
-  std::optional<ssd::Dims2> head2_dims_;
+  std::optional<ssd::Dims2> box_dims_;
+  std::optional<ssd::Dims2> score_dims_;
   bool is_box_first_;
   bool is_box_normalized_;
 
