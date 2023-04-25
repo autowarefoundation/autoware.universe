@@ -50,7 +50,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
-  ASSER_NO_THROW(test_manager->testWithAbnormalTrajectory(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithAbnormalTrajectory(test_target_node));
 
   rclcpp::shutdown();
 }
