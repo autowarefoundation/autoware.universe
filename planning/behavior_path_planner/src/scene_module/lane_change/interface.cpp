@@ -123,7 +123,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     resetPathIfAbort();
   }
 
-  module_type_->setPreviousDrivableLanes(getPreviousModuleOutput().drivable_lanes);
+  module_type_->setPreviousDrivableLanes(
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes);
   auto output = module_type_->generateOutput();
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
