@@ -85,6 +85,8 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 
 ## Important Notes
 
-When launch a node, the parameters are loaded from the package's parameter file, which is located in the config directory.Please be aware that if there are missing parameters, the node can't be launched during testing.
+During test execution, when launching a node, parameters are loaded from the parameter file within each package. Therefore, when adding parameters, it is necessary to add the required parameters to the parameter file in the target node package. This is to prevent the node from being unable to launch if there are missing parameters when retrieving them from the parameter file during node launch.
 
 ## Future extensions / Unimplemented parts
+
+(WIP)
