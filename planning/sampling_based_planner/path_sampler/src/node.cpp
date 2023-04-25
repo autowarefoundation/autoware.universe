@@ -82,8 +82,6 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
       declare_parameter<double>("constraints.hard.min_curvature");
     params_.constraints.soft.lateral_deviation_weight =
       declare_parameter<double>("constraints.soft.lateral_deviation_weight");
-    params_.constraints.soft.longitudinal_deviation_weight =
-      declare_parameter<double>("constraints.soft.longitudinal_deviation_weight");
     params_.constraints.soft.length_weight =
       declare_parameter<double>("constraints.soft.length_weight");
     params_.constraints.soft.curvature_weight =
@@ -118,6 +116,7 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
     // parameter for debug info
     time_keeper_ptr_->enable_calculation_time_info =
       declare_parameter<bool>("debug.enable_calculation_time_info");
+    debug_id_ = static_cast<size_t>(declare_parameter<int>("debug.id"));
 
     // parameters for ego nearest search
     ego_nearest_param_ = EgoNearestParam(this);
@@ -140,9 +139,6 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
   updateParam(
     parameters, "constraints.soft.lateral_deviation_weight",
     params_.constraints.soft.lateral_deviation_weight);
-  updateParam(
-    parameters, "constraints.soft.longitudinal_deviation_weight",
-    params_.constraints.soft.longitudinal_deviation_weight);
   updateParam(parameters, "constraints.soft.length_weight", params_.constraints.soft.length_weight);
   updateParam(
     parameters, "constraints.soft.curvature_weight", params_.constraints.soft.curvature_weight);
@@ -180,6 +176,7 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
   updateParam(
     parameters, "debug.enable_calculation_time_info",
     time_keeper_ptr_->enable_calculation_time_info);
+  updateParam(parameters, "debug.id", debug_id_);
   // parameters for ego nearest search
   ego_nearest_param_.onParam(parameters);
 
@@ -209,7 +206,6 @@ sampler_common::State PathSampler::getPlanningState(
   if (params_.preprocessing.force_zero_heading) {
     state.heading = path_spline.yaw(state.frenet.s);
   }
-  // TODO(Maxime): curvature from steering angle ?
   state.curvature = path_spline.curvature(state.frenet.s);
   return state;
 }
@@ -321,23 +317,48 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   params_.constraints.distance_to_end = path_spline.lastS() - planning_state.frenet.s;
 
   auto candidate_paths = generateCandidatePaths(planning_state, path_spline, 0.0, params_);
-  if (prev_path_ && !prev_path_->lengths.empty()) {
-    const auto prev_path_length = prev_path_->lengths.back();
-    const auto reuse_step = prev_path_length / params_.sampling.previous_path_reuse_points_nb;
-    for (double reuse_length = reuse_step; reuse_length <= prev_path_length;
-         reuse_length += reuse_step) {
-      sampler_common::State reuse_state;
-      size_t reuse_idx;
-      for (reuse_idx = 0;
-           reuse_idx < prev_path_->lengths.size() && prev_path_->lengths[reuse_idx] < reuse_length;
-           ++reuse_idx)
-        ;
-      reuse_state.curvature = prev_path_->curvatures[reuse_idx];
-      reuse_state.pose = prev_path_->points[reuse_idx];
-      reuse_state.heading = prev_path_->yaws[reuse_idx];
-      reuse_state.frenet = path_spline.frenet(reuse_state.pose);
-      auto paths = generateCandidatePaths(reuse_state, path_spline, reuse_length, params_);
-      candidate_paths.insert(candidate_paths.end(), paths.begin(), paths.end());
+  if (prev_path_ && prev_path_->lengths.size() > 1) {
+    // Update previous path
+    constexpr auto max_deviation = 2.0;  // [m] TODO(Maxime): param
+    const auto closest_iter = std::min_element(
+      prev_path_->points.begin(), prev_path_->points.end() - 1,
+      [&](const auto & p1, const auto & p2) {
+        return boost::geometry::distance(p1, current_state.pose) <=
+               boost::geometry::distance(p2, current_state.pose);
+      });
+    if (
+      closest_iter != prev_path_->points.end() &&
+      boost::geometry::distance(*closest_iter, current_state.pose) <= max_deviation) {
+      const auto current_idx = std::distance(prev_path_->points.begin(), closest_iter);
+      const auto length_offset = prev_path_->lengths[current_idx];
+      for (auto & l : prev_path_->lengths) l -= length_offset;
+      constexpr auto behind_dist = -5.0;  // [m] TODO(Maxime): param
+      auto behind_idx = current_idx;
+      while (behind_idx > 0 && prev_path_->lengths[behind_idx] > behind_dist) --behind_idx;
+      *prev_path_ = *prev_path_->subset(behind_idx, prev_path_->points.size());
+
+      // Use previous path for replanning
+      const auto prev_path_length = prev_path_->lengths.back();
+      const auto reuse_step = prev_path_length / params_.sampling.previous_path_reuse_points_nb;
+      for (double reuse_length = reuse_step; reuse_length <= prev_path_length;
+           reuse_length += reuse_step) {
+        sampler_common::State reuse_state;
+        size_t reuse_idx = 0;
+        for (reuse_idx = 0; reuse_idx + 1 < prev_path_->lengths.size() &&
+                            prev_path_->lengths[reuse_idx] < reuse_length;
+             ++reuse_idx)
+          ;
+        if (reuse_idx == 0UL) continue;
+        const auto reused_path = *prev_path_->subset(0UL, reuse_idx);
+        reuse_state.curvature = reused_path.curvatures.back();
+        reuse_state.pose = reused_path.points.back();
+        reuse_state.heading = reused_path.yaws.back();
+        reuse_state.frenet = path_spline.frenet(reuse_state.pose);
+        auto paths = generateCandidatePaths(reuse_state, path_spline, reuse_length, params_);
+        for (auto & p : paths) candidate_paths.push_back(reused_path.extend(p));
+      }
+    } else {
+      resetPreviousData();
     }
   }
   debug_data_.footprints.clear();
@@ -366,7 +387,9 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
     trajectory = trajectory_utils::convertToTrajectoryPoints(selected_path);
     prev_path_ = selected_path;
   } else {
-    std::printf("No valid path found (out of %lu) outputing input path \n", candidate_paths.size());
+    std::printf(
+      "No valid path found (out of %lu) outputing %s\n", candidate_paths.size(),
+      prev_path_ ? "previous path" : "input path");
     int coll = 0;
     int da = 0;
     int k = 0;
@@ -376,7 +399,10 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
       k += static_cast<int>(!p.constraint_results.curvature);
     }
     std::printf("\tInvalid coll/da/k = %d/%d/%d\n", coll, da, k);
-    trajectory = trajectory_utils::convertToTrajectoryPoints(p.traj_points);
+    if (prev_path_)
+      trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
+    else
+      trajectory = trajectory_utils::convertToTrajectoryPoints(p.traj_points);
   }
   time_keeper_ptr_->toc(__func__, "    ");
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
@@ -482,19 +508,51 @@ void PathSampler::publishDebugMarkerOfOptimization(
       markers.markers.push_back(m);
       ++m.id;
     }
-    if (debug_data_.footprints.size() == 1UL) {
-      m.ns = "footprints";
+    if (prev_path_) {
+      m.ns = "previous_path";
       m.id = 0UL;
-      m.type = m.POINTS;
       m.points.clear();
-      m.color.r = 1.0;
+      for (const auto & p : prev_path_->points)
+        m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+      m.color.r = 0.0;
       m.color.g = 0.0;
       m.color.b = 1.0;
-      m.scale.y = 0.02;
-      for (const auto & p : debug_data_.footprints.front())
-        m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
       markers.markers.push_back(m);
     }
+    m.ns = "footprint";
+    m.id = 0UL;
+    m.type = m.POINTS;
+    m.points.clear();
+    m.color.r = 1.0;
+    m.color.g = 0.0;
+    m.color.b = 1.0;
+    m.scale.y = 0.02;
+    if (!debug_data_.footprints.empty()) {
+      m.action = m.ADD;
+      for (const auto & p :
+           debug_data_.footprints[std::min(debug_id_, debug_data_.footprints.size())])
+        m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    } else {
+      m.action = m.DELETE;
+    }
+    m.ns = "debug_path";
+    m.id = 0UL;
+    m.type = m.POINTS;
+    m.points.clear();
+    m.color.g = 1.0;
+    m.color.b = 0.0;
+    m.scale.y = 0.04;
+    if (!debug_data_.sampled_candidates.empty()) {
+      m.action = m.ADD;
+      for (const auto & p :
+           debug_data_
+             .sampled_candidates[std::min(debug_id_, debug_data_.sampled_candidates.size())]
+             .points)
+        m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    } else {
+      m.action = m.DELETE;
+    }
+    markers.markers.push_back(m);
     m.type = m.LINE_STRIP;
     m.ns = "obstacles";
     m.id = 0UL;
@@ -529,38 +587,33 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
 {
   time_keeper_ptr_->tic(__func__);
 
-  const auto & joint_start_pose = optimized_traj_points.front().pose;
-  const auto & joint_end_pose = optimized_traj_points.back().pose;
+  const auto & start_pose = optimized_traj_points.front().pose;
 
-  // calculate start idx of optimized points on path points
-  const size_t joint_start_traj_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
-
-  // crop trajectory for extension
-  constexpr double joint_traj_length_for_smoothing = 5.0;
-  const auto joint_end_upto_traj_point_idx = trajectory_utils::getPointIndexAfter(
-    traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
-    joint_traj_length_for_smoothing);
-
-  // calculate prepended trajectory points
+  // prepend the generated trajectory: join it at the start with the reference path
+  const size_t start_traj_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(traj_points, start_pose, ego_nearest_param_);
   const auto prepended_traj_points = [&]() {
-    if (joint_start_traj_seg_idx == 0UL) return traj_points;
-    const auto pre_traj = std::vector<TrajectoryPoint>(
-      traj_points.begin(), traj_points.begin() + joint_start_traj_seg_idx);
+    if (start_traj_seg_idx == 0UL) return traj_points;
+    const auto pre_traj =
+      std::vector<TrajectoryPoint>(traj_points.begin(), traj_points.begin() + start_traj_seg_idx);
     return concatVectors(pre_traj, optimized_traj_points);
   }();
 
-  // calculate end idx of optimized points on path points
-  const size_t joint_end_traj_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(traj_points, joint_end_pose, ego_nearest_param_);
+  // expand the generated trajectory: join it at the end with the reference path
+  constexpr double joint_traj_length_for_smoothing = 5.0;
+  const auto & end_pose = prepended_traj_points.back().pose;
+  const size_t end_traj_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(traj_points, end_pose, ego_nearest_param_);
+  const auto end_upto_traj_point_idx = trajectory_utils::getPointIndexAfter(
+    traj_points, end_pose.position, end_traj_seg_idx, joint_traj_length_for_smoothing);
 
   // calculate full trajectory points
   const auto full_traj_points = [&]() {
-    if (!joint_end_upto_traj_point_idx) {
+    if (!end_upto_traj_point_idx) {
       return prepended_traj_points;
     }
     const auto extended_traj_points = std::vector<TrajectoryPoint>{
-      traj_points.begin() + *joint_end_upto_traj_point_idx, traj_points.end()};
+      traj_points.begin() + *end_upto_traj_point_idx, traj_points.end()};
     return concatVectors(prepended_traj_points, extended_traj_points);
   }();
 
@@ -569,7 +622,7 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
     full_traj_points, traj_param_.output_delta_arc_length);
 
   // update velocity on joint
-  for (size_t i = joint_end_traj_seg_idx + 1; i <= joint_end_upto_traj_point_idx; ++i) {
+  for (size_t i = end_traj_seg_idx + 1; i <= end_upto_traj_point_idx; ++i) {
     if (hasZeroVelocity(traj_points.at(i))) {
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.
@@ -582,9 +635,6 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
       }
     }
   }
-
-  // debug_data_ptr_->extended_traj_points =
-  //   extended_traj_points ? *extended_traj_points : std::vector<TrajectoryPoint>();
   time_keeper_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }

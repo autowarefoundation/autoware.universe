@@ -49,6 +49,7 @@ protected:  // for the static_centerline_optimizer package
   TrajectoryParam traj_param_{};
   EgoNearestParam ego_nearest_param_{};
   Parameters params_;
+  size_t debug_id_ = 0;
 
   // variables for subscribers
   Odometry::SharedPtr ego_state_ptr_;

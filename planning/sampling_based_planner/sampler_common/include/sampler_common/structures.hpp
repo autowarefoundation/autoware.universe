@@ -88,7 +88,6 @@ struct Path
   std::vector<Point2d> points{};
   std::vector<double> curvatures{};
   std::vector<double> yaws{};
-  std::vector<double> jerks{};
   std::vector<double> lengths{};
   ConstraintResults constraint_results{};
   double cost{};
@@ -102,7 +101,6 @@ struct Path
     points.clear();
     curvatures.clear();
     yaws.clear();
-    jerks.clear();
     lengths.clear();
     constraint_results.clear();
     tag = "";
@@ -114,7 +112,6 @@ struct Path
     points.reserve(size);
     curvatures.reserve(size);
     yaws.reserve(size);
-    jerks.reserve(size);
     lengths.reserve(size);
   }
 
@@ -139,7 +136,6 @@ struct Path
     ext(extended_path.points, points, path.points);
     ext(extended_path.curvatures, curvatures, path.curvatures);
     ext(extended_path.yaws, yaws, path.yaws);
-    ext(extended_path.jerks, jerks, path.jerks);
     extended_path.lengths.insert(extended_path.lengths.end(), lengths.begin(), lengths.end());
     const auto last_base_length = lengths.empty() ? 0.0 : lengths.back() + length_offset;
     for (size_t i = offset; i < path.lengths.size(); ++i)
@@ -165,7 +161,6 @@ struct Path
     copy_subset(curvatures, subpath->curvatures);
     copy_subset(yaws, subpath->yaws);
     copy_subset(lengths, subpath->lengths);
-    copy_subset(jerks, subpath->jerks);
     return subpath;
   };
 };
@@ -176,6 +171,7 @@ struct Trajectory : Path
   std::vector<double> longitudinal_accelerations{};
   std::vector<double> lateral_velocities{};
   std::vector<double> lateral_accelerations{};
+  std::vector<double> jerks{};
   std::vector<double> times{};
 
   Trajectory() = default;
@@ -189,6 +185,7 @@ struct Trajectory : Path
     longitudinal_accelerations.clear();
     lateral_velocities.clear();
     lateral_accelerations.clear();
+    jerks.clear();
     times.clear();
   }
 
@@ -199,6 +196,7 @@ struct Trajectory : Path
     longitudinal_accelerations.reserve(size);
     lateral_velocities.reserve(size);
     lateral_accelerations.reserve(size);
+    jerks.reserve(size);
     times.reserve(size);
   }
 
@@ -230,6 +228,7 @@ struct Trajectory : Path
       traj.longitudinal_accelerations);
     ext(extended_traj.lateral_velocities, lateral_velocities, traj.lateral_velocities);
     ext(extended_traj.lateral_accelerations, lateral_accelerations, traj.lateral_accelerations);
+    ext(extended_traj.jerks, jerks, traj.jerks);
     extended_traj.times.insert(extended_traj.times.end(), times.begin(), times.end());
     const auto last_base_time = times.empty() ? 0.0 : times.back() + time_offset;
     for (size_t i = offset; i < traj.times.size(); ++i)
@@ -249,6 +248,7 @@ struct Trajectory : Path
     copy_subset(longitudinal_accelerations, subtraj->longitudinal_accelerations);
     copy_subset(lateral_velocities, subtraj->lateral_velocities);
     copy_subset(lateral_accelerations, subtraj->lateral_accelerations);
+    copy_subset(jerks, subtraj->jerks);
     copy_subset(times, subtraj->times);
     return subtraj;
   }
@@ -336,7 +336,6 @@ struct Constraints
   struct
   {
     double lateral_deviation_weight;
-    double longitudinal_deviation_weight;
     double length_weight;
     double curvature_weight;
     double yaw_rate_weight;
