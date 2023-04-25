@@ -310,10 +310,12 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
       rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
       rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
     } else {
-      lt.x = boxes[box_index];
-      lt.y = boxes[box_index + 1];
-      rb.x = boxes[box_index + 2];
-      rb.y = boxes[box_index + 3];
+      const float dx = static_cast<float>(in_imgs.at(i).cols) / input_shape_.width;
+      const float dy = static_cast<float>(in_imgs.at(i).rows) / input_shape_.height;
+      lt.x = boxes[box_index] * dx;
+      lt.y = boxes[box_index + 1] * dy;
+      rb.x = boxes[box_index + 2] * dx;
+      rb.y = boxes[box_index + 3] * dy;
     }
     fitInFrame(lt, rb, cv::Size(in_imgs.at(i).cols, in_imgs.at(i).rows));
     det.x = lt.x;
