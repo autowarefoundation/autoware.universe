@@ -28,24 +28,11 @@ find_package(PCL REQUIRED COMPONENTS common)
 
 # ===================================================
 # Executable
-macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
-
-  set(SOURCE "")
-
-  foreach(QUERY IN ITEMS ${_ARG_SRC})
-    file(GLOB SOURCE_TMP ${QUERY})
-    set(SOURCE "${SOURCE};${SOURCE_TMP}")
-  endforeach()
-
-  set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
-  target_include_directories(${TARGET_NAME} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${OpenCV_LIBS})
-endmacro()
-
-ADD_EXE(TARGET graph_segment_node SRC src/graph_segment_node.cpp src/graph_segment_core.cpp INC include)
+set(TARGET graph_segment_node)
+ament_auto_add_executable(${TARGET} src/graph_segment_node.cpp src/graph_segment_core src/similar_area_searcher.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${_ARG_LIB} ${OpenCV_LIBS})
 
 # ===================================================
 ament_auto_package()

@@ -12,6 +12,7 @@
     <arg name="inout_weighted_particles" default="weighted_particles"/>
     <arg name="output_particles_marker_array" default="predicted_particles_marker"/>
     <arg name="ignore_less_than_float" default="true"/>
+    <arg name="gnss_mahalanobis_distance_threshold" default="20.0" description="If the distance to GNSS observation exceeds this, the correction is skipped."/>
 
     <!-- predict update -->
     <arg name="input_initialpose" default="/localization/initializer/rectified/initialpose"/>
@@ -75,7 +76,7 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
         <param name="for_fixed/max_weight" value="5.0"/>
-
+        <param name="mahalanobis_distance_threshold" value="$(var gnss_mahalanobis_distance_threshold)"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/map/height"/>

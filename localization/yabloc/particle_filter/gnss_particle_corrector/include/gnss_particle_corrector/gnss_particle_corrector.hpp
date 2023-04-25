@@ -59,6 +59,10 @@ private:
   void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
   void on_pose(const PoseCovStamped::ConstSharedPtr pose_msg);
 
+  bool is_gnss_observation_valid(
+    const Eigen::Matrix3f & sigma, const Eigen::Vector3f & meaned_position,
+    const Eigen::Vector3f & gnss_position);
+
   ParticleArray weight_particles(
     const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, bool is_rtk_fixed);
 

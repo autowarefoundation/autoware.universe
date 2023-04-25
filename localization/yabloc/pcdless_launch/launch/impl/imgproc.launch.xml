@@ -6,6 +6,7 @@
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw/relay"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
+
     <arg name="max_segment_distance" default="50.0"/>
     <arg name="max_lateral_distance" default="10.0"/>
 
@@ -13,7 +14,8 @@
     <arg name="max_segment_distance" default="-1.0"/>
     <arg name="max_lateral_distance" default="-1.0"/>
 
-    <arg name="target_height_ratio" default="0.85"/>
+    <arg name="target_height_ratio" default="0.85" description="graph_node selects a road surface area from around this height"/>
+    <arg name="pickup_additional_graph_segment" default="true" description="graph_segment_node will pickup additional roadlike areas"/>
 
     <arg name="override_camera_frame_id" default="" description="Value for overriding the camera's frame_id. 
         Use when another static_tf is to be read
@@ -50,6 +52,7 @@
         <remap from="graph_segmented" to="$(var output_graph_segmented)"/>
         <remap from="segmented_image" to="$(var output_segmented_image)"/>
         <param name="target_height_ratio" value="$(var target_height_ratio)"/>
+        <param name="pickup_additional_areas" value="$(var pickup_additional_graph_segment)"/>
     </node>
 
     <!-- segment fitler -->

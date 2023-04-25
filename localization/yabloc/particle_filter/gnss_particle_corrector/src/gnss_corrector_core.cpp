@@ -23,8 +23,8 @@ namespace pcdless::modularized_particle_filter
 {
 GnssParticleCorrector::GnssParticleCorrector()
 : AbstCorrector("gnss_particle_corrector"),
-  ignore_less_than_float_(declare_parameter("ignore_less_than_float", true)),
-  mahalanobis_distance_threshold_(declare_parameter("mahalanobis_distance_threshold", 20)),
+  ignore_less_than_float_(declare_parameter<bool>("ignore_less_than_float", true)),
+  mahalanobis_distance_threshold_(declare_parameter<float>("mahalanobis_distance_threshold", 20.0)),
   weight_manager_(this)
 {
   using std::placeholders::_1;
@@ -61,6 +61,26 @@ Eigen::Vector3f extract_enu_vel(const GnssParticleCorrector::NavPVT & msg)
   Eigen::Vector3f enu_vel;
   enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
   return enu_vel;
+}
+
+bool GnssParticleCorrector::is_gnss_observation_valid(
+  const Eigen::Matrix3f & sigma, const Eigen::Vector3f & meaned_position,
+  const Eigen::Vector3f & gnss_position)
+{
+  Eigen::Matrix3f inv_sigma = sigma.completeOrthogonalDecomposition().pseudoInverse();
+  Eigen::Vector3f diff = gnss_position - meaned_position;
+  diff.z() = 0;
+
+  float mahalanobis_distance = std::sqrt(diff.dot(inv_sigma * diff));
+  RCLCPP_INFO_STREAM(get_logger(), "mahalanobis: " << mahalanobis_distance);
+
+  if (mahalanobis_distance > mahalanobis_distance_threshold_) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "Mahalanobis distance is too large: " << mahalanobis_distance << ">"
+                                                          << mahalanobis_distance_threshold_);
+    return false;
+  }
+  return true;
 }
 
 void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
@@ -101,6 +121,7 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
   }
 
   std::optional<ParticleArray> opt_particles = get_synchronized_particle_array(stamp);
+
   if (!opt_particles.has_value()) return;
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
   if (std::abs(dt.seconds()) > 0.1) {
@@ -108,26 +129,13 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
       get_logger(), "Timestamp gap between gnss and particles is too large: " << dt.seconds());
   }
 
+  const Eigen::Matrix3f sigma = modularized_particle_filter::std_of_distribution(*opt_particles);
   const geometry_msgs::msg::Pose meaned_pose = mean_pose(opt_particles.value());
+  const Eigen::Vector3f meaned_position = common::pose_to_affine(meaned_pose).translation();
 
   // Check validity of GNSS measurement by mahalanobis distance
-  {
-    Eigen::Matrix3f sigma = modularized_particle_filter::std_of_distribution(*opt_particles);
-    Eigen::Matrix3f inv_sigma = sigma.completeOrthogonalDecomposition().pseudoInverse();
-
-    Eigen::Vector3f meaned_position = common::pose_to_affine(meaned_pose).translation();
-    Eigen::Vector3f diff = gnss_position - meaned_position;
-    diff.z() = 0;
-
-    float mahalanobis_distance = std::sqrt(diff.dot(inv_sigma * diff));
-    RCLCPP_INFO_STREAM(get_logger(), "mahalanobis: " << mahalanobis_distance);
-
-    if (mahalanobis_distance > mahalanobis_distance_threshold_) {
-      RCLCPP_WARN_STREAM(
-        get_logger(), "Mahalanobis distance is too large: " << mahalanobis_distance << ">"
-                                                            << mahalanobis_distance_threshold_);
-      return;
-    }
+  if (!is_gnss_observation_valid(sigma, meaned_position, gnss_position)) {
+    return;
   }
 
   ParticleArray weighted_particles =

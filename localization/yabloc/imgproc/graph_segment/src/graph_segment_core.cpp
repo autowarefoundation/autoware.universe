@@ -21,15 +21,12 @@
 #include <pcdless_common/pub_sub.hpp>
 #include <pcdless_common/timer.hpp>
 
-#include <queue>
-
 namespace pcdless::graph_segment
 {
 GraphSegment::GraphSegment()
 : Node("graph_segment"),
   target_height_ratio_(declare_parameter<float>("target_height_ratio", 0.85)),
-  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width", 15)),
-  similarity_score_threshold_(declare_parameter<float>("similarity_score_threshold", 0.8))
+  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width", 15))
 {
   using std::placeholders::_1;
 
@@ -44,78 +41,12 @@ GraphSegment::GraphSegment()
   const float k = declare_parameter<float>("k", 300);
   const int min_size = declare_parameter<double>("min_size", 100);
   segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation(sigma, k, min_size);
-}
 
-std::set<int> GraphSegment::search_similar_areas(
-  const cv::Mat & rgb_image, const cv::Mat & segmented, int best_roadlike_class)
-{
-  std::unordered_map<int, Histogram> histogram_map;
-  std::unordered_map<int, int> count_map;
-
-  for (int h = 0; h < rgb_image.rows; h++) {
-    const int * seg_ptr = segmented.ptr<int>(h);
-    const cv::Vec3b * rgb_ptr = rgb_image.ptr<cv::Vec3b>(h);
-
-    for (int w = 0; w < rgb_image.cols; w++) {
-      int key = seg_ptr[w];
-      cv::Vec3b rgb = rgb_ptr[w];
-      if (count_map.count(key) == 0) {
-        count_map[key] = 1;
-        histogram_map[key].add(rgb);
-      } else {
-        count_map[key]++;
-        histogram_map[key].add(rgb);
-      }
-    }
+  // additional area pickup module
+  if (declare_parameter<bool>("pickup_additional_areas", true)) {
+    similar_area_searcher_ = std::make_unique<SimilarAreaSearcher>(
+      declare_parameter<float>("similarity_score_threshold", 0.8));
   }
-
-  struct KeyAndArea
-  {
-    KeyAndArea(int key, int count) : key(key), count(count) {}
-    int key;
-    int count;
-  };
-
-  auto compare = [](KeyAndArea a, KeyAndArea b) { return a.count < b.count; };
-  std::priority_queue<KeyAndArea, std::vector<KeyAndArea>, decltype(compare)> key_queue{compare};
-  for (auto [key, count] : count_map) {
-    key_queue.push({key, count});
-  }
-
-  Eigen::MatrixXf ref_histogram = histogram_map.at(best_roadlike_class).eval();
-
-  std::stringstream debug_ss;
-  debug_ss << "histogram equality ";
-
-  int index = 0;
-  std::set<int> acceptable_keys;
-  while (!key_queue.empty()) {
-    KeyAndArea key = key_queue.top();
-    key_queue.pop();
-
-    Eigen::MatrixXf query = histogram_map.at(key.key).eval();
-    float score = Histogram::eval_histogram_intersection(ref_histogram, query);
-    debug_ss << " " << score;
-
-    if (score > similarity_score_threshold_) acceptable_keys.insert(key.key);
-    if (++index > 10) break;
-  }
-  RCLCPP_INFO_STREAM(get_logger(), debug_ss.str());
-
-  // // DEBUG: Visualilze
-  // cv::Mat new_segmented = rgb_image.clone();
-  // for (int h = 0; h < rgb_image.rows; h++) {
-  //   const int * seg_ptr = segmented.ptr<int>(h);
-  //   cv::Vec3b * rgb_ptr = new_segmented.ptr<cv::Vec3b>(h);
-
-  //   for (int w = 0; w < rgb_image.cols; w++) {
-  //     int key = seg_ptr[w];
-  //     if (acceptable_keys.count(key)) rgb_ptr[w] = cv::Vec3b(0, 0, 255);
-  //     if (key == best_roadlike_class) rgb_ptr[w] = cv::Vec3b(0, 255, 255);
-  //   }
-  // }
-
-  return acceptable_keys;
 }
 
 cv::Vec3b random_hsv(int index)
@@ -169,7 +100,10 @@ void GraphSegment::on_image(const Image & msg)
   //
   int target_class = search_most_road_like_class(segmented);
   //
-  std::set<int> road_keys = search_similar_areas(resized, segmented, target_class);
+  std::set<int> road_keys = {target_class};
+  if (similar_area_searcher_) {
+    road_keys = similar_area_searcher_->search(resized, segmented, target_class);
+  }
 
   // Draw output image and debug image
   // TODO: use ptr instead of at()
