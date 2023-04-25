@@ -289,8 +289,13 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       is_occluded_ = true;
       occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
     } else {
+      const bool approached_stop_line =
+        motion_utils::calcSignedArcLength(
+          path_ip.points, current_pose.position,
+          path->points.at(default_stop_line_idx_opt.value()).point.pose.position) <
+        planner_param_.common.stop_overshoot_margin;
       const bool is_stopped = planner_data_->isVehicleStopped();
-      if (is_stopped) {
+      if (is_stopped && approached_stop_line) {
         // start waiting at the first stop line
         before_creep_state_machine_.setStateWithMarginTime(
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
