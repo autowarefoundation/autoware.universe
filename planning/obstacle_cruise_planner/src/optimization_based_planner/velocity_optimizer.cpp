@@ -255,7 +255,9 @@ VelocityOptimizer::OptimizationResult VelocityOptimizer::optimize(const Optimiza
   OptimizationResult optimized_result;
   const auto has_nan =
     std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
-  if (!has_nan) {
+  if (has_nan) {
+    std::cerr << "optimization failed : result contains NaN values\n";
+  } else {
     std::vector<double> opt_time = time_vec;
     std::vector<double> opt_pos(N);
     std::vector<double> opt_vel(N);

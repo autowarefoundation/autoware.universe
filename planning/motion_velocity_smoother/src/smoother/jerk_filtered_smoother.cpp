@@ -296,13 +296,13 @@ bool JerkFilteredSmoother::apply(
   const std::vector<double> optval = std::get<0>(result);
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    std::cerr << "optimization failed : " << qp_solver_.getStatusMessage().c_str() << std::endl;
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
     return false;
   }
   const auto has_nan =
     std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
   if (has_nan) {
-    std::cerr << "optimization failed: result contains NaN values\n";
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
     return false;
   }
 

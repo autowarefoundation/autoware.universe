@@ -383,7 +383,7 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
   const auto has_nan = std::any_of(
     optimized_points.begin(), optimized_points.end(), [](const auto v) { return std::isnan(v); });
   if (has_nan) {
-    std::cerr << "optimization failed: result contains NaN values\n";
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
     return std::nullopt;
   }
 

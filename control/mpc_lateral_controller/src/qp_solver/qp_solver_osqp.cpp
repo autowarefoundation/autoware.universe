@@ -66,7 +66,7 @@ bool QPSolverOSQP::solve(
   const auto has_nan =
     std::any_of(U_osqp.begin(), U_osqp.end(), [](const auto v) { return std::isnan(v); });
   if (has_nan) {
-    std::cerr << "optimization failed: result contains NaN values\n";
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
     return false;
   }
 
