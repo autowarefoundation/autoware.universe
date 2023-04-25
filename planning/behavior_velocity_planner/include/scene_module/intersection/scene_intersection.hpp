@@ -318,11 +318,11 @@ private:
     const Polygon2d & stuck_vehicle_detect_area,
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
-  std::optional<size_t> findNearestOcclusionProjectedPosition(
+  bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
     const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
     const lanelet::CompoundPolygon3d & first_detection_area,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double interval,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip,
     const std::pair<size_t, size_t> & lane_interval,
     const std::vector<util::DetectionLaneDivision> & lane_divisions,
     const double occlusion_dist_thr) const;
