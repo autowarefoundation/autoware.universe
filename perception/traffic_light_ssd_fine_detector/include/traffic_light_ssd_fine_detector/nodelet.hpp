@@ -63,7 +63,6 @@ private:
   bool cnnOutput2BoxDetection(
     const float * scores, const float * boxes, const int tlr_id,
     const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<Detection> & detections);
-  void calculateSoftmax(std::vector<float> & scores) const;
   bool rosMsg2CvMat(const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image);
   bool fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size);
   void cvRect2TlRoiMsg(
@@ -105,9 +104,8 @@ private:
   std::string head2_name_;
   std::optional<ssd::Dims2> head1_dims_;
   std::optional<ssd::Dims2> head2_dims_;
-  bool boxes_first_;
-  bool use_softmax_;
-  bool denormalize_boxes_;
+  bool is_box_first_;
+  bool is_box_normalized_;
 
   std::vector<float> mean_;
   std::vector<float> std_;

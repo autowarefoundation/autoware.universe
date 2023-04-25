@@ -50,9 +50,8 @@ def generate_launch_description():
     )
     add_launch_arg("head1_name", "scores")
     add_launch_arg("head2_name", "boxes")
-    add_launch_arg("boxes_first", "False")
-    add_launch_arg("use_softmax", "False")
-    add_launch_arg("denormalize_boxes", "True")
+    add_launch_arg("is_box_first", "False")
+    add_launch_arg("is_box_normalized", "True")
     add_launch_arg("fine_detector_precision", "FP32")
     add_launch_arg("score_thresh", "0.7")
     add_launch_arg("max_batch_size", "8")
@@ -204,9 +203,8 @@ def generate_launch_description():
         "label_file",
         "head1_name",
         "head2_name",
-        "boxes_first",
-        "use_softmax",
-        "denormalize_boxes",
+        "is_box_first",
+        "is_box_normalized",
         "score_thresh",
         "max_batch_size",
         "approximate_sync",

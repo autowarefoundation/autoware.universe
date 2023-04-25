@@ -50,9 +50,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const std::string mode = this->declare_parameter("mode", "FP32");
   head1_name_ = this->declare_parameter("head1_name", "scores");
   head2_name_ = this->declare_parameter("head2_name", "boxes");
-  boxes_first_ = this->declare_parameter("boxes_first", false);
-  use_softmax_ = this->declare_parameter("use_softmax", false);
-  denormalize_boxes_ = this->declare_parameter("denormalize_boxes", true);
+  is_box_first_ = this->declare_parameter("is_box_first", false);
+  is_box_normalized_ = this->declare_parameter("is_box_normalized", true);
 
   fs::path engine_path{onnx_file};
   engine_path.replace_extension("engine");
@@ -100,7 +99,7 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
       head2_index, head2_name_.c_str());
   }
 
-  if (boxes_first_) {
+  if (is_box_first_) {
     detection_per_class_ = head2_dims_->d[0];
     class_num_ = head2_dims_->d[1];
   } else {
@@ -205,7 +204,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     auto scores = std::make_unique<float[]>(num_infer * detection_per_class_ * class_num_);
     auto boxes = std::make_unique<float[]>(num_infer * detection_per_class_ * 4);
-    if (boxes_first_) {
+    if (is_box_first_) {
       // (boxes, scores) order
       cudaMemcpy(
         boxes.get(), head1_d.get(), sizeof(float) * num_infer * head1_dims_->size(),
@@ -301,14 +300,11 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     for (int j = 0; j < detection_per_class_; ++j) {
       tlr_scores.push_back(scores[i * detection_per_class_ * class_num_ + tlr_id + j * class_num_]);
     }
-    if (use_softmax_) {
-      calculateSoftmax(tlr_scores);
-    }
     std::vector<float>::iterator iter = std::max_element(tlr_scores.begin(), tlr_scores.end());
     size_t index = std::distance(tlr_scores.begin(), iter);
     size_t box_index = i * detection_per_class_ * 4 + index * 4;
     cv::Point lt, rb;
-    if (denormalize_boxes_) {
+    if (is_box_normalized_) {
       lt.x = boxes[box_index] * in_imgs.at(i).cols;
       lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
       rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
@@ -329,16 +325,6 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     detections.push_back(det);
   }
   return true;
-}
-
-void TrafficLightSSDFineDetectorNodelet::calculateSoftmax(std::vector<float> & scores) const
-{
-  float exp_sum = std::accumulate(
-    scores.begin(), scores.end(), 0.0, [](float acc, float e) { return acc + exp(e); });
-
-  for (auto & e : scores) {
-    e = exp(e) / exp_sum;
-  }
 }
 
 bool TrafficLightSSDFineDetectorNodelet::rosMsg2CvMat(

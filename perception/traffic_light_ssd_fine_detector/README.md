@@ -56,9 +56,8 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 | `label_file`        | string | "./data/voc_labels_tl.txt"     | The label file with label names for detected objects written on it   |
 | `head1_name`        | string | "scores"                       | The name of first output head                                        |
 | `head2_name`        | string | "boxes"                        | The name of second output head                                       |
-| `boxes_first`       | bool   | false                          | Indicates whether first output head is for boxes                     |
-| `use_softmax`       | bool   | false                          | Indicates whether use sofrmax for output scores                      |
-| `denormalize_boxes` | bool   | true                           | Indicates whether should denormalize output boxes with image size    |
+| `is_box_first`      | bool   | false                          | Indicates whether first output head is for boxes                     |
+| `is_box_normalized` | bool   | true                           | Indicates whether output boxes have been normalized into `[0, 1]`    |
 | `mode`              | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |
 | `max_batch_size`    | int    | 8                              | The size of the batch processed at one time by inference by TensorRT |
 | `approximate_sync`  | bool   | false                          | Flag for whether to ues approximate sync policy                      |

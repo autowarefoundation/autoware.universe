@@ -4,8 +4,8 @@
   <arg name="mode" default="FP32"/>
   <arg name="head1_name" default="scores"/>
   <arg name="head2_name" default="boxes"/>
-  <arg name="boxes_first" default="false"/>
-  <arg name="denormalize_boxes" default="true"/>
+  <arg name="is_box_first" default="false"/>
+  <arg name="is_box_normalized" default="true"/>
   <arg name="input/image" default="/image_raw"/>
   <arg name="input/rois" default="/traffic_light_map_based_detector/output/rois"/>
   <arg name="output/rois" default="~/output/rois"/>
@@ -27,8 +27,8 @@
     <param name="mode" type="str" value="$(var mode)"/>
     <param name="head1_name" value="$(var head1_name)"/>
     <param name="head2_name" value="$(var head2_name)"/>
-    <param name="boxes_first" value="$(var boxes_first)"/>
-    <param name="denormalize_boxes" value="$(var denormalize_boxes)"/>
+    <param name="is_box_first" value="$(var is_box_first)"/>
+    <param name="is_box_normalized" value="$(var is_box_normalized)"/>
     <param name="score_thresh" value="$(var score_thresh)"/>
     <param name="max_batch_size" value="$(var max_batch_size)"/>
     <param name="approximate_sync" value="$(var approximate_sync)"/>
