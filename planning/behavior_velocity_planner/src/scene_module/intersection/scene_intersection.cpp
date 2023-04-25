@@ -275,12 +275,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
   if (!is_occlusion_cleared) {
     if (!default_stop_line_idx_opt) {
-      occlusion_stop_required = true;
-      stop_line_idx = occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
-      is_occluded_ = true;
-      occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
-      RCLCPP_WARN(logger_, "directly stop at occlusion stop line because collision line not found");
-    } else if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
+      RCLCPP_DEBUG(logger_, "occlusion is detected but default stop line is not set or generated");
+      RCLCPP_DEBUG(logger_, "===== plan end =====");
+      return true;
+    }
+    if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
       occlusion_stop_required = true;
       stop_line_idx = occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
       // clear first stop line
@@ -290,10 +289,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       is_occluded_ = true;
       occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
     } else {
-      const double dist_default_stop_line = motion_utils::calcSignedArcLength(
-        path_ip.points, current_pose.position,
-        path->points.at(default_stop_line_idx_opt.value()).point.pose.position);
-      if (dist_default_stop_line < planner_param_.common.stop_overshoot_margin) {
+      const bool is_stopped = planner_data_->isVehicleStopped();
+      if (is_stopped) {
         // start waiting at the first stop line
         before_creep_state_machine_.setStateWithMarginTime(
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
