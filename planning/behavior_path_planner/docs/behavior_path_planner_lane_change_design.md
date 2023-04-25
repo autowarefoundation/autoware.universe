@@ -43,7 +43,7 @@ The `backward_length_buffer_for_end_of_lane` is added to allow some window for a
 Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
 Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `prepare_length`, `prepare_velocity` and `lane_changing_length` equation.
 
-The predetermined deceleration are a set of value that starts from `deceleration = 0.0`, and decrease by `acceleration_resolution` until it reaches`deceleration = -maximum_deceleration`. The `acceleration_resolution` is determine by the following
+The predetermined deceleration are a set of value that starts from `deceleration = 0.0`, and decrease by `acceleration_resolution` until it reaches`deceleration = -maximum_deceleration`. `maximum_deceleration` is defined in the `common.param` file as `normal.min_acc`. The `acceleration_resolution` is determine by the following
 
 ```C++
 acceleration_resolution = maximum_deceleration / lane_change_sampling_num
