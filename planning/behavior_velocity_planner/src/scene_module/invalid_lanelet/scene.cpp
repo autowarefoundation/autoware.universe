@@ -40,7 +40,7 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   if (path->points.empty()) {
     return false;
   }
-  
+
   *stop_reason = planning_utils::initializeStopReason(StopReason::INVALID_LANELET);
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
@@ -49,7 +49,6 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   const auto & invalid_lanelet_polygon =
     lanelet::utils::to2D(invalid_lanelet).polygon2d().basicPolygon();
 
-  
   path_invalid_lanelet_polygon_intersection =
     getPathIntersectionWithInvalidLaneletPolygon(*path, invalid_lanelet_polygon, ego_pos, 2);
 
@@ -87,7 +86,6 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     }
 
     case State::INSIDE_INVALID_LANELET: {
-
       if (planner_param_.print_debug_info) {
         RCLCPP_INFO(logger_, "INSIDE_INVALID_LANELET");
       }
@@ -263,10 +261,10 @@ void InvalidLaneletModule::handle_stopped_state(PathWithLaneId * path, StopReaso
   SegmentIndexWithPose ego_pos_on_path;
   ego_pos_on_path.pose = stopped_pose.get();
   ego_pos_on_path.index = findEgoSegmentIndex(path->points);
-  
+
   // Insert stop pose
   planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
-  
+
   // Get stop point and stop factor
   {
     tier4_planning_msgs::msg::StopFactor stop_factor;

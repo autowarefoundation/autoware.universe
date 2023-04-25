@@ -92,7 +92,8 @@ private:
   void handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason);
   void handle_inside_invalid_lanelet_state(PathWithLaneId * path, StopReason * stop_reason);
   void handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason);
-  void initialize_debug_data(const lanelet::Lanelet & invalid_lanelet, const geometry_msgs::msg::Point & ego_pos);
+  void initialize_debug_data(
+    const lanelet::Lanelet & invalid_lanelet, const geometry_msgs::msg::Point & ego_pos);
 };
 }  // namespace behavior_velocity_planner
 
