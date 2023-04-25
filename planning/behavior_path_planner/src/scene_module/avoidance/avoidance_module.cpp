@@ -97,15 +97,22 @@ bool AvoidanceModule::isExecutionRequested() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionRequested");
 
+#ifndef USE_OLD_ARCHITECTURE
+  const auto is_driving_forward =
+    motion_utils::isDrivingForward(getPreviousModuleOutput().path->points);
+  if (!is_driving_forward || !(*is_driving_forward)) {
+    return false;
+  }
+#endif
+
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
   }
 
-  // Check avoidance targets exist
-  auto avoid_data = calcAvoidancePlanningData(debug_data_);
-
   // Check ego is in preferred lane
 #ifdef USE_OLD_ARCHITECTURE
+  const auto avoid_data = calcAvoidancePlanningData(debug_data_);
+
   const auto current_lanes = utils::getCurrentLanes(planner_data_);
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(
@@ -116,7 +123,7 @@ bool AvoidanceModule::isExecutionRequested() const
     return false;
   }
 #else
-  fillShiftLine(avoid_data, debug_data_);
+  const auto avoid_data = avoidance_data_;
 #endif
 
   if (parameters_->publish_debug_marker) {
@@ -140,16 +147,6 @@ bool AvoidanceModule::isExecutionRequested() const
 bool AvoidanceModule::isExecutionReady() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionReady");
-
-  {
-    DebugData debug;
-    static_cast<void>(calcAvoidancePlanningData(debug));
-  }
-
-  if (current_state_ == ModuleStatus::RUNNING) {
-    return true;
-  }
-
   return true;
 }
 
@@ -1334,7 +1331,7 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto CHANGE_SHIFT_THRESHOLD = 0.2;
+    const auto CHANGE_SHIFT_THRESHOLD = 0.5;
     trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
     debug.trim_similar_grad_shift_third = sl_array_trimmed;
     printShiftLines(sl_array_trimmed, "after trim_similar_grad_shift_second");
@@ -1866,8 +1863,8 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
     // avoidance points: No, shift points: No -> set the ego position to the last shift point
     // so that the return-shift will be generated from ego position.
     if (!has_candidate_point && !has_registered_point) {
-      last_sl.end = getEgoPose();
       last_sl.end_idx = avoidance_data_.ego_closest_path_index;
+      last_sl.end = avoidance_data_.reference_path.points.at(last_sl.end_idx).point.pose;
       last_sl.end_shift_length = getCurrentBaseShift();
     }
   }
@@ -1902,8 +1899,8 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
     // set the return-shift from ego.
     DEBUG_PRINT(
       "return shift already exists, but they are all candidates. Add return shift for overwrite.");
-    last_sl.end = getEgoPose();
     last_sl.end_idx = avoidance_data_.ego_closest_path_index;
+    last_sl.end = avoidance_data_.reference_path.points.at(last_sl.end_idx).point.pose;
     last_sl.end_shift_length = current_base_shift;
   }
 
@@ -1998,7 +1995,7 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
     al.start_shift_length = last_sl.end_shift_length;
     sl_candidates.push_back(al);
     printShiftLines(AvoidLineArray{al}, "return point");
-    debug_data_.extra_return_shift = AvoidLineArray{al};
+    debug_data_.extra_return_shift.push_back(al);
 
     // TODO(Horibe) think how to store the current object
     current_raw_shift_lines.push_back(al);
@@ -2395,6 +2392,7 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
   const auto & current_lanes = avoidance_data_.current_lanelets;
   const auto & enable_opposite = parameters_->enable_avoidance_over_opposite_direction;
 
+  std::vector<DrivableLanes> current_drivable_lanes_vec{};
   for (const auto & current_lane : current_lanes) {
     DrivableLanes current_drivable_lanes;
     current_drivable_lanes.left_lane = current_lane;
@@ -2522,14 +2520,15 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
       current_drivable_lanes.middle_lanes.push_back(current_lane);
     }
 
-    output.drivable_lanes.push_back(current_drivable_lanes);
+    current_drivable_lanes_vec.push_back(current_drivable_lanes);
   }
 
-  const auto shorten_lanes = utils::cutOverlappedLanes(path, output.drivable_lanes);
-
-  const auto extended_lanes = utils::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
+#ifdef USE_OLD_ARCHITECTURE
+  output.drivable_lanes = current_drivable_lanes_vec;
+#else
+  output.drivable_lanes = utils::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_lanes, current_drivable_lanes_vec);
+#endif
 
   {
     const auto & p = planner_data_->parameters;
@@ -3327,7 +3326,20 @@ void AvoidanceModule::setDebugData(
     createAvoidableTargetObjectsMarkerArray(avoidable_target_objects, "avoidable_target_objects"));
   add(createUnavoidableTargetObjectsMarkerArray(
     unavoidable_target_objects, "unavoidable_target_objects"));
-  add(createOtherObjectsMarkerArray(data.other_objects, "other_objects"));
+
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::OBJECT_IS_BEHIND_THRESHOLD));
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::OBJECT_IS_IN_FRONT_THRESHOLD));
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::OBJECT_BEHIND_PATH_GOAL));
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE));
+  add(createOtherObjectsMarkerArray(data.other_objects, AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE));
+  add(createOtherObjectsMarkerArray(data.other_objects, AvoidanceDebugFactor::NOT_PARKING_OBJECT));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("MovingObject")));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("OutOfTargetArea")));
+
   add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
   add(createOverhangFurthestLineStringMarkerArray(
     debug.bounds, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
