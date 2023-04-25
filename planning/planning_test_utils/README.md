@@ -1,34 +1,30 @@
-# Planning Test Utils
+# Planning Interface Test Manager
 
-The Planning Interface Test Manager is a set of utilities and helper functions for testing planning components. It provides a series of helper functions to publish various messages required for launching planning components and methods to run tests with different trajectory route path egp pose scenarios and etc.
+## Background
+
+planningモジュールの各ノードにおいて、特殊な経路や道路から大きく外れた自己位置など(今後特殊な入力と呼ぶ)が、入力として与えられたとき、そのノードが特殊な入力を想定しておらず、してしまうことが多く、ノードクラッシュによって生じるデバッグに時間を要することがある。例えば、空のtrajectoryなどをinputとして入ってくることは実装時に想定しておらず、対策が取られないまま変更がmergeされ、シナリオテストの実行時や実車でシステムを動作している最中にノードがクラッシュしてしまう場合がある。
 
 ## Purpose
 
-The primary goal is to create tests to ensure that nodes do not crash when receiving special inputs, such as trajectory, route, path, ego pose, scenarios, etc., referred to as "exception inputs," during the planning stage. These tests will help validate the robustness of nodes when handling such exception inputs.
+各ノードが例外的な入力を受け取った際にノードが正常に動作することを確認するためのテストを実装するためのユーティリティを提供する。このユーティリティを活用し、特殊な入力に対するテストを実装することで、PRのmerge前に特殊な入力に対する対策が必要になり、実際に動かした際に初めて発覚するバグを減らすことを目的とする。
+
+## Features
+
+The Planning Interface Test Managerは、planningコンポーネントのテストをサポートするためのユーティリティとヘルパー関数のセットです。様々なメッセージをpublishするためのヘルパー関数や、特殊なtrajectoryやposeを入力として与えることでテストを実行するためのメソッドが提供されています。(WIP)
 
 ## Inner-workings / Algorithms
 
-For each node, the necessary topics will be published from the test*node* to operate the node, and the test will ensure that the node remains functional when encountering exception routes.
+### 正常動作の確認
 
-There are two main aspects to be verified:
+テスト対象のノードに対して、そのノードが正常に動作し、後段のノードで必要なメッセージをpublishすることを確認します。そのために、test_nodeから必要なメッセージをpublishし、ノードのoutputがpublishされていることを確認します。
 
-1. Confirm that the required topics are being output from the test*node_and the node is operating correctly.
-   a. Publish the topics that the node takes as input from the test_node*.
-   - To ensure that the node functions properly, we will provide inputs required for normal operation instead of "exception inputs." This will help confirm the node's correct functioning under expected conditions.
-     b. Ensure that the node does not crash.
-     c. Check if the final output topic of the node can be subscribed to the test*node*.
-2. After confirming the operation above, output exception input (such as an empty route, a route with only one point, or a route with duplicate points for trajectories) from the test*node* and ensure that the node does not crash.
-   a. When inputting exception routes, there is no need to publish the final output; it is sufficient to confirm that the node does not crash.
+### 特殊な入力に対する堅牢性の確認
 
-By implementing the tests as described above, the robustness of each node when handling exception routes can be verified, which helps maintain the overall stability of the system.
+正常動作が確認できた後、テスト対象のノードに対して、特殊な入力を与えた際にノードがクラッシュしないことを確認します。そのために、test_nodeから特殊な入力を与え、ノードがクラッシュしないことを確認します。
 
-System Diagram (WIP)
+## Flowchart
 
-- Normal Operation Test
-  ![Normal Operation Test](./image/normal_operation_test.png)
-
-- Abnormal Input Test
-  ![Normal Operation Test](./image/normal_operation_test.png)
+(WIP)
 
 ## Usage
 
