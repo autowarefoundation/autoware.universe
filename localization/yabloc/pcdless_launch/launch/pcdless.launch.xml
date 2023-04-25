@@ -59,6 +59,8 @@
             <push-ros-namespace namespace="validation"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/validation.launch.xml">
                 <arg name="input_overlayed_pose" value="$(var input_pose)"/>
+                <arg name="resized_image" value="$(var resized_image)"/>
+                <arg name="resized_info" value="$(var resized_info)"/>
             </include>
         </group>
 

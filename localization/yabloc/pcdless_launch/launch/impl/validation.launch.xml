@@ -4,10 +4,12 @@
     <let name="input_projected_lsd_cloud" value="/localization/imgproc/projected_lsd_cloud"/>
     <let name="input_ll2_sign_board" value="/localization/map/ll2_sign_board"/>
     <let name="input_ll2_road_marking" value="/localization/map/ll2_road_marking"/>
+    <arg name="resized_image" description=""/>
+    <arg name="resized_info" description=""/>
 
     <!-- overlay monitor -->
     <node name="overlay" pkg="overlay_monitor" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="src_image" to="/sensing/camera/undistorted/image_raw"/>
+        <remap from="src_image" to="$(var resized_image)"/>
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="$(var input_overlayed_pose)"/>
 

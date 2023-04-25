@@ -54,8 +54,8 @@ public:
     sub_image_ = create_subscription<CompressedImage>("src_image", qos, std::move(on_image));
     sub_info_ = create_subscription<CameraInfo>("src_info", qos, std::move(on_info));
 
-    pub_info_ = create_publisher<CameraInfo>("/sensing/camera/undistorted/camera_info", 10);
-    pub_image_ = create_publisher<Image>("/sensing/camera/undistorted/image_raw", 10);
+    pub_info_ = create_publisher<CameraInfo>("resized_info", 10);
+    pub_image_ = create_publisher<Image>("resized_image", 10);
   }
 
 private:

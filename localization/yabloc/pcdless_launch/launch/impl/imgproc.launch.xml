@@ -30,6 +30,8 @@
 
         <remap from="src_image" to="$(var src_image)"/>
         <remap from="src_info" to="$(var src_info)"/>
+        <remap from="resized_image" to="$(var resized_image)"/>
+        <remap from="resized_info" to="$(var resized_info)"/>
     </node>
 
     <!-- line segment detector -->
@@ -58,8 +60,8 @@
     <!-- segment fitler -->
     <arg name="input_graph_segmented" default="graph_segmented"/>
     <arg name="input_lsd_cloud" default="lsd_cloud"/>
-    <arg name="output_projected_lsd_cloud" default="projected_lsd_cloud"/>
-    <arg name="output_projected_image" default="projected_image"/>
+    <arg name="output_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
+    <arg name="output_projected_image" default="/localization/imgproc/projected_image"/>
     <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
         <param name="min_segment_length" value="$(var min_segment_length)"/>
         <param name="max_segment_distance" value="$(var max_segment_distance)"/>
