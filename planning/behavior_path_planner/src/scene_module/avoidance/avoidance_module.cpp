@@ -101,11 +101,10 @@ bool AvoidanceModule::isExecutionRequested() const
     return true;
   }
 
-  // Check avoidance targets exist
-  auto avoid_data = calcAvoidancePlanningData(debug_data_);
-
   // Check ego is in preferred lane
 #ifdef USE_OLD_ARCHITECTURE
+  const auto avoid_data = calcAvoidancePlanningData(debug_data_);
+
   const auto current_lanes = utils::getCurrentLanes(planner_data_);
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(
@@ -116,7 +115,7 @@ bool AvoidanceModule::isExecutionRequested() const
     return false;
   }
 #else
-  fillShiftLine(avoid_data, debug_data_);
+  const auto avoid_data = avoidance_data_;
 #endif
 
   if (parameters_->publish_debug_marker) {
@@ -140,16 +139,6 @@ bool AvoidanceModule::isExecutionRequested() const
 bool AvoidanceModule::isExecutionReady() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionReady");
-
-  {
-    DebugData debug;
-    static_cast<void>(calcAvoidancePlanningData(debug));
-  }
-
-  if (current_state_ == ModuleStatus::RUNNING) {
-    return true;
-  }
-
   return true;
 }
 
@@ -2525,12 +2514,6 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
     output.drivable_lanes.push_back(current_drivable_lanes);
   }
 
-  const auto shorten_lanes = utils::cutOverlappedLanes(path, output.drivable_lanes);
-
-  const auto extended_lanes = utils::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-
   {
     const auto & p = planner_data_->parameters;
     generateDrivableArea(
@@ -3327,7 +3310,20 @@ void AvoidanceModule::setDebugData(
     createAvoidableTargetObjectsMarkerArray(avoidable_target_objects, "avoidable_target_objects"));
   add(createUnavoidableTargetObjectsMarkerArray(
     unavoidable_target_objects, "unavoidable_target_objects"));
-  add(createOtherObjectsMarkerArray(data.other_objects, "other_objects"));
+
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::OBJECT_IS_BEHIND_THRESHOLD));
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::OBJECT_IS_IN_FRONT_THRESHOLD));
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::OBJECT_BEHIND_PATH_GOAL));
+  add(createOtherObjectsMarkerArray(
+    data.other_objects, AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE));
+  add(createOtherObjectsMarkerArray(data.other_objects, AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE));
+  add(createOtherObjectsMarkerArray(data.other_objects, AvoidanceDebugFactor::NOT_PARKING_OBJECT));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("MovingObject")));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("OutOfTargetArea")));
+
   add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
   add(createOverhangFurthestLineStringMarkerArray(
     debug.bounds, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));

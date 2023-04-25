@@ -78,14 +78,13 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
 
   for (const auto & object : objects) {
     {
-      const auto to_stop_factor_distance = std::min(object.to_stop_factor_distance, 1000.0);
       marker.id = uuidToInt32(object.object.object_id);
       marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
       std::ostringstream string_stream;
       string_stream << std::fixed << std::setprecision(2);
       string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
                     << "lateral: " << object.lateral << " [-]\n"
-                    << "stop_factor:" << to_stop_factor_distance << " [m]\n"
+                    << "stop_factor:" << object.to_stop_factor_distance << " [m]\n"
                     << "move_time:" << object.move_time << " [s]\n"
                     << "stop_time:" << object.stop_time << " [s]\n";
       marker.text = string_stream.str();
@@ -412,18 +411,33 @@ MarkerArray createUnavoidableTargetObjectsMarkerArray(
 }
 
 MarkerArray createOtherObjectsMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
+  const behavior_path_planner::ObjectDataArray & objects, const std::string & ns)
 {
+  using behavior_path_planner::utils::convertToSnakeCase;
+
+  const auto filtered_objects = [&objects, &ns]() {
+    ObjectDataArray ret{};
+    for (const auto & o : objects) {
+      if (o.reason != ns) {
+        continue;
+      }
+      ret.push_back(o);
+    }
+
+    return ret;
+  }();
+
   MarkerArray msg;
-  msg.markers.reserve(objects.size() * 2);
+  msg.markers.reserve(filtered_objects.size() * 2);
 
   appendMarkerArray(
     createObjectsCubeMarkerArray(
-      objects, ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
-      createMarkerColor(0.0, 1.0, 0.0, 0.8)),
+      filtered_objects, "others_" + convertToSnakeCase(ns) + "_cube",
+      createMarkerScale(3.0, 1.5, 1.5), createMarkerColor(0.0, 1.0, 0.0, 0.8)),
     &msg);
-
-  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
+  appendMarkerArray(
+    createObjectInfoMarkerArray(filtered_objects, "others_" + convertToSnakeCase(ns) + "_info"),
+    &msg);
 
   return msg;
 }
