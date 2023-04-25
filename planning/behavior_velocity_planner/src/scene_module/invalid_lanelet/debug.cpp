@@ -79,8 +79,9 @@ visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMark
   if (
     (state_ == State::APPROACH) || (state_ == State::INSIDE_INVALID_LANELET) ||
     (state_ == State::STOPPED)) {
-      appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker({debug_data_.stop_pose}, "invalid_lanelet", now),
+    appendMarkerArray(
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
+        {debug_data_.stop_pose}, "invalid_lanelet", now),
       &wall_marker, now);
   }
 
