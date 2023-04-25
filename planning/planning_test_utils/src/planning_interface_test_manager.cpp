@@ -107,17 +107,11 @@ void PlanningInterfaceTestManager::publishParkingScenario(
 }
 
 void PlanningInterfaceTestManager::publishInitialPose(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0)
+  rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift)
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, initial_pose_pub_, test_utils::makeInitialPose(shift));
 }
-
-// void PlanningInterfaceTestManager::publishInitialPose(rclcpp::Node::SharedPtr target_node)
-// {
-//   test_utils::publishToTargetNode(
-//     test_node_, target_node, topic_name, initial_pose_pub_, test_utils::makeInitialPose());
-// }
 
 void PlanningInterfaceTestManager::publishParkingState(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
@@ -389,13 +383,6 @@ void PlanningInterfaceTestManager::testTrajectoryWithInvalidEgoPose(
 
 void PlanningInterfaceTestManager::testOffTrackFromRoute(rclcpp::Node::SharedPtr target_node)
 {
-  if (input_route_name_.empty()) {
-    throw std::runtime_error("route topic name is not set");
-  }
-  if (input_initial_pose_name_.empty()) {
-    throw std::runtime_error("initial topic pose name is not set");
-  }
-
   publishBehaviorNominalRoute(target_node, input_route_name_);
 
   const std::vector<double> deviation_from_route = {0.0, 1.0, 10.0, 100.0};

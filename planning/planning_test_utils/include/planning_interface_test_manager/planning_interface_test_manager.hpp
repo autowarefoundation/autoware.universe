@@ -90,12 +90,10 @@ class PlanningInterfaceTestManager
 public:
   PlanningInterfaceTestManager();
 
-  void publishOdometry(rclcpp::Node::SharedPtr target_node);
   void publishOdometry(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
-  void publishInitialPose(rclcpp::Node::SharedPtr target_node);
   void publishInitialPose(
-    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift);
+    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0);
 
   void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -120,8 +118,6 @@ public:
   void publishExternalCrosswalkStates(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishExternalIntersectionStates(
     rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishInitialPoseData(
-    rclcpp::Node::SharedPtr target_node, std::string topic_name, double shift = 0.0);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
