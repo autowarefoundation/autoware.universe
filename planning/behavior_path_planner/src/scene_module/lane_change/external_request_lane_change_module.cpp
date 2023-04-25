@@ -223,12 +223,24 @@ BehaviorModuleOutput ExternalRequestLaneChangeModule::planWaitingApproval()
   const auto is_within_current_lane = utils::lane_change::isEgoWithinOriginalLane(
     status_.current_lanes, getEgoPose(), planner_data_->parameters);
 
+  auto reference_path = getReferencePath();
+
+  // for old architecture
+  const auto current_lanes = utils::getCurrentLanes(planner_data_);
+  const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
+  std::cerr << "e2" << std::endl;
+  utils::generateDrivableArea(
+    reference_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
+
   if (is_within_current_lane) {
-    prev_approved_path_ = getReferencePath();
+    prev_approved_path_ = reference_path;
   }
 
   BehaviorModuleOutput out;
-  out.path = std::make_shared<PathWithLaneId>(getReferencePath());
+  out.path = std::make_shared<PathWithLaneId>(reference_path);
+  out.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes, target_drivable_lanes);
 
   const auto candidate = planCandidate();
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
@@ -294,11 +306,6 @@ PathWithLaneId ExternalRequestLaneChangeModule::getReferencePath() const
   reference_path = utils::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->prepare_duration,
     lane_change_buffer);
-
-  const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
-  utils::generateDrivableArea(
-    reference_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -631,6 +638,7 @@ void ExternalRequestLaneChangeModule::extendOutputDrivableArea(BehaviorModuleOut
     drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
 
+  std::cerr << "e3" << std::endl;
   // for new architecture
   output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
     getPreviousModuleOutput().drivable_area_info.drivable_lanes, expanded_lanes);

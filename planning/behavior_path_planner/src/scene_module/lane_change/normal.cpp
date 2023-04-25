@@ -118,13 +118,12 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
 
-  // TODO(murooka)
   // for new architecture
-  // output.drivable_area_info.drivable_lanes =
-  //   utils::combineDrivableLanes(
-  //     getPreviousModuleOutput().drivable_area_info.drivable_lanes, expanded_lanes);
+  // TODO(murooka)
+  output.drivable_area_info.drivable_lanes = expanded_lanes;
 
   // for old architecture
+  std::cerr << "e1" << std::endl;
   utils::generateDrivableArea(
     *output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
