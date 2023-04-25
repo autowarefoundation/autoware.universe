@@ -265,7 +265,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const auto occlusion_peeking_line_idx_opt =
     first_detection_area
       ? util::generatePeekingLimitLine(
-          first_detection_area.value(), path, path_ip, lane_interval_ip, planner_data_)
+          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_,
+          planner_param_.occlusion.peeking_offset)
       : std::nullopt;
 
   /* a flag if front stop line is not occlusion */

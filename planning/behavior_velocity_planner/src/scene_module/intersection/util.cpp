@@ -161,9 +161,9 @@ std::optional<size_t> generateStaticPassJudgeLine(
 std::optional<size_t> generatePeekingLimitLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double ip_interval,
   const std::pair<size_t, size_t> lane_interval,
-  const std::shared_ptr<const PlannerData> & planner_data)
+  const std::shared_ptr<const PlannerData> & planner_data, const double offset)
 {
   const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
   const auto area_2d = lanelet::utils::to2D(first_detection_area).basicPolygon();
@@ -181,7 +181,11 @@ std::optional<size_t> generatePeekingLimitLine(
     return std::nullopt;
   }
 
-  const int idx = first_collision.value() - 1;
+  const int idx = first_collision.value() - 1 + std::ceil(offset / ip_interval);
+  if (idx < 0) {
+    return std::nullopt;
+  }
+
   const auto & insert_point = path_ip.points.at(static_cast<size_t>(idx)).point.pose;
   const auto duplicate_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
   if (duplicate_idx_opt) {

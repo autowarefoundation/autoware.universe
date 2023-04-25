@@ -112,6 +112,7 @@ public:
       double occlusion_detection_area_length;  //! used for occlusion detection
       bool enable_creeping;
       double occlusion_creep_velocity;  //! the creep velocity to occlusion limit stop lline
+      double peeking_offset;
       int free_space_max;
       int occupied_min;
       bool do_dp;
