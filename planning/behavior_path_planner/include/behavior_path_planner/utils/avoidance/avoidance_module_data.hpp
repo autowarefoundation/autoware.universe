@@ -247,11 +247,6 @@ struct AvoidanceParameters
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
 
-  // drivable area expansion
-  double drivable_area_right_bound_offset{};
-  double drivable_area_left_bound_offset{};
-  std::vector<std::string> drivable_area_types_to_skip{};
-
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
 
@@ -313,7 +308,7 @@ struct ObjectData  // avoidance target
   double to_road_shoulder_distance{0.0};
 
   // to intersection
-  double to_stop_factor_distance{std::numeric_limits<double>::max()};
+  double to_stop_factor_distance{std::numeric_limits<double>::infinity()};
 
   // if lateral margin is NOT enough, the ego must avoid the object.
   bool avoid_required{false};

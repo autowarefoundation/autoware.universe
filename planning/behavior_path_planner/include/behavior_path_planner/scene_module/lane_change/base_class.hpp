@@ -66,9 +66,9 @@ public:
 
   virtual std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const = 0;
 
-  virtual PathWithLaneId generatePlannedPath() = 0;
+  virtual BehaviorModuleOutput generateOutput() = 0;
 
-  virtual void generateExtendedDrivableArea(PathWithLaneId & path) = 0;
+  virtual void extendOutputDrivableArea(BehaviorModuleOutput & output) = 0;
 
   virtual bool hasFinishedLaneChange() const = 0;
 
@@ -182,7 +182,10 @@ protected:
   bool isNearEndOfLane() const
   {
     const auto & current_pose = getEgoPose();
-    const double threshold = utils::calcTotalLaneChangeLength(planner_data_->parameters);
+    const auto shift_intervals = planner_data_->route_handler->getLateralIntervalsToPreferredLane(
+      status_.current_lanes.back());
+    const double threshold =
+      utils::calcMinimumLaneChangeLength(planner_data_->parameters, shift_intervals);
 
     return (std::max(0.0, utils::getDistanceToEndOfLane(current_pose, status_.current_lanes)) -
             threshold) < planner_data_->parameters.backward_length_buffer_for_end_of_lane;

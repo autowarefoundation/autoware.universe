@@ -238,10 +238,13 @@ void SideShiftModule::updateData()
   path_shifter_.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
 
 #ifndef USE_OLD_ARCHITECTURE
-  if (planner_data_->lateral_offset != nullptr) {
+  if (
+    planner_data_->lateral_offset != nullptr &&
+    planner_data_->lateral_offset->stamp != latest_lateral_offset_stamp_) {
     if (isReadyForNextRequest(parameters_->shift_request_time_limit)) {
       lateral_offset_change_request_ = true;
       requested_lateral_offset_ = planner_data_->lateral_offset->lateral_offset;
+      latest_lateral_offset_stamp_ = planner_data_->lateral_offset->stamp;
     }
   }
 #endif
@@ -416,21 +419,20 @@ double SideShiftModule::getClosestShiftLength() const
 
 void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
 {
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
   const auto itr = std::minmax_element(path->shift_length.begin(), path->shift_length.end());
 
   constexpr double threshold = 0.1;
   constexpr double margin = 0.5;
   const double left_offset = std::max(
-    *itr.second + (*itr.first > threshold ? margin : 0.0),
-    parameters_->drivable_area_left_bound_offset);
+    *itr.second + (*itr.first > threshold ? margin : 0.0), dp.drivable_area_left_bound_offset);
   const double right_offset = -std::min(
-    *itr.first - (*itr.first < -threshold ? margin : 0.0),
-    -parameters_->drivable_area_right_bound_offset);
+    *itr.first - (*itr.first < -threshold ? margin : 0.0), -dp.drivable_area_right_bound_offset);
 
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanelets_);
   const auto shorten_lanes = utils::cutOverlappedLanes(path->path, drivable_lanes);
-  const auto expanded_lanes = utils::expandLanelets(
-    shorten_lanes, left_offset, right_offset, parameters_->drivable_area_types_to_skip);
+  const auto expanded_lanes =
+    utils::expandLanelets(shorten_lanes, left_offset, right_offset, dp.drivable_area_types_to_skip);
 
   {
     const auto & p = planner_data_->parameters;
