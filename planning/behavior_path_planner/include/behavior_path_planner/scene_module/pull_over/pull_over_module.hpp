@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
 #include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "behavior_path_planner/utils/pull_over/default_fixed_goal_planner.hpp"
 #include "behavior_path_planner/utils/pull_over/freespace_pull_over.hpp"
 #include "behavior_path_planner/utils/pull_over/geometric_pull_over.hpp"
 #include "behavior_path_planner/utils/pull_over/goal_searcher.hpp"
@@ -127,6 +128,7 @@ private:
 
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
   std::unique_ptr<PullOverPlannerBase> freespace_planner_;
+  std::unique_ptr<FixedGoalPlannerBase> fixed_goal_planner_;
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
   PullOverPath shift_parking_path_;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -150,6 +152,7 @@ private:
   std::unique_ptr<rclcpp::Time> last_received_time_;
   std::unique_ptr<rclcpp::Time> last_approved_time_;
   std::unique_ptr<rclcpp::Time> last_increment_time_;
+  std::unique_ptr<rclcpp::Time> last_path_update_time_;
   std::unique_ptr<Pose> last_approved_pose_;
 
   // approximate distance from the start point to the end point of pull_over.
@@ -157,7 +160,7 @@ private:
   double approximate_pull_over_distance_{20.0};
 
   bool left_side_parking_{true};
-  bool enable_goal_search_{false};
+  bool allow_goal_modification_{false};
 
   bool incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
@@ -188,12 +191,18 @@ private:
   bool isCrossingPossible(
     const Pose & start_pose, const Pose & end_pose, const lanelet::ConstLanelets lanes) const;
   bool isCrossingPossible(const PullOverPath & pull_over_path) const;
+  bool hasEnoughTimePassedSincePathUpdate(const double duration) const;
+  bool isOnGoal() const;
+  bool needPathUpdate(const double path_update_duration) const;
 
   TurnSignalInfo calcTurnSignalInfo() const;
 
   bool planFreespacePath();
   bool returnToLaneParking();
   bool isStuck();
+
+  BehaviorModuleOutput planWithGoalModification();
+  BehaviorModuleOutput planWaitingApprovalWithGoalModification();
 
   // timer for generating pull over path candidates
   void onTimer();

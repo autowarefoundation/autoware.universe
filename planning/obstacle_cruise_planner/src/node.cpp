@@ -327,12 +327,15 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
   debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
   debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
-  debug_slow_down_wall_marker_pub_ = create_publisher<MarkerArray>("~/slow_down/virtual_wall", 1);
+  debug_slow_down_wall_marker_pub_ =
+    create_publisher<MarkerArray>("~/debug/slow_down/virtual_wall", 1);
   debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
   debug_stop_planning_info_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
   debug_cruise_planning_info_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
+  debug_slow_down_planning_info_pub_ =
+    create_publisher<Float32MultiArrayStamped>("~/debug/slow_down_planning_info", 1);
 
   const auto longitudinal_info = LongitudinalInfo(*this);
 
@@ -1286,8 +1289,8 @@ void ObstacleCruisePlannerNode::publishDebugInfo() const
   debug_cruise_planning_info_pub_->publish(cruise_debug_msg);
 
   // slow_down
-  // const auto slow_down_debug_msg = planner_ptr_->getSlowDownPlanningDebugMessage(now());
-  // debug_slow_down_planning_info_pub_->publish(slow_down_debug_msg);
+  const auto slow_down_debug_msg = planner_ptr_->getSlowDownPlanningDebugMessage(now());
+  debug_slow_down_planning_info_pub_->publish(slow_down_debug_msg);
 }
 
 void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_time) const
