@@ -2,23 +2,21 @@
 
 ## Background
 
-planningモジュールの各ノードにおいて、特殊な経路や道路から大きく外れた自己位置など(今後特殊な入力と呼ぶ)が、入力として与えられたとき、そのノードが特殊な入力を想定しておらず、クラッシュしてしまうことがあり、ノードクラッシュによって生じるデバッグに時間を要することがある。例えば、空のtrajectoryなどをinputとして入ってくることが実装時に想定されず対策が取られていなければ、特殊な入力によるノードのクラッシュの可能性が放置されたまま変更がmergeされ、シナリオテストの実行時や実車でシステムを動作している最中にノードがクラッシュしてしまうケースがある。
+In each node of the planning module, when exceptional input, such as unusual routes or significantly deviated ego-position, is given, the node may not be prepared for such input and could crash. As a result, debugging node crashes can be time-consuming. For example, if an empty trajectory is given as input and it was not anticipated during implementation, the node might crash due to the unaddressed exceptional input when changes are merged, during scenario testing or while the system is running on an actual vehicle.
 
 ## Purpose
 
-各ノードが例外的な入力を受け取った際にノードが正常に動作することを確認するためのテストを実装するためのユーティリティを提供する。このユーティリティを活用し、特殊な入力に対するテストを実装することで、PRのmerge前に特殊な入力に対する対策が必要になり、実際に動かした際に初めて発覚するバグを減らすことを目的とする。
+The purpose is to provide a utility for implementing tests to ensure that node operates correctly when receiving exceptional input. By utilizing this utility and implementing tests for exceptional input, the purpose is to reduce bugs that are only discovered when actually running the system, by requiring measures for exceptional input before merging PRs.
 
 ## Features
 
-### 正常動作の確認
+### Confirmation of normal operation
 
-テスト対象のノードに対して、そのノードが正常に動作し、後段のノードで必要なメッセージをpublishすることを確認します。そのために、test_nodeから必要なメッセージをpublishし、ノードのoutputがpublishされていることを確認します。
+For the test target node, confirm that the node operates correctly and publishes the required messages for subsequent nodes. To do this, test_node publish the necessary messages and confirm that the node's output is being published.
 
-### 特殊な入力に対する堅牢性の確認
+### Robustness confirmation for special inputs
 
-正常動作が確認できた後、テスト対象のノードに対して、特殊な入力を与えた際にノードがクラッシュしないことを確認します。そのために、test_nodeから特殊な入力を与え、ノードがクラッシュしないことを確認します。
-
-## Flowchart
+After confirming normal operation, ensure that the test target node does not crash when given exceptional input. To do this, provide exceptional input from the test_node and confirm that the node does not crash.
 
 (WIP)
 
@@ -68,7 +66,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   // shutdown ROS context
   rclcpp::shutdown();
 }
-
+```
 
 ## Implemented tests
 
@@ -86,9 +84,8 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 | behavior_path_planner                      | NodeTestWithExceptionRoute                     | route, ego position | path_with_lane_id                                                                                          | Empty route, TBD                                       |                           |
 | behavior_velocity_planner                  | NodeTestWithExceptionPathWithLaneID            | path_with_lane_id   | path                                                                                                       | Empty path                                             |                           |
 
-## Assumptions / Known limits
+## Important Notes
 
 When launch a node, the parameters are loaded from the package's parameter file, which is located in the config directory.Please be aware that if there are missing parameters, the node can't be launched during testing.
 
 ## Future extensions / Unimplemented parts
-```
