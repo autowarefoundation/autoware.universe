@@ -77,7 +77,7 @@ visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMark
   const auto now = this->clock_->now();
 
   if (
-    (state_ == State::APPROACH) || (state_ == State::INSIDE_INVALID_LANELET) ||
+    (state_ == State::APPROACHING) || (state_ == State::INSIDE_INVALID_LANELET) ||
     (state_ == State::STOPPED)) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(

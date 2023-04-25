@@ -38,7 +38,7 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 class InvalidLaneletModule : public SceneModuleInterface
 {
 public:
-  enum class State { INIT, APPROACH, INSIDE_INVALID_LANELET, STOPPED };
+  enum class State { INIT, APPROACHING, INSIDE_INVALID_LANELET, STOPPED };
 
   struct SegmentIndexWithPose
   {
@@ -81,8 +81,18 @@ private:
   // State machine
   State state_;
 
+  PathWithInvalidLaneletPolygonIntersection path_invalid_lanelet_polygon_intersection;
+  geometry_msgs::msg::Point first_intersection_point;
+  double distance_ego_first_intersection;
+
   std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
     std::make_shared<motion_utils::VirtualWallMarkerCreator>();
+
+  void handle_init_state();
+  void handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason);
+  void handle_inside_invalid_lanelet_state(PathWithLaneId * path, StopReason * stop_reason);
+  void handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason);
+  void initialize_debug_data(const lanelet::Lanelet & invalid_lanelet, const geometry_msgs::msg::Point & ego_pos);
 };
 }  // namespace behavior_velocity_planner
 
