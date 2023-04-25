@@ -51,15 +51,6 @@ bool isSamePoint(const T1 & t1, const T2 & t2)
   }
   return true;
 }
-
-bool isOutsideDrivableAreaFromRectangleFootprint(
-  const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound,
-  const vehicle_info_util::VehicleInfo & vehicle_info,
-  const bool use_footprint_polygon_for_outside_drivable_area_check);
-
-std::vector<tier4_autoware_utils::Polygon2d> PredictedObjectsToPolygons(
-  const PredictedObjects & objects);
 }  // namespace geometry_utils
 }  // namespace path_sampler
 #endif  // PATH_SAMPLER__UTILS__GEOMETRY_UTILS_HPP_

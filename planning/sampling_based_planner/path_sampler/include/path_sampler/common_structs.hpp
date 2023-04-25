@@ -95,8 +95,6 @@ struct TrajectoryParam
   TrajectoryParam() = default;
   explicit TrajectoryParam(rclcpp::Node * node)
   {
-    output_backward_traj_length =
-      node->declare_parameter<double>("common.output_backward_traj_length");
     output_delta_arc_length = node->declare_parameter<double>("common.output_delta_arc_length");
   }
 
@@ -105,13 +103,10 @@ struct TrajectoryParam
     using tier4_autoware_utils::updateParam;
 
     // common
-    updateParam<double>(
-      parameters, "common.output_backward_traj_length", output_backward_traj_length);
     updateParam<double>(parameters, "common.output_delta_arc_length", output_delta_arc_length);
   }
 
   double output_delta_arc_length;
-  double output_backward_traj_length;
 };
 
 struct EgoNearestParam

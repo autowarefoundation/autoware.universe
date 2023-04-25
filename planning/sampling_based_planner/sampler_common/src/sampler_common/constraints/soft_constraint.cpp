@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,16 +35,20 @@ void calculateLengthCost(Path & path, const Constraints & constraints)
   if (!path.lengths.empty()) path.cost -= constraints.soft.length_weight * path.lengths.back();
 }
 
+void calculateLateralDeviationCost(
+  Path & path, const Constraints & constraints, const transform::Spline2D & reference)
+{
+  const auto fp = reference.frenet(path.points.back());
+  const double lateral_deviation = std::abs(fp.d);
+  path.cost += constraints.soft.lateral_deviation_weight * lateral_deviation;
+}
+
 void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference)
 {
   if (path.points.empty()) return;
   calculateCurvatureCost(path, constraints);
   calculateLengthCost(path, constraints);
-  // calculateLateralDeviationCost(path, constraints, reference);
-  double lateral_deviation_sum = 0.0;
-  const auto fp = reference.frenet(path.points.back());
-  lateral_deviation_sum += std::abs(fp.d);
-  path.cost += constraints.soft.lateral_deviation_weight * lateral_deviation_sum;
+  calculateLateralDeviationCost(path, constraints, reference);
 }
 }  // namespace sampler_common::constraints

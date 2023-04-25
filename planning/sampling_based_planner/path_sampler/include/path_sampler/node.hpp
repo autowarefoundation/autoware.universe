@@ -98,7 +98,7 @@ protected:  // for the static_centerline_optimizer package
     const std::vector<TrajectoryPoint> & input_traj_points,
     const geometry_msgs::msg::Pose & ego_pose) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
-  void publishDebugMarkerOfOptimization(const std::vector<TrajectoryPoint> & traj_points) const;
+  void publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const;
 };
 }  // namespace path_sampler
 

@@ -103,31 +103,31 @@ bool Spline::isValidInput(
   const std::vector<double> & return_index)
 {
   if (base_index.empty() || base_value.empty() || return_index.empty()) {
-    std::cout << "bad index : some vector is empty. base_index: " << base_index.size()
+    std::cerr << "bad index : some vector is empty. base_index: " << base_index.size()
               << ", base_value: " << base_value.size() << ", return_index: " << return_index.size()
               << std::endl;
     return false;
   }
   if (!isIncrease(base_index)) {
-    std::cout << "bad index : base_index is not monotonically increasing. base_index = ["
+    std::cerr << "bad index : base_index is not monotonically increasing. base_index = ["
               << base_index.front() << ", " << base_index.back() << "]" << std::endl;
     return false;
   }
   if (!isIncrease(return_index)) {
-    std::cout << "bad index : base_index is not monotonically increasing. return_index = ["
+    std::cerr << "bad index : base_index is not monotonically increasing. return_index = ["
               << return_index.front() << ", " << return_index.back() << "]" << std::endl;
     return false;
   }
   if (return_index.front() < base_index.front()) {
-    std::cout << "bad index : return_index.front() < base_index.front()" << std::endl;
+    std::cerr << "bad index : return_index.front() < base_index.front()" << std::endl;
     return false;
   }
   if (base_index.back() < return_index.back()) {
-    std::cout << "bad index : base_index.back() < return_index.back()" << std::endl;
+    std::cerr << "bad index : base_index.back() < return_index.back()" << std::endl;
     return false;
   }
   if (base_index.size() != base_value.size()) {
-    std::cout << "bad index : base_index.size() != base_value.size()" << std::endl;
+    std::cerr << "bad index : base_index.size() != base_value.size()" << std::endl;
     return false;
   }
 

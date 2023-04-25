@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,21 +18,18 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
-#include <functional>
-#include <vector>
-
 namespace sampler_common::constraints
 {
 /// @brief calculate the curvature cost of the given path
 void calculateCurvatureCost(Path & path, const Constraints & constraints);
 /// @brief calculate the length cost of the given path
 void calculateLengthCost(Path & path, const Constraints & constraints);
+/// @brief calculate the lateral deviation cost at the end of the given path
+void calculateLateralDeviationCost(
+  Path & path, const Constraints & constraints, const transform::Spline2D & reference);
 /// @brief calculate the overall cost of the given path
 void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference);
-/// @brief calculate the overall cost of the given trajectory
-void calculateCost(
-  Trajectory & trajectory, const Constraints & constraints, const transform::Spline2D & reference);
 }  // namespace sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_

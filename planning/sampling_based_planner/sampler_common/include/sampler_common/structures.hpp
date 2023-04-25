@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,19 +47,10 @@ struct ConstraintResults
   bool collision = true;
   bool curvature = true;
   bool drivable_area = true;
-  bool velocity = true;
-  bool acceleration = true;
-  bool yaw_rate = true;
 
-  [[nodiscard]] bool isValid() const
-  {
-    return collision && curvature && drivable_area && velocity && acceleration && yaw_rate;
-  }
+  [[nodiscard]] bool isValid() const { return collision && curvature && drivable_area; }
 
-  void clear()
-  {
-    collision = curvature = drivable_area = velocity = acceleration = yaw_rate = true;
-  }
+  void clear() { collision = curvature = drivable_area = true; }
 };
 struct FrenetPoint
 {
@@ -338,25 +329,16 @@ struct Constraints
     double lateral_deviation_weight;
     double length_weight;
     double curvature_weight;
-    double yaw_rate_weight;
   } soft{};
   struct
   {
-    double min_lateral_deviation;
-    double max_lateral_deviation;
     double min_curvature;
     double max_curvature;
   } hard{};
   LinearRing2d ego_footprint;
   MultiPolygon2d obstacle_polygons;
   MultiPolygon2d drivable_polygons;
-  MultiPolygon2d prefered_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
-
-  double distance_to_end;  // [m] current distance along the reference path between ego and the end
-                           // of the path
-  double collision_distance_buffer;
-  double static_dynamic_obstacle_velocity_threshold;
 };
 
 struct ReusableTrajectory

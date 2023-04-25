@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,12 +36,10 @@ void prepareConstraints(
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
+  // TODO(Maxime): get obstacle polygons
+  (void)predicted_objects;
   constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
-  for (auto & dynamic_obstacle_polygon :
-       geometry_utils::PredictedObjectsToPolygons(predicted_objects)) {
-    boost::geometry::correct(dynamic_obstacle_polygon);
-    constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
-  }
+  constraints.dynamic_obstacles = {};
 
   sampler_common::Polygon2d drivable_area_polygon;
   for (const auto & p : right_bound) drivable_area_polygon.outer().emplace_back(p.x, p.y);
@@ -49,7 +47,6 @@ void prepareConstraints(
     drivable_area_polygon.outer().emplace_back(it->x, it->y);
   drivable_area_polygon.outer().push_back(drivable_area_polygon.outer().front());
   constraints.drivable_polygons = {drivable_area_polygon};
-  constraints.prefered_polygons = constraints.drivable_polygons;
 }
 
 frenet_planner::SamplingParameters prepareSamplingParameters(

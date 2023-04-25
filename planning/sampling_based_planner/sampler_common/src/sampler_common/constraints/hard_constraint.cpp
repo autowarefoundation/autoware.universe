@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,18 +15,10 @@
 #include "sampler_common/constraints/hard_constraint.hpp"
 
 #include "sampler_common/constraints/footprint.hpp"
-#include "sampler_common/structures.hpp"
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/algorithms/detail/intersects/interface.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
-#include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/algorithms/within.hpp>
-#include <boost/geometry/core/cs.hpp>
 
-#include <algorithm>
-#include <csignal>
-#include <iostream>
+#include <vector>
 
 namespace sampler_common::constraints
 {
@@ -38,23 +30,10 @@ bool satisfyMinMax(const std::vector<double> & values, const double min, const d
   return true;
 }
 
-bool belowCollisionDistance(
-  const MultiPoint2d & footprint, const MultiPolygon2d & polygons, const double min_dist)
-{
-  for (const auto & polygon : polygons) {
-    if (boost::geometry::distance(footprint, polygon) < min_dist) return true;
-  }
-  return false;
-}
-
 MultiPoint2d checkHardConstraints(Path & path, const Constraints & constraints)
 {
   const auto footprint = buildFootprintPoints(path, constraints);
   if (!footprint.empty()) {
-    if (belowCollisionDistance(
-          footprint, constraints.obstacle_polygons, constraints.collision_distance_buffer)) {
-      path.constraint_results.collision = false;
-    }
     if (!boost::geometry::within(footprint, constraints.drivable_polygons)) {
       path.constraint_results.drivable_area = false;
     }

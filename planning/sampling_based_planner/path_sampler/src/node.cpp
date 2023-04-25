@@ -291,11 +291,8 @@ std::vector<TrajectoryPoint> PathSampler::generateTrajectory(const PlannerData &
 
   auto generated_traj_points = generatePath(planner_data);
 
-  // 2. update velocity
   applyInputVelocity(generated_traj_points, input_traj_points, planner_data.ego_pose);
-
-  // 4. publish debug marker
-  publishDebugMarkerOfOptimization(generated_traj_points);
+  publishDebugMarker(generated_traj_points);
 
   time_keeper_ptr_->toc(__func__, " ");
   return generated_traj_points;
@@ -314,7 +311,6 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
 
   const auto planning_state = getPlanningState(current_state, path_spline);
   prepareConstraints(params_.constraints, *in_objects_ptr_, p.left_bound, p.right_bound);
-  params_.constraints.distance_to_end = path_spline.lastS() - planning_state.frenet.s;
 
   auto candidate_paths = generateCandidatePaths(planning_state, path_spline, 0.0, params_);
   if (prev_path_ && prev_path_->lengths.size() > 1) {
@@ -387,8 +383,8 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
     trajectory = trajectory_utils::convertToTrajectoryPoints(selected_path);
     prev_path_ = selected_path;
   } else {
-    std::printf(
-      "No valid path found (out of %lu) outputing %s\n", candidate_paths.size(),
+    RCLCPP_WARN(
+      get_logger(), "No valid path found (out of %lu) outputing %s\n", candidate_paths.size(),
       prev_path_ ? "previous path" : "input path");
     int coll = 0;
     int da = 0;
@@ -398,7 +394,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
       da += static_cast<int>(!p.constraint_results.drivable_area);
       k += static_cast<int>(!p.constraint_results.curvature);
     }
-    std::printf("\tInvalid coll/da/k = %d/%d/%d\n", coll, da, k);
+    RCLCPP_WARN(get_logger(), "\tInvalid coll/da/k = %d/%d/%d\n", coll, da, k);
     if (prev_path_)
       trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
     else
@@ -473,8 +469,7 @@ void PathSampler::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose)
   time_keeper_ptr_->toc(__func__, "      ");
 }
 
-void PathSampler::publishDebugMarkerOfOptimization(
-  const std::vector<TrajectoryPoint> & traj_points) const
+void PathSampler::publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const
 {
   (void)traj_points;
 
