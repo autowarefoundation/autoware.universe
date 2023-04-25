@@ -15,55 +15,23 @@
 #ifndef TIER4_AUTOWARE_UTILS__TRANSFORM__TRANSFORMS_HPP_
 #define TIER4_AUTOWARE_UTILS__TRANSFORM__TRANSFORMS_HPP_
 
-#include <Eigen/Core>
+#include <rclcpp/rclcpp.hpp>
 
+#include <Eigen/Core>
+#include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 
 namespace tier4_autoware_utils
 {
-
 template <typename PointT>
 void transformPointCloud(
   const pcl::PointCloud<PointT> & cloud_in, pcl::PointCloud<PointT> & cloud_out,
   const Eigen::Matrix<float, 4, 4> & transform)
 {
-  if (&cloud_in != &cloud_out) {
-    cloud_out = cloud_in;
-  }
-
-  if (cloud_out.width == 0 || cloud_out.height == 0) return;
-
-  if (cloud_in.is_dense) {
-    for (std::size_t i = 0; i < cloud_out.size(); ++i) {
-      cloud_out[i].data[0] = static_cast<float>(
-        transform(0, 0) * cloud_in[i].data[0] + transform(0, 1) * cloud_in[i].data[1] +
-        transform(0, 2) * cloud_in[i].data[2] + transform(0, 3));
-      cloud_out[i].data[1] = static_cast<float>(
-        transform(1, 0) * cloud_in[i].data[0] + transform(1, 1) * cloud_in[i].data[1] +
-        transform(1, 2) * cloud_in[i].data[2] + transform(1, 3));
-      cloud_out[i].data[2] = static_cast<float>(
-        transform(2, 0) * cloud_in[i].data[0] + transform(2, 1) * cloud_in[i].data[1] +
-        transform(2, 2) * cloud_in[i].data[2] + transform(2, 3));
-      cloud_out[i].data[3] = 1;
-    }
+  if (cloud_in.empty() || cloud_in.width == 0) {
+    RCLCPP_WARN(rclcpp::get_logger("transformPointCloud"), "input point cloud is empty!");
   } else {
-    for (std::size_t i = 0; i < cloud_out.size(); ++i) {
-      if (
-        !std::isfinite(cloud_in[i].x) || !std::isfinite(cloud_in[i].y) ||
-        !std::isfinite(cloud_in[i].z))
-        continue;
-
-      cloud_out[i].data[0] = static_cast<float>(
-        transform(0, 0) * cloud_in[i].data[0] + transform(0, 1) * cloud_in[i].data[1] +
-        transform(0, 2) * cloud_in[i].data[2] + transform(0, 3));
-      cloud_out[i].data[1] = static_cast<float>(
-        transform(1, 0) * cloud_in[i].data[0] + transform(1, 1) * cloud_in[i].data[1] +
-        transform(1, 2) * cloud_in[i].data[2] + transform(1, 3));
-      cloud_out[i].data[2] = static_cast<float>(
-        transform(2, 0) * cloud_in[i].data[0] + transform(2, 1) * cloud_in[i].data[1] +
-        transform(2, 2) * cloud_in[i].data[2] + transform(2, 3));
-      cloud_out[i].data[3] = 1;
-    }
+    pcl::transformPointCloud(cloud_in, cloud_out, transform);
   }
 }
 
@@ -72,9 +40,12 @@ void transformPointCloud(
   const pcl::PointCloud<PointT> & cloud_in, pcl::PointCloud<PointT> & cloud_out,
   const Eigen::Affine3f & transform)
 {
-  tier4_autoware_utils::transformPointCloud(cloud_in, cloud_out, transform.matrix());
+  if (cloud_in.empty() || cloud_in.width == 0) {
+    RCLCPP_WARN(rclcpp::get_logger("transformPointCloud"), "input point cloud is empty!");
+  } else {
+    pcl::transformPointCloud(cloud_in, cloud_out, transform);
+  }
 }
-
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__TRANSFORM__TRANSFORMS_HPP_
