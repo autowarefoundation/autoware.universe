@@ -10,10 +10,6 @@ planningモジュールの各ノードにおいて、特殊な経路や道路か
 
 ## Features
 
-The Planning Interface Test Managerは、planningコンポーネントのテストをサポートするためのユーティリティとヘルパー関数のセットです。様々なメッセージをpublishするためのヘルパー関数や、特殊なtrajectoryやposeを入力として与えることでテストを実行するためのメソッドが提供されています。(WIP)
-
-## Inner-workings / Algorithms
-
 ### 正常動作の確認
 
 テスト対象のノードに対して、そのノードが正常に動作し、後段のノードで必要なメッセージをpublishすることを確認します。そのために、test_nodeから必要なメッセージをpublishし、ノードのoutputがpublishされていることを確認します。
@@ -29,32 +25,50 @@ The Planning Interface Test Managerは、planningコンポーネントのテス�
 ## Usage
 
 ```cpp
-#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
-#include "behavior_path_planner/behavior_path_planner_node.hpp"
-#include "ament_index_cpp/get_package_share_directory.hpp"
-#include <gtest/gtest.h>
 
-
-using behavior_path_planner::BehaviorPathPlannerNode;
-using planning_test_utils::PlanningInterfaceTestManager;
-
-TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
+TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 {
   rclcpp::init(0, nullptr);
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
 
-  publishMandatoryTopics(test_manager, test_target_node);
+  // instantiate test_manager with PlanningInterfaceTestManager type
+  auto test_manager = std::make_shared<planning_test_utils::PlanningInterfaceTestManager>();
 
-  // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
+  // get package directories for necessary configuration files
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto target_node_dir =
+    ament_index_cpp::get_package_share_directory("target_node");
+
+  // set arguments to get the config file
+  node_options.arguments(
+    {"--ros-args", "--params-file",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     planning_validator_dir + "/config/planning_validator.param.yaml"});
+
+  // instantiate the TargetNode with node_options
+  auto test_target_node = std::make_shared<TargetNode>(node_options);
+
+  // publish the necessary topics from test_manager second argument is topic name
+  test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
+  test_manager->publishMaxVelocity(
+    test_target_node, "motion_velocity_smoother/input/external_velocity_limit_mps");
+
+  // set scenario_selector's input topic name(this topic is changed to test node)
+  test_manager->setTrajectoryInputTopicName("input/parking/trajectory");
+
+  // test with normal trajectory
+  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
+
+  // make sure target_node is running
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  // test with empty route
-  test_manager->testWithAbnormalRoute(test_target_node);
+  // test with trajectory input with empty/one point/overlapping point
+  ASSERT_NO_THROW(test_manager->testWithAbnormalTrajectory(test_target_node));
+
+  // shutdown ROS context
   rclcpp::shutdown();
 }
-```
+
 
 ## Implemented tests
 
@@ -77,3 +91,4 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 When launch a node, the parameters are loaded from the package's parameter file, which is located in the config directory.Please be aware that if there are missing parameters, the node can't be launched during testing.
 
 ## Future extensions / Unimplemented parts
+```
