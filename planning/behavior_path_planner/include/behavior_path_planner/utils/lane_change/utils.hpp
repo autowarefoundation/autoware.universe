@@ -67,7 +67,7 @@ bool isPathInLanelets(
 
 double calcLaneChangingLength(
   const double lane_changing_velocity, const double shift_length,
-  const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param);
+  const BehaviorPathPlannerParameters & common_parameter);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
@@ -75,6 +75,7 @@ std::optional<LaneChangePath> constructCandidatePath(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double acceleration,
   const LaneChangePhaseInfo lane_change_length, const LaneChangePhaseInfo lane_change_velocity,
+  const BehaviorPathPlannerParameters & common_parameter,
   const LaneChangeParameters & lane_change_param);
 
 bool getLaneChangePaths(
@@ -105,7 +106,8 @@ bool isLaneChangePathSafe(
 bool hasEnoughLength(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const RouteHandler & route_handler, const double minimum_lane_change_length,
+  const RouteHandler & route_handler, const double minimum_lane_changing_velocity,
+  const BehaviorPathPlannerParameters & common_parameters,
   const Direction direction = Direction::NONE);
 
 ShiftLine getLaneChangingShiftLine(
@@ -148,10 +150,6 @@ std::vector<DrivableLanes> generateDrivableLanes(
 std::vector<DrivableLanes> generateDrivableLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & lane_change_lanes);
-
-std::vector<DrivableLanes> combineDrivableLanes(
-  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
-  const std::vector<DrivableLanes> & new_drivable_lanes_vec);
 
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,

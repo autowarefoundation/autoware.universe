@@ -27,14 +27,8 @@ struct LaneChangeParameters
 {
   // trajectory generation
   double prepare_duration{2.0};
-  double lane_changing_lateral_jerk{0.5};
-  double lane_changing_lateral_acc{0.315};
-  double lane_changing_lateral_acc_at_low_velocity{0.15};
-  double lateral_acc_switching_velocity{0.4};
   double lane_change_finish_judge_buffer{3.0};
-  double minimum_lane_changing_velocity{5.6};
   double prediction_time_resolution{0.5};
-  double maximum_deceleration{1.0};
   int lane_change_sampling_num{10};
 
   // collision check
@@ -59,11 +53,6 @@ struct LaneChangeParameters
 
   double abort_delta_time{3.0};
   double abort_max_lateral_jerk{10.0};
-
-  // drivable area expansion
-  double drivable_area_right_bound_offset{0.0};
-  double drivable_area_left_bound_offset{0.0};
-  std::vector<std::string> drivable_area_types_to_skip{};
 
   // debug marker
   bool publish_debug_marker{false};
