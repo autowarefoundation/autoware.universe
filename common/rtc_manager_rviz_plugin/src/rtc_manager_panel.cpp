@@ -420,6 +420,7 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
     cnt++;
   }
+  rtc_table_->update();
 }
 }  // namespace rviz_plugins
 
