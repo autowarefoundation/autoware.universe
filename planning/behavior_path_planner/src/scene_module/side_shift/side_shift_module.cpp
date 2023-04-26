@@ -298,8 +298,6 @@ BehaviorModuleOutput SideShiftModule::plan()
   setOrientation(&shifted_path.path);
 
   auto output = adjustDrivableArea(shifted_path);
-
-  output.path = std::make_shared<PathWithLaneId>(output_path);
   output.reference_path = getPreviousModuleOutput().reference_path;
 
   prev_output_ = shifted_path;
@@ -335,7 +333,6 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
 
   auto output = adjustDrivableArea(shifted_path);
 
-  output.path = std::make_shared<PathWithLaneId>(output_path);
   output.reference_path = getPreviousModuleOutput().reference_path;
 
   path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
@@ -416,12 +413,12 @@ double SideShiftModule::getClosestShiftLength() const
   return prev_output_.shift_length.at(closest);
 }
 
-BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & path, DrivableAreaInfo & out) const
+BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & path) const
 {
   BehaviorModuleOutput out;
 
   const auto & dp = planner_data_->drivable_area_expansion_parameters;
-  const auto itr = std::minmax_element(path->shift_length.begin(), path->shift_length.end());
+  const auto itr = std::minmax_element(path.shift_length.begin(), path.shift_length.end());
 
   constexpr double threshold = 0.1;
   constexpr double margin = 0.5;
@@ -430,22 +427,23 @@ BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & pat
   const double right_offset = -std::min(
     *itr.first - (*itr.first < -threshold ? margin : 0.0), -dp.drivable_area_right_bound_offset);
 
+  auto output_path = path.path;
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanelets_);
-  const auto shorten_lanes = utils::cutOverlappedLanes(path->path, drivable_lanes);
+  const auto shorten_lanes = utils::cutOverlappedLanes(output_path, drivable_lanes);
   const auto expanded_lanes =
     utils::expandLanelets(shorten_lanes, left_offset, right_offset, dp.drivable_area_types_to_skip);
 
   {  // for old architecture
-  auto output_path = path->path;
-  const auto & p = planner_data_->parameters;
-  const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(output_path.points);
-  const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  output_path.points = motion_utils::cropPoints(
-    output_path.points, current_pose.position, current_seg_idx, p.forward_path_length,
-    p.backward_path_length + p.input_path_interval);
-
     const auto & p = planner_data_->parameters;
+    const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(output_path.points);
+    const auto & current_pose = planner_data_->self_odometry->pose.pose;
+    output_path.points = motion_utils::cropPoints(
+      output_path.points, current_pose.position, current_seg_idx, p.forward_path_length,
+      p.backward_path_length + p.input_path_interval);
+
     utils::generateDrivableArea(output_path, expanded_lanes, p.vehicle_length, planner_data_);
+
+    out.path = std::make_shared<PathWithLaneId>(output_path);
   }
 
   {  // for new architecture
