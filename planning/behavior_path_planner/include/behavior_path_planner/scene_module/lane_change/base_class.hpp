@@ -21,6 +21,7 @@
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -45,7 +46,10 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebugMap;
+using motion_utils::calcSignedArcLength;
+using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using route_handler::Direction;
+using tier4_autoware_utils::getPose;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
@@ -179,6 +183,8 @@ protected:
   virtual lanelet::ConstLanelets getCurrentLanes() const = 0;
 
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
+
+  virtual PathWithLaneId getExtendPath(const PathWithLaneId & path) const = 0;
 
   virtual PathWithLaneId getPrepareSegment(
     const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,

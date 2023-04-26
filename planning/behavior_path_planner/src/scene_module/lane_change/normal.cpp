@@ -89,7 +89,9 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
 BehaviorModuleOutput NormalLaneChange::generateOutput()
 {
   BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(getLaneChangePath().path);
+  const auto output_path = getExtendPath(getLaneChangePath().path);
+  output.path = std::make_shared<PathWithLaneId>(output_path);
+  // output.path = std::make_shared<PathWithLaneId>(getLaneChangePath().path);
 
   extendOutputDrivableArea(output);
 
@@ -272,6 +274,64 @@ int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) 
   const auto get_opposite_direction =
     (direction_ == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
   return std::abs(getRouteHandler()->getNumLaneToPreferredLane(lane, get_opposite_direction));
+}
+
+PathWithLaneId NormalLaneChange::getExtendPath(const PathWithLaneId & path) const
+{
+  const auto & p = planner_data_->parameters;
+
+  const auto to_goal_distance =
+    calcSignedArcLength(path.points, getEgoPosition(), getRouteHandler()->getGoalPose().position);
+  const auto shift_intervals =
+    getRouteHandler()->getLateralIntervalsToPreferredLane(status_.lane_change_lanes.back());
+  const double lane_change_buffer = utils::calcMinimumLaneChangeLength(p, shift_intervals);
+
+  // extension no longer needed.
+  if (to_goal_distance - lane_change_buffer < p.forward_path_length) {
+    return path;
+  }
+
+  const auto to_lane_change_path_end =
+    calcSignedArcLength(path.points, getEgoPose().position, path.points.size() - 1);
+  const auto additional_length =
+    p.forward_path_length - to_lane_change_path_end - lane_change_buffer;
+
+  // extension no longer needed.
+  if (additional_length < 0.0) {
+    return path;
+  }
+
+  const auto original_path_end_pose = getPose(path.points.back());
+
+  constexpr double BACKWARD_MARGIN = 10.0;
+  const auto reference_lanes = getRouteHandler()->getLaneletSequence(
+    status_.lane_change_lanes.back(), original_path_end_pose, BACKWARD_MARGIN, additional_length);
+
+  const auto additional_path = utils::getCenterLinePath(
+    *getRouteHandler(), reference_lanes, original_path_end_pose, BACKWARD_MARGIN, additional_length,
+    p);
+
+  const size_t nearest_segment_idx = findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, getPose(additional_path.points.front()), p.ego_nearest_dist_threshold,
+    p.ego_nearest_yaw_threshold);
+
+  PathWithLaneId extended_path{};
+  {
+    extended_path.points.insert(
+      extended_path.points.end(), path.points.begin(), path.points.begin() + nearest_segment_idx);
+  }
+
+  {
+    extended_path.points.insert(
+      extended_path.points.end(), additional_path.points.begin(), additional_path.points.end());
+  }
+
+  const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(extended_path.points);
+  extended_path.points = motion_utils::cropPoints(
+    extended_path.points, getEgoPosition(), current_seg_idx, p.forward_path_length,
+    p.backward_path_length + p.input_path_interval);
+
+  return extended_path;
 }
 
 PathWithLaneId NormalLaneChange::getPrepareSegment(
@@ -516,8 +576,41 @@ bool NormalLaneChange::getLaneChangePaths(
 
 std::vector<DrivableLanes> NormalLaneChange::getDrivableLanes() const
 {
+  const auto & p = planner_data_->parameters;
+
+  lanelet::ConstLanelets extend_current_lanes{};
+  {
+    const auto lanelet_sequence = getRouteHandler()->getLaneletSequence(
+      status_.current_lanes.front(), 0.0, std::numeric_limits<double>::max());
+
+    lanelet::ConstLanelet closest_lane{};
+    if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, getEgoPose(), &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return {};
+    }
+
+    extend_current_lanes = getRouteHandler()->getLaneletSequence(
+      closest_lane, p.backward_path_length, p.forward_path_length);
+  }
+
+  lanelet::ConstLanelets extend_target_lanes{};
+  {
+    const auto lanelet_sequence = getRouteHandler()->getLaneletSequence(
+      status_.lane_change_lanes.front(), 0.0, std::numeric_limits<double>::max());
+
+    lanelet::ConstLanelet closest_lane{};
+    if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, getEgoPose(), &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return {};
+    }
+
+    extend_target_lanes = getRouteHandler()->getLaneletSequence(
+      closest_lane, p.backward_path_length, p.forward_path_length);
+  }
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
-    *getRouteHandler(), status_.current_lanes, status_.lane_change_lanes);
+    *getRouteHandler(), extend_current_lanes, extend_target_lanes);
   return utils::combineDrivableLanes(*prev_drivable_lanes_, drivable_lanes);
 }
 
