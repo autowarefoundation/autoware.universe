@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Foundation
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -69,6 +70,7 @@ using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using planning_interface::Route;
+using route_handler::RouteHandler;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_autoware_utils::createPoint;
@@ -223,6 +225,46 @@ HADMapBin createMapBinMsg(
   lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
 
   return map_bin_msg;
+}
+
+Pose createPoseFromLaneID(const int & lane_id)
+{
+  auto map_bin_msg = makeMapBinMsg();
+  // create route_handler
+  auto route_handler = std::make_shared<RouteHandler>();
+  route_handler->setMap(map_bin_msg);
+
+  // get middle idx of the lanelet
+  const auto lanelet = route_handler->getLaneletsFromId(lane_id);
+  const auto center_line = lanelet.centerline();
+  const size_t middle_point_idx = std::floor(center_line.size() / 2.0);
+
+  // get middle position of the lanelet
+  geometry_msgs::msg::Point middle_pos;
+  middle_pos.x = center_line[middle_point_idx].x();
+  middle_pos.y = center_line[middle_point_idx].y();
+
+  // get next middle position of the lanelet
+  geometry_msgs::msg::Point next_middle_pos;
+  next_middle_pos.x = center_line[middle_point_idx + 1].x();
+  next_middle_pos.y = center_line[middle_point_idx + 1].y();
+
+  // calculate middle pose
+  geometry_msgs::msg::Pose middle_pose;
+  middle_pose.position = middle_pos;
+  const double yaw = tier4_autoware_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
+  middle_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+
+  return middle_pose;
+}
+
+Odometry makeInitialPoseFromLaneID(const int & lane_id)
+{
+  Odometry current_odometry;
+  current_odometry.pose.pose = createPoseFromLaneID(lane_id);
+  current_odometry.header.frame_id = "map";
+
+  return current_odometry;
 }
 
 template <typename T>
