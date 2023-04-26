@@ -226,6 +226,7 @@ BehaviorModuleOutput ExternalRequestLaneChangeModule::planWaitingApproval()
   auto reference_path = getReferencePath();
 
   // for old architecture
+  const auto & common_parameters = planner_data_->parameters;
   const auto current_lanes = utils::getCurrentLanes(planner_data_);
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
   const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
