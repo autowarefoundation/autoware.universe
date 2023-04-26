@@ -21,10 +21,8 @@
         <remap from="twist" to="$(var predict_twist)" />
 
         <remap from="initialpose" to="$(var input_initialpose)" />
-        <remap from="initial_gnss_pose" to="/localization/pf/initial_gnss_pose"/> 
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="use_dynamic_noise" value="true"/>
         <param name="num_of_particles" value="500" />
         <param name="resampling_interval_seconds" value="1.0" />
         <param name="prediction_rate" value="50.0" />
@@ -40,8 +38,6 @@
         <remap from="pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
 
         <param name="is_swap_mode" value="false" />
-        <remap from="image" to="$(var resized_image)"/>
-        <remap from="pose_cov" to="/localization/pose_with_covariance"/>
     </node>
 
     <!-- camera  correction -->

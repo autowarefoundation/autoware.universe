@@ -63,7 +63,9 @@ private:
   // Number of updates to keep resampling history.
   // Resampling records prior to this will not be kept.
   const int max_history_num_;
+  //
   const int number_of_particles_;
+  //
   std::vector<std::vector<int>> resampling_history_;
 };
 

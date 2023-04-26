@@ -19,28 +19,24 @@
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
 #include <Eigen/Core>
+#include <pcdless_common/pose_conversions.hpp>
 #include <sophus/geometry.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <tf2/utils.h>
 
-#include <iostream>
 #include <numeric>
 
 namespace pcdless::modularized_particle_filter
 {
 Predictor::Predictor()
 : Node("predictor"),
-  visualize_(declare_parameter<bool>("visualize", false)),
   number_of_particles_(declare_parameter("num_of_particles", 500)),
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
   static_linear_covariance_(declare_parameter("static_linear_covariance", 0.01)),
-  static_angular_covariance_(declare_parameter("static_angular_covariance", 0.01)),
-  use_dynamic_noise_(declare_parameter("use_dynamic_noise", false))
+  static_angular_covariance_(declare_parameter("static_angular_covariance", 0.01))
 {
-  const double prediction_rate{declare_parameter("prediction_rate", 50.0f)};
-
   tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   // Publishers
@@ -50,44 +46,33 @@ Predictor::Predictor()
 
   // Subscribers
   using std::placeholders::_1;
-  auto on_gnss_pose = std::bind(&Predictor::on_gnss_pose, this, _1);
-  auto initial_cb = std::bind(&Predictor::on_initial_pose, this, _1);
-  auto twist_cb = std::bind(&Predictor::on_twist, this, _1);
-  auto twist_cov_cb = std::bind(&Predictor::on_twist_cov, this, _1);
-  auto particle_cb = std::bind(&Predictor::on_weighted_particles, this, _1);
-  auto height_cb = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
+  auto on_initial = std::bind(&Predictor::on_initial_pose, this, _1);
+  auto on_twist = std::bind(&Predictor::on_twist, this, _1);
+  // clang-format off
+  auto on_twist_cov= [this](const TwistCovStamped & twist_cov) -> void { this->latest_twist_opt_ = twist_cov; };
+  // clang-format on
+  auto on_particle = std::bind(&Predictor::on_weighted_particles, this, _1);
+  auto on_height = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
 
-  gnss_sub_ = create_subscription<PoseStamped>("initial_gnss_pose", 1, on_gnss_pose);
-  initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, initial_cb);
-  twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
-  twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, twist_cov_cb);
-  particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, particle_cb);
-  height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, height_cb);
-
-  if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
-
-  if (declare_parameter("is_swap_mode", false)) {
-    swap_mode_adaptor_ = std::make_unique<SwapModeAdaptor>(this);
-  }
+  initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, on_initial);
+  twist_sub_ = create_subscription<TwistStamped>("twist", 10, on_twist);
+  twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, on_twist_cov);
+  particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, on_particle);
+  height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, on_height);
 
   // Timer callback
-  auto cb_timer = std::bind(&Predictor::on_timer, this);
+  const double prediction_rate = declare_parameter("prediction_rate", 50.0f);
+  auto on_timer = std::bind(&Predictor::on_timer, this);
   timer_ = rclcpp::create_timer(
-    this, this->get_clock(), rclcpp::Rate(prediction_rate).period(), std::move(cb_timer));
-}
+    this, this->get_clock(), rclcpp::Rate(prediction_rate).period(), std::move(on_timer));
 
-void Predictor::on_gnss_pose(const PoseStamped::ConstSharedPtr pose)
-{
-  PoseCovStamped pose_cov;
-  pose_cov.header = pose->header;
-  pose_cov.pose.pose = pose->pose;
-  pose_cov.pose.covariance[6 * 0 + 0] = 0.25;
-  pose_cov.pose.covariance[6 * 1 + 1] = 0.25;
-  pose_cov.pose.covariance[6 * 5 + 5] = 0.04;
-
-  if (particle_array_opt_.has_value()) return;
-
-  initialize_particles(pose_cov);
+  // Optional modules
+  if (declare_parameter<bool>("visualize", false)) {
+    visualizer_ptr_ = std::make_unique<ParticleVisualizer>(*this);
+  }
+  if (declare_parameter("is_swap_mode", false)) {
+    swap_mode_adaptor_ptr_ = std::make_unique<SwapModeAdaptor>(this);
+  }
 }
 
 void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose)
@@ -109,28 +94,29 @@ void Predictor::initialize_particles(const PoseCovStamped & initialpose)
   cov(1, 0) = initialpose.pose.covariance[6 * 1 + 0];
   cov(1, 1) = initialpose.pose.covariance[6 * 1 + 1];
 
-  const float yaw{static_cast<float>(tf2::getYaw(initialpose.pose.pose.orientation))};
-  for (size_t i{0}; i < particle_array.particles.size(); i++) {
-    geometry_msgs::msg::Pose pose{initialpose.pose.pose};
+  const double yaw = tf2::getYaw(initialpose.pose.pose.orientation);
+  const double yaw_std = std::sqrt(initialpose.pose.covariance[6 * 5 + 5]);
 
-    Eigen::Vector2d noise = util::nrand_2d(cov);
+  for (auto & particle : particle_array.particles) {
+    geometry_msgs::msg::Pose pose = initialpose.pose.pose;
+    const Eigen::Vector2d noise = util::nrand_2d(cov);
     pose.position.x += noise.x();
     pose.position.y += noise.y();
 
-    float noised_yaw =
-      util::normalize_radian(yaw + util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
-    tf2::Quaternion q;
-    q.setRPY(0, 0, noised_yaw);
-    pose.orientation = tf2::toMsg(q);
+    float noised_yaw = util::normalize_radian(yaw + util::nrand(yaw_std));
+    pose.orientation.w = std::cos(noised_yaw / 2.0);
+    pose.orientation.x = 0.0;
+    pose.orientation.y = 0.0;
+    pose.orientation.z = std::sin(noised_yaw / 2.0);
 
-    particle_array.particles[i].pose = pose;
-    particle_array.particles[i].weight = 1.0;
+    particle.pose = pose;
+    particle.weight = 1.0;
   }
   particle_array_opt_ = particle_array;
 
   // We have to initialize resampler every particles initialization,
   // because resampler has particles resampling history and it will be outdate.
-  resampler_ptr_ = std::make_shared<RetroactiveResampler>(number_of_particles_, 100);
+  resampler_ptr_ = std::make_unique<RetroactiveResampler>(number_of_particles_, 100);
 }
 
 void Predictor::on_twist(const TwistStamped::ConstSharedPtr twist)
@@ -144,144 +130,86 @@ void Predictor::on_twist(const TwistStamped::ConstSharedPtr twist)
   twist_covariance.twist.covariance.at(21) = 1e4;
   twist_covariance.twist.covariance.at(28) = 1e4;
   twist_covariance.twist.covariance.at(35) = static_angular_covariance_;
-  twist_opt_ = twist_covariance;
-}
-
-void Predictor::on_twist_cov(const TwistCovStamped::ConstSharedPtr twist_cov)
-{
-  twist_opt_ = *twist_cov;
-}
-
-geometry_msgs::msg::Pose se3_to_pose_msg(const Sophus::SE3f & se3)
-{
-  const Eigen::Vector3f t = se3.translation();
-  const Eigen::Quaternionf q = se3.unit_quaternion();
-
-  geometry_msgs::msg::Pose pose;
-  pose.position.x = t.x();
-  pose.position.y = t.y();
-  pose.position.z = t.z();
-  pose.orientation.w = q.w();
-  pose.orientation.x = q.x();
-  pose.orientation.y = q.y();
-  pose.orientation.z = q.z();
-  return pose;
-}
-
-Sophus::SE3f pose_msg_to_se3(const geometry_msgs::msg::Pose & pose)
-{
-  auto pos = pose.position;
-  auto ori = pose.orientation;
-
-  Eigen::Vector3f t(pos.x, pos.y, pos.z);
-  Eigen::Quaternionf q(ori.w, ori.x, ori.y, ori.z);
-  return Sophus::SE3f(q, t);
+  latest_twist_opt_ = twist_covariance;
 }
 
 void Predictor::update_with_dynamic_noise(
-  ParticleArray & particle_array, const TwistCovStamped & twist)
+  ParticleArray & particle_array, const TwistCovStamped & twist, double dt)
 {
-  rclcpp::Time current_time{this->now()};
-  rclcpp::Time msg_time{particle_array.header.stamp};
-
-  const float dt = static_cast<float>((current_time - msg_time).seconds());
-  particle_array.header.stamp = current_time;
-
-  if (dt < 0.0f || dt > 1.0f) {
-    // NOTE: sometime particle_array.header.stamp is ancient due to lagged pose_initializer
-    RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
-    return;
-  }
-
+  // linear & angular velocity
   const float linear_x = twist.twist.twist.linear.x;
   const float angular_z = twist.twist.twist.angular.z;
+  // standard deviation of linear & angular velocity
   const float std_linear_x = std::sqrt(twist.twist.covariance[6 * 0 + 0]);
   const float std_angular_z = std::sqrt(twist.twist.covariance[6 * 5 + 5]);
-
-  const float truncated_gain = std::clamp(std::sqrt(std::abs(linear_x)), 0.1f, 1.0f);
+  // 1[rad/s] = 60[deg/s]
+  // 1[m/s] = 3.6[km/h]
+  const float truncated_angular_std =
+    std_angular_z * std::clamp(std::sqrt(std::abs(linear_x)), 0.1f, 1.0f);
   const float truncated_linear_std = std::clamp(std_linear_x * linear_x, 0.1f, 2.0f);
 
-  using util::nrand;
-  for (size_t i{0}; i < particle_array.particles.size(); i++) {
-    Sophus::SE3f se3_pose = pose_msg_to_se3(particle_array.particles[i].pose);
+  for (auto & particle : particle_array.particles) {
+    Sophus::SE3f se3_pose = common::pose_to_se3(particle.pose);
     Eigen::Matrix<float, 6, 1> noised_xi;
     noised_xi.setZero();
-    noised_xi(0) = linear_x + nrand(truncated_linear_std);
-    noised_xi(5) = angular_z + nrand(std_angular_z * truncated_gain);
+    noised_xi(0) = linear_x + util::nrand(truncated_linear_std);
+    noised_xi(5) = angular_z + util::nrand(truncated_angular_std);
     se3_pose *= Sophus::SE3f::exp(noised_xi * dt);
 
-    geometry_msgs::msg::Pose pose = se3_to_pose_msg(se3_pose);
+    geometry_msgs::msg::Pose pose = common::se3_to_pose(se3_pose);
     pose.position.z = ground_height_;
-    particle_array.particles[i].pose = pose;
-  }
-}
-
-void Predictor::update_with_static_noise(
-  ParticleArray & particle_array, const TwistCovStamped & twist)
-{
-  rclcpp::Time current_time{this->now()};
-  const float dt =
-    static_cast<float>((current_time - rclcpp::Time(particle_array.header.stamp)).seconds());
-  if (dt < 0.0f) {
-    RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
-    return;
-  }
-
-  particle_array.header.stamp = current_time;
-  for (size_t i{0}; i < particle_array.particles.size(); i++) {
-    geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
-
-    const float stddev_vx = static_cast<float>(std::sqrt(twist.twist.covariance[6 * 0 + 0]));
-    const float stddev_wz = static_cast<float>(std::sqrt(twist.twist.covariance[6 * 5 + 5]));
-
-    const float roll{0.0f};
-    const float pitch{0.0f};
-    const float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    const float vx{static_cast<float>(twist.twist.twist.linear.x) + util::nrand(stddev_vx)};
-    const float wz{static_cast<float>(twist.twist.twist.angular.z) + util::nrand(stddev_wz)};
-    tf2::Quaternion q;
-    q.setRPY(roll, pitch, util::normalize_radian(yaw + wz * dt));
-
-    pose.orientation = tf2::toMsg(q);
-    pose.position.x += vx * std::cos(yaw) * dt;
-    pose.position.y += vx * std::sin(yaw) * dt;
-    pose.position.z = ground_height_;
-
-    particle_array.particles[i].pose = pose;
+    particle.pose = pose;
   }
 }
 
 void Predictor::on_timer()
 {
+  // ==========================================================================
+  // Pre-check section
   // TODO: Refactor
-  if (swap_mode_adaptor_) {
-    if (swap_mode_adaptor_->should_keep_update() == false) {
+  if (swap_mode_adaptor_ptr_) {
+    if (swap_mode_adaptor_ptr_->should_keep_update() == false) {
       return;
     }
-    if (swap_mode_adaptor_->should_call_initialize()) {
-      initialize_particles(swap_mode_adaptor_->init_pose());
+    if (swap_mode_adaptor_ptr_->should_call_initialize()) {
+      initialize_particles(swap_mode_adaptor_ptr_->init_pose());
     }
   }
-
-  if (!particle_array_opt_.has_value()) return;
-  if (!twist_opt_.has_value()) return;
-
+  // Return if particle_array is not initialized yet
+  if (!particle_array_opt_.has_value()) {
+    return;
+  }
+  // Return if twist is not subscirbed yet
+  if (!latest_twist_opt_.has_value()) {
+    return;
+  }
+  //
   ParticleArray particle_array = particle_array_opt_.value();
-  TwistCovStamped twist{twist_opt_.value()};
+  const rclcpp::Time current_time = this->now();
+  const rclcpp::Time msg_time = particle_array.header.stamp;
+  const double dt = (current_time - msg_time).seconds();
+  particle_array.header.stamp = current_time;
 
-  if (use_dynamic_noise_) {
-    update_with_dynamic_noise(particle_array, twist);
-  } else {
-    update_with_static_noise(particle_array, twist);
+  // ==========================================================================
+  // Prediction section
+  // NOTE: Sometimes particle_array.header.stamp is ancient due to lagged pose_initializer
+  if (dt < 0.0 || dt > 1.0) {
+    RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
+    return;
   }
 
+  update_with_dynamic_noise(particle_array, latest_twist_opt_.value(), dt);
+
+  // ==========================================================================
+  // Post-process section
+  //
   predicted_particles_pub_->publish(particle_array);
-
-  rclcpp::Time current_time{this->now()};
-  geometry_msgs::msg::Pose meaned_pose{mean_pose(particle_array)};
-  publish_mean_pose(meaned_pose, current_time);
-
-  if (visualize_) visualizer_->publish(particle_array);
+  //
+  publish_mean_pose(mean_pose(particle_array), this->now());
+  // If visualizer exists,
+  if (visualizer_ptr_) {
+    visualizer_ptr_->publish(particle_array);
+  }
 
   particle_array_opt_ = particle_array;
 }

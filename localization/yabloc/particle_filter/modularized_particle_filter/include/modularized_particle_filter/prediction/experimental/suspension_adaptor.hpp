@@ -20,6 +20,10 @@
 
 #include <optional>
 
+// In the future, YabLoc will switch with NDT on the fly.
+// This class was developed to make it, but it does not work now.
+// At that time, YabLoc is  switched depending on whether the image topic was flowing or not.
+
 namespace pcdless::modularized_particle_filter
 {
 struct SwapModeAdaptor
@@ -34,8 +38,10 @@ struct SwapModeAdaptor
       stamp_opt_ = rclcpp::Time(msg.header.stamp);
     };
 
-    sub_image_ = node->create_subscription<Image>("image", 1, on_image);
-    sub_pose_ = node->create_subscription<PoseCovStamped>("pose_cov", 1, on_ekf_pose);
+    sub_image_ =
+      node->create_subscription<Image>("/sensing/camera/undistorted/image_raw", 1, on_image);
+    sub_pose_ = node->create_subscription<PoseCovStamped>(
+      "/localizatrion/pose_with_covariance", 1, on_ekf_pose);
     clock_ = node->get_clock();
 
     state_is_active = false;
