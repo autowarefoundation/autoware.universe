@@ -121,6 +121,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // set parameters
   {
     avoidance_param_ptr_ = std::make_shared<AvoidanceParameters>(getAvoidanceParam());
+    dynamic_avoidance_param_ptr_ =
+      std::make_shared<DynamicAvoidanceParameters>(getDynamicAvoidanceParam());
     lane_change_param_ptr_ = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
     pull_out_param_ptr_ = std::make_shared<PullOutParameters>(getPullOutParam());
     goal_planner_param_ptr_ = std::make_shared<GoalPlannerParameters>(getGoalPlannerParam());
@@ -151,6 +153,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     path_candidate_publishers_.emplace(
       "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
+
+    auto dynamic_avoidance_module = std::make_shared<DynamicAvoidanceModule>(
+      "DynamicAvoidance", *this, dynamic_avoidance_param_ptr_);
+    bt_manager_->registerSceneModule(dynamic_avoidance_module);
 
     auto lane_following_module = std::make_shared<LaneFollowingModule>("LaneFollowing", *this);
     bt_manager_->registerSceneModule(lane_following_module);
@@ -294,6 +300,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
         "avoidance_by_lane_change",
         create_publisher<Path>(path_reference_name_space + "avoidance_by_lane_change", 1));
     }
+
+    if (p.config_dynamic_avoidance.enable_module) {
+      auto manager = std::make_shared<DynamicAvoidanceModuleManager>(
+        this, "dynamic_avoidance", p.config_dynamic_avoidance, dynamic_avoidance_param_ptr_);
+      planner_manager_->registerSceneModuleManager(manager);
+    }
   }
 #endif
 
@@ -349,6 +361,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     get_scene_module_manager_param("external_request_lane_change_left.");
   p.config_avoidance = get_scene_module_manager_param("avoidance.");
   p.config_avoidance_by_lc = get_scene_module_manager_param("avoidance_by_lc.");
+  p.config_dynamic_avoidance = get_scene_module_manager_param("dynamic_avoidance.");
 
   // vehicle info
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
@@ -642,6 +655,25 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     std::string ns = "avoidance.target_velocity_matrix.";
     p.col_size = declare_parameter<int>(ns + "col_size");
     p.target_velocity_matrix = declare_parameter<std::vector<double>>(ns + "matrix");
+  }
+
+  return p;
+}
+
+DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
+{
+  DynamicAvoidanceParameters p{};
+
+  {  // target object
+    std::string ns = "dynamic_avoidance.target_object.";
+    p.avoid_car = declare_parameter<bool>(ns + "car");
+    p.avoid_truck = declare_parameter<bool>(ns + "truck");
+    p.avoid_bus = declare_parameter<bool>(ns + "bus");
+    p.avoid_trailer = declare_parameter<bool>(ns + "trailer");
+    p.avoid_unknown = declare_parameter<bool>(ns + "unknown");
+    p.avoid_bicycle = declare_parameter<bool>(ns + "bicycle");
+    p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
+    p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
   }
 
   return p;

@@ -21,6 +21,7 @@
 #ifdef USE_OLD_ARCHITECTURE
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/goal_planner_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
@@ -30,6 +31,7 @@
 #include "behavior_path_planner/planner_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance_by_lc/manager.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
 #include "behavior_path_planner/scene_module/pull_out/manager.hpp"
@@ -75,6 +77,7 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -149,6 +152,7 @@ private:
   // parameters
   std::shared_ptr<AvoidanceParameters> avoidance_param_ptr_;
   std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lc_param_ptr_;
+  std::shared_ptr<DynamicAvoidanceParameters> dynamic_avoidance_param_ptr_;
   std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
   std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
@@ -161,6 +165,7 @@ private:
 #endif
 
   AvoidanceParameters getAvoidanceParam();
+  DynamicAvoidanceParameters getDynamicAvoidanceParam();
   LaneChangeParameters getLaneChangeParam();
   SideShiftParameters getSideShiftParam();
   GoalPlannerParameters getGoalPlannerParam();
