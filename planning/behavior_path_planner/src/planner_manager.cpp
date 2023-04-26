@@ -454,7 +454,7 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
    * use the last module's output as approved modules planning result.
    */
   const auto output_module_name = approved_module_ptrs_.back()->name();
-  auto approved_modules_output = [&output_module_name, &results]() {
+  const auto approved_modules_output = [&output_module_name, &results]() {
     if (results.count(output_module_name) == 0) {
       return results.at("root");
     }
