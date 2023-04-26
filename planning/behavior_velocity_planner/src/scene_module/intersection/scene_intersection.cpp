@@ -303,6 +303,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       stop_line_idx = occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
       // clear first stop line
       // insert creep velocity [closest_idx, occlusion_stop_line)
+      // TODO(sobue): check occlusion_peeking_line_idx_opt
       insert_creep_during_occlusion =
         std::make_pair(closest_idx, occlusion_peeking_line_idx_opt.value());
       occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
@@ -321,14 +322,17 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
       stop_line_idx = occlusion_first_stop_line_idx;
       // insert creep velocity [default_stop_line, occlusion_stop_line)
+      // TODO(sobue) check default_stop_line_idx_opt and occlusion_peeking_line_idx_opt
       insert_creep_during_occlusion =
         std::make_pair(default_stop_line_idx_opt.value(), occlusion_peeking_line_idx_opt.value());
       occlusion_state_ = OcclusionState::BEFORE_FIRST_STOP_LINE;
     }
   } else if (occlusion_state_ != OcclusionState::CLEARED) {
     // previously occlusion existed, but now it is clear
-    if (!util::isOverTargetIndex(
-          *path, closest_idx, current_pose, default_stop_line_idx_opt.value())) {
+    if (
+      default_stop_line_idx_opt &&
+      !util::isOverTargetIndex(
+        *path, closest_idx, current_pose, default_stop_line_idx_opt.value())) {
       stop_line_idx = default_stop_line_idx_opt.value();
     } else if (
       static_pass_judge_line_opt &&
