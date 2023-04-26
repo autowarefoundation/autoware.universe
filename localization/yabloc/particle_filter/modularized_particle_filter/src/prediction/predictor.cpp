@@ -130,8 +130,7 @@ void Predictor::initialize_particles(const PoseCovStamped & initialpose)
 
   // We have to initialize resampler every particles initialization,
   // because resampler has particles resampling history and it will be outdate.
-  resampler_ptr_ =
-    std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_, 100);
+  resampler_ptr_ = std::make_shared<RetroactiveResampler>(number_of_particles_, 100);
 }
 
 void Predictor::on_twist(const TwistStamped::ConstSharedPtr twist)
@@ -289,24 +288,44 @@ void Predictor::on_timer()
 
 void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
-  RCLCPP_INFO_STREAM(this->get_logger(), "on_weighted_particle start");
-
+  // NOTE: **We need not to check particle_array_opt.has_value().**
   // Since the weighted_particles is generated from messages published from this node,
   // the particle_array must have an entity in this function.
-  // Therefore, we need not to check particle_array_opt.has_value().
-  ParticleArray particle_array{particle_array_opt_.value()};
+  ParticleArray particle_array = particle_array_opt_.value();
 
-  OptParticleArray retroactive_weighted_particles{
-    resampler_ptr_->add_weight_retroactively(particle_array, *weighted_particles_ptr)};
-  if (retroactive_weighted_particles.has_value()) {
-    // TODO: Why do you copy only particles. Why do not copy all members including header and id
-    particle_array.particles = retroactive_weighted_particles.value().particles;
+  // ==========================================================================
+  // From here, weighting section
+  particle_array =
+    resampler_ptr_->add_weight_retroactively(particle_array, *weighted_particles_ptr);
+
+  // ==========================================================================
+  // From here, resampling section
+  class resampling_skip_eception : public std::runtime_error
+  {
+  public:
+    resampling_skip_eception(const char * message) : runtime_error(message) {}
+  };
+
+  const double current_time = rclcpp::Time(particle_array.header.stamp).seconds();
+  try {
+    // Exit if previous resampling time is not valid.
+    if (!previous_resampling_time_opt_.has_value()) {
+      previous_resampling_time_opt_ = current_time;
+      throw resampling_skip_eception("previous resampling time is not valid");
+    }
+
+    if (current_time - previous_resampling_time_opt_.value() <= resampling_interval_seconds_) {
+      throw resampling_skip_eception("it is not time to resample");
+    }
+
+    particle_array = resampler_ptr_->resample(particle_array);
+    previous_resampling_time_opt_ = current_time;
+
+  } catch (const resampling_skip_eception & e) {
+    // Do nothing (just skipping the resample())
   }
 
-  OptParticleArray resampled_particles{resampler_ptr_->resample(particle_array)};
-  if (resampled_particles.has_value()) {
-    particle_array = resampled_particles.value();
-  }
+  // ==========================================================================
   particle_array_opt_ = particle_array;
 }
 
@@ -351,53 +370,6 @@ void Predictor::publish_mean_pose(
     transform.transform.rotation = mean_pose.orientation;
     tf2_broadcaster_->sendTransform(transform);
   }
-}
-
-Predictor::SwapModeAdaptor::SwapModeAdaptor(rclcpp::Node * node)
-{
-  auto on_ekf_pose = [this](const PoseCovStamped & pose) -> void { init_pose_opt_ = pose; };
-  auto on_image = [this](const Image & msg) -> void {
-    stamp_opt_ = rclcpp::Time(msg.header.stamp);
-  };
-
-  sub_image_ = node->create_subscription<Image>("image", 1, on_image);
-  sub_pose_ = node->create_subscription<PoseCovStamped>("pose_cov", 1, on_ekf_pose);
-  clock_ = node->get_clock();
-
-  state_is_active = false;
-  state_is_activating = false;
-}
-
-bool Predictor::SwapModeAdaptor::should_keep_update()
-{
-  if (!stamp_opt_.has_value()) {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should stop");
-    state_is_active = false;
-    return false;
-  }
-
-  double dt = (clock_->now() - stamp_opt_.value()).seconds();
-  if (dt > 3) {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should stop");
-    state_is_active = false;
-    return false;
-  } else {
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("swap_adaptor"), "system should keep estimation");
-    state_is_activating = true;
-    return true;
-  }
-}
-
-bool Predictor::SwapModeAdaptor::should_call_initialize()
-{
-  if (state_is_activating && init_pose_opt_.has_value()) {
-    if (!state_is_active) {
-      state_is_active = true;
-      state_is_activating = false;
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace pcdless::modularized_particle_filter
