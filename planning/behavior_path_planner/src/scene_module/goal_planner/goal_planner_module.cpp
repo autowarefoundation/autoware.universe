@@ -696,8 +696,10 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
   status_.prev_is_safe = status_.is_safe;
 
   // generate drivable area info for new architecture
-  if (status_.during_freespace_parking) {
-    output.drivable_area_info.drivable_margin = planner_data_->parameters.vehicle_width;
+  if (status_.pull_over_path->type == PullOverPlannerType::FREESPACE) {
+    const double drivable_area_margin = planner_data_->parameters.vehicle_width;
+    output.drivable_area_info.drivable_margin =
+      planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
   } else {
     const auto target_drivable_lanes = getNonOverlappingExpandedLanes(*output.path, status_.lanes);
     output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
@@ -810,8 +812,10 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
   waitApproval();
 
   // generate drivable area info for new architecture
-  if (status_.during_freespace_parking) {
-    out.drivable_area_info.drivable_margin = planner_data_->parameters.vehicle_width;
+  if (status_.pull_over_path->type == PullOverPlannerType::FREESPACE) {
+    const double drivable_area_margin = planner_data_->parameters.vehicle_width;
+    out.drivable_area_info.drivable_margin =
+      planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
   } else {
     const auto target_drivable_lanes = getNonOverlappingExpandedLanes(*out.path, status_.lanes);
     out.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
