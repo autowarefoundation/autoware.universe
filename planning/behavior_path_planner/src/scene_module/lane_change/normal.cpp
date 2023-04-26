@@ -119,7 +119,6 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
     dp.drivable_area_types_to_skip);
 
   // for new architecture
-  // TODO(murooka)
   output.drivable_area_info.drivable_lanes = expanded_lanes;
 
   // for old architecture
@@ -127,6 +126,7 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
   utils::generateDrivableArea(
     *output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
+
 bool NormalLaneChange::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
