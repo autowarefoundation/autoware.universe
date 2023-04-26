@@ -36,6 +36,7 @@ namespace behavior_path_planner
 {
 struct DynamicAvoidanceParameters
 {
+  // obstacle types to avoid
   bool avoid_car{true};
   bool avoid_truck{true};
   bool avoid_bus{true};
@@ -44,6 +45,11 @@ struct DynamicAvoidanceParameters
   bool avoid_bicycle{false};
   bool avoid_motorcycle{false};
   bool avoid_pedestrian{false};
+  double min_obstacle_vel{0.0};
+
+  // drivable area generation
+  double lat_offset_from_obstacle{0.0};
+  double time_to_avoid{0.0};
 };
 
 class DynamicAvoidanceModule : public SceneModuleInterface
@@ -51,13 +57,16 @@ class DynamicAvoidanceModule : public SceneModuleInterface
 public:
   struct DynamicAvoidanceObject
   {
-    explicit DynamicAvoidanceObject(const PredictedObject & predicted_object)
+    explicit DynamicAvoidanceObject(
+      const PredictedObject & predicted_object, const double arg_path_projected_vel)
     : pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
+      path_projected_vel(arg_path_projected_vel),
       shape(predicted_object.shape)
     {
     }
 
     geometry_msgs::msg::Pose pose;
+    double path_projected_vel;
     autoware_auto_perception_msgs::msg::Shape shape;
   };
 
@@ -70,6 +79,11 @@ public:
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+
+  void updateModuleParams(const std::shared_ptr<DynamicAvoidanceParameters> & parameters)
+  {
+    parameters_ = parameters;
+  }
 #endif
 
   bool isExecutionRequested() const override;
@@ -89,8 +103,8 @@ private:
   std::vector<DynamicAvoidanceObject> calcTargetObjects() const;
   lanelet::ConstLanelets getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
-  tier4_autoware_utils::Polygon2d calcDynamicObstaclesPolygon(
-    const PathWithLaneId & path, const DynamicAvoidanceObject & object);
+  tier4_autoware_utils::Polygon2d calcDynamicObstaclePolygon(
+    const PathWithLaneId & path, const DynamicAvoidanceObject & object) const;
 
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;

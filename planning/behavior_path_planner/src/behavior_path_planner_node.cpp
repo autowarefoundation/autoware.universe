@@ -674,6 +674,13 @@ DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
     p.avoid_bicycle = declare_parameter<bool>(ns + "bicycle");
     p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
     p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
+    p.min_obstacle_vel = declare_parameter<double>(ns + "min_obstacle_vel");
+  }
+
+  {  // drivable_area_generation
+    std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    p.lat_offset_from_obstacle = declare_parameter<double>(ns + "lat_offset_from_obstacle");
+    p.time_to_avoid = declare_parameter<double>(ns + "time_to_avoid");
   }
 
   return p;

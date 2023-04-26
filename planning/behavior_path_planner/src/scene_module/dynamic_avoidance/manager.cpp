@@ -26,9 +26,8 @@ namespace behavior_path_planner
 DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
   const std::shared_ptr<DynamicAvoidanceParameters> & parameters)
-: SceneModuleManagerInterface(node, name, config), parameters_{parameters}
+: SceneModuleManagerInterface(node, name, config, {""}), parameters_{parameters}
 {
-  rtc_interface_ = std::make_shared<RTCInterface>(node, name);
 }
 
 void DynamicAvoidanceModuleManager::updateModuleParams(

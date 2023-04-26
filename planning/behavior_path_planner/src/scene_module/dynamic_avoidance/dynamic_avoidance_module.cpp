@@ -71,6 +71,29 @@ geometry_msgs::msg::Point toGeometryPoint(const tier4_autoware_utils::Point2d & 
   geom_obj_point.y = point.y();
   return geom_obj_point;
 }
+
+double calcObstacleProjectedVelocity(
+  const std::vector<PathPointWithLaneId> & path_points, const PredictedObject & object)
+{
+  const auto & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
+  const double obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+
+  const size_t obj_idx = motion_utils::findNearestIndex(path_points, obj_pose.position);
+
+  const double obj_yaw = tf2::getYaw(obj_pose.orientation);
+  const double path_yaw = tf2::getYaw(path_points.at(obj_idx).point.pose.orientation);
+
+  return obj_vel * std::cos(obj_yaw - path_yaw);
+}
+
+std::pair<double, double> getMinMaxValues(const std::vector<double> & vec)
+{
+  const size_t min_idx = std::distance(vec.begin(), std::min_element(vec.begin(), vec.end()));
+
+  const size_t max_idx = std::distance(vec.begin(), std::max_element(vec.begin(), vec.end()));
+
+  return std::make_pair(vec.at(min_idx), vec.at(max_idx));
+}
 }  // namespace
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -123,7 +146,6 @@ bool DynamicAvoidanceModule::isExecutionReady() const
 
 void DynamicAvoidanceModule::updateData()
 {
-  std::cerr << "updateData" << std::endl;
   target_objects_ = calcTargetObjects();
 }
 
@@ -142,13 +164,12 @@ ModuleStatus DynamicAvoidanceModule::updateState()
 
 BehaviorModuleOutput DynamicAvoidanceModule::plan()
 {
-  // generate reference path
-  auto reference_path = utils::generateCenterLinePath(planner_data_);
-
-  // TODO(murooka) implement here
-  // generate drivable area
   const auto & p = planner_data_->parameters;
 
+  // 1. generate reference path
+  auto reference_path = utils::generateCenterLinePath(planner_data_);
+
+  // 2. generate drivable lanes
   const auto current_lanes = utils::getCurrentLanes(planner_data_);
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
   const auto target_drivable_lanes =
@@ -158,9 +179,10 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   utils::generateDrivableArea(
     *reference_path, target_drivable_lanes, p.vehicle_length, planner_data_);
 
+  // 3. create obstacle polygons to avoid
   std::vector<tier4_autoware_utils::Polygon2d> obstacle_polys;
   for (const auto & object : target_objects_) {
-    const auto obstacle_poly = calcDynamicObstaclesPolygon(*reference_path, object);
+    const auto obstacle_poly = calcDynamicObstaclePolygon(*reference_path, object);
     obstacle_polys.push_back(obstacle_poly);
   }
 
@@ -190,18 +212,27 @@ BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
 std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject>
 DynamicAvoidanceModule::calcTargetObjects() const
 {
-  // calculate target lanes to filter obstacles
-  const auto target_lanes = getAdjacentLanes(100.0, 5.0);
+  const auto reference_path = utils::generateCenterLinePath(planner_data_);
 
-  // calculate obstacles for dynamic avoidance
+  // 1. calculate target lanes to filter obstacles
+  const auto target_lanes = getAdjacentLanes(100.0, 10.0);
+
+  // 2. filter obstacles for dynamic avoidance
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
   const auto target_predicted_objects = getObjectsInLanes(predicted_objects, target_lanes);
-  std::cerr << target_predicted_objects.size() << std::endl;
 
-  // convert predicted objects to dynamic avoidance objects
+  // 3. convert predicted objects to dynamic avoidance objects
   std::vector<DynamicAvoidanceObject> target_avoidance_objects;
   for (const auto & predicted_object : target_predicted_objects) {
-    target_avoidance_objects.push_back(DynamicAvoidanceObject(predicted_object));
+    const double path_projected_vel =
+      calcObstacleProjectedVelocity(reference_path->points, predicted_object);
+    // check if velocity is high enough
+    if (std::abs(path_projected_vel) < parameters_->min_obstacle_vel) {
+      continue;
+    }
+
+    target_avoidance_objects.push_back(
+      DynamicAvoidanceObject(predicted_object, path_projected_vel));
   }
 
   return target_avoidance_objects;
@@ -244,98 +275,95 @@ lanelet::ConstLanelets DynamicAvoidanceModule::getAdjacentLanes(
   return target_lanes;
 }
 
-/*
-void boundDynamicObstacles(PathWithLaneId & path, const DynamicAvoidanceObject & object)
+tier4_autoware_utils::Polygon2d DynamicAvoidanceModule::calcDynamicObstaclePolygon(
+  const PathWithLaneId & path, const DynamicAvoidanceObject & object) const
 {
-  // calculate lat offset
-  const double lat_offset = motion_utils::calcLateralOffset(reference_path, object.pose.position);
-  const bool is_left = 0.0 < lat_offset;
+  auto path_for_bound = path;
 
-  auto & target_bound = is_left ? reference_path.left_bound : reference_path.right_bound;
-  const size_t obj_seg_idx = motion_utils::findNearsetSegmentIndex(target_bound,
-object.pose.position);
-
-  // calculate front and back point
-  const auto obj_points = tier4_autoware_utils::toPolygon2d(object.shape);
-  std::vector<double> obj_lon_offset_vec;
-  for (const auto & obj_point : obj_points.outer()) {
-    const lon_offset = motion_utils::calcLongitudinalOffsetToSement(target_bound, obj_seg_idx,
-obj_point); obj_lon_offset_vec.push_back(lon_offset);
-  }
-  const auto itr = std::minmax_element(obj_lon_offset_vec.begin(), obj_lon_offset_vec.end());
-  const size_t front_idx = std::distance(obj_lon_offset_vec.begin(), itr.first);
-  const size_t back_idx = std::distance(obj_lon_offset_vec.begin(), itr.second);
-  const auto obj_front_pos = obj_points.outer().at(front_idx);
-  const auto obj_back_pos = obj_points.outer().at(back_idx);
-
-  const size_t front_seg_idx = motion_utils::insertTargetPoint(-3.0, obj_front_pos, target_bound);
-  const size_t back_seg_idx = motion_utils::insertTargetPoint(3.0, obj_back_pos, target_bound);
-
-  for (size_t i = front_seg_idx; i < back_seg_idx) {
-    target_bound.at(i) =
-  }
-}
-*/
-
-tier4_autoware_utils::Polygon2d DynamicAvoidanceModule::calcDynamicObstaclesPolygon(
-  const PathWithLaneId & path, const DynamicAvoidanceObject & object)
-{
-  // calculate lat offset
   const size_t obj_seg_idx =
-    motion_utils::findNearestSegmentIndex(path.points, object.pose.position);
+    motion_utils::findNearestSegmentIndex(path_for_bound.points, object.pose.position);
   const double obj_lat_offset =
-    motion_utils::calcLateralOffset(path.points, object.pose.position, obj_seg_idx);
+    motion_utils::calcLateralOffset(path_for_bound.points, object.pose.position, obj_seg_idx);
   const bool is_left = 0.0 < obj_lat_offset;
+  const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
 
-  const auto [min_obj_lat_offset, min_obj_lat_offset_point] = [&]() {
-    const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
-    std::vector<double> obj_lat_offset_vec;
+  // calculate min/max lateral offset from object to path
+  const auto [min_obj_lat_abs_offset, max_obj_lat_abs_offset] = [&]() {
+    std::vector<double> obj_lat_abs_offset_vec;
     for (size_t i = 0; i < obj_points.outer().size(); ++i) {
       const auto geom_obj_point = toGeometryPoint(obj_points.outer().at(i));
       const size_t obj_point_seg_idx =
-        motion_utils::findNearestSegmentIndex(path.points, geom_obj_point);
+        motion_utils::findNearestSegmentIndex(path_for_bound.points, geom_obj_point);
       const double obj_point_lat_offset =
-        motion_utils::calcLateralOffset(path.points, geom_obj_point, obj_point_seg_idx);
-      obj_lat_offset_vec.push_back(obj_point_lat_offset);
+        motion_utils::calcLateralOffset(path_for_bound.points, geom_obj_point, obj_point_seg_idx);
+      obj_lat_abs_offset_vec.push_back(std::abs(obj_point_lat_offset));
     }
-    const size_t min_obj_lat_offset_idx = std::distance(
-      obj_lat_offset_vec.begin(),
-      std::min_element(obj_lat_offset_vec.begin(), obj_lat_offset_vec.end()));
+    return getMinMaxValues(obj_lat_abs_offset_vec);
+  }();
+  const double min_obj_lat_offset = min_obj_lat_abs_offset * (is_left ? 1.0 : -1.0);
+  const double max_obj_lat_offset = max_obj_lat_abs_offset * (is_left ? 1.0 : -1.0);
 
-    return std::make_pair(
-      obj_lat_offset_vec.at(min_obj_lat_offset_idx),
-      toGeometryPoint(obj_points.outer().at(min_obj_lat_offset_idx)));
+  // calculate min/max longitudinal offset from object to path
+  const auto [min_obj_lon_offset, max_obj_lon_offset] = [&]() {
+    std::vector<double> obj_lon_offset_vec;
+    for (size_t i = 0; i < obj_points.outer().size(); ++i) {
+      const auto geom_obj_point = toGeometryPoint(obj_points.outer().at(i));
+      const double lon_offset = motion_utils::calcLongitudinalOffsetToSegment(
+        path_for_bound.points, obj_seg_idx, geom_obj_point);
+      obj_lon_offset_vec.push_back(lon_offset);
+    }
+    return getMinMaxValues(obj_lon_offset_vec);
   }();
 
-  // calculate object bound
-  const size_t obj_front_seg_idx =
-    motion_utils::findNearestSegmentIndex(path.points, min_obj_lat_offset_point);
-  std::vector<geometry_msgs::msg::Point> obj_bound_points;
-  for (size_t i = obj_front_seg_idx; i < obj_front_seg_idx; ++i) {
-    obj_bound_points.push_back(tier4_autoware_utils::calcOffsetPose(
-                                 path.points.at(i).point.pose, 0.0, min_obj_lat_offset, 0.0)
-                                 .position);
+  // calculate bound start and end index
+  const double length_to_avoid = object.path_projected_vel * parameters_->time_to_avoid;
+  const auto lon_bound_start_idx_opt = motion_utils::insertTargetPoint(
+    obj_seg_idx, min_obj_lon_offset + (length_to_avoid < 0 ? length_to_avoid : 0.0),
+    path_for_bound.points);
+  const auto lon_bound_end_idx_opt = motion_utils::insertTargetPoint(
+    obj_seg_idx, max_obj_lon_offset + (0 < length_to_avoid ? length_to_avoid : 0.0),
+    path_for_bound.points);
+  // TODO(murooka) insertTargetPoint does not work well with a negative offset for now.
+  // const size_t lon_bound_start_idx = lon_bound_start_idx_opt ? lon_bound_start_idx_opt.value() :
+  // 0;
+  const size_t lon_bound_start_idx = obj_seg_idx;
+  const size_t lon_bound_end_idx = lon_bound_end_idx_opt
+                                     ? lon_bound_end_idx_opt.value()
+                                     : static_cast<size_t>(path_for_bound.points.size() - 1);
+
+  // calculate bound min and max lateral offset
+  const double min_bound_lat_offset =
+    min_obj_lat_offset - parameters_->lat_offset_from_obstacle * (is_left ? 1.0 : -1.0);
+  const double max_bound_lat_offset =
+    max_obj_lat_offset + parameters_->lat_offset_from_obstacle * (is_left ? 1.0 : -1.0);
+
+  // create inner/outer bound points
+  std::vector<geometry_msgs::msg::Point> obj_inner_bound_points;
+  std::vector<geometry_msgs::msg::Point> obj_outer_bound_points;
+  for (size_t i = lon_bound_start_idx; i <= lon_bound_end_idx; ++i) {
+    obj_inner_bound_points.push_back(
+      tier4_autoware_utils::calcOffsetPose(
+        path_for_bound.points.at(i).point.pose, 0.0, min_bound_lat_offset, 0.0)
+        .position);
+    obj_outer_bound_points.push_back(
+      tier4_autoware_utils::calcOffsetPose(
+        path_for_bound.points.at(i).point.pose, 0.0, max_bound_lat_offset, 0.0)
+        .position);
   }
 
-  // convert obj_bound_points to obj_polygon
+  // create obj_polygon from inner/outer bound points
   tier4_autoware_utils::Polygon2d obj_poly;
-  for (size_t i = 0; i < obj_bound_points.size(); ++i) {
-    const auto obj_poly_point =
-      tier4_autoware_utils::Point2d(obj_bound_points.at(i).x, obj_bound_points.at(i).y);
+  for (const auto & bound_point : obj_inner_bound_points) {
+    const auto obj_poly_point = tier4_autoware_utils::Point2d(bound_point.x, bound_point.y);
+    obj_poly.outer().push_back(obj_poly_point);
+  }
+  std::reverse(obj_outer_bound_points.begin(), obj_outer_bound_points.end());
+  for (const auto & bound_point : obj_outer_bound_points) {
+    const auto obj_poly_point = tier4_autoware_utils::Point2d(bound_point.x, bound_point.y);
     obj_poly.outer().push_back(obj_poly_point);
   }
 
-  /*
-  auto & target_bound = is_left ? path.left_bound : path.right_bound;
-  const size_t obj_seg_idx = motion_utils::findNearsetSegmentIndex(target_bound,
-  object.pose.position);
-
-  // calculate front and back point
-  std::vector<double> obj_lon_offset_vec;
-  for (const auto & obj_point : obj_points.outer()) {
-    const lon_offset = motion_utils::calcLongitudinalOffsetToSement(target_bound, obj_seg_idx,
-  obj_point); obj_lon_offset_vec.push_back(lon_offset);
-  }
-  */
+  boost::geometry::correct(obj_poly);
+  return obj_poly;
 }
 }  // namespace behavior_path_planner

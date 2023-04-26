@@ -85,10 +85,8 @@ public:
   {
     module_ptr->setData(planner_data_);
     module_ptr->setPreviousModuleOutput(previous_module_output);
-    std::cerr << "PO2" << std::endl;
     module_ptr->updateData();
 
-    std::cerr << "PO1" << std::endl;
     return module_ptr->isExecutionRequested();
   }
 
