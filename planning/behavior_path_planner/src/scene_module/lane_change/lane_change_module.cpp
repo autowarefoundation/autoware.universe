@@ -39,7 +39,8 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters)
 : SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {"left", "right"})},
-  module_type_{std::make_unique<NormalLaneChangeBT>(parameters, Direction::NONE)}
+  module_type_{
+    std::make_unique<NormalLaneChangeBT>(parameters, LaneChangeModuleType::NORMAL, Direction::NONE)}
 {
 }
 
@@ -113,8 +114,6 @@ BehaviorModuleOutput LaneChangeModule::plan()
   resetPathReference();
   is_activated_ = isActivated();
 
-  const auto path = module_type_->generatePlannedPath();
-
   if (!module_type_->isValidPath()) {
     return {};
   }
@@ -123,12 +122,10 @@ BehaviorModuleOutput LaneChangeModule::plan()
     resetPathIfAbort();
   }
 
-  BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(path);
-  output.turn_signal_info = module_type_->updateOutputTurnSignal();
+  auto output = module_type_->generateOutput();
 
   path_reference_ = getPreviousModuleOutput().reference_path;
-  prev_approved_path_ = path;
+  prev_approved_path_ = *output.path;
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -196,16 +193,8 @@ void LaneChangeModule::resetPathIfAbort()
     return;
   }
 
-  const auto & path = module_type_->getLaneChangePath();
   if (!is_abort_approval_requested_) {
-    const auto lateral_shift = utils::lane_change::getLateralShift(path);
-    if (lateral_shift > 0.0) {
-      removePreviousRTCStatusRight();
-      uuid_map_.at("right") = generateUUID();
-    } else if (lateral_shift < 0.0) {
-      removePreviousRTCStatusLeft();
-      uuid_map_.at("left") = generateUUID();
-    }
+    removeRTCStatus();
     RCLCPP_DEBUG(getLogger(), "[abort] uuid is reset to request abort approval.");
     is_abort_approval_requested_ = true;
     is_abort_path_approved_ = false;

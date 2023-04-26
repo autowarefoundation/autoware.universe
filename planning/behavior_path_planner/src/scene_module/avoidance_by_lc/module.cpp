@@ -156,21 +156,12 @@ AvoidancePlanningData AvoidanceByLCModule::calcAvoidancePlanningData(DebugData &
   AvoidancePlanningData data;
 
   // reference pose
-  const auto reference_pose = getEgoPose();
-  data.reference_pose = reference_pose;
+  data.reference_pose = getEgoPose();
+
+  data.reference_path_rough = *getPreviousModuleOutput().path;
 
   data.reference_path = utils::resamplePathWithSpline(
-    *getPreviousModuleOutput().path, parameters_->avoidance->resample_interval_for_planning);
-
-  const size_t nearest_segment_index =
-    findNearestSegmentIndex(data.reference_path.points, data.reference_pose.position);
-  data.ego_closest_path_index =
-    std::min(nearest_segment_index + 1, data.reference_path.points.size() - 1);
-
-  // arclength from ego pose (used in many functions)
-  data.arclength_from_ego = utils::calcPathArcLengthArray(
-    data.reference_path, 0, data.reference_path.points.size(),
-    calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
+    data.reference_path_rough, parameters_->avoidance->resample_interval_for_planning);
 
   // lanelet info
 #ifdef USE_OLD_ARCHITECTURE
@@ -231,10 +222,6 @@ ObjectData AvoidanceByLCModule::createObjectData(
 
   // calc object centroid.
   object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
-
-  // calc longitudinal distance from ego to closest target object footprint point.
-  fillLongitudinalAndLengthByClosestEnvelopeFootprint(
-    data.reference_path, getEgoPosition(), object_data);
 
   // Calc moving time.
   fillObjectMovingTime(object_data, stopped_objects_, parameters_->avoidance);
@@ -552,13 +539,9 @@ PathWithLaneId AvoidanceByLCModule::getReferencePath() const
     lane_change_buffer);
 
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
-  const auto shorten_lanes = utils::cutOverlappedLanes(reference_path, drivable_lanes);
-  const auto expanded_lanes = utils::expandLanelets(
-    shorten_lanes, parameters_->lane_change->drivable_area_left_bound_offset,
-    parameters_->lane_change->drivable_area_right_bound_offset,
-    parameters_->lane_change->drivable_area_types_to_skip);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
   utils::generateDrivableArea(
-    reference_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+    reference_path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -695,9 +678,10 @@ bool AvoidanceByLCModule::isValidPath(const PathWithLaneId & path) const
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, utils::extendLanes(route_handler, status_.current_lanes),
     utils::extendLanes(route_handler, status_.lane_change_lanes));
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
   const auto expanded_lanes = utils::expandLanelets(
-    drivable_lanes, parameters_->lane_change->drivable_area_left_bound_offset,
-    parameters_->lane_change->drivable_area_right_bound_offset);
+    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
   const auto lanelets = utils::transformToLanelets(expanded_lanes);
 
   // check path points are in any lanelets
@@ -937,12 +921,9 @@ void AvoidanceByLCModule::generateExtendedDrivableArea(PathWithLaneId & path)
   const auto & route_handler = planner_data_->route_handler;
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, status_.current_lanes, status_.lane_change_lanes);
-  const auto shorten_lanes = utils::cutOverlappedLanes(path, drivable_lanes);
-  const auto expanded_lanes = utils::expandLanelets(
-    shorten_lanes, parameters_->lane_change->drivable_area_left_bound_offset,
-    parameters_->lane_change->drivable_area_right_bound_offset);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, drivable_lanes);
   utils::generateDrivableArea(
-    path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+    path, target_drivable_lanes, common_parameters.vehicle_length, planner_data_);
 }
 
 bool AvoidanceByLCModule::isApprovedPathSafe(Pose & ego_pose_before_collision) const

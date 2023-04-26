@@ -230,12 +230,12 @@ bool getLaneChangePaths(
   const auto current_velocity = twist.linear.x;
 
   // compute maximum_deceleration
-  const auto maximum_deceleration =
-    std::invoke([&minimum_lane_changing_velocity, &current_velocity, &parameter]() {
+  const auto maximum_deceleration = std::invoke(
+    [&minimum_lane_changing_velocity, &current_velocity, &common_parameter, &parameter]() {
       const double min_a =
         (minimum_lane_changing_velocity - current_velocity) / parameter.prepare_duration;
       return std::clamp(
-        min_a, -std::abs(parameter.maximum_deceleration), -std::numeric_limits<double>::epsilon());
+        min_a, -std::abs(common_parameter.min_acc), -std::numeric_limits<double>::epsilon());
     });
 
   const auto acceleration_resolution = std::abs(maximum_deceleration) / lane_change_sampling_num;
@@ -1315,5 +1315,30 @@ std::vector<int64_t> replaceWithSortedIds(
     }
   }
   return original_lane_ids;
+}
+
+CandidateOutput assignToCandidate(
+  const LaneChangePath & lane_change_path, const Point & ego_position)
+{
+  CandidateOutput candidate_output;
+  candidate_output.path_candidate = lane_change_path.path;
+  candidate_output.lateral_shift = utils::lane_change::getLateralShift(lane_change_path);
+  candidate_output.start_distance_to_path_change = motion_utils::calcSignedArcLength(
+    lane_change_path.path.points, ego_position, lane_change_path.shift_line.start.position);
+  candidate_output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
+    lane_change_path.path.points, ego_position, lane_change_path.shift_line.end.position);
+
+  return candidate_output;
+}
+
+boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const LaneChangeModuleType type, const Direction & direction)
+{
+  if (type == LaneChangeModuleType::NORMAL) {
+    return route_handler.getLaneChangeTarget(current_lanes, direction);
+  }
+
+  return route_handler.getLaneChangeTargetExceptPreferredLane(current_lanes, direction);
 }
 }  // namespace behavior_path_planner::utils::lane_change

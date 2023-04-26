@@ -16,11 +16,13 @@ set(common_src
   src/scene_module/avoidance/avoidance_module.cpp
   src/scene_module/avoidance_by_lc/module.cpp
   src/scene_module/pull_out/pull_out_module.cpp
-  src/scene_module/pull_over/pull_over_module.cpp
+  src/scene_module/goal_planner/goal_planner_module.cpp
   src/scene_module/side_shift/side_shift_module.cpp
+  src/scene_module/lane_change/interface.cpp
   src/scene_module/lane_change/lane_change_module.cpp
   src/scene_module/lane_change/normal.cpp
   src/scene_module/lane_change/bt_normal.cpp
+  src/scene_module/lane_change/external_request.cpp
   src/turn_signal_decider.cpp
   src/utils/utils.cpp
   src/utils/path_utils.cpp
@@ -28,11 +30,12 @@ set(common_src
   src/utils/avoidance/util.cpp
   src/utils/lane_change/utils.cpp
   src/utils/side_shift/util.cpp
-  src/utils/pull_over/util.cpp
-  src/utils/pull_over/shift_pull_over.cpp
-  src/utils/pull_over/geometric_pull_over.cpp
-  src/utils/pull_over/freespace_pull_over.cpp
-  src/utils/pull_over/goal_searcher.cpp
+  src/utils/goal_planner/util.cpp
+  src/utils/goal_planner/shift_pull_over.cpp
+  src/utils/goal_planner/geometric_pull_over.cpp
+  src/utils/goal_planner/freespace_pull_over.cpp
+  src/utils/goal_planner/goal_searcher.cpp
+  src/utils/goal_planner/default_fixed_goal_planner.cpp
   src/utils/pull_out/util.cpp
   src/utils/pull_out/shift_pull_out.cpp
   src/utils/pull_out/geometric_pull_out.cpp
@@ -53,8 +56,6 @@ if(COMPILE_WITH_OLD_ARCHITECTURE)
     src/behavior_tree_manager.cpp
     src/scene_module/scene_module_bt_node_interface.cpp
     src/scene_module/lane_following/lane_following_module.cpp
-    src/scene_module/pull_over/pull_over_module.cpp
-    src/scene_module/lane_change/external_request_lane_change_module.cpp
     ${common_src}
   )
 
@@ -71,8 +72,6 @@ else()
     src/scene_module/pull_over/manager.cpp
     src/scene_module/side_shift/manager.cpp
     src/scene_module/lane_change/manager.cpp
-    src/scene_module/lane_change/interface.cpp
-    src/scene_module/lane_change/external_request.cpp
     ${common_src}
   )
 

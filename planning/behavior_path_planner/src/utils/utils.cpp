@@ -971,8 +971,8 @@ void generateDrivableArea(
 
 // generate drivable area by expanding path for freespace
 void generateDrivableArea(
-  PathWithLaneId & path, const double vehicle_length, const double vehicle_width,
-  const double margin, const bool is_driving_forward)
+  PathWithLaneId & path, const double vehicle_length, const double offset,
+  const bool is_driving_forward)
 {
   using tier4_autoware_utils::calcOffsetPose;
 
@@ -1007,8 +1007,8 @@ void generateDrivableArea(
   for (const auto & point : resampled_path.points) {
     const auto & pose = point.point.pose;
 
-    const auto left_point = calcOffsetPose(pose, 0, vehicle_width / 2.0 + margin, 0);
-    const auto right_point = calcOffsetPose(pose, 0, -vehicle_width / 2.0 - margin, 0);
+    const auto left_point = calcOffsetPose(pose, 0, offset, 0);
+    const auto right_point = calcOffsetPose(pose, 0, -offset, 0);
 
     left_bound.push_back(left_point.position);
     right_bound.push_back(right_point.position);
@@ -1018,32 +1018,32 @@ void generateDrivableArea(
     // add backward offset point to bound
     const Pose first_point =
       calcOffsetPose(resampled_path.points.front().point.pose, -vehicle_length, 0, 0);
-    const Pose left_first_point = calcOffsetPose(first_point, 0, vehicle_width / 2.0 + margin, 0);
-    const Pose right_first_point = calcOffsetPose(first_point, 0, -vehicle_width / 2.0 - margin, 0);
+    const Pose left_first_point = calcOffsetPose(first_point, 0, offset, 0);
+    const Pose right_first_point = calcOffsetPose(first_point, 0, -offset, 0);
     left_bound.insert(left_bound.begin(), left_first_point.position);
     right_bound.insert(right_bound.begin(), right_first_point.position);
 
     // add forward offset point to bound
     const Pose last_point =
       calcOffsetPose(resampled_path.points.back().point.pose, vehicle_length, 0, 0);
-    const Pose left_last_point = calcOffsetPose(last_point, 0, vehicle_width / 2.0 + margin, 0);
-    const Pose right_last_point = calcOffsetPose(last_point, 0, -vehicle_width / 2.0 - margin, 0);
+    const Pose left_last_point = calcOffsetPose(last_point, 0, offset, 0);
+    const Pose right_last_point = calcOffsetPose(last_point, 0, -offset, 0);
     left_bound.push_back(left_last_point.position);
     right_bound.push_back(right_last_point.position);
   } else {
     // add forward offset point to bound
     const Pose first_point =
       calcOffsetPose(resampled_path.points.front().point.pose, vehicle_length, 0, 0);
-    const Pose left_first_point = calcOffsetPose(first_point, 0, vehicle_width / 2.0 + margin, 0);
-    const Pose right_first_point = calcOffsetPose(first_point, 0, -vehicle_width / 2.0 - margin, 0);
+    const Pose left_first_point = calcOffsetPose(first_point, 0, offset, 0);
+    const Pose right_first_point = calcOffsetPose(first_point, 0, -offset, 0);
     left_bound.insert(left_bound.begin(), left_first_point.position);
     right_bound.insert(right_bound.begin(), right_first_point.position);
 
     // add backward offset point to bound
     const Pose last_point =
       calcOffsetPose(resampled_path.points.back().point.pose, -vehicle_length, 0, 0);
-    const Pose left_last_point = calcOffsetPose(last_point, 0, vehicle_width / 2.0 + margin, 0);
-    const Pose right_last_point = calcOffsetPose(last_point, 0, -vehicle_width / 2.0 - margin, 0);
+    const Pose left_last_point = calcOffsetPose(last_point, 0, offset, 0);
+    const Pose right_last_point = calcOffsetPose(last_point, 0, -offset, 0);
     left_bound.push_back(left_last_point.position);
     right_bound.push_back(right_last_point.position);
   }
@@ -1118,7 +1118,7 @@ double getDistanceToNextTrafficLight(
 {
   lanelet::ConstLanelet current_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
-    return std::numeric_limits<double>::max();
+    return std::numeric_limits<double>::infinity();
   }
 
   const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
@@ -1166,7 +1166,7 @@ double getDistanceToNextTrafficLight(
     distance += lanelet::utils::getLaneletLength3d(llt);
   }
 
-  return std::numeric_limits<double>::max();
+  return std::numeric_limits<double>::infinity();
 }
 
 double getDistanceToNextIntersection(
@@ -1799,11 +1799,12 @@ BehaviorModuleOutput getReferencePath(
   const auto drivable_lanelets = getLaneletsFromPath(reference_path, route_handler);
   const auto drivable_lanes = generateDrivableLanes(drivable_lanelets);
 
-  const auto shorten_lanes = cutOverlappedLanes(reference_path, drivable_lanes);
+  const auto & dp = planner_data->drivable_area_expansion_parameters;
 
+  const auto shorten_lanes = cutOverlappedLanes(reference_path, drivable_lanes);
   const auto expanded_lanes = expandLanelets(
-    shorten_lanes, p.drivable_area_left_bound_offset, p.drivable_area_right_bound_offset,
-    p.drivable_area_types_to_skip);
+    shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
 
   generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data);
 

@@ -247,11 +247,6 @@ struct AvoidanceParameters
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
 
-  // drivable area expansion
-  double drivable_area_right_bound_offset{};
-  double drivable_area_left_bound_offset{};
-  std::vector<std::string> drivable_area_types_to_skip{};
-
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
 
@@ -313,7 +308,7 @@ struct ObjectData  // avoidance target
   double to_road_shoulder_distance{0.0};
 
   // to intersection
-  double to_stop_factor_distance{std::numeric_limits<double>::max()};
+  double to_stop_factor_distance{std::numeric_limits<double>::infinity()};
 
   // if lateral margin is NOT enough, the ego must avoid the object.
   bool avoid_required{false};
@@ -382,6 +377,9 @@ struct AvoidancePlanningData
 
   // reference path (before shifting)
   PathWithLaneId reference_path;
+
+  // reference path (pre-resampled reference path)
+  PathWithLaneId reference_path_rough;
 
   // closest reference_path index for reference_pose
   size_t ego_closest_path_index;
@@ -499,10 +497,6 @@ struct DebugData
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
-
-  boost::optional<Pose> stop_pose{boost::none};
-  boost::optional<Pose> slow_pose{boost::none};
-  boost::optional<Pose> feasible_bound{boost::none};
 
   bool exist_adjacent_objects{false};
 
