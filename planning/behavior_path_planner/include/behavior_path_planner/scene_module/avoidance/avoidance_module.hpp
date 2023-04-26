@@ -17,7 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -172,17 +172,10 @@ private:
     }
   }
 
-  /**
-   * object pre-process
-   */
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
-
-  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
-
-  void fillObjectMovingTime(ObjectData & object_data) const;
-
-  void compensateDetectionLost(
-    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
 
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
@@ -209,7 +202,6 @@ private:
   AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
-  void updateRegisteredObject(const ObjectDataArray & objects);
 
   // ========= shift line generator ======
 
@@ -276,8 +268,6 @@ private:
   // intersection (old)
   boost::optional<AvoidLine> calcIntersectionShiftLine(const AvoidancePlanningData & data) const;
 
-  bool isTargetObjectType(const PredictedObject & object) const;
-
   // debug
   mutable DebugData debug_data_;
   mutable std::shared_ptr<AvoidanceDebugMsgArray> debug_msg_ptr_;
@@ -343,11 +333,6 @@ private:
     MarginData & margin_data) const;
 
   // ========= helper functions ==========
-
-  double getEgoSpeed() const
-  {
-    return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
-  }
 
   double getNominalAvoidanceEgoSpeed() const
   {
@@ -428,16 +413,7 @@ private:
 
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
 
-  Point getEgoPosition() const { return planner_data_->self_odometry->pose.pose.position; }
-
-  Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-
-  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
-
-  PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   // TODO(Horibe): think later.
   // for unique ID

@@ -18,10 +18,10 @@
 #include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/util/avoidance_by_lc/module_data.hpp"
-#include "behavior_path_planner/util/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/util/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance_by_lc/module_data.hpp"
+#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -170,13 +170,10 @@ private:
   ObjectDataArray registered_objects_;
   mutable ObjectDataArray stopped_objects_;
 
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
-  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
-  void fillObjectMovingTime(ObjectData & object_data) const;
-  void updateRegisteredObject(const ObjectDataArray & objects);
-  void compensateDetectionLost(
-    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
-  bool isTargetObjectType(const PredictedObject & object) const;
 
   lanelet::ConstLanelets get_original_lanes() const;
   PathWithLaneId getReferencePath() const;
@@ -206,9 +203,6 @@ private:
   bool isAbortState() const;
 
   // getter
-  Point getEgoPosition() const { return planner_data_->self_odometry->pose.pose.position; }
-  Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-  Twist getEgoTwist() const;
   std_msgs::msg::Header getRouteHeader() const;
   void resetPathIfAbort();
 

@@ -16,11 +16,11 @@ Compare the z of the input points with the value of elevation_map. The height di
 
 ### Distance Based Compare Map Filter
 
-WIP
+This filter compares the input pointcloud with the map pointcloud using the `nearestKSearch` function of `kdtree` and removes points that are close to the map point cloud. The map pointcloud can be loaded statically at once at the beginning or dynamically as the vehicle moves.
 
 ### Voxel Based Approximate Compare Map Filter
 
-WIP
+The filter loads the map point cloud, which can be loaded statically at the beginning or dynamically during vehicle movement, and creates a voxel grid of the map point cloud. The filter uses the getCentroidIndexAt function in combination with the getGridCoordinates function from the VoxelGrid class to find input points that are inside the voxel grid and removes them.
 
 ### Voxel Based Compare Map Filter
 
@@ -30,7 +30,7 @@ For each point of input pointcloud, the filter use `getCentroidIndexAt` combine 
 
 ### Voxel Distance based Compare Map Filter
 
-WIP
+This filter is a combination of the distance_based_compare_map_filter and voxel_based_approximate_compare_map_filter. The filter loads the map point cloud, which can be loaded statically at the beginning or dynamically during vehicle movement, and creates a voxel grid and a k-d tree of the map point cloud. The filter uses the getCentroidIndexAt function in combination with the getGridCoordinates function from the VoxelGrid class to find input points that are inside the voxel grid and removes them. For points that do not belong to any voxel grid, they are compared again with the map point cloud using the radiusSearch function of the k-d tree and are removed if they are close enough to the map.
 
 ## Inputs / Outputs
 
@@ -61,11 +61,12 @@ WIP
 
 #### Input
 
-| Name                     | Type                                            | Description                                            |
-| ------------------------ | ----------------------------------------------- | ------------------------------------------------------ |
-| `~/input/points`         | `sensor_msgs::msg::PointCloud2`                 | reference points                                       |
-| `~/input/map`            | `sensor_msgs::msg::PointCloud2`                 | map (in case static map loading)                       |
-| `~/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | current ego-vehicle pose (in case dynamic map loading) |
+| Name                                 | Type                                            | Description                                                    |
+| ------------------------------------ | ----------------------------------------------- | -------------------------------------------------------------- |
+| `~/input/points`                     | `sensor_msgs::msg::PointCloud2`                 | reference points                                               |
+| `~/input/map`                        | `sensor_msgs::msg::PointCloud2`                 | map (in case static map loading)                               |
+| `~/pose_with_covariance`             | `geometry_msgs::msg::PoseWithCovarianceStamped` | current ego-vehicle pose (in case dynamic map loading)         |
+| `/localization/initialization_state` | `localization_interface::InitializationState`   | Ego-vehicle pose initialization state (in dynamic map loading) |
 
 #### Output
 
@@ -75,13 +76,14 @@ WIP
 
 #### Parameters
 
-| Name                            | Type  | Description                                                                                  | Default value |
-| :------------------------------ | :---- | :------------------------------------------------------------------------------------------- | :------------ |
-| `use_dynamic_map_loading`       | bool  | map loading mode selection, `true` for dynamic map loading, `false` for static map loading   | true          |
-| `distance_threshold`            | float | VoxelGrid's leaf_size also the threshold to check distance between input point and map point | 0.5           |
-| `map_update_distance_threshold` | float | Threshold of vehicle movement distance when map update is necessary [m]                      | 10.0          |
-| `map_loader_radius`             | float | Radius of map need to be loaded (in dynamic map loading) [m]                                 | 150.0         |
-| `timer_interval_ms`             | int   | time interval of timer to check if update the map is necessary (in dynamic map loading) [ms] | 100           |
+| Name                            | Type  | Description                                                                                                                             | Default value |
+| :------------------------------ | :---- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `use_dynamic_map_loading`       | bool  | map loading mode selection, `true` for dynamic map loading, `false` for static map loading                                              | true          |
+| `distance_threshold`            | float | Threshold distance to compare input points with map points [m]                                                                          | 0.5           |
+| `map_update_distance_threshold` | float | Threshold of vehicle movement distance when map update is necessary (in dynamic map loading) [m]                                        | 10.0          |
+| `map_loader_radius`             | float | Radius of map need to be loaded (in dynamic map loading) [m]                                                                            | 150.0         |
+| `timer_interval_ms`             | int   | Timer interval to check if the map update is necessary (in dynamic map loading) [ms]                                                    | 100           |
+| `publish_debug_pcd`             | bool  | Enable to publish voxelized updated map in `debug/downsampled_map/pointcloud` for debugging. It might cause additional computation cost | false         |
 
 ## Assumptions / Known limits
 
