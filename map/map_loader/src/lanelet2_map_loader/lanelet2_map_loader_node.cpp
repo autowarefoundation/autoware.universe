@@ -141,6 +141,8 @@ MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
     map_projector_type_msg.type = "UTM";
     map_projector_type_msg.map_origin.latitude = map_origin_lat;
     map_projector_type_msg.map_origin.longitude = map_origin_lon;
+  } else {
+    map_projector_type_msg.type = "local";
   }
   return map_projector_type_msg;
 }
