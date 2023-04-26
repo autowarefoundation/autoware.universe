@@ -268,7 +268,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
           first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_,
           planner_param_.occlusion.peeking_offset)
       : std::nullopt;
-  is_actually_occluded_ = is_occlusion_cleared;
 
   /* calculate final stop lines */
   std::optional<size_t> stop_line_idx = default_stop_line_idx_opt;
@@ -297,7 +296,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   bool occlusion_stop_required = false;
 
   /* check safety */
-  const bool ext_occlusion_requested = (!is_actually_occluded_ && !occlusion_activated_);
+  const bool ext_occlusion_requested = (is_occlusion_cleared && !occlusion_activated_);
+  is_actually_occluded_ = !is_occlusion_cleared;
+  is_forcefully_occluded_ = ext_occlusion_requested;
   if (!is_occlusion_cleared || ext_occlusion_requested) {
     if (!default_stop_line_idx_opt) {
       RCLCPP_DEBUG(logger_, "occlusion is detected but default stop line is not set or generated");
@@ -401,6 +402,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     setDistance(dist_1st_stopline);
   }
 
+  RCLCPP_INFO(
+    logger_, "is_occluded: %d, is_actually_occluded: %d, is_forcefully_occluded: %d", isOccluded(),
+    is_actually_occluded_, is_forcefully_occluded_);
   RCLCPP_INFO(logger_, "default: [], safe: %d, activated: %d", safe_, activated_);
   RCLCPP_INFO(
     logger_, "occlusion: [%s], safe: %d, activated: %d ", uuid2string(occlusion_uuid_).c_str(),
