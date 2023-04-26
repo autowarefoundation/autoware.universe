@@ -145,7 +145,6 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   out.reference_path = getPreviousModuleOutput().reference_path;
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
-  std::cerr << "PO" << std::endl;
   module_type_->extendOutputDrivableArea(out);
 
   const auto candidate = planCandidate();

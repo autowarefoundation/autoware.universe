@@ -122,7 +122,6 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
   output.drivable_area_info.drivable_lanes = expanded_lanes;
 
   // for old architecture
-  std::cerr << "e1" << std::endl;
   utils::generateDrivableArea(
     *output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
