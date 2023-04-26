@@ -2,7 +2,7 @@ name: sync-upstream
 
 on:
   schedule:
-    - cron: 0 0 * * *
+    - cron: 0 1 * * 1-5
   workflow_dispatch:
 
 jobs:
@@ -16,8 +16,21 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.PRIVATE_KEY }}
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - run: npm install @holiday-jp/holiday_jp
+
+      - uses: actions/github-script@v6
+        id: is-holiday
+        with:
+          script: |
+            const holiday_jp = require(`${process.env.GITHUB_WORKSPACE}/node_modules/@holiday-jp/holiday_jp`)
+            core.setOutput('holiday', holiday_jp.isHoliday(new Date()));
       - name: Run sync-branches
         uses: autowarefoundation/autoware-github-actions/sync-branches@v1
+        if: ${{ steps.is-holiday.outputs.holiday != 'true' || github.event_name == 'workflow_dispatch' }}
         with:
           token: ${{ steps.generate-token.outputs.token }}
           base-branch: tier4/main
