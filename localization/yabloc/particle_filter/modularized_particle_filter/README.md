@@ -6,6 +6,13 @@
 - Correctorは抽象的なクラスのみを提供しており、それを継承して好みのCorrectorノードを実装することを想定している。
 - Predictorはそのまま使える。
 
+## How to test
+
+```shell
+colcon test --event-handlers console_cohesion+  --packages-select modularized_particle_filter
+colcon test-result --verbose --all
+```
+
 ## Predictor
 
 ### Input

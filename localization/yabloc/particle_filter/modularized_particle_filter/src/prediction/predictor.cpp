@@ -297,13 +297,13 @@ void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weight
   ParticleArray particle_array{particle_array_opt_.value()};
 
   OptParticleArray retroactive_weighted_particles{
-    resampler_ptr_->retroactive_weighting(particle_array, weighted_particles_ptr)};
+    resampler_ptr_->add_weight_retroactively(particle_array, *weighted_particles_ptr)};
   if (retroactive_weighted_particles.has_value()) {
     // TODO: Why do you copy only particles. Why do not copy all members including header and id
     particle_array.particles = retroactive_weighted_particles.value().particles;
   }
 
-  OptParticleArray resampled_particles{resampler_ptr_->resampling(particle_array)};
+  OptParticleArray resampled_particles{resampler_ptr_->resample(particle_array)};
   if (resampled_particles.has_value()) {
     particle_array = resampled_particles.value();
   }

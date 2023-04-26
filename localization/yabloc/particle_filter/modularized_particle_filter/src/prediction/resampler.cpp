@@ -16,135 +16,173 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <boost/range/adaptor/indexed.hpp>
+
 #include <cmath>
 #include <numeric>
+#include <random>
 
-namespace pcdless ::modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 RetroactiveResampler::RetroactiveResampler(
   float resampling_interval_seconds, int number_of_particles, int max_history_num)
 : resampling_interval_seconds_(resampling_interval_seconds),
+  max_history_num_(max_history_num),
   number_of_particles_(number_of_particles),
-  max_history_num_(max_history_num)
+  logger_(rclcpp::get_logger("modularized_particle_filter.retroactive_resampler")),
+  resampling_history_(max_history_num_, number_of_particles)
 {
-  initialize_resample_history();
+  latest_resampling_generation_ = 0;
 }
 
-void RetroactiveResampler::initialize_resample_history()
+bool RetroactiveResampler::check_weighted_particles_validity(
+  const ParticleArray & weighted_particles) const
 {
-  resampling_history_.resize(max_history_num_);
-  for (int i = 0; i < max_history_num_; i++) {
-    resampling_history_[i].resize(number_of_particles_);
-    for (int m = 0; m < number_of_particles_; m++) {
-      resampling_history_[i][m] = m;
-    }
+  if (static_cast<int>(weighted_particles.particles.size()) != number_of_particles_) {
+    return false;
   }
-  resampling_history_wp_ = 0;
+
+  // invalid generation
+  if (weighted_particles.id < 0) {
+    RCLCPP_ERROR_STREAM(logger_, "invalid generation id");
+    return false;
+  }
+
+  // future data
+  if (weighted_particles.id > latest_resampling_generation_) {
+    RCLCPP_ERROR_STREAM(logger_, "future generation id");
+    return false;
+  }
+
+  // not too old data
+  if (!(weighted_particles.id > latest_resampling_generation_ - max_history_num_)) {
+    RCLCPP_WARN_STREAM(logger_, "too old generation id");
+    return false;
+  }
+  return true;
 }
 
-RetroactiveResampler::OptParticleArray RetroactiveResampler::retroactive_weighting(
-  const ParticleArray & predicted_particles,
-  const ParticleArray::ConstSharedPtr & weighted_particles)
+RetroactiveResampler::OptParticleArray RetroactiveResampler::add_weight_retroactively(
+  const ParticleArray & predicted_particles, const ParticleArray & weighted_particles)
 {
-  rclcpp::Logger logger = rclcpp::get_logger("modularized_particle_filter.retroactive_resampler");
-  if (!(weighted_particles->id <= resampling_history_wp_ &&                    // not future data
-        weighted_particles->id > resampling_history_wp_ - max_history_num_ &&  // not old data
-        weighted_particles->id >= 0))                                          // not error data
-  {
-    RCLCPP_WARN(logger, "out of history");
+  if (!check_weighted_particles_validity(weighted_particles)) {
     return std::nullopt;
   }
 
-  ParticleArray reweighted_particles{predicted_particles};
-
   RCLCPP_INFO_STREAM(
-    logger, "current generation " << resampling_history_wp_ << " callback generation "
-                                  << weighted_particles->id);
+    logger_, "current generation " << latest_resampling_generation_ << " callback generation "
+                                   << weighted_particles.id);
 
-  // initialize corresponding index lookup table
-  std::vector<int> index_table(static_cast<int>(weighted_particles->particles.size()));
-  for (int m{0}; m < static_cast<int>(weighted_particles->particles.size()); m++) {
-    index_table[m] = m;
-  }
+  // Initialize corresponding index lookup table
+  // The m-th addres has the m-th particle's parent index
+  std::vector<int> index_table(weighted_particles.particles.size());
+  std::iota(index_table.begin(), index_table.end(), 0);
 
-  // lookup corresponding indices
-  for (int history_wp{resampling_history_wp_}; history_wp > weighted_particles->id; history_wp--) {
-    for (int m{0}; m < static_cast<int>(weighted_particles->particles.size()); m++) {
-      if (
-        0 <= index_table[m] &&
-        index_table[m] < static_cast<int>(weighted_particles->particles.size())) {
-        index_table[m] = resampling_history_[history_wp % max_history_num_][index_table[m]];
-      } else {
-        return std::nullopt;
-      }
+  // Lookup corresponding indices
+  for (int generation = latest_resampling_generation_; generation > weighted_particles.id;
+       generation--) {
+    for (int m = 0; m < number_of_particles_; m++) {
+      index_table[m] = resampling_history_[generation][index_table[m]];
     }
   }
 
-  // weighting to current particles
+  ParticleArray reweighted_particles = predicted_particles;
+
+  // Add weights to current particles
   float sum_weight = 0;
-  for (int m{0}; m < static_cast<int>(weighted_particles->particles.size()); m++) {
-    reweighted_particles.particles[m].weight *=
-      weighted_particles->particles[index_table[m]].weight;
-    sum_weight += reweighted_particles.particles[m].weight;
+  for (auto && it : reweighted_particles.particles | boost::adaptors::indexed()) {
+    it.value().weight *= weighted_particles.particles[index_table[it.index()]].weight;
+    sum_weight += it.value().weight;
   }
-  for (int m{0}; m < static_cast<int>(weighted_particles->particles.size()); m++) {
-    reweighted_particles.particles[m].weight /= sum_weight;
+
+  // Normalize all weight
+  for (auto & particle : reweighted_particles.particles) {
+    particle.weight /= sum_weight;
   }
 
   return reweighted_particles;
 }
-RetroactiveResampler::OptParticleArray RetroactiveResampler::resampling(
+
+RetroactiveResampler::OptParticleArray RetroactiveResampler::resample(
   const ParticleArray & predicted_particles)
 {
-  double current_time{rclcpp::Time(predicted_particles.header.stamp).seconds()};
+  const double current_time = rclcpp::Time(predicted_particles.header.stamp).seconds();
 
+  // Exit if previous resampling time is not valid.
   if (!previous_resampling_time_opt_.has_value()) {
     previous_resampling_time_opt_ = current_time;
     return std::nullopt;
   }
 
+  // TODO: When this function is called, always it should resamples. We should manage resampling
+  // interval outside of this function.
   if (current_time - previous_resampling_time_opt_.value() <= resampling_interval_seconds_) {
     return std::nullopt;
   }
 
   ParticleArray resampled_particles{predicted_particles};
-  resampling_history_wp_++;
-  resampled_particles.id = resampling_history_wp_;
+  latest_resampling_generation_++;
+  resampled_particles.id = latest_resampling_generation_;
 
-  const double num_of_particles_inv{
-    1.0 / static_cast<double>(predicted_particles.particles.size())};
-  const double sum_weight_inv{
-    1.0 / std::accumulate(
-            predicted_particles.particles.begin(), predicted_particles.particles.end(), 0.0,
-            [](double weight, const Particle & ps) { return weight + ps.weight; })};
+  // Summation of current weights
+  const double sum_weight = std::accumulate(
+    predicted_particles.particles.begin(), predicted_particles.particles.end(), 0.0,
+    [](double weight, const Particle & ps) { return weight + ps.weight; });
+  // Inverse of the summation of current weight
+  const double sum_weight_inv = 1.0 / sum_weight;
+  // Inverse of the number of particle
+  const double num_of_particles_inv = 1.0 / static_cast<double>(number_of_particles_);
+  // A residual term for a random selection of particle sampling thresholds.
+  // This can range from 0 to 1/(num_of_particles)
+  const double weight_threshold_residual = random_from_01_uniformly() * num_of_particles_inv;
 
   if (!std::isfinite(sum_weight_inv)) {
+    RCLCPP_ERROR_STREAM(logger_, "The inverse of the sum of the weights is not a valid value");
     exit(EXIT_FAILURE);
   }
 
-  const double r{
-    (rand() / static_cast<double>(RAND_MAX)) /
-    (static_cast<double>(predicted_particles.particles.size()))};
+  auto n_th_normalized_weight = [&](int index) -> double {
+    return predicted_particles.particles.at(index).weight * sum_weight_inv;
+  };
 
-  double c{predicted_particles.particles[0].weight * sum_weight_inv};
+  //
+  int predicted_particle_index = 0;
+  double accumulated_normzlied_weights = n_th_normalized_weight(0);
+  // Here, 'm' means resampled_particle_index
+  for (int m = 0; m < number_of_particles_; m++) {
+    const double m_th_weight_threshold = m * num_of_particles_inv + weight_threshold_residual;
 
-  int i{0};
-  for (int m{0}; m < static_cast<int>(predicted_particles.particles.size()); m++) {
-    const double u{r + m * num_of_particles_inv};
-
-    while (c < u) {
-      i++;
-      c += predicted_particles.particles[i].weight * sum_weight_inv;
+    // Accumulate predicted particles' weight until it exceeds the threshold
+    // (If the previous weights are sufficiently large, this accumulation can be skipped over
+    // several resampled particles. It means that a probable particle will make many successors.)
+    while (accumulated_normzlied_weights < m_th_weight_threshold) {
+      predicted_particle_index++;
+      accumulated_normzlied_weights += n_th_normalized_weight(predicted_particle_index);
     }
+    // Copy particle to resampled variable
+    resampled_particles.particles[m] = predicted_particles.particles[predicted_particle_index];
+    // Reset weight uniformly
+    resampled_particles.particles[m].weight = num_of_particles_inv;
+    // Make history
+    resampling_history_[latest_resampling_generation_][m] = predicted_particle_index;
+  }
 
-    resampled_particles.particles[m] = predicted_particles.particles[i];
-    resampled_particles.particles[m].weight = num_of_particles_inv;  // TODO:
-    resampling_history_[resampling_history_wp_ % max_history_num_][m] = i;
+  // NOTE: This check wastes the computation time
+  if (!resampling_history_.check_history_validity()) {
+    RCLCPP_ERROR_STREAM(logger_, "resampling_hisotry may be broken");
+    return std::nullopt;
   }
 
   previous_resampling_time_opt_ = current_time;
 
   return resampled_particles;
+}
+
+double RetroactiveResampler::random_from_01_uniformly() const
+{
+  static std::default_random_engine engine(0);
+  std::uniform_real_distribution<double> dist(0.0, 1.0);
+  return dist(engine);
 }
 
 }  // namespace pcdless::modularized_particle_filter
