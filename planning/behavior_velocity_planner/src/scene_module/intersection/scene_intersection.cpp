@@ -90,15 +90,6 @@ IntersectionModule::IntersectionModule(
   }
 }
 
-static std::string uuid2string(const unique_identifier_msgs::msg::UUID & uuid)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +uuid.uuid[i];
-  }
-  return ss.str();
-}
-
 bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   RCLCPP_DEBUG(logger_, "===== plan start =====");
@@ -401,18 +392,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     setSafe(collision_state_machine_.getState() == StateMachine::State::GO);
     setDistance(dist_1st_stopline);
   }
-
-  RCLCPP_INFO(
-    logger_, "is_occluded: %d, is_actually_occluded: %d, is_forcefully_occluded: %d", isOccluded(),
-    is_actually_occluded_, is_forcefully_occluded_);
-  RCLCPP_INFO(logger_, "default: [], safe: %d, activated: %d", safe_, activated_);
-  RCLCPP_INFO(
-    logger_, "occlusion: [%s], safe: %d, activated: %d ", uuid2string(occlusion_uuid_).c_str(),
-    occlusion_safety_, occlusion_activated_);
-  RCLCPP_INFO(
-    logger_, "occlusion_1st: [%s], safe: %d, activated: %d ",
-    uuid2string(occlusion_first_stop_uuid_).c_str(), occlusion_first_stop_safety_,
-    occlusion_first_stop_activated_);
 
   /* make decision */
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
