@@ -97,6 +97,14 @@ bool AvoidanceModule::isExecutionRequested() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionRequested");
 
+#ifndef USE_OLD_ARCHITECTURE
+  const auto is_driving_forward =
+    motion_utils::isDrivingForward(getPreviousModuleOutput().path->points);
+  if (!is_driving_forward || !(*is_driving_forward)) {
+    return false;
+  }
+#endif
+
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
   }
@@ -223,13 +231,13 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
 
   // reference path
 #ifdef USE_OLD_ARCHITECTURE
-  data.reference_path =
-    utils::resamplePathWithSpline(center_path, parameters_->resample_interval_for_planning);
+  data.reference_path_rough = center_path;
 #else
-  const auto backward_extened_path = extendBackwardLength(*getPreviousModuleOutput().path);
-  data.reference_path = utils::resamplePathWithSpline(
-    backward_extened_path, parameters_->resample_interval_for_planning);
+  data.reference_path_rough = extendBackwardLength(*getPreviousModuleOutput().path);
 #endif
+
+  data.reference_path = utils::resamplePathWithSpline(
+    data.reference_path_rough, parameters_->resample_interval_for_planning);
 
   if (data.reference_path.points.size() < 2) {
     // if the resampled path has only 1 point, use original path.
@@ -334,10 +342,6 @@ ObjectData AvoidanceModule::createObjectData(
 
   // calc object centroid.
   object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
-
-  // calc longitudinal distance from ego to closest target object footprint point.
-  fillLongitudinalAndLengthByClosestEnvelopeFootprint(
-    data.reference_path, getEgoPosition(), object_data);
 
   // Calc moving time.
   fillObjectMovingTime(object_data, stopped_objects_, parameters_);
@@ -1323,7 +1327,7 @@ AvoidLineArray AvoidanceModule::trimShiftLine(
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto CHANGE_SHIFT_THRESHOLD = 0.2;
+    const auto CHANGE_SHIFT_THRESHOLD = 0.5;
     trimSimilarGradShiftLine(sl_array_trimmed, CHANGE_SHIFT_THRESHOLD);
     debug.trim_similar_grad_shift_third = sl_array_trimmed;
     printShiftLines(sl_array_trimmed, "after trim_similar_grad_shift_second");
@@ -2384,6 +2388,7 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
   const auto & current_lanes = avoidance_data_.current_lanelets;
   const auto & enable_opposite = parameters_->enable_avoidance_over_opposite_direction;
 
+  std::vector<DrivableLanes> current_drivable_lanes_vec{};
   for (const auto & current_lane : current_lanes) {
     DrivableLanes current_drivable_lanes;
     current_drivable_lanes.left_lane = current_lane;
@@ -2511,8 +2516,15 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
       current_drivable_lanes.middle_lanes.push_back(current_lane);
     }
 
-    output.drivable_lanes.push_back(current_drivable_lanes);
+    current_drivable_lanes_vec.push_back(current_drivable_lanes);
   }
+
+#ifdef USE_OLD_ARCHITECTURE
+  output.drivable_lanes = current_drivable_lanes_vec;
+#else
+  output.drivable_lanes = utils::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_lanes, current_drivable_lanes_vec);
+#endif
 
   {
     const auto & p = planner_data_->parameters;
