@@ -492,8 +492,8 @@ bool NormalLaneChange::getLaneChangePaths(
 
     if (candidate_paths->empty()) {
       // only compute dynamic object indices once
-      const auto backward_lanes = utils::lane_change::getExtendedTargetLanesForCollisionCheck(
-        route_handler, target_lanelets.front(), getEgoPose(), check_length_);
+      const auto backward_lanes = utils::lane_change::getBackwardLanelets(
+        route_handler, target_lanelets, getEgoPose(), check_length_);
       dynamic_object_indices = utils::lane_change::filterObjectIndices(
         {*candidate_path}, *dynamic_objects, backward_lanes, getEgoPose(),
         common_parameter.forward_path_length, *parameters_, lateral_buffer);
@@ -532,8 +532,8 @@ bool NormalLaneChange::isApprovedPathSafe(Pose & ego_pose_before_collision) cons
   const auto & path = status_.lane_change_path;
 
   // get lanes used for detection
-  const auto check_lanes = utils::lane_change::getExtendedTargetLanesForCollisionCheck(
-    *route_handler, path.target_lanelets.front(), current_pose, check_length_);
+  const auto check_lanes = utils::lane_change::getBackwardLanelets(
+    *route_handler, path.target_lanelets, current_pose, check_length_);
 
   CollisionCheckDebugMap debug_data;
   const auto lateral_buffer =
