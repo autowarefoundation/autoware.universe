@@ -50,10 +50,10 @@ struct BuildConfig
   // DLA core ID that the process uses
   int dla_core_id;
 
-  // flag for partial quanitzation in first layer
+  // flag for partial quantization in first layer
   bool quantize_first_layer;  // For partial quantization
 
-  // flag for partial quanitzation in last layer
+  // flag for partial quantization in last layer
   bool quantize_last_layer;  // For partial quantization
 
   // flag for per-layer profiler using IProfiler
@@ -151,7 +151,7 @@ public:
   /**
    * @brief Load TensorRT engine
    * @param[in] engine_file_path path for a engine file
-   * @return flag for whether loading are succedded or failed
+   * @return flag for whether loading are succeeded or failed
    */
   bool loadEngine(const std::string & engine_file_path);
 
