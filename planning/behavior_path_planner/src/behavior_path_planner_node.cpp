@@ -154,10 +154,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
 
-    auto dynamic_avoidance_module = std::make_shared<DynamicAvoidanceModule>(
-      "DynamicAvoidance", *this, dynamic_avoidance_param_ptr_);
-    bt_manager_->registerSceneModule(dynamic_avoidance_module);
-
     auto lane_following_module = std::make_shared<LaneFollowingModule>("LaneFollowing", *this);
     bt_manager_->registerSceneModule(lane_following_module);
 

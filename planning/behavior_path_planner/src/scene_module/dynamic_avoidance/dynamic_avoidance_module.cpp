@@ -116,18 +116,16 @@ bool DynamicAvoidanceModule::isExecutionRequested() const
 {
   RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionRequested.");
 
+  const auto reference_path = getPreviousModuleOutput().reference_path;
+  if (!reference_path || reference_path->points.size() < 2) {
+    return false;
+  }
+
   // check if the ego is driving forward
-  const auto is_driving_forward = [&]() {
-    if (!getPreviousModuleOutput().path || getPreviousModuleOutput().path->points.size() < 2) {
-      return false;
-    }
-    const auto is_driving_forward =
-      motion_utils::isDrivingForward(getPreviousModuleOutput().path->points);
-    if (!is_driving_forward) {
-      return false;
-    }
-    return *is_driving_forward;
-  }();
+  const auto is_driving_forward = motion_utils::isDrivingForward(reference_path->points);
+  if (!is_driving_forward || !(*is_driving_forward)) {
+    return false;
+  }
 
   // check if the planner is already running
   if (current_state_ == ModuleStatus::RUNNING) {
@@ -164,8 +162,6 @@ ModuleStatus DynamicAvoidanceModule::updateState()
 
 BehaviorModuleOutput DynamicAvoidanceModule::plan()
 {
-  const auto & p = planner_data_->parameters;
-
   // 1. get reference path from previous module
   const auto reference_path = getPreviousModuleOutput().reference_path;
 
@@ -312,7 +308,7 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynam
 
   // calculate bound start and end index
   const double length_to_avoid = object.path_projected_vel * parameters_->time_to_avoid;
-  const auto lon_bound_start_idx_opt = motion_utils::insertTargetPoint(
+  [[maybe_unused]] const auto lon_bound_start_idx_opt = motion_utils::insertTargetPoint(
     obj_seg_idx, min_obj_lon_offset + (length_to_avoid < 0 ? length_to_avoid : 0.0),
     path_for_bound.points);
   const auto lon_bound_end_idx_opt = motion_utils::insertTargetPoint(
