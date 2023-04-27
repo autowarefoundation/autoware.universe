@@ -1,13 +1,13 @@
 # Dynamic avoidance design
 
+## Purpose / Role
+
 This is a module designed for avoiding obstacles which are running.
 Static obstacles such as parked vehicles are dealt with by the avoidance module.
 
-## Purpose / Role
-
-This module is designed for rule-based avoidance that is easy for developers to design its behavior. It generates avoidance path parameterized by intuitive parameters such as lateral jerk and avoidance distance margin. This makes it possible to pre-define avoidance behavior.
-
 This module is under development.
+In the current implementation, the dynamic obstacles to avoid is extracted from the drivable area.
+Then the motion planner, in detail obstacle_avoidance_planner, will generate an avoiging trajectory.
 
 ### Parameters
 
