@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -50,6 +51,7 @@ struct DynamicAvoidanceParameters
   // drivable area generation
   double lat_offset_from_obstacle{0.0};
   double time_to_avoid{0.0};
+  double max_lat_offset_to_avoid{0.0};
 };
 
 class DynamicAvoidanceModule : public SceneModuleInterface
@@ -103,7 +105,7 @@ private:
   std::vector<DynamicAvoidanceObject> calcTargetObjects() const;
   lanelet::ConstLanelets getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
-  tier4_autoware_utils::Polygon2d calcDynamicObstaclePolygon(
+  std::optional<tier4_autoware_utils::Polygon2d> calcDynamicObstaclePolygon(
     const PathWithLaneId & path, const DynamicAvoidanceObject & object) const;
 
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;

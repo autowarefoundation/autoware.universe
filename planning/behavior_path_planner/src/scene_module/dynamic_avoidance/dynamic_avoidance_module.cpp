@@ -183,7 +183,9 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   std::vector<tier4_autoware_utils::Polygon2d> obstacle_polys;
   for (const auto & object : target_objects_) {
     const auto obstacle_poly = calcDynamicObstaclePolygon(*reference_path, object);
-    obstacle_polys.push_back(obstacle_poly);
+    if (obstacle_poly) {
+      obstacle_polys.push_back(obstacle_poly.value());
+    }
   }
 
   BehaviorModuleOutput output;
@@ -191,7 +193,9 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   output.reference_path = reference_path;
 
   // for new arhictecture
-  output.drivable_area_info.drivable_lanes = target_drivable_lanes;
+  output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes, target_drivable_lanes);
+
   output.drivable_area_info.obstacle_polys = obstacle_polys;
 
   return output;
@@ -275,7 +279,7 @@ lanelet::ConstLanelets DynamicAvoidanceModule::getAdjacentLanes(
   return target_lanes;
 }
 
-tier4_autoware_utils::Polygon2d DynamicAvoidanceModule::calcDynamicObstaclePolygon(
+std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynamicObstaclePolygon(
   const PathWithLaneId & path, const DynamicAvoidanceObject & object) const
 {
   auto path_for_bound = path;
@@ -323,17 +327,36 @@ tier4_autoware_utils::Polygon2d DynamicAvoidanceModule::calcDynamicObstaclePolyg
   const auto lon_bound_end_idx_opt = motion_utils::insertTargetPoint(
     obj_seg_idx, max_obj_lon_offset + (0 < length_to_avoid ? length_to_avoid : 0.0),
     path_for_bound.points);
-  // TODO(murooka) insertTargetPoint does not work well with a negative offset for now.
-  // const size_t lon_bound_start_idx = lon_bound_start_idx_opt ? lon_bound_start_idx_opt.value() :
-  // 0;
   const size_t lon_bound_start_idx = obj_seg_idx;
   const size_t lon_bound_end_idx = lon_bound_end_idx_opt
                                      ? lon_bound_end_idx_opt.value()
                                      : static_cast<size_t>(path_for_bound.points.size() - 1);
 
+  // TODO(murooka) insertTargetPoint does not work well with a negative offset for now.
+  //               When a offset is negative, the bound will be weird.
+  if (
+    lon_bound_start_idx == 0 &&
+    lon_bound_end_idx == static_cast<size_t>(path_for_bound.points.size() - 1)) {
+    return std::nullopt;
+  }
+
   // calculate bound min and max lateral offset
-  const double min_bound_lat_offset =
-    min_obj_lat_offset - parameters_->lat_offset_from_obstacle * (is_left ? 1.0 : -1.0);
+  const double min_bound_lat_offset = [&]() {
+    const double raw_min_bound_lat_offset =
+      min_obj_lat_offset - parameters_->lat_offset_from_obstacle * (is_left ? 1.0 : -1.0);
+    const double min_bound_lat_abs_offset_limit =
+      planner_data_->parameters.vehicle_width / 2.0 - parameters_->max_lat_offset_to_avoid;
+    if (is_left) {
+      if (raw_min_bound_lat_offset < min_bound_lat_abs_offset_limit) {
+        return min_bound_lat_abs_offset_limit;
+      }
+    } else {
+      if (-min_bound_lat_abs_offset_limit < raw_min_bound_lat_offset) {
+        return -min_bound_lat_abs_offset_limit;
+      }
+    }
+    return raw_min_bound_lat_offset;
+  }();
   const double max_bound_lat_offset =
     max_obj_lat_offset + parameters_->lat_offset_from_obstacle * (is_left ? 1.0 : -1.0);
 
