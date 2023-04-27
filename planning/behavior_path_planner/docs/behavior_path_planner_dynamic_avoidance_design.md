@@ -19,4 +19,4 @@ This module is under development.
 | target_object.min_obstacle_vel                    | [m/s] | double | Minimum obstacle velocity to avoid      | 1.0           |
 | drivable_area_generation.lat_offset_from_obstacle | [m]   | double | Lateral offset to avoid from obstacles  | 0.8           |
 | drivable_area_generation.time_to_avoid            | [s]   | double | Elapsed time for avoiding an obstacle   | 5.0           |
-| drivable_area_generation.max_lat_offset_to_avoi   | [m]   | double | Maximum lateral offset to avoid         | 0.5           |
+| drivable_area_generation.max_lat_offset_to_avoid  | [m]   | double | Maximum lateral offset to avoid         | 0.5           |

@@ -114,7 +114,7 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
 
 bool DynamicAvoidanceModule::isExecutionRequested() const
 {
-  RCLCPP_INFO(getLogger(), "DYNAMIC AVOIDANCE isExecutionRequested.");
+  RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionRequested.");
 
   // check if the ego is driving forward
   const auto is_driving_forward = [&]() {
@@ -140,7 +140,7 @@ bool DynamicAvoidanceModule::isExecutionRequested() const
 
 bool DynamicAvoidanceModule::isExecutionReady() const
 {
-  RCLCPP_INFO(getLogger(), "DYNAMIC AVOIDANCE isExecutionReady.");
+  RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionReady.");
   return true;
 }
 
@@ -175,7 +175,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   const auto target_drivable_lanes =
     getNonOverlappingExpandedLanes(*reference_path, drivable_lanes);
 
-  // for old arhictecture
+  // for old architecture
   utils::generateDrivableArea(
     *reference_path, target_drivable_lanes, p.vehicle_length, planner_data_);
 
@@ -192,7 +192,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   output.path = reference_path;
   output.reference_path = reference_path;
 
-  // for new arhictecture
+  // for new architecture
   output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
     getPreviousModuleOutput().drivable_area_info.drivable_lanes, target_drivable_lanes);
 
