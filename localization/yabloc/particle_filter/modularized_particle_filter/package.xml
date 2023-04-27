@@ -21,7 +21,7 @@
   <depend>tf2_geometry_msgs</depend>
 
   <depend>sophus</depend>
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
   <depend>modularized_particle_filter_msgs</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

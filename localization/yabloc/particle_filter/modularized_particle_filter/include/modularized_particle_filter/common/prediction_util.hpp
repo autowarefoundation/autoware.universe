@@ -22,7 +22,7 @@
 #include <random>
 #include <vector>
 
-namespace pcdless
+namespace yabloc
 {
 namespace modularized_particle_filter::util
 {
@@ -64,5 +64,5 @@ double normalize_radian(const double rad, const double min_rad = -M_PI)
 }
 
 }  // namespace modularized_particle_filter::util
-}  // namespace pcdless
+}  // namespace yabloc
 #endif  // MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_

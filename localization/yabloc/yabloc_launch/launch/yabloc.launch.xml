@@ -1,0 +1,80 @@
+<launch>
+    <!-- NOTE: -->
+    <arg name="standalone" description="[true,false] Set to true if not connected to Autoware's P/C."/>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="use_septentrio" default="false" description="septentrio gnss"/>
+
+    <!-- source camera image topics -->
+    <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
+    <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
+    <let name="resized_image" value="/sensing/camera/undistorted/image_raw"/>
+    <let name="resized_info" value="/sensing/camera/undistorted/camera_info"/>
+    
+    <let name="connect_base_link_to_particle_pose" value="true" if="$(var standalone)"/>
+    <let name="connect_base_link_to_particle_pose" value="false" unless="$(var standalone)"/>
+    <let name="input_pose" value="/localization/pf/pose" if="$(var standalone)"/>
+    <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose" unless="$(var standalone)"/>
+
+    <group>
+        <push-ros-namespace namespace="localization"/>
+
+        <!-- initializer -->
+        <group>
+            <push-ros-namespace namespace="initializer"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/initializer.launch.xml">
+                <arg name="skip_autoware_pose_initializer" value="$(var standalone)"/>
+            </include>
+        </group>
+
+        <!-- particle filter -->
+        <group>
+            <push-ros-namespace namespace="pf"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/pf.launch.xml"/>
+        </group>
+
+        <!-- static tf -->
+        <group if="$(var connect_base_link_to_particle_pose)"> 
+            <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
+        </group>
+
+        <!-- image processing -->
+        <group>
+            <push-ros-namespace namespace="imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/imgproc.launch.xml">
+                <arg name="src_image" value="$(var src_image)"/>
+                <arg name="src_info" value="$(var src_info)"/>
+                <arg name="resized_image" value="$(var resized_image)"/>
+                <arg name="resized_info" value="$(var resized_info)"/>
+            </include>
+        </group>
+
+        <!-- twist -->
+        <group>
+            <push-ros-namespace namespace="twist"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/twist.launch.xml"/>
+        </group>
+
+        <!-- validation -->
+        <group>
+            <push-ros-namespace namespace="validation"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/validation.launch.xml">
+                <arg name="input_overlayed_pose" value="$(var input_pose)"/>
+                <arg name="resized_image" value="$(var resized_image)"/>
+                <arg name="resized_info" value="$(var resized_info)"/>
+            </include>
+        </group>
+
+        <!-- map -->
+        <group>
+            <push-ros-namespace namespace="map"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/map.launch.xml">
+                <arg name="input_particle_pose" value="$(var input_pose)"/>
+            </include>
+        </group>
+
+        <!-- septentrio ublox converter -->
+        <group if="$(var use_septentrio)">
+            <node name="doppler_converter" pkg="doppler_converter" exec="doppler_converter_node"/>
+        </group>
+    </group>
+</launch>

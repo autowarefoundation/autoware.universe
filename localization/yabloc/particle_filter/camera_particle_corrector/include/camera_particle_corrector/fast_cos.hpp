@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 struct FastCosSin
 {
@@ -48,4 +48,4 @@ struct FastCosSin
 private:
   std::vector<float> cos_;
 };
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

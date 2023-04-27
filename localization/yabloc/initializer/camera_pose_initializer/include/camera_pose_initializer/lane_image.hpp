@@ -20,7 +20,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
-namespace pcdless
+namespace yabloc
 {
 class LaneImage
 {
@@ -36,4 +36,4 @@ public:
 private:
   lanelet::LaneletMapPtr map_;
 };
-}  // namespace pcdless
+}  // namespace yabloc

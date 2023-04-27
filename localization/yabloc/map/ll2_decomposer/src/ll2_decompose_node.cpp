@@ -17,7 +17,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::ll2_decomposer::Ll2Decomposer>());
+  rclcpp::spin(std::make_shared<yabloc::ll2_decomposer::Ll2Decomposer>());
   rclcpp::shutdown();
   return 0;
 }

@@ -18,7 +18,7 @@
   <depend>visualization_msgs</depend>
 
   <depend>modularized_particle_filter</depend>
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
   <depend>ll2_decomposer</depend>
 
   <export>

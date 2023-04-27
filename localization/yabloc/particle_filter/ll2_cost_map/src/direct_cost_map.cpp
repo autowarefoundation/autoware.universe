@@ -14,7 +14,7 @@
 
 #include "ll2_cost_map/direct_cost_map.hpp"
 
-namespace pcdless
+namespace yabloc
 {
 cv::Mat direct_cost_map(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
@@ -94,7 +94,7 @@ cv::Mat visualize_direction_map(const cv::Mat & cost_map)
   return rgb;
 }
 
-}  // namespace pcdless
+}  // namespace yabloc
 
 // #include <opencv4/opencv2/highgui.hpp>
 

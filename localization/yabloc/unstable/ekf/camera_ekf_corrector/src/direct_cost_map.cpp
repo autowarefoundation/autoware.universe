@@ -14,7 +14,7 @@
 
 #include "camera_ekf_corrector/direct_cost_map.hpp"
 
-namespace pcdless::ekf_corrector
+namespace yabloc::ekf_corrector
 {
 cv::Mat direct_cost_map(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
@@ -94,7 +94,7 @@ cv::Mat visualize_direction_map(const cv::Mat & cost_map)
   return rgb;
 }
 
-}  // namespace pcdless::ekf_corrector
+}  // namespace yabloc::ekf_corrector
 
 // #include <opencv4/opencv2/highgui.hpp>
 

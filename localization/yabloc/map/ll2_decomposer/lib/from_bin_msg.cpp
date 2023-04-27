@@ -20,7 +20,7 @@
 
 #include <lanelet2_io/io_handlers/Serialize.h>
 
-namespace pcdless::ll2_decomposer
+namespace yabloc::ll2_decomposer
 {
 lanelet::LaneletMapPtr from_bin_msg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
 {
@@ -39,4 +39,4 @@ lanelet::LaneletMapPtr from_bin_msg(const autoware_auto_mapping_msgs::msg::HADMa
   return map;
 }
 
-}  // namespace pcdless::ll2_decomposer
+}  // namespace yabloc::ll2_decomposer

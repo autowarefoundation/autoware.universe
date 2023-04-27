@@ -18,7 +18,7 @@
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace pcdless::initializer
+namespace yabloc::initializer
 {
 class MarkerModule
 {
@@ -34,4 +34,4 @@ public:
 private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 };
-}  // namespace pcdless::initializer
+}  // namespace yabloc::initializer

@@ -16,7 +16,7 @@
 
   <depend>ground_msgs</depend>
   <depend>ll2_decomposer</depend>
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

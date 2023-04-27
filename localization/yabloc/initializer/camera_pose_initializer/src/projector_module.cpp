@@ -16,9 +16,9 @@
 
 #include <Eigen/Geometry>
 #include <opencv2/imgproc.hpp>
-#include <pcdless_common/cv_decompress.hpp>
+#include <yabloc_common/cv_decompress.hpp>
 
-namespace pcdless::initializer
+namespace yabloc::initializer
 {
 ProjectorModule::ProjectorModule(rclcpp::Node * node)
 : info_(node), tf_subscriber_(node->get_clock()), logger_(node->get_logger())
@@ -104,4 +104,4 @@ bool ProjectorModule::define_project_func()
   };
   return true;
 }
-}  // namespace pcdless::initializer
+}  // namespace yabloc::initializer

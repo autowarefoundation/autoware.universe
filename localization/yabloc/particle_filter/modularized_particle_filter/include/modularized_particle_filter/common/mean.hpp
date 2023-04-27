@@ -20,7 +20,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 
-namespace pcdless
+namespace yabloc
 {
 namespace modularized_particle_filter
 {
@@ -32,6 +32,6 @@ Eigen::Matrix3f std_of_distribution(
 
 float std_of_weight(const modularized_particle_filter_msgs::msg::ParticleArray & particle_array);
 }  // namespace modularized_particle_filter
-}  // namespace pcdless
+}  // namespace yabloc
 
 #endif  // MODULARIZED_PARTICLE_FILTER__COMMON__MEAN_HPP_

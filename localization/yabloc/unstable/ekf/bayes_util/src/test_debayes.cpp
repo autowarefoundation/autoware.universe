@@ -21,7 +21,7 @@ void test(double a, double b, double c, double d)
   Eigen::Matrix2d S;
   S << a, b, c, d;
 
-  Eigen::Matrix2d approx = pcdless::bayes_util::approximate_by_spd(S, true);
+  Eigen::Matrix2d approx = yabloc::bayes_util::approximate_by_spd(S, true);
   std::cout << "target:\n " << S << std::endl;
   std::cout << "opt:\n " << approx << std::endl;
   std::cout << std::endl;

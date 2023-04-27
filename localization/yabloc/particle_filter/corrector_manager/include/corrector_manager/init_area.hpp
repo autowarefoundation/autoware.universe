@@ -22,7 +22,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless
+namespace yabloc
 {
 class InitArea
 {
@@ -40,4 +40,4 @@ private:
   std::vector<polygon> deinit_areas_;
 };
 
-}  // namespace pcdless
+}  // namespace yabloc

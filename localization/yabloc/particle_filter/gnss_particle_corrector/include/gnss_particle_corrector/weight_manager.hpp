@@ -15,7 +15,7 @@
 #pragma once
 #include <rclcpp/rclcpp.hpp>
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 struct WeightManager
 {
@@ -85,4 +85,4 @@ struct WeightManager
     }
   }
 };
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

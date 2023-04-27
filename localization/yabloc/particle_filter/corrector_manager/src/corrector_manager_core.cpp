@@ -14,7 +14,7 @@
 
 #include "corrector_manager/corrector_manager.hpp"
 
-namespace pcdless
+namespace yabloc
 {
 CorrectorManager::CorrectorManager() : Node("predictor")
 {
@@ -45,7 +45,7 @@ void CorrectorManager::on_timer()
 
 void CorrectorManager::on_init_area(const PointCloud2 & msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "initialize pcdless init/deinit areas");
+  RCLCPP_INFO_STREAM(get_logger(), "initialize yabloc init/deinit areas");
   init_area_ = InitArea(msg);
 }
 
@@ -79,4 +79,4 @@ void CorrectorManager::call_service(bool data)
   }
 }
 
-}  // namespace pcdless
+}  // namespace yabloc

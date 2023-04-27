@@ -29,7 +29,7 @@
 
 #include <optional>
 
-namespace pcdless::lsd
+namespace yabloc::lsd
 {
 class LineSegmentDetector : public rclcpp::Node
 {
@@ -53,4 +53,4 @@ private:
   void on_image(const sensor_msgs::msg::Image & msg);
   void execute(const cv::Mat & image, const rclcpp::Time & stamp);
 };
-}  // namespace pcdless::lsd
+}  // namespace yabloc::lsd

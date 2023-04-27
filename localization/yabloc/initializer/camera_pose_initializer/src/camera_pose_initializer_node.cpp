@@ -17,7 +17,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<pcdless::CameraPoseInitializer>();
+  auto node = std::make_shared<yabloc::CameraPoseInitializer>();
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
   executor.spin();

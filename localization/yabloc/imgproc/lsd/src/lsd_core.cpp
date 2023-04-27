@@ -15,13 +15,13 @@
 #include "lsd/lsd.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
-#include <pcdless_common/cv_decompress.hpp>
-#include <pcdless_common/pub_sub.hpp>
-#include <pcdless_common/timer.hpp>
+#include <yabloc_common/cv_decompress.hpp>
+#include <yabloc_common/pub_sub.hpp>
+#include <yabloc_common/timer.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless::lsd
+namespace yabloc::lsd
 {
 LineSegmentDetector::LineSegmentDetector() : Node("line_detector")
 {
@@ -102,4 +102,4 @@ std::vector<cv::Mat> LineSegmentDetector::remove_too_outer_elements(
   return filtered_lines;
 }
 
-}  // namespace pcdless::lsd
+}  // namespace yabloc::lsd

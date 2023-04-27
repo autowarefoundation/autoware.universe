@@ -17,7 +17,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::overlay::Overlay>());
+  rclcpp::spin(std::make_shared<yabloc::overlay::Overlay>());
   rclcpp::shutdown();
   return 0;
 }

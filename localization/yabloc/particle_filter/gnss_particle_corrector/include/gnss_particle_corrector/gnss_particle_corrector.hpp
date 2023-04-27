@@ -27,7 +27,7 @@
 #include <ublox_msgs/msg/nav_pvt.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 class GnssParticleCorrector : public AbstCorrector
 {
@@ -72,6 +72,6 @@ private:
 
   void publish_marker(const Eigen::Vector3f & position, bool fixed);
 };
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter
 
 #endif  // GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_

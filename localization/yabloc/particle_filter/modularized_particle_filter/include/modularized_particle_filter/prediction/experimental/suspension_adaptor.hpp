@@ -24,7 +24,7 @@
 // This class was developed to make it, but it does not work now.
 // At that time, YabLoc is  switched depending on whether the image topic was flowing or not.
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 struct SwapModeAdaptor
 {
@@ -93,4 +93,4 @@ struct SwapModeAdaptor
   }
 };
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

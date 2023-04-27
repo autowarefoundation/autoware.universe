@@ -20,7 +20,7 @@
 
 #include <queue>
 
-namespace pcdless::graph_segment
+namespace yabloc::graph_segment
 {
 struct KeyAndArea
 {
@@ -93,4 +93,4 @@ std::set<int> SimilarAreaSearcher::search(
 
   return acceptable_keys;
 }
-}  // namespace pcdless::graph_segment
+}  // namespace yabloc::graph_segment

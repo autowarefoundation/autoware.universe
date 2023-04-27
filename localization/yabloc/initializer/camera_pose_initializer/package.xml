@@ -21,7 +21,7 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>ground_msgs</depend>
   <depend>ll2_decomposer</depend>
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
   <depend>semantic_segmentation</depend>
 
   <export>

@@ -15,8 +15,8 @@
 #pragma once
 #include <Eigen/StdVector>
 #include <opencv4/opencv2/core.hpp>
-#include <pcdless_common/gamma_converter.hpp>
 #include <rclcpp/node.hpp>
+#include <yabloc_common/gamma_converter.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -27,7 +27,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace pcdless
+namespace yabloc
 {
 struct Area
 {
@@ -135,4 +135,4 @@ private:
 
   cv::Mat create_available_area_image(const Area & area) const;
 };
-}  // namespace pcdless
+}  // namespace yabloc

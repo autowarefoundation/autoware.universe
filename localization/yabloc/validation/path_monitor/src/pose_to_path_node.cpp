@@ -19,7 +19,7 @@
 
 #include <boost/circular_buffer.hpp>
 
-namespace pcdless::path_monitor
+namespace yabloc::path_monitor
 {
 class Pose2Path : public rclcpp::Node
 {
@@ -87,12 +87,12 @@ private:
     psm.publish(msg.header);
   }
 };
-}  // namespace pcdless::path_monitor
+}  // namespace yabloc::path_monitor
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::path_monitor::Pose2Path>());
+  rclcpp::spin(std::make_shared<yabloc::path_monitor::Pose2Path>());
   rclcpp::shutdown();
   return 0;
 }

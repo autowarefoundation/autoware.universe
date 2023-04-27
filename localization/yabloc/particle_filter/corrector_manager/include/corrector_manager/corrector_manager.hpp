@@ -21,7 +21,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-namespace pcdless
+namespace yabloc
 {
 class CorrectorManager : public rclcpp::Node
 {
@@ -46,4 +46,4 @@ private:
   void on_init_area(const PointCloud2 & msg);
   void on_gnss_pose(const PoseStamped & msg);
 };
-}  // namespace pcdless
+}  // namespace yabloc

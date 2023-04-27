@@ -28,7 +28,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
-namespace pcdless
+namespace yabloc
 {
 class CameraPoseInitializer : public rclcpp::Node
 {
@@ -71,4 +71,4 @@ private:
 
   bool estimate_pose(const Eigen::Vector3f & position, double & yaw_angle_rad, double yaw_std_rad);
 };
-}  // namespace pcdless
+}  // namespace yabloc

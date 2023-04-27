@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
   google::InstallFailureSignalHandler();
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::ekf_corrector::CameraEkfCorrector>());
+  rclcpp::spin(std::make_shared<yabloc::ekf_corrector::CameraEkfCorrector>());
   rclcpp::shutdown();
   return 0;
 }

@@ -22,7 +22,7 @@
 #include <numeric>
 #include <random>
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 RetroactiveResampler::RetroactiveResampler(int number_of_particles, int max_history_num)
 : max_history_num_(max_history_num),
@@ -164,4 +164,4 @@ double RetroactiveResampler::random_from_01_uniformly() const
   return dist(engine);
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

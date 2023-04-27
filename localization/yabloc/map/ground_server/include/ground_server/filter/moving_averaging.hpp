@@ -17,7 +17,7 @@
 
 #include <boost/circular_buffer.hpp>
 
-namespace pcdless::ground_server
+namespace yabloc::ground_server
 {
 class MovingAveraging
 {
@@ -38,4 +38,4 @@ public:
 private:
   boost::circular_buffer<Eigen::Vector3f> buffer_;
 };
-}  // namespace pcdless::ground_server
+}  // namespace yabloc::ground_server

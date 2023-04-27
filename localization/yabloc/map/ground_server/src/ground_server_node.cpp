@@ -22,6 +22,6 @@ int main(int argc, char ** argv)
   google::InstallFailureSignalHandler();
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::ground_server::GroundServer>());
+  rclcpp::spin(std::make_shared<yabloc::ground_server::GroundServer>());
   rclcpp::shutdown();
 }

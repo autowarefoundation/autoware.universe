@@ -14,7 +14,7 @@
 
 #include "particle_initializer/particle_initializer.hpp"
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 ParticleInitializer::ParticleInitializer()
 : Node("particle_initializer"),
@@ -114,4 +114,4 @@ ParticleInitializer::PoseCovStamped ParticleInitializer::rectify_initial_pose(
   return msg;
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

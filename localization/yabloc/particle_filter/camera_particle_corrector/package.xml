@@ -19,7 +19,7 @@
   <depend>ll2_cost_map</depend>
 
   <depend>modularized_particle_filter</depend>
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

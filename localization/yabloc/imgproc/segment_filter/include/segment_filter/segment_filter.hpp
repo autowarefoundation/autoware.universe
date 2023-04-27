@@ -14,10 +14,10 @@
 
 #pragma once
 #include <opencv4/opencv2/core.hpp>
-#include <pcdless_common/camera_info_subscriber.hpp>
-#include <pcdless_common/static_tf_subscriber.hpp>
-#include <pcdless_common/synchro_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <yabloc_common/camera_info_subscriber.hpp>
+#include <yabloc_common/static_tf_subscriber.hpp>
+#include <yabloc_common/synchro_subscriber.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -27,7 +27,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace pcdless::segment_filter
+namespace yabloc::segment_filter
 {
 class SegmentFilter : public rclcpp::Node
 {
@@ -69,4 +69,4 @@ private:
 
   bool is_near_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
-}  // namespace pcdless::segment_filter
+}  // namespace yabloc::segment_filter

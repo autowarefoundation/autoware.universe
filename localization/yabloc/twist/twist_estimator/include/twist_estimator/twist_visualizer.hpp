@@ -25,7 +25,7 @@
 
 #include <optional>
 
-namespace pcdless::twist_visualizer
+namespace yabloc::twist_visualizer
 {
 class TwistVisualizer : public rclcpp::Node
 {
@@ -52,4 +52,4 @@ private:
 
   Pose se3f_to_pose_msg(const Sophus::SE3f & pose);
 };
-}  // namespace pcdless::twist_visualizer
+}  // namespace yabloc::twist_visualizer

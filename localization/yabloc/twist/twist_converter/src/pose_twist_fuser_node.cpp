@@ -18,7 +18,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-namespace pcdless::velocity_converter
+namespace yabloc::velocity_converter
 {
 class PoseTwistFuser : public rclcpp::Node
 {
@@ -59,12 +59,12 @@ private:
   }
 };
 
-}  // namespace pcdless::velocity_converter
+}  // namespace yabloc::velocity_converter
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::velocity_converter::PoseTwistFuser>());
+  rclcpp::spin(std::make_shared<yabloc::velocity_converter::PoseTwistFuser>());
   rclcpp::shutdown();
   return 0;
 }

@@ -17,7 +17,7 @@
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-namespace pcdless::bayes_util
+namespace yabloc::bayes_util
 {
 
 using ceres::AutoDiffCostFunction;
@@ -112,4 +112,4 @@ Eigen::Matrix2f debayes_covariance(
   return likelihood_info;
 }
 
-}  // namespace pcdless::bayes_util
+}  // namespace yabloc::bayes_util

@@ -15,7 +15,7 @@
 #pragma once
 #include <Eigen/Core>
 
-namespace pcdless::bayes_util
+namespace yabloc::bayes_util
 {
 Eigen::Matrix2d approximate_by_spd(const Eigen::Matrix2d & target, bool verbose = false);
 
@@ -23,4 +23,4 @@ Eigen::Matrix2d approximate_by_spd(const Eigen::Matrix2d & target, bool verbose 
 // This estimation assumes all PDFs are normal distribution.
 Eigen::Matrix2f debayes_covariance(
   const Eigen::Matrix2f & post_covariance, const Eigen::Matrix2f & prior_covariance);
-}  // namespace pcdless::bayes_util
+}  // namespace yabloc::bayes_util

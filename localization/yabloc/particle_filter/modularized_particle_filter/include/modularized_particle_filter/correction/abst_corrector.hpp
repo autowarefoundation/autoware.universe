@@ -24,7 +24,7 @@
 
 #include <optional>
 
-namespace pcdless
+namespace yabloc
 {
 namespace modularized_particle_filter
 {
@@ -54,6 +54,6 @@ private:
   void on_particle_array(const ParticleArray & particle_array);
 };
 }  // namespace modularized_particle_filter
-}  // namespace pcdless
+}  // namespace yabloc
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_

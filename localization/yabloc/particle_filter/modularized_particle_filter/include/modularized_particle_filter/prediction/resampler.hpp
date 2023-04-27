@@ -21,7 +21,7 @@
 
 #include "modularized_particle_filter_msgs/msg/particle_array.hpp"
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 class RetroactiveResampler
 {
@@ -55,6 +55,6 @@ private:
   // Check the sanity of the particles obtained from the particle corrector.
   bool check_weighted_particles_validity(const ParticleArray & weighted_particles) const;
 };
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter
 
 #endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_

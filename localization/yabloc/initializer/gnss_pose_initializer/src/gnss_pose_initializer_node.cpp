@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <pcdless_common/fix2mgrs.hpp>
-#include <pcdless_common/ublox_stamp.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <yabloc_common/fix2mgrs.hpp>
+#include <yabloc_common/ublox_stamp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
-namespace pcdless::particle_initializer
+namespace yabloc::particle_initializer
 {
 class GnssBasedPoseInitializer : public rclcpp::Node
 {
@@ -93,12 +93,12 @@ private:
     return common::fix_to_mgrs(fix).cast<float>();
   }
 };
-}  // namespace pcdless::particle_initializer
+}  // namespace yabloc::particle_initializer
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<pcdless::particle_initializer::GnssBasedPoseInitializer>());
+  rclcpp::spin(std::make_shared<yabloc::particle_initializer::GnssBasedPoseInitializer>());
   rclcpp::shutdown();
   return 0;
 }

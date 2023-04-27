@@ -14,7 +14,7 @@
 
 #include "modularized_particle_filter/correction/abst_corrector.hpp"
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 AbstCorrector::AbstCorrector(const std::string & node_name)
 : Node(node_name),
@@ -66,4 +66,4 @@ void AbstCorrector::set_weighted_particle_array(const ParticleArray & particle_a
   if (visualize_) visualizer_->publish(particle_array);
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

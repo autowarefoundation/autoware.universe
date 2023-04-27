@@ -15,13 +15,13 @@
 #pragma once
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
-#include <pcdless_common/camera_info_subscriber.hpp>
-#include <pcdless_common/static_tf_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <yabloc_common/camera_info_subscriber.hpp>
+#include <yabloc_common/static_tf_subscriber.hpp>
 
 #include <sensor_msgs/msg/image.hpp>
 
-namespace pcdless::initializer
+namespace yabloc::initializer
 {
 class ProjectorModule
 {
@@ -39,4 +39,4 @@ private:
   common::CameraInfoSubscriber info_;
   common::StaticTfSubscriber tf_subscriber_;
 };
-}  // namespace pcdless::initializer
+}  // namespace yabloc::initializer

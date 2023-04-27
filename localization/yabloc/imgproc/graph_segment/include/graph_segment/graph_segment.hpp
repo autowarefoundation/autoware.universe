@@ -21,7 +21,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-namespace pcdless::graph_segment
+namespace yabloc::graph_segment
 {
 class GraphSegment : public rclcpp::Node
 {
@@ -47,4 +47,4 @@ private:
   void draw_and_publish_image(
     const cv::Mat & raw_image, const cv::Mat & debug_image, const rclcpp::Time & stamp);
 };
-}  // namespace pcdless::graph_segment
+}  // namespace yabloc::graph_segment

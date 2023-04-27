@@ -167,7 +167,7 @@
                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">
                                 <font style="">
                                     <font style="font-size: 12px;">
-                                        ros2 launch pcdless_launch sample.launch.xml
+                                        ros2 launch yabloc_launch sample.launch.xml
                                         <br/>
                                     </font>
                                 </font>
@@ -176,7 +176,7 @@
                     </div>
                 </foreignObject>
                 <text x="1002" y="19" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
-                    ros2 launch pcdless_launch sample.launch.xml
+                    ros2 launch yabloc_launch sample.launch.xml
                 </text>
             </switch>
         </g>
@@ -405,7 +405,7 @@
                             <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">
                                 <font style="">
                                     <font style="font-size: 12px;">
-                                        ros2 launch pcdless_launch rviz.launch.xml
+                                        ros2 launch yabloc_launch rviz.launch.xml
                                     </font>
                                     <br/>
                                 </font>
@@ -414,7 +414,7 @@
                     </div>
                 </foreignObject>
                 <text x="1002" y="259" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px">
-                    ros2 launch pcdless_launch rviz.launch.xml
+                    ros2 launch yabloc_launch rviz.launch.xml
                 </text>
             </switch>
         </g>

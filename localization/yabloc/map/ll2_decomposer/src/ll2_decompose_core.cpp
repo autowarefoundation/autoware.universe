@@ -15,14 +15,14 @@
 #include "ll2_decomposer/from_bin_msg.hpp"
 #include "ll2_decomposer/ll2_decomposer.hpp"
 
-#include <pcdless_common/color.hpp>
-#include <pcdless_common/pub_sub.hpp>
+#include <yabloc_common/color.hpp>
+#include <yabloc_common/pub_sub.hpp>
 
 #include <geometry_msgs/msg/polygon.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless::ll2_decomposer
+namespace yabloc::ll2_decomposer
 {
 Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 {
@@ -111,8 +111,8 @@ pcl::PointCloud<pcl::PointXYZL> load_transition_areas(const lanelet::PolygonLaye
   for (const lanelet::ConstPolygon3d & polygon : polygons) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    bool is_init_label = (attr.value() == "pcdless_init_area");
-    bool is_deinit_label = (attr.value() == "pcdless_deinit_area");
+    bool is_init_label = (attr.value() == "yabloc_init_area");
+    bool is_deinit_label = (attr.value() == "yabloc_deinit_area");
     if (!is_init_label && !is_deinit_label) continue;
 
     for (const lanelet::ConstPoint3d & p : polygon) {
@@ -282,7 +282,7 @@ void Ll2Decomposer::publish_additional_marker(const lanelet::LaneletMapPtr & lan
     make_sign_marker_msg(lanelet_map->lineStringLayer, sign_board_labels_, "sign_board");
   auto marker2 = make_sign_marker_msg(lanelet_map->lineStringLayer, {"virtual"}, "virtual");
   auto marker3 = make_polygon_marker_msg(
-    lanelet_map->polygonLayer, {"pcdless_init_area", "pcdless_deinit_area"}, "transition_area");
+    lanelet_map->polygonLayer, {"yabloc_init_area", "yabloc_deinit_area"}, "transition_area");
   auto marker4 =
     make_polygon_marker_msg(lanelet_map->polygonLayer, {"bounding_box"}, "bounding_box");
 
@@ -292,4 +292,4 @@ void Ll2Decomposer::publish_additional_marker(const lanelet::LaneletMapPtr & lan
   pub_marker_->publish(marker1);
 }
 
-}  // namespace pcdless::ll2_decomposer
+}  // namespace yabloc::ll2_decomposer

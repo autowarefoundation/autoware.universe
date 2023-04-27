@@ -14,9 +14,9 @@
 
 #include "camera_pose_initializer/marker_module.hpp"
 
-#include <pcdless_common/color.hpp>
+#include <yabloc_common/color.hpp>
 
-namespace pcdless::initializer
+namespace yabloc::initializer
 {
 
 MarkerModule::MarkerModule(rclcpp::Node * node)
@@ -62,4 +62,4 @@ void MarkerModule::publish_marker(
   pub_marker_->publish(array);
 }
 
-}  // namespace pcdless::initializer
+}  // namespace yabloc::initializer

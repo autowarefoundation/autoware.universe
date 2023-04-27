@@ -16,7 +16,7 @@
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
 
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
   <depend>modularized_particle_filter</depend>
   <depend>bayes_util</depend>
 

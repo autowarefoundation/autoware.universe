@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #pragma once
-namespace pcdless
+namespace yabloc
 {
 float logit_to_prob(float logit, float gain = 1.0f);
 
@@ -25,4 +25,4 @@ float logit_to_prob(float logit, float gain = 1.0f);
  * @return logit
  */
 float prob_to_logit(float prob);
-}  // namespace pcdless
+}  // namespace yabloc

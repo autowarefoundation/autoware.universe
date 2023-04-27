@@ -18,15 +18,15 @@
 #include "camera_ekf_corrector/sampling.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
-#include <pcdless_common/color.hpp>
-#include <pcdless_common/pose_conversions.hpp>
-#include <pcdless_common/pub_sub.hpp>
-#include <pcdless_common/timer.hpp>
-#include <pcdless_common/transform_line_segments.hpp>
+#include <yabloc_common/color.hpp>
+#include <yabloc_common/pose_conversions.hpp>
+#include <yabloc_common/pub_sub.hpp>
+#include <yabloc_common/timer.hpp>
+#include <yabloc_common/transform_line_segments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless::ekf_corrector
+namespace yabloc::ekf_corrector
 {
 FastCosSin fast_math;
 
@@ -51,7 +51,8 @@ CameraEkfCorrector::CameraEkfCorrector()
   auto on_ll2 = std::bind(&CameraEkfCorrector::on_ll2, this, _1);
   auto on_bounding_box = std::bind(&CameraEkfCorrector::on_bounding_box, this, _1);
   auto on_pose_cov = std::bind(&CameraEkfCorrector::on_pose_cov, this, _1);
-  sub_line_segments_cloud_ = create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
+  sub_line_segments_cloud_ =
+    create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
   sub_pose_cov_ =
@@ -144,7 +145,8 @@ void CameraEkfCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
 
   if (pose_buffer_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(), "pose_buffer is empty so skip on_line_segments()");
+      get_logger(), *get_clock(), (1000ms).count(),
+      "pose_buffer is empty so skip on_line_segments()");
     return;
   }
 
@@ -174,13 +176,13 @@ void CameraEkfCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
   // TODO:
   if (opt_synched_pose->pose.covariance[0] > 1000) return;
 
-  PoseCovStamped estimated_pose =
-    estimate_pose_with_covariance(opt_synched_pose.value(), line_segments_cloud, iffy_line_segments_cloud);
+  PoseCovStamped estimated_pose = estimate_pose_with_covariance(
+    opt_synched_pose.value(), line_segments_cloud, iffy_line_segments_cloud);
 
   {
     Sophus::SE3f transform = common::pose_to_se3(opt_synched_pose->pose.pose);
-    pcl::PointCloud<pcl::PointXYZI> cloud =
-      evaluate_cloud(common::transform_line_segments(line_segments_cloud, transform), transform.translation());
+    pcl::PointCloud<pcl::PointXYZI> cloud = evaluate_cloud(
+      common::transform_line_segments(line_segments_cloud, transform), transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
 
@@ -218,7 +220,8 @@ void CameraEkfCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
 }
 
 CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covariance(
-  const PoseCovStamped & init, const LineSegments & line_segments_cloud, const LineSegments & iffy_line_segments_cloud)
+  const PoseCovStamped & init, const LineSegments & line_segments_cloud,
+  const LineSegments & iffy_line_segments_cloud)
 {
   ParticleArray particles;
 
@@ -257,8 +260,10 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   // Find weights for every pose candidates
   for (auto & particle : particles.particles) {
     Sophus::SE3f transform = common::pose_to_se3(particle.pose);
-    LineSegments transformed_line_segments = common::transform_line_segments(line_segments_cloud, transform);
-    LineSegments transformed_iffy_line_segments = common::transform_line_segments(iffy_line_segments_cloud, transform);
+    LineSegments transformed_line_segments =
+      common::transform_line_segments(line_segments_cloud, transform);
+    LineSegments transformed_iffy_line_segments =
+      common::transform_line_segments(iffy_line_segments_cloud, transform);
     transformed_line_segments += transformed_iffy_line_segments;
 
     float logit = compute_logit(transformed_line_segments, transform.translation());
@@ -418,4 +423,4 @@ pcl::PointCloud<pcl::PointXYZI> CameraEkfCorrector::evaluate_cloud(
   return cloud;
 }
 
-}  // namespace pcdless::ekf_corrector
+}  // namespace yabloc::ekf_corrector

@@ -16,7 +16,7 @@
 
 #include <rclcpp/logging.hpp>
 
-namespace pcdless::ground_server
+namespace yabloc::ground_server
 {
 pcl::PointCloud<pcl::PointXYZ> sample_from_polygons(const lanelet::PolygonLayer & polygons)
 {
@@ -90,4 +90,4 @@ pcl::PointCloud<pcl::PointXYZ> fill_points_in_polygon(
 
   return dst_cloud;
 }
-}  // namespace pcdless::ground_server
+}  // namespace yabloc::ground_server

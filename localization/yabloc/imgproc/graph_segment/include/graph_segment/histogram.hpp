@@ -16,7 +16,7 @@
 #include <Eigen/Core>
 #include <opencv4/opencv2/core.hpp>
 
-namespace pcdless::graph_segment
+namespace yabloc::graph_segment
 {
 struct Histogram
 {
@@ -63,4 +63,4 @@ struct Histogram
   };
 };
 
-}  // namespace pcdless::graph_segment
+}  // namespace yabloc::graph_segment

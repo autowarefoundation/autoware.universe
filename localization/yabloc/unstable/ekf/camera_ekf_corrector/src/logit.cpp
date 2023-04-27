@@ -18,7 +18,7 @@
 #include <array>
 #include <cmath>
 
-namespace pcdless
+namespace yabloc
 {
 namespace
 {
@@ -46,4 +46,4 @@ float logit_to_prob(float logit, float gain) { return 1.f / (1 + std::exp(-gain 
 
 float prob_to_logit(float prob) { return prob_to_logit_table(prob); }
 
-}  // namespace pcdless
+}  // namespace yabloc

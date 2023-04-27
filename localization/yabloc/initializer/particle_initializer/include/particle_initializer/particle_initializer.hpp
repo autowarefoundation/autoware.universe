@@ -19,7 +19,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 class ParticleInitializer : public rclcpp::Node
 {
@@ -43,4 +43,4 @@ private:
     const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
     const PoseCovStamped & raw_initialpose);
 };
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

@@ -16,7 +16,7 @@
 
 #include <boost/geometry/geometry.hpp>
 
-namespace pcdless
+namespace yabloc
 {
 
 InitArea::InitArea(const sensor_msgs::msg::PointCloud2 & msg)
@@ -71,4 +71,4 @@ bool InitArea::is_inside(const Eigen::Vector3d & xyz, bool * init_area) const
   return false;
 }
 
-}  // namespace pcdless
+}  // namespace yabloc

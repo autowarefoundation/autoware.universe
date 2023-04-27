@@ -17,7 +17,7 @@
   <depend>visualization_msgs</depend>
   <depend>ublox_msgs</depend>
 
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

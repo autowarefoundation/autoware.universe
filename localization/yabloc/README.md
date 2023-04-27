@@ -55,11 +55,11 @@ sample rosbag: [Google Drive link](https://drive.google.com/file/d/1UqULyfidxcA5
 ```shell
 # terminal 1
 source install/setup.bash
-ros2 launch pcdless_launch sample_launch.xml
+ros2 launch yabloc_launch sample_launch.xml
 
 # terminal 2
 source install/setup.bash
-ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch yabloc_launch rviz.launch.xml
 
 # terminal 3
 source install/setup.bash
@@ -77,8 +77,8 @@ ros2 bag play awsim_yabloc_rosbag_sample_0.db3 -s sqlite3
 ![how_to_launch_with_rosbag](docs/how_to_launch_with_rosbag.drawio.svg)
 
 ```shell
-ros2 launch pcdless_launch sample_launch.xml
-ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch yabloc_launch sample_launch.xml
+ros2 launch yabloc_launch rviz.launch.xml
 ros2 launch autoware_launch logging_simulator.launch.xml \
   system:=false \
   localizaton:=false \
@@ -104,8 +104,8 @@ ros2 bag play your_rosbag --clock 100
 ![how_to_launch_with_rosbag](docs/how_to_launch_in_real.drawio.svg)
 
 ```shell
-ros2 launch pcdless_launch sample_launch.xml use_sim_time:=false
-ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch yabloc_launch sample_launch.xml use_sim_time:=false
+ros2 launch yabloc_launch rviz.launch.xml
 ros2 launch autoware_launch autoware.launch.xml \
   rviz:=false
 ```
@@ -119,8 +119,8 @@ ros2 launch autoware_launch autoware.launch.xml \
 **You have to change autoware.universe branch.**
 
 ```shell
-ros2 launch pcdless_launch sample_launch.xml standalone:=false
-ros2 launch pcdless_launch rviz.launch.xml
+ros2 launch yabloc_launch sample_launch.xml standalone:=false
+ros2 launch yabloc_launch rviz.launch.xml
 ros2 launch autoware_launch e2e_simulator.launch.xml
 ```
 
@@ -181,7 +181,7 @@ If you give it a non-empty string, `/imgproc/undistort_node` will rewrite the fr
 For example, you can give a different tf_static as follows.
 
 ```shell
-ros2 launch pcdless_launch sample_launch.xml override_camera_frame_id:=fake_camera_optical_link
+ros2 launch yabloc_launch sample_launch.xml override_camera_frame_id:=fake_camera_optical_link
 ros2 run tf2_ros static_transform_publisher \
   --frame-id base_link \
   --child-frame-id fake_camera_optical_link \

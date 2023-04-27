@@ -21,7 +21,7 @@
 #include <cmath>
 #include <random>
 
-namespace pcdless::ekf_corrector
+namespace yabloc::ekf_corrector
 {
 extern std::random_device seed_gen;
 extern std::default_random_engine engine;
@@ -64,4 +64,4 @@ struct MeanResult
 MeanResult compile_distribution(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array);
 
-}  // namespace pcdless::ekf_corrector
+}  // namespace yabloc::ekf_corrector

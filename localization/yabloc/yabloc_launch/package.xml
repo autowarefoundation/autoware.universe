@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>yabloc_launch</name>
+  <version>0.0.0</version>
+  <description>launch files for vector map visual localization</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
+
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclpy</depend>
+  <depend>autoware_auto_control_msgs</depend>
+
+  <!--imgproc-->
+  <depend>graph_segment</depend>
+  <depend>lsd</depend>
+  <depend>segment_filter</depend>
+  <depend>undistort</depend>
+  <!--map-->
+  <depend>ground_server</depend>
+  <depend>ll2_decomposer</depend>
+  <!--twist-->
+  <depend>twist_converter</depend>
+  <depend>twist_estimator</depend>
+  <depend>doppler_converter</depend>
+  <!--validation-->
+  <depend>ape_monitor</depend>
+  <depend>covariance_monitor</depend>
+  <depend>overlay_monitor</depend>
+  <depend>path_monitor</depend>
+  <!--particle filter-->
+  <depend>camera_particle_corrector</depend>
+  <depend>gnss_particle_corrector</depend>
+  <depend>particle_initializer</depend>
+  <!--rviz plugin-->
+  <depend>rviz2_initialpose_plugins</depend>
+  <depend>rviz2_overlay_plugins</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -13,7 +13,7 @@
   <depend>sensor_msgs</depend>
   <depend>ublox_msgs</depend>
 
-  <depend>pcdless_common</depend>
+  <depend>yabloc_common</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

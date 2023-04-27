@@ -17,15 +17,15 @@
 #include "camera_particle_corrector/logit.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
-#include <pcdless_common/color.hpp>
-#include <pcdless_common/pose_conversions.hpp>
-#include <pcdless_common/pub_sub.hpp>
-#include <pcdless_common/timer.hpp>
-#include <pcdless_common/transform_line_segments.hpp>
+#include <yabloc_common/color.hpp>
+#include <yabloc_common/pose_conversions.hpp>
+#include <yabloc_common/pub_sub.hpp>
+#include <yabloc_common/timer.hpp>
+#include <yabloc_common/transform_line_segments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 FastCosSin fast_math;
 
@@ -53,7 +53,8 @@ CameraParticleCorrector::CameraParticleCorrector()
   auto on_ll2 = std::bind(&CameraParticleCorrector::on_ll2, this, _1);
   auto on_bounding_box = std::bind(&CameraParticleCorrector::on_bounding_box, this, _1);
   auto on_pose = std::bind(&CameraParticleCorrector::on_pose, this, _1);
-  sub_line_segments_cloud_ = create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
+  sub_line_segments_cloud_ =
+    create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
   sub_pose_ = create_subscription<PoseStamped>("pose", 10, on_pose);
@@ -162,8 +163,10 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
   if (publish_weighted_particles) {
     for (auto & particle : weighted_particles.particles) {
       Sophus::SE3f transform = common::pose_to_se3(particle.pose);
-      LineSegments transformed_line_segments = common::transform_line_segments(line_segments_cloud, transform);
-      LineSegments transformed_iffy_line_segments = common::transform_line_segments(iffy_line_segments_cloud, transform);
+      LineSegments transformed_line_segments =
+        common::transform_line_segments(line_segments_cloud, transform);
+      LineSegments transformed_iffy_line_segments =
+        common::transform_line_segments(iffy_line_segments_cloud, transform);
       transformed_line_segments += transformed_iffy_line_segments;
 
       float logit = compute_logit(transformed_line_segments, transform.translation());
@@ -183,10 +186,11 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
     Pose meaned_pose = mean_pose(weighted_particles);
     Sophus::SE3f transform = common::pose_to_se3(meaned_pose);
 
-    pcl::PointCloud<pcl::PointXYZI> cloud =
-      evaluate_cloud(common::transform_line_segments(line_segments_cloud, transform), transform.translation());
+    pcl::PointCloud<pcl::PointXYZI> cloud = evaluate_cloud(
+      common::transform_line_segments(line_segments_cloud, transform), transform.translation());
     pcl::PointCloud<pcl::PointXYZI> iffy_cloud = evaluate_cloud(
-      common::transform_line_segments(iffy_line_segments_cloud, transform), transform.translation());
+      common::transform_line_segments(iffy_line_segments_cloud, transform),
+      transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud2;
@@ -209,7 +213,8 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
     }
 
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, line_segments_msg.header.stamp);
-    common::publish_cloud(*pub_scored_posteriori_cloud_, rgb_cloud2, line_segments_msg.header.stamp);
+    common::publish_cloud(
+      *pub_scored_posteriori_cloud_, rgb_cloud2, line_segments_msg.header.stamp);
   }
 
   if (timer.milli_seconds() > 80) {
@@ -311,4 +316,4 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
   }
   return cloud;
 }
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter

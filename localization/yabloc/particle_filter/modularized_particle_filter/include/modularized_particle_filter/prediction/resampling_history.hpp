@@ -19,7 +19,7 @@
 #include <numeric>
 #include <vector>
 
-namespace pcdless::modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 class ResamplingHistory
 {
@@ -69,6 +69,6 @@ private:
   std::vector<std::vector<int>> resampling_history_;
 };
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace yabloc::modularized_particle_filter
 
 #endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_

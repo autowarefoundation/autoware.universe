@@ -19,7 +19,7 @@
 
 #include <set>
 
-namespace pcdless::graph_segment
+namespace yabloc::graph_segment
 {
 class SimilarAreaSearcher
 {
@@ -37,4 +37,4 @@ private:
   const float similarity_score_threshold_;
   rclcpp::Logger logger_;
 };
-}  // namespace pcdless::graph_segment
+}  // namespace yabloc::graph_segment

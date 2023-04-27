@@ -24,7 +24,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace pcdless::ll2_decomposer
+namespace yabloc::ll2_decomposer
 {
 class Ll2Decomposer : public rclcpp::Node
 {
@@ -72,4 +72,4 @@ private:
 
   void publish_additional_marker(const lanelet::LaneletMapPtr & lanelet_map);
 };
-}  // namespace pcdless::ll2_decomposer
+}  // namespace yabloc::ll2_decomposer

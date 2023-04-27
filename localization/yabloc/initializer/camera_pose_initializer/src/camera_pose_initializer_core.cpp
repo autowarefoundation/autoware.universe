@@ -23,7 +23,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace pcdless
+namespace yabloc
 {
 CameraPoseInitializer::CameraPoseInitializer()
 : Node("camera_pose_initializer"), angle_resolution_{declare_parameter("angle_resolution", 30)}
@@ -50,7 +50,7 @@ CameraPoseInitializer::CameraPoseInitializer()
 
   // Server
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
-  align_server_ = create_service<RequestPoseAlignment>("pcdless_align_srv", on_service);
+  align_server_ = create_service<RequestPoseAlignment>("yabloc_align_srv", on_service);
 
   using namespace std::chrono_literals;
   while (!ground_client_->wait_for_service(1s) && rclcpp::ok()) {
@@ -236,4 +236,4 @@ CameraPoseInitializer::PoseCovStamped CameraPoseInitializer::create_rectified_in
   return msg;
 }
 
-}  // namespace pcdless
+}  // namespace yabloc

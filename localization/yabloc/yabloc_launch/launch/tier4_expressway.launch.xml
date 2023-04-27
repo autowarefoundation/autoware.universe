@@ -1,0 +1,20 @@
+<launch>
+    <arg name="standalone" default="true" description="Set to true if not connected to Autoware's P/C."/>
+
+    <include file="$(find-pkg-share yabloc_launch)/launch/yabloc.launch.xml">
+        <arg name="standalone" value="$(var standalone)"/>
+
+        <arg name="min_segment_length" value="0.5"/>
+        <arg name="max_segment_distance" value="30.0"/>
+        <arg name="ignore_less_than_float" value="true"/>
+
+        <arg name="static_linear_covariance" value="0.25"/>
+        <arg name="static_angular_covariance" value="0.0010"/>
+        <arg name="static_scale_factor" value="1.015"/>
+        <arg name="pickup_additional_graph_segment" value="false"/>  <!-- This feature is useless on expressways -->
+        <arg name="gnss_mahalanobis_distance_threshold" value="40.0"/>  <!-- The longitudinal drift grows larger in expressway tunnels -->
+
+        <arg name="road_marking_labels" value="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
+        <arg name="sign_board_labels" value="[sign-board]"/>
+    </include>
+</launch>

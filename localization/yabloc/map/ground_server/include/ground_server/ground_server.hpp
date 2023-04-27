@@ -16,8 +16,8 @@
 #include "ground_server/filter/low_pass_filter.hpp"
 #include "ground_server/filter/moving_averaging.hpp"
 
-#include <pcdless_common/ground_plane.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <yabloc_common/ground_plane.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -35,7 +35,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace pcdless::ground_server
+namespace yabloc::ground_server
 {
 class GroundServer : public rclcpp::Node
 {
@@ -105,4 +105,4 @@ private:
   void publish_marker(const GroundPlane & plane);
 };
 
-}  // namespace pcdless::ground_server
+}  // namespace yabloc::ground_server

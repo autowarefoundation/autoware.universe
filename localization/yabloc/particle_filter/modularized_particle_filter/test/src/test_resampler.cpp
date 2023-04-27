@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 
-namespace mpf = pcdless::modularized_particle_filter;
+namespace mpf = yabloc::modularized_particle_filter;
 using Particle = modularized_particle_filter_msgs::msg::Particle;
 using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
 

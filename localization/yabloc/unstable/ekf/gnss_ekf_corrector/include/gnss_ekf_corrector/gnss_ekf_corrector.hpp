@@ -24,7 +24,7 @@
 #include <ublox_msgs/msg/nav_pvt.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace pcdless::ekf_corrector
+namespace yabloc::ekf_corrector
 {
 class GnssEkfCorrector : public rclcpp::Node
 {
@@ -53,4 +53,4 @@ private:
   void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
   void publish_marker(const Eigen::Vector3f & position, bool fixed);
 };
-}  // namespace pcdless::ekf_corrector
+}  // namespace yabloc::ekf_corrector
