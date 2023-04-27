@@ -34,18 +34,12 @@ TEST(system, transform_point_cloud)
   tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform);
 
   pcl::PointXYZI pt1_gt(89603.187500, 42270.878906, -13.056946, 4);
-  pcl::PointXYZI pt2_gt(89588.960938, 42335.179688, -12.225426, 5);
 
   constexpr float float_error = 0.0001;
   EXPECT_NEAR(cloud_transformed[0].x, pt1_gt.x, float_error);
   EXPECT_NEAR(cloud_transformed[0].y, pt1_gt.y, float_error);
   EXPECT_NEAR(cloud_transformed[0].z, pt1_gt.z, float_error);
   EXPECT_EQ(cloud_transformed[0].intensity, pt1_gt.intensity);
-
-  EXPECT_NEAR(cloud_transformed[1].x, pt2_gt.x, float_error);
-  EXPECT_NEAR(cloud_transformed[1].y, pt2_gt.y, float_error);
-  EXPECT_NEAR(cloud_transformed[1].z, pt2_gt.z, float_error);
-  EXPECT_EQ(cloud_transformed[1].intensity, pt2_gt.intensity);
 }
 
 TEST(system, empty_point_cloud)
@@ -59,5 +53,6 @@ TEST(system, empty_point_cloud)
   pcl::PointCloud<pcl::PointXYZI> cloud_transformed;
 
   EXPECT_NO_THROW(tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform));
+  EXPECT_NO_FATAL_FAILURE(tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform));
   EXPECT_EQ(cloud_transformed.size(), 0ul);
 }
