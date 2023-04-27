@@ -110,6 +110,13 @@ ModuleStatus LaneChangeInterface::updateState()
   return current_state_;
 }
 
+void LaneChangeInterface::updateData()
+{
+  module_type_->setPreviousModulePaths(
+    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  module_type_->updateSpecialData();
+}
+
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
   resetPathCandidate();
@@ -308,6 +315,47 @@ void LaneChangeInterface::acceptVisitor(const std::shared_ptr<SceneModuleVisitor
 void SceneModuleVisitor::visitLaneChangeInterface(const LaneChangeInterface * interface) const
 {
   lane_change_visitor_ = interface->get_debug_msg_array();
+}
+
+AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
+  const std::string & name, rclcpp::Node & node,
+  const std::shared_ptr<LaneChangeParameters> & parameters,
+  const std::shared_ptr<AvoidanceParameters> & avoidance_parameters,
+  const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters)
+: LaneChangeInterface{
+    name, node, parameters, createRTCInterfaceMap(node, name, {""}),
+    std::make_unique<AvoidanceByLaneChange>(
+      parameters, avoidance_parameters, avoidance_by_lane_change_parameters)}
+{
+}
+
+ModuleStatus AvoidanceByLaneChangeInterface::updateState()
+{
+  if (!module_type_->isValidPath()) {
+    current_state_ = ModuleStatus::FAILURE;
+    return current_state_;
+  }
+
+  if (isWaitingApproval()) {
+  }
+
+  if (module_type_->isAbortState()) {
+    current_state_ = ModuleStatus::RUNNING;
+    return current_state_;
+  }
+
+  if (module_type_->isCancelConditionSatisfied()) {
+    current_state_ = ModuleStatus::FAILURE;
+    return current_state_;
+  }
+
+  if (module_type_->hasFinishedLaneChange()) {
+    current_state_ = ModuleStatus::SUCCESS;
+    return current_state_;
+  }
+
+  current_state_ = ModuleStatus::RUNNING;
+  return current_state_;
 }
 
 LaneChangeBTInterface::LaneChangeBTInterface(

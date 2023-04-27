@@ -62,4 +62,24 @@ void LaneChangeModuleManager::updateModuleParams(
   });
 }
 
+AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
+  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
+  std::shared_ptr<LaneChangeParameters> parameters,
+  std::shared_ptr<AvoidanceParameters> avoidance_parameters,
+  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters)
+: LaneChangeModuleManager(
+    node, name, config, std::move(parameters), Direction::NONE,
+    LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE),
+  avoidance_parameters_(std::move(avoidance_parameters)),
+  avoidance_by_lane_change_parameters_(std::move(avoidance_by_lane_change_parameters))
+{
+}
+
+std::shared_ptr<SceneModuleInterface>
+AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
+{
+  return std::make_shared<AvoidanceByLaneChangeInterface>(
+    name_, *node_, parameters_, avoidance_parameters_, avoidance_by_lane_change_parameters_);
+}
+
 }  // namespace behavior_path_planner
