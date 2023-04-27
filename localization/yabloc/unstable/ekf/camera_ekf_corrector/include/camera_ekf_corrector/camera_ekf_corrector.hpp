@@ -62,7 +62,7 @@ private:
   HierarchicalCostMap cost_map_;
 
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_bounding_box_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_line_segments_cloud_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
@@ -80,14 +80,14 @@ private:
   Float32 latest_height_;
   bool enable_switch_{false};
 
-  void on_lsd(const PointCloud2 & msg);
+  void on_line_segments(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
   void on_bounding_box(const PointCloud2 & msg);
   void on_pose_cov(const PoseCovStamped & msg);
 
-  std::pair<LineSegments, LineSegments> split_linesegments(const PointCloud2 & msg);
+  std::pair<LineSegments, LineSegments> split_line_segments(const PointCloud2 & msg);
 
-  float compute_logit(const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+  float compute_logit(const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position);
 
   std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
   std::optional<PoseCovStamped> get_synchronized_pose(const rclcpp::Time & stamp);
@@ -95,10 +95,10 @@ private:
   void publish_visualize_markers(const ParticleArray & particles);
 
   PoseCovStamped estimate_pose_with_covariance(
-    const PoseCovStamped & init, const LineSegments & lsd_cloud,
-    const LineSegments & iffy_lsd_cloud);
+    const PoseCovStamped & init, const LineSegments & line_segments_cloud,
+    const LineSegments & iffy_line_segments_cloud);
 
   pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
-    const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+    const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position);
 };
 }  // namespace pcdless::ekf_corrector

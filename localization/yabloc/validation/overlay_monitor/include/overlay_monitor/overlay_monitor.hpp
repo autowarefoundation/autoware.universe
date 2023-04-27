@@ -57,7 +57,7 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_line_segments_cloud_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_sign_board_;
   rclcpp::Subscription<Float32Array>::SharedPtr sub_ground_plane_;
 
@@ -70,12 +70,12 @@ private:
 
   void on_info(const CameraInfo & msg);
   void on_image(const Image & msg);
-  void on_lsd(const PointCloud2 & msg);
+  void on_line_segments(const PointCloud2 & msg);
 
   void draw_overlay(
     const cv::Mat & image, const std::optional<Pose> & pose, const rclcpp::Time & stamp);
   void draw_overlay_line_segments(
-    cv::Mat & image, const Pose & pose, const LineSegments & linesegments);
+    cv::Mat & image, const Pose & pose, const LineSegments & line_segments);
 
   void make_vis_marker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };

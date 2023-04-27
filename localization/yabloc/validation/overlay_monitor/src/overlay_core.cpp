@@ -35,14 +35,14 @@ Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{
   // Subscriber
   auto cb_info = std::bind(&Overlay::on_info, this, _1);
   auto cb_image = std::bind(&Overlay::on_image, this, _1);
-  auto cb_lsd = std::bind(&Overlay::on_lsd, this, _1);
+  auto cb_line_segments = std::bind(&Overlay::on_line_segments, this, _1);
   auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
   auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
 
   sub_ground_plane_ = create_subscription<Float32Array>("ground", 10, cb_ground);
   sub_image_ = create_subscription<Image>("src_image", 10, cb_image);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, cb_pose);
-  sub_lsd_ = create_subscription<PointCloud2>("projected_lsd_cloud", 10, cb_lsd);
+  sub_line_segments_cloud_ = create_subscription<PointCloud2>("projected_line_segments_cloud", 10, cb_line_segments);
   sub_info_ = create_subscription<CameraInfo>("src_info", 10, cb_info);
   sub_sign_board_ = create_subscription<PointCloud2>(
     "ll2_sign_board", 10,
@@ -87,7 +87,7 @@ void Overlay::on_image(const sensor_msgs::msg::Image & msg)
   draw_overlay(image, synched_pose, stamp);
 }
 
-void Overlay::on_lsd(const PointCloud2 & msg)
+void Overlay::on_line_segments(const PointCloud2 & msg)
 {
   const rclcpp::Time stamp = msg.header.stamp;
 
@@ -107,9 +107,9 @@ void Overlay::on_lsd(const PointCloud2 & msg)
 
   std::vector<int> a;
 
-  LineSegments lsd_cloud;
-  pcl::fromROSMsg(msg, lsd_cloud);
-  make_vis_marker(lsd_cloud, synched_pose.pose, stamp);
+  LineSegments line_segments_cloud;
+  pcl::fromROSMsg(msg, line_segments_cloud);
+  make_vis_marker(line_segments_cloud, synched_pose.pose, stamp);
 }
 
 void Overlay::draw_overlay(

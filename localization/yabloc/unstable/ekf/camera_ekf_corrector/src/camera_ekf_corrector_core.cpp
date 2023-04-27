@@ -22,7 +22,7 @@
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
 #include <pcdless_common/timer.hpp>
-#include <pcdless_common/transform_linesegments.hpp>
+#include <pcdless_common/transform_line_segments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -47,11 +47,11 @@ CameraEkfCorrector::CameraEkfCorrector()
   pub_scored_cloud_ = create_publisher<PointCloud2>("debug_scored_cloud", 10);
 
   // Subscription
-  auto on_lsd = std::bind(&CameraEkfCorrector::on_lsd, this, _1);
+  auto on_line_segments = std::bind(&CameraEkfCorrector::on_line_segments, this, _1);
   auto on_ll2 = std::bind(&CameraEkfCorrector::on_ll2, this, _1);
   auto on_bounding_box = std::bind(&CameraEkfCorrector::on_bounding_box, this, _1);
   auto on_pose_cov = std::bind(&CameraEkfCorrector::on_pose_cov, this, _1);
-  sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
+  sub_line_segments_cloud_ = create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
   sub_pose_cov_ =
@@ -76,13 +76,13 @@ void CameraEkfCorrector::on_bounding_box(const PointCloud2 & msg)
 }
 
 std::pair<CameraEkfCorrector::LineSegments, CameraEkfCorrector::LineSegments>
-CameraEkfCorrector::split_linesegments(const PointCloud2 & msg)
+CameraEkfCorrector::split_line_segments(const PointCloud2 & msg)
 {
-  LineSegments all_lsd_cloud;
-  pcl::fromROSMsg(msg, all_lsd_cloud);
+  LineSegments all_line_segments_cloud;
+  pcl::fromROSMsg(msg, all_line_segments_cloud);
   LineSegments reliable_cloud, iffy_cloud;
   {
-    for (const auto & p : all_lsd_cloud) {
+    for (const auto & p : all_line_segments_cloud) {
       if (p.label == 0)
         iffy_cloud.push_back(p);
       else
@@ -137,14 +137,14 @@ std::optional<CameraEkfCorrector::PoseCovStamped> CameraEkfCorrector::get_synchr
   return *std::min_element(pose_buffer_.begin(), pose_buffer_.end(), comp);
 }
 
-void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
+void CameraEkfCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
 {
   using namespace std::literals::chrono_literals;
   common::Timer timer;
 
   if (pose_buffer_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(), "pose_buffer is empty so skip on_lsd()");
+      get_logger(), *get_clock(), (1000ms).count(), "pose_buffer is empty so skip on_line_segments()");
     return;
   }
 
@@ -154,7 +154,7 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   //   return;
   // }
 
-  const rclcpp::Time stamp = lsd_msg.header.stamp;
+  const rclcpp::Time stamp = line_segments_msg.header.stamp;
   auto opt_synched_pose = get_synchronized_pose(stamp);
 
   // TEMP:
@@ -166,8 +166,8 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
     return;
   }
 
-  auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
-  // iffy_lsd_cloud.clear(); // TODO:
+  auto [line_segments_cloud, iffy_line_segments_cloud] = split_line_segments(line_segments_msg);
+  // iffy_line_segments_cloud.clear(); // TODO:
 
   // cost_map_.set_height(opt_synched_pose->pose.pose.position.z);
 
@@ -175,12 +175,12 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   if (opt_synched_pose->pose.covariance[0] > 1000) return;
 
   PoseCovStamped estimated_pose =
-    estimate_pose_with_covariance(opt_synched_pose.value(), lsd_cloud, iffy_lsd_cloud);
+    estimate_pose_with_covariance(opt_synched_pose.value(), line_segments_cloud, iffy_line_segments_cloud);
 
   {
     Sophus::SE3f transform = common::pose_to_se3(opt_synched_pose->pose.pose);
     pcl::PointCloud<pcl::PointXYZI> cloud =
-      evaluate_cloud(common::transform_linesegments(lsd_cloud, transform), transform.translation());
+      evaluate_cloud(common::transform_line_segments(line_segments_cloud, transform), transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
 
@@ -190,7 +190,7 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
       rgb.rgba = common::color_scale::blue_red(p.intensity);
       rgb_cloud.push_back(rgb);
     }
-    common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
+    common::publish_cloud(*pub_scored_cloud_, rgb_cloud, line_segments_msg.header.stamp);
   }
 
   // NOTE: Skip weighting if travel distance is too small
@@ -211,14 +211,14 @@ void CameraEkfCorrector::on_lsd(const PointCloud2 & lsd_msg)
   cost_map_.erase_obsolete();  // NOTE: Don't foreget erasing
 
   if (timer.milli_seconds() > 80) {
-    RCLCPP_WARN_STREAM(get_logger(), "on_lsd: " << timer);
+    RCLCPP_WARN_STREAM(get_logger(), "on_line_segments: " << timer);
   } else {
-    RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
+    RCLCPP_INFO_STREAM(get_logger(), "on_line_segments: " << timer);
   }
 }
 
 CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covariance(
-  const PoseCovStamped & init, const LineSegments & lsd_cloud, const LineSegments & iffy_lsd_cloud)
+  const PoseCovStamped & init, const LineSegments & line_segments_cloud, const LineSegments & iffy_line_segments_cloud)
 {
   ParticleArray particles;
 
@@ -257,11 +257,11 @@ CameraEkfCorrector::PoseCovStamped CameraEkfCorrector::estimate_pose_with_covari
   // Find weights for every pose candidates
   for (auto & particle : particles.particles) {
     Sophus::SE3f transform = common::pose_to_se3(particle.pose);
-    LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
-    LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
-    transformed_lsd += transformed_iffy_lsd;
+    LineSegments transformed_line_segments = common::transform_line_segments(line_segments_cloud, transform);
+    LineSegments transformed_iffy_line_segments = common::transform_line_segments(iffy_line_segments_cloud, transform);
+    transformed_line_segments += transformed_iffy_line_segments;
 
-    float logit = compute_logit(transformed_lsd, transform.translation());
+    float logit = compute_logit(transformed_line_segments, transform.translation());
     particle.weight = logit_to_prob(logit, logit_gain_);
   }
 
@@ -361,10 +361,10 @@ float abs_cos(const Eigen::Vector3f & t, float deg)
 }
 
 float CameraEkfCorrector::compute_logit(
-  const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
+  const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position)
 {
   float logit = 0;
-  for (const LineSegment & pn : lsd_cloud) {
+  for (const LineSegment & pn : line_segments_cloud) {
     const Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     const float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 
@@ -392,10 +392,10 @@ float CameraEkfCorrector::compute_logit(
 }
 
 pcl::PointCloud<pcl::PointXYZI> CameraEkfCorrector::evaluate_cloud(
-  const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
+  const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position)
 {
   pcl::PointCloud<pcl::PointXYZI> cloud;
-  for (const LineSegment & pn : lsd_cloud) {
+  for (const LineSegment & pn : line_segments_cloud) {
     Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 

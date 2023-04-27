@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pcdless_common/transform_linesegments.hpp"
+#include "pcdless_common/transform_line_segments.hpp"
 
 namespace pcdless::common
 {
-pcl::PointCloud<pcl::PointXYZLNormal> transform_linesegments(
+pcl::PointCloud<pcl::PointXYZLNormal> transform_line_segments(
   const pcl::PointCloud<pcl::PointXYZLNormal> & src, const Sophus::SE3f & transform)
 {
   pcl::PointCloud<pcl::PointXYZLNormal> dst;
@@ -33,7 +33,7 @@ pcl::PointCloud<pcl::PointXYZLNormal> transform_linesegments(
   return dst;
 }
 
-pcl::PointCloud<pcl::PointNormal> transform_linesegments(
+pcl::PointCloud<pcl::PointNormal> transform_line_segments(
   const pcl::PointCloud<pcl::PointNormal> & src, const Sophus::SE3f & transform)
 {
   pcl::PointCloud<pcl::PointNormal> dst;

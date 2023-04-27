@@ -31,7 +31,7 @@ SegmentFilter::SegmentFilter()
   max_segment_distance_(declare_parameter<float>("max_segment_distance", -1)),
   max_lateral_distance_(declare_parameter<float>("max_lateral_distance", -1)),
   info_(this),
-  synchro_subscriber_(this, "lsd_cloud", "mask_image"),
+  synchro_subscriber_(this, "line_segments_cloud", "mask_image"),
   tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
@@ -39,7 +39,7 @@ SegmentFilter::SegmentFilter()
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
   synchro_subscriber_.set_callback(std::move(cb));
 
-  pub_cloud_ = create_publisher<PointCloud2>("projected_lsd_cloud", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("projected_line_segments_cloud", 10);
   pub_image_ = create_publisher<Image>("projected_image", 10);
 }
 
@@ -80,7 +80,7 @@ bool SegmentFilter::define_project_func()
   return true;
 }
 
-void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_msg)
+void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image & segment_msg)
 {
   if (!define_project_func()) {
     using namespace std::literals::chrono_literals;
@@ -89,16 +89,16 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
     return;
   }
 
-  const rclcpp::Time stamp = lsd_msg.header.stamp;
+  const rclcpp::Time stamp = line_segments_msg.header.stamp;
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
+  pcl::PointCloud<pcl::PointNormal>::Ptr line_segments_cloud{new pcl::PointCloud<pcl::PointNormal>()};
   cv::Mat mask_image = common::decompress_to_cv_mat(segment_msg);
-  pcl::fromROSMsg(lsd_msg, *lsd);
+  pcl::fromROSMsg(line_segments_msg, *line_segments_cloud);
 
-  const std::set<int> indices = filt_by_mask(mask_image, *lsd);
+  const std::set<int> indices = filt_by_mask(mask_image, *line_segments_cloud);
 
-  pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*lsd, indices);
-  pcl::PointCloud<pcl::PointNormal> invalid_edges = project_lines(*lsd, indices, true);
+  pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*line_segments_cloud, indices);
+  pcl::PointCloud<pcl::PointNormal> invalid_edges = project_lines(*line_segments_cloud, indices, true);
 
   // Line segments
   {

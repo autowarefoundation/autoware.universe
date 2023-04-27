@@ -42,7 +42,7 @@ RefineOptimizer::RefineOptimizer()
 
   auto cb_synchro = std::bind(&RefineOptimizer::imageAndLsdCallback, this, _1, _2);
   using MySynchroSub = SynchroSubscriber<Image, PointCloud2>;
-  sub_synchro_ = std::make_shared<MySynchroSub>(this, "/src_image", "/lsd_cloud");
+  sub_synchro_ = std::make_shared<MySynchroSub>(this, "/src_image", "/line_segments_cloud");
   sub_synchro_->setCallback(cb_synchro);
 
   // Subscriber
@@ -75,9 +75,9 @@ void RefineOptimizer::infoCallback(const CameraInfo & msg)
   camera_extrinsic_ = tf_subscriber_.se3f(info_->header.frame_id, "base_link");
 }
 
-void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCloud2 & lsd_msg)
+void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCloud2 & line_segments_msg)
 {
-  const rclcpp::Time stamp = lsd_msg.header.stamp;
+  const rclcpp::Time stamp = line_segments_msg.header.stamp;
 
   // Search synchronized pose
   float min_dt = std::numeric_limits<float>::max();
@@ -92,13 +92,13 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   }
   if (min_dt > 0.1) return;
 
-  LineSegments lsd;
-  pcl::fromROSMsg(lsd_msg, lsd);
-  cv::Mat cost_image = makeCostMap(lsd);
+  LineSegments line_segments;
+  pcl::fromROSMsg(line_segments_msg, line_segments);
+  cv::Mat cost_image = makeCostMap(line_segments);
 
   Sophus::SE3f raw_pose = vml_common::pose2Se3(synched_pose.pose);
-  auto linesegments = extractNaerLineSegments(raw_pose, ll2_cloud_);
-  pcl::PointCloud<pcl::PointXYZ> samples = sampleUniformlyOnImage(raw_pose, linesegments);
+  auto line_segments = extractNaerLineSegments(raw_pose, ll2_cloud_);
+  pcl::PointCloud<pcl::PointXYZ> samples = sampleUniformlyOnImage(raw_pose, line_segments);
 
   Sophus::SE3f opt_pose = raw_pose;
   std::string summary_text;
@@ -118,7 +118,7 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     rgb_image = vml_common::decompress2CvMat(image_msg);
   }
   drawOverlayPoints(rgb_image, raw_pose, samples, cv::Scalar::all(0));
-  drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(255, 255, 255));
+  drawOverlayLineSegments(rgb_image, opt_pose, line_segments, cv::Scalar(255, 255, 255));
 
   addText(summary_text, rgb_image);
 
@@ -200,7 +200,7 @@ void RefineOptimizer::drawOverlayPoints(
 }
 
 RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
-  const Sophus::SE3f & pose, const LineSegments & linesegments)
+  const Sophus::SE3f & pose, const LineSegments & line_segments)
 {
   // Compute distance between linesegment and pose.
   // Note that the linesegment may pass close to the pose even if both end points are far from pose.
@@ -227,7 +227,7 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
   };
 
   LineSegments near_linestrings;
-  for (const pcl::PointNormal & pn : linesegments) {
+  for (const pcl::PointNormal & pn : line_segments) {
     if (checkIntersection(pn)) {
       near_linestrings.push_back(pn);
     }
@@ -235,13 +235,13 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
   return near_linestrings;
 }
 
-cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
+cv::Mat RefineOptimizer::makeCostMap(LineSegments & line_segments)
 {
   const cv::Size size(info_->width, info_->height);
   cv::Mat image = 255 * cv::Mat::ones(size, CV_8UC1);
 
   auto cvPoint = [](const Eigen::Vector3f & p) -> cv::Point2f { return cv::Point2f(p.x(), p.y()); };
-  for (const auto pn : lsd) {
+  for (const auto pn : line_segments) {
     cv::Point2f from = cvPoint(pn.getVector3fMap());
     cv::Point2f to = cvPoint(pn.getNormalVector3fMap());
     cv::line(image, from, to, cv::Scalar::all(0), 1);
@@ -255,7 +255,7 @@ cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
 }
 
 pcl::PointCloud<pcl::PointXYZ> RefineOptimizer::sampleUniformlyOnImage(
-  const Sophus::SE3f & pose, const LineSegments & segments)
+  const Sophus::SE3f & pose, const LineSegments & line_segments)
 {
   Eigen::Matrix3f intrinsic =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
@@ -281,7 +281,7 @@ pcl::PointCloud<pcl::PointXYZ> RefineOptimizer::sampleUniformlyOnImage(
 
   std::unordered_set<size_t> already_occupied_pixels;
   pcl::PointCloud<pcl::PointXYZ> samples;
-  for (const pcl::PointNormal & pn : segments) {
+  for (const pcl::PointNormal & pn : line_segments) {
     const Eigen::Vector3f from = pn.getVector3fMap();
     const Eigen::Vector3f to = pn.getNormalVector3fMap();
     const Eigen::Vector3f t = (to - from).normalized();

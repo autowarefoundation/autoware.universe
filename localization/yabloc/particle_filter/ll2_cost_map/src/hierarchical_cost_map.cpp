@@ -110,7 +110,7 @@ void HierarchicalCostMap::build_map(const Area & area)
     return this->to_cv_point(area, p.topRows(2));
   };
 
-  // TODO: We can speed up by skipping too far linesegments
+  // TODO: We can speed up by skipping too far line_segments
   for (const auto pn : cloud_.value()) {
     if (height_) {
       if (std::abs(pn.z - *height_) > 4) continue;

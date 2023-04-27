@@ -43,10 +43,10 @@ public:
 
 private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
-  rclcpp::Publisher<Image>::SharedPtr pub_image_lsd_;
+  rclcpp::Publisher<Image>::SharedPtr pub_image_with_line_segments_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
 
-  cv::Ptr<cv::LineSegmentDetector> lsd_;
+  cv::Ptr<cv::LineSegmentDetector> line_segment_detector_;
 
   std::vector<cv::Mat> remove_too_outer_elements(
     const cv::Mat & lines, const cv::Size & size) const;

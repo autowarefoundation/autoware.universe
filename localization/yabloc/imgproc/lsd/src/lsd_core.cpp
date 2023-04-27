@@ -32,10 +32,10 @@ LineSegmentDetector::LineSegmentDetector() : Node("line_detector")
   sub_image_ = create_subscription<Image>("src_image", 10, cb_image);
 
   // Publisher
-  pub_image_lsd_ = create_publisher<Image>("lsd_image", 10);
-  pub_cloud_ = create_publisher<PointCloud2>("lsd_cloud", 10);
+  pub_image_with_line_segments_ = create_publisher<Image>("image_with_line_segments", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("line_segments_cloud", 10);
 
-  lsd_ = cv::createLineSegmentDetector(cv::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
+  line_segment_detector_ = cv::createLineSegmentDetector(cv::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
 }
 
 void LineSegmentDetector::on_image(const sensor_msgs::msg::Image & msg)
@@ -52,12 +52,12 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
   cv::Mat lines;
   {
     common::Timer timer;
-    lsd_->detect(gray_image, lines);
-    lsd_->drawSegments(gray_image, lines);
+    line_segment_detector_->detect(gray_image, lines);
+    line_segment_detector_->drawSegments(gray_image, lines);
     RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << timer);
   }
 
-  common::publish_image(*pub_image_lsd_, gray_image, stamp);
+  common::publish_image(*pub_image_with_line_segments_, gray_image, stamp);
 
   pcl::PointCloud<pcl::PointNormal> line_cloud;
   std::vector<cv::Mat> filtered_lines = remove_too_outer_elements(lines, image.size());

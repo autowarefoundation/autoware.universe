@@ -21,7 +21,7 @@
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
 #include <pcdless_common/timer.hpp>
-#include <pcdless_common/transform_linesegments.hpp>
+#include <pcdless_common/transform_line_segments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -49,11 +49,11 @@ CameraParticleCorrector::CameraParticleCorrector()
   pub_scored_posteriori_cloud_ = create_publisher<PointCloud2>("scored_post_cloud", 10);
 
   // Subscription
-  auto on_lsd = std::bind(&CameraParticleCorrector::on_lsd, this, _1);
+  auto on_line_segments = std::bind(&CameraParticleCorrector::on_line_segments, this, _1);
   auto on_ll2 = std::bind(&CameraParticleCorrector::on_ll2, this, _1);
   auto on_bounding_box = std::bind(&CameraParticleCorrector::on_bounding_box, this, _1);
   auto on_pose = std::bind(&CameraParticleCorrector::on_pose, this, _1);
-  sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
+  sub_line_segments_cloud_ = create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
   sub_pose_ = create_subscription<PoseStamped>("pose", 10, on_pose);
@@ -90,13 +90,13 @@ void CameraParticleCorrector::on_bounding_box(const PointCloud2 & msg)
 }
 
 std::pair<CameraParticleCorrector::LineSegments, CameraParticleCorrector::LineSegments>
-CameraParticleCorrector::split_linesegments(const PointCloud2 & msg)
+CameraParticleCorrector::split_line_segments(const PointCloud2 & msg)
 {
-  LineSegments all_lsd_cloud;
-  pcl::fromROSMsg(msg, all_lsd_cloud);
+  LineSegments all_line_segments_cloud;
+  pcl::fromROSMsg(msg, all_line_segments_cloud);
   LineSegments reliable_cloud, iffy_cloud;
   {
-    for (const auto & p : all_lsd_cloud) {
+    for (const auto & p : all_line_segments_cloud) {
       if (p.label == 0)
         iffy_cloud.push_back(p);
       else
@@ -124,10 +124,10 @@ CameraParticleCorrector::split_linesegments(const PointCloud2 & msg)
   return {reliable_cloud, good_cloud};
 }
 
-void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
+void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
 {
   common::Timer timer;
-  const rclcpp::Time stamp = lsd_msg.header.stamp;
+  const rclcpp::Time stamp = line_segments_msg.header.stamp;
   std::optional<ParticleArray> opt_array = this->get_synchronized_particle_array(stamp);
   if (!opt_array.has_value()) {
     return;
@@ -139,7 +139,7 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     RCLCPP_WARN_STREAM(get_logger(), text << dt.seconds());
   }
 
-  auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
+  auto [line_segments_cloud, iffy_line_segments_cloud] = split_line_segments(line_segments_msg);
   ParticleArray weighted_particles = opt_array.value();
 
   bool publish_weighted_particles = true;
@@ -162,11 +162,11 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   if (publish_weighted_particles) {
     for (auto & particle : weighted_particles.particles) {
       Sophus::SE3f transform = common::pose_to_se3(particle.pose);
-      LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
-      LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
-      transformed_lsd += transformed_iffy_lsd;
+      LineSegments transformed_line_segments = common::transform_line_segments(line_segments_cloud, transform);
+      LineSegments transformed_iffy_line_segments = common::transform_line_segments(iffy_line_segments_cloud, transform);
+      transformed_line_segments += transformed_iffy_line_segments;
 
-      float logit = compute_logit(transformed_lsd, transform.translation());
+      float logit = compute_logit(transformed_line_segments, transform.translation());
       particle.weight = logit_to_prob(logit, 0.01f);
     }
 
@@ -184,9 +184,9 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     Sophus::SE3f transform = common::pose_to_se3(meaned_pose);
 
     pcl::PointCloud<pcl::PointXYZI> cloud =
-      evaluate_cloud(common::transform_linesegments(lsd_cloud, transform), transform.translation());
+      evaluate_cloud(common::transform_line_segments(line_segments_cloud, transform), transform.translation());
     pcl::PointCloud<pcl::PointXYZI> iffy_cloud = evaluate_cloud(
-      common::transform_linesegments(iffy_lsd_cloud, transform), transform.translation());
+      common::transform_line_segments(iffy_line_segments_cloud, transform), transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud2;
@@ -208,14 +208,14 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       rgb_cloud2.push_back(rgb);
     }
 
-    common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
-    common::publish_cloud(*pub_scored_posteriori_cloud_, rgb_cloud2, lsd_msg.header.stamp);
+    common::publish_cloud(*pub_scored_cloud_, rgb_cloud, line_segments_msg.header.stamp);
+    common::publish_cloud(*pub_scored_posteriori_cloud_, rgb_cloud2, line_segments_msg.header.stamp);
   }
 
   if (timer.milli_seconds() > 80) {
-    RCLCPP_WARN_STREAM(get_logger(), "on_lsd: " << timer);
+    RCLCPP_WARN_STREAM(get_logger(), "on_line_segments: " << timer);
   } else {
-    RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
+    RCLCPP_INFO_STREAM(get_logger(), "on_line_segments: " << timer);
   }
 
   // Publish status as string
@@ -255,10 +255,10 @@ float abs_cos(const Eigen::Vector3f & t, float deg)
 }
 
 float CameraParticleCorrector::compute_logit(
-  const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
+  const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position)
 {
   float logit = 0;
-  for (const LineSegment & pn : lsd_cloud) {
+  for (const LineSegment & pn : line_segments_cloud) {
     const Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     const float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 
@@ -286,10 +286,10 @@ float CameraParticleCorrector::compute_logit(
 }
 
 pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
-  const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
+  const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position)
 {
   pcl::PointCloud<pcl::PointXYZI> cloud;
-  for (const LineSegment & pn : lsd_cloud) {
+  for (const LineSegment & pn : line_segments_cloud) {
     Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 

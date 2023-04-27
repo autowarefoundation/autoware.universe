@@ -35,15 +35,15 @@
     </node>
 
     <!-- line segment detector -->
-    <arg name="output_lsd_image" default="lsd_image"/>
-    <arg name="output_lsd_cloud" default="lsd_cloud"/>
+    <arg name="output_image_with_line_segments" default="image_with_line_segments"/>
+    <arg name="output_line_segments_cloud" default="line_segments_cloud"/>
 
     <node name="lsd" pkg="lsd" exec="lsd_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="src_image" to="$(var resized_image)"/>
 
-        <remap from="lsd_image" to="$(var output_lsd_image)"/>
-        <remap from="lsd_cloud" to="$(var output_lsd_cloud)"/>
+        <remap from="image_with_line_segments" to="$(var output_image_with_line_segments)"/>
+        <remap from="line_segments_cloud" to="$(var output_line_segments_cloud)"/>
     </node>
 
     <!-- graph based segmentation -->
@@ -59,8 +59,8 @@
 
     <!-- segment fitler -->
     <arg name="input_graph_segmented" default="graph_segmented"/>
-    <arg name="input_lsd_cloud" default="lsd_cloud"/>
-    <arg name="output_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
+    <arg name="input_line_segments_cloud" default="line_segments_cloud"/>
+    <arg name="output_projected_line_segments_cloud" default="/localization/imgproc/projected_line_segments_cloud"/>
     <arg name="output_projected_image" default="/localization/imgproc/projected_image"/>
     <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
         <param name="min_segment_length" value="$(var min_segment_length)"/>
@@ -69,8 +69,8 @@
 
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="graph_segmented" to="$(var input_graph_segmented)"/>
-        <remap from="lsd_cloud" to="$(var input_lsd_cloud)"/>
-        <remap from="projected_lsd_cloud" to="$(var output_projected_lsd_cloud)"/>
+        <remap from="line_segments_cloud" to="$(var input_line_segments_cloud)"/>
+        <remap from="projected_line_segments_cloud" to="$(var output_projected_line_segments_cloud)"/>
         <remap from="projected_image" to="$(var output_projected_image)"/>
     </node>
 

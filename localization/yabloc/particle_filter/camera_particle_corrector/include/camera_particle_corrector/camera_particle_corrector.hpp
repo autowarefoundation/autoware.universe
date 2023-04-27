@@ -54,7 +54,7 @@ private:
   HierarchicalCostMap cost_map_;
 
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_bounding_box_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_line_segments_cloud_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
   rclcpp::Service<SetBool>::SharedPtr switch_service_;
@@ -73,19 +73,19 @@ private:
 
   bool enable_switch_{true};
 
-  void on_lsd(const PointCloud2 & msg);
+  void on_line_segments(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
   void on_bounding_box(const PointCloud2 & msg);
   void on_pose(const PoseStamped & msg);
   void on_timer();
   void on_service(SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response);
 
-  std::pair<LineSegments, LineSegments> split_linesegments(const PointCloud2 & msg);
+  std::pair<LineSegments, LineSegments> split_line_segments(const PointCloud2 & msg);
 
-  float compute_logit(const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+  float compute_logit(const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position);
 
   pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
-    const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+    const LineSegments & line_segments_cloud, const Eigen::Vector3f & self_position);
 
   std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
 };

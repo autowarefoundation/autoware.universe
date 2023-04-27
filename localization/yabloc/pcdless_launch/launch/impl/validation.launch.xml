@@ -1,7 +1,7 @@
 <launch>
     <arg name="input_overlayed_pose" description=""/>
     <let name="input_ground" value="/localization/map/ground"/>
-    <let name="input_projected_lsd_cloud" value="/localization/imgproc/projected_lsd_cloud"/>
+    <let name="input_projected_line_segments_cloud" value="/localization/imgproc/projected_line_segments_cloud"/>
     <let name="input_ll2_sign_board" value="/localization/map/ll2_sign_board"/>
     <let name="input_ll2_road_marking" value="/localization/map/ll2_road_marking"/>
     <arg name="resized_image" description=""/>
@@ -14,7 +14,7 @@
         <remap from="particle_pose" to="$(var input_overlayed_pose)"/>
 
         <remap from="ground" to="$(var input_ground)"/>
-        <remap from="projected_lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
+        <remap from="projected_line_segments_cloud" to="$(var input_projected_line_segments_cloud)"/>
         <remap from="ll2_sign_board" to="$(var input_ll2_sign_board)"/>
         <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
     </node>

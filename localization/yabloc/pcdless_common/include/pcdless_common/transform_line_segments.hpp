@@ -20,9 +20,9 @@
 
 namespace pcdless::common
 {
-pcl::PointCloud<pcl::PointXYZLNormal> transform_linesegments(
+pcl::PointCloud<pcl::PointXYZLNormal> transform_line_segments(
   const pcl::PointCloud<pcl::PointXYZLNormal> & src, const Sophus::SE3f & transform);
 
-pcl::PointCloud<pcl::PointNormal> transform_linesegments(
+pcl::PointCloud<pcl::PointNormal> transform_line_segments(
   const pcl::PointCloud<pcl::PointNormal> & src, const Sophus::SE3f & transform);
 }  // namespace pcdless::common

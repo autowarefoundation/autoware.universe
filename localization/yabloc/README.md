@@ -199,8 +199,8 @@ ros2 run tf2_ros static_transform_publisher \
 |  `/localicazation/validation/overlay_image`      | `sensor_msgs/msg/Image`              | really nice image for demonstration  |
 |  `/localicazation/pf/cost_map_image`             | `sensor_msgs/msg/Image`              | visualization of cost map for debug  |
 |  `/localicazation/pf/predicted_particles_marker` | `visualization_msgs/msg/MarkerArray` | particles of particle filter |
-|  `/localicazation/imgproc/lsd_image`             | `sensor_msgs/msg/Image`              | image |
-|  `/localicazation/imgproc/projected_lsd_image`   | `sensor_msgs/msg/Image`              | image |
+|  `/localicazation/imgproc/image_with_line_segments`             | `sensor_msgs/msg/Image`              | image |
+|  `/localicazation/imgproc/projected_image_with_line_segments`   | `sensor_msgs/msg/Image`              | image |
 
 ## Visualization
 
@@ -213,7 +213,7 @@ This project contains original rviz plugins. [rviz2_overlay_plugins](./rviz2_plu
 | 1  |  `/localicazation/validation/overlay_image`     | Projection of lanelet2 (yellow lines) onto image based on estimated pose. If they match well with the actual road markings, it means that the localization performs well.  |
 | 2  |  `/localicazation/imgproc/segmented_image`      | result of graph-based segmetation. yellow area is identified as the road surface.|
 | 3  |  `/localicazation/pf/cost_map_image`            | cost map generated from lanelet2. |
-| 4  |  `/localicazation/imgproc/lsd_image`            | detected line segments |
+| 4  |  `/localicazation/imgproc/image_with_line_segments`            | detected line segments |
 | 5  |  `/localicazation/map/ground_status`            | ground height and tilt estimatation status |
 | 6  |  `/localicazation/twist/kalman/status`          | twist estimation status |
 | 7  |  `/localicazation/pf/predicted_particle_marker` | particle distribution of particle fitler (red means a probable candidate) |

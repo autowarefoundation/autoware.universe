@@ -87,9 +87,9 @@ protected:
   void imageAndLsdCallback(const Image & image, const PointCloud2 & msg);
 
   LineSegments extractNaerLineSegments(
-    const Sophus::SE3f & pose, const LineSegments & linesegments);
+    const Sophus::SE3f & pose, const LineSegments & line_segments);
 
-  cv::Mat makeCostMap(LineSegments & lsd);
+  cv::Mat makeCostMap(LineSegments & line_segments);
 
   pcl::PointCloud<pcl::PointXYZ> sampleUniformlyOnImage(
     const Sophus::SE3f & pose, const LineSegments & segments);
@@ -98,7 +98,7 @@ protected:
     cv::Mat & image, const Sophus::SE3f & pose_affine,
     const pcl::PointCloud<pcl::PointXYZ> & points, const cv::Scalar & color);
   void drawOverlayLineSegments(
-    cv::Mat & image, const Sophus::SE3f & pose_affine, const LineSegments & linesegments,
+    cv::Mat & image, const Sophus::SE3f & pose_affine, const LineSegments & line_segments,
     const cv::Scalar & color);
 };
 }  // namespace refine_optimizer
