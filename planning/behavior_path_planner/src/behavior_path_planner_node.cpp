@@ -172,7 +172,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_->registerSceneModule(ext_request_lane_change_left_module);
 
     auto lane_change_module =
-      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr_);
+      std::make_shared<LaneChangeBTModule>("LaneChange", *this, lane_change_param_ptr_);
     path_candidate_publishers_.emplace(
       "LaneChange", create_publisher<Path>(path_candidate_name_space + "lane_change", 1));
     bt_manager_->registerSceneModule(lane_change_module);
@@ -392,9 +392,11 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("lane_change.lane_changing_lateral_acc_at_low_velocity");
   p.lateral_acc_switching_velocity =
     declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
+  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
   p.minimum_lane_changing_velocity =
     declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
-  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
+  p.minimum_lane_changing_velocity =
+    std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
   p.minimum_prepare_length =
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
 

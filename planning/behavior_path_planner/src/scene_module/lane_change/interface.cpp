@@ -123,7 +123,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     resetPathIfAbort();
   }
 
-  module_type_->setPreviousDrivableLanes(getPreviousModuleOutput().drivable_lanes);
+  module_type_->setPreviousDrivableLanes(
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes);
   auto output = module_type_->generateOutput();
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
@@ -142,6 +143,9 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.path = std::make_shared<PathWithLaneId>(*getPreviousModuleOutput().path);
   out.reference_path = getPreviousModuleOutput().reference_path;
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+
+  out.drivable_area_info.drivable_lanes =
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes;
 
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
@@ -402,6 +406,14 @@ void SceneModuleVisitor::visitLaneChangeBTInterface(const LaneChangeBTInterface 
   external_request_lane_change_bt_visitor_ = module->get_debug_msg_array();
 }
 
+LaneChangeBTModule::LaneChangeBTModule(
+  const std::string & name, rclcpp::Node & node,
+  const std::shared_ptr<LaneChangeParameters> & parameters)
+: LaneChangeBTInterface{
+    name, node, parameters, createRTCInterfaceMap(node, name, {"left", "right"}),
+    std::make_unique<NormalLaneChangeBT>(parameters, LaneChangeModuleType::NORMAL, Direction::NONE)}
+{
+}
 ExternalRequestLaneChangeLeftBTModule::ExternalRequestLaneChangeLeftBTModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneChangeParameters> & parameters)

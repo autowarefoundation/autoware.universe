@@ -130,6 +130,13 @@ public:
     out.path = utils::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
     path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+
+    // for new architecture
+    const auto lanes = utils::getLaneletsFromPath(*out.path, planner_data_->route_handler);
+    const auto drivable_lanes = utils::generateDrivableLanes(lanes);
+    out.drivable_area_info.drivable_lanes =
+      getNonOverlappingExpandedLanes(*out.path, drivable_lanes);
+
     return out;
   }
 
@@ -383,14 +390,14 @@ protected:
     for (const auto & rtc_type : rtc_types) {
       const auto snake_case_name = utils::convertToSnakeCase(name);
       const auto rtc_interface_name =
-        rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
+        rtc_type.empty() ? snake_case_name : (snake_case_name + "_" + rtc_type);
       rtc_interface_ptr_map.emplace(
         rtc_type, std::make_shared<RTCInterface>(&node, rtc_interface_name));
     }
     return rtc_interface_ptr_map;
   }
 
-  void updateRTCStatus(const double start_distance, const double finish_distance)
+  virtual void updateRTCStatus(const double start_distance, const double finish_distance)
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second) {
