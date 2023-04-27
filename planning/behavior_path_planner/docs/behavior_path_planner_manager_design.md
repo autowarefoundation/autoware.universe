@@ -5,7 +5,7 @@
 The manager launches and executes scene modules in `behavior_path_planner` depending on the use case, and has been developed to achieve following features:
 
 - Multiple modules can run simultaneously in series in order to achieve more complex use cases.
-- Don't use external library (e.g. BehaviorTree.cpp) for flexible development.
+- Flexible development by not relying on framework from external libraries.
 
 Support status:
 
@@ -27,7 +27,7 @@ Click [here](../README.md) for supported scene modules.
 
 ## Overview
 
-The manager is the implementation part of the core of `behavior_path_planner`. It outputs path based on the latest data.
+The manager is the core part of the `behavior_path_planner` implementation. It outputs path based on the latest data.
 
 The manager has sub-managers for each scene module, and its main task is
 
@@ -45,7 +45,7 @@ Additionally, the manager generates root reference path, and if any other module
 
 The sub-manager's main task is
 
-- stores the launched modules in internal vectors `registered_modules_`.
+- store the launched modules in internal vectors `registered_modules_`.
 - create scene module instance.
 - pass scene module's instance to the manager.
 - delete expired scene module instance from `registered_modules_`.
@@ -141,8 +141,8 @@ There are 5 steps in one process:
 
 and, within a single planning cycle, these steps are repeated until the following conditions are satisfied.
 
-- **Any modules don't make a request of path modification.**
-- **Any candidate modules' request are not approved.**
+- **Any modules don't make a request of path modification. (Check in Step3)**
+- **Any candidate modules' request are not approved. (Check in Step5)**
 
 ```plantuml
 @startuml
