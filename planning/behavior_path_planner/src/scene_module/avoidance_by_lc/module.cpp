@@ -17,7 +17,7 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
-#include "behavior_path_planner/utils/avoidance/util.hpp"
+#include "behavior_path_planner/utils/avoidance/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
@@ -141,9 +141,9 @@ void AvoidanceByLCModule::updateData()
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
 
-  updateRegisteredObject(
+  utils::avoidance::updateRegisteredObject(
     registered_objects_, avoidance_data_.target_objects, parameters_->avoidance);
-  compensateDetectionLost(
+  utils::avoidance::compensateDetectionLost(
     registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
 
   std::sort(
@@ -156,21 +156,12 @@ AvoidancePlanningData AvoidanceByLCModule::calcAvoidancePlanningData(DebugData &
   AvoidancePlanningData data;
 
   // reference pose
-  const auto reference_pose = getEgoPose();
-  data.reference_pose = reference_pose;
+  data.reference_pose = getEgoPose();
+
+  data.reference_path_rough = *getPreviousModuleOutput().path;
 
   data.reference_path = utils::resamplePathWithSpline(
-    *getPreviousModuleOutput().path, parameters_->avoidance->resample_interval_for_planning);
-
-  const size_t nearest_segment_index =
-    findNearestSegmentIndex(data.reference_path.points, data.reference_pose.position);
-  data.ego_closest_path_index =
-    std::min(nearest_segment_index + 1, data.reference_path.points.size() - 1);
-
-  // arclength from ego pose (used in many functions)
-  data.arclength_from_ego = utils::calcPathArcLengthArray(
-    data.reference_path, 0, data.reference_path.points.size(),
-    calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
+    data.reference_path_rough, parameters_->avoidance->resample_interval_for_planning);
 
   // lanelet info
 #ifdef USE_OLD_ARCHITECTURE
@@ -208,7 +199,8 @@ void AvoidanceByLCModule::fillAvoidanceTargetObjects(
     objects.push_back(createObjectData(data, object));
   }
 
-  filterTargetObjects(objects, data, debug, planner_data_, parameters_->avoidance);
+  utils::avoidance::filterTargetObjects(
+    objects, data, debug, planner_data_, parameters_->avoidance);
 }
 
 ObjectData AvoidanceByLCModule::createObjectData(
@@ -226,24 +218,20 @@ ObjectData AvoidanceByLCModule::createObjectData(
   object_data.object = object;
 
   // Calc envelop polygon.
-  fillObjectEnvelopePolygon(
+  utils::avoidance::fillObjectEnvelopePolygon(
     object_data, registered_objects_, object_closest_pose, parameters_->avoidance);
 
   // calc object centroid.
   object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
 
-  // calc longitudinal distance from ego to closest target object footprint point.
-  fillLongitudinalAndLengthByClosestEnvelopeFootprint(
-    data.reference_path, getEgoPosition(), object_data);
-
   // Calc moving time.
-  fillObjectMovingTime(object_data, stopped_objects_, parameters_->avoidance);
+  utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, parameters_->avoidance);
 
   // Calc lateral deviation from path to target object.
   object_data.lateral = calcLateralDeviation(object_closest_pose, object_pose.position);
 
   // Find the footprint point closest to the path, set to object_data.overhang_distance.
-  object_data.overhang_dist = calcEnvelopeOverhangDistance(
+  object_data.overhang_dist = utils::avoidance::calcEnvelopeOverhangDistance(
     object_data, object_closest_pose, object_data.overhang_pose.position);
 
   // Check whether the the ego should avoid the object.
@@ -251,8 +239,9 @@ ObjectData AvoidanceByLCModule::createObjectData(
   const auto safety_margin =
     0.5 * vehicle_width + parameters_->avoidance->lateral_passable_safety_buffer;
   object_data.avoid_required =
-    (isOnRight(object_data) && std::abs(object_data.overhang_dist) < safety_margin) ||
-    (!isOnRight(object_data) && object_data.overhang_dist < safety_margin);
+    (utils::avoidance::isOnRight(object_data) &&
+     std::abs(object_data.overhang_dist) < safety_margin) ||
+    (!utils::avoidance::isOnRight(object_data) && object_data.overhang_dist < safety_margin);
 
   return object_data;
 }
@@ -457,6 +446,16 @@ BehaviorModuleOutput AvoidanceByLCModule::planWaitingApproval()
   out.reference_path = getPreviousModuleOutput().reference_path;
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
+  // for new architecture
+#ifndef USE_OLD_ARCHITECTURE
+  const auto current_lanes =
+    utils::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+  const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(*out.path, drivable_lanes);
+  out.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes, target_drivable_lanes);
+#endif
+
   if (!avoidance_data_.target_objects.empty()) {
     const auto to_front_object_distance = avoidance_data_.target_objects.front().longitudinal;
     const double shift_length = status_.lane_change_path.shift_line.end_shift_length -
@@ -464,9 +463,8 @@ BehaviorModuleOutput AvoidanceByLCModule::planWaitingApproval()
     const double lane_change_buffer =
       utils::calcMinimumLaneChangeLength(planner_data_->parameters, {shift_length});
 
-    boost::optional<Pose> p_insert{};
-    insertDecelPoint(
-      getEgoPosition(), to_front_object_distance - lane_change_buffer, 0.0, *out.path, p_insert);
+    utils::avoidance::insertDecelPoint(
+      getEgoPosition(), to_front_object_distance - lane_change_buffer, 0.0, *out.path, stop_pose_);
   }
 
 #ifndef USE_OLD_ARCHITECTURE
@@ -548,7 +546,7 @@ PathWithLaneId AvoidanceByLCModule::getReferencePath() const
     utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
 
   reference_path = utils::setDecelerationVelocity(
-    *route_handler, reference_path, current_lanes, parameters_->lane_change->prepare_duration,
+    *route_handler, reference_path, current_lanes, common_parameters.lane_change_prepare_duration,
     lane_change_buffer);
 
   const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
@@ -565,7 +563,7 @@ lanelet::ConstLanelets AvoidanceByLCModule::getLaneChangeLanes(
   lanelet::ConstLanelets lane_change_lanes;
   const auto & route_handler = planner_data_->route_handler;
   const auto minimum_prepare_length = planner_data_->parameters.minimum_prepare_length;
-  const auto prepare_duration = parameters_->lane_change->prepare_duration;
+  const auto prepare_duration = planner_data_->parameters.lane_change_prepare_duration;
   const auto current_pose = getEgoPose();
   const auto current_twist = getEgoTwist();
 
@@ -589,7 +587,7 @@ lanelet::ConstLanelets AvoidanceByLCModule::getLaneChangeLanes(
     route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
   lanelet::ConstLanelet lane_change_lane;
 
-  if (isOnRight(o_front)) {
+  if (utils::avoidance::isOnRight(o_front)) {
     for (const auto & lanelet : current_check_lanes) {
       const auto & left_lane = route_handler->getRoutingGraphPtr()->left(lanelet);
       if (left_lane) {
@@ -645,7 +643,7 @@ std::pair<bool, bool> AvoidanceByLCModule::getSafePath(
     &valid_paths, &object_debug_);
 #else
   const auto o_front = avoidance_data_.target_objects.front();
-  const auto direction = isOnRight(o_front) ? Direction::LEFT : Direction::RIGHT;
+  const auto direction = utils::avoidance::isOnRight(o_front) ? Direction::LEFT : Direction::RIGHT;
   const auto found_safe_path = utils::lane_change::getLaneChangePaths(
     *getPreviousModuleOutput().path, *route_handler, current_lanes, lane_change_lanes, current_pose,
     current_twist, planner_data_->dynamic_object, common_parameters, *parameters_->lane_change,

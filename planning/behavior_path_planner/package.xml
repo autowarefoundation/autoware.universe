@@ -7,7 +7,7 @@
 
   <!-- lane change module -->
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
-  <!-- pull over module -->
+  <!-- goal planner module -->
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
   <!-- pull out module -->
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
@@ -54,7 +54,6 @@
   <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
-  <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
   <depend>perception_utils</depend>

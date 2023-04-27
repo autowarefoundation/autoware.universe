@@ -378,6 +378,9 @@ struct AvoidancePlanningData
   // reference path (before shifting)
   PathWithLaneId reference_path;
 
+  // reference path (pre-resampled reference path)
+  PathWithLaneId reference_path_rough;
+
   // closest reference_path index for reference_pose
   size_t ego_closest_path_index;
 
@@ -494,10 +497,6 @@ struct DebugData
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
-
-  boost::optional<Pose> stop_pose{boost::none};
-  boost::optional<Pose> slow_pose{boost::none};
-  boost::optional<Pose> feasible_bound{boost::none};
 
   bool exist_adjacent_objects{false};
 

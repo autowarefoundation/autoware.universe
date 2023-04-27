@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
                    behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
                    behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
                    behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
-                   behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
+                   behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
                    behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
                    behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
 
@@ -100,7 +100,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test with empty route
-  test_manager->testWithAbnormalRoute(test_target_node);
+  ASSERT_NO_THROW(test_manager->testWithAbnormalRoute(test_target_node));
   rclcpp::shutdown();
 }
 

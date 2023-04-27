@@ -54,10 +54,15 @@ class LaneChangeInterface : public SceneModuleInterface
 {
 public:
   LaneChangeInterface(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters,
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
     std::unique_ptr<LaneChangeBase> && module_type);
+
+  LaneChangeInterface(const LaneChangeInterface &) = delete;
+  LaneChangeInterface(LaneChangeInterface &&) = delete;
+  LaneChangeInterface & operator=(const LaneChangeInterface &) = delete;
+  LaneChangeInterface & operator=(LaneChangeInterface &&) = delete;
+  ~LaneChangeInterface() override = default;
 
   void processOnEntry() override;
 
@@ -83,14 +88,13 @@ public:
 
   void setData(const std::shared_ptr<const PlannerData> & data) override;
 
-private:
+protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
 
   std::unique_ptr<LaneChangeBase> module_type_;
 
   void resetPathIfAbort();
 
-protected:
   void setObjectDebugVisualization() const;
 
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
@@ -107,6 +111,71 @@ protected:
   bool is_abort_path_approved_{false};
 
   bool is_abort_approval_requested_{false};
+};
+
+class LaneChangeBTInterface : public LaneChangeInterface
+{
+public:
+  LaneChangeBTInterface(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<LaneChangeParameters> & parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
+    std::unique_ptr<LaneChangeBase> && module_type);
+
+  LaneChangeBTInterface(const LaneChangeBTInterface &) = delete;
+  LaneChangeBTInterface(LaneChangeBTInterface &&) = delete;
+  LaneChangeBTInterface & operator=(const LaneChangeBTInterface &) = delete;
+  LaneChangeBTInterface & operator=(LaneChangeBTInterface &&) = delete;
+  ~LaneChangeBTInterface() override = default;
+
+  void processOnEntry() override;
+
+  BehaviorModuleOutput plan() override;
+
+  BehaviorModuleOutput planWaitingApproval() override;
+
+  CandidateOutput planCandidate() const override;
+
+  void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
+
+protected:
+  bool is_activated_{false};
+};
+
+class LaneChangeBTModule : public LaneChangeBTInterface
+{
+public:
+  LaneChangeBTModule(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<LaneChangeParameters> & parameters);
+
+protected:
+  void updateRTCStatus(const double start_distance, const double finish_distance) override
+  {
+    const auto direction = std::invoke([&]() -> std::string {
+      const auto dir = module_type_->getDirection();
+      return (dir == Direction::LEFT) ? "left" : "right";
+    });
+
+    rtc_interface_ptr_map_.at(direction)->updateCooperateStatus(
+      uuid_map_.at(direction), isExecutionReady(), start_distance, finish_distance, clock_->now());
+  }
+};
+
+class ExternalRequestLaneChangeLeftBTModule : public LaneChangeBTInterface
+{
+public:
+  ExternalRequestLaneChangeLeftBTModule(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<LaneChangeParameters> & parameters);
+};
+
+class ExternalRequestLaneChangeRightBTModule : public LaneChangeBTInterface
+{
+public:
+  ExternalRequestLaneChangeRightBTModule(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<LaneChangeParameters> & parameters);
 };
 }  // namespace behavior_path_planner
 

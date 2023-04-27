@@ -27,11 +27,24 @@ public:
   ExternalRequestLaneChange(
     const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction);
 
+  ExternalRequestLaneChange(const ExternalRequestLaneChange &) = delete;
+  ExternalRequestLaneChange(ExternalRequestLaneChange &&) = delete;
+  ExternalRequestLaneChange & operator=(const ExternalRequestLaneChange &) = delete;
+  ExternalRequestLaneChange & operator=(ExternalRequestLaneChange &&) = delete;
   ~ExternalRequestLaneChange() override = default;
+};
 
-protected:
-  lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes) const override;
+class ExternalRequestLaneChangeBT : public NormalLaneChangeBT
+{
+public:
+  ExternalRequestLaneChangeBT(
+    const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction);
+
+  ExternalRequestLaneChangeBT(const ExternalRequestLaneChangeBT &) = delete;
+  ExternalRequestLaneChangeBT(ExternalRequestLaneChangeBT &&) = delete;
+  ExternalRequestLaneChangeBT & operator=(const ExternalRequestLaneChangeBT &) = delete;
+  ExternalRequestLaneChangeBT & operator=(ExternalRequestLaneChangeBT &&) = delete;
+  ~ExternalRequestLaneChangeBT() override = default;
 };
 }  // namespace behavior_path_planner
 
