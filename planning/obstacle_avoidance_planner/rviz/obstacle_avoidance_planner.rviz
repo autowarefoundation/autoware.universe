@@ -246,21 +246,21 @@ Visualization Manager:
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                traffic_light_left_camera/camera_link:
+                camera6/camera_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                traffic_light_left_camera/camera_optical_link:
+                camera6/camera_optical_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
-                traffic_light_right_camera/camera_link:
+                camera7/camera_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                traffic_light_right_camera/camera_optical_link:
+                camera7/camera_optical_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
