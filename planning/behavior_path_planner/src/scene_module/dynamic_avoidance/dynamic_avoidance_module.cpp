@@ -166,18 +166,11 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
 {
   const auto & p = planner_data_->parameters;
 
-  // 1. generate reference path
-  auto reference_path = utils::generateCenterLinePath(planner_data_);
+  // 1. get reference path from previous module
+  const auto reference_path = getPreviousModuleOutput().reference_path;
 
-  // 2. generate drivable lanes
-  const auto current_lanes = utils::getCurrentLanes(planner_data_);
-  const auto drivable_lanes = utils::generateDrivableLanes(current_lanes);
-  const auto target_drivable_lanes =
-    getNonOverlappingExpandedLanes(*reference_path, drivable_lanes);
-
-  // for old architecture
-  utils::generateDrivableArea(
-    *reference_path, target_drivable_lanes, p.vehicle_length, planner_data_);
+  // 2. get drivable lanes from previous module
+  const auto drivable_lanes = getPreviousModuleOutput().drivable_area_info.drivable_lanes;
 
   // 3. create obstacle polygons to avoid
   std::vector<tier4_autoware_utils::Polygon2d> obstacle_polys;
@@ -191,12 +184,10 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   BehaviorModuleOutput output;
   output.path = reference_path;
   output.reference_path = reference_path;
-
   // for new architecture
-  output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
-    getPreviousModuleOutput().drivable_area_info.drivable_lanes, target_drivable_lanes);
-
+  output.drivable_area_info.drivable_lanes = drivable_lanes;
   output.drivable_area_info.obstacle_polys = obstacle_polys;
+  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   return output;
 }
@@ -216,7 +207,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
 std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject>
 DynamicAvoidanceModule::calcTargetObjects() const
 {
-  const auto reference_path = utils::generateCenterLinePath(planner_data_);
+  const auto reference_path = getPreviousModuleOutput().reference_path;
 
   // 1. calculate target lanes to filter obstacles
   const auto target_lanes = getAdjacentLanes(100.0, 10.0);
