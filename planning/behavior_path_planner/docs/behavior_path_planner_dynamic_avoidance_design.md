@@ -7,7 +7,7 @@ Static obstacles such as parked vehicles are dealt with by the avoidance module.
 
 This module is under development.
 In the current implementation, the dynamic obstacles to avoid is extracted from the drivable area.
-Then the motion planner, in detail obstacle_avoidance_planner, will generate an avoiging trajectory.
+Then the motion planner, in detail obstacle_avoidance_planner, will generate an avoiding trajectory.
 
 ### Parameters
 
