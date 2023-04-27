@@ -153,8 +153,6 @@ void TwistEstimator::on_velocity_report(const VelocityReport & msg)
   const float wheel = msg.longitudinal_velocity;
   last_wheel_vel_ = wheel;
 
-  if (std::abs(wheel) < stop_vel_threshold_) return;
-
   // Compute error and jacobian
   float error = state_[VELOCITY] - state_[SCALE] * wheel;
   Eigen::Matrix<float, 1, 4> H;
