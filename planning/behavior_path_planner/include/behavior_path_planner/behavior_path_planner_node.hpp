@@ -99,6 +99,9 @@ class BehaviorPathPlannerNode : public rclcpp::Node
 public:
   explicit BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options);
 
+  // NOTE: This function is public for the static_centerline_optimizer package.
+  static void getCommonParam(Node * node, BehaviorPathPlannerParameters & p);
+
 private:
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
   rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
@@ -121,6 +124,8 @@ private:
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_reference_publishers_;
 
   std::shared_ptr<PlannerData> planner_data_;
+
+  BehaviorPathPlannerParameters getBehaviorPathPlannerParam();
 
 #ifdef USE_OLD_ARCHITECTURE
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
@@ -153,8 +158,6 @@ private:
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
   std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
   std::shared_ptr<GoalPlannerParameters> goal_planner_param_ptr_;
-
-  BehaviorPathPlannerParameters getCommonParam();
 
 #ifdef USE_OLD_ARCHITECTURE
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();

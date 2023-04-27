@@ -15,6 +15,7 @@
 #ifndef STATIC_CENTERLINE_OPTIMIZER__STATIC_CENTERLINE_OPTIMIZER_NODE_HPP_
 #define STATIC_CENTERLINE_OPTIMIZER__STATIC_CENTERLINE_OPTIMIZER_NODE_HPP_
 
+#include "behavior_path_planner/parameters.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "static_centerline_optimizer/srv/load_map.hpp"
 #include "static_centerline_optimizer/srv/plan_path.hpp"
@@ -81,6 +82,12 @@ private:
 
   // vehicle info
   vehicle_info_util::VehicleInfo vehicle_info_;
+
+  // behavior path planner parameters
+  // NOTE: Other parameters than the following are created locally.
+  // Only this parameter's definition is other package's function. Therefore, we cannot use
+  // has/get/declare_parameter as other parameters.
+  std::shared_ptr<BehaviorPathPlannerParameters> behavior_path_planner_parameters_;
 };
 }  // namespace static_centerline_optimizer
 #endif  // STATIC_CENTERLINE_OPTIMIZER__STATIC_CENTERLINE_OPTIMIZER_NODE_HPP_

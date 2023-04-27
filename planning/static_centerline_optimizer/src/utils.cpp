@@ -22,12 +22,14 @@ namespace static_centerline_optimizer
 {
 namespace
 {
+/*
 nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(const geometry_msgs::msg::Pose & pose)
 {
   auto odometry_ptr = std::make_shared<nav_msgs::msg::Odometry>();
   odometry_ptr->pose.pose = pose;
   return odometry_ptr;
 }
+*/
 
 lanelet::Point3d createPoint3d(const double x, const double y, const double z = 19.0)
 {
@@ -69,6 +71,7 @@ geometry_msgs::msg::Pose get_center_pose(
   return middle_pose;
 }
 
+/*
 PathWithLaneId get_path_with_lane_id(
   const RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
   const geometry_msgs::msg::Pose & start_pose, const double ego_nearest_dist_threshold,
@@ -77,8 +80,8 @@ PathWithLaneId get_path_with_lane_id(
   // get center line
   constexpr double s_start = 0.0;
   constexpr double s_end = std::numeric_limits<double>::max();
-  auto path_with_lane_id = route_handler.getCenterLinePath(lanelets, s_start, s_end);
-  path_with_lane_id.header.frame_id = "map";
+  auto raw_path_with_lane_id = route_handler.getCenterLinePath(lanelets, s_start, s_end);
+  raw_path_with_lane_id.header.frame_id = "map";
 
   // create planner data
   auto planner_data = std::make_shared<behavior_path_planner::PlannerData>();
@@ -91,10 +94,16 @@ PathWithLaneId get_path_with_lane_id(
   constexpr double vehicle_length = 0.0;
   const auto drivable_lanes = behavior_path_planner::utils::generateDrivableLanes(lanelets);
   behavior_path_planner::utils::generateDrivableArea(
-    path_with_lane_id, drivable_lanes, vehicle_length, planner_data);
+    raw_path_with_lane_id, drivable_lanes, vehicle_length, planner_data);
 
-  return path_with_lane_id;
+  // constexpr double resample_interval = 2.0;
+  // const auto resampled_path_with_lane_id = motion_utils::resamplePath(
+  //   raw_path_with_lane_id, resample_interval, false);
+
+  // return resampled_path_with_lane_id;
+  return raw_path_with_lane_id;
 }
+*/
 
 void update_centerline(
   RouteHandler & route_handler, const lanelet::ConstLanelets & lanelets,

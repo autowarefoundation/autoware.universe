@@ -14,6 +14,7 @@
 
 #include "static_centerline_optimizer/static_centerline_optimizer_node.hpp"
 
+#include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
@@ -378,6 +379,7 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
   const auto start_center_pose =
     utils::get_center_pose(*route_handler_ptr_, route_lane_ids.front());
 
+  /*
   // ego nearest search parameters
   const double ego_nearest_dist_threshold =
     has_parameter("ego_nearest_dist_threshold")
@@ -387,11 +389,32 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
     has_parameter("ego_nearest_yaw_threshold")
       ? get_parameter("ego_nearest_yaw_threshold").as_double()
       : declare_parameter<double>("ego_nearest_yaw_threshold");
+  */
+
+  // behavior path planner parameters
+  if (!behavior_path_planner_parameters_) {
+    // behavior_path_planner::BehaviorPathPlannerNode
+    // behavior_path_planner_node(create_node_options());
+    BehaviorPathPlannerParameters param;
+    // behavior_path_planner_node.getCommonParam(param);
+    behavior_path_planner::BehaviorPathPlannerNode::getCommonParam(this, param);
+    behavior_path_planner_parameters_ = std::make_shared<BehaviorPathPlannerParameters>(param);
+    std::cerr << "PO" << std::endl;
+  }
 
   // extract path with lane id from lanelets
+  constexpr double s_start = -std::numeric_limits<double>::max();
+  constexpr double s_end = std::numeric_limits<double>::max();
+  const auto raw_path_with_lane_id = behavior_path_planner::utils::getCenterLinePath(
+    *route_handler_ptr_, route_lanelets, start_center_pose, s_end, s_start,
+    *behavior_path_planner_parameters_);
+  std::cerr << raw_path_with_lane_id.points.size() << std::endl;
+
+  /*
   const auto raw_path_with_lane_id = utils::get_path_with_lane_id(
     *route_handler_ptr_, route_lanelets, start_center_pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
+  */
 
   pub_raw_path_with_lane_id_->publish(raw_path_with_lane_id);
   RCLCPP_INFO(get_logger(), "Calculated raw path with lane id and published.");

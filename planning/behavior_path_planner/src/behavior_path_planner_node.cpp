@@ -57,7 +57,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // data_manager
   {
     planner_data_ = std::make_shared<PlannerData>();
-    planner_data_->parameters = getCommonParam();
+    planner_data_->parameters = getBehaviorPathPlannerParam();
     planner_data_->drivable_area_expansion_parameters.init(*this);
   }
 
@@ -320,12 +320,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 }
 
-BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
+BehaviorPathPlannerParameters BehaviorPathPlannerNode::getBehaviorPathPlannerParam()
 {
   BehaviorPathPlannerParameters p{};
 
-  p.verbose = declare_parameter<bool>("verbose");
-
+  // scene module parameter
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;
     config.enable_module = declare_parameter<bool>(ns + "enable_module");
@@ -350,8 +349,37 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.config_avoidance = get_scene_module_manager_param("avoidance.");
   p.config_avoidance_by_lc = get_scene_module_manager_param("avoidance_by_lc.");
 
+  // common parameter
+  getCommonParam(this, p);
+
+  // lane change parameters
+  p.backward_length_buffer_for_end_of_lane =
+    declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
+  p.lane_changing_lateral_jerk =
+    declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
+  p.lane_changing_lateral_acc = declare_parameter<double>("lane_change.lane_changing_lateral_acc");
+  p.lane_changing_lateral_acc_at_low_velocity =
+    declare_parameter<double>("lane_change.lane_changing_lateral_acc_at_low_velocity");
+  p.lateral_acc_switching_velocity =
+    declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
+  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
+  p.minimum_lane_changing_velocity =
+    declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
+  p.minimum_lane_changing_velocity =
+    std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
+  p.minimum_prepare_length =
+    0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
+
+
+  return p;
+}
+
+void BehaviorPathPlannerNode::getCommonParam(Node * node, BehaviorPathPlannerParameters & p)
+{
+  p.verbose = node->declare_parameter<bool>("verbose");
+
   // vehicle info
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = VehicleInfoUtil(*node).getVehicleInfo();
   p.vehicle_info = vehicle_info;
   p.vehicle_width = vehicle_info.vehicle_width_m;
   p.vehicle_length = vehicle_info.vehicle_length_m;
@@ -375,77 +403,62 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
 
   // ROS parameters
-  p.backward_path_length = declare_parameter<double>("backward_path_length") + backward_offset;
-  p.forward_path_length = declare_parameter<double>("forward_path_length");
+  p.backward_path_length =
+    node->declare_parameter<double>("backward_path_length") + backward_offset;
+  p.forward_path_length = node->declare_parameter<double>("forward_path_length");
 
   // acceleration parameters
-  p.min_acc = declare_parameter<double>("normal.min_acc");
-  p.max_acc = declare_parameter<double>("normal.max_acc");
-
-  // lane change parameters
-  p.backward_length_buffer_for_end_of_lane =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
-  p.lane_changing_lateral_jerk =
-    declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lane_changing_lateral_acc = declare_parameter<double>("lane_change.lane_changing_lateral_acc");
-  p.lane_changing_lateral_acc_at_low_velocity =
-    declare_parameter<double>("lane_change.lane_changing_lateral_acc_at_low_velocity");
-  p.lateral_acc_switching_velocity =
-    declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
-  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
-  p.minimum_lane_changing_velocity =
-    declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
-  p.minimum_lane_changing_velocity =
-    std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.minimum_prepare_length =
-    0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
+  p.min_acc = node->declare_parameter<double>("normal.min_acc");
+  p.max_acc = node->declare_parameter<double>("normal.max_acc");
 
   p.backward_length_buffer_for_end_of_pull_over =
-    declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
+    node->declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
-    declare_parameter<double>("backward_length_buffer_for_end_of_pull_out");
+    node->declare_parameter<double>("backward_length_buffer_for_end_of_pull_out");
 
-  p.minimum_pull_over_length = declare_parameter<double>("minimum_pull_over_length");
-  p.refine_goal_search_radius_range = declare_parameter<double>("refine_goal_search_radius_range");
+  p.minimum_pull_over_length = node->declare_parameter<double>("minimum_pull_over_length");
+  p.refine_goal_search_radius_range =
+    node->declare_parameter<double>("refine_goal_search_radius_range");
   p.turn_signal_intersection_search_distance =
-    declare_parameter<double>("turn_signal_intersection_search_distance");
+    node->declare_parameter<double>("turn_signal_intersection_search_distance");
   p.turn_signal_intersection_angle_threshold_deg =
-    declare_parameter<double>("turn_signal_intersection_angle_threshold_deg");
+    node->declare_parameter<double>("turn_signal_intersection_angle_threshold_deg");
   p.turn_signal_minimum_search_distance =
-    declare_parameter<double>("turn_signal_minimum_search_distance");
-  p.turn_signal_search_time = declare_parameter<double>("turn_signal_search_time");
+    node->declare_parameter<double>("turn_signal_minimum_search_distance");
+  p.turn_signal_search_time = node->declare_parameter<double>("turn_signal_search_time");
   p.turn_signal_shift_length_threshold =
-    declare_parameter<double>("turn_signal_shift_length_threshold");
-  p.turn_signal_on_swerving = declare_parameter<bool>("turn_signal_on_swerving");
+    node->declare_parameter<double>("turn_signal_shift_length_threshold");
+  p.turn_signal_on_swerving = node->declare_parameter<bool>("turn_signal_on_swerving");
 
-  p.enable_akima_spline_first = declare_parameter<bool>("enable_akima_spline_first");
-  p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
-  p.input_path_interval = declare_parameter<double>("input_path_interval");
-  p.output_path_interval = declare_parameter<double>("output_path_interval");
-  p.visualize_maximum_drivable_area = declare_parameter<bool>("visualize_maximum_drivable_area");
-  p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+  p.enable_akima_spline_first = node->declare_parameter<bool>("enable_akima_spline_first");
+  p.enable_cog_on_centerline = node->declare_parameter<bool>("enable_cog_on_centerline");
+  p.input_path_interval = node->declare_parameter<double>("input_path_interval");
+  p.output_path_interval = node->declare_parameter<double>("output_path_interval");
+  p.visualize_maximum_drivable_area =
+    node->declare_parameter<bool>("visualize_maximum_drivable_area");
+  p.ego_nearest_dist_threshold = node->declare_parameter<double>("ego_nearest_dist_threshold");
+  p.ego_nearest_yaw_threshold = node->declare_parameter<double>("ego_nearest_yaw_threshold");
 
-  p.lateral_distance_max_threshold = declare_parameter<double>("lateral_distance_max_threshold");
+  p.lateral_distance_max_threshold =
+    node->declare_parameter<double>("lateral_distance_max_threshold");
   p.longitudinal_distance_min_threshold =
-    declare_parameter<double>("longitudinal_distance_min_threshold");
+    node->declare_parameter<double>("longitudinal_distance_min_threshold");
 
-  p.expected_front_deceleration = declare_parameter<double>("expected_front_deceleration");
-  p.expected_rear_deceleration = declare_parameter<double>("expected_rear_deceleration");
+  p.expected_front_deceleration = node->declare_parameter<double>("expected_front_deceleration");
+  p.expected_rear_deceleration = node->declare_parameter<double>("expected_rear_deceleration");
 
   p.expected_front_deceleration_for_abort =
-    declare_parameter<double>("expected_front_deceleration_for_abort");
+    node->declare_parameter<double>("expected_front_deceleration_for_abort");
   p.expected_rear_deceleration_for_abort =
-    declare_parameter<double>("expected_rear_deceleration_for_abort");
+    node->declare_parameter<double>("expected_rear_deceleration_for_abort");
 
-  p.rear_vehicle_reaction_time = declare_parameter<double>("rear_vehicle_reaction_time");
-  p.rear_vehicle_safety_time_margin = declare_parameter<double>("rear_vehicle_safety_time_margin");
+  p.rear_vehicle_reaction_time = node->declare_parameter<double>("rear_vehicle_reaction_time");
+  p.rear_vehicle_safety_time_margin =
+    node->declare_parameter<double>("rear_vehicle_safety_time_margin");
 
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Lane change buffer must be more than 1 meter. Modifying the buffer.");
+    std::cerr << "Lane change buffer must be more than 1 meter. Modifying the buffer." << std::endl;
   }
-  return p;
 }
 
 SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
