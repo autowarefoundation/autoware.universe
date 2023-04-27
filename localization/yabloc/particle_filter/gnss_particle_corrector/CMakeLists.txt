@@ -33,10 +33,11 @@ find_library(GeographicLib_LIBRARIES NAMES Geographic)
 
 # ===================================================
 # Executable
-ament_auto_add_executable(gnss_particle_corrector src/gnss_corrector_node.cpp src/gnss_corrector_core.cpp)
-target_include_directories(gnss_particle_corrector PUBLIC include)
-target_include_directories(gnss_particle_corrector PUBLIC SYSTEM ${GeographicLib_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(gnss_particle_corrector Sophus::Sophus)
+set(TARGET gnss_particle_corrector_node)
+ament_auto_add_executable(${TARGET} src/gnss_corrector_node.cpp src/gnss_corrector_core.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} PUBLIC SYSTEM ${GeographicLib_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(${TARGET} Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()

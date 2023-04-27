@@ -21,24 +21,11 @@ find_package(Eigen3 REQUIRED)
 
 # ===================================================
 # Executable
-macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
+set(TARGET velocity_report_converter_node)
+ament_auto_add_executable(${TARGET} src/velocity_report_node.cpp)
 
-  set(SOURCE "")
-
-  foreach(QUERY IN ITEMS ${_ARG_SRC})
-    file(GLOB SOURCE_TMP ${QUERY})
-    set(SOURCE "${SOURCE};${SOURCE_TMP}")
-  endforeach()
-
-  set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
-endmacro()
-
-ADD_EXE(TARGET velocity_report_converter SRC src/velocity_report_node.cpp INC include)
-ADD_EXE(TARGET pose_twist_fuser SRC src/pose_twist_fuse_node.cpp INC include)
+set(TARGET pose_twist_fuser_node)
+ament_auto_add_executable(${TARGET} src/pose_twist_fuser_node.cpp)
 
 # ===================================================
 ament_auto_package()

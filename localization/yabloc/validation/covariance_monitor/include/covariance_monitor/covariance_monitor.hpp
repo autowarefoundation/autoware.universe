@@ -13,7 +13,8 @@
 // limitations under the License.
 
 #pragma once
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <pcdless_common/synchro_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 

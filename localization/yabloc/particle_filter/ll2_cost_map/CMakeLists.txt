@@ -24,7 +24,7 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
 # ===================================================
-# Executable
+# Library
 ament_auto_add_library(${PROJECT_NAME}
   SHARED
   src/hierarchical_cost_map.cpp

@@ -32,24 +32,15 @@ set(CMAKE_NO_SYSTEM_FROM_IMPORTED FALSE)
 
 # ===================================================
 # Executable
-macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
+set(TARGET twist_estimator_node)
+ament_auto_add_executable(${TARGET} src/twist_estimator_node.cpp src/twist_estimator_core.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_link_libraries(${TARGET} Sophus::Sophus)
 
-  set(SOURCE "")
-
-  foreach(QUERY IN ITEMS ${_ARG_SRC})
-    file(GLOB SOURCE_TMP ${QUERY})
-    set(SOURCE "${SOURCE};${SOURCE_TMP}")
-  endforeach()
-
-  set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} Sophus::Sophus)
-endmacro()
-
-ADD_EXE(TARGET twist_estimator_node SRC src/twist_estimator_*.cpp INC include)
-ADD_EXE(TARGET twist_visualizer_node SRC src/twist_visualizer_*.cpp INC include)
+set(TARGET twist_visualizer_node)
+ament_auto_add_executable(${TARGET} src/twist_visualizer_node.cpp src/twist_visualizer_core.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_link_libraries(${TARGET} Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()

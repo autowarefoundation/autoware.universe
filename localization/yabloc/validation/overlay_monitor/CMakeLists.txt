@@ -27,24 +27,11 @@ find_package(Sophus REQUIRED)
 
 # ===================================================
 # Executable
-macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
-
-  set(SOURCE "")
-
-  foreach(QUERY IN ITEMS ${_ARG_SRC})
-    file(GLOB SOURCE_TMP ${QUERY})
-    set(SOURCE "${SOURCE};${SOURCE_TMP}")
-  endforeach()
-
-  set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
-  target_include_directories(${TARGET_NAME} SYSTEM PUBLIC ${EIGEN_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} Sophus::Sophus ${PCL_LIBRARIES})
-endmacro()
-
-ADD_EXE(TARGET overlay_node SRC src/overlay_*.cpp)
+set(TARGET overlay_node)
+ament_auto_add_executable(${TARGET} src/overlay_core.cpp src/overlay_node.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES})
 
 # ===================================================
 ament_auto_package()

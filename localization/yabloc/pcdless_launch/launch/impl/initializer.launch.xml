@@ -3,7 +3,7 @@
     <arg name="initialpose_cov_xx_yy" default="[2.0,0.25]"/>
 
     <group if="$(var skip_autoware_pose_initializer)">
-        <node name="gnss_based_pose_initializer" pkg="particle_initializer" exec="gnss_based_pose_initializer" output="screen" args="--ros-args --log-level info">
+        <node name="gnss_pose_initializer_node" pkg="gnss_pose_initializer" exec="gnss_pose_initializer_node" output="screen" args="--ros-args --log-level info">
             <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
             <remap from="pose_cov" to="/initialpose3d"/>
             <remap from="pf_pose" to="/localization/pf/pose"/>
@@ -11,7 +11,7 @@
     </group>
 
     <group unless="$(var skip_autoware_pose_initializer)">
-        <node name="camera_pose_initializer_node" pkg="camera_pose_initializer" exec="camera_pose_initializer" output="screen" args="--ros-args --log-level info">
+        <node name="camera_pose_initializer_node" pkg="camera_pose_initializer" exec="camera_pose_initializer_node" output="screen" args="--ros-args --log-level info">
             <remap from="camera_info" to="$(var resized_info)"/>
             <remap from="initialpose" to="/initialpose"/>
             <remap from="/map/ll2_road_marking" to="/localization/map/ll2_road_marking"/>

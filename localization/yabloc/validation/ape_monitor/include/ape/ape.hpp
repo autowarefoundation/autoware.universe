@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #pragma once
-#include <eigen3/Eigen/StdVector>
+#include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>

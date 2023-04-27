@@ -28,16 +28,17 @@ find_package(Sophus REQUIRED)
 
 # ===================================================
 # Executable
-ament_auto_add_executable(${PROJECT_NAME}
+set(TARGET camera_pose_initializer_node)
+ament_auto_add_executable(${TARGET}
   src/lane_image.cpp
   src/marker_module.cpp
   src/projector_module.cpp
   src/lanelet_util.cpp
   src/camera_pose_initializer_core.cpp
   src/camera_pose_initializer_node.cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Sophus::Sophus)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()

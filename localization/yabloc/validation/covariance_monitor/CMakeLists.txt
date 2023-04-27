@@ -24,23 +24,10 @@ find_package(Sophus REQUIRED)
 
 # ===================================================
 # Executable
-macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
-
-  set(SOURCE "")
-
-  foreach(QUERY IN ITEMS ${_ARG_SRC})
-    file(GLOB SOURCE_TMP ${QUERY})
-    set(SOURCE "${SOURCE};${SOURCE_TMP}")
-  endforeach()
-
-  set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC} ${EIGEN_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} Sophus::Sophus)
-endmacro()
-
-ADD_EXE(TARGET covariance_node SRC src/covariance_*.cpp INC include)
+set(TARGET covariance_monitor_node)
+ament_auto_add_executable(${TARGET} src/covariance_node.cpp)
+target_include_directories(${TARGET} PUBLIC include ${EIGEN_INCLUDE_DIRS})
+target_link_libraries(${TARGET} Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()

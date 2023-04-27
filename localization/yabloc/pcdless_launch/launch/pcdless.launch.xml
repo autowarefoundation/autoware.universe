@@ -74,7 +74,7 @@
 
         <!-- septentrio ublox converter -->
         <group if="$(var use_septentrio)">
-            <node name="doppler_converter" pkg="doppler_converter" exec="doppler_converter"/>
+            <node name="doppler_converter" pkg="doppler_converter" exec="doppler_converter_node"/>
         </group>
     </group>
 </launch>

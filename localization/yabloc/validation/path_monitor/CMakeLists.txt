@@ -19,30 +19,17 @@ ament_auto_find_build_dependencies()
 # Eigen3
 find_package(Eigen3 REQUIRED)
 
-# PCL
-find_package(PCL REQUIRED COMPONENTS common)
-
 # ===================================================
 # Executable
-macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
+set(TARGET fix_to_pose_node)
+ament_auto_add_executable(${TARGET} src/fix_to_pose_node.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN_INCLUDE_DIRS})
 
-  set(SOURCE "")
-
-  foreach(QUERY IN ITEMS ${_ARG_SRC})
-    file(GLOB SOURCE_TMP ${QUERY})
-    set(SOURCE "${SOURCE};${SOURCE_TMP}")
-  endforeach()
-
-  set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
-  target_include_directories(${TARGET_NAME} SYSTEM PUBLIC ${EIGEN_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
-endmacro()
-
-ADD_EXE(TARGET fix_to_pose SRC src/fix_to_pose_node.cpp INC include)
-ADD_EXE(TARGET pose_to_path SRC src/pose_to_path_node.cpp INC include)
+set(TARGET pose_to_path_node)
+ament_auto_add_executable(${TARGET} src/pose_to_path_node.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN_INCLUDE_DIRS})
 
 # ===================================================
 ament_auto_package()

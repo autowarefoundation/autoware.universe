@@ -17,7 +17,7 @@ ament_auto_find_build_dependencies()
 
 # ===================================================
 # Executable
-ament_auto_add_executable(doppler_converter src/doppler_converter.cpp)
+ament_auto_add_executable(doppler_converter_node src/doppler_converter_node.cpp)
 
 # ===================================================
 ament_auto_package()

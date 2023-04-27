@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gnss_pose_initializer</name>
+  <version>0.0.0</version>
+  <description>The pose initializer based on gnns doppler</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>ublox_msgs</depend>
+
+  <depend>pcdless_common</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

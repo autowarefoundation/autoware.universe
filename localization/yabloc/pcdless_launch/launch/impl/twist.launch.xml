@@ -29,7 +29,7 @@
     </group>
 
     <!-- velocity report converter -->
-    <node name="velocity_report_node" pkg="twist_converter" exec="velocity_report_converter" output="screen" args="--ros-args --log-level warn">
+    <node name="velocity_report_node" pkg="twist_converter" exec="velocity_report_converter_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 </launch>

@@ -31,7 +31,7 @@ find_package(glog REQUIRED)
 
 # ===================================================
 # Executable
-set(TARGET camera_particle_corrector)
+set(TARGET camera_particle_corrector_node)
 ament_auto_add_executable(${TARGET}
   src/camera_particle_corrector_node.cpp
   src/filt_lsd.cpp

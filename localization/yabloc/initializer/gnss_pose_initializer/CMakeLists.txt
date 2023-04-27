@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(undistort)
+project(gnss_pose_initializer)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -17,14 +17,16 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # ===================================================
-# OpenCV
-find_package(OpenCV REQUIRED)
+# Eigen3
+find_package(Eigen3 REQUIRED)
 
 # ===================================================
 # Executable
-set(TARGET undistort_node)
-ament_auto_add_executable(${TARGET} src/undistort_node.cpp)
-target_link_libraries(${TARGET} ${OpenCV_LIBS})
+set(TARGET gnss_pose_initializer_node)
+ament_auto_add_executable(${TARGET}
+  src/gnss_pose_initializer_node.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE launch)
+ament_auto_package()

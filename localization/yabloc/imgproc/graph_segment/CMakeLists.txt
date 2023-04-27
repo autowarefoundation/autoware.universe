@@ -23,16 +23,13 @@ find_package(Eigen3 REQUIRED)
 # OpenCV
 find_package(OpenCV REQUIRED)
 
-# PCL
-find_package(PCL REQUIRED COMPONENTS common)
-
 # ===================================================
 # Executable
 set(TARGET graph_segment_node)
 ament_auto_add_executable(${TARGET} src/graph_segment_node.cpp src/graph_segment_core src/similar_area_searcher.cpp)
 target_include_directories(${TARGET} PUBLIC include)
-target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-target_link_libraries(${TARGET} ${_ARG_LIB} ${OpenCV_LIBS})
+target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${OpenCV_LIBS})
 
 # ===================================================
 ament_auto_package()
