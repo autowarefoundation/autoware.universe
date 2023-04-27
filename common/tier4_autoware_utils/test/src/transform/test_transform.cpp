@@ -53,6 +53,7 @@ TEST(system, empty_point_cloud)
   pcl::PointCloud<pcl::PointXYZI> cloud_transformed;
 
   EXPECT_NO_THROW(tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform));
-  EXPECT_NO_FATAL_FAILURE(tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform));
+  EXPECT_NO_FATAL_FAILURE(
+    tier4_autoware_utils::transformPointCloud(cloud, cloud_transformed, transform));
   EXPECT_EQ(cloud_transformed.size(), 0ul);
 }
