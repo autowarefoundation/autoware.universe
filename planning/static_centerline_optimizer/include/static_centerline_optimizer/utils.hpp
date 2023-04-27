@@ -15,6 +15,7 @@
 #ifndef STATIC_CENTERLINE_OPTIMIZER__UTILS_HPP_
 #define STATIC_CENTERLINE_OPTIMIZER__UTILS_HPP_
 
+#include "behavior_path_planner/parameters.hpp"
 #include "route_handler/route_handler.hpp"
 #include "static_centerline_optimizer/type_alias.hpp"
 
@@ -29,12 +30,10 @@ namespace utils
 geometry_msgs::msg::Pose get_center_pose(
   const RouteHandler & route_handler, const size_t lanelet_id);
 
-/*
 PathWithLaneId get_path_with_lane_id(
   const RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
-  const geometry_msgs::msg::Pose & start_pose, const double nearest_ego_dist_threshold,
-  const double nearest_ego_yaw_threshold);
-*/
+  const geometry_msgs::msg::Pose & start_pose,
+  const BehaviorPathPlannerParameters & behavior_path_planner_parameters);
 
 void update_centerline(
   RouteHandler & route_handler, const lanelet::ConstLanelets & lanelets,

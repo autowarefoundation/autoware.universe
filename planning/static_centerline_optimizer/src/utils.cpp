@@ -22,14 +22,12 @@ namespace static_centerline_optimizer
 {
 namespace
 {
-/*
 nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(const geometry_msgs::msg::Pose & pose)
 {
   auto odometry_ptr = std::make_shared<nav_msgs::msg::Odometry>();
   odometry_ptr->pose.pose = pose;
   return odometry_ptr;
 }
-*/
 
 lanelet::Point3d createPoint3d(const double x, const double y, const double z = 19.0)
 {
@@ -71,24 +69,27 @@ geometry_msgs::msg::Pose get_center_pose(
   return middle_pose;
 }
 
-/*
 PathWithLaneId get_path_with_lane_id(
   const RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
-  const geometry_msgs::msg::Pose & start_pose, const double ego_nearest_dist_threshold,
-  const double ego_nearest_yaw_threshold)
+  const geometry_msgs::msg::Pose & start_pose,
+  const BehaviorPathPlannerParameters & behavior_path_planner_parameters)
 {
   // get center line
-  constexpr double s_start = 0.0;
-  constexpr double s_end = std::numeric_limits<double>::max();
-  auto raw_path_with_lane_id = route_handler.getCenterLinePath(lanelets, s_start, s_end);
+  constexpr double forward_length = std::numeric_limits<double>::max();
+  constexpr double backward_length = std::numeric_limits<double>::max();
+  auto raw_path_with_lane_id = behavior_path_planner::utils::getCenterLinePath(
+    route_handler, lanelets, start_pose, backward_length, forward_length,
+    behavior_path_planner_parameters);
   raw_path_with_lane_id.header.frame_id = "map";
 
   // create planner data
   auto planner_data = std::make_shared<behavior_path_planner::PlannerData>();
   planner_data->route_handler = std::make_shared<RouteHandler>(route_handler);
   planner_data->self_odometry = convert_to_odometry(start_pose);
-  planner_data->parameters.ego_nearest_dist_threshold = ego_nearest_dist_threshold;
-  planner_data->parameters.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold;
+  planner_data->parameters.ego_nearest_dist_threshold =
+    behavior_path_planner_parameters.ego_nearest_dist_threshold;
+  planner_data->parameters.ego_nearest_yaw_threshold =
+    behavior_path_planner_parameters.ego_nearest_yaw_threshold;
 
   // generate drivable area and store it in path with lane id
   constexpr double vehicle_length = 0.0;
@@ -96,14 +97,8 @@ PathWithLaneId get_path_with_lane_id(
   behavior_path_planner::utils::generateDrivableArea(
     raw_path_with_lane_id, drivable_lanes, vehicle_length, planner_data);
 
-  // constexpr double resample_interval = 2.0;
-  // const auto resampled_path_with_lane_id = motion_utils::resamplePath(
-  //   raw_path_with_lane_id, resample_interval, false);
-
-  // return resampled_path_with_lane_id;
   return raw_path_with_lane_id;
 }
-*/
 
 void update_centerline(
   RouteHandler & route_handler, const lanelet::ConstLanelets & lanelets,

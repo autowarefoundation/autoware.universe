@@ -125,8 +125,6 @@ private:
 
   std::shared_ptr<PlannerData> planner_data_;
 
-  BehaviorPathPlannerParameters getBehaviorPathPlannerParam();
-
 #ifdef USE_OLD_ARCHITECTURE
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
 #else
@@ -158,6 +156,8 @@ private:
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
   std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
   std::shared_ptr<GoalPlannerParameters> goal_planner_param_ptr_;
+
+  BehaviorPathPlannerParameters getBehaviorPathPlannerParam();
 
 #ifdef USE_OLD_ARCHITECTURE
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();
