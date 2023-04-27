@@ -160,7 +160,7 @@ public:
    * @param[in] onnx_file_path path for a onnx file
    * @warning This function is based on darknet log.
    */
-  void print_network_info(const std::string & onnx_file_path);
+  void printNetworkInfo(const std::string & onnx_file_path);
 
   /**
    * @brief build TensorRT engine from ONNX
@@ -185,7 +185,7 @@ public:
   /**
    * @brief output per-layer information
    */
-  void print_profiling(void);
+  void printProfiling(void);
 
   /**
    * @brief get per-layer information for trt-engine-profiler

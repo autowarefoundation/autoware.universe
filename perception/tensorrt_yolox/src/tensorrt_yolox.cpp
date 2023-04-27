@@ -29,24 +29,24 @@
 
 namespace
 {
-static void trim_left(std::string & s)
+static void trimLeft(std::string & s)
 {
   s.erase(s.begin(), find_if(s.begin(), s.end(), [](int ch) { return !isspace(ch); }));
 }
 
-static void trim_right(std::string & s)
+static void trimRight(std::string & s)
 {
   s.erase(find_if(s.rbegin(), s.rend(), [](int ch) { return !isspace(ch); }).base(), s.end());
 }
 
 std::string trim(std::string & s)
 {
-  trim_left(s);
-  trim_right(s);
+  trimLeft(s);
+  trimRight(s);
   return s;
 }
 
-bool exist_file(const std::string & file_name, bool verbose)
+bool existFile(const std::string & file_name, bool verbose)
 {
   if (!std::experimental::filesystem::exists(std::experimental::filesystem::path(file_name))) {
     if (verbose) {
@@ -57,9 +57,9 @@ bool exist_file(const std::string & file_name, bool verbose)
   return true;
 }
 
-std::vector<std::string> load_list_from_text_file(const std::string & filename)
+std::vector<std::string> loadListFromTextFile(const std::string & filename)
 {
-  assert(exist_file(filename, true));
+  assert(existFile(filename, true));
   std::vector<std::string> list;
 
   std::ifstream f(filename);
@@ -80,15 +80,15 @@ std::vector<std::string> load_list_from_text_file(const std::string & filename)
   return list;
 }
 
-std::vector<std::string> load_image_list(const std::string & filename, const std::string & prefix)
+std::vector<std::string> loadImageList(const std::string & filename, const std::string & prefix)
 {
-  std::vector<std::string> fileList = load_list_from_text_file(filename);
+  std::vector<std::string> fileList = loadListFromTextFile(filename);
   for (auto & file : fileList) {
-    if (exist_file(file, false)) {
+    if (existFile(file, false)) {
       continue;
     } else {
       std::string prefixed = prefix + file;
-      if (exist_file(prefixed, false))
+      if (existFile(prefixed, false))
         file = prefixed;
       else
         std::cerr << "WARNING: couldn't find: " << prefixed << " while loading: " << filename
@@ -118,7 +118,7 @@ TrtYoloX::TrtYoloX(
     }
     int max_batch_size = 1;
     nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
-    std::vector<std::string> calibration_images = load_image_list(calibration_image_list_file, "");
+    std::vector<std::string> calibration_images = loadImageList(calibration_image_list_file, "");
     tensorrt_yolox::ImageStream stream(max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
     std::string calibName = "";
@@ -231,7 +231,7 @@ TrtYoloX::TrtYoloX(
   }
 }
 
-void TrtYoloX::init_preproces_buffer(int width, int height)
+void TrtYoloX::initPreprocesBuffer(int width, int height)
 {
   // if size of source input has benn changed...
   if (src_width_ != -1 || src_height_ != -1) {
@@ -265,7 +265,12 @@ void TrtYoloX::init_preproces_buffer(int width, int height)
   }
 }
 
-void TrtYoloX::preprocess_gpu(const std::vector<cv::Mat> & images)
+void TrtYoloX::printProfiling(void)
+{
+  trt_common_->printProfiling();
+}
+
+void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
 {
   const auto batch_size = images.size();
   // Currently only supports single batch in cuda preprocessing
@@ -369,7 +374,7 @@ bool TrtYoloX::doInference(const std::vector<cv::Mat> & images, ObjectArrays & o
   }
 
   if (use_gpu_preprocess_) {
-    preprocess_gpu(images);
+    preprocessGpu(images);
   } else {
     preprocess(images);
   }

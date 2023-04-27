@@ -101,18 +101,18 @@ public:
    * @warning if we don't allocate buffers using it, "preprocess_gpu" allocates buffers at the
    * beginning
    */
-  void init_preproces_buffer(int width, int height);
+  void initPreprocesBuffer(int width, int height);
 
   /**
    * @brief output TensorRT profiles for each layer
    */
-  void print_profiling(void);
+  void printProfiling(void);
 
 private:
   void preprocess(const std::vector<cv::Mat> & images);
 
   // NOTE: Currently only supports a single batch image
-  void preprocess_gpu(const std::vector<cv::Mat> & images);
+  void preprocessGpu(const std::vector<cv::Mat> & images);
 
   bool feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects);
   bool feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects);

@@ -173,7 +173,7 @@ void TrtCommon::setup()
     cache_engine_path.replace_extension(ext);
 
     // Output Network Information
-    print_network_info(model_file_path_);
+    printNetworkInfo(model_file_path_);
 
     if (fs::exists(cache_engine_path)) {
       std::cout << "Loading... " << cache_engine_path << std::endl;
@@ -222,7 +222,7 @@ bool TrtCommon::loadEngine(const std::string & engine_file_path)
   return true;
 }
 
-void TrtCommon::print_network_info(const std::string & onnx_file_path)
+void TrtCommon::printNetworkInfo(const std::string & onnx_file_path)
 {
   auto builder = TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
   if (!builder) {
@@ -525,7 +525,7 @@ bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * i
   }
 }
 
-void TrtCommon::print_profiling()
+void TrtCommon::printProfiling()
 {
   std::cout << host_profiler_;
   std::cout << std::endl;
