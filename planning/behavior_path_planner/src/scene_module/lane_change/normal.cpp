@@ -117,9 +117,15 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
   const auto expanded_lanes = utils::expandLanelets(
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
+
+  // for new architecture
+  output.drivable_area_info.drivable_lanes = expanded_lanes;
+
+  // for old architecture
   utils::generateDrivableArea(
     *output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
+
 bool NormalLaneChange::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
@@ -240,8 +246,9 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
 
   const auto minimum_prepare_length = planner_data_->parameters.minimum_prepare_length;
 
-  const auto lane_change_prepare_length =
-    std::max(getEgoVelocity() * parameters_->prepare_duration, minimum_prepare_length);
+  const auto lane_change_prepare_length = std::max(
+    getEgoVelocity() * planner_data_->parameters.lane_change_prepare_duration,
+    minimum_prepare_length);
 
   const auto & route_handler = getRouteHandler();
 
@@ -304,7 +311,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto backward_path_length = common_parameter.backward_path_length;
   const auto forward_path_length = common_parameter.forward_path_length;
-  const auto prepare_duration = parameters_->prepare_duration;
+  const auto prepare_duration = common_parameter.lane_change_prepare_duration;
   const auto minimum_prepare_length = common_parameter.minimum_prepare_length;
   const auto minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
   const auto lane_change_sampling_num = parameters_->lane_change_sampling_num;
@@ -315,8 +322,8 @@ bool NormalLaneChange::getLaneChangePaths(
   // compute maximum_deceleration
   const auto maximum_deceleration =
     std::invoke([&minimum_lane_changing_velocity, &current_velocity, &common_parameter, this]() {
-      const double min_a =
-        (minimum_lane_changing_velocity - current_velocity) / parameters_->prepare_duration;
+      const double min_a = (minimum_lane_changing_velocity - current_velocity) /
+                           common_parameter.lane_change_prepare_duration;
       return std::clamp(
         min_a, -std::abs(common_parameter.min_acc), -std::numeric_limits<double>::epsilon());
     });
@@ -561,7 +568,7 @@ void NormalLaneChange::calcTurnSignalInfo()
 
   turn_signal_info.desired_start_point = std::invoke([&]() {
     const auto blinker_start_duration = planner_data_->parameters.turn_signal_search_time;
-    const auto prepare_duration = parameters_->prepare_duration;
+    const auto prepare_duration = planner_data_->parameters.lane_change_prepare_duration;
     const auto diff_time = prepare_duration - blinker_start_duration;
     if (diff_time < 1e-5) {
       return path.path.points.front().point.pose;
