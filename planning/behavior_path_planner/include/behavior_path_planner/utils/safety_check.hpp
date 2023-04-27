@@ -76,6 +76,14 @@ double calcMinimumLongitudinalLength(
   const BehaviorPathPlannerParameters & params);
 
 /**
+ * @brief Check object is in front of the origin rather than threshold
+ * @param [in] projected_pose object's pose
+ * @param [in] threshold threshold to check object's position
+ * @return true if the projected pose is in front of the origin rather than threshold
+ */
+bool isObjectFront(const Pose & projected_pose, const double threshold = -1e-3);
+
+/**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
  * @return true if distance is safe.
@@ -87,7 +95,7 @@ bool isSafeInLaneletCollisionCheck(
   const double prepare_duration, const PredictedObject & target_object,
   const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
   const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
-  const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
+  const double rear_decel, CollisionCheckDebug & debug);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and

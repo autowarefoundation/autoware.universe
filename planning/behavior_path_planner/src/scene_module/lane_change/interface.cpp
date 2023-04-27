@@ -84,21 +84,12 @@ bool LaneChangeInterface::isExecutionReady() const
 ModuleStatus LaneChangeInterface::updateState()
 {
   if (!module_type_->isValidPath()) {
-    current_state_ = ModuleStatus::FAILURE;
-    return current_state_;
+    return ModuleStatus::FAILURE;
   }
 
   if (module_type_->isAbortState()) {
-    current_state_ = ModuleStatus::RUNNING;
-    return current_state_;
-  }
-
-  if (module_type_->isCancelConditionSatisfied()) {
-    if (module_type_->isCancelEnabled()) {
-      current_state_ = isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::FAILURE;
-    } else {
-      current_state_ = ModuleStatus::RUNNING;
-    }
+    current_state_ =
+      module_type_->hasFinishedAbort() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
     return current_state_;
   }
 
@@ -107,6 +98,90 @@ ModuleStatus LaneChangeInterface::updateState()
     return current_state_;
   }
 
+  const auto [is_safe, is_object_coming_from_rear] = module_type_->isApprovedPathSafe();
+
+  if (is_safe) {
+    module_type_->toNormalState();
+    current_state_ = ModuleStatus::RUNNING;
+    return current_state_;
+  }
+
+  if (!module_type_->isCancelEnabled()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), *clock_, 5000,
+      "Lane change path is unsafe but cancel was not enabled. Continue lane change.");
+    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
+      module_type_->toStopState();
+    } else {
+      module_type_->toNormalState();
+    }
+    current_state_ = ModuleStatus::RUNNING;
+    return current_state_;
+  }
+
+  if (!module_type_->isAbleToReturnCurrentLane()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), *clock_, 5000,
+      "Lane change path is unsafe but cannot return. Continue lane change.");
+    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
+      module_type_->toStopState();
+    } else {
+      module_type_->toNormalState();
+    }
+    current_state_ = ModuleStatus::RUNNING;
+    return current_state_;
+  }
+
+  if (module_type_->isNearEndOfLane()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), *clock_, 5000,
+      "Lane change path is unsafe but near end of lane. Continue lane change.");
+    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
+      module_type_->toStopState();
+    } else {
+      module_type_->toNormalState();
+    }
+    return ModuleStatus::RUNNING;
+  }
+
+  if (module_type_->isEgoOnPreparePhase()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), *clock_, 5000, "Lane change path is unsafe. Cancel lane change.");
+    module_type_->toCancelState();
+    current_state_ = ModuleStatus::FAILURE;
+    return current_state_;
+  }
+
+  if (!module_type_->isAbortEnabled()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), *clock_, 5000,
+      "Lane change path is unsafe but abort was not enabled. Continue lane change.");
+    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
+      module_type_->toStopState();
+    } else {
+      module_type_->toNormalState();
+    }
+    current_state_ = ModuleStatus::RUNNING;
+    return current_state_;
+  }
+
+  const auto found_abort_path = module_type_->getAbortPath();
+  if (!found_abort_path) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), *clock_, 5000,
+      "Lane change path is unsafe but not found abort path. Continue lane change.");
+    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
+      module_type_->toStopState();
+    } else {
+      module_type_->toNormalState();
+    }
+    current_state_ = ModuleStatus::RUNNING;
+    return current_state_;
+  }
+
+  RCLCPP_WARN_STREAM_THROTTLE(
+    getLogger(), *clock_, 5000, "Lane change path is unsafe. Abort lane change.");
+  module_type_->toAbortState();
   current_state_ = ModuleStatus::RUNNING;
   return current_state_;
 }
@@ -125,10 +200,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   if (!module_type_->isValidPath()) {
     return {};
-  }
-
-  if (module_type_->isAbortState()) {
-    resetPathIfAbort();
   }
 
   module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
@@ -187,27 +258,6 @@ CandidateOutput LaneChangeInterface::planCandidate() const
 
   updateSteeringFactorPtr(output, selected_path);
   return output;
-}
-
-void LaneChangeInterface::resetPathIfAbort()
-{
-  if (!is_abort_approval_requested_) {
-    RCLCPP_DEBUG(getLogger(), "%s - resetPathIfAbort: removeRTCStatus", name().c_str());
-    removeRTCStatus();
-    is_abort_approval_requested_ = true;
-    clearAbortApproval();
-    return;
-  }
-
-  if (isActivated()) {
-    RCLCPP_DEBUG(getLogger(), "%s - resetPathIfAbort: isActivated = false.", name().c_str());
-    is_abort_path_approved_ = true;
-    clearWaitingApproval();
-  } else {
-    RCLCPP_DEBUG(getLogger(), "%s - resetPathIfAbort: isActivated = true.", name().c_str());
-    clearAbortApproval();
-    waitApproval();
-  }
 }
 
 void LaneChangeInterface::updateModuleParams(
@@ -334,27 +384,66 @@ AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
 ModuleStatus AvoidanceByLaneChangeInterface::updateState()
 {
   if (!module_type_->isValidPath()) {
-    current_state_ = ModuleStatus::FAILURE;
-    return current_state_;
+    return ModuleStatus::FAILURE;
   }
 
   if (module_type_->isAbortState()) {
-    current_state_ = ModuleStatus::RUNNING;
-    return current_state_;
-  }
-
-  if (module_type_->isCancelConditionSatisfied()) {
-    current_state_ = ModuleStatus::FAILURE;
-    return current_state_;
+    return module_type_->hasFinishedAbort() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
   }
 
   if (module_type_->hasFinishedLaneChange()) {
-    current_state_ = ModuleStatus::SUCCESS;
-    return current_state_;
+    return ModuleStatus::SUCCESS;
   }
 
-  current_state_ = ModuleStatus::RUNNING;
-  return current_state_;
+  const auto [is_safe, is_object_coming_from_rear] = module_type_->isApprovedPathSafe();
+
+  if (is_safe) {
+    return ModuleStatus::RUNNING;
+  }
+
+  if (!module_type_->isCancelEnabled()) {
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Lane change path is unsafe but cancel was not enabled. Continue lane change.");
+    module_type_->isRequiredStop(is_object_coming_from_rear);
+    return ModuleStatus::RUNNING;
+  }
+
+  if (!module_type_->isAbleToReturnCurrentLane()) {
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Lane change path is unsafe but cannot return. Continue lane change.");
+    module_type_->isRequiredStop(is_object_coming_from_rear);
+    return ModuleStatus::RUNNING;
+  }
+
+  if (module_type_->isNearEndOfLane()) {
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Lane change path is unsafe but near end of lane. Continue lane change.");
+    module_type_->isRequiredStop(is_object_coming_from_rear);
+    return ModuleStatus::RUNNING;
+  }
+
+  if (module_type_->isEgoOnPreparePhase()) {
+    RCLCPP_WARN_STREAM(getLogger(), "Lane change path is unsafe. Cancel lane change.");
+    return ModuleStatus::FAILURE;
+  }
+
+  if (module_type_->isAbortState()) {
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Lane change path is unsafe but abort was not enabled. Continue lane change.");
+    module_type_->isRequiredStop(is_object_coming_from_rear);
+    return ModuleStatus::RUNNING;
+  }
+
+  const auto found_abort_path = module_type_->getAbortPath();
+  if (!found_abort_path) {
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Lane change path is unsafe but not found abort path. Continue lane change.");
+    module_type_->isRequiredStop(is_object_coming_from_rear);
+    return ModuleStatus::RUNNING;
+  }
+
+  RCLCPP_WARN_STREAM(getLogger(), "Lane change path is unsafe. Abort lane change.");
+  return ModuleStatus::RUNNING;
 }
 
 void AvoidanceByLaneChangeInterface::updateRTCStatus(
@@ -391,10 +480,6 @@ BehaviorModuleOutput LaneChangeBTInterface::plan()
 
   if (!module_type_->isValidPath()) {
     return {};
-  }
-
-  if (module_type_->isAbortState()) {
-    resetPathIfAbort();
   }
 
   auto output = module_type_->generateOutput();
