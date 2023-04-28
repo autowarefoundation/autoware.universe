@@ -36,33 +36,6 @@ bool isInLanelets(const lanelet::ConstLanelets & lanes, const Pose & pose)
   return false;
 }
 
-PathWithLaneId createGoalAroundPath(
-  const std::shared_ptr<RouteHandler> & route_handler,
-  const std::optional<PoseWithUuidStamped> & modified_goal)
-{
-  const Pose goal_pose = modified_goal ? modified_goal->pose : route_handler->getGoalPose();
-  const auto shoulder_lanes = route_handler->getShoulderLanelets();
-
-  lanelet::ConstLanelet goal_lane;
-  const bool is_failed_getting_lanelet = std::invoke([&]() {
-    if (isInLanelets(shoulder_lanes, goal_pose)) {
-      return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
-    }
-    return !route_handler->getGoalLanelet(&goal_lane);
-  });
-  if (is_failed_getting_lanelet) {
-    PathWithLaneId path{};
-    return path;
-  }
-
-  constexpr double backward_length = 1.0;
-  const auto arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, goal_pose);
-  const double s_start = std::max(arc_coord.length - backward_length, 0.0);
-  const double s_end = arc_coord.length;
-
-  return route_handler->getCenterLinePath({goal_lane}, s_start, s_end);
-}
-
 PlannerManager::PlannerManager(rclcpp::Node & node, const bool verbose)
 : logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
@@ -86,7 +59,8 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   auto result_output = [&]() {
     if (isEgoOutOfRoute(data)) {
       BehaviorModuleOutput output{};
-      const auto output_path = createGoalAroundPath(data->route_handler, data->prev_modified_goal);
+      const auto output_path =
+        utils::createGoalAroundPath(data->route_handler, data->prev_modified_goal);
       output.path = std::make_shared<PathWithLaneId>(output_path);
       output.reference_path = std::make_shared<PathWithLaneId>(output_path);
       return output;
@@ -681,7 +655,7 @@ bool PlannerManager::isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) 
     }
   }
 
-  // If ego vehicle is out of the closest lanelet, return false
+  // If ego vehicle is out of the closest lanelet, return true
   lanelet::ConstLanelet closest_lane;
   if (!data->route_handler->getClosestLaneletWithinRoute(self_pose, &closest_lane)) {
     RCLCPP_WARN_STREAM(logger_, "cannot find closest lanelet");
