@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__DATA_MANAGER_HPP_
 
 #include "behavior_path_planner/parameters.hpp"
-#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -43,6 +43,7 @@
 namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
@@ -74,6 +75,20 @@ struct DrivableLanes
   lanelet::ConstLanelet right_lane;
   lanelet::ConstLanelet left_lane;
   lanelet::ConstLanelets middle_lanes;
+};
+
+// NOTE: To deal with some policies about drivable area generation, currently DrivableAreaInfo is
+// quite messy. Needs to be refactored.
+struct DrivableAreaInfo
+{
+  std::vector<DrivableLanes> drivable_lanes;
+  std::vector<tier4_autoware_utils::Polygon2d> obstacle_polys;
+
+  // temporary only for pull over's freespace planning
+  double drivable_margin{0.0};
+
+  // temporary only for side shift
+  bool is_already_expanded{false};
 };
 
 struct TurnSignalInfo
@@ -108,8 +123,9 @@ struct BehaviorModuleOutput
 
   std::optional<PoseWithUuidStamped> modified_goal{};
 
-  // drivable lanes
-  std::vector<DrivableLanes> drivable_lanes;
+  // drivable area info to create drivable area
+  // NOTE: Drivable area in the path is generated at last from drivable_area_info.
+  DrivableAreaInfo drivable_area_info;
 };
 
 struct CandidateOutput

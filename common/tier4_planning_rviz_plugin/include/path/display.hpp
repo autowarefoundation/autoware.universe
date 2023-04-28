@@ -63,13 +63,13 @@ void visualizeBound(
     auto target_lp = bound.at(i);
     target_lp.x = target_lp.x - x_offset;
     target_lp.y = target_lp.y + y_offset;
-    target_lp.z = target_lp.z + 0.5;
+    target_lp.z = target_lp.z;
     bound_object->position(target_lp.x, target_lp.y, target_lp.z);
     bound_object->colour(color);
     auto target_rp = bound.at(i);
     target_rp.x = target_rp.x + x_offset;
     target_rp.y = target_rp.y - y_offset;
-    target_rp.z = target_rp.z + 0.5;
+    target_rp.z = target_rp.z;
     bound_object->position(target_rp.x, target_rp.y, target_rp.z);
     bound_object->colour(color);
   }
@@ -161,9 +161,10 @@ public:
   ~AutowarePathWithLaneIdDisplay();
 
 private:
-  void preprocessMessageDetail(
+  void preProcessMessageDetail() override;
+  void preVisualizePathFootprintDetail(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr) override;
-  void processMessageDetail(
+  void visualizePathFootprintDetail(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr,
     const size_t p_idx) override;
 
@@ -179,12 +180,16 @@ class AutowarePathDisplay
 : public AutowarePathWithDrivableAreaDisplay<autoware_auto_planning_msgs::msg::Path>
 {
   Q_OBJECT
+private:
+  void preProcessMessageDetail() override;
 };
 
 class AutowareTrajectoryDisplay
 : public AutowarePathBaseDisplay<autoware_auto_planning_msgs::msg::Trajectory>
 {
   Q_OBJECT
+private:
+  void preProcessMessageDetail() override;
 };
 }  // namespace rviz_plugins
 
