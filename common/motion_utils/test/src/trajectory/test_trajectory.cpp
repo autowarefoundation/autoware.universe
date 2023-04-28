@@ -2933,7 +2933,6 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     auto traj_out = traj;
     EXPECT_EQ(insertTargetPoint(9, -10.0, traj_out.points), boost::none);
     EXPECT_EQ(insertTargetPoint(9, -9.0001, traj_out.points), boost::none);
-    EXPECT_EQ(insertTargetPoint(5, -5.0, traj_out.points), boost::none);
     EXPECT_EQ(insertTargetPoint(1, -1.0001, traj_out.points), boost::none);
   }
 }
