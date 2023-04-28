@@ -511,10 +511,10 @@ bool TrtCommon::isInitialized()
 nvinfer1::Dims TrtCommon::getBindingDimensions(const int32_t index) const
 {
 #if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + (NV_TENSOR_PATCH * 10) >= 8500
-  auto const& name = engine_->getIOTensorName(index);
+  auto const & name = engine_->getIOTensorName(index);
   auto dims = context_->getTensorShape(name);
-  bool const has_runtime_dim = std::any_of(dims.d, dims.d + dims.nbDims,
-                                         [](int32_t dim) { return dim == -1; });
+  bool const has_runtime_dim =
+    std::any_of(dims.d, dims.d + dims.nbDims, [](int32_t dim) { return dim == -1; });
 
   if (has_runtime_dim) {
     return dims;
