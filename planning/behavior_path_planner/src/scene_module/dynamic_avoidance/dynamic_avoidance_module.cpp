@@ -116,13 +116,13 @@ bool DynamicAvoidanceModule::isExecutionRequested() const
 {
   RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionRequested.");
 
-  const auto reference_path = getPreviousModuleOutput().reference_path;
-  if (!reference_path || reference_path->points.size() < 2) {
+  const auto prev_module_path = getPreviousModuleOutput().path;
+  if (!prev_module_path || prev_module_path->points.size() < 2) {
     return false;
   }
 
   // check if the ego is driving forward
-  const auto is_driving_forward = motion_utils::isDrivingForward(reference_path->points);
+  const auto is_driving_forward = motion_utils::isDrivingForward(prev_module_path->points);
   if (!is_driving_forward || !(*is_driving_forward)) {
     return false;
   }
@@ -163,7 +163,7 @@ ModuleStatus DynamicAvoidanceModule::updateState()
 BehaviorModuleOutput DynamicAvoidanceModule::plan()
 {
   // 1. get reference path from previous module
-  const auto reference_path = getPreviousModuleOutput().reference_path;
+  const auto prev_module_path = getPreviousModuleOutput().path;
 
   // 2. get drivable lanes from previous module
   const auto drivable_lanes = getPreviousModuleOutput().drivable_area_info.drivable_lanes;
@@ -171,15 +171,15 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   // 3. create obstacle polygons to avoid
   std::vector<tier4_autoware_utils::Polygon2d> obstacle_polys;
   for (const auto & object : target_objects_) {
-    const auto obstacle_poly = calcDynamicObstaclePolygon(*reference_path, object);
+    const auto obstacle_poly = calcDynamicObstaclePolygon(*prev_module_path, object);
     if (obstacle_poly) {
       obstacle_polys.push_back(obstacle_poly.value());
     }
   }
 
   BehaviorModuleOutput output;
-  output.path = reference_path;
-  output.reference_path = reference_path;
+  output.path = prev_module_path;
+  output.reference_path = getPreviousModuleOutput().reference_path;
   // for new architecture
   output.drivable_area_info.drivable_lanes = drivable_lanes;
   output.drivable_area_info.obstacle_polys = obstacle_polys;
@@ -203,7 +203,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
 std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject>
 DynamicAvoidanceModule::calcTargetObjects() const
 {
-  const auto reference_path = getPreviousModuleOutput().reference_path;
+  const auto prev_module_path = getPreviousModuleOutput().path;
 
   // 1. calculate target lanes to filter obstacles
   const auto target_lanes = getAdjacentLanes(100.0, 10.0);
@@ -216,7 +216,7 @@ DynamicAvoidanceModule::calcTargetObjects() const
   std::vector<DynamicAvoidanceObject> target_avoidance_objects;
   for (const auto & predicted_object : target_predicted_objects) {
     const double path_projected_vel =
-      calcObstacleProjectedVelocity(reference_path->points, predicted_object);
+      calcObstacleProjectedVelocity(prev_module_path->points, predicted_object);
     // check if velocity is high enough
     if (std::abs(path_projected_vel) < parameters_->min_obstacle_vel) {
       continue;
