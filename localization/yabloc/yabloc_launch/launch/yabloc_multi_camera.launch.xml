@@ -9,10 +9,14 @@
     <arg name="src_info_0" default="/sensing/camera/camera0/camera_info"/>
     <arg name="src_image_1" default="/sensing/camera/camera1/image_rect_color/compressed"/>
     <arg name="src_info_1" default="/sensing/camera/camera1/camera_info"/>
-    <arg name="resized_image_0" default="/sensing/camera/undistorted_0/image_raw"/>
-    <arg name="resized_info_0" default="/sensing/camera/undistorted_0/camera_info"/>
-    <arg name="resized_image_1" default="/sensing/camera/undistorted_1/image_raw"/>
-    <arg name="resized_info_1" default="/sensing/camera/undistorted_1/camera_info"/>
+    <arg name="src_image_2" default="/sensing/camera/camera2/image_rect_color/compressed"/>
+    <arg name="src_info_2" default="/sensing/camera/camera2/camera_info"/>
+    <arg name="src_image_3" default="/sensing/camera/camera3/image_rect_color/compressed"/>
+    <arg name="src_info_3" default="/sensing/camera/camera3/camera_info"/>
+    <arg name="src_image_4" default="/sensing/camera/camera4/image_rect_color/compressed"/>
+    <arg name="src_info_4" default="/sensing/camera/camera4/camera_info"/>
+    <arg name="src_image_5" default="/sensing/camera/camera5/image_rect_color/compressed"/>
+    <arg name="src_info_5" default="/sensing/camera/camera5/camera_info"/>
 
     <let name="connect_base_link_to_particle_pose" value="true" if="$(var standalone)"/>
     <let name="connect_base_link_to_particle_pose" value="false" unless="$(var standalone)"/>
@@ -41,23 +45,53 @@
             <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
         </group>
 
-        <!-- image processing -->
-        <group>
-            <push-ros-namespace namespace="imgproc/camera0"/>
-            <include file="$(find-pkg-share yabloc_launch)/launch/impl/imgproc.launch.xml">
+        <!-- camera processing -->
+        <group if="$(var use_camera_0)">
+            <push-ros-namespace namespace="camera0/imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/camera.launch.xml">
                 <arg name="src_image" value="$(var src_image_0)"/>
                 <arg name="src_info" value="$(var src_info_0)"/>
-                <arg name="resized_image" value="$(var resized_image_0)"/>
-                <arg name="resized_info" value="$(var resized_info_0)"/>
+                <arg name="input_pose" value="$(var input_pose)"/>
             </include>
         </group>
-        <group>
-            <push-ros-namespace namespace="imgproc/camera1"/>
-            <include file="$(find-pkg-share yabloc_launch)/launch/impl/imgproc.launch.xml">
+        <group if="$(var use_camera_1)">
+            <push-ros-namespace namespace="camera1/imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/camera.launch.xml">
                 <arg name="src_image" value="$(var src_image_1)"/>
                 <arg name="src_info" value="$(var src_info_1)"/>
-                <arg name="resized_image" value="$(var resized_image_1)"/>
-                <arg name="resized_info" value="$(var resized_info_1)"/>
+                <arg name="input_pose" value="$(var input_pose)"/>
+            </include>
+        </group>
+        <group if="$(var use_camera_2)">
+            <push-ros-namespace namespace="camera2/imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/camera.launch.xml">
+                <arg name="src_image" value="$(var src_image_2)"/>
+                <arg name="src_info" value="$(var src_info_2)"/>
+                <arg name="input_pose" value="$(var input_pose)"/>
+            </include>
+        </group>
+        <group if="$(var use_camera_3)">
+            <push-ros-namespace namespace="camera3/imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/camera.launch.xml">
+                <arg name="src_image" value="$(var src_image_3)"/>
+                <arg name="src_info" value="$(var src_info_3)"/>
+                <arg name="input_pose" value="$(var input_pose)"/>
+            </include>
+        </group>
+        <group if="$(var use_camera_4)">
+            <push-ros-namespace namespace="camera4/imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/camera.launch.xml">
+                <arg name="src_image" value="$(var src_image_4)"/>
+                <arg name="src_info" value="$(var src_info_4)"/>
+                <arg name="input_pose" value="$(var input_pose)"/>
+            </include>
+        </group>
+        <group if="$(var use_camera_5)">
+            <push-ros-namespace namespace="camera5/imgproc"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/camera.launch.xml">
+                <arg name="src_image" value="$(var src_image_5)"/>
+                <arg name="src_info" value="$(var src_info_5)"/>
+                <arg name="input_pose" value="$(var input_pose)"/>
             </include>
         </group>
 
@@ -65,24 +99,6 @@
         <group>
             <push-ros-namespace namespace="twist"/>
             <include file="$(find-pkg-share yabloc_launch)/launch/impl/twist.launch.xml"/>
-        </group>
-
-        <!-- validation -->
-        <group>
-            <push-ros-namespace namespace="validation/camera0"/>
-            <include file="$(find-pkg-share yabloc_launch)/launch/impl/validation.launch.xml">
-                <arg name="input_overlayed_pose" value="$(var input_pose)"/>
-                <arg name="resized_image" value="$(var resized_image_0)"/>
-                <arg name="resized_info" value="$(var resized_info_0)"/>
-            </include>
-        </group>
-        <group>
-            <push-ros-namespace namespace="validation/camera1"/>
-            <include file="$(find-pkg-share yabloc_launch)/launch/impl/validation.launch.xml">
-                <arg name="input_overlayed_pose" value="$(var input_pose)"/>
-                <arg name="resized_image" value="$(var resized_image_1)"/>
-                <arg name="resized_info" value="$(var resized_info_1)"/>
-            </include>
         </group>
 
         <!-- map -->

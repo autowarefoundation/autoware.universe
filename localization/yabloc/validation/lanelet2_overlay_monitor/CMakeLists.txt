@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(overlay_monitor)
+project(lanelet2_overlay_monitor)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -27,8 +27,8 @@ find_package(Sophus REQUIRED)
 
 # ===================================================
 # Executable
-set(TARGET overlay_node)
-ament_auto_add_executable(${TARGET} src/overlay_core.cpp src/overlay_node.cpp)
+set(TARGET lanelet2_overlay_monitor_node)
+ament_auto_add_executable(${TARGET} src/lanelet2_overlay_monitor_core.cpp src/lanelet2_overlay_monitor_node.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES})

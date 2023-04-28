@@ -16,10 +16,12 @@
         <arg name="road_marking_labels" value="[cross_walk, zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
         <arg name="sign_board_labels" value="[sign-board]"/>
 
-        <arg name="src_image_0" value="/sensing/camera/camera0/image_rect_color/compressed"/>
-        <arg name="src_info_0" value="/sensing/camera/camera0/camera_info"/>
-        <arg name="src_image_1" value="/sensing/camera/camera1/image_rect_color/compressed"/>
-        <arg name="src_info_1" value="/sensing/camera/camera1/camera_info"/>
+        <arg name="use_camera_0" value="true"/>
+        <arg name="use_camera_1" value="true"/>
+        <arg name="use_camera_2" value="false"/>
+        <arg name="use_camera_3" value="false"/>
+        <arg name="use_camera_4" value="false"/>
+        <arg name="use_camera_5" value="false"/>
 
         <arg name="target_height_ratio" value="0.80"/>
         <!-- <arg name="override_camera_frame_id" value="fake_camera_optical_link"/> -->

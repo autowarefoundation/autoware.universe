@@ -39,7 +39,8 @@ SegmentFilter::SegmentFilter()
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
   synchro_subscriber_.set_callback(std::move(cb));
 
-  pub_cloud_ = create_publisher<PointCloud2>("projected_line_segments_cloud", 10);
+  pub_projected_cloud_ = create_publisher<PointCloud2>("projected_line_segments_cloud", 10);
+  pub_debug_cloud_ = create_publisher<PointCloud2>("debug/line_segments_cloud", 10);
   pub_image_ = create_publisher<Image>("projected_image", 10);
 }
 
@@ -100,7 +101,7 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
   pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*line_segments_cloud, indices);
   pcl::PointCloud<pcl::PointNormal> invalid_edges = project_lines(*line_segments_cloud, indices, true);
 
-  // Line segments
+  // Projected line segments
   {
     pcl::PointCloud<pcl::PointXYZLNormal> combined_edges;
     for (const auto & pn : valid_edges) {
@@ -117,7 +118,7 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
       pln.label = 0;
       combined_edges.push_back(pln);
     }
-    common::publish_cloud(*pub_cloud_, combined_edges, stamp);
+    common::publish_cloud(*pub_projected_cloud_, combined_edges, stamp);
   }
 
   // Image
@@ -134,6 +135,21 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
       cv::line(projected_image, p1, p2, cv::Scalar(200, 200, 200), 3, cv::LineTypes::LINE_8);
     }
     common::publish_image(*pub_image_, projected_image, stamp);
+  }
+
+  // Line segments for debug
+  {
+    pcl::PointCloud<pcl::PointXYZLNormal> combined_debug_edges;
+    for (size_t index = 0; index < line_segments_cloud->size(); ++index) {
+      const pcl::PointNormal& pn = line_segments_cloud->at(index);
+      pcl::PointXYZLNormal pln;
+      pln.getVector3fMap() = pn.getVector3fMap();
+      pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
+      if (indices.count(index) > 0) pln.label = 255;
+      else pln.label = 0;
+      combined_debug_edges.push_back(pln);
+    }
+    common::publish_cloud(*pub_debug_cloud_, combined_debug_edges, stamp);
   }
 }
 

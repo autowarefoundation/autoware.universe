@@ -32,9 +32,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace yabloc::overlay
+namespace yabloc::lanelet2_overlay
 {
-class Overlay : public rclcpp::Node
+class Lanelet2Overlay : public rclcpp::Node
 {
 public:
   using Pose = geometry_msgs::msg::Pose;
@@ -46,7 +46,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using Float32Array = std_msgs::msg::Float32MultiArray;
 
-  Overlay();
+  Lanelet2Overlay();
 
 private:
   common::StaticTfSubscriber tf_subscriber_;
@@ -79,4 +79,4 @@ private:
 
   void make_vis_marker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };
-}  // namespace yabloc::overlay
+}  // namespace yabloc::lanelet2_overlay

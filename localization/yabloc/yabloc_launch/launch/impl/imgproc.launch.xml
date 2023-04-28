@@ -62,16 +62,21 @@
     <arg name="input_line_segments_cloud" default="line_segments_cloud"/>
     <arg name="output_projected_line_segments_cloud" default="/localization/imgproc/projected_line_segments_cloud"/>
     <arg name="output_projected_image" default="/localization/imgproc/projected_image"/>
+    <arg name="output_debug_image_with_lines" default="debug/projected_image"/>
+    <arg name="publish_image_with_segment_for_debug" default="true"/>
     <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
         <param name="min_segment_length" value="$(var min_segment_length)"/>
         <param name="max_segment_distance" value="$(var max_segment_distance)"/>
         <param name="max_lateral_distance" value="$(var max_lateral_distance)"/>
+        <param name="publish_image_with_segment_for_debug" value="$(var publish_image_with_segment_for_debug)"/>
 
+        <remap from="undistorted_image" to="$(var resized_image)"/>
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="graph_segmented" to="$(var input_graph_segmented)"/>
         <remap from="line_segments_cloud" to="$(var input_line_segments_cloud)"/>
         <remap from="projected_line_segments_cloud" to="$(var output_projected_line_segments_cloud)"/>
         <remap from="projected_image" to="$(var output_projected_image)"/>
+        <remap from="debug/image_with_lines" to="$(var output_debug_image_with_lines)"/>
     </node>
 
 </launch>

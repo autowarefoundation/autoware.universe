@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>overlay_monitor</name>
+  <name>lanelet2_overlay_monitor</name>
   <version>0.0.0</version>
   <description>overlay lanelet2 onto camera image</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>

@@ -49,8 +49,8 @@ private:
   common::SynchroSubscriber<PointCloud2, Image> synchro_subscriber_;
   common::StaticTfSubscriber tf_subscriber_;
 
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_middle_cloud_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_projected_cloud_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_debug_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
   ProjectFunc project_func_ = nullptr;

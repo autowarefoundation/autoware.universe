@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "overlay_monitor/overlay_monitor.hpp"
+#include "lanelet2_overlay_monitor/lanelet2_overlay_monitor.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -26,16 +26,16 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace yabloc::overlay
+namespace yabloc::lanelet2_overlay
 {
-Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{40}
+Lanelet2Overlay::Lanelet2Overlay() : Node("lanelet2_overlay"), tf_subscriber_(get_clock()), pose_buffer_{40}
 {
   using std::placeholders::_1;
 
   // Subscriber
-  auto cb_info = std::bind(&Overlay::on_info, this, _1);
-  auto cb_image = std::bind(&Overlay::on_image, this, _1);
-  auto cb_line_segments = std::bind(&Overlay::on_line_segments, this, _1);
+  auto cb_info = std::bind(&Lanelet2Overlay::on_info, this, _1);
+  auto cb_image = std::bind(&Lanelet2Overlay::on_image, this, _1);
+  auto cb_line_segments = std::bind(&Lanelet2Overlay::on_line_segments, this, _1);
   auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
   auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
 
@@ -53,16 +53,16 @@ Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{
 
   // Publisher
   pub_vis_ = create_publisher<Marker>("projected_marker", 10);
-  pub_image_ = create_publisher<sensor_msgs::msg::Image>("overlay_image", 10);
+  pub_image_ = create_publisher<sensor_msgs::msg::Image>("lanelet2_overlay_image", 10);
 }
 
-void Overlay::on_info(const CameraInfo & msg)
+void Lanelet2Overlay::on_info(const CameraInfo & msg)
 {
   info_ = msg;
   camera_extrinsic_ = tf_subscriber_(info_->header.frame_id, "base_link");
 }
 
-void Overlay::on_image(const sensor_msgs::msg::Image & msg)
+void Lanelet2Overlay::on_image(const sensor_msgs::msg::Image & msg)
 {
   cv::Mat image = common::decompress_to_cv_mat(msg);
   const rclcpp::Time stamp = msg.header.stamp;
@@ -87,7 +87,7 @@ void Overlay::on_image(const sensor_msgs::msg::Image & msg)
   draw_overlay(image, synched_pose, stamp);
 }
 
-void Overlay::on_line_segments(const PointCloud2 & msg)
+void Lanelet2Overlay::on_line_segments(const PointCloud2 & msg)
 {
   const rclcpp::Time stamp = msg.header.stamp;
 
@@ -112,7 +112,7 @@ void Overlay::on_line_segments(const PointCloud2 & msg)
   make_vis_marker(line_segments_cloud, synched_pose.pose, stamp);
 }
 
-void Overlay::draw_overlay(
+void Lanelet2Overlay::draw_overlay(
   const cv::Mat & image, const std::optional<Pose> & pose, const rclcpp::Time & stamp)
 {
   if (ll2_cloud_.empty()) return;
@@ -134,7 +134,7 @@ void Overlay::draw_overlay(
   common::publish_image(*pub_image_, show_image, stamp);
 }
 
-void Overlay::draw_overlay_line_segments(
+void Lanelet2Overlay::draw_overlay_line_segments(
   cv::Mat & image, const Pose & pose, const LineSegments & near_segments)
 {
   if (!camera_extrinsic_.has_value()) return;
@@ -181,7 +181,7 @@ void Overlay::draw_overlay_line_segments(
   }
 }
 
-void Overlay::make_vis_marker(
+void Lanelet2Overlay::make_vis_marker(
   const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp)
 {
   Marker marker;

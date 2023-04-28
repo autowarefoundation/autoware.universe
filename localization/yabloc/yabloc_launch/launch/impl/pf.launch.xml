@@ -80,4 +80,11 @@
         <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
         <remap from="gnss_range_marker" to="/localization/pf/gnss_range_marker"/>
     </node>
+
+    <!-- pose to path -->
+    <node name="pose_to_path" pkg="path_monitor" exec="pose_to_path_node" output="log" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="sub_topics" value="[/localization/pf/pose]"/>
+        <param name="pub_topics" value="[/localization/validation/path/pf]"/>
+    </node>
 </launch>

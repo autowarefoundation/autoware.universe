@@ -4,11 +4,13 @@
     <let name="input_projected_line_segments_cloud" value="/localization/imgproc/projected_line_segments_cloud"/>
     <let name="input_ll2_sign_board" value="/localization/map/ll2_sign_board"/>
     <let name="input_ll2_road_marking" value="/localization/map/ll2_road_marking"/>
+    <let name="input_debug_line_segments" value="debug/line_segments_cloud"/>
+    <arg name="output_image_with_colored_line_segments" default="image_with_colored_line_segments"/>
     <arg name="resized_image" description=""/>
     <arg name="resized_info" description=""/>
 
-    <!-- overlay monitor -->
-    <node name="overlay" pkg="overlay_monitor" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
+    <!-- lanelet2 overlay monitor -->
+    <node name="lanelet2_overlay_monitor" pkg="lanelet2_overlay_monitor" exec="lanelet2_overlay_monitor_node" output="screen" args="--ros-args --log-level warn">
         <remap from="src_image" to="$(var resized_image)"/>
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="$(var input_overlayed_pose)"/>
@@ -19,11 +21,10 @@
         <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
     </node>
 
-    <!-- pose to path -->
-    <node name="pose_to_path" pkg="path_monitor" exec="pose_to_path_node" output="log" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="sub_topics" value="[/localization/pf/pose]"/>
-        <param name="pub_topics" value="[/localization/validation/path/pf]"/>
+    <!-- line segments overlay monitor -->
+    <node name="line_segments_overlay_monitor" pkg="line_segments_overlay_monitor" exec="line_segments_overlay_monitor_node" output="screen">
+        <remap from="input_image" to="$(var resized_image)"/>
+        <remap from="input_line_segments" to="$(var input_debug_line_segments)"/>
+        <remap from="output_image_with_colored_line_segments" to="$(var output_image_with_colored_line_segments)"/>
     </node>
-
 </launch>

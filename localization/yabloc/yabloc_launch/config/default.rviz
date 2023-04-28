@@ -185,7 +185,7 @@ Visualization Manager:
           QoS Durability: Volatile
           QoS Reliability: Reliable
           Top: 0
-          Topic: /localization/validation/overlay_image
+          Topic: /localization/imgproc/lanelet2_overlay_image
           Value: true
           Width: 800
         - Alpha: 0.30000001192092896

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "overlay_monitor/overlay_monitor.hpp"
+#include "lanelet2_overlay_monitor/lanelet2_overlay_monitor.hpp"
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<yabloc::overlay::Overlay>());
+  rclcpp::spin(std::make_shared<yabloc::lanelet2_overlay::Lanelet2Overlay>());
   rclcpp::shutdown();
   return 0;
 }
