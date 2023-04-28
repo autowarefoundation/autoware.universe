@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pcdless_module.hpp"
+#include "yabloc_module.hpp"
 
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
@@ -23,12 +23,12 @@ using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-PcdlessModule::PcdlessModule(rclcpp::Node * node) : logger_(node->get_logger())
+YabLocModule::YabLocModule(rclcpp::Node * node) : logger_(node->get_logger())
 {
-  cli_align_ = node->create_client<RequestPoseAlignment>("pcdless_align");
+  cli_align_ = node->create_client<RequestPoseAlignment>("yabloc_align");
 }
 
-PoseWithCovarianceStamped PcdlessModule::align_pose(const PoseWithCovarianceStamped & pose)
+PoseWithCovarianceStamped YabLocModule::align_pose(const PoseWithCovarianceStamped & pose)
 {
   const auto req = std::make_shared<RequestPoseAlignment::Request>();
   req->pose_with_covariance = pose;

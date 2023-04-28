@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INITIALIZER__PCDLESS_MODULE_HPP_
-#define POSE_INITIALIZER__PCDLESS_MODULE_HPP_
+#ifndef POSE_INITIALIZER__YABLOC_MODULE_HPP_
+#define POSE_INITIALIZER__YABLOC_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
-class PcdlessModule
+class YabLocModule
 {
 private:
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
 
 public:
-  explicit PcdlessModule(rclcpp::Node * node);
+  explicit YabLocModule(rclcpp::Node * node);
   PoseWithCovarianceStamped align_pose(const PoseWithCovarianceStamped & pose);
 
 private:
@@ -35,4 +35,4 @@ private:
   rclcpp::Client<RequestPoseAlignment>::SharedPtr cli_align_;
 };
 
-#endif  // POSE_INITIALIZER__PCDLESS_MODULE_HPP_
+#endif  // POSE_INITIALIZER__YABLOC_MODULE_HPP_
