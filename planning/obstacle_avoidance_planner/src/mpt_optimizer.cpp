@@ -798,10 +798,34 @@ void MPTOptimizer::updateBounds(
     static_cast<size_t>(std::ceil(1.0 / mpt_param_.delta_arc_length)), ref_points.size() - 1);
   for (size_t i = 0; i < ref_points.size(); ++i) {
     const auto ref_point_for_bound_search = ref_points.at(std::max(min_ref_point_index, i));
-    const double dist_to_left_bound = calcLateralDistToBounds(
-      ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
-    const double dist_to_right_bound = calcLateralDistToBounds(
-      ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
+    const auto [dist_to_left_bound, dist_to_right_bound] = [&]() -> std::pair<double, double> {
+      // calculate dist to left and right bounds
+      const double raw_dist_to_left_bound = calcLateralDistToBounds(
+        ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
+      const double raw_dist_to_right_bound = calcLateralDistToBounds(
+        ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
+
+      // NOTE: The drivable area's width is sometimes narrower than the vehicle width which means
+      // infeasible to run espcially when obsatcles are extracted from the drivable area.
+      //       In this case, the drivable area's width is forced to be wider.
+      const double drivable_width = raw_dist_to_left_bound - raw_dist_to_right_bound;
+      constexpr double min_drivable_width = 0.2;
+      if (drivable_width < min_drivable_width) {
+        // infeasible to run inside the drivable area
+        if (raw_dist_to_left_bound < 0.0) {
+          return {raw_dist_to_right_bound + min_drivable_width, raw_dist_to_right_bound};
+        } else if (0.0 < raw_dist_to_right_bound) {
+          return {raw_dist_to_left_bound, raw_dist_to_left_bound - min_drivable_width};
+        } else {
+          const double center_dist_to_bounds =
+            (raw_dist_to_left_bound + raw_dist_to_left_bound) / 2.0;
+          return {
+            center_dist_to_bounds + min_drivable_width / 2.0,
+            center_dist_to_bounds - min_drivable_width / 2.0};
+        }
+      }
+      return {raw_dist_to_left_bound, raw_dist_to_right_bound};
+    }();
 
     ref_points.at(i).bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
   }
