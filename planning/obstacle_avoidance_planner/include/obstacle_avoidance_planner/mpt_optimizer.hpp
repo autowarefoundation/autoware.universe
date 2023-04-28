@@ -184,6 +184,7 @@ private:
     double avoidance_cost_margin;
     double avoidance_cost_band_length;
     double avoidance_cost_decrease_rate;
+    double min_drivable_width;
     double avoidance_lat_error_weight;
     double avoidance_yaw_error_weight;
     double avoidance_steer_input_weight;

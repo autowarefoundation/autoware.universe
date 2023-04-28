@@ -246,6 +246,7 @@ MPTOptimizer::MPTParam::MPTParam(
       node->declare_parameter<double>("mpt.avoidance.avoidance_cost_band_length");
     avoidance_cost_decrease_rate =
       node->declare_parameter<double>("mpt.avoidance.avoidance_cost_decrease_rate");
+    min_drivable_width = node->declare_parameter<double>("mpt.avoidance.min_drivable_width");
 
     avoidance_lat_error_weight =
       node->declare_parameter<double>("mpt.avoidance.weight.lat_error_weight");
@@ -384,6 +385,7 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
       parameters, "mpt.avoidance.max_longitudinal_margin_for_bound_violation",
       max_longitudinal_margin_for_bound_violation);
     updateParam<double>(parameters, "mpt.avoidance.max_bound_fixing_time", max_bound_fixing_time);
+    updateParam<double>(parameters, "mpt.avoidance.min_drivable_width", min_drivable_width);
     updateParam<double>(parameters, "mpt.avoidance.max_avoidance_cost", max_avoidance_cost);
     updateParam<double>(parameters, "mpt.avoidance.avoidance_cost_margin", avoidance_cost_margin);
     updateParam<double>(
@@ -809,19 +811,18 @@ void MPTOptimizer::updateBounds(
       // infeasible to run espcially when obsatcles are extracted from the drivable area.
       //       In this case, the drivable area's width is forced to be wider.
       const double drivable_width = raw_dist_to_left_bound - raw_dist_to_right_bound;
-      constexpr double min_drivable_width = 0.2;
-      if (drivable_width < min_drivable_width) {
+      if (drivable_width < mpt_param_.min_drivable_width) {
         // infeasible to run inside the drivable area
         if (raw_dist_to_left_bound < 0.0) {
-          return {raw_dist_to_right_bound + min_drivable_width, raw_dist_to_right_bound};
+          return {raw_dist_to_right_bound + mpt_param_.min_drivable_width, raw_dist_to_right_bound};
         } else if (0.0 < raw_dist_to_right_bound) {
-          return {raw_dist_to_left_bound, raw_dist_to_left_bound - min_drivable_width};
+          return {raw_dist_to_left_bound, raw_dist_to_left_bound - mpt_param_.min_drivable_width};
         } else {
           const double center_dist_to_bounds =
             (raw_dist_to_left_bound + raw_dist_to_left_bound) / 2.0;
           return {
-            center_dist_to_bounds + min_drivable_width / 2.0,
-            center_dist_to_bounds - min_drivable_width / 2.0};
+            center_dist_to_bounds + mpt_param_.min_drivable_width / 2.0,
+            center_dist_to_bounds - mpt_param_.min_drivable_width / 2.0};
         }
       }
       return {raw_dist_to_left_bound, raw_dist_to_right_bound};
