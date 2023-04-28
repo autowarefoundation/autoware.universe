@@ -808,7 +808,7 @@ void MPTOptimizer::updateBounds(
         ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
 
       // NOTE: The drivable area's width is sometimes narrower than the vehicle width which means
-      // infeasible to run espcially when obsatcles are extracted from the drivable area.
+      // infeasible to run especially when obstacles are extracted from the drivable area.
       //       In this case, the drivable area's width is forced to be wider.
       const double drivable_width = raw_dist_to_left_bound - raw_dist_to_right_bound;
       if (drivable_width < mpt_param_.min_drivable_width) {
