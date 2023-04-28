@@ -39,8 +39,12 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
       return this->declare_parameter(name, default_val, param_desc);
     };
 
-  std::string model_path = declare_parameter_with_description("model_path", "");
-  std::string label_path = declare_parameter_with_description("label_path", "");
+  std::string model_path = declare_parameter_with_description(
+      "model_path", "",
+      "The onnx file name for YOLOX model");
+  std::string label_path = declare_parameter_with_description(
+      "label_path", "",
+      "The label file that consists of label name texts for detected object categories");
   std::string precision = declare_parameter_with_description(
     "precision", "fp32",
     "operation precision to be used on inference. Valid value is one of: [fp32, fp16, int8]");
