@@ -498,7 +498,8 @@ bool NormalLaneChange::getLaneChangePaths(
           route_handler, target_lanelets, getEgoPose(), check_length_);
       dynamic_object_indices = utils::lane_change::filterObjectIndices(
         {*candidate_path}, *dynamic_objects, backward_target_lanes_for_object_filtering,
-        getEgoPose(), common_parameter.forward_path_length, *lane_change_parameters_, lateral_buffer);
+        getEgoPose(), common_parameter.forward_path_length, *lane_change_parameters_,
+        lateral_buffer);
     }
     candidate_paths->push_back(*candidate_path);
 
