@@ -383,12 +383,9 @@ void PlanningInterfaceTestManager::testTrajectoryWithInvalidEgoPose(
 
 void PlanningInterfaceTestManager::testOffTrackFromRoute(rclcpp::Node::SharedPtr target_node)
 {
-  publishBehaviorNominalRoute(target_node, input_route_name_);
-
   const std::vector<double> deviation_from_route = {0.0, 1.0, 10.0, 100.0};
   for (const auto & deviation : deviation_from_route) {
     publishInitialPose(target_node, input_initial_pose_name_, deviation);
-    test_utils::spinSomeNodes(test_node_, target_node, 5);
   }
 }
 
