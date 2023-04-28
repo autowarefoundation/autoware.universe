@@ -2,6 +2,6 @@
   ros__parameters:
     gnss_enabled: true
     ndt_enabled: false
-    pcdless_enabled: true
+    yabloc_enabled: true
     ekf_enabled: true
     stop_check_enabled: false

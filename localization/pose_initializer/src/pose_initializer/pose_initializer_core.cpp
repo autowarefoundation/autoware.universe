@@ -19,8 +19,8 @@
 #include "gnss_module.hpp"
 #include "ndt_localization_trigger_module.hpp"
 #include "ndt_module.hpp"
-#include "pcdless_module.hpp"
 #include "stop_check_module.hpp"
+#include "yabloc_module.hpp"
 
 #include <memory>
 #include <vector>
@@ -42,8 +42,8 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
   }
-  if (declare_parameter<bool>("pcdless_enabled")) {
-    pcdless_ = std::make_unique<PcdlessModule>(this);
+  if (declare_parameter<bool>("yabloc_enabled")) {
+    yabloc_ = std::make_unique<YabLocModule>(this);
   }
   if (declare_parameter<bool>("ndt_enabled")) {
     ndt_ = std::make_unique<NdtModule>(this);
@@ -91,8 +91,8 @@ void PoseInitializer::on_initialize(
     if (ndt_) {
       pose = ndt_->align_pose(pose);
     }
-    if (pcdless_) {
-      pose = pcdless_->align_pose(pose);
+    if (yabloc_) {
+      pose = yabloc_->align_pose(pose);
     }
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
