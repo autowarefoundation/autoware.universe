@@ -187,10 +187,12 @@ public:
    */
   void printProfiling(void);
 
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
   /**
    * @brief get per-layer information for trt-engine-profiler
    */
   std::string getLayerInformation(nvinfer1::LayerInformationFormat format);
+#endif
 
 private:
   Logger logger_;

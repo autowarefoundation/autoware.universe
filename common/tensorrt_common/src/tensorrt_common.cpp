@@ -200,6 +200,7 @@ void TrtCommon::setup()
   if (build_config_->profile_per_layer) {
     context_->setProfiler(&model_profiler_);
   }
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
   // Write profiles for trt-engine-explorer
   // See: https://github.com/NVIDIA/TensorRT/tree/main/tools/experimental/trt-engine-explorer
   std::string j_ext = ".json";
@@ -208,6 +209,8 @@ void TrtCommon::setup()
   std::string ret = getLayerInformation(nvinfer1::LayerInformationFormat::kJSON);
   std::ofstream os(json_path, std::ofstream::trunc);
   os << ret << std::flush;
+#endif
+
   is_initialized_ = true;
 }
 
@@ -361,7 +364,11 @@ bool TrtCommon::buildEngineFromOnnx(
     }
     config->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
     config->setDLACore(build_config_->dla_core_id);
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
     config->setFlag(nvinfer1::BuilderFlag::kPREFER_PRECISION_CONSTRAINTS);
+#else
+    config->setFlag(nvinfer1::BuilderFlag::kSTRICT_TYPES);
+#endif
     config->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
   }
   if (precision_ == "fp16" || precision_ == "int8") {
@@ -441,13 +448,21 @@ bool TrtCommon::buildEngineFromOnnx(
   }
   if (precision_ == "int8" && calibrator_) {
     config->setFlag(nvinfer1::BuilderFlag::kINT8);
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
     config->setFlag(nvinfer1::BuilderFlag::kPREFER_PRECISION_CONSTRAINTS);
+#else
+    config->setFlag(nvinfer1::BuilderFlag::kSTRICT_TYPES);
+#endif
     // QAT requires no calibrator.
     //    assert((calibrator != nullptr) && "Invalid calibrator for INT8 precision");
     config->setInt8Calibrator(calibrator_.get());
   }
   if (build_config_->profile_per_layer) {
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
     config->setProfilingVerbosity(nvinfer1::ProfilingVerbosity::kDETAILED);
+#else
+    config->setProfilingVerbosity(nvinfer1::ProfilingVerbosity::kVERBOSE);
+#endif
   }
 
 #if TENSORRT_VERSION_MAJOR >= 8
@@ -495,7 +510,20 @@ bool TrtCommon::isInitialized()
 
 nvinfer1::Dims TrtCommon::getBindingDimensions(const int32_t index) const
 {
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + (NV_TENSOR_PATCH * 10) >= 8500
+  auto const& name = engine_->getIOTensorName(index);
+  auto dims = context_->getTensorShape(name);
+  bool const has_runtime_dim = std::any_of(dims.d, dims.d + dims.nbDims,
+                                         [](int32_t dim) { return dim == -1; });
+
+  if (has_runtime_dim) {
+    return dims;
+  } else {
+    return context_->getBindingDimensions(index);
+  }
+#else
   return context_->getBindingDimensions(index);
+#endif
 }
 
 int32_t TrtCommon::getNbBindings()
@@ -532,6 +560,7 @@ void TrtCommon::printProfiling()
   std::cout << model_profiler_;
 }
 
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
 std::string TrtCommon::getLayerInformation(nvinfer1::LayerInformationFormat format)
 {
   auto runtime = std::unique_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
@@ -542,5 +571,6 @@ std::string TrtCommon::getLayerInformation(nvinfer1::LayerInformationFormat form
   std::string result = inspector->getEngineInformation(format);
   return result;
 }
+#endif
 
 }  // namespace tensorrt_common
