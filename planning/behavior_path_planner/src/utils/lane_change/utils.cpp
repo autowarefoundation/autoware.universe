@@ -402,10 +402,10 @@ bool getLaneChangePaths(
 
     if (candidate_paths->empty()) {
       // only compute dynamic object indices once
-      const auto backward_lanes =
+      const auto backward_target_lanes_for_object_filtering =
         utils::lane_change::getBackwardLanelets(route_handler, target_lanelets, pose, check_length);
       dynamic_object_indices = filterObjectIndices(
-        {*candidate_path}, *dynamic_objects, backward_lanes, pose,
+        {*candidate_path}, *dynamic_objects, backward_target_lanes_for_object_filtering, pose,
         common_parameter.forward_path_length, parameter, lateral_buffer);
     }
     candidate_paths->push_back(*candidate_path);
