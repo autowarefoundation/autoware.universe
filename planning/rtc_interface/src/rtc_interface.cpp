@@ -56,9 +56,9 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::EXT_REQUEST_LANE_CHANGE_LEFT;
   } else if (module_name == "external_request_lane_change_right") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_RIGHT;
-  } else if (module_name == "avoidance_by_lane_change_left") {
+  } else if (module_name == "avoidance_by_lane_change") {
     module.type = Module::AVOIDANCE_BY_LC_LEFT;
-  } else if (module_name == "avoidance_by_lane_change_right") {
+  } else if (module_name == "avoidance_by_lane_change") {
     module.type = Module::AVOIDANCE_BY_LC_RIGHT;
   } else if (module_name == "avoidance_left") {
     module.type = Module::AVOIDANCE_LEFT;
