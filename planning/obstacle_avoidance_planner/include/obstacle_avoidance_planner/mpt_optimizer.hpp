@@ -189,6 +189,7 @@ private:
     double avoidance_lat_error_weight;
     double avoidance_yaw_error_weight;
     double avoidance_steer_input_weight;
+    double avoidance_soft_collision_free_weight;
 
     // constraint type
     bool soft_constraint;

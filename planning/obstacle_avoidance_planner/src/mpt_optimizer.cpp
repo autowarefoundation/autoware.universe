@@ -254,6 +254,8 @@ MPTOptimizer::MPTParam::MPTParam(
       node->declare_parameter<double>("mpt.avoidance.weight.yaw_error_weight");
     avoidance_steer_input_weight =
       node->declare_parameter<double>("mpt.avoidance.weight.steer_input_weight");
+    avoidance_soft_collision_free_weight =
+      node->declare_parameter<double>("mpt.avoidance.weight.soft_collision_free_weight");
   }
 
   {  // collision free constraints
@@ -399,6 +401,9 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
       parameters, "mpt.avoidance.weight.yaw_error_weight", avoidance_yaw_error_weight);
     updateParam<double>(
       parameters, "mpt.avoidance.weight.steer_input_weight", avoidance_steer_input_weight);
+    updateParam<double>(
+      parameters, "mpt.avoidance.weight.soft_collision_free_weight",
+      avoidance_soft_collision_free_weight);
   }
 
   {  // validation
@@ -1261,7 +1266,19 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   }
   */
   Eigen::VectorXd extended_g(D_v + N_ref * N_slack);
-  extended_g << g, mpt_param_.soft_collision_free_weight * Eigen::VectorXd::Ones(N_ref * N_slack);
+  extended_g.segment(0, D_v) = g;
+  for (size_t i = 0; i < N_ref; ++i) {
+    const bool is_avoiding_obstacle = true;  // ref_points.at(i); // TODO(murooka)
+    const double soft_collision_free_weight = is_avoiding_obstacle
+                                                ? mpt_param_.soft_collision_free_weight
+                                                : mpt_param_.avoidance_soft_collision_free_weight;
+
+    // TODO(murooka) specific implementation for L_inf
+    extended_g(D_v + i * N_slack) = soft_collision_free_weight;      // for lower
+    extended_g(D_v + i * N_slack + 1) = soft_collision_free_weight;  // for upper
+    // extended_g.segment(D_v + i * N_slack, N_slack) = soft_collision_free_weight *
+    // Eigen::VectorXd::Ones(N_slack);
+  }
 
   ObjectiveMatrix obj_matrix;
   obj_matrix.hessian = extended_H;
@@ -1289,6 +1306,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
 
   // NOTE: The number of one-step slack variables.
   //       The number of all slack variables will be N_ref * N_slack.
+  // TODO(murooka)
   const size_t N_slack = getNumberOfSlackVariables();
 
   // calculate indices of fixed points
@@ -1304,7 +1322,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   if (mpt_param_.soft_constraint) {
     // NOTE: 3 means expecting slack variable constraints to be larger than lower bound,
     //       smaller than upper bound, and positive.
-    A_rows += 3 * N_ref * N_collision_check;
+    A_rows += 4 * N_ref * N_collision_check;
   }
   if (mpt_param_.hard_constraint) {
     A_rows += N_ref * N_collision_check;
@@ -1356,31 +1374,36 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
     // soft constraints
     if (mpt_param_.soft_constraint) {
       size_t A_offset_cols = D_v;
-      const size_t A_blk_rows = 3 * N_ref;
+      const size_t A_blk_rows = 4 * N_ref;
 
       // A := [C * B | O | ... | O | I | O | ...
       //      -C * B | O | ... | O | I | O | ...
       //          O    | O | ... | O | I | O | ... ]
       Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, A_cols);
       A_blk.block(0, 0, N_ref, D_v) = CB;
-      A_blk.block(N_ref, 0, N_ref, D_v) = -CB;
+      A_blk.block(2 * N_ref, 0, N_ref, D_v) = -CB;
 
       size_t local_A_offset_cols = A_offset_cols;
       if (!mpt_param_.l_inf_norm) {
-        local_A_offset_cols += N_ref * l_idx;
+        local_A_offset_cols += 2 * N_ref * l_idx;  // 2 means upper and lower slack variables
       }
+      // for lower slack variables
       A_blk.block(0, local_A_offset_cols, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
       A_blk.block(N_ref, local_A_offset_cols, N_ref, N_ref) =
         Eigen::MatrixXd::Identity(N_ref, N_ref);
-      A_blk.block(2 * N_ref, local_A_offset_cols, N_ref, N_ref) =
+      // for upper slack variables
+      A_blk.block(2 * N_ref, local_A_offset_cols + N_ref, N_ref, N_ref) =
+        Eigen::MatrixXd::Identity(N_ref, N_ref);
+      A_blk.block(3 * N_ref, local_A_offset_cols + N_ref, N_ref, N_ref) =
         Eigen::MatrixXd::Identity(N_ref, N_ref);
 
       // lb := [lower_bound - CW
+      //               O
       //        CW - upper_bound
       //               O        ]
       Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(A_blk_rows);
       lb_blk.segment(0, N_ref) = -CW + part_lb;
-      lb_blk.segment(N_ref, N_ref) = CW - part_ub;
+      lb_blk.segment(2 * N_ref, N_ref) = CW - part_ub;
 
       A_offset_cols += N_ref * N_slack;
 
@@ -1742,7 +1765,7 @@ size_t MPTOptimizer::getNumberOfSlackVariables() const
 {
   if (mpt_param_.soft_constraint) {
     if (mpt_param_.l_inf_norm) {
-      return 1;
+      return 2;
     }
     return vehicle_circle_longitudinal_offsets_.size();
   }
