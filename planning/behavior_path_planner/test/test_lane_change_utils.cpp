@@ -17,6 +17,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+constexpr double epsilon = 1e-6;
+
 TEST(BehaviorPathPlanningLaneChangeUtilsTest, projectCurrentPoseToTarget)
 {
   geometry_msgs::msg::Pose ego_pose;
@@ -32,6 +34,6 @@ TEST(BehaviorPathPlanningLaneChangeUtilsTest, projectCurrentPoseToTarget)
   const auto result =
     behavior_path_planner::utils::safety_check::projectCurrentPoseToTarget(ego_pose, obj_pose);
 
-  std::cerr << "x: " << result.position.x << std::endl;
-  std::cerr << "y: " << result.position.y << std::endl;
+  EXPECT_NEAR(result.position.x, -4, epsilon);
+  EXPECT_NEAR(result.position.y, 3, epsilon);
 }
