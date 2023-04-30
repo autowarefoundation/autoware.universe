@@ -291,8 +291,6 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynam
     }
     return getMinMaxValues(obj_lat_abs_offset_vec);
   }();
-  std::cerr << is_left << " " << min_obj_lat_abs_offset << " " << max_obj_lat_abs_offset
-            << std::endl;
   const double min_obj_lat_offset = min_obj_lat_abs_offset * (is_left ? 1.0 : -1.0);
   const double max_obj_lat_offset = max_obj_lat_abs_offset * (is_left ? 1.0 : -1.0);
 
