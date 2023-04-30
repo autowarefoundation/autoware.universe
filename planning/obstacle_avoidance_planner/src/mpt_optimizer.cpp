@@ -1256,28 +1256,42 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
 
   // calculate g, and extend it for slack variables
   Eigen::VectorXd g = (sparse_T_mat * mpt_mat.W + T_vec).transpose() * QB;
-  /*
-  Eigen::VectorXd extended_g(D_v + N_ref * N_slack);
-
-  extended_g.segment(0, D_v) = g;
-  if (N_slack > 0) {
-    extended_g.segment(D_v, N_ref * N_slack) =
-      mpt_param_.soft_collision_free_weight * Eigen::VectorXd::Ones(N_ref * N_slack);
-  }
-  */
   Eigen::VectorXd extended_g(D_v + N_ref * N_slack);
   extended_g.segment(0, D_v) = g;
   for (size_t i = 0; i < N_ref; ++i) {
-    const bool is_avoiding_obstacle = true;  // ref_points.at(i); // TODO(murooka)
-    const double soft_collision_free_weight = is_avoiding_obstacle
-                                                ? mpt_param_.soft_collision_free_weight
-                                                : mpt_param_.avoidance_soft_collision_free_weight;
-
     // TODO(murooka) specific implementation for L_inf
-    extended_g(D_v + i * N_slack) = soft_collision_free_weight;      // for lower
-    extended_g(D_v + i * N_slack + 1) = soft_collision_free_weight;  // for upper
+    // for lower
+    extended_g(D_v + i) = [&]() {
+      // return mpt_param_.avoidance_soft_collision_free_weight;
+      for (int diff_idx = -10; diff_idx <= 10; ++diff_idx) {
+        const int around_idx =
+          std::clamp(static_cast<int>(i) + diff_idx, 0, static_cast<int>(ref_points.size()) - 1);
+        if (0.0 < ref_points.at(around_idx).bounds.lower_bound) {
+          return mpt_param_.avoidance_soft_collision_free_weight;
+        }
+      }
+      return mpt_param_.soft_collision_free_weight;
+    }();
+    // for upper
+    extended_g(D_v + N_ref + i) = [&]() {
+      // return mpt_param_.soft_collision_free_weight;
+      for (int diff_idx = -10; diff_idx <= 10; ++diff_idx) {
+        const int around_idx =
+          std::clamp(static_cast<int>(i) + diff_idx, 0, static_cast<int>(ref_points.size()) - 1);
+        if (ref_points.at(around_idx).bounds.upper_bound < 0.0) {
+          return mpt_param_.avoidance_soft_collision_free_weight;
+        }
+      }
+      return mpt_param_.soft_collision_free_weight;
+    }();
     // extended_g.segment(D_v + i * N_slack, N_slack) = soft_collision_free_weight *
     // Eigen::VectorXd::Ones(N_slack);
+    /*
+    // for lower
+    extended_g(D_v + i * N_slack) = mpt_param_.soft_collision_free_weight;
+    // for upper
+    extended_g(D_v + i * N_slack + 1) = mpt_param_.avoidance_soft_collision_free_weight;
+    */
   }
 
   ObjectiveMatrix obj_matrix;
