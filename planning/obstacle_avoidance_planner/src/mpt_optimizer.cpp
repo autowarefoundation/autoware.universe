@@ -800,36 +800,18 @@ void MPTOptimizer::updateBounds(
     static_cast<size_t>(std::ceil(1.0 / mpt_param_.delta_arc_length)), ref_points.size() - 1);
   for (size_t i = 0; i < ref_points.size(); ++i) {
     const auto ref_point_for_bound_search = ref_points.at(std::max(min_ref_point_index, i));
-    const auto [dist_to_left_bound, dist_to_right_bound] = [&]() -> std::pair<double, double> {
-      // calculate dist to left and right bounds
-      const double raw_dist_to_left_bound = calcLateralDistToBounds(
-        ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
-      const double raw_dist_to_right_bound = calcLateralDistToBounds(
-        ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
-
-      // NOTE: The drivable area's width is sometimes narrower than the vehicle width which means
-      // infeasible to run especially when obstacles are extracted from the drivable area.
-      //       In this case, the drivable area's width is forced to be wider.
-      const double drivable_width = raw_dist_to_left_bound - raw_dist_to_right_bound;
-      if (drivable_width < mpt_param_.min_drivable_width) {
-        // infeasible to run inside the drivable area
-        if (raw_dist_to_left_bound < 0.0) {
-          return {raw_dist_to_right_bound + mpt_param_.min_drivable_width, raw_dist_to_right_bound};
-        } else if (0.0 < raw_dist_to_right_bound) {
-          return {raw_dist_to_left_bound, raw_dist_to_left_bound - mpt_param_.min_drivable_width};
-        } else {
-          const double center_dist_to_bounds =
-            (raw_dist_to_left_bound + raw_dist_to_left_bound) / 2.0;
-          return {
-            center_dist_to_bounds + mpt_param_.min_drivable_width / 2.0,
-            center_dist_to_bounds - mpt_param_.min_drivable_width / 2.0};
-        }
-      }
-      return {raw_dist_to_left_bound, raw_dist_to_right_bound};
-    }();
-
+    const double dist_to_left_bound = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
+    const double dist_to_right_bound = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
     ref_points.at(i).bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
   }
+
+  // keep vehicle width + margin
+  // NOTE: The drivable area's width is sometimes narrower than the vehicle width which means
+  // infeasible to run especially when obstacles are extracted from the drivable area.
+  //       In this case, the drivable area's width is forced to be wider.
+  keepMinimumBoundsWidth(ref_points);
 
   // extend violated bounds, where the input path is outside the drivable area
   ref_points = extendViolatedBounds(ref_points);
@@ -856,6 +838,37 @@ void MPTOptimizer::updateBounds(
 
   time_keeper_ptr_->toc(__func__, "          ");
   return;
+}
+
+void MPTOptimizer::keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_points) const
+{
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    const auto & b = ref_points.at(i).bounds;
+
+    const double drivable_width = b.upper_bound - b.lower_bound;
+    if (mpt_param_.min_drivable_width < drivable_width) {
+      continue;
+    }
+
+    // infeasible to run inside the drivable area
+    if (b.upper_bound < 0.0) {
+      // The Upper bound is cut out. Widen the bounds towards the upper bound since cut out too
+      // much.
+      ref_points.at(i).bounds.upper_bound = b.lower_bound + mpt_param_.min_drivable_width;
+      ref_points.at(i).bounds.lower_bound = b.lower_bound;
+    } else if (0.0 < b.lower_bound) {
+      // The lower bound is cut out. Widen the bounds towards the upper bound since cut out too
+      // much.
+      ref_points.at(i).bounds.upper_bound = b.upper_bound;
+      ref_points.at(i).bounds.lower_bound = b.upper_bound - mpt_param_.min_drivable_width;
+    }
+    // It seems no bound is cut out. Widen the bounds towards the both side.
+    const double center_dist_to_bounds = (b.upper_bound + b.upper_bound) / 2.0;
+    ref_points.at(i).bounds.upper_bound =
+      center_dist_to_bounds + mpt_param_.min_drivable_width / 2.0;
+    ref_points.at(i).bounds.lower_bound =
+      center_dist_to_bounds - mpt_param_.min_drivable_width / 2.0;
+  }
 }
 
 std::vector<ReferencePoint> MPTOptimizer::extendViolatedBounds(
