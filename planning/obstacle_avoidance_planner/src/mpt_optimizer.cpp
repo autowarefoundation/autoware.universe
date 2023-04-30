@@ -852,8 +852,10 @@ void MPTOptimizer::keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_poin
     // const double drivable_width = b.upper_bound - b.lower_bound;
     // const bool is_infeasible_to_drive = drivable_width < mpt_param_.min_drivable_width;
 
-    // Here, it is infeasible to drive inside the drivable area
-    if (/*is_infeasible_to_drive &&*/ b.upper_bound < 0.0) {  // out of upper bound
+    // NOTE: The following condition should be uncommented to see obstacles outside the path.
+    //       However, on a narrow road, the ego may go outside the road border with this condition.
+    //       Currently, we cannot distinguish obstacles and road border
+    if (/*is_infeasible_to_drive ||*/ b.upper_bound < 0.0) {  // out of upper bound
       if (!out_of_upper_bound_start_idx) {
         out_of_upper_bound_start_idx = i;
       }
@@ -863,7 +865,7 @@ void MPTOptimizer::keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_poin
         out_of_upper_bound_start_idx = std::nullopt;
       }
     }
-    if (/*is_infeasible_to_drive &&*/ 0.0 < b.lower_bound) {  // out of lower bound
+    if (/*is_infeasible_to_drive ||*/ 0.0 < b.lower_bound) {  // out of lower bound
       if (!out_of_lower_bound_start_idx) {
         out_of_lower_bound_start_idx = i;
       }
