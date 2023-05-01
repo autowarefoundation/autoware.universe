@@ -930,7 +930,7 @@ PathWithLaneId createGoalAroundPath(
 
   lanelet::ConstLanelet goal_lane;
   const bool is_failed_getting_lanelet = std::invoke([&]() {
-    if (isInLanelets(shoulder_lanes, goal_pose)) {
+    if (isInLanelets(goal_pose, shoulder_lanes)) {
       return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
     }
     return !route_handler->getGoalLanelet(&goal_lane);
@@ -946,6 +946,16 @@ PathWithLaneId createGoalAroundPath(
   const double s_end = arc_coord.length;
 
   return route_handler->getCenterLinePath({goal_lane}, s_start, s_end);
+}
+
+bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
+{
+  for (const auto & lane : lanes) {
+    if (lanelet::utils::isInLanelet(pose, lane)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)

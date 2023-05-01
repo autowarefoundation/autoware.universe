@@ -26,16 +26,6 @@
 
 namespace behavior_path_planner
 {
-bool isInLanelets(const lanelet::ConstLanelets & lanes, const Pose & pose)
-{
-  for (const auto & lane : lanes) {
-    if (lanelet::utils::isInLanelet(pose, lane)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 PlannerManager::PlannerManager(rclcpp::Node & node, const bool verbose)
 : logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
@@ -632,7 +622,7 @@ bool PlannerManager::isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) 
 
   lanelet::ConstLanelet goal_lane;
   const bool is_failed_getting_lanelet = std::invoke([&]() {
-    if (isInLanelets(shoulder_lanes, goal_pose)) {
+    if (utils::isInLanelets(goal_pose, shoulder_lanes)) {
       return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
     }
     return !data->route_handler->getGoalLanelet(&goal_lane);
