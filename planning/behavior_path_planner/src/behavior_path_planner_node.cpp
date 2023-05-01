@@ -676,7 +676,10 @@ DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
   {  // drivable_area_generation
     std::string ns = "dynamic_avoidance.drivable_area_generation.";
     p.lat_offset_from_obstacle = declare_parameter<double>(ns + "lat_offset_from_obstacle");
-    p.time_to_avoid = declare_parameter<double>(ns + "time_to_avoid");
+    p.time_to_avoid_same_directional_object =
+      declare_parameter<double>(ns + "time_to_avoid_same_directional_object");
+    p.time_to_avoid_opposite_directional_object =
+      declare_parameter<double>(ns + "time_to_avoid_opposite_directional_object");
     p.max_lat_offset_to_avoid = declare_parameter<double>(ns + "max_lat_offset_to_avoid");
   }
 
@@ -1490,12 +1493,17 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     return result;
   }
 
+#ifndef USE_OLD_ARCHITECTURE
+  {
+    const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
+    planner_manager_->updateModuleParams(parameters);
+  }
+#endif
+
   result.successful = true;
   result.reason = "success";
 
   try {
-    updateParam(
-      parameters, "avoidance.publish_debug_marker", avoidance_param_ptr_->publish_debug_marker);
     updateParam(
       parameters, "lane_change.publish_debug_marker", lane_change_param_ptr_->publish_debug_marker);
     // Drivable area expansion parameters
