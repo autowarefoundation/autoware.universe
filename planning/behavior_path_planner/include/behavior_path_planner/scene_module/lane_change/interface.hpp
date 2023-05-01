@@ -129,16 +129,7 @@ public:
   ModuleStatus updateState() override;
 
 protected:
-  void updateRTCStatus(const double start_distance, const double finish_distance) override
-  {
-    const auto direction = std::invoke([&]() -> std::string {
-      const auto dir = module_type_->getDirection();
-      return (dir == Direction::LEFT) ? "left" : "right";
-    });
-
-    rtc_interface_ptr_map_.at(direction)->updateCooperateStatus(
-      uuid_map_.at(direction), isExecutionReady(), start_distance, finish_distance, clock_->now());
-  }
+  void updateRTCStatus(const double start_distance, const double finish_distance) override;
 };
 
 class LaneChangeBTInterface : public LaneChangeInterface
@@ -178,16 +169,7 @@ public:
     const std::shared_ptr<LaneChangeParameters> & parameters);
 
 protected:
-  void updateRTCStatus(const double start_distance, const double finish_distance) override
-  {
-    const auto direction = std::invoke([&]() -> std::string {
-      const auto dir = module_type_->getDirection();
-      return (dir == Direction::LEFT) ? "left" : "right";
-    });
-
-    rtc_interface_ptr_map_.at(direction)->updateCooperateStatus(
-      uuid_map_.at(direction), isExecutionReady(), start_distance, finish_distance, clock_->now());
-  }
+  void updateRTCStatus(const double start_distance, const double finish_distance) override;
 };
 
 class ExternalRequestLaneChangeLeftBTModule : public LaneChangeBTInterface
