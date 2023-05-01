@@ -76,10 +76,11 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
 {
   rtc_interface_ptr_map_.clear();
   const std::vector<std::string> rtc_types = {"left", "right"};
-  for (const auto & rtc_type : rtc_types){
+  for (const auto & rtc_type : rtc_types) {
     const auto snake_case_name = convertToSnakeCase(name);
     const std::string rtc_interface_name = snake_case_name + "_" + rtc_type;
-    rtc_interface_ptr_map_.emplace(rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
+    rtc_interface_ptr_map_.emplace(
+      rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
   }
 }
 

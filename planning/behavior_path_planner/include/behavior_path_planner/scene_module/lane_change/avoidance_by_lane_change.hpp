@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/lane_change/normal.hpp"
 
 #include <memory>
+#include <utility>
 
 namespace behavior_path_planner
 {

@@ -337,9 +337,6 @@ ModuleStatus AvoidanceByLaneChangeInterface::updateState()
     return current_state_;
   }
 
-  if (isWaitingApproval()) {
-  }
-
   if (module_type_->isAbortState()) {
     current_state_ = ModuleStatus::RUNNING;
     return current_state_;
