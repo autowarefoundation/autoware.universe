@@ -123,8 +123,7 @@ public:
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<LaneChangeParameters> & parameters,
     const std::shared_ptr<AvoidanceParameters> & avoidance_parameters,
-    const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+    const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters);
 
   ModuleStatus updateState() override;
 };

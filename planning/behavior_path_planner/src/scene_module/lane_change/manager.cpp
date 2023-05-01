@@ -79,8 +79,7 @@ std::shared_ptr<SceneModuleInterface>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_shared<AvoidanceByLaneChangeInterface>(
-    name_, *node_, parameters_, avoidance_parameters_, avoidance_by_lane_change_parameters_,
-    rtc_interface_ptr_map_);
+    name_, *node_, parameters_, avoidance_parameters_, avoidance_by_lane_change_parameters_);
 }
 
 }  // namespace behavior_path_planner

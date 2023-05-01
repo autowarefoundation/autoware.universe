@@ -52,10 +52,10 @@ std::string getModuleName(const uint8_t module_type)
       return "external_request_lane_change_right";
     }
     case Module::AVOIDANCE_BY_LC_LEFT: {
-      return "avoidance_by_lane_change";
+      return "avoidance_by_lane_change_left";
     }
     case Module::AVOIDANCE_BY_LC_RIGHT: {
-      return "avoidance_by_lane_change";
+      return "avoidance_by_lane_change_right";
     }
     case Module::AVOIDANCE_LEFT: {
       return "avoidance_left";
