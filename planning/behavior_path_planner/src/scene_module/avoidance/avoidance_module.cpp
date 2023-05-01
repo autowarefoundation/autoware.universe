@@ -2530,7 +2530,8 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
     output.drivable_area_info.obstacles = utils::avoidance::generateObstaclePolygonsForDrivableArea(
       avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
     // expand hatched road markings
-    output.drivable_area_info.enable_expanding_hatched_road_markings = true;
+    output.drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
   }
 
   {  // for old architecture
