@@ -1231,9 +1231,6 @@ void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward)
 {
-  std::vector<geometry_msgs::msg::Point> left_bound;
-  std::vector<geometry_msgs::msg::Point> right_bound;
-
   // extract data
   const auto transformed_lanes = utils::transformToLanelets(lanes);
   const auto current_pose = planner_data->self_odometry->pose.pose;
@@ -1267,10 +1264,8 @@ void generateDrivableArea(
     };
 
   // Insert Position
-  for (const auto & lane : lanes) {
-    addPoints(lane.left_lane.leftBound3d(), left_bound);
-    addPoints(lane.right_lane.rightBound3d(), right_bound);
-  }
+  auto left_bound = calcBound(route_handler, lanes, true);
+  auto right_bound = calcBound(route_handler, lanes, false);
 
   // Insert points after goal
   lanelet::ConstLanelet goal_lanelet;
@@ -1385,6 +1380,88 @@ void generateDrivableArea(
       path, expansion_params, *planner_data->dynamic_object, *planner_data->route_handler,
       transformed_lanes);
   }
+}
+
+std::vector<geometry_msgs::msg::Point> calcBound(
+  const std::shared_ptr<RouteHandler> route_handler,
+  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left)
+{
+  const auto convert_to_points = [&](const std::vector<DrivableLanes> & drivable_lanes) {
+    constexpr double overlap_threshold = 0.01;
+
+    std::vector<lanelet::ConstPoint3d> points;
+    for (const auto & drivable_lane : drivable_lanes) {
+      const auto bound =
+        is_left ? drivable_lane.left_lane.leftBound3d() : drivable_lane.right_lane.rightBound3d();
+      for (const auto & point : bound) {
+        if (
+          points.empty() ||
+          overlap_threshold < (points.back().basicPoint2d() - point.basicPoint2d()).norm()) {
+          points.push_back(point);
+        }
+      }
+    }
+    return points;
+  };
+  const auto get_corresponding_polygon_index = [&](const auto & polygon, const auto & target_id) {
+    for (size_t poly_idx = 0; poly_idx < polygon.size(); ++poly_idx) {
+      if (polygon[poly_idx].id() == target_id) {
+        // NOTE: If there are duplicated points in polygon, the early one will be returned.
+        return poly_idx;
+      }
+    }
+    // This means calculation has some errors.
+    return polygon.size() - 1;
+  };
+  const auto mod = [&](const int a, const int b) {
+    return (a + b) % b;  // NOTE: consider negative value
+  };
+
+  std::optional<lanelet::Polygon3d> current_polygon{std::nullopt};
+  std::vector<size_t> current_polygon_border_indices;
+  std::vector<geometry_msgs::msg::Point> output_points;
+  for (const auto & point : convert_to_points(drivable_lanes)) {
+    const auto polygons = route_handler->getLaneletMapPtr()->polygonLayer.findUsages(point);
+
+    if (!current_polygon) {
+      if (polygons.empty()) {
+        output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
+      } else {
+        // There is a new additional polygon to expand
+        current_polygon = polygons.front();  // NOTE: only use the front polygon
+        current_polygon_border_indices.push_back(
+          get_corresponding_polygon_index(*current_polygon, point.id()));
+      }
+    } else {
+      if (polygons.empty()) {
+        // The current additional polygon ends to expand
+        const size_t current_polygon_points_num = current_polygon->size();
+        const bool is_polygon_opposite_direction = [&]() {
+          const size_t modulo_diff = mod(
+            static_cast<int>(current_polygon_border_indices[1]) -
+              static_cast<int>(current_polygon_border_indices[0]),
+            current_polygon_points_num);
+          return modulo_diff == 1;
+        }();
+
+        const int target_points_num =
+          current_polygon_points_num - current_polygon_border_indices.size();
+        for (int poly_idx = 0; poly_idx <= target_points_num; ++poly_idx) {
+          const int target_poly_idx = current_polygon_border_indices.front() +
+                                      poly_idx * (is_polygon_opposite_direction ? -1 : 1);
+          output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(
+            (*current_polygon)[mod(target_poly_idx, current_polygon_points_num)]));
+        }
+        current_polygon = std::nullopt;
+        current_polygon_border_indices.clear();
+      } else {
+        current_polygon_border_indices.push_back(
+          get_corresponding_polygon_index(*current_polygon, point.id()));
+      }
+    }
+  }
+
+  return output_points;
 }
 
 // generate drivable area by expanding path for freespace
