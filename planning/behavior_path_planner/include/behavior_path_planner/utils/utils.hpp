@@ -231,14 +231,16 @@ std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
 std::vector<geometry_msgs::msg::Point> calcBound(
   const std::shared_ptr<RouteHandler> route_handler,
-  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left);
+  const std::vector<DrivableLanes> & drivable_lanes, const bool enable_expanding_polygon,
+  const bool is_left);
 
 boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
 std::vector<DrivableLanes> cutOverlappedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes);
 
 void generateDrivableArea(
-  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
+  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
+  const bool enable_expanding_polygon, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
 
 void generateDrivableArea(

@@ -1228,7 +1228,8 @@ geometry_msgs::msg::Point calcLongitudinalOffsetGoalPoint(
 }
 
 void generateDrivableArea(
-  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
+  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
+  const bool enable_expanding_polygon, const double vehicle_length,
   const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward)
 {
   // extract data
@@ -1264,8 +1265,8 @@ void generateDrivableArea(
     };
 
   // Insert Position
-  auto left_bound = calcBound(route_handler, lanes, true);
-  auto right_bound = calcBound(route_handler, lanes, false);
+  auto left_bound = calcBound(route_handler, lanes, enable_expanding_polygon, true);
+  auto right_bound = calcBound(route_handler, lanes, enable_expanding_polygon, false);
 
   // Insert points after goal
   lanelet::ConstLanelet goal_lanelet;
@@ -1382,9 +1383,11 @@ void generateDrivableArea(
   }
 }
 
+// calculate bounds from drivable lanes and hatched road markings
 std::vector<geometry_msgs::msg::Point> calcBound(
   const std::shared_ptr<RouteHandler> route_handler,
-  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left)
+  const std::vector<DrivableLanes> & drivable_lanes, const bool enable_expanding_polygon,
+  const bool is_left)
 {
   const auto convert_to_points = [&](const std::vector<DrivableLanes> & drivable_lanes) {
     constexpr double overlap_threshold = 0.01;
@@ -1421,19 +1424,31 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   std::vector<size_t> current_polygon_border_indices;
   std::vector<geometry_msgs::msg::Point> output_points;
   for (const auto & point : convert_to_points(drivable_lanes)) {
-    const auto polygons = route_handler->getLaneletMapPtr()->polygonLayer.findUsages(point);
+    const auto polygon = [&]() -> std::optional<lanelet::Polygon3d> {
+      if (enable_expanding_polygon) {
+        const auto polygons = route_handler->getLaneletMapPtr()->polygonLayer.findUsages(point);
+        for (const auto & polygon : polygons) {
+          const std::string type = polygon.attributeOr(lanelet::AttributeName::Type, "none");
+          if (type == "hatched_road_markings") {
+            // NOTE: If there are multiple polygons on a point, only the front one is used.
+            return polygon;
+          }
+        }
+      }
+      return std::nullopt;
+    }();
 
     if (!current_polygon) {
-      if (polygons.empty()) {
+      if (!polygon) {
         output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
       } else {
         // There is a new additional polygon to expand
-        current_polygon = polygons.front();  // NOTE: only use the front polygon
+        current_polygon = polygon;
         current_polygon_border_indices.push_back(
           get_corresponding_polygon_index(*current_polygon, point.id()));
       }
     } else {
-      if (polygons.empty()) {
+      if (!polygon) {
         // The current additional polygon ends to expand
         const size_t current_polygon_points_num = current_polygon->size();
         const bool is_polygon_opposite_direction = [&]() {
@@ -2044,7 +2059,8 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
   centerline_path->header = route_handler->getRouteHeader();
 
-  utils::generateDrivableArea(*centerline_path, drivable_lanes, p.vehicle_length, planner_data);
+  utils::generateDrivableArea(
+    *centerline_path, drivable_lanes, false, p.vehicle_length, planner_data);
 
   return centerline_path;
 }
@@ -2294,7 +2310,7 @@ BehaviorModuleOutput getReferencePath(
     dp.drivable_area_types_to_skip);
 
   // for old architecture
-  generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data);
+  generateDrivableArea(reference_path, expanded_lanes, false, p.vehicle_length, planner_data);
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(reference_path);
