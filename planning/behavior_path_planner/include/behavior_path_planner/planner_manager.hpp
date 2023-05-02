@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -212,11 +213,17 @@ private:
       root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
 
     lanelet::ConstLanelet closest_lane{};
-    if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-      return {};
+    if (lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return utils::getReferencePath(closest_lane, data);
     }
 
-    return utils::getReferencePath(closest_lane, data);
+    if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+      return utils::getReferencePath(closest_lane, data);
+    }
+
+    return {};  // something wrong.
   }
 
   /**
@@ -346,6 +353,8 @@ private:
   std::pair<SceneModulePtr, BehaviorModuleOutput> runRequestModules(
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
+
+  bool isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) const;
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
 

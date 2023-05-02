@@ -2532,9 +2532,8 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
     output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
       getPreviousModuleOutput().drivable_area_info.drivable_lanes, drivable_lanes);
     // generate obstacle polygons
-    output.drivable_area_info.obstacle_polys =
-      utils::avoidance::generateObstaclePolygonsForDrivableArea(
-        avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    output.drivable_area_info.obstacles = utils::avoidance::generateObstaclePolygonsForDrivableArea(
+      avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
   }
 
   {  // for old architecture
@@ -3328,7 +3327,6 @@ void AvoidanceModule::setDebugData(
   add(createOverhangFurthestLineStringMarkerArray(
     debug.bounds, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
-  add(createUnavoidableObjectsMarkerArray(debug.unavoidable_objects, "unavoidable_objects"));
   add(createUnsafeObjectsMarkerArray(debug.unsafe_objects, "unsafe_objects"));
 
   // parent object info

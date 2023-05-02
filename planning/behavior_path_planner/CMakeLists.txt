@@ -15,6 +15,7 @@ set(common_src
   src/scene_module/scene_module_visitor.cpp
   src/scene_module/avoidance/avoidance_module.cpp
   src/scene_module/avoidance_by_lc/module.cpp
+  src/scene_module/dynamic_avoidance/dynamic_avoidance_module.cpp
   src/scene_module/pull_out/pull_out_module.cpp
   src/scene_module/goal_planner/goal_planner_module.cpp
   src/scene_module/side_shift/side_shift_module.cpp
@@ -66,6 +67,7 @@ else()
     src/planner_manager.cpp
     src/scene_module/avoidance/manager.cpp
     src/scene_module/avoidance_by_lc/manager.cpp
+    src/scene_module/dynamic_avoidance/manager.cpp
     src/scene_module/pull_out/manager.cpp
     src/scene_module/goal_planner/manager.cpp
     src/scene_module/side_shift/manager.cpp
@@ -104,6 +106,14 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_avoidance_module
+    behavior_path_planner_node
+  )
+
+  ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_lane_change_module
+    test/test_lane_change_utils.cpp
+  )
+
+  target_link_libraries(test_${CMAKE_PROJECT_NAME}_lane_change_module
     behavior_path_planner_node
   )
 

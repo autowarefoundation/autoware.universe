@@ -427,7 +427,7 @@ std::vector<Point> updateBoundary(
   return updated_bound;
 }
 
-geometry_msgs::msg::Point calcCenterOfGeometry(const Polygon2d & obj_poly)
+[[maybe_unused]] geometry_msgs::msg::Point calcCenterOfGeometry(const Polygon2d & obj_poly)
 {
   geometry_msgs::msg::Point center_pos;
   for (const auto & point : obj_poly.outer()) {
@@ -915,6 +915,43 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 {
   for (const auto & lane : lanes) {
     if (lane.id() == goal_id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+PathWithLaneId createGoalAroundPath(
+  const std::shared_ptr<RouteHandler> & route_handler,
+  const std::optional<PoseWithUuidStamped> & modified_goal)
+{
+  const Pose goal_pose = modified_goal ? modified_goal->pose : route_handler->getGoalPose();
+  const auto shoulder_lanes = route_handler->getShoulderLanelets();
+
+  lanelet::ConstLanelet goal_lane;
+  const bool is_failed_getting_lanelet = std::invoke([&]() {
+    if (isInLanelets(goal_pose, shoulder_lanes)) {
+      return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
+    }
+    return !route_handler->getGoalLanelet(&goal_lane);
+  });
+  if (is_failed_getting_lanelet) {
+    PathWithLaneId path{};
+    return path;
+  }
+
+  constexpr double backward_length = 1.0;
+  const auto arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, goal_pose);
+  const double s_start = std::max(arc_coord.length - backward_length, 0.0);
+  const double s_end = arc_coord.length;
+
+  return route_handler->getCenterLinePath({goal_lane}, s_start, s_end);
+}
+
+bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
+{
+  for (const auto & lane : lanes) {
+    if (lanelet::utils::isInLanelet(pose, lane)) {
       return true;
     }
   }
@@ -2466,25 +2503,25 @@ std::vector<DrivableLanes> combineDrivableLanes(
 
 // NOTE: Assuming that path.right/left_bound is already created.
 void extractObstaclesFromDrivableArea(
-  PathWithLaneId & path, const std::vector<tier4_autoware_utils::Polygon2d> & obj_polys)
+  PathWithLaneId & path, const std::vector<DrivableAreaInfo::Obstacle> & obstacles)
 {
-  if (obj_polys.empty()) {
+  if (obstacles.empty()) {
     return;
   }
 
   std::vector<std::vector<PolygonPoint>> right_polygons;
   std::vector<std::vector<PolygonPoint>> left_polygons;
-  for (const auto & obj_poly : obj_polys) {
-    const auto obj_pos = drivable_area_processing::calcCenterOfGeometry(obj_poly);
+  for (const auto & obstacle : obstacles) {
+    const auto & obj_pos = obstacle.pose.position;
 
     // get edge points of the object
     const size_t nearest_path_idx =
       motion_utils::findNearestIndex(path.points, obj_pos);  // to get z for object polygon
     std::vector<Point> edge_points;
-    for (size_t i = 0; i < obj_poly.outer().size() - 1;
+    for (size_t i = 0; i < obstacle.poly.outer().size() - 1;
          ++i) {  // NOTE: There is a duplicated points
       edge_points.push_back(tier4_autoware_utils::createPoint(
-        obj_poly.outer().at(i).x(), obj_poly.outer().at(i).y(),
+        obstacle.poly.outer().at(i).x(), obstacle.poly.outer().at(i).y(),
         path.points.at(nearest_path_idx).point.pose.position.z));
     }
 

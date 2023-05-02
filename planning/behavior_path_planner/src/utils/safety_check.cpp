@@ -14,33 +14,47 @@
 
 #include "behavior_path_planner/utils/safety_check.hpp"
 
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "perception_utils/predicted_path_utils.hpp"
 
 namespace behavior_path_planner::utils::safety_check
 {
+bool isTargetObjectFront(
+  const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon)
+{
+  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
+  const auto ego_point =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0).position;
+
+  // check all edges in the polygon
+  for (const auto & obj_edge : obj_polygon.outer()) {
+    const auto obj_point = tier4_autoware_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
+    if (motion_utils::isTargetPointFront(path.points, ego_point, obj_point)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 template <typename Pythagoras>
 ProjectedDistancePoint pointToSegment(
   const Point2d & reference_point, const Point2d & polygon_segment_start,
   const Point2d & polygon_segment_end)
 {
-  auto copied_point_from_object = polygon_segment_end;
-  auto copied_point_from_reference = reference_point;
-  bg::subtract_point(copied_point_from_object, polygon_segment_start);
-  bg::subtract_point(copied_point_from_reference, polygon_segment_start);
+  auto segment_vec = polygon_segment_end;
+  auto segment_start_to_reference_vec = reference_point;
+  bg::subtract_point(segment_vec, polygon_segment_start);
+  bg::subtract_point(segment_start_to_reference_vec, polygon_segment_start);
 
-  const auto c1 = bg::dot_product(copied_point_from_reference, copied_point_from_object);
-  if (!(c1 > 0)) {
-    return {polygon_segment_start, Pythagoras::apply(reference_point, polygon_segment_start)};
-  }
-
-  const auto c2 = bg::dot_product(copied_point_from_object, copied_point_from_object);
-  if (!(c2 > c1)) {
-    return {polygon_segment_end, Pythagoras::apply(reference_point, polygon_segment_end)};
-  }
+  const auto c1 = bg::dot_product(segment_vec, segment_start_to_reference_vec);
+  const auto c2 = bg::dot_product(segment_vec, segment_vec);
+  const auto ratio = std::clamp(c1 / c2, 0.0, 1.0);
 
   Point2d projected = polygon_segment_start;
-  bg::multiply_value(copied_point_from_object, c1 / c2);
-  bg::add_point(projected, copied_point_from_object);
+  bg::multiply_value(segment_vec, ratio);
+  bg::add_point(projected, segment_vec);
 
   return {projected, Pythagoras::apply(reference_point, projected)};
 }
@@ -199,16 +213,15 @@ bool isSafeInLaneletCollisionCheck(
       continue;
     }
 
-    const auto found_expected_obj_pose =
+    auto expected_obj_pose =
       perception_utils::calcInterpolatedPose(target_object_path, current_time);
 
-    if (!found_expected_obj_pose) {
+    if (!expected_obj_pose) {
       continue;
     }
 
-    auto expected_obj_pose = *found_expected_obj_pose;
     const auto & obj_polygon =
-      tier4_autoware_utils::toPolygon2d(expected_obj_pose, target_object.shape);
+      tier4_autoware_utils::toPolygon2d(*expected_obj_pose, target_object.shape);
     const auto & ego_info = interpolated_ego.at(i);
     auto expected_ego_pose = ego_info.first;
     const auto & ego_polygon = ego_info.second;
@@ -223,12 +236,12 @@ bool isSafeInLaneletCollisionCheck(
     debug.lerped_path.push_back(expected_ego_pose);
 
     getProjectedDistancePointFromPolygons(
-      ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
+      ego_polygon, obj_polygon, expected_ego_pose, *expected_obj_pose);
     debug.expected_ego_pose = expected_ego_pose;
-    debug.expected_obj_pose = expected_obj_pose;
+    debug.expected_obj_pose = *expected_obj_pose;
 
     if (!hasEnoughDistance(
-          expected_ego_pose, ego_current_twist, expected_obj_pose, object_twist, common_parameters,
+          expected_ego_pose, ego_current_twist, *expected_obj_pose, object_twist, common_parameters,
           front_decel, rear_decel, debug)) {
       debug.failed_reason = "not_enough_longitudinal";
       return false;
