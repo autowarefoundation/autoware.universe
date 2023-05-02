@@ -105,18 +105,7 @@ void getProjectedDistancePointFromPolygons(
 }
 Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object)
 {
-  tf2::Transform tf_map_desired_to_global{};
-  tf2::Transform tf_map_target_to_global{};
-
-  tf2::fromMsg(desired_object, tf_map_desired_to_global);
-  tf2::fromMsg(target_object, tf_map_target_to_global);
-
-  Pose desired_obj_pose_projected_to_target{};
-  tf2::toMsg(
-    tf_map_desired_to_global.inverse() * tf_map_target_to_global,
-    desired_obj_pose_projected_to_target);
-
-  return desired_obj_pose_projected_to_target;
+  return tier4_autoware_utils::inverseTransformPose(target_object, desired_object);
 }
 
 bool hasEnoughDistance(
