@@ -192,12 +192,25 @@ bool BehaviorTreeManager::isEgoOutOfRoute(const std::shared_ptr<PlannerData> & d
   }
 
   // If ego vehicle is out of the closest lanelet, return true
-  lanelet::ConstLanelet closest_lane;
-  if (!data->route_handler->getClosestLaneletWithinRoute(self_pose, &closest_lane)) {
-    RCLCPP_WARN_STREAM(logger_, "cannot find closest lanelet");
-    return true;
-  }
-  if (!lanelet::utils::isInLanelet(self_pose, closest_lane)) {
+  // check if ego vehicle is in shoulder lane
+  const bool is_in_shoulder_lane = std::invoke([&]() {
+    lanelet::Lanelet closest_shoulder_lanelet;
+    if (!lanelet::utils::query::getClosestLanelet(
+          shoulder_lanes, self_pose, &closest_shoulder_lanelet)) {
+      return false;
+    }
+    return lanelet::utils::isInLanelet(self_pose, closest_shoulder_lanelet);
+  });
+  // check if ego vehicle is in road lane
+  const bool is_in_road_lane = std::invoke([&]() {
+    lanelet::ConstLanelet closest_road_lane;
+    if (!data->route_handler->getClosestLaneletWithinRoute(self_pose, &closest_road_lane)) {
+      RCLCPP_WARN_STREAM(logger_, "cannot find closest road lanelet");
+      return false;
+    }
+    return lanelet::utils::isInLanelet(self_pose, closest_road_lane);
+  });
+  if (!is_in_shoulder_lane && !is_in_road_lane) {
     return true;
   }
 
