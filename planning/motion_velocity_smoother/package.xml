@@ -30,6 +30,7 @@
   <depend>osqp_interface</depend>
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>

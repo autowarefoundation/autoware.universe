@@ -10,7 +10,6 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_tf2_autoware_auto_msgs
     "autoware_auto_common"
     "autoware_auto_perception_msgs"
-    "autoware_auto_system_msgs"
     "autoware_auto_geometry_msgs"
     "geometry_msgs"
     "tf2"

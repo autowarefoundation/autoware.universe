@@ -5,11 +5,20 @@ project(front_vehicle_velocity_estimator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(PCL REQUIRED COMPONENTS common)
+
 # Targets
 ament_auto_add_library(front_vehicle_velocity_estimator_node_component SHARED
   src/front_vehicle_velocity_estimator_node/front_vehicle_velocity_estimator_node.cpp
   src/front_vehicle_velocity_estimator_node/front_vehicle_velocity_estimator.cpp
 )
+target_include_directories(front_vehicle_velocity_estimator_node_component
+  SYSTEM PUBLIC ${PCL_INCLUDE_DIRS}
+)
+target_link_libraries(front_vehicle_velocity_estimator_node_component
+  ${PCL_LIBRARY_DIRS}
+)
+
 
 rclcpp_components_register_node(front_vehicle_velocity_estimator_node_component
   PLUGIN "front_vehicle_velocity_estimator::FrontVehicleVelocityEstimatorNode"

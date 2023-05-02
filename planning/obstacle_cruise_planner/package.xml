@@ -30,9 +30,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>signal_processing</depend>
-  <depend>std_msgs</depend>
   <depend>tf2</depend>
-  <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_planning_msgs</depend>

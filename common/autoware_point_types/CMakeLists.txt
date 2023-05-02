@@ -4,6 +4,8 @@ project(autoware_point_types)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(PCL REQUIRED COMPONENTS common)
+
 include_directories(
   include
   SYSTEM

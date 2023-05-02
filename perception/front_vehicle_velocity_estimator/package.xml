@@ -12,11 +12,10 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
-  <depend>geometry_msgs</depend>
+  <depend>libpcl-common</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
   <depend>pcl_conversions</depend>
-  <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>

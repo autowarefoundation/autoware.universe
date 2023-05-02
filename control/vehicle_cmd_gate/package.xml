@@ -16,7 +16,6 @@
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_control_msgs</depend>
-  <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>

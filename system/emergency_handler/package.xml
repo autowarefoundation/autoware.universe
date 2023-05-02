@@ -18,8 +18,6 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
   <depend>tier4_system_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

@@ -16,7 +16,6 @@
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
-  <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
@@ -24,11 +23,9 @@
   <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
-  <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

@@ -17,7 +17,6 @@
   <depend>message_filters</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>std_msgs</depend>
   <depend>tier4_autoware_utils</depend>
 
   <build_depend>autoware_cmake</build_depend>
