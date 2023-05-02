@@ -135,8 +135,13 @@ private:
   struct ConstraintMatrix
   {
     Eigen::MatrixXd linear;
-    Eigen::VectorXd lower_bound;
     Eigen::VectorXd upper_bound;
+    Eigen::VectorXd lower_bound;
+
+    static ConstraintMatrix getEmptyConstraint(const size_t cols)
+    {
+      return ConstraintMatrix{Eigen::MatrixXd{0, cols}, Eigen::VectorXd{0}, Eigen::VectorXd{0}};
+    }
   };
 
   struct MPTParam
@@ -192,9 +197,10 @@ private:
     double avoidance_soft_collision_free_weight;
 
     // constraint type
-    bool soft_constraint;
     bool hard_constraint;
-    bool l_inf_norm;
+    bool soft_constraint;
+    bool use_different_slack_variables_for_each_vehicle_circle;
+    bool use_symmetric_slack_variables;
 
     // vehicle circles
     std::string vehicle_circles_method;
@@ -278,6 +284,19 @@ private:
   ConstraintMatrix calcConstraintMatrix(
     const StateEquationGenerator::Matrix & mpt_mat,
     const std::vector<ReferencePoint> & ref_points) const;
+  std::pair<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>>
+  calcCollisionFreeCoefficients(
+    const std::vector<ReferencePoint> & ref_points,
+    const StateEquationGenerator::Matrix & mpt_mat) const;
+  ConstraintMatrix generateSoftConstraints(
+    const std::vector<ReferencePoint> & ref_points, const std::vector<Eigen::MatrixXd> & CB_vec,
+    const std::vector<Eigen::VectorXd> & CW_vec) const;
+  ConstraintMatrix generateHardConstraints(
+    const std::vector<ReferencePoint> & ref_points, const std::vector<Eigen::MatrixXd> & CB_vec,
+    const std::vector<Eigen::VectorXd> & CW_vec) const;
+  ConstraintMatrix generateFixedPointsConstraints(
+    const std::vector<ReferencePoint> & ref_points,
+    const StateEquationGenerator::Matrix & mpt_mat) const;
 
   std::optional<Eigen::VectorXd> calcOptimizedSteerAngles(
     const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
@@ -303,7 +322,7 @@ private:
   std::vector<TrajectoryPoint> extractFixedPoints(
     const std::vector<ReferencePoint> & ref_points) const;
 
-  size_t getNumberOfSlackVariables() const;
+  size_t getNumberOfOneStepSlackVariables() const;
   std::optional<double> calcNormalizedAvoidanceCost(const ReferencePoint & ref_point) const;
 };
 }  // namespace obstacle_avoidance_planner

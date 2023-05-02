@@ -259,11 +259,15 @@ MPTOptimizer::MPTParam::MPTParam(
   }
 
   {  // collision free constraints
-    l_inf_norm = node->declare_parameter<bool>("mpt.collision_free_constraints.option.l_inf_norm");
-    soft_constraint =
-      node->declare_parameter<bool>("mpt.collision_free_constraints.option.soft_constraint");
     hard_constraint =
-      node->declare_parameter<bool>("mpt.collision_free_constraints.option.hard_constraint");
+      node->declare_parameter<bool>("mpt.collision_free_constraints.option.hard_constraint.enable");
+    soft_constraint =
+      node->declare_parameter<bool>("mpt.collision_free_constraints.option.soft_constraint.enable");
+    use_different_slack_variables_for_each_vehicle_circle = node->declare_parameter<bool>(
+      "mpt.collision_free_constraints.option.soft_constraint.use_different_slack_variables_for_"
+      "each_vehicle_circle");
+    use_symmetric_slack_variables = node->declare_parameter<bool>(
+      "mpt.collision_free_constraints.option.soft_constraint.use_symmetric_slack_variables");
   }
 
   {  // vehicle_circles
@@ -321,11 +325,19 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
     parameters, "mpt.kinematics.optimization_center_offset", optimization_center_offset);
 
   // collision_free_constraints
-  updateParam<bool>(parameters, "mpt.collision_free_constraints.option.l_inf_norm", l_inf_norm);
   updateParam<bool>(
-    parameters, "mpt.collision_free_constraints.option.soft_constraint", soft_constraint);
+    parameters, "mpt.collision_free_constraints.option.hard_constraint.enable", hard_constraint);
   updateParam<bool>(
-    parameters, "mpt.collision_free_constraints.option.hard_constraint", hard_constraint);
+    parameters, "mpt.collision_free_constraints.option.soft_constraint.enable", soft_constraint);
+  updateParam<bool>(
+    parameters,
+    "mpt.collision_free_constraints.option.soft_constraint.use_different_slack_variables_for_each_"
+    "vehicle_circle",
+    use_different_slack_variables_for_each_vehicle_circle);
+  updateParam<bool>(
+    parameters,
+    "mpt.collision_free_constraints.option.soft_constraint.use_symmetric_slack_variables",
+    use_symmetric_slack_variables);
 
   {  // vehicle_circles
     updateParam<std::string>(
@@ -1220,7 +1232,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   const size_t D_u = state_equation_generator_.getDimU();
   const size_t D_xn = D_x * N_ref;
   const size_t D_v = D_x + (N_ref - 1) * D_u;
-  const size_t N_slack = getNumberOfSlackVariables();
+  const size_t N_slack = N_ref * getNumberOfOneStepSlackVariables();
 
   // generate T matrix and vector to shift optimization center
   // NOTE: Z is defined as time-series vector of shifted deviation
@@ -1251,12 +1263,12 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   H.triangularView<Eigen::Upper>() = B.transpose() * QB + R;
   H.triangularView<Eigen::Lower>() = H.transpose();
 
-  Eigen::MatrixXd extended_H = Eigen::MatrixXd::Zero(D_v + N_ref * N_slack, D_v + N_ref * N_slack);
+  Eigen::MatrixXd extended_H = Eigen::MatrixXd::Zero(D_v + N_slack, D_v + N_slack);
   extended_H.block(0, 0, D_v, D_v) = H;
 
   // calculate g, and extend it for slack variables
   Eigen::VectorXd g = (sparse_T_mat * mpt_mat.W + T_vec).transpose() * QB;
-  Eigen::VectorXd extended_g(D_v + N_ref * N_slack);
+  Eigen::VectorXd extended_g(D_v + N_slack);
   extended_g.segment(0, D_v) = g;
   for (size_t i = 0; i < N_ref; ++i) {
     // TODO(murooka) specific implementation for L_inf
@@ -1284,13 +1296,13 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
       }
       return mpt_param_.soft_collision_free_weight;
     }();
-    // extended_g.segment(D_v + i * N_slack, N_slack) = soft_collision_free_weight *
-    // Eigen::VectorXd::Ones(N_slack);
+    // extended_g.segment(D_v + i * N_one_step_slack, N_one_step_slack) = soft_collision_free_weight
+    // * Eigen::VectorXd::Ones(N_one_step_slack);
     /*
     // for lower
-    extended_g(D_v + i * N_slack) = mpt_param_.soft_collision_free_weight;
+    extended_g(D_v + i * N_one_step_slack) = mpt_param_.soft_collision_free_weight;
     // for upper
-    extended_g(D_v + i * N_slack + 1) = mpt_param_.avoidance_soft_collision_free_weight;
+    extended_g(D_v + i * N_one_step_slack + 1) = mpt_param_.avoidance_soft_collision_free_weight;
     */
   }
 
@@ -1302,9 +1314,9 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   return obj_matrix;
 }
 
-// Constraint: lb <= A u <= ub
+// Constraint: lb <= A v <= ub
 // decision variable
-// u := [initial state, steer angles, soft variables]
+// v := [initial state, steer angles, slack variables]
 MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   const StateEquationGenerator::Matrix & mpt_mat,
   const std::vector<ReferencePoint> & ref_points) const
@@ -1317,48 +1329,90 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   const size_t N_u = (N_ref - 1) * D_u;
   const size_t D_v = D_x + N_u;
   const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
+  // NOTE: Colum number of A is initial state + steer angles + slack variables
+  const size_t A_cols = D_v + N_ref * getNumberOfOneStepSlackVariables();
 
-  // NOTE: The number of one-step slack variables.
-  //       The number of all slack variables will be N_ref * N_slack.
-  // TODO(murooka)
-  const size_t N_slack = getNumberOfSlackVariables();
+  const auto [CB_vec, CW_vec] = calcCollisionFreeCoefficients(ref_points, mpt_mat);
 
-  // calculate indices of fixed points
-  std::vector<size_t> fixed_points_indices;
-  for (size_t i = 0; i < N_ref; ++i) {
-    if (ref_points.at(i).fixed_kinematic_state) {
-      fixed_points_indices.push_back(i);
+  // 1. soft collision free constraint
+  // lb - s < C1X + C2 < ub + s
+  // C1X + C2 = C1(Bv + w) + C2
+  const auto soft_collisoin_free_constraint_mat =
+    generateSoftConstraints(ref_points, CB_vec, CW_vec);
+
+  // 2. hard collision free constraint
+  // lb < CX1 + C2 < ub
+  // CX1 + C2 = C1(Bv + w) + C2
+  const auto hard_collisoin_free_constraint_mat =
+    generateHardConstraints(ref_points, CB_vec, CW_vec);
+
+  // 3. fixed points constraint
+  // X = B v + w where point is fixed
+  const auto fixed_points_constraint_mat = generateFixedPointsConstraints(ref_points, mpt_mat);
+
+  // 4. steer limit
+  // steer_min < u < steer_max
+  const auto steer_limit_constraint_mat = [&]() {
+    if (!mpt_param_.steer_limit_constraint) {
+      return ConstraintMatrix::getEmptyConstraint(A_cols);
     }
-  }
 
-  // calculate rows and cols of A
-  size_t A_rows = 0;
-  if (mpt_param_.soft_constraint) {
-    // NOTE: 3 means expecting slack variable constraints to be larger than lower bound,
-    //       smaller than upper bound, and positive.
-    A_rows += 4 * N_ref * N_collision_check;
-  }
-  if (mpt_param_.hard_constraint) {
-    A_rows += N_ref * N_collision_check;
-  }
-  A_rows += fixed_points_indices.size() * D_x;
-  if (mpt_param_.steer_limit_constraint) {
-    A_rows += N_u;
-  }
+    Eigen::MatrixXd A_block = Eigen::MatrixXd(N_u, A_cols);
+    A_block.block(0, D_x, N_u, N_u) = Eigen::MatrixXd::Identity(N_u, N_u);
 
-  const size_t A_cols = [&] {
-    if (mpt_param_.soft_constraint) {
-      return D_v + N_ref * N_slack;  // initial state + steer angles + soft variables
+    // TODO(murooka) use curvature by stabling optimization
+    // Currently, when using curvature, the optimization result is weird with sample_map.
+    // Eigen::VectorXd ub_block = Eigen::VectorXd::Constant(N_u, mpt_param_.max_steer_rad);
+    // Eigen::VectorXd lb_block = Eigen::VectorXd::Constant(N_u, -mpt_param_.max_steer_rad);
+    // return ConstraintMatrix{A_block, ub_block, lb_block};
+
+    Eigen::VectorXd ub_block = Eigen::VectorXd::Zero(N_u);
+    Eigen::VectorXd lb_block = Eigen::VectorXd::Zero(N_u);
+    for (size_t i = 0; i < N_u; ++i) {
+      const double ref_steer_angle =
+        std::atan2(vehicle_info_.wheel_base_m * ref_points.at(i).curvature, 1.0);
+      ub_block(i) = ref_steer_angle + mpt_param_.max_steer_rad;
+      lb_block(i) = ref_steer_angle - mpt_param_.max_steer_rad;
     }
-    return D_v;  // initial state + steer angles
+    return ConstraintMatrix{A_block, ub_block, lb_block};
   }();
 
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, A_cols);
-  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::common::osqp::INF);
-  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::common::osqp::INF);
-  size_t A_rows_end = 0;
+  // allocate constraint matrix and vector before concatenation
+  ConstraintMatrix constraint_mat;
+  const size_t A_rows = soft_collisoin_free_constraint_mat.linear.rows() +
+                        hard_collisoin_free_constraint_mat.linear.rows() +
+                        fixed_points_constraint_mat.linear.rows() +
+                        steer_limit_constraint_mat.linear.rows();
+  constraint_mat.linear = Eigen::MatrixXd::Zero(A_rows, A_cols);
+  constraint_mat.upper_bound = Eigen::VectorXd::Zero(A_rows);
+  constraint_mat.lower_bound = Eigen::VectorXd::Zero(A_rows);
 
-  // CX = C(Bv + w) + C \in R^{N_ref, N_ref * D_x}
+  // concatenate each matrix and vector
+  constraint_mat.linear << soft_collisoin_free_constraint_mat.linear,
+    hard_collisoin_free_constraint_mat.linear, fixed_points_constraint_mat.linear,
+    steer_limit_constraint_mat.linear;
+  constraint_mat.upper_bound << soft_collisoin_free_constraint_mat.upper_bound,
+    hard_collisoin_free_constraint_mat.upper_bound, fixed_points_constraint_mat.upper_bound,
+    steer_limit_constraint_mat.upper_bound;
+  constraint_mat.lower_bound << soft_collisoin_free_constraint_mat.lower_bound,
+    hard_collisoin_free_constraint_mat.lower_bound, fixed_points_constraint_mat.lower_bound,
+    steer_limit_constraint_mat.lower_bound;
+
+  time_keeper_ptr_->toc(__func__, "          ");
+  return constraint_mat;
+}
+
+std::pair<std::vector<Eigen::MatrixXd>, std::vector<Eigen::VectorXd>>
+MPTOptimizer::calcCollisionFreeCoefficients(
+  const std::vector<ReferencePoint> & ref_points,
+  const StateEquationGenerator::Matrix & mpt_mat) const
+{
+  const size_t N_ref = ref_points.size();
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
+
+  std::vector<Eigen::MatrixXd> CB_vec;
+  std::vector<Eigen::VectorXd> CW_vec;
   for (size_t l_idx = 0; l_idx < N_collision_check; ++l_idx) {
     // create C := [cos(beta) | l cos(beta)]
     Eigen::SparseMatrix<double> C_sparse_mat(N_ref, N_ref * D_x);
@@ -1376,111 +1430,150 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
     }
     C_sparse_mat.setFromTriplets(C_triplet_vec.begin(), C_triplet_vec.end());
 
-    // calculate CB, and CW
-    const Eigen::MatrixXd CB = C_sparse_mat * mpt_mat.B;
-    const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.W + C_vec;
+    // calculate CB and CW
+    CB_vec.push_back(C_sparse_mat * mpt_mat.B);
+    CW_vec.push_back(C_sparse_mat * mpt_mat.W + C_vec);
+  }
 
+  return {CB_vec, CW_vec};
+}
+
+MPTOptimizer::ConstraintMatrix MPTOptimizer::generateSoftConstraints(
+  const std::vector<ReferencePoint> & ref_points, const std::vector<Eigen::MatrixXd> & CB_vec,
+  const std::vector<Eigen::VectorXd> & CW_vec) const
+{
+  const size_t N_ref = ref_points.size();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_u = (N_ref - 1) * D_u;
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_v = D_x + N_u;
+  const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
+  const size_t N_one_step_slack_variables = getNumberOfOneStepSlackVariables();
+  const size_t A_cols = D_v + N_ref * getNumberOfOneStepSlackVariables();
+
+  if (!mpt_param_.soft_constraint) {
+    return ConstraintMatrix::getEmptyConstraint(A_cols);
+  }
+
+  // NOTE: upper and lower bounds constraints (2) and positive slack variables constraints
+  const size_t A_one_step_rows = 2 * N_ref + N_one_step_slack_variables * N_ref;
+
+  Eigen::MatrixXd A_block = Eigen::MatrixXd::Zero(N_collision_check * A_one_step_rows, A_cols);
+  // NOTE: Upper bound will not be updated
+  const Eigen::VectorXd ub_block =
+    Eigen::VectorXd::Constant(N_collision_check * A_one_step_rows, autoware::common::osqp::INF);
+  Eigen::VectorXd lb_block = Eigen::VectorXd::Zero(N_collision_check * A_one_step_rows);
+
+  // use L infinity norm for soft constraints
+  for (size_t l_idx = 0; l_idx < N_collision_check; ++l_idx) {
     // calculate bounds
     const double bounds_offset =
       vehicle_info_.vehicle_width_m / 2.0 - vehicle_circle_radiuses_.at(l_idx);
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
-    // soft constraints
-    if (mpt_param_.soft_constraint) {
-      size_t A_offset_cols = D_v;
-      const size_t A_blk_rows = 4 * N_ref;
+    // update A
+    A_block.block(l_idx * A_one_step_rows, 0, N_ref, D_v) = CB_vec.at(l_idx);
+    A_block.block(l_idx * A_one_step_rows + N_ref, 0, N_ref, D_v) = -CB_vec.at(l_idx);
 
-      // A := [C * B | O | ... | O | I | O | ...
-      //      -C * B | O | ... | O | I | O | ...
-      //          O    | O | ... | O | I | O | ... ]
-      Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, A_cols);
-      A_blk.block(0, 0, N_ref, D_v) = CB;
-      A_blk.block(2 * N_ref, 0, N_ref, D_v) = -CB;
-
-      size_t local_A_offset_cols = A_offset_cols;
-      if (!mpt_param_.l_inf_norm) {
-        local_A_offset_cols += 2 * N_ref * l_idx;  // 2 means upper and lower slack variables
+    const Eigen::MatrixXd Inn = Eigen::MatrixXd::Identity(N_ref, N_ref);
+    const size_t rows_offset = l_idx * A_one_step_rows;
+    if (mpt_param_.use_different_slack_variables_for_each_vehicle_circle) {
+      if (mpt_param_.use_symmetric_slack_variables) {
+        const size_t cols_offset = D_v + l_idx * N_ref;
+        A_block.block(rows_offset, cols_offset, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 1 * N_ref, cols_offset, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 2 * N_ref, cols_offset, N_ref, N_ref) = Inn;
+      } else {
+        const size_t cols_offset = D_v + l_idx * N_ref;
+        A_block.block(rows_offset, cols_offset, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + N_ref, cols_offset + N_ref, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 2 * N_ref, cols_offset, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 3 * N_ref, cols_offset + N_ref, N_ref, N_ref) = Inn;
       }
-      // for lower slack variables
-      A_blk.block(0, local_A_offset_cols, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-      A_blk.block(N_ref, local_A_offset_cols, N_ref, N_ref) =
-        Eigen::MatrixXd::Identity(N_ref, N_ref);
-      // for upper slack variables
-      A_blk.block(2 * N_ref, local_A_offset_cols + N_ref, N_ref, N_ref) =
-        Eigen::MatrixXd::Identity(N_ref, N_ref);
-      A_blk.block(3 * N_ref, local_A_offset_cols + N_ref, N_ref, N_ref) =
-        Eigen::MatrixXd::Identity(N_ref, N_ref);
-
-      // lb := [lower_bound - CW
-      //               O
-      //        CW - upper_bound
-      //               O        ]
-      Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(A_blk_rows);
-      lb_blk.segment(0, N_ref) = -CW + part_lb;
-      lb_blk.segment(2 * N_ref, N_ref) = CW - part_ub;
-
-      A_offset_cols += N_ref * N_slack;
-
-      A.block(A_rows_end, 0, A_blk_rows, A_cols) = A_blk;
-      lb.segment(A_rows_end, A_blk_rows) = lb_blk;
-
-      A_rows_end += A_blk_rows;
+    } else {
+      if (mpt_param_.use_symmetric_slack_variables) {
+        A_block.block(rows_offset + 0, D_v, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + N_ref, D_v, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 2 * N_ref, D_v, N_ref, N_ref) = Inn;
+      } else {
+      }
     }
 
-    // hard constraints
-    if (mpt_param_.hard_constraint) {
-      const size_t A_blk_rows = N_ref;
+    // update lb
+    lb_block.segment(l_idx * A_one_step_rows, N_ref) = -CW_vec.at(l_idx) + part_lb;
+    lb_block.segment(l_idx * A_one_step_rows + N_ref, N_ref) = CW_vec.at(l_idx) - part_ub;
+  }
+  return ConstraintMatrix{A_block, ub_block, lb_block};
+}
 
-      Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, A_cols);
-      A_blk.block(0, 0, N_ref, N_ref) = CB;
+MPTOptimizer::ConstraintMatrix MPTOptimizer::generateHardConstraints(
+  const std::vector<ReferencePoint> & ref_points, const std::vector<Eigen::MatrixXd> & CB_vec,
+  const std::vector<Eigen::VectorXd> & CW_vec) const
+{
+  const size_t N_ref = ref_points.size();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_u = (N_ref - 1) * D_u;
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_v = D_x + N_u;
+  const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
+  const size_t N_one_step_slack_variables = getNumberOfOneStepSlackVariables();
+  const size_t A_cols = D_v + N_ref * getNumberOfOneStepSlackVariables();
 
-      A.block(A_rows_end, 0, A_blk_rows, A_cols) = A_blk;
-      lb.segment(A_rows_end, A_blk_rows) = part_lb - CW;
-      ub.segment(A_rows_end, A_blk_rows) = part_ub - CW;
+  if (!mpt_param_.hard_constraint) {
+    return ConstraintMatrix::getEmptyConstraint(A_cols);
+  }
 
-      A_rows_end += A_blk_rows;
+  Eigen::MatrixXd A_block = Eigen::MatrixXd::Zero(N_ref * N_collision_check, A_cols);
+  Eigen::VectorXd lb_block = Eigen::VectorXd::Zero(N_ref * N_collision_check);
+  Eigen::VectorXd ub_block = Eigen::VectorXd::Zero(N_ref * N_collision_check);
+  for (size_t l_idx = 0; l_idx < N_collision_check; ++l_idx) {
+    const double bounds_offset =
+      vehicle_info_.vehicle_width_m / 2.0 - vehicle_circle_radiuses_.at(l_idx);
+    const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
+
+    A_block.block(l_idx * N_ref, D_v, N_ref, N_ref) = CB_vec.at(l_idx);
+
+    lb_block.segment(l_idx * N_ref, N_ref) = part_lb - CW_vec.at(l_idx);
+    ub_block.segment(l_idx * N_ref, N_ref) = part_ub - CW_vec.at(l_idx);
+  }
+
+  return ConstraintMatrix{A_block, ub_block, lb_block};
+}
+
+MPTOptimizer::ConstraintMatrix MPTOptimizer::generateFixedPointsConstraints(
+  const std::vector<ReferencePoint> & ref_points,
+  const StateEquationGenerator::Matrix & mpt_mat) const
+{
+  const size_t N_ref = ref_points.size();
+  const size_t D_u = state_equation_generator_.getDimU();
+  const size_t N_u = (N_ref - 1) * D_u;
+  const size_t D_x = state_equation_generator_.getDimX();
+  const size_t D_v = D_x + N_u;
+  const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
+  const size_t N_one_step_slack_variables = getNumberOfOneStepSlackVariables();
+  const size_t A_cols = D_v + N_ref * getNumberOfOneStepSlackVariables();
+
+  // calculate indices of fixed points
+  std::vector<size_t> fixed_points_indices;
+  for (size_t i = 0; i < N_ref; ++i) {
+    if (ref_points.at(i).fixed_kinematic_state) {
+      fixed_points_indices.push_back(i);
     }
   }
 
-  // fixed points constraint
-  // X = B v + w where point is fixed
-  for (const size_t i : fixed_points_indices) {
-    A.block(A_rows_end, 0, D_x, D_v) = mpt_mat.B.block(i * D_x, 0, D_x, D_v);
-
-    lb.segment(A_rows_end, D_x) =
-      ref_points[i].fixed_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
-    ub.segment(A_rows_end, D_x) =
-      ref_points[i].fixed_kinematic_state->toEigenVector() - mpt_mat.W.segment(i * D_x, D_x);
-
-    A_rows_end += D_x;
+  // calculate matrix and vector
+  Eigen::MatrixXd A_block = Eigen::MatrixXd(fixed_points_indices.size() * D_x, A_cols);
+  Eigen::VectorXd ub_block = Eigen::VectorXd::Zero(fixed_points_indices.size() * D_x);
+  Eigen::VectorXd lb_block = Eigen::VectorXd::Zero(fixed_points_indices.size() * D_x);
+  for (size_t i = 0; i < fixed_points_indices.size(); ++i) {
+    const size_t p_idx = fixed_points_indices.at(i);
+    A_block.block(i * D_x, 0, D_x, D_v) = mpt_mat.B.block(p_idx * D_x, 0, D_x, D_v);
+    lb_block.segment(i * D_x, D_x) = ref_points.at(p_idx).fixed_kinematic_state->toEigenVector() -
+                                     mpt_mat.W.segment(p_idx * D_x, D_x);
+    ub_block.segment(i * D_x, D_x) = ref_points.at(p_idx).fixed_kinematic_state->toEigenVector() -
+                                     mpt_mat.W.segment(p_idx * D_x, D_x);
   }
-
-  // steer limit
-  if (mpt_param_.steer_limit_constraint) {
-    A.block(A_rows_end, D_x, N_u, N_u) = Eigen::MatrixXd::Identity(N_u, N_u);
-
-    // TODO(murooka) use curvature by stabling optimization
-    // Currently, when using curvature, the optimization result is weird with sample_map.
-    // lb.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, -mpt_param_.max_steer_rad);
-    // ub.segment(A_rows_end, N_u) = Eigen::MatrixXd::Constant(N_u, 1, mpt_param_.max_steer_rad);
-
-    for (size_t i = 0; i < N_u; ++i) {
-      const double ref_steer_angle =
-        std::atan2(vehicle_info_.wheel_base_m * ref_points.at(i).curvature, 1.0);
-      lb(A_rows_end + i) = ref_steer_angle - mpt_param_.max_steer_rad;
-      ub(A_rows_end + i) = ref_steer_angle + mpt_param_.max_steer_rad;
-    }
-
-    A_rows_end += N_u;
-  }
-
-  ConstraintMatrix constraint_matrix;
-  constraint_matrix.linear = A;
-  constraint_matrix.lower_bound = lb;
-  constraint_matrix.upper_bound = ub;
-
-  time_keeper_ptr_->toc(__func__, "          ");
-  return constraint_matrix;
+  return ConstraintMatrix{A_block, ub_block, lb_block};
 }
 
 void MPTOptimizer::addSteerWeightR(
@@ -1511,8 +1604,8 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
   const size_t D_v = D_x + (N_ref - 1) * D_u;
-  const size_t N_slack = getNumberOfSlackVariables();
-  const size_t D_un = D_v + N_ref * N_slack;
+  const size_t N_slack = N_ref * getNumberOfOneStepSlackVariables();
+  const size_t D_un = D_v + N_slack;
 
   // for manual warm start, calculate initial solution
   const auto u0 = [&]() -> std::optional<Eigen::VectorXd> {
@@ -1604,8 +1697,8 @@ Eigen::VectorXd MPTOptimizer::calcInitialSolutionForManualWarmStart(
   const size_t N_ref = ref_points.size();
   const size_t N_u = (N_ref - 1) * D_u;
   const size_t D_v = D_x + N_u;
-  const size_t N_slack = getNumberOfSlackVariables();
-  const size_t D_un = D_v + N_ref * N_slack;
+  const size_t N_slack = N_ref * getNumberOfOneStepSlackVariables();
+  const size_t D_un = D_v + N_slack;
 
   Eigen::VectorXd u0 = Eigen::VectorXd::Zero(D_un);
 
@@ -1623,15 +1716,18 @@ Eigen::VectorXd MPTOptimizer::calcInitialSolutionForManualWarmStart(
     u0(D_x + i) = prev_ref_points.at(prev_target_idx).optimized_input;
   }
 
+  /*
   // set previous slack variables
+  // TODO(murooka)
   for (size_t i = 0; i < N_ref; ++i) {
     const auto & slack_variables = ref_points.at(i).slack_variables;
     if (slack_variables) {
       for (size_t j = 0; j < slack_variables->size(); ++j) {
-        u0(D_v + i * N_slack + j) = slack_variables->at(j);
+        u0(D_v + i * N_one_step_slack + j) = slack_variables->at(j);
       }
     }
   }
+  */
 
   return u0;
 }
@@ -1677,10 +1773,10 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::calcMPTPoints(
   const size_t D_u = state_equation_generator_.getDimU();
   const size_t N_ref = ref_points.size();
   const size_t D_v = D_x + (N_ref - 1) * D_u;
-  const size_t N_slack = getNumberOfSlackVariables();
+  const size_t N_slack = N_ref * getNumberOfOneStepSlackVariables();
 
   const Eigen::VectorXd steer_angles = U.segment(0, D_v);
-  const Eigen::VectorXd slack_variables = U.segment(D_v, N_ref * N_slack);
+  const Eigen::VectorXd slack_variables = U.segment(D_v, N_slack);
 
   // predict time-series states from optimized control inputs
   const Eigen::VectorXd X = state_equation_generator_.predict(mpt_mat, steer_angles);
@@ -1710,11 +1806,20 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::calcMPTPoints(
       ref_point.optimized_input = steer_angles(D_x + i * D_u);
     }
 
-    std::vector<double> tmp_slack_variables;
-    for (size_t j = 0; j < N_slack; ++j) {
-      tmp_slack_variables.push_back(slack_variables(i * N_slack + j));
-    }
-    ref_point.slack_variables = tmp_slack_variables;
+    // TODO(murooka)
+    // memorize slack variables for manual warm start
+    /*
+        if (N_slack % N_ref == 0) {
+          // NOTE: This means each time step has each own slack variables.
+          const size_t N_one_step_slack = N_slack / N_ref;
+
+          std::vector<double> tmp_slack_variables;
+          for (size_t j = 0; j < N_one_step_slack; ++j) {
+            tmp_slack_variables.push_back(slack_variables(i * N_one_step_slack + j));
+          }
+          ref_point.slack_variables = tmp_slack_variables;
+        }
+    */
 
     // update pose and velocity
     TrajectoryPoint traj_point;
@@ -1775,13 +1880,21 @@ int MPTOptimizer::getNumberOfPoints() const
   return mpt_param_.num_points;
 }
 
-size_t MPTOptimizer::getNumberOfSlackVariables() const
+// NOTE: get number of one-step slack variables for collision free
+size_t MPTOptimizer::getNumberOfOneStepSlackVariables() const
 {
   if (mpt_param_.soft_constraint) {
-    if (mpt_param_.l_inf_norm) {
+    if (mpt_param_.use_different_slack_variables_for_each_vehicle_circle) {
+      if (mpt_param_.use_symmetric_slack_variables) {
+        return vehicle_circle_longitudinal_offsets_.size();
+      }
+      return 2 * vehicle_circle_longitudinal_offsets_.size();
+    } else {
+      if (mpt_param_.use_symmetric_slack_variables) {
+        return 1;
+      }
       return 2;
     }
-    return vehicle_circle_longitudinal_offsets_.size();
   }
   return 0;
 }
