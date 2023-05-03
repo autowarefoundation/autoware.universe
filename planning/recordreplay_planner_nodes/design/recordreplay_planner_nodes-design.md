@@ -47,7 +47,3 @@ See `recordreplay_planner`.
 # Security considerations 
 
 TBD by a security specialist.
-
-# Future extensions / Unimplemented parts
-
-* Proper `tf` support
