@@ -103,3 +103,15 @@ repositories:
     type: git
     url: https://github.com/MORAI-Autonomous/MORAI-ROS2_morai_msgs.git
     version: main
+  vendor/eagleye:
+    type: git
+    url: https://github.com/MapIV/eagleye.git
+    version: autoware-main
+  vendor/rtklib_ros_bridge:
+    type: git
+    url: https://github.com/MapIV/rtklib_ros_bridge.git
+    version: ros2-v0.1.0
+  vendor/llh_converter:
+    type: git
+    url: https://github.com/MapIV/llh_converter.git
+    version: ros2
