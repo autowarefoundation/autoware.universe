@@ -15,10 +15,11 @@
 #ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
 #define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
 
+#include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
+
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/LU>
-#include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
 
 #include <cmath>
 
