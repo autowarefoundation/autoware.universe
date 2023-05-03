@@ -30,8 +30,7 @@ This node uses two actions to control its behavior:
   are published on that topic, the node publishes a trajectory starting approximately at that point (see the
   `recordreplay_planner` design documentation on how that point is determined).  
 
-The actions are defined in `autoware_auto_vehicle_msgs`, `autoware_auto_planning_msgs` and
-`autoware_auto_perception_msgs`.
+The actions are defined in `autoware_auto_planning_msgs` and `autoware_auto_perception_msgs`.
 
 Inputs:
 
