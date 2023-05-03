@@ -68,6 +68,8 @@ void registerSceneModuleManager(const SceneModuleManagerPtr & manager_ptr)
 }
 ```
 
+Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/include/behavior_path_planner/planner_manager.hpp#L66-L75)
+
 Sub-manager has the following parameters that are needed by the manager to manage the launched modules, and these parameters can be set for each module.
 
 ```c++
@@ -80,6 +82,8 @@ struct ModuleConfigParameters
   uint8_t max_module_size{0};
 };
 ```
+
+Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/include/behavior_path_planner/parameters.hpp#L23-L30)
 
 | Name                                                | Type    | Description                                                                                                            |
 | :-------------------------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------------------- |
@@ -259,6 +263,8 @@ detach
   }
 ```
 
+Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/src/planner_manager.cpp#L66-L111)
+
 ## Priority of execution request
 
 Compare priorities parameter among sub-managers to determine the order of execution based on config. Therefore, the priority between sub-modules does **NOT** change at runtime.
@@ -277,6 +283,8 @@ Compare priorities parameter among sub-managers to determine the order of execut
     });
   }
 ```
+
+Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/include/behavior_path_planner/planner_manager.hpp#L239-L250)
 
 In the future, however, we are considering having the priorities change dynamically depending on the situation in order to achieve more complex use cases.
 
@@ -478,10 +486,18 @@ This closest lanelet is used for root reference path generation.
       root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
 
     lanelet::ConstLanelet closest_lane{};
-    if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-      return {};
+    if (lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return utils::getReferencePath(closest_lane, data);
     }
 
-    return utils::getReferencePath(closest_lane, data);
+    if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+      return utils::getReferencePath(closest_lane, data);
+    }
+
+    return {};  // something wrong.
   }
 ```
+
+Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/include/behavior_path_planner/planner_manager.hpp#L202-L227)
