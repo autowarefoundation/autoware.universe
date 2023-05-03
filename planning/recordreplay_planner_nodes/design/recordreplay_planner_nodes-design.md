@@ -23,10 +23,10 @@ Actions:
 This node uses two actions to control its behavior:
 
 * `RecordTrajectory.action` is used to record a trajectory. It runs until canceled. While the action is
-  running, the node subscribes to a `VehicleKinematicState.msg` topic by a provided name and records all
+  running, the node subscribes to a `Odometry.msg` topic by a provided name and records all
   states that are published on that topic. 
 * `ReplayTrajectory.action` is used to replay a trajectory. It runs until canceled. While the action is 
-  running, the node subscribes to the same `VehicleKinematicState.msg` topic as when recording. When messages
+  running, the node subscribes to the same `Odometry.msg` topic as when recording. When messages
   are published on that topic, the node publishes a trajectory starting approximately at that point (see the
   `recordreplay_planner` design documentation on how that point is determined).  
 
