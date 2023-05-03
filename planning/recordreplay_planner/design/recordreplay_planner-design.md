@@ -45,8 +45,7 @@ the path file that the user obtained while recording.
 
 Inputs:
 
-* `VehicleKinematicState.msg` is the state that gets recorded
-* `BoundingBoxArray.msg` is a list of bounding boxes of obstacles
+* `Odometry.msg` is the state that gets recorded
 
 Outputs:
 
@@ -63,12 +62,3 @@ the number of halfplanes in the ego vehicle and a single obstacle.
 # Security considerations 
 
 TBD by a security specialist.
-
-# Future extensions / Unimplemented parts
-
-* Trajectory buffer clearing
-* Proper `tf` support
-* rosbag2 support for recording and later replaying
-
-# Related issues
-
