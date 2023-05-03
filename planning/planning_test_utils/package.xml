@@ -11,8 +11,8 @@
   <author email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
   <buildtool_depend>autoware_cmake</buildtool_depend>
+
 
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>

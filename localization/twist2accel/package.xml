@@ -10,8 +10,8 @@
   <author email="koji.minoda@tier4.jp">Koji Minoda</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
   <buildtool_depend>autoware_cmake</buildtool_depend>
+
 
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>

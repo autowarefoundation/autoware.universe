@@ -10,8 +10,8 @@
   <author email="isamu.takagi@tier4.jp">Takagi, Isamu</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
   <buildtool_depend>autoware_cmake</buildtool_depend>
+
 
   <depend>autoware_map_msgs</depend>
   <depend>geometry_msgs</depend>
