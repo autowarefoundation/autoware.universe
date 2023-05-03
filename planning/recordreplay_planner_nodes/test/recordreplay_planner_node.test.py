@@ -15,21 +15,21 @@
 # This file contains tests for the record and replay behavior of the containing node.
 # I'll start by conceptually documenting the tests I want to add, then implement them.
 
+import subprocess
+import time
 import unittest
 
 import ament_index_python
+from autoware_auto_planning_msgs.action import RecordTrajectory
+from autoware_auto_planning_msgs.action import ReplayTrajectory
+from autoware_auto_planning_msgs.msg import Trajectory
+from autoware_auto_vehicle_msgs.msg import VehicleKinematicState
 import launch
 import launch_ros.actions
 import launch_testing
 import rclpy
-from rclpy.node import Node
 from rclpy.action import ActionClient
-from autoware_auto_planning_msgs.action import RecordTrajectory, ReplayTrajectory
-from autoware_auto_planning_msgs.msg import Trajectory
-from autoware_auto_vehicle_msgs.msg import VehicleKinematicState
-
-import subprocess
-import time
+from rclpy.node import Node
 
 
 # Class to publish some dummy states
@@ -83,9 +83,7 @@ class MockActionCaller(Node):
         self._goal_handle = goal_handle
 
     def feedback_callback(self, feedback):
-        self.get_logger().info(
-            "Received feedback: {0}".format(feedback.feedback.sequence)
-        )
+        self.get_logger().info("Received feedback: {0}".format(feedback.feedback.sequence))
 
     def manual_cancel(self):
         self.get_logger().info("Canceling goal")
@@ -114,9 +112,7 @@ def generate_test_description():
         name="recordreplay_planner",
         parameters=[
             "{}/defaults.param.yaml".format(
-                ament_index_python.get_package_share_directory(
-                    "recordreplay_planner_nodes"
-                )
+                ament_index_python.get_package_share_directory("recordreplay_planner_nodes")
             )
         ],
     )

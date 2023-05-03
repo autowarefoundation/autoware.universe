@@ -1,5 +1,4 @@
-RecordReplay planner nodes {#recordreplay-planner-nodes}
-==========================
+# RecordReplay planner nodes {#recordreplay-planner-nodes}
 
 # Purpose / Use cases
 
@@ -22,28 +21,28 @@ Actions:
 
 This node uses two actions to control its behavior:
 
-* `RecordTrajectory.action` is used to record a trajectory. It runs until canceled. While the action is
+- `RecordTrajectory.action` is used to record a trajectory. It runs until canceled. While the action is
   running, the node subscribes to a `Odometry.msg` topic by a provided name and records all
-  states that are published on that topic. 
-* `ReplayTrajectory.action` is used to replay a trajectory. It runs until canceled. While the action is 
+  states that are published on that topic.
+- `ReplayTrajectory.action` is used to replay a trajectory. It runs until canceled. While the action is
   running, the node subscribes to the same `Odometry.msg` topic as when recording. When messages
   are published on that topic, the node publishes a trajectory starting approximately at that point (see the
-  `recordreplay_planner` design documentation on how that point is determined).  
+  `recordreplay_planner` design documentation on how that point is determined).
 
 The actions are defined in `autoware_auto_planning_msgs` and `autoware_auto_perception_msgs`.
 
 Inputs:
 
-* `autoware_auto_vehicle_msgs/msg/Odometry` is the state used as recorded points for replay, and also to prune starting point of replay trajectory
+- `autoware_auto_vehicle_msgs/msg/Odometry` is the state used as recorded points for replay, and also to prune starting point of replay trajectory
 
 Outputs:
 
-* `autoware_auto_planning_msgs/msg/Trajectory` is the trajectory that gets published. If `enable_object_collision_estimator`, then it is the trajectory after modification.
+- `autoware_auto_planning_msgs/msg/Trajectory` is the trajectory that gets published. If `enable_object_collision_estimator`, then it is the trajectory after modification.
 
 ## Complexity
 
 See `recordreplay_planner`.
 
-# Security considerations 
+# Security considerations
 
 TBD by a security specialist.
