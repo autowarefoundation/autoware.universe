@@ -51,7 +51,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::RUNNING; });
 
-    const auto is_out_of_route = utils::isEgoOutOfRoute(
+    const bool is_out_of_route = utils::isEgoOutOfRoute(
       data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler);
 
     if (!is_any_module_running && is_out_of_route) {
