@@ -10,7 +10,6 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-
   <depend>lanelet2_extension</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>

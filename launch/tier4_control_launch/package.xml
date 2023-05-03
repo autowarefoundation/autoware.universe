@@ -11,7 +11,6 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-
   <exec_depend>external_cmd_converter</exec_depend>
   <exec_depend>external_cmd_selector</exec_depend>
   <exec_depend>lane_departure_checker</exec_depend>

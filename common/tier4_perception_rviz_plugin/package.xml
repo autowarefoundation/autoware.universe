@@ -10,7 +10,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-
   <depend>dummy_perception_publisher</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>

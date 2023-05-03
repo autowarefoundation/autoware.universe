@@ -13,7 +13,6 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-
   <depend>eigen</depend>
   <depend>osqp_vendor</depend>
   <depend>rclcpp</depend>
