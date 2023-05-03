@@ -16,15 +16,6 @@ point of the trajectory are too far away.
 This is a wrapper around `recordreplay_planner`. Its behavior can be controlled via actions. It can record
 the ego state of the vehicle and play back a set of recorded states at a later time.
 
-
-## Assumptions / Known limits
-
-This node assumes that the recorded states can be played back without any `tf` changes. There is an open issue
-in https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/issues/265 to address this limitation.
-
-See the `recordreplay_planner` design documentation for more details.
-
-
 ## Inputs / Outputs / API
 
 Actions:
