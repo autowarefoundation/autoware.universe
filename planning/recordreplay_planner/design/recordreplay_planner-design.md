@@ -19,8 +19,6 @@ The replay will find the closest state in terms of location and heading along th
 deliver trajectories starting from that state. The trajectory length is at most 100 as specified by the
 `Trajectory` message, and at least 1 if there is any recorded data present.
 
-No obstacle collision is checked when replaying. The produced `Trajectory` message, however, can be fed to an `obstacle_collision_estimator` node which will modify the trajectory considering the obstacles. See the `recordreplay_planner_nodes` design documentation for more details.
-
 ## Assumptions / Known limits
 
 There is no interpolation between points along the trajectory, and localization is not done in a smart way:
