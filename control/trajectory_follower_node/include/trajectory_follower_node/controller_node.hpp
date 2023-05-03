@@ -15,8 +15,8 @@
 #ifndef TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 #define TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"

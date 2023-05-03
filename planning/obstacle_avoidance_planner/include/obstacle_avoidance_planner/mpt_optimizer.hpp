@@ -15,8 +15,8 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Sparse"
+#include <Eigen/Core>
+#include <Eigen/Sparse>
 #include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"

@@ -15,7 +15,7 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_SMOOTHER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_SMOOTHER_HPP_
 
-#include "eigen3/Eigen/Core"
+#include <Eigen/Core>
 #include "obstacle_avoidance_planner/common_structs.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "osqp_interface/osqp_interface.hpp"

@@ -16,8 +16,8 @@
 #define PID_LONGITUDINAL_CONTROLLER__PID_LONGITUDINAL_CONTROLLER_HPP_
 
 #include "diagnostic_updater/diagnostic_updater.hpp"
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include "pid_longitudinal_controller/debug_values.hpp"
 #include "pid_longitudinal_controller/longitudinal_controller_utils.hpp"
 #include "pid_longitudinal_controller/lowpass_filter.hpp"

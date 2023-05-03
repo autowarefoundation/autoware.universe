@@ -15,7 +15,7 @@
 #ifndef MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
 #define MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
 
-#include "eigen3/Eigen/Core"
+#include <Eigen/Core>
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "rclcpp/rclcpp.hpp"

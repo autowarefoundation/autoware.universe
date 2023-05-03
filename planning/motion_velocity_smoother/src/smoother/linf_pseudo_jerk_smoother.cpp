@@ -14,7 +14,7 @@
 
 #include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 
-#include "eigen3/Eigen/Core"
+#include <Eigen/Core>
 #include "motion_velocity_smoother/trajectory_utils.hpp"
 
 #include <algorithm>

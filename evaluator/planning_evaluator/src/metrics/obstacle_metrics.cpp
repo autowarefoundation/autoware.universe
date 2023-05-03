@@ -14,7 +14,7 @@
 
 #include "planning_evaluator/metrics/obstacle_metrics.hpp"
 
-#include "eigen3/Eigen/Core"
+#include <Eigen/Core>
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"

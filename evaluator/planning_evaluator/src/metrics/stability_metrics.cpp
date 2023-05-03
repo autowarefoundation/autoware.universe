@@ -14,7 +14,7 @@
 
 #include "planning_evaluator/metrics/stability_metrics.hpp"
 
-#include "eigen3/Eigen/Core"
+#include <Eigen/Core>
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 

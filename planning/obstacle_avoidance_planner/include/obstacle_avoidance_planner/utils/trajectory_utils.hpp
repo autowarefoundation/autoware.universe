@@ -15,7 +15,7 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_
 
-#include "eigen3/Eigen/Core"
+#include <Eigen/Core>
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
