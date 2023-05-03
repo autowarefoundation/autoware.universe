@@ -47,7 +47,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     manager_ptrs_.begin(), manager_ptrs_.end(), [&data](const auto & m) { m->setData(data); });
 
   auto result_output = [&]() {
-    const auto is_any_module_running = std::any_of(
+    const bool is_any_module_running = std::any_of(
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::RUNNING; });
 
