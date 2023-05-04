@@ -89,3 +89,4 @@
   files:
     - source: .github/workflows/deploy-docs.yaml
     - source: .github/workflows/delete-closed-pr-docs.yaml
+    - source: mkdocs.yaml
