@@ -3052,7 +3052,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
     // DEBUG_PRINT("%s, shift current: %f, candidate: %f", pfx, current_shift,
     // candidate.end_shift_length);
 
-    const auto new_point_threshold = parameters_->avoidance_execution_lateral_threshold;
+    const auto new_point_threshold = parameters_->lateral_execution_threshold;
     if (std::abs(candidate.end_shift_length - current_shift) > new_point_threshold) {
       if (calcJerk(candidate) > parameters_->max_lateral_jerk) {
         DEBUG_PRINT(

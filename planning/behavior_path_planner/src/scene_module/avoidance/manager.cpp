@@ -69,8 +69,7 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   {
     const std::string ns = "avoidance.avoidance.lateral.";
     updateParam<double>(
-      parameters, ns + "avoidance_execution_lateral_threshold",
-      p->avoidance_execution_lateral_threshold);
+      parameters, ns + "lateral_execution_threshold", p->lateral_execution_threshold);
     updateParam<double>(
       parameters, ns + "lateral_passable_safety_buffer", p->lateral_passable_safety_buffer);
     updateParam<double>(parameters, ns + "lateral_collision_margin", p->lateral_collision_margin);
