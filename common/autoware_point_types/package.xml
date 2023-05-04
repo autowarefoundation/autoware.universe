@@ -18,7 +18,6 @@
   <depend>libpcl-common</depend>
   <depend>point_cloud_msg_wrapper</depend>
 
-
   <test_depend>ament_cmake_copyright</test_depend>
   <test_depend>ament_cmake_cppcheck</test_depend>
   <test_depend>ament_cmake_lint_cmake</test_depend>
