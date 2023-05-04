@@ -147,9 +147,6 @@ struct AvoidanceParameters
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
 
-  // if object overhang is less than this value, the ego stops behind the object.
-  double lateral_passable_safety_buffer{0.5};
-
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
   double longitudinal_collision_margin_min_distance;
