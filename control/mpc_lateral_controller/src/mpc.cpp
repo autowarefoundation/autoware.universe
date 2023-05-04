@@ -97,39 +97,15 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
   m_raw_steer_cmd_prev = Uex(0);
 
-  // calculate predicted trajectory
+  /* calculate predicted trajectory */
   predicted_trajectory =
-    calcPredictedTrajectory(mpc_resampled_ref_trajectory, mpc_matrix, x0_delayed, Uex);
+    calculatePredictedTrajectory(mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt);
 
   // prepare diagnostic message
   diagnostic =
     generateDiagData(reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
 
   return true;
-}
-
-Trajectory MPC::calcPredictedTrajectory(
-  const MPCTrajectory & mpc_resampled_ref_trajectory, const MPCMatrix & mpc_matrix,
-  const VectorXd & x0_delayed, const VectorXd & Uex) const
-{
-  const VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
-  MPCTrajectory mpc_predicted_traj;
-  const auto & traj = mpc_resampled_ref_trajectory;
-  for (int i = 0; i < m_param.prediction_horizon; ++i) {
-    const int DIM_X = m_vehicle_model_ptr->getDimX();
-    const double lat_error = Xex(i * DIM_X);
-    const double yaw_error = Xex(i * DIM_X + 1);
-    const double x = traj.x.at(i) - std::sin(traj.yaw.at(i)) * lat_error;
-    const double y = traj.y.at(i) + std::cos(traj.yaw.at(i)) * lat_error;
-    const double z = traj.z.at(i);
-    const double yaw = traj.yaw.at(i) + yaw_error;
-    const double vx = traj.vx.at(i);
-    const double k = traj.k.at(i);
-    const double smooth_k = traj.smooth_k.at(i);
-    const double relative_time = traj.relative_time.at(i);
-    mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
-  }
-  return MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
 }
 
 Float32MultiArrayStamped MPC::generateDiagData(
@@ -792,6 +768,23 @@ VectorXd MPC::calcSteerRateLimitOnTrajectory(
   }
 
   return steer_rate_limits;
+}
+
+Trajectory MPC::calculatePredictedTrajectory(
+  const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+  const MPCTrajectory & reference_trajectory, const double dt) const
+{
+  const auto predicted_mpc_trajectory = m_vehicle_model_ptr->calculatePredictedTrajectory(
+    mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
+    dt);
+
+  // do not over the reference trajectory
+  const auto predicted_length = MPCUtils::calcMPCTrajectoryArcLength(reference_trajectory);
+  const auto clipped_trajectory =
+    MPCUtils::clipTrajectoryByLength(predicted_mpc_trajectory, predicted_length);
+
+  const auto predicted_trajectory = MPCUtils::convertToAutowareTrajectory(clipped_trajectory);
+  return predicted_trajectory;
 }
 
 bool MPC::isValid(const MPCMatrix & m) const
