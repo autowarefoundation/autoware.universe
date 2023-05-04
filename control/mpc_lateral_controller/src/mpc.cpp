@@ -95,24 +95,8 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   /* calculate predicted trajectory */
-  Eigen::VectorXd Xex = mpc_matrix.Aex * x0 + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
-  MPCTrajectory mpc_predicted_traj;
-  const auto & traj = mpc_resampled_ref_traj;
-  for (size_t i = 0; i < static_cast<size_t>(m_param.prediction_horizon); ++i) {
-    const int DIM_X = m_vehicle_model_ptr->getDimX();
-    const double lat_error = Xex(static_cast<int>(i) * DIM_X);
-    const double yaw_error = Xex(static_cast<int>(i) * DIM_X + 1);
-    const double x = traj.x[i] - std::sin(traj.yaw[i]) * lat_error;
-    const double y = traj.y[i] + std::cos(traj.yaw[i]) * lat_error;
-    const double z = traj.z[i];
-    const double yaw = traj.yaw[i] + yaw_error;
-    const double vx = traj.vx[i];
-    const double k = traj.k[i];
-    const double smooth_k = traj.smooth_k[i];
-    const double relative_time = traj.relative_time[i];
-    mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
-  }
-  MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
+  predicted_traj =
+    calcualtePredictedTrajectory(mpc_matrix, x0, Uex, mpc_resampled_ref_traj, prediction_dt);
 
   /* prepare diagnostic message */
   const double nearest_k = reference_trajectory.k[static_cast<size_t>(mpc_data.nearest_idx)];
@@ -163,6 +147,64 @@ bool MPC::calculateMPC(
   append_diag_data(current_velocity * tan(mpc_data.predicted_steer) / wb);
 
   return true;
+}
+
+Trajectory MPC::calcualtePredictedTrajectory(
+  const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+  const MPCTrajectory & mpc_resampled_ref_traj, const double dt)
+{
+  MPCTrajectory mpc_predicted_traj;
+  const size_t N = m_param.prediction_horizon;
+  const auto & traj = mpc_resampled_ref_traj;
+  const int DIM_X = m_vehicle_model_ptr->getDimX();
+  const int DIM_U = m_vehicle_model_ptr->getDimU();
+
+  const auto calcPredictedTrajectoryInFrenetCoordinate = [&]() {
+    Eigen::VectorXd Xex = mpc_matrix.Aex * x0 + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
+    for (size_t i = 0; i < N; ++i) {
+      const auto lateral_error = Xex(i * DIM_X);
+      const auto yaw_error = Xex(i * DIM_X + 1);
+      const auto x = traj.x.at(i) - std::sin(traj.yaw.at(i)) * lateral_error;
+      const auto y = traj.y.at(i) + std::cos(traj.yaw.at(i)) * lateral_error;
+      const auto yaw = traj.yaw.at(i) + yaw_error;
+      mpc_predicted_traj.push_back(
+        x, y, traj.z.at(i), yaw, traj.vx.at(i), traj.k.at(i), traj.smooth_k.at(i),
+        traj.relative_time.at(i));
+    }
+    Trajectory predicted_traj;
+    MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
+    return predicted_traj;
+  };
+
+  if (m_vehicle_model_type == "kinematics") {
+    // calculate predicted state in world coordinate since there is modeling errors in Flenet
+    // coordinate x = [lat_err, yaw_err, steer]
+    const auto lateral_error_0 = x0(0);
+    const auto yaw_error_0 = x0(1);
+    const auto steer_0 = x0(2);
+
+    const auto x_0 = traj.x.at(0) - std::sin(traj.yaw.at(0)) * lateral_error_0;
+    const auto y_0 = traj.y.at(0) + std::cos(traj.yaw.at(0)) * lateral_error_0;
+    const auto yaw_0 = traj.yaw.at(0) + yaw_error_0;
+
+    Eigen::MatrixXd x0_world = Eigen::MatrixXd::Zero(4, 1);
+    x0_world << x_0, y_0, yaw_0, steer_0;
+    m_vehicle_model_ptr->setStateInWorldCoordinate(x0_world);
+    for (size_t i = 0; i < N; ++i) {
+      m_vehicle_model_ptr->setVelocity(traj.vx.at(i));
+      const auto X_next =
+        m_vehicle_model_ptr->updateStateInWorldCoordinate(Uex.block(i * DIM_U, 0, DIM_U, 1), dt);
+      mpc_predicted_traj.push_back(
+        X_next(0), X_next(1), traj.z.at(i), X_next(2), traj.vx.at(i), traj.k.at(i),
+        traj.smooth_k.at(i), traj.relative_time.at(i));
+    }
+    Trajectory predicted_traj;
+    MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
+    return predicted_traj;
+  } else {
+    // TODO(Horibe): implement for "kinematics_no_delay" and "dynamics"
+    return calcPredictedTrajectoryInFrenetCoordinate();
+  }
 }
 
 void MPC::setReferenceTrajectory(

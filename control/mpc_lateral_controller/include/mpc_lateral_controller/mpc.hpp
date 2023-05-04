@@ -261,6 +261,13 @@ private:
     const double u_filtered, const float current_steer, const double predict_dt) const;
 
   /**
+   * @brief calculate predicted trajectory
+   */
+  Trajectory calcualtePredictedTrajectory(
+    const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+    const MPCTrajectory & mpc_resampled_ref_traj, const double dt);
+
+  /**
    * @brief check if the matrix has invalid value
    */
   bool isValid(const MPCMatrix & m) const;

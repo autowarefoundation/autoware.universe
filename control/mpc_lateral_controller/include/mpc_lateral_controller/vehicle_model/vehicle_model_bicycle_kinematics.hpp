@@ -87,6 +87,9 @@ public:
    */
   void calculateReferenceInput(Eigen::MatrixXd & u_ref) override;
 
+  Eigen::MatrixXd updateStateInWorldCoordinate(
+    const Eigen::MatrixXd & input, const double dt) override;
+
 private:
   double m_steer_lim;  //!< @brief steering angle limit [rad]
   double m_steer_tau;  //!< @brief steering time constant for 1d-model [s]

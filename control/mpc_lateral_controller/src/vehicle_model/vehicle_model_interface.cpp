@@ -44,4 +44,16 @@ void VehicleModelInterface::setCurvature(const double curvature)
 {
   m_curvature = curvature;
 }
+void VehicleModelInterface::setStateInWorldCoordinate(const Eigen::MatrixXd & state)
+{
+  x_in_world_coordinate = state;
+}
+Eigen::MatrixXd VehicleModelInterface::updateStateInWorldCoordinate(
+  const Eigen::MatrixXd & input, const double dt)
+{
+  (void)input;
+  (void)dt;
+  throw std::runtime_error("this function is not implemented.");
+  return x_in_world_coordinate;
+}
 }  // namespace autoware::motion::control::mpc_lateral_controller

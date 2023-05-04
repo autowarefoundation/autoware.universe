@@ -68,4 +68,22 @@ void KinematicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd & u_ref)
 {
   u_ref(0, 0) = std::atan(m_wheelbase * m_curvature);
 }
+
+Eigen::MatrixXd KinematicsBicycleModel::updateStateInWorldCoordinate(
+  const Eigen::MatrixXd & input, const double dt)
+{
+  const auto yaw = x_in_world_coordinate(2);
+  const auto steer = x_in_world_coordinate(3);
+  const auto desired_steer = input(0);
+
+  Eigen::MatrixXd dxdt = Eigen::MatrixXd::Zero(4, 1);
+  dxdt(0) = m_velocity * std::cos(yaw);
+  dxdt(1) = m_velocity * std::sin(yaw);
+  dxdt(2) = m_velocity * std::tan(steer) / m_wheelbase;
+  dxdt(3) = -(steer - desired_steer) / m_steer_tau;
+
+  x_in_world_coordinate += dxdt * dt;
+  return x_in_world_coordinate;
+}
+
 }  // namespace autoware::motion::control::mpc_lateral_controller

@@ -102,6 +102,22 @@ public:
    * @param [out] u_ref input
    */
   virtual void calculateReferenceInput(Eigen::MatrixXd & u_ref) = 0;
+
+  // --------------- for debug purpose ---------------------
+
+  //!< @brief state in world coordinate to predict future state
+  Eigen::MatrixXd x_in_world_coordinate;
+
+  /**
+   * @brief set state in world coordinate. Its dimension could differ from the error dynamics
+   */
+  void setStateInWorldCoordinate(const Eigen::MatrixXd & state);
+
+  /**
+   * @brief calculate predicted state in world coordinate from the input and dt.
+   */
+  virtual Eigen::MatrixXd updateStateInWorldCoordinate(
+    const Eigen::MatrixXd & input, const double dt);
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
