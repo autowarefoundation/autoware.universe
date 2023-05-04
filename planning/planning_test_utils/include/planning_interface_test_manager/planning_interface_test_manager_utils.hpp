@@ -353,7 +353,7 @@ void spinSomeNodes(
 template <typename T>
 void publishToTargetNode(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, std::string topic_name,
-  typename rclcpp::Publisher<T>::SharedPtr publisher, T data, const int repeat_count = 1)
+  typename rclcpp::Publisher<T>::SharedPtr publisher, T data, const int repeat_count = 3)
 {
   if (topic_name.empty()) {
     throw std::runtime_error(std::string("Topic name for ") + typeid(data).name() + " is empty");

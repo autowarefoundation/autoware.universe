@@ -388,7 +388,6 @@ void PlanningInterfaceTestManager::testOffTrackFromRoute(rclcpp::Node::SharedPtr
   const std::vector<double> deviation_from_route = {0.0, 1.0, 10.0, 100.0};
   for (const auto & deviation : deviation_from_route) {
     publishInitialPose(target_node, input_initial_pose_name_, deviation);
-    test_utils::spinSomeNodes(test_node_, target_node, 5);
   }
 }
 
@@ -406,7 +405,6 @@ void PlanningInterfaceTestManager::testOffTrackFromPathWithLaneId(
   const std::vector<double> deviation_from_path = {0.0, 1.0, 10.0, 100.0};
   for (const auto & deviation : deviation_from_path) {
     publishOdometry(target_node, input_odometry_name_, deviation);
-    test_utils::spinSomeNodes(test_node_, target_node, 5);
   }
 }
 
@@ -417,7 +415,6 @@ void PlanningInterfaceTestManager::testOffTrackFromTrajectory(rclcpp::Node::Shar
   const std::vector<double> deviation_from_traj = {0.0, 1.0, 10.0, 100.0};
   for (const auto & deviation : deviation_from_traj) {
     publishOdometry(target_node, input_odometry_name_, deviation);
-    test_utils::spinSomeNodes(test_node_, target_node, 5);
   }
 }
 
