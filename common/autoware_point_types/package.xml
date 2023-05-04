@@ -15,10 +15,9 @@
   <buildtool_export_depend>ament_cmake_core</buildtool_export_depend>
   <buildtool_export_depend>ament_cmake_test</buildtool_export_depend>
 
-
   <depend>libpcl-common</depend>
-
   <depend>point_cloud_msg_wrapper</depend>
+
 
   <test_depend>ament_cmake_copyright</test_depend>
   <test_depend>ament_cmake_cppcheck</test_depend>
