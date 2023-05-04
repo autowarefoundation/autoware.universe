@@ -236,10 +236,10 @@ bool convertToMPCTrajectory(
   return true;
 }
 
-bool convertToAutowareTrajectory(
-  const MPCTrajectory & input, autoware_auto_planning_msgs::msg::Trajectory & output)
+autoware_auto_planning_msgs::msg::Trajectory convertToAutowareTrajectory(
+  const MPCTrajectory & input)
 {
-  output.points.clear();
+  autoware_auto_planning_msgs::msg::Trajectory output;
   autoware_auto_planning_msgs::msg::TrajectoryPoint p;
   using Real = decltype(p.pose.position.x);
   for (size_t i = 0; i < input.size(); ++i) {
@@ -254,7 +254,7 @@ bool convertToAutowareTrajectory(
       break;
     }
   }
-  return true;
+  return output;
 }
 
 bool calcMPCTrajectoryTime(MPCTrajectory & traj)
@@ -301,8 +301,7 @@ bool calcNearestPoseInterp(
     return false;
   }
 
-  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
-  convertToAutowareTrajectory(traj, autoware_traj);
+  auto autoware_traj = convertToAutowareTrajectory(traj);
   if (autoware_traj.points.empty()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger, clock, 5000, "[calcNearestPoseInterp] input trajectory is empty");
@@ -407,8 +406,7 @@ void extendTrajectoryInYawDirection(
   traj.yaw.back() = yaw;
 
   // get terminal pose
-  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
-  MPCUtils::convertToAutowareTrajectory(traj, autoware_traj);
+  auto autoware_traj = MPCUtils::convertToAutowareTrajectory(traj);
   auto extended_pose = autoware_traj.points.back().pose;
 
   constexpr double extend_dist = 10.0;

@@ -171,9 +171,7 @@ Trajectory MPC::calcualtePredictedTrajectory(
         x, y, traj.z.at(i), yaw, traj.vx.at(i), traj.k.at(i), traj.smooth_k.at(i),
         traj.relative_time.at(i));
     }
-    Trajectory predicted_traj;
-    MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
-    return predicted_traj;
+    return MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
   };
 
   if (m_vehicle_model_type == "kinematics") {
@@ -198,9 +196,7 @@ Trajectory MPC::calcualtePredictedTrajectory(
         X_next(0), X_next(1), traj.z.at(i), X_next(2), traj.vx.at(i), traj.k.at(i),
         traj.smooth_k.at(i), traj.relative_time.at(i));
     }
-    Trajectory predicted_traj;
-    MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
-    return predicted_traj;
+    return MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
   } else {
     // TODO(Horibe): implement for "kinematics_no_delay" and "dynamics"
     return calcPredictedTrajectoryInFrenetCoordinate();
@@ -516,8 +512,7 @@ bool MPC::updateStateForDelayCompensation(
 MPCTrajectory MPC::applyVelocityDynamicsFilter(
   const MPCTrajectory & input, const Pose & current_pose, const double v0) const
 {
-  Trajectory autoware_traj;
-  MPCUtils::convertToAutowareTrajectory(input, autoware_traj);
+  auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
   if (autoware_traj.points.empty()) {
     return input;
   }
@@ -811,8 +806,7 @@ double MPC::getPredictionDeltaTime(
   const double start_time, const MPCTrajectory & input, const Pose & current_pose) const
 {
   // Calculate the time min_prediction_length ahead from current_pose
-  Trajectory autoware_traj;
-  MPCUtils::convertToAutowareTrajectory(input, autoware_traj);
+  auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   double sum_dist = 0;

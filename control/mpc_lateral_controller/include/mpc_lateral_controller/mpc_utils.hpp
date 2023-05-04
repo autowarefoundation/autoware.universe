@@ -75,11 +75,10 @@ bool convertToMPCTrajectory(
 /**
  * @brief convert the given MPCTrajectory to a Trajectory msg
  * @param [in] input MPCTrajectory to convert
- * @param [out] output resulting Trajectory msg
- * @return true if the conversion was successful
+ * @return resulting Trajectory msg
  */
-bool convertToAutowareTrajectory(
-  const MPCTrajectory & input, autoware_auto_planning_msgs::msg::Trajectory & output);
+autoware_auto_planning_msgs::msg::Trajectory convertToAutowareTrajectory(
+  const MPCTrajectory & input);
 /**
  * @brief calculate the arc length at each point of the given trajectory
  * @param [in] trajectory trajectory for which to calculate the arc length
