@@ -59,7 +59,7 @@ cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-Record a trajectory and save at your preferred path
+Record a trajectory and save at your preferred path. To stop recording, Ctrl + C and your path will be automatically saved.
 
 ```(bash)
 # Terminal 3
