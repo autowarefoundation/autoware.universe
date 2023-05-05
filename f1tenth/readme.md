@@ -1,5 +1,14 @@
 # F1Tenth RecordReplay Trajectory Demo
 
+## How to set up a development environment
+
+1. Clone `autowarefoundation/autoware` and move to the directory.
+
+   ```bash
+   git clone https://github.com/autowarefoundation/autoware.git
+   cd autoware
+   ```
+
 ## How to set up a workspace
 
 1. Create the `src` directory and clone repositories into it.
