@@ -53,7 +53,7 @@ ros2 launch launch_autoware_f1tenth demo_launch.py
 Launch the keyboard teleop tool
 
 ```(bash)
-Terminal 2
+# Terminal 2
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
@@ -62,7 +62,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 Record a trajectory and save at your preferred path
 
 ```(bash)
-Terminal 3
+# Terminal 3
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
