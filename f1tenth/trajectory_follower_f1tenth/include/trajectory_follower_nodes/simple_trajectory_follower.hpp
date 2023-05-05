@@ -17,10 +17,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -29,13 +29,13 @@
 
 namespace simple_trajectory_follower
 {
+using ackermann_msgs::msg::AckermannDriveStamped;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
-using ackermann_msgs::msg::AckermannDriveStamped;
 
 class SimpleTrajectoryFollower : public rclcpp::Node
 {

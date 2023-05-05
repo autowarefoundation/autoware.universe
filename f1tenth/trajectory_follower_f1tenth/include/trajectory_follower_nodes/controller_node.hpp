@@ -35,12 +35,12 @@
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
-#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include "geometry_msgs/msg/accel_stamped.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 
 #include <memory>
 #include <string>

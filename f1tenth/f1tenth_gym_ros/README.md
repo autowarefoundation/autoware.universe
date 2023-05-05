@@ -1,4 +1,5 @@
 # F1TENTH gym environment ROS2 communication bridge
+
 This is a containerized ROS communication bridge for the F1TENTH gym environment that turns it into a simulation in ROS2.
 
 # Installation
@@ -14,31 +15,38 @@ This installation guide will be split into instruction for installing the ROS 2 
 ## Native on Ubuntu 20.04
 
 **Install the following dependencies:**
+
 - **ROS 2** Follow the instructions [here](https://docs.ros.org/en/foxy/Installation.html) to install ROS 2 Foxy.
 - **F1TENTH Gym**
+
   ```bash
   git clone https://github.com/f1tenth/f1tenth_gym
   cd f1tenth_gym && pip3 install -e .
   ```
 
 **Installing the simulation:**
-- Create a workspace: ```cd $HOME && mkdir -p sim_ws/src```
+
+- Create a workspace: `cd $HOME && mkdir -p sim_ws/src`
 - Clone the repo into the workspace:
+
   ```bash
   cd $HOME/sim_ws/src
   git clone https://github.com/f1tenth/f1tenth_gym_ros
   ```
+
 - Update correct parameter for path to map file:
   Go to `sim.yaml` [https://github.com/f1tenth/f1tenth_gym_ros/blob/main/config/sim.yaml](https://github.com/f1tenth/f1tenth_gym_ros/blob/main/config/sim.yaml) in your cloned repo, change the `map_path` parameter to point to the correct location. It should be `'<your_home_dir>/sim_ws/src/f1tenth_gym_ros/maps/levine'`
 - Install dependencies with rosdep:
+
   ```bash
   source /opt/ros/foxy/setup.bash
   cd ..
   rosdep install -i --from-path src --rosdistro foxy -y
   ```
-- Build the workspace: ```colcon build```
 
-## With an NVIDIA gpu:
+- Build the workspace: `colcon build`
+
+## With an NVIDIA gpu
 
 **Install the following dependencies:**
 
@@ -50,50 +58,61 @@ This installation guide will be split into instruction for installing the ROS 2 
 
 1. Clone this repo
 2. Build the docker image by:
+
 ```bash
-$ cd f1tenth_gym_ros
-$ docker build -t f1tenth_gym_ros -f Dockerfile .
-```
-3. To run the containerized environment, start a docker container by running the following. (example showned here with nvidia-docker support). By running this, the current directory that you're in (should be `f1tenth_gym_ros`) is mounted in the container at `/sim_ws/src/f1tenth_gym_ros`. Which means that the changes you make in the repo on the host system will also reflect in the container.
-```bash
-$ rocker --nvidia --x11 --volume .:/sim_ws/src/f1tenth_gym_ros -- f1tenth_gym_ros
+cd f1tenth_gym_ros
+docker build -t f1tenth_gym_ros -f Dockerfile .
 ```
 
-## Without an NVIDIA gpu:
+3. To run the containerized environment, start a docker container by running the following. (example showned here with nvidia-docker support). By running this, the current directory that you're in (should be `f1tenth_gym_ros`) is mounted in the container at `/sim_ws/src/f1tenth_gym_ros`. Which means that the changes you make in the repo on the host system will also reflect in the container.
+
+```bash
+rocker --nvidia --x11 --volume .:/sim_ws/src/f1tenth_gym_ros -- f1tenth_gym_ros
+```
+
+## Without an NVIDIA gpu
 
 **Install the following dependencies:**
 
 If your system does not support nvidia-docker2, noVNC will have to be used to forward the display.
+
 - Again you'll need **Docker**. Follow the instruction from above.
 - Additionally you'll need **docker-compose**. Follow the instruction [here](https://docs.docker.com/compose/install/) to install docker-compose.
 
 **Installing the simulation:**
 
-1. Clone this repo 
+1. Clone this repo
 2. Bringup the novnc container and the sim container with docker-compose:
+
 ```bash
 docker-compose up
-``` 
+```
+
 3. In a separate terminal, run the following, and you'll have the a bash session in the simulation container. `tmux` is available for convenience.
+
 ```bash
 docker exec -it f1tenth_gym_ros-sim-1 /bin/bash
 ```
+
 4. In your browser, navigate to [http://localhost:8080/vnc.html](http://localhost:8080/vnc.html), you should see the noVNC logo with the connect button. Click the connect button to connect to the session.
 
 # Launching the Simulation
 
 1. `tmux` is included in the contianer, so you can create multiple bash sessions in the same terminal.
 2. To launch the simulation, make sure you source both the ROS2 setup script and the local workspace setup script. Run the following in the bash session from the container:
+
 ```bash
-$ source /opt/ros/foxy/setup.bash
-$ source install/local_setup.bash
-$ ros2 launch f1tenth_gym_ros gym_bridge_launch.py
+source /opt/ros/foxy/setup.bash
+source install/local_setup.bash
+ros2 launch f1tenth_gym_ros gym_bridge_launch.py
 ```
+
 A rviz window should pop up showing the simulation either on your host system or in the browser window depending on the display forwarding you chose.
 
 You can then run another node by creating another bash session in `tmux`.
 
 # Configuring the simulation
+
 - The configuration file for the simulation is at `f1tenth_gym_ros/config/sim.yaml`.
 - Topic names and namespaces can be configured but is recommended to leave uncahnged.
 - The map can be changed via the `map_path` parameter. You'll have to use the full path to the map file in the container. The map follows the ROS convention. It is assumed that the image file and the `yaml` file for the map are in the same directory with the same name. See the note below about mounting a volume to see where to put your map file.
@@ -147,9 +166,11 @@ In addition to all topics in the single agent scenario, these topics are also av
 # Keyboard Teleop
 
 The keyboard teleop node from `teleop_twist_keyboard` is also installed as part of the simulation's dependency. To enable keyboard teleop, set `kb_teleop` to `True` in `sim.yaml`. After launching the simulation, in another terminal, run:
+
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
+
 Then, press `i` to move forward, `u` and `o` to move forward and turn, `,` to move backwards, `m` and `.` to move backwards and turn, and `k` to stop in the terminal window running the teleop node.
 
 # Developing and creating your own agent in ROS 2

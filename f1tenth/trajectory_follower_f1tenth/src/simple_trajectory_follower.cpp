@@ -13,6 +13,7 @@
 //  limitations under the License.
 
 #include "trajectory_follower_nodes/simple_trajectory_follower.hpp"
+
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -69,7 +70,7 @@ void SimpleTrajectoryFollower::onTimer()
   ackermann_msg.drive.steering_angle = cmd.lateral.steering_tire_angle * 10;
   drive_cmd_->publish(ackermann_msg);
 
-  cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
+  cout << "velocity: " << ackermann_msg.drive.speed << "m/s" << endl;
 }
 
 void SimpleTrajectoryFollower::updateClosest()
@@ -96,7 +97,7 @@ double SimpleTrajectoryFollower::calcSteerCmd()
   constexpr auto steer_lim = 1.0;
 
   const auto steer = std::clamp(-kp * lat_err - kd * yaw_err, -steer_lim, steer_lim);
-  
+
   return steer;
 }
 
@@ -116,7 +117,10 @@ double SimpleTrajectoryFollower::calcAccCmd()
   return acc;
 }
 
-bool SimpleTrajectoryFollower::checkData() { return (trajectory_ && odometry_); }
+bool SimpleTrajectoryFollower::checkData()
+{
+  return (trajectory_ && odometry_);
+}
 
 }  // namespace simple_trajectory_follower
 

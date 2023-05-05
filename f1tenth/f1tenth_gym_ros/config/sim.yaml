@@ -23,27 +23,27 @@
 bridge:
   ros__parameters:
     # topics and namespaces
-    ego_namespace: 'ego_racecar'
-    ego_scan_topic: 'scan'
-    ego_odom_topic: 'odom'
-    ego_opp_odom_topic: 'opp_odom'
-    ego_drive_topic: 'drive'
-    opp_namespace: 'opp_racecar'
-    opp_scan_topic: 'opp_scan'
-    opp_odom_topic: 'odom'
-    opp_ego_odom_topic: 'opp_odom'
-    opp_drive_topic: 'opp_drive'
+    ego_namespace: "ego_racecar"
+    ego_scan_topic: "scan"
+    ego_odom_topic: "odom"
+    ego_opp_odom_topic: "opp_odom"
+    ego_drive_topic: "drive"
+    opp_namespace: "opp_racecar"
+    opp_scan_topic: "opp_scan"
+    opp_odom_topic: "odom"
+    opp_ego_odom_topic: "opp_odom"
+    opp_drive_topic: "opp_drive"
 
     # transform related
     scan_distance_to_base_link: 0.0
-    
+
     # laserscan parameters
     scan_fov: 4.7
     scan_beams: 1080
 
     # map parameters
-    map_path: '/home/autoware/autoware/src/f1tenth/gym_simulator_f1tenth/maps/levine'
-    map_img_ext: '.png'
+    map_path: "/home/autoware/autoware/src/f1tenth/gym_simulator_f1tenth/maps/levine"
+    map_img_ext: ".png"
 
     # opponent parameters
     num_agent: 1
