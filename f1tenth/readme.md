@@ -42,6 +42,7 @@
 ## How to record a trajectory
 
 Terminal 1
+
 Launch the f1tenth gym simulator and recordreplay node
 ```
 source /opt/ros/humble/setup.bash
@@ -50,6 +51,7 @@ ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
 Terminal 2
+
 Launch the keyboard teleop tool
 ```
 source /opt/ros/humble/setup.bash
@@ -58,6 +60,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
 Terminal 3
+
 Send record command and save at your preferred directory
 ```
 source /opt/ros/humble/setup.bash
