@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__NO_DRIVABLE_LANE_SCENE_HPP_
-#define SCENE_MODULE__NO_DRIVABLE_LANE_SCENE_HPP_
+#ifndef SCENE_MODULE__NO_DRIVABLE_LANE__SCENE_HPP_
+#define SCENE_MODULE__NO_DRIVABLE_LANE__SCENE_HPP_
 
 #include "scene_module/no_drivable_lane/util.hpp"
 #include "scene_module/scene_module_interface.hpp"
@@ -97,4 +97,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__NO_DRIVABLE_LANE_SCENE_HPP_
+#endif  // SCENE_MODULE__NO_DRIVABLE_LANE__SCENE_HPP_

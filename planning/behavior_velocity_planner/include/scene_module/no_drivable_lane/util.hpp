@@ -39,8 +39,8 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 // the status of intersection between path and no drivable lane polygon
 struct PathWithNoDrivableLanePolygonIntersection
 {
-  bool is_path_inside_of_polygon =
-    false;  // true if path is completely inside the no drivable lane polygon (no intersection point)
+  bool is_path_inside_of_polygon = false;  // true if path is completely inside the no drivable lane
+                                           // polygon (no intersection point)
   bool is_first_path_point_inside_polygon =
     false;  // true if first path point is inside the no drivable lane polygon
   boost::optional<geometry_msgs::msg::Point> first_intersection_point;

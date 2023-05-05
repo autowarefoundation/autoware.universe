@@ -49,7 +49,7 @@ This function is activated when the lane id of the target path has an no drivabl
 #### RTC Settings During Different States
 
 | State                     | RTC Activation | Safe State | Distance                                                    |
-| ------------------------  | -------------- | ---------- | ----------------------------------------------------------- |
+| ------------------------- | -------------- | ---------- | ----------------------------------------------------------- |
 | `INIT`                    | `false`        | `true`     | distance from ego front to first intersection point OR zero |
 | `APPROACHING`             | `false`        | `true`     | distance from ego front to first intersection               |
 | `INSIDE_NO_DRIVABLE_LANE` | `false`        | `false`    | zero                                                        |
