@@ -61,7 +61,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 Terminal 3
 
-Send record command and save at your preferred directory
+Record a trajectory and save at your preferred path
 ```
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
