@@ -23,7 +23,6 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
 
-
   <build_depend>autoware_auto_common</build_depend>
 
   <exec_depend>launch_ros</exec_depend>
