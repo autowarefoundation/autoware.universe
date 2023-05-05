@@ -43,7 +43,7 @@
 
 Terminal 1
 
-Launch the f1tenth gym simulator and recordreplay node
+Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros) and recordreplay node
 
 ```
 source /opt/ros/humble/setup.bash
