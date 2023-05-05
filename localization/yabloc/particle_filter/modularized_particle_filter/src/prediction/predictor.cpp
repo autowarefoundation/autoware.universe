@@ -30,6 +30,7 @@
 
 namespace yabloc::modularized_particle_filter
 {
+
 Predictor::Predictor()
 : Node("predictor"),
   number_of_particles_(declare_parameter("num_of_particles", 500)),
@@ -223,33 +224,31 @@ void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weight
 
   // ==========================================================================
   // From here, weighting section
-  particle_array =
-    resampler_ptr_->add_weight_retroactively(particle_array, *weighted_particles_ptr);
+  try {
+    particle_array =
+      resampler_ptr_->add_weight_retroactively(particle_array, *weighted_particles_ptr);
+  } catch (const resampling_skip_exception & e) {
+    // Do nothing (just skipping the resample())
+  }
 
   // ==========================================================================
   // From here, resampling section
-  class resampling_skip_eception : public std::runtime_error
-  {
-  public:
-    resampling_skip_eception(const char * message) : runtime_error(message) {}
-  };
-
   const double current_time = rclcpp::Time(particle_array.header.stamp).seconds();
   try {
     // Exit if previous resampling time is not valid.
     if (!previous_resampling_time_opt_.has_value()) {
       previous_resampling_time_opt_ = current_time;
-      throw resampling_skip_eception("previous resampling time is not valid");
+      throw resampling_skip_exception("previous resampling time is not valid");
     }
 
     if (current_time - previous_resampling_time_opt_.value() <= resampling_interval_seconds_) {
-      throw resampling_skip_eception("it is not time to resample");
+      throw resampling_skip_exception("it is not time to resample");
     }
 
     particle_array = resampler_ptr_->resample(particle_array);
     previous_resampling_time_opt_ = current_time;
 
-  } catch (const resampling_skip_eception & e) {
+  } catch (const resampling_skip_exception & e) {
     // Do nothing (just skipping the resample())
   }
 

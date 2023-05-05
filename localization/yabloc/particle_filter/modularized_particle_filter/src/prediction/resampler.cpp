@@ -65,7 +65,7 @@ RetroactiveResampler::ParticleArray RetroactiveResampler::add_weight_retroactive
 {
   if (!check_weighted_particles_validity(weighted_particles)) {
     RCLCPP_ERROR_STREAM(logger_, "weighted_particles has invalid data");
-    throw std::runtime_error("weighted_particles has invalid data");
+    throw resampling_skip_exception("weighted_particles has invalid data");
   }
 
   // Initialize corresponding index lookup table

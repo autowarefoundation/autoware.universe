@@ -23,6 +23,12 @@
 
 namespace yabloc::modularized_particle_filter
 {
+class resampling_skip_exception : public std::runtime_error
+{
+public:
+  resampling_skip_exception(const char * message) : runtime_error(message) {}
+};
+
 class RetroactiveResampler
 {
 public:
