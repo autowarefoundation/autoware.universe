@@ -8,7 +8,7 @@
    git clone https://github.com/autowarefoundation/autoware.git
    cd autoware
    ```
-   
+
 2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth`
 
 ## How to set up a workspace
@@ -41,11 +41,12 @@
 
 ## How to record a trajectory
 
-#(Terminal 1)
+# (Terminal 1)
+
 ```
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
-ros2 launch launch_autoware_f1tenth demo_launch.py 
+ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
 ```
