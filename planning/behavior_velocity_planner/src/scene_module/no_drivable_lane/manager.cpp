@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/invalid_lanelet/manager.hpp"
+#include "scene_module/no_drivable_lane/manager.hpp"
 
 namespace behavior_velocity_planner
 {
 
-InvalidLaneletModuleManager::InvalidLaneletModuleManager(rclcpp::Node & node)
+NoDrivableLaneModuleManager::NoDrivableLaneModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
@@ -25,7 +25,7 @@ InvalidLaneletModuleManager::InvalidLaneletModuleManager(rclcpp::Node & node)
   planner_param_.print_debug_info = node.declare_parameter(ns + ".print_debug_info", false);
 }
 
-void InvalidLaneletModuleManager::launchNewModules(
+void NoDrivableLaneModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & ll : planning_utils::getLaneletsOnPath(
@@ -38,13 +38,13 @@ void InvalidLaneletModuleManager::launchNewModules(
       continue;
     }
 
-    const std::string invalid_lanelet_attribute = ll.attributeOr("invalid_lanelet", "no");
-    if (invalid_lanelet_attribute != "yes") {
+    const std::string no_drivable_lane_attribute = ll.attributeOr("no_drivable_lane", "no");
+    if (no_drivable_lane_attribute != "yes") {
       continue;
     }
 
-    registerModule(std::make_shared<InvalidLaneletModule>(
-      module_id, lane_id, planner_param_, logger_.get_child("invalid_lanelet"), clock_));
+    registerModule(std::make_shared<NoDrivableLaneModule>(
+      module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane"), clock_));
     generateUUID(module_id);
     updateRTCStatus(
       getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
@@ -52,7 +52,7 @@ void InvalidLaneletModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-InvalidLaneletModuleManager::getModuleExpiredFunction(
+NoDrivableLaneModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_id_set = planning_utils::getLaneIdSetOnPath(

@@ -14,7 +14,7 @@
       - "goal_planner"
       - "pull_out"
       - "intersection_occlusion"
-      - "invalid_lanelet"
+      - "no_drivable_lane"
 
     default_enable_list:
       - "blind_spot"
@@ -30,4 +30,4 @@
       - "goal_planner"
       - "pull_out"
       - "intersection_occlusion"
-      - "invalid_lanelet"
+      - "no_drivable_lane"

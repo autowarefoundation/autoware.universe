@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INVALID_LANELET__UTIL_HPP_
-#define SCENE_MODULE__INVALID_LANELET__UTIL_HPP_
+#ifndef SCENE_MODULE__NO_DRIVABLE_LANE__UTIL_HPP_
+#define SCENE_MODULE__NO_DRIVABLE_LANE__UTIL_HPP_
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -36,21 +36,21 @@ namespace bg = boost::geometry;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-// the status of intersection between path and invalid lanelet polygon
-struct PathWithInvalidLaneletPolygonIntersection
+// the status of intersection between path and no drivable lane polygon
+struct PathWithNoDrivableLanePolygonIntersection
 {
   bool is_path_inside_of_polygon =
-    false;  // true if path is completely inside the invalid lanelet polygon (no intersection point)
+    false;  // true if path is completely inside the no drivable lane polygon (no intersection point)
   bool is_first_path_point_inside_polygon =
-    false;  // true if first path point is inside the invalid lanelet polygon
+    false;  // true if first path point is inside the no drivable lane polygon
   boost::optional<geometry_msgs::msg::Point> first_intersection_point;
   boost::optional<geometry_msgs::msg::Point> second_intersection_point;
 };
 
-PathWithInvalidLaneletPolygonIntersection getPathIntersectionWithInvalidLaneletPolygon(
+PathWithNoDrivableLanePolygonIntersection getPathIntersectionWithNoDrivableLanePolygon(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__INVALID_LANELET__UTIL_HPP_
+#endif  // SCENE_MODULE__NO_DRIVABLE_LANE__UTIL_HPP_

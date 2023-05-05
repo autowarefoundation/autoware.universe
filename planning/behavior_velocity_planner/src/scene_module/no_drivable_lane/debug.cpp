@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/invalid_lanelet/scene.hpp"
+#include "scene_module/no_drivable_lane/scene.hpp"
 
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -31,19 +31,19 @@ using visualization_msgs::msg::Marker;
 
 namespace
 {
-visualization_msgs::msg::MarkerArray createInvalidLaneletMarkers(
-  const InvalidLaneletModule::DebugData & debug_data, const rclcpp::Time & now,
+visualization_msgs::msg::MarkerArray createNoDrivableLaneMarkers(
+  const NoDrivableLaneModule::DebugData & debug_data, const rclcpp::Time & now,
   const int64_t module_id)
 {
   visualization_msgs::msg::MarkerArray msg;
   const int32_t uid = planning_utils::bitShift(module_id);
 
-  // Invalid Lanelet polygon
-  if (!debug_data.invalid_lanelet_polygon.empty()) {
+  // No Drivable Lane Polygon
+  if (!debug_data.no_drivable_lane_polygon.empty()) {
     auto marker = createDefaultMarker(
-      "map", now, "invalid_lanelet polygon", uid, Marker::LINE_STRIP,
+      "map", now, "no_drivable_lane polygon", uid, Marker::LINE_STRIP,
       createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
-    for (const auto & p : debug_data.invalid_lanelet_polygon) {
+    for (const auto & p : debug_data.no_drivable_lane_polygon) {
       marker.points.push_back(createPoint(p.x, p.y, p.z));
     }
     marker.points.push_back(marker.points.front());
@@ -70,31 +70,31 @@ visualization_msgs::msg::MarkerArray createInvalidLaneletMarkers(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray InvalidLaneletModule::createVirtualWallMarkerArray()
+visualization_msgs::msg::MarkerArray NoDrivableLaneModule::createVirtualWallMarkerArray()
 {
   visualization_msgs::msg::MarkerArray wall_marker;
 
   const auto now = this->clock_->now();
 
   if (
-    (state_ == State::APPROACHING) || (state_ == State::INSIDE_INVALID_LANELET) ||
+    (state_ == State::APPROACHING) || (state_ == State::INSIDE_NO_DRIVABLE_LANE) ||
     (state_ == State::STOPPED)) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.stop_pose}, "invalid_lanelet", now),
+        {debug_data_.stop_pose}, "no_drivable_lane", now),
       &wall_marker, now);
   }
 
   return wall_marker;
 }
 
-visualization_msgs::msg::MarkerArray InvalidLaneletModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray NoDrivableLaneModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   const auto now = this->clock_->now();
 
   appendMarkerArray(
-    createInvalidLaneletMarkers(debug_data_, this->clock_->now(), module_id_), &debug_marker_array);
+    createNoDrivableLaneMarkers(debug_data_, this->clock_->now(), module_id_), &debug_marker_array);
 
   return debug_marker_array;
 }

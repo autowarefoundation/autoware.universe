@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INVALID_LANELET__SCENE_HPP_
-#define SCENE_MODULE__INVALID_LANELET__SCENE_HPP_
+#ifndef SCENE_MODULE__NO_DRIVABLE_LANE_SCENE_HPP_
+#define SCENE_MODULE__NO_DRIVABLE_LANE_SCENE_HPP_
 
-#include "scene_module/invalid_lanelet/util.hpp"
+#include "scene_module/no_drivable_lane/util.hpp"
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 
@@ -35,10 +35,10 @@ namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-class InvalidLaneletModule : public SceneModuleInterface
+class NoDrivableLaneModule : public SceneModuleInterface
 {
 public:
-  enum class State { INIT, APPROACHING, INSIDE_INVALID_LANELET, STOPPED };
+  enum class State { INIT, APPROACHING, INSIDE_NO_DRIVABLE_LANE, STOPPED };
 
   struct SegmentIndexWithPose
   {
@@ -49,8 +49,8 @@ public:
   struct DebugData
   {
     double base_link2front;
-    PathWithInvalidLaneletPolygonIntersection path_polygon_intersection;
-    std::vector<geometry_msgs::msg::Point> invalid_lanelet_polygon;
+    PathWithNoDrivableLanePolygonIntersection path_polygon_intersection;
+    std::vector<geometry_msgs::msg::Point> no_drivable_lane_polygon;
     geometry_msgs::msg::Pose stop_pose;
   };
 
@@ -60,7 +60,7 @@ public:
     bool print_debug_info;
   };
 
-  InvalidLaneletModule(
+  NoDrivableLaneModule(
     const int64_t module_id, const int64_t lane_id, const PlannerParam & planner_param,
     const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
@@ -81,7 +81,7 @@ private:
   // State machine
   State state_;
 
-  PathWithInvalidLaneletPolygonIntersection path_invalid_lanelet_polygon_intersection;
+  PathWithNoDrivableLanePolygonIntersection path_no_drivable_lane_polygon_intersection;
   geometry_msgs::msg::Point first_intersection_point;
   double distance_ego_first_intersection;
 
@@ -90,11 +90,11 @@ private:
 
   void handle_init_state();
   void handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason);
-  void handle_inside_invalid_lanelet_state(PathWithLaneId * path, StopReason * stop_reason);
+  void handle_inside_no_drivable_lane_state(PathWithLaneId * path, StopReason * stop_reason);
   void handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason);
   void initialize_debug_data(
-    const lanelet::Lanelet & invalid_lanelet, const geometry_msgs::msg::Point & ego_pos);
+    const lanelet::Lanelet & no_drivable_lane, const geometry_msgs::msg::Point & ego_pos);
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__INVALID_LANELET__SCENE_HPP_
+#endif  // SCENE_MODULE__NO_DRIVABLE_LANE_SCENE_HPP_

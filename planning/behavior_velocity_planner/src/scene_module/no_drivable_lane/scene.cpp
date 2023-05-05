@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/invalid_lanelet/scene.hpp"
+#include "scene_module/no_drivable_lane/scene.hpp"
 
 #include "utilization/util.hpp"
 
@@ -24,7 +24,7 @@ namespace behavior_velocity_planner
 {
 using tier4_autoware_utils::createPoint;
 
-InvalidLaneletModule::InvalidLaneletModule(
+NoDrivableLaneModule::NoDrivableLaneModule(
   const int64_t module_id, const int64_t lane_id, const PlannerParam & planner_param,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
@@ -32,37 +32,37 @@ InvalidLaneletModule::InvalidLaneletModule(
   planner_param_(planner_param),
   state_(State::INIT)
 {
-  velocity_factor_.init(VelocityFactor::INVALID_LANELET);
+  velocity_factor_.init(VelocityFactor::NO_DRIVABLE_LANE);
 }
 
-bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   if (path->points.empty()) {
     return false;
   }
 
-  *stop_reason = planning_utils::initializeStopReason(StopReason::INVALID_LANELET);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::NO_DRIVABLE_LANE);
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto & lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
-  const auto & invalid_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-  const auto & invalid_lanelet_polygon =
-    lanelet::utils::to2D(invalid_lanelet).polygon2d().basicPolygon();
+  const auto & no_drivable_lane = lanelet_map_ptr->laneletLayer.get(lane_id_);
+  const auto & no_drivable_lane_polygon =
+    lanelet::utils::to2D(no_drivable_lane).polygon2d().basicPolygon();
 
-  path_invalid_lanelet_polygon_intersection =
-    getPathIntersectionWithInvalidLaneletPolygon(*path, invalid_lanelet_polygon, ego_pos, 2);
+  path_no_drivable_lane_polygon_intersection =
+    getPathIntersectionWithNoDrivableLanePolygon(*path, no_drivable_lane_polygon, ego_pos, 2);
 
   distance_ego_first_intersection = 0.0;
 
-  if (path_invalid_lanelet_polygon_intersection.first_intersection_point) {
+  if (path_no_drivable_lane_polygon_intersection.first_intersection_point) {
     first_intersection_point =
-      path_invalid_lanelet_polygon_intersection.first_intersection_point.get();
+      path_no_drivable_lane_polygon_intersection.first_intersection_point.get();
     distance_ego_first_intersection = motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_odometry->pose.position, first_intersection_point);
     distance_ego_first_intersection -= planner_data_->vehicle_info_.max_longitudinal_offset_m;
   }
 
-  initialize_debug_data(invalid_lanelet, ego_pos);
+  initialize_debug_data(no_drivable_lane, ego_pos);
 
   switch (state_) {
     case State::INIT: {
@@ -85,12 +85,12 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       break;
     }
 
-    case State::INSIDE_INVALID_LANELET: {
+    case State::INSIDE_NO_DRIVABLE_LANE: {
       if (planner_param_.print_debug_info) {
-        RCLCPP_INFO(logger_, "INSIDE_INVALID_LANELET");
+        RCLCPP_INFO(logger_, "INSIDE_NO_DRIVABLE_LANE");
       }
 
-      handle_inside_invalid_lanelet_state(path, stop_reason);
+      handle_inside_no_drivable_lane_state(path, stop_reason);
 
       break;
     }
@@ -113,15 +113,15 @@ bool InvalidLaneletModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   return true;
 }
 
-void InvalidLaneletModule::handle_init_state()
+void NoDrivableLaneModule::handle_init_state()
 {
   if (
-    (path_invalid_lanelet_polygon_intersection.is_first_path_point_inside_polygon) ||
-    ((path_invalid_lanelet_polygon_intersection.first_intersection_point) &&
+    (path_no_drivable_lane_polygon_intersection.is_first_path_point_inside_polygon) ||
+    ((path_no_drivable_lane_polygon_intersection.first_intersection_point) &&
      (distance_ego_first_intersection <= planner_param_.stop_margin))) {
-    state_ = State::INSIDE_INVALID_LANELET;
+    state_ = State::INSIDE_NO_DRIVABLE_LANE;
   } else if (
-    (path_invalid_lanelet_polygon_intersection.first_intersection_point) &&
+    (path_no_drivable_lane_polygon_intersection.first_intersection_point) &&
     (distance_ego_first_intersection > planner_param_.stop_margin)) {
     state_ = State::APPROACHING;
   } else {
@@ -133,7 +133,7 @@ void InvalidLaneletModule::handle_init_state()
   setActivation(false);
 }
 
-void InvalidLaneletModule::handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason)
+void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason)
 {
   const double longitudinal_offset =
     -1.0 * (planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m);
@@ -203,14 +203,14 @@ void InvalidLaneletModule::handle_approaching_state(PathWithLaneId * path, StopR
 
     if (signed_arc_dist_to_intersection_point < 0.0) {
       RCLCPP_ERROR(
-        logger_, "Failed to stop before invalid lanelet but ego stopped. Change state to STOPPED");
+        logger_, "Failed to stop before no drivable lane but ego stopped. Change state to STOPPED");
     }
 
     state_ = State::STOPPED;
   }
 }
 
-void InvalidLaneletModule::handle_inside_invalid_lanelet_state(
+void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(
   PathWithLaneId * path, StopReason * stop_reason)
 {
   const auto & current_point = planner_data_->current_odometry->pose.position;
@@ -228,7 +228,7 @@ void InvalidLaneletModule::handle_inside_invalid_lanelet_state(
     planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose,
-      VelocityFactor::INVALID_LANELET);
+      VelocityFactor::NO_DRIVABLE_LANE);
 
     const auto & virtual_wall_pose = motion_utils::calcLongitudinalOffsetPose(
       path->points, stop_pose.position, debug_data_.base_link2front);
@@ -248,7 +248,7 @@ void InvalidLaneletModule::handle_inside_invalid_lanelet_state(
   setActivation(false);
 }
 
-void InvalidLaneletModule::handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason)
+void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason)
 {
   const auto & stopped_pose = motion_utils::calcLongitudinalOffsetPose(
     path->points, planner_data_->current_odometry->pose.position, 0.0);
@@ -286,15 +286,15 @@ void InvalidLaneletModule::handle_stopped_state(PathWithLaneId * path, StopReaso
   setActivation(true);
 }
 
-void InvalidLaneletModule::initialize_debug_data(
-  const lanelet::Lanelet & invalid_lanelet, const geometry_msgs::msg::Point & ego_pos)
+void NoDrivableLaneModule::initialize_debug_data(
+  const lanelet::Lanelet & no_drivable_lane, const geometry_msgs::msg::Point & ego_pos)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  debug_data_.path_polygon_intersection = path_invalid_lanelet_polygon_intersection;
+  debug_data_.path_polygon_intersection = path_no_drivable_lane_polygon_intersection;
 
-  for (const auto & p : invalid_lanelet.polygon2d().basicPolygon()) {
-    debug_data_.invalid_lanelet_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  for (const auto & p : no_drivable_lane.polygon2d().basicPolygon()) {
+    debug_data_.no_drivable_lane_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
   }
 }
 

@@ -1,5 +1,0 @@
-/**:
-  ros__parameters:
-    invalid_lanelet:
-      stop_margin: 1.5 # Stop margin before the invalid lanelet [m]
-      print_debug_info: false

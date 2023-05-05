@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INVALID_LANELET__MANAGER_HPP_
-#define SCENE_MODULE__INVALID_LANELET__MANAGER_HPP_
+#ifndef SCENE_MODULE__NO_DRIVABLE_LANE__MANAGER_HPP_
+#define SCENE_MODULE__NO_DRIVABLE_LANE__MANAGER_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "scene_module/invalid_lanelet/scene.hpp"
+#include "scene_module/no_drivable_lane/scene.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
@@ -26,15 +26,15 @@
 
 namespace behavior_velocity_planner
 {
-class InvalidLaneletModuleManager : public SceneModuleManagerInterfaceWithRTC
+class NoDrivableLaneModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
 public:
-  explicit InvalidLaneletModuleManager(rclcpp::Node & node);
+  explicit NoDrivableLaneModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "invalid_lanelet"; }
+  const char * getModuleName() override { return "no_drivable_lane"; }
 
 private:
-  InvalidLaneletModule::PlannerParam planner_param_;
+  NoDrivableLaneModule::PlannerParam planner_param_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
@@ -43,4 +43,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__INVALID_LANELET__MANAGER_HPP_
+#endif  // SCENE_MODULE__NO_DRIVABLE_LANE__MANAGER_HPP_
