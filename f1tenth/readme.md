@@ -45,7 +45,8 @@ Terminal 1
 
 Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros) and recordreplay node
 
-```
+```(bash)
+# Terminal 1
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
