@@ -1,27 +1,36 @@
 # F1Tenth RecordReplay Trajectory Demo
 
-clone the autoware.universe repository
+## How to set up a workspace
 
-`git clone https://github.com/autowarefoundation/autoware.git`
+1. Create the `src` directory and clone repositories into it.
 
-Create the src directory and clone repositories into it.
+   Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces.
 
-Autoware uses `vcstool` to construct workspaces.
+   ```bash
+   cd autoware
+   mkdir src
+   vcs import src < autoware.repos
+   ```
 
-    Autoware is scalable and can be customized to work with distributed or less powerful hardware.
-    The minimum hardware requirements given below are just a general recommendation.
-    However, performance will be improved with more cores, RAM and a higher-spec graphics card or GPU core.
+2. Install dependent ROS packages.
 
-````cd autoware
-mkdir src
-vcs import src < autoware.repos```
+   Autoware requires some ROS 2 packages in addition to the core components.
+   The tool `rosdep` allows an automatic search and installation of such dependencies.
+   You might need to run `rosdep update` before `rosdep install`.
 
-`source /opt/ros/humble/setup.bash
-rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO`
+   ```bash
+   source /opt/ros/humble/setup.bash
+   rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+   ```
 
-`source /opt/ros/galactic/setup.bash`
+3. Build the workspace.
 
+   Autoware uses [colcon](https://github.com/colcon) to build workspaces.
+   For more advanced options, refer to the [documentation](https://colcon.readthedocs.io/).
 
+   ```bash
+   colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+   ```
 
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
 
