@@ -8,6 +8,8 @@
    git clone https://github.com/autowarefoundation/autoware.git
    cd autoware
    ```
+   
+2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth`
 
 ## How to set up a workspace
 
