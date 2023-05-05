@@ -8,7 +8,7 @@
    git clone https://github.com/autowarefoundation/autoware.git
    cd autoware
    ```
-   
+
 2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth`
 
 ## How to set up a workspace
@@ -44,15 +44,17 @@
 Terminal 1
 
 Launch the f1tenth gym simulator and recordreplay node
+
 ```
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
-ros2 launch launch_autoware_f1tenth demo_launch.py 
+ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
 Terminal 2
 
 Launch the keyboard teleop tool
+
 ```
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
@@ -62,6 +64,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 Terminal 3
 
 Record a trajectory and save at your preferred path
+
 ```
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
