@@ -30,6 +30,7 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   test_manager->setRouteInputTopicName("freespace_planner/input/route");
   test_manager->setTrajectorySubscriber("freespace_planner/output/trajectory");
   test_manager->setOdometryTopicName("freespace_planner/input/odometry");
+  test_manager->setInitialPoseTopicName("freespace_planner/input/odometry");
   return test_manager;
 }
 
