@@ -41,8 +41,6 @@
 
 ## How to record a trajectory
 
-Terminal 1
-
 Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros) and recordreplay node
 
 ```(bash)
@@ -52,21 +50,19 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
-Terminal 2
-
 Launch the keyboard teleop tool
 
-```
+```(bash)
+Terminal 2
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-Terminal 3
-
 Record a trajectory and save at your preferred path
 
-```
+```(bash)
+Terminal 3
 source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
