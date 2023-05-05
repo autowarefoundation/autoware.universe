@@ -8,9 +8,9 @@ Create the src directory and clone repositories into it.
 
 Autoware uses `vcstool` to construct workspaces.
 
-`cd autoware
+```cd autoware
 mkdir src
-vcs import src < autoware.repos`
+vcs import src < autoware.repos```
 
 `source /opt/ros/humble/setup.bash
 rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO`
