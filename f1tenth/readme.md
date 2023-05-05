@@ -8,6 +8,10 @@ Create the src directory and clone repositories into it.
 
 Autoware uses `vcstool` to construct workspaces.
 
+    Autoware is scalable and can be customized to work with distributed or less powerful hardware.
+    The minimum hardware requirements given below are just a general recommendation.
+    However, performance will be improved with more cores, RAM and a higher-spec graphics card or GPU core.
+
 ````cd autoware
 mkdir src
 vcs import src < autoware.repos```
