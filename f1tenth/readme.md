@@ -8,7 +8,7 @@
    git clone https://github.com/autowarefoundation/autoware.git
    cd autoware
    ```
-
+   
 2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth`
 
 ## How to set up a workspace
@@ -41,9 +41,9 @@
 
 ## How to record a trajectory
 
-```# (Terminal 1)
-
+```#(Terminal 1)
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
-
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
+
+aaa
