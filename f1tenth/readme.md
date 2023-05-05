@@ -79,7 +79,7 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
-Replay a trajectory from your previous saved file
+Replay a trajectory from your previously saved file
 
 ```(bash)
 # Terminal 2
