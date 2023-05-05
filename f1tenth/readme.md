@@ -41,7 +41,7 @@
 
 ## How to record a trajectory
 
-Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros) and recordreplay node
+Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), recordreplay node, and trajectory follower (not used)
 
 ```(bash)
 # Terminal 1
@@ -68,4 +68,22 @@ cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
 
+## How to replay a trajectory
+
+Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), recordreplay node, and trajectory follower
+
+```(bash)
+# Terminal 1
+source /opt/ros/humble/setup.bash
+cd autoware && . install/setup.bash
+ros2 launch launch_autoware_f1tenth demo_launch.py
+```
+
+Replay a trajectory from your previous saved file
+
+```(bash)
+# Terminal 2
+source /opt/ros/humble/setup.bash
+cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
+```
