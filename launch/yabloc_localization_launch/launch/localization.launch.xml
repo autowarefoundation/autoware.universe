@@ -18,11 +18,6 @@
         <arg name="pose_initializer_param_path" value="$(var pose_initializer_param_path)"/>
       </include>
     </group>
-    <!-- pose_estimator module -->
-    <group>
-      <push-ros-namespace namespace="pose_estimator"/>
-      <include if="true" file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
-    </group>
     <!-- twist_estimator module -->
     <group>
       <push-ros-namespace namespace="twist_estimator"/>
@@ -38,4 +33,11 @@
       <include file="$(find-pkg-share yabloc_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml"/>
     </group>
   </group>
+
+  <!-- pose_estimator module -->
+  <group>
+    <!-- <push-ros-namespace namespace="pose_estimator"/> -->
+    <include if="true" file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
+  </group>
+
 </launch>
