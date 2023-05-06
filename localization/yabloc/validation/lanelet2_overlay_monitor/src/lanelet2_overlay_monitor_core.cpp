@@ -28,7 +28,8 @@
 
 namespace yabloc::lanelet2_overlay
 {
-Lanelet2Overlay::Lanelet2Overlay() : Node("lanelet2_overlay"), tf_subscriber_(get_clock()), pose_buffer_{40}
+Lanelet2Overlay::Lanelet2Overlay()
+: Node("lanelet2_overlay"), tf_subscriber_(get_clock()), pose_buffer_{40}
 {
   using std::placeholders::_1;
 
@@ -42,7 +43,8 @@ Lanelet2Overlay::Lanelet2Overlay() : Node("lanelet2_overlay"), tf_subscriber_(ge
   sub_ground_plane_ = create_subscription<Float32Array>("ground", 10, cb_ground);
   sub_image_ = create_subscription<Image>("src_image", 10, cb_image);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, cb_pose);
-  sub_line_segments_cloud_ = create_subscription<PointCloud2>("projected_line_segments_cloud", 10, cb_line_segments);
+  sub_line_segments_cloud_ =
+    create_subscription<PointCloud2>("projected_line_segments_cloud", 10, cb_line_segments);
   sub_info_ = create_subscription<CameraInfo>("src_info", 10, cb_info);
   sub_sign_board_ = create_subscription<PointCloud2>(
     "ll2_sign_board", 10,
@@ -138,6 +140,8 @@ void Lanelet2Overlay::draw_overlay_line_segments(
   cv::Mat & image, const Pose & pose, const LineSegments & near_segments)
 {
   if (!camera_extrinsic_.has_value()) return;
+  if (!info_.has_value()) return;
+
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
@@ -209,4 +213,4 @@ void Lanelet2Overlay::make_vis_marker(
   pub_vis_->publish(marker);
 }
 
-}  // namespace yabloc::overlay
+}  // namespace yabloc::lanelet2_overlay
