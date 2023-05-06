@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Parameter files -->
-  <arg name="ndt_scan_matcher_param_path"/>
   <arg name="localization_error_monitor_param_path"/>
   <arg name="ekf_localizer_param_path"/>
 
@@ -22,7 +21,7 @@
     <!-- pose_estimator module -->
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
-      <include file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
+      <include if="true" file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
     </group>
     <!-- twist_estimator module -->
     <group>
