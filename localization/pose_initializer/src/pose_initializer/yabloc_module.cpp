@@ -34,17 +34,17 @@ PoseWithCovarianceStamped YabLocModule::align_pose(const PoseWithCovarianceStamp
   req->pose_with_covariance = pose;
 
   if (!cli_align_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("PCD-less align server is not ready.");
+    throw component_interface_utils::ServiceUnready("YabLoc align server is not ready.");
   }
 
-  RCLCPP_INFO(logger_, "Call PCD-less align server.");
+  RCLCPP_INFO(logger_, "Call YabLoc align server.");
   const auto res = cli_align_->async_send_request(req).get();
   if (!res->success) {
-    RCLCPP_INFO(logger_, "PCD-less align server failed.");
+    RCLCPP_INFO(logger_, "YabLoc align server failed.");
     throw ServiceException(
-      Initialize::Service::Response::ERROR_ESTIMATION, "PCD-less align server failed.");
+      Initialize::Service::Response::ERROR_ESTIMATION, "YabLoc align server failed.");
   }
-  RCLCPP_INFO(logger_, "PCD-less align server succeeded.");
+  RCLCPP_INFO(logger_, "YabLoc align server succeeded.");
 
   // Overwrite the covariance.
   return res->pose_with_covariance;
