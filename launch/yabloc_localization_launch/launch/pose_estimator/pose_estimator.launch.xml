@@ -15,5 +15,8 @@
 
         <arg name="road_marking_labels" value="[cross_walk, zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
         <arg name="sign_board_labels" value="[sign-board]"/>
+
+        <arg name="predict_twist" value="/localization/twist/disabled"/>
+        <arg name="predict_twist_cov" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
     </include>
 </launch>
