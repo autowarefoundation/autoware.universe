@@ -36,8 +36,7 @@
 
   <!-- pose_estimator module -->
   <group>
-    <!-- <push-ros-namespace namespace="pose_estimator"/> -->
-    <include if="true" file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
+    <include file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
   </group>
 
 </launch>
