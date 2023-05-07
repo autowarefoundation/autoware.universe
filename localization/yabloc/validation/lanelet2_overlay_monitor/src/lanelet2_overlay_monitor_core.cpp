@@ -81,10 +81,7 @@ void Lanelet2Overlay::on_image(const sensor_msgs::msg::Image & msg)
     }
   }
   if (min_abs_dt > 0.1) synched_pose = std::nullopt;
-  auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
-  RCLCPP_INFO_STREAM(
-    get_logger(), "dt: " << min_abs_dt << " image:" << stamp.nanoseconds()
-                         << " latest_pose:" << latest_pose_stamp.nanoseconds());
+  RCLCPP_INFO_STREAM(get_logger(), "dt: " << min_abs_dt << " image:" << stamp.nanoseconds());
 
   draw_overlay(image, synched_pose, stamp);
 }
