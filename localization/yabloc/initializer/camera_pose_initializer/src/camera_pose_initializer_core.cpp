@@ -191,6 +191,7 @@ void CameraPoseInitializer::on_service(
 
   const auto query_pos_with_cov = request->pose_with_covariance;
   const auto query_pos = request->pose_with_covariance.pose.pose.position;
+  const auto orientation = request->pose_with_covariance.pose.pose.orientation;
   const double yaw_std_rad = std::sqrt(query_pos_with_cov.pose.covariance.at(35));
 
   auto ground_request = std::make_shared<Ground::Request>();
@@ -214,7 +215,7 @@ void CameraPoseInitializer::on_service(
 
   // Estimate orientation
   const auto header = request->pose_with_covariance.header;
-  double yaw_angle_rad;
+  double yaw_angle_rad = 2 * std::atan2(orientation.z, orientation.w);
   if (estimate_pose(pos_vec3f, yaw_angle_rad, yaw_std_rad)) {
     response->success = true;
     response->pose_with_covariance =
