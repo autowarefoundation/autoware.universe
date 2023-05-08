@@ -121,9 +121,13 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
 
   // for new architecture
   DrivableAreaInfo current_drivable_area_info;
-  current_drivable_area_info.drivable_lanes = drivable_lanes;
-  output.drivable_area_info = utils::combineDrivableAreaInfo(
-    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+  current_drivable_area_info.drivable_lanes = expanded_lanes;
+  if (prev_drivable_area_info_) {
+    output.drivable_area_info =
+      utils::combineDrivableAreaInfo(current_drivable_area_info, *prev_drivable_area_info_);
+  } else {
+    output.drivable_area_info = current_drivable_area_info;
+  }
 
   // for old architecture
   utils::generateDrivableArea(

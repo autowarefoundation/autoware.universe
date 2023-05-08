@@ -207,7 +207,7 @@ BehaviorModuleOutput PullOutModule::plan()
     path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
 
   DrivableAreaInfo current_drivable_area_info;
-  current_drivable_area_info.drivable_lanes = status_.lanes;
+  current_drivable_area_info.drivable_lanes = target_drivable_lanes;
   output.drivable_area_info = utils::combineDrivableAreaInfo(
     current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
 
