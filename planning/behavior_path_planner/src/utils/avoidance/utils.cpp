@@ -96,6 +96,32 @@ double calcShiftLength(
   return std::fabs(shift_length) > 1e-3 ? shift_length : 0.0;
 }
 
+bool isShiftNecessary(const bool & is_object_on_right, const double & shift_length)
+{
+  /**
+   *   ^
+   *   |
+   * --+----x-------------------------------x--->
+   *   |                 x     x
+   *   |                 ==obj==
+   */
+  if (is_object_on_right && shift_length < 0.0) {
+    return false;
+  }
+
+  /**
+   *   ^                 ==obj==
+   *   |                 x     x
+   * --+----x-------------------------------x--->
+   *   |
+   */
+  if (!is_object_on_right && shift_length > 0.0) {
+    return false;
+  }
+
+  return true;
+}
+
 bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length)
 {
   return (is_object_on_right == std::signbit(shift_length));
@@ -270,14 +296,14 @@ Polygon2d createEnvelopePolygon(
   return expanded_polygon;
 }
 
-std::vector<tier4_autoware_utils::Polygon2d> generateObstaclePolygonsForDrivableArea(
+std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
   const ObjectDataArray & objects, const std::shared_ptr<AvoidanceParameters> & parameters,
   const double vehicle_width)
 {
-  std::vector<tier4_autoware_utils::Polygon2d> obj_polys;
+  std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
 
   if (objects.empty() || !parameters->enable_bound_clipping) {
-    return obj_polys;
+    return obstacles_for_drivable_area;
   }
 
   for (const auto & object : objects) {
@@ -302,9 +328,10 @@ std::vector<tier4_autoware_utils::Polygon2d> generateObstaclePolygonsForDrivable
       object.avoid_margin.get() - object_parameter.envelope_buffer_margin - vehicle_width / 2.0;
     const auto obj_poly =
       tier4_autoware_utils::expandPolygon(object.envelope_poly, diff_poly_buffer);
-    obj_polys.push_back(obj_poly);
+    obstacles_for_drivable_area.push_back(
+      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly});
   }
-  return obj_polys;
+  return obstacles_for_drivable_area;
 }
 
 double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v)
@@ -681,6 +708,15 @@ void filterTargetObjects(
       }
       return std::min(max_allowable_lateral_distance, max_avoid_margin);
     }();
+
+    if (!!avoid_margin) {
+      const auto shift_length = calcShiftLength(isOnRight(o), o.overhang_dist, avoid_margin.get());
+      if (!isShiftNecessary(isOnRight(o), shift_length)) {
+        o.reason = "NotNeedAvoidance";
+        data.other_objects.push_back(o);
+        continue;
+      }
+    }
 
     // force avoidance for stopped vehicle
     {

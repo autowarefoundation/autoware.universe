@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/avoidance_by_lc/manager.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,25 +23,24 @@
 namespace behavior_path_planner
 {
 
-AvoidanceByLCModuleManager::AvoidanceByLCModuleManager(
+DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-  const std::shared_ptr<AvoidanceByLCParameters> & parameters)
-: SceneModuleManagerInterface(node, name, config, {"left", "right"}), parameters_{parameters}
+  const std::shared_ptr<DynamicAvoidanceParameters> & parameters)
+: SceneModuleManagerInterface(node, name, config, {""}), parameters_{parameters}
 {
 }
 
-void AvoidanceByLCModuleManager::updateModuleParams(
+void DynamicAvoidanceModuleManager::updateModuleParams(
   [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
 
-  [[maybe_unused]] auto p = parameters_;
+  auto & p = parameters_;
 
-  [[maybe_unused]] const std::string ns = name_ + ".";
+  [[maybe_unused]] std::string ns = name_ + ".";
 
   std::for_each(registered_modules_.begin(), registered_modules_.end(), [&p](const auto & m) {
     m->updateModuleParams(p);
   });
 }
-
 }  // namespace behavior_path_planner

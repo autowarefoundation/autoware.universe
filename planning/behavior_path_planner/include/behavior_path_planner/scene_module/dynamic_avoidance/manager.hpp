@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE_BY_LC__MANAGER_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE_BY_LC__MANAGER_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__MANAGER_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__MANAGER_HPP_
 
-#include "behavior_path_planner/scene_module/avoidance_by_lc/module.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
-#include "behavior_path_planner/utils/avoidance_by_lc/module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,27 +28,26 @@
 namespace behavior_path_planner
 {
 
-class AvoidanceByLCModuleManager : public SceneModuleManagerInterface
+class DynamicAvoidanceModuleManager : public SceneModuleManagerInterface
 {
 public:
-  AvoidanceByLCModuleManager(
+  DynamicAvoidanceModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-    const std::shared_ptr<AvoidanceByLCParameters> & parameters);
+    const std::shared_ptr<DynamicAvoidanceParameters> & parameters);
 
   std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
-    return std::make_shared<AvoidanceByLCModule>(
+    return std::make_shared<DynamicAvoidanceModule>(
       name_, *node_, parameters_, rtc_interface_ptr_map_);
   }
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
-  std::shared_ptr<AvoidanceByLCParameters> parameters_;
-
-  std::vector<std::shared_ptr<AvoidanceByLCModule>> registered_modules_;
+  std::shared_ptr<DynamicAvoidanceParameters> parameters_;
+  std::vector<std::shared_ptr<DynamicAvoidanceModule>> registered_modules_;
 };
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE_BY_LC__MANAGER_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__MANAGER_HPP_

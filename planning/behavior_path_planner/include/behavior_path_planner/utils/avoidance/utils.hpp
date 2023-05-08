@@ -34,6 +34,8 @@ bool isTargetObjectType(
 double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
 
+bool isShiftNecessary(const bool & is_object_on_right, const double & shift_length);
+
 bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length);
 
 size_t findPathIndexFromArclength(
@@ -65,7 +67,7 @@ void setStartData(
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
 
-std::vector<tier4_autoware_utils::Polygon2d> generateObstaclePolygonsForDrivableArea(
+std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
   const ObjectDataArray & objects, const std::shared_ptr<AvoidanceParameters> & parameters,
   const double vehicle_width);
 
