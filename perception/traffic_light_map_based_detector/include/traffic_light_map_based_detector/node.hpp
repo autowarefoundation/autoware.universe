@@ -52,6 +52,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -91,10 +92,23 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr route_sub_;
-
+  /**
+   * @brief publish the rois of traffic lights with angular and distance offset
+   *
+   */
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
+  /**
+   * @brief publish the rois of traffic lights with zero angular and distance offset
+   *
+   */
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
     expect_roi_pub_;
+  /**
+   * @brief publish the camera info which would be used in traffic_light_multi_camera_fusion node.
+   * The reason of publishing this topic instead of using the original camera info topic
+   * is explained in traffic_light_multi_camera_fusion package.
+   */
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr cam_info_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr viz_pub_;
 
   tf2_ros::Buffer tf_buffer_;
@@ -108,6 +122,7 @@ private:
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
+
   Config config_;
   /**
    * @brief Calculated the transform from map to frame_id at timestamp t
@@ -141,12 +156,13 @@ private:
    * @brief Get the Visible Traffic Lights object
    *
    * @param all_traffic_lights      all the traffic lights in the route or in the map
-   * @param tf_map2camera           the transformation from map to camera
+   * @param tf_map2camera_vec           the transformation sequences from map to camera
    * @param pinhole_camera_model    pinhole model calculated from camera_info
    * @param visible_traffic_lights  the visible traffic lights object
    */
   void getVisibleTrafficLights(
-    const TrafficLightSet & all_traffic_lights, const tf2::Transform & tf_map2camera,
+    const TrafficLightSet & all_traffic_lights,
+    const std::vector<tf2::Transform> & tf_map2camera_vec,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
     std::vector<lanelet::ConstLineString3d> & visible_traffic_lights);
   /**

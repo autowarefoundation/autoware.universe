@@ -5,6 +5,7 @@
   <arg name="input/route" default="/planning/mission_planning/route"/>
   <arg name="expect/rois" default="~/expect/rois"/>
   <arg name="output/rois" default="~/output/rois"/>
+  <arg name="output/camera_info" default="~/camera_info"/>
   <arg name="min_timestamp_offset" default="0.0"/>
   <arg name="max_timestamp_offset" default="0.0"/>
   <arg name="timestamp_sample_len" default="0.02"/>
@@ -16,6 +17,7 @@
     <remap from="~/expect/rois" to="$(var expect/rois)"/>
     <remap from="~/input/route" to="$(var input/route)"/>
     <remap from="~/output/rois" to="$(var output/rois)"/>
+    <remap from="~/output/camera_info" to="$(var output/camera_info)"/>
     <param from="$(var param_path)"/>
     <param name="min_timestamp_offset" value="$(var min_timestamp_offset)"/>
     <param name="max_timestamp_offset" value="$(var max_timestamp_offset)"/>

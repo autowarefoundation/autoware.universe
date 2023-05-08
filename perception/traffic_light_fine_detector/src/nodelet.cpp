@@ -62,15 +62,15 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
   using std::placeholders::_2;
   using std::placeholders::_3;
 
-  std::string model_path = declare_parameter("fine_detection_onnx_file", "");
-  std::string label_path = declare_parameter("fine_detection_label_file", "");
+  std::string model_path = declare_parameter("fine_detector_model_path", "");
+  std::string label_path = declare_parameter("fine_detector_label_path", "");
   std::string precision = declare_parameter("fine_detector_precision", "fp32");
   // Objects with a score lower than this value will be ignored.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  score_thresh_ = declare_parameter("fine_detection_score_thresh", 0.3);
+  score_thresh_ = declare_parameter("fine_detector_score_thresh", 0.3);
   // Detection results will be ignored if IoU over this value.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  float nms_threshold = declare_parameter("fine_detection_nms_thresh", 0.65);
+  float nms_threshold = declare_parameter("fine_detector_nms_thresh", 0.65);
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
 
   if (!readLabelFile(label_path, tlr_id_, num_class)) {
@@ -185,7 +185,7 @@ float TrafficLightFineDetectorNodelet::evalMatchScore(
     const sensor_msgs::msg::RegionOfInterest & expected_roi = roi_p.second.roi;
     for (const tensorrt_yolox::Object & detection : id2detections[tlr_id]) {
       float score = ::calWeightedIou(expected_roi, detection);
-      if (score > max_score) {
+      if (score >= max_score) {
         max_score = score;
         id2bestDetection[tlr_id] = detection;
       }
