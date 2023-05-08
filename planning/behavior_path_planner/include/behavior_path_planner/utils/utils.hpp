@@ -395,6 +395,10 @@ void extractObstaclesFromDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableAreaInfo::Obstacle> & obstacles);
 
 void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound_left);
+
+std::optional<lanelet::Polygon3d> getPolygonByPoint(
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstPoint3d & point,
+  const std::string & polygon_name);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
