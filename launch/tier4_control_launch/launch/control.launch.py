@@ -59,6 +59,8 @@ def launch_setup(context, *args, **kwargs):
         LaunchConfiguration("obstacle_collision_checker_param_path").perform(context), "r"
     ) as f:
         obstacle_collision_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("aeb_param_path").perform(context), "r") as f:
+        aeb_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     controller_component = ComposableNode(
         package="trajectory_follower_node",
@@ -70,6 +72,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/current_odometry", "/localization/kinematic_state"),
             ("~/input/current_steering", "/vehicle/status/steering_status"),
             ("~/input/current_accel", "/localization/acceleration"),
+            ("~/input/current_operation_mode", "/system/operation_mode/state"),
             ("~/output/predicted_trajectory", "lateral/predicted_trajectory"),
             ("~/output/lateral_diagnostic", "lateral/diagnostic"),
             ("~/output/slope_angle", "longitudinal/slope_angle"),
@@ -79,6 +82,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             {
                 "lateral_controller_mode": LaunchConfiguration("lateral_controller_mode"),
+                "longitudinal_controller_mode": LaunchConfiguration("longitudinal_controller_mode"),
             },
             nearest_search_param,
             trajectory_follower_node_param,
@@ -125,6 +129,33 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    # autonomous emergency braking
+    autonomous_emergency_braking = ComposableNode(
+        package="autonomous_emergency_braking",
+        plugin="autoware::motion::control::autonomous_emergency_braking::AEB",
+        name="autonomous_emergency_braking",
+        remappings=[
+            ("~/input/pointcloud", "/perception/obstacle_segmentation/pointcloud"),
+            ("~/input/velocity", "/vehicle/status/velocity_status"),
+            ("~/input/imu", "/sensing/imu/imu_data"),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            (
+                "~/input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
+        ],
+        parameters=[
+            aeb_param,
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    autonomous_emergency_braking_loader = LoadComposableNodes(
+        condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
+        composable_node_descriptions=[autonomous_emergency_braking],
+        target_container="/control/control_container",
+    )
+
     # vehicle cmd gate
     vehicle_cmd_gate_component = ComposableNode(
         package="vehicle_cmd_gate",
@@ -148,6 +179,8 @@ def launch_setup(context, *args, **kwargs):
             ("input/emergency/gear_cmd", "/system/emergency/gear_cmd"),
             ("input/mrm_state", "/system/fail_safe/mrm_state"),
             ("input/gear_status", "/vehicle/status/gear_status"),
+            ("input/kinematics", "/localization/kinematic_state"),
+            ("input/acceleration", "/localization/acceleration"),
             ("output/vehicle_cmd_emergency", "/control/command/emergency_cmd"),
             ("output/control_cmd", "/control/command/control_cmd"),
             ("output/gear_cmd", "/control/command/gear_cmd"),
@@ -167,6 +200,11 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             vehicle_cmd_gate_param,
             vehicle_info_param,
+            {
+                "check_external_emergency_heartbeat": LaunchConfiguration(
+                    "check_external_emergency_heartbeat"
+                ),
+            },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -271,6 +309,7 @@ def launch_setup(context, *args, **kwargs):
             external_cmd_selector_loader,
             external_cmd_converter_loader,
             obstacle_collision_checker_loader,
+            autonomous_emergency_braking_loader,
         ]
     )
 
@@ -303,9 +342,12 @@ def generate_launch_description():
     add_launch_arg("shift_decider_param_path")
     add_launch_arg("obstacle_collision_checker_param_path")
     add_launch_arg("external_cmd_selector_param_path")
+    add_launch_arg("aeb_param_path")
+    add_launch_arg("enable_autonomous_emergency_braking")
+    add_launch_arg("check_external_emergency_heartbeat")
 
     # component
-    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

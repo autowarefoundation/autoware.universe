@@ -37,8 +37,9 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   {
     const auto node = component_interface_utils::NodeAdaptor(this);
     node.init_srv(
-      srv_autoware_control, this, &OperationModeTransitionManager::onChangeAutowareControl);
-    node.init_srv(srv_operation_mode, this, &OperationModeTransitionManager::onChangeOperationMode);
+      srv_autoware_control_, this, &OperationModeTransitionManager::onChangeAutowareControl);
+    node.init_srv(
+      srv_operation_mode_, this, &OperationModeTransitionManager::onChangeOperationMode);
     node.init_pub(pub_operation_mode_);
   }
 
@@ -50,12 +51,23 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   }
 
   // initialize state
-  transition_timeout_ = declare_parameter<double>("transition_timeout");
   current_mode_ = OperationMode::STOP;
   transition_ = nullptr;
   gate_operation_mode_.mode = OperationModeState::UNKNOWN;
   gate_operation_mode_.is_in_transition = false;
   control_mode_report_.mode = ControlModeReport::NO_COMMAND;
+  transition_timeout_ = declare_parameter<double>("transition_timeout");
+  {
+    // check `transition_timeout` value
+    const auto stable_duration = declare_parameter<double>("stable_check.duration");
+    const double TIMEOUT_MARGIN = 0.5;
+    if (transition_timeout_ < stable_duration + TIMEOUT_MARGIN) {
+      transition_timeout_ = stable_duration + TIMEOUT_MARGIN;
+      RCLCPP_WARN(
+        get_logger(), "`transition_timeout` must be somewhat larger than `stable_check.duration`");
+      RCLCPP_WARN_STREAM(get_logger(), "transition_timeout is set to " << transition_timeout_);
+    }
+  }
 
   // modes
   modes_[OperationMode::STOP] = std::make_unique<StopMode>();

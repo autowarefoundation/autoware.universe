@@ -38,6 +38,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -81,7 +82,6 @@ public:
     double max_yield_timeout;
     double ego_yield_query_stop_duration;
     // param for input data
-    double external_input_timeout;
     double tl_state_timeout;
     // param for target area & object
     double crosswalk_attention_range;
@@ -147,8 +147,6 @@ private:
 
   bool isTargetType(const PredictedObject & object) const;
 
-  bool isTargetExternalInputStatus(const int target_status) const;
-
   static geometry_msgs::msg::Polygon createObjectPolygon(
     const double width_m, const double length_m);
 
@@ -174,6 +172,9 @@ private:
 
   // whether ego passed safety_slow_point
   bool passed_safety_slow_point_;
+
+  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_crosswalk_ =
+    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
 }  // namespace behavior_velocity_planner
 

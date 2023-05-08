@@ -15,8 +15,10 @@
 #ifndef SCENE_MODULE__RUN_OUT__UTILS_HPP_
 #define SCENE_MODULE__RUN_OUT__UTILS_HPP_
 
-#include "scene_module/run_out/dynamic_obstacle.hpp"
+#include "behavior_velocity_planner/planner_data.hpp"
+#include "utilization/util.hpp"
 
+#include <motion_utils/distance/distance.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <string>
@@ -73,6 +75,11 @@ struct DetectionArea
   float margin_behind;
 };
 
+struct MandatoryArea
+{
+  float decel_jerk;
+};
+
 struct ApproachingParam
 {
   bool enable;
@@ -100,12 +107,28 @@ struct Smoother
   double start_jerk;
 };
 
+struct DynamicObstacleParam
+{
+  bool use_mandatory_area;
+
+  float min_vel_kmph;
+  float max_vel_kmph;
+
+  // parameter to convert points to dynamic obstacle
+  float diameter;             // [m]
+  float height;               // [m]
+  float max_prediction_time;  // [sec]
+  float time_step;            // [sec]
+  float points_interval;      // [m]
+};
+
 struct PlannerParam
 {
   CommonParam common;
   RunOutParam run_out;
   VehicleParam vehicle_param;
   DetectionArea detection_area;
+  MandatoryArea mandatory_area;
   ApproachingParam approaching;
   StateParam state_param;
   DynamicObstacleParam dynamic_obstacle;
@@ -120,55 +143,40 @@ enum class DetectionMethod {
   Unknown,
 };
 
-bool validCheckDecelPlan(
-  const double v_end, const double a_end, const double v_target, const double a_target,
-  const double v_margin, const double a_margin);
+struct PoseWithRange
+{
+  geometry_msgs::msg::Pose pose_min;
+  geometry_msgs::msg::Pose pose_max;
+};
 
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE1)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (am) minimum deceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @param (jd) minimum jerk [m/sss]
- * @param (t_min) duration of constant deceleration [s]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType1(
-  const double v0, const double vt, const double a0, const double am, const double ja,
-  const double jd, const double t_min);
+// since we use the minimum and maximum velocity,
+// define the PredictedPath without time_step
+struct PredictedPath
+{
+  std::vector<geometry_msgs::msg::Pose> path;
+  float confidence;
+};
 
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE2)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (am) minimum deceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @param (jd) minimum jerk [m/sss]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType2(
-  const double v0, const double vt, const double a0, const double ja, const double jd);
+// abstracted obstacle information
+struct DynamicObstacle
+{
+  geometry_msgs::msg::Pose pose;
+  std::vector<geometry_msgs::msg::Point> collision_points;
+  geometry_msgs::msg::Point nearest_collision_point;
+  float min_velocity_mps;
+  float max_velocity_mps;
+  std::vector<ObjectClassification> classifications;
+  Shape shape;
+  std::vector<PredictedPath> predicted_paths;
+};
 
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE3)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType3(
-  const double v0, const double vt, const double a0, const double ja);
-
-boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
-  const double current_vel, const double target_vel, const double current_acc, const double acc_min,
-  const double jerk_acc, const double jerk_dec);
+struct DynamicObstacleData
+{
+  PredictedObjects predicted_objects;
+  PathWithLaneId path;
+  Polygons2d detection_area;
+  Polygons2d mandatory_detection_area;
+};
 
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly);
 
@@ -225,6 +233,14 @@ PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_dist
 PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
 
 DetectionMethod toEnum(const std::string & detection_method);
+
+Polygons2d createDetectionAreaPolygon(
+  const PathWithLaneId & path, const PlannerData & planner_data,
+  const PlannerParam & planner_param);
+
+Polygons2d createMandatoryDetectionAreaPolygon(
+  const PathWithLaneId & path, const PlannerData & planner_data,
+  const PlannerParam & planner_param);
 }  // namespace run_out_utils
 }  // namespace behavior_velocity_planner
 #endif  // SCENE_MODULE__RUN_OUT__UTILS_HPP_

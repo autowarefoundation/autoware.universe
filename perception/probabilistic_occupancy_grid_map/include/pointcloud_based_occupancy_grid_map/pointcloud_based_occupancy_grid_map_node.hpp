@@ -82,8 +82,11 @@ private:
   // ROS Parameters
   std::string map_frame_;
   std::string base_link_frame_;
+  std::string gridmap_origin_frame_;
+  std::string scan_origin_frame_;
   bool use_height_filter_;
   bool enable_single_frame_mode_;
+  bool filter_obstacle_pointcloud_by_raw_pointcloud_;
 };
 
 }  // namespace occupancy_grid_map

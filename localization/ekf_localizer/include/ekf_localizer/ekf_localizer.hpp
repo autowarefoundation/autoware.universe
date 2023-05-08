@@ -15,6 +15,7 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include "ekf_localizer/aged_object_queue.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
 
@@ -46,20 +47,6 @@
 #include <queue>
 #include <string>
 #include <vector>
-
-struct PoseInfo
-{
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose;
-  int counter;
-  int smoothing_steps;
-};
-
-struct TwistInfo
-{
-  geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr twist;
-  int counter;
-  int smoothing_steps;
-};
 
 class Simple1DFilter
 {
@@ -180,9 +167,9 @@ private:
 
   bool is_activated_;
 
-  /* for model prediction */
-  std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
-  std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
+  AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
+  AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
+
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
     current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction

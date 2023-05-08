@@ -14,37 +14,42 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Parameters
 
-| Name                      | Type   | Description                          |
-| ------------------------- | ------ | ------------------------------------ |
-| `map_frame`               | string | The frame name for map               |
-| `arrival_check_angle_deg` | double | Angle threshold for goal check       |
-| `arrival_check_distance`  | double | Distance threshold for goal check    |
-| `arrival_check_duration`  | double | Duration threshold for goal check    |
-| `goal_angle_threshold`    | double | Max goal pose angle for goal approve |
+| Name                       | Type   | Description                                                                   |
+| -------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `map_frame`                | string | The frame name for map                                                        |
+| `arrival_check_angle_deg`  | double | Angle threshold for goal check                                                |
+| `arrival_check_distance`   | double | Distance threshold for goal check                                             |
+| `arrival_check_duration`   | double | Duration threshold for goal check                                             |
+| `goal_angle_threshold`     | double | Max goal pose angle for goal approve                                          |
+| `enable_correct_goal_pose` | bool   | Enabling correction of goal pose according to the closest lanelet orientation |
 
 ### Services
 
-| Name                                 | Type                                        | Description                       |
-| ------------------------------------ | ------------------------------------------- | --------------------------------- |
-| `/planning/routing/clear_route`      | autoware_adapi_v1_msgs::srv::ClearRoute     | route clear request               |
-| `/planning/routing/set_route_points` | autoware_adapi_v1_msgs::srv::SetRoutePoints | route request with pose waypoints |
-| `/planning/routing/set_route`        | autoware_planning_msgs::srv::SetRoute       | route request with HAD map format |
+| Name                                             | Type                                      | Description                                 |
+| ------------------------------------------------ | ----------------------------------------- | ------------------------------------------- |
+| `/planning/mission_planning/clear_route`         | autoware_adapi_v1_msgs/srv/ClearRoute     | route clear request                         |
+| `/planning/mission_planning/set_route_points`    | autoware_adapi_v1_msgs/srv/SetRoutePoints | route request with pose waypoints           |
+| `/planning/mission_planning/set_route`           | autoware_adapi_v1_msgs/srv/SetRoute       | route request with lanelet waypoints        |
+| `/planning/mission_planning/change_route_points` | autoware_adapi_v1_msgs/srv/SetRoutePoints | route change request with pose waypoints    |
+| `/planning/mission_planning/change_route`        | autoware_adapi_v1_msgs/srv/SetRoute       | route change request with lanelet waypoints |
+| `~/srv/set_mrm_route`                            | autoware_adapi_v1_msgs/srv/SetRoutePoints | set emergency route                         |
+| `~/srv/clear_mrm_route`                          | std_srvs/srv/Trigger                      | clear emergency route                       |
 
 ### Subscriptions
 
-| Name                  | Type                                 | Description                 |
-| --------------------- | ------------------------------------ | --------------------------- |
-| `input/vector_map`    | autoware_auto_mapping_msgs/HADMapBin | vector map of Lanelet2      |
-| `input/modified_goal` | geometry_msgs/PoseStamped            | goal pose for arrival check |
+| Name                  | Type                                 | Description            |
+| --------------------- | ------------------------------------ | ---------------------- |
+| `input/vector_map`    | autoware_auto_mapping_msgs/HADMapBin | vector map of Lanelet2 |
+| `input/modified_goal` | geometry_msgs/PoseWithUuidStamped    | modified goal pose     |
 
 ### Publications
 
-| Name                            | Type                                    | Description              |
-| ------------------------------- | --------------------------------------- | ------------------------ |
-| `/planning/routing/route_state` | autoware_adapi_v1_msgs::msg::RouteState | route state              |
-| `/planning/routing/route`       | autoware_planning_msgs/LaneletRoute     | route                    |
-| `debug/route_marker`            | visualization_msgs::msg::MarkerArray    | route marker for debug   |
-| `debug/goal_footprint`          | visualization_msgs::msg::MarkerArray    | goal footprint for debug |
+| Name                                     | Type                                  | Description              |
+| ---------------------------------------- | ------------------------------------- | ------------------------ |
+| `/planning/mission_planning/route_state` | autoware_adapi_v1_msgs/msg/RouteState | route state              |
+| `/planning/mission_planning/route`       | autoware_planning_msgs/LaneletRoute   | route                    |
+| `debug/route_marker`                     | visualization_msgs/msg/MarkerArray    | route marker for debug   |
+| `debug/goal_footprint`                   | visualization_msgs/msg/MarkerArray    | goal footprint for debug |
 
 ## Route section
 

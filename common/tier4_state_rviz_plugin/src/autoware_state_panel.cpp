@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2020 TIER IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
@@ -25,9 +26,10 @@
 #include <memory>
 #include <string>
 
-inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
-
-using std::placeholders::_1;
+inline std::string Bool2String(const bool var)
+{
+  return var ? "True" : "False";
+}
 
 namespace rviz_plugins
 {
@@ -189,7 +191,7 @@ QGroupBox * AutowareStatePanel::makeMotionGroup()
 
 QGroupBox * AutowareStatePanel::makeFailSafeGroup()
 {
-  auto * group = new QGroupBox("FalSafe");
+  auto * group = new QGroupBox("FailSafe");
   auto * grid = new QGridLayout;
 
   mrm_state_label_ptr_ = new QLabel("INIT");
@@ -208,6 +210,8 @@ QGroupBox * AutowareStatePanel::makeFailSafeGroup()
 
 void AutowareStatePanel::onInitialize()
 {
+  using std::placeholders::_1;
+
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   // Operation Mode
@@ -487,7 +491,7 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
   {
     QString text = "";
     QString style_sheet = "";
-    switch (msg->state) {
+    switch (msg->behavior) {
       case MRMState::NONE:
         text = "NONE";
         style_sheet = "background-color: #00FF00;";  // green

@@ -34,11 +34,20 @@ geo_pos_conv::geo_pos_conv()
 {
 }
 
-double geo_pos_conv::x() const { return m_x; }
+double geo_pos_conv::x() const
+{
+  return m_x;
+}
 
-double geo_pos_conv::y() const { return m_y; }
+double geo_pos_conv::y() const
+{
+  return m_y;
+}
 
-double geo_pos_conv::z() const { return m_z; }
+double geo_pos_conv::z() const
+{
+  return m_z;
+}
 
 void geo_pos_conv::set_plane(double lat, double lon)
 {
@@ -211,7 +220,7 @@ void geo_pos_conv::conv_llh2xyz(void)
   Pmo = 0.9999;
 
   /*WGS84 Parameters*/
-  AW = 6378137.0;            // Semimajor Axis
+  AW = 6378137.0;            // Semi-major Axis
   FW = 1.0 / 298.257222101;  // 298.257223563 //Geometrical flattening
 
   Pe = sqrt(2.0 * FW - pow(FW, 2));

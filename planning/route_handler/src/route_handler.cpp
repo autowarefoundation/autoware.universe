@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -123,7 +123,11 @@ std::string toString(const geometry_msgs::msg::Pose & pose)
 
 namespace route_handler
 {
-RouteHandler::RouteHandler(const HADMapBin & map_msg) { setMap(map_msg); }
+RouteHandler::RouteHandler(const HADMapBin & map_msg)
+{
+  setMap(map_msg);
+  route_ptr_ = nullptr;
+}
 
 void RouteHandler::setMap(const HADMapBin & map_msg)
 {
@@ -169,8 +173,7 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
 void RouteHandler::setRoute(const LaneletRoute & route_msg)
 {
   if (!isRouteLooped(route_msg.segments)) {
-    route_msg_ = route_msg;
-    is_route_msg_ready_ = true;
+    route_ptr_ = std::make_shared<LaneletRoute>(route_msg);
     is_handler_ready_ = false;
     setLaneletsFromRouteMsg();
   } else {
@@ -180,7 +183,10 @@ void RouteHandler::setRoute(const LaneletRoute & route_msg)
   }
 }
 
-bool RouteHandler::isHandlerReady() const { return is_handler_ready_; }
+bool RouteHandler::isHandlerReady() const
+{
+  return is_handler_ready_;
+}
 
 void RouteHandler::setRouteLanelets(const lanelet::ConstLanelets & path_lanelets)
 {
@@ -282,25 +288,35 @@ void RouteHandler::setRouteLanelets(const lanelet::ConstLanelets & path_lanelets
   is_handler_ready_ = true;
 }
 
+void RouteHandler::clearRoute()
+{
+  route_lanelets_.clear();
+  preferred_lanelets_.clear();
+  start_lanelets_.clear();
+  goal_lanelets_.clear();
+  route_ptr_ = nullptr;
+  is_handler_ready_ = false;
+}
+
 void RouteHandler::setLaneletsFromRouteMsg()
 {
-  if (!is_route_msg_ready_ || !is_map_msg_ready_) {
+  if (!route_ptr_ || !is_map_msg_ready_) {
     return;
   }
   route_lanelets_.clear();
   preferred_lanelets_.clear();
-  const bool is_route_valid = lanelet::utils::route::isRouteValid(route_msg_, lanelet_map_ptr_);
+  const bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr_, lanelet_map_ptr_);
   if (!is_route_valid) {
     return;
   }
 
   size_t primitive_size{0};
-  for (const auto & route_section : route_msg_.segments) {
+  for (const auto & route_section : route_ptr_->segments) {
     primitive_size += route_section.primitives.size();
   }
   route_lanelets_.reserve(primitive_size);
 
-  for (const auto & route_section : route_msg_.segments) {
+  for (const auto & route_section : route_ptr_->segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
       const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
@@ -312,15 +328,15 @@ void RouteHandler::setLaneletsFromRouteMsg()
   }
   goal_lanelets_.clear();
   start_lanelets_.clear();
-  if (!route_msg_.segments.empty()) {
-    goal_lanelets_.reserve(route_msg_.segments.back().primitives.size());
-    for (const auto & primitive : route_msg_.segments.back().primitives) {
+  if (!route_ptr_->segments.empty()) {
+    goal_lanelets_.reserve(route_ptr_->segments.back().primitives.size());
+    for (const auto & primitive : route_ptr_->segments.back().primitives) {
       const auto id = primitive.id;
       const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
       goal_lanelets_.push_back(llt);
     }
-    start_lanelets_.reserve(route_msg_.segments.front().primitives.size());
-    for (const auto & primitive : route_msg_.segments.front().primitives) {
+    start_lanelets_.reserve(route_ptr_->segments.front().primitives.size());
+    for (const auto & primitive : route_ptr_->segments.front().primitives) {
       const auto id = primitive.id;
       const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
       start_lanelets_.push_back(llt);
@@ -334,7 +350,32 @@ lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id 
   return lanelet_map_ptr_->polygonLayer.get(id);
 }
 
-Header RouteHandler::getRouteHeader() const { return route_msg_.header; }
+Header RouteHandler::getRouteHeader() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getRouteHeader: Route has not been set yet");
+    return Header();
+  }
+  return route_ptr_->header;
+}
+
+UUID RouteHandler::getRouteUuid() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
+    UUID();
+  }
+  return route_ptr_->uuid;
+}
+
+bool RouteHandler::isAllowedGoalModification() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
+    return false;
+  }
+  return route_ptr_->allow_modification;
+}
 
 std::vector<lanelet::ConstLanelet> RouteHandler::getLanesBeforePose(
   const geometry_msgs::msg::Pose & pose, const double length) const
@@ -372,17 +413,27 @@ std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
   return succeeding_lanes_vec.front();
 }
 
-lanelet::ConstLanelets RouteHandler::getRouteLanelets() const { return route_lanelets_; }
+lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
+{
+  return route_lanelets_;
+}
 
-Pose RouteHandler::getGoalPose() const { return route_msg_.goal_pose; }
+Pose RouteHandler::getGoalPose() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getGoalPose: Route has not been set yet");
+    Pose();
+  }
+  return route_ptr_->goal_pose;
+}
 
 lanelet::Id RouteHandler::getGoalLaneId() const
 {
-  if (route_msg_.segments.empty()) {
+  if (!route_ptr_ || route_ptr_->segments.empty()) {
     return lanelet::InvalId;
   }
 
-  return route_msg_.segments.back().preferred_primitive.id;
+  return route_ptr_->segments.back().preferred_primitive.id;
 }
 
 bool RouteHandler::getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const
@@ -399,10 +450,10 @@ bool RouteHandler::getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const
 
 bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const
 {
-  if (route_msg_.segments.empty()) {
+  if (!route_ptr_ || route_ptr_->segments.empty()) {
     return false;
   }
-  return exists(route_msg_.segments.back().primitives, lanelet.id());
+  return exists(route_ptr_->segments.back().primitives, lanelet.id());
 }
 
 lanelet::ConstLanelets RouteHandler::getLaneletsFromIds(const lanelet::Ids & ids) const
@@ -426,11 +477,17 @@ bool RouteHandler::isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const
   return !getNextLaneletWithinRoute(lanelet, &next_lanelet);
 }
 
+lanelet::ConstLanelets RouteHandler::getLaneChangeableNeighbors(
+  const lanelet::ConstLanelet & lanelet) const
+{
+  return lanelet::utils::query::getLaneChangeableNeighbors(routing_graph_ptr_, lanelet);
+}
+
 lanelet::ConstLanelets RouteHandler::getLaneletSequenceAfter(
-  const lanelet::ConstLanelet & lanelet, const double min_length) const
+  const lanelet::ConstLanelet & lanelet, const double min_length, const bool only_route_lanes) const
 {
   lanelet::ConstLanelets lanelet_sequence_forward;
-  if (!exists(route_lanelets_, lanelet)) {
+  if (only_route_lanes && !exists(route_lanelets_, lanelet)) {
     return lanelet_sequence_forward;
   }
 
@@ -439,6 +496,10 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceAfter(
   while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelet next_lanelet;
     if (!getNextLaneletWithinRoute(current_lanelet, &next_lanelet)) {
+      break;
+    }
+    // loop check
+    if (lanelet.id() == next_lanelet.id()) {
       break;
     }
     lanelet_sequence_forward.push_back(next_lanelet);
@@ -451,10 +512,10 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceAfter(
 }
 
 lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
-  const lanelet::ConstLanelet & lanelet, const double min_length) const
+  const lanelet::ConstLanelet & lanelet, const double min_length, const bool only_route_lanes) const
 {
   lanelet::ConstLanelets lanelet_sequence_backward;
-  if (!exists(route_lanelets_, lanelet)) {
+  if (only_route_lanes && !exists(route_lanelets_, lanelet)) {
     return lanelet_sequence_backward;
   }
 
@@ -463,6 +524,12 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
   while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelets candidate_lanelets;
     if (!getPreviousLaneletsWithinRoute(current_lanelet, &candidate_lanelets)) {
+      break;
+    }
+    // loop check
+    if (std::any_of(
+          candidate_lanelets.begin(), candidate_lanelets.end(),
+          [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); })) {
       break;
     }
 
@@ -502,7 +569,7 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
 
 lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   const lanelet::ConstLanelet & lanelet, const double backward_distance,
-  const double forward_distance) const
+  const double forward_distance, const bool only_route_lanes) const
 {
   Pose current_pose{};
   current_pose.orientation.w = 1;
@@ -511,16 +578,16 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   }
 
   lanelet::ConstLanelets lanelet_sequence;
-  if (!exists(route_lanelets_, lanelet)) {
+  if (only_route_lanes && !exists(route_lanelets_, lanelet)) {
     return lanelet_sequence;
   }
 
   lanelet::ConstLanelets lanelet_sequence_forward =
-    getLaneletSequenceAfter(lanelet, forward_distance);
+    getLaneletSequenceAfter(lanelet, forward_distance, only_route_lanes);
   const lanelet::ConstLanelets lanelet_sequence_backward = std::invoke([&]() {
     const auto arc_coordinate = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
     if (arc_coordinate.length < backward_distance) {
-      return getLaneletSequenceUpTo(lanelet, backward_distance);
+      return getLaneletSequenceUpTo(lanelet, backward_distance, only_route_lanes);
     }
     return lanelet::ConstLanelets{};
   });
@@ -542,19 +609,19 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
 
 lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   const lanelet::ConstLanelet & lanelet, const Pose & current_pose, const double backward_distance,
-  const double forward_distance) const
+  const double forward_distance, const bool only_route_lanes) const
 {
   lanelet::ConstLanelets lanelet_sequence;
-  if (!exists(route_lanelets_, lanelet)) {
+  if (only_route_lanes && !exists(route_lanelets_, lanelet)) {
     return lanelet_sequence;
   }
 
   lanelet::ConstLanelets lanelet_sequence_forward =
-    getLaneletSequenceAfter(lanelet, forward_distance);
+    getLaneletSequenceAfter(lanelet, forward_distance, only_route_lanes);
   const lanelet::ConstLanelets lanelet_sequence_backward = std::invoke([&]() {
     const auto arc_coordinate = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
     if (arc_coordinate.length < backward_distance) {
-      return getLaneletSequenceUpTo(lanelet, backward_distance);
+      return getLaneletSequenceUpTo(lanelet, backward_distance, only_route_lanes);
     }
     return lanelet::ConstLanelets{};
   });
@@ -577,21 +644,33 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
 bool RouteHandler::getFollowingShoulderLanelet(
   const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const
 {
-  Pose back_pose;
-  back_pose.position.x = lanelet.centerline2d().back().x();
-  back_pose.position.y = lanelet.centerline2d().back().y();
-  back_pose.position.z = 0;
-
   for (const auto & shoulder_lanelet : shoulder_lanelets_) {
-    Pose front_pose;
-    front_pose.position.x = shoulder_lanelet.centerline2d().front().x();
-    front_pose.position.y = shoulder_lanelet.centerline2d().front().y();
-    front_pose.position.z = 0;
-    if (
-      std::hypot(
-        front_pose.position.x - back_pose.position.x,
-        front_pose.position.y - back_pose.position.y) < 5) {
+    if (lanelet::geometry::follows(lanelet, shoulder_lanelet)) {
       *following_lanelet = shoulder_lanelet;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool RouteHandler::getLeftShoulderLanelet(
+  const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const
+{
+  for (const auto & shoulder_lanelet : shoulder_lanelets_) {
+    if (lanelet::geometry::leftOf(shoulder_lanelet, lanelet)) {
+      *left_lanelet = shoulder_lanelet;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool RouteHandler::getRightShoulderLanelet(
+  const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const
+{
+  for (const auto & shoulder_lanelet : shoulder_lanelets_) {
+    if (lanelet::geometry::rightOf(shoulder_lanelet, lanelet)) {
+      *right_lanelet = shoulder_lanelet;
       return true;
     }
   }
@@ -625,20 +704,8 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceAfter(
 bool RouteHandler::getPreviousShoulderLanelet(
   const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const
 {
-  Pose front_pose;
-  front_pose.position.x = lanelet.centerline2d().front().x();
-  front_pose.position.y = lanelet.centerline2d().front().y();
-  front_pose.position.z = 0;
-
   for (const auto & shoulder_lanelet : shoulder_lanelets_) {
-    Pose back_pose;
-    back_pose.position.x = shoulder_lanelet.centerline2d().back().x();
-    back_pose.position.y = shoulder_lanelet.centerline2d().back().y();
-    back_pose.position.z = 0;
-    if (
-      std::hypot(
-        front_pose.position.x - back_pose.position.x,
-        front_pose.position.y - back_pose.position.y) < 5) {
+    if (lanelet::geometry::follows(shoulder_lanelet, lanelet)) {
       *prev_lanelet = shoulder_lanelet;
       return true;
     }
@@ -710,6 +777,14 @@ bool RouteHandler::getClosestLaneletWithinRoute(
   const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
 {
   return lanelet::utils::query::getClosestLanelet(route_lanelets_, search_pose, closest_lanelet);
+}
+
+bool RouteHandler::getClosestLaneletWithConstrainsWithinRoute(
+  const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
+  const double yaw_threshold) const
+{
+  return lanelet::utils::query::getClosestLaneletWithConstrains(
+    route_lanelets_, search_pose, closest_lanelet, dist_threshold, yaw_threshold);
 }
 
 bool RouteHandler::getNextLaneletWithinRoute(
@@ -1000,6 +1075,17 @@ lanelet::Lanelets RouteHandler::getLeftOppositeLanelets(const lanelet::ConstLane
   return opposite_lanelets;
 }
 
+lanelet::ConstLanelet RouteHandler::getMostRightLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  // recursively compute the width of the lanes
+  const auto & same = getRightLanelet(lanelet);
+
+  if (same) {
+    return getMostRightLanelet(same.get());
+  }
+  return lanelet;
+}
+
 lanelet::ConstLanelet RouteHandler::getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const
 {
   // recursively compute the width of the lanes
@@ -1102,31 +1188,105 @@ lanelet::ConstLineStrings3d RouteHandler::getFurthestLinestring(
   return linestrings;
 }
 
-bool RouteHandler::getLaneChangeTarget(
-  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+std::vector<lanelet::ConstLanelets> RouteHandler::getPrecedingLaneletSequence(
+  const lanelet::ConstLanelet & lanelet, const double length,
+  const lanelet::ConstLanelets & exclude_lanelets) const
+{
+  return lanelet::utils::query::getPrecedingLaneletSequences(
+    routing_graph_ptr_, lanelet, length, exclude_lanelets);
+}
+
+boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTarget(
+  const lanelet::ConstLanelets & lanelets, const Direction direction) const
 {
   for (const auto & lanelet : lanelets) {
-    const int num = getNumLaneToPreferredLane(lanelet);
+    const int num = getNumLaneToPreferredLane(lanelet, direction);
     if (num == 0) {
       continue;
     }
 
-    if (num < 0) {
+    if (direction == Direction::NONE || direction == Direction::RIGHT) {
+      if (num < 0) {
+        if (!!routing_graph_ptr_->right(lanelet)) {
+          return routing_graph_ptr_->right(lanelet);
+        }
+      }
+    }
+
+    if (direction == Direction::NONE || direction == Direction::LEFT) {
+      if (num > 0) {
+        if (!!routing_graph_ptr_->left(lanelet)) {
+          return routing_graph_ptr_->left(lanelet);
+        }
+      }
+    }
+  }
+
+  return boost::none;
+}
+
+boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, const Direction direction) const
+{
+  for (const auto & lanelet : lanelets) {
+    if (direction == Direction::RIGHT) {
+      // Get right lanelet if preferred lane is on the left
+      if (getNumLaneToPreferredLane(lanelet, direction) < 0) {
+        continue;
+      }
+
+      if (!!routing_graph_ptr_->right(lanelet)) {
+        return routing_graph_ptr_->right(lanelet);
+      }
+    }
+
+    if (direction == Direction::LEFT) {
+      // Get left lanelet if preferred lane is on the right
+      if (getNumLaneToPreferredLane(lanelet, direction) > 0) {
+        continue;
+      }
+      if (!!routing_graph_ptr_->left(lanelet)) {
+        return routing_graph_ptr_->left(lanelet);
+      }
+    }
+  }
+
+  return boost::none;
+}
+
+bool RouteHandler::getRightLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet);
+
+    // Get right lanelet if preferred lane is on the left
+    if (num >= 0) {
       if (!!routing_graph_ptr_->right(lanelet)) {
         const auto right_lanelet = routing_graph_ptr_->right(lanelet);
         *target_lanelet = right_lanelet.get();
         return true;
       }
-      continue;
     }
+  }
 
-    if (num > 0) {
+  *target_lanelet = lanelets.front();
+  return false;
+}
+
+bool RouteHandler::getLeftLaneChangeTargetExceptPreferredLane(
+  const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet);
+
+    // Get left lanelet if preferred lane is on the right
+    if (num <= 0) {
       if (!!routing_graph_ptr_->left(lanelet)) {
         const auto left_lanelet = routing_graph_ptr_->left(lanelet);
         *target_lanelet = left_lanelet.get();
         return true;
       }
-      continue;
     }
   }
 
@@ -1169,30 +1329,99 @@ lanelet::ConstLanelets RouteHandler::getClosestLaneletSequence(const Pose & pose
   return getLaneletSequence(lanelet);
 }
 
-int RouteHandler::getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const
+int RouteHandler::getNumLaneToPreferredLane(
+  const lanelet::ConstLanelet & lanelet, const Direction direction) const
 {
-  int num = 0;
   if (exists(preferred_lanelets_, lanelet)) {
-    return num;
+    return 0;
   }
-  const auto & right_lanes =
-    lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet);
-  for (const auto & right : right_lanes) {
-    num--;
-    if (exists(preferred_lanelets_, right)) {
-      return num;
+
+  if ((direction == Direction::NONE) || (direction == Direction::RIGHT)) {
+    int num{0};
+    const auto & right_lanes =
+      lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet);
+    for (const auto & right : right_lanes) {
+      num--;
+      if (exists(preferred_lanelets_, right)) {
+        return num;
+      }
     }
   }
-  const auto & left_lanes = lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet);
-  num = 0;
-  for (const auto & left : left_lanes) {
-    num++;
-    if (exists(preferred_lanelets_, left)) {
-      return num;
+
+  if ((direction == Direction::NONE) || (direction == Direction::LEFT)) {
+    const auto & left_lanes =
+      lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet);
+    int num = 0;
+    for (const auto & left : left_lanes) {
+      num++;
+      if (exists(preferred_lanelets_, left)) {
+        return num;
+      }
     }
   }
 
   return 0;  // TODO(Horibe) check if return 0 is appropriate.
+}
+
+double RouteHandler::getTotalLateralDistanceToPreferredLane(
+  const lanelet::ConstLanelet & lanelet, const Direction direction) const
+{
+  const auto intervals = getLateralIntervalsToPreferredLane(lanelet, direction);
+  return std::accumulate(intervals.begin(), intervals.end(), 0);
+}
+
+std::vector<double> RouteHandler::getLateralIntervalsToPreferredLane(
+  const lanelet::ConstLanelet & lanelet, const Direction direction) const
+{
+  if (exists(preferred_lanelets_, lanelet)) {
+    return {};
+  }
+
+  if ((direction == Direction::NONE) || (direction == Direction::RIGHT)) {
+    std::vector<double> intervals;
+    lanelet::ConstLanelet current_lanelet = lanelet;
+    const auto & right_lanes =
+      lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet);
+    for (const auto & right : right_lanes) {
+      const auto & current_centerline = current_lanelet.centerline();
+      const auto & next_centerline = right.centerline();
+      if (current_centerline.empty() || next_centerline.empty()) {
+        return intervals;
+      }
+      const auto & curr_pt = current_centerline.front();
+      const auto & next_pt = next_centerline.front();
+      intervals.push_back(-lanelet::geometry::distance2d(to2D(curr_pt), to2D(next_pt)));
+
+      if (exists(preferred_lanelets_, right)) {
+        return intervals;
+      }
+      current_lanelet = right;
+    }
+  }
+
+  if ((direction == Direction::NONE) || (direction == Direction::LEFT)) {
+    std::vector<double> intervals;
+    lanelet::ConstLanelet current_lanelet = lanelet;
+    const auto & left_lanes =
+      lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet);
+    for (const auto & left : left_lanes) {
+      const auto & current_centerline = current_lanelet.centerline();
+      const auto & next_centerline = left.centerline();
+      if (current_centerline.empty() || next_centerline.empty()) {
+        return intervals;
+      }
+      const auto & curr_pt = current_centerline.front();
+      const auto & next_pt = next_centerline.front();
+      intervals.push_back(lanelet::geometry::distance2d(to2D(curr_pt), to2D(next_pt)));
+
+      if (exists(preferred_lanelets_, left)) {
+        return intervals;
+      }
+      current_lanelet = left;
+    }
+  }
+
+  return {};
 }
 
 bool RouteHandler::isInPreferredLane(const PoseStamped & pose) const
@@ -1325,7 +1554,7 @@ lanelet::ConstLanelets RouteHandler::getLaneChangeTargetLanes(const Pose & pose)
 }
 
 double RouteHandler::getLaneChangeableDistance(
-  const Pose & current_pose, const LaneChangeDirection & direction) const
+  const Pose & current_pose, const Direction & direction) const
 {
   lanelet::ConstLanelet current_lane;
   if (!getClosestLaneletWithinRoute(current_pose, &current_lane)) {
@@ -1339,12 +1568,12 @@ double RouteHandler::getLaneChangeableDistance(
   double accumulated_distance = 0;
   for (const auto & lane : lanelet_sequence) {
     lanelet::ConstLanelet target_lane;
-    if (direction == LaneChangeDirection::RIGHT) {
+    if (direction == Direction::RIGHT) {
       if (!getRightLaneletWithinRoute(lane, &target_lane)) {
         break;
       }
     }
-    if (direction == LaneChangeDirection::LEFT) {
+    if (direction == Direction::LEFT) {
       if (!getLeftLaneletWithinRoute(lane, &target_lane)) {
         break;
       }
@@ -1421,7 +1650,10 @@ lanelet::ConstLanelets RouteHandler::getCheckTargetLanesFromPath(
   return check_lanelets;
 }
 
-bool RouteHandler::isMapMsgReady() const { return is_map_msg_ready_; }
+bool RouteHandler::isMapMsgReady() const
+{
+  return is_map_msg_ready_;
+}
 
 lanelet::routing::RoutingGraphPtr RouteHandler::getRoutingGraphPtr() const
 {
@@ -1439,7 +1671,10 @@ std::shared_ptr<const lanelet::routing::RoutingGraphContainer> RouteHandler::get
   return overall_graphs_ptr_;
 }
 
-lanelet::LaneletMapPtr RouteHandler::getLaneletMapPtr() const { return lanelet_map_ptr_; }
+lanelet::LaneletMapPtr RouteHandler::getLaneletMapPtr() const
+{
+  return lanelet_map_ptr_;
+}
 
 lanelet::routing::RelationType RouteHandler::getRelation(
   const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const
@@ -1476,7 +1711,15 @@ lanelet::routing::RelationType RouteHandler::getRelation(
   return lanelet::routing::RelationType::None;
 }
 
-lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const { return shoulder_lanelets_; }
+lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const
+{
+  return shoulder_lanelets_;
+}
+
+bool RouteHandler::isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  return lanelet::utils::contains(shoulder_lanelets_, lanelet);
+}
 
 lanelet::ConstLanelets RouteHandler::getPreviousLaneletSequence(
   const lanelet::ConstLanelets & lanelet_sequence) const

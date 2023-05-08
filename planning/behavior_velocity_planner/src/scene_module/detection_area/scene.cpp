@@ -77,7 +77,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   const auto stop_line = getStopLineGeometry2d();
 
   // Get self pose
-  const auto & self_pose = planner_data_->current_pose.pose;
+  const auto & self_pose = planner_data_->current_odometry->pose;
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
 
   // Get stop point
@@ -154,7 +154,9 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   const double dist_from_ego_to_stop = calcSignedArcLength(
     original_path.points, self_pose.position, current_seg_idx, stop_pose.position,
     stop_line_seg_idx);
-  if (state_ != State::STOP && dist_from_ego_to_stop < 0.0) {
+  if (
+    state_ != State::STOP &&
+    dist_from_ego_to_stop < -planner_param_.distance_to_judge_over_stop_line) {
     setSafe(true);
     return true;
   }
@@ -184,7 +186,8 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
     stop_factor.stop_factor_points = obstacle_points;
     planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
-      path->points, planner_data_->current_pose.pose, stop_point->second, VelocityFactor::UNKNOWN);
+      path->points, planner_data_->current_odometry->pose, stop_point->second,
+      VelocityFactor::UNKNOWN);
   }
 
   // Create legacy StopReason
@@ -202,6 +205,73 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   return true;
 }
 
+// calc smallest enclosing circle with average O(N) algorithm
+// reference:
+// https://erickimphotography.com/blog/wp-content/uploads/2018/09/Computational-Geometry-Algorithms-and-Applications-3rd-Ed.pdf
+std::pair<lanelet::BasicPoint2d, double> calcSmallestEnclosingCircle(
+  const lanelet::ConstPolygon2d & poly)
+{
+  // The `eps` is used to avoid precision bugs in circle inclusion checkings.
+  // If the value of `eps` is too small, this function doesn't work well. More than 1e-10 is
+  // recommended.
+  const double eps = 1e-5;
+  lanelet::BasicPoint2d center(0.0, 0.0);
+  double radius_squared = 0.0;
+
+  auto cross = [](const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2) -> double {
+    return p1.x() * p2.y() - p1.y() * p2.x();
+  };
+
+  auto make_circle_3 = [&](
+                         const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2,
+                         const lanelet::BasicPoint2d & p3) -> void {
+    // reference for circumcenter vector https://en.wikipedia.org/wiki/Circumscribed_circle
+    const double A = (p2 - p3).squaredNorm();
+    const double B = (p3 - p1).squaredNorm();
+    const double C = (p1 - p2).squaredNorm();
+    const double S = cross(p2 - p1, p3 - p1);
+    if (std::abs(S) < eps) return;
+    center = (A * (B + C - A) * p1 + B * (C + A - B) * p2 + C * (A + B - C) * p3) / (4 * S * S);
+    radius_squared = (center - p1).squaredNorm() + eps;
+  };
+
+  auto make_circle_2 =
+    [&](const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2) -> void {
+    center = (p1 + p2) * 0.5;
+    radius_squared = (center - p1).squaredNorm() + eps;
+  };
+
+  auto in_circle = [&](const lanelet::BasicPoint2d & p) -> bool {
+    return (center - p).squaredNorm() <= radius_squared;
+  };
+
+  // mini disc
+  for (size_t i = 1; i < poly.size(); i++) {
+    const auto p1 = poly[i].basicPoint2d();
+    if (in_circle(p1)) continue;
+
+    // mini disc with point
+    const auto p0 = poly[0].basicPoint2d();
+    make_circle_2(p0, p1);
+    for (size_t j = 0; j < i; j++) {
+      const auto p2 = poly[j].basicPoint2d();
+      if (in_circle(p2)) continue;
+
+      // mini disc with two points
+      make_circle_2(p1, p2);
+      for (size_t k = 0; k < j; k++) {
+        const auto p3 = poly[k].basicPoint2d();
+        if (in_circle(p3)) continue;
+
+        // mini disc with tree points
+        make_circle_3(p1, p2, p3);
+      }
+    }
+  }
+
+  return std::make_pair(center, radius_squared);
+}
+
 std::vector<geometry_msgs::msg::Point> DetectionAreaModule::getObstaclePoints() const
 {
   std::vector<geometry_msgs::msg::Point> obstacle_points;
@@ -210,11 +280,17 @@ std::vector<geometry_msgs::msg::Point> DetectionAreaModule::getObstaclePoints() 
   const auto & points = *(planner_data_->no_ground_pointcloud);
 
   for (const auto & detection_area : detection_areas) {
+    const auto poly = lanelet::utils::to2D(detection_area);
+    const auto circle = calcSmallestEnclosingCircle(poly);
     for (const auto p : points) {
-      if (bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(detection_area).basicPolygon())) {
-        obstacle_points.push_back(planning_utils::toRosPoint(p));
-        // get all obstacle point becomes high computation cost so skip if any point is found
-        break;
+      const double squared_dist = (circle.first.x() - p.x) * (circle.first.x() - p.x) +
+                                  (circle.first.y() - p.y) * (circle.first.y() - p.y);
+      if (squared_dist <= circle.second) {
+        if (bg::within(Point2d{p.x, p.y}, poly.basicPolygon())) {
+          obstacle_points.push_back(tier4_autoware_utils::createPoint(p.x, p.y, p.z));
+          // get all obstacle point becomes high computation cost so skip if any point is found
+          break;
+        }
       }
     }
   }
@@ -252,6 +328,12 @@ bool DetectionAreaModule::hasEnoughBrakingDistance(
   const double delay_response_time = planner_data_->delay_response_time;
   const double pass_judge_line_distance =
     planning_utils::calcJudgeLineDistWithAccLimit(current_velocity, max_acc, delay_response_time);
+
+  // prevent from being judged as not having enough distance when the current velocity is zero
+  // and the vehicle crosses the stop line
+  if (current_velocity < 1e-3) {
+    return true;
+  }
 
   return arc_lane_utils::calcSignedDistance(self_pose, line_pose.position) >
          pass_judge_line_distance;

@@ -20,6 +20,6 @@ bool TruckFilter::filter(
 {
   constexpr float min_width = 1.5;
   constexpr float max_width = 3.2;
-  constexpr float max_length = 7.9;
+  constexpr float max_length = 7.9;  // upto 12m in japanese law
   return utils::filterVehicleBoundingBox(shape, min_width, max_width, max_length);
 }

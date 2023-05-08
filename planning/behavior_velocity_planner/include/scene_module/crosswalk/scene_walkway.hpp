@@ -28,6 +28,7 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -41,7 +42,6 @@ public:
   {
     double stop_line_distance;
     double stop_duration_sec;
-    double external_input_timeout;
   };
   WalkwayModule(
     const int64_t module_id, lanelet::ConstLanelet walkway, const PlannerParam & planner_param,
@@ -72,6 +72,9 @@ private:
 
   // Debug
   DebugData debug_data_;
+
+  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_walkway_ =
+    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
 }  // namespace behavior_velocity_planner
 

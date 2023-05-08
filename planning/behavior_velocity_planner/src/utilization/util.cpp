@@ -32,15 +32,7 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 {
   auto lerp = [](const double a, const double b, const double t) { return a + t * (b - a); };
   PathPoint p;
-  Pose pose;
-  const auto pp0 = p0.pose.position;
-  const auto pp1 = p1.pose.position;
-  pose.position.x = lerp(pp0.x, pp1.x, ratio);
-  pose.position.y = lerp(pp0.y, pp1.y, ratio);
-  pose.position.z = lerp(pp0.z, pp1.z, ratio);
-  const double yaw = calcAzimuthAngle(pp0, pp1);
-  pose.orientation = createQuaternionFromYaw(yaw);
-  p.pose = pose;
+  p.pose = tier4_autoware_utils::calcInterpolatedPose(p0, p1, ratio);
   const double v = lerp(p0.longitudinal_velocity_mps, p1.longitudinal_velocity_mps, ratio);
   p.longitudinal_velocity_mps = v;
   return p;
@@ -295,6 +287,32 @@ Polygon2d generatePathPolygon(
   return ego_area;
 }
 
+lanelet::ConstLanelet generatePathLanelet(
+  const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width)
+{
+  lanelet::Points3d lefts;
+  for (size_t i = start_idx; i <= end_idx; ++i) {
+    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
+    const double x = path.points.at(i).point.pose.position.x + width / 2 * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y - width / 2 * std::cos(yaw);
+    const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
+    lefts.emplace_back(p);
+  }
+  lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, lefts);
+
+  lanelet::Points3d rights;
+  for (size_t i = start_idx; i <= end_idx; ++i) {
+    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
+    const double x = path.points.at(i).point.pose.position.x - width / 2 * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y + width / 2 * std::cos(yaw);
+    const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
+    rights.emplace_back(p);
+  }
+  lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, rights);
+
+  return lanelet::Lanelet(lanelet::InvalId, left, right);
+}
+
 geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
 {
@@ -488,24 +506,6 @@ std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & obje
   return points;
 }
 
-geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point)
-{
-  geometry_msgs::msg::Point point;
-  point.x = pcl_point.x;
-  point.y = pcl_point.y;
-  point.z = pcl_point.z;
-  return point;
-}
-
-geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z)
-{
-  geometry_msgs::msg::Point point;
-  point.x = boost_point.x();
-  point.y = boost_point.y();
-  point.z = z;
-  return point;
-}
-
 LineString2d extendLine(
   const lanelet::ConstPoint3d & lanelet_point1, const lanelet::ConstPoint3d & lanelet_point2,
   const double & length)
@@ -640,14 +640,10 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
 {
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
-  const auto insert_idx = motion_utils::insertTargetPoint(base_idx, stop_point, output.points);
+  const auto insert_idx = motion_utils::insertStopPoint(base_idx, stop_point, output.points);
 
   if (!insert_idx) {
     return {};
-  }
-
-  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
-    output.points.at(i).point.longitudinal_velocity_mps = 0.0;
   }
 
   return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
@@ -656,17 +652,43 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
 boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output)
 {
-  const auto insert_idx = motion_utils::insertTargetPoint(stop_seg_idx, stop_point, output.points);
+  const auto insert_idx = motion_utils::insertStopPoint(stop_seg_idx, stop_point, output.points);
 
   if (!insert_idx) {
     return {};
   }
 
-  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
-    output.points.at(i).point.longitudinal_velocity_mps = 0.0;
-  }
-
   return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
 }
+
+std::set<int> getAssociativeIntersectionLanelets(
+  lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
+  const lanelet::routing::RoutingGraphPtr routing_graph)
+{
+  const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+  if (turn_direction.compare("else") == 0) {
+    return {};
+  }
+
+  const auto parents = routing_graph->previous(lane);
+  std::set<int> parent_neighbors;
+  for (const auto & parent : parents) {
+    const auto neighbors = routing_graph->besides(parent);
+    for (const auto & neighbor : neighbors) parent_neighbors.insert(neighbor.id());
+  }
+  std::set<int> assocs;
+  assocs.insert(lane.id());
+  for (const auto & parent_neighbor_id : parent_neighbors) {
+    const auto parent_neighbor = lanelet_map->laneletLayer.get(parent_neighbor_id);
+    const auto followings = routing_graph->following(parent_neighbor);
+    for (const auto & following : followings) {
+      if (following.attributeOr("turn_direction", "else") == turn_direction) {
+        assocs.insert(following.id());
+      }
+    }
+  }
+  return assocs;
+}
+
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner

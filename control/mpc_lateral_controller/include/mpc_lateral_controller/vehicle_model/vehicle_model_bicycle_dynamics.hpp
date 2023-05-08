@@ -47,9 +47,10 @@
 #ifndef MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_DYNAMICS_HPP_
 #define MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_DYNAMICS_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -89,7 +90,7 @@ public:
    * @param [in] dt Discretization time [s]
    */
   void calculateDiscreteMatrix(
-    Eigen::MatrixXd & a_d, Eigen::MatrixXd & b_d, Eigen::MatrixXd & w_d, Eigen::MatrixXd & c_d,
+    Eigen::MatrixXd & a_d, Eigen::MatrixXd & b_d, Eigen::MatrixXd & c_d, Eigen::MatrixXd & w_d,
     const double dt) override;
 
   /**

@@ -27,6 +27,8 @@
   <!-- run out module -->
   <maintainer email="tomohito.ando@tier4.jp">Tomohito Ando</maintainer>
   <maintainer email="makoto.kurihara@tier4.jp">Makoto Kurihara</maintainer>
+  <!-- out of lane module -->
+  <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
 
   <!-- maintainer -->
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
@@ -44,24 +46,27 @@
   <author email="yukihiro.saito@tier4.jp">Yukihiro Saito</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
+  <depend>cv_bridge</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
+  <depend>grid_map_cv</depend>
   <depend>grid_map_ros</depend>
   <depend>grid_map_utils</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>
+  <depend>magic_enum</depend>
+  <depend>message_filters</depend>
   <depend>motion_utils</depend>
   <depend>motion_velocity_smoother</depend>
   <depend>nav_msgs</depend>
@@ -82,6 +87,7 @@
   <depend>tier4_v2x_msgs</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
+  <exec_depend>grid_map_rviz_plugin</exec_depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

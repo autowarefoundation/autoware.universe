@@ -27,7 +27,6 @@ import pytest
 
 @pytest.mark.launch_test
 def generate_test_description():
-
     lanelet2_map_path = os.path.join(
         get_package_share_directory("static_centerline_optimizer"), "test/data/lanelet2_map.osm"
     )
@@ -44,6 +43,11 @@ def generate_test_description():
             {"lanelet2_output_file_path": "/tmp/lanelet2_map.osm"},
             {"start_lanelet_id": 215},
             {"end_lanelet_id": 216},
+            os.path.join(
+                get_package_share_directory("mission_planner"),
+                "config",
+                "mission_planner.param.yaml",
+            ),
             os.path.join(
                 get_package_share_directory("static_centerline_optimizer"),
                 "config/static_centerline_optimizer.param.yaml",

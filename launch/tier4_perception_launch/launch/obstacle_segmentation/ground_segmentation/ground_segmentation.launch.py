@@ -249,7 +249,6 @@ class GroundSegmentationPipeline:
         return components
 
     def create_single_frame_obstacle_segmentation_components(self, input_topic, output_topic):
-
         additional_lidars = self.ground_segmentation_param["additional_lidars"]
         use_ransac = bool(self.ground_segmentation_param["ransac_input_topics"])
         use_additional = bool(additional_lidars)
@@ -322,12 +321,17 @@ class GroundSegmentationPipeline:
                     ("output/elevation_map", "map"),
                     ("input/pointcloud_map", "/map/pointcloud_map"),
                     ("input/vector_map", "/map/vector_map"),
+                    ("input/pointcloud_map_metadata", "/map/pointcloud_map_metadata"),
+                    ("service/get_selected_pointcloud_map", "/map/get_selected_pointcloud_map"),
                 ],
                 parameters=[
                     {
                         "use_lane_filter": False,
+                        "use_sequential_load": False,
+                        "sequential_map_load_num": 1,
                         "use_inpaint": True,
                         "inpaint_radius": 1.0,
+                        "lane_margin": 2.0,
                         "param_file_path": PathJoinSubstitution(
                             [
                                 LaunchConfiguration(
@@ -424,7 +428,6 @@ class GroundSegmentationPipeline:
 
     @staticmethod
     def get_additional_lidars_concatenated_component(input_topics, output_topic):
-
         return ComposableNode(
             package="pointcloud_preprocessor",
             plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
@@ -463,7 +466,9 @@ def launch_setup(context, *args, **kwargs):
     components.extend(
         pipeline.create_single_frame_obstacle_segmentation_components(
             input_topic=LaunchConfiguration("input/pointcloud"),
-            output_topic=pipeline.single_frame_obstacle_seg_output,
+            output_topic=pipeline.single_frame_obstacle_seg_output
+            if pipeline.use_single_frame_filter or pipeline.use_time_series_filter
+            else pipeline.output_topic,
         )
     )
 
@@ -505,7 +510,6 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-
     launch_arguments = []
 
     def add_launch_arg(name: str, default_value=None):

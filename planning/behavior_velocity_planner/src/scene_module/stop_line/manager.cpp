@@ -28,14 +28,14 @@ StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
 {
   const std::string ns(getModuleName());
   auto & p = planner_param_;
-  p.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
-  p.hold_stop_margin_distance = node.declare_parameter(ns + ".hold_stop_margin_distance", 2.0);
-  p.stop_duration_sec = node.declare_parameter(ns + ".stop_duration_sec", 1.0);
+  p.stop_margin = node.declare_parameter<double>(ns + ".stop_margin");
+  p.hold_stop_margin_distance = node.declare_parameter<double>(ns + ".hold_stop_margin_distance");
+  p.stop_duration_sec = node.declare_parameter<double>(ns + ".stop_duration_sec");
   p.use_initialization_stop_line_state =
-    node.declare_parameter(ns + ".use_initialization_stop_line_state", false);
+    node.declare_parameter<bool>(ns + ".use_initialization_stop_line_state");
   // debug
   p.show_stopline_collision_check =
-    node.declare_parameter(ns + ".debug.show_stopline_collision_check", false);
+    node.declare_parameter<bool>(ns + ".debug.show_stopline_collision_check");
 }
 
 std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnPath(
@@ -45,7 +45,7 @@ std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnP
   std::vector<StopLineWithLaneId> stop_lines_with_lane_id;
 
   for (const auto & m : planning_utils::getRegElemMapOnPath<TrafficSign>(
-         path, lanelet_map, planner_data_->current_pose.pose)) {
+         path, lanelet_map, planner_data_->current_odometry->pose)) {
     const auto & traffic_sign_reg_elem = m.first;
     const int64_t lane_id = m.second.id();
     // Is stop sign?

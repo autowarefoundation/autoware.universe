@@ -39,11 +39,21 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   input_c_ = node_ptr_->declare_parameter("input_c", 3);
   input_h_ = node_ptr_->declare_parameter("input_h", 224);
   input_w_ = node_ptr_->declare_parameter("input_w", 224);
+  mean_ = node_ptr_->declare_parameter("mean", std::vector<double>({0.242, 0.193, 0.201}));
+  std_ = node_ptr_->declare_parameter("std", std::vector<double>({1.0, 1.0, 1.0}));
+  std::string input_name = node_ptr_->declare_parameter("input_name", std::string("input_0"));
+  std::string output_name = node_ptr_->declare_parameter("output_name", std::string("output_0"));
+  apply_softmax_ = node_ptr_->declare_parameter("apply_softmax", true);
 
   readLabelfile(label_file_path, labels_);
 
-  trt_ = std::make_shared<Tn::TrtCommon>(model_file_path, precision);
+  trt_ = std::make_shared<Tn::TrtCommon>(model_file_path, precision, input_name, output_name);
   trt_->setup();
+
+  if (node_ptr_->declare_parameter("build_only", false)) {
+    RCLCPP_INFO(node_ptr_->get_logger(), "TensorRT engine is built and shutdown node.");
+    rclcpp::shutdown();
+  }
 }
 
 bool CNNClassifier::getTrafficSignal(
@@ -79,7 +89,7 @@ bool CNNClassifier::getTrafficSignal(
     output_data_host.data(), output_data_device.get(), num_output * sizeof(float),
     cudaMemcpyDeviceToHost);
 
-  postProcess(output_data_host, traffic_signal);
+  postProcess(output_data_host, traffic_signal, apply_softmax_);
 
   /* debug */
   if (0 < image_pub_.getNumSubscribers()) {
@@ -153,19 +163,22 @@ void CNNClassifier::preProcess(cv::Mat & image, std::vector<float> & input_tenso
 
 bool CNNClassifier::postProcess(
   std::vector<float> & output_tensor,
-  autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal)
+  autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal, bool apply_softmax)
 {
   std::vector<float> probs;
   int num_output = trt_->getNumOutput();
-  calcSoftmax(output_tensor, probs, num_output);
+  if (apply_softmax) {
+    calcSoftmax(output_tensor, probs, num_output);
+  }
   std::vector<size_t> sorted_indices = argsort(output_tensor, num_output);
 
   // ROS_INFO("label: %s, score: %.2f\%",
   //          labels_[sorted_indices[0]].c_str(),
   //          probs[sorted_indices[0]] * 100);
 
-  std::string match_label = labels_[sorted_indices[0]];
-  float probability = probs[sorted_indices[0]];
+  size_t max_indice = sorted_indices.front();
+  std::string match_label = labels_[max_indice];
+  float probability = apply_softmax ? probs[max_indice] : output_tensor[max_indice];
 
   // label names are assumed to be comma-separated to represent each lamp
   // e.g.

@@ -8,11 +8,11 @@ It is a package for traffic light detection using MobileNetV2 and SSDLite.
 
 ### Pretrained Model
 
-The model is based on [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd) and the pretrained model could be downloaded from [here](https://storage.googleapis.com/models-hao/mb2-ssd-lite-mp-0_686.pth).
+The model is based on [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd) and the pretrained model could be downloaded from [here](https://drive.google.com/file/d/1puI6ltKZKJ4RoiCO-ypivzEysHaDVBsa/view).
 
 ### Training Data
 
-The model was fine-tuned on 1750 TierIV internal images of Japanese traffic lights.
+The model was fine-tuned on 1750 TIER IV internal images of Japanese traffic lights.
 
 ### Trained Onnx model
 
@@ -57,6 +57,7 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 | `mode`             | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |
 | `max_batch_size`   | int    | 8                              | The size of the batch processed at one time by inference by TensorRT |
 | `approximate_sync` | bool   | false                          | Flag for whether to ues approximate sync policy                      |
+| `build_only`       | bool   | false                          | shutdown node after TensorRT engine file is built                    |
 
 ## Assumptions / Known limits
 

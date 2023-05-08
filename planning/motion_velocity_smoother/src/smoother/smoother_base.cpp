@@ -31,69 +31,93 @@ using vehicle_info_util::VehicleInfoUtil;
 SmootherBase::SmootherBase(rclcpp::Node & node)
 {
   auto & p = base_param_;
-  p.max_accel = node.declare_parameter("normal.max_acc", 2.0);
-  p.min_decel = node.declare_parameter("normal.min_acc", -3.0);
-  p.stop_decel = node.declare_parameter("stop_decel", 0.0);
-  p.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
-  p.min_jerk = node.declare_parameter("normal.min_jerk", -0.1);
-  p.max_lateral_accel = node.declare_parameter("max_lateral_accel", 0.2);
+  p.max_accel = node.declare_parameter<double>("normal.max_acc");
+  p.min_decel = node.declare_parameter<double>("normal.min_acc");
+  p.stop_decel = node.declare_parameter<double>("stop_decel");
+  p.max_jerk = node.declare_parameter<double>("normal.max_jerk");
+  p.min_jerk = node.declare_parameter<double>("normal.min_jerk");
+  p.max_lateral_accel = node.declare_parameter<double>("max_lateral_accel");
   p.min_decel_for_lateral_acc_lim_filter =
-    node.declare_parameter("min_decel_for_lateral_acc_lim_filter", -2.5);
-  p.sample_ds = node.declare_parameter("resample_ds", 0.5);
-  p.curvature_threshold = node.declare_parameter("curvature_threshold", 0.2);
-  p.max_steering_angle_rate = node.declare_parameter("max_steering_angle_rate", 5.0);
-  p.curvature_calculation_distance = node.declare_parameter("curvature_calculation_distance", 1.0);
-  p.decel_distance_before_curve = node.declare_parameter("decel_distance_before_curve", 3.5);
-  p.decel_distance_after_curve = node.declare_parameter("decel_distance_after_curve", 0.0);
-  p.min_curve_velocity = node.declare_parameter("min_curve_velocity", 1.38);
-  p.resample_param.max_trajectory_length = node.declare_parameter("max_trajectory_length", 200.0);
-  p.resample_param.min_trajectory_length = node.declare_parameter("min_trajectory_length", 30.0);
-  p.resample_param.resample_time = node.declare_parameter("resample_time", 10.0);
-  p.resample_param.dense_resample_dt = node.declare_parameter("dense_resample_dt", 0.1);
+    node.declare_parameter<double>("min_decel_for_lateral_acc_lim_filter");
+  p.sample_ds = node.declare_parameter<double>("resample_ds");
+  p.curvature_threshold = node.declare_parameter<double>("curvature_threshold");
+  p.max_steering_angle_rate = node.declare_parameter<double>("max_steering_angle_rate");
+  p.curvature_calculation_distance =
+    node.declare_parameter<double>("curvature_calculation_distance");
+  p.decel_distance_before_curve = node.declare_parameter<double>("decel_distance_before_curve");
+  p.decel_distance_after_curve = node.declare_parameter<double>("decel_distance_after_curve");
+  p.min_curve_velocity = node.declare_parameter<double>("min_curve_velocity");
+  p.resample_param.max_trajectory_length = node.declare_parameter<double>("max_trajectory_length");
+  p.resample_param.min_trajectory_length = node.declare_parameter<double>("min_trajectory_length");
+  p.resample_param.resample_time = node.declare_parameter<double>("resample_time");
+  p.resample_param.dense_resample_dt = node.declare_parameter<double>("dense_resample_dt");
   p.resample_param.dense_min_interval_distance =
-    node.declare_parameter("dense_min_interval_distance", 0.1);
-  p.resample_param.sparse_resample_dt = node.declare_parameter("sparse_resample_dt", 0.5);
+    node.declare_parameter<double>("dense_min_interval_distance");
+  p.resample_param.sparse_resample_dt = node.declare_parameter<double>("sparse_resample_dt");
   p.resample_param.sparse_min_interval_distance =
-    node.declare_parameter("sparse_min_interval_distance", 4.0);
+    node.declare_parameter<double>("sparse_min_interval_distance");
 }
 
-void SmootherBase::setParam(const BaseParam & param) { base_param_ = param; }
-
-SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
-
-double SmootherBase::getMaxAccel() const { return base_param_.max_accel; }
-
-double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
-
-double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
-
-double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
-
-boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
-  const TrajectoryPoints & input, [[maybe_unused]] const double v0,
-  [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit) const
+void SmootherBase::setParam(const BaseParam & param)
 {
-  if (input.empty()) {
-    return boost::none;
-  }
+  base_param_ = param;
+}
 
+SmootherBase::BaseParam SmootherBase::getBaseParam() const
+{
+  return base_param_;
+}
+
+double SmootherBase::getMaxAccel() const
+{
+  return base_param_.max_accel;
+}
+
+double SmootherBase::getMinDecel() const
+{
+  return base_param_.min_decel;
+}
+
+double SmootherBase::getMaxJerk() const
+{
+  return base_param_.max_jerk;
+}
+
+double SmootherBase::getMinJerk() const
+{
+  return base_param_.min_jerk;
+}
+
+TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
+  const TrajectoryPoints & input, [[maybe_unused]] const double v0,
+  [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit,
+  const bool use_resampling, const double input_points_interval) const
+{
   if (input.size() < 3) {
-    return boost::optional<TrajectoryPoints>(input);  // cannot calculate lateral acc. do nothing.
+    return input;  // cannot calculate lateral acc. do nothing.
   }
-
-  // Interpolate with constant interval distance for lateral acceleration calculation.
-  constexpr double points_interval = 0.1;  // [m]
-  std::vector<double> out_arclength;
-  const auto traj_length = motion_utils::calcArcLength(input);
-  for (double s = 0; s < traj_length; s += points_interval) {
-    out_arclength.push_back(s);
-  }
-  const auto output_traj =
-    motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
-  auto output = motion_utils::convertToTrajectoryPointArray(output_traj);
-  output.back() = input.back();  // keep the final speed.
 
   constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
+
+  // Interpolate with constant interval distance for lateral acceleration calculation.
+  TrajectoryPoints output;
+  const double points_interval =
+    use_resampling ? base_param_.sample_ds : input_points_interval;  // [m]
+  // since the resampling takes a long time, omit the resampling when it is not requested
+  if (use_resampling) {
+    std::vector<double> out_arclength;
+    const auto traj_length = motion_utils::calcArcLength(input);
+    for (double s = 0; s < traj_length; s += points_interval) {
+      out_arclength.push_back(s);
+    }
+    const auto output_traj =
+      motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
+    output = motion_utils::convertToTrajectoryPointArray(output_traj);
+    output.back() = input.back();  // keep the final speed.
+  } else {
+    output = input;
+  }
+
   const size_t idx_dist =
     static_cast<size_t>(std::max(static_cast<int>((curvature_calc_dist) / points_interval), 1));
 
@@ -135,30 +159,34 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   return output;
 }
 
-boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
-  const TrajectoryPoints & input) const
+TrajectoryPoints SmootherBase::applySteeringRateLimit(
+  const TrajectoryPoints & input, const bool use_resampling,
+  const double input_points_interval) const
 {
-  if (input.empty()) {
-    return boost::none;
-  }
-
   if (input.size() < 3) {
-    return boost::optional<TrajectoryPoints>(
-      input);  // cannot calculate the desired velocity. do nothing.
+    return input;  // cannot calculate the desired velocity. do nothing.
   }
-  // Interpolate with constant interval distance for lateral acceleration calculation.
-  std::vector<double> out_arclength;
-  const auto traj_length = motion_utils::calcArcLength(input);
-  for (double s = 0; s < traj_length; s += base_param_.sample_ds) {
-    out_arclength.push_back(s);
-  }
-  const auto output_traj =
-    motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
-  auto output = motion_utils::convertToTrajectoryPointArray(output_traj);
-  output.back() = input.back();  // keep the final speed.
 
-  const size_t idx_dist = static_cast<size_t>(std::max(
-    static_cast<int>((base_param_.curvature_calculation_distance) / base_param_.sample_ds), 1));
+  // Interpolate with constant interval distance for lateral acceleration calculation.
+  const double points_interval = use_resampling ? base_param_.sample_ds : input_points_interval;
+  TrajectoryPoints output;
+  // since the resampling takes a long time, omit the resampling when it is not requested
+  if (use_resampling) {
+    std::vector<double> out_arclength;
+    const auto traj_length = motion_utils::calcArcLength(input);
+    for (double s = 0; s < traj_length; s += points_interval) {
+      out_arclength.push_back(s);
+    }
+    const auto output_traj =
+      motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
+    output = motion_utils::convertToTrajectoryPointArray(output_traj);
+    output.back() = input.back();  // keep the final speed.
+  } else {
+    output = input;
+  }
+
+  const size_t idx_dist = static_cast<size_t>(
+    std::max(static_cast<int>((base_param_.curvature_calculation_distance) / points_interval), 1));
 
   // Calculate curvature assuming the trajectory points interval is constant
   const auto curvature_v = trajectory_utils::calcTrajectoryCurvatureFrom3Points(output, idx_dist);
@@ -173,14 +201,14 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
       const double mean_vel =
         (output.at(i).longitudinal_velocity_mps + output.at(i + 1).longitudinal_velocity_mps) / 2.0;
       const double dt =
-        std::max(base_param_.sample_ds / mean_vel, std::numeric_limits<double>::epsilon());
+        std::max(points_interval / mean_vel, std::numeric_limits<double>::epsilon());
       const double steering_diff =
         fabs(output.at(i).front_wheel_angle_rad - output.at(i + 1).front_wheel_angle_rad);
       const double dt_steering =
         steering_diff / tier4_autoware_utils::deg2rad(base_param_.max_steering_angle_rate);
 
       if (dt_steering > dt) {
-        const double target_mean_vel = (base_param_.sample_ds / dt_steering);
+        const double target_mean_vel = (points_interval / dt_steering);
         for (size_t k = 0; k < 2; k++) {
           const double temp_vel =
             output.at(i + k).longitudinal_velocity_mps * (target_mean_vel / mean_vel);

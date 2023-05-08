@@ -21,7 +21,10 @@
 #include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
+#include <boost/geometry/algorithms/area.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/length.hpp>
+#include <boost/geometry/algorithms/union.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -29,6 +32,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -38,7 +42,7 @@ namespace bg = boost::geometry;
 
 namespace
 {
-geometry_msgs::msg::Polygon toGeomPoly(const lanelet::CompoundPolygon3d & poly)
+[[maybe_unused]] geometry_msgs::msg::Polygon toGeomPoly(const lanelet::CompoundPolygon3d & poly)
 {
   geometry_msgs::msg::Polygon geom_poly;
 
@@ -90,7 +94,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
 
   /* get current pose */
-  geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
+  geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
@@ -117,7 +121,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   /* calc closest index */
   const auto closest_idx_opt =
-    motion_utils::findNearestIndex(input_path.points, current_pose.pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(input_path.points, current_pose, 3.0, M_PI_4);
   if (!closest_idx_opt) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "[Blind Spot] motion_utils::findNearestIndex fail");
@@ -133,9 +137,14 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const double pass_judge_line_dist =
     planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
   const auto stop_point_pose = path->points.at(stop_line_idx).point.pose;
+  const auto ego_segment_idx =
+    motion_utils::findNearestSegmentIndex(input_path.points, current_pose);
+  if (ego_segment_idx == boost::none) return true;
+  const size_t stop_point_segment_idx =
+    motion_utils::findNearestSegmentIndex(input_path.points, stop_point_pose.position);
   const auto distance_until_stop = motion_utils::calcSignedArcLength(
-    input_path.points, current_pose.pose, stop_point_pose.position);
-  if (distance_until_stop == boost::none) return true;
+    input_path.points, current_pose.position, *ego_segment_idx, stop_point_pose.position,
+    stop_point_segment_idx);
 
   /* get debug info */
   const auto stop_line_pose = planning_utils::getAheadPose(
@@ -152,7 +161,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     const double eps = 1e-1;  // to prevent hunting
     if (
       current_state == StateMachine::State::GO &&
-      *distance_until_stop + eps < pass_judge_line_dist) {
+      distance_until_stop + eps < pass_judge_line_dist) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       *path = input_path;  // reset path
       setSafe(true);
@@ -174,7 +183,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   /* set stop speed */
   setSafe(state_machine_.getState() != StateMachine::State::STOP);
   setDistance(motion_utils::calcSignedArcLength(
-    path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position));
+    path->points, current_pose.position, path->points.at(stop_line_idx).point.pose.position));
   if (!isActivated()) {
     constexpr double stop_vel = 0.0;
     planning_utils::setVelocityFromIndex(stop_line_idx, stop_vel, path);
@@ -185,7 +194,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
-      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
+      path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
   } else {
     *path = input_path;  // reset path
   }
@@ -373,8 +382,8 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
   const auto areas_opt = generateBlindSpotPolygons(
     lanelet_map_ptr, routing_graph_ptr, path, closest_idx, stop_line_pose);
   if (!!areas_opt) {
-    debug_data_.detection_area_for_blind_spot = toGeomPoly(areas_opt.get().detection_area);
-    debug_data_.conflict_area_for_blind_spot = toGeomPoly(areas_opt.get().conflict_area);
+    debug_data_.detection_areas_for_blind_spot = areas_opt.get().detection_areas;
+    debug_data_.conflict_areas_for_blind_spot = areas_opt.get().conflict_areas;
 
     autoware_auto_perception_msgs::msg::PredictedObjects objects = *objects_ptr;
     cutPredictPathWithDuration(&objects, planner_param_.max_future_movement_time);
@@ -386,12 +395,17 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
         continue;
       }
 
-      bool exist_in_detection_area = bg::within(
-        to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
-        lanelet::utils::to2D(areas_opt.get().detection_area));
-      bool exist_in_conflict_area = isPredictedPathInArea(
-        object, areas_opt.get().conflict_area, planner_data_->current_pose.pose);
-      if (exist_in_detection_area || exist_in_conflict_area) {
+      const auto & detection_areas = areas_opt.get().detection_areas;
+      const auto & conflict_areas = areas_opt.get().conflict_areas;
+      const bool exist_in_detection_area =
+        std::any_of(detection_areas.begin(), detection_areas.end(), [&object](const auto & area) {
+          return bg::within(
+            to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
+            lanelet::utils::to2D(area));
+        });
+      const bool exist_in_conflict_area =
+        isPredictedPathInArea(object, conflict_areas, planner_data_->current_odometry->pose);
+      if (exist_in_detection_area && exist_in_conflict_area) {
         obstacle_detected = true;
         debug_data_.conflicting_targets.objects.push_back(object);
       }
@@ -404,22 +418,25 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
 
 bool BlindSpotModule::isPredictedPathInArea(
   const autoware_auto_perception_msgs::msg::PredictedObject & object,
-  const lanelet::CompoundPolygon3d & area, geometry_msgs::msg::Pose ego_pose) const
+  const std::vector<lanelet::CompoundPolygon3d> & areas, geometry_msgs::msg::Pose ego_pose) const
 {
-  const auto area_2d = lanelet::utils::to2D(area);
   const auto ego_yaw = tf2::getYaw(ego_pose.orientation);
   const auto threshold_yaw_diff = planner_param_.threshold_yaw_diff;
   // NOTE: iterating all paths including those of low confidence
   return std::any_of(
-    object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
-    [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & path) {
+    areas.begin(), areas.end(), [&object, &ego_yaw, &threshold_yaw_diff](const auto & area) {
+      const auto area_2d = lanelet::utils::to2D(area);
       return std::any_of(
-        path.path.begin(), path.path.end(),
-        [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & point) {
-          const auto is_in_area = bg::within(to_bg2d(point.position), area_2d);
-          const auto match_yaw =
-            std::fabs(ego_yaw - tf2::getYaw(point.orientation)) < threshold_yaw_diff;
-          return is_in_area && match_yaw;
+        object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
+        [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & path) {
+          return std::any_of(
+            path.path.begin(), path.path.end(),
+            [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & point) {
+              const auto is_in_area = bg::within(to_bg2d(point.position), area_2d);
+              const auto match_yaw =
+                std::fabs(ego_yaw - tf2::getYaw(point.orientation)) < threshold_yaw_diff;
+              return is_in_area && match_yaw;
+            });
         });
     });
 }
@@ -445,12 +462,42 @@ lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
   for (const auto & pt : original_right_bound) {
     rights.push_back(lanelet::Point3d(pt));
   }
-  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
-  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
+  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, std::move(lefts));
+  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, std::move(rights));
   auto half_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
   const auto centerline = lanelet::utils::generateFineCenterline(half_lanelet, 5.0);
   half_lanelet.setCenterline(centerline);
-  return std::move(half_lanelet);
+  return half_lanelet;
+}
+
+lanelet::ConstLanelet BlindSpotModule::generateExtendedAdjacentLanelet(
+  const lanelet::ConstLanelet lanelet, const TurnDirection direction) const
+{
+  const auto centerline = lanelet.centerline2d();
+  const auto width =
+    boost::geometry::area(lanelet.polygon2d().basicPolygon()) / boost::geometry::length(centerline);
+  const double extend_width = std::min<double>(planner_param_.adjacent_extend_width, width);
+  const auto left_bound_ =
+    direction == TurnDirection::LEFT
+      ? lanelet::utils::getCenterlineWithOffset(lanelet, -width / 2 + extend_width)
+      : lanelet.leftBound();
+  const auto right_bound_ =
+    direction == TurnDirection::RIGHT
+      ? lanelet::utils::getCenterlineWithOffset(lanelet, width / 2 - extend_width)
+      : lanelet.rightBound();
+  lanelet::Points3d lefts, rights;
+  for (const auto & pt : left_bound_) {
+    lefts.push_back(lanelet::Point3d(pt));
+  }
+  for (const auto & pt : right_bound_) {
+    rights.push_back(lanelet::Point3d(pt));
+  }
+  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, std::move(lefts));
+  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, std::move(rights));
+  auto new_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+  const auto new_centerline = lanelet::utils::generateFineCenterline(new_lanelet, 5.0);
+  new_lanelet.setCenterline(new_centerline);
+  return new_lanelet;
 }
 
 boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
@@ -484,21 +531,48 @@ boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
     blind_spot_lanelets.push_back(half_lanelet);
   }
 
-  const auto current_arc =
-    lanelet::utils::getArcCoordinates(blind_spot_lanelets, path.points[closest_idx].point.pose);
-  const auto stop_line_arc = lanelet::utils::getArcCoordinates(blind_spot_lanelets, stop_line_pose);
-  const auto detection_area_start_length = stop_line_arc.length - planner_param_.backward_length;
-  if (
-    detection_area_start_length < current_arc.length && current_arc.length < stop_line_arc.length) {
-    const auto conflict_area = lanelet::utils::getPolygonFromArcLength(
-      blind_spot_lanelets, current_arc.length, stop_line_arc.length);
-    const auto detection_area = lanelet::utils::getPolygonFromArcLength(
-      blind_spot_lanelets, detection_area_start_length, stop_line_arc.length);
+  // additional detection area on left/right side
+  lanelet::ConstLanelets adjacent_lanelets;
+  for (const auto i : lane_ids) {
+    const auto lane = lanelet_map_ptr->laneletLayer.get(i);
+    const auto adj =
+      turn_direction_ == TurnDirection::LEFT
+        ? (routing_graph_ptr->adjacentLeft(lane))
+        : (turn_direction_ == TurnDirection::RIGHT ? (routing_graph_ptr->adjacentRight(lane))
+                                                   : boost::none);
+    if (adj) {
+      const auto half_lanelet = generateExtendedAdjacentLanelet(adj.get(), turn_direction_);
+      adjacent_lanelets.push_back(half_lanelet);
+    }
+  }
 
+  const auto current_arc_ego =
+    lanelet::utils::getArcCoordinates(blind_spot_lanelets, path.points[closest_idx].point.pose)
+      .length;
+  const auto stop_line_arc_ego =
+    lanelet::utils::getArcCoordinates(blind_spot_lanelets, stop_line_pose).length;
+  const auto detection_area_start_length_ego = stop_line_arc_ego - planner_param_.backward_length;
+  if (detection_area_start_length_ego < current_arc_ego && current_arc_ego < stop_line_arc_ego) {
     BlindSpotPolygons blind_spot_polygons;
-    blind_spot_polygons.conflict_area = conflict_area;
-    blind_spot_polygons.detection_area = detection_area;
-
+    auto conflict_area_ego = lanelet::utils::getPolygonFromArcLength(
+      blind_spot_lanelets, current_arc_ego, stop_line_arc_ego);
+    auto detection_area_ego = lanelet::utils::getPolygonFromArcLength(
+      blind_spot_lanelets, detection_area_start_length_ego, stop_line_arc_ego);
+    blind_spot_polygons.conflict_areas.emplace_back(std::move(conflict_area_ego));
+    blind_spot_polygons.detection_areas.emplace_back(std::move(detection_area_ego));
+    // additional detection area on left/right side
+    if (!adjacent_lanelets.empty()) {
+      const auto stop_line_arc_adj = lanelet::utils::getLaneletLength3d(adjacent_lanelets);
+      const auto current_arc_adj = stop_line_arc_adj - (stop_line_arc_ego - current_arc_ego);
+      const auto detection_area_start_length_adj =
+        stop_line_arc_adj - planner_param_.backward_length;
+      auto conflicting_area_adj = lanelet::utils::getPolygonFromArcLength(
+        adjacent_lanelets, current_arc_adj, stop_line_arc_adj);
+      auto detection_area_adj = lanelet::utils::getPolygonFromArcLength(
+        adjacent_lanelets, detection_area_start_length_adj, stop_line_arc_adj);
+      blind_spot_polygons.conflict_areas.emplace_back(std::move(conflicting_area_adj));
+      blind_spot_polygons.detection_areas.emplace_back(std::move(detection_area_adj));
+    }
     return blind_spot_polygons;
   } else {
     return boost::none;

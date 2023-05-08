@@ -39,6 +39,7 @@ TrtCommon::TrtCommon(
 {
   for (const auto & plugin_path : plugin_paths) {
     int32_t flags{RTLD_LAZY};
+// cspell: ignore asan
 #if ENABLE_ASAN
     // https://github.com/google/sanitizers/issues/89
     // asan doesn't handle module unloading correctly and there are no plans on doing
@@ -200,14 +201,20 @@ bool TrtCommon::buildEngineFromOnnx(
   return true;
 }
 
-bool TrtCommon::isInitialized() { return is_initialized_; }
+bool TrtCommon::isInitialized()
+{
+  return is_initialized_;
+}
 
 nvinfer1::Dims TrtCommon::getBindingDimensions(const int32_t index) const
 {
   return context_->getBindingDimensions(index);
 }
 
-int32_t TrtCommon::getNbBindings() { return engine_->getNbBindings(); }
+int32_t TrtCommon::getNbBindings()
+{
+  return engine_->getNbBindings();
+}
 
 bool TrtCommon::setBindingDimensions(const int32_t index, const nvinfer1::Dims & dimensions) const
 {

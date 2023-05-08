@@ -11,10 +11,12 @@
   <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
   <author email="ali.boyali@tier4.jp">Ali BOYALI</author>
 
-  <build_depend>autoware_cmake</build_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
+  <build_depend>libboost-dev</build_depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
+  <build_export_depend>libboost-dev</build_export_depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

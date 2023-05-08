@@ -35,9 +35,9 @@ namespace bg = boost::geometry;
 MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const PlannerParam & planner_param, const std::set<int> & assoc_ids, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
+: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id), assoc_ids_(assoc_ids)
 {
   velocity_factor_.init(VelocityFactor::MERGE);
   planner_param_ = planner_param;
@@ -57,40 +57,54 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
 
   /* get current pose */
-  geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
+  geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
-  /* get detection area */
-  auto && [detection_lanelets, conflicting_lanelets] = util::getObjectiveLanelets(
-    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    false /* tl_arrow_solid on does not matter here*/);
-  if (detection_lanelets.empty()) {
-    RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
-    return true;
+  /* spline interpolation */
+  constexpr double interval = 0.2;
+  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
+  if (!splineInterpolate(*path, interval, path_ip, logger_)) {
+    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
+    RCLCPP_DEBUG(logger_, "===== plan end =====");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
+    return false;
   }
-  const auto detection_area =
-    util::getPolygon3dFromLanelets(detection_lanelets, planner_param_.detection_area_length);
-  const std::vector<lanelet::CompoundPolygon3d> conflicting_area =
-    util::getPolygon3dFromLanelets(conflicting_lanelets);
-  debug_data_.detection_area = detection_area;
+  const auto lane_interval_ip_opt = util::findLaneIdsInterval(path_ip, assoc_ids_);
+  if (!lane_interval_ip_opt.has_value()) {
+    RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
+    RCLCPP_DEBUG(logger_, "===== plan end =====");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
+    return false;
+  }
+  const auto lane_interval_ip = lane_interval_ip_opt.value();
+
+  /* get detection area */
+  if (!intersection_lanelets_.has_value()) {
+    intersection_lanelets_ = util::getObjectiveLanelets(
+      lanelet_map_ptr, routing_graph_ptr, lane_id_, {} /* not used here */, path_ip,
+      lane_interval_ip, planner_param_.detection_area_length,
+      false /* tl_arrow_solid on does not matter here*/);
+  }
+  const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area;
 
   /* set stop-line and stop-judgement-line for base_link */
-  const auto private_path =
-    extractPathNearExitOfPrivateRoad(*path, planner_data_->vehicle_info_.vehicle_length_m);
-  const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
-    lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
-    0.0 /* unnecessary in merge_from_private */, false /* same */, path, *path,
-    logger_.get_child("util"), clock_);
-  if (!stop_lines_idx_opt.has_value()) {
+  const auto stop_line_idx_opt =
+    first_conflicting_area
+      ? util::generateCollisionStopLine(
+          lane_id_, first_conflicting_area.value(), planner_data_, planner_param_.stop_line_margin,
+          path, path_ip, interval, lane_interval_ip, logger_.get_child("util"))
+      : std::nullopt;
+  if (!stop_line_idx_opt.has_value()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
   }
 
-  const auto & stop_lines_idx = stop_lines_idx_opt.value();
-  const size_t stop_line_idx = stop_lines_idx.stop_line;
+  const size_t stop_line_idx = stop_line_idx_opt.value();
   if (stop_line_idx == 0) {
     RCLCPP_DEBUG(logger_, "stop line is at path[0], ignore planning.");
     return true;
@@ -99,8 +113,6 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   debug_data_.virtual_wall_pose = planning_utils::getAheadPose(
     stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
-  const size_t first_inside_lane_idx = stop_lines_idx.first_inside_lane;
-  debug_data_.first_collision_point = path->points.at(first_inside_lane_idx).point.pose.position;
 
   /* set stop speed */
   if (state_machine_.getState() == StateMachine::State::STOP) {
@@ -110,14 +122,13 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     /* get stop point and stop factor */
     tier4_planning_msgs::msg::StopFactor stop_factor;
     stop_factor.stop_pose = debug_data_.stop_point_pose;
-    stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
     const auto & stop_pose = path->points.at(stop_line_idx).point.pose;
     velocity_factor_.set(
-      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
+      path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
 
     const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
-      path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position);
+      path->points, current_pose.position, path->points.at(stop_line_idx).point.pose.position);
 
     constexpr double distance_threshold = 2.0;
     if (

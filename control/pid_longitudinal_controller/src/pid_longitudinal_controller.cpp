@@ -203,6 +203,11 @@ void PidLongitudinalController::setCurrentAcceleration(
   m_current_accel = msg;
 }
 
+void PidLongitudinalController::setCurrentOperationMode(const OperationModeState & msg)
+{
+  m_current_operation_mode = msg;
+}
+
 void PidLongitudinalController::setTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & msg)
 {
@@ -357,6 +362,7 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
   setTrajectory(input_data.current_trajectory);
   setKinematicState(input_data.current_odometry);
   setCurrentAcceleration(input_data.current_accel);
+  setCurrentOperationMode(input_data.current_operation_mode);
 
   // calculate current pose and control data
   geometry_msgs::msg::Pose current_pose = m_current_kinematic_state.pose.pose;
@@ -908,19 +914,34 @@ double PidLongitudinalController::applyVelocityFeedback(
 {
   const double current_vel_abs = std::fabs(current_vel);
   const double target_vel_abs = std::fabs(target_motion.vel);
-  const bool enable_integration = (current_vel_abs > m_current_vel_threshold_pid_integrate);
+  const bool is_under_control = m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
+  const bool enable_integration =
+    (current_vel_abs > m_current_vel_threshold_pid_integrate) && is_under_control;
   const double error_vel_filtered = m_lpf_vel_error->filter(target_vel_abs - current_vel_abs);
 
   std::vector<double> pid_contributions(3);
   const double pid_acc =
     m_pid_vel.calculate(error_vel_filtered, dt, enable_integration, pid_contributions);
-  const double feedback_acc = target_motion.acc + pid_acc;
+
+  // Feedforward scaling:
+  // This is for the coordinate conversion where feedforward is applied, from Time to Arclength.
+  // Details: For accurate control, the feedforward should be calculated in the arclength coordinate
+  // system, not in the time coordinate system. Otherwise, even if FF is applied, the vehicle speed
+  // deviation will be bigger.
+  constexpr double ff_scale_max = 2.0;  // for safety
+  constexpr double ff_scale_min = 0.5;  // for safety
+  const double ff_scale =
+    std::clamp(current_vel_abs / std::max(target_vel_abs, 0.1), ff_scale_min, ff_scale_max);
+  const double ff_acc = target_motion.acc * ff_scale;
+
+  const double feedback_acc = ff_acc + pid_acc;
 
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PID_APPLIED, feedback_acc);
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL_FILTERED, error_vel_filtered);
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FB_P_CONTRIBUTION, pid_contributions.at(0));
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FB_I_CONTRIBUTION, pid_contributions.at(1));
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FB_D_CONTRIBUTION, pid_contributions.at(2));
+  m_debug_values.setValues(DebugValues::TYPE::FF_SCALE, ff_acc);
 
   return feedback_acc;
 }

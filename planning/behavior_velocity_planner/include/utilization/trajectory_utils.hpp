@@ -90,7 +90,7 @@ inline bool smoothPath(
   const PathWithLaneId & in_path, PathWithLaneId & out_path,
   const std::shared_ptr<const PlannerData> & planner_data)
 {
-  const geometry_msgs::msg::Pose current_pose = planner_data->current_pose.pose;
+  const geometry_msgs::msg::Pose current_pose = planner_data->current_odometry->pose;
   const double v0 = planner_data->current_velocity->twist.linear.x;
   const double a0 = planner_data->current_acceleration->accel.accel.linear.x;
   const auto & external_v_limit = planner_data->external_velocity_limit;
@@ -105,7 +105,7 @@ inline bool smoothPath(
 
   // Resample trajectory with ego-velocity based interval distances
   auto traj_resampled = smoother->resampleTrajectory(
-    *traj_lateral_acc_filtered, v0, current_pose, planner_data->ego_nearest_dist_threshold,
+    traj_lateral_acc_filtered, v0, current_pose, planner_data->ego_nearest_dist_threshold,
     planner_data->ego_nearest_yaw_threshold);
   const size_t traj_resampled_closest = motion_utils::findFirstNearestIndexWithSoftConstraints(
     traj_resampled, current_pose, planner_data->ego_nearest_dist_threshold,

@@ -81,13 +81,13 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   /* vehicle model setup */
   const std::string vehicle_model_type =
     node_->declare_parameter<std::string>("vehicle_model_type");
-  std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr;
+  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr;
   if (vehicle_model_type == "kinematics") {
-    vehicle_model_ptr = std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
+    vehicle_model_ptr = std::make_shared<KinematicsBicycleModel>(
       wheelbase, m_mpc.m_steer_lim, m_mpc.m_param.steer_tau);
   } else if (vehicle_model_type == "kinematics_no_delay") {
-    vehicle_model_ptr = std::make_shared<mpc_lateral_controller::KinematicsBicycleModelNoDelay>(
-      wheelbase, m_mpc.m_steer_lim);
+    vehicle_model_ptr =
+      std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, m_mpc.m_steer_lim);
   } else if (vehicle_model_type == "dynamics") {
     const double mass_fl = node_->declare_parameter<double>("vehicle.mass_fl");
     const double mass_fr = node_->declare_parameter<double>("vehicle.mass_fr");
@@ -98,19 +98,19 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
 
     // vehicle_model_ptr is only assigned in ctor, so parameter value have to be passed at init time
     // // NOLINT
-    vehicle_model_ptr = std::make_shared<mpc_lateral_controller::DynamicsBicycleModel>(
-      wheelbase, mass_fl, mass_fr, mass_rl, mass_rr, cf, cr);
+    vehicle_model_ptr =
+      std::make_shared<DynamicsBicycleModel>(wheelbase, mass_fl, mass_fr, mass_rl, mass_rr, cf, cr);
   } else {
     RCLCPP_ERROR(node_->get_logger(), "vehicle_model_type is undefined");
   }
 
   /* QP solver setup */
   const std::string qp_solver_type = node_->declare_parameter<std::string>("qp_solver_type");
-  std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr;
+  std::shared_ptr<QPSolverInterface> qpsolver_ptr;
   if (qp_solver_type == "unconstraint_fast") {
-    qpsolver_ptr = std::make_shared<mpc_lateral_controller::QPSolverEigenLeastSquareLLT>();
+    qpsolver_ptr = std::make_shared<QPSolverEigenLeastSquareLLT>();
   } else if (qp_solver_type == "osqp") {
-    qpsolver_ptr = std::make_shared<mpc_lateral_controller::QPSolverOSQP>(node_->get_logger());
+    qpsolver_ptr = std::make_shared<QPSolverOSQP>(node_->get_logger());
   } else {
     RCLCPP_ERROR(node_->get_logger(), "qp_solver_type is undefined");
   }
@@ -121,6 +121,19 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     const double delay_step = std::round(delay_tmp / m_mpc.m_ctrl_period);
     m_mpc.m_param.input_delay = delay_step * m_mpc.m_ctrl_period;
     m_mpc.m_input_buffer = std::deque<double>(static_cast<size_t>(delay_step), 0.0);
+  }
+
+  /* steering offset compensation */
+  {
+    const std::string ns = "steering_offset.";
+    enable_auto_steering_offset_removal_ =
+      node_->declare_parameter<bool>(ns + "enable_auto_steering_offset_removal");
+    const auto vel_thres = node_->declare_parameter<double>(ns + "update_vel_threshold");
+    const auto steer_thres = node_->declare_parameter<double>(ns + "update_steer_threshold");
+    const auto limit = node_->declare_parameter<double>(ns + "steering_offset_limit");
+    const auto num = node_->declare_parameter<int>(ns + "average_num");
+    steering_offset_ =
+      std::make_shared<SteeringOffsetEstimator>(wheelbase, num, vel_thres, steer_thres, limit);
   }
 
   /* initialize lowpass filter */
@@ -148,6 +161,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     "~/output/predicted_trajectory", 1);
   m_pub_debug_values = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
     "~/output/lateral_diagnostic", 1);
+  m_pub_steer_offset = node_->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+    "~/output/estimated_steer_offset", 1);
 
   // TODO(Frederik.Beaujean) ctor is too long, should factor out parameter declarations
   declareMPCparameters();
@@ -163,7 +178,9 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_mpc.setClock(node_->get_clock());
 }
 
-MpcLateralController::~MpcLateralController() {}
+MpcLateralController::~MpcLateralController()
+{
+}
 
 trajectory_follower::LateralOutput MpcLateralController::run(
   trajectory_follower::InputData const & input_data)
@@ -172,6 +189,9 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   setTrajectory(input_data.current_trajectory);
   m_current_kinematic_state = input_data.current_odometry;
   m_current_steering = input_data.current_steering;
+  if (enable_auto_steering_offset_removal_) {
+    m_current_steering.steering_tire_angle -= steering_offset_->getOffset();
+  }
 
   autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd;
   autoware_auto_planning_msgs::msg::Trajectory predicted_traj;
@@ -185,6 +205,22 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   const bool is_mpc_solved = m_mpc.calculateMPC(
     m_current_steering, m_current_kinematic_state.twist.twist.linear.x,
     m_current_kinematic_state.pose.pose, ctrl_cmd, predicted_traj, debug_values);
+
+  // reset previous MPC result
+  // Note: When a large deviation from the trajectory occurs, the optimization stops and
+  // the vehicle will return to the path by re-planning the trajectory or external operation.
+  // After the recovery, the previous value of the optimization may deviate greatly from
+  // the actual steer angle, and it may make the optimization result unstable.
+  if (!is_mpc_solved) {
+    m_mpc.resetPrevResult(m_current_steering);
+  }
+
+  if (enable_auto_steering_offset_removal_) {
+    steering_offset_->updateOffset(
+      m_current_kinematic_state.twist.twist,
+      input_data.current_steering.steering_tire_angle);  // use unbiased steering
+    ctrl_cmd.steering_tire_angle += steering_offset_->getOffset();
+  }
 
   publishPredictedTraj(predicted_traj);
   publishDebugValues(debug_values);
@@ -367,6 +403,11 @@ void MpcLateralController::publishDebugValues(
 {
   debug_values.stamp = node_->now();
   m_pub_debug_values->publish(debug_values);
+
+  tier4_debug_msgs::msg::Float32Stamped offset;
+  offset.stamp = node_->now();
+  offset.data = steering_offset_->getOffset();
+  m_pub_steer_offset->publish(offset);
 }
 
 void MpcLateralController::declareMPCparameters()
@@ -422,7 +463,7 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
   result.reason = "success";
 
   // strong exception safety wrt MPCParam
-  mpc_lateral_controller::MPCParam param = m_mpc.m_param;
+  MPCParam param = m_mpc.m_param;
   try {
     update_param(parameters, "mpc_prediction_horizon", param.prediction_horizon);
     update_param(parameters, "mpc_prediction_dt", param.prediction_dt);

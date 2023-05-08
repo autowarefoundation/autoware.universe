@@ -3,14 +3,13 @@
 <package format="3">
   <name>gyro_odometer</name>
   <version>0.1.0</version>
-  <description>The gyro_odometer package as a ROS2 node</description>
+  <description>The gyro_odometer package as a ROS 2 node</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <license>Apache License 2.0</license>
   <author email="yamato.ando@tier4.jp">Yamato Ando</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
@@ -24,6 +23,7 @@
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclcpp_components</exec_depend>
 
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 

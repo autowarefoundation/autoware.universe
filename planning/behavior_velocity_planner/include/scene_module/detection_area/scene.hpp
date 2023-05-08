@@ -60,6 +60,7 @@ public:
     bool use_pass_judge_line;
     double state_clear_time;
     double hold_stop_margin_distance;
+    double distance_to_judge_over_stop_line;
   };
 
 public:
@@ -99,6 +100,9 @@ private:
 
   // Debug
   DebugData debug_data_;
+
+  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
+    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 };
 }  // namespace behavior_velocity_planner
 

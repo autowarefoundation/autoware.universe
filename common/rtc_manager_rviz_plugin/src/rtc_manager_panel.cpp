@@ -25,8 +25,14 @@
 
 namespace rviz_plugins
 {
-inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
-inline bool uint2bool(uint8_t var) { return var == static_cast<uint8_t>(0) ? false : true; }
+inline std::string Bool2String(const bool var)
+{
+  return var ? "True" : "False";
+}
+inline bool uint2bool(uint8_t var)
+{
+  return var == static_cast<uint8_t>(0) ? false : true;
+}
 using std::placeholders::_1;
 using std::placeholders::_2;
 
@@ -39,14 +45,26 @@ std::string getModuleName(const uint8_t module_type)
     case Module::LANE_CHANGE_RIGHT: {
       return "lane_change_right";
     }
+    case Module::EXT_REQUEST_LANE_CHANGE_LEFT: {
+      return "external_request_lane_change_left";
+    }
+    case Module::EXT_REQUEST_LANE_CHANGE_RIGHT: {
+      return "external_request_lane_change_right";
+    }
+    case Module::AVOIDANCE_BY_LC_LEFT: {
+      return "avoidance_by_lane_change_left";
+    }
+    case Module::AVOIDANCE_BY_LC_RIGHT: {
+      return "avoidance_by_lane_change_right";
+    }
     case Module::AVOIDANCE_LEFT: {
       return "avoidance_left";
     }
     case Module::AVOIDANCE_RIGHT: {
       return "avoidance_right";
     }
-    case Module::PULL_OVER: {
-      return "pull_over";
+    case Module::GOAL_PLANNER: {
+      return "goal_planner";
     }
     case Module::PULL_OUT: {
       return "pull_out";
@@ -72,6 +90,9 @@ std::string getModuleName(const uint8_t module_type)
     case Module::OCCLUSION_SPOT: {
       return "occlusion_spot";
     }
+    case Module::INTERSECTION_OCCLUSION: {
+      return "intersection_occlusion";
+    }
   }
   return "NONE";
 }
@@ -80,8 +101,11 @@ bool isPathChangeModule(const uint8_t module_type)
 {
   if (
     module_type == Module::LANE_CHANGE_LEFT || module_type == Module::LANE_CHANGE_RIGHT ||
+    module_type == Module::EXT_REQUEST_LANE_CHANGE_LEFT ||
+    module_type == Module::EXT_REQUEST_LANE_CHANGE_RIGHT ||
+    module_type == Module::AVOIDANCE_BY_LC_LEFT || module_type == Module::AVOIDANCE_BY_LC_RIGHT ||
     module_type == Module::AVOIDANCE_LEFT || module_type == Module::AVOIDANCE_RIGHT ||
-    module_type == Module::PULL_OVER || module_type == Module::PULL_OUT) {
+    module_type == Module::GOAL_PLANNER || module_type == Module::PULL_OUT) {
     return true;
   }
   return false;
@@ -90,7 +114,7 @@ bool isPathChangeModule(const uint8_t module_type)
 RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
   // TODO(tanaka): replace this magic number to Module::SIZE
-  const size_t module_size = 14;
+  const size_t module_size = 19;
   auto_modes_.reserve(module_size);
   auto * v_layout = new QVBoxLayout;
   auto vertical_header = new QHeaderView(Qt::Vertical);
@@ -150,6 +174,9 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     auto_modes_.emplace_back(rtc_auto_mode);
   }
   v_layout->addWidget(auto_mode_table_);
+
+  num_rtc_status_ptr_ = new QLabel("Init");
+  v_layout->addWidget(num_rtc_status_ptr_);
 
   // lateral execution
   auto * exe_path_change_layout = new QHBoxLayout;
@@ -308,17 +335,37 @@ void RTCManagerPanel::onClickCommandRequest(const uint8_t command)
   client_rtc_commands_->async_send_request(executable_cooperate_commands_request);
 }
 
-void RTCManagerPanel::onClickExecuteVelChange() { onClickChangeRequest(false, Command::ACTIVATE); }
-void RTCManagerPanel::onClickWaitVelChange() { onClickChangeRequest(false, Command::DEACTIVATE); }
-void RTCManagerPanel::onClickExecutePathChange() { onClickChangeRequest(true, Command::ACTIVATE); }
-void RTCManagerPanel::onClickWaitPathChange() { onClickChangeRequest(true, Command::DEACTIVATE); }
-void RTCManagerPanel::onClickExecution() { onClickCommandRequest(Command::ACTIVATE); }
-void RTCManagerPanel::onClickWait() { onClickCommandRequest(Command::DEACTIVATE); }
+void RTCManagerPanel::onClickExecuteVelChange()
+{
+  onClickChangeRequest(false, Command::ACTIVATE);
+}
+void RTCManagerPanel::onClickWaitVelChange()
+{
+  onClickChangeRequest(false, Command::DEACTIVATE);
+}
+void RTCManagerPanel::onClickExecutePathChange()
+{
+  onClickChangeRequest(true, Command::ACTIVATE);
+}
+void RTCManagerPanel::onClickWaitPathChange()
+{
+  onClickChangeRequest(true, Command::DEACTIVATE);
+}
+void RTCManagerPanel::onClickExecution()
+{
+  onClickCommandRequest(Command::ACTIVATE);
+}
+void RTCManagerPanel::onClickWait()
+{
+  onClickCommandRequest(Command::DEACTIVATE);
+}
 
 void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg)
 {
   cooperate_statuses_ptr_ = std::make_shared<CooperateStatusArray>(*msg);
   rtc_table_->clearContents();
+  num_rtc_status_ptr_->setText(
+    QString::fromStdString("The Number of RTC Statuses: " + std::to_string(msg->statuses.size())));
   if (msg->statuses.empty()) return;
   // this is to stable rtc display not to occupy too much
   size_t min_display_size{5};
@@ -407,6 +454,7 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
     cnt++;
   }
+  rtc_table_->update();
 }
 }  // namespace rviz_plugins
 

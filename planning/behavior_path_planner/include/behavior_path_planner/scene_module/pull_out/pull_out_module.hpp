@@ -15,13 +15,13 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_MODULE_HPP_
 
-#include "behavior_path_planner/scene_module/pull_out/geometric_pull_out.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_parameters.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
-#include "behavior_path_planner/scene_module/pull_out/shift_pull_out.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/scene_module/utils/geometric_parallel_parking.hpp"
-#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
+#include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/pull_out/geometric_pull_out.hpp"
+#include "behavior_path_planner/utils/pull_out/pull_out_parameters.hpp"
+#include "behavior_path_planner/utils/pull_out/pull_out_path.hpp"
+#include "behavior_path_planner/utils/pull_out/shift_pull_out.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -36,6 +36,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -63,25 +64,37 @@ struct PullOutStatus
 class PullOutModule : public SceneModuleInterface
 {
 public:
+#ifdef USE_OLD_ARCHITECTURE
   PullOutModule(
-    const std::string & name, rclcpp::Node & node, const PullOutParameters & parameters);
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<PullOutParameters> & parameters);
+#else
+  PullOutModule(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<PullOutParameters> & parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+
+  void updateModuleParams(const std::shared_ptr<PullOutParameters> & parameters)
+  {
+    parameters_ = parameters;
+  }
+#endif
 
   BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  BT::NodeStatus updateState() override;
-  BT::NodeStatus getNodeStatusWhileWaitingApproval() const override
-  {
-    return BT::NodeStatus::SUCCESS;
-  }
+  ModuleStatus updateState() override;
+  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnExit() override;
 
-  void setParameters(const PullOutParameters & parameters) { parameters_ = parameters; }
+  void setParameters(const std::shared_ptr<PullOutParameters> & parameters)
+  {
+    parameters_ = parameters;
+  }
   void resetStatus();
 
   void acceptVisitor(
@@ -90,7 +103,7 @@ public:
   }
 
 private:
-  PullOutParameters parameters_;
+  std::shared_ptr<PullOutParameters> parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> pull_out_planners_;
@@ -104,8 +117,7 @@ private:
 
   std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
   PathWithLaneId getFullPath() const;
-  ParallelParkingParameters getGeometricPullOutParameters() const;
-  std::vector<Pose> searchBackedPoses();
+  std::vector<Pose> searchPullOutStartPoses();
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
@@ -118,7 +130,7 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
   void planWithPriorityOnShortBackDistance(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
-  void generateStopPath();
+  PathWithLaneId generateStopPath() const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,

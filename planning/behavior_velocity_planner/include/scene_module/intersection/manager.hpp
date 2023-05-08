@@ -25,6 +25,8 @@
 
 #include <functional>
 #include <memory>
+#include <string>
+#include <unordered_map>
 
 namespace behavior_velocity_planner
 {
@@ -37,11 +39,22 @@ public:
 
 private:
   IntersectionModule::PlannerParam intersection_param_;
+  // additional for INTERSECTION_OCCLUSION
+  RTCInterface occlusion_rtc_interface_;
+  std::unordered_map<int64_t, UUID> occlusion_map_uuid_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
+
+  /* called from SceneModuleInterfaceWithRTC::plan */
+  void sendRTC(const Time & stamp) override;
+  void setActivation() override;
+  /* called from SceneModuleInterface::updateSceneModuleInstances */
+  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface
@@ -58,6 +71,8 @@ private:
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };
 }  // namespace behavior_velocity_planner
 
