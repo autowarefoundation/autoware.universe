@@ -98,12 +98,12 @@ public:
   }
 
   /**
-   * @brief publish all registered modules' debug markers.
+   * @brief publish all registered modules' markers.
    */
-  void publishDebugMarker() const
+  void publishMarker() const
   {
     std::for_each(
-      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishDebugMarker(); });
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishMarker(); });
   }
 
   /**
@@ -353,8 +353,6 @@ private:
   std::pair<SceneModulePtr, BehaviorModuleOutput> runRequestModules(
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
-
-  bool isEgoOutOfRoute(const std::shared_ptr<PlannerData> & data) const;
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
 
