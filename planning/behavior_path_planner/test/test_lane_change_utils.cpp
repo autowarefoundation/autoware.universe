@@ -31,8 +31,7 @@ TEST(BehaviorPathPlanningLaneChangeUtilsTest, projectCurrentPoseToTarget)
   obj_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(obj_yaw);
   obj_pose.position = tier4_autoware_utils::createPoint(-4, 3, 0);
 
-  const auto result =
-    behavior_path_planner::utils::safety_check::projectCurrentPoseToTarget(ego_pose, obj_pose);
+  const auto result = tier4_autoware_utils::inverseTransformPose(obj_pose, ego_pose);
 
   EXPECT_NEAR(result.position.x, -4, epsilon);
   EXPECT_NEAR(result.position.y, 3, epsilon);
