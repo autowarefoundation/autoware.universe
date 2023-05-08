@@ -53,11 +53,10 @@ private:
     SCALE = 3,
   };
 
-  rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
   rclcpp::Publisher<String>::SharedPtr pub_string_;
   rclcpp::Publisher<Float>::SharedPtr pub_doppler_vel_;
-  rclcpp::Publisher<TwistCovStamped>::SharedPtr pub_twist_with_covariance_;
+  rclcpp::Publisher<TwistCovStamped>::SharedPtr pub_twist_cov_;
 
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;

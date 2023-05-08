@@ -41,11 +41,10 @@ TwistEstimator::TwistEstimator()
     create_subscription<VelocityReport>("/vehicle/status/velocity_status", 10, cb_velocity);
   sub_navpvt_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_pvt);
 
-  pub_twist_ = create_publisher<TwistStamped>("twist", 10);
   pub_pose_ = create_publisher<PoseStamped>("doppler", 10);
   pub_string_ = create_publisher<String>("status", 10);
   pub_doppler_vel_ = create_publisher<Float>("doppler_vel", 10);
-  pub_twist_with_covariance_ = create_publisher<TwistCovStamped>("twist_with_cov", 10);
+  pub_twist_cov_ = create_publisher<TwistCovStamped>("twist_with_cov", 10);
 
   // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 20, 0, 1);
@@ -129,15 +128,13 @@ void TwistEstimator::publish_twist(const Imu & imu)
     msg.twist.linear.x = static_scale_factor_ * last_wheel_vel_;
   }
 
-  pub_twist_->publish(msg);
-
   {
     TwistCovStamped cov_msg;
     cov_msg.header = msg.header;
     cov_msg.twist.twist = msg.twist;
     cov_msg.twist.covariance.at(0) = 4.0;
     cov_msg.twist.covariance.at(35) = 0.1;
-    pub_twist_with_covariance_->publish(cov_msg);
+    pub_twist_cov_->publish(cov_msg);
   }
 }
 

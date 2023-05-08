@@ -56,7 +56,6 @@ private:
   // Subscriber
   rclcpp::Subscription<PoseCovStamped>::SharedPtr initialpose_sub_;
   rclcpp::Subscription<TwistCovStamped>::SharedPtr twist_cov_sub_;
-  rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
   rclcpp::Subscription<ParticleArray>::SharedPtr particles_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr height_sub_;
 
@@ -82,7 +81,7 @@ private:
 
   // Callback
   void on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose);
-  void on_twist(const TwistStamped::ConstSharedPtr twist);
+  void on_twist_cov(const TwistCovStamped::ConstSharedPtr twist);
   void on_weighted_particles(const ParticleArray::ConstSharedPtr weighted_particles);
   void on_timer();
 

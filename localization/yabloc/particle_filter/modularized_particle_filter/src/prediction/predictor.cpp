@@ -48,18 +48,14 @@ Predictor::Predictor()
   // Subscribers
   using std::placeholders::_1;
   auto on_initial = std::bind(&Predictor::on_initial_pose, this, _1);
-  auto on_twist = std::bind(&Predictor::on_twist, this, _1);
-  // clang-format off
-  auto on_twist_cov= [this](const TwistCovStamped & twist_cov) -> void { this->latest_twist_opt_ = twist_cov; };
-  // clang-format on
+  auto on_twist_cov = std::bind(&Predictor::on_twist_cov, this, _1);
   auto on_particle = std::bind(&Predictor::on_weighted_particles, this, _1);
   auto on_height = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
 
   initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, on_initial);
-  twist_sub_ = create_subscription<TwistStamped>("twist", 10, on_twist);
-  twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, on_twist_cov);
   particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, on_particle);
   height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, on_height);
+  twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, on_twist_cov);
 
   // Timer callback
   const double prediction_rate = declare_parameter("prediction_rate", 50.0f);
@@ -120,11 +116,12 @@ void Predictor::initialize_particles(const PoseCovStamped & initialpose)
   resampler_ptr_ = std::make_unique<RetroactiveResampler>(number_of_particles_, 100);
 }
 
-void Predictor::on_twist(const TwistStamped::ConstSharedPtr twist)
+void Predictor::on_twist_cov(const TwistCovStamped::ConstSharedPtr twist_cov)
 {
+  const auto twist = twist_cov->twist;
   TwistCovStamped twist_covariance;
-  twist_covariance.header = twist->header;
-  twist_covariance.twist.twist = twist->twist;
+  twist_covariance.header = twist_cov->header;
+  twist_covariance.twist.twist = twist.twist;
   twist_covariance.twist.covariance.at(0) = static_linear_covariance_;
   twist_covariance.twist.covariance.at(7) = 1e4;
   twist_covariance.twist.covariance.at(14) = 1e4;
@@ -196,6 +193,7 @@ void Predictor::on_timer()
   // NOTE: Sometimes particle_array.header.stamp is ancient due to lagged pose_initializer
   if (dt < 0.0 || dt > 1.0) {
     RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
+    particle_array_opt_->header.stamp = current_time;
     return;
   }
 

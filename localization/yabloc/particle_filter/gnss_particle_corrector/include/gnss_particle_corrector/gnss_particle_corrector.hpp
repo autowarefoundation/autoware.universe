@@ -51,13 +51,15 @@ private:
   rclcpp::Subscription<NavPVT>::SharedPtr ublox_sub_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr pose_sub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
-  rclcpp::Publisher<PoseStamped>::SharedPtr direction_pub_;
 
   Float32 latest_height_;
   Eigen::Vector3f last_mean_position_;
 
   void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
   void on_pose(const PoseCovStamped::ConstSharedPtr pose_msg);
+
+  void process(
+    const Eigen::Vector3f & gnss_position, const rclcpp::Time & stamp, const bool is_rtk_fixed);
 
   bool is_gnss_observation_valid(
     const Eigen::Matrix3f & sigma, const Eigen::Vector3f & meaned_position,

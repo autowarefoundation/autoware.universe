@@ -8,7 +8,6 @@
     <group>
         <push-ros-namespace namespace="kalman"/>
 
-        <arg name="output_twist" default="twist"/>
         <arg name="output_doppler" default="doppler"/>
         <arg name="output_status" default="status"/>
         <arg name="output_doppler_vel" default="doppler_vel"/>
@@ -20,7 +19,6 @@
             <param name="static_scale_factor" value="$(var static_scale_factor)"/>
             <param name="static_gyro_bias" value="$(var static_gyro_bias)"/>
 
-            <remap from="twist" to="$(var output_twist)"/>
             <remap from="doppler" to="$(var output_doppler)"/>
             <remap from="status" to="$(var output_status)"/>
             <remap from="doppler_vel" to="$(var output_doppler_vel)"/>

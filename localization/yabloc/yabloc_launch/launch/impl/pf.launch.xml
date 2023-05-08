@@ -1,10 +1,6 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
 
-    <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
-    <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
-
-    <arg name="predict_twist" default="/localization/twist/kalman/twist"/>
 
     <arg name="static_linear_covariance" default="12.00"/>
     <arg name="static_angular_covariance" default="0.005"/>
@@ -14,12 +10,14 @@
     <arg name="ignore_less_than_float" default="true"/>
     <arg name="gnss_mahalanobis_distance_threshold" default="20.0" description="If the distance to GNSS observation exceeds this, the correction is skipped."/>
 
+    <arg name="use_ublox_msg_in_gnss_corrector" default="true" description="Raw sensor data should not be used when running as Autoware."/>
+    <arg name="twist_cov_for_prediction" default="/localization/twist_estimator/twist_with_covariance"/>
+
     <!-- predict update -->
     <arg name="input_initialpose" default="/localization/initializer/rectified/initialpose"/>
 
     <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level info">
-        <remap from="twist" to="$(var predict_twist)" />
-
+        <remap from="twist_cov" to="$(var twist_cov_for_prediction)"/>
         <remap from="initialpose" to="$(var input_initialpose)" />
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -34,7 +32,6 @@
 
         <remap from="particles_marker_array" to="$(var output_particles_marker_array)"/>
         <remap from="height" to="/localization/map/height"/>
-        <remap from="twist_cov" to="/localization/twist/disabled/twist_with_cov"/>
         <remap from="pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
 
         <param name="is_swap_mode" value="false" />
@@ -48,8 +45,6 @@
     <arg name="output_scored_cloud" default="scored_cloud"/>
     <arg name="output_cost_map_range" default="cost_map_range"/>
     <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector_node" output="screen" args="--ros-args --log-level warn">
-        <param name="visualize" value="false"/>
-
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
@@ -73,11 +68,13 @@
         <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
         <param name="for_fixed/max_weight" value="5.0"/>
         <param name="mahalanobis_distance_threshold" value="$(var gnss_mahalanobis_distance_threshold)"/>
+        <param name="use_ublox_msg" value="$(var use_ublox_msg_in_gnss_corrector)"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/map/height"/>
+        <remap from="input/pose_with_covariance" to="/sensing/gnss/pose_with_covariance"/>
+
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
-        <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
         <remap from="gnss_range_marker" to="/localization/pf/gnss_range_marker"/>
     </node>
 

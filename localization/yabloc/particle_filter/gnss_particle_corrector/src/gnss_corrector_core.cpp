@@ -33,27 +33,15 @@ GnssParticleCorrector::GnssParticleCorrector()
   auto on_pose = std::bind(&GnssParticleCorrector::on_pose, this, _1);
   auto on_ublox = std::bind(&GnssParticleCorrector::on_ublox, this, _1);
   auto on_height = [this](const Float32 & height) { this->latest_height_ = height; };
-  ublox_sub_ = create_subscription<NavPVT>("input/navpvt", 10, on_ublox);
-  pose_sub_ = create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, on_pose);
+  if (declare_parameter<bool>("use_ublox_msg", true)) {
+    ublox_sub_ = create_subscription<NavPVT>("input/navpvt", 10, on_ublox);
+  } else {
+    pose_sub_ = create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, on_pose);
+  }
   height_sub_ = create_subscription<Float32>("input/height", 10, on_height);
 
   // Publisher
   marker_pub_ = create_publisher<MarkerArray>("gnss/range_marker", 10);
-  direction_pub_ = create_publisher<PoseStamped>("gnss/direction", 10);
-}
-
-void GnssParticleCorrector::on_pose(const PoseCovStamped::ConstSharedPtr pose_msg)
-{
-  const rclcpp::Time stamp = pose_msg->header.stamp;
-  std::optional<ParticleArray> opt_particles = get_synchronized_particle_array(stamp);
-  if (!opt_particles.has_value()) return;
-
-  auto position = pose_msg->pose.pose.position;
-  Eigen::Vector3f position_vec3f;
-  position_vec3f << position.x, position.y, position.z;
-
-  ParticleArray weighted_particles{weight_particles(opt_particles.value(), position_vec3f, true)};
-  set_weighted_particle_array(weighted_particles);
 }
 
 Eigen::Vector3f extract_enu_vel(const GnssParticleCorrector::NavPVT & msg)
@@ -83,6 +71,17 @@ bool GnssParticleCorrector::is_gnss_observation_valid(
   return true;
 }
 
+void GnssParticleCorrector::on_pose(const PoseCovStamped::ConstSharedPtr pose_msg)
+{
+  const rclcpp::Time stamp = pose_msg->header.stamp;
+  const auto & position = pose_msg->pose.pose.position;
+  Eigen::Vector3f gnss_position;
+  gnss_position << position.x, position.y, position.z;
+
+  constexpr bool is_rtk_fixed = false;
+  process(gnss_position, stamp, is_rtk_fixed);
+}
+
 void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
 {
   const rclcpp::Time stamp = common::ublox_time_to_stamp(*ublox_msg);
@@ -97,28 +96,13 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
       return;
     }
   }
+  process(gnss_position, stamp, is_rtk_fixed);
+}
 
+void GnssParticleCorrector::process(
+  const Eigen::Vector3f & gnss_position, const rclcpp::Time & stamp, const bool is_rtk_fixed)
+{
   publish_marker(gnss_position, is_rtk_fixed);
-
-  const Eigen::Vector3f doppler = extract_enu_vel(*ublox_msg);
-  const float theta = std::atan2(doppler.y(), doppler.x());
-
-  // visualize doppler velocity
-  {
-    if (doppler.norm() > 1) {
-      PoseStamped pose;
-      pose.header.frame_id = "map";
-      pose.header.stamp = stamp;
-      pose.pose.position.x = gnss_position.x();
-      pose.pose.position.y = gnss_position.y();
-      pose.pose.position.z = 0;
-      pose.pose.orientation.w = std::cos(theta / 2);
-      pose.pose.orientation.z = std::sin(theta / 2);
-      pose.pose.orientation.x = 0;
-      pose.pose.orientation.y = 0;
-      direction_pub_->publish(pose);
-    }
-  }
 
   std::optional<ParticleArray> opt_particles = get_synchronized_particle_array(stamp);
 
@@ -142,6 +126,8 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     weight_particles(opt_particles.value(), gnss_position, is_rtk_fixed);
 
   // NOTE: Not sure whether the correction using orientation is effective.
+  // const Eigen::Vector3f doppler = extract_enu_vel(*ublox_msg);
+  // const float theta = std::atan2(doppler.y(), doppler.x());
   // add_weight_by_orientation(weighted_particles, doppler);
 
   // Compute travel distance from last update position
