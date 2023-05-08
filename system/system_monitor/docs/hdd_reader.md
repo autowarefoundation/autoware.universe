@@ -2,7 +2,7 @@
 
 ## Name
 
-hdd_reader - Read S.M.A.R.T. information for monitoring HDD temperature and life of HDD
+hdd_reader - Read S.M.A.R.T. information to monitor HDD
 
 ## Synopsis
 
@@ -10,14 +10,14 @@ hdd_reader [OPTION]
 
 ## Description
 
-Read S.M.A.R.T. information for monitoring HDD temperature and life of HDD.<br>
-This runs as a daemon process and listens to a TCP/IP port (7635 by default).
+Read S.M.A.R.T. information to monitor HDD such as temperature and lifetime.<br>
+This runs as a daemon process and listens to an Unix domain socket (`/tmp/hdd_reader` by default).
 
 **Options:**<br>
 _-h, --help_<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Display help<br>
-_-p, --port #_<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Port number to listen to
+_-s, --socket #_<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Path of UNIX domain socket
 
 **Exit status:**<br>
 Returns 0 if OK; non-zero otherwise.
@@ -35,11 +35,16 @@ This is an approach to limit its functionality, however, the functionality can b
 | HDD temperature, life of HDD | SMART READ DATA      | 256 words(512 bytes) |
 
 For details please see the documents below.<br>
+**You need to create your account of Technical Committee T13(<https://www.t13.org>).**
 
-- [ATA Command Set - 4 (ACS-4)](https://www.t13.org/system/files/Project%20Drafts/2017/di529r20-ATA/ATAPI%20Command%20Set%20-%204_2.pdf)
-- [ATA/ATAPI Command Set - 3 (ACS-3)](https://www.t13.org/system/files/Standards/2013/d2161r5-ATA/ATAPI%20Command%20Set%20-%203.pdf)
-- [SMART Attribute Overview](https://www.t13.org/system/files/Documents/2005/e05171r0-SMART%20Attributes%20Overview_1.pdf)
-- [SMART Attribute Annex](https://www.t13.org/system/files/Documents/2005/e05148r0-ACS-SMART%20Attributes%20Annex_1.pdf)
+- [ATA Command Set - 4 (ACS-4)]
+  Search document number `di529`, then you can find the document number `di529r20`.
+- [ATA/ATAPI Command Set - 3 (ACS-3)]
+  Search document number `d2161`, then you can find the document number `d2161r5`.
+- [SMART Attribute Overview]
+  Search document number `e05171`, then you can find the document number `e05171r0`.
+- [SMART Attribute Annex]
+  Search document number `e05148`, then you can find the document number `e05148r0`.
 
 ### [NVMe]
 

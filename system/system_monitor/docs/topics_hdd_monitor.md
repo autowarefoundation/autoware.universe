@@ -1,5 +1,28 @@
 # ROS topics: HDD Monitor
 
+## <u>HDD Connection</u>
+
+/diagnostics/hdd_monitor: HDD Connection
+
+<b>[summary]</b>
+
+| level | message       |
+| ----- | ------------- |
+| OK    | OK            |
+| WARN  | not connected |
+
+<b>[values]</b>
+
+<!-- cspell: ignore MZVLB1T0HBLR, S4EMNF0M820682 -->
+
+| key                    | value (example)            |
+| ---------------------- | -------------------------- |
+| HDD [0-9]: status      | OK / not connected         |
+| HDD [0-9]: mount point | /                          |
+| HDD [0-9]: name        | /dev/nvme0                 |
+| HDD [0-9]: model       | SAMSUNG MZVLB1T0HBLR-000L7 |
+| HDD [0-9]: serial      | S4EMNF0M820682             |
+
 ## <u>HDD Temperature</u>
 
 /diagnostics/hdd_monitor: HDD Temperature
@@ -14,15 +37,11 @@
 
 <b>[values]</b>
 
-<!-- cspell: ignore MZVLB1T0HBLR, S4EMNF0M820682 -->
-
-| key                    | value (example)              |
-| ---------------------- | ---------------------------- |
-| HDD [0-9]: status      | OK / hot / critical hot      |
-| HDD [0-9]: name        | /dev/nvme0                   |
-| HDD [0-9]: model       | SAMSUNG MZVLB1T0HBLR-000L7   |
-| HDD [0-9]: serial      | S4EMNF0M820682               |
-| HDD [0-9]: temperature | 37.0 DegC <br> not available |
+| key                    | value (example)           |
+| ---------------------- | ------------------------- |
+| HDD [0-9]: status      | OK / hot / critical hot   |
+| HDD [0-9]: name        | /dev/nvme0                |
+| HDD [0-9]: temperature | 37.0 DegC / not available |
 
 ## <u>HDD PowerOnHours</u>
 
@@ -37,13 +56,11 @@
 
 <b>[values]</b>
 
-| key                       | value (example)               |
-| ------------------------- | ----------------------------- |
-| HDD [0-9]: status         | OK / lifetime limit           |
-| HDD [0-9]: name           | /dev/nvme0                    |
-| HDD [0-9]: model          | PHISON PS5012-E12S-512G       |
-| HDD [0-9]: serial         | FB590709182505050767          |
-| HDD [0-9]: power on hours | 4834 Hours <br> not available |
+| key                       | value (example)            |
+| ------------------------- | -------------------------- |
+| HDD [0-9]: status         | OK / lifetime limit        |
+| HDD [0-9]: name           | /dev/nvme0                 |
+| HDD [0-9]: power on hours | 4834 Hours / not available |
 
 ## <u>HDD TotalDataWritten</u>
 
@@ -58,13 +75,11 @@
 
 <b>[values]</b>
 
-| key                           | value (example)              |
-| ----------------------------- | ---------------------------- |
-| HDD [0-9]: status             | OK / warranty period         |
-| HDD [0-9]: name               | /dev/nvme0                   |
-| HDD [0-9]: model              | PHISON PS5012-E12S-512G      |
-| HDD [0-9]: serial             | FB590709182505050767         |
-| HDD [0-9]: total data written | 146295330 <br> not available |
+| key                           | value (example)           |
+| ----------------------------- | ------------------------- |
+| HDD [0-9]: status             | OK / warranty period      |
+| HDD [0-9]: name               | /dev/nvme0                |
+| HDD [0-9]: total data written | 146295330 / not available |
 
 ## <u>HDD RecoveredError</u>
 
@@ -83,9 +98,7 @@
 | -------------------------- | ------------------------- |
 | HDD [0-9]: status          | OK / high soft error rate |
 | HDD [0-9]: name            | /dev/nvme0                |
-| HDD [0-9]: model           | PHISON PS5012-E12S-512G   |
-| HDD [0-9]: serial          | FB590709182505050767      |
-| HDD [0-9]: recovered error | 0 <br> not available      |
+| HDD [0-9]: recovered error | 0 / not available         |
 
 ## <u>HDD Usage</u>
 
@@ -101,15 +114,16 @@
 
 <b>[values]</b>
 
-| key                   | value (example)                           |
-| --------------------- | ----------------------------------------- |
-| HDD [0-9]: status     | OK / low disk space / very low disk space |
-| HDD [0-9]: filesystem | /dev/nvme0n1p4                            |
-| HDD [0-9]: size       | 264G                                      |
-| HDD [0-9]: used       | 172G                                      |
-| HDD [0-9]: avail      | 749G                                      |
-| HDD [0-9]: use        | 69%                                       |
-| HDD [0-9]: mounted on | /                                         |
+| key                       | value (example)                           |
+| ------------------------- | ----------------------------------------- |
+| HDD [0-9]: status         | OK / low disk space / very low disk space |
+| HDD [0-9]: mounted point  | /                                         |
+| HDD [0-9]: filesystem     | /dev/nvme0n1p4                            |
+| HDD [0-9]: size           | 565359 MiB                                |
+| HDD [0-9]: used           | 507636 MiB                                |
+| HDD [0-9]: avail          | 31689 MiB                                 |
+| HDD [0-9]: use            | 95%                                       |
+| HDD [0-9]: execution time | 3.250181 ms                               |
 
 ## <u>HDD ReadDataRate</u>
 
@@ -186,22 +200,3 @@
 | HDD [0-9]: status        | OK / high IOPS of write |
 | HDD [0-9]: name          | /dev/nvme0              |
 | HDD [0-9]: IOPS of write | 0.00 IOPS               |
-
-## <u>HDD Connection</u>
-
-/diagnostics/hdd_monitor: HDD Connection
-
-<b>[summary]</b>
-
-| level | message       |
-| ----- | ------------- |
-| OK    | OK            |
-| WARN  | not connected |
-
-<b>[values]</b>
-
-| key                    | value (example)    |
-| ---------------------- | ------------------ |
-| HDD [0-9]: status      | OK / not connected |
-| HDD [0-9]: name        | /dev/nvme0         |
-| HDD [0-9]: mount point | /                  |
