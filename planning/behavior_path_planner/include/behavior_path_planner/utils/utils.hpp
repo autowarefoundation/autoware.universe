@@ -393,6 +393,8 @@ std::vector<DrivableLanes> combineDrivableLanes(
 
 void extractObstaclesFromDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableAreaInfo::Obstacle> & obstacles);
+
+void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound_left);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_

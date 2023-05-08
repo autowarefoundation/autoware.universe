@@ -1381,6 +1381,10 @@ void generateDrivableArea(
       path, expansion_params, *planner_data->dynamic_object, *planner_data->route_handler,
       transformed_lanes);
   }
+
+  // make bound longitudinally monotonic
+  makeBoundLongitudinallyMonotonic(path, true);
+  makeBoundLongitudinallyMonotonic(path, false);
 }
 
 // calculate bounds from drivable lanes and hatched road markings
@@ -1423,7 +1427,10 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   std::optional<lanelet::Polygon3d> current_polygon{std::nullopt};
   std::vector<size_t> current_polygon_border_indices;
   std::vector<geometry_msgs::msg::Point> output_points;
-  for (const auto & point : convert_to_points(drivable_lanes)) {
+  const auto bound_points = convert_to_points(drivable_lanes);
+  for (size_t point_idx = 0; point_idx < bound_points.size(); ++point_idx) {
+    const auto & point = bound_points.at(point_idx);
+
     const auto polygon = [&]() -> std::optional<lanelet::Polygon3d> {
       if (enable_expanding_polygon) {
         const auto polygons = route_handler->getLaneletMapPtr()->polygonLayer.findUsages(point);
@@ -1438,6 +1445,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
       return std::nullopt;
     }();
 
+    bool will_close_polygon{false};
     if (!current_polygon) {
       if (!polygon) {
         output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
@@ -1449,34 +1457,111 @@ std::vector<geometry_msgs::msg::Point> calcBound(
       }
     } else {
       if (!polygon) {
-        // The current additional polygon ends to expand
-        const size_t current_polygon_points_num = current_polygon->size();
-        const bool is_polygon_opposite_direction = [&]() {
-          const size_t modulo_diff = mod(
-            static_cast<int>(current_polygon_border_indices[1]) -
-              static_cast<int>(current_polygon_border_indices[0]),
-            current_polygon_points_num);
-          return modulo_diff == 1;
-        }();
-
-        const int target_points_num =
-          current_polygon_points_num - current_polygon_border_indices.size();
-        for (int poly_idx = 0; poly_idx <= target_points_num; ++poly_idx) {
-          const int target_poly_idx = current_polygon_border_indices.front() +
-                                      poly_idx * (is_polygon_opposite_direction ? -1 : 1);
-          output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(
-            (*current_polygon)[mod(target_poly_idx, current_polygon_points_num)]));
-        }
-        current_polygon = std::nullopt;
-        current_polygon_border_indices.clear();
+        will_close_polygon = true;
       } else {
         current_polygon_border_indices.push_back(
           get_corresponding_polygon_index(*current_polygon, point.id()));
       }
     }
+
+    if (point_idx == bound_points.size() - 1 && current_polygon) {
+      // If drivable lanes ends earlier than polygon, close the polygon
+      will_close_polygon = true;
+    }
+
+    if (will_close_polygon) {
+      // The current additional polygon ends to expand
+      const size_t current_polygon_points_num = current_polygon->size();
+      const bool is_polygon_opposite_direction = [&]() {
+        const size_t modulo_diff = mod(
+          static_cast<int>(current_polygon_border_indices[1]) -
+            static_cast<int>(current_polygon_border_indices[0]),
+          current_polygon_points_num);
+        return modulo_diff == 1;
+      }();
+
+      const int target_points_num =
+        current_polygon_points_num - current_polygon_border_indices.size();
+      for (int poly_idx = 0; poly_idx <= target_points_num; ++poly_idx) {
+        const int target_poly_idx = current_polygon_border_indices.front() +
+                                    poly_idx * (is_polygon_opposite_direction ? -1 : 1);
+        output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(
+          (*current_polygon)[mod(target_poly_idx, current_polygon_points_num)]));
+      }
+      current_polygon = std::nullopt;
+      current_polygon_border_indices.clear();
+    }
   }
 
   return output_points;
+}
+
+void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound_left)
+{
+  if (path.points.empty()) {
+    return;
+  }
+
+  // define a function to remove non monotonic point on bound
+  const auto remove_non_monotonic_point =
+    [&](std::vector<geometry_msgs::msg::Point> original_bound, const bool is_reversed) {
+      std::reverse(original_bound.begin(), original_bound.end());
+
+      const bool is_points_left = is_reversed ? !is_bound_left : is_bound_left;
+      const double lat_offset = is_points_left ? 20.0 : -20.0;
+
+      std::vector<geometry_msgs::msg::Point> monotonic_bound;
+      size_t b_idx = 0;
+      while (true) {
+        if (original_bound.size() <= b_idx) {
+          break;
+        }
+        monotonic_bound.push_back(original_bound.at(b_idx));
+
+        const auto bound_pose = [&]() {
+          geometry_msgs::msg::Pose pose;
+          pose.position = original_bound.at(b_idx);
+          const size_t nearest_idx =
+            motion_utils::findNearestIndex(path.points, original_bound.at(b_idx));
+          const double yaw = tf2::getYaw(path.points.at(nearest_idx).point.pose.orientation);
+          pose.orientation =
+            tier4_autoware_utils::createQuaternionFromYaw(yaw + is_reversed ? M_PI : 0.0);
+          return pose;
+        }();
+        const auto bound_pose_with_lat_offset =
+          tier4_autoware_utils::calcOffsetPose(bound_pose, 0.0, lat_offset, 0.0);
+
+        for (size_t candidate_idx = b_idx + 1; candidate_idx < original_bound.size() - 1;
+             ++candidate_idx) {
+          const auto intersect_point = drivable_area_processing::intersect(
+            bound_pose.position, bound_pose_with_lat_offset.position,
+            original_bound.at(candidate_idx), original_bound.at(candidate_idx + 1));
+
+          if (intersect_point) {
+            const double theta = tier4_autoware_utils::normalizeRadian(
+              tier4_autoware_utils::calcAzimuthAngle(
+                bound_pose.position, original_bound.at(candidate_idx)) -
+              tier4_autoware_utils::calcAzimuthAngle(
+                bound_pose.position, bound_pose_with_lat_offset.position));
+            if ((is_points_left && 0 < theta) || (!is_points_left && theta < 0)) {
+              monotonic_bound.push_back(*intersect_point);
+              b_idx = candidate_idx;
+              break;
+            }
+          }
+        }
+
+        ++b_idx;
+      }
+      return monotonic_bound;
+    };
+
+  auto & bound = is_bound_left ? path.left_bound : path.right_bound;
+  const auto original_bound = bound;
+  const auto half_monotonic_bound = remove_non_monotonic_point(original_bound, true);
+  const auto full_monotonic_bound = remove_non_monotonic_point(half_monotonic_bound, false);
+
+  bound = full_monotonic_bound;
 }
 
 // generate drivable area by expanding path for freespace
