@@ -339,10 +339,6 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
 
   prev_output_ = shifted_path;
 
-  auto distance = motion_utils::calcSignedArcLength(
-    shifted_path.path.points, planner_data_->self_odometry->pose.pose.position,
-    shifted_path.path.points.back().point.pose.position);
-  updateRTCStatus(0., distance);
   waitApproval();
 
   return output;

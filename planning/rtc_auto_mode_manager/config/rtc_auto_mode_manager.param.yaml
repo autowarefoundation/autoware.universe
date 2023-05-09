@@ -16,7 +16,6 @@
       - "goal_planner"
       - "pull_out"
       - "intersection_occlusion"
-      - "side_shift"
 
     default_enable_list:
       - "blind_spot"
@@ -34,4 +33,3 @@
       - "goal_planner"
       - "pull_out"
       - "intersection_occlusion"
-      - "side_shift"
