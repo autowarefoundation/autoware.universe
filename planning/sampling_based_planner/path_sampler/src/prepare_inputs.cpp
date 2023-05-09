@@ -53,6 +53,38 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const double base_length,
   const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
+  // calculate target lateral positions
+  std::vector<double> target_lateral_positions;
+  if(params.sampling.nb_target_lateral_positions > 1) {
+    target_lateral_positions = {0.0, initial_state.frenet.d};
+    double min_d = 0.0;
+    double max_d = 0.0;
+    double min_d_s = std::numeric_limits<double>::max();
+    double max_d_s = std::numeric_limits<double>::max();
+    for(const auto & drivable_poly : params.constraints.drivable_polygons) {
+      for(const auto & p : drivable_poly.outer()) {
+        const auto frenet_coordinates = path_spline.frenet(p);
+        const auto d_s = std::abs(frenet_coordinates.s - initial_state.frenet.s);
+        if(d_s < min_d_s && frenet_coordinates.d < 0.0) {
+          min_d_s = d_s;
+          min_d = frenet_coordinates.d;
+        }
+        if(d_s < max_d_s && frenet_coordinates.d > 0.0) {
+          max_d_s = d_s;
+          max_d = frenet_coordinates.d;
+        }
+      }
+    }
+    min_d += params.constraints.ego_width / 2.0;
+    max_d -= params.constraints.ego_width / 2.0;
+    std::cout << "min_d = " << min_d << " max_d : " << max_d << std::endl;
+    if(min_d < max_d) {
+      for(auto r = 0.0; r <= 1.0; r += 1.0 / (params.sampling.nb_target_lateral_positions - 1))
+        target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
+    }
+  } else {
+    target_lateral_positions = params.sampling.target_lateral_positions;
+  }
   frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.resolution = params.sampling.resolution;
   const auto max_s = path_spline.lastS();
@@ -60,8 +92,8 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   for (const auto target_length : params.sampling.target_lengths) {
     p.target_state.position.s = std::min(
       max_s, path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length - base_length));
-    for (const auto target_lat_pos : params.sampling.frenet.target_lateral_positions) {
-      p.target_state.position.d = target_lat_pos;
+    for (const auto target_lateral_position : target_lateral_positions) {
+      p.target_state.position.d = target_lateral_position;
       for (const auto target_lat_vel : params.sampling.frenet.target_lateral_velocities) {
         p.target_state.lateral_velocity = target_lat_vel;
         for (const auto target_lat_acc : params.sampling.frenet.target_lateral_accelerations) {

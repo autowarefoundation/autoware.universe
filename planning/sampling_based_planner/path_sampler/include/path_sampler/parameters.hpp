@@ -30,9 +30,10 @@ struct Parameters
     double resolution{};
     int previous_path_reuse_points_nb{};
     std::vector<double> target_lengths{};
+    std::vector<double> target_lateral_positions{};
+    int nb_target_lateral_positions{};
     struct
     {
-      std::vector<double> target_lateral_positions{};
       std::vector<double> target_lateral_velocities{};
       std::vector<double> target_lateral_accelerations{};
     } frenet;

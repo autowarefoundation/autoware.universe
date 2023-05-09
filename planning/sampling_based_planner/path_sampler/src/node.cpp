@@ -93,8 +93,10 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
       declare_parameter<int>("sampling.previous_path_reuse_points_nb");
     params_.sampling.target_lengths =
       declare_parameter<std::vector<double>>("sampling.target_lengths");
-    params_.sampling.frenet.target_lateral_positions =
-      declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_positions");
+    params_.sampling.target_lateral_positions =
+      declare_parameter<std::vector<double>>("sampling.target_lateral_positions");
+    params_.sampling.nb_target_lateral_positions =
+      declare_parameter<int>("sampling.nb_target_lateral_positions");
     params_.sampling.frenet.target_lateral_velocities =
       declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_velocities");
     params_.sampling.frenet.target_lateral_accelerations =
@@ -112,6 +114,8 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
     params_.preprocessing.smooth_reference =
       declare_parameter<bool>("preprocessing.smooth_reference_trajectory");
     params_.constraints.ego_footprint = vehicle_info_.createFootprint();
+    params_.constraints.ego_width = vehicle_info_.vehicle_width_m;
+    params_.constraints.ego_length = vehicle_info_.vehicle_length_m;
 
     // parameter for debug info
     time_keeper_ptr_->enable_calculation_time_info =
@@ -150,8 +154,11 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
     params_.sampling.previous_path_reuse_points_nb);
   updateParam(parameters, "sampling.target_lengths", params_.sampling.target_lengths);
   updateParam(
-    parameters, "sampling.frenet.target_lateral_positions",
-    params_.sampling.frenet.target_lateral_positions);
+    parameters, "sampling.target_lateral_positions",
+    params_.sampling.target_lateral_positions);
+  updateParam(
+    parameters, "sampling.nb_target_lateral_positions",
+    params_.sampling.nb_target_lateral_positions);
   updateParam(
     parameters, "sampling.frenet.target_lateral_velocities",
     params_.sampling.frenet.target_lateral_velocities);
@@ -383,6 +390,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
     trajectory = trajectory_utils::convertToTrajectoryPoints(selected_path);
     prev_path_ = selected_path;
   } else {
+    // TODO(Maxime): insert stop point
     RCLCPP_WARN(
       get_logger(), "No valid path found (out of %lu) outputing %s\n", candidate_paths.size(),
       prev_path_ ? "previous path" : "input path");

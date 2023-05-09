@@ -336,6 +336,8 @@ struct Constraints
     double max_curvature;
   } hard{};
   LinearRing2d ego_footprint;
+  double ego_width;
+  double ego_length;
   MultiPolygon2d obstacle_polygons;
   MultiPolygon2d drivable_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
