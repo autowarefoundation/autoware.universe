@@ -60,7 +60,7 @@ CameraParticleCorrector::CameraParticleCorrector()
   sub_pose_ = create_subscription<PoseStamped>("pose", 10, on_pose);
 
   auto on_service = std::bind(&CameraParticleCorrector::on_service, this, _1, _2);
-  switch_service_ = create_service<SetBool>("/switch", on_service);
+  switch_service_ = create_service<SetBool>("switch_srv", on_service);
 
   // Timer callback
   auto on_timer = std::bind(&CameraParticleCorrector::on_timer, this);
