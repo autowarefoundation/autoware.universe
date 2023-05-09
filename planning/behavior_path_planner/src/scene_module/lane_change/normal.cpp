@@ -105,6 +105,16 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   output.reference_path = std::make_shared<PathWithLaneId>(getReferencePath());
   output.turn_signal_info = updateOutputTurnSignal();
 
+  if (!prev_turn_signal_info_) {
+    return output;
+  }
+
+  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path->points);
+  output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+    *output.path, getEgoPose(), current_seg_idx, *prev_turn_signal_info_, output.turn_signal_info,
+    planner_data_->parameters.ego_nearest_dist_threshold,
+    planner_data_->parameters.ego_nearest_yaw_threshold);
+
   return output;
 }
 
@@ -124,7 +134,7 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
 
   // for old architecture
   utils::generateDrivableArea(
-    *output.path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+    *output.path, expanded_lanes, false, common_parameters.vehicle_length, planner_data_);
 }
 
 bool NormalLaneChange::hasFinishedLaneChange() const
@@ -678,7 +688,7 @@ PathWithLaneId NormalLaneChangeBT::getReferencePath() const
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
   utils::generateDrivableArea(
-    reference_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+    reference_path, expanded_lanes, false, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
