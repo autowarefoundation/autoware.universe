@@ -153,8 +153,9 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
     } else {
       using namespace std::literals::chrono_literals;
       publish_weighted_particles = false;
-      RCLCPP_INFO_STREAM_THROTTLE(
-        get_logger(), *get_clock(), (1000ms).count(), "Skip weighting because almost same positon");
+      RCLCPP_WARN_STREAM_THROTTLE(
+        get_logger(), *get_clock(), 2000,
+        "Skip particle weighting due to almost the same position");
     }
   }
 

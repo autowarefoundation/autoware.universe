@@ -139,7 +139,8 @@ void GnssParticleCorrector::process(
       last_mean_position_ = meaned_position;
     } else {
       RCLCPP_WARN_STREAM_THROTTLE(
-        get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
+        get_logger(), *get_clock(), 2000,
+        "Skip particle weighting due to almost the same position");
     }
   }
 }

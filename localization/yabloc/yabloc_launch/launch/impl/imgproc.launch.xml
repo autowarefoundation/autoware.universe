@@ -22,7 +22,7 @@
         if it is blank (default) camera frame_id is not overridden."/>
 
     <!-- undistort & resize -->
-    <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level info">
+    <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="width" value="800"/>
         <param name="override_frame_id" value="$(var override_camera_frame_id)"/>

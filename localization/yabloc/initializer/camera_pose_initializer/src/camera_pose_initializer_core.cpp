@@ -40,13 +40,13 @@ CameraPoseInitializer::CameraPoseInitializer()
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
   auto on_image = [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; };
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
-  sub_image_ = create_subscription<Image>("/sensing/camera/undistorted/image_raw", 10, on_image);
+  sub_image_ = create_subscription<Image>("/image_raw", 10, on_image);
 
   // Client
-  ground_client_ = create_client<Ground>(
-    "/localization/map/ground", rmw_qos_profile_services_default, service_callback_group_);
+  ground_client_ = create_client<GroundSrv>(
+    "/ground_srv", rmw_qos_profile_services_default, service_callback_group_);
   semseg_client_ = create_client<SemsegSrv>(
-    "/localization/semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
+    "/semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
 
   // Server
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
@@ -194,7 +194,7 @@ void CameraPoseInitializer::on_service(
   const auto orientation = request->pose_with_covariance.pose.pose.orientation;
   const double yaw_std_rad = std::sqrt(query_pos_with_cov.pose.covariance.at(35));
 
-  auto ground_request = std::make_shared<Ground::Request>();
+  auto ground_request = std::make_shared<GroundSrv::Request>();
   ground_request->point.x = query_pos.x;
   ground_request->point.y = query_pos.y;
 

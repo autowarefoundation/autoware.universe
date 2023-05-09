@@ -36,7 +36,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using Ground = ground_msgs::srv::Ground;
+  using GroundSrv = ground_msgs::srv::Ground;
   using Image = sensor_msgs::msg::Image;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
@@ -55,7 +55,7 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Service<RequestPoseAlignment>::SharedPtr align_server_;
-  rclcpp::Client<Ground>::SharedPtr ground_client_;
+  rclcpp::Client<GroundSrv>::SharedPtr ground_client_;
   rclcpp::Client<SemsegSrv>::SharedPtr semseg_client_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 
