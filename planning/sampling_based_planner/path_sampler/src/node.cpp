@@ -244,6 +244,13 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
     const auto output_traj_msg =
       trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
     traj_pub_->publish(output_traj_msg);
+  } else {
+    auto stopping_traj = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
+    for(auto & p : stopping_traj)
+      p.longitudinal_velocity_mps = 0.0;
+    const auto output_traj_msg =
+      trajectory_utils::createTrajectory(path_ptr->header, stopping_traj);
+    traj_pub_->publish(output_traj_msg);
   }
 
   time_keeper_ptr_->toc(__func__, "");
@@ -390,10 +397,9 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
     trajectory = trajectory_utils::convertToTrajectoryPoints(selected_path);
     prev_path_ = selected_path;
   } else {
-    // TODO(Maxime): insert stop point
     RCLCPP_WARN(
       get_logger(), "No valid path found (out of %lu) outputing %s\n", candidate_paths.size(),
-      prev_path_ ? "previous path" : "input path");
+      prev_path_ ? "previous path" : "stopping path");
     int coll = 0;
     int da = 0;
     int k = 0;
@@ -405,8 +411,6 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
     RCLCPP_WARN(get_logger(), "\tInvalid coll/da/k = %d/%d/%d\n", coll, da, k);
     if (prev_path_)
       trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
-    else
-      trajectory = trajectory_utils::convertToTrajectoryPoints(p.traj_points);
   }
   time_keeper_ptr_->toc(__func__, "    ");
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
