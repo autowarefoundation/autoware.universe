@@ -4,8 +4,6 @@ project(fault_injection)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(pluginlib REQUIRED)
-
 ament_auto_add_library(fault_injection_node_component SHARED
   src/fault_injection_node/fault_injection_node.cpp
 )
