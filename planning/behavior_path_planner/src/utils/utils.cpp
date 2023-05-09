@@ -1398,8 +1398,8 @@ void generateDrivableArea(
   }
 
   // make bound longitudinally monotonic
-  makeBoundLongitudinallyMonotonic(path, true);
-  makeBoundLongitudinallyMonotonic(path, false);
+  makeBoundLongitudinallyMonotonic(path, true);   // for left bound
+  makeBoundLongitudinallyMonotonic(path, false);  // for right bound
 }
 
 // calculate bounds from drivable lanes and hatched road markings
@@ -1517,10 +1517,11 @@ void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound
   // define a function to remove non monotonic point on bound
   const auto remove_non_monotonic_point =
     [&](std::vector<geometry_msgs::msg::Point> original_bound, const bool is_reversed) {
-      std::reverse(original_bound.begin(), original_bound.end());
+      if (is_reversed) {
+        std::reverse(original_bound.begin(), original_bound.end());
+      }
 
       const bool is_points_left = is_reversed ? !is_bound_left : is_bound_left;
-      const double lat_offset = is_points_left ? 20.0 : -20.0;
 
       std::vector<geometry_msgs::msg::Point> monotonic_bound;
       size_t b_idx = 0;
@@ -1536,11 +1537,12 @@ void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound
           pose.position = original_bound.at(b_idx);
           const size_t nearest_idx =
             motion_utils::findNearestIndex(path.points, original_bound.at(b_idx));
-          const double yaw = tf2::getYaw(path.points.at(nearest_idx).point.pose.orientation);
-          pose.orientation =
-            tier4_autoware_utils::createQuaternionFromYaw(yaw + is_reversed ? M_PI : 0.0);
+          pose.orientation = path.points.at(nearest_idx).point.pose.orientation;
           return pose;
         }();
+        // NOTE: is_bound_left is used instead of is_points_left since orientation of path point is
+        // opposite.
+        const double lat_offset = is_bound_left ? 20.0 : -20.0;
         const auto bound_pose_with_lat_offset =
           tier4_autoware_utils::calcOffsetPose(bound_pose, 0.0, lat_offset, 0.0);
 
@@ -1567,13 +1569,19 @@ void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound
 
         ++b_idx;
       }
+
+      if (is_reversed) {
+        std::reverse(monotonic_bound.begin(), monotonic_bound.end());
+      }
       return monotonic_bound;
     };
 
   auto & bound = is_bound_left ? path.left_bound : path.right_bound;
   const auto original_bound = bound;
-  const auto half_monotonic_bound = remove_non_monotonic_point(original_bound, true);
-  const auto full_monotonic_bound = remove_non_monotonic_point(half_monotonic_bound, false);
+  const auto half_monotonic_bound =
+    remove_non_monotonic_point(original_bound, true);  // for reverse
+  const auto full_monotonic_bound =
+    remove_non_monotonic_point(half_monotonic_bound, false);  // for not reverse
 
   bound = full_monotonic_bound;
 }
