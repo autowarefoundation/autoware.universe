@@ -103,14 +103,12 @@ public:
 
   virtual void setPreviousDrivableAreaInfo(const DrivableAreaInfo & prev_drivable_area_info)
   {
-    if (prev_drivable_area_info_) {
-      *prev_drivable_area_info_ = prev_drivable_area_info;
-    }
+    prev_drivable_area_info_ = std::make_shared<DrivableAreaInfo>(prev_drivable_area_info);
   }
 
   virtual void setPreviousTurnSignalInfo(const TurnSignalInfo & prev_turn_signal_info)
   {
-    *prev_turn_signal_info_ = prev_turn_signal_info;
+    prev_turn_signal_info_ = std::make_shared<TurnSignalInfo>(prev_turn_signal_info);
   }
 
   virtual void updateSpecialData() {}
