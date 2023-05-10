@@ -41,7 +41,7 @@ int calVisibleScore(
   const traffic_light::MultiCameraFusion::RoiType & roi,
   const traffic_light::MultiCameraFusion::CamInfoType & cam_info)
 {
-  uint32_t boundary = 5;
+  const uint32_t boundary = 5;
   uint32_t x1 = roi.roi.x_offset;
   uint32_t x2 = roi.roi.x_offset + roi.roi.width;
   uint32_t y1 = roi.roi.y_offset;
@@ -64,7 +64,8 @@ int compareRecord(
   */
   double t1 = rclcpp::Time(r1.header.stamp).seconds();
   double t2 = rclcpp::Time(r2.header.stamp).seconds();
-  if (r1.header.frame_id == r2.header.frame_id && std::abs(t1 - t2) >= 1e-3) {
+  const double dt_thres = 1e-3;
+  if (r1.header.frame_id == r2.header.frame_id && std::abs(t1 - t2) >= dt_thres) {
     return t1 < t2 ? -1 : 1;
   }
   bool r1_is_unknown = isUnknown(r1.signal);
