@@ -33,31 +33,26 @@ bool isUnknown(const autoware_auto_perception_msgs::msg::TrafficSignal & signal)
  * @brief Currently the visible score only considers the truncation.
  * If the detection roi is very close to the image boundary, it would be considered as truncated.
  *
- * @param roi       detection roi
- * @param cam_info  camera info
+ * @param record    fusion record
  * @return 0 if traffic light is truncated, otherwise 1
  */
-int calVisibleScore(
-  const traffic_light::MultiCameraFusion::RoiType & roi,
-  const traffic_light::MultiCameraFusion::CamInfoType & cam_info)
+int calVisibleScore(const traffic_light::FusionRecord & record)
 {
   const uint32_t boundary = 5;
-  uint32_t x1 = roi.roi.x_offset;
-  uint32_t x2 = roi.roi.x_offset + roi.roi.width;
-  uint32_t y1 = roi.roi.y_offset;
-  uint32_t y2 = roi.roi.y_offset + roi.roi.height;
+  uint32_t x1 = record.roi.roi.x_offset;
+  uint32_t x2 = record.roi.roi.x_offset + record.roi.roi.width;
+  uint32_t y1 = record.roi.roi.y_offset;
+  uint32_t y2 = record.roi.roi.y_offset + record.roi.roi.height;
   if (
-    x1 <= boundary || (cam_info.width - x2) <= boundary || y1 <= boundary ||
-    (cam_info.height - y2) <= boundary) {
+    x1 <= boundary || (record.cam_info.width - x2) <= boundary || y1 <= boundary ||
+    (record.cam_info.height - y2) <= boundary) {
     return 0;
   } else {
     return 1;
   }
 }
 
-int compareRecord(
-  const traffic_light::FusionRecord & r1, const traffic_light::FusionRecord & r2,
-  const traffic_light::MultiCameraFusion::CamInfoType & cam_info)
+int compareRecord(const traffic_light::FusionRecord & r1, const traffic_light::FusionRecord & r2)
 {
   /*
   if both records are from the same sensor but different stamp, trust the latest one
@@ -81,8 +76,8 @@ int compareRecord(
     */
     return r1_is_unknown ? -1 : 1;
   }
-  int visible_score_1 = calVisibleScore(r1.roi, cam_info);
-  int visible_score_2 = calVisibleScore(r2.roi, cam_info);
+  int visible_score_1 = calVisibleScore(r1);
+  int visible_score_2 = calVisibleScore(r2);
   if (visible_score_1 == visible_score_2) {
     int area_1 = r1.roi.roi.width * r1.roi.roi.height;
     int area_2 = r2.roi.roi.width * r2.roi.roi.height;
@@ -155,12 +150,13 @@ void MultiCameraFusion::trafficSignalRoiCallback(
   Insert the received record array to the table.
   Attention should be paied that this record array might not have the newest timestamp
   */
-  record_arr_set_.insert(FusionRecordArr{cam_info_msg->header, *roi_msg, *signal_msg});
+  record_arr_set_.insert(
+    FusionRecordArr{cam_info_msg->header, *cam_info_msg, *roi_msg, *signal_msg});
 
   std::map<IdType, FusionRecord> fusionedRecordMap;
-  multiCameraFusion(*cam_info_msg, fusionedRecordMap);
+  multiCameraFusion(fusionedRecordMap);
   if (perform_group_fusion_) {
-    groupFusion(*cam_info_msg, fusionedRecordMap);
+    groupFusion(fusionedRecordMap);
   }
 
   SignalArrayType out_msg;
@@ -187,19 +183,19 @@ void MultiCameraFusion::mapCallback(
 
     auto lights = tl->trafficLights();
     for (const auto & light : lights) {
-      trafficLightId2RegulatoryEleId_[light.id()] = tl->id();
+      traffic_light_id_to_regulatory_ele_id_[light.id()] = tl->id();
     }
   }
 }
 
-void MultiCameraFusion::multiCameraFusion(
-  const CamInfoType cam_info, std::map<IdType, FusionRecord> & fusionedRecordMap)
+void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusionedRecordMap)
 {
   fusionedRecordMap.clear();
   /*
   this should not happen. Just in case
   */
   if (record_arr_set_.empty()) {
+    RCLCPP_ERROR(get_logger(), "record_arr_set_ is empty! This should not happen");
     return;
   }
   const rclcpp::Time & newest_stamp(record_arr_set_.rbegin()->header.stamp);
@@ -228,14 +224,14 @@ void MultiCameraFusion::multiCameraFusion(
         if (signal_it == record_arr.signals.signals.end()) {
           continue;
         }
-        FusionRecord record{record_arr.header, roi, *signal_it};
+        FusionRecord record{record_arr.header, record_arr.cam_info, roi, *signal_it};
         /*
         if this traffic light is not detected yet or can be updated by higher priority record,
         update it
         */
         if (
           fusionedRecordMap.find(roi.id) == fusionedRecordMap.end() ||
-          ::compareRecord(record, fusionedRecordMap[roi.id], cam_info) >= 0) {
+          ::compareRecord(record, fusionedRecordMap[roi.id]) >= 0) {
           fusionedRecordMap[roi.id] = record;
         }
       }
@@ -244,8 +240,7 @@ void MultiCameraFusion::multiCameraFusion(
   }
 }
 
-void MultiCameraFusion::groupFusion(
-  const CamInfoType cam_info, std::map<IdType, FusionRecord> & fusionedRecordMap)
+void MultiCameraFusion::groupFusion(std::map<IdType, FusionRecord> & fusionedRecordMap)
 {
   /*
   this should not happen. Just in case
@@ -260,17 +255,17 @@ void MultiCameraFusion::groupFusion(
     /*
     this should not happen
     */
-    if (trafficLightId2RegulatoryEleId_.count(roi_id) == 0) {
+    if (traffic_light_id_to_regulatory_ele_id_.count(roi_id) == 0) {
       RCLCPP_WARN_STREAM(
         get_logger(), "Found Traffic Light Id = " << roi_id << " which is not defined in Map");
     } else {
       /*
       keep the best record for every regulatory element id
       */
-      IdType reg_ele_id = trafficLightId2RegulatoryEleId_[p.second.roi.id];
+      IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.id];
       if (
         regEleId2BestRecord.count(reg_ele_id) == 0 ||
-        ::compareRecord(p.second, regEleId2BestRecord[reg_ele_id], cam_info) >= 0) {
+        ::compareRecord(p.second, regEleId2BestRecord[reg_ele_id]) >= 0) {
         regEleId2BestRecord[reg_ele_id] = p.second;
       }
     }
@@ -279,8 +274,8 @@ void MultiCameraFusion::groupFusion(
   replace the resul with the best record of its group
   */
   for (auto & p : fusionedRecordMap) {
-    if (trafficLightId2RegulatoryEleId_.count(p.second.roi.id) != 0) {
-      IdType reg_ele_id = trafficLightId2RegulatoryEleId_[p.second.roi.id];
+    if (traffic_light_id_to_regulatory_ele_id_.count(p.second.roi.id) != 0) {
+      IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.id];
       p.second.signal.lights = regEleId2BestRecord[reg_ele_id].signal.lights;
     }
   }
