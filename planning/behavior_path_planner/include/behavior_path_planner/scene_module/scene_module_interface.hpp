@@ -238,6 +238,8 @@ public:
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second->isRegistered(uuid_map_.at(itr->first))) {
         return itr->second->isActivated(uuid_map_.at(itr->first));
+      } else {
+        return false;
       }
     }
     return true;
