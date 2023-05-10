@@ -48,8 +48,13 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const std::string onnx_file = this->declare_parameter<std::string>("onnx_file");
   const std::string label_file = this->declare_parameter<std::string>("label_file");
   const std::string mode = this->declare_parameter("mode", "FP32");
-  is_box_first_ = this->declare_parameter("is_box_first", false);
-  is_box_normalized_ = this->declare_parameter("is_box_normalized", true);
+  dnn_header_type_ = this->declare_parameter("dnn_header_type", "pytorch");
+
+  if (dnn_header_type_.compare("pytorch") != 0 && dnn_header_type_.compare("mmdetection") != 0) {
+    RCLCPP_ERROR(
+      this->get_logger(), "Unexpected DNN type: %s, choose from (pytorch, mmdetection)",
+      dnn_header_type_.c_str());
+  }
 
   fs::path engine_path{onnx_file};
   engine_path.replace_extension("engine");
@@ -82,12 +87,12 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   }
 
   input_shape_ = net_ptr_->getInputShape();
-  if (is_box_first_) {
-    box_dims_ = net_ptr_->getOutputDimensions(1);
-    score_dims_ = net_ptr_->getOutputDimensions(2);
-  } else {
+  if (dnn_header_type_.compare("pytorch") == 0) {
     score_dims_ = net_ptr_->getOutputDimensions(1);
     box_dims_ = net_ptr_->getOutputDimensions(2);
+  } else {
+    box_dims_ = net_ptr_->getOutputDimensions(1);
+    score_dims_ = net_ptr_->getOutputDimensions(2);
   }
   detection_per_class_ = score_dims_->d[0];
   class_num_ = score_dims_->d[1];
@@ -158,10 +163,10 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     auto box_d = cuda::make_unique<float[]>(num_infer * box_dims_->size());
     auto score_d = cuda::make_unique<float[]>(num_infer * score_dims_->size());
     std::vector<void *> buffers;
-    if (is_box_first_) {
-      buffers = {data_d.get(), box_d.get(), score_d.get()};
-    } else {
+    if (dnn_header_type_.compare("pytorch") == 0) {
       buffers = {data_d.get(), score_d.get(), box_d.get()};
+    } else {
+      buffers = {data_d.get(), box_d.get(), score_d.get()};
     }
     std::vector<cv::Point> lts, rbs;
     std::vector<cv::Mat> cropped_imgs;
@@ -283,7 +288,7 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     size_t index = std::distance(tlr_scores.begin(), iter);
     size_t box_index = i * detection_per_class_ * 4 + index * 4;
     cv::Point lt, rb;
-    if (is_box_normalized_) {
+    if (dnn_header_type_.compare("pytorch") == 0) {
       lt.x = boxes[box_index] * in_imgs.at(i).cols;
       lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
       rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;

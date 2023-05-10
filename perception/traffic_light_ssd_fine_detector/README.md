@@ -50,16 +50,15 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 
 ### Node Parameters
 
-| Name                | Type   | Default Value                  | Description                                                          |
-| ------------------- | ------ | ------------------------------ | -------------------------------------------------------------------- |
-| `onnx_file`         | string | "./data/mb2-ssd-lite-tlr.onnx" | The onnx file name for yolo model                                    |
-| `label_file`        | string | "./data/voc_labels_tl.txt"     | The label file with label names for detected objects written on it   |
-| `is_box_first`      | bool   | false                          | Indicates whether first output head is for boxes                     |
-| `is_box_normalized` | bool   | true                           | Indicates whether output boxes have been normalized into `[0, 1]`    |
-| `mode`              | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |
-| `max_batch_size`    | int    | 8                              | The size of the batch processed at one time by inference by TensorRT |
-| `approximate_sync`  | bool   | false                          | Flag for whether to ues approximate sync policy                      |
-| `build_only`        | bool   | false                          | shutdown node after TensorRT engine file is built                    |
+| Name               | Type   | Default Value                  | Description                                                          |
+| ------------------ | ------ | ------------------------------ | -------------------------------------------------------------------- |
+| `onnx_file`        | string | "./data/mb2-ssd-lite-tlr.onnx" | The onnx file name for yolo model                                    |
+| `label_file`       | string | "./data/voc_labels_tl.txt"     | The label file with label names for detected objects written on it   |
+| `dnn_header_type`  | string | "pytorch"                      | Name of DNN trained toolbox: "pytorch" or "mmdetection"              |
+| `mode`             | string | "FP32"                         | The inference mode: "FP32", "FP16", "INT8"                           |
+| `max_batch_size`   | int    | 8                              | The size of the batch processed at one time by inference by TensorRT |
+| `approximate_sync` | bool   | false                          | Flag for whether to ues approximate sync policy                      |
+| `build_only`       | bool   | false                          | shutdown node after TensorRT engine file is built                    |
 
 ## Assumptions / Known limits
 

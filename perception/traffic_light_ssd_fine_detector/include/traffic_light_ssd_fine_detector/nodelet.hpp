@@ -102,8 +102,7 @@ private:
   int detection_per_class_;
   std::optional<ssd::Dims2> box_dims_;
   std::optional<ssd::Dims2> score_dims_;
-  bool is_box_first_;
-  bool is_box_normalized_;
+  std::string dnn_header_type_;
 
   std::vector<float> mean_;
   std::vector<float> std_;

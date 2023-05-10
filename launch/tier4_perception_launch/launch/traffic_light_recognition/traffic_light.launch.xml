@@ -6,7 +6,6 @@
   <arg name="input/camera_info" default="/sensing/camera/traffic_light/camera_info" description="camera info topic name for traffic light"/>
   <arg name="fine_detector_label_path" default="$(find-pkg-share traffic_light_ssd_fine_detector)/data/voc_labels_tl.txt" description="fine detector label path"/>
   <arg name="fine_detector_model_path" default="$(find-pkg-share traffic_light_ssd_fine_detector)/data/mb2-ssd-lite-tlr.onnx" description="fine detector onnx model path"/>
-  <arg name="fine_detector_is_box_first" default="false"/>
   <arg name="classifier_label_path" default="$(find-pkg-share traffic_light_classifier)/data/lamp_labels.txt" description="classifier label path"/>
   <arg name="classifier_model_path" default="$(find-pkg-share traffic_light_classifier)/data/traffic_light_classifier_mobilenetv2.onnx" description="classifier onnx model path"/>
   <arg name="use_crosswalk_traffic_light_estimator" default="true" description="output pedestrian's traffic light signals"/>
@@ -36,7 +35,6 @@
       <arg name="use_multithread" value="true"/>
       <arg name="label_file" value="$(var fine_detector_label_path)"/>
       <arg name="onnx_file" value="$(var fine_detector_model_path)"/>
-      <arg name="is_box_first" value="$(var fine_detector_is_box_first)"/>
       <arg name="label_file_path" value="$(var classifier_label_path)"/>
       <arg name="model_file_path" value="$(var classifier_model_path)"/>
     </include>
