@@ -16,6 +16,20 @@
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+namespace
+{
+
+auto create_point(double x, double y)
+{
+  geometry_msgs::msg::Point32 point;
+  point.x = x;
+  point.y = y;
+  point.z = 0.0;
+  return point;
+}
+
+}  // namespace
+
 namespace default_ad_api
 {
 
@@ -37,6 +51,15 @@ VehicleInfoNode::VehicleInfoNode(const rclcpp::NodeOptions & options)
   dimensions_.left_overhang = vehicle.left_overhang_m;
   dimensions_.right_overhang = vehicle.right_overhang_m;
   dimensions_.height = vehicle.vehicle_height_m;
+
+  const auto l = (vehicle.wheel_tread_m / 2.0) + vehicle.left_overhang_m;
+  const auto r = (vehicle.wheel_tread_m / 2.0) + vehicle.right_overhang_m;
+  const auto b = vehicle.rear_overhang_m;
+  const auto f = vehicle.front_overhang_m + vehicle.wheel_base_m;
+  dimensions_.footprint.points.push_back(create_point(+f, +r));
+  dimensions_.footprint.points.push_back(create_point(+f, -l));
+  dimensions_.footprint.points.push_back(create_point(-b, -l));
+  dimensions_.footprint.points.push_back(create_point(-b, +r));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_srv(srv_dimensions_, on_vehicle_dimensions);
