@@ -22,6 +22,10 @@ The node publishes the raw pointcloud map loaded from the `.pcd` file(s).
 
 The node publishes the downsampled pointcloud map loaded from the `.pcd` file(s). You can specify the downsample resolution by changing the `leaf_size` parameter.
 
+#### Publish metadata of pointcloud map (ROS 2 topic)
+
+The node publishes the pointcloud metadata attached with an ID. Metadata is loaded from the `.yaml` file. Please see [the description of `PointCloudMapMetaData.msg`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#pointcloudmapmetadatamsg) for details.
+
 #### Send partial pointcloud map (ROS 2 service)
 
 Here, we assume that the pointcloud maps are divided into grids.
@@ -36,6 +40,13 @@ Here, we assume that the pointcloud maps are divided into grids.
 Given a query and set of map IDs, the node sends a set of pointcloud maps that overlap with the queried area and are not included in the set of map IDs.
 Please see [the description of `GetDifferentialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getdifferentialpointcloudmapsrv) for details.
 
+#### Send selected pointcloud map (ROS 2 service)
+
+Here, we assume that the pointcloud maps are divided into grids.
+
+Given IDs query from a client node, the node sends a set of pointcloud maps (each of which attached with unique ID) specified by query.
+Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getselectedpointcloudmapsrv) for details.
+
 ### Parameters
 
 | Name                          | Type        | Description                                                                       | Default value |
@@ -44,6 +55,7 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 | enable_downsampled_whole_load | bool        | A flag to enable downsampled pointcloud map publishing                            | false         |
 | enable_partial_load           | bool        | A flag to enable partial pointcloud map server                                    | false         |
 | enable_differential_load      | bool        | A flag to enable differential pointcloud map server                               | false         |
+| enable_selected_load          | bool        | A flag to enable selected pointcloud map server                                   | false         |
 | leaf_size                     | float       | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 | pcd_paths_or_directory        | std::string | Path(s) to pointcloud map file or directory                                       |               |
 | pcd_metadata_path             | std::string | Path to pointcloud metadata file                                                  |               |
@@ -51,9 +63,11 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 ### Interfaces
 
 - `output/pointcloud_map` (sensor_msgs/msg/PointCloud2) : Raw pointcloud map
+- `output/pointcloud_map_metadata` (autoware_map_msgs/msg/PointCloudMapMetaData) : Metadata of pointcloud map
 - `output/debug/downsampled_pointcloud_map` (sensor_msgs/msg/PointCloud2) : Downsampled pointcloud map
 - `service/get_partial_pcd_map` (autoware_map_msgs/srv/GetPartialPointCloudMap) : Partial pointcloud map
 - `service/get_differential_pcd_map` (autoware_map_msgs/srv/GetDifferentialPointCloudMap) : Differential pointcloud map
+- `service/get_selected_pcd_map` (autoware_map_msgs/srv/GetSelectedPointCloudMap) : Selected pointcloud map
 - pointcloud map file(s) (.pcd)
 - metadata of pointcloud map(s) (.yaml)
 
@@ -120,7 +134,11 @@ The node projects lan/lon coordinates into MGRS coordinates.
 
 ### Feature
 
-lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray.
+lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. There are 3 types of map can be loaded in autoware. Please make sure you selected the correct lanelet2_map_projector_type when you launch this package.
+
+- MGRS
+- UTM
+- local
 
 ### How to Run
 
@@ -133,3 +151,13 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 ### Published Topics
 
 - ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
+
+### Parameters
+
+| Name                        | Type        | Description                                                  | Default value |
+| :-------------------------- | :---------- | :----------------------------------------------------------- | :------------ |
+| lanelet2_map_projector_type | std::string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
+| latitude                    | double      | Latitude of map_origin, only using in UTM map projector      | 0.0           |
+| longitude                   | double      | Longitude of map_origin, only using in UTM map projector     | 0.0           |
+| center_line_resolution      | double      | Define the resolution of the lanelet center line             | 5.0           |
+| lanelet2_map_path           | std::string | The lanelet2 map path                                        | None          |

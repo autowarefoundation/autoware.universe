@@ -8,11 +8,11 @@ It is a package for traffic light detection using MobileNetV2 and SSDLite.
 
 ### Pretrained Model
 
-The model is based on [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd) and the pretrained model could be downloaded from [here](https://storage.googleapis.com/models-hao/mb2-ssd-lite-mp-0_686.pth).
+The model is based on [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd) and the pretrained model could be downloaded from [here](https://drive.google.com/file/d/1puI6ltKZKJ4RoiCO-ypivzEysHaDVBsa/view).
 
 ### Training Data
 
-The model was fine-tuned on 1750 TierIV internal images of Japanese traffic lights.
+The model was fine-tuned on 1750 TIER IV internal images of Japanese traffic lights.
 
 ### Trained Onnx model
 

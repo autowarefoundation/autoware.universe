@@ -40,8 +40,8 @@
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <utils.hpp>
 
 namespace
@@ -105,6 +105,7 @@ public:
   AutowarePathBaseDisplay()
   :  // path
     property_path_view_{"View Path", true, "", this},
+    property_path_width_view_{"Constant Width", false, "", &property_path_view_},
     property_path_width_{"Width", 2.0, "", &property_path_view_},
     property_path_alpha_{"Alpha", 1.0, "", &property_path_view_},
     property_path_color_view_{"Constant Color", false, "", &property_path_view_},
@@ -211,8 +212,12 @@ public:
 
 protected:
   virtual void visualizeDrivableArea([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
-  virtual void preprocessMessageDetail([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
-  virtual void processMessageDetail(
+  virtual void preProcessMessageDetail() {}
+  virtual void preVisualizePathFootprintDetail(
+    [[maybe_unused]] const typename T::ConstSharedPtr msg_ptr)
+  {
+  }
+  virtual void visualizePathFootprintDetail(
     [[maybe_unused]] const typename T::ConstSharedPtr msg_ptr, [[maybe_unused]] const size_t p_idx)
   {
   }
@@ -230,6 +235,8 @@ protected:
         "Message contained invalid floating point values (nans or infs)");
       return;
     }
+
+    preProcessMessageDetail();
 
     Ogre::Vector3 position;
     Ogre::Quaternion orientation;
@@ -293,6 +300,12 @@ protected:
       velocity_text_nodes_.resize(msg_ptr->points.size());
     }
 
+    const auto info = vehicle_footprint_info_;
+    const float left = property_path_width_view_.getBool() ? -property_path_width_.getFloat() / 2.0
+                                                           : -info->width / 2.0;
+    const float right = property_path_width_view_.getBool() ? property_path_width_.getFloat() / 2.0
+                                                            : info->width / 2.0;
+
     for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
       const auto & path_point = msg_ptr->points.at(point_idx);
       const auto & pose = tier4_autoware_utils::getPose(path_point);
@@ -314,7 +327,7 @@ protected:
         Eigen::Vector3f vec_out;
         Eigen::Quaternionf quat_yaw_reverse(0, 0, 0, 1);
         {
-          vec_in << 0, (property_path_width_.getFloat() / 2.0), 0;
+          vec_in << 0, right, 0;
           Eigen::Quaternionf quat(
             pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
           if (!isDrivingForward(msg_ptr->points, point_idx)) {
@@ -328,7 +341,7 @@ protected:
           path_manual_object_->colour(color);
         }
         {
-          vec_in << 0, -(property_path_width_.getFloat() / 2.0), 0;
+          vec_in << 0, left, 0;
           Eigen::Quaternionf quat(
             pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
           if (!isDrivingForward(msg_ptr->points, point_idx)) {
@@ -404,9 +417,14 @@ protected:
     point_manual_object_->estimateVertexCount(msg_ptr->points.size() * 3 * 8);
     point_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-    const float offset_from_baselink = property_offset_.getFloat();
+    preVisualizePathFootprintDetail(msg_ptr);
 
-    preprocessMessageDetail(msg_ptr);
+    const float offset_from_baselink = property_offset_.getFloat();
+    const auto info = vehicle_footprint_info_;
+    const float top = info->length - info->rear_overhang - offset_from_baselink;
+    const float bottom = -info->rear_overhang + offset_from_baselink;
+    const float left = -info->width / 2.0;
+    const float right = info->width / 2.0;
 
     for (size_t p_idx = 0; p_idx < msg_ptr->points.size(); p_idx++) {
       const auto & point = msg_ptr->points.at(p_idx);
@@ -416,12 +434,6 @@ protected:
         Ogre::ColourValue color;
         color = rviz_common::properties::qtToOgre(property_footprint_color_.getColor());
         color.a = property_footprint_alpha_.getFloat();
-
-        const auto info = vehicle_footprint_info_;
-        const float top = info->length - info->rear_overhang - offset_from_baselink;
-        const float bottom = -info->rear_overhang + offset_from_baselink;
-        const float left = -info->width / 2.0;
-        const float right = info->width / 2.0;
 
         const std::array<float, 4> lon_offset_vec{top, top, bottom, bottom};
         const std::array<float, 4> lat_offset_vec{left, right, right, left};
@@ -481,11 +493,27 @@ protected:
         }
       }
 
-      processMessageDetail(msg_ptr, p_idx);
+      visualizePathFootprintDetail(msg_ptr, p_idx);
     }
 
     footprint_manual_object_->end();
     point_manual_object_->end();
+  }
+
+  void updateVehicleInfo()
+  {
+    if (vehicle_info_) {
+      vehicle_footprint_info_ = std::make_shared<VehicleFootprintInfo>(
+        vehicle_info_->vehicle_length_m, vehicle_info_->vehicle_width_m,
+        vehicle_info_->rear_overhang_m);
+    } else {
+      const float length{property_vehicle_length_.getFloat()};
+      const float width{property_vehicle_width_.getFloat()};
+      const float rear_overhang{property_rear_overhang_.getFloat()};
+
+      vehicle_footprint_info_ =
+        std::make_shared<VehicleFootprintInfo>(length, width, rear_overhang);
+    }
   }
 
   Ogre::ManualObject * path_manual_object_{nullptr};
@@ -496,6 +524,7 @@ protected:
   std::vector<Ogre::SceneNode *> velocity_text_nodes_;
 
   rviz_common::properties::BoolProperty property_path_view_;
+  rviz_common::properties::BoolProperty property_path_width_view_;
   rviz_common::properties::FloatProperty property_path_width_;
   rviz_common::properties::FloatProperty property_path_alpha_;
   rviz_common::properties::BoolProperty property_path_color_view_;
@@ -523,6 +552,8 @@ protected:
   rviz_common::properties::FloatProperty property_point_radius_;
   rviz_common::properties::FloatProperty property_point_offset_;
 
+  std::shared_ptr<VehicleInfo> vehicle_info_;
+
 private:
   typename T::ConstSharedPtr last_msg_ptr_;
 
@@ -535,24 +566,7 @@ private:
     float length, width, rear_overhang;
   };
 
-  std::shared_ptr<VehicleInfo> vehicle_info_;
   std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
-
-  void updateVehicleInfo()
-  {
-    if (vehicle_info_) {
-      vehicle_footprint_info_ = std::make_shared<VehicleFootprintInfo>(
-        vehicle_info_->vehicle_length_m, vehicle_info_->vehicle_width_m,
-        vehicle_info_->rear_overhang_m);
-    } else {
-      const float length{property_vehicle_length_.getFloat()};
-      const float width{property_vehicle_width_.getFloat()};
-      const float rear_overhang{property_rear_overhang_.getFloat()};
-
-      vehicle_footprint_info_ =
-        std::make_shared<VehicleFootprintInfo>(length, width, rear_overhang);
-    }
-  }
 };
 }  // namespace rviz_plugins
 
