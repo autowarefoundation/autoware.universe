@@ -1,28 +1,24 @@
-/*
- * Copyright 2021 Tier IV, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#pragma once
+#ifndef BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
+#define BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 
 #include <bezier_sampler/bezier.hpp>
 #include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
 #include <sampler_common/structures.hpp>
 
-#include <array>
-#include <iostream>
 #include <vector>
 
 namespace bezier_sampler
@@ -37,6 +33,8 @@ struct SamplingParameters
   double mk_max;  // Minimum normalized curvature vector magnitude
 };
 /// @brief sample Bezier curves given an initial and final state and sampling parameters
+/// @details from Section IV of A. Artuñedoet al.: Real-Time Motion Planning Approach for Automated
+/// Driving in Urban Environments
 std::vector<Bezier> sample(
   const sampler_common::State & initial, const sampler_common::State & final,
   const SamplingParameters & params);
@@ -46,3 +44,5 @@ Bezier generate(
   const Eigen::Vector2d & initial_velocity, const Eigen::Vector2d & initial_acceleration,
   const Eigen::Vector2d & final_velocity, const Eigen::Vector2d & final_acceleration);
 }  // namespace bezier_sampler
+
+#endif  // BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_

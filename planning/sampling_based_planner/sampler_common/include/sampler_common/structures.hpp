@@ -40,7 +40,6 @@ using tier4_autoware_utils::MultiPolygon2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
-// TODO(Maxime CLEMENT): split in multiple files
 /// @brief data about constraint check results of a given path
 struct ConstraintResults
 {
@@ -131,7 +130,6 @@ struct Path
     const auto last_base_length = lengths.empty() ? 0.0 : lengths.back() + length_offset;
     for (size_t i = offset; i < path.lengths.size(); ++i)
       extended_path.lengths.push_back(last_base_length + path.lengths[i]);
-    // TODO(Maxime CLEMENT): direct copy from the 2nd path. might need to be improved
     extended_path.cost = path.cost;
     extended_path.constraint_results = path.constraint_results;
     extended_path.tag = path.tag;

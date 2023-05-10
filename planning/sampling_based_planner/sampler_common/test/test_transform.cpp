@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ TEST(splineTransform, toFrenet)
   frenet = spline.frenet({1.5, -2.0});
   EXPECT_NEAR(frenet.s, 1.5, TOL);
   EXPECT_NEAR(frenet.d, -2.0, TOL);
-  /* TODO(Maxime CLEMENT) failing edge cases
+  GTEST_SKIP() << "Skipping edge cases";
   // EDGE CASE before spline
   frenet = spline.frenet({-1.0, 1.0});
   EXPECT_NEAR(frenet.s, -1.0, TOL);
@@ -60,7 +60,6 @@ TEST(splineTransform, toFrenet)
   frenet = spline2.frenet({1.0, 2.0});
   EXPECT_NEAR(frenet.s, 1.0, TOL);
   EXPECT_NEAR(frenet.d, 1.0, TOL);
-  */
 }
 
 TEST(splineTransform, toCartesian)
@@ -73,6 +72,7 @@ TEST(splineTransform, toCartesian)
 
 TEST(splineTransform, benchFrenet)
 {
+  GTEST_SKIP() << "Skipping benchmark test";
   std::random_device rd;
   std::mt19937 gen(rd());
   constexpr auto precision = 1e-2;

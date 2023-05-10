@@ -1,18 +1,16 @@
-/*
- * Copyright 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "frenet_planner/frenet_planner.hpp"
 
@@ -216,47 +214,12 @@ void calculateCartesian(
       trajectory.lateral_velocities.push_back(vel.y());
       trajectory.longitudinal_accelerations.push_back(acc.x());
       trajectory.lateral_accelerations.push_back(acc.y());
-      /*
-      const auto s = trajectory.frenet_points[i].s;
-      const auto d = trajectory.frenet_points[i].d;
-      const auto curvature = reference.curvature(s);
-      const auto curvd = (1 - curvature * d);
-      const auto s_vel = trajectory.longitudinal_polynomial->velocity(time);
-      const auto s_acc = trajectory.longitudinal_polynomial->acceleration(time);
-      const auto d_vel = trajectory.lateral_polynomial->velocity(time);
-      // const auto d_acc = trajectory.lateral_polynomial->acceleration(time);
-      const auto cos_dyaw = std::cos(dyaws[i]);
-      const auto tan_dyaw = std::tan(dyaws[i]);
-      trajectory.longitudinal_velocities.push_back(
-        std::sqrt(curvd * curvd * s_vel * s_vel + d_vel * d_vel));
-      trajectory.lateral_velocities.push_back(curvd * std::tan(dyaws[i]));
-      if (i > 0lu) {
-        const auto ds = s - trajectory.frenet_points[i - 1].s;
-        const auto ddyaw = (dyaws[i] - dyaws[i - 1]) / ds;
-        const auto dcurv =
-          (curvature - reference.curvature(trajectory.frenet_points[i - 1].s)) / ds;
-        const auto dcurvd_curvdd = dcurv * d + curvature * trajectory.lateral_velocities[i];
-        trajectory.longitudinal_accelerations.push_back(
-          s_acc * curvd / cos_dyaw +
-          s_vel * s_vel / cos_dyaw * (curvd * tan_dyaw * ddyaw - dcurvd_curvdd));
-        // TODO(Maxime): the 1st 'curvature' variable should be the curvature of the trajectory, not
-        // the one of the reference path
-        trajectory.lateral_accelerations.push_back(
-          -dcurvd_curvdd * tan_dyaw +
-          curvd / (cos_dyaw * cos_dyaw) * (curvature * (curvd / cos_dyaw) - curvature));
-      }
-      */
       trajectory.jerks.push_back(
         trajectory.longitudinal_polynomial->jerk(time) + trajectory.lateral_polynomial->jerk(time));
     }
     if (trajectory.longitudinal_accelerations.empty()) {
       trajectory.longitudinal_accelerations.push_back(0.0);
       trajectory.lateral_accelerations.push_back(0.0);
-    } else {
-      /*
-      trajectory.longitudinal_accelerations.push_back(trajectory.longitudinal_accelerations.back());
-      trajectory.lateral_accelerations.push_back(trajectory.lateral_accelerations.back());
-      */
     }
   }
 }

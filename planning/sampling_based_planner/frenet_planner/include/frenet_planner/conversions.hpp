@@ -1,18 +1,16 @@
-/*
- * Copyright 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef FRENET_PLANNER__CONVERSIONS_HPP_
 #define FRENET_PLANNER__CONVERSIONS_HPP_
@@ -25,6 +23,9 @@
 
 namespace frenet_planner
 {
+
+/// @brief calculate the lengths and yaws vectors of the given trajectory
+/// @param [inout] trajectory trajectory
 inline void calculateLengthsAndYaws(Trajectory & trajectory)
 {
   if (trajectory.points.empty()) return;
@@ -43,8 +44,6 @@ inline void calculateLengthsAndYaws(Trajectory & trajectory)
   const auto last_yaw = trajectory.yaws.empty() ? 0.0 : trajectory.yaws.back();
   trajectory.yaws.push_back(last_yaw);
 }
-// TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
-// Optimal trajectory Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
 }  // namespace frenet_planner
 
 #endif  // FRENET_PLANNER__CONVERSIONS_HPP_

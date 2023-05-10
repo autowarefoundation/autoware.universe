@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -181,8 +181,7 @@ Spline2D::Spline2D(const std::vector<double> & x, const std::vector<double> & y)
 }
 
 // @brief Calculate the distances of the points along the path
-// TODO(Maxime CLEMENT) need something more precise than linear segments ?
-// https://medium.com/@all2one/how-to-compute-the-length-of-a-spline-e44f5f04c40
+// @details approximation using linear segments
 std::vector<double> Spline2D::arcLength(
   const std::vector<double> & x, const std::vector<double> & y)
 {
@@ -298,7 +297,7 @@ Point2d Spline2D::cartesian(const FrenetPoint & fp) const
 
 double Spline2D::curvature(const double s) const
 {
-  // TODO(Maxime CLEMENT) if need to gain performance, search for s in s_ here and pass index
+  // TODO(Maxime CLEMENT) search for s in s_ here and pass index
   const double x_vel = x_spline_.velocity(s, s_);
   const double y_vel = y_spline_.velocity(s, s_);
   const double x_acc = x_spline_.acceleration(s, s_);

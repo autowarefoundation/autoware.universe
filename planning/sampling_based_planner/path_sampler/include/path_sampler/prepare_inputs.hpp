@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,11 +42,10 @@ void prepareConstraints(
   sampler_common::Constraints & constraints, const PredictedObjects & predicted_objects,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound);
-/// @brief prepare sampling parameters to generate paths in Frenet frame
+/// @brief prepare sampling parameters to generate Frenet paths
 frenet_planner::SamplingParameters prepareSamplingParameters(
-  const sampler_common::State & initial_state,
-  const double base_length, const sampler_common::transform::Spline2D & path_spline,
-  const Parameters & params);
+  const sampler_common::State & initial_state, const double base_length,
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 /// @brief prepare the 2D spline representation of the given Path message
 sampler_common::transform::Spline2D preparePathSpline(
   const std::vector<TrajectoryPoint> & path_msg, const bool smooth_path);

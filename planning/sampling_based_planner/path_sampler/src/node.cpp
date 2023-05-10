@@ -154,8 +154,7 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
     params_.sampling.previous_path_reuse_points_nb);
   updateParam(parameters, "sampling.target_lengths", params_.sampling.target_lengths);
   updateParam(
-    parameters, "sampling.target_lateral_positions",
-    params_.sampling.target_lateral_positions);
+    parameters, "sampling.target_lateral_positions", params_.sampling.target_lateral_positions);
   updateParam(
     parameters, "sampling.nb_target_lateral_positions",
     params_.sampling.nb_target_lateral_positions);
@@ -246,8 +245,7 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
     traj_pub_->publish(output_traj_msg);
   } else {
     auto stopping_traj = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
-    for(auto & p : stopping_traj)
-      p.longitudinal_velocity_mps = 0.0;
+    for (auto & p : stopping_traj) p.longitudinal_velocity_mps = 0.0;
     const auto output_traj_msg =
       trajectory_utils::createTrajectory(path_ptr->header, stopping_traj);
     traj_pub_->publish(output_traj_msg);
@@ -373,7 +371,6 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
   }
   debug_data_.footprints.clear();
   for (auto & path : candidate_paths) {
-    // TODO(Maxime): resample the path ?
     const auto footprint =
       sampler_common::constraints::checkHardConstraints(path, params_.constraints);
     debug_data_.footprints.push_back(footprint);
@@ -409,8 +406,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
       k += static_cast<int>(!p.constraint_results.curvature);
     }
     RCLCPP_WARN(get_logger(), "\tInvalid coll/da/k = %d/%d/%d\n", coll, da, k);
-    if (prev_path_)
-      trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
+    if (prev_path_) trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
   }
   time_keeper_ptr_->toc(__func__, "    ");
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();

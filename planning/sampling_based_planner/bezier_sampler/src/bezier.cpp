@@ -1,20 +1,20 @@
-/*
- * Copyright 2021 Tier IV, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2023 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <bezier_sampler/bezier.hpp>
+
+#include <iostream>
 
 namespace bezier_sampler
 {
@@ -58,8 +58,6 @@ Eigen::Vector2d Bezier::valueM(const double t) const
   return ts * quintic_bezier_coefficients * control_points_;
 }
 
-// TODO(Maxime CLEMENT): ensure points are separated by fixed arc-length (rather than fixed
-// t-parameter)
 std::vector<Eigen::Vector2d> Bezier::cartesian(const int nb_points) const
 {
   std::vector<Eigen::Vector2d> points;
@@ -69,8 +67,6 @@ std::vector<Eigen::Vector2d> Bezier::cartesian(const int nb_points) const
   return points;
 }
 
-// TODO(Maxime CLEMENT): ensure points are separated by fixed arc-length (rather than fixed
-// t-parameter)
 std::vector<Eigen::Vector2d> Bezier::cartesian(const double resolution) const
 {
   std::vector<Eigen::Vector2d> points;
@@ -79,8 +75,6 @@ std::vector<Eigen::Vector2d> Bezier::cartesian(const double resolution) const
   return points;
 }
 
-// TODO(Maxime CLEMENT): ensure points are separated by fixed arc-length (rather than fixed
-// t-parameter)
 std::vector<Eigen::Vector3d> Bezier::cartesianWithHeading(const int nb_points) const
 {
   std::vector<Eigen::Vector3d> points;

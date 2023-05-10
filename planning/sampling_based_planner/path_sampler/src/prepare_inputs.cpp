@@ -41,6 +41,7 @@ void prepareConstraints(
   constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
   constraints.dynamic_obstacles = {};
 
+  // TODO(Maxime): keep using lines instead of polygon
   sampler_common::Polygon2d drivable_area_polygon;
   for (const auto & p : right_bound) drivable_area_polygon.outer().emplace_back(p.x, p.y);
   for (auto it = left_bound.rbegin(); it != left_bound.rend(); ++it)
@@ -55,21 +56,21 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
 {
   // calculate target lateral positions
   std::vector<double> target_lateral_positions;
-  if(params.sampling.nb_target_lateral_positions > 1) {
+  if (params.sampling.nb_target_lateral_positions > 1) {
     target_lateral_positions = {0.0, initial_state.frenet.d};
     double min_d = 0.0;
     double max_d = 0.0;
     double min_d_s = std::numeric_limits<double>::max();
     double max_d_s = std::numeric_limits<double>::max();
-    for(const auto & drivable_poly : params.constraints.drivable_polygons) {
-      for(const auto & p : drivable_poly.outer()) {
+    for (const auto & drivable_poly : params.constraints.drivable_polygons) {
+      for (const auto & p : drivable_poly.outer()) {
         const auto frenet_coordinates = path_spline.frenet(p);
         const auto d_s = std::abs(frenet_coordinates.s - initial_state.frenet.s);
-        if(d_s < min_d_s && frenet_coordinates.d < 0.0) {
+        if (d_s < min_d_s && frenet_coordinates.d < 0.0) {
           min_d_s = d_s;
           min_d = frenet_coordinates.d;
         }
-        if(d_s < max_d_s && frenet_coordinates.d > 0.0) {
+        if (d_s < max_d_s && frenet_coordinates.d > 0.0) {
           max_d_s = d_s;
           max_d = frenet_coordinates.d;
         }
@@ -78,8 +79,8 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
     min_d += params.constraints.ego_width / 2.0;
     max_d -= params.constraints.ego_width / 2.0;
     std::cout << "min_d = " << min_d << " max_d : " << max_d << std::endl;
-    if(min_d < max_d) {
-      for(auto r = 0.0; r <= 1.0; r += 1.0 / (params.sampling.nb_target_lateral_positions - 1))
+    if (min_d < max_d) {
+      for (auto r = 0.0; r <= 1.0; r += 1.0 / (params.sampling.nb_target_lateral_positions - 1))
         target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
     }
   } else {
@@ -113,7 +114,7 @@ sampler_common::transform::Spline2D preparePathSpline(
   std::vector<double> x;
   std::vector<double> y;
   if (smooth_path) {
-    // TODO(Maxime CLEMENT): this version using Eigen::Spline often crashes
+    // TODO(Maxime CLEMENT): this version using Eigen::Spline is unreliable and sometimes crashes
     constexpr auto spline_dim = 3;
     Eigen::MatrixXd control_points(path.size(), 2);
     for (auto i = 0lu; i < path.size(); ++i) {
