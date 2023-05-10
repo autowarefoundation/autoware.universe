@@ -174,7 +174,7 @@ ModuleStatus DynamicAvoidanceModule::updateState()
 
 BehaviorModuleOutput DynamicAvoidanceModule::plan()
 {
-  debug_marker_.markers.clear();
+  info_marker_.markers.clear();
 
   // 1. get reference path from previous module
   const auto prev_module_path = getPreviousModuleOutput().path;
@@ -189,7 +189,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
     if (obstacle_poly) {
       obstacles_for_drivable_area.push_back({object.pose, obstacle_poly.value()});
 
-      appendObjectMarker(debug_marker_, object.pose);
+      appendObjectMarker(info_marker_, object.pose);
     }
   }
 
