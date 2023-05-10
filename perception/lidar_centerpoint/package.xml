@@ -10,8 +10,7 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>pcl_ros</depend>
@@ -19,6 +18,7 @@
   <depend>python3-open3d</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>tensorrt_common</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tier4_autoware_utils</depend>

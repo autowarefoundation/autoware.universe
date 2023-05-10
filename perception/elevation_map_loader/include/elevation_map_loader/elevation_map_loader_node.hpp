@@ -26,6 +26,8 @@
 
 #include "tier4_external_api_msgs/msg/map_hash.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/point_cloud_map_meta_data.hpp>
+#include <autoware_map_msgs/srv/get_selected_point_cloud_map.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/pcl_base.h>
@@ -53,6 +55,7 @@ public:
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_pcl_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   bool use_lane_filter_ = false;
+  std::vector<std::string> pointcloud_map_ids_;
 };
 
 class ElevationMapLoaderNode : public rclcpp::Node
@@ -64,32 +67,33 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pointcloud_map_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::MapHash>::SharedPtr sub_map_hash_;
+  rclcpp::Subscription<autoware_map_msgs::msg::PointCloudMapMetaData>::SharedPtr
+    sub_pointcloud_metadata_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_elevation_map_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_elevation_map_cloud_;
+  rclcpp::Client<autoware_map_msgs::srv::GetSelectedPointCloudMap>::SharedPtr pcd_loader_client_;
+  rclcpp::CallbackGroup::SharedPtr group_;
+  rclcpp::TimerBase::SharedPtr timer_;
   void onPointcloudMap(const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_map);
   void onMapHash(const tier4_external_api_msgs::msg::MapHash::ConstSharedPtr map_hash);
+  void timerCallback();
   void onVectorMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr vector_map);
-
+  void onPointCloudMapMetaData(
+    const autoware_map_msgs::msg::PointCloudMapMetaData pointcloud_map_metadata);
+  void receiveMap();
+  void concatenatePointCloudMaps(
+    sensor_msgs::msg::PointCloud2 & pointcloud_map,
+    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & new_pointcloud_with_ids)
+    const;
+  std::vector<std::string> getRequestIDs(const unsigned int map_id_counter) const;
   void publish();
   void createElevationMap();
   void setVerbosityLevelToDebugIfFlagSet();
   void createElevationMapFromPointcloud(
     const pcl::shared_ptr<grid_map::GridMapPclLoader> & grid_map_pcl_loader);
-  tier4_autoware_utils::LinearRing2d getConvexHull(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & input_cloud);
-  lanelet::ConstLanelets getIntersectedLanelets(
-    const tier4_autoware_utils::LinearRing2d & convex_hull,
-    const lanelet::ConstLanelets & road_lanelets_);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr getLaneFilteredPointCloud(
-    const lanelet::ConstLanelets & joint_lanelets,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud);
-  bool checkPointWithinLanelets(
-    const pcl::PointXYZ & point, const lanelet::ConstLanelets & joint_lanelets);
   void inpaintElevationMap(const float radius);
   pcl::PointCloud<pcl::PointXYZ>::Ptr createPointcloudFromElevationMap();
   void saveElevationMap();
-  float calculateDistancePointFromPlane(
-    const pcl::PointXYZ & point, const lanelet::ConstLanelet & lanelet);
 
   grid_map::GridMap elevation_map_;
   std::string layer_name_;
@@ -97,18 +101,18 @@ private:
   std::string elevation_map_directory_;
   bool use_inpaint_;
   float inpaint_radius_;
+  unsigned int sequential_map_load_num_;
   bool use_elevation_map_cloud_publisher_;
   std::string param_file_path_;
+  bool is_map_metadata_received_ = false;
+  bool is_map_received_ = false;
+  bool is_elevation_map_published_ = false;
 
   DataManager data_manager_;
   struct LaneFilter
   {
-    float voxel_size_x_;
-    float voxel_size_y_;
-    float voxel_size_z_;
-    float lane_margin_;
-    float lane_height_diff_thresh_;
     lanelet::ConstLanelets road_lanelets_;
+    float lane_margin_;
     bool use_lane_filter_;
   };
   LaneFilter lane_filter_;

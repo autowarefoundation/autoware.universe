@@ -48,7 +48,10 @@ struct score_greater
   __device__ bool operator()(const Box3D & lb, const Box3D & rb) { return lb.score > rb.score; }
 };
 
-__device__ inline float sigmoid(float x) { return 1.0f / (1.0f + expf(-x)); }
+__device__ inline float sigmoid(float x)
+{
+  return 1.0f / (1.0f + expf(-x));
+}
 
 __global__ void generateBoxes3D_kernel(
   const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
@@ -114,6 +117,7 @@ PostProcessCUDA::PostProcessCUDA(const CenterPointConfig & config) : config_(con
     config_.yaw_norm_thresholds_.begin(), config_.yaw_norm_thresholds_.end());
 }
 
+// cspell: ignore divup
 cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
   const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d,
@@ -130,7 +134,7 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
     thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
     thrust::raw_pointer_cast(boxes3d_d_.data()));
 
-  // suppress by socre
+  // suppress by score
   const auto num_det_boxes3d = thrust::count_if(
     thrust::device, boxes3d_d_.begin(), boxes3d_d_.end(),
     is_score_greater(config_.score_threshold_));

@@ -72,7 +72,7 @@ MarkerArray getFootprintsMarkerArray(
   return marker_array;
 }
 
-MarkerArray getBoundsLineMarkerArray(
+MarkerArray getBoundsWidthMarkerArray(
   const std::vector<ReferencePoint> & ref_points, const double vehicle_width,
   const size_t sampling_num)
 {
@@ -84,18 +84,18 @@ MarkerArray getBoundsLineMarkerArray(
   // create lower bound marker
   auto lb_marker = createDefaultMarker(
     "map", rclcpp::Clock().now(), "", 0, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
-    createMarkerColor(0.99 + 0.5, 0.99, 0.2, 0.3));
+    createMarkerColor(0.5, 0.99, 0.2, 0.8));
   lb_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   // create upper bound marker
   auto ub_marker = createDefaultMarker(
     "map", rclcpp::Clock().now(), "", 1, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
-    createMarkerColor(0.99, 0.99 + 0.5, 0.2, 0.3));
+    createMarkerColor(0.99, 0.5, 0.2, 0.8));
   ub_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   for (size_t bound_idx = 0; bound_idx < ref_points.at(0).bounds_on_constraints.size();
        ++bound_idx) {
-    const std::string ns = "base_bounds_" + std::to_string(bound_idx);
+    const std::string ns = "bounds" + std::to_string(bound_idx);
 
     {  // lower bound
       lb_marker.points.clear();
@@ -137,6 +137,40 @@ MarkerArray getBoundsLineMarkerArray(
       marker_array.markers.push_back(ub_marker);
     }
   }
+
+  return marker_array;
+}
+
+MarkerArray getBoundsLineMarkerArray(
+  const std::vector<ReferencePoint> & ref_points, const double vehicle_width)
+{
+  MarkerArray marker_array;
+
+  if (ref_points.empty()) return marker_array;
+
+  auto ub_marker = createDefaultMarker(
+    "map", rclcpp::Clock().now(), "left_bounds", 0, Marker::LINE_STRIP,
+    createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(0.0, 1.0, 1.0, 0.8));
+  ub_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+
+  auto lb_marker = createDefaultMarker(
+    "map", rclcpp::Clock().now(), "right_bounds", 0, Marker::LINE_STRIP,
+    createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(0.0, 1.0, 1.0, 0.8));
+  lb_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+
+  for (size_t i = 0; i < ref_points.size(); i++) {
+    const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose;
+
+    const double ub_y = ref_points.at(i).bounds.upper_bound + vehicle_width / 2.0;
+    const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
+    ub_marker.points.push_back(ub);
+
+    const double lb_y = ref_points.at(i).bounds.lower_bound - vehicle_width / 2.0;
+    const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
+    lb_marker.points.push_back(lb);
+  }
+  marker_array.markers.push_back(ub_marker);
+  marker_array.markers.push_back(lb_marker);
 
   return marker_array;
 }
@@ -308,9 +342,13 @@ MarkerArray getDebugMarker(
     getFootprintsMarkerArray(optimized_points, vehicle_info, debug_data.mpt_visualize_sampling_num),
     &marker_array);
 
-  // bounds
+  // bounds lines
   appendMarkerArray(
-    getBoundsLineMarkerArray(
+    getBoundsLineMarkerArray(debug_data.ref_points, vehicle_info.vehicle_width_m), &marker_array);
+
+  // bounds width
+  appendMarkerArray(
+    getBoundsWidthMarkerArray(
       debug_data.ref_points, vehicle_info.vehicle_width_m, debug_data.mpt_visualize_sampling_num),
     &marker_array);
 

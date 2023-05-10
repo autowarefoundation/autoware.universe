@@ -39,14 +39,21 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   input_c_ = node_ptr_->declare_parameter("input_c", 3);
   input_h_ = node_ptr_->declare_parameter("input_h", 224);
   input_w_ = node_ptr_->declare_parameter("input_w", 224);
-  auto input_name = node_ptr_->declare_parameter("input_name", "input_0");
-  auto output_name = node_ptr_->declare_parameter("output_name", "output_0");
+  mean_ = node_ptr_->declare_parameter("mean", std::vector<double>({0.242, 0.193, 0.201}));
+  std_ = node_ptr_->declare_parameter("std", std::vector<double>({1.0, 1.0, 1.0}));
+  std::string input_name = node_ptr_->declare_parameter("input_name", std::string("input_0"));
+  std::string output_name = node_ptr_->declare_parameter("output_name", std::string("output_0"));
   apply_softmax_ = node_ptr_->declare_parameter("apply_softmax", true);
 
   readLabelfile(label_file_path, labels_);
 
   trt_ = std::make_shared<Tn::TrtCommon>(model_file_path, precision, input_name, output_name);
   trt_->setup();
+
+  if (node_ptr_->declare_parameter("build_only", false)) {
+    RCLCPP_INFO(node_ptr_->get_logger(), "TensorRT engine is built and shutdown node.");
+    rclcpp::shutdown();
+  }
 }
 
 bool CNNClassifier::getTrafficSignal(

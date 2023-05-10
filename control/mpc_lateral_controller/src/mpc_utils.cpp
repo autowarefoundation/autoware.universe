@@ -26,7 +26,8 @@ namespace autoware::motion::control::mpc_lateral_controller
 {
 namespace MPCUtils
 {
-using autoware::common::geometry::distance_2d;
+using tier4_autoware_utils::calcDistance2d;
+using tier4_autoware_utils::normalizeRadian;
 
 geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double & yaw)
 {
@@ -42,7 +43,7 @@ void convertEulerAngleToMonotonic(std::vector<double> * a)
   }
   for (uint i = 1; i < a->size(); ++i) {
     const double da = a->at(i) - a->at(i - 1);
-    a->at(i) = a->at(i - 1) + autoware::common::helper_functions::wrap_angle(da);
+    a->at(i) = a->at(i - 1) + normalizeRadian(da);
   }
 }
 
@@ -200,12 +201,12 @@ std::vector<double> calcTrajectoryCurvature(
     p1.y = traj.y[prev_idx];
     p2.y = traj.y[curr_idx];
     p3.y = traj.y[next_idx];
-    const double den = std::max(
-      distance_2d<double>(p1, p2) * distance_2d<double>(p2, p3) * distance_2d<double>(p3, p1),
-      std::numeric_limits<double>::epsilon());
-    const double curvature =
-      2.0 * ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / den;
-    curvature_vec.at(curr_idx) = curvature;
+    try {
+      curvature_vec.at(curr_idx) = tier4_autoware_utils::calcCurvature(p1, p2, p3);
+    } catch (...) {
+      std::cerr << "[MPC] 2 points are too close to calculate curvature." << std::endl;
+      curvature_vec.at(curr_idx) = 0.0;
+    }
   }
 
   /* first and last curvature is copied from next value */
@@ -357,10 +358,9 @@ bool calcNearestPoseInterp(
     alpha * traj.x[*nearest_index] + (1 - alpha) * traj.x[second_nearest_index];
   nearest_pose->position.y =
     alpha * traj.y[*nearest_index] + (1 - alpha) * traj.y[second_nearest_index];
-  const double tmp_yaw_err = autoware::common::helper_functions::wrap_angle(
-    traj.yaw[*nearest_index] - traj.yaw[second_nearest_index]);
-  const double nearest_yaw = autoware::common::helper_functions::wrap_angle(
-    traj.yaw[second_nearest_index] + alpha * tmp_yaw_err);
+  const double tmp_yaw_err =
+    normalizeRadian(traj.yaw[*nearest_index] - traj.yaw[second_nearest_index]);
+  const double nearest_yaw = normalizeRadian(traj.yaw[second_nearest_index] + alpha * tmp_yaw_err);
   nearest_pose->orientation = getQuaternionFromYaw(nearest_yaw);
   *nearest_time = alpha * traj.relative_time[*nearest_index] +
                   (1 - alpha) * traj.relative_time[second_nearest_index];
@@ -380,7 +380,7 @@ double calcStopDistance(
     for (int i = origin + 1; i < static_cast<int>(current_trajectory.points.size()) - 1; ++i) {
       const auto & p0 = current_trajectory.points.at(static_cast<size_t>(i));
       const auto & p1 = current_trajectory.points.at(static_cast<size_t>(i - 1));
-      stop_dist += distance_2d<double>(p0, p1);
+      stop_dist += calcDistance2d(p0, p1);
       if (std::fabs(p0.longitudinal_velocity_mps) < zero_velocity) {
         break;
       }
@@ -395,7 +395,7 @@ double calcStopDistance(
     if (std::fabs(p0.longitudinal_velocity_mps) > zero_velocity) {
       break;
     }
-    stop_dist -= distance_2d<double>(p0, p1);
+    stop_dist -= calcDistance2d(p0, p1);
   }
   return stop_dist;
 }
@@ -408,8 +408,7 @@ void extendTrajectoryInYawDirection(
 
   // get terminal pose
   autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
-  autoware::motion::control::mpc_lateral_controller::MPCUtils::convertToAutowareTrajectory(
-    traj, autoware_traj);
+  MPCUtils::convertToAutowareTrajectory(traj, autoware_traj);
   auto extended_pose = autoware_traj.points.back().pose;
 
   constexpr double extend_dist = 10.0;

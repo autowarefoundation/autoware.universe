@@ -155,7 +155,10 @@ void setVelocityFromIndex(const size_t begin_idx, const double vel, PathWithLane
 void insertVelocity(
   PathWithLaneId & path, const PathPointWithLaneId & path_point, const double v,
   size_t & insert_index, const double min_distance = 0.001);
-inline int64_t bitShift(int64_t original_id) { return original_id << (sizeof(int32_t) * 8 / 2); }
+inline int64_t bitShift(int64_t original_id)
+{
+  return original_id << (sizeof(int32_t) * 8 / 2);
+}
 
 geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
@@ -191,9 +194,6 @@ StopReason initializeStopReason(const std::string & stop_reason);
 void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason);
 
 std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & object);
-
-geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point);
-geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z);
 
 LineString2d extendLine(
   const lanelet::ConstPoint3d & lanelet_point1, const lanelet::ConstPoint3d & lanelet_point2,
@@ -295,7 +295,7 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output);
 
 /*
-  @brief return 'associatvie' lanes in the intersection. 'associative' means that a lane shares same
+  @brief return 'associative' lanes in the intersection. 'associative' means that a lane shares same
   or lane-changeable parent lanes with `lane` and has same turn_direction value.
  */
 std::set<int> getAssociativeIntersectionLanelets(

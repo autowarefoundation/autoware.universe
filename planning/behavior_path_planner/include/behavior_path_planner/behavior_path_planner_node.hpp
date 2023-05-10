@@ -21,19 +21,28 @@
 #ifdef USE_OLD_ARCHITECTURE
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/lane_change/external_request_lane_change_module.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/goal_planner/goal_planner_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
-#include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #else
 #include "behavior_path_planner/planner_manager.hpp"
+#include "behavior_path_planner/scene_module/avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
+#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
+#include "behavior_path_planner/scene_module/pull_out/manager.hpp"
+#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
 #endif
 
 #include "behavior_path_planner/steering_factor_interface.hpp"
-#include "behavior_path_planner/turn_signal_decider.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
+#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/utils/lane_following/module_data.hpp"
+#include "behavior_path_planner/utils/pull_out/pull_out_parameters.hpp"
+#include "behavior_path_planner/utils/side_shift/side_shift_parameters.hpp"
 
 #include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -60,22 +69,11 @@
 #include <string>
 #include <vector>
 
-template <typename T>
-inline void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
-{
-  const auto it = std::find_if(
-    parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
-  if (it != parameters.cend()) {
-    value = static_cast<T>(it->template get_value<T>());
-  }
-}
-
 namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -90,6 +88,7 @@ using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
+using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
@@ -107,9 +106,9 @@ private:
   rclcpp::Subscription<Scenario>::SharedPtr scenario_subscriber_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
-#ifndef USE_OLD_ARCHITECTURE
+  rclcpp::Subscription<OccupancyGrid>::SharedPtr costmap_subscriber_;
+  rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_subscriber_;
-#endif
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
@@ -118,9 +117,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
-#ifndef USE_OLD_ARCHITECTURE
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_reference_publishers_;
-#endif
 
   std::shared_ptr<PlannerData> planner_data_;
 
@@ -138,52 +135,51 @@ private:
   bool has_received_map_{false};
   bool has_received_route_{false};
 
-  TurnSignalDecider turn_signal_decider_;
-
-  std::mutex mutex_pd_;  // mutex for planner_data_
-  std::mutex mutex_bt_;  // mutex for bt_manager_
+  std::mutex mutex_pd_;       // mutex for planner_data_
+  std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
+  std::mutex mutex_map_;      // mutex for has_received_map_ and map_ptr_
+  std::mutex mutex_route_;    // mutex for has_received_route_ and route_ptr_
 
   // setup
   bool isDataReady();
 
-  // update planner data
-  std::shared_ptr<PlannerData> createLatestPlannerData();
-
-#ifdef USE_OLD_ARCHITECTURE
   // parameters
-  std::shared_ptr<AvoidanceParameters> avoidance_param_ptr;
-  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr;
-#endif
+  std::shared_ptr<AvoidanceParameters> avoidance_param_ptr_;
+  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lc_param_ptr_;
+  std::shared_ptr<DynamicAvoidanceParameters> dynamic_avoidance_param_ptr_;
+  std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
+  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
+  std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
+  std::shared_ptr<GoalPlannerParameters> goal_planner_param_ptr_;
 
   BehaviorPathPlannerParameters getCommonParam();
 
 #ifdef USE_OLD_ARCHITECTURE
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();
-  SideShiftParameters getSideShiftParam();
-  AvoidanceParameters getAvoidanceParam();
-  LaneFollowingParameters getLaneFollowingParam();
-  LaneChangeParameters getLaneChangeParam();
-  PullOverParameters getPullOverParam();
-  PullOutParameters getPullOutParam();
 #endif
+
+  AvoidanceParameters getAvoidanceParam();
+  DynamicAvoidanceParameters getDynamicAvoidanceParam();
+  LaneChangeParameters getLaneChangeParam();
+  SideShiftParameters getSideShiftParam();
+  GoalPlannerParameters getGoalPlannerParam();
+  PullOutParameters getPullOutParam();
+  AvoidanceByLCParameters getAvoidanceByLCParam(
+    const std::shared_ptr<AvoidanceParameters> & avoidance_param,
+    const std::shared_ptr<LaneChangeParameters> & lane_change_param);
 
   // callback
   void onOdometry(const Odometry::ConstSharedPtr msg);
   void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
+  void onCostMap(const OccupancyGrid::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
-#ifndef USE_OLD_ARCHITECTURE
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
-#endif
+  void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
-  /**
-   * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
-   */
-  PathWithLaneId modifyPathForSmoothGoalConnection(
-    const PathWithLaneId & path) const;  // (TODO) move to util
   OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
   /**
@@ -194,14 +190,15 @@ private:
   /**
    * @brief extract path from behavior tree output
    */
+#ifdef USE_OLD_ARCHITECTURE
   PathWithLaneId::SharedPtr getPath(
-    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
-
-  /**
-   * @brief skip smooth goal connection
-   */
-  bool skipSmoothGoalConnection(
-    const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
+    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> & planner_data,
+    const std::shared_ptr<BehaviorTreeManager> & bt_manager);
+#else
+  PathWithLaneId::SharedPtr getPath(
+    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> & planner_data,
+    const std::shared_ptr<PlannerManager> & planner_manager);
+#endif
 
   bool keepInputPoints(const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
 
@@ -220,7 +217,8 @@ private:
   /**
    * @brief publish steering factor from intersection
    */
-  void publish_steering_factor(const TurnIndicatorsCommand & turn_signal);
+  void publish_steering_factor(
+    const std::shared_ptr<PlannerData> & planner_data, const TurnIndicatorsCommand & turn_signal);
 
   /**
    * @brief publish left and right bound
@@ -230,27 +228,34 @@ private:
   /**
    * @brief publish debug messages
    */
-  void publishSceneModuleDebugMsg();
+#ifdef USE_OLD_ARCHITECTURE
+  void publishSceneModuleDebugMsg(
+    const std::shared_ptr<SceneModuleVisitor> & debug_messages_data_ptr);
+#endif
 
   /**
    * @brief publish path candidate
    */
 #ifdef USE_OLD_ARCHITECTURE
   void publishPathCandidate(
-    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules);
+    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules,
+    const std::shared_ptr<PlannerData> & planner_data);
 #else
   void publishPathCandidate(
-    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers);
+    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
+    const std::shared_ptr<PlannerData> & planner_data);
 
   void publishPathReference(
-    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers);
+    const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
+    const std::shared_ptr<PlannerData> & planner_data);
 #endif
 
   /**
    * @brief convert path with lane id to path for publish path candidate
    */
   Path convertToPath(
-    const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready);
+    const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready,
+    const std::shared_ptr<PlannerData> & planner_data);
 };
 }  // namespace behavior_path_planner
 

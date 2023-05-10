@@ -179,10 +179,8 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVirtualWallMarkerArray()
   visualization_msgs::msg::MarkerArray wall_marker;
   rclcpp::Time now = node_.now();
 
-  size_t id = 0;
-
   appendMarkerArray(
-    virtual_wall_marker_creator_->createStopVirtualWallMarker(stop_pose_, "run_out", now, id),
+    virtual_wall_marker_creator_->createStopVirtualWallMarker(stop_pose_, "run_out", now),
     &wall_marker, now);
 
   stop_pose_.clear();
@@ -284,7 +282,10 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 
   return msg;
 }
-void RunOutDebug::setAccelReason(const AccelReason & accel_reason) { accel_reason_ = accel_reason; }
+void RunOutDebug::setAccelReason(const AccelReason & accel_reason)
+{
+  accel_reason_ = accel_reason;
+}
 
 void RunOutDebug::publishDebugValue()
 {
@@ -333,7 +334,10 @@ void RunOutDebug::publishEmptyPointCloud()
   pub_debug_pointcloud_->publish(pc);
 }
 
-void RunOutDebug::setHeight(const double height) { height_ = height; }
+void RunOutDebug::setHeight(const double height)
+{
+  height_ = height;
+}
 
 // scene module
 visualization_msgs::msg::MarkerArray RunOutModule::createDebugMarkerArray()

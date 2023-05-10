@@ -26,7 +26,10 @@
 #include <memory>
 #include <string>
 
-inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
+inline std::string Bool2String(const bool var)
+{
+  return var ? "True" : "False";
+}
 
 namespace rviz_plugins
 {
@@ -188,7 +191,7 @@ QGroupBox * AutowareStatePanel::makeMotionGroup()
 
 QGroupBox * AutowareStatePanel::makeFailSafeGroup()
 {
-  auto * group = new QGroupBox("FalSafe");
+  auto * group = new QGroupBox("FailSafe");
   auto * grid = new QGridLayout;
 
   mrm_state_label_ptr_ = new QLabel("INIT");
@@ -488,7 +491,7 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
   {
     QString text = "";
     QString style_sheet = "";
-    switch (msg->state) {
+    switch (msg->behavior) {
       case MRMState::NONE:
         text = "NONE";
         style_sheet = "background-color: #00FF00;";  // green

@@ -15,9 +15,9 @@
 #ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_INTERFACE_HPP_
 #define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_INTERFACE_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Dense"
-#include "eigen3/Eigen/LU"
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/LU>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -41,7 +41,7 @@ public:
    * @param [in] lb_a parameter matrix for constraint lb_a < a*u < ub_a
    * @param [in] ub_a parameter matrix for constraint lb_a < a*u < ub_a
    * @param [out] u optimal variable vector
-   * @return ture if the problem was solved
+   * @return true if the problem was solved
    */
   virtual bool solve(
     const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,

@@ -14,8 +14,9 @@
 
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 
-#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -49,7 +50,10 @@ void JerkFilteredSmoother::setParam(const Param & smoother_param)
   smoother_param_ = smoother_param;
 }
 
-JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
+JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const
+{
+  return smoother_param_;
+}
 
 bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
@@ -198,12 +202,15 @@ bool JerkFilteredSmoother::apply(
     P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
   }
 
+  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
   for (size_t i = 0; i < N; ++i) {
-    const double v_max = std::max(v_max_arr.at(i), 0.1);
-    q.at(IDX_B0 + i) =
-      -1.0 / (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
-    if (i < N - 1) {
-      q.at(IDX_B0 + i) *= std::max(interval_dist_arr.at(i), 0.0001);
+    if (v_max_arr.at(i) > 0.01) {
+      // Note that if v_max[i] is too small, we did not minimize the corresponding -b[i]
+      double v_weight_term = -1.0 / (v_max_arr.at(i) * v_max_arr.at(i));
+      if (i < N - 1) {
+        v_weight_term *= std::max(interval_dist_arr.at(i), 0.0001);
+      }
+      q.at(IDX_B0 + i) += v_weight_term;
     }
     P(IDX_DELTA0 + i, IDX_DELTA0 + i) += over_v_weight;  // over velocity cost
     P(IDX_SIGMA0 + i, IDX_SIGMA0 + i) += over_a_weight;  // over acceleration cost
@@ -287,6 +294,17 @@ bool JerkFilteredSmoother::apply(
   // execute optimization
   const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
   const std::vector<double> optval = std::get<0>(result);
+  const int status_val = std::get<3>(result);
+  if (status_val != 1) {
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    return false;
+  }
+  const auto has_nan =
+    std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return false;
+  }
 
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =

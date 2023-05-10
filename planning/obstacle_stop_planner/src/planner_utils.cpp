@@ -14,6 +14,7 @@
 
 #include "obstacle_stop_planner/planner_utils.hpp"
 
+#include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/tmp_conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
@@ -26,180 +27,11 @@
 namespace motion_planning
 {
 
+using motion_utils::calcDecelDistWithJerkAndAccConstraints;
 using motion_utils::findFirstNearestIndexWithSoftConstraints;
 using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::getRPY;
-
-bool validCheckDecelPlan(
-  const double v_end, const double a_end, const double v_target, const double a_target,
-  const double v_margin, const double a_margin)
-{
-  const double v_min = v_target - std::abs(v_margin);
-  const double v_max = v_target + std::abs(v_margin);
-  const double a_min = a_target - std::abs(a_margin);
-  const double a_max = a_target + std::abs(a_margin);
-
-  if (v_end < v_min || v_max < v_end) {
-    RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("validCheckDecelPlan"),
-      "[validCheckDecelPlan] valid check error! v_target = " << v_target << ", v_end = " << v_end);
-    return false;
-  }
-  if (a_end < a_min || a_max < a_end) {
-    RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("validCheckDecelPlan"),
-      "[validCheckDecelPlan] valid check error! a_target = " << a_target << ", a_end = " << a_end);
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE1)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (am) minimum deceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @param (jd) minimum jerk [m/sss]
- * @param (t_min) duration of constant deceleration [s]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType1(
-  const double v0, const double vt, const double a0, const double am, const double ja,
-  const double jd, const double t_min)
-{
-  constexpr double epsilon = 1e-3;
-
-  const double j1 = am < a0 ? jd : ja;
-  const double t1 = epsilon < (am - a0) / j1 ? (am - a0) / j1 : 0.0;
-  const double a1 = a0 + j1 * t1;
-  const double v1 = v0 + a0 * t1 + 0.5 * j1 * t1 * t1;
-  const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * j1 * t1 * t1 * t1;
-
-  const double t2 = epsilon < t_min ? t_min : 0.0;
-  const double a2 = a1;
-  const double v2 = v1 + a1 * t2;
-  const double x2 = x1 + v1 * t2 + 0.5 * a1 * t2 * t2;
-
-  const double t3 = epsilon < (0.0 - am) / ja ? (0.0 - am) / ja : 0.0;
-  const double a3 = a2 + ja * t3;
-  const double v3 = v2 + a2 * t3 + 0.5 * ja * t3 * t3;
-  const double x3 = x2 + v2 * t3 + 0.5 * a2 * t3 * t3 + (1.0 / 6.0) * ja * t3 * t3 * t3;
-
-  const double a_target = 0.0;
-  const double v_margin = 0.3;  // [m/s]
-  const double a_margin = 0.1;  // [m/s^2]
-
-  if (!validCheckDecelPlan(v3, a3, vt, a_target, v_margin, a_margin)) {
-    return {};
-  }
-
-  return x3;
-}
-
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE2)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (am) minimum deceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @param (jd) minimum jerk [m/sss]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType2(
-  const double v0, const double vt, const double a0, const double ja, const double jd)
-{
-  constexpr double epsilon = 1e-3;
-
-  const double a1_square = (vt - v0 - 0.5 * (0.0 - a0) / jd * a0) * (2.0 * ja * jd / (ja - jd));
-  const double a1 = -std::sqrt(a1_square);
-
-  const double t1 = epsilon < (a1 - a0) / jd ? (a1 - a0) / jd : 0.0;
-  const double v1 = v0 + a0 * t1 + 0.5 * jd * t1 * t1;
-  const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * jd * t1 * t1 * t1;
-
-  const double t2 = epsilon < (0.0 - a1) / ja ? (0.0 - a1) / ja : 0.0;
-  const double a2 = a1 + ja * t2;
-  const double v2 = v1 + a1 * t2 + 0.5 * ja * t2 * t2;
-  const double x2 = x1 + v1 * t2 + 0.5 * a1 * t2 * t2 + (1.0 / 6.0) * ja * t2 * t2 * t2;
-
-  const double a_target = 0.0;
-  const double v_margin = 0.3;
-  const double a_margin = 0.1;
-
-  if (!validCheckDecelPlan(v2, a2, vt, a_target, v_margin, a_margin)) {
-    return {};
-  }
-
-  return x2;
-}
-
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE3)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType3(
-  const double v0, const double vt, const double a0, const double ja)
-{
-  constexpr double epsilon = 1e-3;
-
-  const double t_acc = (0.0 - a0) / ja;
-
-  const double t1 = epsilon < t_acc ? t_acc : 0.0;
-  const double a1 = a0 + ja * t1;
-  const double v1 = v0 + a0 * t1 + 0.5 * ja * t1 * t1;
-  const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * ja * t1 * t1 * t1;
-
-  const double a_target = 0.0;
-  const double v_margin = 0.3;
-  const double a_margin = 0.1;
-
-  if (!validCheckDecelPlan(v1, a1, vt, a_target, v_margin, a_margin)) {
-    return {};
-  }
-
-  return x1;
-}
-
-boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
-  const double current_vel, const double target_vel, const double current_acc, const double acc_min,
-  const double jerk_acc, const double jerk_dec)
-{
-  constexpr double epsilon = 1e-3;
-  const double t_dec =
-    acc_min < current_acc ? (acc_min - current_acc) / jerk_dec : (acc_min - current_acc) / jerk_acc;
-  const double t_acc = (0.0 - acc_min) / jerk_acc;
-  const double t_min = (target_vel - current_vel - current_acc * t_dec -
-                        0.5 * jerk_dec * t_dec * t_dec - 0.5 * acc_min * t_acc) /
-                       acc_min;
-
-  // check if it is possible to decelerate to the target velocity
-  // by simply bringing the current acceleration to zero.
-  const auto is_decel_needed =
-    0.5 * (0.0 - current_acc) / jerk_acc * current_acc > target_vel - current_vel;
-
-  if (t_min > epsilon) {
-    return calcDecelDistPlanType1(
-      current_vel, target_vel, current_acc, acc_min, jerk_acc, jerk_dec, t_min);
-  } else if (is_decel_needed || current_acc > epsilon) {
-    return calcDecelDistPlanType2(current_vel, target_vel, current_acc, jerk_acc, jerk_dec);
-  } else {
-    return calcDecelDistPlanType3(current_vel, target_vel, current_acc, jerk_acc);
-  }
-
-  return {};
-}
 
 boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   const SlowDownParam & slow_down_param, const double dist_baselink_to_obstacle,
@@ -426,16 +258,11 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 }
 
 bool withinPolygon(
-  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Polygon2d & boost_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
   PointCloud::Ptr within_points_ptr)
 {
-  Polygon2d boost_polygon;
   bool find_within_points = false;
-  for (const auto & point : cv_polygon) {
-    boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
-  }
-  boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
 
   for (size_t j = 0; j < candidate_points_ptr->size(); ++j) {
     Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
@@ -450,16 +277,11 @@ bool withinPolygon(
 }
 
 bool withinPolyhedron(
-  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Polygon2d & boost_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
   PointCloud::Ptr within_points_ptr, double z_min, double z_max)
 {
-  Polygon2d boost_polygon;
   bool find_within_points = false;
-  for (const auto & point : cv_polygon) {
-    boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
-  }
-  boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
 
   for (const auto & candidate_point : *candidate_points_ptr) {
     Point2d point(candidate_point.x, candidate_point.y);
@@ -475,79 +297,62 @@ bool withinPolyhedron(
   return find_within_points;
 }
 
-bool convexHull(
-  const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points)
+void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point)
 {
-  cv::Point2d centroid;
-  centroid.x = 0;
-  centroid.y = 0;
-  for (const auto & point : pointcloud) {
-    centroid.x += point.x;
-    centroid.y += point.y;
-  }
-  centroid.x = centroid.x / static_cast<double>(pointcloud.size());
-  centroid.y = centroid.y / static_cast<double>(pointcloud.size());
+  Point2d point;
+  point.x() = geom_point.x;
+  point.y() = geom_point.y;
 
-  std::vector<cv::Point> normalized_pointcloud;
-  std::vector<cv::Point> normalized_polygon_points;
-  for (const auto & p : pointcloud) {
-    normalized_pointcloud.emplace_back(
-      cv::Point((p.x - centroid.x) * 1000.0, (p.y - centroid.y) * 1000.0));
-  }
-  cv::convexHull(normalized_pointcloud, normalized_polygon_points);
-
-  for (const auto & p : normalized_polygon_points) {
-    cv::Point2d polygon_point;
-    polygon_point.x = (p.x / 1000.0 + centroid.x);
-    polygon_point.y = (p.y / 1000.0 + centroid.y);
-    polygon_points.push_back(polygon_point);
-  }
-  return true;
+  boost::geometry::append(polygon.outer(), point);
 }
 
 void createOneStepPolygon(
-  const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
+  const Pose & base_step_pose, const Pose & next_step_pose, Polygon2d & hull_polygon,
   const VehicleInfo & vehicle_info, const double expand_width)
 {
-  std::vector<cv::Point2d> one_step_move_vehicle_corner_points;
+  Polygon2d polygon;
 
-  const auto & i = vehicle_info;
-  const auto & front_m = i.max_longitudinal_offset_m;
-  const auto & width_m = i.vehicle_width_m / 2.0 + expand_width;
-  const auto & back_m = i.rear_overhang_m;
-  // start step
-  {
-    const auto yaw = getRPY(base_step_pose).z;
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
-      base_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * -width_m,
-      base_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * -width_m,
-      base_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * width_m,
-      base_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * width_m));
+  const double longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
+  const double width = vehicle_info.vehicle_width_m / 2.0 + expand_width;
+  const double rear_overhang = vehicle_info.rear_overhang_m;
+
+  {  // base step
+    appendPointToPolygon(
+      polygon, tier4_autoware_utils::calcOffsetPose(base_step_pose, longitudinal_offset, width, 0.0)
+                 .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(base_step_pose, longitudinal_offset, -width, 0.0)
+        .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(base_step_pose, -rear_overhang, -width, 0.0).position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(base_step_pose, -rear_overhang, width, 0.0).position);
   }
-  // next step
-  {
-    const auto yaw = getRPY(next_step_pose).z;
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
-      next_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * -width_m,
-      next_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * -width_m,
-      next_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * width_m,
-      next_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * width_m));
+
+  {  // next step
+    appendPointToPolygon(
+      polygon, tier4_autoware_utils::calcOffsetPose(next_step_pose, longitudinal_offset, width, 0.0)
+                 .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(next_step_pose, longitudinal_offset, -width, 0.0)
+        .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(next_step_pose, -rear_overhang, -width, 0.0).position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(next_step_pose, -rear_overhang, width, 0.0).position);
   }
-  convexHull(one_step_move_vehicle_corner_points, polygon);
+
+  polygon = tier4_autoware_utils::isClockwise(polygon)
+              ? polygon
+              : tier4_autoware_utils::inverseClockwise(polygon);
+
+  boost::geometry::convex_hull(polygon, hull_polygon);
 }
 
 void insertStopPoint(
@@ -805,7 +610,9 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   object_polygon.outer().emplace_back(p4_obj.x(), p4_obj.y());
 
   object_polygon.outer().push_back(object_polygon.outer().front());
-
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
   return object_polygon;
 }
 
@@ -826,7 +633,9 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
   }
 
   object_polygon.outer().push_back(object_polygon.outer().front());
-
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
   return object_polygon;
 }
 
@@ -844,7 +653,9 @@ Polygon2d convertPolygonObjectToGeometryPolygon(
     object_polygon.outer().emplace_back(tf_obj.x(), tf_obj.y());
   }
   object_polygon.outer().push_back(object_polygon.outer().front());
-
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
   return object_polygon;
 }
 }  // namespace motion_planning

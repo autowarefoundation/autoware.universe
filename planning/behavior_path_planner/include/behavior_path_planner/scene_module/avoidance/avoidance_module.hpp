@@ -17,7 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -44,52 +45,33 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
+#ifdef USE_OLD_ARCHITECTURE
   AvoidanceModule(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
+#else
+  AvoidanceModule(
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+#endif
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  BT::NodeStatus updateState() override;
-  BT::NodeStatus getNodeStatusWhileWaitingApproval() const override
-  {
-    return BT::NodeStatus::SUCCESS;
-  }
+  ModuleStatus updateState() override;
+  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
   void updateData() override;
   void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
-  void publishRTCStatus() override
+#ifndef USE_OLD_ARCHITECTURE
+  void updateModuleParams(const std::shared_ptr<AvoidanceParameters> & parameters)
   {
-    rtc_interface_left_.publishCooperateStatus(clock_->now());
-    rtc_interface_right_.publishCooperateStatus(clock_->now());
+    parameters_ = parameters;
   }
-
-  bool isActivated() override
-  {
-    if (rtc_interface_left_.isRegistered(uuid_left_)) {
-      return rtc_interface_left_.isActivated(uuid_left_);
-    }
-    if (rtc_interface_right_.isRegistered(uuid_right_)) {
-      return rtc_interface_right_.isActivated(uuid_right_);
-    }
-    return false;
-  }
-
-  void lockRTCCommand() override
-  {
-    rtc_interface_left_.lockCommandUpdate();
-    rtc_interface_right_.lockCommandUpdate();
-  }
-
-  void unlockRTCCommand() override
-  {
-    rtc_interface_left_.unlockCommandUpdate();
-    rtc_interface_right_.unlockCommandUpdate();
-  }
+#endif
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
@@ -107,29 +89,24 @@ private:
 
   PathShifter path_shifter_;
 
-  RTCInterface rtc_interface_left_;
-  RTCInterface rtc_interface_right_;
-
   RegisteredShiftLineArray left_shift_array_;
   RegisteredShiftLineArray right_shift_array_;
   UUID candidate_uuid_;
-  UUID uuid_left_;
-  UUID uuid_right_;
 
   void updateCandidateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
-      rtc_interface_left_.updateCooperateStatus(
-        uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+        uuid_map_.at("left"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_left_;
+      candidate_uuid_ = uuid_map_.at("left");
       return;
     }
     if (candidate.lateral_shift < 0.0) {
-      rtc_interface_right_.updateCooperateStatus(
-        uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
+      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+        uuid_map_.at("right"), isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_right_;
+      candidate_uuid_ = uuid_map_.at("right");
       return;
     }
 
@@ -147,7 +124,7 @@ private:
         calcSignedArcLength(path.points, ego_position, left_shift.start_pose.position);
       const double finish_distance =
         calcSignedArcLength(path.points, ego_position, left_shift.finish_pose.position);
-      rtc_interface_left_.updateCooperateStatus(
+      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
@@ -161,7 +138,7 @@ private:
         calcSignedArcLength(path.points, ego_position, right_shift.start_pose.position);
       const double finish_distance =
         calcSignedArcLength(path.points, ego_position, right_shift.finish_pose.position);
-      rtc_interface_right_.updateCooperateStatus(
+      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
@@ -172,46 +149,33 @@ private:
     }
   }
 
-  void removeRTCStatus() override
-  {
-    rtc_interface_left_.clearCooperateStatus();
-    rtc_interface_right_.clearCooperateStatus();
-  }
-
   void removeCandidateRTCStatus()
   {
-    if (rtc_interface_left_.isRegistered(candidate_uuid_)) {
-      rtc_interface_left_.removeCooperateStatus(candidate_uuid_);
-    } else if (rtc_interface_right_.isRegistered(candidate_uuid_)) {
-      rtc_interface_right_.removeCooperateStatus(candidate_uuid_);
+    if (rtc_interface_ptr_map_.at("left")->isRegistered(candidate_uuid_)) {
+      rtc_interface_ptr_map_.at("left")->removeCooperateStatus(candidate_uuid_);
+    } else if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
+      rtc_interface_ptr_map_.at("right")->removeCooperateStatus(candidate_uuid_);
     }
   }
 
   void removePreviousRTCStatusLeft()
   {
-    if (rtc_interface_left_.isRegistered(uuid_left_)) {
-      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    if (rtc_interface_ptr_map_.at("left")->isRegistered(uuid_map_.at("left"))) {
+      rtc_interface_ptr_map_.at("left")->removeCooperateStatus(uuid_map_.at("left"));
     }
   }
 
   void removePreviousRTCStatusRight()
   {
-    if (rtc_interface_right_.isRegistered(uuid_right_)) {
-      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    if (rtc_interface_ptr_map_.at("right")->isRegistered(uuid_map_.at("right"))) {
+      rtc_interface_ptr_map_.at("right")->removeCooperateStatus(uuid_map_.at("right"));
     }
   }
 
-  /**
-   * object pre-process
-   */
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
-
-  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
-
-  void fillObjectMovingTime(ObjectData & object_data) const;
-
-  void compensateDetectionLost(
-    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
 
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
@@ -238,7 +202,6 @@ private:
   AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
-  void updateRegisteredObject(const ObjectDataArray & objects);
 
   // ========= shift line generator ======
 
@@ -265,12 +228,12 @@ private:
 
   // shift point generation: trimmers
   AvoidLineArray trimShiftLine(const AvoidLineArray & shift_lines, DebugData & debug) const;
-  void quantizeShiftLine(AvoidLineArray & shift_lines, const double interval) const;
-  void trimSmallShiftLine(AvoidLineArray & shift_lines, const double shift_diff_thres) const;
+  void quantizeShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
+  void trimSmallShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
   void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
   void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
   void trimTooSharpShift(AvoidLineArray & shift_lines) const;
-  void trimSharpReturn(AvoidLineArray & shift_lines) const;
+  void trimSharpReturn(AvoidLineArray & shift_lines, const double threshold) const;
 
   // shift point generation: return-shift generator
   void addReturnShiftLineFromEgo(
@@ -281,6 +244,7 @@ private:
     AvoidLineArray & shift_lines, const bool recalculate_start_length = true) const;
   AvoidLineArray fillAdditionalInfo(const AvoidLineArray & shift_lines) const;
   AvoidLine fillAdditionalInfo(const AvoidLine & shift_line) const;
+  AvoidLine getNonStraightShiftLine(const AvoidLineArray & shift_lines) const;
   void fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const;
   void fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const;
 
@@ -292,7 +256,7 @@ private:
 
   // -- path generation --
   ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
-  void generateExtendedDrivableArea(PathWithLaneId & path) const;
+  void generateExtendedDrivableArea(BehaviorModuleOutput & output) const;
 
   // -- velocity planning --
   std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
@@ -304,16 +268,27 @@ private:
   // intersection (old)
   boost::optional<AvoidLine> calcIntersectionShiftLine(const AvoidancePlanningData & data) const;
 
-  bool isTargetObjectType(const PredictedObject & object) const;
-
   // debug
   mutable DebugData debug_data_;
   mutable std::shared_ptr<AvoidanceDebugMsgArray> debug_msg_ptr_;
-  void setDebugData(
-    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
-  void updateAvoidanceDebugData(std::vector<AvoidanceDebugMsg> & avoidance_debug_msg_array) const;
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
+
+  /**
+   * @brief fill debug markers.
+   */
+  void updateDebugMarker(
+    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
+
+  /**
+   * @brief fill information markers that are shown in Rviz by default.
+   */
+  void updateInfoMarker(const AvoidancePlanningData & data) const;
+
+  /**
+   * @brief fill debug msg that are published as a topic.
+   */
+  void updateAvoidanceDebugData(std::vector<AvoidanceDebugMsg> & avoidance_debug_msg_array) const;
 
   double getLateralMarginFromVelocity(const double velocity) const;
 
@@ -347,9 +322,11 @@ private:
     path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
   }
 
-  double getFeasibleDecelDistance(const double target_velocity) const;
+  boost::optional<double> getFeasibleDecelDistance(const double target_velocity) const;
 
-  double getMildDecelDistance(const double target_velocity) const;
+  boost::optional<double> getMildDecelDistance(const double target_velocity) const;
+
+  double getRelativeLengthFromPath(const AvoidLine & avoid_line) const;
 
   // ========= safety check ==============
 
@@ -369,11 +346,6 @@ private:
     MarginData & margin_data) const;
 
   // ========= helper functions ==========
-
-  double getEgoSpeed() const
-  {
-    return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
-  }
 
   double getNominalAvoidanceEgoSpeed() const
   {
@@ -454,14 +426,7 @@ private:
 
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
 
-  Point getEgoPosition() const { return planner_data_->self_odometry->pose.pose.position; }
-
-  Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-
-  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-
-  PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
+  PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
 
   // TODO(Horibe): think later.
   // for unique ID

@@ -40,6 +40,7 @@
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
@@ -114,22 +115,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
-  sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
-    "~/input/external_crosswalk_states", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1),
-    createSubscriptionOptions(this));
-  sub_external_intersection_states_ =
-    this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
-      "~/input/external_intersection_states", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
-  sub_external_traffic_signals_ =
-    this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/external_traffic_signals", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1),
-      createSubscriptionOptions(this));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 1,
@@ -149,9 +137,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);
 
   // Parameters
-  forward_path_length_ = this->declare_parameter("forward_path_length", 1000.0);
-  backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
-  planner_data_.stop_line_extend_length = this->declare_parameter("stop_line_extend_length", 5.0);
+  forward_path_length_ = this->declare_parameter<double>("forward_path_length");
+  backward_path_length_ = this->declare_parameter<double>("backward_path_length");
+  planner_data_.stop_line_extend_length =
+    this->declare_parameter<double>("stop_line_extend_length");
 
   // nearest search
   planner_data_.ego_nearest_dist_threshold =
@@ -160,44 +149,47 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
-  if (this->declare_parameter("launch_crosswalk", true)) {
+  if (this->declare_parameter<bool>("launch_crosswalk")) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
     planner_manager_.launchSceneModule(std::make_shared<WalkwayModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_traffic_light", true)) {
+  if (this->declare_parameter<bool>("launch_traffic_light")) {
     planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_intersection", true)) {
+  if (this->declare_parameter<bool>("launch_intersection")) {
     // intersection module should be before merge from private to declare intersection parameters
     planner_manager_.launchSceneModule(std::make_shared<IntersectionModuleManager>(*this));
     planner_manager_.launchSceneModule(std::make_shared<MergeFromPrivateModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_blind_spot", true)) {
+  if (this->declare_parameter<bool>("launch_blind_spot")) {
     planner_manager_.launchSceneModule(std::make_shared<BlindSpotModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_detection_area", true)) {
+  if (this->declare_parameter<bool>("launch_detection_area")) {
     planner_manager_.launchSceneModule(std::make_shared<DetectionAreaModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_virtual_traffic_light", true)) {
+  if (this->declare_parameter<bool>("launch_virtual_traffic_light")) {
     planner_manager_.launchSceneModule(std::make_shared<VirtualTrafficLightModuleManager>(*this));
   }
   // this module requires all the stop line.Therefore this modules should be placed at the bottom.
-  if (this->declare_parameter("launch_no_stopping_area", true)) {
+  if (this->declare_parameter<bool>("launch_no_stopping_area")) {
     planner_manager_.launchSceneModule(std::make_shared<NoStoppingAreaModuleManager>(*this));
   }
   // permanent stop line module should be after no stopping area
-  if (this->declare_parameter("launch_stop_line", true)) {
+  if (this->declare_parameter<bool>("launch_stop_line")) {
     planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
   }
   // to calculate ttc it's better to be after stop line
-  if (this->declare_parameter("launch_occlusion_spot", true)) {
+  if (this->declare_parameter<bool>("launch_occlusion_spot")) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_run_out", false)) {
+  if (this->declare_parameter<bool>("launch_run_out")) {
     planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_speed_bump", true)) {
+  if (this->declare_parameter<bool>("launch_speed_bump")) {
     planner_manager_.launchSceneModule(std::make_shared<SpeedBumpModuleManager>(*this));
+  }
+  if (this->declare_parameter<bool>("launch_out_of_lane")) {
+    planner_manager_.launchSceneModule(std::make_shared<OutOfLaneModuleManager>(*this));
   }
 }
 
@@ -236,6 +228,11 @@ bool BehaviorVelocityPlannerNode::isDataReady(
   if (!d.velocity_smoother_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
+    return false;
+  }
+  if (!d.occupancy_grid) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of occupancy grid map");
     return false;
   }
   return true;
@@ -353,36 +350,10 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
   }
 }
 
-void BehaviorVelocityPlannerNode::onExternalCrosswalkStates(
-  const tier4_api_msgs::msg::CrosswalkStatus::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.external_crosswalk_status_input = *msg;
-}
-
-void BehaviorVelocityPlannerNode::onExternalIntersectionStates(
-  const tier4_api_msgs::msg::IntersectionStatus::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.external_intersection_status_input = *msg;
-}
-
 void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
-}
-
-void BehaviorVelocityPlannerNode::onExternalTrafficSignals(
-  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  for (const auto & signal : msg->signals) {
-    autoware_auto_perception_msgs::msg::TrafficSignalStamped traffic_signal;
-    traffic_signal.header = msg->header;
-    traffic_signal.signal = signal;
-    planner_data_.external_traffic_light_id_map[signal.map_primitive_id] = traffic_signal;
-  }
 }
 
 void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(

@@ -77,6 +77,7 @@ bool validate_local_optimal_solution_oscillation(
   return false;
 }
 
+// cspell: ignore degrounded
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
@@ -312,8 +313,8 @@ void NDTScanMatcher::callback_initial_pose(
     // transform pose_frame to map_frame
     auto mapTF_initial_pose_msg_ptr =
       std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-    // mapTF_initial_pose_msg_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
     *mapTF_initial_pose_msg_ptr = transform(*initial_pose_msg_ptr, *TF_pose_to_map_ptr);
+    mapTF_initial_pose_msg_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
     initial_pose_msg_ptr_array_.push_back(mapTF_initial_pose_msg_ptr);
   }
 }
