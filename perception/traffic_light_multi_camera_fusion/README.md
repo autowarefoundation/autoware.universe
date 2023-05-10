@@ -2,7 +2,7 @@
 
 ## Overview
 
-`traffic_light_multi_camera_fusion` performs traffic light signal fusion which contains two tasks:
+`traffic_light_multi_camera_fusion` performs traffic light signal fusion which can be summarized as the following two tasks:
 
 1. Multi-Camera-Fusion: performed on single traffic light signal detected by different cameras.
 2. Group-Fusion: performed on traffic light signals within the same group, which means traffic lights sharing the same regulatory element id defined in lanetlet2 map.
