@@ -153,16 +153,16 @@ void MultiCameraFusion::trafficSignalRoiCallback(
   record_arr_set_.insert(
     FusionRecordArr{cam_info_msg->header, *cam_info_msg, *roi_msg, *signal_msg});
 
-  std::map<IdType, FusionRecord> fusionedRecordMap;
-  multiCameraFusion(fusionedRecordMap);
+  std::map<IdType, FusionRecord> fusioned_record_map;
+  multiCameraFusion(fusioned_record_map);
   if (perform_group_fusion_) {
-    groupFusion(fusionedRecordMap);
+    groupFusion(fusioned_record_map);
   }
 
   SignalArrayType out_msg;
   out_msg.header = signal_msg->header;
-  out_msg.signals.reserve(fusionedRecordMap.size());
-  for (const auto & p : fusionedRecordMap) {
+  out_msg.signals.reserve(fusioned_record_map.size());
+  for (const auto & p : fusioned_record_map) {
     out_msg.signals.emplace_back(p.second.signal);
   }
   signal_pub_->publish(out_msg);
@@ -188,9 +188,9 @@ void MultiCameraFusion::mapCallback(
   }
 }
 
-void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusionedRecordMap)
+void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusioned_record_map)
 {
-  fusionedRecordMap.clear();
+  fusioned_record_map.clear();
   /*
   this should not happen. Just in case
   */
@@ -230,9 +230,9 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
         update it
         */
         if (
-          fusionedRecordMap.find(roi.id) == fusionedRecordMap.end() ||
-          ::compareRecord(record, fusionedRecordMap[roi.id]) >= 0) {
-          fusionedRecordMap[roi.id] = record;
+          fusioned_record_map.find(roi.id) == fusioned_record_map.end() ||
+          ::compareRecord(record, fusioned_record_map[roi.id]) >= 0) {
+          fusioned_record_map[roi.id] = record;
         }
       }
       it++;
@@ -240,7 +240,7 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
   }
 }
 
-void MultiCameraFusion::groupFusion(std::map<IdType, FusionRecord> & fusionedRecordMap)
+void MultiCameraFusion::groupFusion(std::map<IdType, FusionRecord> & fusioned_record_map)
 {
   /*
   this should not happen. Just in case
@@ -249,8 +249,8 @@ void MultiCameraFusion::groupFusion(std::map<IdType, FusionRecord> & fusionedRec
     RCLCPP_WARN(get_logger(), "perform_group_fusion_ is set to false. Skip GroupFusion");
     return;
   }
-  std::map<IdType, FusionRecord> regEleId2BestRecord;
-  for (auto & p : fusionedRecordMap) {
+  std::map<IdType, FusionRecord> reg_ele_id_to_best_record;
+  for (auto & p : fusioned_record_map) {
     IdType roi_id = p.second.roi.id;
     /*
     this should not happen
@@ -264,19 +264,19 @@ void MultiCameraFusion::groupFusion(std::map<IdType, FusionRecord> & fusionedRec
       */
       IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.id];
       if (
-        regEleId2BestRecord.count(reg_ele_id) == 0 ||
-        ::compareRecord(p.second, regEleId2BestRecord[reg_ele_id]) >= 0) {
-        regEleId2BestRecord[reg_ele_id] = p.second;
+        reg_ele_id_to_best_record.count(reg_ele_id) == 0 ||
+        ::compareRecord(p.second, reg_ele_id_to_best_record[reg_ele_id]) >= 0) {
+        reg_ele_id_to_best_record[reg_ele_id] = p.second;
       }
     }
   }
   /*
   replace the resul with the best record of its group
   */
-  for (auto & p : fusionedRecordMap) {
+  for (auto & p : fusioned_record_map) {
     if (traffic_light_id_to_regulatory_ele_id_.count(p.second.roi.id) != 0) {
       IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.id];
-      p.second.signal.lights = regEleId2BestRecord[reg_ele_id].signal.lights;
+      p.second.signal.lights = reg_ele_id_to_best_record[reg_ele_id].signal.lights;
     }
   }
 }

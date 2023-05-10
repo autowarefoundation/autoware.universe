@@ -84,9 +84,9 @@ private:
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg);
 
-  void multiCameraFusion(std::map<IdType, FusionRecord> & fusionedRecordMap);
+  void multiCameraFusion(std::map<IdType, FusionRecord> & fusioned_record_map);
 
-  void groupFusion(std::map<IdType, FusionRecord> & fusionedRecordMap);
+  void groupFusion(std::map<IdType, FusionRecord> & fusioned_record_map);
 
   typedef mf::sync_policies::ExactTime<CamInfoType, RoiArrayType, SignalArrayType> ExactSyncPolicy;
   typedef mf::Synchronizer<ExactSyncPolicy> ExactSync;
