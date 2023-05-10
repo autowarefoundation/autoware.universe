@@ -1553,7 +1553,7 @@ void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound
         }
         monotonic_bound.push_back(original_bound.at(b_idx));
 
-        // caculate bound pose and its laterally offset pose.
+        // calculate bound pose and its laterally offset pose.
         const auto bound_pose = [&]() {
           geometry_msgs::msg::Pose pose;
           pose.position = original_bound.at(b_idx);
