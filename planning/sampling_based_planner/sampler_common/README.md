@@ -1,5 +1,6 @@
 # Sampler Common
 
-Common classes and functions for sampling based planners.
-
-## Description
+Common functions for sampling based planners.
+This includes classes for representing paths and trajectories,
+hard and soft constraints,
+conversion between cartesian and frenet frames, ...
