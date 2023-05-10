@@ -62,7 +62,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler);
 
     if (!is_any_module_running && is_out_of_route) {
-      auto output = utils::createGoalAroundPath(data);
+      BehaviorModuleOutput output = utils::createGoalAroundPath(data);
       generateCombinedDrivableArea(output, data);
       return output;
     }
