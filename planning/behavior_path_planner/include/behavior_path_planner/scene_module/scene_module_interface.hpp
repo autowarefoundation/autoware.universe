@@ -109,6 +109,11 @@ public:
   virtual ModuleStatus updateState() = 0;
 
   /**
+   * @brief Set the current_state_ based on updateState output.
+   */
+  virtual void updateCurrentState() { current_state_ = updateState(); }
+
+  /**
    * @brief If the module plan customized reference path while waiting approval, it should output
    * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
    */
