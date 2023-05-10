@@ -53,7 +53,7 @@ protected:  // for the static_centerline_optimizer package
 
   // variables for subscribers
   Odometry::SharedPtr ego_state_ptr_;
-  PredictedObjects::SharedPtr in_objects_ptr_;
+  PredictedObjects::SharedPtr in_objects_ptr_ = std::make_shared<PredictedObjects>();
 
   // variables for previous information
   std::optional<sampler_common::Path> prev_path_;

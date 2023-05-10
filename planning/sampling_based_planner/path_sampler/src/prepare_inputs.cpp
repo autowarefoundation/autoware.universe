@@ -36,12 +36,13 @@ void prepareConstraints(
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
-  // TODO(Maxime): get obstacle polygons
-  (void)predicted_objects;
   constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
-  constraints.dynamic_obstacles = {};
+  for (const auto & o : predicted_objects.objects)
+    if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5)  // TODO(Maxime): param
+      constraints.obstacle_polygons.push_back(tier4_autoware_utils::toPolygon2d(o));
+  constraints.dynamic_obstacles = {};  // TODO(Maxime): not implemented
 
-  // TODO(Maxime): keep using lines instead of polygon
+  // TODO(Maxime): directly use lines instead of polygon
   sampler_common::Polygon2d drivable_area_polygon;
   for (const auto & p : right_bound) drivable_area_polygon.outer().emplace_back(p.x, p.y);
   for (auto it = left_bound.rbegin(); it != left_bound.rend(); ++it)
@@ -78,7 +79,6 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
     }
     min_d += params.constraints.ego_width / 2.0;
     max_d -= params.constraints.ego_width / 2.0;
-    std::cout << "min_d = " << min_d << " max_d : " << max_d << std::endl;
     if (min_d < max_d) {
       for (auto r = 0.0; r <= 1.0; r += 1.0 / (params.sampling.nb_target_lateral_positions - 1))
         target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
