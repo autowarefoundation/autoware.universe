@@ -12,7 +12,7 @@ The model is based on [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) and
 
 ### Training Data
 
-The model was fine-tuned on around 17,000 TierIV internal images of Japanese traffic lights.
+The model was fine-tuned on around 17,000 TIER IV internal images of Japanese traffic lights.
 
 ### Trained Onnx model
 
