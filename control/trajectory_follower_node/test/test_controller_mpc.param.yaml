@@ -1,4 +1,3 @@
 /**:
   ros__parameters:
     lateral_controller_mode: "mpc"
-    longitudinal_controller_mode: "pid"
