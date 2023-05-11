@@ -27,12 +27,17 @@
   <!--validation-->
   <depend>ape_monitor</depend>
   <depend>covariance_monitor</depend>
-  <depend>overlay_monitor</depend>
+  <depend>lanelet2_overlay_monitor</depend>
   <depend>path_monitor</depend>
+  <depend>line_segments_overlay_monitor</depend>
+  <!--initializer-->
+  <depend>gnss_pose_initializer</depend>
+  <depend>camera_pose_initializer</depend>
+  <depend>particle_initializer</depend>
+  <depend>semantic_segmentation</depend>
   <!--particle filter-->
   <depend>camera_particle_corrector</depend>
   <depend>gnss_particle_corrector</depend>
-  <depend>particle_initializer</depend>
   <!--rviz plugin-->
   <depend>rviz2_initialpose_plugins</depend>
   <depend>rviz2_overlay_plugins</depend>

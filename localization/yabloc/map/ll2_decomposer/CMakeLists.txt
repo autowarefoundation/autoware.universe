@@ -22,8 +22,6 @@ find_package(Eigen3 REQUIRED)
 # PCL
 find_package(PCL REQUIRED)
 
-find_package(glog REQUIRED)
-
 # ===================================================
 # Library
 file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)

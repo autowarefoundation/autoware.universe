@@ -20,6 +20,8 @@
 
   <depend>modularized_particle_filter</depend>
   <depend>yabloc_common</depend>
+  <depend>libgoogle-glog-dev</depend>
+
 
   <export>
     <build_type>ament_cmake</build_type>

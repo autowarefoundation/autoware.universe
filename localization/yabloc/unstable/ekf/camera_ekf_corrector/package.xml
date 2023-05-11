@@ -19,6 +19,7 @@
   <depend>yabloc_common</depend>
   <depend>modularized_particle_filter</depend>
   <depend>bayes_util</depend>
+  <depend>libgoogle-glog-dev</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
