@@ -186,10 +186,6 @@ ModuleStatus SideShiftModule::updateState()
 
 void SideShiftModule::updateData()
 {
-  if (prev_reference_.points.empty()) {
-    prev_reference_ = *getPreviousModuleOutput().path;
-  }
-
   // special for avoidance: take behind distance upt ot shift-start-point if it exist.
   const auto longest_dist_to_shift_line = [&]() {
     double max_dist = 0.0;
@@ -206,6 +202,9 @@ void SideShiftModule::updateData()
   const auto centerline_path =
     utils::calcCenterLinePath(planner_data_, reference_pose, longest_dist_to_shift_line);
 #else
+  if (prev_reference_.points.empty()) {
+    prev_reference_ = *getPreviousModuleOutput().path;
+  }
   const auto centerline_path = utils::calcCenterLinePath(
     planner_data_, reference_pose, longest_dist_to_shift_line,
     *getPreviousModuleOutput().reference_path);
@@ -442,7 +441,8 @@ BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & pat
     utils::expandLanelets(shorten_lanes, left_offset, right_offset, dp.drivable_area_types_to_skip);
 
   {  // for old architecture
-    utils::generateDrivableArea(output_path, expanded_lanes, p.vehicle_length, planner_data_);
+    utils::generateDrivableArea(
+      output_path, expanded_lanes, false, p.vehicle_length, planner_data_);
     out.path = std::make_shared<PathWithLaneId>(output_path);
   }
 

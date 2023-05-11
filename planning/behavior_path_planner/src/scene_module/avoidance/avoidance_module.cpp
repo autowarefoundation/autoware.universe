@@ -2523,18 +2523,25 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
   }
 
   {  // for new architecture
+    DrivableAreaInfo current_drivable_area_info;
     // generate drivable lanes
-    output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
-      getPreviousModuleOutput().drivable_area_info.drivable_lanes, drivable_lanes);
+    current_drivable_area_info.drivable_lanes = drivable_lanes;
     // generate obstacle polygons
-    output.drivable_area_info.obstacles = utils::avoidance::generateObstaclePolygonsForDrivableArea(
-      avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    current_drivable_area_info.obstacles =
+      utils::avoidance::generateObstaclePolygonsForDrivableArea(
+        avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
   }
 
   {  // for old architecture
     // NOTE: Obstacles to avoid are not extracted from the drivable area with an old architecture.
     utils::generateDrivableArea(
-      *output.path, drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+      *output.path, drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   }
 }
 
@@ -2783,7 +2790,18 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
 
   BehaviorModuleOutput output;
-  output.turn_signal_info = calcTurnSignalInfo(avoidance_path);
+
+  // turn signal info
+  {
+    const auto original_signal = getPreviousModuleOutput().turn_signal_info;
+    const auto new_signal = calcTurnSignalInfo(avoidance_path);
+    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(avoidance_path.path.points);
+    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+      avoidance_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
+      planner_data_->parameters.ego_nearest_dist_threshold,
+      planner_data_->parameters.ego_nearest_yaw_threshold);
+  }
+
   // sparse resampling for computational cost
   {
     avoidance_path.path =
