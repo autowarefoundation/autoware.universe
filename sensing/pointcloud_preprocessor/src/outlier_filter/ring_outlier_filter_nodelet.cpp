@@ -50,8 +50,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
 // TODO(sykwer): Temporary Implementation: Rename this function to `filter()` when all the filter
 // nodes conform to new API. Then delete the old `filter()` defined below.
 void RingOutlierFilterComponent::faster_filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & unused_indices,
-  PointCloud2 & output, const TransformInfo & transform_info)
+  const PointCloud2ConstPtr & input, const IndicesPtr & unused_indices, PointCloud2 & output,
+  const TransformInfo & transform_info)
 {
   std::scoped_lock lock(mutex_);
   if (unused_indices) {
