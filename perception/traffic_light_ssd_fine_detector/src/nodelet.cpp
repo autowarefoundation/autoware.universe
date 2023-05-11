@@ -87,13 +87,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   }
 
   input_shape_ = net_ptr_->getInputShape();
-  if (dnn_header_type_.compare("pytorch") == 0) {
-    score_dims_ = net_ptr_->getOutputDimensions(1);
-    box_dims_ = net_ptr_->getOutputDimensions(2);
-  } else {
-    box_dims_ = net_ptr_->getOutputDimensions(1);
-    score_dims_ = net_ptr_->getOutputDimensions(2);
-  }
+  box_dims_ = net_ptr_->getOutputDimensions("boxes");
+  score_dims_ = net_ptr_->getOutputDimensions("scores");
   detection_per_class_ = score_dims_->d[0];
   class_num_ = score_dims_->d[1];
 

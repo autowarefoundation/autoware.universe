@@ -20,7 +20,6 @@
 
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -90,10 +89,18 @@ public:
   void infer(std::vector<void *> & buffers, const int batch_size);
 
   // Get (c, h, w) size of the fixed input
-  Shape getInputShape() const;
+  inline Shape getInputShape() const
+  {
+    auto dims = getTensorShape("input");
+    return {dims.d[1], dims.d[2], dims.d[3]};
+  }
 
-  // Get output dimensions by index
-  std::optional<Dims2> getOutputDimensions(const size_t index) const;
+  // Get output dimensions by name
+  inline Dims2 getOutputDimensions(const char * name) const
+  {
+    auto dims = getTensorShape(name);
+    return Dims2(dims.d[1], dims.d[2]);
+  }
 
   // Get max allowed batch size
   inline int getMaxBatchSize() const
@@ -102,12 +109,16 @@ public:
   }
 
   // Get max number of detections
-  inline int getMaxDetections() const { return engine_->getBindingDimensions(1).d[1]; }
+  inline int getMaxDetections() const { return getTensorShape("boxes").d[1]; }
 
-  // Get binding index of specified name
-  inline int getBindingIndex(const std::string & name) const
+  // Get specified name of tensor shape
+  inline nvinfer1::Dims getTensorShape(const char * name) const
   {
-    return engine_->getBindingIndex(name.c_str());
+#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+    return engine_->getTensorShape(name);
+#else
+    return engine_->getBindingDimensions(engine_->getBindingIndex(name));
+#endif
   }
 
 private:
