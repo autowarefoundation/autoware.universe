@@ -40,6 +40,7 @@
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
@@ -114,22 +115,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
-  sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
-    "~/input/external_crosswalk_states", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1),
-    createSubscriptionOptions(this));
-  sub_external_intersection_states_ =
-    this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
-      "~/input/external_intersection_states", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
-  sub_external_traffic_signals_ =
-    this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/external_traffic_signals", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1),
-      createSubscriptionOptions(this));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 1,
@@ -200,6 +188,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter<bool>("launch_speed_bump")) {
     planner_manager_.launchSceneModule(std::make_shared<SpeedBumpModuleManager>(*this));
   }
+  if (this->declare_parameter<bool>("launch_out_of_lane")) {
+    planner_manager_.launchSceneModule(std::make_shared<OutOfLaneModuleManager>(*this));
+  }
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
@@ -239,6 +230,11 @@ bool BehaviorVelocityPlannerNode::isDataReady(
       get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
     return false;
   }
+  if (!d.occupancy_grid) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of occupancy grid map");
+    return false;
+  }
   return true;
 }
 
@@ -274,7 +270,7 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
   if (!pc.empty()) {
-    pcl::transformPointCloud(pc, *pc_transformed, affine);
+    tier4_autoware_utils::transformPointCloud(pc, *pc_transformed, affine);
   }
 
   {
@@ -354,36 +350,10 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
   }
 }
 
-void BehaviorVelocityPlannerNode::onExternalCrosswalkStates(
-  const tier4_api_msgs::msg::CrosswalkStatus::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.external_crosswalk_status_input = *msg;
-}
-
-void BehaviorVelocityPlannerNode::onExternalIntersectionStates(
-  const tier4_api_msgs::msg::IntersectionStatus::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.external_intersection_status_input = *msg;
-}
-
 void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
-}
-
-void BehaviorVelocityPlannerNode::onExternalTrafficSignals(
-  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  for (const auto & signal : msg->signals) {
-    autoware_auto_perception_msgs::msg::TrafficSignalStamped traffic_signal;
-    traffic_signal.header = msg->header;
-    traffic_signal.signal = signal;
-    planner_data_.external_traffic_light_id_map[signal.map_primitive_id] = traffic_signal;
-  }
 }
 
 void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(

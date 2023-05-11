@@ -3,7 +3,7 @@
 <package format="3">
   <name>external_velocity_limit_selector</name>
   <version>0.1.0</version>
-  <description>The external_velocity_limit_selector ROS2 package</description>
+  <description>The external_velocity_limit_selector ROS 2 package</description>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <maintainer email="shinnosuke.hirakawa@tier4.jp">Shinnosuke Hirakawa</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
@@ -15,8 +15,7 @@
   <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
