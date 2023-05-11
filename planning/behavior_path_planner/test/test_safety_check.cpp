@@ -54,10 +54,10 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 
     EXPECT_EQ(ego_polygon.outer().size(), static_cast<unsigned int>(5));
 
-    const auto p1 = ego_polygon.outer().at(0);
-    const auto p2 = ego_polygon.outer().at(1);
-    const auto p3 = ego_polygon.outer().at(2);
-    const auto p4 = ego_polygon.outer().at(3);
+    const auto & p1 = ego_polygon.outer().at(0);
+    const auto & p2 = ego_polygon.outer().at(1);
+    const auto & p3 = ego_polygon.outer().at(2);
+    const auto & p4 = ego_polygon.outer().at(3);
     EXPECT_NEAR(p1.x(), 14.0, epsilon);
     EXPECT_NEAR(p1.y(), 3.0, epsilon);
     EXPECT_NEAR(p2.x(), 14.0, epsilon);
@@ -66,5 +66,60 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
     EXPECT_NEAR(p3.y(), -3.0, epsilon);
     EXPECT_NEAR(p4.x(), -1.0, epsilon);
     EXPECT_NEAR(p4.y(), 3.0, epsilon);
+  }
+
+  {
+    Pose ego_pose;
+    ego_pose.position = tier4_autoware_utils::createPoint(3.0, 4.0, 0.0);
+    ego_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
+
+    const double lon_length = 10.0;
+    const double lat_margin = 2.0;
+
+    const auto ego_polygon =
+      createExtendedEgoPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
+
+    EXPECT_EQ(ego_polygon.outer().size(), static_cast<unsigned int>(5));
+
+    const auto & p1 = ego_polygon.outer().at(0);
+    const auto & p2 = ego_polygon.outer().at(1);
+    const auto & p3 = ego_polygon.outer().at(2);
+    const auto & p4 = ego_polygon.outer().at(3);
+    EXPECT_NEAR(p1.x(), 17.0, epsilon);
+    EXPECT_NEAR(p1.y(), 7.0, epsilon);
+    EXPECT_NEAR(p2.x(), 17.0, epsilon);
+    EXPECT_NEAR(p2.y(), 1.0, epsilon);
+    EXPECT_NEAR(p3.x(), 2.0, epsilon);
+    EXPECT_NEAR(p3.y(), 1.0, epsilon);
+    EXPECT_NEAR(p4.x(), 2.0, epsilon);
+    EXPECT_NEAR(p4.y(), 7.0, epsilon);
+  }
+
+  {
+    Pose ego_pose;
+    ego_pose.position = tier4_autoware_utils::createPoint(0.0, 0.0, 0.0);
+    ego_pose.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(tier4_autoware_utils::deg2rad(60));
+
+    const double lon_length = 10.0;
+    const double lat_margin = 2.0;
+
+    const auto ego_polygon =
+      createExtendedEgoPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
+
+    EXPECT_EQ(ego_polygon.outer().size(), static_cast<unsigned int>(5));
+
+    const auto & p1 = ego_polygon.outer().at(0);
+    const auto & p2 = ego_polygon.outer().at(1);
+    const auto & p3 = ego_polygon.outer().at(2);
+    const auto & p4 = ego_polygon.outer().at(3);
+    EXPECT_NEAR(p1.x(), 7.0 - 1.5 * std::sqrt(3), epsilon);
+    EXPECT_NEAR(p1.y(), 7.0 * std::sqrt(3) + 1.5, epsilon);
+    EXPECT_NEAR(p2.x(), 7.0 + 1.5 * std::sqrt(3), epsilon);
+    EXPECT_NEAR(p2.y(), 7.0 * std::sqrt(3) - 1.5, epsilon);
+    EXPECT_NEAR(p3.x(), 1.5 * std::sqrt(3) - 0.5, epsilon);
+    EXPECT_NEAR(p3.y(), -1.5 - std::sqrt(3) / 2.0, epsilon);
+    EXPECT_NEAR(p4.x(), -1.5 * std::sqrt(3) - 0.5, epsilon);
+    EXPECT_NEAR(p4.y(), 1.5 - std::sqrt(3) / 2.0, epsilon);
   }
 }
