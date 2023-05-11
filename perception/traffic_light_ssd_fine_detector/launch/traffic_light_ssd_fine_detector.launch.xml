@@ -21,9 +21,8 @@
     <remap from="~/output/rois" to="$(var output/rois)"/>
     <param name="onnx_file" type="str" value="$(var onnx_file)"/>
     <param name="label_file" type="str" value="$(var label_file)"/>
+    <param name="dnn_header_type" type="str" value="$(var dnn_header_type)"/>
     <param name="mode" type="str" value="$(var mode)"/>
-    <param name="is_box_first" value="$(var is_box_first)"/>
-    <param name="is_box_normalized" value="$(var is_box_normalized)"/>
     <param name="score_thresh" value="$(var score_thresh)"/>
     <param name="max_batch_size" value="$(var max_batch_size)"/>
     <param name="approximate_sync" value="$(var approximate_sync)"/>
