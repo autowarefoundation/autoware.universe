@@ -61,9 +61,9 @@ Polygon2d createExtendedEgoPolygon(
   const auto p2 =
     tier4_autoware_utils::calcOffsetPose(base_link_pose, lon_offset, -lat_offset, 0.0);
   const auto p3 =
-    tier4_autoware_utils::calcOffsetPose(base_link_pose, base_to_rear, -lat_offset, 0.0);
+    tier4_autoware_utils::calcOffsetPose(base_link_pose, -base_to_rear, -lat_offset, 0.0);
   const auto p4 =
-    tier4_autoware_utils::calcOffsetPose(base_link_pose, base_to_rear, lat_offset, 0.0);
+    tier4_autoware_utils::calcOffsetPose(base_link_pose, -base_to_rear, lat_offset, 0.0);
 
   Polygon2d polygon;
   appendPointToPolygon(polygon, p1.position);
