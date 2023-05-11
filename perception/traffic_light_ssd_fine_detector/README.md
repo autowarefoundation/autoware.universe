@@ -29,16 +29,21 @@ The model was fine-tuned on 1750 TIER IV internal images of Japanese traffic lig
 
 ### Customization of CNN model
 
-Currently, in Autoware, [SSD](https://arxiv.org/abs/1512.02325) is used as CNN fine detector by default.
-
 In order to train models and export onnx model, we recommend [open-mmlab/mmdetection](https://github.com/open-mmlab/mmdetection.git).
-Please follow the [official document](https://mmdetection.readthedocs.io/en/latest/) to install and experiment with mmdetection. If you get into troubles, [FAQ page] would help you.
+Please follow the [official document](https://mmdetection.readthedocs.io/en/latest/) to install and experiment with mmdetection. If you get into troubles, [FAQ page](https://mmdetection.readthedocs.io/en/stable/notes/faq.html) would help you.
 
 The following steps are example of a quick-start.
 
 #### step 0. Install [MMCV](https://github.com/open-mmlab/mmcv.git) and [MIM](https://github.com/open-mmlab/mim.git)
 
-_NOTE_ : First of all, install [PyTorch](https://pytorch.org/) suitable for your CUDA version (CUDA11.6 is supported in Autoware).
+_NOTE_ :
+
+- First of all, install [PyTorch](https://pytorch.org/) suitable for your CUDA version (CUDA11.6 is supported in Autoware).
+- Our tested library versions are following. If the scripts as shown below would be old, please update to be suited to your version.
+  - MMCV == 1.x
+  - MMDetection == 2.x
+  - MMDeploy == 0.x
+  - MIM == 0.3.x
 
 In order to install mmcv suitable for your CUDA version, install it specifying a url.
 
@@ -76,7 +81,9 @@ $ mim train mmdet YOUR_CONFIG.py [--resume-from YOUR_CHECKPOINT.pth]
 #### step 3. Export onnx model
 
 In exporting onnx, use `mmdetection/tools/deployment/pytorch2onnx.py` or [open-mmlab/mmdeploy](https://github.com/open-mmlab/mmdeploy.git).
-_NOTE_: Currently, autoware does not support TensorRT plugin for NMS defined by open-mmlab. Therefore, **please deploy onnx model excluding NMS layer**.
+_NOTE_:
+
+- Currently, autoware does not support TensorRT plugin for NMS defined by open-mmlab. Therefore, **please deploy onnx model excluding NMS layer**.
 
 ```shell
 cd ~/mmdetection/tools/deployment
