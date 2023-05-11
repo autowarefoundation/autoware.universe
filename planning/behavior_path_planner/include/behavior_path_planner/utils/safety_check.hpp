@@ -60,10 +60,10 @@ bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
 
-Polygon2d createExtendedEgoPolygon(
+Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
   const double lon_length, const double lat_margin);
-Polygon2d createExtendedObjectPolygon(
+Polygon2d createExtendedPolygon(
   const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin);
 
 double calcRssDistance(

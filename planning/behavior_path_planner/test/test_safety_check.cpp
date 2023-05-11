@@ -34,7 +34,7 @@ using tier4_autoware_utils::Polygon2d;
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 {
-  using behavior_path_planner::utils::safety_check::createExtendedEgoPolygon;
+  using behavior_path_planner::utils::safety_check::createExtendedPolygon;
 
   vehicle_info_util::VehicleInfo vehicle_info;
   vehicle_info.max_longitudinal_offset_m = 4.0;
@@ -49,15 +49,14 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
 
-    const auto ego_polygon =
-      createExtendedEgoPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
+    const auto polygon = createExtendedPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
 
-    EXPECT_EQ(ego_polygon.outer().size(), static_cast<unsigned int>(5));
+    EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 
-    const auto & p1 = ego_polygon.outer().at(0);
-    const auto & p2 = ego_polygon.outer().at(1);
-    const auto & p3 = ego_polygon.outer().at(2);
-    const auto & p4 = ego_polygon.outer().at(3);
+    const auto & p1 = polygon.outer().at(0);
+    const auto & p2 = polygon.outer().at(1);
+    const auto & p3 = polygon.outer().at(2);
+    const auto & p4 = polygon.outer().at(3);
     EXPECT_NEAR(p1.x(), 14.0, epsilon);
     EXPECT_NEAR(p1.y(), 3.0, epsilon);
     EXPECT_NEAR(p2.x(), 14.0, epsilon);
@@ -76,15 +75,14 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
 
-    const auto ego_polygon =
-      createExtendedEgoPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
+    const auto polygon = createExtendedPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
 
-    EXPECT_EQ(ego_polygon.outer().size(), static_cast<unsigned int>(5));
+    EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 
-    const auto & p1 = ego_polygon.outer().at(0);
-    const auto & p2 = ego_polygon.outer().at(1);
-    const auto & p3 = ego_polygon.outer().at(2);
-    const auto & p4 = ego_polygon.outer().at(3);
+    const auto & p1 = polygon.outer().at(0);
+    const auto & p2 = polygon.outer().at(1);
+    const auto & p3 = polygon.outer().at(2);
+    const auto & p4 = polygon.outer().at(3);
     EXPECT_NEAR(p1.x(), 17.0, epsilon);
     EXPECT_NEAR(p1.y(), 7.0, epsilon);
     EXPECT_NEAR(p2.x(), 17.0, epsilon);
@@ -104,15 +102,14 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
 
-    const auto ego_polygon =
-      createExtendedEgoPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
+    const auto polygon = createExtendedPolygon(ego_pose, vehicle_info, lon_length, lat_margin);
 
-    EXPECT_EQ(ego_polygon.outer().size(), static_cast<unsigned int>(5));
+    EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 
-    const auto & p1 = ego_polygon.outer().at(0);
-    const auto & p2 = ego_polygon.outer().at(1);
-    const auto & p3 = ego_polygon.outer().at(2);
-    const auto & p4 = ego_polygon.outer().at(3);
+    const auto & p1 = polygon.outer().at(0);
+    const auto & p2 = polygon.outer().at(1);
+    const auto & p3 = polygon.outer().at(2);
+    const auto & p4 = polygon.outer().at(3);
     EXPECT_NEAR(p1.x(), 7.0 - 1.5 * std::sqrt(3), epsilon);
     EXPECT_NEAR(p1.y(), 7.0 * std::sqrt(3) + 1.5, epsilon);
     EXPECT_NEAR(p2.x(), 7.0 + 1.5 * std::sqrt(3), epsilon);
@@ -121,5 +118,52 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
     EXPECT_NEAR(p3.y(), -1.5 - std::sqrt(3) / 2.0, epsilon);
     EXPECT_NEAR(p4.x(), -1.5 * std::sqrt(3) - 0.5, epsilon);
     EXPECT_NEAR(p4.y(), 1.5 - std::sqrt(3) / 2.0, epsilon);
+  }
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedObjPolygon)
+{
+  using behavior_path_planner::utils::safety_check::createExtendedPolygon;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::createQuaternionFromYaw;
+
+  {
+    Pose obj_pose;
+    obj_pose.position = createPoint(0.0, 0.0, 0.0);
+    obj_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
+
+    Shape shape;
+    shape.type = autoware_auto_perception_msgs::msg::Shape::POLYGON;
+    shape.footprint.points.resize(5);
+    shape.footprint.points.at(0).x = 3.0;
+    shape.footprint.points.at(0).y = 0.0;
+    shape.footprint.points.at(1).x = 0.0;
+    shape.footprint.points.at(1).y = -2.0;
+    shape.footprint.points.at(2).x = -2.0;
+    shape.footprint.points.at(2).y = 0.0;
+    shape.footprint.points.at(3).x = -1.0;
+    shape.footprint.points.at(3).y = 0.5;
+    shape.footprint.points.at(4).x = 2.0;
+    shape.footprint.points.at(4).y = 1.0;
+
+    const double lon_length = 10.0;
+    const double lat_margin = 2.0;
+
+    const auto polygon = createExtendedPolygon(obj_pose, shape, lon_length, lat_margin);
+
+    EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
+
+    const auto & p1 = polygon.outer().at(0);
+    const auto & p2 = polygon.outer().at(1);
+    const auto & p3 = polygon.outer().at(2);
+    const auto & p4 = polygon.outer().at(3);
+    EXPECT_NEAR(p1.x(), 13.0, epsilon);
+    EXPECT_NEAR(p1.y(), 3.0, epsilon);
+    EXPECT_NEAR(p2.x(), 13.0, epsilon);
+    EXPECT_NEAR(p2.y(), -4.0, epsilon);
+    EXPECT_NEAR(p3.x(), -2.0, epsilon);
+    EXPECT_NEAR(p3.y(), -4.0, epsilon);
+    EXPECT_NEAR(p4.x(), -2.0, epsilon);
+    EXPECT_NEAR(p4.y(), 3.0, epsilon);
   }
 }

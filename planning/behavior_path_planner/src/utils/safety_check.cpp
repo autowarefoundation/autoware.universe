@@ -47,7 +47,7 @@ bool isTargetObjectFront(
   return false;
 }
 
-Polygon2d createExtendedEgoPolygon(
+Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
   const double lon_length, const double lat_margin)
 {
@@ -76,7 +76,7 @@ Polygon2d createExtendedEgoPolygon(
            : tier4_autoware_utils::inverseClockwise(polygon);
 }
 
-Polygon2d createExtendedObjectPolygon(
+Polygon2d createExtendedPolygon(
   const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin)
 {
   const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, shape);
@@ -92,22 +92,10 @@ Polygon2d createExtendedObjectPolygon(
     const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
     const auto transformed_p = tier4_autoware_utils::inverseTransformPoint(obj_p, obj_pose);
 
-    // max_x
-    if (transformed_p.x > max_x) {
-      max_x = transformed_p.x;
-    }
-    // min_x
-    if (transformed_p.x < min_x) {
-      min_x = transformed_p.y;
-    }
-    // max_y
-    if (transformed_p.y > max_y) {
-      max_y = transformed_p.y;
-    }
-    // min_y
-    if (transformed_p.y < min_y) {
-      min_y = transformed_p.y;
-    }
+    max_x = std::max(transformed_p.x, max_x);
+    min_x = std::min(transformed_p.x, min_x);
+    max_y = std::max(transformed_p.y, max_y);
+    min_y = std::min(transformed_p.y, min_y);
   }
 
   const double lon_offset = max_x + lon_length;
@@ -216,12 +204,11 @@ bool isSafeInLaneletCollisionCheck(
     const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto & lat_margin = common_parameters.lateral_distance_max_threshold;
     const auto & extended_ego_polygon =
-      is_object_front ? createExtendedEgoPolygon(ego_pose, ego_vehicle_info, rss_dist, lat_margin)
+      is_object_front ? createExtendedPolygon(ego_pose, ego_vehicle_info, rss_dist, lat_margin)
                       : ego_polygon;
     const auto & extended_obj_polygon =
-      is_object_front
-        ? obj_polygon
-        : createExtendedObjectPolygon(*obj_pose, target_object.shape, rss_dist, lat_margin);
+      is_object_front ? obj_polygon
+                      : createExtendedPolygon(*obj_pose, target_object.shape, rss_dist, lat_margin);
 
     debug.lerped_path.push_back(ego_pose);
     debug.expected_ego_pose = ego_pose;
@@ -288,12 +275,11 @@ bool isSafeInFreeSpaceCollisionCheck(
     const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto & lat_margin = common_parameters.lateral_distance_max_threshold;
     const auto & extended_ego_polygon =
-      is_object_front ? createExtendedEgoPolygon(ego_pose, ego_vehicle_info, rss_dist, lat_margin)
+      is_object_front ? createExtendedPolygon(ego_pose, ego_vehicle_info, rss_dist, lat_margin)
                       : ego_polygon;
     const auto & extended_obj_polygon =
-      is_object_front
-        ? obj_polygon
-        : createExtendedObjectPolygon(obj_pose, target_object.shape, rss_dist, lat_margin);
+      is_object_front ? obj_polygon
+                      : createExtendedPolygon(obj_pose, target_object.shape, rss_dist, lat_margin);
 
     debug.lerped_path.push_back(ego_pose);
     debug.expected_ego_pose = ego_pose;
