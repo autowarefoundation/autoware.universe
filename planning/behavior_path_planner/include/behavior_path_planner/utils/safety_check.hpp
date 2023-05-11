@@ -71,6 +71,10 @@ double calcRssDistance(
   const double front_object_deceleration, const double rear_object_deceleration,
   const BehaviorPathPlannerParameters & params);
 
+double calcMinimumLongitudinalLength(
+  const double front_object_velocity, const double rear_object_velocity,
+  const BehaviorPathPlannerParameters & params);
+
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.

@@ -130,21 +130,23 @@ double calcRssDistance(
 
   const double & reaction_time =
     params.rear_vehicle_reaction_time + params.rear_vehicle_safety_time_margin;
-  const double & lon_threshold = params.longitudinal_distance_min_threshold;
-  const auto front_object_stop_length =
-    stoppingDistance(front_object_velocity, front_object_deceleration);
-  const auto rear_object_stop_length = std::max(
-    rear_object_velocity * reaction_time +
-      stoppingDistance(rear_object_velocity, rear_object_deceleration),
-    lon_threshold);
-  const double rss_dist = rear_object_stop_length - front_object_stop_length;
 
-  // calculate minimum longitudinal distance
+  const double front_object_stop_length =
+    stoppingDistance(front_object_velocity, front_object_deceleration);
+  const double rear_object_stop_length =
+    rear_object_velocity * reaction_time +
+    stoppingDistance(rear_object_velocity, rear_object_deceleration);
+  return rear_object_stop_length - front_object_stop_length;
+}
+
+double calcMinimumLongitudinalLength(
+  const double front_object_velocity, const double rear_object_velocity,
+  const BehaviorPathPlannerParameters & params)
+{
+  const double & lon_threshold = params.longitudinal_distance_min_threshold;
   const auto max_vel = std::max(front_object_velocity, rear_object_velocity);
   constexpr auto scale = 0.8;
-  const auto min_lon_dist = scale * std::abs(max_vel) + lon_threshold;
-
-  return std::max(rss_dist, min_lon_dist);
+  return scale * std::abs(max_vel) + lon_threshold;
 }
 
 bool isSafeInLaneletCollisionCheck(
@@ -201,14 +203,20 @@ bool isSafeInLaneletCollisionCheck(
       front_object_velocity, rear_object_velocity, front_object_deceleration,
       rear_object_deceleration, common_parameters);
 
+    // minimum longitudinal length
+    const auto min_lon_length =
+      calcMinimumLongitudinalLength(front_object_velocity, rear_object_velocity, common_parameters);
+
+    const auto & lon_offset = std::max(rss_dist, min_lon_length);
     const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto & lat_margin = common_parameters.lateral_distance_max_threshold;
     const auto & extended_ego_polygon =
-      is_object_front ? createExtendedPolygon(ego_pose, ego_vehicle_info, rss_dist, lat_margin)
+      is_object_front ? createExtendedPolygon(ego_pose, ego_vehicle_info, lon_offset, lat_margin)
                       : ego_polygon;
     const auto & extended_obj_polygon =
-      is_object_front ? obj_polygon
-                      : createExtendedPolygon(*obj_pose, target_object.shape, rss_dist, lat_margin);
+      is_object_front
+        ? obj_polygon
+        : createExtendedPolygon(*obj_pose, target_object.shape, lon_offset, lat_margin);
 
     debug.lerped_path.push_back(ego_pose);
     debug.expected_ego_pose = ego_pose;
@@ -272,14 +280,20 @@ bool isSafeInFreeSpaceCollisionCheck(
       front_object_velocity, rear_object_velocity, front_object_deceleration,
       rear_object_deceleration, common_parameters);
 
+    // minimum longitudinal length
+    const auto min_lon_length =
+      calcMinimumLongitudinalLength(front_object_velocity, rear_object_velocity, common_parameters);
+
+    const auto & lon_offset = std::max(rss_dist, min_lon_length);
     const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto & lat_margin = common_parameters.lateral_distance_max_threshold;
     const auto & extended_ego_polygon =
-      is_object_front ? createExtendedPolygon(ego_pose, ego_vehicle_info, rss_dist, lat_margin)
+      is_object_front ? createExtendedPolygon(ego_pose, ego_vehicle_info, lon_offset, lat_margin)
                       : ego_polygon;
     const auto & extended_obj_polygon =
-      is_object_front ? obj_polygon
-                      : createExtendedPolygon(obj_pose, target_object.shape, rss_dist, lat_margin);
+      is_object_front
+        ? obj_polygon
+        : createExtendedPolygon(obj_pose, target_object.shape, lon_offset, lat_margin);
 
     debug.lerped_path.push_back(ego_pose);
     debug.expected_ego_pose = ego_pose;
