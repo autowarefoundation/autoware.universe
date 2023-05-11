@@ -14,10 +14,12 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "lanelet2_core/geometry/Lanelet.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -26,15 +28,8 @@ namespace behavior_path_planner
 struct LaneChangeParameters
 {
   // trajectory generation
-  double prepare_duration{2.0};
-  double lane_changing_lateral_jerk{0.5};
-  double lane_changing_lateral_acc{0.315};
-  double lane_changing_lateral_acc_at_low_velocity{0.15};
-  double lateral_acc_switching_velocity{0.4};
   double lane_change_finish_judge_buffer{3.0};
-  double minimum_lane_changing_velocity{5.6};
   double prediction_time_resolution{0.5};
-  double maximum_deceleration{1.0};
   int lane_change_sampling_num{10};
 
   // collision check
@@ -59,11 +54,6 @@ struct LaneChangeParameters
 
   double abort_delta_time{3.0};
   double abort_max_lateral_jerk{10.0};
-
-  // drivable area expansion
-  double drivable_area_right_bound_offset{0.0};
-  double drivable_area_left_bound_offset{0.0};
-  std::vector<std::string> drivable_area_types_to_skip{};
 
   // debug marker
   bool publish_debug_marker{false};
@@ -91,7 +81,26 @@ struct LaneChangeTargetObjectIndices
   std::vector<size_t> other_lane{};
 };
 
-enum class LaneChangeModuleType { NORMAL = 0, EXTERNAL_REQUEST };
+enum class LaneChangeModuleType {
+  NORMAL = 0,
+  EXTERNAL_REQUEST,
+  AVOIDANCE_BY_LANE_CHANGE,
+};
+
+struct AvoidanceByLCParameters
+{
+  std::shared_ptr<AvoidanceParameters> avoidance{};
+  std::shared_ptr<LaneChangeParameters> lane_change{};
+
+  // execute if the target object number is larger than this param.
+  size_t execute_object_num{1};
+
+  // execute only when the target object longitudinal distance is larger than this param.
+  double execute_object_longitudinal_margin{0.0};
+
+  // execute only when lane change end point is before the object.
+  bool execute_only_when_lane_change_finish_before_object{false};
+};
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
