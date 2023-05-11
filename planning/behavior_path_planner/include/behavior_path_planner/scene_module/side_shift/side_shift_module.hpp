@@ -137,6 +137,7 @@ private:
   mutable SideShiftDebugData debug_data_;
   void setDebugMarkersVisualization() const;
 };
+
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_

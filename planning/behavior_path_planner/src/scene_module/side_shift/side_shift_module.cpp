@@ -510,42 +510,6 @@ PathWithLaneId SideShiftModule::extendBackwardLength(const PathWithLaneId & orig
   return extended_path;
 }
 
-// NOTE: this function is ported from avoidance.
-PathWithLaneId SideShiftModule::calcCenterLinePath(
-  const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const
-{
-  const auto & p = planner_data->parameters;
-  const auto & route_handler = planner_data->route_handler;
-
-  PathWithLaneId centerline_path;
-
-  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
-  const auto longest_dist_to_shift_line = [&]() {
-    double max_dist = 0.0;
-    for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(max_dist, tier4_autoware_utils::calcDistance2d(getEgoPose(), pnt.start));
-    }
-    return max_dist;
-  }();
-  const auto extra_margin = 10.0;  // Since distance does not consider arclength, but just line.
-  const auto backward_length =
-    std::max(p.backward_path_length, longest_dist_to_shift_line + extra_margin);
-
-  RCLCPP_DEBUG(
-    getLogger(),
-    "p.backward_path_length = %f, longest_dist_to_shift_line = %f, backward_length = %f",
-    p.backward_path_length, longest_dist_to_shift_line, backward_length);
-
-  const lanelet::ConstLanelets current_lanes =
-    util::calcLaneAroundPose(route_handler, pose, p.forward_path_length, backward_length);
-  centerline_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
-
-  centerline_path.header = route_handler->getRouteHeader();
-
-  return centerline_path;
-}
-
 void SideShiftModule::setDebugMarkersVisualization() const
 {
   using marker_utils::createShiftLineMarkerArray;
