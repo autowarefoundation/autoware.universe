@@ -70,8 +70,7 @@ IntersectionModule::IntersectionModule(
   assoc_ids_(assoc_ids),
   enable_occlusion_detection_(enable_occlusion_detection),
   detection_divisions_(std::nullopt),
-  occlusion_uuid_(tier4_autoware_utils::generateUUID()),
-  occlusion_first_stop_uuid_(tier4_autoware_utils::generateUUID())
+  occlusion_uuid_(tier4_autoware_utils::generateUUID())
 {
   velocity_factor_.init(VelocityFactor::INTERSECTION);
   planner_param_ = planner_param;
@@ -105,7 +104,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   occlusion_safety_ = true;
   occlusion_stop_distance_ = std::numeric_limits<double>::lowest();
   occlusion_first_stop_safety_ = true;
-  occlusion_first_stop_distance_ = std::numeric_limits<double>::lowest();
 
   /* get current pose */
   const geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
@@ -387,7 +385,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     logger_.get_child("collision state_machine"), *clock_);
 
   /* set RTC safety respectively */
-  occlusion_first_stop_distance_ = dist_1st_stopline;
   occlusion_stop_distance_ = dist_2nd_stopline;
   setDistance(dist_1st_stopline);
   if (occlusion_stop_required) {
@@ -414,7 +411,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       }
     }
 
-    if (!occlusion_first_stop_activated_ && occlusion_first_stop_line_idx) {
+    if (!occlusion_first_stop_safety_ && occlusion_first_stop_line_idx) {
       planning_utils::setVelocityFromIndex(
         occlusion_first_stop_line_idx.value(), 0.0 /* [m/s] */, path);
       debug_data_.occlusion_first_stop_wall_pose =
