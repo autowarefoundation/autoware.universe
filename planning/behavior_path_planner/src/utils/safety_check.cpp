@@ -229,7 +229,7 @@ bool isSafeInLaneletCollisionCheck(
     debug.is_front = is_object_front;
 
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
-      debug.failed_reason = "overlap_polygon";
+      debug.failed_reason = "overlap_extended_polygon";
       ego_pose_before_collision = ego_pose;
       return false;
     }
@@ -301,7 +301,7 @@ bool isSafeInFreeSpaceCollisionCheck(
     debug.is_front = is_object_front;
 
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
-      debug.failed_reason = "overlap_polygon";
+      debug.failed_reason = "overlap_extended_polygon";
       return false;
     }
   }
