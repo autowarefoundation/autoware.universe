@@ -512,7 +512,7 @@ protected:
   PlanResult path_candidate_;
   PlanResult path_reference_;
 
-  ModuleStatus current_state_;
+  ModuleStatus current_state_{ModuleStatus::RUNNING};
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
