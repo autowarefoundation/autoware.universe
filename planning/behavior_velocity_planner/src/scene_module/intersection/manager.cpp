@@ -185,19 +185,13 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
 {
   for (const auto & scene_module : scene_modules_) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
-    const bool is_occluded = intersection_module->isOccluded();
     const UUID uuid = getUUID(scene_module->getModuleId());
+    updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), stamp);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     const auto occlusion_distance = intersection_module->getOcclusionDistance();
-    updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), stamp);
-    if (!is_occluded) {
-      occlusion_rtc_interface_.updateCooperateStatus(
-        occlusion_uuid, true, occlusion_distance, occlusion_distance, stamp);
-    } else {
-      const auto occlusion_safety = intersection_module->getOcclusionSafety();
-      occlusion_rtc_interface_.updateCooperateStatus(
-        occlusion_uuid, occlusion_safety, occlusion_distance, occlusion_distance, stamp);
-    }
+    const auto occlusion_safety = intersection_module->getOcclusionSafety();
+    occlusion_rtc_interface_.updateCooperateStatus(
+      occlusion_uuid, occlusion_safety, occlusion_distance, occlusion_distance, stamp);
   }
   rtc_interface_.publishCooperateStatus(stamp);  // publishRTCStatus()
   occlusion_rtc_interface_.publishCooperateStatus(stamp);

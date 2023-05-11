@@ -213,7 +213,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   if (!occlusion_first_stop_safety_) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.occlusion_first_stop_wall_pose}, "intersection", now),
+        {debug_data_.occlusion_first_stop_wall_pose}, "intersection(temporal)", now),
       &wall_marker, now);
   }
   if (!occlusion_activated_) {

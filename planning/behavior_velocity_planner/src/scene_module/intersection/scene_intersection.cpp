@@ -264,7 +264,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   /* calculate final stop lines */
   std::optional<size_t> stop_line_idx = default_stop_line_idx_opt;
   std::optional<size_t> occlusion_peeking_line_idx =
-    occlusion_peeking_line_idx_opt;  // TODO(Mamoru Sobue): different position depending on the flag
+    occlusion_peeking_line_idx_opt
+      ? std::make_optional<size_t>(occlusion_peeking_line_idx_opt.value())
+      : std::nullopt;
   std::optional<size_t> occlusion_first_stop_line_idx = default_stop_line_idx_opt;
   std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
 
@@ -297,11 +299,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       return true;
     }
-    if (
-      before_creep_state_machine_.getState() == StateMachine::State::GO &&
-      !ext_occlusion_requested) {
+    if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
       occlusion_stop_required = true;
-      stop_line_idx = occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
+      occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
+      stop_line_idx = isActivated() ? occlusion_peeking_line_idx_opt : default_stop_line_idx_opt;
+
       // clear first stop line
       // insert creep velocity [closest_idx, occlusion_stop_line)
       insert_creep_during_occlusion =
@@ -424,10 +426,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       debug_data_.occlusion_stop_wall_pose =
         planning_utils::getAheadPose(occlusion_peeking_line_idx.value(), baselink2front, *path);
     }
-
-    RCLCPP_DEBUG(logger_, "not activated. stop at the line.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return true;
   }
 
   if (!isActivated() /* collision*/) {
@@ -452,6 +451,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       velocity_factor_.set(
         path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
     }
+    RCLCPP_DEBUG(logger_, "===== plan end =====");
+    return true;
   }
 
   is_go_out_ = true;
