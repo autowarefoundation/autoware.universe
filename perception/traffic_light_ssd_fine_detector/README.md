@@ -6,6 +6,15 @@ It is a package for traffic light detection using MobileNetV2 and SSDLite.
 
 ## Training Information
 
+_NOTE_:
+
+- Currently, Autoware supports SSD trained both [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd) and [mmdetection](https://github.com/open-mmlab/mmdetection.git).
+  - Please specify either `pytorch` or `mmdetection` in `dnn_header_type`.
+- Note that, tensor names of your onnx model conform the following.
+  - Input tensor: `input`
+  - Output box tensor: `boxes`.
+  - Output score tensor: `scores`.
+
 ### Pretrained Model
 
 The model is based on [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd) and the pretrained model could be downloaded from [here](https://drive.google.com/file/d/1puI6ltKZKJ4RoiCO-ypivzEysHaDVBsa/view).
