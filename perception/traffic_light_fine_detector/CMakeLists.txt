@@ -70,9 +70,9 @@ else()
 endif()
 
 # Download caffemodel and prototxt
-set(PRETRAINED_MODEL_HASH 8d555c1aa9a91d14c2587b8fa7b12470)
+set(PRETRAINED_MODEL_HASH f3af5bd588c6c99ccf9ca236a07ad41e)
 set(LAMP_LABEL_HASH e9f45efb02f2a9aa8ac27b3d5c164905)
-set(DATA_DIR https://awf.ml.dev.web.auto/perception/models/tlr_yolox_s/v1)
+set(DATA_DIR https://awf.ml.dev.web.auto/perception/models/tlr_yolox_s/v2)
 
 set(DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if(NOT EXISTS "${DATA_PATH}")
