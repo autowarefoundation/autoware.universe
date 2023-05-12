@@ -80,11 +80,14 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
   node_options.append_parameter_override("launch_blind_spot", true);
   node_options.append_parameter_override("launch_detection_area", true);
   node_options.append_parameter_override(
-    "launch_virtual_traffic_light", false);                                // TODO() set to true
-  node_options.append_parameter_override("launch_occlusion_spot", false);  // TODO() set to true
+    "launch_virtual_traffic_light", false);  // TODO(Kyoichi Sugahara) set to true
+  node_options.append_parameter_override(
+    "launch_occlusion_spot", false);  // TODO(Kyoichi Sugahara) set to true
   node_options.append_parameter_override("launch_no_stopping_area", true);
-  node_options.append_parameter_override("launch_run_out", false);     // TODO() set to true
-  node_options.append_parameter_override("launch_speed_bump", false);  // TODO() set to true
+  node_options.append_parameter_override(
+    "launch_run_out", false);  // TODO(Kyoichi Sugahara) set to true
+  node_options.append_parameter_override(
+    "launch_speed_bump", false);  // TODO(Kyoichi Sugahara) set to true
   node_options.append_parameter_override("launch_out_of_lane", true);
 
   return std::make_shared<BehaviorVelocityPlannerNode>(node_options);
