@@ -22,7 +22,7 @@ import rclpy
 from rclpy.node import Node
 
 accel_topic = "/localization/acceleration"
-odom_topic = "localization/kinematic_state"
+odom_topic = "/localization/kinematic_state"
 in_gate_cmd_topic = "/control/trajectory_follower/control_cmd"
 out_gate_cmd_topic = "/control/command/control_cmd"
 engage_topic = "/autoware/engage"
