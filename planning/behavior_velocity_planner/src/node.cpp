@@ -230,6 +230,11 @@ bool BehaviorVelocityPlannerNode::isDataReady(
       get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
     return false;
   }
+  if (!d.occupancy_grid) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of occupancy grid map");
+    return false;
+  }
   return true;
 }
 
@@ -265,7 +270,7 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
   if (!pc.empty()) {
-    pcl::transformPointCloud(pc, *pc_transformed, affine);
+    tier4_autoware_utils::transformPointCloud(pc, *pc_transformed, affine);
   }
 
   {
