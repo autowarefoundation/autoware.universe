@@ -61,11 +61,11 @@ void visualizeBound(
     const auto [normal_vector_angle, adaptive_width] = [&]() -> std::pair<float, float> {
       if (i == 0) {
         return std::make_pair(
-          tier4_autoware_utils::calcAzimuthAngle(bound.at(i), bound.at(i + 1)), width);
+          tier4_autoware_utils::calcAzimuthAngle(bound.at(i), bound.at(i + 1)) + M_PI_2, width);
       }
       if (i == bound.size() - 1) {
         return std::make_pair(
-          tier4_autoware_utils::calcAzimuthAngle(bound.at(i - 1), bound.at(i)), width);
+          tier4_autoware_utils::calcAzimuthAngle(bound.at(i - 1), bound.at(i)) + M_PI_2, width);
       }
       const auto & prev_p = bound.at(i - 1);
       const auto & curr_p = bound.at(i);
