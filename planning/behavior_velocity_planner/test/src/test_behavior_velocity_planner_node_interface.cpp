@@ -36,7 +36,8 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   test_manager->setPathWithLaneIdTopicName(
     "behavior_velocity_planner_node/input/path_with_lane_id");
 
-  test_manager->setInitialPoseTopicName("behavior_velocity_planner/input/odometry");
+  test_manager->setInitialPoseTopicName("behavior_velocity_planner_node/input/vehicle_odometry");
+  test_manager->setOdometryTopicName("behavior_velocity_planner_node/input/vehicle_odometry");
 
   return test_manager;
 }
@@ -135,21 +136,21 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
   rclcpp::shutdown();
 }
 
-// TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
-// {
-//   rclcpp::init(0, nullptr);
+TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
+{
+  rclcpp::init(0, nullptr);
 
-//   auto test_manager = generateTestManager();
-//   auto test_target_node = generateNode();
-//   publishMandatoryTopics(test_manager, test_target_node);
+  auto test_manager = generateTestManager();
+  auto test_target_node = generateNode();
+  publishMandatoryTopics(test_manager, test_target_node);
 
-//   // test for normal trajectory
-//   ASSERT_NO_THROW(test_manager->testWithNominalPathWithLaneId(test_target_node));
+  // test for normal trajectory
+  ASSERT_NO_THROW(test_manager->testWithNominalPathWithLaneId(test_target_node));
 
-//   // make sure behavior_path_planner is running
-//   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
+  // make sure behavior_path_planner is running
+  EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-//   ASSERT_NO_THROW(test_manager->testOffTrackFromPathWithLaneId(test_target_node));
+  ASSERT_NO_THROW(test_manager->testOffTrackFromPathWithLaneId(test_target_node));
 
-//   rclcpp::shutdown();
-// }
+  rclcpp::shutdown();
+}
