@@ -207,20 +207,22 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   if (!activated_) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.collision_stop_wall_pose}, "intersection", now),
+        {debug_data_.collision_stop_wall_pose}, "intersection", now, 0.0,
+        std::to_string(module_id_) + "_"),
       &wall_marker, now);
   }
   if (!occlusion_first_stop_activated_) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
         {debug_data_.occlusion_first_stop_wall_pose}, "intersection", now, 0.0,
-        "occlusion_first_stop_"),
+        std::to_string(module_id_) + "occlusion_first_stop_"),
       &wall_marker, now);
   }
   if (!occlusion_activated_) {
     appendMarkerArray(
       virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.occlusion_stop_wall_pose}, "intersection_occlusion", now, 0.0, "occlusion_"),
+        {debug_data_.occlusion_stop_wall_pose}, "intersection_occlusion", now, 0.0,
+        std::to_string(module_id_) + "occlusion_"),
       &wall_marker, now);
   }
 
