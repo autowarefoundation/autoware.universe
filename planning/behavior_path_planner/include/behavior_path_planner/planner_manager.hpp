@@ -19,13 +19,13 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -55,9 +55,7 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  PlannerManager(
-    rclcpp::Node & node, const std::shared_ptr<LaneFollowingParameters> & parameters,
-    const bool verbose);
+  PlannerManager(rclcpp::Node & node, const bool verbose);
 
   /**
    * @brief run all candidate and approved modules.
@@ -100,12 +98,21 @@ public:
   }
 
   /**
-   * @brief publish all registered modules' debug markers.
+   * @brief publish all registered modules' markers.
    */
-  void publishDebugMarker() const
+  void publishMarker() const
   {
     std::for_each(
-      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishDebugMarker(); });
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishMarker(); });
+  }
+
+  /**
+   * @brief publish all registered modules' virtual wall.
+   */
+  void publishVirtualWall() const
+  {
+    std::for_each(
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishVirtualWall(); });
   }
 
   /**
@@ -182,6 +189,41 @@ private:
     processing_time_.at(module_ptr->name()) += stop_watch_.toc(module_ptr->name(), true);
 
     return result;
+  }
+
+  void generateCombinedDrivableArea(
+    BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const;
+
+  /**
+   * @brief get reference path from root_lanelet_ centerline.
+   * @param planner data.
+   * @return reference path.
+   */
+  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const
+  {
+    const auto & route_handler = data->route_handler;
+    const auto & pose = data->self_odometry->pose.pose;
+    const auto p = data->parameters;
+
+    constexpr double extra_margin = 10.0;
+    const auto backward_length =
+      std::max(p.backward_path_length, p.backward_path_length + extra_margin);
+
+    const auto lanelet_sequence = route_handler->getLaneletSequence(
+      root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
+
+    lanelet::ConstLanelet closest_lane{};
+    if (lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return utils::getReferencePath(closest_lane, data);
+    }
+
+    if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+      return utils::getReferencePath(closest_lane, data);
+    }
+
+    return {};  // something wrong.
   }
 
   /**
@@ -279,13 +321,6 @@ private:
   BehaviorModuleOutput runApprovedModules(const std::shared_ptr<PlannerData> & data);
 
   /**
-   * @brief get reference path from root_lanelet_ centerline.
-   * @param planner data.
-   * @return reference path.
-   */
-  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const;
-
-  /**
    * @brief select a module that should be execute at first.
    * @param modules that make execution request.
    * @return the highest priority module.
@@ -320,8 +355,6 @@ private:
     const BehaviorModuleOutput & previous_module_output);
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
-
-  std::shared_ptr<LaneFollowingParameters> parameters_;
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 

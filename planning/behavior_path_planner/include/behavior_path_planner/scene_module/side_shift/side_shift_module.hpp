@@ -57,6 +57,7 @@ public:
     const double & min_request_time_sec, bool override_requests = false) const noexcept;
   ModuleStatus updateState() override;
   void updateData() override;
+  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -85,7 +86,7 @@ private:
 #endif
 
   // non-const methods
-  void adjustDrivableArea(ShiftedPath * path) const;
+  BehaviorModuleOutput adjustDrivableArea(const ShiftedPath & path) const;
 
   ShiftLine calcShiftLine() const;
 
@@ -126,14 +127,15 @@ private:
   ShiftedPath prev_output_;
   ShiftLine prev_shift_line_;
 
-  // NOTE: this function is ported from avoidance.
-  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  inline Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
-  PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
+
+  rclcpp::Time latest_lateral_offset_stamp_;
+
+  // debug
+  mutable SideShiftDebugData debug_data_;
+  void setDebugMarkersVisualization() const;
 };
 
 }  // namespace behavior_path_planner

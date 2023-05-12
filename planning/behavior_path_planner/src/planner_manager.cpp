@@ -26,12 +26,8 @@
 
 namespace behavior_path_planner
 {
-
-PlannerManager::PlannerManager(
-  rclcpp::Node & node, const std::shared_ptr<LaneFollowingParameters> & parameters,
-  const bool verbose)
-: parameters_{parameters},
-  logger_(node.get_logger().get_child("planner_manager")),
+PlannerManager::PlannerManager(rclcpp::Node & node, const bool verbose)
+: logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
   verbose_{verbose}
 {
@@ -50,56 +46,121 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   std::for_each(
     manager_ptrs_.begin(), manager_ptrs_.end(), [&data](const auto & m) { m->setData(data); });
 
-  while (rclcpp::ok()) {
-    /**
-     * STEP1: get approved modules' output
-     */
-    const auto approved_modules_output = runApprovedModules(data);
+  auto result_output = [&]() {
+    const bool is_any_approved_module_running = std::any_of(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::RUNNING; });
 
-    /**
-     * STEP2: check modules that need to be launched
-     */
-    const auto request_modules = getRequestModules(approved_modules_output);
+    const bool is_any_candidate_module_running = std::any_of(
+      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(),
+      [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::RUNNING; });
 
-    /**
-     * STEP3: if there is no module that need to be launched, return approved modules' output
-     */
-    if (request_modules.empty()) {
-      processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-      return approved_modules_output;
+    const bool is_any_module_running =
+      is_any_approved_module_running || is_any_candidate_module_running;
+
+    const bool is_out_of_route = utils::isEgoOutOfRoute(
+      data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler);
+
+    if (!is_any_module_running && is_out_of_route) {
+      BehaviorModuleOutput output = utils::createGoalAroundPath(data);
+      generateCombinedDrivableArea(output, data);
+      return output;
     }
 
-    /**
-     * STEP4: if there is module that should be launched, execute the module
-     */
-    const auto [highest_priority_module, candidate_modules_output] =
-      runRequestModules(request_modules, data, approved_modules_output);
-    if (!highest_priority_module) {
-      processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-      return approved_modules_output;
-    }
+    while (rclcpp::ok()) {
+      /**
+       * STEP1: get approved modules' output
+       */
+      const auto approved_modules_output = runApprovedModules(data);
 
-    /**
-     * STEP5: if the candidate module's modification is NOT approved yet, return the result.
-     * NOTE: the result is output of the candidate module, but the output path don't contains path
-     * shape modification that needs approval. On the other hand, it could include velocity profile
-     * modification.
-     */
-    if (highest_priority_module->isWaitingApproval()) {
-      processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-      return candidate_modules_output;
-    }
+      /**
+       * STEP2: check modules that need to be launched
+       */
+      const auto request_modules = getRequestModules(approved_modules_output);
 
-    /**
-     * STEP6: if the candidate module is approved, push the module into approved_module_ptrs_
-     */
-    addApprovedModule(highest_priority_module);
-    clearCandidateModules();
+      /**
+       * STEP3: if there is no module that need to be launched, return approved modules' output
+       */
+      if (request_modules.empty()) {
+        processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+        return approved_modules_output;
+      }
+
+      /**
+       * STEP4: if there is module that should be launched, execute the module
+       */
+      const auto [highest_priority_module, candidate_modules_output] =
+        runRequestModules(request_modules, data, approved_modules_output);
+      if (!highest_priority_module) {
+        processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+        return approved_modules_output;
+      }
+
+      /**
+       * STEP5: if the candidate module's modification is NOT approved yet, return the result.
+       * NOTE: the result is output of the candidate module, but the output path don't contains path
+       * shape modification that needs approval. On the other hand, it could include velocity
+       * profile modification.
+       */
+      if (highest_priority_module->isWaitingApproval()) {
+        processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+        return candidate_modules_output;
+      }
+
+      /**
+       * STEP6: if the candidate module is approved, push the module into approved_module_ptrs_
+       */
+      addApprovedModule(highest_priority_module);
+      clearCandidateModules();
+    }
+    return BehaviorModuleOutput{};
+  }();
+
+  generateCombinedDrivableArea(result_output, data);
+
+  return result_output;
+}
+
+// NOTE: To deal with some policies about drivable area generation, currently DrivableAreaInfo is
+// quite messy. Needs to be refactored.
+void PlannerManager::generateCombinedDrivableArea(
+  BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const
+{
+  if (output.path->points.empty()) {
+    RCLCPP_ERROR_STREAM(logger_, "[generateCombinedDrivableArea] Output path is empty!");
+    return;
   }
 
-  processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+  const auto & di = output.drivable_area_info;
+  constexpr double epsilon = 1e-3;
 
-  return {};
+  if (epsilon < std::abs(di.drivable_margin)) {
+    // for single free space pull over
+    const auto is_driving_forward_opt = motion_utils::isDrivingForward(output.path->points);
+    const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
+
+    utils::generateDrivableArea(
+      *output.path, data->parameters.vehicle_length, di.drivable_margin, is_driving_forward);
+  } else if (di.is_already_expanded) {
+    // for single side shift
+    utils::generateDrivableArea(
+      *output.path, di.drivable_lanes, false, data->parameters.vehicle_length, data);
+  } else {
+    const auto shorten_lanes = utils::cutOverlappedLanes(*output.path, di.drivable_lanes);
+
+    const auto & dp = data->drivable_area_expansion_parameters;
+    const auto expanded_lanes = utils::expandLanelets(
+      shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+      dp.drivable_area_types_to_skip);
+
+    // for other modules where multiple modules may be launched
+    utils::generateDrivableArea(
+      *output.path, expanded_lanes, di.enable_expanding_hatched_road_markings,
+      data->parameters.vehicle_length, data);
+  }
+
+  // extract obstacles from drivable area
+  utils::extractObstaclesFromDrivableArea(*output.path, di.obstacles);
 }
 
 std::vector<SceneModulePtr> PlannerManager::getRequestModules(
@@ -387,12 +448,12 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     if (itr != approved_module_ptrs_.end()) {
       clearCandidateModules();
       candidate_module_ptrs_.push_back(*itr);
+
+      std::for_each(
+        std::next(itr), approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
     }
 
-    approved_module_ptrs_.erase(
-      std::remove_if(
-        approved_module_ptrs_.begin(), approved_module_ptrs_.end(), waiting_approval_modules),
-      approved_module_ptrs_.end());
+    approved_module_ptrs_.erase(itr, approved_module_ptrs_.end());
   }
 
   /**
@@ -427,91 +488,58 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     return results.at(output_module_name);
   }();
 
+  const auto not_success_itr = std::find_if(
+    approved_module_ptrs_.rbegin(), approved_module_ptrs_.rend(),
+    [](const auto & m) { return m->getCurrentStatus() != ModuleStatus::SUCCESS; });
+
+  // convert reverse iterator -> iterator
+  const auto success_itr = std::prev(not_success_itr).base() - 1;
+
   /**
-   * 1.remove success modules. these modules' outputs are used as valid plan.
-   * 2.update root lanelet if lane change module succeeded path planning, and finished correctly.
+   * there is no succeeded module. return.
    */
-  {
-    const auto itr = std::find_if(
-      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-      [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::SUCCESS; });
+  if (success_itr == approved_module_ptrs_.end()) {
+    return approved_modules_output;
+  }
 
-    if (itr == approved_module_ptrs_.begin()) {
-      if ((*itr)->name().find("lane_change") != std::string::npos) {
-        root_lanelet_ = updateRootLanelet(data);
-      }
+  const auto lane_change_itr = std::find_if(
+    success_itr, approved_module_ptrs_.end(),
+    [](const auto & m) { return m->name().find("lane_change") != std::string::npos; });
 
-      clearCandidateModules();
-      deleteExpiredModules(*itr);
-      approved_module_ptrs_.erase(itr);
-    }
+  /**
+   * remove success modules according to Last In First Out(LIFO) policy. when the next module is in
+   * ModuleStatus::RUNNING, the previous module keeps running even if it is in
+   * ModuleStatus::SUCCESS.
+   */
+  if (lane_change_itr == approved_module_ptrs_.end()) {
+    std::for_each(
+      success_itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+
+    approved_module_ptrs_.erase(success_itr, approved_module_ptrs_.end());
+    clearCandidateModules();
+
+    return approved_modules_output;
+  }
+
+  /**
+   * as an exception, when there is lane change module is in succeeded modules, it doesn't remove
+   * any modules if module whose status is NOT ModuleStatus::SUCCESS exists. this is because the
+   * root lanelet is updated at the moment of lane change module's unregistering, and that causes
+   * change First In module's input.
+   */
+  if (not_success_itr == approved_module_ptrs_.rend()) {
+    std::for_each(
+      success_itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+
+    approved_module_ptrs_.erase(success_itr, approved_module_ptrs_.end());
+    clearCandidateModules();
+
+    root_lanelet_ = updateRootLanelet(data);
+
+    return approved_modules_output;
   }
 
   return approved_modules_output;
-}
-
-BehaviorModuleOutput PlannerManager::getReferencePath(
-  const std::shared_ptr<PlannerData> & data) const
-{
-  PathWithLaneId reference_path{};
-
-  constexpr double extra_margin = 10.0;
-
-  const auto & route_handler = data->route_handler;
-  const auto & pose = data->self_odometry->pose.pose;
-  const auto p = data->parameters;
-
-  reference_path.header = route_handler->getRouteHeader();
-
-  const auto backward_length =
-    std::max(p.backward_path_length, p.backward_path_length + extra_margin);
-
-  const auto lanelet_sequence = route_handler->getLaneletSequence(
-    root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
-
-  lanelet::ConstLanelet closest_lane{};
-  if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-    return {};
-  }
-
-  const auto current_lanes =
-    route_handler->getLaneletSequence(closest_lane, pose, backward_length, p.forward_path_length);
-
-  reference_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
-
-  // clip backward length
-  const size_t current_seg_idx = data->findEgoSegmentIndex(reference_path.points);
-  util::clipPathLength(
-    reference_path, current_seg_idx, p.forward_path_length, p.backward_path_length);
-  const auto drivable_lanelets = util::getLaneletsFromPath(reference_path, route_handler);
-  const auto drivable_lanes = util::generateDrivableLanes(drivable_lanelets);
-
-  {
-    const int num_lane_change =
-      std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
-
-    const double lane_change_buffer = util::calcLaneChangeBuffer(p, num_lane_change);
-
-    reference_path = util::setDecelerationVelocity(
-      *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
-      lane_change_buffer);
-  }
-
-  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
-
-  const auto expanded_lanes = util::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-
-  util::generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, data);
-
-  BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(reference_path);
-  output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
-  output.drivable_lanes = drivable_lanes;
-
-  return output;
 }
 
 void PlannerManager::updateCandidateModules(
