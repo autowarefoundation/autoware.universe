@@ -168,8 +168,6 @@ public:
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<LaneChangeParameters> & parameters);
 
-  ModuleStatus updateState() override;
-
 protected:
   void updateRTCStatus(const double start_distance, const double finish_distance) override;
 };
