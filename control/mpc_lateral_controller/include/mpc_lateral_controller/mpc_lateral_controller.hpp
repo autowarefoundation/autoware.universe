@@ -68,7 +68,7 @@ public:
   virtual ~MpcLateralController();
 
 private:
-  rclcpp::Node * node_;
+  rclcpp::Node & node_;
 
   //!< @brief topic publisher for predicted trajectory
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_pub_predicted_traj;
