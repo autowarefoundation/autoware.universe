@@ -103,7 +103,7 @@ public:
   explicit PurePursuitLateralController(rclcpp::Node & node);
 
 private:
-  rclcpp::Node::SharedPtr node_;
+  rclcpp::Node &node_;
   std::vector<TrajectoryPoint> output_tp_array_;
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_auto_planning_msgs::msg::Trajectory trajectory_;
