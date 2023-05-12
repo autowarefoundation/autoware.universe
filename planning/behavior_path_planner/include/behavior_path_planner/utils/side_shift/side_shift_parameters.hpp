@@ -15,8 +15,11 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__SIDE_SHIFT__SIDE_SHIFT_PARAMETERS_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__SIDE_SHIFT__SIDE_SHIFT_PARAMETERS_HPP_
 
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -37,10 +40,14 @@ struct SideShiftParameters
   double drivable_area_width;
   double drivable_area_height;
   double shift_request_time_limit;
-  // drivable area expansion
-  double drivable_area_right_bound_offset;
-  double drivable_area_left_bound_offset;
-  std::vector<std::string> drivable_area_types_to_skip;
+  bool publish_debug_marker;
+};
+
+struct SideShiftDebugData
+{
+  std::shared_ptr<PathShifter> path_shifter{};
+  ShiftLineArray shift_lines{};
+  double current_request{0.0};
 };
 
 }  // namespace behavior_path_planner

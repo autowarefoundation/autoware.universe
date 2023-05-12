@@ -37,11 +37,12 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner::util::safety_check
+namespace behavior_path_planner::utils::safety_check
 {
 
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedPath;
+using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
@@ -55,50 +56,24 @@ struct ProjectedDistancePoint
   double distance{0.0};
 };
 
-/**
- * @brief Project nearest point on a line segment.
- * @param [in] reference_point point to project
- * @param [in] line segment
- * @return nearest point on the line segment
- */
-template <typename Pythagoras = bg::strategy::distance::pythagoras<>>
-ProjectedDistancePoint pointToSegment(
-  const Point2d & reference_point, const Point2d & polygon_segment_start,
-  const Point2d & polygon_segment_end);
+bool isTargetObjectFront(
+  const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
 
-/**
- * @brief Find nearest points between two polygon.
- */
-void getProjectedDistancePointFromPolygons(
-  const Polygon2d & ego_polygon, const Polygon2d & object_polygon, Pose & point_on_ego,
-  Pose & point_on_object);
+Polygon2d createExtendedPolygon(
+  const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const double lon_length, const double lat_margin);
+Polygon2d createExtendedPolygon(
+  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin);
 
-/**
- * @brief get relative pose with reference to the target object.
- * @param [in] absolute pose desired_pose reference pose
- * @param [in] absolute pose target_pose target pose to check
- * @return relative pose of the target
- */
-Pose projectCurrentPoseToTarget(const Pose & reference_pose, const Pose & target_pose);
+double calcRssDistance(
+  const double front_object_velocity, const double rear_object_velocity,
+  const double front_object_deceleration, const double rear_object_deceleration,
+  const BehaviorPathPlannerParameters & params);
 
-/**
- * @brief find which vehicle is front and rear and check for lateral,
- *        longitudinal physical and longitudinal expected stopping distance between two points
- * @param [in] expected_ego_pose ego vehicle's pose
- * @param [in] ego_current_twist ego vehicle's twist
- * @param [in] expected_object_pose object vehicle's pose
- * @param [in] object_current_twist object vehicle's twist
- * @param [in] param common behavior path planner parameters
- * @param [in] front_decel expected deceleration of front vehicle
- * @param [in] rear_decel expected deceleration of rear vehicle
- * @param [in] debug debug data
- * @return true if distance is safe.
- */
-bool hasEnoughDistance(
-  const Pose & expected_ego_pose, const Twist & ego_current_twist,
-  const Pose & expected_object_pose, const Twist & object_current_twist,
-  const BehaviorPathPlannerParameters & param, const double front_decel, const double rear_decel,
-  CollisionCheckDebug & debug);
+double calcMinimumLongitudinalLength(
+  const double front_object_velocity, const double rear_object_velocity,
+  const BehaviorPathPlannerParameters & params);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -106,6 +81,7 @@ bool hasEnoughDistance(
  * @return true if distance is safe.
  */
 bool isSafeInLaneletCollisionCheck(
+  const PathWithLaneId & path,
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
   const Twist & ego_current_twist, const std::vector<double> & check_duration,
   const double prepare_duration, const PredictedObject & target_object,
@@ -119,13 +95,14 @@ bool isSafeInLaneletCollisionCheck(
  * @return true if distance is safe.
  */
 bool isSafeInFreeSpaceCollisionCheck(
+  const PathWithLaneId & path,
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
   const Twist & ego_current_twist, const std::vector<double> & check_duration,
   const double prepare_duration, const PredictedObject & target_object,
   const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
-  const double rear_decel, CollisionCheckDebug & debug);
+  const double prepare_phase_ignore_target_velocity_thresh, const double front_object_deceleration,
+  const double rear_object_deceleration, CollisionCheckDebug & debug);
 
-}  // namespace behavior_path_planner::util::safety_check
+}  // namespace behavior_path_planner::utils::safety_check
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECK_HPP_

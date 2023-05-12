@@ -42,11 +42,23 @@ using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using route_handler::Direction;
 using tier4_autoware_utils::Polygon2d;
+
+double calcLaneChangeResampleInterval(
+  const double lane_changing_length, const double lane_changing_velocity);
+
+std::vector<int64_t> replaceWithSortedIds(
+  const std::vector<int64_t> & original_lane_ids,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids);
+
+std::vector<std::vector<int64_t>> getSortedLaneIds(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const double rough_shift_length);
 
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
 
@@ -56,7 +68,7 @@ bool isPathInLanelets(
 
 double calcLaneChangingLength(
   const double lane_changing_velocity, const double shift_length,
-  const BehaviorPathPlannerParameters & com_param, const LaneChangeParameters & lc_param);
+  const BehaviorPathPlannerParameters & common_parameter);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
@@ -64,23 +76,8 @@ std::optional<LaneChangePath> constructCandidatePath(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double acceleration,
   const LaneChangePhaseInfo lane_change_length, const LaneChangePhaseInfo lane_change_velocity,
+  const BehaviorPathPlannerParameters & common_parameter,
   const LaneChangeParameters & lane_change_param);
-
-bool getLaneChangePaths(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets, const Pose & pose, const Twist & twist,
-  const PredictedObjects::ConstSharedPtr dynamic_objects,
-  const BehaviorPathPlannerParameters & common_parameter, const LaneChangeParameters & parameter,
-  const double check_length, LaneChangePaths * candidate_paths,
-  std::unordered_map<std::string, CollisionCheckDebug> * debug_data);
-
-bool getLaneChangePaths(
-  const PathWithLaneId & original_path, const RouteHandler & route_handler,
-  const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
-  const Pose & pose, const Twist & twist, const PredictedObjects::ConstSharedPtr dynamic_objects,
-  const BehaviorPathPlannerParameters & common_parameter, const LaneChangeParameters & parameter,
-  const double check_length, const Direction direction, LaneChangePaths * candidate_paths,
-  std::unordered_map<std::string, CollisionCheckDebug> * debug_data);
 
 bool isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const PredictedObjects::ConstSharedPtr dynamic_objects,
@@ -91,18 +88,12 @@ bool isLaneChangePathSafe(
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data,
   const double acceleration = 0.0);
 
-#ifdef USE_OLD_ARCHITECTURE
 bool hasEnoughLength(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const RouteHandler & route_handler, const double minimum_lane_change_length);
-#else
-bool hasEnoughLength(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const RouteHandler & route_handler, const double minimum_lane_change_length,
-  const Direction direction);
-#endif
+  const RouteHandler & route_handler, const double minimum_lane_changing_velocity,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const Direction direction = Direction::NONE);
 
 ShiftLine getLaneChangingShiftLine(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
@@ -112,7 +103,8 @@ PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double target_lane_length,
   const double lane_changing_length, const double forward_path_length,
-  const double resample_interval, const bool is_goal_in_route);
+  const double resample_interval, const bool is_goal_in_route,
+  const double next_lane_change_buffer);
 
 PathWithLaneId getPrepareSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
@@ -145,10 +137,6 @@ std::vector<DrivableLanes> generateDrivableLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & lane_change_lanes);
 
-std::vector<DrivableLanes> combineDrivableLanes(
-  const std::vector<DrivableLanes> & original_drivable_lanes_vec,
-  const std::vector<DrivableLanes> & new_drivable_lanes_vec);
-
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,
   const Pose & ego_lerp_pose_before_collision, const BehaviorPathPlannerParameters & common_param,
@@ -161,8 +149,8 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   const Pose & curent_pose, const double abort_return_dist,
   const BehaviorPathPlannerParameters & common_param);
 
-lanelet::ConstLanelets getExtendedTargetLanesForCollisionCheck(
-  const RouteHandler & route_handler, const lanelet::ConstLanelet & target_lanes,
+lanelet::ConstLanelets getBackwardLanelets(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const double backward_length);
 
 LaneChangeTargetObjectIndices filterObjectIndices(
@@ -175,11 +163,14 @@ bool isTargetObjectType(const PredictedObject & object, const LaneChangeParamete
 
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
 
+double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer);
+
 std::string getStrDirection(const std::string & name, const Direction direction);
 
-lanelet::ConstLanelets getLaneChangeLanes(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length,
-  const double prepare_duration, const Direction direction, const LaneChangeModuleType type);
+CandidateOutput assignToCandidate(
+  const LaneChangePath & lane_change_path, const Point & ego_position);
+boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const LaneChangeModuleType type, const Direction & direction);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_

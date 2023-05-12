@@ -89,7 +89,6 @@ public:
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void processOnEntry() override;
   void processOnExit() override;
 
   void setParameters(const std::shared_ptr<PullOutParameters> & parameters)
@@ -118,7 +117,6 @@ private:
 
   std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
   PathWithLaneId getFullPath() const;
-  ParallelParkingParameters getGeometricPullOutParameters() const;
   std::vector<Pose> searchPullOutStartPoses();
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
