@@ -101,7 +101,6 @@ Each is activated when all conditions are met.
   - we support `2D Rough Goal Pose` with the key bind `r` in rviz, but in the future there will be a panel of tools to manipulate various Route API from rviz.
 - ego-vehicle is in the same lane as the goal.
 
-
 <img src="https://user-images.githubusercontent.com/39142679/237929941-2ce26ea5-c84d-4d17-8cdc-103f5246db90.png" width="600">
 
 #### pull over on shoulder lane
