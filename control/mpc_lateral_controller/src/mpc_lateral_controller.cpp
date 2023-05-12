@@ -79,8 +79,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{node}
   m_mpc.m_steer_rate_lim = steer_rate_lim_dps * deg2rad;
 
   /* vehicle model setup */
-  const std::string vehicle_model_type =
-    node_.declare_parameter<std::string>("vehicle_model_type");
+  const std::string vehicle_model_type = node_.declare_parameter<std::string>("vehicle_model_type");
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr;
   if (vehicle_model_type == "kinematics") {
     vehicle_model_ptr = std::make_shared<KinematicsBicycleModel>(
@@ -138,8 +137,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{node}
 
   /* initialize lowpass filter */
   {
-    const double steering_lpf_cutoff_hz =
-      node_.declare_parameter<double>("steering_lpf_cutoff_hz");
+    const double steering_lpf_cutoff_hz = node_.declare_parameter<double>("steering_lpf_cutoff_hz");
     const double error_deriv_lpf_cutoff_hz =
       node_.declare_parameter<double>("error_deriv_lpf_cutoff_hz");
     m_mpc.initializeLowPassFilters(steering_lpf_cutoff_hz, error_deriv_lpf_cutoff_hz);
@@ -168,8 +166,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{node}
   declareMPCparameters();
 
   /* get parameter updates */
-  m_set_param_res = node_.add_on_set_parameters_callback(
-    std::bind(&MpcLateralController::paramCallback, this, _1));
+  m_set_param_res =
+    node_.add_on_set_parameters_callback(std::bind(&MpcLateralController::paramCallback, this, _1));
 
   m_mpc.setQPSolver(qpsolver_ptr);
   m_mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
@@ -287,8 +285,7 @@ bool MpcLateralController::isReady(const trajectory_follower::InputData & input_
     return false;
   }
   if (m_mpc.m_ref_traj.size() == 0) {
-    RCLCPP_INFO_THROTTLE(
-      node_.get_logger(), *node_.get_clock(), 5000, "trajectory size is zero.");
+    RCLCPP_INFO_THROTTLE(node_.get_logger(), *node_.get_clock(), 5000, "trajectory size is zero.");
     return false;
   }
 

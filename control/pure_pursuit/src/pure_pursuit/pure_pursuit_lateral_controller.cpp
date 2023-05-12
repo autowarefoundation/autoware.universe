@@ -78,8 +78,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
     node_.declare_parameter<double>("reverse_min_lookahead_distance");
   param_.converged_steer_rad_ = node_.declare_parameter<double>("converged_steer_rad");
   param_.prediction_ds = node_.declare_parameter<double>("prediction_ds");
-  param_.prediction_distance_length =
-    node_.declare_parameter<double>("prediction_distance_length");
+  param_.prediction_distance_length = node_.declare_parameter<double>("prediction_distance_length");
   param_.resampling_ds = node_.declare_parameter<double>("resampling_ds");
   param_.curvature_calculation_distance =
     node_.declare_parameter<double>("curvature_calculation_distance");
