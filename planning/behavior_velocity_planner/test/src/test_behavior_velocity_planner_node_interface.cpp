@@ -131,3 +131,22 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
   ASSERT_NO_THROW(test_manager->testWithAbnormalPathWithLaneId(test_target_node));
   rclcpp::shutdown();
 }
+
+// TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
+// {
+//   rclcpp::init(0, nullptr);
+
+//   auto test_manager = generateTestManager();
+//   auto test_target_node = generateNode();
+//   publishMandatoryTopics(test_manager, test_target_node);
+
+//   // test for normal trajectory
+//   ASSERT_NO_THROW(test_manager->testWithNominalPathWithLaneId(test_target_node));
+
+//   // make sure behavior_path_planner is running
+//   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
+
+//   ASSERT_NO_THROW(test_manager->testOffTrackFromPathWithLaneId(test_target_node));
+
+//   rclcpp::shutdown();
+// }
