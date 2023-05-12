@@ -73,10 +73,6 @@ bool LaneChangeInterface::isExecutionRequested() const
 
 bool LaneChangeInterface::isExecutionReady() const
 {
-  if (current_state_ == ModuleStatus::RUNNING) {
-    return true;
-  }
-
   LaneChangePath selected_path;
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
