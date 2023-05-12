@@ -93,13 +93,8 @@ void publishMandatoryTopics(
   test_manager->publishMap(test_target_node, "behavior_velocity_planner_node/input/vector_map");
   test_manager->publishTrafficSignals(
     test_target_node, "behavior_velocity_planner_node/input/traffic_signals");
-
-  test_manager->publishExternalIntersectionStates(
-    test_target_node, "behavior_velocity_planner_node/input/external_intersection_states");
   test_manager->publishMaxVelocity(
     test_target_node, "behavior_velocity_planner_node/input/external_velocity_limit_mps");
-  test_manager->publishExternalTrafficSignals(
-    test_target_node, "behavior_velocity_planner_node/input/external_traffic_signals");
   test_manager->publishVirtualTrafficLightState(
     test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
   test_manager->publishOccupancyGrid(
