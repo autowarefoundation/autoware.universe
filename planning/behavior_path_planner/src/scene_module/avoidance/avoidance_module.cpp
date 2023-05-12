@@ -353,8 +353,10 @@ ObjectData AvoidanceModule::createObjectData(
     object_data, object_closest_pose, object_data.overhang_pose.position);
 
   // Check whether the the ego should avoid the object.
+  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(t);
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto safety_margin = 0.5 * vehicle_width + parameters_->lateral_passable_safety_buffer;
+  const auto safety_margin = 0.5 * vehicle_width + object_parameter.safety_buffer_lateral;
   object_data.avoid_required =
     (utils::avoidance::isOnRight(object_data) &&
      std::abs(object_data.overhang_dist) < safety_margin) ||
@@ -2877,24 +2879,35 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
 BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
 {
+  const auto & data = avoidance_data_;
+
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
+
 #ifndef USE_OLD_ARCHITECTURE
   if (path_shifter_.getShiftLines().empty()) {
     out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   }
 #endif
+
+  const auto all_unavoidable = std::all_of(
+    data.target_objects.begin(), data.target_objects.end(),
+    [](const auto & o) { return !o.is_avoidable; });
+
   const auto candidate = planCandidate();
-  constexpr double threshold_to_update_status = -1.0e-03;
-  if (candidate.start_distance_to_path_change > threshold_to_update_status) {
+  if (!avoidance_data_.safe_new_sl.empty()) {
     updateCandidateRTCStatus(candidate);
+    waitApproval();
+  } else if (all_unavoidable) {
     waitApproval();
   } else {
     clearWaitingApproval();
     removeCandidateRTCStatus();
   }
+
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
+
   return out;
 }
 
@@ -3052,7 +3065,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
     // DEBUG_PRINT("%s, shift current: %f, candidate: %f", pfx, current_shift,
     // candidate.end_shift_length);
 
-    const auto new_point_threshold = parameters_->avoidance_execution_lateral_threshold;
+    const auto new_point_threshold = parameters_->lateral_execution_threshold;
     if (std::abs(candidate.end_shift_length - current_shift) > new_point_threshold) {
       if (calcJerk(candidate) > parameters_->max_lateral_jerk) {
         DEBUG_PRINT(
@@ -3142,6 +3155,7 @@ void AvoidanceModule::updateData()
 void AvoidanceModule::processOnEntry()
 {
   initVariables();
+  waitApproval();
 }
 
 void AvoidanceModule::processOnExit()
