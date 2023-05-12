@@ -22,12 +22,27 @@
 #include <cmath>
 #include <vector>
 
-TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
+using behavior_velocity_planner::BehaviorVelocityPlannerNode;
+using planning_test_utils::PlanningInterfaceTestManager;
+
+std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
-  rclcpp::init(0, nullptr);
+  auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
-  auto test_manager = std::make_shared<planning_test_utils::PlanningInterfaceTestManager>();
+  // set subscriber with topic name: behavior_velocity_planner → test_node_
+  test_manager->setPathSubscriber("behavior_velocity_planner_node/output/path");
 
+  // set behavior_velocity_planner node's input topic name(this topic is changed to test node)
+  test_manager->setPathWithLaneIdTopicName(
+    "behavior_velocity_planner_node/input/path_with_lane_id");
+
+  test_manager->setInitialPoseTopicName("behavior_velocity_planner/input/odometry");
+
+  return test_manager;
+}
+
+std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
+{
   auto node_options = rclcpp::NodeOptions{};
 
   const auto planning_test_utils_dir =
@@ -58,9 +73,13 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
      behavior_velocity_planner_dir + "/config/virtual_traffic_light.param.yaml",
      behavior_velocity_planner_dir + "/config/out_of_lane.param.yaml"});
 
-  auto test_target_node =
-    std::make_shared<behavior_velocity_planner::BehaviorVelocityPlannerNode>(node_options);
+  return std::make_shared<BehaviorVelocityPlannerNode>(node_options);
+}
 
+void publishMandatoryTopics(
+  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
+  std::shared_ptr<BehaviorVelocityPlannerNode> test_target_node)
+{
   // publish necessary topics from test_manager
   test_manager->publishTF(test_target_node, "/tf");
   test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner_node/input/accel");
@@ -74,8 +93,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
   test_manager->publishMap(test_target_node, "behavior_velocity_planner_node/input/vector_map");
   test_manager->publishTrafficSignals(
     test_target_node, "behavior_velocity_planner_node/input/traffic_signals");
-  test_manager->publishExternalCrosswalkStates(
-    test_target_node, "behavior_velocity_planner_node/input/external_crosswalk_states");
+
   test_manager->publishExternalIntersectionStates(
     test_target_node, "behavior_velocity_planner_node/input/external_intersection_states");
   test_manager->publishMaxVelocity(
@@ -86,19 +104,21 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
     test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
   test_manager->publishOccupancyGrid(
     test_target_node, "behavior_velocity_planner_node/input/occupancy_grid");
+}
 
-  // set subscriber with topic name: behavior_velocity_planner → test_node_
-  test_manager->setPathSubscriber("behavior_velocity_planner_node/output/path");
+TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
+{
+  rclcpp::init(0, nullptr);
+  auto test_manager = generateTestManager();
+  auto test_target_node = generateNode();
 
-  // set behavior_velocity_planner node's input topic name(this topic is changed to test node)
-  test_manager->setPathWithLaneIdTopicName(
-    "behavior_velocity_planner_node/input/path_with_lane_id");
+  publishMandatoryTopics(test_manager, test_target_node);
 
   // test with nominal path_with_lane_id
   ASSERT_NO_THROW(test_manager->testWithNominalPathWithLaneId(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test with empty path_with_lane_id
-  test_manager->testWithAbnormalPathWithLaneId(test_target_node);
+  ASSERT_NO_THROW(test_manager->testWithAbnormalPathWithLaneId(test_target_node));
   rclcpp::shutdown();
 }
