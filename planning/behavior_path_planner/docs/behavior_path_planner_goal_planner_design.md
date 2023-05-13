@@ -96,7 +96,7 @@ Each is activated when all conditions are met.
 #### pull over on road lane
 
 - The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
-- route is set with `allow_goal_modification=true`
+- Route is set with `allow_goal_modification=true`
   - we can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
   - we support `2D Rough Goal Pose` with the key bind `r` in rviz, but in the future there will be a panel of tools to manipulate various Route API from rviz.
 - ego-vehicle is in the same lane as the goal.
