@@ -18,6 +18,10 @@
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
+// NOTE: Do not include OSQP before ProxQP. It will cause a build error. This is because OSQP
+// defines WARM_START with a macro which ProxQP uses in a enum.
+#include "qp_interface/osqp_interface.hpp"
+#include "qp_interface/proxqp_interface.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -429,8 +433,16 @@ MPTOptimizer::MPTOptimizer(
   state_equation_generator_ =
     StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad, time_keeper_ptr_);
 
-  // osqp solver
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_);
+  // qp interface
+  if (mpt_param_.qp_solver == "proxqp") {
+    const bool enable_warm_start = false;
+    qp_interface_ptr_ = std::make_shared<qp::ProxQPInterface>(enable_warm_start, osqp_epsilon_);
+  } else if (mpt_param_.qp_solver == "osqp") {
+    const bool enable_warm_start = true;
+    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(enable_warm_start, osqp_epsilon_);
+  } else {
+    throw std::invalid_argument("qp_solver is invalid.");
+  }
 
   // publisher
   debug_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
@@ -1322,8 +1334,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   }();
 
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, A_cols);
-  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::common::osqp::INF);
-  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::common::osqp::INF);
+  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -std::numeric_limits<double>::max());
+  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, std::numeric_limits<double>::max());
   size_t A_rows_end = 0;
 
   // CX = C(Bv + w) + C \in R^{N_ref, N_ref * D_x}
@@ -1492,54 +1504,37 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
     updateMatrixForManualWarmStart(obj_mat, const_mat, u0);
 
   // calculate matrices for qp
-  const Eigen::MatrixXd & H = updated_obj_mat.hessian;
+  const Eigen::MatrixXd & P = updated_obj_mat.hessian;
   const Eigen::MatrixXd & A = updated_const_mat.linear;
   const auto f = toStdVector(updated_obj_mat.gradient);
   const auto upper_bound = toStdVector(updated_const_mat.upper_bound);
   const auto lower_bound = toStdVector(updated_const_mat.lower_bound);
 
-  // initialize or update solver according to warm start
-  time_keeper_ptr_->tic("initOsqp");
-
-  const autoware::common::osqp::CSC_Matrix P_csc =
-    autoware::common::osqp::calCSCMatrixTrapezoidal(H);
-  const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
-  if (mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() && prev_mat_m_ == A.rows()) {
-    RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "warm start");
-    osqp_solver_ptr_->updateCscP(P_csc);
-    osqp_solver_ptr_->updateQ(f);
-    osqp_solver_ptr_->updateCscA(A_csc);
-    osqp_solver_ptr_->updateL(lower_bound);
-    osqp_solver_ptr_->updateU(upper_bound);
-  } else {
-    RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-      P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
-  }
-  prev_mat_n_ = H.rows();
-  prev_mat_m_ = A.rows();
-
-  time_keeper_ptr_->toc("initOsqp", "          ");
-
   // solve qp
   time_keeper_ptr_->tic("solveOsqp");
-  const auto result = osqp_solver_ptr_->optimize();
+  auto optimization_result = [&]() {
+    if (mpt_param_.qp_solver == "proxqp") {
+      return qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
+    }
+    if (mpt_param_.qp_solver == "osqp") {
+      return qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
+    }
+    throw std::invalid_argument("qp_solver is invalid.");
+  }();
   time_keeper_ptr_->toc("solveOsqp", "          ");
 
-  // check solution status
-  const int solution_status = std::get<3>(result);
-  if (solution_status != 1) {
-    osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
+  // check if optimization is solved successfully
+  const bool is_solved = qp_interface_ptr_->isSolved();
+  if (!is_solved) {
+    qp_interface_ptr_->logUnsolvedStatus("[MPT]");
     return std::nullopt;
   }
 
   // print iteration
-  const int iteration_status = std::get<4>(result);
+  const int iteration_status = qp_interface_ptr_->getIteration();
   RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "iteration: %d", iteration_status);
 
   // get optimization result
-  auto optimization_result =
-    std::get<0>(result);  // NOTE: const cannot be added due to the next operation.
   const auto has_nan = std::any_of(
     optimization_result.begin(), optimization_result.end(),
     [](const auto v) { return std::isnan(v); });

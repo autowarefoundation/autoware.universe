@@ -92,6 +92,14 @@ void ProxQPInterface::updateVerbose(const bool is_verbose)
   m_settings.verbose = is_verbose;
 }
 
+bool ProxQPInterface::isSolved() const
+{
+  if (m_qp_ptr) {
+    return m_qp_ptr->results.info.status == proxsuite::proxqp::QPSolverOutput::PROXQP_SOLVED;
+  }
+  return false;
+}
+
 int ProxQPInterface::getIteration() const
 {
   if (m_qp_ptr) {
@@ -106,6 +114,32 @@ int ProxQPInterface::getStatus() const
     return static_cast<int>(m_qp_ptr->results.info.status);
   }
   return 0;
+}
+
+std::string ProxQPInterface::getStatusMessage() const
+{
+  if (m_qp_ptr) {
+    if (m_qp_ptr->results.info.status == proxsuite::proxqp::QPSolverOutput::PROXQP_SOLVED) {
+      return "PROXQP_SOLVED";
+    }
+    if (
+      m_qp_ptr->results.info.status == proxsuite::proxqp::QPSolverOutput::PROXQP_MAX_ITER_REACHED) {
+      return "PROXQP_MAX_ITER_REACHED";
+    }
+    if (
+      m_qp_ptr->results.info.status ==
+      proxsuite::proxqp::QPSolverOutput::PROXQP_PRIMAL_INFEASIBLE) {
+      return "PROXQP_PRIMAL_INFEASIBLE";
+    }
+    if (
+      m_qp_ptr->results.info.status == proxsuite::proxqp::QPSolverOutput::PROXQP_DUAL_INFEASIBLE) {
+      return "PROXQP_DUAL_INFEASIBLE";
+    }
+    if (m_qp_ptr->results.info.status == proxsuite::proxqp::QPSolverOutput::PROXQP_NOT_RUN) {
+      return "PROXQP_NOT_RUN";
+    }
+  }
+  return "";
 }
 
 std::vector<double> ProxQPInterface::optimizeImpl()

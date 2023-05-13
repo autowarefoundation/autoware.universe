@@ -14,6 +14,8 @@
 
 #include "qp_interface/qp_interface.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -66,5 +68,25 @@ std::vector<double> QPInterface::optimize(
   const auto result = optimizeImpl();
 
   return result;
+}
+
+void QPInterface::logUnsolvedStatus(const std::string & prefix_message) const
+{
+  if (isSolved()) {
+    // No need logging since optimization was solved.
+    return;
+  }
+
+  // create message
+  std::string output_message = "";
+  if (prefix_message != "") {
+    output_message = prefix_message + " ";
+  }
+
+  const auto status_message = getStatusMessage();
+  output_message += "Optimization failed due to " + status_message;
+
+  // log with warning
+  RCLCPP_WARN(rclcpp::get_logger("qp_interface"), output_message.c_str());
 }
 }  // namespace qp

@@ -18,6 +18,7 @@
 #include <Eigen/Core>
 
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace qp
@@ -37,6 +38,10 @@ public:
   virtual void updateEpsAbs([[maybe_unused]] const double eps_abs) = 0;
   virtual void updateEpsRel([[maybe_unused]] const double eps_rel) = 0;
   virtual void updateVerbose([[maybe_unused]] const bool verbose) {}
+
+  void logUnsolvedStatus(const std::string & prefix_message = "") const;
+  virtual bool isSolved() const = 0;
+  virtual std::string getStatusMessage() const = 0;
 
 protected:
   bool m_enable_warm_start;

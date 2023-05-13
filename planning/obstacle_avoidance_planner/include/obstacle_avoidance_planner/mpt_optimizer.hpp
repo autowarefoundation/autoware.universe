@@ -21,7 +21,7 @@
 #include "obstacle_avoidance_planner/common_structs.hpp"
 #include "obstacle_avoidance_planner/state_equation_generator.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
-#include "osqp_interface/osqp_interface.hpp"
+#include "qp_interface/qp_interface.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
@@ -156,6 +156,9 @@ private:
     double delta_arc_length;
     int num_points;
 
+    // qp
+    std::string qp_solver{"proxqp"};
+
     // kinematics
     double optimization_center_offset;
     double max_steer_rad;
@@ -225,7 +228,7 @@ private:
   MPTParam mpt_param_;
 
   StateEquationGenerator state_equation_generator_;
-  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+  std::shared_ptr<qp::QPInterface> qp_interface_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;
 
