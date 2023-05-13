@@ -21,6 +21,7 @@
   <depend>nav_msgs</depend>
   <depend>osqp_interface</depend>
   <depend>planning_test_utils</depend>
+  <depend>qp_interface</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
