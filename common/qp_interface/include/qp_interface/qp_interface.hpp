@@ -19,6 +19,7 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -53,6 +54,9 @@ protected:
     const std::vector<double> & l, const std::vector<double> & u) = 0;
 
   virtual std::vector<double> optimizeImpl() = 0;
+
+  std::optional<size_t> m_variables_num;
+  std::optional<size_t> m_constraints_num;
 };
 }  // namespace qp
 
