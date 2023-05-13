@@ -97,7 +97,7 @@ Either one is activated when all conditions are met.
 
 - The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
 - Route is set with `allow_goal_modification=true`
-  - we can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
+  - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
   - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
 - ego-vehicle is in the same lane as the goal.
 
