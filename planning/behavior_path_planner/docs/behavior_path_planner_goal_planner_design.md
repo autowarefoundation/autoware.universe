@@ -87,7 +87,7 @@ Either one is activated when all conditions are met.
 ### fixed_goal_planner
 
 - The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
-- route is set with `allow_goal_modification=false` which is the default value.
+- Route is set with `allow_goal_modification=false` by default.
 
 <img src="https://user-images.githubusercontent.com/39142679/237929955-c0adf01b-9e3c-45e3-848d-98cf11e52b65.png" width="600">
 
