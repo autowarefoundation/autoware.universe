@@ -266,8 +266,8 @@ MPTOptimizer::MPTParam::MPTParam(
     use_different_slack_variables_for_each_vehicle_circle = node->declare_parameter<bool>(
       "mpt.collision_free_constraints.option.soft_constraint.use_different_slack_variables_for_"
       "each_vehicle_circle");
-    use_symmetric_slack_variables = node->declare_parameter<bool>(
-      "mpt.collision_free_constraints.option.soft_constraint.use_symmetric_slack_variables");
+    use_asymmetric_slack_variables = node->declare_parameter<bool>(
+      "mpt.collision_free_constraints.option.soft_constraint.use_asymmetric_slack_variables");
   }
 
   {  // vehicle_circles
@@ -336,8 +336,8 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
     use_different_slack_variables_for_each_vehicle_circle);
   updateParam<bool>(
     parameters,
-    "mpt.collision_free_constraints.option.soft_constraint.use_symmetric_slack_variables",
-    use_symmetric_slack_variables);
+    "mpt.collision_free_constraints.option.soft_constraint.use_asymmetric_slack_variables",
+    use_asymmetric_slack_variables);
 
   {  // vehicle_circles
     updateParam<std::string>(
@@ -1233,6 +1233,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   const size_t D_xn = D_x * N_ref;
   const size_t D_v = D_x + (N_ref - 1) * D_u;
   const size_t N_slack = N_ref * getNumberOfOneStepSlackVariables();
+  const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
 
   // generate T matrix and vector to shift optimization center
   // NOTE: Z is defined as time-series vector of shifted deviation
@@ -1270,40 +1271,50 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   Eigen::VectorXd g = (sparse_T_mat * mpt_mat.W + T_vec).transpose() * QB;
   Eigen::VectorXd extended_g(D_v + N_slack);
   extended_g.segment(0, D_v) = g;
-  for (size_t i = 0; i < N_ref; ++i) {
-    // TODO(murooka) specific implementation for L_inf
-    // for lower
-    extended_g(D_v + i) = [&]() {
-      // return mpt_param_.avoidance_soft_collision_free_weight;
-      for (int diff_idx = -10; diff_idx <= 10; ++diff_idx) {
-        const int around_idx =
-          std::clamp(static_cast<int>(i) + diff_idx, 0, static_cast<int>(ref_points.size()) - 1);
-        if (0.0 < ref_points.at(around_idx).bounds.lower_bound) {
-          return mpt_param_.avoidance_soft_collision_free_weight;
+
+  // NOTE: If slack variables are asymmetric, collision free weight for avoidance can be used.
+  if (mpt_param_.use_asymmetric_slack_variables) {
+    for (size_t i = 0; i < N_ref; ++i) {
+      // for lower
+      const double lower_bound_weight = [&]() {
+        // return mpt_param_.avoidance_soft_collision_free_weight;
+        for (int diff_idx = -10; diff_idx <= 10; ++diff_idx) {
+          const int around_idx =
+            std::clamp(static_cast<int>(i) + diff_idx, 0, static_cast<int>(ref_points.size()) - 1);
+          if (0.0 < ref_points.at(around_idx).bounds.lower_bound) {
+            return mpt_param_.avoidance_soft_collision_free_weight;
+          }
         }
-      }
-      return mpt_param_.soft_collision_free_weight;
-    }();
-    // for upper
-    extended_g(D_v + N_ref + i) = [&]() {
-      // return mpt_param_.soft_collision_free_weight;
-      for (int diff_idx = -10; diff_idx <= 10; ++diff_idx) {
-        const int around_idx =
-          std::clamp(static_cast<int>(i) + diff_idx, 0, static_cast<int>(ref_points.size()) - 1);
-        if (ref_points.at(around_idx).bounds.upper_bound < 0.0) {
-          return mpt_param_.avoidance_soft_collision_free_weight;
+        return mpt_param_.soft_collision_free_weight;
+      }();
+      if (mpt_param_.use_different_slack_variables_for_each_vehicle_circle) {
+        for (size_t j = 0; j < N_collision_check; ++j) {
+          extended_g(D_v + 2 * N_ref * j + i) = lower_bound_weight;
         }
+      } else {
+        extended_g(D_v + i) = lower_bound_weight;
       }
-      return mpt_param_.soft_collision_free_weight;
-    }();
-    // extended_g.segment(D_v + i * N_one_step_slack, N_one_step_slack) = soft_collision_free_weight
-    // * Eigen::VectorXd::Ones(N_one_step_slack);
-    /*
-    // for lower
-    extended_g(D_v + i * N_one_step_slack) = mpt_param_.soft_collision_free_weight;
-    // for upper
-    extended_g(D_v + i * N_one_step_slack + 1) = mpt_param_.avoidance_soft_collision_free_weight;
-    */
+
+      // for upper
+      const double upper_bound_weight = [&]() {
+        // return mpt_param_.soft_collision_free_weight;
+        for (int diff_idx = -10; diff_idx <= 10; ++diff_idx) {
+          const int around_idx =
+            std::clamp(static_cast<int>(i) + diff_idx, 0, static_cast<int>(ref_points.size()) - 1);
+          if (ref_points.at(around_idx).bounds.upper_bound < 0.0) {
+            return mpt_param_.avoidance_soft_collision_free_weight;
+          }
+        }
+        return mpt_param_.soft_collision_free_weight;
+      }();
+      if (mpt_param_.use_different_slack_variables_for_each_vehicle_circle) {
+        for (size_t j = 0; j < N_collision_check; ++j) {
+          extended_g(D_v + 2 * N_ref * j + N_ref + i) = upper_bound_weight;
+        }
+      } else {
+        extended_g(D_v + N_ref + i) = upper_bound_weight;
+      }
+    }
   }
 
   ObjectiveMatrix obj_matrix;
@@ -1337,13 +1348,13 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   // 1. soft collision free constraint
   // lb - s < C1X + C2 < ub + s
   // C1X + C2 = C1(Bv + w) + C2
-  const auto soft_collisoin_free_constraint_mat =
+  const auto soft_collision_free_constraint_mat =
     generateSoftConstraints(ref_points, CB_vec, CW_vec);
 
   // 2. hard collision free constraint
   // lb < CX1 + C2 < ub
   // CX1 + C2 = C1(Bv + w) + C2
-  const auto hard_collisoin_free_constraint_mat =
+  const auto hard_collision_free_constraint_mat =
     generateHardConstraints(ref_points, CB_vec, CW_vec);
 
   // 3. fixed points constraint
@@ -1379,8 +1390,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
 
   // allocate constraint matrix and vector before concatenation
   ConstraintMatrix constraint_mat;
-  const size_t A_rows = soft_collisoin_free_constraint_mat.linear.rows() +
-                        hard_collisoin_free_constraint_mat.linear.rows() +
+  const size_t A_rows = soft_collision_free_constraint_mat.linear.rows() +
+                        hard_collision_free_constraint_mat.linear.rows() +
                         fixed_points_constraint_mat.linear.rows() +
                         steer_limit_constraint_mat.linear.rows();
   constraint_mat.linear = Eigen::MatrixXd::Zero(A_rows, A_cols);
@@ -1388,14 +1399,14 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   constraint_mat.lower_bound = Eigen::VectorXd::Zero(A_rows);
 
   // concatenate each matrix and vector
-  constraint_mat.linear << soft_collisoin_free_constraint_mat.linear,
-    hard_collisoin_free_constraint_mat.linear, fixed_points_constraint_mat.linear,
+  constraint_mat.linear << soft_collision_free_constraint_mat.linear,
+    hard_collision_free_constraint_mat.linear, fixed_points_constraint_mat.linear,
     steer_limit_constraint_mat.linear;
-  constraint_mat.upper_bound << soft_collisoin_free_constraint_mat.upper_bound,
-    hard_collisoin_free_constraint_mat.upper_bound, fixed_points_constraint_mat.upper_bound,
+  constraint_mat.upper_bound << soft_collision_free_constraint_mat.upper_bound,
+    hard_collision_free_constraint_mat.upper_bound, fixed_points_constraint_mat.upper_bound,
     steer_limit_constraint_mat.upper_bound;
-  constraint_mat.lower_bound << soft_collisoin_free_constraint_mat.lower_bound,
-    hard_collisoin_free_constraint_mat.lower_bound, fixed_points_constraint_mat.lower_bound,
+  constraint_mat.lower_bound << soft_collision_free_constraint_mat.lower_bound,
+    hard_collision_free_constraint_mat.lower_bound, fixed_points_constraint_mat.lower_bound,
     steer_limit_constraint_mat.lower_bound;
 
   time_keeper_ptr_->toc(__func__, "          ");
@@ -1456,46 +1467,50 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::generateSoftConstraints(
   }
 
   // NOTE: upper and lower bounds constraints (2) and positive slack variables constraints
-  const size_t A_one_step_rows = 2 * N_ref + N_one_step_slack_variables * N_ref;
-
+  const size_t A_one_step_rows =
+    2 * N_ref + N_ref * (mpt_param_.use_asymmetric_slack_variables ? 2 : 1);
   Eigen::MatrixXd A_block = Eigen::MatrixXd::Zero(N_collision_check * A_one_step_rows, A_cols);
   // NOTE: Upper bound will not be updated
   const Eigen::VectorXd ub_block =
     Eigen::VectorXd::Constant(N_collision_check * A_one_step_rows, autoware::common::osqp::INF);
   Eigen::VectorXd lb_block = Eigen::VectorXd::Zero(N_collision_check * A_one_step_rows);
 
-  // use L infinity norm for soft constraints
   for (size_t l_idx = 0; l_idx < N_collision_check; ++l_idx) {
     // calculate bounds
     const double bounds_offset =
       vehicle_info_.vehicle_width_m / 2.0 - vehicle_circle_radiuses_.at(l_idx);
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
+    const size_t rows_offset = l_idx * A_one_step_rows;
+
     // update A
-    A_block.block(l_idx * A_one_step_rows, 0, N_ref, D_v) = CB_vec.at(l_idx);
-    A_block.block(l_idx * A_one_step_rows + N_ref, 0, N_ref, D_v) = -CB_vec.at(l_idx);
+    A_block.block(rows_offset, 0, N_ref, D_v) = CB_vec.at(l_idx);
+    A_block.block(rows_offset + N_ref, 0, N_ref, D_v) = -CB_vec.at(l_idx);
 
     const Eigen::MatrixXd Inn = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    const size_t rows_offset = l_idx * A_one_step_rows;
     if (mpt_param_.use_different_slack_variables_for_each_vehicle_circle) {
-      if (mpt_param_.use_symmetric_slack_variables) {
-        const size_t cols_offset = D_v + l_idx * N_ref;
-        A_block.block(rows_offset, cols_offset, N_ref, N_ref) = Inn;
-        A_block.block(rows_offset + 1 * N_ref, cols_offset, N_ref, N_ref) = Inn;
-        A_block.block(rows_offset + 2 * N_ref, cols_offset, N_ref, N_ref) = Inn;
-      } else {
+      if (mpt_param_.use_asymmetric_slack_variables) {
         const size_t cols_offset = D_v + l_idx * N_ref;
         A_block.block(rows_offset, cols_offset, N_ref, N_ref) = Inn;
         A_block.block(rows_offset + N_ref, cols_offset + N_ref, N_ref, N_ref) = Inn;
         A_block.block(rows_offset + 2 * N_ref, cols_offset, N_ref, N_ref) = Inn;
         A_block.block(rows_offset + 3 * N_ref, cols_offset + N_ref, N_ref, N_ref) = Inn;
+      } else {
+        const size_t cols_offset = D_v + l_idx * N_ref;
+        A_block.block(rows_offset, cols_offset, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + N_ref, cols_offset, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 2 * N_ref, cols_offset, N_ref, N_ref) = Inn;
       }
     } else {
-      if (mpt_param_.use_symmetric_slack_variables) {
+      if (mpt_param_.use_asymmetric_slack_variables) {
+        A_block.block(rows_offset + 0, D_v, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + N_ref, D_v + N_ref, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 2 * N_ref, D_v, N_ref, N_ref) = Inn;
+        A_block.block(rows_offset + 3 * N_ref, D_v + N_ref, N_ref, N_ref) = Inn;
+      } else {
         A_block.block(rows_offset + 0, D_v, N_ref, N_ref) = Inn;
         A_block.block(rows_offset + N_ref, D_v, N_ref, N_ref) = Inn;
         A_block.block(rows_offset + 2 * N_ref, D_v, N_ref, N_ref) = Inn;
-      } else {
       }
     }
 
@@ -1885,15 +1900,15 @@ size_t MPTOptimizer::getNumberOfOneStepSlackVariables() const
 {
   if (mpt_param_.soft_constraint) {
     if (mpt_param_.use_different_slack_variables_for_each_vehicle_circle) {
-      if (mpt_param_.use_symmetric_slack_variables) {
-        return vehicle_circle_longitudinal_offsets_.size();
+      if (mpt_param_.use_asymmetric_slack_variables) {
+        return 2 * vehicle_circle_longitudinal_offsets_.size();
       }
-      return 2 * vehicle_circle_longitudinal_offsets_.size();
+      return vehicle_circle_longitudinal_offsets_.size();
     } else {
-      if (mpt_param_.use_symmetric_slack_variables) {
-        return 1;
+      if (mpt_param_.use_asymmetric_slack_variables) {
+        return 2;
       }
-      return 2;
+      return 1;
     }
   }
   return 0;

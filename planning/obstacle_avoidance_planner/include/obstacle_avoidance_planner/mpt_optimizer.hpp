@@ -200,7 +200,7 @@ private:
     bool hard_constraint;
     bool soft_constraint;
     bool use_different_slack_variables_for_each_vehicle_circle;
-    bool use_symmetric_slack_variables;
+    bool use_asymmetric_slack_variables;
 
     // vehicle circles
     std::string vehicle_circles_method;
