@@ -193,8 +193,6 @@ MPTOptimizer::MPTParam::MPTParam(
 {
   {  // option
     steer_limit_constraint = node->declare_parameter<bool>("mpt.option.steer_limit_constraint");
-    enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
-    enable_manual_warm_start = node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
     enable_optimization_validation =
       node->declare_parameter<bool>("mpt.option.enable_optimization_validation");
     mpt_visualize_sampling_num = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
@@ -203,6 +201,13 @@ MPTOptimizer::MPTParam::MPTParam(
   {  // common
     num_points = node->declare_parameter<int>("mpt.common.num_points");
     delta_arc_length = node->declare_parameter<double>("mpt.common.delta_arc_length");
+  }
+
+  {  // qp
+    solver = node->declare_parameter<std::string>("mpt.qp.solver");
+    enable_warm_start = node->declare_parameter<bool>("mpt.qp.enable_warm_start");
+    enable_manual_warm_start = node->declare_parameter<bool>("mpt.qp.enable_manual_warm_start");
+    eps_abs = node->declare_parameter<double>("mpt.qp.eps_abs");
   }
 
   // kinematics
@@ -434,12 +439,13 @@ MPTOptimizer::MPTOptimizer(
     StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad, time_keeper_ptr_);
 
   // qp interface
-  if (mpt_param_.qp_solver == "proxqp") {
+  if (mpt_param_.solver == "proxqp") {
     const bool enable_warm_start = false;
-    qp_interface_ptr_ = std::make_shared<qp::ProxQPInterface>(enable_warm_start, osqp_epsilon_);
-  } else if (mpt_param_.qp_solver == "osqp") {
+    qp_interface_ptr_ =
+      std::make_shared<qp::ProxQPInterface>(enable_warm_start, mpt_param_.eps_abs);
+  } else if (mpt_param_.solver == "osqp") {
     const bool enable_warm_start = true;
-    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(enable_warm_start, osqp_epsilon_);
+    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(enable_warm_start, mpt_param_.eps_abs);
   } else {
     throw std::invalid_argument("qp_solver is invalid.");
   }
@@ -1513,13 +1519,13 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   // solve qp
   time_keeper_ptr_->tic("solveOsqp");
   auto optimization_result = [&]() {
-    if (mpt_param_.qp_solver == "proxqp") {
+    if (mpt_param_.solver == "proxqp") {
       return qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
     }
-    if (mpt_param_.qp_solver == "osqp") {
+    if (mpt_param_.solver == "osqp") {
       return qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
     }
-    throw std::invalid_argument("qp_solver is invalid.");
+    throw std::invalid_argument("QP solver is invalid.");
   }();
   time_keeper_ptr_->toc("solveOsqp", "          ");
 

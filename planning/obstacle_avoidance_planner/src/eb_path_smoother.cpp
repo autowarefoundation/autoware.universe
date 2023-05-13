@@ -14,10 +14,14 @@
 
 #include "obstacle_avoidance_planner/eb_path_smoother.hpp"
 
+// NOTE: Do not include OSQP before ProxQP. It will cause a build error. This is because OSQP
+// defines WARM_START with a macro which ProxQP uses in a enum.
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
+#include "qp_interface/osqp_interface.hpp"
+#include "qp_interface/proxqp_interface.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -74,7 +78,6 @@ namespace obstacle_avoidance_planner
 EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
 {
   {  // option
-    enable_warm_start = node->declare_parameter<bool>("eb.option.enable_warm_start");
     enable_optimization_validation =
       node->declare_parameter<bool>("eb.option.enable_optimization_validation");
   }
@@ -97,6 +100,8 @@ EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
   }
 
   {  // qp
+    qp_param.solver = node->declare_parameter<std::string>("eb.qp.solver");
+    qp_param.enable_warm_start = node->declare_parameter<bool>("eb.qp.enable_warm_start");
     qp_param.max_iteration = node->declare_parameter<int>("eb.qp.max_iteration");
     qp_param.eps_abs = node->declare_parameter<double>("eb.qp.eps_abs");
     qp_param.eps_rel = node->declare_parameter<double>("eb.qp.eps_rel");
@@ -111,7 +116,6 @@ void EBPathSmoother::EBParam::onParam(const std::vector<rclcpp::Parameter> & par
   using tier4_autoware_utils::updateParam;
 
   {  // option
-    updateParam<bool>(parameters, "eb.option.enable_warm_start", enable_warm_start);
     updateParam<bool>(
       parameters, "eb.option.enable_optimization_validation", enable_optimization_validation);
   }
@@ -134,6 +138,8 @@ void EBPathSmoother::EBParam::onParam(const std::vector<rclcpp::Parameter> & par
   }
 
   {  // qp
+    updateParam<std::string>(parameters, "eb.qp.option.solver", qp_param.solver);
+    updateParam<bool>(parameters, "eb.qp.option.enable_warm_start", qp_param.enable_warm_start);
     updateParam<int>(parameters, "eb.qp.max_iteration", qp_param.max_iteration);
     updateParam<double>(parameters, "eb.qp.eps_abs", qp_param.eps_abs);
     updateParam<double>(parameters, "eb.qp.eps_rel", qp_param.eps_rel);
@@ -155,6 +161,17 @@ EBPathSmoother::EBPathSmoother(
   // publisher
   debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_traj", 1);
   debug_eb_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_fixed_traj", 1);
+
+  // qp interface
+  const auto & p = eb_param_.qp_param;
+  if (p.solver == "proxqp") {
+    qp_interface_ptr_ = std::make_shared<qp::ProxQPInterface>(p.enable_warm_start, p.eps_abs);
+  } else if (p.solver == "osqp") {
+    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(p.enable_warm_start, p.eps_abs);
+  } else {
+    throw std::invalid_argument("QP solver is invalid.");
+  }
+  qp_interface_ptr_->updateEpsRel(p.eps_rel);
 }
 
 void EBPathSmoother::onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -214,18 +231,16 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   // 4. pad trajectory points
   const auto [padded_traj_points, pad_start_idx] = getPaddedTrajectoryPoints(resampled_traj_points);
 
-  // 5. update constraint for elastic band's QP
-  updateConstraint(p.header, padded_traj_points, is_goal_contained, pad_start_idx);
-
-  // 6. get optimization result
-  const auto optimized_points = optimizeTrajectory();
+  // 5. update constraint for elastic band's QP and optimize trajectory
+  const auto optimized_points =
+    optimizeTrajectory(p.header, padded_traj_points, is_goal_contained, pad_start_idx);
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
       logger_, enable_debug_info_, "return std::nullopt since smoothing failed");
     return std::nullopt;
   }
 
-  // 7. convert optimization result to trajectory
+  // 6. convert optimization result to trajectory
   const auto eb_traj_points =
     convertOptimizedPointsToTrajectory(*optimized_points, padded_traj_points, pad_start_idx);
   if (!eb_traj_points) {
@@ -235,7 +250,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
 
   prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*eb_traj_points);
 
-  // 8. publish eb trajectory
+  // 7. publish eb trajectory
   const auto eb_traj = trajectory_utils::createTrajectory(p.header, *eb_traj_points);
   debug_eb_traj_pub_->publish(eb_traj);
 
@@ -280,7 +295,7 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
   return {padded_traj_points, pad_start_idx};
 }
 
-void EBPathSmoother::updateConstraint(
+std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory(
   const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points,
   const bool is_goal_contained, const int pad_start_idx)
 {
@@ -322,6 +337,10 @@ void EBPathSmoother::updateConstraint(
     }
   }
 
+  // publish fixed trajectory
+  const auto eb_fixed_traj = trajectory_utils::createTrajectory(header, debug_fixed_traj_points);
+  debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
+
   Eigen::VectorXd x_mat(2 * p.num_points);
   Eigen::MatrixXd theta_mat = Eigen::MatrixXd::Zero(p.num_points, 2 * p.num_points);
   for (size_t i = 0; i < static_cast<size_t>(p.num_points); ++i) {
@@ -344,42 +363,16 @@ void EBPathSmoother::updateConstraint(
   const Eigen::VectorXd raw_q_for_smooth = theta_mat * raw_P_for_smooth * x_mat;
   const auto q = toStdVector(raw_q_for_smooth);
 
-  if (p.enable_warm_start && osqp_solver_ptr_) {
-    osqp_solver_ptr_->updateP(P);
-    osqp_solver_ptr_->updateQ(q);
-    osqp_solver_ptr_->updateA(A);
-    osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
-    osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
-  } else {
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-      P, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
-    osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
-    osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
-    osqp_solver_ptr_->updateMaxIter(p.qp_param.max_iteration);
-  }
-
-  // publish fixed trajectory
-  const auto eb_fixed_traj = trajectory_utils::createTrajectory(header, debug_fixed_traj_points);
-  debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
-
-  time_keeper_ptr_->toc(__func__, "        ");
-}
-
-std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
-{
-  time_keeper_ptr_->tic(__func__);
-
   // solve QP
-  const auto result = osqp_solver_ptr_->optimize();
-  const auto optimized_points = std::get<0>(result);
+  const auto optimized_points = qp_interface_ptr_->optimize(P, A, q, lower_bound, upper_bound);
 
-  const auto status = std::get<3>(result);
-
-  // check status
-  if (status != 1) {
-    osqp_solver_ptr_->logUnsolvedStatus("[EB]");
+  // check if optimization is solved successfully
+  const bool is_solved = qp_interface_ptr_->isSolved();
+  if (!is_solved) {
+    qp_interface_ptr_->logUnsolvedStatus("[EB]");
     return std::nullopt;
   }
+
   const auto has_nan = std::any_of(
     optimized_points.begin(), optimized_points.end(), [](const auto v) { return std::isnan(v); });
   if (has_nan) {
@@ -388,6 +381,7 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
   }
 
   time_keeper_ptr_->toc(__func__, "        ");
+
   return optimized_points;
 }
 

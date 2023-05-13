@@ -146,8 +146,6 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     // option
-    bool enable_warm_start;
-    bool enable_manual_warm_start;
     bool enable_optimization_validation;
     bool steer_limit_constraint;
     int mpt_visualize_sampling_num;  // for debug
@@ -157,7 +155,10 @@ private:
     int num_points;
 
     // qp
-    std::string qp_solver{"proxqp"};
+    std::string solver;
+    bool enable_warm_start;
+    bool enable_manual_warm_start;
+    double eps_abs;
 
     // kinematics
     double optimization_center_offset;
