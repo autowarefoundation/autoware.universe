@@ -15,14 +15,15 @@
 #ifndef PATH_SMOOTHER__ELASTIC_BAND_HPP_
 #define PATH_SMOOTHER__ELASTIC_BAND_HPP_
 
-#include "osqp_interface/osqp_interface.hpp"
 #include "path_smoother/common_structs.hpp"
 #include "path_smoother/type_alias.hpp"
+#include "qp_interface/qp_interface.hpp"
 
 #include <Eigen/Core>
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -49,6 +50,8 @@ private:
     // qp
     struct QPParam
     {
+      std::string solver;
+      bool enable_warm_start;
       int max_iteration;
       double eps_abs;
       double eps_rel;
@@ -59,7 +62,6 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     // option
-    bool enable_warm_start;
     bool enable_optimization_validation;
 
     // common
@@ -108,7 +110,7 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_fixed_traj_pub_;
 
-  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+  std::shared_ptr<qp::QPInterface> qp_interface_ptr_;
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
 
   std::vector<TrajectoryPoint> insertFixedPoint(
@@ -117,11 +119,9 @@ private:
   std::tuple<std::vector<TrajectoryPoint>, size_t> getPaddedTrajectoryPoints(
     const std::vector<TrajectoryPoint> & traj_points) const;
 
-  void updateConstraint(
+  std::optional<std::vector<double>> optimizeTrajectory(
     const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points,
     const bool is_goal_contained, const int pad_start_idx);
-
-  std::optional<std::vector<double>> optimizeTrajectory();
 
   std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
   convertOptimizedPointsToTrajectory(
