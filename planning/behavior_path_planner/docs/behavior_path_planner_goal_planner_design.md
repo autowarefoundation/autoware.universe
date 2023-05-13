@@ -82,7 +82,7 @@ GoalCandidates --o GoalSeacherBase
 
 ## start condition
 
-Each is activated when all conditions are met.
+Either one is activated when all conditions are met.
 
 ### fixed_goal_planner
 
