@@ -106,7 +106,7 @@ Each is activated when all conditions are met.
 #### pull over on shoulder lane
 
 - The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
-- Goal is set in the `road_shoulder`
+- Goal is set in the `road_shoulder`.
 
 <img src="https://user-images.githubusercontent.com/39142679/237929941-2ce26ea5-c84d-4d17-8cdc-103f5246db90.png" width="600">
 
