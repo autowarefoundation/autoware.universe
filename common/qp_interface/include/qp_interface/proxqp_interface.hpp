@@ -17,14 +17,11 @@
 
 #include "qp_interface/qp_interface.hpp"
 
-#include <Eigen/Core>
 #include <proxsuite/helpers/optional.hpp>
 #include <proxsuite/proxqp/sparse/sparse.hpp>
 
 #include <limits>
 #include <memory>
-#include <string>
-#include <tuple>
 #include <vector>
 
 namespace qp
@@ -32,9 +29,9 @@ namespace qp
 class ProxQPInterface : public QPInterface
 {
 public:
-  ProxQPInterface() {}
-
-  std::vector<double> optimize();
+  explicit ProxQPInterface(
+    const bool enable_warm_start = false,
+    const double eps_abs = std::numeric_limits<double>::epsilon());
 
   int getIteration() const override;
   int getStatus() const override;
@@ -44,7 +41,8 @@ public:
   void updateVerbose(const bool verbose) override;
 
 private:
-  std::shared_ptr<proxsuite::proxqp::sparse::QP<double, int>> qp_ptr_;
+  proxsuite::proxqp::Settings<double> m_settings;
+  std::shared_ptr<proxsuite::proxqp::sparse::QP<double, int>> m_qp_ptr;
 
   void initializeProblemImpl(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,

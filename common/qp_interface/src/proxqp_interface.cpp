@@ -14,102 +14,107 @@
 
 #include "qp_interface/proxqp_interface.hpp"
 
-#include <chrono>
-#include <iostream>
-#include <limits>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <vector>
-
 namespace qp
 {
+ProxQPInterface::ProxQPInterface(const bool enable_warm_start, const double eps_abs)
+: QPInterface(enable_warm_start)
+{
+  m_settings.eps_abs = eps_abs;
+}
+
 void ProxQPInterface::initializeProblemImpl(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
   const std::vector<double> & l, const std::vector<double> & u)
 {
-  auto dim = static_cast<int>(q.size());
-  auto n_in = static_cast<int>(l.size());
+  const size_t variables_num = q.size();
+  const size_t constraints_num = l.size();
 
-  const bool use_warm_start = false;
-  /*
-  const bool use_warm_start = [&]() {
-    if (!qp_ptr_) return false;
-    if (!m_variables_num || static_cast<long>(*m_variables_num) != dim) return false;
-    if (!m_constraints_num || static_cast<long>(*m_constraints_num) != n_in) return false;
+  const bool enable_warm_start = [&]() {
+    if (
+      !m_enable_warm_start  // Warm start is designated
+      || !m_qp_ptr          // QP pointer is initialized
+      // The number of variables is the same as the previous one.
+      || !m_variables_num ||
+      *m_variables_num != variables_num
+      // The number of constraints is the same as the previous one
+      || !m_constraints_num || *m_constraints_num != constraints_num) {
+      return false;
+    }
     return true;
   }();
-  */
-  std::cerr << use_warm_start << std::endl;
 
-  if (!use_warm_start) {
-    qp_ptr_ = std::make_shared<proxsuite::proxqp::sparse::QP<double, int>>(dim, 0, n_in);
+  if (!enable_warm_start) {
+    m_qp_ptr = std::make_shared<proxsuite::proxqp::sparse::QP<double, int>>(
+      variables_num, 0, constraints_num);
   }
 
-  Eigen::SparseMatrix<double> H_spa(dim, n_in);
-  H_spa = P.sparseView();
-  qp_ptr_->settings.eps_abs = 1e-9;
-  qp_ptr_->settings.initial_guess =
-    use_warm_start ? proxsuite::proxqp::InitialGuessStatus::WARM_START_WITH_PREVIOUS_RESULT
-                   : proxsuite::proxqp::InitialGuessStatus::NO_INITIAL_GUESS;
-  qp_ptr_->settings.verbose = true;
+  m_settings.initial_guess =
+    enable_warm_start ? proxsuite::proxqp::InitialGuessStatus::WARM_START_WITH_PREVIOUS_RESULT
+                      : proxsuite::proxqp::InitialGuessStatus::NO_INITIAL_GUESS;
 
-  std::vector<double> g_std_vec = q;
-  Eigen::VectorXd ei_g =
-    Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(g_std_vec.data(), g_std_vec.size());
+  m_qp_ptr->settings = m_settings;
+
+  Eigen::SparseMatrix<double> P_sparse(variables_num, constraints_num);
+  P_sparse = P.sparseView();
+
+  // NOTE: const std vector cannot be converted to eigen vector
+  std::vector<double> non_const_q = q;
+  Eigen::VectorXd eigen_q =
+    Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(non_const_q.data(), non_const_q.size());
   std::vector<double> l_std_vec = l;
-  Eigen::VectorXd ei_l =
+  Eigen::VectorXd eigen_l =
     Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(l_std_vec.data(), l_std_vec.size());
   std::vector<double> u_std_vec = u;
-  Eigen::VectorXd ei_u =
+  Eigen::VectorXd eigen_u =
     Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(u_std_vec.data(), u_std_vec.size());
 
-  if (use_warm_start) {
-    qp_ptr_->update(
-      H_spa, ei_g, proxsuite::nullopt, proxsuite::nullopt, A.sparseView(), ei_l, ei_u);
+  if (enable_warm_start) {
+    m_qp_ptr->update(
+      P_sparse, eigen_q, proxsuite::nullopt, proxsuite::nullopt, A.sparseView(), eigen_l, eigen_u);
   } else {
-    qp_ptr_->init(H_spa, ei_g, proxsuite::nullopt, proxsuite::nullopt, A.sparseView(), ei_l, ei_u);
+    m_qp_ptr->init(
+      P_sparse, eigen_q, proxsuite::nullopt, proxsuite::nullopt, A.sparseView(), eigen_l, eigen_u);
   }
 }
 
 void ProxQPInterface::updateEpsAbs(const double eps_abs)
 {
-  if (qp_ptr_) {
-    qp_ptr_->settings.eps_abs = eps_abs;
-  }
+  m_settings.eps_abs = eps_abs;
 }
 
 void ProxQPInterface::updateEpsRel(const double eps_rel)
 {
-  if (qp_ptr_) {
-    qp_ptr_->settings.eps_rel = eps_rel;
-  }
+  m_settings.eps_rel = eps_rel;
 }
 
 void ProxQPInterface::updateVerbose(const bool is_verbose)
 {
-  if (qp_ptr_) {
-    qp_ptr_->settings.verbose = is_verbose;
-  }
+  m_settings.verbose = is_verbose;
 }
 
 int ProxQPInterface::getIteration() const
 {
+  if (m_qp_ptr) {
+    return m_qp_ptr->results.info.iter;
+  }
   return 0;
 }
 
 int ProxQPInterface::getStatus() const
 {
+  if (m_qp_ptr) {
+    return static_cast<int>(m_qp_ptr->results.info.status);
+  }
   return 0;
 }
 
 std::vector<double> ProxQPInterface::optimizeImpl()
 {
-  qp_ptr_->solve();
+  m_qp_ptr->solve();
 
   std::vector<double> result;
-  for (Eigen::Index i = 0; i < qp_ptr_->results.x.size(); ++i) {
-    result.push_back(qp_ptr_->results.x[i]);
+  for (Eigen::Index i = 0; i < m_qp_ptr->results.x.size(); ++i) {
+    result.push_back(m_qp_ptr->results.x[i]);
   }
   return result;
 }

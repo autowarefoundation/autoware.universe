@@ -17,11 +17,7 @@
 
 #include <Eigen/Core>
 
-#include <limits>
-#include <memory>
 #include <optional>
-#include <string>
-#include <tuple>
 #include <vector>
 
 namespace qp

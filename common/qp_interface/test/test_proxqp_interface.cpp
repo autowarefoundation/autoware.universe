@@ -56,9 +56,24 @@ TEST(TestProxqpInterface, BasicQp)
 
   {
     // Define problem during optimization
-    qp::ProxQPInterface proxqp;
+    qp::ProxQPInterface proxqp(false, 1e-9);
     const auto solution = proxqp.QPInterface::optimize(P, A, q, l, u);
     check_result(solution);
+  }
+
+  {
+    // Define problem during optimization with warm start
+    qp::ProxQPInterface proxqp(true, 1e-9);
+    {
+      const auto solution = proxqp.QPInterface::optimize(P, A, q, l, u);
+      check_result(solution);
+      EXPECT_NE(proxqp.getIteration(), 1);
+    }
+    {
+      const auto solution = proxqp.QPInterface::optimize(P, A, q, l, u);
+      check_result(solution);
+      EXPECT_EQ(proxqp.getIteration(), 0);
+    }
   }
 }
 }  // namespace
