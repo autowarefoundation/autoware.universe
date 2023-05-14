@@ -14,14 +14,16 @@
 
 #include "obstacle_avoidance_planner/eb_path_smoother.hpp"
 
-// NOTE: Do not include OSQP before ProxQP. It will cause a build error. This is because OSQP
-// defines WARM_START with a macro which ProxQP uses in a enum.
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
-#include "qp_interface/osqp_interface.hpp"
+// clang-format off
+// NOTE: Do not include OSQP before ProxQP. It will cause a build error. This is because OSQP
+// defines WARM_START with a macro which ProxQP uses in a enum.
 #include "qp_interface/proxqp_interface.hpp"
+#include "qp_interface/osqp_interface.hpp"
+// clang-format on
 
 #include <algorithm>
 #include <chrono>

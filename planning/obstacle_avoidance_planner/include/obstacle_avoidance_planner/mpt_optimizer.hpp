@@ -231,8 +231,6 @@ private:
   StateEquationGenerator state_equation_generator_;
   std::shared_ptr<qp::QPInterface> qp_interface_ptr_;
 
-  const double osqp_epsilon_ = 1.0e-3;
-
   // vehicle circles
   std::vector<double> vehicle_circle_longitudinal_offsets_;  // from base_link
   std::vector<double> vehicle_circle_radiuses_;

@@ -18,10 +18,12 @@
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
+// clang-format off
 // NOTE: Do not include OSQP before ProxQP. It will cause a build error. This is because OSQP
 // defines WARM_START with a macro which ProxQP uses in a enum.
-#include "qp_interface/osqp_interface.hpp"
 #include "qp_interface/proxqp_interface.hpp"
+#include "qp_interface/osqp_interface.hpp"
+// clang-format on
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -440,12 +442,11 @@ MPTOptimizer::MPTOptimizer(
 
   // qp interface
   if (mpt_param_.solver == "proxqp") {
-    const bool enable_warm_start = false;
     qp_interface_ptr_ =
-      std::make_shared<qp::ProxQPInterface>(enable_warm_start, mpt_param_.eps_abs);
+      std::make_shared<qp::ProxQPInterface>(mpt_param_.enable_warm_start, mpt_param_.eps_abs);
   } else if (mpt_param_.solver == "osqp") {
-    const bool enable_warm_start = true;
-    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(enable_warm_start, mpt_param_.eps_abs);
+    qp_interface_ptr_ =
+      std::make_shared<qp::OSQPInterface>(mpt_param_.enable_warm_start, mpt_param_.eps_abs);
   } else {
     throw std::invalid_argument("qp_solver is invalid.");
   }
@@ -1518,15 +1519,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
 
   // solve qp
   time_keeper_ptr_->tic("solveOsqp");
-  auto optimization_result = [&]() {
-    if (mpt_param_.solver == "proxqp") {
-      return qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
-    }
-    if (mpt_param_.solver == "osqp") {
-      return qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
-    }
-    throw std::invalid_argument("QP solver is invalid.");
-  }();
+  auto optimization_result = qp_interface_ptr_->optimize(P, A, f, lower_bound, upper_bound);
   time_keeper_ptr_->toc("solveOsqp", "          ");
 
   // check if optimization is solved successfully
