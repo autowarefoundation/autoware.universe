@@ -333,6 +333,9 @@ boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacle() cons
 
 boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCloud() const
 {
+  if (pointcloud_ptr_->data.empty()) {
+    return boost::none;
+  }
   const auto transform_stamped =
     getTransform("base_link", pointcloud_ptr_->header.frame_id, pointcloud_ptr_->header.stamp, 0.5);
 
