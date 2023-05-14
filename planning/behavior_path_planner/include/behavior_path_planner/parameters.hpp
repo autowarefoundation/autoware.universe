@@ -32,6 +32,7 @@ struct ModuleConfigParameters
 struct BehaviorPathPlannerParameters
 {
   bool verbose;
+  size_t max_iteration_num;
 
   ModuleConfigParameters config_avoidance;
   ModuleConfigParameters config_avoidance_by_lc;

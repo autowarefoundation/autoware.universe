@@ -334,6 +334,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   BehaviorPathPlannerParameters p{};
 
   p.verbose = declare_parameter<bool>("verbose");
+  p.max_iteration_num = declare_parameter<int>("max_iteration_num");
 
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;

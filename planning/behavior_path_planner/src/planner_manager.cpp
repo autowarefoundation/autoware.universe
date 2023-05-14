@@ -67,6 +67,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       return output;
     }
 
+    size_t iteration_num = 1;
     while (rclcpp::ok()) {
       /**
        * STEP1: get approved modules' output
@@ -112,7 +113,19 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
        */
       addApprovedModule(highest_priority_module);
       clearCandidateModules();
+
+      /**
+       * Break loop, when the iteration reaches max num.
+       */
+      if (iteration_num >= data->parameters.max_iteration_num) {
+        processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+        return candidate_modules_output;
+      }
+
+      iteration_num++;
     }
+
+    // never reach this line during nominal situation.
     return BehaviorModuleOutput{};
   }();
 

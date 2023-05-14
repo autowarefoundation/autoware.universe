@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
     verbose: false
+    max_iteration_num: 2
 
     groot_zmq_publisher_port: 1666
     groot_zmq_server_port: 1667
