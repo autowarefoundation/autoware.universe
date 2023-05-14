@@ -196,7 +196,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
 void SurroundObstacleCheckerNode::onTimer()
 {
   if (!odometry_ptr_) {
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for current velocity...");
     return;
   }
@@ -206,13 +206,13 @@ void SurroundObstacleCheckerNode::onTimer()
   }
 
   if (node_param_.use_pointcloud && !pointcloud_ptr_) {
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for pointcloud info...");
     return;
   }
 
   if (node_param_.use_dynamic_object && !object_ptr_) {
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object info...");
     return;
   }
