@@ -103,16 +103,10 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
   // find the prev and next waypoint
 
   if (*closest_idx != 0 && (*closest_idx + 1) != current_waypoints_ptr_->poses.size()) {
-    const double dist_to_prev = std::hypot(
-      current_vec_pose_ptr_->position.x -
-        current_waypoints_ptr_->poses.at(*closest_idx - 1).position.x,
-      current_vec_pose_ptr_->position.y -
-        current_waypoints_ptr_->poses.at(*closest_idx - 1).position.y);
-    const double dist_to_next = std::hypot(
-      current_vec_pose_ptr_->position.x -
-        current_waypoints_ptr_->poses.at(*closest_idx + 1).position.x,
-      current_vec_pose_ptr_->position.y -
-        current_waypoints_ptr_->poses.at(*closest_idx + 1).position.y);
+    const auto dist_to_prev = tier4_autoware_utils::calcDistance2d(
+      *current_vec_pose_ptr_, current_waypoints_ptr_->poses.at(*closest_idx - 1));
+    const auto dist_to_next = tier4_autoware_utils::calcDistance2d(
+      *current_vec_pose_ptr_, current_waypoints_ptr_->poses.at(*closest_idx + 1));
     if (dist_to_next > dist_to_prev) {
       idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx - 1);
       idx_next_wp_ = std::make_unique<int32_t>(*closest_idx);
@@ -235,11 +229,8 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
 
   const double & Vx = odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
   // Current acceleration calculation
-  const double & d_x = odom_history_ptr_->at(odom_size - 1).pose.pose.position.x -
-                       odom_history_ptr_->at(odom_size - 2).pose.pose.position.x;
-  const double & d_y = odom_history_ptr_->at(odom_size - 1).pose.pose.position.y -
-                       odom_history_ptr_->at(odom_size - 2).pose.pose.position.y;
-  const double & ds = std::hypot(d_x, d_y);
+  const auto ds = tier4_autoware_utils::calcDistance2d(
+    odom_history_ptr_->at(odom_size - 1).pose.pose, odom_history_ptr_->at(odom_size - 2).pose.pose);
 
   const double & vel_mean = (odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x +
                              odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x) /
