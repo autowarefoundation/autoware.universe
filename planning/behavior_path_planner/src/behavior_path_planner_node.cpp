@@ -410,6 +410,14 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.minimum_prepare_length =
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
 
+  // lateral acceleration map for lane change
+  p.lane_change_lat_acc_map.add(0.0, 0.2, 0.315);
+  p.lane_change_lat_acc_map.add(3.0, 0.2, 0.315);
+  p.lane_change_lat_acc_map.add(5.0, 0.2, 0.315);
+  p.lane_change_lat_acc_map.add(6.0, 0.315, 0.4);
+  p.lane_change_lat_acc_map.add(7.0, 0.315, 0.45);
+  p.lane_change_lat_acc_map.add(10.0, 0.315, 0.50);
+
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =

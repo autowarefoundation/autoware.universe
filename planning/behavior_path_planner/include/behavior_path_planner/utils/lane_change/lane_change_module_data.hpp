@@ -15,7 +15,6 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "interpolation/linear_interpolation.hpp"
 #include "lanelet2_core/geometry/Lanelet.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
@@ -102,47 +101,6 @@ struct AvoidanceByLCParameters
 
   // execute only when lane change end point is before the object.
   bool execute_only_when_lane_change_finish_before_object{false};
-};
-
-struct LateralAccelerationMap
-{
-  std::vector<double> base_vel;
-  std::vector<double> base_min_acc;
-  std::vector<double> base_max_acc;
-
-  void add(const double velocity, const double min_acc, const double max_acc)
-  {
-    if (base_vel.size() != base_min_acc.size() || base_vel.size() != base_max_acc.size()) {
-      return;
-    }
-
-    size_t idx = 0;
-    for (size_t i = 0; i < base_vel.size(); ++i) {
-      if (velocity < base_vel.at(i)) {
-        break;
-      }
-      idx = i + 1;
-    }
-
-    base_vel.insert(base_vel.begin() + idx, velocity);
-    base_min_acc.insert(base_min_acc.begin() + idx, min_acc);
-    base_max_acc.insert(base_max_acc.begin() + idx, max_acc);
-  }
-
-  std::pair<double, double> find(const double velocity)
-  {
-    if (!base_vel.empty() && velocity < base_vel.front()) {
-      return std::make_pair(base_min_acc.front(), base_max_acc.front());
-    }
-    if (!base_vel.empty() && velocity > base_vel.back()) {
-      return std::make_pair(base_min_acc.back(), base_max_acc.back());
-    }
-
-    const double min_acc = interpolation::lerp(base_vel, base_min_acc, velocity);
-    const double max_acc = interpolation::lerp(base_vel, base_max_acc, velocity);
-
-    return std::make_pair(min_acc, max_acc);
-  }
 };
 }  // namespace behavior_path_planner
 

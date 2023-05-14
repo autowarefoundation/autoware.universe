@@ -37,10 +37,8 @@ TEST(BehaviorPathPlanningLaneChangeUtilsTest, projectCurrentPoseToTarget)
   EXPECT_NEAR(result.position.y, 3, epsilon);
 }
 
-TEST(BehaviorPathPlanningLaneChangeUtilsTest, LateralAccelerationMap)
+TEST(BehaviorPathPlanningLaneChangeUtilsTest, TESTLateralAccelerationMap)
 {
-  using behavior_path_planner::LateralAccelerationMap;
-
   LateralAccelerationMap lat_acc_map;
   lat_acc_map.add(0.0, 0.2, 0.315);
   lat_acc_map.add(3.0, 0.2, 0.315);
