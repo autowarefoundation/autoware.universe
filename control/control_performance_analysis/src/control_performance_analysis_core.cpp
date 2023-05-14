@@ -96,6 +96,10 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
     current_waypoints_ptr_->poses, *current_vec_pose_ptr_, p_.acceptable_max_distance_to_waypoint_,
     p_.acceptable_max_yaw_difference_rad_);
 
+  if (!closest_idx) {  // fail to find closest idx
+    return std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
+  }
+
   // find the prev and next waypoint
 
   if (*closest_idx != 0 && (*closest_idx + 1) != current_waypoints_ptr_->poses.size()) {
