@@ -99,8 +99,6 @@ private:
 
   // Variables Received Outside
   std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> current_trajectory_ptr_;
-  std::shared_ptr<PoseArray> current_waypoints_ptr_;
-  std::shared_ptr<std::vector<double>> current_waypoints_vel_ptr_;
   std::shared_ptr<Pose> current_vec_pose_ptr_;
   std::shared_ptr<std::vector<Odometry>> odom_history_ptr_;  // velocities at k-2, k-1, k, k+1
   std::shared_ptr<AckermannControlCommand> current_control_ptr_;

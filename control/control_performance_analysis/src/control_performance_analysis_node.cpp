@@ -165,11 +165,10 @@ void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr m
     RCLCPP_ERROR(get_logger(), "Cannot compute error vars ...");
   }
   if (control_performance_core_ptr_->calculateDrivingVars()) {
-    control_performance_core_ptr_->driving_status_vars.controller_processing_time.header.stamp =
-      current_control_msg_ptr_->stamp;
-    control_performance_core_ptr_->driving_status_vars.controller_processing_time.data =
-      d_control_cmd_;
-    pub_driving_msg_->publish(control_performance_core_ptr_->driving_status_vars);
+    auto & status_vars = control_performance_core_ptr_->driving_status_vars;
+    status_vars.controller_processing_time.header.stamp = current_control_msg_ptr_->stamp;
+    status_vars.controller_processing_time.data = d_control_cmd_;
+    pub_driving_msg_->publish(status_vars);
   } else {
     RCLCPP_ERROR(get_logger(), "Cannot compute driving vars ...");
   }
