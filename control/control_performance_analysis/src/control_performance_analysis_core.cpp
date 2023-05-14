@@ -14,8 +14,8 @@
 
 #include "control_performance_analysis/control_performance_analysis_core.hpp"
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "motion_utils/trajectory/interpolation.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -494,7 +494,7 @@ void ControlPerformanceAnalysisCore::findCurveRefIdx()
 
 std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
 {
-   const auto interp_point =
+  const auto interp_point =
     motion_utils::calcInterpolatedPoint(*current_trajectory_ptr_, *current_vec_pose_ptr_);
 
   const double interp_steering_angle = std::atan(p_.wheelbase_ * estimateCurvature());
