@@ -136,20 +136,17 @@ void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr m
   if (!current_odom_ptr_) {
     if (isDataReady()) {
       current_odom_ptr_ = msg;
-      current_pose_ = self_pose_listener_.getCurrentPose();
       control_performance_core_ptr_->setOdomHistory(*current_odom_ptr_);
-      prev_traj = *current_trajectory_ptr_;
-      prev_cmd = *current_control_msg_ptr_;
-      prev_steering = *current_vec_steering_msg_ptr_;
     }
     return;
   }
 
-  control_performance_core_ptr_->setCurrentWaypoints(prev_traj);
+  current_pose_ = self_pose_listener_.getCurrentPose();
+  control_performance_core_ptr_->setCurrentWaypoints(*current_trajectory_ptr_);
   control_performance_core_ptr_->setCurrentPose(current_pose_->pose);
-  control_performance_core_ptr_->setCurrentControlValue(prev_cmd);
+  control_performance_core_ptr_->setCurrentControlValue(*current_control_msg_ptr_);
   control_performance_core_ptr_->setOdomHistory(*msg);  // k+1, k, k-1
-  control_performance_core_ptr_->setSteeringStatus(prev_steering);
+  control_performance_core_ptr_->setSteeringStatus(*current_vec_steering_msg_ptr_);
 
   if (!control_performance_core_ptr_->isDataReady()) {
     return;
@@ -178,9 +175,6 @@ void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr m
   } else {
     RCLCPP_ERROR(get_logger(), "Cannot compute driving vars ...");
   }
-  prev_traj = *current_trajectory_ptr_;
-  prev_cmd = *current_control_msg_ptr_;
-  prev_steering = *current_vec_steering_msg_ptr_;
   current_odom_ptr_ = msg;
   current_pose_ = self_pose_listener_.getCurrentPose();
 }
