@@ -112,7 +112,7 @@ Either one is activated when all conditions are met.
 
 ## finish condition
 
-- The distance to the goal from your vehicle is lower than threshold (default: < `1m`)
+- The distance to the goal from your vehicle is lower than threshold (default: < `1m`).
 - The ego-vehicle is stopped.
   - The speed is lower than threshold (default: < `0.01m/s`).
 
