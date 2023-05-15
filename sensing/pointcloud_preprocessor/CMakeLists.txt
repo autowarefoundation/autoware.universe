@@ -46,7 +46,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/concatenate_data/concatenate_data_nodelet.cpp
   src/crop_box_filter/crop_box_filter_nodelet.cpp
   src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
-  src/downsample_filter/faster_voxel_griddownsample_filter.cpp
+  src/downsample_filter/faster_voxel_grid_downsample_filter.cpp
   src/downsample_filter/random_downsample_filter_nodelet.cpp
   src/downsample_filter/approximate_downsample_filter_nodelet.cpp
   src/outlier_filter/ring_outlier_filter_nodelet.cpp
