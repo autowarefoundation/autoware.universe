@@ -148,7 +148,7 @@ ModuleStatus LaneChangeInterface::updateState()
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger(), *clock_, 5000, "Lane change path is unsafe. Cancel lane change.");
     module_type_->toCancelState();
-    current_state_ = ModuleStatus::FAILURE;
+    current_state_ = isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::FAILURE;
     return current_state_;
   }
 
