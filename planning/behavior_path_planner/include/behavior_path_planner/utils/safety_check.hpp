@@ -76,14 +76,6 @@ double calcMinimumLongitudinalLength(
   const BehaviorPathPlannerParameters & params);
 
 /**
- * @brief Check object is in front of the origin rather than threshold
- * @param [in] projected_pose object's pose
- * @param [in] threshold threshold to check object's position
- * @return true if the projected pose is in front of the origin rather than threshold
- */
-bool isObjectFront(const Pose & projected_pose, const double threshold = -1e-3);
-
-/**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
  * @return true if distance is safe.
