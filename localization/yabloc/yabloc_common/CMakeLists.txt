@@ -32,7 +32,7 @@ find_package(Sophus REQUIRED)
 # GeographicLib
 find_package(PkgConfig)
 find_path(GeographicLib_INCLUDE_DIR GeographicLib/Config.h
-  PAHT_SUFFIXES GeographicLib
+  PATH_SUFFIXES GeographicLib
 )
 set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
 find_library(GeographicLib_LIBRARIES NAMES Geographic)
