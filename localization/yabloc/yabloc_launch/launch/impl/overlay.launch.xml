@@ -1,9 +1,9 @@
 <launch>
     <arg name="input_overlayed_pose" description=""/>
-    <let name="input_ground" value="/localization/map/ground"/>
-    <let name="input_projected_line_segments_cloud" value="/localization/imgproc/projected_line_segments_cloud"/>
-    <let name="input_ll2_sign_board" value="/localization/map/ll2_sign_board"/>
-    <let name="input_ll2_road_marking" value="/localization/map/ll2_road_marking"/>
+    <let name="input_ground" value="/localization/yabloc/map/ground"/>
+    <let name="input_projected_line_segments_cloud" value="/localization/yabloc/imgproc/projected_line_segments_cloud"/>
+    <let name="input_ll2_sign_board" value="/localization/yabloc/map/ll2_sign_board"/>
+    <let name="input_ll2_road_marking" value="/localization/yabloc/map/ll2_road_marking"/>
     <let name="input_debug_line_segments" value="debug/line_segments_cloud"/>
     <arg name="output_image_with_colored_line_segments" default="image_with_colored_line_segments"/>
     <arg name="resized_image" description=""/>

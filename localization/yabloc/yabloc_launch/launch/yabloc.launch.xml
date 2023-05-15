@@ -9,11 +9,11 @@
 
     <let name="connect_base_link_to_particle_pose" value="true" if="$(var standalone)"/>
     <let name="connect_base_link_to_particle_pose" value="false" unless="$(var standalone)"/>
-    <let name="input_pose" value="/localization/pf/pose" if="$(var standalone)"/>
+    <let name="input_pose" value="/localization/yabloc/pf/pose" if="$(var standalone)"/>
     <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose" unless="$(var standalone)"/>
 
     <group>
-        <push-ros-namespace namespace="localization"/>
+        <push-ros-namespace namespace="localization/yabloc"/>
 
         <!-- initializer -->
         <group>

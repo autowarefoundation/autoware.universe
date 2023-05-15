@@ -3,6 +3,6 @@
 
     <node name="semseg_node" pkg="semantic_segmentation" exec="semseg_server.py" output="screen" args="--ros-args --log-level info">
         <param name="model_path" value="$(var model_path)"/>
-        <remap from="/srv/semseg_srv" to="/localization/semseg_srv"/>
+        <remap from="/srv/semseg_srv" to="/localization/yabloc/semseg_srv"/>
     </node>
 </launch>

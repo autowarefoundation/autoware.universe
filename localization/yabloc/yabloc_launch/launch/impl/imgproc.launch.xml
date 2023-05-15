@@ -60,8 +60,8 @@
     <!-- segment fitler -->
     <arg name="input_graph_segmented" default="graph_segmented"/>
     <arg name="input_line_segments_cloud" default="line_segments_cloud"/>
-    <arg name="output_projected_line_segments_cloud" default="/localization/imgproc/projected_line_segments_cloud"/>
-    <arg name="output_projected_image" default="/localization/imgproc/projected_image"/>
+    <arg name="output_projected_line_segments_cloud" default="/localization/yabloc/imgproc/projected_line_segments_cloud"/>
+    <arg name="output_projected_image" default="/localization/yabloc/imgproc/projected_image"/>
     <arg name="output_debug_image_with_lines" default="debug/projected_image"/>
     <arg name="publish_image_with_segment_for_debug" default="true"/>
     <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
