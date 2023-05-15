@@ -2,7 +2,6 @@
     <!-- NOTE: -->
     <arg name="standalone" description="[true,false] Set to true if not connected to Autoware's P/C."/>
     <arg name="use_sim_time" default="true"/>
-    <arg name="use_septentrio" default="false" description="septentrio gnss"/>
 
     <!-- source camera image topics -->
     <arg name="src_image_0" default="/sensing/camera/camera0/image_rect_color/compressed"/>
@@ -109,9 +108,5 @@
             </include>
         </group>
 
-        <!-- septentrio ublox converter -->
-        <group if="$(var use_septentrio)">
-            <node name="doppler_converter" pkg="doppler_converter" exec="doppler_converter_node"/>
-        </group>
     </group>
 </launch>

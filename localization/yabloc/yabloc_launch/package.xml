@@ -23,7 +23,6 @@
   <!--twist-->
   <depend>twist_converter</depend>
   <depend>twist_estimator</depend>
-  <depend>doppler_converter</depend>
   <!--validation-->
   <depend>ape_monitor</depend>
   <depend>covariance_monitor</depend>

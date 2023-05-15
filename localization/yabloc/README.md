@@ -20,22 +20,25 @@ Branches
 
 * [main](https://github.com/tier4/YabLoc/tree/main) is a branch to work with minimal dependence on autoware.
   * If you want to try the YabLoc demo, please use `main` branch.
-* [autoware(under construction)](https://github.com/tier4/YabLoc/tree/autoware) is a branch made to run as part of Autoware.
 
 Submodules
 
-* [external/autoware_auto_msgs](https://github.com/tier4/autoware_auto_msgs)
-* [external/autoware_msgs](https://github.com/autowarefoundation/autoware_msgs.git)
-* [external/septentrio_gnss_driver](https://github.com/tier4/septentrio_gnss_driver.git)
-* [external/tier4_autoware_msgs](https://github.com/tier4/tier4_autoware_msgs.git)
 
 ### How to build
 
 ```shell
 mkdir yabloc_ws/src -p
-cd yabloc_ws
-git clone git@github.com:tier4/YabLoc.git src/YabLoc --recursive
+cd yabloc_ws/src
+# clone related packages
+git clone https://github.com/tier4/autoware_auto_msgs
+git clone https://github.com/autowarefoundation/autoware_msgs.git
+git clone https://github.com/tier4/tier4_autoware_msgs.git
+# clone YabLoc
+git clone https://github.com/tier4/YabLoc.git
+# install dependency 
+cd ..
 rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+# build
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 source install/setup.bash
 ```
@@ -170,14 +173,13 @@ If doppler (`ublox_msgs/msg/navpvt`) is available and the vehicle moves enough f
 
 from sesnors
 
-| topic name                                           | msg type                                         | description           |
-|------------------------------------------------------|--------------------------------------------------|-----------------------|
-| `/sensing/imu/tamagawa/imu_raw`                      | `sensor_msgs/msg/Imu`                            |                       |
-| `/sensing/camera/traffic_light/image_raw/compressed` | `sensor_msgs/msg/CompressedImage`                |                       |
-| `/sensing/camera/traffic_light/camera_info`          | `sensor_msgs/msg/CameraInfo`                     |                       |
-| `/sensing/gnss/ublox/navpvt`                         | `ublox_msgs/msg/NavPVT`                          | If you use ublox      |
-| `/sensing/gnss/septentrio/poscovgeodetic`            | `septentrio_gnss_driver_msgs/msg/PosCovGeodetic` | If you use Septentrio |
-| `/vehicle/status/velocity_status`                    | `autoware_auto_vehicle_msgs/msg/VelocityReport`  |                       |
+| topic name                                           | msg type                                        | description      |
+|------------------------------------------------------|-------------------------------------------------|------------------|
+| `/sensing/imu/tamagawa/imu_raw`                      | `sensor_msgs/msg/Imu`                           |                  |
+| `/sensing/camera/traffic_light/image_raw/compressed` | `sensor_msgs/msg/CompressedImage`               |                  |
+| `/sensing/camera/traffic_light/camera_info`          | `sensor_msgs/msg/CameraInfo`                    |                  |
+| `/sensing/gnss/ublox/navpvt`                         | `ublox_msgs/msg/NavPVT`                         | If you use ublox |
+| `/vehicle/status/velocity_status`                    | `autoware_auto_vehicle_msgs/msg/VelocityReport` |                  |
 
 from autoware
 | topic name        | msg type                                   | description                               |
@@ -214,10 +216,10 @@ ros2 run tf2_ros static_transform_publisher \
 ### Output topics about pose
 
 
-| topic name                                            | msg type                             | description                                |
-|-------------------------------------------------------|--------------------------------------|--------------------------------------------|
-| `/localicazation/pf/pose`                             | `geometry_msgs/msg/PoseStamped`      | estimated pose                             |
-| `/localicazation/pose_estimator/pose_with_covariance` | `geometry_msgs/msg/PoseStamped`      | estimated pose with covariance             |
+| topic name                                            | msg type                        | description                    |
+|-------------------------------------------------------|---------------------------------|--------------------------------|
+| `/localicazation/pf/pose`                             | `geometry_msgs/msg/PoseStamped` | estimated pose                 |
+| `/localicazation/pose_estimator/pose_with_covariance` | `geometry_msgs/msg/PoseStamped` | estimated pose with covariance |
 
 ### Output topics for visualization
 

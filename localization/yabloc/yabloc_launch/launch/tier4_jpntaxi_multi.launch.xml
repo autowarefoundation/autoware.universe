@@ -25,7 +25,6 @@
 
         <arg name="target_height_ratio" value="0.80"/>
         <!-- <arg name="override_camera_frame_id" value="fake_camera_optical_link"/> -->
-        <arg name="use_septentrio" value="true"/>
     </include>
 
     <node pkg="tf2_ros" exec="static_transform_publisher" name="fake_tf1" args="--frame-id base_link                 --child-frame-id fake_sensor_kit_base_link --x 0.6 --z 1.7 --yaw 0.03" />
