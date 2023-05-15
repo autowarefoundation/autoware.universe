@@ -73,37 +73,9 @@ protected:
     const TransformInfo & transform_info);
 
 private:
-  struct Centroid
-  {
-    float x;
-    float y;
-    float z;
-    uint32_t point_count_;
-
-    Centroid() : x(0), y(0), z(0) {}
-    Centroid(float _x, float _y, float _z) : x(_x), y(_y), z(_z) { this->point_count_ = 1; }
-
-    void add_point(float _x, float _y, float _z)
-    {
-      this->x += _x;
-      this->y += _y;
-      this->z += _z;
-      this->point_count_++;
-    }
-
-    void calc_centroid()
-    {
-      this->x /= this->point_count_;
-      this->y /= this->point_count_;
-      this->z /= this->point_count_;
-    }
-  };
-
   float voxel_size_x_;
   float voxel_size_y_;
   float voxel_size_z_;
-  Eigen::Vector3f inverse_voxel_size_;
-  std::vector<pcl::PCLPointField> xyz_fields_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;

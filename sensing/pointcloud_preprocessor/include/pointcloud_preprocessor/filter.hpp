@@ -133,7 +133,6 @@ public:
     const std::string & filter_name = "pointcloud_preprocessor_filter",
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
-protected:
   struct TransformInfo
   {
     TransformInfo()
@@ -146,6 +145,7 @@ protected:
     bool need_transform;
   };
 
+protected:
   /** \brief The input PointCloud2 subscriber. */
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_input_;
 
