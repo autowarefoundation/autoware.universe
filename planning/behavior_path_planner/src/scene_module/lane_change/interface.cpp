@@ -381,71 +381,6 @@ AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
 {
 }
 
-ModuleStatus AvoidanceByLaneChangeInterface::updateState()
-{
-  if (!module_type_->isValidPath()) {
-    return ModuleStatus::FAILURE;
-  }
-
-  if (module_type_->isAbortState()) {
-    return module_type_->hasFinishedAbort() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
-  }
-
-  if (module_type_->hasFinishedLaneChange()) {
-    return ModuleStatus::SUCCESS;
-  }
-
-  const auto [is_safe, is_object_coming_from_rear] = module_type_->isApprovedPathSafe();
-
-  if (is_safe) {
-    return ModuleStatus::RUNNING;
-  }
-
-  if (!module_type_->isCancelEnabled()) {
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Lane change path is unsafe but cancel was not enabled. Continue lane change.");
-    module_type_->isRequiredStop(is_object_coming_from_rear);
-    return ModuleStatus::RUNNING;
-  }
-
-  if (!module_type_->isAbleToReturnCurrentLane()) {
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Lane change path is unsafe but cannot return. Continue lane change.");
-    module_type_->isRequiredStop(is_object_coming_from_rear);
-    return ModuleStatus::RUNNING;
-  }
-
-  if (module_type_->isNearEndOfLane()) {
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Lane change path is unsafe but near end of lane. Continue lane change.");
-    module_type_->isRequiredStop(is_object_coming_from_rear);
-    return ModuleStatus::RUNNING;
-  }
-
-  if (module_type_->isEgoOnPreparePhase()) {
-    RCLCPP_WARN_STREAM(getLogger(), "Lane change path is unsafe. Cancel lane change.");
-    return ModuleStatus::FAILURE;
-  }
-
-  if (module_type_->isAbortState()) {
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Lane change path is unsafe but abort was not enabled. Continue lane change.");
-    module_type_->isRequiredStop(is_object_coming_from_rear);
-    return ModuleStatus::RUNNING;
-  }
-
-  const auto found_abort_path = module_type_->getAbortPath();
-  if (!found_abort_path) {
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Lane change path is unsafe but not found abort path. Continue lane change.");
-    module_type_->isRequiredStop(is_object_coming_from_rear);
-    return ModuleStatus::RUNNING;
-  }
-
-  RCLCPP_WARN_STREAM(getLogger(), "Lane change path is unsafe. Abort lane change.");
-  return ModuleStatus::RUNNING;
-}
-
 void AvoidanceByLaneChangeInterface::updateRTCStatus(
   const double start_distance, const double finish_distance)
 {
@@ -557,33 +492,6 @@ LaneChangeBTModule::LaneChangeBTModule(
     name, node, parameters, createRTCInterfaceMap(node, name, {"left", "right"}),
     std::make_unique<NormalLaneChangeBT>(parameters, LaneChangeModuleType::NORMAL, Direction::NONE)}
 {
-}
-
-ModuleStatus LaneChangeBTModule::updateState()
-{
-  if (!module_type_->isValidPath()) {
-    current_state_ = ModuleStatus::FAILURE;
-    return current_state_;
-  }
-
-  if (module_type_->isAbortState()) {
-    current_state_ = ModuleStatus::RUNNING;
-    return current_state_;
-  }
-
-  if (module_type_->isCancelConditionSatisfied()) {
-    current_state_ =
-      module_type_->isCancelEnabled() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
-    return current_state_;
-  }
-
-  if (module_type_->hasFinishedLaneChange()) {
-    current_state_ = ModuleStatus::SUCCESS;
-    return current_state_;
-  }
-
-  current_state_ = ModuleStatus::RUNNING;
-  return current_state_;
 }
 
 void LaneChangeBTModule::updateRTCStatus(const double start_distance, const double finish_distance)
