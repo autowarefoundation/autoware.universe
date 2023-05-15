@@ -114,11 +114,7 @@ public:
   void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExternalTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishVirtualTrafficLightState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExternalCrosswalkStates(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExternalIntersectionStates(
-    rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
@@ -126,6 +122,7 @@ public:
   void setRouteInputTopicName(std::string topic_name);
   void setPathInputTopicName(std::string topic_name);
   void setPathWithLaneIdTopicName(std::string topic_name);
+  void setPathTopicName(std::string topic_name);
 
   void setTrajectorySubscriber(std::string topic_name);
   void setScenarioSubscriber(std::string topic_name);
@@ -146,6 +143,9 @@ public:
 
   void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
+
+  void testWithNominalPath(rclcpp::Node::SharedPtr target_node);
+  void testWithAbnormalPath(rclcpp::Node::SharedPtr target_node);
 
   // for invalid ego poses, contains some tests inside.
   void testRouteWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
@@ -184,10 +184,7 @@ private:
   rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr traffic_signals_pub_;
-  rclcpp::Publisher<TrafficSignalArray>::SharedPtr external_traffic_signals_pub_;
   rclcpp::Publisher<VirtualTrafficLightStateArray>::SharedPtr virtual_traffic_light_states_pub_;
-  rclcpp::Publisher<CrosswalkStatus>::SharedPtr external_crosswalk_states_pub_;
-  rclcpp::Publisher<IntersectionStatus>::SharedPtr external_intersection_states_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
@@ -210,6 +207,10 @@ private:
   // Publisher for testing(PathWithLaneId)
   rclcpp::Publisher<PathWithLaneId>::SharedPtr normal_path_with_lane_id_pub_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr abnormal_path_with_lane_id_pub_;
+
+  // Publisher for testing(Path)
+  rclcpp::Publisher<Path>::SharedPtr normal_path_pub_;
+  rclcpp::Publisher<Path>::SharedPtr abnormal_path_pub_;
 
   std::string input_trajectory_name_ = "";
   std::string input_parking_trajectory_name_ = "";
@@ -239,6 +240,9 @@ private:
   void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+
+  void publishNominalPath(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishAbnormalPath(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 };  // class PlanningInterfaceTestManager
 
 }  // namespace planning_test_utils
