@@ -69,10 +69,11 @@ PathWithLaneId resamplePathWithSpline(
   }
 
   constexpr double epsilon = 0.2;
+  const auto is_close = [&](const double v, const double x) { return std::abs(v - x) < epsilon; };
   const auto has_almost_same_value = [&](const auto & vec, const auto x) {
     if (vec.empty()) return false;
-    const auto has_close = [&](const auto v) { return std::abs(v - x) < epsilon; };
-    return std::find_if(vec.begin(), vec.end(), has_close) != vec.end();
+    return std::find_if(vec.begin(), vec.end(), [&](const double v) { return is_close(v, x); }) !=
+           vec.end();
   };
 
   // Get lane ids that are not duplicated
@@ -102,15 +103,13 @@ PathWithLaneId resamplePathWithSpline(
   const auto start_s = std::max(target_section.first, 0.0);
   const auto end_s = std::min(target_section.second, s_vec.back());
   for (double s = start_s; s < end_s; s += interval) {
-    if (!has_almost_same_value(s_out, s)) {
+    if (!has_almost_same_value(s_out, s) || !is_close(end_s, s)) {
       s_out.push_back(s);
     }
   }
 
   // Insert Terminal Point
-  if (!has_almost_same_value(s_out, end_s)) {
-    s_out.push_back(end_s);
-  }
+  s_out.push_back(end_s);
 
   // Insert Stop Point
   const auto closest_stop_dist = motion_utils::calcDistanceToForwardStopPoint(transformed_path);
