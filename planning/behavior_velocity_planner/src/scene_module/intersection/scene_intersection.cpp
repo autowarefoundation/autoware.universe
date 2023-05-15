@@ -1070,8 +1070,14 @@ bool IntersectionModule::isOcclusionCleared(
   }
 
   // (3) occlusion mask
-  cv::Mat occlusion_mask(width, height, CV_8UC1, cv::Scalar(0));
-  cv::bitwise_and(detection_mask, unknown_mask, occlusion_mask);
+  cv::Mat occlusion_mask_raw(width, height, CV_8UC1, cv::Scalar(0));
+  cv::bitwise_and(detection_mask, unknown_mask, occlusion_mask_raw);
+  // (3.1) apply morphologyEx
+  cv::Mat occlusion_mask;
+  const int morph_size = std::ceil(2.0 / reso);
+  cv::morphologyEx(
+    occlusion_mask_raw, occlusion_mask, cv::MORPH_OPEN,
+    cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
 
   // (4) create distance grid
   // value: 0 - 254: signed distance representing [distamce_min, distance_max]
@@ -1225,6 +1231,9 @@ bool IntersectionModule::isOcclusionCleared(
     origin.z + distance_max /* elevation for 255 */);
   grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 3>(
     distance_grid_heatmap, "color", occlusion_grid);
+  cv::rotate(occlusion_mask, occlusion_mask, cv::ROTATE_90_COUNTERCLOCKWISE);
+  grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 1>(
+    occlusion_mask, "denoised_occlusion", occlusion_grid);
   occlusion_grid_pub_->publish(grid_map::GridMapRosConverter::toMessage(occlusion_grid));
   if (min_cost > min_cost_thr || !min_cost_projection_ind.has_value()) {
     return true;
