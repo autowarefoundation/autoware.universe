@@ -186,7 +186,7 @@ double calcDistanceFromPointToSegment(
     return numerator / denominator;
   }
 
-  // target_point is outside the semgent.
+  // target_point is outside the segment.
   return std::min(
     tier4_autoware_utils::calcDistance2d(a, p), tier4_autoware_utils::calcDistance2d(b, p));
 }
