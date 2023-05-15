@@ -13,6 +13,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
 
+  <depend>geographiclib</depend>
   <depend>tf2_ros</depend>
   <depend>cv_bridge</depend>
   <depend>std_msgs</depend>
