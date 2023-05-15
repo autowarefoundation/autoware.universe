@@ -194,7 +194,7 @@ protected:
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
-  virtual bool isCurrentSpeedLow() const = 0;
+  virtual bool isAbleToStopSafely() const = 0;
 
   virtual lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, Direction direction) const = 0;

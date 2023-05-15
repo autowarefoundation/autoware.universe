@@ -75,7 +75,7 @@ public:
 
   bool isEgoOnPreparePhase() const override;
 
-  bool isCurrentSpeedLow() const override;
+  bool isAbleToStopSafely() const override;
 
   bool hasFinishedAbort() const override;
 

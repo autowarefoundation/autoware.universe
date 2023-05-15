@@ -105,7 +105,12 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   }
 
   if (isStopState()) {
-    const auto stop_point = utils::insertStopPoint(0.1, *output.path);
+    const auto current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+    const auto current_dist = motion_utils::calcSignedArcLength(
+      output.path->points, output.path->points.front().point.pose.position, getEgoPosition());
+    const auto stop_dist =
+      -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
+    const auto stop_point = utils::insertStopPoint(stop_dist + current_dist, *output.path);
   }
 
   output.reference_path = std::make_shared<PathWithLaneId>(getReferencePath());
@@ -286,10 +291,31 @@ bool NormalLaneChange::isEgoOnPreparePhase() const
   return motion_utils::calcSignedArcLength(path_points, start_position, getEgoPosition()) < 0.0;
 }
 
-bool NormalLaneChange::isCurrentSpeedLow() const
+bool NormalLaneChange::isAbleToStopSafely() const
 {
-  constexpr double threshold_ms = 10.0 * 1000 / 3600;
-  return getEgoVelocity() < threshold_ms;
+  if (status_.lane_change_path.path.points.size() < 2) {
+    return false;
+  }
+
+  const auto nearest_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    status_.lane_change_path.path.points, getEgoPose(),
+    planner_data_->parameters.ego_nearest_dist_threshold,
+    planner_data_->parameters.ego_nearest_yaw_threshold);
+
+  const auto current_velocity = getEgoVelocity();
+  const auto stop_dist =
+    -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
+
+  double dist = 0.0;
+  for (size_t idx = nearest_idx; idx < status_.lane_change_path.path.points.size() - 1; ++idx) {
+    dist += motion_utils::calcSignedArcLength(status_.lane_change_path.path.points, idx, idx + 1);
+    if (dist > stop_dist) {
+      const auto & estimated_pose = status_.lane_change_path.path.points.at(idx + 1).point.pose;
+      return utils::lane_change::isEgoWithinOriginalLane(
+        status_.current_lanes, estimated_pose, planner_data_->parameters);
+    }
+  }
+  return true;
 }
 
 bool NormalLaneChange::hasFinishedAbort() const
@@ -686,7 +712,7 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 
 bool NormalLaneChange::isRequiredStop(const bool is_object_coming_from_rear) const
 {
-  return isNearEndOfLane() && isCurrentSpeedLow() && is_object_coming_from_rear;
+  return isNearEndOfLane() && isAbleToStopSafely() && is_object_coming_from_rear;
 }
 
 bool NormalLaneChange::getAbortPath()
