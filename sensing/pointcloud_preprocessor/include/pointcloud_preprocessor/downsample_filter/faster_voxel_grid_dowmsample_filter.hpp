@@ -31,6 +31,7 @@ public:
 
   FasterVoxelGridDownsampleFilter();
   void set_voxel_size(float voxel_size_x_, float voxel_size_y_, float voxel_size_z_);
+  void set_field_offsets(const PointCloud2ConstPtr & input);
   void filter(
     const PointCloud2ConstPtr & input, PointCloud2 & output, const TransformInfo & transform_info,
     const rclcpp::Logger & logger);
@@ -75,5 +76,20 @@ private:
 
   Eigen::Vector3f inverse_voxel_size_;
   std::vector<pcl::PCLPointField> xyz_fields_;
+  int x_offset_;
+  int y_offset_;
+  int z_offset_;
+  int intensity_offset_;
+
+  bool get_min_max_voxel(
+    const PointCloud2ConstPtr & input, Eigen::Vector3f & min_voxel, Eigen::Vector3f & max_voxel);
+
+  std::unordered_map<uint32_t, Centroid> calc_centroids_each_voxel(
+    const PointCloud2ConstPtr & input, const Eigen::Vector3f & max_voxel,
+    const Eigen::Vector3f & min_voxel);
+
+  void copy_centroids_to_output(
+    std::unordered_map<uint32_t, Centroid> & voxel_centroid_map, PointCloud2 & output,
+    const TransformInfo & transform_info);
 };
 }  // namespace pointcloud_preprocessor
