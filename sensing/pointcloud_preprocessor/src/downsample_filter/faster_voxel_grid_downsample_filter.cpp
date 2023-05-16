@@ -21,14 +21,15 @@ FasterVoxelGridDownsampleFilter::FasterVoxelGridDownsampleFilter()
 {
   pcl::for_each_type<typename pcl::traits::fieldList<pcl::PointXYZ>::type>(
     pcl::detail::FieldAdder<pcl::PointXYZ>(xyz_fields_));
+  offset_initialized_ = false;
 }
 
 void FasterVoxelGridDownsampleFilter::set_voxel_size(
-  float voxel_size_x_, float voxel_size_y_, float voxel_size_z_)
+  float voxel_size_x, float voxel_size_y, float voxel_size_z)
 {
-  inverse_voxel_size_[0] = 1.0f / voxel_size_x_;
-  inverse_voxel_size_[1] = 1.0f / voxel_size_y_;
-  inverse_voxel_size_[2] = 1.0f / voxel_size_z_;
+  inverse_voxel_size_[0] = 1.0f / voxel_size_x;
+  inverse_voxel_size_[1] = 1.0f / voxel_size_y;
+  inverse_voxel_size_[2] = 1.0f / voxel_size_z;
 }
 
 void FasterVoxelGridDownsampleFilter::set_field_offsets(const PointCloud2ConstPtr & input)
@@ -37,12 +38,18 @@ void FasterVoxelGridDownsampleFilter::set_field_offsets(const PointCloud2ConstPt
   y_offset_ = input->fields[pcl::getFieldIndex(*input, "y")].offset;
   z_offset_ = input->fields[pcl::getFieldIndex(*input, "z")].offset;
   intensity_offset_ = input->fields[pcl::getFieldIndex(*input, "intensity")].offset;
+  offset_initialized_ = true;
 }
 
 void FasterVoxelGridDownsampleFilter::filter(
   const PointCloud2ConstPtr & input, PointCloud2 & output, const TransformInfo & transform_info,
   const rclcpp::Logger & logger)
 {
+  // Check if the field offset has been set
+  if (!offset_initialized_) {
+    set_field_offsets(input);
+  }
+
   // Compute the minimum and maximum voxel coordinates
   Eigen::Vector3f min_voxel, max_voxel;
   if (!get_min_max_voxel(input, min_voxel, max_voxel)) {
@@ -60,8 +67,8 @@ void FasterVoxelGridDownsampleFilter::filter(
   // Initialize the output
   output.row_step = voxel_centroid_map.size() * input->point_step;
   output.data.resize(output.row_step);
-  pcl_conversions::fromPCL(xyz_fields_, output.fields);
   output.width = voxel_centroid_map.size();
+  pcl_conversions::fromPCL(xyz_fields_, output.fields);
   output.is_dense = true;  // we filter out invalid points
   output.height = input->height;
   output.is_bigendian = input->is_bigendian;
@@ -70,6 +77,16 @@ void FasterVoxelGridDownsampleFilter::filter(
 
   // Copy the centroids to the output
   copy_centroids_to_output(voxel_centroid_map, output, transform_info);
+}
+
+Eigen::Vector3f FasterVoxelGridDownsampleFilter::get_point_from_global_offset(
+  const PointCloud2ConstPtr & input, size_t global_offset)
+{
+  Eigen::Vector3f point(
+    *reinterpret_cast<const float *>(&input->data[global_offset + x_offset_]),
+    *reinterpret_cast<const float *>(&input->data[global_offset + y_offset_]),
+    *reinterpret_cast<const float *>(&input->data[global_offset + z_offset_]));
+  return point;
 }
 
 bool FasterVoxelGridDownsampleFilter::get_min_max_voxel(
@@ -81,10 +98,7 @@ bool FasterVoxelGridDownsampleFilter::get_min_max_voxel(
   max_point.setConstant(-FLT_MAX);
   for (size_t global_offset = 0; global_offset + input->point_step <= input->data.size();
        global_offset += input->point_step) {
-    Eigen::Vector3f point(
-      *reinterpret_cast<const float *>(&input->data[global_offset + x_offset_]),
-      *reinterpret_cast<const float *>(&input->data[global_offset + y_offset_]),
-      *reinterpret_cast<const float *>(&input->data[global_offset + z_offset_]));
+    Eigen::Vector3f point = get_point_from_global_offset(input, global_offset);
     if (std::isfinite(point[0]) && std::isfinite(point[1]), std::isfinite(point[2])) {
       min_point = min_point.cwiseMin(point);
       max_point = max_point.cwiseMax(point);
@@ -117,28 +131,22 @@ FasterVoxelGridDownsampleFilter::calc_centroids_each_voxel(
   const Eigen::Vector3f & min_voxel)
 {
   std::unordered_map<uint32_t, Centroid> voxel_centroid_map;
-
   // Compute the number of divisions needed along all axis
   Eigen::Vector3f div_b = max_voxel - min_voxel + Eigen::Vector3f::Ones();
-
   // Set up the division multiplier
   Eigen::Vector3i div_b_mul(1, div_b[0], div_b[0] * div_b[1]);
 
   for (size_t global_offset = 0; global_offset + input->point_step <= input->data.size();
        global_offset += input->point_step) {
-    Eigen::Vector3f point(
-      *reinterpret_cast<const float *>(&input->data[global_offset + x_offset_]),
-      *reinterpret_cast<const float *>(&input->data[global_offset + y_offset_]),
-      *reinterpret_cast<const float *>(&input->data[global_offset + z_offset_]));
+    Eigen::Vector3f point = get_point_from_global_offset(input, global_offset);
     if (std::isfinite(point[0]) && std::isfinite(point[1]), std::isfinite(point[2])) {
-      int ijk0 = static_cast<int>(
-        std::floor(point[0] * inverse_voxel_size_[0]) - static_cast<float>(min_voxel[0]));
-      int ijk1 = static_cast<int>(
-        std::floor(point[1] * inverse_voxel_size_[1]) - static_cast<float>(min_voxel[1]));
-      int ijk2 = static_cast<int>(
-        std::floor(point[2] * inverse_voxel_size_[2]) - static_cast<float>(min_voxel[2]));
+      // Calculate the voxel index to which the point belongs
+      int ijk0 = static_cast<int>(std::floor(point[0] * inverse_voxel_size_[0]) - min_voxel[0]);
+      int ijk1 = static_cast<int>(std::floor(point[1] * inverse_voxel_size_[1]) - min_voxel[1]);
+      int ijk2 = static_cast<int>(std::floor(point[2] * inverse_voxel_size_[2]) - min_voxel[2]);
       uint32_t voxel_id = ijk0 * div_b_mul[0] + ijk1 * div_b_mul[1] + ijk2 * div_b_mul[2];
 
+      // Add the point to the corresponding centroid
       if (voxel_centroid_map.find(voxel_id) == voxel_centroid_map.end()) {
         voxel_centroid_map[voxel_id] = Centroid(point[0], point[1], point[2]);
       } else {
@@ -156,20 +164,14 @@ void FasterVoxelGridDownsampleFilter::copy_centroids_to_output(
 {
   size_t output_data_size = 0;
   for (auto & pair : voxel_centroid_map) {
-    pair.second.calc_centroid();
+    Eigen::Vector4f centroid = pair.second.calc_centroid();
     if (transform_info.need_transform) {
-      Eigen::Array4f point = transform_info.eigen_transform *
-                             Eigen::Vector4f(pair.second.x, pair.second.y, pair.second.z, 1);
-      *reinterpret_cast<float *>(&output.data[output_data_size + x_offset_]) = point[0];
-      *reinterpret_cast<float *>(&output.data[output_data_size + y_offset_]) = point[1];
-      *reinterpret_cast<float *>(&output.data[output_data_size + z_offset_]) = point[2];
-    } else {
-      *reinterpret_cast<float *>(&output.data[output_data_size + x_offset_]) = pair.second.x;
-      *reinterpret_cast<float *>(&output.data[output_data_size + y_offset_]) = pair.second.y;
-      *reinterpret_cast<float *>(&output.data[output_data_size + z_offset_]) = pair.second.z;
+      centroid = transform_info.eigen_transform * centroid;
     }
-
-    *reinterpret_cast<float *>(&output.data[output_data_size + intensity_offset_]) = 1.0f;
+    *reinterpret_cast<float *>(&output.data[output_data_size + x_offset_]) = centroid[0];
+    *reinterpret_cast<float *>(&output.data[output_data_size + y_offset_]) = centroid[1];
+    *reinterpret_cast<float *>(&output.data[output_data_size + z_offset_]) = centroid[2];
+    *reinterpret_cast<float *>(&output.data[output_data_size + intensity_offset_]) = centroid[3];
     output_data_size += output.point_step;
   }
 }

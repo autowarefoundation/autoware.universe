@@ -103,8 +103,9 @@ void VoxelGridDownsampleFilterComponent::faster_filter(
   PointCloud2 & output, const TransformInfo & transform_info)
 {
   std::scoped_lock lock(mutex_);
-  auto faster_voxel_filter = FasterVoxelGridDownsampleFilter();
+  FasterVoxelGridDownsampleFilter faster_voxel_filter;
   faster_voxel_filter.set_voxel_size(voxel_size_x_, voxel_size_y_, voxel_size_z_);
+  faster_voxel_filter.set_field_offsets(input);
   faster_voxel_filter.filter(input, output, transform_info, this->get_logger());
 }
 

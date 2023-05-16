@@ -22,15 +22,16 @@
 
 namespace pointcloud_preprocessor
 {
+
 class FasterVoxelGridDownsampleFilter
 {
-public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
   using TransformInfo = pointcloud_preprocessor::Filter::TransformInfo;
 
+public:
   FasterVoxelGridDownsampleFilter();
-  void set_voxel_size(float voxel_size_x_, float voxel_size_y_, float voxel_size_z_);
+  void set_voxel_size(float voxel_size_x, float voxel_size_y, float voxel_size_z);
   void set_field_offsets(const PointCloud2ConstPtr & input);
   void filter(
     const PointCloud2ConstPtr & input, PointCloud2 & output, const TransformInfo & transform_info,
@@ -40,17 +41,6 @@ private:
   struct Centroid
   {
     float x;
-    struct TransformInfo
-    {
-      TransformInfo()
-      {
-        eigen_transform = Eigen::Matrix4f::Identity(4, 4);
-        need_transform = false;
-      }
-
-      Eigen::Matrix4f eigen_transform;
-      bool need_transform;
-    };
     float y;
     float z;
     uint32_t point_count_;
@@ -66,11 +56,12 @@ private:
       this->point_count_++;
     }
 
-    void calc_centroid()
+    Eigen::Vector4f calc_centroid()
     {
-      this->x /= this->point_count_;
-      this->y /= this->point_count_;
-      this->z /= this->point_count_;
+      Eigen::Vector4f centroid(
+        (this->x / this->point_count_), (this->y / this->point_count_),
+        (this->z / this->point_count_), 1.0f);
+      return centroid;
     }
   };
 
@@ -80,6 +71,10 @@ private:
   int y_offset_;
   int z_offset_;
   int intensity_offset_;
+  bool offset_initialized_;
+
+  Eigen::Vector3f get_point_from_global_offset(
+    const PointCloud2ConstPtr & input, size_t global_offset);
 
   bool get_min_max_voxel(
     const PointCloud2ConstPtr & input, Eigen::Vector3f & min_voxel, Eigen::Vector3f & max_voxel);
@@ -92,4 +87,5 @@ private:
     std::unordered_map<uint32_t, Centroid> & voxel_centroid_map, PointCloud2 & output,
     const TransformInfo & transform_info);
 };
+
 }  // namespace pointcloud_preprocessor
