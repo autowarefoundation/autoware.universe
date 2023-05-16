@@ -130,7 +130,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
     cl_no_stopping_areas, cl_no_obstacle_segmentation_area,
     cl_no_obstacle_segmentation_area_for_run_out, cl_hatched_road_markings_area,
     cl_hatched_road_markings_line;
-    cl_no_obstacle_segmentation_area_for_run_out, cl_invalid_lanelets;
   setColor(&cl_road, 0.27, 0.27, 0.27, 0.999);
   setColor(&cl_shoulder, 0.15, 0.15, 0.15, 0.999);
   setColor(&cl_cross, 0.27, 0.3, 0.27, 0.5);
@@ -151,7 +150,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
   setColor(&cl_no_obstacle_segmentation_area_for_run_out, 0.37, 0.7, 0.27, 0.5);
   setColor(&cl_hatched_road_markings_area, 0.3, 0.3, 0.3, 0.5);
   setColor(&cl_hatched_road_markings_line, 0.5, 0.5, 0.5, 0.999);
-  setColor(&cl_invalid_lanelets, 0.56, 0.40, 0.27, 0.5);
 
   visualization_msgs::msg::MarkerArray map_marker_array;
 
