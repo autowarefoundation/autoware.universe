@@ -9,7 +9,26 @@ This module is under development.
 In the current implementation, the dynamic obstacles to avoid is extracted from the drivable area.
 Then the motion planner, in detail obstacle_avoidance_planner, will generate an avoiding trajectory.
 
-### Parameters
+## Overview of drivable area modification
+
+The dynamics obstacles meeting the following condition will be avoided.
+
+- The type is designated as `target_object.*`.
+- The norm of the obstacle's velocity projected to the ego's path is smaller than `target_object.min_obstacle_vel`.
+- The obstacle is in the next lane to the ego's lane, which will not cut-into the ego's lane according to the highest-prioritized predicted path.
+
+To realize dynamic obstacles for avoidance, the time dimension should be take into an account considering the dynamics.
+However, it will make the planning problem much harder to solve.
+Therefore, we project the time dimension to the 2D pose dimension.
+
+Currently, the predicted paths of predicted objects are not so stable.
+Therefore, instead of using the predicted paths,
+
+![drivable_area_extraction_width](../image/dynamic_avoidance/drivable_area_extraction_width.drawio.svg)
+![same_directional_object](../image/dynamic_avoidance/same_directional_object.svg)
+![opposite_directional_object](../image/dynamic_avoidance/opposite_directional_object.svg)
+
+## Parameters
 
 | Name                                                               | Unit  | Type   | Description                                                 | Default value |
 | :----------------------------------------------------------------- | :---- | :----- | :---------------------------------------------------------- | :------------ |
