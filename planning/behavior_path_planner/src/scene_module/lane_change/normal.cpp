@@ -266,9 +266,8 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
 
-  const double ego_velocity = std::max(
-    getEgoVelocity(),
-    planner_data_->parameters.minimum_lane_changing_velocity);
+  const double ego_velocity =
+    std::max(getEgoVelocity(), planner_data_->parameters.minimum_lane_changing_velocity);
   const double estimated_travel_dist = ego_velocity * lane_change_parameters_->abort_delta_time;
 
   double dist = 0.0;
