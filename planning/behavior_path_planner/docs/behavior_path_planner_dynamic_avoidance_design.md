@@ -37,7 +37,10 @@ We can limit the lateral shift offset by `drivable_area_generation.max_lat_offse
 Then, extracting the same directional and opposite directional obstacles from the drivable area will work as follows considering TTC (time to collision).
 Regarding the same directional obstacles, obstacles whose TTC is negative will be ignored (e.g. The obstacle is in front of the ego, and the obstacle's velocity is larger than the ego's velocity.).
 
+Same directional obstacles
 ![same_directional_object](../image/dynamic_avoidance/same_directional_object.svg)
+
+Opposite directional obstacles
 ![opposite_directional_object](../image/dynamic_avoidance/opposite_directional_object.svg)
 
 ## Parameters
