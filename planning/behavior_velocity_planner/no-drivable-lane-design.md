@@ -17,7 +17,7 @@ Some examples of No Drivable Lanes
 
 A lanelet becomes invalid by adding a new tag under the relevant lanelet in the map file `<tag k="no_drivable_lane" v="yes"/>`.
 
-The target of this module is to stop the vehicle before entering the no drivable lane (with configurable stop margin) or keep the vehicle stationary if autonomous mode started inside a no drivable lane. Then ask the human driver to take the responsibility of the driving task (Request to Cooperate "RTC")
+The target of this module is to stop the vehicle before entering the no drivable lane (with configurable stop margin) or keep the vehicle stationary if autonomous mode started inside a no drivable lane. Then ask the human driver to take the responsibility of the driving task (Takeover Request / Request to Intervine)
 
 ### Activation Timing
 
@@ -57,4 +57,5 @@ This function is activated when the lane id of the target path has an no drivabl
 
 ### Future Work
 
-- Handle the case when the vehicle stops before a no drivable lane but part of it footprint intersects with the no drivable lane polygon.
+- As [Request to Intervine API](https://github.com/autowarefoundation/autoware/issues/3487) is not implemented yet, this will be handled to notify the driver to takeover the driving task responsibility after the vehicle stops due to `no_drivable_lane`
+- Handle the case when the vehicle stops before a no drivable lane but part of its footprint intersects with the no drivable lane polygon.
