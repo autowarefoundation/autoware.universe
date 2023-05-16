@@ -18,6 +18,7 @@
 
 #include <pcl/filters/voxel_grid.h>
 
+#include <unordered_map>
 #include <vector>
 
 namespace pointcloud_preprocessor
