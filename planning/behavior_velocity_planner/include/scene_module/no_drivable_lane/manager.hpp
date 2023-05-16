@@ -26,7 +26,7 @@
 
 namespace behavior_velocity_planner
 {
-class NoDrivableLaneModuleManager : public SceneModuleManagerInterfaceWithRTC
+class NoDrivableLaneModuleManager : public SceneModuleManagerInterface
 {
 public:
   explicit NoDrivableLaneModuleManager(rclcpp::Node & node);

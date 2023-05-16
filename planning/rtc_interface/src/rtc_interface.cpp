@@ -70,8 +70,6 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::PULL_OUT;
   } else if (module_name == "intersection_occlusion") {
     module.type = Module::INTERSECTION_OCCLUSION;
-  } else if (module_name == "no_drivable_lane") {
-    module.type = Module::NO_DRIVABLE_LANE;
   }
   return module;
 }

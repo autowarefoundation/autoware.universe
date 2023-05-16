@@ -74,9 +74,6 @@ std::string getModuleName(const uint8_t module_type)
     case Module::OCCLUSION_SPOT: {
       return "occlusion_spot";
     }
-    case Module::NO_DRIVABLE_LANE: {
-      return "no_drivable_lane";
-    }
   }
   return "NONE";
 }

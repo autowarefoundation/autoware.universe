@@ -18,7 +18,7 @@ namespace behavior_velocity_planner
 {
 
 NoDrivableLaneModuleManager::NoDrivableLaneModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
+: SceneModuleManagerInterface(node, getModuleName())
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = node.declare_parameter(ns + ".stop_margin", 1.5);
@@ -45,9 +45,6 @@ void NoDrivableLaneModuleManager::launchNewModules(
 
     registerModule(std::make_shared<NoDrivableLaneModule>(
       module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane"), clock_));
-    generateUUID(module_id);
-    updateRTCStatus(
-      getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
   }
 }
 

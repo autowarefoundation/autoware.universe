@@ -127,10 +127,6 @@ void NoDrivableLaneModule::handle_init_state()
   } else {
     state_ = State::INIT;
   }
-
-  setSafe(true);
-  setDistance(distance_ego_first_intersection);
-  setActivation(false);
 }
 
 void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason)
@@ -177,10 +173,6 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopR
 
     debug_data_.stop_pose = virtual_wall_pose.get();
   }
-
-  setSafe(true);
-  setDistance(distance_ego_first_intersection);
-  setActivation(false);
 
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
   const auto intersection_segment_idx =
@@ -243,9 +235,6 @@ void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(
     }
     state_ = State::STOPPED;
   }
-  setSafe(false);
-  setDistance(0);
-  setActivation(false);
 }
 
 void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason)
@@ -280,10 +269,6 @@ void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path, StopReaso
 
     debug_data_.stop_pose = virtual_wall_pose.get();
   }
-
-  setSafe(false);
-  setDistance(0);
-  setActivation(true);
 }
 
 void NoDrivableLaneModule::initialize_debug_data(
