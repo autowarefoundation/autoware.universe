@@ -105,7 +105,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   }
 
   if (isStopState()) {
-    const auto current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+    const auto current_velocity = getEgoVelocity();
     const auto current_dist = motion_utils::calcSignedArcLength(
       output.path->points, output.path->points.front().point.pose.position, getEgoPosition());
     const auto stop_dist =
