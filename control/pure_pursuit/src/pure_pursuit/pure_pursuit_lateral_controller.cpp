@@ -95,9 +95,6 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Publish predicted trajectory
   pub_predicted_trajectory_ = node_.create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/output/predicted_trajectory", 1);
-
-  //  Wait for first current pose
-  tf_utils::waitForTransform(tf_buffer_, "map", "base_link");
 }
 
 double PurePursuitLateralController::calcLookaheadDistance(
