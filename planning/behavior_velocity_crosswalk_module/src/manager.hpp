@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__CROSSWALK__MANAGER_HPP_
-#define SCENE_MODULE__CROSSWALK__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
 
+#include "scene_crosswalk.hpp"
+#include "scene_walkway.hpp"
+
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/crosswalk/scene_crosswalk.hpp>
-#include <scene_module/crosswalk/scene_walkway.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_api_msgs/msg/crosswalk_status.hpp>
@@ -61,6 +64,15 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
+
+class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>
+{
+};
+
+class WalkwayModulePlugin : public PluginWrapper<WalkwayModuleManager>
+{
+};
+
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__CROSSWALK__MANAGER_HPP_
+#endif  // MANAGER_HPP_

@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <scene_module/crosswalk/manager.hpp>
+#include "manager.hpp"
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
+
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -195,3 +197,9 @@ WalkwayModuleManager::getModuleExpiredFunction(
   };
 }
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::CrosswalkModulePlugin, behavior_velocity_planner::PluginInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::WalkwayModulePlugin, behavior_velocity_planner::PluginInterface)

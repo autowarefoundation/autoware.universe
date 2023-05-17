@@ -12,14 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "scene_crosswalk.hpp"
+
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/crosswalk/scene_crosswalk.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
+#include <set>
 #include <vector>
 
 namespace behavior_velocity_planner

@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__CROSSWALK__SCENE_CROSSWALK_HPP_
-#define SCENE_MODULE__CROSSWALK__SCENE_CROSSWALK_HPP_
+#ifndef SCENE_CROSSWALK_HPP_
+#define SCENE_CROSSWALK_HPP_
+
+#include "util.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/crosswalk/util.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -178,4 +179,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__CROSSWALK__SCENE_CROSSWALK_HPP_
+#endif  // SCENE_CROSSWALK_HPP_

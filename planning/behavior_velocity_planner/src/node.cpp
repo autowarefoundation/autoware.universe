@@ -35,7 +35,6 @@
 
 // Scene modules
 #include <scene_module/blind_spot/manager.hpp>
-#include <scene_module/crosswalk/manager.hpp>
 #include <scene_module/detection_area/manager.hpp>
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
@@ -149,8 +148,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Initialize PlannerManager
   if (this->declare_parameter<bool>("launch_crosswalk")) {
-    planner_manager_.launchSceneModule<CrosswalkModuleManager>(*this);
-    planner_manager_.launchSceneModule<WalkwayModuleManager>(*this);
+    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::CrosswalkModulePlugin");
+    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::WalkwayModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_traffic_light")) {
     planner_manager_.launchSceneModule<TrafficLightModuleManager>(*this);

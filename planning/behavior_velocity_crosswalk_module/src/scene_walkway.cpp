@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "scene_walkway.hpp"
+
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <scene_module/crosswalk/scene_walkway.hpp>
 
 #include <cmath>
 

@@ -14,7 +14,6 @@ find_package(OpenCV REQUIRED)
 set(scene_modules
   detection_area
   blind_spot
-  crosswalk
   traffic_light
   intersection
   no_stopping_area
