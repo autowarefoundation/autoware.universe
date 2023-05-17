@@ -14,7 +14,6 @@ find_package(OpenCV REQUIRED)
 set(scene_modules
   detection_area
   blind_spot
-  traffic_light
   no_stopping_area
   virtual_traffic_light
   occlusion_spot

@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <scene_module/traffic_light/manager.hpp>
+#include "manager.hpp"
 
 #include <tf2/utils.h>
 
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -202,3 +203,7 @@ bool TrafficLightModuleManager::hasSameTrafficLight(
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::TrafficLightModulePlugin, behavior_velocity_planner::PluginInterface)

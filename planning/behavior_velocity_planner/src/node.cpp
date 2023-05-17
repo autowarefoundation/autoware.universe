@@ -41,7 +41,6 @@
 #include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
-#include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
 
 namespace
@@ -151,7 +150,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::WalkwayModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_traffic_light")) {
-    planner_manager_.launchSceneModule<TrafficLightModuleManager>(*this);
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::TrafficLightModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_intersection")) {
     // intersection module should be before merge from private to declare intersection parameters
