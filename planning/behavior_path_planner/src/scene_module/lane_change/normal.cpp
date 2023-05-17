@@ -831,7 +831,9 @@ bool NormalLaneChange::getAbortPath()
   const auto lateral_jerk = behavior_path_planner::PathShifter::calcJerkFromLatLonDistance(
     shift_line.end_shift_length, abort_start_dist, current_velocity);
   path_shifter.setVelocity(current_velocity);
-  path_shifter.setLateralAccelerationLimit(common_param.lane_changing_lateral_acc);
+  const auto lateral_acc_range = common_param.lane_change_lat_acc_map.find(current_velocity);
+  const double & max_lateral_acc = lateral_acc_range.second;
+  path_shifter.setLateralAccelerationLimit(max_lateral_acc);
 
   if (lateral_jerk > lane_change_parameters_->abort_max_lateral_jerk) {
     RCLCPP_ERROR_STREAM(

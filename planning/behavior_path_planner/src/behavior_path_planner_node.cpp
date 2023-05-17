@@ -397,9 +397,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
   p.lane_changing_lateral_jerk =
     declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lane_changing_lateral_acc = declare_parameter<double>("lane_change.lane_changing_lateral_acc");
-  p.lane_changing_lateral_acc_at_low_velocity =
-    declare_parameter<double>("lane_change.lane_changing_lateral_acc_at_low_velocity");
   p.lateral_acc_switching_velocity =
     declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
   p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
@@ -411,12 +408,22 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
 
   // lateral acceleration map for lane change
-  p.lane_change_lat_acc_map.add(0.0, 0.2, 0.315);
-  p.lane_change_lat_acc_map.add(3.0, 0.2, 0.315);
-  p.lane_change_lat_acc_map.add(5.0, 0.2, 0.315);
-  p.lane_change_lat_acc_map.add(6.0, 0.315, 0.4);
-  p.lane_change_lat_acc_map.add(7.0, 0.315, 0.45);
-  p.lane_change_lat_acc_map.add(10.0, 0.315, 0.50);
+  const auto lateral_acc_velocity =
+    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.velocity");
+  const auto min_lateral_acc =
+    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.min_values");
+  const auto max_lateral_acc =
+    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.max_values");
+  if (
+    lateral_acc_velocity.size() != min_lateral_acc.size() ||
+    lateral_acc_velocity.size() != max_lateral_acc.size()) {
+    RCLCPP_ERROR(get_logger(), "Lane Change lateral acceleration map has invalid size.");
+    exit(EXIT_FAILURE);
+  }
+  for (size_t i = 0; i < lateral_acc_velocity.size(); ++i) {
+    p.lane_change_lat_acc_map.add(
+      lateral_acc_velocity.at(i), min_lateral_acc.at(i), max_lateral_acc.at(i));
+  }
 
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
