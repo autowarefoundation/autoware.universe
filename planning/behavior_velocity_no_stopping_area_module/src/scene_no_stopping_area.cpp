@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/no_stopping_area/scene_no_stopping_area.hpp"
+#include "scene_no_stopping_area.hpp"
 
 #include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>

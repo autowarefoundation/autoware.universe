@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/no_stopping_area/manager.hpp"
+#include "manager.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 
 #include <tf2/utils.h>
 
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -81,3 +82,7 @@ NoStoppingAreaModuleManager::getModuleExpiredFunction(
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::NoStoppingAreaModulePlugin, behavior_velocity_planner::PluginInterface)

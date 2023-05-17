@@ -12,7 +12,6 @@ find_package(PCL REQUIRED COMPONENTS common filters)
 find_package(OpenCV REQUIRED)
 
 set(scene_modules
-  no_stopping_area
   virtual_traffic_light
   occlusion_spot
   run_out

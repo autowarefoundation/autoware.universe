@@ -34,7 +34,6 @@
 #include <memory>
 
 // Scene modules
-#include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
@@ -170,7 +169,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
   // this module requires all the stop line.Therefore this modules should be placed at the bottom.
   if (this->declare_parameter<bool>("launch_no_stopping_area")) {
-    planner_manager_.launchSceneModule<NoStoppingAreaModuleManager>(*this);
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::NoStoppingAreaModulePlugin");
   }
   // permanent stop line module should be after no stopping area
   if (this->declare_parameter<bool>("launch_stop_line")) {

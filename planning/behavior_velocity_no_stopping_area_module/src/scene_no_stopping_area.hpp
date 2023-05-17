@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__NO_STOPPING_AREA__SCENE_NO_STOPPING_AREA_HPP_
-#define SCENE_MODULE__NO_STOPPING_AREA__SCENE_NO_STOPPING_AREA_HPP_
+#ifndef SCENE_NO_STOPPING_AREA_HPP_
+#define SCENE_NO_STOPPING_AREA_HPP_
 
 #define EIGEN_MPL2_ONLY
 
@@ -179,4 +179,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__NO_STOPPING_AREA__SCENE_NO_STOPPING_AREA_HPP_
+#endif  // SCENE_NO_STOPPING_AREA_HPP_
