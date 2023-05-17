@@ -55,7 +55,8 @@ private:
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
   bool canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg);
   GNSSStat convert(
-    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,int height_system);
+    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,
+    int height_system);
   geometry_msgs::msg::Point getPosition(const GNSSStat & gnss_stat);
   geometry_msgs::msg::Point getMedianPosition(
     const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);

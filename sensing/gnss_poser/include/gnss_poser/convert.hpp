@@ -80,7 +80,8 @@ GNSSStat NavSatFix2LocalCartesianWGS84(
   return local_cartesian;
 }
 GNSSStat NavSatFix2UTM(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger, int height_system)
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger,
+  int height_system)
 {
   GNSSStat utm;
   utm.coordinate_system = CoordinateSystem::UTM;
@@ -89,10 +90,9 @@ GNSSStat NavSatFix2UTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm.zone, utm.east_north_up, utm.x,
       utm.y);
-    if(height_system==0){
+    if (height_system == 0) {
       utm.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-    }
-    else{
+    } else {
       utm.z = nav_sat_fix_msg.altitude;
     }
     utm.latitude = nav_sat_fix_msg.latitude;
@@ -167,9 +167,9 @@ GNSSStat UTM2MGRS(
 
 GNSSStat NavSatFix2MGRS(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const MGRSPrecision & precision,
-  const rclcpp::Logger & logger,int height_system)
+  const rclcpp::Logger & logger, int height_system)
 {
-  const auto utm = NavSatFix2UTM(nav_sat_fix_msg, logger,height_system);
+  const auto utm = NavSatFix2UTM(nav_sat_fix_msg, logger, height_system);
   const auto mgrs = UTM2MGRS(utm, precision, logger);
   return mgrs;
 }
