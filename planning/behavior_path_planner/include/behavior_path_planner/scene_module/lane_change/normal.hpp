@@ -121,15 +121,15 @@ public:
 
   PathWithLaneId getReferencePath() const override;
 
-  PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
-    const double backward_path_length, const double prepare_length,
-    const double prepare_velocity) const override;
-
 protected:
   lanelet::ConstLanelets getCurrentLanes() const override;
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
+
+  PathWithLaneId getPrepareSegment(
+    const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
+    const double backward_path_length, const double prepare_length,
+    const double prepare_velocity) const override;
 
   std::vector<DrivableLanes> getDrivableLanes() const override;
 };
