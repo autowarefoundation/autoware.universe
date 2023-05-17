@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "manager.hpp"
+
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <scene_module/blind_spot/manager.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -82,3 +84,7 @@ BlindSpotModuleManager::getModuleExpiredFunction(
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::BlindSpotModulePlugin, behavior_velocity_planner::PluginInterface)

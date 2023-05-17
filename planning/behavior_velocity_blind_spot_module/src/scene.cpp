@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "scene.hpp"
+
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <scene_module/blind_spot/scene.hpp>
 #include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
 
 #include <boost/geometry/algorithms/area.hpp>
@@ -30,6 +31,7 @@
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <type_traits>

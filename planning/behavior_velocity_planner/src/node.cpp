@@ -34,7 +34,6 @@
 #include <memory>
 
 // Scene modules
-#include <scene_module/blind_spot/manager.hpp>
 #include <scene_module/detection_area/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
@@ -161,7 +160,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       *this, "behavior_velocity_planner::MergeFromPrivateModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_blind_spot")) {
-    planner_manager_.launchSceneModule<BlindSpotModuleManager>(*this);
+    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::BlindSpotModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_detection_area")) {
     planner_manager_.launchSceneModule<DetectionAreaModuleManager>(*this);
