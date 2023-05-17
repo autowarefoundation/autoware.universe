@@ -17,11 +17,11 @@ This node publishes the result of the dummy detection with the type of perceptio
 
 ### Output
 
-| Name                          | Type                                                     | Description                     |
-| ----------------------------- | -------------------------------------------------------- | ------------------------------- |
-| `output/dynamic_object`       | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | dummy detection objects         |
-| `output/points_raw`           | `sensor_msgs::msg::PointCloud2`                          | point cloud of objects          |
-| `output/ground_truth_objects` | `autoware_auto_perception_msgs::msg::TrackedObjects`     | ground truth objects (optional) |
+| Name                                | Type                                                     | Description             |
+| ----------------------------------- | -------------------------------------------------------- | ----------------------- |
+| `output/dynamic_object`             | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | dummy detection objects |
+| `output/points_raw`                 | `sensor_msgs::msg::PointCloud2`                          | point cloud of objects  |
+| `output/debug/ground_truth_objects` | `autoware_auto_perception_msgs::msg::TrackedObjects`     | ground truth objects    |
 
 ## Parameters
 
