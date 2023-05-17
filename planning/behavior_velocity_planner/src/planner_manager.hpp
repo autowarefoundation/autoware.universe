@@ -16,7 +16,7 @@
 #define PLANNER_MANAGER_HPP_
 
 #include <behavior_velocity_planner_common/plugin_interface.hpp>
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -42,9 +42,15 @@ class BehaviorVelocityPlannerManager
 {
 public:
   BehaviorVelocityPlannerManager();
+  void launchScenePlugin(rclcpp::Node & node, const std::string & name);
 
-  void launchSceneModule(
-    const std::shared_ptr<SceneModuleManagerInterface> & scene_module_manager_ptr);
+  template <class T>
+  void launchSceneModule(rclcpp::Node & node)
+  {
+    const auto plugin = std::make_shared<PluginWrapper<T>>();
+    plugin->init(node);
+    scene_manager_plugins_.push_back(plugin);
+  }
 
   autoware_auto_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
@@ -53,10 +59,9 @@ public:
   diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag() const;
 
 private:
-  std::vector<std::shared_ptr<SceneModuleManagerInterface>> scene_manager_ptrs_;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
   pluginlib::ClassLoader<PluginInterface> plugin_loader_;
-  std::vector<std::shared_ptr<PluginInterface>> plugins_;
+  std::vector<std::shared_ptr<PluginInterface>> scene_manager_plugins_;
 };
 }  // namespace behavior_velocity_planner
 

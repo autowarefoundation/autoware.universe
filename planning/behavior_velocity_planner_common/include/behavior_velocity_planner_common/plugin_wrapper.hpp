@@ -27,6 +27,21 @@ class PluginWrapper : public PluginInterface
 {
 public:
   void init(rclcpp::Node & node) override { scene_manager_ = std::make_unique<T>(node); }
+  void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path) override
+  {
+    scene_manager_->plan(path);
+  };
+  void updateSceneModuleInstances(
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override
+  {
+    scene_manager_->updateSceneModuleInstances(planner_data, path);
+  }
+  boost::optional<int> getFirstStopPathPointIndex() override
+  {
+    return scene_manager_->getFirstStopPathPointIndex();
+  }
+  const char * getModuleName() override { return scene_manager_->getModuleName(); }
 
 private:
   std::unique_ptr<T> scene_manager_;
