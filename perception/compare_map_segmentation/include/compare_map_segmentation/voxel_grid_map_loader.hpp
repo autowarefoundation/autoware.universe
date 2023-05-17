@@ -176,8 +176,6 @@ protected:
   double origin_x_remainder_ = 0.0;
   double origin_y_remainder_ = 0.0;
 
-  bool is_split_map = false;
-
   /** \brief Array to hold loaded map grid positions for fast map grid searching.
    */
   std::vector<std::shared_ptr<MapGridVoxelInfo>> current_voxel_grid_array_;
