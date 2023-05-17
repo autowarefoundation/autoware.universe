@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
+#ifndef NODE_HPP_
+#define NODE_HPP_
 
-#include "behavior_velocity_planner/planner_manager.hpp"
+#include "planner_manager.hpp"
 
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -114,4 +114,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
+#endif  // NODE_HPP_

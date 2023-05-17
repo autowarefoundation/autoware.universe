@@ -12,21 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_INTERFACE_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_INTERFACE_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_WRAPPER_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_WRAPPER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+
+#include <memory>
 
 namespace behavior_velocity_planner
 {
 
-class PluginInterface
+template <class T>
+class PluginWrapper : public PluginInterface
 {
 public:
-  virtual ~PluginInterface() = default;
-  virtual void init(rclcpp::Node & node) = 0;
+  void init(rclcpp::Node & node) override { scene_manager_ = std::make_unique<T>(node); }
+
+private:
+  std::unique_ptr<T> scene_manager_;
 };
 
 }  // namespace behavior_velocity_planner
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_INTERFACE_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_WRAPPER_HPP_

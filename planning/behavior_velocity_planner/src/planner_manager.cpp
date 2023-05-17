@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_velocity_planner/planner_manager.hpp"
+#include "planner_manager.hpp"
 
 #include <boost/format.hpp>
 
@@ -48,6 +48,16 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
   return stop_reason_diag;
 }
 }  // namespace
+
+BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
+: plugin_loader_("behavior_velocity_planner", "behavior_velocity_planner::PluginInterface")
+{
+  const auto logger = rclcpp::get_logger("mytest");
+  RCLCPP_INFO_STREAM(logger, "plugin list");
+  for (const auto & name : plugin_loader_.getDeclaredClasses()) {
+    RCLCPP_INFO_STREAM(logger, " - " << name);
+  }
+}
 
 void BehaviorVelocityPlannerManager::launchSceneModule(
   const std::shared_ptr<SceneModuleManagerInterface> & scene_module_manager_ptr)

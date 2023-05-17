@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
+#ifndef PLANNER_MANAGER_HPP_
+#define PLANNER_MANAGER_HPP_
 
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -39,6 +41,8 @@ namespace behavior_velocity_planner
 class BehaviorVelocityPlannerManager
 {
 public:
+  BehaviorVelocityPlannerManager();
+
   void launchSceneModule(
     const std::shared_ptr<SceneModuleManagerInterface> & scene_module_manager_ptr);
 
@@ -51,7 +55,9 @@ public:
 private:
   std::vector<std::shared_ptr<SceneModuleManagerInterface>> scene_manager_ptrs_;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
+  pluginlib::ClassLoader<PluginInterface> plugin_loader_;
+  std::vector<std::shared_ptr<PluginInterface>> plugins_;
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
+#endif  // PLANNER_MANAGER_HPP_

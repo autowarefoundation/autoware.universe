@@ -73,6 +73,7 @@
   <depend>nav_msgs</depend>
   <depend>nlohmann-json-dev</depend>
   <depend>pcl_conversions</depend>
+  <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>

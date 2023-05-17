@@ -17,6 +17,8 @@
 
 #include "scene.hpp"
 
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -55,6 +57,11 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
+
+class StopLineModulePlugin : public PluginWrapper<StopLineModuleManager>
+{
+};
+
 }  // namespace behavior_velocity_planner
 
 #endif  // MANAGER_HPP_

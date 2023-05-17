@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "behavior_velocity_planner/node.hpp"
+#include "node.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 

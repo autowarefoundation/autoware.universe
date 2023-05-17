@@ -100,4 +100,9 @@ StopLineModuleManager::getModuleExpiredFunction(
     return stop_line_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
+
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::StopLineModulePlugin, behavior_velocity_planner::PluginInterface)
