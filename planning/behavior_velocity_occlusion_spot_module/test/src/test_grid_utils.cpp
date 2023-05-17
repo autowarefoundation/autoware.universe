@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "grid_utils.hpp"
 #include "utils.hpp"
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include <scene_module/occlusion_spot/grid_utils.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <gtest/gtest.h>

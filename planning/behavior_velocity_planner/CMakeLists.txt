@@ -23,13 +23,13 @@ foreach(scene_module IN LISTS scene_modules)
   list(APPEND scene_modules_src ${scene_module_src})
 endforeach()
 
-ament_auto_add_library(behavior_velocity_planner SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/node.cpp
   src/planner_manager.cpp
   ${scene_modules_src}
 )
 
-target_include_directories(behavior_velocity_planner
+target_include_directories(${PROJECT_NAME}
   SYSTEM PUBLIC
     ${BOOST_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
@@ -37,22 +37,21 @@ target_include_directories(behavior_velocity_planner
     ${EIGEN3_INCLUDE_DIR}
 )
 
-ament_target_dependencies(behavior_velocity_planner
+ament_target_dependencies(${PROJECT_NAME}
   Boost
   Eigen3
   PCL
   message_filters
 )
 
-target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
 
-rclcpp_components_register_node(behavior_velocity_planner
+rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
-  EXECUTABLE behavior_velocity_planner_node
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)
-  # Gtest for utilization
   ament_add_ros_isolated_gtest(utilization-test
     test/src/test_state_machine.cpp
     test/src/test_arc_lane_util.cpp
@@ -60,9 +59,8 @@ if(BUILD_TESTING)
   )
   target_link_libraries(utilization-test
     gtest_main
-    behavior_velocity_planner
+    ${PROJECT_NAME}
   )
-
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/src/test_${PROJECT_NAME}_node_interface.cpp
   )

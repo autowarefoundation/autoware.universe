@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "occlusion_spot_utils.hpp"
+#include "risk_predictive_braking.hpp"
 #include "utils.hpp"
-
-#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
-#include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 
 #include <gtest/gtest.h>
 

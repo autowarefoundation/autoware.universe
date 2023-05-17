@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
+#include "occlusion_spot_utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "utils.hpp"
 
