@@ -767,7 +767,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
 
   // validation of parameters
-  if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num) {
+  if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
       get_logger(),
       "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
