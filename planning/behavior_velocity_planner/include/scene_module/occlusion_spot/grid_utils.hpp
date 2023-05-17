@@ -15,6 +15,8 @@
 #ifndef SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
 #define SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/LineIterator.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
@@ -22,8 +24,6 @@
 #include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>

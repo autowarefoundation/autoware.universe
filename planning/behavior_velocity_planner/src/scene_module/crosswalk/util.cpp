@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <scene_module/crosswalk/util.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 

@@ -15,9 +15,10 @@
 #include "gtest/gtest.h"
 #include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-#include "utilization/path_utilization.hpp"
-#include "utilization/util.hpp"
 #include "utils.hpp"
+
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/vector3.hpp"

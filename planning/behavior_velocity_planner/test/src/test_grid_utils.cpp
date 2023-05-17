@@ -14,9 +14,9 @@
 
 #include "utils.hpp"
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 
 #include <gtest/gtest.h>
 

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <scene_module/intersection/scene_merge_from_private_road.hpp>
 #include <scene_module/intersection/util.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/path_utilization.hpp>
-#include <utilization/util.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>

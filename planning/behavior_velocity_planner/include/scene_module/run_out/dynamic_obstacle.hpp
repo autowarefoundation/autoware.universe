@@ -17,10 +17,10 @@
 
 #include "scene_module/run_out/debug.hpp"
 #include "scene_module/run_out/utils.hpp"
-#include "utilization/path_utilization.hpp"
-#include "utilization/util.hpp"
 
 #include <behavior_velocity_planner_common/planner_data.hpp>
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>

@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utilization/debug.hpp"
-
 #include "scene_module/no_stopping_area/scene_no_stopping_area.hpp"
-#include "utilization/util.hpp"
 
+#include <behavior_velocity_planner_common/utilization/debug.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/motion_utils.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC

@@ -21,11 +21,11 @@
 #include "scene_module/out_of_lane/overlapping_range.hpp"
 #include "scene_module/out_of_lane/types.hpp"
 
+#include <behavior_velocity_planner_common/utilization/debug.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <utilization/debug.hpp>
-#include <utilization/util.hpp>
 
 #include <lanelet2_core/geometry/LaneletMap.h>
 

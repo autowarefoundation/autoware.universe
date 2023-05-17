@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__STOP_LINE__SCENE_HPP_
-#define SCENE_MODULE__STOP_LINE__SCENE_HPP_
+#ifndef SCENE_HPP_
+#define SCENE_HPP_
 
 #include <memory>
 #include <string>
@@ -25,10 +25,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -111,4 +111,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__STOP_LINE__SCENE_HPP_
+#endif  // SCENE_HPP_

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
-#include <utilization/util.hpp>
 
 #include <algorithm>
 #include <vector>

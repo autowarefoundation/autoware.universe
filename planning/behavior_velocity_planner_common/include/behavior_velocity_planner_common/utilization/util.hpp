@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILIZATION__UTIL_HPP_
-#define UTILIZATION__UTIL_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__UTIL_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__UTIL_HPP_
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -317,4 +317,4 @@ lanelet::ConstLanelets getConstLaneletsFromIds(
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 
-#endif  // UTILIZATION__UTIL_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__UTIL_HPP_

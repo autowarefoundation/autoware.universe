@@ -25,9 +25,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/looking_traffic_signal.hpp>
 

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
-#include <utilization/path_utilization.hpp>
-#include <utilization/util.hpp>
 
 #include <deque>
 #include <functional>

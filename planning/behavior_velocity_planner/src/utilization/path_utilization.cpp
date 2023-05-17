@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <interpolation/linear_interpolation.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <interpolation/zero_order_hold.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <utilization/path_utilization.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 

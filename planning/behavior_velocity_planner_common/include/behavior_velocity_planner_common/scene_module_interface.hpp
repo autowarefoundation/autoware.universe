@@ -16,11 +16,11 @@
 #define BEHAVIOR_VELOCITY_PLANNER_COMMON__SCENE_MODULE_INTERFACE_HPP_
 
 #include <behavior_velocity_planner_common/planner_data.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <behavior_velocity_planner_common/velocity_factor_interface.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <rtc_interface/rtc_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/util.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>

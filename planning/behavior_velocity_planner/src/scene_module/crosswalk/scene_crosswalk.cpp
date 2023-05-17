@@ -13,11 +13,11 @@
 // limitations under the License.
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/crosswalk/scene_crosswalk.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/path_utilization.hpp>
-#include <utilization/util.hpp>
 
 #include <cmath>
 #include <vector>

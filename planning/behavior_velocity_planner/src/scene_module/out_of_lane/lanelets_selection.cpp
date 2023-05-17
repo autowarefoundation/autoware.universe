@@ -14,7 +14,7 @@
 
 #include "scene_module/out_of_lane/lanelets_selection.hpp"
 
-#include "utilization/util.hpp"
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 #include <lanelet2_core/geometry/LaneletMap.h>
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/debug.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/debug.hpp>
 
 namespace behavior_velocity_planner
 {

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/path_utilization.hpp>
-#include <utilization/trajectory_utils.hpp>
-#include <utilization/util.hpp>
 
 #include <boost/optional.hpp>
 

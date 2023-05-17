@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utilization/arc_lane_util.hpp"
-
+#include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/detection_area/scene.hpp>
-#include <utilization/util.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>

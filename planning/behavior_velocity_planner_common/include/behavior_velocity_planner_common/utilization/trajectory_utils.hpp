@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILIZATION__TRAJECTORY_UTILS_HPP_
-#define UTILIZATION__TRAJECTORY_UTILS_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__TRAJECTORY_UTILS_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__TRAJECTORY_UTILS_HPP_
 
 #include <behavior_velocity_planner_common/planner_data.hpp>
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <interpolation/linear_interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <motion_velocity_smoother/trajectory_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -129,4 +129,4 @@ inline bool smoothPath(
 
 }  // namespace behavior_velocity_planner
 
-#endif  // UTILIZATION__TRAJECTORY_UTILS_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__TRAJECTORY_UTILS_HPP_

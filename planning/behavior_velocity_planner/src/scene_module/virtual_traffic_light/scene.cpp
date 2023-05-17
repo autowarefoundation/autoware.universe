@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/virtual_traffic_light/scene.hpp>
-#include <utilization/arc_lane_util.hpp>
-#include <utilization/util.hpp>
 
 #include <tier4_v2x_msgs/msg/key_value.hpp>
 

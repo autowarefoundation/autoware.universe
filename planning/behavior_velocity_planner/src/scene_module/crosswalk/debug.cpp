@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <scene_module/crosswalk/scene_crosswalk.hpp>
 #include <scene_module/crosswalk/scene_walkway.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/util.hpp>
 
 #include <vector>
 

@@ -14,9 +14,9 @@
 
 #include "motion_utils/motion_utils.hpp"
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <scene_module/speed_bump/util.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/util.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>

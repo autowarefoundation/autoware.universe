@@ -15,9 +15,8 @@
 #ifndef SCENE_MODULE__RUN_OUT__UTILS_HPP_
 #define SCENE_MODULE__RUN_OUT__UTILS_HPP_
 
-#include "utilization/util.hpp"
-
 #include <behavior_velocity_planner_common/planner_data.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 

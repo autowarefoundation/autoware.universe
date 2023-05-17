@@ -16,9 +16,9 @@
 #define SCENE_MODULE__BLIND_SPOT__SCENE_HPP_
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/state_machine.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>

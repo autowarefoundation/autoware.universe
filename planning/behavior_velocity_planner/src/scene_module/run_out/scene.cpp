@@ -15,8 +15,9 @@
 #include "scene_module/run_out/scene.hpp"
 
 #include "scene_module/run_out/path_utils.hpp"
-#include "utilization/trajectory_utils.hpp"
-#include "utilization/util.hpp"
+
+#include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 namespace behavior_velocity_planner
 {

@@ -14,9 +14,9 @@
 
 #include "behavior_velocity_planner/node.hpp"
 
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <tier4_autoware_utils/ros/wait_for_param.hpp>
-#include <utilization/path_utilization.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -43,7 +43,6 @@
 #include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
-#include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
 
@@ -175,9 +174,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchSceneModule(std::make_shared<NoStoppingAreaModuleManager>(*this));
   }
   // permanent stop line module should be after no stopping area
-  if (this->declare_parameter<bool>("launch_stop_line")) {
-    planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
-  }
+  // if (this->declare_parameter<bool>("launch_stop_line")) {
+  //   planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
+  //}
   // to calculate ttc it's better to be after stop line
   if (this->declare_parameter<bool>("launch_occlusion_spot")) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));

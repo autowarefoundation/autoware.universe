@@ -16,13 +16,13 @@
 #define SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <grid_map_core/grid_map_core.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/intersection/util_type.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/state_machine.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>

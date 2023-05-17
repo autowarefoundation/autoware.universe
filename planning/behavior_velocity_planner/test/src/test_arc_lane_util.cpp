@@ -14,8 +14,8 @@
 
 #include "utils.hpp"
 
-#include <utilization/arc_lane_util.hpp>
-#include <utilization/util.hpp>
+#include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 #include <gtest/gtest.h>
 

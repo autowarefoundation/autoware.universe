@@ -14,9 +14,9 @@
 
 #include "scene_module/speed_bump/scene.hpp"
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <utilization/util.hpp>
 
 #include <vector>
 

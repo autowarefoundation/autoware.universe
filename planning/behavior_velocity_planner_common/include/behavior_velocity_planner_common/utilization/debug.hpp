@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILIZATION__DEBUG_HPP_
-#define UTILIZATION__DEBUG_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__DEBUG_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__DEBUG_HPP_
 
-#include <utilization/util.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -44,4 +44,4 @@ visualization_msgs::msg::MarkerArray createPointsMarkerArray(
   const double r, const double g, const double b);
 }  // namespace debug
 }  // namespace behavior_velocity_planner
-#endif  // UTILIZATION__DEBUG_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__DEBUG_HPP_

@@ -14,10 +14,9 @@
 
 #include "scene_module/no_stopping_area/scene_no_stopping_area.hpp"
 
-#include "utilization/arc_lane_util.hpp"
-#include "utilization/path_utilization.hpp"
-#include "utilization/util.hpp"
-
+#include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 

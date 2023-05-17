@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILIZATION__ARC_LANE_UTIL_HPP_
-#define UTILIZATION__ARC_LANE_UTIL_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__ARC_LANE_UTIL_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__ARC_LANE_UTIL_HPP_
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -293,4 +293,4 @@ inline boost::optional<PathIndexWithPose> createTargetPoint(
 }  // namespace arc_lane_utils
 }  // namespace behavior_velocity_planner
 
-#endif  // UTILIZATION__ARC_LANE_UTIL_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__ARC_LANE_UTIL_HPP_

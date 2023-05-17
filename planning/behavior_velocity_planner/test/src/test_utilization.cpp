@@ -13,11 +13,11 @@
 // limitations under the License.
 
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "utilization/path_utilization.hpp"
 #include "utils.hpp"
 
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/util.hpp>
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 #include <gtest/gtest.h>
 

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <scene_module/blind_spot/manager.hpp>
-#include <utilization/boost_geometry_helper.hpp>
-#include <utilization/util.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 

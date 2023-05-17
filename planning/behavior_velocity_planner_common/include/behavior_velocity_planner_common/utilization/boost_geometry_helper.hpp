@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
-#define UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
@@ -127,4 +127,4 @@ inline geometry_msgs::msg::Polygon toGeomPoly(const Polygon2d & polygon)
 }
 }  // namespace behavior_velocity_planner
 
-#endif  // UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_

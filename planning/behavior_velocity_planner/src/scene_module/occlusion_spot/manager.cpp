@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
-#include <utilization/util.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 

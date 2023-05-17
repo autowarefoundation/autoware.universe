@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__STOP_LINE__MANAGER_HPP_
-#define SCENE_MODULE__STOP_LINE__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
+
+#include "scene.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/stop_line/scene.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -56,4 +57,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__STOP_LINE__MANAGER_HPP_
+#endif  // MANAGER_HPP_
