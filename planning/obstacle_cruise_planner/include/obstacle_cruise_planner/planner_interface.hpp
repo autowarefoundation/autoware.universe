@@ -162,7 +162,7 @@ protected:
 
 private:
   double calculateSlowDownVelocity(const SlowDownObstacle & obstacle) const;
-  double calculateDistanceToSlowDownWithAccConstraint(
+  std::optional<double> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
     const SlowDownObstacle & obstacle, const double dist_to_ego, const double slow_down_vel) const;
 
