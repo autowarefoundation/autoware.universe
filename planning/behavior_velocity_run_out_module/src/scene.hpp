@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__RUN_OUT__SCENE_HPP_
-#define SCENE_MODULE__RUN_OUT__SCENE_HPP_
+#ifndef SCENE_HPP_
+#define SCENE_HPP_
 
-#include "scene_module/run_out/debug.hpp"
-#include "scene_module/run_out/dynamic_obstacle.hpp"
-#include "scene_module/run_out/state_machine.hpp"
-#include "scene_module/run_out/utils.hpp"
+#include "debug.hpp"
+#include "dynamic_obstacle.hpp"
+#include "state_machine.hpp"
+#include "utils.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 
@@ -144,4 +144,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__RUN_OUT__SCENE_HPP_
+#endif  // SCENE_HPP_

@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__RUN_OUT__MANAGER_HPP_
-#define SCENE_MODULE__RUN_OUT__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
 
-#include "scene_module/run_out/scene.hpp"
+#include "scene.hpp"
 
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 
 #include <memory>
@@ -42,6 +44,11 @@ private:
 
   void setDynamicObstacleCreator(rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr);
 };
+
+class RunOutModulePlugin : public PluginWrapper<RunOutModuleManager>
+{
+};
+
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__RUN_OUT__MANAGER_HPP_
+#endif  // MANAGER_HPP_

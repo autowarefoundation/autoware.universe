@@ -23,6 +23,7 @@
 
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -34,7 +35,6 @@
 #include <memory>
 
 // Scene modules
-#include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
 
@@ -180,7 +180,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       *this, "behavior_velocity_planner::OcclusionSpotModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_run_out")) {
-    planner_manager_.launchSceneModule<RunOutModuleManager>(*this);
+    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::RunOutModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_speed_bump")) {
     planner_manager_.launchSceneModule<SpeedBumpModuleManager>(*this);

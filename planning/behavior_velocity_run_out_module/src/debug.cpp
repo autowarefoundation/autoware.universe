@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/run_out/debug.hpp"
+#include "debug.hpp"
 
-#include "scene_module/run_out/scene.hpp"
+#include "scene.hpp"
 
 #include <motion_utils/motion_utils.hpp>
 

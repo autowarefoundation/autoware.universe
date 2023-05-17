@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__RUN_OUT__PATH_UTILS_HPP_
-#define SCENE_MODULE__RUN_OUT__PATH_UTILS_HPP_
+#ifndef PATH_UTILS_HPP_
+#define PATH_UTILS_HPP_
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -50,4 +50,4 @@ geometry_msgs::msg::Point findLongitudinalNearestPoint(
 
 }  // namespace run_out_utils
 }  // namespace behavior_velocity_planner
-#endif  // SCENE_MODULE__RUN_OUT__PATH_UTILS_HPP_
+#endif  // PATH_UTILS_HPP_

@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef SCENE_MODULE__RUN_OUT__DEBUG_HPP_
-#define SCENE_MODULE__RUN_OUT__DEBUG_HPP_
+#ifndef DEBUG_HPP_
+#define DEBUG_HPP_
 
-#include "scene_module/run_out/utils.hpp"
+#include "utils.hpp"
 
 #include <memory>
 #include <string>
@@ -145,4 +145,4 @@ private:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__RUN_OUT__DEBUG_HPP_
+#endif  // DEBUG_HPP_

@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/run_out/dynamic_obstacle.hpp"
+#include "dynamic_obstacle.hpp"
 
 #include <pcl/filters/voxel_grid.h>
+
+#include <algorithm>
+#include <string>
 
 namespace behavior_velocity_planner
 {

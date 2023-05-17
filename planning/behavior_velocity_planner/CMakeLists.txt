@@ -13,7 +13,6 @@ find_package(OpenCV REQUIRED)
 
 set(scene_modules
   virtual_traffic_light
-  run_out
   speed_bump
 )
 

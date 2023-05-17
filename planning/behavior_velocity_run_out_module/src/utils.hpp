@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__RUN_OUT__UTILS_HPP_
-#define SCENE_MODULE__RUN_OUT__UTILS_HPP_
+#ifndef UTILS_HPP_
+#define UTILS_HPP_
 
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
@@ -242,4 +242,4 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   const PlannerParam & planner_param);
 }  // namespace run_out_utils
 }  // namespace behavior_velocity_planner
-#endif  // SCENE_MODULE__RUN_OUT__UTILS_HPP_
+#endif  // UTILS_HPP_

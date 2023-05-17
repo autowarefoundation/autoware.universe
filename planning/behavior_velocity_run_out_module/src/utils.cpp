@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/run_out/utils.hpp"
+#include "utils.hpp"
+
+#include <algorithm>
+#include <limits>
 
 namespace behavior_velocity_planner
 {

@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/run_out/manager.hpp"
+#include "manager.hpp"
+
+#include <string>
+#include <utility>
 
 namespace behavior_velocity_planner
 {
@@ -182,3 +185,7 @@ void RunOutModuleManager::setDynamicObstacleCreator(
   }
 }
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::RunOutModulePlugin, behavior_velocity_planner::PluginInterface)
