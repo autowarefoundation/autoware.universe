@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "manager.hpp"
+
 #include <lanelet2_extension/utility/query.hpp>
-#include <scene_module/detection_area/manager.hpp>
 
 #include <tf2/utils.h>
 
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -77,3 +79,7 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::DetectionAreaModulePlugin, behavior_velocity_planner::PluginInterface)

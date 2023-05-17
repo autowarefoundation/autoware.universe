@@ -34,7 +34,6 @@
 #include <memory>
 
 // Scene modules
-#include <scene_module/detection_area/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/out_of_lane/manager.hpp>
@@ -163,7 +162,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::BlindSpotModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_detection_area")) {
-    planner_manager_.launchSceneModule<DetectionAreaModuleManager>(*this);
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::DetectionAreaModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_virtual_traffic_light")) {
     planner_manager_.launchSceneModule<VirtualTrafficLightModuleManager>(*this);
