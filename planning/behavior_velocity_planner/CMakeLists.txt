@@ -13,7 +13,6 @@ find_package(OpenCV REQUIRED)
 
 set(scene_modules
   virtual_traffic_light
-  occlusion_spot
   run_out
   speed_bump
   out_of_lane
@@ -60,20 +59,6 @@ if(BUILD_TESTING)
     test/src/test_utilization.cpp
   )
   target_link_libraries(utilization-test
-    gtest_main
-    behavior_velocity_planner
-  )
-
-  # Gtest for occlusion spot
-  ament_add_ros_isolated_gtest(occlusion_spot-test
-    test/src/test_occlusion_spot_utils.cpp
-    test/src/test_risk_predictive_braking.cpp
-    test/src/test_grid_utils.cpp
-  )
-  # Gtest for out of lane
-  # ament_add_ros_isolated_gtest(out_of_lane-test
-  # )
-  target_link_libraries(occlusion_spot-test
     gtest_main
     behavior_velocity_planner
   )

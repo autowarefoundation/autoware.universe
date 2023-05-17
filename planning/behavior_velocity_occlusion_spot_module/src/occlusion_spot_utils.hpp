@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OCCLUSION_SPOT__OCCLUSION_SPOT_UTILS_HPP_
-#define SCENE_MODULE__OCCLUSION_SPOT__OCCLUSION_SPOT_UTILS_HPP_
+#ifndef OCCLUSION_SPOT_UTILS_HPP_
+#define OCCLUSION_SPOT_UTILS_HPP_
+
+#include "grid_utils.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <scene_module/occlusion_spot/grid_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -252,4 +253,4 @@ bool generatePossibleCollisionsFromGridMap(
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OCCLUSION_SPOT__OCCLUSION_SPOT_UTILS_HPP_
+#endif  // OCCLUSION_SPOT_UTILS_HPP_

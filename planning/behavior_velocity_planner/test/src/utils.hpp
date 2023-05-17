@@ -15,8 +15,9 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include "occlusion_spot_utils.hpp"
+
 #include <grid_map_core/GridMap.hpp>
-#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>

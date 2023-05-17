@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <scene_module/occlusion_spot/grid_utils.hpp>
+#include "grid_utils.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner

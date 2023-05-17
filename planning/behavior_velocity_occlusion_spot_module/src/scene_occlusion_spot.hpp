@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_HPP_
-#define SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_HPP_
+#ifndef SCENE_OCCLUSION_SPOT_HPP_
+#define SCENE_OCCLUSION_SPOT_HPP_
+
+#include "occlusion_spot_utils.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -74,4 +75,4 @@ protected:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_HPP_
+#endif  // SCENE_OCCLUSION_SPOT_HPP_

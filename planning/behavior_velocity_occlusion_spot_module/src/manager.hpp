@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OCCLUSION_SPOT__MANAGER_HPP_
-#define SCENE_MODULE__OCCLUSION_SPOT__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
 
+#include "occlusion_spot_utils.hpp"
+#include "scene_occlusion_spot.hpp"
+
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -55,6 +58,11 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
+
+class OcclusionSpotModulePlugin : public PluginWrapper<OcclusionSpotModuleManager>
+{
+};
+
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OCCLUSION_SPOT__MANAGER_HPP_
+#endif  // MANAGER_HPP_

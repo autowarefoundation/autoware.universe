@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "manager.hpp"
+
+#include "scene_occlusion_spot.hpp"
+
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <scene_module/occlusion_spot/manager.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -129,3 +131,7 @@ OcclusionSpotModuleManager::getModuleExpiredFunction(
   };
 }
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::OcclusionSpotModulePlugin, behavior_velocity_planner::PluginInterface)

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OCCLUSION_SPOT__RISK_PREDICTIVE_BRAKING_HPP_
-#define SCENE_MODULE__OCCLUSION_SPOT__RISK_PREDICTIVE_BRAKING_HPP_
+#ifndef RISK_PREDICTIVE_BRAKING_HPP_
+#define RISK_PREDICTIVE_BRAKING_HPP_
 
-#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+#include "occlusion_spot_utils.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -40,4 +40,4 @@ SafeMotion calculateSafeMotion(const Velocity & v, const double ttv);
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OCCLUSION_SPOT__RISK_PREDICTIVE_BRAKING_HPP_
+#endif  // RISK_PREDICTIVE_BRAKING_HPP_

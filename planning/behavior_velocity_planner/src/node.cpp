@@ -34,7 +34,6 @@
 #include <memory>
 
 // Scene modules
-#include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
@@ -178,7 +177,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
   // to calculate ttc it's better to be after stop line
   if (this->declare_parameter<bool>("launch_occlusion_spot")) {
-    planner_manager_.launchSceneModule<OcclusionSpotModuleManager>(*this);
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::OcclusionSpotModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_run_out")) {
     planner_manager_.launchSceneModule<RunOutModuleManager>(*this);

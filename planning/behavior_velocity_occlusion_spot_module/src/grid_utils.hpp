@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
-#define SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
+#ifndef GRID_UTILS_HPP_
+#define GRID_UTILS_HPP_
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
@@ -120,4 +120,4 @@ void denoiseOccupancyGridCV(
 }  // namespace grid_utils
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
+#endif  // GRID_UTILS_HPP_
