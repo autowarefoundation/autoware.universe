@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
-#define SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__SCENE_MODULE_INTERFACE_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__SCENE_MODULE_INTERFACE_HPP_
 
-#include "behavior_velocity_planner/planner_data.hpp"
-#include "velocity_factor_interface.hpp"
-
+#include <behavior_velocity_planner_common/planner_data.hpp>
+#include <behavior_velocity_planner_common/velocity_factor_interface.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <rtc_interface/rtc_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -414,4 +413,4 @@ protected:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__SCENE_MODULE_INTERFACE_HPP_

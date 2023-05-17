@@ -19,7 +19,8 @@
 #include "scene_module/run_out/dynamic_obstacle.hpp"
 #include "scene_module/run_out/state_machine.hpp"
 #include "scene_module/run_out/utils.hpp"
-#include "scene_module/scene_module_interface.hpp"
+
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 
 #include <memory>
 #include <string>

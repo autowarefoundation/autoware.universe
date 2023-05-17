@@ -17,8 +17,8 @@
 
 #include "scene_module/out_of_lane/types.hpp"
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>

@@ -27,10 +27,9 @@
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
-#include "behavior_velocity_planner/planner_data.hpp"
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <behavior_velocity_planner_common/planner_data.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 

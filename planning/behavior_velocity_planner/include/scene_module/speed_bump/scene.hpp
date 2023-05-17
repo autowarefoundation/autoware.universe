@@ -15,8 +15,8 @@
 #ifndef SCENE_MODULE__SPEED_BUMP__SCENE_HPP_
 #define SCENE_MODULE__SPEED_BUMP__SCENE_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/scene_module_interface.hpp>
 #include <scene_module/speed_bump/util.hpp>
 
 #include <utility>

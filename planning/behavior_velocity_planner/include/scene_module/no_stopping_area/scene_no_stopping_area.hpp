@@ -17,11 +17,11 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 #include "utilization/state_machine.hpp"
 
 #include <Eigen/Core>
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/no_stopping_area.hpp>
 #include <rclcpp/rclcpp.hpp>
 

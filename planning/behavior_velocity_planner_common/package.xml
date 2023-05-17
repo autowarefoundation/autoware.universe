@@ -1,36 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>behavior_velocity_planner</name>
+  <name>behavior_velocity_planner_common</name>
   <version>0.1.0</version>
-  <description>The behavior_velocity_planner package</description>
+  <description>The behavior_velocity_planner_common package</description>
 
-  <!-- intersection module -->
-  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
-  <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
-  <!-- crosswalk module -->
-  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
-  <!-- detection area module -->
-  <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
-  <!-- occlusion spot module -->
-  <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
-  <!-- no stopping area module -->
-  <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
-  <!-- traffic light module -->
-  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
-  <!-- blind spot module -->
-  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
-  <!-- stop line module -->
-  <maintainer email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</maintainer>
-  <!-- virtual traffic light module -->
-  <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
-  <!-- run out module -->
-  <maintainer email="tomohito.ando@tier4.jp">Tomohito Ando</maintainer>
-  <maintainer email="makoto.kurihara@tier4.jp">Makoto Kurihara</maintainer>
-  <!-- out of lane module -->
-  <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
-
-  <!-- maintainer -->
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
 
@@ -54,7 +28,6 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
-  <depend>behavior_velocity_planner_common</depend>
   <depend>cv_bridge</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>

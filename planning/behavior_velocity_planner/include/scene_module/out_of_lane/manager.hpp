@@ -15,9 +15,9 @@
 #ifndef SCENE_MODULE__OUT_OF_LANE__MANAGER_HPP_
 #define SCENE_MODULE__OUT_OF_LANE__MANAGER_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/out_of_lane/scene_out_of_lane.hpp>
-#include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>

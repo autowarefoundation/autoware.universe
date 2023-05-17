@@ -15,11 +15,11 @@
 #ifndef SCENE_MODULE__CROSSWALK__SCENE_WALKWAY_HPP_
 #define SCENE_MODULE__CROSSWALK__SCENE_WALKWAY_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/crosswalk/scene_crosswalk.hpp>
 #include <scene_module/crosswalk/util.hpp>
-#include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>

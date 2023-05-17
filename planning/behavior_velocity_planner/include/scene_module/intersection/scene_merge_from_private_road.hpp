@@ -15,9 +15,9 @@
 #ifndef SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 #define SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/intersection/scene_intersection.hpp>
-#include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/state_machine.hpp>

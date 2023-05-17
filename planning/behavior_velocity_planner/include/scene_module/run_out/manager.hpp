@@ -16,7 +16,8 @@
 #define SCENE_MODULE__RUN_OUT__MANAGER_HPP_
 
 #include "scene_module/run_out/scene.hpp"
-#include "scene_module/scene_module_interface.hpp"
+
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 
 #include <memory>
 

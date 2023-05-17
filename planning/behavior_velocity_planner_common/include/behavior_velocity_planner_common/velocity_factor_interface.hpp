@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__VELOCITY_FACTOR_INTERFACE_HPP_
-#define SCENE_MODULE__VELOCITY_FACTOR_INTERFACE_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__VELOCITY_FACTOR_INTERFACE_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__VELOCITY_FACTOR_INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -65,4 +65,4 @@ private:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__VELOCITY_FACTOR_INTERFACE_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__VELOCITY_FACTOR_INTERFACE_HPP_

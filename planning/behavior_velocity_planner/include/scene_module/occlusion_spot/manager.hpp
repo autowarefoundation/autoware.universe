@@ -15,10 +15,10 @@
 #ifndef SCENE_MODULE__OCCLUSION_SPOT__MANAGER_HPP_
 #define SCENE_MODULE__OCCLUSION_SPOT__MANAGER_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
-#include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>

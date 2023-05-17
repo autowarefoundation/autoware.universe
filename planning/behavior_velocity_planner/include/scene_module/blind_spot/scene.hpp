@@ -15,8 +15,8 @@
 #ifndef SCENE_MODULE__BLIND_SPOT__SCENE_HPP_
 #define SCENE_MODULE__BLIND_SPOT__SCENE_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/scene_module_interface.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/state_machine.hpp>
 

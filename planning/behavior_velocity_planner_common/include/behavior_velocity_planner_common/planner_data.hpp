@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
+#ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 
 #include "route_handler/route_handler.hpp"
 
@@ -144,4 +144,4 @@ struct PlannerData
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_

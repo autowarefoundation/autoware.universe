@@ -17,7 +17,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "scene_module/no_stopping_area/scene_no_stopping_area.hpp"
-#include "scene_module/scene_module_interface.hpp"
+
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 

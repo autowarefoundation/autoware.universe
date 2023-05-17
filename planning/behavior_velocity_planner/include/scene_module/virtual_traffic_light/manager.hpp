@@ -15,8 +15,8 @@
 #ifndef SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__MANAGER_HPP_
 #define SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__MANAGER_HPP_
 
+#include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/scene_module_interface.hpp>
 #include <scene_module/virtual_traffic_light/scene.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>

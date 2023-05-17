@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 
-#include "behavior_velocity_planner/planner_data.hpp"
 #include "behavior_velocity_planner/planner_manager.hpp"
 
+#include <behavior_velocity_planner_common/planner_data.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>

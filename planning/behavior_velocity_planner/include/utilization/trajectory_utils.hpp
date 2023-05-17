@@ -15,7 +15,7 @@
 #ifndef UTILIZATION__TRAJECTORY_UTILS_HPP_
 #define UTILIZATION__TRAJECTORY_UTILS_HPP_
 
-#include <behavior_velocity_planner/planner_data.hpp>
+#include <behavior_velocity_planner_common/planner_data.hpp>
 #include <interpolation/linear_interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <motion_velocity_smoother/trajectory_utils.hpp>
