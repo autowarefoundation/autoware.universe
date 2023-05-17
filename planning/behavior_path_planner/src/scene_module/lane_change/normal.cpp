@@ -958,32 +958,6 @@ int NormalLaneChangeBT::getNumToPreferredLane(const lanelet::ConstLanelet & lane
   return std::abs(getRouteHandler()->getNumLaneToPreferredLane(lane));
 }
 
-PathWithLaneId NormalLaneChangeBT::getPrepareSegment(
-  const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
-  const double backward_path_length, const double prepare_length,
-  const double prepare_velocity) const
-{
-  if (current_lanes.empty()) {
-    return PathWithLaneId();
-  }
-
-  const double s_start = arc_length_from_current - backward_path_length;
-  const double s_end = arc_length_from_current + prepare_length;
-
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("lane_change").get_child(getModuleTypeStr()).get_child("getPrepareSegment"),
-    "start: %f, end: %f", s_start, s_end);
-
-  PathWithLaneId prepare_segment =
-    getRouteHandler()->getCenterLinePath(current_lanes, s_start, s_end);
-
-  prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
-    prepare_segment.points.back().point.longitudinal_velocity_mps,
-    static_cast<float>(prepare_velocity));
-
-  return prepare_segment;
-}
-
 std::vector<DrivableLanes> NormalLaneChangeBT::getDrivableLanes() const
 {
   return utils::lane_change::generateDrivableLanes(
