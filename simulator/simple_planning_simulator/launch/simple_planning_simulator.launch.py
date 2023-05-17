@@ -80,7 +80,24 @@ def launch_setup(context, *args, **kwargs):
         executable="static_transform_publisher",
         name="static_map_to_odom_tf_publisher",
         output="screen",
-        arguments=["0.0", "0.0", "0.0", "0", "0", "0", "map", "odom"],
+        arguments=[
+            "--frame-id",
+            "map",
+            "--child-frame-id",
+            "odom",
+            "--x",
+            "0.0",
+            "--y",
+            "0.0",
+            "--z",
+            "0.0",
+            "--roll",
+            "0.0",
+            "--pitch",
+            "0.0",
+            "--yaw",
+            "0.0",
+        ],
     )
 
     group = GroupAction([simple_planning_simulator_node, map_to_odom_tf_publisher])
