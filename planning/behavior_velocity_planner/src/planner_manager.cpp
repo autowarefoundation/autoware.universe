@@ -52,11 +52,6 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
 : plugin_loader_("behavior_velocity_planner", "behavior_velocity_planner::PluginInterface")
 {
-  const auto logger = rclcpp::get_logger("mytest");
-  RCLCPP_INFO_STREAM(logger, "plugin list");
-  for (const auto & name : plugin_loader_.getDeclaredClasses()) {
-    RCLCPP_INFO_STREAM(logger, " - " << name);
-  }
 }
 
 void BehaviorVelocityPlannerManager::launchScenePlugin(
