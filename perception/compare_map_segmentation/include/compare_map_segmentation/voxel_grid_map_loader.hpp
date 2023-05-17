@@ -170,8 +170,11 @@ protected:
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
 
   /** Map grid size. It might be defined by using metadata */
-  float map_grid_size_x_ = -1.0;
-  float map_grid_size_y_ = -1.0;
+  double map_grid_size_x_ = -1.0;
+  double map_grid_size_y_ = -1.0;
+
+  double origin_x_remainder_ = 0.0;
+  double origin_y_remainder_ = 0.0;
 
   bool is_split_map = false;
 
@@ -237,18 +240,12 @@ public:
   /** Update loaded map grid array for fast searching*/
   virtual inline void updateVoxelGridArray()
   {
-    if (!is_split_map) {
-      (*mutex_ptr_).lock();
-      current_voxel_grid_array_.assign(1, std::make_shared<MapGridVoxelInfo>());
-      current_voxel_grid_array_.at(0) =
-        std::make_shared<MapGridVoxelInfo>(current_voxel_grid_dict_.begin()->second);
-      (*mutex_ptr_).unlock();
-      return;
-    }
     origin_x_ = std::floor((current_position_.value().x - map_loader_radius_) / map_grid_size_x_) *
-                map_grid_size_x_;
+                  map_grid_size_x_ +
+                origin_x_remainder_;
     origin_y_ = std::floor((current_position_.value().y - map_loader_radius_) / map_grid_size_y_) *
-                map_grid_size_y_;
+                  map_grid_size_y_ +
+                origin_y_remainder_;
 
     map_grids_x_ = static_cast<int>(
       std::ceil((current_position_.value().x + map_loader_radius_ - origin_x_) / map_grid_size_x_));
@@ -287,8 +284,8 @@ public:
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
     map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
 
-    is_split_map = (std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_) == 0.0) &&
-                   (std::remainder(map_cell_to_add.metadata.min_y, map_grid_size_y_) == 0.0);
+    origin_x_remainder_ = std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_);
+    origin_y_remainder_ = std::remainder(map_cell_to_add.metadata.min_y, map_grid_size_y_);
 
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
