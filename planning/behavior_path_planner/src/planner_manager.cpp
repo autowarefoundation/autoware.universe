@@ -18,6 +18,7 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <magic_enum.hpp>
 
 #include <boost/format.hpp>
 
@@ -640,20 +641,7 @@ void PlannerManager::print() const
   }
 
   const auto get_status = [](const auto & m) {
-    const auto status = m->getCurrentStatus();
-    if (status == ModuleStatus::RUNNING) {
-      return "RUNNING";
-    }
-
-    if (status == ModuleStatus::FAILURE) {
-      return "FAILURE";
-    }
-
-    if (status == ModuleStatus::SUCCESS) {
-      return "SUCCESS";
-    }
-
-    return "NONE";
+    return magic_enum::enum_name(m->getCurrentStatus());
   };
 
   size_t max_string_num = 0;
