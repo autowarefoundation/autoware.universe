@@ -43,4 +43,4 @@ target_include_directories(${TARGET} PUBLIC include)
 target_link_libraries(${TARGET} Sophus::Sophus)
 
 # ===================================================
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE config)

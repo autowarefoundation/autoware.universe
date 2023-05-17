@@ -39,13 +39,13 @@ public:
 
   UndistortNode()
   : Node("undistort"),
-    OUTPUT_WIDTH(declare_parameter("width", 800)),
-    OVERRIDE_FRAME_ID(declare_parameter("override_frame_id", ""))
+    OUTPUT_WIDTH(declare_parameter<int>("width")),
+    OVERRIDE_FRAME_ID(declare_parameter<std::string>("override_frame_id"))
   {
     using std::placeholders::_1;
 
     rclcpp::QoS qos{10};
-    if (declare_parameter("use_sensor_qos", false)) {
+    if (declare_parameter<bool>("use_sensor_qos")) {
       qos = rclcpp::QoS(10).durability_volatile().best_effort();
     }
 

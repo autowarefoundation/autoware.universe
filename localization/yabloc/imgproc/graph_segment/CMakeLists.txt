@@ -32,4 +32,4 @@ target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(${TARGET} ${OpenCV_LIBS})
 
 # ===================================================
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE config)

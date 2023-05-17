@@ -17,10 +17,29 @@
     <arg name="src_image_5" default="/sensing/camera/camera5/image_rect_color/compressed"/>
     <arg name="src_info_5" default="/sensing/camera/camera5/camera_info"/>
 
+    <!-- conditional branch for autoware integration -->
     <let name="connect_base_link_to_particle_pose" value="true" if="$(var standalone)"/>
     <let name="connect_base_link_to_particle_pose" value="false" unless="$(var standalone)"/>
     <let name="input_pose" value="/localization/yabloc/pf/pose" if="$(var standalone)"/>
     <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose" unless="$(var standalone)"/>
+
+    <!-- default parameter path -->
+    <!-- initializer -->
+    <arg name="camera_pose_initializer_param_path" default="$(find-pkg-share camera_pose_initializer)/config/camera_pose_initializer.param.yaml"/>
+    <arg name="particle_initializer_param_path" default="$(find-pkg-share particle_initializer)/config/particle_initializer.param.yaml"/>
+    <!-- particle filter-->
+    <arg name="camera_particle_corrector_param_path" default="$(find-pkg-share camera_particle_corrector)/config/camera_particle_corrector.param.yaml"/>
+    <arg name="gnss_particle_corrector_param_path" default="$(find-pkg-share gnss_particle_corrector)/config/gnss_particle_corrector.param.yaml"/>
+    <arg name="predictor_param_path" default="$(find-pkg-share modularized_particle_filter)/config/predictor.param.yaml"/>
+    <!-- image processing -->
+    <arg name="graph_segment_param_path" default="$(find-pkg-share graph_segment)/config/graph_segment.param.yaml"/>
+    <arg name="segment_filter_param_path" default="$(find-pkg-share segment_filter)/config/segment_filter.param.yaml"/>
+    <arg name="undistort_param_path" default="$(find-pkg-share undistort)/config/undistort.param.yaml"/>
+    <!-- map -->
+    <arg name="ground_server_param_path" default="$(find-pkg-share ground_server)/config/ground_server.param.yaml"/>
+    <arg name="ll2_decomposer_param_path" default="$(find-pkg-share ll2_decomposer)/config/ll2_decomposer.param.yaml"/>
+    <!-- twist estimator -->
+    <arg name="twist_estimator_param_path" default="$(find-pkg-share twist_estimator)/config/twist_estimator.param.yaml"/>
 
     <group>
         <push-ros-namespace namespace="localization/yabloc"/>
@@ -37,11 +56,6 @@
         <group>
             <push-ros-namespace namespace="pf"/>
             <include file="$(find-pkg-share yabloc_launch)/launch/impl/pf.launch.xml"/>
-        </group>
-
-        <!-- static tf -->
-        <group if="$(var connect_base_link_to_particle_pose)"> 
-            <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
         </group>
 
         <!-- camera processing -->
@@ -94,18 +108,23 @@
             </include>
         </group>
 
-        <!-- twist -->
-        <group>
-            <push-ros-namespace namespace="twist"/>
-            <include file="$(find-pkg-share yabloc_launch)/launch/impl/twist.launch.xml"/>
-        </group>
-
         <!-- map -->
         <group>
             <push-ros-namespace namespace="map"/>
             <include file="$(find-pkg-share yabloc_launch)/launch/impl/map.launch.xml">
                 <arg name="input_particle_pose" value="$(var input_pose)"/>
             </include>
+        </group>
+
+        <!-- static tf -->
+        <group if="$(var connect_base_link_to_particle_pose)"> 
+            <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--frame-id /particle_filter --child-frame-id /base_link"/>
+        </group>
+
+        <!-- twist -->
+        <group>
+            <push-ros-namespace namespace="twist"/>
+            <include file="$(find-pkg-share yabloc_launch)/launch/impl/twist.launch.xml"/>
         </group>
 
     </group>

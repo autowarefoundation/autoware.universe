@@ -1,61 +1,34 @@
 <launch>
-    <arg name="use_sim_time" default="true"/>
-
-
-    <arg name="static_linear_covariance" default="12.00"/>
-    <arg name="static_angular_covariance" default="0.005"/>
-
-    <arg name="inout_weighted_particles" default="weighted_particles"/>
-    <arg name="output_particles_marker_array" default="predicted_particles_marker"/>
-    <arg name="ignore_less_than_float" default="true"/>
-    <arg name="gnss_mahalanobis_distance_threshold" default="20.0" description="If the distance to GNSS observation exceeds this, the correction is skipped."/>
-
-    <arg name="use_ublox_msg_in_gnss_corrector" default="true" description="Raw sensor data should not be used when running as Autoware."/>
-    <arg name="twist_cov_for_prediction" default="/localization/twist_estimator/twist_with_covariance"/>
 
     <!-- predict update -->
     <arg name="input_initialpose" default="/localization/yabloc/initializer/rectified/initialpose"/>
-
+    <arg name="twist_cov_for_prediction" default="/localization/twist_estimator/twist_with_covariance"/>
+    <let name="inout_weighted_particles" value="weighted_particles"/>
+    <let name="output_particles_marker_array" value="predicted_particles_marker"/>
     <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param from="$(var predictor_param_path)"/>
+
         <remap from="twist_cov" to="$(var twist_cov_for_prediction)"/>
         <remap from="initialpose" to="$(var input_initialpose)" />
-
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="num_of_particles" value="500" />
-        <param name="resampling_interval_seconds" value="1.0" />
-        <param name="prediction_rate" value="50.0" />
-
-        <param name="static_linear_covariance" value="$(var static_linear_covariance)" />
-        <param name="static_angular_covariance" value="$(var static_angular_covariance)" />
-
-        <param name="visualize" value="true"/>
 
         <remap from="particles_marker_array" to="$(var output_particles_marker_array)"/>
         <remap from="height" to="/localization/yabloc/map/height"/>
         <remap from="pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
-
-        <param name="is_swap_mode" value="false" />
     </node>
 
     <!-- camera  correction -->
     <arg name="input_projected_line_segments_cloud" default="/localization/yabloc/imgproc/projected_line_segments_cloud"/>
     <arg name="input_ll2_road_marking" default="/localization/yabloc/map/ll2_road_marking"/>
     <arg name="input_ll2_bounding_box" default="/localization/yabloc/map/ll2_bounding_box"/>
-
     <arg name="output_scored_cloud" default="scored_cloud"/>
     <arg name="output_cost_map_range" default="cost_map_range"/>
     <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="image_size" value="800"/>
-        <param name="max_range" value="40.0"/>
-        <param name="gamma" value="5.0"/>
-        <param name="min_prob" value="0.1"/>
-        <param name="far_weight_gain" value="0.001"/>
-        <param name="enabled_at_first" value="true"/>
+        <param from="$(var camera_particle_corrector_param_path)"/>
 
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
         <remap from="switch_srv" to="camera_corrector_switch"/>
-
         <remap from="line_segments_cloud" to="$(var input_projected_line_segments_cloud)"/>
         <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
         <remap from="ll2_bounding_box" to="$(var input_ll2_bounding_box)"/>
@@ -66,10 +39,7 @@
     <!-- gnss correction -->
     <node name="gnss_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
-        <param name="for_fixed/max_weight" value="5.0"/>
-        <param name="mahalanobis_distance_threshold" value="$(var gnss_mahalanobis_distance_threshold)"/>
-        <param name="use_ublox_msg" value="$(var use_ublox_msg_in_gnss_corrector)"/>
+        <param from="$(var gnss_particle_corrector_param_path)"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/yabloc/map/height"/>

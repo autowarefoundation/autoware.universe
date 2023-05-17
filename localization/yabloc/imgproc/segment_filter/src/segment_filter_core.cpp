@@ -25,11 +25,11 @@ namespace yabloc::segment_filter
 {
 SegmentFilter::SegmentFilter()
 : Node("segment_filter"),
-  image_size_(declare_parameter<int>("image_size", 800)),
-  max_range_(declare_parameter<float>("max_range", 20.f)),
-  min_segment_length_(declare_parameter<float>("min_segment_length", -1)),
-  max_segment_distance_(declare_parameter<float>("max_segment_distance", -1)),
-  max_lateral_distance_(declare_parameter<float>("max_lateral_distance", -1)),
+  image_size_(declare_parameter<int>("image_size")),
+  max_range_(declare_parameter<float>("max_range")),
+  min_segment_length_(declare_parameter<float>("min_segment_length")),
+  max_segment_distance_(declare_parameter<float>("max_segment_distance")),
+  max_lateral_distance_(declare_parameter<float>("max_lateral_distance")),
   info_(this),
   synchro_subscriber_(this, "line_segments_cloud", "mask_image"),
   tf_subscriber_(this->get_clock())
@@ -92,14 +92,16 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
 
   const rclcpp::Time stamp = line_segments_msg.header.stamp;
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr line_segments_cloud{new pcl::PointCloud<pcl::PointNormal>()};
+  pcl::PointCloud<pcl::PointNormal>::Ptr line_segments_cloud{
+    new pcl::PointCloud<pcl::PointNormal>()};
   cv::Mat mask_image = common::decompress_to_cv_mat(segment_msg);
   pcl::fromROSMsg(line_segments_msg, *line_segments_cloud);
 
   const std::set<int> indices = filt_by_mask(mask_image, *line_segments_cloud);
 
   pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*line_segments_cloud, indices);
-  pcl::PointCloud<pcl::PointNormal> invalid_edges = project_lines(*line_segments_cloud, indices, true);
+  pcl::PointCloud<pcl::PointNormal> invalid_edges =
+    project_lines(*line_segments_cloud, indices, true);
 
   // Projected line segments
   {
@@ -141,12 +143,14 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
   {
     pcl::PointCloud<pcl::PointXYZLNormal> combined_debug_edges;
     for (size_t index = 0; index < line_segments_cloud->size(); ++index) {
-      const pcl::PointNormal& pn = line_segments_cloud->at(index);
+      const pcl::PointNormal & pn = line_segments_cloud->at(index);
       pcl::PointXYZLNormal pln;
       pln.getVector3fMap() = pn.getVector3fMap();
       pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
-      if (indices.count(index) > 0) pln.label = 255;
-      else pln.label = 0;
+      if (indices.count(index) > 0)
+        pln.label = 255;
+      else
+        pln.label = 0;
       combined_debug_edges.push_back(pln);
     }
     common::publish_cloud(*pub_debug_cloud_, combined_debug_edges, stamp);

@@ -3,27 +3,14 @@
 
     <include file="$(find-pkg-share yabloc_launch)/launch/yabloc.launch.xml">
         <arg name="standalone" value="$(var standalone)"/>
-
-        <arg name="min_segment_length" value="1.5"/>
-        <arg name="max_segment_distance" value="30.0"/>
-        <arg name="ignore_less_than_float" value="true"/>
-
-        <arg name="static_linear_covariance" value="0.04"/>
-        <arg name="static_angular_covariance" value="0.0010"/>
-        <arg name="static_scale_factor" value="-1.0"/>
-
-        <arg name="road_marking_labels" value="[cross_walk, zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
-        <arg name="sign_board_labels" value="[sign-board]"/>
+        <arg name="graph_segment_param_path" value="$(find-pkg-share yabloc_launch)/config/lexus/graph_segment.param.yaml"/>
+        <arg name="undistort_param_path" value="$(find-pkg-share yabloc_launch)/config/lexus/undistort.param.yaml"/>
 
         <arg name="src_image" value="/sensing/camera/c1/image_raw/compressed"/>
         <arg name="src_info" value="/sensing/camera/c1/camera_info"/>
-
-        <arg name="target_height_ratio" value="0.80"/>
-        <arg name="override_camera_frame_id" value="fake_camera_optical_link"/>
     </include>
 
     <node pkg="tf2_ros" exec="static_transform_publisher" name="fake_tf1" args="--frame-id base_link                 --child-frame-id fake_sensor_kit_base_link --x 0.6 --z 1.7 --yaw 0.03" />
     <node pkg="tf2_ros" exec="static_transform_publisher" name="fake_tf2" args="--frame-id fake_sensor_kit_base_link --child-frame-id fake_camera_link          --x 0.8703194 --y 0.01868 --z 0.09616 --roll -0.000664 --pitch 0.0085596 --yaw -0.01503"/>
     <node pkg="tf2_ros" exec="static_transform_publisher" name="fake_tf3" args="--frame-id fake_camera_link          --child-frame-id fake_camera_optical_link  --roll -1.57 --yaw -1.57" />
-
 </launch>

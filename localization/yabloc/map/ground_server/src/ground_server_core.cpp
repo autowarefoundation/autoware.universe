@@ -32,9 +32,9 @@ namespace yabloc ::ground_server
 {
 GroundServer::GroundServer()
 : Node("ground_server"),
-  force_zero_tilt_(declare_parameter("force_zero_tilt", false)),
-  R(declare_parameter("R", 20)),
-  K(declare_parameter("K", 50))
+  force_zero_tilt_(declare_parameter<bool>("force_zero_tilt")),
+  R(declare_parameter<int>("R")),
+  K(declare_parameter<int>("K"))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

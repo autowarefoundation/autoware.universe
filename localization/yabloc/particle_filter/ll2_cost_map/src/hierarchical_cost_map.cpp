@@ -27,13 +27,13 @@ namespace yabloc
 float Area::unit_length_ = -1;
 
 HierarchicalCostMap::HierarchicalCostMap(rclcpp::Node * node)
-: max_range_(node->declare_parameter<float>("max_range", 40.0)),
-  image_size_(node->declare_parameter<int>("image_size", 800)),
+: max_range_(node->declare_parameter<float>("max_range")),
+  image_size_(node->declare_parameter<int>("image_size")),
   max_map_count_(10),
   logger_(node->get_logger())
 {
   Area::unit_length_ = max_range_;
-  float gamma = node->declare_parameter<float>("gamma", 5.0);
+  float gamma = node->declare_parameter<float>("gamma");
   gamma_converter.reset(gamma);
 }
 

@@ -27,4 +27,4 @@ ament_auto_add_executable(${TARGET} src/undistort_node.cpp)
 target_link_libraries(${TARGET} ${OpenCV_LIBS})
 
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE launch)
+ament_auto_package(INSTALL_TO_SHARE launch config)

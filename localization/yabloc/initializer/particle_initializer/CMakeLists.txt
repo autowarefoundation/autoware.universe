@@ -29,4 +29,4 @@ target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 
 # ===================================================
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE config)

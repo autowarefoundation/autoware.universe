@@ -43,7 +43,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 
   auto load_lanelet2_labels =
     [this](const std::string & param_name, std::set<std::string> & labels) -> void {
-    declare_parameter(param_name, std::vector<std::string>{});
+    this->template declare_parameter<std::vector<std::string>>(param_name);
     auto label_array = get_parameter(param_name).as_string_array();
     for (auto l : label_array) labels.insert(l);
   };

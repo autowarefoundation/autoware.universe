@@ -31,7 +31,7 @@ public:
   ParticleInitializer();
 
 private:
-  const Eigen::Vector2d cov_xx_yy_;
+  const std::vector<double> cov_xx_yy_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
   rclcpp::Publisher<Marker>::SharedPtr pub_marker_;

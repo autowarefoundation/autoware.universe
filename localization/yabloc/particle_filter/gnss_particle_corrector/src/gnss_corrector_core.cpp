@@ -23,8 +23,8 @@ namespace yabloc::modularized_particle_filter
 {
 GnssParticleCorrector::GnssParticleCorrector()
 : AbstCorrector("gnss_particle_corrector"),
-  ignore_less_than_float_(declare_parameter<bool>("ignore_less_than_float", true)),
-  mahalanobis_distance_threshold_(declare_parameter<float>("mahalanobis_distance_threshold", 20.0)),
+  ignore_less_than_float_(declare_parameter<bool>("ignore_less_than_float")),
+  mahalanobis_distance_threshold_(declare_parameter<float>("mahalanobis_distance_threshold")),
   weight_manager_(this)
 {
   using std::placeholders::_1;
@@ -33,7 +33,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   auto on_pose = std::bind(&GnssParticleCorrector::on_pose, this, _1);
   auto on_ublox = std::bind(&GnssParticleCorrector::on_ublox, this, _1);
   auto on_height = [this](const Float32 & height) { this->latest_height_ = height; };
-  if (declare_parameter<bool>("use_ublox_msg", true)) {
+  if (declare_parameter<bool>("use_ublox_msg")) {
     ublox_sub_ = create_subscription<NavPVT>("input/navpvt", 10, on_ublox);
   } else {
     pose_sub_ = create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, on_pose);

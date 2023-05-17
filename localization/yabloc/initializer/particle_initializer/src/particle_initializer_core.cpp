@@ -18,7 +18,7 @@ namespace yabloc::modularized_particle_filter
 {
 ParticleInitializer::ParticleInitializer()
 : Node("particle_initializer"),
-  cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()}
+  cov_xx_yy_{this->template declare_parameter<std::vector<double>>("cov_xx_yy")}
 {
   using std::placeholders::_1;
 
@@ -101,7 +101,7 @@ ParticleInitializer::PoseCovStamped ParticleInitializer::rectify_initial_pose(
   msg.pose.pose.orientation.z = std::sin(theta / 2);
 
   Eigen::Matrix2f cov;
-  cov << cov_xx_yy_(0), 0, 0, cov_xx_yy_(1);
+  cov << cov_xx_yy_.at(0), 0, 0, cov_xx_yy_.at(1);
   Eigen::Rotation2D r(theta);
   cov = r * cov * r.inverse();
 

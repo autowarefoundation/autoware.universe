@@ -51,15 +51,17 @@ ament_auto_add_executable(particle_visualize
   src/common/particle_visualize_node.cpp
 )
 
+# ===================================================
 # TEST
 if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
+# ===================================================
 install(PROGRAMS
   script/particle_array_to_marker_array.py
   script/particle_array_to_pose_array.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_auto_package(INSTALL_TO_SHARE launch)
+ament_auto_package(INSTALL_TO_SHARE launch config)

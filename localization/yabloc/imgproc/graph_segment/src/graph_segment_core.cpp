@@ -25,8 +25,8 @@ namespace yabloc::graph_segment
 {
 GraphSegment::GraphSegment()
 : Node("graph_segment"),
-  target_height_ratio_(declare_parameter<float>("target_height_ratio", 0.85)),
-  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width", 15))
+  target_height_ratio_(declare_parameter<float>("target_height_ratio")),
+  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width"))
 {
   using std::placeholders::_1;
 
@@ -37,15 +37,15 @@ GraphSegment::GraphSegment()
   pub_mask_image_ = create_publisher<Image>("mask_image", 10);
   pub_debug_image_ = create_publisher<Image>("segmented_image", 10);
 
-  const double sigma = declare_parameter<double>("sigma", 0.5);
-  const float k = declare_parameter<float>("k", 300);
-  const int min_size = declare_parameter<double>("min_size", 100);
+  const double sigma = declare_parameter<double>("sigma");
+  const float k = declare_parameter<float>("k");
+  const int min_size = declare_parameter<double>("min_size");
   segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation(sigma, k, min_size);
 
   // additional area pickup module
   if (declare_parameter<bool>("pickup_additional_areas", true)) {
-    similar_area_searcher_ = std::make_unique<SimilarAreaSearcher>(
-      declare_parameter<float>("similarity_score_threshold", 0.8));
+    similar_area_searcher_ =
+      std::make_unique<SimilarAreaSearcher>(declare_parameter<float>("similarity_score_threshold"));
   }
 }
 

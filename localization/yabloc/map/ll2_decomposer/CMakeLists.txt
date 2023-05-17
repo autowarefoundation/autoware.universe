@@ -33,13 +33,13 @@ target_include_directories(ll2_util PUBLIC include 3rd/regulatory_elements/inclu
 
 # ===================================================
 # Executable
-set(TARGET ll2_decompose_node)
+set(TARGET ll2_decomposer_node)
 ament_auto_add_executable(${TARGET}
-  src/ll2_decompose_core.cpp
-  src/ll2_decompose_node.cpp)
+  src/ll2_decomposer_core.cpp
+  src/ll2_decomposer_node.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 target_link_libraries(${TARGET} ${PCL_LIBRARIES} ll2_util)
 
 # ===================================================
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE config)

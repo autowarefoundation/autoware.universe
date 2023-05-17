@@ -33,10 +33,10 @@ namespace yabloc::modularized_particle_filter
 
 Predictor::Predictor()
 : Node("predictor"),
-  number_of_particles_(declare_parameter("num_of_particles", 500)),
-  resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
-  static_linear_covariance_(declare_parameter("static_linear_covariance", 0.01)),
-  static_angular_covariance_(declare_parameter("static_angular_covariance", 0.01))
+  number_of_particles_(declare_parameter<int>("num_of_particles")),
+  resampling_interval_seconds_(declare_parameter<float>("resampling_interval_seconds")),
+  static_linear_covariance_(declare_parameter<float>("static_linear_covariance")),
+  static_angular_covariance_(declare_parameter<float>("static_angular_covariance"))
 {
   tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -58,7 +58,7 @@ Predictor::Predictor()
   twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, on_twist_cov);
 
   // Timer callback
-  const double prediction_rate = declare_parameter("prediction_rate", 50.0f);
+  const double prediction_rate = declare_parameter<double>("prediction_rate");
   auto on_timer = std::bind(&Predictor::on_timer, this);
   timer_ = rclcpp::create_timer(
     this, this->get_clock(), rclcpp::Rate(prediction_rate).period(), std::move(on_timer));

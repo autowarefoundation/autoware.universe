@@ -1,0 +1,6 @@
+/**: 
+  ros__parameters:
+    stop_vel_threshold: 0.05
+    static_scale_factor: -1.0 # if negative value, static_scale_factor is not used
+    static_gyro_bias: 10.0    # if larger than 1, static_gyro_bias is not used
+    ignore_less_than_float: true

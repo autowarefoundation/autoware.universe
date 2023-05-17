@@ -31,14 +31,14 @@ FastCosSin fast_math;
 
 CameraParticleCorrector::CameraParticleCorrector()
 : AbstCorrector("camera_particle_corrector"),
-  min_prob_(declare_parameter<float>("min_prob", 0.01)),
-  far_weight_gain_(declare_parameter<float>("far_weight_gain", 0.001)),
+  min_prob_(declare_parameter<float>("min_prob")),
+  far_weight_gain_(declare_parameter<float>("far_weight_gain")),
   cost_map_(this)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  enable_switch_ = declare_parameter<bool>("enabled_at_first", true);
+  enable_switch_ = declare_parameter<bool>("enabled_at_first");
 
   // Publication
   pub_image_ = create_publisher<Image>("match_image", 10);

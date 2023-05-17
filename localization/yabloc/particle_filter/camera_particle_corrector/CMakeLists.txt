@@ -42,4 +42,4 @@ target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL
 target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES} glog::glog)
 
 # ===================================================
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE config)

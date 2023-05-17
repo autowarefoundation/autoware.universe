@@ -1,9 +1,9 @@
 <launch>
     <arg name="skip_autoware_pose_initializer"/>
-    <arg name="initialpose_cov_xx_yy" default="[2.0,0.25]"/>
 
     <group if="$(var skip_autoware_pose_initializer)">
         <node name="gnss_pose_initializer_node" pkg="gnss_pose_initializer" exec="gnss_pose_initializer_node" output="screen" args="--ros-args --log-level info">
+            <param name="use_sim_time" value="$(var use_sim_time)"/>
             <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
             <remap from="pose_cov" to="/initialpose3d"/>
             <remap from="pf_pose" to="/localization/yabloc/pf/pose"/>
@@ -12,6 +12,8 @@
 
     <group unless="$(var skip_autoware_pose_initializer)">
         <node name="camera_pose_initializer_node" pkg="camera_pose_initializer" exec="camera_pose_initializer_node" output="screen" args="--ros-args --log-level info">
+            <param name="use_sim_time" value="$(var use_sim_time)"/>
+            <param from="$(var camera_pose_initializer_param_path)" />
             <remap from="/image_raw" to="/localization/yabloc/imgproc/undistorted/image_raw"/>
             <remap from="camera_info" to="/localization/yabloc/imgproc/undistorted/camera_info"/>
             <remap from="initialpose" to="/initialpose"/>
@@ -25,7 +27,8 @@
 
 
     <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
-        <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param from="$(var particle_initializer_param_path)" />
         <remap from="initialpose3d" to="/initialpose3d"/>
     </node>
 

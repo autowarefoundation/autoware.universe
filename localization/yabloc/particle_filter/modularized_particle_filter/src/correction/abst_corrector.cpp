@@ -18,8 +18,8 @@ namespace yabloc::modularized_particle_filter
 {
 AbstCorrector::AbstCorrector(const std::string & node_name)
 : Node(node_name),
-  acceptable_max_delay_(declare_parameter<float>("acceptable_max_delay", 1.0f)),
-  visualize_(declare_parameter<bool>("visualize", false)),
+  acceptable_max_delay_(declare_parameter<float>("acceptable_max_delay")),
+  visualize_(declare_parameter<bool>("visualize")),
   logger_(rclcpp::get_logger("abst_corrector"))
 {
   using std::placeholders::_1;

@@ -1,13 +1,8 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
-    <arg name="ignore_less_than_float" default="true"/>
-    <arg name="static_scale_factor" default="-1.0" description="if negative value, static_scale_factor is not used"/>
-    <arg name="static_gyro_bias" default="10.0" description="if larger than 1, static_gyro_bias is not used"/>
 
     <!-- twist estimator -->
     <group>
-        <push-ros-namespace namespace="kalman"/>
-
         <arg name="output_doppler" default="doppler"/>
         <arg name="output_status" default="status"/>
         <arg name="output_doppler_vel" default="doppler_vel"/>
@@ -15,9 +10,7 @@
 
         <node name="twist_estimator" pkg="twist_estimator" exec="twist_estimator_node" output="screen" args="--ros-args --log-level warn">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
-            <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
-            <param name="static_scale_factor" value="$(var static_scale_factor)"/>
-            <param name="static_gyro_bias" value="$(var static_gyro_bias)"/>
+            <param from="$(var twist_estimator_param_path)"/>
 
             <remap from="doppler" to="$(var output_doppler)"/>
             <remap from="status" to="$(var output_status)"/>

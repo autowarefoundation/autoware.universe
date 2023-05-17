@@ -24,10 +24,10 @@ namespace yabloc::twist_estimator
 TwistEstimator::TwistEstimator()
 : Node("twist_estimator"),
   upside_down(true),
-  ignore_less_than_float_(declare_parameter("ignore_less_than_float", true)),
-  stop_vel_threshold_(declare_parameter("stop_vel_threshold", 0.05f)),
-  static_scale_factor_(declare_parameter("static_scale_factor", -1.f)),
-  static_gyro_bias_(declare_parameter("static_gyro_bias", 10.f))
+  ignore_less_than_float_(declare_parameter<bool>("ignore_less_than_float")),
+  stop_vel_threshold_(declare_parameter<float>("stop_vel_threshold")),
+  static_scale_factor_(declare_parameter<float>("static_scale_factor")),
+  static_gyro_bias_(declare_parameter<float>("static_gyro_bias"))
 {
   using std::placeholders::_1;
   using namespace std::literals::chrono_literals;
