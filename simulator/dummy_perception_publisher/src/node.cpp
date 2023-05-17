@@ -133,6 +133,9 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
   const bool object_centric_pointcloud =
     this->declare_parameter("object_centric_pointcloud", false);
   publish_ground_truth_objects_ = this->declare_parameter("publish_ground_truth", false);
+  const unsigned int random_seed =
+    static_cast<unsigned int>(this->declare_parameter("random_seed", 0));
+  const bool use_fixed_random_seed = this->declare_parameter("use_fixed_random_seed", false);
 
   if (object_centric_pointcloud) {
     pointcloud_creator_ =
@@ -145,8 +148,12 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
   // parameters for vehicle centric point cloud generation
   angle_increment_ = this->declare_parameter("angle_increment", 0.25 * M_PI / 180.0);
 
-  std::random_device seed_gen;
-  random_generator_.seed(seed_gen());
+  if (use_fixed_random_seed) {
+    random_generator_.seed(random_seed);
+  } else {
+    std::random_device seed_gen;
+    random_generator_.seed(seed_gen());
+  }
 
   // create subscriber and publisher
   rclcpp::QoS qos{1};
