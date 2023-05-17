@@ -639,6 +639,23 @@ void PlannerManager::print() const
     return;
   }
 
+  const auto get_status = [](const auto & m) {
+    const auto status = m->getCurrentStatus();
+    if (status == ModuleStatus::RUNNING) {
+      return "RUNNING";
+    }
+
+    if (status == ModuleStatus::FAILURE) {
+      return "FAILURE";
+    }
+
+    if (status == ModuleStatus::SUCCESS) {
+      return "SUCCESS";
+    }
+
+    return "NONE";
+  };
+
   size_t max_string_num = 0;
 
   std::ostringstream string_stream;
@@ -655,13 +672,15 @@ void PlannerManager::print() const
   string_stream << "\n";
   string_stream << "approved modules  : ";
   for (const auto & m : approved_module_ptrs_) {
-    string_stream << "[" << m->name() << "]->";
+    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
+                  << "]->";
   }
 
   string_stream << "\n";
   string_stream << "candidate module  : ";
   for (const auto & m : candidate_module_ptrs_) {
-    string_stream << "[" << m->name() << "]->";
+    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
+                  << "]->";
   }
 
   string_stream << "\n" << std::fixed << std::setprecision(1);
