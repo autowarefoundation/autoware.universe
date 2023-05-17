@@ -106,6 +106,28 @@ void appendObjectMarker(MarkerArray & marker_array, const geometry_msgs::msg::Po
 
   marker_array.markers.push_back(marker);
 }
+
+void appendExtractedPolygonMarker(
+  MarkerArray & marker_array, const tier4_autoware_utils::Polygon2d & obj_poly)
+{
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "extracted_polygons", marker_array.markers.size(),
+    visualization_msgs::msg::Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.05, 0.0, 0.0),
+    tier4_autoware_utils::createMarkerColor(1.0, 0.5, 0.6, 0.8));
+
+  // NOTE: obj_poly.outer() has already duplicated points to close the polygon.
+  for (size_t i = 0; i < obj_poly.outer().size(); ++i) {
+    const auto & bound_point = obj_poly.outer().at(i);
+
+    geometry_msgs::msg::Point bound_geom_point;
+    bound_geom_point.x = bound_point.x();
+    bound_geom_point.y = bound_point.y();
+    marker.points.push_back(bound_geom_point);
+  }
+
+  marker_array.markers.push_back(marker);
+}
 }  // namespace
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -118,7 +140,7 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
 DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::string & name, rclcpp::Node & node,
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
 #endif
 {
@@ -175,6 +197,7 @@ ModuleStatus DynamicAvoidanceModule::updateState()
 BehaviorModuleOutput DynamicAvoidanceModule::plan()
 {
   info_marker_.markers.clear();
+  debug_marker_.markers.clear();
 
   // 1. get reference path from previous module
   const auto prev_module_path = getPreviousModuleOutput().path;
@@ -190,6 +213,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
       obstacles_for_drivable_area.push_back({object.pose, obstacle_poly.value()});
 
       appendObjectMarker(info_marker_, object.pose);
+      appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value());
     }
   }
 
@@ -222,13 +246,14 @@ DynamicAvoidanceModule::calcTargetObjects() const
   const auto prev_module_path = getPreviousModuleOutput().path;
 
   // 1. calculate target lanes to filter obstacles
-  const auto target_lanes = getAdjacentLanes(100.0, 10.0);
+  const auto target_lanes = getAdjacentLanes(100.0, 50.0);
 
   // 2. filter obstacles for dynamic avoidance
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
   const auto predicted_objects_in_target_lanes = getObjectsInLanes(predicted_objects, target_lanes);
 
   // check if object will cut into the ego lane.
+  // NOTE: The oncoming object will be ignored.
   std::vector<PredictedObject> target_predicted_objects;
   constexpr double epsilon_path_lat_diff = 0.3;
   for (const auto & object : predicted_objects_in_target_lanes) {
@@ -236,8 +261,15 @@ DynamicAvoidanceModule::calcTargetObjects() const
       object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
-    // Ignore object since it will cut into the ego lane
+    // Ignore object that will cut into the ego lane
     const bool will_object_cut_in = [&]() {
+      const double path_projected_vel =
+        calcObstacleProjectedVelocity(prev_module_path->points, object);
+      if (path_projected_vel < 0) {
+        // Ignore oncoming object
+        return false;
+      }
+
       for (const auto & predicted_path_point : reliable_predicted_path->path) {
         const double paths_lat_diff =
           motion_utils::calcLateralOffset(prev_module_path->points, predicted_path_point.position);
@@ -337,7 +369,7 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynam
   const double max_obj_lat_offset = max_obj_lat_abs_offset * (is_left ? 1.0 : -1.0);
 
   // calculate min/max longitudinal offset from object to path
-  const auto [min_obj_lon_offset, max_obj_lon_offset] = [&]() {
+  const auto obj_lon_offset = [&]() -> std::optional<std::pair<double, double>> {
     std::vector<double> obj_lon_offset_vec;
     for (size_t i = 0; i < obj_points.outer().size(); ++i) {
       const auto geom_obj_point = toGeometryPoint(obj_points.outer().at(i));
@@ -345,8 +377,45 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynam
         path_for_bound.points, obj_seg_idx, geom_obj_point);
       obj_lon_offset_vec.push_back(lon_offset);
     }
-    return getMinMaxValues(obj_lon_offset_vec);
+
+    const auto [raw_min_obj_lon_offset, raw_max_obj_lon_offset] =
+      getMinMaxValues(obj_lon_offset_vec);
+
+    // calculate time to collision and apply it to drivable area extraction
+    const double relative_velocity = getEgoSpeed() - object.path_projected_vel;
+    const double time_to_collision = [&]() {
+      const auto prev_module_path = getPreviousModuleOutput().path;
+      const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(prev_module_path->points);
+      const size_t obj_seg_idx =
+        motion_utils::findNearestSegmentIndex(prev_module_path->points, object.pose.position);
+      const double signed_lon_length = motion_utils::calcSignedArcLength(
+        prev_module_path->points, getEgoPosition(), ego_seg_idx, object.pose.position, obj_seg_idx);
+      if (relative_velocity == 0.0) {
+        return std::numeric_limits<double>::max();
+      }
+      return signed_lon_length / relative_velocity;
+    }();
+
+    if (time_to_collision < 0) {
+      return std::nullopt;
+    }
+
+    const double limited_time_to_collision = std::min(3.0, time_to_collision);
+    if (0 <= object.path_projected_vel) {
+      return std::make_pair(
+        raw_min_obj_lon_offset + object.path_projected_vel * limited_time_to_collision,
+        raw_max_obj_lon_offset + object.path_projected_vel * limited_time_to_collision);
+    }
+    return std::make_pair(
+      raw_min_obj_lon_offset + object.path_projected_vel * limited_time_to_collision,
+      raw_max_obj_lon_offset);
   }();
+
+  if (!obj_lon_offset) {
+    return std::nullopt;
+  }
+  const double min_obj_lon_offset = obj_lon_offset->first;
+  const double max_obj_lon_offset = obj_lon_offset->second;
 
   // calculate bound start and end index
   const double length_to_avoid = [&]() {
@@ -358,9 +427,13 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynam
   const auto lon_bound_start_idx_opt = motion_utils::insertTargetPoint(
     obj_seg_idx, min_obj_lon_offset + (length_to_avoid < 0 ? length_to_avoid : 0.0),
     path_for_bound.points);
+  const size_t updated_obj_seg_idx =
+    (lon_bound_start_idx_opt && lon_bound_start_idx_opt.value() <= obj_seg_idx) ? obj_seg_idx + 1
+                                                                                : obj_seg_idx;
   const auto lon_bound_end_idx_opt = motion_utils::insertTargetPoint(
-    obj_seg_idx, max_obj_lon_offset + (0 <= length_to_avoid ? length_to_avoid : 0.0),
+    updated_obj_seg_idx, max_obj_lon_offset + (0 <= length_to_avoid ? length_to_avoid : 0.0),
     path_for_bound.points);
+
   if (!lon_bound_start_idx_opt && !lon_bound_end_idx_opt) {
     // NOTE: The obstacle is longitudinally out of the ego's trajectory.
     return std::nullopt;

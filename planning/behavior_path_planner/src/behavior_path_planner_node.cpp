@@ -717,6 +717,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   const auto parameter = [](std::string && name) { return "lane_change." + name; };
 
   // trajectory generation
+  p.backward_lane_length = declare_parameter<double>(parameter("backward_lane_length"));
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
@@ -749,6 +750,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.enable_abort_lane_change = declare_parameter<bool>(parameter("enable_abort_lane_change"));
 
   p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
+  p.aborting_time = declare_parameter<double>(parameter("aborting_time"));
   p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
 
   // debug marker
@@ -1468,9 +1470,9 @@ bool BehaviorPathPlannerNode::keepInputPoints(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
 #ifdef USE_OLD_ARCHITECTURE
-  const std::vector<std::string> target_modules = {"PullOver", "Avoidance"};
+  const std::vector<std::string> target_modules = {"GoalPlanner", "Avoidance"};
 #else
-  const std::vector<std::string> target_modules = {"pull_over", "avoidance"};
+  const std::vector<std::string> target_modules = {"goal_planner", "avoidance"};
 #endif
 
   const auto target_status = ModuleStatus::RUNNING;
