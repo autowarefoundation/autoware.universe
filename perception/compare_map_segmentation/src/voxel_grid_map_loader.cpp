@@ -354,6 +354,14 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
   if (current_voxel_grid_dict_.size() == 0) {
     return false;
   }
+  // For no split map
+  if (!is_split_map) {
+    if (is_close_to_neighbor_voxels(
+          point, distance_threshold, current_voxel_grid_array_.at(0)->map_cell_pc_ptr,
+          current_voxel_grid_array_.at(0)->map_cell_voxel_grid)) {
+      return true;
+    }
+  }
 
   // Compare point with map grid that point belong to
 
