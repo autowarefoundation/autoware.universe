@@ -216,6 +216,18 @@ void DummyPerceptionPublisherNode::timerCallback()
     obj_infos.push_back(obj_info);
   }
 
+  // publish ground truth
+  // add Tracked Object
+  if (publish_ground_truth_objects_) {
+    for (auto object : objects_) {
+      const auto object_info = ObjectInfo(object, current_time);
+      TrackedObject gt_tracked_object = object_info.toTrackedObject(object);
+      gt_tracked_object.existence_probability = 1.0;
+      output_ground_truth_objects_msg.objects.push_back(gt_tracked_object);
+    }
+  }
+
+  // publish noised detected objects
   pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr detected_merged_pointcloud_ptr(
     new pcl::PointCloud<pcl::PointXYZ>);
@@ -272,10 +284,6 @@ void DummyPerceptionPublisherNode::timerCallback()
       pcl::toROSMsg(*pointcloud, feature_object.feature.cluster);
       output_dynamic_object_msg.feature_objects.push_back(feature_object);
 
-      // add Tracked Object
-      TrackedObject gt_tracked_object = object_info.toTrackedObject(object);
-      output_ground_truth_objects_msg.objects.push_back(gt_tracked_object);
-
       // check delete idx
       tf2::Transform tf_base_link2moved_object;
       tf_base_link2moved_object = tf_base_link2map * object_info.tf_map2moved_object;
@@ -300,7 +308,7 @@ void DummyPerceptionPublisherNode::timerCallback()
   output_dynamic_object_msg.header.stamp = current_time;
   output_pointcloud_msg.header.frame_id = "base_link";
   output_pointcloud_msg.header.stamp = current_time;
-  output_ground_truth_objects_msg.header.frame_id = "base_link";
+  output_ground_truth_objects_msg.header.frame_id = "map";
   output_ground_truth_objects_msg.header.stamp = current_time;
 
   // publish
