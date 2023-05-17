@@ -34,10 +34,6 @@
 #include <functional>
 #include <memory>
 
-// Scene modules
-#include <scene_module/speed_bump/manager.hpp>
-#include <scene_module/virtual_traffic_light/manager.hpp>
-
 namespace
 {
 rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
@@ -163,7 +159,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       *this, "behavior_velocity_planner::DetectionAreaModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_virtual_traffic_light")) {
-    planner_manager_.launchSceneModule<VirtualTrafficLightModuleManager>(*this);
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::VirtualTrafficLightModulePlugin");
   }
   // this module requires all the stop line.Therefore this modules should be placed at the bottom.
   if (this->declare_parameter<bool>("launch_no_stopping_area")) {
@@ -183,7 +180,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::RunOutModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_speed_bump")) {
-    planner_manager_.launchSceneModule<SpeedBumpModuleManager>(*this);
+    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::SpeedBumpModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_out_of_lane")) {
     planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::OutOfLaneModulePlugin");

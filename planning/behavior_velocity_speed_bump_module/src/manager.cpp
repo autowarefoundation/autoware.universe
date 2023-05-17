@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/speed_bump/manager.hpp"
+#include "manager.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 
@@ -78,3 +78,7 @@ SpeedBumpModuleManager::getModuleExpiredFunction(
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::SpeedBumpModulePlugin, behavior_velocity_planner::PluginInterface)

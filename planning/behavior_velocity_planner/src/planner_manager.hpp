@@ -44,14 +44,6 @@ public:
   BehaviorVelocityPlannerManager();
   void launchScenePlugin(rclcpp::Node & node, const std::string & name);
 
-  template <class T>
-  void launchSceneModule(rclcpp::Node & node)
-  {
-    const auto plugin = std::make_shared<PluginWrapper<T>>();
-    plugin->init(node);
-    scene_manager_plugins_.push_back(plugin);
-  }
-
   autoware_auto_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg);

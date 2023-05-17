@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__MANAGER_HPP_
-#define SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
 
+#include "scene.hpp"
+
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/virtual_traffic_light/scene.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -26,20 +29,26 @@
 
 namespace behavior_velocity_planner
 {
-class VirtualTrafficLightModuleManager : public SceneModuleManagerInterface
+class SpeedBumpModuleManager : public SceneModuleManagerInterface
 {
 public:
-  explicit VirtualTrafficLightModuleManager(rclcpp::Node & node);
+  explicit SpeedBumpModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "virtual_traffic_light"; }
+  const char * getModuleName() override { return "speed_bump"; }
 
 private:
-  VirtualTrafficLightModule::PlannerParam planner_param_;
+  SpeedBumpModule::PlannerParam planner_param_;
+
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
+
+class SpeedBumpModulePlugin : public PluginWrapper<SpeedBumpModuleManager>
+{
+};
+
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__MANAGER_HPP_
+#endif  // MANAGER_HPP_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/speed_bump/scene.hpp"
+#include "scene.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/motion_utils.hpp>

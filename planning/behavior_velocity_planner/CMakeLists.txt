@@ -11,20 +11,9 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common filters)
 find_package(OpenCV REQUIRED)
 
-set(scene_modules
-  virtual_traffic_light
-  speed_bump
-)
-
-foreach(scene_module IN LISTS scene_modules)
-  file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
-  list(APPEND scene_modules_src ${scene_module_src})
-endforeach()
-
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/node.cpp
   src/planner_manager.cpp
-  ${scene_modules_src}
 )
 
 target_include_directories(${PROJECT_NAME}

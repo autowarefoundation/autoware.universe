@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <scene_module/virtual_traffic_light/manager.hpp>
+#include "manager.hpp"
+
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <memory>
@@ -72,3 +73,8 @@ VirtualTrafficLightModuleManager::getModuleExpiredFunction(
   };
 }
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::VirtualTrafficLightModulePlugin,
+  behavior_velocity_planner::PluginInterface)

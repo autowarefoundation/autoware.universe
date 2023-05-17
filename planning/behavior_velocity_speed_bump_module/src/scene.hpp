@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__SPEED_BUMP__SCENE_HPP_
-#define SCENE_MODULE__SPEED_BUMP__SCENE_HPP_
+#ifndef SCENE_HPP_
+#define SCENE_HPP_
+
+#include "util.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/speed_bump/util.hpp>
 
 #include <utility>
 #include <vector>
@@ -81,4 +82,4 @@ private:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__SPEED_BUMP__SCENE_HPP_
+#endif  // SCENE_HPP_

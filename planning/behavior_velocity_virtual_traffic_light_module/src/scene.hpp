@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_
-#define SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_
+#ifndef SCENE_HPP_
+#define SCENE_HPP_
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
@@ -130,4 +130,4 @@ private:
     tier4_planning_msgs::msg::StopReason * stop_reason, const size_t end_line_idx);
 };
 }  // namespace behavior_velocity_planner
-#endif  // SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_
+#endif  // SCENE_HPP_

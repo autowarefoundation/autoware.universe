@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__SPEED_BUMP__UTIL_HPP_
-#define SCENE_MODULE__SPEED_BUMP__UTIL_HPP_
+#ifndef UTIL_HPP_
+#define UTIL_HPP_
 
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -30,6 +30,7 @@
 #include <Eigen/Geometry>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point32.hpp>
 
 #include <lanelet2_core/primitives/Polygon.h>
 
@@ -70,4 +71,4 @@ float calcSlowDownSpeed(const Point32 & p1, const Point32 & p2, const float spee
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__SPEED_BUMP__UTIL_HPP_
+#endif  // UTIL_HPP_
