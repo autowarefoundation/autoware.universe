@@ -269,8 +269,7 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
 
   // 2. check the case where the polygon does not intersect the bound
   const bool is_polygon_fully_inside_bounds = [&]() {
-    for (int i = 0; i < static_cast<int>(full_polygon.size()); ++i) {
-      const auto & curr_poly = full_polygon.at(i);
+    for (const auto & curr_poly : full_polygon) {
       const bool is_curr_outside = curr_poly.is_outside_bounds(is_object_right);
       if (is_curr_outside) {
         return false;
