@@ -406,7 +406,8 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto prepare_duration = common_parameter.lane_change_prepare_duration;
   const auto minimum_prepare_length = common_parameter.minimum_prepare_length;
   const auto minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
-  const auto lane_change_sampling_num = lane_change_parameters_->lane_change_sampling_num;
+  const auto longitudinal_acc_sampling_num = lane_change_parameters_->longitudinal_acc_sampling_num;
+  const auto lateral_acc_sampling_num = lane_change_parameters_->lateral_acc_sampling_num;
 
   // get velocity
   const auto current_velocity = getEgoTwist().linear.x;
@@ -421,7 +422,7 @@ bool NormalLaneChange::getLaneChangePaths(
     });
 
   const auto longitudinal_acc_resolution =
-    std::abs(maximum_deceleration) / lane_change_sampling_num;
+    std::abs(maximum_deceleration) / longitudinal_acc_sampling_num;
 
   const auto target_length =
     utils::getArcLengthToTargetLanelet(original_lanelets, target_lanelets.front(), getEgoPose());
@@ -450,7 +451,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
   LaneChangeTargetObjectIndices dynamic_object_indices;
 
-  candidate_paths->reserve(lane_change_sampling_num);
+  candidate_paths->reserve(longitudinal_acc_sampling_num * lateral_acc_sampling_num);
   for (double sampled_longitudinal_acc = 0.0; sampled_longitudinal_acc >= maximum_deceleration;
        sampled_longitudinal_acc -= longitudinal_acc_resolution) {
     const auto prepare_velocity = std::max(
@@ -507,9 +508,12 @@ bool NormalLaneChange::getLaneChangePaths(
     // get lateral acceleration range
     const auto [min_lateral_acc, max_lateral_acc] =
       common_parameter.lane_change_lat_acc_map.find(lane_changing_velocity);
+    const auto lateral_acc_resolution =
+      std::abs(max_lateral_acc - min_lateral_acc) / lateral_acc_sampling_num;
+    constexpr double lateral_acc_epsilon = 0.01;
 
-    for (double lateral_acc = min_lateral_acc; lateral_acc <= max_lateral_acc;
-         lateral_acc += 0.05) {
+    for (double lateral_acc = min_lateral_acc; lateral_acc < max_lateral_acc + lateral_acc_epsilon;
+         lateral_acc += lateral_acc_resolution) {
       const auto lane_changing_length = utils::lane_change::calcLaneChangingLength(
         lane_changing_velocity, shift_length, lateral_acc,
         common_parameter.lane_changing_lateral_jerk);

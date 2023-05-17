@@ -728,7 +728,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
-  p.lane_change_sampling_num = declare_parameter<int>(parameter("lane_change_sampling_num"));
+  p.longitudinal_acc_sampling_num =
+    declare_parameter<int>(parameter("longitudinal_acceleration_sampling_num"));
+  p.lateral_acc_sampling_num =
+    declare_parameter<int>(parameter("lateral_acceleration_sampling_num"));
 
   // collision check
   p.enable_prepare_segment_collision_check =
@@ -764,11 +767,13 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
 
   // validation of parameters
-  if (p.lane_change_sampling_num < 1) {
+  if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num) {
     RCLCPP_FATAL_STREAM(
-      get_logger(), "lane_change_sampling_num must be positive integer. Given parameter: "
-                      << p.lane_change_sampling_num << std::endl
-                      << "Terminating the program...");
+      get_logger(),
+      "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
+        << p.longitudinal_acc_sampling_num
+        << "Given lateral parameter: " << p.lateral_acc_sampling_num << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
