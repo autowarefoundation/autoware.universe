@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INTERSECTION__UTIL_TYPE_HPP_
-#define SCENE_MODULE__INTERSECTION__UTIL_TYPE_HPP_
+#ifndef UTIL_TYPE_HPP_
+#define UTIL_TYPE_HPP_
 
 #include <lanelet2_core/primitives/CompoundPolygon.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -56,4 +56,4 @@ struct DetectionLaneDivision
 
 }  // namespace behavior_velocity_planner::util
 
-#endif  // SCENE_MODULE__INTERSECTION__UTIL_TYPE_HPP_
+#endif  // UTIL_TYPE_HPP_

@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INTERSECTION__UTIL_HPP_
-#define SCENE_MODULE__INTERSECTION__UTIL_HPP_
+#ifndef UTIL_HPP_
+#define UTIL_HPP_
+
+#include "scene_intersection.hpp"
+#include "util_type.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/intersection/scene_intersection.hpp>
-#include <scene_module/intersection/util_type.hpp>
 
 #include <geometry_msgs/msg/point.hpp>
 
@@ -193,4 +194,4 @@ std::vector<DetectionLaneDivision> generateDetectionLaneDivisions(
 }  // namespace util
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__INTERSECTION__UTIL_HPP_
+#endif  // UTIL_HPP_

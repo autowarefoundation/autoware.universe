@@ -26,20 +26,23 @@
 #endif
 // #include <sensor_msgs/image_encodings.h>
 // #include <opencv2/highgui/highgui.hpp>
+#include "scene_intersection.hpp"
+#include "util.hpp"
+
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <magic_enum.hpp>
 #include <opencv2/imgproc.hpp>
-#include <scene_module/intersection/scene_intersection.hpp>
-#include <scene_module/intersection/util.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 namespace behavior_velocity_planner

@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "manager.hpp"
+
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <scene_module/intersection/manager.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -356,3 +359,10 @@ bool MergeFromPrivateModuleManager::hasSameParentLaneletAndTurnDirectionWithRegi
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::IntersectionModulePlugin, behavior_velocity_planner::PluginInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::MergeFromPrivateModulePlugin,
+  behavior_velocity_planner::PluginInterface)

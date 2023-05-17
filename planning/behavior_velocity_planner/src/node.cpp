@@ -36,7 +36,6 @@
 // Scene modules
 #include <scene_module/blind_spot/manager.hpp>
 #include <scene_module/detection_area/manager.hpp>
-#include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/out_of_lane/manager.hpp>
@@ -156,8 +155,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
   if (this->declare_parameter<bool>("launch_intersection")) {
     // intersection module should be before merge from private to declare intersection parameters
-    planner_manager_.launchSceneModule<IntersectionModuleManager>(*this);
-    planner_manager_.launchSceneModule<MergeFromPrivateModuleManager>(*this);
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::IntersectionModulePlugin");
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::MergeFromPrivateModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_blind_spot")) {
     planner_manager_.launchSceneModule<BlindSpotModuleManager>(*this);

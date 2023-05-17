@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
-#define SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
+#ifndef SCENE_INTERSECTION_HPP_
+#define SCENE_INTERSECTION_HPP_
+
+#include "util_type.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
@@ -21,7 +23,6 @@
 #include <grid_map_core/grid_map_core.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/intersection/util_type.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -331,4 +332,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
+#endif  // SCENE_INTERSECTION_HPP_

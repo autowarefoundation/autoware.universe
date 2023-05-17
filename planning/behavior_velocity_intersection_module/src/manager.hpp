@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__INTERSECTION__MANAGER_HPP_
-#define SCENE_MODULE__INTERSECTION__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
 
+#include "scene_intersection.hpp"
+#include "scene_merge_from_private_road.hpp"
+
+#include <behavior_velocity_planner_common/plugin_interface.hpp>
+#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <scene_module/intersection/scene_intersection.hpp>
-#include <scene_module/intersection/scene_merge_from_private_road.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
@@ -74,6 +77,15 @@ private:
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };
+
+class IntersectionModulePlugin : public PluginWrapper<IntersectionModuleManager>
+{
+};
+
+class MergeFromPrivateModulePlugin : public PluginWrapper<MergeFromPrivateModuleManager>
+{
+};
+
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__INTERSECTION__MANAGER_HPP_
+#endif  // MANAGER_HPP_
