@@ -417,7 +417,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   if (
     lateral_acc_velocity.size() != min_lateral_acc.size() ||
     lateral_acc_velocity.size() != max_lateral_acc.size()) {
-    RCLCPP_ERROR(get_logger(), "Lane Change lateral acceleration map has invalid size.");
+    RCLCPP_ERROR(get_logger(), "Lane change lateral acceleration map has invalid size.");
     exit(EXIT_FAILURE);
   }
   for (size_t i = 0; i < lateral_acc_velocity.size(); ++i) {
