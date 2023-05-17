@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OUT_OF_LANE__LANELETS_SELECTION_HPP_
-#define SCENE_MODULE__OUT_OF_LANE__LANELETS_SELECTION_HPP_
+#ifndef LANELETS_SELECTION_HPP_
+#define LANELETS_SELECTION_HPP_
 
-#include "scene_module/out_of_lane/types.hpp"
+#include "types.hpp"
 
 #include <route_handler/route_handler.hpp>
 
@@ -55,4 +55,4 @@ lanelet::ConstLanelets calculate_other_lanelets(
   const route_handler::RouteHandler & route_handler, const PlannerParam & params);
 }  // namespace behavior_velocity_planner::out_of_lane
 
-#endif  // SCENE_MODULE__OUT_OF_LANE__LANELETS_SELECTION_HPP_
+#endif  // LANELETS_SELECTION_HPP_

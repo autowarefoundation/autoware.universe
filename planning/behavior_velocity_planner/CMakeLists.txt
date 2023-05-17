@@ -15,7 +15,6 @@ set(scene_modules
   virtual_traffic_light
   run_out
   speed_bump
-  out_of_lane
 )
 
 foreach(scene_module IN LISTS scene_modules)

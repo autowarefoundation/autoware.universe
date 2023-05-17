@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
-#define SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
+#ifndef TYPES_HPP_
+#define TYPES_HPP_
 
 #include <route_handler/route_handler.hpp>
 
@@ -173,4 +173,4 @@ struct DebugData
 
 }  // namespace behavior_velocity_planner::out_of_lane
 
-#endif  // SCENE_MODULE__OUT_OF_LANE__TYPES_HPP_
+#endif  // TYPES_HPP_

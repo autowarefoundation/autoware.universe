@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "manager.hpp"
+
+#include "scene_out_of_lane.hpp"
+
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <scene_module/out_of_lane/manager.hpp>
-#include <scene_module/out_of_lane/scene_out_of_lane.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -85,3 +87,7 @@ OutOfLaneModuleManager::getModuleExpiredFunction(
   };
 }
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::OutOfLaneModulePlugin, behavior_velocity_planner::PluginInterface)

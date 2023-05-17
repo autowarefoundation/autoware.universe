@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/out_of_lane/overlapping_range.hpp"
+#include "overlapping_range.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>

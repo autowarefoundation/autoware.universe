@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/out_of_lane/lanelets_selection.hpp"
+#include "lanelets_selection.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 

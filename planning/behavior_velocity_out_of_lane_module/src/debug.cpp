@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/out_of_lane/debug.hpp"
+#include "debug.hpp"
 
 #include <visualization_msgs/msg/marker.hpp>
 

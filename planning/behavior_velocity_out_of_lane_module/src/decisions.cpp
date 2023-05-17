@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/out_of_lane/decisions.hpp"
+#include "decisions.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 

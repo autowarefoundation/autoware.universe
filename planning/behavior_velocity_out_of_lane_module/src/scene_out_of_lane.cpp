@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/out_of_lane/scene_out_of_lane.hpp"
+#include "scene_out_of_lane.hpp"
 
-#include "scene_module/out_of_lane/debug.hpp"
-#include "scene_module/out_of_lane/decisions.hpp"
-#include "scene_module/out_of_lane/footprint.hpp"
-#include "scene_module/out_of_lane/lanelets_selection.hpp"
-#include "scene_module/out_of_lane/overlapping_range.hpp"
-#include "scene_module/out_of_lane/types.hpp"
+#include "debug.hpp"
+#include "decisions.hpp"
+#include "footprint.hpp"
+#include "lanelets_selection.hpp"
+#include "overlapping_range.hpp"
+#include "types.hpp"
 
 #include <behavior_velocity_planner_common/utilization/debug.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
@@ -31,6 +31,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner::out_of_lane

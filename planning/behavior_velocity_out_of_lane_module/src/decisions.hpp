@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OUT_OF_LANE__DECISIONS_HPP_
-#define SCENE_MODULE__OUT_OF_LANE__DECISIONS_HPP_
+#ifndef DECISIONS_HPP_
+#define DECISIONS_HPP_
 
-#include "scene_module/out_of_lane/types.hpp"
+#include "types.hpp"
 
 #include <rclcpp/logger.hpp>
 #include <route_handler/route_handler.hpp>
@@ -123,4 +123,4 @@ std::vector<Slowdown> calculate_decisions(
   const DecisionInputs & inputs, const PlannerParam & params, const rclcpp::Logger & logger);
 }  // namespace behavior_velocity_planner::out_of_lane
 
-#endif  // SCENE_MODULE__OUT_OF_LANE__DECISIONS_HPP_
+#endif  // DECISIONS_HPP_

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OUT_OF_LANE__SCENE_OUT_OF_LANE_HPP_
-#define SCENE_MODULE__OUT_OF_LANE__SCENE_OUT_OF_LANE_HPP_
+#ifndef SCENE_OUT_OF_LANE_HPP_
+#define SCENE_OUT_OF_LANE_HPP_
 
-#include "scene_module/out_of_lane/types.hpp"
+#include "types.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -70,4 +70,4 @@ std::vector<SlowdownToInsert> calculate_slowdown_points(
 
 }  // namespace behavior_velocity_planner::out_of_lane
 
-#endif  // SCENE_MODULE__OUT_OF_LANE__SCENE_OUT_OF_LANE_HPP_
+#endif  // SCENE_OUT_OF_LANE_HPP_

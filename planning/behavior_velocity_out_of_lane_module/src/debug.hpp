@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OUT_OF_LANE__DEBUG_HPP_
-#define SCENE_MODULE__OUT_OF_LANE__DEBUG_HPP_
+#ifndef DEBUG_HPP_
+#define DEBUG_HPP_
 
-#include "scene_module/out_of_lane/types.hpp"
+#include "types.hpp"
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -52,4 +52,4 @@ void add_lanelet_markers(
   const std_msgs::msg::ColorRGBA & color);
 }  // namespace behavior_velocity_planner::out_of_lane::debug
 
-#endif  // SCENE_MODULE__OUT_OF_LANE__DEBUG_HPP_
+#endif  // DEBUG_HPP_

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OUT_OF_LANE__FOOTPRINT_HPP_
-#define SCENE_MODULE__OUT_OF_LANE__FOOTPRINT_HPP_
+#ifndef FOOTPRINT_HPP_
+#define FOOTPRINT_HPP_
 
-#include "scene_module/out_of_lane/types.hpp"
+#include "types.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -56,4 +56,4 @@ lanelet::BasicPolygon2d calculate_current_ego_footprint(
 }  // namespace out_of_lane
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OUT_OF_LANE__FOOTPRINT_HPP_
+#endif  // FOOTPRINT_HPP_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/out_of_lane/footprint.hpp"
+#include "footprint.hpp"
 
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>

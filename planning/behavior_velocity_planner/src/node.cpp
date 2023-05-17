@@ -34,7 +34,6 @@
 #include <memory>
 
 // Scene modules
-#include <scene_module/out_of_lane/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
 #include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -187,7 +186,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchSceneModule<SpeedBumpModuleManager>(*this);
   }
   if (this->declare_parameter<bool>("launch_out_of_lane")) {
-    planner_manager_.launchSceneModule<OutOfLaneModuleManager>(*this);
+    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::OutOfLaneModulePlugin");
   }
 }
 
