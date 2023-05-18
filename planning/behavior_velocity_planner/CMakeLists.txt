@@ -4,34 +4,10 @@ project(behavior_velocity_planner)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-# Find the non-obvious packages manually
-find_package(Boost REQUIRED)
-find_package(eigen3_cmake_module REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(PCL REQUIRED COMPONENTS common filters)
-find_package(OpenCV REQUIRED)
-
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/node.cpp
   src/planner_manager.cpp
 )
-
-target_include_directories(${PROJECT_NAME}
-  SYSTEM PUBLIC
-    ${BOOST_INCLUDE_DIRS}
-    ${PCL_INCLUDE_DIRS}
-    ${tf2_geometry_msgs_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
-)
-
-ament_target_dependencies(${PROJECT_NAME}
-  Boost
-  Eigen3
-  PCL
-  message_filters
-)
-
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
@@ -39,17 +15,8 @@ rclcpp_components_register_node(${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
-  ament_add_ros_isolated_gtest(utilization-test
-    test/src/test_state_machine.cpp
-    test/src/test_arc_lane_util.cpp
-    test/src/test_utilization.cpp
-  )
-  target_link_libraries(utilization-test
-    gtest_main
-    ${PROJECT_NAME}
-  )
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/src/test_${PROJECT_NAME}_node_interface.cpp
+    test/src/test_node_interface.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     gtest_main
