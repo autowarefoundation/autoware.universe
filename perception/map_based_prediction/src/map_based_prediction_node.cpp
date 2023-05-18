@@ -1175,8 +1175,13 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // check if current lane is in the opposite lane
     const double abs_norm_delta =
       calcAbsYawDiffBetweenLaneletAndObject(object, current_lanelet_data.lanelet);
-    const bool now_in_opposite_lane =
-      !(abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_);
+    const bool delta_yaw_condition = abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_;
+    const bool delta_yaw_reversed_condition =
+      M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta;
+    const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    const bool velocity_reverted = object_vel < 0.0;
+    const bool reverted_delta_yaw_condition = velocity_reverted && delta_yaw_reversed_condition;
+    const bool now_in_opposite_lane = !(delta_yaw_condition || reverted_delta_yaw_condition);
 
     // Step1. Get the path
     // Step1.1 Get the left lanelet
@@ -1184,13 +1189,17 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     auto adjacent_left = routing_graph_ptr_->adjacentLeft(current_lanelet_data.lanelet);
 
-    if (!!opt_left && !now_in_opposite_lane) {
-      // set left lane
-      left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
-    } else if (!!adjacent_left && !now_in_opposite_lane) {
-      // set adjacent left lane
-      left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
-    } else if (now_in_opposite_lane) {
+    if (!now_in_opposite_lane) {  // in the forward lane
+      if (!!opt_left) {
+        // set left lane
+        left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
+      } else if (!!adjacent_left) {
+        // set adjacent left lane
+        left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
+      } else {
+        // there are no left lane
+      }
+    } else {
       // search for opposite lane to back
       //  Note(any): Only fit for left side driving country
       const auto opposite_lefts =
@@ -1203,31 +1212,23 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
         left_paths = routing_graph_ptr_->possiblePaths(opposite_left, possible_params);
         break;  // currently just considering one path
       }
-    } else {
-      // do nothing
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     auto adjacent_right = routing_graph_ptr_->adjacentRight(current_lanelet_data.lanelet);
-    if (!!opt_right && !now_in_opposite_lane) {
-      right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
-    } else if (!!adjacent_right && !now_in_opposite_lane) {
-      right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
-    } else {
-      // TODO(yoshiri): need to implement to go opposite lane from forward lane
 
-      // const auto opposite_rights =
-      //   getRightOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
-      // for (auto & opposite_right : opposite_rights) {
-      //   const double abs_norm_delta_yaw =
-      //     calcAbsYawDiffBetweenLaneletAndObject(object, opposite_right);
-      //   // do not predict path to opposite lane
-      //   if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
-      //   right_paths = routing_graph_ptr_->possiblePaths(opposite_right, possible_params);
-      //   break;  // currently just considering one path
-      //}
+    if (!now_in_opposite_lane) {
+      if (!!opt_right && !now_in_opposite_lane) {
+        right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
+      } else if (!!adjacent_right && !now_in_opposite_lane) {
+        right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
+      } else {
+        // TODO(yoshiri): need to implement to go opposite lane from forward lane
+      }
+    } else {
+      // Need to write prediction for opposite lane
     }
 
     lanelet::routing::LaneletPaths center_paths =
