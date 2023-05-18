@@ -1163,8 +1163,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
   const double object_detected_time)
 {
-  const double obj_vel = std::fabs(object.kinematics.twist_with_covariance.twist.linear.x);
+  // Following code is for left side driving country Japan/British.
+  // In other countries like US, modify the code to set is_left_side_driving_country = false.
+  const bool is_left_side_driving_country = true;
 
+  // get possible params
+  const double obj_vel = std::fabs(object.kinematics.twist_with_covariance.twist.linear.x);
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
     // parameter for lanelet::routing::PossiblePathsParams
@@ -1202,15 +1206,17 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     } else {
       // search for opposite lane to back
       //  Note(any): Only fit for left side driving country
-      const auto opposite_lefts =
-        getLeftOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
-      for (auto & opposite_left : opposite_lefts) {
-        const double abs_norm_delta_yaw =
-          calcAbsYawDiffBetweenLaneletAndObject(object, opposite_left);
-        // do not predict path to opposite lane
-        if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
-        left_paths = routing_graph_ptr_->possiblePaths(opposite_left, possible_params);
-        break;  // currently just considering one path
+      if (is_left_side_driving_country) {
+        const auto opposite_lanes =
+          getRightOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+        for (auto & opposite_lane : opposite_lanes) {
+          const double abs_norm_delta_yaw =
+            calcAbsYawDiffBetweenLaneletAndObject(object, opposite_lane);
+          // do not predict path to opposite lane
+          if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
+          left_paths = routing_graph_ptr_->possiblePaths(opposite_lane, possible_params);
+          break;  // currently just considering one path
+        }
       }
     }
 
@@ -1229,6 +1235,19 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       }
     } else {
       // Need to write prediction for opposite lane
+      //  Note(any): Only fit for right side driving country
+      if (!is_left_side_driving_country) {
+        const auto opposite_lanes =
+          getLeftOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+        for (auto & opposite_lane : opposite_lanes) {
+          const double abs_norm_delta_yaw =
+            calcAbsYawDiffBetweenLaneletAndObject(object, opposite_lane);
+          // do not predict path to opposite lane
+          if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
+          left_paths = routing_graph_ptr_->possiblePaths(opposite_lane, possible_params);
+          break;  // currently just considering one path
+        }
+      }
     }
 
     lanelet::routing::LaneletPaths center_paths =
