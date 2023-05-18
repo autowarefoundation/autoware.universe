@@ -497,12 +497,13 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * Even if it is determined that a yield is necessary, the yield maneuver is not executed
    * if the avoidance has already been initiated.
    */
-  if (!data.safe && data.avoiding_now) {
+  constexpr double THRESHOLD = -0.5;
+  const auto exceed_stop_line = data.to_stop_line < THRESHOLD;
+  if (!data.safe && (data.avoiding_now || exceed_stop_line)) {
     data.yield_required = false;
     data.safe = true;  // OVERWRITE SAFETY JUDGE
     data.safe_new_sl = data.unapproved_new_sl;
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "avoiding now. could not transit yield maneuver!!!");
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "could not transit yield maneuver!!!");
   }
 
   fillDebugData(data, debug);
