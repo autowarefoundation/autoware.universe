@@ -49,10 +49,12 @@ def launch_setup(context, *args, **kwargs):
         avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("avoidance_by_lc_param_path").perform(context), "r") as f:
         avoidance_by_lc_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("dynamic_avoidance_param_path").perform(context), "r") as f:
+        dynamic_avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_change_param_path").perform(context), "r") as f:
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("pull_over_param_path").perform(context), "r") as f:
-        pull_over_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("goal_planner_param_path").perform(context), "r") as f:
+        goal_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("pull_out_param_path").perform(context), "r") as f:
         pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("drivable_area_expansion_param_path").perform(context), "r") as f:
@@ -90,8 +92,9 @@ def launch_setup(context, *args, **kwargs):
             side_shift_param,
             avoidance_param,
             avoidance_by_lc_param,
+            dynamic_avoidance_param,
             lane_change_param,
-            pull_over_param,
+            goal_planner_param,
             pull_out_param,
             drivable_area_expansion_param,
             scene_module_manager_param,
@@ -318,7 +321,7 @@ def generate_launch_description():
     add_launch_arg("use_experimental_lane_change_function")
 
     # component
-    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 
     # for points filter of run out module

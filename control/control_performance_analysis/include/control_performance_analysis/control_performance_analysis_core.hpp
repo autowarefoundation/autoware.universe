@@ -21,7 +21,7 @@
 #include "control_performance_analysis/msg/float_stamped.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <rclcpp/time.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
@@ -98,6 +98,7 @@ private:
   Params p_;
 
   // Variables Received Outside
+  std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> current_trajectory_ptr_;
   std::shared_ptr<PoseArray> current_waypoints_ptr_;
   std::shared_ptr<std::vector<double>> current_waypoints_vel_ptr_;
   std::shared_ptr<Pose> current_vec_pose_ptr_;

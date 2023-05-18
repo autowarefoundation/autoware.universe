@@ -94,6 +94,9 @@ struct AvoidanceParameters
   // disable path update
   bool disable_path_update{false};
 
+  // use hatched road markings for avoidance
+  bool use_hatched_road_markings{false};
+
   // constrains
   bool use_constraints_for_decel{false};
 
@@ -143,9 +146,6 @@ struct AvoidanceParameters
 
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
-
-  // if object overhang is less than this value, the ego stops behind the object.
-  double lateral_passable_safety_buffer{0.5};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -236,7 +236,22 @@ struct AvoidanceParameters
   // avoidance points is greater than this threshold.
   // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
-  double avoidance_execution_lateral_threshold;
+  double lateral_execution_threshold;
+
+  // For shift line generation process. The continuous shift length is quantized by this value.
+  double quantize_filter_threshold;
+
+  // For shift line generation process. Merge small shift lines. (First step)
+  double same_grad_filter_1_threshold;
+
+  // For shift line generation process. Merge small shift lines. (Second step)
+  double same_grad_filter_2_threshold;
+
+  // For shift line generation process. Merge small shift lines. (Third step)
+  double same_grad_filter_3_threshold;
+
+  // For shift line generation process. Remove sharp(=jerky) shift line.
+  double sharp_shift_filter_threshold;
 
   // target velocity matrix
   std::vector<double> target_velocity_matrix;
@@ -497,10 +512,6 @@ struct DebugData
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
-
-  boost::optional<Pose> stop_pose{boost::none};
-  boost::optional<Pose> slow_pose{boost::none};
-  boost::optional<Pose> feasible_bound{boost::none};
 
   bool exist_adjacent_objects{false};
 

@@ -15,8 +15,6 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Sparse"
 #include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
@@ -26,6 +24,9 @@
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Sparse>
 
 #include <memory>
 #include <optional>
@@ -184,6 +185,7 @@ private:
     double avoidance_cost_margin;
     double avoidance_cost_band_length;
     double avoidance_cost_decrease_rate;
+    double min_drivable_width;
     double avoidance_lat_error_weight;
     double avoidance_yaw_error_weight;
     double avoidance_steer_input_weight;
@@ -251,6 +253,7 @@ private:
     const std::vector<geometry_msgs::msg::Point> & left_bound,
     const std::vector<geometry_msgs::msg::Point> & right_bound,
     const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const;
+  void keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_points) const;
   std::vector<ReferencePoint> extendViolatedBounds(
     const std::vector<ReferencePoint> & ref_points) const;
   void avoidSuddenSteering(

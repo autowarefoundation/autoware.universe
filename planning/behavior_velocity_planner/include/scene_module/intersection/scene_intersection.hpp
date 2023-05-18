@@ -150,15 +150,9 @@ public:
   UUID getOcclusionUUID() const { return occlusion_uuid_; }
   bool getOcclusionSafety() const { return occlusion_safety_; }
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
-  UUID getOcclusionFirstStopUUID() const { return occlusion_first_stop_uuid_; }
-  bool getOcclusionFirstStopSafety() const { return occlusion_first_stop_safety_; }
-  double getOcclusionFirstStopDistance() const { return occlusion_first_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
-  void setOcclusionFirstStopActivation(const bool activation)
-  {
-    occlusion_first_stop_activated_ = activation;
-  }
-  bool isOccluded() const { return is_occluded_; }
+  bool isOccluded() const { return is_actually_occluded_ || is_forcefully_occluded_; }
+  bool isOcclusionFirstStopRequired() { return occlusion_first_stop_required_; }
 
 private:
   rclcpp::Node & node_;
@@ -175,7 +169,8 @@ private:
   // for occlusion detection
   const bool enable_occlusion_detection_;
   std::optional<std::vector<util::DetectionLaneDivision>> detection_divisions_;
-  bool is_occluded_ = false;
+  bool is_actually_occluded_ = false;    //! occlusion based on occupancy_grid
+  bool is_forcefully_occluded_ = false;  //! fake occlusion forced by external operator
   OcclusionState occlusion_state_ = OcclusionState::NONE;
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
@@ -184,10 +179,8 @@ private:
   double occlusion_stop_distance_;
   bool occlusion_activated_ = true;
   // for first stop in two-phase stop
-  const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): replace with uuid_
-  bool occlusion_first_stop_safety_ = true;
-  double occlusion_first_stop_distance_;
-  bool occlusion_first_stop_activated_ = true;
+  const UUID occlusion_first_stop_uuid_;
+  bool occlusion_first_stop_required_ = false;
 
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
@@ -322,6 +315,7 @@ private:
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
     const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+    lanelet::ConstLanelets adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_detection_area,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip,
     const std::pair<size_t, size_t> & lane_interval,

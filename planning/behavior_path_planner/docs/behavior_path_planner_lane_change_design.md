@@ -22,18 +22,18 @@ The lane change candidate path is divided into two phases: preparation and lane-
 The preparation trajectory is the candidate path's first and the straight portion generated along the ego vehicle's current lane. The length of the preparation trajectory is computed as follows.
 
 ```C++
-lane_change_prepare_distance = max(current_speed * lane_change_prepare_duration + 0.5 * deceleration * lane_change_prepare_duration^2, minimum_lane_change_prepare_distance)
+lane_change_prepare_distance = current_speed * lane_change_prepare_duration + 0.5 * deceleration * lane_change_prepare_duration^2
 ```
 
 During the preparation phase, the turn signal will be activated when the remaining distance is equal to or less than `lane_change_search_distance`.
 
 ### Lane-changing phase
 
-The lane-changing phase consist of the shifted path that moves ego from current lane to the target lane. Total distance of lane-changing phase is as follows.
+The lane-changing phase consist of the shifted path that moves ego from current lane to the target lane. Total distance of lane-changing phase is as follows. Note that during the lane changing phase, the ego vehicle travels at a constant speed.
 
 ```C++
-lane_change_prepare_velocity = current_speed + deceleration * lane_change_prepare_duration
-lane_changing_distance = max(lane_change_prepare_velocity * lane_changing_duration + 0.5 * deceleration * lane_changing_duration^2, minimum_lane_change_length + backward_length_buffer_for_end_of_lane)
+lane_change_prepare_velocity = std::max(current_speed + deceleration * lane_change_prepare_duration, minimum_lane_changing_velocity)
+lane_changing_distance = lane_change_prepare_velocity * lane_changing_duration
 ```
 
 The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
@@ -41,13 +41,15 @@ The `backward_length_buffer_for_end_of_lane` is added to allow some window for a
 #### Multiple candidate path samples
 
 Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
-Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `lane_change_prepare_distance`, `lane_change_prepare_velocity` and `lane_changing_distance` equation.
+Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `prepare_length`, `prepare_velocity` and `lane_changing_length` equation.
 
-The predetermined deceleration are a set of value that starts from `deceleration = 0.0`, and decrease by `acceleration_resolution` until it reaches`deceleration = -maximum_deceleration`. The `acceleration_resolution` is determine by the following
+The predetermined deceleration are a set of value that starts from `deceleration = 0.0`, and decrease by `acceleration_resolution` until it reaches`deceleration = -maximum_deceleration`. `maximum_deceleration` is defined in the `common.param` file as `normal.min_acc`. The `acceleration_resolution` is determine by the following
 
 ```C++
 acceleration_resolution = maximum_deceleration / lane_change_sampling_num
 ```
+
+Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, the acceleration becomes positive value (not deceleration).
 
 The following figure illustrates when `lane_change_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
 
@@ -123,183 +125,7 @@ stop
 
 #### Candidate Path's Safety check
 
-Valid candidate path is evaluated for safety before is was selected as the output candidate path. The flow of the process is as follows.
-
-```plantuml
-@startuml
-skinparam monochrome true
-skinparam defaultTextAlignment center
-skinparam noteTextAlignment left
-
-title Safe and Force Lane Change
-start
-:**INPUT** std::vector<LaneChangePath> valid_paths;
-
-partition selectValidPaths {
-:**INITIALIZE** std::vector<LaneChangePath> valid_paths;
-
-:idx = 0;
-
-while (idx < input_paths.size()?) is (TRUE)
-
-:path = valid_paths.at(idx);
-
-
-if(path pass safety check?) then (TRUE)
-:selected_path = path, is_path_safe = true;
-else (NO)
-endif
-
-:++idx;
-endwhile (FALSE)
-
-if(valid_paths.empty()?)then (true)
-
-:selected_path = valid_paths.front(), is_path_safe = false;
-note left
-used for
-**FORCE LANE CHANGE**
-if FORCE is needed,
-then there is no safe path
-end note
-else (\nfalse)
-endif
-
-:**RETURN** selected_path && is_path_safe;
-
-}
-stop
-@enduml
-
-```
-
-If all valid candidate path is unsafe, then the operator will have the option to perform force lane change by using the front-most candidate path as the output. The force lane change will ignore all safety checks.
-
-A candidate path's is safe if it satisfies the following lateral distance criteria,
-
-```C++
-lateral distance > lateral_distance_threshold
-```
-
-However, suppose the lateral distance is insufficient. In that case, longitudinal distance will be evaluated. The candidate path is safe only when the longitudinal gap between the ego vehicle and the dynamic object is wide enough.
-
-The following charts illustrate the flow of the safety checks
-
-```plantuml
-@startuml
-skinparam monochrome true
-skinparam defaultTextAlignment center
-skinparam noteTextAlignment left
-
-title Collision/Safety Check
-start
-:**INPUT** valid_path;
-
-:**CONVERT** valid_path **to** ego_predicted_path;
-
-:idx = 0;
-
-:is_safe_path = true;
-
-:objects = dynamic_objects in current and target lane;
-while (idx < objects.size()?) is (TRUE)
-
-:obj = objects.at(idx);
-
-:**INITIALIZE** time = 0;
-
-:check_time = prepare_duration + lane_changing_duration;
-
-while(time == check_time?) is (FALSE)
-
-if(lateral distance is sufficient) then (TRUE)
-
-else
-if (is ego in front of object?) then (YES)
-:v_front = v_ego
-v_rear = v_obj;
-else (NO)
-:v_front = v_obj
-v_rear = v_ego;
-endif
-if(longitudinal distance is sufficient) then (YES)
-else (NO)
-:is_safe_path = false;
-break
-endif
-endif
-
-:t+=prediction_time_resolution;
-
-endwhile (TRUE)
-
-if(if_safe_path == TRUE?) then (YES)
-else (NO)
-break;
-endif
-
-:++idx;
-
-endwhile (FALSE)
-
-:**RETURN** is_safe_path;
-
-stop
-@enduml
-
-```
-
-##### Calculating and evaluating longitudinal distance
-
-A sufficient longitudinal gap between vehicles will prevent any rear-end collision from happening. This includes an emergency stop or sudden braking scenarios.
-
-The following information is required to evaluate the longitudinal distance between vehicles
-
-1. estimated speed of the dynamic objects
-2. predicted path of dynamic objects
-3. ego vehicle's current speed
-4. ego vehicle's predicted path (converted/estimated from candidate path)
-
-The following figure illustrates how the safety check is performed on ego vs. dynamic objects.
-
-![Safety check](../image/lane_change/lane_change-collision_check.png)
-
-Let `v_front` and `a_front` be the front vehicle's velocity and deceleration, respectively, and `v_rear` and `a_rear` be the rear vehicle's velocity and deceleration, respectively.
-Front vehicle and rear vehicle assignment will depend on which predicted path's pose is currently being evaluated.
-
-The following figure illustrates front and rear vehicle velocity assignment.
-
-![front rear assignment](../image/lane_change/lane_change-collision_check_parked_vehicle.png)
-
-Assuming the front vehicle brakes, then `d_front` is the distance the front vehicle will travel until it comes to a complete stop. The distance is computed from the equation of motion, which yield.
-
-```C++
-d_front = -std::pow(v_front,2) / (2*a_front)
-```
-
-Using the same formula to evaluate the rear vehicle's stopping distance `d_rear` is insufficient. This is because as the rear vehicle's driver saw the front vehicle's sudden brake, it will take some time for the driver to process the information and react by pressing the brake. We call this delay the reaction time.
-
-The reaction time is considered from the duration starting from the driver seeing the front vehicle brake light until the brake is pressed. As the brake is pressed, the time margin (which might be caused by mechanical or control delay) also needs to be considered. With these two parameters included, the formula for `d_rear` will be as follows.
-
-```C++
-d_rear = v_rear * rear_vehicle_reaction_time + v_rear * rear_vehicle_safety_time_margin + (-std::pow(v_front,2) / 2 * a_rear)
-```
-
-Since there is no absolute value for the deceleration`a_front` and `a_rear`, both of the values are parameterized (`expected_front_deceleration` and `expected_rear_deceleration`, respectively) with the estimation of how much deceleration will occur if the brake is pressed.
-
-The longitudinal distance is evaluated as follows
-
-```C++
-d_rear < d_front + d_inter
-```
-
-where `d_inter` is the relative longitudinal distance obtained at each evaluated predicted pose.
-
-Finally minimum longitudinal distance for `d_rear` is added to compensate for object to near to each other when `d_rear = 0.0`. This yields
-
-```C++
-std::max(longitudinal_distance_min_threshold, d_rear) < d_front + d_inter
-```
+See [safety check utils explanation](../docs/behavior_path_planner_safety_check.md)
 
 ##### Collision check in prepare phase
 
@@ -311,10 +137,11 @@ The parameter `prepare_phase_ignore_target_speed_thresh` can be configured to ig
 
 #### If the lane is blocked and multiple lane changes
 
-When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance computation is as follows.
+When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance can be computed from shift length and minimum lane changing velocity.
 
 ```C++
-minimum_lane_change_distance = num_of_lane_changes * (minimum_lane_change_length + backward_length_buffer_for_end_of_lane)
+lane_changing_time = f(shift_length, lat_acceleration, lat_jerk)
+minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_velocity * lane_changing_time + backward_length_buffer_for_end_of_lane
 ```
 
 The following figure illustrates when the lane is blocked in multiple lane changes cases.
@@ -409,14 +236,12 @@ The following parameters are configurable in `lane_change.param.yaml`.
 
 | Name                                     | Unit   | Type   | Description                                                                             | Default value |
 | :--------------------------------------- | ------ | ------ | --------------------------------------------------------------------------------------- | ------------- |
-| `lane_change_prepare_duration`           | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.            | 4.0           |
+| `prepare_duration`                       | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.            | 4.0           |
 | `lane_changing_safety_check_duration`    | [m]    | double | The total time that is taken to complete the lane-changing task.                        | 8.0           |
-| `minimum_lane_change_length`             | [m]    | double | The minimum distance needed for changing lanes.                                         | 16.5          |
 | `backward_length_buffer_for_end_of_lane` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change   | 2.0           |
 | `lane_change_finish_judge_buffer`        | [m]    | double | The additional buffer used to confirm lane change process completion                    | 3.0           |
 | `lane_changing_lateral_jerk`             | [m/s3] | double | Lateral jerk value for lane change path generation                                      | 0.5           |
-| `lane_changing_lateral_acc`              | [m/s2] | double | Lateral acceleration value for lane change path generation                              | 0.5           |
-| `minimum_lane_change_velocity`           | [m/s]  | double | Minimum speed during lane changing process.                                             | 2.78          |
+| `minimum_lane_changing_velocity`         | [m/s]  | double | Minimum speed during lane changing process.                                             | 2.78          |
 | `prediction_time_resolution`             | [s]    | double | Time resolution for object's path interpolation and collision check.                    | 0.5           |
 | `lane_change_sampling_num`               | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by deceleration | 10            |
 

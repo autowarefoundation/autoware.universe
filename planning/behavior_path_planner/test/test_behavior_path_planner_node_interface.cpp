@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,18 +52,20 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
     "bt_tree_config_path", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml");
 
   test_utils::updateNodeOptions(
-    node_options, {planning_test_utils_dir + "/config/test_common.param.yaml",
-                   planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-                   planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-                   behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
-                   behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
-                   behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-                   behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
-                   behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-                   behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
-                   behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
-                   behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
-                   behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+    node_options,
+    {planning_test_utils_dir + "/config/test_common.param.yaml",
+     planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
+     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
+     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
+     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
+     behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml",
+     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
+     behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
+     behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
+     behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
+     behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }
@@ -96,11 +98,11 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
   publishMandatoryTopics(test_manager, test_target_node);
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithBehaviorNominalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test with empty route
-  test_manager->testWithAbnormalRoute(test_target_node);
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalRoute(test_target_node));
   rclcpp::shutdown();
 }
 
@@ -113,12 +115,12 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   publishMandatoryTopics(test_manager, test_target_node);
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithBehaviorNominalRoute(test_target_node));
 
   // make sure behavior_path_planner is running
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  ASSERT_NO_THROW(test_manager->testRouteWithInvalidEgoPose(test_target_node));
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testRouteWithInvalidEgoPose(test_target_node));
 
   rclcpp::shutdown();
 }

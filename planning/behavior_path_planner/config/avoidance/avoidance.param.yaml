@@ -18,6 +18,7 @@
       enable_safety_check: true
       enable_yield_maneuver: true
       disable_path_update: false
+      use_hatched_road_markings: false
 
       # for debug
       publish_debug_marker: false
@@ -97,9 +98,8 @@
         # avoidance lateral parameters
         lateral:
           lateral_collision_margin: 1.0                 # [m]
-          lateral_passable_safety_buffer: 1.0           # [m]
+          lateral_execution_threshold: 0.499            # [m]
           road_shoulder_safety_margin: 0.3              # [m]
-          avoidance_execution_lateral_threshold: 0.499
           max_right_shift_length: 5.0
           max_left_shift_length: 5.0
         # avoidance distance parameters
@@ -143,3 +143,11 @@
         matrix:
           [2.78, 13.9,                                  # velocity [m/s]
            0.50, 1.00]                                  # margin [m]
+
+      shift_line_pipeline:
+        trim:
+          quantize_filter_threshold: 0.2
+          same_grad_filter_1_threshold: 0.1
+          same_grad_filter_2_threshold: 0.2
+          same_grad_filter_3_threshold: 0.5
+          sharp_shift_filter_threshold: 0.2

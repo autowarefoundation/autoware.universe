@@ -11,8 +11,7 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
@@ -21,6 +20,7 @@
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>libboost-dev</depend>
+  <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
