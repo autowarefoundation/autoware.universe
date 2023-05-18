@@ -1074,7 +1074,7 @@ bool IntersectionModule::isOcclusionCleared(
   cv::bitwise_and(detection_mask, unknown_mask, occlusion_mask_raw);
   // (3.1) apply morphologyEx
   cv::Mat occlusion_mask;
-  const int morph_size = std::ceil(2.0 / reso);
+  const int morph_size = std::ceil(planner_param_.occlusion.denoise_kernel / reso);
   cv::morphologyEx(
     occlusion_mask_raw, occlusion_mask, cv::MORPH_OPEN,
     cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
