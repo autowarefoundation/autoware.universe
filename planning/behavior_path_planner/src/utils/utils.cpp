@@ -1380,7 +1380,7 @@ void generateDrivableArea(
     auto clock{rclcpp::Clock{RCL_ROS_TIME}};
     RCLCPP_ERROR_STREAM_THROTTLE(
       rclcpp::get_logger("behavior_path_planner").get_child("utils"), clock, 1000,
-      "closest shoulder lanelet not found.");
+      "The right or left bound of drivable area is empty");
     return;
   }
 
