@@ -88,12 +88,12 @@ std::tuple<double, double, double> update(
  * @param (am) minimum deceleration [m/ss]
  * @param (ja) maximum jerk [m/sss]
  * @param (jd) minimum jerk [m/sss]
- * @param (t_min_acc) duration of constant deceleration [s]
+ * @param (t_during_min_acc) duration of constant deceleration [s]
  * @return moving distance until velocity is reached vt [m]
  */
 boost::optional<double> calcDecelDistPlanType1(
   const double v0, const double vt, const double a0, const double am, const double ja,
-  const double jd, const double t_min_acc)
+  const double jd, const double t_during_min_acc)
 {
   constexpr double epsilon = 1e-3;
 
@@ -103,7 +103,7 @@ boost::optional<double> calcDecelDistPlanType1(
   const auto [x1, v1, a1] = update(0.0, v0, a0, j1, t1);
 
   // zero jerk time
-  const double t2 = epsilon < t_min_acc ? t_min_acc : 0.0;
+  const double t2 = epsilon < t_during_min_acc ? t_during_min_acc : 0.0;
   const auto [x2, v2, a2] = update(x1, v1, a1, 0.0, t2);
 
   // positive jerk time
