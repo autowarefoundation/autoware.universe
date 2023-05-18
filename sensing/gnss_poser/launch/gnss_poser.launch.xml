@@ -19,7 +19,6 @@
   <arg name="plane_zone" default="9"/>
   <arg name="height_system" default="1" description="0:Orthometric Height 1:Ellipsoid Height"/>
 
-
   <node pkg="gnss_poser" exec="gnss_poser" name="gnss_poser" output="screen">
     <remap from="fix" to="$(var input_topic_fix)"/>
     <remap from="autoware_orientation" to="$(var input_topic_orientation)"/>

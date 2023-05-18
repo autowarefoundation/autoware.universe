@@ -81,7 +81,7 @@ void GNSSPoser::callbackNavSatFix(
   }
 
   // get position in coordinate_system
-  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, coordinate_system_,height_system_);
+  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, coordinate_system_, height_system_);
   const auto position = getPosition(gnss_stat);
 
   // calc median position
@@ -180,16 +180,18 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
 }
 
 GNSSStat GNSSPoser::convert(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,int height_system)
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,
+  int height_system)
 {
   GNSSStat gnss_stat;
   if (coordinate_system == CoordinateSystem::UTM) {
-    gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger(),height_system);
+    gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger(), height_system);
   } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
     gnss_stat =
       NavSatFix2LocalCartesianUTM(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(),height_system);
   } else if (coordinate_system == CoordinateSystem::MGRS) {
-    gnss_stat = NavSatFix2MGRS(nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(),height_system);
+    gnss_stat = NavSatFix2MGRS(
+      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), height_system);
   } else if (coordinate_system == CoordinateSystem::PLANE) {
     gnss_stat = NavSatFix2PLANE(nav_sat_fix_msg, plane_zone_, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_WGS84) {
