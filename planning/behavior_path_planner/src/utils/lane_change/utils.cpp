@@ -171,20 +171,20 @@ std::optional<LaneChangePath> constructCandidatePath(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double longitudinal_acceleration,
   const double lateral_acceleration, const LaneChangePhaseInfo lane_change_length,
-  const LaneChangePhaseInfo lane_change_velocity,
-  const BehaviorPathPlannerParameters & common_parameter,
-  const LaneChangeParameters & lane_change_param)
+  const LaneChangePhaseInfo lane_change_velocity, const double terminal_lane_changing_velocity,
+  const LaneChangePhaseInfo lane_change_time)
 {
   PathShifter path_shifter;
   path_shifter.setPath(target_lane_reference_path);
   path_shifter.addShiftLine(shift_line);
+  path_shifter.setLongitudinalAcceleration(longitudinal_acceleration);
   ShiftedPath shifted_path;
 
   // offset front side
   bool offset_back = false;
 
-  const auto lane_changing_velocity = lane_change_velocity.lane_changing;
-  path_shifter.setVelocity(lane_changing_velocity);
+  const auto initial_lane_changing_velocity = lane_change_velocity.lane_changing;
+  path_shifter.setVelocity(initial_lane_changing_velocity);
   path_shifter.setLateralAccelerationLimit(std::abs(lateral_acceleration));
 
   if (!path_shifter.generate(&shifted_path, offset_back)) {
@@ -200,15 +200,8 @@ std::optional<LaneChangePath> constructCandidatePath(
   candidate_path.acceleration = longitudinal_acceleration;
   candidate_path.length.prepare = prepare_length;
   candidate_path.length.lane_changing = lane_changing_length;
-  candidate_path.duration.prepare = std::invoke([&]() {
-    const auto duration = prepare_length / lane_change_velocity.prepare;
-    return std::min(duration, common_parameter.lane_change_prepare_duration);
-  });
-  candidate_path.duration.lane_changing = std::invoke([&]() {
-    const auto rounding_multiplier = 1.0 / lane_change_param.prediction_time_resolution;
-    return std::ceil((lane_changing_length / lane_changing_velocity) * rounding_multiplier) /
-           rounding_multiplier;
-  });
+  candidate_path.duration.prepare = lane_change_time.prepare;
+  candidate_path.duration.lane_changing = lane_change_time.lane_changing;
   candidate_path.shift_line = shift_line;
   candidate_path.reference_lanelets = original_lanelets;
   candidate_path.target_lanelets = target_lanelets;
@@ -220,7 +213,6 @@ std::optional<LaneChangePath> constructCandidatePath(
       .get_child("constructCandidatePath"),
     "prepare_length: %f, lane_change: %f", prepare_length, lane_changing_length);
 
-  const PathPointWithLaneId & lane_changing_start_point = prepare_segment.points.back();
   const PathPointWithLaneId & lane_changing_end_point = target_segment.points.front();
   const Pose & lane_changing_end_pose = lane_changing_end_point.point.pose;
   const auto lane_change_end_idx =
@@ -238,8 +230,7 @@ std::optional<LaneChangePath> constructCandidatePath(
     if (i < *lane_change_end_idx) {
       point.lane_ids = replaceWithSortedIds(point.lane_ids, sorted_lane_ids);
       point.point.longitudinal_velocity_mps = std::min(
-        point.point.longitudinal_velocity_mps,
-        lane_changing_start_point.point.longitudinal_velocity_mps);
+        point.point.longitudinal_velocity_mps, static_cast<float>(terminal_lane_changing_velocity));
       continue;
     }
     const auto nearest_idx =
@@ -452,25 +443,6 @@ bool isObjectIndexIncluded(
   const size_t & index, const std::vector<size_t> & dynamic_objects_indices)
 {
   return std::count(dynamic_objects_indices.begin(), dynamic_objects_indices.end(), index) != 0;
-}
-
-double calcLaneChangingLength(
-  const double lane_changing_velocity, const double shift_length, const double lateral_acc,
-  const double lateral_jerk)
-{
-  const auto required_time =
-    PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
-  const auto lane_changing_length = lane_changing_velocity * required_time;
-
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("behavior_path_planner")
-      .get_child("lane_change")
-      .get_child("util")
-      .get_child("calcLaneChangingLength"),
-    "required_time: %f [s] lane_changing_velocity : %f [m/s], lane_changing_length: %f [m]",
-    required_time, lane_changing_velocity, lane_changing_length);
-
-  return lane_changing_length;
 }
 
 PathWithLaneId getTargetSegment(
