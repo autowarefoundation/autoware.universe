@@ -235,6 +235,12 @@ private:
    */
   void insertYieldVelocity(ShiftedPath & shifted_path) const;
 
+  /**
+   * @brief calculate stop distance based on object's overhang.
+   * @param stop distance.
+   */
+  double calcDistanceToStopLine(const ObjectData & object) const;
+
   // avoidance data preparation
 
   /**
