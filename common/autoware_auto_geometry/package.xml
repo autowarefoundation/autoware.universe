@@ -5,6 +5,7 @@
   <version>1.0.0</version>
   <description>Geometry related algorithms</description>
   <maintainer email="opensource@apex.ai">Apex.AI, Inc.</maintainer>
+  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
