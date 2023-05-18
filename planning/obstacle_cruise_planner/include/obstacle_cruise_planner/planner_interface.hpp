@@ -209,6 +209,7 @@ private:
     double min_ego_velocity;
     double max_deceleration;
     double time_margin_on_target_velocity;
+    double lpf_gain_slow_down_vel{0.9};  // TODO(murooka) use rosparam
   };
   SlowDownParam slow_down_param_;
 

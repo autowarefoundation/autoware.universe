@@ -14,6 +14,8 @@
 
 #include "obstacle_cruise_planner/planner_interface.hpp"
 
+#include "signal_processing/lowpass_filter_1d.hpp"
+
 namespace
 {
 StopSpeedExceeded createStopSpeedExceededMsg(
@@ -334,7 +336,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
   for (size_t i = 0; i < obstacles.size(); ++i) {
     const auto & obstacle = obstacles.at(i);
     const auto prev_output = getObjectFromUuid(prev_slow_down_output, obstacle.uuid);
-    std::cerr << prev_output.has_value() << std::endl;
 
     // calculate raw slow down velocity
     const double raw_slow_down_vel = calculateSlowDownVelocity(obstacle);
@@ -348,6 +349,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     const double stable_slow_down_vel = [&]() {
       if (!slow_down_start_idx && prev_output) {
         return prev_output->target_vel;
+      }
+      if (prev_output) {
+        return signal_processing::lowpassFilter(
+          raw_slow_down_vel, prev_output->target_vel, slow_down_param_.lpf_gain_slow_down_vel);
       }
       return raw_slow_down_vel;
     }();

@@ -18,6 +18,16 @@
 
 constexpr double epsilon = 1e-6;
 
+TEST(lowpass_filter, filter)
+{
+  using signal_processing::lowpassFilter;
+
+  EXPECT_NEAR(lowpassFilter(0.0, 0.0, 0.1), 0.0, epsilon);
+  EXPECT_NEAR(lowpassFilter(1.0, 0.0, 0.1), 0.9, epsilon);
+  EXPECT_NEAR(lowpassFilter(0.0, 1.0, 0.1), 0.1, epsilon);
+  EXPECT_NEAR(lowpassFilter(0.8, 0.3, 0.1), 0.75, epsilon);
+}
+
 TEST(lowpass_filter_1d, filter)
 {
   LowpassFilter1d lowpass_filter_1d(0.1);

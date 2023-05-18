@@ -14,6 +14,14 @@
 
 #include "signal_processing/lowpass_filter_1d.hpp"
 
+namespace signal_processing
+{
+double lowpassFilter(const double current_val, const double prev_val, const double gain)
+{
+  return gain * prev_val + (1.0 - gain) * current_val;
+}
+}  // namespace signal_processing
+
 LowpassFilter1d::LowpassFilter1d(const double gain) : gain_(gain)
 {
 }
@@ -36,7 +44,7 @@ boost::optional<double> LowpassFilter1d::getValue() const
 double LowpassFilter1d::filter(const double u)
 {
   if (x_) {
-    const double ret = gain_ * x_.get() + (1.0 - gain_) * u;
+    const double ret = signal_processing::lowpassFilter(u, x_.get(), gain_);
     x_ = ret;
     return x_.get();
   }
