@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 class PlannerInterface
@@ -210,6 +211,24 @@ private:
     double time_margin_on_target_velocity;
   };
   SlowDownParam slow_down_param_;
+
+  struct SlowDownOutput
+  {
+    SlowDownOutput(
+      const std::string & arg_uuid, const std::vector<TrajectoryPoint> & traj_points,
+      const std::optional<size_t> & idx, const double arg_target_vel)
+    : uuid(arg_uuid), target_vel(arg_target_vel)
+    {
+      if (idx) {
+        start_point = traj_points.at(*idx).pose;
+      }
+    }
+
+    const std::string uuid;
+    const double target_vel;
+    std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
+  };
+  std::vector<SlowDownOutput> prev_slow_down_output_;
 };
 
 #endif  // OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_

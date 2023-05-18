@@ -100,6 +100,19 @@ double calcMinimumDistanceToStop(
 
   return -std::pow(initial_vel, 2) / 2.0 / min_acc;
 }
+
+template <typename T>
+std::optional<T> getObjectFromUuid(const std::vector<T> & objects, const std::string & target_uuid)
+{
+  const auto itr = std::find_if(objects.begin(), objects.end(), [&](const auto & object) {
+    return object.uuid == target_uuid;
+  });
+
+  if (itr == objects.end()) {
+    return std::nullopt;
+  }
+  return *itr;
+}
 }  // namespace
 
 std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
@@ -284,6 +297,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
   auto slow_down_traj_points = cruise_traj_points;
   slow_down_debug_multi_array_ = Float32MultiArrayStamped();
 
+  // NOTE: Do not use reference since prev_slow_down_output_ will be updated.
+  const auto prev_slow_down_output = prev_slow_down_output_;
+  prev_slow_down_output_.clear();
+
   const double dist_to_ego = [&]() {
     const size_t ego_seg_idx =
       ego_nearest_param_.findSegmentIndex(slow_down_traj_points, planner_data.ego_pose);
@@ -295,11 +312,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
   // define function to insert slow down velocity to trajectory
-  const auto insert_slow_down_to_trajectory =
-    [&](const double lon_dist, const double slow_down_vel) -> std::optional<size_t> {
+  const auto insert_point_in_trajectory = [&](const double lon_dist) -> std::optional<size_t> {
     const auto inserted_idx = motion_utils::insertTargetPoint(0, lon_dist, slow_down_traj_points);
     if (inserted_idx) {
-      slow_down_traj_points.at(inserted_idx.get()).longitudinal_velocity_mps = slow_down_vel;
       return inserted_idx.get();
     }
     return std::nullopt;
@@ -318,15 +333,25 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
 
   for (size_t i = 0; i < obstacles.size(); ++i) {
     const auto & obstacle = obstacles.at(i);
+    const auto prev_output = getObjectFromUuid(prev_slow_down_output, obstacle.uuid);
+    std::cerr << prev_output.has_value() << std::endl;
 
-    // calculate slow down velocity
-    const double slow_down_vel = calculateSlowDownVelocity(obstacle);
+    // calculate raw slow down velocity
+    const double raw_slow_down_vel = calculateSlowDownVelocity(obstacle);
 
     // calculate slow down start distance, and insert slow down velocity
     const double dist_to_slow_down_start = calculateDistanceToSlowDownWithAccConstraint(
-      planner_data, slow_down_traj_points, obstacle, dist_to_ego, slow_down_vel);
-    const auto slow_down_start_idx =
-      insert_slow_down_to_trajectory(dist_to_slow_down_start, slow_down_vel);
+      planner_data, slow_down_traj_points, obstacle, dist_to_ego, raw_slow_down_vel);
+    const auto slow_down_start_idx = insert_point_in_trajectory(dist_to_slow_down_start);
+
+    // calculate slow down velocity
+    const double stable_slow_down_vel = [&]() {
+      if (!slow_down_start_idx && prev_output) {
+        return prev_output->target_vel;
+      }
+      return raw_slow_down_vel;
+    }();
+    std::cerr << raw_slow_down_vel << " " << stable_slow_down_vel << std::endl;
 
     // calculate slow down end distance, and insert slow down velocity
     const double dist_to_slow_down_end =
@@ -334,10 +359,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
       abs_ego_offset;
     // NOTE: slow_down_start_idx will not be wrong since inserted back point is after inserted
     // front point.
-    const auto slow_down_end_idx =
-      dist_to_slow_down_start < dist_to_slow_down_end
-        ? insert_slow_down_to_trajectory(dist_to_slow_down_end, slow_down_vel)
-        : std::nullopt;
+    const auto slow_down_end_idx = dist_to_slow_down_start < dist_to_slow_down_end
+                                     ? insert_point_in_trajectory(dist_to_slow_down_end)
+                                     : std::nullopt;
     if (!slow_down_end_idx) {
       continue;
     }
@@ -345,12 +369,12 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     // insert slow down velocity between slow start and end
     for (size_t i = (slow_down_start_idx ? *slow_down_start_idx : 0); i <= *slow_down_end_idx;
          ++i) {
-      slow_down_traj_points.at(i).longitudinal_velocity_mps = slow_down_vel;
+      slow_down_traj_points.at(i).longitudinal_velocity_mps = stable_slow_down_vel;
     }
 
     // add debug data and virtual wall
     slow_down_debug_multi_array_.data.push_back(obstacle.precise_lat_dist);
-    slow_down_debug_multi_array_.data.push_back(slow_down_vel);
+    slow_down_debug_multi_array_.data.push_back(stable_slow_down_vel);
     if (slow_down_start_idx) {
       slow_down_debug_multi_array_.data.push_back(
         slow_down_start_idx ? *slow_down_start_idx : -1.0);
@@ -362,6 +386,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     }
 
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);
+
+    // update prev_slow_down_output_
+    prev_slow_down_output_.push_back(SlowDownOutput{
+      obstacle.uuid, slow_down_traj_points, slow_down_start_idx, stable_slow_down_vel});
   }
 
   const double calculation_time = stop_watch_.toc(__func__);
