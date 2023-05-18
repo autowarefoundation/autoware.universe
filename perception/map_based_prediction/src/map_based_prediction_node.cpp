@@ -1205,17 +1205,17 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     } else if (!!adjacent_right) {
       right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
     } else {
-      // search for opposite lane
-      const auto opposite_rights =
-        getRightOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
-      for (auto & opposite_right : opposite_rights) {
-        const double abs_norm_delta_yaw =
-          calcAbsYawDiffBetweenLaneletAndObject(object, opposite_right);
-        // do not predict path to opposite lane
-        if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
-        right_paths = routing_graph_ptr_->possiblePaths(opposite_right, possible_params);
-        break;  // currently just considering one path
-      }
+      // search for opposite lane. currently do nothing
+      // const auto opposite_rights =
+      //   getRightOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+      // for (auto & opposite_right : opposite_rights) {
+      //   const double abs_norm_delta_yaw =
+      //     calcAbsYawDiffBetweenLaneletAndObject(object, opposite_right);
+      //   // do not predict path to opposite lane
+      //   if (abs_norm_delta_yaw > delta_yaw_threshold_for_searching_lanelet_) continue;
+      //   right_paths = routing_graph_ptr_->possiblePaths(opposite_right, possible_params);
+      //   break;  // currently just considering one path
+      //}
     }
 
     // Step1.3 Get the centerline
