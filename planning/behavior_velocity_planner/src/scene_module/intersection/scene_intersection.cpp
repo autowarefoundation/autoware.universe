@@ -1231,9 +1231,6 @@ bool IntersectionModule::isOcclusionCleared(
     origin.z + distance_max /* elevation for 255 */);
   grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 3>(
     distance_grid_heatmap, "color", occlusion_grid);
-  cv::rotate(occlusion_mask, occlusion_mask, cv::ROTATE_90_COUNTERCLOCKWISE);
-  grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 1>(
-    occlusion_mask, "denoised_occlusion", occlusion_grid);
   occlusion_grid_pub_->publish(grid_map::GridMapRosConverter::toMessage(occlusion_grid));
   if (min_cost > min_cost_thr || !min_cost_projection_ind.has_value()) {
     return true;
