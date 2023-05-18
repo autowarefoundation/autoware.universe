@@ -265,7 +265,7 @@ Visualization Manager:
           Left: 800
           Name: Twist/KalmanStatus
           Top: 0
-          Topic: /localization/yabloc/twist/kalman/status
+          Topic: /localization/yabloc/twist/status
           Value: true
           Width: 400
         - Background Alpha: 0

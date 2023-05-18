@@ -10,6 +10,8 @@
     <!-- conditional branch for autoware integration -->
     <let name="connect_base_link_to_particle_pose" value="true" if="$(var standalone)"/>
     <let name="connect_base_link_to_particle_pose" value="false" unless="$(var standalone)"/>
+    <let name="estimate_twist_in_yabloc" value="true" if="$(var standalone)"/>
+    <let name="estimate_twist_in_yabloc" value="false" unless="$(var standalone)"/>
     <let name="input_pose" value="/localization/yabloc/pf/pose" if="$(var standalone)"/>
     <let name="input_pose" value="/localization/pose_twist_fusion_filter/pose" unless="$(var standalone)"/>
 
@@ -73,7 +75,7 @@
         </group>
 
         <!-- twist -->
-        <group>
+        <group if="$(var estimate_twist_in_yabloc)">
             <push-ros-namespace namespace="twist"/>
             <include file="$(find-pkg-share yabloc_launch)/launch/impl/twist.launch.xml"/>
         </group>
