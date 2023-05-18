@@ -512,10 +512,11 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
     trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
 
   // crop trajectory for extension
-  constexpr double joint_traj_length_for_smoothing = 5.0;
+  constexpr double joint_traj_max_length_for_smoothing = 15.0;
+  constexpr double joint_traj_min_length_for_smoothing = 5.0;
   const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
     traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
-    joint_traj_length_for_smoothing);
+    joint_traj_max_length_for_smoothing, joint_traj_min_length_for_smoothing);
 
   // calculate full trajectory points
   const auto full_traj_points = [&]() {
