@@ -325,12 +325,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     const double slow_down_vel = calculateSlowDownVelocity(obstacle);
 
     // calculate slow down start distance, and insert slow down velocity
-    const auto dist_to_slow_down_start = calculateDistanceToSlowDownWithConstraints(
+    const double dist_to_slow_down_start = calculateDistanceToSlowDownWithConstraints(
       planner_data, slow_down_traj_points, obstacle, dist_to_ego, slow_down_vel);
-    if (!dist_to_slow_down_start) {
-      // NOTE: no need to slow down
-      continue;
-    }
     const auto slow_down_start_idx =
       insert_slow_down_to_trajectory(*dist_to_slow_down_start, slow_down_vel);
 
@@ -341,7 +337,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     // NOTE: slow_down_start_idx will not be wrong since inserted back point is after inserted
     // front point.
     const auto slow_down_end_idx =
-      *dist_to_slow_down_start < dist_to_slow_down_end
+      dist_to_slow_down_start < dist_to_slow_down_end
         ? insert_slow_down_to_trajectory(dist_to_slow_down_end, slow_down_vel)
         : std::nullopt;
     if (!slow_down_end_idx) {
@@ -392,7 +388,7 @@ double PlannerInterface::calculateSlowDownVelocity(const SlowDownObstacle & obst
   return slow_down_vel;
 }
 
-std::optional<double> PlannerInterface::calculateDistanceToSlowDownWithConstraints(
+double PlannerInterface::calculateDistanceToSlowDownWithConstraints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
   const SlowDownObstacle & obstacle, const double dist_to_ego, const double slow_down_vel) const
 {
@@ -411,5 +407,6 @@ std::optional<double> PlannerInterface::calculateDistanceToSlowDownWithConstrain
     return dist_to_ego + deceleration_dist;
   }
 
-  return dist_to_ego + std::max(deceleration_dist, *deceleration_min_dist) + abs_ego_offset + slow_down_vel * p.time_margin_on_target_velocity;
+  return dist_to_ego + std::max(deceleration_dist, *deceleration_min_dist) + abs_ego_offset +
+         slow_down_vel * p.time_margin_on_target_velocity;
 }
