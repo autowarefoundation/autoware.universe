@@ -169,7 +169,7 @@ private:
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
     const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-    const lanelet::BasicPoint2d & search_point, const bool allow_opposite_lane_condition);
+    const bool allow_opposite_lane_condition);
   float calculateLocalLikelihood(
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);

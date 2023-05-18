@@ -946,10 +946,10 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
   // search forward lanelet
   bool search_opposite_lane = false;
   // search twice for forward and opposite lanelet
-  for (auto i = 0; i < 2; i++) {
+  for (auto search_try_num = 0; search_try_num < 2; search_try_num++) {
     for (const auto & lanelet : surrounding_lanelets) {
       if (
-        !checkCloseLaneletCondition(lanelet, object, search_point, search_opposite_lane) ||
+        !checkCloseLaneletCondition(lanelet, object, search_opposite_lane) ||
         isDuplicated(lanelet, closest_lanelets)) {
         continue;
       }
@@ -1036,8 +1036,12 @@ bool checkValidLaneletHistory(
  */
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-  const lanelet::BasicPoint2d & search_point, const bool allow_opposite_lane_condition = false)
+  const bool allow_opposite_lane_condition = false)
 {
+  lanelet::BasicPoint2d search_point(
+    object.kinematics.pose_with_covariance.pose.position.x,
+    object.kinematics.pose_with_covariance.pose.position.y);
+
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
     return false;
@@ -1168,22 +1172,27 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
                                lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
 
+    // check if current lane is in the opposite lane
+    const double abs_norm_delta =
+      calcAbsYawDiffBetweenLaneletAndObject(object, current_lanelet_data.lanelet);
+    const bool now_in_opposite_lane =
+      !(abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_);
+
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     auto adjacent_left = routing_graph_ptr_->adjacentLeft(current_lanelet_data.lanelet);
 
-    if (!!opt_left) {
+    if (!!opt_left && !now_in_opposite_lane) {
       // set left lane
       left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
-    } else if (!!adjacent_left) {
+    } else if (!!adjacent_left && !now_in_opposite_lane) {
       // set adjacent left lane
       left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
-    } else {
-      // search for opposite lane
-      //  Note(any): Probably not necessary in countries where the left-hand side of the road is
-      //  used
+    } else if (now_in_opposite_lane) {
+      // search for opposite lane to back
+      //  Note(any): Only fit for left side driving country
       const auto opposite_lefts =
         getLeftOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
       for (auto & opposite_left : opposite_lefts) {
@@ -1194,18 +1203,21 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
         left_paths = routing_graph_ptr_->possiblePaths(opposite_left, possible_params);
         break;  // currently just considering one path
       }
+    } else {
+      // do nothing
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     auto adjacent_right = routing_graph_ptr_->adjacentRight(current_lanelet_data.lanelet);
-    if (!!opt_right) {
+    if (!!opt_right && !now_in_opposite_lane) {
       right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
-    } else if (!!adjacent_right) {
+    } else if (!!adjacent_right && !now_in_opposite_lane) {
       right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
     } else {
-      // search for opposite lane. currently do nothing
+      // TODO(yoshiri): need to implement to go opposite lane from forward lane
+
       // const auto opposite_rights =
       //   getRightOppositeLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
       // for (auto & opposite_right : opposite_rights) {
@@ -1218,9 +1230,11 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       //}
     }
 
-    // Step1.3 Get the centerline
     lanelet::routing::LaneletPaths center_paths =
       routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
+    if (now_in_opposite_lane) {
+      center_paths.clear();
+    }
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
