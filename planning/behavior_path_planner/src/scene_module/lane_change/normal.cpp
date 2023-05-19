@@ -500,7 +500,7 @@ bool NormalLaneChange::getLaneChangePaths(
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanelets, lane_changing_start_pose);
 
     const auto initial_lane_changing_velocity = prepare_velocity;
-    const double lane_changing_longitudinal_acc = longitudinal_acc > 0.0 ? longitudinal_acc : 0.0;
+    const auto & max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
 
     // get lateral acceleration range
     const auto [min_lateral_acc, max_lateral_acc] =
@@ -513,6 +513,9 @@ bool NormalLaneChange::getLaneChangePaths(
          lateral_acc += lateral_acc_resolution) {
       const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
         shift_length, common_parameter.lane_changing_lateral_jerk, lateral_acc);
+      const double lane_changing_longitudinal_acc = std::clamp(
+        (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
+        longitudinal_acc);
       const auto lane_changing_length =
         initial_lane_changing_velocity * lane_changing_time +
         0.5 * lane_changing_longitudinal_acc * lane_changing_time * lane_changing_time;
@@ -619,7 +622,8 @@ bool NormalLaneChange::getLaneChangePaths(
       const auto [is_safe, is_object_coming_from_rear] = utils::lane_change::isLaneChangePathSafe(
         *candidate_path, dynamic_objects, dynamic_object_indices, getEgoPose(), getEgoTwist(),
         common_parameter, *lane_change_parameters_, common_parameter.expected_front_deceleration,
-        common_parameter.expected_rear_deceleration, object_debug_, longitudinal_acc);
+        common_parameter.expected_rear_deceleration, object_debug_, longitudinal_acc,
+        lane_changing_longitudinal_acc);
 
       if (is_safe) {
         return true;

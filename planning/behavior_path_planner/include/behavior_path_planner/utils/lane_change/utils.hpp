@@ -92,8 +92,8 @@ PathSafetyStatus isLaneChangePathSafe(
   const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameter,
   const behavior_path_planner::LaneChangeParameters & lane_change_parameter,
   const double front_decel, const double rear_decel,
-  std::unordered_map<std::string, CollisionCheckDebug> & debug_data,
-  const double acceleration = 0.0);
+  std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double prepare_acc = 0.0,
+  const double lane_changing_acc = 0.0);
 
 bool isObjectIndexIncluded(
   const size_t & index, const std::vector<size_t> & dynamic_objects_indices);
@@ -167,5 +167,10 @@ CandidateOutput assignToCandidate(
 boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType type, const Direction & direction);
+
+PredictedPath convertToPredictedPath(
+  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
+  const size_t nearest_seg_idx, const double duration, const double resolution,
+  const double prepare_time, const double prepare_acc, const double lane_changing_acc);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
