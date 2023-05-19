@@ -55,7 +55,7 @@ double calcLaneChangeResampleInterval(
 
 double calcMaximumAcceleration(
   const PathWithLaneId & path, const Pose & current_pose, const double current_velocity,
-  const BehaviorPathPlannerParameters & params);
+  const double max_longitudinal_acc, const BehaviorPathPlannerParameters & params);
 
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);

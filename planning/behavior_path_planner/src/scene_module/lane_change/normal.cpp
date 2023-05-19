@@ -404,20 +404,24 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
   const auto longitudinal_acc_sampling_num = lane_change_parameters_->longitudinal_acc_sampling_num;
   const auto lateral_acc_sampling_num = lane_change_parameters_->lateral_acc_sampling_num;
+  const auto min_longitudinal_acc =
+    std::max(common_parameter.min_acc, lane_change_parameters_->min_longitudinal_acc);
+  const auto max_longitudinal_acc =
+    std::min(common_parameter.max_acc, lane_change_parameters_->max_longitudinal_acc);
 
   // get velocity
   const auto current_velocity = getEgoTwist().linear.x;
 
   // compute maximum longitudinal deceleration and acceleration
-  const auto maximum_deceleration =
-    std::invoke([&minimum_lane_changing_velocity, &current_velocity, &common_parameter, this]() {
-      const double min_a = (minimum_lane_changing_velocity - current_velocity) /
-                           common_parameter.lane_change_prepare_duration;
-      return std::clamp(
-        min_a, -std::abs(common_parameter.min_acc), -std::numeric_limits<double>::epsilon());
-    });
+  const auto maximum_deceleration = std::invoke([&minimum_lane_changing_velocity, &current_velocity,
+                                                 &min_longitudinal_acc, &common_parameter, this]() {
+    const double min_a = (minimum_lane_changing_velocity - current_velocity) /
+                         common_parameter.lane_change_prepare_duration;
+    return std::clamp(
+      min_a, -std::abs(min_longitudinal_acc), -std::numeric_limits<double>::epsilon());
+  });
   const auto maximum_acceleration = utils::lane_change::calcMaximumAcceleration(
-    prev_module_path_, getEgoPose(), current_velocity, common_parameter);
+    prev_module_path_, getEgoPose(), current_velocity, max_longitudinal_acc, common_parameter);
 
   // get sampling acceleration values
   const auto longitudinal_acc_sampling_values = utils::lane_change::getAccelerationValues(
@@ -515,7 +519,7 @@ bool NormalLaneChange::getLaneChangePaths(
         shift_length, common_parameter.lane_changing_lateral_jerk, lateral_acc);
       const double lane_changing_longitudinal_acc = std::clamp(
         (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
-        common_parameter.max_acc);
+        max_longitudinal_acc);
       const auto lane_changing_length =
         initial_lane_changing_velocity * lane_changing_time +
         0.5 * lane_changing_longitudinal_acc * lane_changing_time * lane_changing_time;

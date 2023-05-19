@@ -63,11 +63,10 @@ double calcLaneChangeResampleInterval(
 
 double calcMaximumAcceleration(
   const PathWithLaneId & path, const Pose & current_pose, const double current_velocity,
-  const BehaviorPathPlannerParameters & params)
+  const double max_longitudinal_acc, const BehaviorPathPlannerParameters & params)
 {
-  const double & max_acc = params.max_acc;
   if (path.points.empty()) {
-    return max_acc;
+    return max_longitudinal_acc;
   }
 
   const double & nearest_dist_threshold = params.ego_nearest_dist_threshold;
@@ -80,7 +79,7 @@ double calcMaximumAcceleration(
   const double & prepare_duration = params.lane_change_prepare_duration;
 
   const double acc = (max_path_velocity - current_velocity) / prepare_duration;
-  return std::clamp(acc, 0.0, max_acc);
+  return std::clamp(acc, 0.0, max_longitudinal_acc);
 }
 
 void setPrepareVelocity(
