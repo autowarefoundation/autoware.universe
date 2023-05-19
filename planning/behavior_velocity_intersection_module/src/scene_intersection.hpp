@@ -122,6 +122,7 @@ public:
       double before_creep_stop_time;
       double min_vehicle_brake_for_rss;
       double max_vehicle_velocity_for_rss;
+      double denoise_kernel;
     } occlusion;
   };
 
