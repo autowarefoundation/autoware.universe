@@ -238,6 +238,10 @@ boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
   const double current_vel, const double target_vel, const double current_acc, const double acc_min,
   const double jerk_acc, const double jerk_dec)
 {
+  if (current_vel < target_vel) {
+    return {};
+  }
+
   constexpr double epsilon = 1e-3;
   const double jerk_before_min_acc = acc_min < current_acc ? jerk_dec : jerk_acc;
   const double t_before_min_acc = (acc_min - current_acc) / jerk_before_min_acc;
