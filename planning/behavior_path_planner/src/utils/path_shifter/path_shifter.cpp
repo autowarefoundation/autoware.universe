@@ -314,8 +314,9 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
     return getBaseLengthsWithoutAccelLimit(arclength, shift_length, offset_back);
   }
 
+  const auto & S = arclength;
   const auto L = std::abs(shift_length);
-  const auto T = a > acc_threshold ? (-v0 + std::sqrt(v0 * v0 + 2 * a * L)) / a : L / v0;
+  const auto T = a > acc_threshold ? (-v0 + std::sqrt(v0 * v0 + 2 * a * S)) / a : S / v0;
   const auto lateral_a_max = 8.0 * L / (T * T);
 
   if (lateral_a_max < lateral_acc_limit_) {
@@ -323,7 +324,7 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
     RCLCPP_WARN_THROTTLE(
       logger_, clock_, 3000, "No need to consider lateral acc limit. max: %f, limit: %f",
       lateral_a_max, lateral_acc_limit_);
-    return getBaseLengthsWithoutAccelLimit(arclength, shift_length, v0, a, T, offset_back);
+    return getBaseLengthsWithoutAccelLimit(S, shift_length, v0, a, T, offset_back);
   }
 
   const auto tj = T / 2.0 - 2.0 * L / (lateral_acc_limit_ * T);
@@ -337,7 +338,7 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
       logger_, clock_, 3000,
       "Acc limit is too small to be applied. Tj: %f, Ta: %f, j: %f, a_max: %f, acc_limit: %f", tj,
       ta, lat_jerk, lateral_a_max, lateral_acc_limit_);
-    return getBaseLengthsWithoutAccelLimit(arclength, shift_length, offset_back);
+    return getBaseLengthsWithoutAccelLimit(S, shift_length, offset_back);
   }
 
   const auto tj3 = tj * tj * tj;
