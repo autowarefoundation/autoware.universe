@@ -211,7 +211,6 @@ PolygonPoint transformBoundFrenetCoordinate(
     motion_utils::calcLongitudinalOffsetToSegment(bound_points, min_dist_seg_idx, target_point);
   const double lat_dist_to_segment =
     motion_utils::calcLateralOffset(bound_points, target_point, min_dist_seg_idx);
-  std::cerr << lat_dist_to_segment << std::endl;
   return PolygonPoint{target_point, min_dist_seg_idx, lon_dist_to_segment, lat_dist_to_segment};
 }
 
