@@ -1057,7 +1057,7 @@ bool IntersectionModule::isOcclusionCleared(
   }
 
   // (2) prepare unknown mask
-  // In OpenCV the pixel at (X=x, Y=y) (with left-upper origin) is accesed by img[y, x]
+  // In OpenCV the pixel at (X=x, Y=y) (with left-upper origin) is accessed by img[y, x]
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
       const int idx = y * width + x;
