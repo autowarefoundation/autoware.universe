@@ -282,13 +282,14 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::getBaseLengthsW
 {
   const auto & s = arclength;
   const auto & l = shift_length;
-  const auto & v = velocity;
+  const auto & v0 = velocity;
   const auto & a = longitudinal_acc;
   const auto & T = total_time;
   const double t = T / 4;
 
-  const double s1 = v * t + 0.5 * a * t * t;
-  const double s2 = s1 + 2 * v * t + 2 * a * t * t;
+  const double s1 = v0 * t + 0.5 * a * t * t;
+  const double v1 = v0 + a * t;
+  const double s2 = s1 + 2 * v1 * t + 2 * a * t * t;
   std::vector<double> base_lon = {0.0, s1, s2, s};
   std::vector<double> base_lat = {0.0, 1.0 / 12.0 * l, 11.0 / 12.0 * l, l};
 
@@ -300,22 +301,21 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::getBaseLengthsW
 std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths(
   const double arclength, const double shift_length, const bool offset_back) const
 {
-  const auto speed = std::abs(velocity_);
+  const auto v0 = std::abs(velocity_);
 
   // For longitudinal acceleration, we only consider positive side
   // negative acceleration (deceleration) is treated as 0.0
   const double acc_threshold = 0.0001;
   const auto & a = longitudinal_acc_ > acc_threshold ? longitudinal_acc_ : 0.0;
 
-  if (speed < 1.0e-5 && a < acc_threshold) {
+  if (v0 < 1.0e-5 && a < acc_threshold) {
     // no need to consider acceleration limit
     RCLCPP_DEBUG(logger_, "set velocity is zero. lateral acc limit is ignored");
     return getBaseLengthsWithoutAccelLimit(arclength, shift_length, offset_back);
   }
 
   const auto L = std::abs(shift_length);
-  const auto T =
-    a > acc_threshold ? (-speed + std::sqrt(speed * speed + 2 * a * L)) / a : L / speed;
+  const auto T = a > acc_threshold ? (-v0 + std::sqrt(v0 * v0 + 2 * a * L)) / a : L / v0;
   const auto lateral_a_max = 8.0 * L / (T * T);
 
   if (lateral_a_max < lateral_acc_limit_) {
@@ -323,7 +323,7 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
     RCLCPP_WARN_THROTTLE(
       logger_, clock_, 3000, "No need to consider lateral acc limit. max: %f, limit: %f",
       lateral_a_max, lateral_acc_limit_);
-    return getBaseLengthsWithoutAccelLimit(arclength, shift_length, speed, a, T, offset_back);
+    return getBaseLengthsWithoutAccelLimit(arclength, shift_length, v0, a, T, offset_back);
   }
 
   const auto tj = T / 2.0 - 2.0 * L / (lateral_acc_limit_ * T);
@@ -344,12 +344,22 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
   const auto ta2_tj = ta * ta * tj;
   const auto ta_tj2 = ta * tj * tj;
 
-  const auto s1 = tj * speed + 0.5 * a * tj * tj;
-  const auto s2 = s1 + ta * speed + 0.5 * a * ta * ta;
-  const auto s3 = s2 + tj * speed + 0.5 * a * tj * tj;  // = s4
-  const auto s5 = s3 + tj * speed + 0.5 * a * tj * tj;
-  const auto s6 = s5 + ta * speed + 0.5 * a * ta * ta;
-  const auto s7 = s6 + tj * speed + 0.5 * a * tj * tj;
+  const auto s1 = tj * v0 + 0.5 * a * tj * tj;
+  const auto v1 = v0 + a * tj;
+
+  const auto s2 = s1 + ta * v1 + 0.5 * a * ta * ta;
+  const auto v2 = v1 + a * ta;
+
+  const auto s3 = s2 + tj * v2 + 0.5 * a * tj * tj;  // = s4
+  const auto v3 = v2 + a * tj;
+
+  const auto s5 = s3 + tj * v3 + 0.5 * a * tj * tj;
+  const auto v5 = v3 + a * tj;
+
+  const auto s6 = s5 + ta * v5 + 0.5 * a * ta * ta;
+  const auto v6 = v5 + a * ta;
+
+  const auto s7 = s6 + tj * v6 + 0.5 * a * tj * tj;
 
   const auto sign = shift_length > 0.0 ? 1.0 : -1.0;
   const auto l1 = sign * (1.0 / 6.0 * lat_jerk * tj3);
