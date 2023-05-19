@@ -775,7 +775,6 @@ void filterTargetObjects(
         utils::getDistanceToCrosswalk(ego_pose, data.current_lanelets, *rh->getOverallGraphPtr()) -
         o.longitudinal;
       {
-        const auto object_to_crosswalk = to_crosswalk - o.longitudinal;
         const auto stop_for_crosswalk =
           to_crosswalk < parameters->object_ignore_distance_crosswalk_forward &&
           to_crosswalk > -1.0 * parameters->object_ignore_distance_crosswalk_backward;
