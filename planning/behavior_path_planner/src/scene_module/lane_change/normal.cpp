@@ -515,7 +515,7 @@ bool NormalLaneChange::getLaneChangePaths(
         shift_length, common_parameter.lane_changing_lateral_jerk, lateral_acc);
       const double lane_changing_longitudinal_acc = std::clamp(
         (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
-        longitudinal_acc);
+        common_parameter.max_acc);
       const auto lane_changing_length =
         initial_lane_changing_velocity * lane_changing_time +
         0.5 * lane_changing_longitudinal_acc * lane_changing_time * lane_changing_time;
