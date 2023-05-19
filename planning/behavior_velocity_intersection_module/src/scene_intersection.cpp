@@ -316,7 +316,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       return true;
     }
-    if (before_creep_state_machine_.getState() == StateMachine::State::GO && has_collision) {
+    if (before_creep_state_machine_.getState() == StateMachine::State::GO && !has_collision) {
       occlusion_stop_required = true;
       occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
 
