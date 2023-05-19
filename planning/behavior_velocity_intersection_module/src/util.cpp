@@ -136,28 +136,19 @@ std::optional<size_t> generateStaticPassJudgeLine(
   const std::pair<size_t, size_t> lane_interval,
   const std::shared_ptr<const PlannerData> & planner_data)
 {
-  const auto pass_judge_line_idx_ip =
-    util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
-  if (!pass_judge_line_idx_ip) {
-    return std::nullopt;
+  const double velocity = planner_data->current_velocity->twist.linear.x;
+  const double acceleration = planner_data->current_acceleration->accel.accel.linear.x;
+  const double max_stop_acceleration = planner_data->max_stop_acceleration_threshold;
+  const double max_stop_jerk = planner_data->max_stop_jerk_threshold;
+  // const double delay_response_time = planner_data->delay_response_time;
+  const double offset = -planning_utils::calcJudgeLineDistWithJerkLimit(
+    velocity, acceleration, max_stop_acceleration, max_stop_jerk, 0.0);
+  const auto pass_judge_line_idx = generatePeekingLimitLine(
+    first_detection_area, original_path, path_ip, ip_interval, lane_interval, planner_data, offset);
+  if (pass_judge_line_idx) {
+    return pass_judge_line_idx;
   }
-  const int base2front_idx_dist =
-    std::ceil(planner_data->vehicle_info_.vehicle_length_m / ip_interval);
-  const int idx = static_cast<int>(pass_judge_line_idx_ip.value()) - base2front_idx_dist;
-  if (idx < 0) {
-    return std::nullopt;
-  }
-  const auto & insert_point = path_ip.points.at(static_cast<size_t>(idx)).point.pose;
-  const auto duplicate_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
-  if (duplicate_idx_opt) {
-    return duplicate_idx_opt;
-  } else {
-    const auto insert_idx_opt = util::insertPoint(insert_point, original_path);
-    if (!insert_idx_opt) {
-      return std::nullopt;
-    }
-    return insert_idx_opt;
-  }
+  return 0;
 }
 
 std::optional<size_t> generatePeekingLimitLine(
