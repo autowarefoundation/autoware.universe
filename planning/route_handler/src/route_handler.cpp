@@ -793,11 +793,18 @@ bool RouteHandler::getNextLaneletWithinRoute(
   if (exists(goal_lanelets_, lanelet)) {
     return false;
   }
+
+  lanelet::ConstLanelet start_lanelet;
+  bool flag_check = true;
+  if (!getClosestLaneletWithinRoute(route_ptr_->start_pose, &start_lanelet)) {
+    flag_check = false;
+  }
+
   const auto following_lanelets = routing_graph_ptr_->following(lanelet);
   for (const auto & llt : following_lanelets) {
-    if (exists(route_lanelets_, llt)) {
-      *next_lanelet = llt;
-      return true;
+    if (!(flag_check && start_lanelet.id() == llt.id()) && exists(route_lanelets_, llt)) {
+        *next_lanelet = llt;
+        return true;
     }
   }
   return false;
