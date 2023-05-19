@@ -1081,7 +1081,7 @@ bool IntersectionModule::isOcclusionCleared(
     cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
 
   // (4) create distance grid
-  // value: 0 - 254: signed distance representing [distamce_min, distance_max]
+  // value: 0 - 254: signed distance representing [distance_min, distance_max]
   // 255: undefined value
   const double distance_max = std::hypot(width * resolution / 2, height * resolution / 2);
   const double distance_min = -distance_max;
