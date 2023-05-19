@@ -328,7 +328,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     const double dist_to_slow_down_start = calculateDistanceToSlowDownWithConstraints(
       planner_data, slow_down_traj_points, obstacle, dist_to_ego, slow_down_vel);
     const auto slow_down_start_idx =
-      insert_slow_down_to_trajectory(*dist_to_slow_down_start, slow_down_vel);
+      insert_slow_down_to_trajectory(dist_to_slow_down_start, slow_down_vel);
 
     // calculate slow down end distance, and insert slow down velocity
     const double dist_to_slow_down_end =
@@ -392,13 +392,14 @@ double PlannerInterface::calculateDistanceToSlowDownWithConstraints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
   const SlowDownObstacle & obstacle, const double dist_to_ego, const double slow_down_vel) const
 {
+  const auto & p = slow_down_param_;
   const double abs_ego_offset = planner_data.is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
   const double deceleration_dist =
     motion_utils::calcSignedArcLength(traj_points, 0, obstacle.front_collision_point) -
-    abs_ego_offset - dist_to_ego;
+    abs_ego_offset - dist_to_ego - slow_down_vel * p.time_margin_on_target_velocity;
 
   const auto deceleration_min_dist = motion_utils::calcDecelDistWithJerkAndAccConstraints(
     planner_data.ego_vel, slow_down_vel, planner_data.ego_acc, longitudinal_info_.min_accel,
@@ -407,6 +408,5 @@ double PlannerInterface::calculateDistanceToSlowDownWithConstraints(
     return dist_to_ego + deceleration_dist;
   }
 
-  return dist_to_ego + std::max(deceleration_dist, *deceleration_min_dist) + abs_ego_offset +
-         slow_down_vel * p.time_margin_on_target_velocity;
+  return dist_to_ego + std::max(deceleration_dist, *deceleration_min_dist);
 }
