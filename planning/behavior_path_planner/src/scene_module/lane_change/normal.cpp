@@ -518,7 +518,8 @@ bool NormalLaneChange::getLaneChangePaths(
       const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
         shift_length, common_parameter.lane_changing_lateral_jerk, lateral_acc);
       const double lane_changing_lon_acc = utils::lane_change::calcLaneChangingAcceleration(
-        initial_lane_changing_velocity, max_path_velocity, lane_changing_time, longitudinal_acc);
+        initial_lane_changing_velocity, max_path_velocity, lane_changing_time,
+        sampled_longitudinal_acc);
       const auto lane_changing_length =
         initial_lane_changing_velocity * lane_changing_time +
         0.5 * lane_changing_lon_acc * lane_changing_time * lane_changing_time;
