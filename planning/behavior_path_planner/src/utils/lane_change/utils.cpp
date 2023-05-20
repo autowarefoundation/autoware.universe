@@ -82,6 +82,19 @@ double calcMaximumAcceleration(
   return std::clamp(acc, 0.0, max_longitudinal_acc);
 }
 
+double calcLaneChangingAcceleration(
+  const double initial_lane_changing_velocity, const double max_path_velocity,
+  const double lane_changing_time, const double prepare_longitudinal_acc)
+{
+  if (prepare_longitudinal_acc <= 0.0) {
+    return 0.0;
+  }
+
+  return std::clamp(
+    (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
+    prepare_longitudinal_acc);
+}
+
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity)
 {

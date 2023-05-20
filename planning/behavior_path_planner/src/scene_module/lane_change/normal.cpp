@@ -517,14 +517,13 @@ bool NormalLaneChange::getLaneChangePaths(
          lateral_acc += lateral_acc_resolution) {
       const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
         shift_length, common_parameter.lane_changing_lateral_jerk, lateral_acc);
-      const double lane_changing_longitudinal_acc = std::clamp(
-        (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
-        max_longitudinal_acc);
+      const double lane_changing_lon_acc = utils::lane_change::calcLaneChangingAcceleration(
+        initial_lane_changing_velocity, max_path_velocity, lane_changing_time, longitudinal_acc);
       const auto lane_changing_length =
         initial_lane_changing_velocity * lane_changing_time +
-        0.5 * lane_changing_longitudinal_acc * lane_changing_time * lane_changing_time;
+        0.5 * lane_changing_lon_acc * lane_changing_time * lane_changing_time;
       const auto terminal_lane_changing_velocity =
-        initial_lane_changing_velocity + lane_changing_longitudinal_acc * lane_changing_time;
+        initial_lane_changing_velocity + lane_changing_lon_acc * lane_changing_time;
       utils::lane_change::setPrepareVelocity(
         prepare_segment, current_velocity, terminal_lane_changing_velocity);
 
@@ -589,7 +588,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
       const auto candidate_path = utils::lane_change::constructCandidatePath(
         prepare_segment, target_segment, target_lane_reference_path, shift_line, original_lanelets,
-        target_lanelets, sorted_lane_ids, lane_changing_longitudinal_acc, lateral_acc, lc_length,
+        target_lanelets, sorted_lane_ids, lane_changing_lon_acc, lateral_acc, lc_length,
         lc_velocity, terminal_lane_changing_velocity, lc_time);
 
       if (!candidate_path) {
@@ -627,7 +626,7 @@ bool NormalLaneChange::getLaneChangePaths(
         *candidate_path, dynamic_objects, dynamic_object_indices, getEgoPose(), getEgoTwist(),
         common_parameter, *lane_change_parameters_, common_parameter.expected_front_deceleration,
         common_parameter.expected_rear_deceleration, object_debug_, longitudinal_acc,
-        lane_changing_longitudinal_acc);
+        lane_changing_lon_acc);
 
       if (is_safe) {
         return true;

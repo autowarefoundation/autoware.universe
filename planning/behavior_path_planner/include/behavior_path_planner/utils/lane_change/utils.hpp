@@ -57,6 +57,10 @@ double calcMaximumAcceleration(
   const PathWithLaneId & path, const Pose & current_pose, const double current_velocity,
   const double max_longitudinal_acc, const BehaviorPathPlannerParameters & params);
 
+double calcLaneChangingAcceleration(
+  const double initial_lane_changing_velocity, const double max_path_velocity,
+  const double lane_changing_time, const double prepare_longitudinal_acc);
+
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
 
