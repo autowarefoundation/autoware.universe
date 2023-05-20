@@ -415,11 +415,10 @@ double PlannerInterface::calculateSlowDownVelocity(
     if (prev_output) {
       return signal_processing::lowpassFilter(
         obstacle.precise_lat_dist, prev_output->precise_lat_dist,
-        slow_down_param_.lpf_gain_precise_lat_dist);
+        slow_down_param_.lpf_gain_lat_dist);
     }
     return obstacle.precise_lat_dist;
   }();
-  std::cerr << "=============" << stable_precise_lat_dist << "=================" << std::endl;
 
   const double ratio = std::clamp(
     (std::abs(stable_precise_lat_dist) - p.min_lat_margin) / (p.max_lat_margin - p.min_lat_margin),
