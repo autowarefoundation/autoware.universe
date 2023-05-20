@@ -168,12 +168,15 @@ private:
     SlowDownOutput() = default;
     SlowDownOutput(
       const std::string & arg_uuid, const std::vector<TrajectoryPoint> & traj_points,
-      const std::optional<size_t> & idx, const double arg_target_vel,
-      const double arg_precise_lat_dist)
+      const std::optional<size_t> & start_idx, const std::optional<size_t> & end_idx,
+      const double arg_target_vel, const double arg_precise_lat_dist)
     : uuid(arg_uuid), target_vel(arg_target_vel), precise_lat_dist(arg_precise_lat_dist)
     {
-      if (idx) {
-        start_point = traj_points.at(*idx).pose;
+      if (start_idx) {
+        start_point = traj_points.at(*start_idx).pose;
+      }
+      if (end_idx) {
+        end_point = traj_points.at(*end_idx).pose;
       }
     }
 
@@ -181,6 +184,7 @@ private:
     double target_vel;
     double precise_lat_dist;
     std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
+    std::optional<geometry_msgs::msg::Pose> end_point{std::nullopt};
   };
   double calculateSlowDownVelocity(
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
@@ -208,8 +212,8 @@ private:
         node.declare_parameter<double>("slow_down.time_margin_on_target_velocity");
       lpf_gain_slow_down_vel = node.declare_parameter<double>("slow_down.lpf_gain_slow_down_vel");
       lpf_gain_lat_dist = node.declare_parameter<double>("slow_down.lpf_gain_lat_dist");
-      lpf_gain_dist_to_slow_down_start =
-        node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down_start");
+      lpf_gain_dist_to_slow_down =
+        node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -229,7 +233,7 @@ private:
       tier4_autoware_utils::updateParam<double>(
         parameters, "slow_down.lpf_gain_lat_dist", lpf_gain_lat_dist);
       tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.lpf_gain_dist_to_slow_down_start", lpf_gain_dist_to_slow_down_start);
+        parameters, "slow_down.lpf_gain_dist_to_slow_down", lpf_gain_dist_to_slow_down);
     }
 
     double max_lat_margin;
@@ -237,9 +241,9 @@ private:
     double max_ego_velocity;
     double min_ego_velocity;
     double time_margin_on_target_velocity;
-    double lpf_gain_slow_down_vel{0.99};           // TODO(murooka) use rosparam
-    double lpf_gain_lat_dist{0.999};               // TODO(murooka) use rosparam
-    double lpf_gain_dist_to_slow_down_start{0.9};  // TODO(murooka) use rosparam
+    double lpf_gain_slow_down_vel;
+    double lpf_gain_lat_dist;
+    double lpf_gain_dist_to_slow_down;
   };
   SlowDownParam slow_down_param_;
 
