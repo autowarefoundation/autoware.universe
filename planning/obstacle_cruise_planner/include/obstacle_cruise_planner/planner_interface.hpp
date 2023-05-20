@@ -206,6 +206,10 @@ private:
       min_ego_velocity = node.declare_parameter<double>("slow_down.min_ego_velocity");
       time_margin_on_target_velocity =
         node.declare_parameter<double>("slow_down.time_margin_on_target_velocity");
+      lpf_gain_slow_down_vel = node.declare_parameter<double>("slow_down.lpf_gain_slow_down_vel");
+      lpf_gain_lat_dist = node.declare_parameter<double>("slow_down.lpf_gain_lat_dist");
+      lpf_gain_dist_to_slow_down_start =
+        node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down_start");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -220,6 +224,12 @@ private:
         parameters, "slow_down.min_ego_velocity", min_ego_velocity);
       tier4_autoware_utils::updateParam<double>(
         parameters, "slow_down.time_margin_on_target_velocity", time_margin_on_target_velocity);
+      tier4_autoware_utils::updateParam<double>(
+        parameters, "slow_down.lpf_gain_slow_down_vel", lpf_gain_slow_down_vel);
+      tier4_autoware_utils::updateParam<double>(
+        parameters, "slow_down.lpf_gain_lat_dist", lpf_gain_lat_dist);
+      tier4_autoware_utils::updateParam<double>(
+        parameters, "slow_down.lpf_gain_dist_to_slow_down_start", lpf_gain_dist_to_slow_down_start);
     }
 
     double max_lat_margin;
@@ -228,7 +238,7 @@ private:
     double min_ego_velocity;
     double time_margin_on_target_velocity;
     double lpf_gain_slow_down_vel{0.99};           // TODO(murooka) use rosparam
-    double lpf_gain_precise_lat_dist{0.999};       // TODO(murooka) use rosparam
+    double lpf_gain_lat_dist{0.999};               // TODO(murooka) use rosparam
     double lpf_gain_dist_to_slow_down_start{0.9};  // TODO(murooka) use rosparam
   };
   SlowDownParam slow_down_param_;
