@@ -962,9 +962,13 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   // check lateral distance considering hysteresis
   const bool is_lat_dist_low = isLowerConsideringHysteresis(
     precise_lat_dist, is_prev_obstacle_slow_down,
-    p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down,
-    p.max_lat_margin_for_slow_down - p.lat_hysteresis_margin_for_slow_down);
+    p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down / 2.0,
+    p.max_lat_margin_for_slow_down - p.lat_hysteresis_margin_for_slow_down / 2.0);
   if (!is_lat_dist_low) {
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), enable_debug_info_,
+      "[SlowDown] Ignore obstacle (%s) since it's far from trajectory. (%f [m])", object_id.c_str(),
+      precise_lat_dist);
     return std::nullopt;
   }
 

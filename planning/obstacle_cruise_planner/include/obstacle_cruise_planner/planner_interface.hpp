@@ -24,6 +24,8 @@
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
 class PlannerInterface
@@ -161,10 +163,31 @@ protected:
   }
 
 private:
-  double calculateSlowDownVelocity(const SlowDownObstacle & obstacle) const;
-  double calculateDistanceToSlowDownWithConstraints(
+  struct SlowDownOutput
+  {
+    SlowDownOutput() = default;
+    SlowDownOutput(
+      const std::string & arg_uuid, const std::vector<TrajectoryPoint> & traj_points,
+      const std::optional<size_t> & idx, const double arg_target_vel,
+      const double arg_precise_lat_dist)
+    : uuid(arg_uuid), target_vel(arg_target_vel), precise_lat_dist(arg_precise_lat_dist)
+    {
+      if (idx) {
+        start_point = traj_points.at(*idx).pose;
+      }
+    }
+
+    std::string uuid;
+    double target_vel;
+    double precise_lat_dist;
+    std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
+  };
+  double calculateSlowDownVelocity(
+    const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
+  std::pair<double, double> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
-    const SlowDownObstacle & obstacle, const double dist_to_ego, const double slow_down_vel) const;
+    const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
+    const double dist_to_ego, const double slow_down_vel) const;
 
   struct SlowDownInfo
   {
@@ -204,8 +227,13 @@ private:
     double max_ego_velocity;
     double min_ego_velocity;
     double time_margin_on_target_velocity;
+    double lpf_gain_slow_down_vel{0.99};           // TODO(murooka) use rosparam
+    double lpf_gain_precise_lat_dist{0.999};       // TODO(murooka) use rosparam
+    double lpf_gain_dist_to_slow_down_start{0.9};  // TODO(murooka) use rosparam
   };
   SlowDownParam slow_down_param_;
+
+  std::vector<SlowDownOutput> prev_slow_down_output_;
 };
 
 #endif  // OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
