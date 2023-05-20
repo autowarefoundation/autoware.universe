@@ -314,6 +314,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
   const auto insert_point_in_trajectory = [&](const double lon_dist) -> std::optional<size_t> {
     const auto inserted_idx = motion_utils::insertTargetPoint(0, lon_dist, slow_down_traj_points);
     if (inserted_idx) {
+      if (inserted_idx.get() + 1 <= slow_down_traj_points.size() - 1) {
+        slow_down_traj_points.at(inserted_idx.get()).longitudinal_velocity_mps =
+          slow_down_traj_points.at(inserted_idx.get() + 1).longitudinal_velocity_mps;
+      }
       return inserted_idx.get();
     }
     return std::nullopt;
@@ -371,7 +375,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     // insert slow down velocity between slow start and end
     for (size_t i = (slow_down_start_idx ? *slow_down_start_idx : 0); i <= *slow_down_end_idx;
          ++i) {
-      slow_down_traj_points.at(i).longitudinal_velocity_mps = stable_slow_down_vel;
+      auto & traj_point = slow_down_traj_points.at(i);
+      traj_point.longitudinal_velocity_mps =
+        std::min(traj_point.longitudinal_velocity_mps, static_cast<float>(stable_slow_down_vel));
     }
 
     // add debug data and virtual wall
