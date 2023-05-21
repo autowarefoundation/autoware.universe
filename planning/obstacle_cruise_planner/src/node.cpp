@@ -1175,7 +1175,6 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
   planner_data.ego_vel = ego_odom_ptr_->twist.twist.linear.x;
   planner_data.ego_acc = ego_accel_ptr_->accel.accel.linear.x;
   planner_data.is_driving_forward = is_driving_forward_;
-
   return planner_data;
 }
 

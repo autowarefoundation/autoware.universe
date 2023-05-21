@@ -25,6 +25,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -188,10 +189,10 @@ private:
   };
   double calculateSlowDownVelocity(
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
-  std::pair<double, double> calculateDistanceToSlowDownWithConstraints(
+  std::tuple<double, double, double> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-    const double dist_to_ego, const double slow_down_vel) const;
+    const double dist_to_ego) const;
 
   struct SlowDownInfo
   {
