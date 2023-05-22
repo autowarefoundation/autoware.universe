@@ -134,15 +134,15 @@ std::optional<size_t> generateStaticPassJudgeLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double ip_interval,
   const std::pair<size_t, size_t> lane_interval,
-  const std::shared_ptr<const PlannerData> & planner_data)
+  const std::shared_ptr<const PlannerData> & planner_data, const double velocity)
 {
-  const double velocity = planner_data->current_velocity->twist.linear.x;
-  const double acceleration = planner_data->current_acceleration->accel.accel.linear.x;
+  // const double velocity = planner_data->current_velocity->twist.linear.x;
+  // const double acceleration = planner_data->current_acceleration->accel.accel.linear.x;
   const double max_stop_acceleration = planner_data->max_stop_acceleration_threshold;
-  const double max_stop_jerk = planner_data->max_stop_jerk_threshold;
+  // const double max_stop_jerk = planner_data->max_stop_jerk_threshold;
   // const double delay_response_time = planner_data->delay_response_time;
-  const double offset = -planning_utils::calcJudgeLineDistWithJerkLimit(
-    velocity, acceleration, max_stop_acceleration, max_stop_jerk, 0.0);
+  const double offset =
+    -planning_utils::calcJudgeLineDistWithAccLimit(velocity, max_stop_acceleration, 0.0);
   const auto pass_judge_line_idx = generatePeekingLimitLine(
     first_detection_area, original_path, path_ip, ip_interval, lane_interval, planner_data, offset);
   if (pass_judge_line_idx) {
