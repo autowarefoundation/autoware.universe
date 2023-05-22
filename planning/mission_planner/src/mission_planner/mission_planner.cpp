@@ -454,7 +454,7 @@ bool MissionPlanner::checkRerouteSafety(
   // find last idx that matches the target primitives
   size_t end_idx = start_idx;
   for (size_t i = 1; i < target_route.segments.size(); ++i) {
-    if (start_idx + 1 > original_route.segments.size() - 1) {
+    if (start_idx + i > original_route.segments.size() - 1) {
       break;
     }
 
