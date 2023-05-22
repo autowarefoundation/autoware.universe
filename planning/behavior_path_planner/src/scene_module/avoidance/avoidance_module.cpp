@@ -153,21 +153,21 @@ ModuleStatus AvoidanceModule::updateState()
   const auto is_plan_running = isAvoidancePlanRunning();
   const bool has_avoidance_target = !avoidance_data_.target_objects.empty();
 
-  if (!is_plan_running && !has_avoidance_target) {
-    current_state_ = ModuleStatus::SUCCESS;
-  } else if (
-    !has_avoidance_target && parameters_->enable_update_path_when_object_is_gone &&
-    !isAvoidanceManeuverRunning()) {
-    // if dynamic objects are removed on path, change current state to reset path
-    current_state_ = ModuleStatus::SUCCESS;
-  } else {
-    current_state_ = ModuleStatus::RUNNING;
-  }
-
   DEBUG_PRINT(
     "is_plan_running = %d, has_avoidance_target = %d", is_plan_running, has_avoidance_target);
 
-  return current_state_;
+  if (!is_plan_running && !has_avoidance_target) {
+    return ModuleStatus::SUCCESS;
+  }
+
+  if (
+    !has_avoidance_target && parameters_->enable_update_path_when_object_is_gone &&
+    !isAvoidanceManeuverRunning()) {
+    // if dynamic objects are removed on path, change current state to reset path
+    return ModuleStatus::SUCCESS;
+  }
+
+  return ModuleStatus::RUNNING;
 }
 
 bool AvoidanceModule::isAvoidancePlanRunning() const
@@ -2585,6 +2585,11 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
     *ego_velocity_starting_avoidance_ptr_ = getEgoSpeed();
   }
 
+  // update ego velocity if the ego is faster than saved velocity.
+  if (*ego_velocity_starting_avoidance_ptr_ < getEgoSpeed()) {
+    *ego_velocity_starting_avoidance_ptr_ = getEgoSpeed();
+  }
+
   // calc index and velocity to NO_ACCEL_TIME_THR
   const auto v0 = *ego_velocity_starting_avoidance_ptr_;
   auto vmax = 0.0;
@@ -3342,10 +3347,10 @@ void AvoidanceModule::updateDebugMarker(
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("MovingObject")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("OutOfTargetArea")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("NotNeedAvoidance")));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("LessThanExecutionThreshold")));
 
   add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
-  add(createOverhangFurthestLineStringMarkerArray(
-    debug.bounds, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
+  add(createOverhangFurthestLineStringMarkerArray(debug.bounds, "bounds", 1.0, 0.0, 1.0));
 
   add(createUnsafeObjectsMarkerArray(debug.unsafe_objects, "unsafe_objects"));
 

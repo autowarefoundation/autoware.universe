@@ -2,50 +2,54 @@
 
 ## Purpose / Role
 
-Search for a space where there are no objects and goal planner there.
+Plan path around the goal.
+
+- Park at the designated goal.
+- Modify the goal to avoid obstacles or to pull over at the side of tha lane.
 
 ## Design
+
+If goal modification is not allowed, park at the designated fixed goal. (`fixed_goal_planner` in the figure below)
+When allowed, park in accordance with the specified policy(e.g pull over on left/right side of the lane). (`rough_goal_planner` in the figure below). Currently rough goal planner only support pull_over feature, but it would be desirable to be able to accommodate various parking policies in the future.
 
 ```plantuml
 @startuml
 package goal_planner{
-    abstract class PullOverPlannerBase {
-    }
-    abstract class GoalSeacherBase {
-    }
 
-    package lane_parking <<Rectangle>>{
-        class ShiftPullOver {
+    class GoalPlannerModule {}
+
+    package rough_goal_planner <<Rectangle>>{
+
+        package lane_parking <<Rectangle>>{
+            class ShiftPullOver {}
+            class GeometricPullOver {}
         }
-        class GeometricPullOver {
+
+        package freespace_parking <<Rectangle>>{
+            class FreeSpacePullOver {}
         }
+
+        class GoalSeacher {}
+
+        struct GoalCandidates {}
+        struct PullOverPath{}
+
+        abstract class PullOverPlannerBase {}
+        abstract class GoalSeacherBase {}
+
     }
 
-    package freespace_parking <<Rectangle>>{
-        class FreeSpacePullOver {
-        }
+    package fixed_goal_planner <<Rectangle>>{
+        abstract class FixedGoalPlannerBase {}
+        class DefaultFixedPlanner{}
     }
-
-    class GoalSeacher {
-    }
-
-    class GoalPlannerModule {
-    }
-
-
-    struct GoalCandidates {
-    }
-
-    struct PullOverPath{}
 }
 
 
 package utils{
-    class PathShifter {
-    }
+    class PathShifter {}
 
-    class GeometricParallelParking {
-    }
+    class GeometricParallelParking {}
 }
 
 package freespace_planning_algorithms
@@ -59,6 +63,7 @@ ShiftPullOver --|> PullOverPlannerBase
 GeometricPullOver --|> PullOverPlannerBase
 FreeSpacePullOver --|> PullOverPlannerBase
 GoalSeacher --|> GoalSeacherBase
+DefaultFixedPlanner --|> FixedGoalPlannerBase
 
 PathShifter --o ShiftPullOver
 GeometricParallelParking --o GeometricPullOver
@@ -67,6 +72,7 @@ RRTStar --o FreeSpacePullOver
 
 PullOverPlannerBase --o GoalPlannerModule
 GoalSeacherBase --o GoalPlannerModule
+FixedGoalPlannerBase --o GoalPlannerModule
 
 PullOverPath --o PullOverPlannerBase
 GoalCandidates --o GoalSeacherBase
@@ -74,15 +80,51 @@ GoalCandidates --o GoalSeacherBase
 @enduml
 ```
 
+## start condition
+
+Either one is activated when all conditions are met.
+
+### fixed_goal_planner
+
+- The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
+- Route is set with `allow_goal_modification=false` by default.
+
+<img src="https://user-images.githubusercontent.com/39142679/237929955-c0adf01b-9e3c-45e3-848d-98cf11e52b65.png" width="600">
+
+### rough_goal_planner
+
+#### pull over on road lane
+
+- The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
+- Route is set with `allow_goal_modification=true` .
+  - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
+  - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
+- ego-vehicle is in the same lane as the goal.
+
+<img src="https://user-images.githubusercontent.com/39142679/237929950-989ca6c3-d48c-4bb5-81e5-e8d6a38911aa.png" width="600">
+
+#### pull over on shoulder lane
+
+- The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
+- Goal is set in the `road_shoulder`.
+
+<img src="https://user-images.githubusercontent.com/39142679/237929941-2ce26ea5-c84d-4d17-8cdc-103f5246db90.png" width="600">
+
+## finish condition
+
+- The distance to the goal from your vehicle is lower than threshold (default: < `1m`).
+- The ego-vehicle is stopped.
+  - The speed is lower than threshold (default: < `0.01m/s`).
+
 ## General parameters for goal_planner
 
 | Name                       | Unit   | Type   | Description                                                                                                                             | Default value |
 | :------------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| minimum_request_length     | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, the module is activated.                          | 200.0         |
+| minimum_request_length     | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, the module is activated.                          | 100.0         |
 | th_arrived_distance        | [m]    | double | distance threshold for arrival of path termination                                                                                      | 1.0           |
 | th_stopped_velocity        | [m/s]  | double | velocity threshold for arrival of path termination                                                                                      | 0.01          |
 | th_stopped_time            | [s]    | double | time threshold for arrival of path termination                                                                                          | 2.0           |
-| pull_over_velocity         | [m/s]  | double | decelerate to this speed by the goal search area                                                                                        | 2.0           |
+| pull_over_velocity         | [m/s]  | double | decelerate to this speed by the goal search area                                                                                        | 3.0           |
 | pull_over_minimum_velocity | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                           | 1.38          |
 | margin_from_boundary       | [m]    | double | distance margin from edge of the shoulder lane                                                                                          | 0.5           |
 | decide_path_distance       | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed | 10.0          |
@@ -129,8 +171,8 @@ searched for in certain range of the shoulder lane.
 | backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
 | goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
 | longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
-| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 3.0            |
-| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 3.0            |
+| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 0.5            |
+| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 0.25           |
 | ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                      | 15.0           |
 
 ## **Path Generation**
@@ -160,7 +202,7 @@ The lateral jerk is searched for among the predetermined minimum and maximum val
 | maximum_lateral_jerk          | [m/s3] | double | maximum lateral jerk                                                | 2.0           |
 | minimum_lateral_jerk          | [m/s3] | double | minimum lateral jerk                                                | 0.5           |
 | deceleration_interval         | [m]    | double | distance of deceleration section                                    | 15.0          |
-| after_shift_straight_distance | [m]    | double | straight line distance after pull over end point                    | 5.0           |
+| after_shift_straight_distance | [m]    | double | straight line distance after pull over end point                    | 1.0           |
 
 ### **geometric parallel parking**
 
