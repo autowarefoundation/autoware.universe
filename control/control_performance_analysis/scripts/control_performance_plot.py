@@ -15,34 +15,45 @@
 # limitations under the License.
 
 import argparse
-
-
-import rclpy
-from rclpy.node import Node
-from control_performance_analysis.msg import ErrorStamped, DrivingMonitorStamped
-from tier4_debug_msgs.msg import BoolStamped
-from nav_msgs.msg import Odometry
-import matplotlib.pyplot as plt
 import math
 
+from control_performance_analysis.msg import DrivingMonitorStamped
+from control_performance_analysis.msg import ErrorStamped
+import matplotlib.pyplot as plt
+from nav_msgs.msg import Odometry
+import rclpy
+from rclpy.node import Node
+from tier4_debug_msgs.msg import BoolStamped
+
 parser = argparse.ArgumentParser()
-parser.add_argument("-i","--interval",help="interval distance to plot")
+parser.add_argument("-i", "--interval", help="interval distance to plot")
 parser.add_argument("-r", "--realtime_plot", default=True, help="Enable real-time plotting")
+
 
 class PlotterNode(Node):
     def __init__(self, realtime_plot):
-        super().__init__('plotter_node')
+        super().__init__("plotter_node")
 
         self.realtime_plot = realtime_plot
 
-        self.subscription_error = self.create_subscription(ErrorStamped, '/control_performance/performance_vars', self.error_callback, 10)
-        self.subscription_driving = self.create_subscription(DrivingMonitorStamped, 'driving_topic', self.driving_callback, 10)
-        self.subscription_odometry = self.create_subscription(Odometry, '/localization/kinematic_state', self.odometry_callback, 10)
-        self.subscription_plot = self.create_subscription(BoolStamped, '/make_plot', self.make_plot_callback, 10)
+        self.subscription_error = self.create_subscription(
+            ErrorStamped, "/control_performance/performance_vars", self.error_callback, 10
+        )
+        self.subscription_driving = self.create_subscription(
+            DrivingMonitorStamped, "driving_topic", self.driving_callback, 10
+        )
+        self.subscription_odometry = self.create_subscription(
+            Odometry, "/localization/kinematic_state", self.odometry_callback, 10
+        )
+        self.subscription_plot = self.create_subscription(
+            BoolStamped, "/make_plot", self.make_plot_callback, 10
+        )
         self.curvature = None
         self.velocity = None
         self.lateral_error = None
-        self.pose_distance_threshold = 0.2  # Define the pose distance threshold to trigger plot update
+        self.pose_distance_threshold = (
+            0.2  # Define the pose distance threshold to trigger plot update
+        )
         self.previous_pos = None
 
         self.abs_curvature_arr = []
@@ -50,7 +61,17 @@ class PlotterNode(Node):
         self.abs_lateral_error_arr = []
 
         self.fig, self.ax = plt.subplots(3, 3, figsize=(12, 9))
-        self.velocities = [(0.0, 3.0), (3.0, 6.0), (6.0, 9.0), (9.0, 12.0), (12.0, 15.0), (15.0, 18.0), (18.0, 21.0), (21.0, 24.0), (24.0, float('inf'))]
+        self.velocities = [
+            (0.0, 3.0),
+            (3.0, 6.0),
+            (6.0, 9.0),
+            (9.0, 12.0),
+            (12.0, 15.0),
+            (15.0, 18.0),
+            (18.0, 21.0),
+            (21.0, 24.0),
+            (24.0, float("inf")),
+        ]
         plt.pause(0.1)
 
     def error_callback(self, msg):
@@ -83,8 +104,6 @@ class PlotterNode(Node):
         if self.lateral_error is None:
             print("waiting lateral_error")
             return
-        
-
 
         pose_distance = self.calculate_distance(self.previous_pos, current_pos)
         print("pose_distance = ", pose_distance)
@@ -97,10 +116,8 @@ class PlotterNode(Node):
                 self.update_plot()
             self.previous_pos = current_pos
 
-        
-
     def calculate_distance(self, pos1, pos2):
-        distance = math.sqrt((pos2.x - pos1.x)**2 + (pos2.y - pos1.y)**2)
+        distance = math.sqrt((pos2.x - pos1.x) ** 2 + (pos2.y - pos1.y) ** 2)
         return distance
 
     # def update_plot(self):
@@ -121,11 +138,14 @@ class PlotterNode(Node):
             if len(indices) > 0:
                 ax = self.ax[i // 3, i % 3]
                 ax.cla()
-                ax.scatter([self.abs_curvature_arr[j] for j in indices], [self.abs_lateral_error_arr[j] for j in indices])
-                ax.set_xlabel('Curvature')
-                ax.set_ylabel('Lateral Error')
-                ax.set_title(f'Velocity: {vel_min} - {vel_max}')
-        
+                ax.scatter(
+                    [self.abs_curvature_arr[j] for j in indices],
+                    [self.abs_lateral_error_arr[j] for j in indices],
+                )
+                ax.set_xlabel("Curvature")
+                ax.set_ylabel("Lateral Error")
+                ax.set_title(f"Velocity: {vel_min} - {vel_max}")
+
         plt.tight_layout()
         plt.pause(0.1)  # Pause to allow the plot to update
 
@@ -143,5 +163,6 @@ def main(args=None):
     plotter_node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

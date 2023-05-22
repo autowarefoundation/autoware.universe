@@ -34,10 +34,10 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
   p_.odom_interval_ = 0;
   p_.curvature_interval_length_ = 10.0;
-  p_.acceptable_max_distance_to_waypoint_ = 10.0;
+  p_.acceptable_max_distance_to_waypoint_ = 1.5;
   p_.acceptable_max_yaw_difference_rad_ = 1.0472;
   p_.prevent_zero_division_value_ = 0.001;
-  p_.lpf_gain_ = 0.0;
+  p_.lpf_gain_ = 0.8;
   p_.wheelbase_ = 2.74;
 }
 
