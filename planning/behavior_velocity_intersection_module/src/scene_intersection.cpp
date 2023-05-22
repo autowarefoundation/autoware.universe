@@ -112,7 +112,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   occlusion_stop_distance_ = std::numeric_limits<double>::lowest();
   occlusion_first_stop_required_ = false;
 
-  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   /* get current pose */
   const geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
 
@@ -183,19 +182,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       planner_data_->occupancy_grid->info.resolution / std::sqrt(2.0));
   }
 
-  const auto static_pass_judge_line_opt =
-    first_detection_area
-      ? util::generateStaticPassJudgeLine(
-          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_)
-      : std::nullopt;
-
-  const auto default_stop_line_idx_opt =
-    first_detection_area ? util::generateCollisionStopLine(
-                             lane_id_, first_detection_area.value(), planner_data_,
-                             planner_param_.common.stop_line_margin, path, path_ip, interval,
-                             lane_interval_ip, logger_.get_child("util"))
-                         : std::nullopt;
-
   /* calc closest index */
   const auto closest_idx_opt =
     motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
@@ -207,20 +193,20 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
   const size_t closest_idx = closest_idx_opt.get();
 
-  if (static_pass_judge_line_opt && default_stop_line_idx_opt) {
+  const auto static_pass_judge_line_opt =
+    first_detection_area
+      ? util::generateStaticPassJudgeLine(
+          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_)
+      : std::nullopt;
+
+  if (static_pass_judge_line_opt) {
     const auto pass_judge_line_idx = static_pass_judge_line_opt.value();
-    debug_data_.pass_judge_wall_pose =
-      planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, *path);
     const bool is_over_pass_judge_line =
       util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
-    const bool is_over_default_stop_line =
-      util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx_opt.value());
     const double vel = std::fabs(planner_data_->current_velocity->twist.linear.x);
     const bool keep_detection = (vel < planner_param_.collision_detection.keep_detection_vel_thr);
     // if ego is over the pass judge line and not stopped
-    if (is_over_default_stop_line && !is_over_pass_judge_line && keep_detection) {
-      /* do nothing */
-    } else if (is_over_default_stop_line && is_over_pass_judge_line) {
+    if (is_over_pass_judge_line && is_go_out_ && !keep_detection) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       return true;
@@ -252,6 +238,12 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* calculate dynamic collision around detection area */
   /* set stop lines for base_link */
+  const auto default_stop_line_idx_opt =
+    first_detection_area ? util::generateCollisionStopLine(
+                             lane_id_, first_detection_area.value(), planner_data_,
+                             planner_param_.common.stop_line_margin, path, path_ip, interval,
+                             lane_interval_ip, logger_.get_child("util"))
+                         : std::nullopt;
   const double time_delay = is_go_out_
                               ? 0.0
                               : (planner_param_.collision_detection.state_transit_margin_time -
@@ -427,6 +419,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
 
   /* make decision */
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   if (!occlusion_activated_) {
     is_go_out_ = false;
 
