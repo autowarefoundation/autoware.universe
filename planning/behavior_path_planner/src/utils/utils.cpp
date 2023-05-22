@@ -218,12 +218,22 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
   const std::vector<Point> & bound, const std::vector<Point> & edge_points,
   const bool is_object_right)
 {
+  constexpr double invalid_lat_dist_to_bound = 10.0;
+
   std::vector<PolygonPoint> full_polygon;
   for (const auto & edge_point : edge_points) {
     const auto polygon_point = transformBoundFrenetCoordinate(bound, edge_point);
+
+    // check lat dist for U-turn roads.
+    if (
+      (is_object_right && invalid_lat_dist_to_bound < polygon_point.lat_dist_to_bound) ||
+      (!is_object_right && polygon_point.lat_dist_to_bound < -invalid_lat_dist_to_bound)) {
+      return {};
+    }
     full_polygon.push_back(polygon_point);
   }
 
+  // 1. check the case where the polygon intersects the bound
   std::vector<PolygonPoint> inside_poly;
   bool has_intersection = false;  // NOTE: between obstacle polygon and bound
   for (int i = 0; i < static_cast<int>(full_polygon.size()); ++i) {
@@ -262,10 +272,24 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
     inside_poly.push_back(intersect_point);
     continue;
   }
-
   if (has_intersection) {
     return inside_poly;
   }
+
+  // 2. check the case where the polygon does not intersect the bound
+  const bool is_polygon_fully_inside_bounds = [&]() {
+    for (const auto & curr_poly : full_polygon) {
+      const bool is_curr_outside = curr_poly.is_outside_bounds(is_object_right);
+      if (is_curr_outside) {
+        return false;
+      }
+    }
+    return true;
+  }();
+  if (is_polygon_fully_inside_bounds) {
+    return full_polygon;
+  }
+
   return std::vector<PolygonPoint>{};
 }
 
@@ -1035,6 +1059,19 @@ bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
   return false;
 }
 
+bool isInLaneletWithYawThreshold(
+  const Pose & current_pose, const lanelet::ConstLanelet & lanelet, const double yaw_threshold,
+  const double radius)
+{
+  const double pose_yaw = tf2::getYaw(current_pose.orientation);
+  const double lanelet_angle = lanelet::utils::getLaneletAngle(lanelet, current_pose.position);
+  const double angle_diff =
+    std::abs(tier4_autoware_utils::normalizeRadian(lanelet_angle - pose_yaw));
+
+  return (angle_diff < std::abs(yaw_threshold)) &&
+         lanelet::utils::isInLanelet(current_pose, lanelet, radius);
+}
+
 bool isEgoOutOfRoute(
   const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler)
@@ -1058,10 +1095,8 @@ bool isEgoOutOfRoute(
   }
 
   // If ego vehicle is over goal on goal lane, return true
-  lanelet::ConstLanelet closest_lane;
   const double yaw_threshold = tier4_autoware_utils::deg2rad(90);
-  if (lanelet::utils::query::getClosestLaneletWithConstrains(
-        {goal_lane}, self_pose, &closest_lane, 0.0, yaw_threshold)) {
+  if (isInLaneletWithYawThreshold(self_pose, goal_lane, yaw_threshold)) {
     constexpr double buffer = 1.0;
     const auto ego_arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, self_pose);
     const auto goal_arc_coord =
@@ -1350,6 +1385,14 @@ void generateDrivableArea(
   auto left_bound = calcBound(route_handler, lanes, enable_expanding_polygon, true);
   auto right_bound = calcBound(route_handler, lanes, enable_expanding_polygon, false);
 
+  if (left_bound.empty() || right_bound.empty()) {
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"), clock, 1000,
+      "The right or left bound of drivable area is empty");
+    return;
+  }
+
   // Insert points after goal
   lanelet::ConstLanelet goal_lanelet;
   if (
@@ -1390,21 +1433,38 @@ void generateDrivableArea(
     std::reverse(right_bound.begin(), right_bound.end());
   }
 
-  // Get Closest segment for the start point
-  constexpr double front_length = 0.5;
-  const auto front_pose = path.points.empty() ? current_pose : path.points.front().point.pose;
-  const size_t front_left_start_idx =
-    findNearestSegmentIndexFromLateralDistance(left_bound, front_pose.position);
-  const size_t front_right_start_idx =
-    findNearestSegmentIndexFromLateralDistance(right_bound, front_pose.position);
-  const auto left_start_point =
-    calcLongitudinalOffsetStartPoint(left_bound, front_pose, front_left_start_idx, -front_length);
-  const auto right_start_point =
-    calcLongitudinalOffsetStartPoint(right_bound, front_pose, front_right_start_idx, -front_length);
-  const size_t left_start_idx =
-    findNearestSegmentIndexFromLateralDistance(left_bound, left_start_point);
-  const size_t right_start_idx =
-    findNearestSegmentIndexFromLateralDistance(right_bound, right_start_point);
+  path.left_bound.clear();
+  path.right_bound.clear();
+
+  const auto [left_start_idx, right_start_idx] = [&]() {
+    const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
+    const auto cropped_path_points = motion_utils::cropPoints(
+      path.points, current_pose.position, current_seg_idx,
+      planner_data->parameters.forward_path_length,
+      planner_data->parameters.backward_path_length + planner_data->parameters.input_path_interval);
+
+    constexpr double front_length = 0.5;
+    const auto front_pose =
+      cropped_path_points.empty() ? current_pose : cropped_path_points.front().point.pose;
+    const size_t front_left_start_idx =
+      findNearestSegmentIndexFromLateralDistance(left_bound, front_pose.position);
+    const size_t front_right_start_idx =
+      findNearestSegmentIndexFromLateralDistance(right_bound, front_pose.position);
+    const auto left_start_point =
+      calcLongitudinalOffsetStartPoint(left_bound, front_pose, front_left_start_idx, -front_length);
+    const auto right_start_point = calcLongitudinalOffsetStartPoint(
+      right_bound, front_pose, front_right_start_idx, -front_length);
+    const size_t left_start_idx =
+      findNearestSegmentIndexFromLateralDistance(left_bound, left_start_point);
+    const size_t right_start_idx =
+      findNearestSegmentIndexFromLateralDistance(right_bound, right_start_point);
+
+    // Insert a start point
+    path.left_bound.push_back(left_start_point);
+    path.right_bound.push_back(right_start_point);
+
+    return std::make_pair(left_start_idx, right_start_idx);
+  }();
 
   // Get Closest segment for the goal point
   const auto goal_pose = path.points.empty() ? current_pose : path.points.back().point.pose;
@@ -1421,14 +1481,6 @@ void generateDrivableArea(
   const size_t right_goal_idx = std::max(
     goal_right_start_idx,
     findNearestSegmentIndexFromLateralDistance(right_bound, right_goal_point));
-
-  // Store Data
-  path.left_bound.clear();
-  path.right_bound.clear();
-
-  // Insert a start point
-  path.left_bound.push_back(left_start_point);
-  path.right_bound.push_back(right_start_point);
 
   // Insert middle points
   for (size_t i = left_start_idx + 1; i <= left_goal_idx; ++i) {
@@ -2683,18 +2735,6 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
   return true;
 }
 
-double calcLaneChangingTime(
-  const double lane_changing_velocity, const double shift_length,
-  const BehaviorPathPlannerParameters & common_parameter)
-{
-  const double lateral_acc =
-    lane_changing_velocity < common_parameter.lateral_acc_switching_velocity
-      ? common_parameter.lane_changing_lateral_acc_at_low_velocity
-      : common_parameter.lane_changing_lateral_acc;
-  const double & lateral_jerk = common_parameter.lane_changing_lateral_jerk;
-  return PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
-}
-
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
   const double length_to_intersection)
@@ -2704,11 +2744,15 @@ double calcMinimumLaneChangeLength(
   }
 
   const double & vel = common_param.minimum_lane_changing_velocity;
+  const auto lat_acc = common_param.lane_change_lat_acc_map.find(vel);
+  const double & max_lateral_acc = lat_acc.second;
+  const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
 
   double accumulated_length =
     length_to_intersection + common_param.backward_length_buffer_for_end_of_lane;
   for (const auto & shift_interval : shift_intervals) {
-    const double t = calcLaneChangingTime(vel, shift_interval, common_param);
+    const double t =
+      PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
     accumulated_length += vel * t + common_param.minimum_prepare_length;
   }
 
@@ -2881,8 +2925,7 @@ void extractObstaclesFromDrivableArea(
     }
 
     // get a boundary that we have to change
-    const double lat_dist_to_path = motion_utils::calcLateralOffset(path.points, obj_pos);
-    const bool is_object_right = lat_dist_to_path < 0.0;
+    const bool is_object_right = !obstacle.is_left;
     const auto & bound = is_object_right ? path.right_bound : path.left_bound;
 
     // get polygon points inside the bounds

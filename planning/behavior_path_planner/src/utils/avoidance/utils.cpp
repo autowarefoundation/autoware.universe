@@ -328,8 +328,9 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       object.avoid_margin.get() - object_parameter.envelope_buffer_margin - vehicle_width / 2.0;
     const auto obj_poly =
       tier4_autoware_utils::expandPolygon(object.envelope_poly, diff_poly_buffer);
+    const bool is_left = 0 < object.lateral;
     obstacles_for_drivable_area.push_back(
-      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly});
+      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, is_left});
   }
   return obstacles_for_drivable_area;
 }
@@ -753,20 +754,43 @@ void filterTargetObjects(
         data.other_objects.push_back(o);
         continue;
       }
+
+      if (std::abs(shift_length) < parameters->lateral_execution_threshold) {
+        o.reason = "LessThanExecutionThreshold";
+        data.other_objects.push_back(o);
+        continue;
+      }
     }
 
-    // force avoidance for stopped vehicle
-    {
+    const auto stop_time_longer_than_threshold =
+      o.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
+
+    if (stop_time_longer_than_threshold && parameters->enable_force_avoidance_for_stopped_vehicle) {
+      // force avoidance for stopped vehicle
+      bool not_parked_object = true;
+
+      // check traffic light
       const auto to_traffic_light =
         utils::getDistanceToNextTrafficLight(object_pose, data.current_lanelets);
+      {
+        not_parked_object = to_traffic_light < parameters->object_ignore_distance_traffic_light;
+      }
 
-      o.to_stop_factor_distance = std::min(to_traffic_light, o.to_stop_factor_distance);
-    }
+      // check crosswalk
+      const auto & ego_pose = planner_data->self_odometry->pose.pose;
+      const auto to_crosswalk =
+        utils::getDistanceToCrosswalk(ego_pose, data.current_lanelets, *rh->getOverallGraphPtr()) -
+        o.longitudinal;
+      {
+        const auto stop_for_crosswalk =
+          to_crosswalk < parameters->object_ignore_distance_crosswalk_forward &&
+          to_crosswalk > -1.0 * parameters->object_ignore_distance_crosswalk_backward;
+        not_parked_object = not_parked_object || stop_for_crosswalk;
+      }
 
-    if (
-      o.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle &&
-      parameters->enable_force_avoidance_for_stopped_vehicle) {
-      if (o.to_stop_factor_distance > parameters->object_check_force_avoidance_clearance) {
+      o.to_stop_factor_distance = std::min(to_traffic_light, to_crosswalk);
+
+      if (!not_parked_object) {
         o.last_seen = now;
         o.avoid_margin = avoid_margin;
         data.target_objects.push_back(o);

@@ -301,6 +301,10 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
 
 bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes);
 
+bool isInLaneletWithYawThreshold(
+  const Pose & current_pose, const lanelet::ConstLanelet & lanelet, const double yaw_threshold,
+  const double radius = 0.0);
+
 bool isEgoOutOfRoute(
   const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler);
@@ -371,10 +375,6 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
   const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
-
-double calcLaneChangingTime(
-  const double lane_changing_velocity, const double shift_length,
-  const BehaviorPathPlannerParameters & common_parameter);
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
