@@ -222,6 +222,14 @@ private:
   void insertWaitPoint(const bool use_constraints_for_decel, ShiftedPath & shifted_path) const;
 
   /**
+   * @brief insert stop point to yield. (stop in the lane if possible, even if the shift has
+   * initiated.)
+   * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
+   * @param target path.
+   */
+  void insertStopPoint(const bool use_constraints_for_decel, ShiftedPath & shifted_path) const;
+
+  /**
    * @brief insert stop point in output path.
    * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
    * @param target path.

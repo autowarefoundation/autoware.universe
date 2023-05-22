@@ -501,7 +501,6 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
   const auto exceed_stop_line = data.to_stop_line < THRESHOLD;
   if (!data.safe && (data.avoiding_now || exceed_stop_line)) {
     data.yield_required = false;
-    data.safe = true;  // OVERWRITE SAFETY JUDGE
     data.safe_new_sl = data.unapproved_new_sl;
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "could not transit yield maneuver!!!");
   }
@@ -600,6 +599,7 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
       break;
     }
     case AvoidanceState::AVOID_EXECUTE: {
+      insertStopPoint(true, path);
       break;
     }
     default:
@@ -3381,7 +3381,6 @@ void AvoidanceModule::updateAvoidanceDebugData(
 double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
 {
   const auto & p = parameters_;
-  const auto & data = avoidance_data_;
   const auto & base_link2front = planner_data_->parameters.base_link2front;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
@@ -3439,6 +3438,51 @@ void AvoidanceModule::insertWaitPoint(
     utils::avoidance::insertDecelPoint(
       getEgoPosition(), insert_distance, 0.0, shifted_path.path, stop_pose_);
   }
+}
+
+void AvoidanceModule::insertStopPoint(
+  const bool use_constraints_for_decel, ShiftedPath & shifted_path) const
+{
+  const auto & data = avoidance_data_;
+
+  if (data.safe) {
+    return;
+  }
+
+  const auto stop_idx = [&]() {
+    const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
+    for (size_t idx = ego_idx; idx < shifted_path.path.points.size(); ++idx) {
+      const auto & estimated_pose = shifted_path.path.points.at(idx).point.pose;
+      if (!utils::isEgoWithinOriginalLane(
+            data.current_lanelets, estimated_pose, planner_data_->parameters)) {
+        return idx - 1;
+      }
+    }
+
+    return shifted_path.path.points.size() - 1;
+  }();
+
+  const auto stop_distance =
+    calcSignedArcLength(shifted_path.path.points, getEgoPosition(), stop_idx);
+
+  if (!use_constraints_for_decel) {
+    utils::avoidance::insertDecelPoint(
+      getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
+    return;
+  }
+
+  const auto decel_distance = helper_.getMildDecelDistance(0.0);
+  if (!decel_distance) {
+    return;
+  }
+
+  if (stop_distance < decel_distance) {
+    return;
+  }
+
+  constexpr double MARGIN = 1.0;
+  utils::avoidance::insertDecelPoint(
+    getEgoPosition(), stop_distance - MARGIN, 0.0, shifted_path.path, stop_pose_);
 }
 
 void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
