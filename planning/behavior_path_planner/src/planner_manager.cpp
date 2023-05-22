@@ -18,6 +18,7 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <magic_enum.hpp>
 
 #include <boost/format.hpp>
 
@@ -62,11 +63,8 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler);
 
     if (!is_any_module_running && is_out_of_route) {
-      BehaviorModuleOutput output{};
-      const auto output_path =
-        utils::createGoalAroundPath(data->route_handler, data->prev_modified_goal);
-      output.path = std::make_shared<PathWithLaneId>(output_path);
-      output.reference_path = std::make_shared<PathWithLaneId>(output_path);
+      BehaviorModuleOutput output = utils::createGoalAroundPath(data);
+      generateCombinedDrivableArea(output, data);
       return output;
     }
 
@@ -129,23 +127,27 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
 void PlannerManager::generateCombinedDrivableArea(
   BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const
 {
+  if (output.path->points.empty()) {
+    RCLCPP_ERROR_STREAM(logger_, "[generateCombinedDrivableArea] Output path is empty!");
+    return;
+  }
+
+  const auto & di = output.drivable_area_info;
   constexpr double epsilon = 1e-3;
-  if (epsilon < std::abs(output.drivable_area_info.drivable_margin)) {
+
+  if (epsilon < std::abs(di.drivable_margin)) {
     // for single free space pull over
     const auto is_driving_forward_opt = motion_utils::isDrivingForward(output.path->points);
     const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
 
     utils::generateDrivableArea(
-      *output.path, data->parameters.vehicle_length, output.drivable_area_info.drivable_margin,
-      is_driving_forward);
-  } else if (output.drivable_area_info.is_already_expanded) {
+      *output.path, data->parameters.vehicle_length, di.drivable_margin, is_driving_forward);
+  } else if (di.is_already_expanded) {
     // for single side shift
     utils::generateDrivableArea(
-      *output.path, output.drivable_area_info.drivable_lanes, data->parameters.vehicle_length,
-      data);
+      *output.path, di.drivable_lanes, false, data->parameters.vehicle_length, data);
   } else {
-    const auto shorten_lanes =
-      utils::cutOverlappedLanes(*output.path, output.drivable_area_info.drivable_lanes);
+    const auto shorten_lanes = utils::cutOverlappedLanes(*output.path, di.drivable_lanes);
 
     const auto & dp = data->drivable_area_expansion_parameters;
     const auto expanded_lanes = utils::expandLanelets(
@@ -154,11 +156,12 @@ void PlannerManager::generateCombinedDrivableArea(
 
     // for other modules where multiple modules may be launched
     utils::generateDrivableArea(
-      *output.path, expanded_lanes, data->parameters.vehicle_length, data);
+      *output.path, expanded_lanes, di.enable_expanding_hatched_road_markings,
+      data->parameters.vehicle_length, data);
   }
 
   // extract obstacles from drivable area
-  utils::extractObstaclesFromDrivableArea(*output.path, output.drivable_area_info.obstacles);
+  utils::extractObstaclesFromDrivableArea(*output.path, di.obstacles);
 }
 
 std::vector<SceneModulePtr> PlannerManager::getRequestModules(
@@ -446,6 +449,9 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     if (itr != approved_module_ptrs_.end()) {
       clearCandidateModules();
       candidate_module_ptrs_.push_back(*itr);
+
+      std::for_each(
+        std::next(itr), approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
     }
 
     approved_module_ptrs_.erase(itr, approved_module_ptrs_.end());
@@ -634,6 +640,10 @@ void PlannerManager::print() const
     return;
   }
 
+  const auto get_status = [](const auto & m) {
+    return magic_enum::enum_name(m->getCurrentStatus());
+  };
+
   size_t max_string_num = 0;
 
   std::ostringstream string_stream;
@@ -650,13 +660,15 @@ void PlannerManager::print() const
   string_stream << "\n";
   string_stream << "approved modules  : ";
   for (const auto & m : approved_module_ptrs_) {
-    string_stream << "[" << m->name() << "]->";
+    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
+                  << "]->";
   }
 
   string_stream << "\n";
   string_stream << "candidate module  : ";
   for (const auto & m : candidate_module_ptrs_) {
-    string_stream << "[" << m->name() << "]->";
+    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
+                  << "]->";
   }
 
   string_stream << "\n" << std::fixed << std::setprecision(1);

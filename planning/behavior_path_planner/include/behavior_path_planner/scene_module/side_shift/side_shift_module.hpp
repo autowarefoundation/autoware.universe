@@ -57,6 +57,7 @@ public:
     const double & min_request_time_sec, bool override_requests = false) const noexcept;
   ModuleStatus updateState() override;
   void updateData() override;
+  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -131,6 +132,10 @@ private:
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
 
   rclcpp::Time latest_lateral_offset_stamp_;
+
+  // debug
+  mutable SideShiftDebugData debug_data_;
+  void setDebugMarkersVisualization() const;
 };
 
 }  // namespace behavior_path_planner

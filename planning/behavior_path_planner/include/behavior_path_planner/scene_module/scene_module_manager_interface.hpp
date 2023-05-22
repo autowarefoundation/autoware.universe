@@ -73,12 +73,13 @@ public:
 
   SceneModulePtr getNewModule()
   {
-    if (idling_module_ != nullptr) {
-      return idling_module_;
+    if (idling_module_ptr_ != nullptr) {
+      idling_module_ptr_->onEntry();
+      return idling_module_ptr_;
     }
 
-    idling_module_ = createNewSceneModuleInstance();
-    return idling_module_;
+    idling_module_ptr_ = createNewSceneModuleInstance();
+    return idling_module_ptr_;
   }
 
   bool isExecutionRequested(
@@ -117,6 +118,7 @@ public:
     }
 
     module_ptr.reset();
+    idling_module_ptr_.reset();
 
     pub_debug_marker_->publish(MarkerArray{});
   }
@@ -182,9 +184,9 @@ public:
       marker_id += marker_offset;
     }
 
-    if (registered_modules_.empty() && idling_module_ != nullptr) {
-      appendMarkerArray(idling_module_->getInfoMarkers(), &info_markers);
-      appendMarkerArray(idling_module_->getDebugMarkers(), &debug_markers);
+    if (registered_modules_.empty() && idling_module_ptr_ != nullptr) {
+      appendMarkerArray(idling_module_ptr_->getInfoMarkers(), &info_markers);
+      appendMarkerArray(idling_module_ptr_->getDebugMarkers(), &debug_markers);
     }
 
     pub_info_marker_->publish(info_markers);
@@ -225,9 +227,11 @@ public:
     });
     registered_modules_.clear();
 
-    idling_module_->onExit();
-    idling_module_->publishRTCStatus();
-    idling_module_.reset();
+    if (idling_module_ptr_ != nullptr) {
+      idling_module_ptr_->onExit();
+      idling_module_ptr_->publishRTCStatus();
+      idling_module_ptr_.reset();
+    }
 
     pub_debug_marker_->publish(MarkerArray{});
   }
@@ -261,7 +265,7 @@ protected:
 
   std::vector<SceneModulePtr> registered_modules_;
 
-  SceneModulePtr idling_module_;
+  SceneModulePtr idling_module_ptr_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 

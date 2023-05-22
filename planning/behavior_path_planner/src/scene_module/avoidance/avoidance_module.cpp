@@ -153,21 +153,21 @@ ModuleStatus AvoidanceModule::updateState()
   const auto is_plan_running = isAvoidancePlanRunning();
   const bool has_avoidance_target = !avoidance_data_.target_objects.empty();
 
-  if (!is_plan_running && !has_avoidance_target) {
-    current_state_ = ModuleStatus::SUCCESS;
-  } else if (
-    !has_avoidance_target && parameters_->enable_update_path_when_object_is_gone &&
-    !isAvoidanceManeuverRunning()) {
-    // if dynamic objects are removed on path, change current state to reset path
-    current_state_ = ModuleStatus::SUCCESS;
-  } else {
-    current_state_ = ModuleStatus::RUNNING;
-  }
-
   DEBUG_PRINT(
     "is_plan_running = %d, has_avoidance_target = %d", is_plan_running, has_avoidance_target);
 
-  return current_state_;
+  if (!is_plan_running && !has_avoidance_target) {
+    return ModuleStatus::SUCCESS;
+  }
+
+  if (
+    !has_avoidance_target && parameters_->enable_update_path_when_object_is_gone &&
+    !isAvoidanceManeuverRunning()) {
+    // if dynamic objects are removed on path, change current state to reset path
+    return ModuleStatus::SUCCESS;
+  }
+
+  return ModuleStatus::RUNNING;
 }
 
 bool AvoidanceModule::isAvoidancePlanRunning() const
@@ -353,8 +353,10 @@ ObjectData AvoidanceModule::createObjectData(
     object_data, object_closest_pose, object_data.overhang_pose.position);
 
   // Check whether the the ego should avoid the object.
+  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(t);
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto safety_margin = 0.5 * vehicle_width + parameters_->lateral_passable_safety_buffer;
+  const auto safety_margin = 0.5 * vehicle_width + object_parameter.safety_buffer_lateral;
   object_data.avoid_required =
     (utils::avoidance::isOnRight(object_data) &&
      std::abs(object_data.overhang_dist) < safety_margin) ||
@@ -2523,18 +2525,25 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
   }
 
   {  // for new architecture
+    DrivableAreaInfo current_drivable_area_info;
     // generate drivable lanes
-    output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
-      getPreviousModuleOutput().drivable_area_info.drivable_lanes, drivable_lanes);
+    current_drivable_area_info.drivable_lanes = drivable_lanes;
     // generate obstacle polygons
-    output.drivable_area_info.obstacles = utils::avoidance::generateObstaclePolygonsForDrivableArea(
-      avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    current_drivable_area_info.obstacles =
+      utils::avoidance::generateObstaclePolygonsForDrivableArea(
+        avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
   }
 
   {  // for old architecture
     // NOTE: Obstacles to avoid are not extracted from the drivable area with an old architecture.
     utils::generateDrivableArea(
-      *output.path, drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+      *output.path, drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   }
 }
 
@@ -2573,6 +2582,11 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
                           avoidance_data_.arclength_from_ego.at(ego_idx);
   const auto t_from_ego = s_from_ego / std::max(getEgoSpeed(), 1.0);
   if (t_from_ego > NO_ACCEL_TIME_THR) {
+    *ego_velocity_starting_avoidance_ptr_ = getEgoSpeed();
+  }
+
+  // update ego velocity if the ego is faster than saved velocity.
+  if (*ego_velocity_starting_avoidance_ptr_ < getEgoSpeed()) {
     *ego_velocity_starting_avoidance_ptr_ = getEgoSpeed();
   }
 
@@ -2783,7 +2797,18 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
 
   BehaviorModuleOutput output;
-  output.turn_signal_info = calcTurnSignalInfo(avoidance_path);
+
+  // turn signal info
+  {
+    const auto original_signal = getPreviousModuleOutput().turn_signal_info;
+    const auto new_signal = calcTurnSignalInfo(avoidance_path);
+    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(avoidance_path.path.points);
+    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+      avoidance_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
+      planner_data_->parameters.ego_nearest_dist_threshold,
+      planner_data_->parameters.ego_nearest_yaw_threshold);
+  }
+
   // sparse resampling for computational cost
   {
     avoidance_path.path =
@@ -2859,24 +2884,35 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
 BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
 {
+  const auto & data = avoidance_data_;
+
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
+
 #ifndef USE_OLD_ARCHITECTURE
   if (path_shifter_.getShiftLines().empty()) {
     out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   }
 #endif
+
+  const auto all_unavoidable = std::all_of(
+    data.target_objects.begin(), data.target_objects.end(),
+    [](const auto & o) { return !o.is_avoidable; });
+
   const auto candidate = planCandidate();
-  constexpr double threshold_to_update_status = -1.0e-03;
-  if (candidate.start_distance_to_path_change > threshold_to_update_status) {
+  if (!avoidance_data_.safe_new_sl.empty()) {
     updateCandidateRTCStatus(candidate);
+    waitApproval();
+  } else if (all_unavoidable) {
     waitApproval();
   } else {
     clearWaitingApproval();
     removeCandidateRTCStatus();
   }
+
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
+
   return out;
 }
 
@@ -3034,7 +3070,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
     // DEBUG_PRINT("%s, shift current: %f, candidate: %f", pfx, current_shift,
     // candidate.end_shift_length);
 
-    const auto new_point_threshold = parameters_->avoidance_execution_lateral_threshold;
+    const auto new_point_threshold = parameters_->lateral_execution_threshold;
     if (std::abs(candidate.end_shift_length - current_shift) > new_point_threshold) {
       if (calcJerk(candidate) > parameters_->max_lateral_jerk) {
         DEBUG_PRINT(
@@ -3124,6 +3160,7 @@ void AvoidanceModule::updateData()
 void AvoidanceModule::processOnEntry()
 {
   initVariables();
+  waitApproval();
 }
 
 void AvoidanceModule::processOnExit()
@@ -3310,10 +3347,10 @@ void AvoidanceModule::updateDebugMarker(
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("MovingObject")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("OutOfTargetArea")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("NotNeedAvoidance")));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("LessThanExecutionThreshold")));
 
   add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
-  add(createOverhangFurthestLineStringMarkerArray(
-    debug.bounds, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
+  add(createOverhangFurthestLineStringMarkerArray(debug.bounds, "bounds", 1.0, 0.0, 1.0));
 
   add(createUnsafeObjectsMarkerArray(debug.unsafe_objects, "unsafe_objects"));
 

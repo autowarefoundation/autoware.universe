@@ -94,6 +94,9 @@ struct AvoidanceParameters
   // disable path update
   bool disable_path_update{false};
 
+  // use hatched road markings for avoidance
+  bool use_hatched_road_markings{false};
+
   // constrains
   bool use_constraints_for_decel{false};
 
@@ -116,8 +119,14 @@ struct AvoidanceParameters
   // vehicles with speed greater than this will not be avoided
   double threshold_speed_object_is_stopped;
 
-  // execute only when there is no intersection or crosswalk behind of the stopped vehicle.
-  double object_check_force_avoidance_clearance;
+  // execute only when there is no intersection behind of the stopped vehicle.
+  double object_ignore_distance_traffic_light;
+
+  // execute only when there is no crosswalk near the stopped vehicle.
+  double object_ignore_distance_crosswalk_forward;
+
+  // execute only when there is no crosswalk near the stopped vehicle.
+  double object_ignore_distance_crosswalk_backward;
 
   // distance to avoid object detection
   double object_check_forward_distance;
@@ -143,9 +152,6 @@ struct AvoidanceParameters
 
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
-
-  // if object overhang is less than this value, the ego stops behind the object.
-  double lateral_passable_safety_buffer{0.5};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -236,7 +242,7 @@ struct AvoidanceParameters
   // avoidance points is greater than this threshold.
   // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
-  double avoidance_execution_lateral_threshold;
+  double lateral_execution_threshold;
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
