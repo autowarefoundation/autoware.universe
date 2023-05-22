@@ -1253,7 +1253,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
 
 Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
-  const double /*object_detected_time*/)
+  const double object_detected_time)
 {
   // Step1. Check if we have the object in the buffer
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
@@ -1262,60 +1262,96 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   }
 
   const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
+  const double current_time = (this->get_clock()->now()).seconds();
 
-  // Step2. Check if object history length longer than history_time_length
-  const int latest_id = static_cast<int>(object_info.size()) - 1;
-  // object history is not long enough
-  if (latest_id < 1) {
+  // Step2. Get the previous id
+  int prev_id = static_cast<int>(object_info.size()) - 1;
+  while (prev_id >= 0) {
+    const double prev_time_delay = object_info.at(prev_id).time_delay;
+    const double prev_time =
+      rclcpp::Time(object_info.at(prev_id).header.stamp).seconds() + prev_time_delay;
+    // if (object_detected_time - prev_time > history_time_length_) {
+    if (current_time - prev_time > history_time_length_) {
+      break;
+    }
+    --prev_id;
+  }
+
+  if (prev_id < 0) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  // Step3. get object lateral kinematics
-  const auto & latest_info = object_info.at(static_cast<size_t>(latest_id));
-
-  bool not_found_corresponding_lanelet = true;
-  double left_dist, right_dist;
-  double v_left_filtered, v_right_filtered;
-  if (latest_info.lateral_kinematics_set.count(current_lanelet_data.lanelet) != 0) {
-    const auto & lateral_kinematics =
-      latest_info.lateral_kinematics_set.at(current_lanelet_data.lanelet);
-    left_dist = lateral_kinematics.dist_from_left_boundary;
-    right_dist = lateral_kinematics.dist_from_right_boundary;
-    v_left_filtered = lateral_kinematics.filtered_left_lateral_velocity;
-    v_right_filtered = lateral_kinematics.filtered_right_lateral_velocity;
-    not_found_corresponding_lanelet = false;
+  // Step3. Get closest previous lanelet ID
+  const auto & prev_info = object_info.at(static_cast<size_t>(prev_id));
+  const auto prev_pose = compensateTimeDelay(prev_info.pose, prev_info.twist, prev_info.time_delay);
+  const lanelet::ConstLanelets prev_lanelets =
+    object_info.at(static_cast<size_t>(prev_id)).current_lanelets;
+  if (prev_lanelets.empty()) {
+    return Maneuver::LANE_FOLLOW;
+  }
+  lanelet::ConstLanelet prev_lanelet = prev_lanelets.front();
+  double closest_prev_yaw = std::numeric_limits<double>::max();
+  for (const auto & lanelet : prev_lanelets) {
+    const double lane_yaw = lanelet::utils::getLaneletAngle(lanelet, prev_pose.position);
+    const double delta_yaw = tf2::getYaw(prev_pose.orientation) - lane_yaw;
+    const double normalized_delta_yaw = tier4_autoware_utils::normalizeRadian(delta_yaw);
+    if (normalized_delta_yaw < closest_prev_yaw) {
+      closest_prev_yaw = normalized_delta_yaw;
+      prev_lanelet = lanelet;
+    }
   }
 
-  // return lane follow when catch exception
-  if (not_found_corresponding_lanelet) {
+  // Step4. Check if the vehicle has changed lane
+  const auto current_lanelet = current_lanelet_data.lanelet;
+  const double current_time_delay = std::max(current_time - object_detected_time, 0.0);
+  const auto current_pose = compensateTimeDelay(
+    object.kinematics.pose_with_covariance.pose, object.kinematics.twist_with_covariance.twist,
+    current_time_delay);
+  const double dist = tier4_autoware_utils::calcDistance2d(prev_pose, current_pose);
+  lanelet::routing::LaneletPaths possible_paths =
+    routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
+  bool has_lane_changed = true;
+  for (const auto & path : possible_paths) {
+    for (const auto & lanelet : path) {
+      if (lanelet == current_lanelet) {
+        has_lane_changed = false;
+        break;
+      }
+    }
+  }
+
+  if (has_lane_changed) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  const double latest_lane_width = left_dist + right_dist;
-  if (latest_lane_width < 1e-3) {
+  // Step5. Lane Change Detection
+  const lanelet::ConstLineString2d prev_left_bound = prev_lanelet.leftBound2d();
+  const lanelet::ConstLineString2d prev_right_bound = prev_lanelet.rightBound2d();
+  const lanelet::ConstLineString2d current_left_bound = current_lanelet.leftBound2d();
+  const lanelet::ConstLineString2d current_right_bound = current_lanelet.rightBound2d();
+  const double prev_left_dist = calcLeftLateralOffset(prev_left_bound, prev_pose);
+  const double prev_right_dist = calcRightLateralOffset(prev_right_bound, prev_pose);
+  const double current_left_dist = calcLeftLateralOffset(current_left_bound, current_pose);
+  const double current_right_dist = calcRightLateralOffset(current_right_bound, current_pose);
+  const double prev_lane_width = std::fabs(prev_left_dist) + std::fabs(prev_right_dist);
+  const double current_lane_width = std::fabs(current_left_dist) + std::fabs(current_right_dist);
+  if (prev_lane_width < 1e-3 || current_lane_width < 1e-3) {
     RCLCPP_ERROR(get_logger(), "[Map Based Prediction]: Lane Width is too small");
     return Maneuver::LANE_FOLLOW;
   }
 
-  // Step 4. check time to reach left/right bound
-  const double epsilon = 1e-9;
-  const double margin_to_reach_left_bound = left_dist / (std::fabs(v_left_filtered) + epsilon);
-  const double margin_to_reach_right_bound = right_dist / (std::fabs(v_right_filtered) + epsilon);
+  const double current_left_dist_ratio = current_left_dist / current_lane_width;
+  const double current_right_dist_ratio = current_right_dist / current_lane_width;
+  const double diff_left_current_prev = current_left_dist - prev_left_dist;
+  const double diff_right_current_prev = current_right_dist - prev_right_dist;
 
-  // Step 5. detect lane change
   if (
-    left_dist < right_dist &&                              // in left side,
-    left_dist < dist_threshold_to_bound_ &&                // close to boundary,
-    v_left_filtered < 0 &&                                 // approaching,
-    margin_to_reach_left_bound < time_threshold_to_bound_  // will soon arrive to left bound
-  ) {
+    current_left_dist_ratio > dist_ratio_threshold_to_left_bound_ &&
+    diff_left_current_prev > diff_dist_threshold_to_left_bound_) {
     return Maneuver::LEFT_LANE_CHANGE;
   } else if (
-    right_dist < left_dist &&                               // in right side,
-    right_dist < dist_threshold_to_bound_ &&                // close to boundary,
-    v_right_filtered < 0 &&                                 // approaching,
-    margin_to_reach_right_bound < time_threshold_to_bound_  // will soon arrive to right bound
-  ) {
+    current_right_dist_ratio < dist_ratio_threshold_to_right_bound_ &&
+    diff_right_current_prev < diff_dist_threshold_to_right_bound_) {
     return Maneuver::RIGHT_LANE_CHANGE;
   }
 
