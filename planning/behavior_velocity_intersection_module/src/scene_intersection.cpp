@@ -413,10 +413,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   if (occlusion_stop_required) {
     occlusion_first_stop_required_ = first_phase_stop_required;
     occlusion_safety_ = is_occlusion_cleared;
-  } else {
-    /* collision */
-    setSafe(collision_state_machine_.getState() == StateMachine::State::GO);
   }
+  /* collision */
+  setSafe(collision_state_machine_.getState() == StateMachine::State::GO);
 
   /* make decision */
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
