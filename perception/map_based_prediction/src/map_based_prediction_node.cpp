@@ -494,12 +494,30 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter("sigma_yaw_angle_deg", 5.0);
   object_buffer_time_length_ = declare_parameter("object_buffer_time_length", 2.0);
   history_time_length_ = declare_parameter("history_time_length", 1.0);
-  dist_threshold_to_bound_ =
-    declare_parameter("dist_threshold_for_lane_change_detection", 1.0);  // 1m
-  time_threshold_to_bound_ =
-    declare_parameter("time_threshold_for_lane_change_detection", 5.0);  // 5 sec
-  cutoff_freq_of_velocity_lpf_ =
-    declare_parameter("cutoff_freq_of_velocity_for_lane_change_detection", 0.1);  // 0.1Hz
+  {  // lane change detection
+    lane_change_detection_method_ = declare_parameter<std::string>("lane_change_detection.method");
+
+    // lane change detection by time_to_change_lane
+    dist_threshold_to_bound_ = declare_parameter(
+      "lane_change_detection.time_to_change_lane.dist_threshold_for_lane_change_detection",
+      1.0);  // 1m
+    time_threshold_to_bound_ = declare_parameter(
+      "lane_change_detection.time_to_change_lane.time_threshold_for_lane_change_detection",
+      5.0);  // 5 sec
+    cutoff_freq_of_velocity_lpf_ = declare_parameter(
+      "lane_change_detection.time_to_change_lane.cutoff_freq_of_velocity_for_lane_change_detection",
+      0.1);  // 0.1Hz
+
+    // lane change detection by lat_diff_distance
+    dist_ratio_threshold_to_left_bound_ = declare_parameter<double>(
+      "lane_change_detection.lat_diff_distance.dist_ratio_threshold_to_left_bound");
+    dist_ratio_threshold_to_right_bound_ = declare_parameter<double>(
+      "lane_change_detection.lat_diff_distance.dist_ratio_threshold_to_right_bound");
+    diff_dist_threshold_to_left_bound_ = declare_parameter<double>(
+      "lane_change_detection.lat_diff_distance.diff_dist_threshold_to_left_bound");
+    diff_dist_threshold_to_right_bound_ = declare_parameter<double>(
+      "lane_change_detection.lat_diff_distance.diff_dist_threshold_to_right_bound");
+  }
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
 
   path_generator_ = std::make_shared<PathGenerator>(
@@ -1149,6 +1167,91 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
  * @return predicted manuever (lane follow, left/right lane change)
  */
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
+  const TrackedObject & object, const LaneletData & current_lanelet_data,
+  const double object_detected_time)
+{
+  if (lane_change_detection_method_ == "time_to_change_lane") {
+    return predictObjectManeuverByTimeToLaneChange(
+      object, current_lanelet_data, object_detected_time);
+  } else if (lane_change_detection_method_ == "lat_diff_distance") {
+    return predictObjectManeuverByLatDiffDistance(
+      object, current_lanelet_data, object_detected_time);
+  }
+  throw std::logic_error("Lane change detection method is invalid.");
+}
+
+Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
+  const TrackedObject & object, const LaneletData & current_lanelet_data,
+  const double /*object_detected_time*/)
+{
+  // Step1. Check if we have the object in the buffer
+  const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
+  if (objects_history_.count(object_id) == 0) {
+    return Maneuver::LANE_FOLLOW;
+  }
+
+  const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
+
+  // Step2. Check if object history length longer than history_time_length
+  const int latest_id = static_cast<int>(object_info.size()) - 1;
+  // object history is not long enough
+  if (latest_id < 1) {
+    return Maneuver::LANE_FOLLOW;
+  }
+
+  // Step3. get object lateral kinematics
+  const auto & latest_info = object_info.at(static_cast<size_t>(latest_id));
+
+  bool not_found_corresponding_lanelet = true;
+  double left_dist, right_dist;
+  double v_left_filtered, v_right_filtered;
+  if (latest_info.lateral_kinematics_set.count(current_lanelet_data.lanelet) != 0) {
+    const auto & lateral_kinematics =
+      latest_info.lateral_kinematics_set.at(current_lanelet_data.lanelet);
+    left_dist = lateral_kinematics.dist_from_left_boundary;
+    right_dist = lateral_kinematics.dist_from_right_boundary;
+    v_left_filtered = lateral_kinematics.filtered_left_lateral_velocity;
+    v_right_filtered = lateral_kinematics.filtered_right_lateral_velocity;
+    not_found_corresponding_lanelet = false;
+  }
+
+  // return lane follow when catch exception
+  if (not_found_corresponding_lanelet) {
+    return Maneuver::LANE_FOLLOW;
+  }
+
+  const double latest_lane_width = left_dist + right_dist;
+  if (latest_lane_width < 1e-3) {
+    RCLCPP_ERROR(get_logger(), "[Map Based Prediction]: Lane Width is too small");
+    return Maneuver::LANE_FOLLOW;
+  }
+
+  // Step 4. check time to reach left/right bound
+  const double epsilon = 1e-9;
+  const double margin_to_reach_left_bound = left_dist / (std::fabs(v_left_filtered) + epsilon);
+  const double margin_to_reach_right_bound = right_dist / (std::fabs(v_right_filtered) + epsilon);
+
+  // Step 5. detect lane change
+  if (
+    left_dist < right_dist &&                              // in left side,
+    left_dist < dist_threshold_to_bound_ &&                // close to boundary,
+    v_left_filtered < 0 &&                                 // approaching,
+    margin_to_reach_left_bound < time_threshold_to_bound_  // will soon arrive to left bound
+  ) {
+    return Maneuver::LEFT_LANE_CHANGE;
+  } else if (
+    right_dist < left_dist &&                               // in right side,
+    right_dist < dist_threshold_to_bound_ &&                // close to boundary,
+    v_right_filtered < 0 &&                                 // approaching,
+    margin_to_reach_right_bound < time_threshold_to_bound_  // will soon arrive to right bound
+  ) {
+    return Maneuver::RIGHT_LANE_CHANGE;
+  }
+
+  return Maneuver::LANE_FOLLOW;
+}
+
+Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
   const double /*object_detected_time*/)
 {
