@@ -322,24 +322,26 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       RCLCPP_DEBUG(logger_, "occlusion is detected but default stop line is not set or generated");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       return true;
-    } else if (has_collision) {
-      collision_stop_required = true;
-      stop_line_idx = default_stop_line_idx_opt;
-      occlusion_stop_required = true;
-      occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
-      // clear first stop line
-      // insert creep velocity [closest_idx, occlusion_stop_line)
-      insert_creep_during_occlusion =
-        std::make_pair(closest_idx, occlusion_peeking_line_idx_opt.value());
-      occlusion_state_ = OcclusionState::COLLISION_DETECTED;
     } else if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
-      occlusion_stop_required = true;
-      occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
-      // clear first stop line
-      // insert creep velocity [closest_idx, occlusion_stop_line)
-      insert_creep_during_occlusion =
-        std::make_pair(closest_idx, occlusion_peeking_line_idx_opt.value());
-      occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
+      if (!has_collision) {
+        occlusion_stop_required = true;
+        occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
+        // clear first stop line
+        // insert creep velocity [closest_idx, occlusion_stop_line)
+        insert_creep_during_occlusion =
+          std::make_pair(closest_idx, occlusion_peeking_line_idx_opt.value());
+        occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
+      } else {
+        collision_stop_required = true;
+        stop_line_idx = default_stop_line_idx_opt;
+        occlusion_stop_required = true;
+        occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
+        // clear first stop line
+        // insert creep velocity [closest_idx, occlusion_stop_line)
+        insert_creep_during_occlusion =
+          std::make_pair(closest_idx, occlusion_peeking_line_idx_opt.value());
+        occlusion_state_ = OcclusionState::COLLISION_DETECTED;
+      }
     } else {
       if (is_stopped && approached_stop_line) {
         // start waiting at the first stop line
