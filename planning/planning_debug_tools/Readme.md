@@ -190,7 +190,7 @@ PlotCurrentVelocity('localization_kinematic_state', '/localization/kinematic_sta
 
 This script can overlay the perception results from the rosbag on the planning simulator.
 
-In deatil, the ego pose in the rosbag which is closest to the current ego pose in the simulator is calcualted.
+In detail, the ego pose in the rosbag which is closest to the current ego pose in the simulator is calculated.
 The perception results at the timestamp of the closest ego pose is extracted, and published.
 
 ### How to use
