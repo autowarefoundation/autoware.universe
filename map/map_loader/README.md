@@ -103,11 +103,11 @@ If you have multiple rosbags, an example directory structure would be as follows
 ```bash
 sample-map-rosbag
 ├── lanelet2_map.osm
-├── pointcloud_map
-├── pcd_00.pcd
-├── pcd_01.pcd
-├── pcd_02.pcd
-├── ...
+├── pointcloud_map.pcd
+│ ├── A.pcd
+│ ├── B.pcd
+│ ├── C.pcd
+│ └── ...
 └── pointcloud_map_metadata.yaml
 ```
 
@@ -134,7 +134,11 @@ The node projects lan/lon coordinates into MGRS coordinates.
 
 ### Feature
 
-lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray.
+lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. There are 3 types of map can be loaded in autoware. Please make sure you selected the correct lanelet2_map_projector_type when you launch this package.
+
+- MGRS
+- UTM
+- local
 
 ### How to Run
 
@@ -147,3 +151,13 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 ### Published Topics
 
 - ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
+
+### Parameters
+
+| Name                        | Type        | Description                                                  | Default value |
+| :-------------------------- | :---------- | :----------------------------------------------------------- | :------------ |
+| lanelet2_map_projector_type | std::string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
+| latitude                    | double      | Latitude of map_origin, only using in UTM map projector      | 0.0           |
+| longitude                   | double      | Longitude of map_origin, only using in UTM map projector     | 0.0           |
+| center_line_resolution      | double      | Define the resolution of the lanelet center line             | 5.0           |
+| lanelet2_map_path           | std::string | The lanelet2 map path                                        | None          |

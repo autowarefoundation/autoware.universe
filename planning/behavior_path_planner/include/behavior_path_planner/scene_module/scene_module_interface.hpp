@@ -44,8 +44,13 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using motion_utils::createDeadLineVirtualWallMarker;
+using motion_utils::createSlowDownVirtualWallMarker;
+using motion_utils::createStopVirtualWallMarker;
 using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
+using tier4_autoware_utils::appendMarkerArray;
+using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using unique_identifier_msgs::msg::UUID;
@@ -63,14 +68,30 @@ public:
     clock_{node.get_clock()},
     is_waiting_approval_{false},
     is_locked_new_module_launch_{false},
+#ifdef USE_OLD_ARCHITECTURE
     current_state_{ModuleStatus::SUCCESS},
+#else
+    current_state_{ModuleStatus::IDLE},
+#endif
     rtc_interface_ptr_map_(rtc_interface_ptr_map),
     steering_factor_interface_ptr_(
       std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
   {
 #ifdef USE_OLD_ARCHITECTURE
-    const auto ns = std::string("~/debug/") + utils::convertToSnakeCase(name);
-    pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+    {
+      const auto ns = std::string("~/debug/") + utils::convertToSnakeCase(name);
+      pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+    }
+
+    {
+      const auto ns = std::string("~/info/") + utils::convertToSnakeCase(name);
+      pub_info_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+    }
+
+    {
+      const auto ns = std::string("~/virtual_wall/") + utils::convertToSnakeCase(name);
+      pub_virtual_wall_ = node.create_publisher<MarkerArray>(ns, 20);
+    }
 #endif
 
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
@@ -86,6 +107,11 @@ public:
    *        These condition is to be implemented in each modules.
    */
   virtual ModuleStatus updateState() = 0;
+
+  /**
+   * @brief Set the current_state_ based on updateState output.
+   */
+  virtual void updateCurrentState() { current_state_ = updateState(); }
 
   /**
    * @brief If the module plan customized reference path while waiting approval, it should output
@@ -118,6 +144,13 @@ public:
     out.path = utils::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
     path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+
+    // for new architecture
+    const auto lanes = utils::getLaneletsFromPath(*out.path, planner_data_->route_handler);
+    const auto drivable_lanes = utils::generateDrivableLanes(lanes);
+    out.drivable_area_info.drivable_lanes =
+      getNonOverlappingExpandedLanes(*out.path, drivable_lanes);
+
     return out;
   }
 
@@ -206,10 +239,15 @@ public:
   }
 
   /**
-   * @brief Return true if the activation command is received
+   * @brief Return true if the activation command is received from the RTC interface.
+   *        If no RTC interface is registered, return true.
    */
   bool isActivated()
   {
+    if (rtc_interface_ptr_map_.empty()) {
+      return true;
+    }
+
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second->isRegistered(uuid_map_.at(itr->first))) {
         return itr->second->isActivated(uuid_map_.at(itr->first));
@@ -258,7 +296,39 @@ public:
   virtual void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
 
 #ifdef USE_OLD_ARCHITECTURE
+  void publishInfoMarker() { pub_info_marker_->publish(info_marker_); }
+
   void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
+
+  void publishVirtualWall()
+  {
+    MarkerArray markers{};
+
+    const auto opt_stop_pose = getStopPose();
+    if (!!opt_stop_pose) {
+      const auto virtual_wall = createStopVirtualWallMarker(
+        opt_stop_pose.get(), utils::convertToSnakeCase(name()), rclcpp::Clock().now(), 0);
+      appendMarkerArray(virtual_wall, &markers);
+    }
+
+    const auto opt_slow_pose = getSlowPose();
+    if (!!opt_slow_pose) {
+      const auto virtual_wall = createSlowDownVirtualWallMarker(
+        opt_slow_pose.get(), utils::convertToSnakeCase(name()), rclcpp::Clock().now(), 0);
+      appendMarkerArray(virtual_wall, &markers);
+    }
+
+    const auto opt_dead_pose = getDeadPose();
+    if (!!opt_dead_pose) {
+      const auto virtual_wall = createDeadLineVirtualWallMarker(
+        opt_dead_pose.get(), utils::convertToSnakeCase(name()), rclcpp::Clock().now(), 0);
+      appendMarkerArray(virtual_wall, &markers);
+    }
+
+    pub_virtual_wall_->publish(markers);
+
+    resetWallPoses();
+  }
 #endif
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
@@ -273,7 +343,9 @@ public:
 
   PlanResult getPathReference() const { return path_reference_; }
 
-  MarkerArray getDebugMarkers() { return debug_marker_; }
+  MarkerArray getInfoMarkers() const { return info_marker_; }
+
+  MarkerArray getDebugMarkers() const { return debug_marker_; }
 
   ModuleStatus getCurrentStatus() const { return current_state_; }
 
@@ -281,7 +353,64 @@ public:
 
   std::string name() const { return name_; }
 
+  boost::optional<Pose> getStopPose() const
+  {
+    if (!stop_pose_) {
+      return {};
+    }
+
+    const auto & base_link2front = planner_data_->parameters.base_link2front;
+    return calcOffsetPose(stop_pose_.get(), base_link2front, 0.0, 0.0);
+  }
+
+  boost::optional<Pose> getSlowPose() const
+  {
+    if (!slow_pose_) {
+      return {};
+    }
+
+    const auto & base_link2front = planner_data_->parameters.base_link2front;
+    return calcOffsetPose(slow_pose_.get(), base_link2front, 0.0, 0.0);
+  }
+
+  boost::optional<Pose> getDeadPose() const
+  {
+    if (!dead_pose_) {
+      return {};
+    }
+
+    const auto & base_link2front = planner_data_->parameters.base_link2front;
+    return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
+  }
+
+  void resetWallPoses()
+  {
+    stop_pose_ = boost::none;
+    slow_pose_ = boost::none;
+    dead_pose_ = boost::none;
+  }
+
   rclcpp::Logger getLogger() const { return logger_; }
+
+  void setIsSimultaneousExecutableAsApprovedModule(const bool enable)
+  {
+    is_simultaneously_executable_as_approved_module_ = enable;
+  }
+
+  bool isSimultaneousExecutableAsApprovedModule() const
+  {
+    return is_simultaneously_executable_as_approved_module_;
+  }
+
+  void setIsSimultaneousExecutableAsCandidateModule(const bool enable)
+  {
+    is_simultaneously_executable_as_candidate_module_ = enable;
+  }
+
+  bool isSimultaneousExecutableAsCandidateModule() const
+  {
+    return is_simultaneously_executable_as_candidate_module_;
+  }
 
 private:
   std::string name_;
@@ -289,7 +418,9 @@ private:
   rclcpp::Logger logger_;
 
 #ifdef USE_OLD_ARCHITECTURE
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_info_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
 #endif
 
   BehaviorModuleOutput previous_module_output_;
@@ -303,14 +434,14 @@ protected:
     for (const auto & rtc_type : rtc_types) {
       const auto snake_case_name = utils::convertToSnakeCase(name);
       const auto rtc_interface_name =
-        rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
+        rtc_type.empty() ? snake_case_name : (snake_case_name + "_" + rtc_type);
       rtc_interface_ptr_map.emplace(
         rtc_type, std::make_shared<RTCInterface>(&node, rtc_interface_name));
     }
     return rtc_interface_ptr_map;
   }
 
-  void updateRTCStatus(const double start_distance, const double finish_distance)
+  virtual void updateRTCStatus(const double start_distance, const double finish_distance)
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
       if (itr->second) {
@@ -366,6 +497,9 @@ protected:
     return expanded_lanes;
   }
 
+  bool is_simultaneously_executable_as_approved_module_{false};
+  bool is_simultaneously_executable_as_candidate_module_{false};
+
   rclcpp::Clock::SharedPtr clock_;
 
   std::shared_ptr<const PlannerData> planner_data_;
@@ -378,11 +512,23 @@ protected:
   PlanResult path_candidate_;
   PlanResult path_reference_;
 
-  ModuleStatus current_state_;
+#ifdef USE_OLD_ARCHITECTURE
+  ModuleStatus current_state_{ModuleStatus::SUCCESS};
+#else
+  ModuleStatus current_state_{ModuleStatus::IDLE};
+#endif
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+
+  mutable boost::optional<Pose> stop_pose_{boost::none};
+
+  mutable boost::optional<Pose> slow_pose_{boost::none};
+
+  mutable boost::optional<Pose> dead_pose_{boost::none};
+
+  mutable MarkerArray info_marker_;
 
   mutable MarkerArray debug_marker_;
 };

@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -97,12 +98,21 @@ public:
   }
 
   /**
-   * @brief publish all registered modules' debug markers.
+   * @brief publish all registered modules' markers.
    */
-  void publishDebugMarker() const
+  void publishMarker() const
   {
     std::for_each(
-      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishDebugMarker(); });
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishMarker(); });
+  }
+
+  /**
+   * @brief publish all registered modules' virtual wall.
+   */
+  void publishVirtualWall() const
+  {
+    std::for_each(
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishVirtualWall(); });
   }
 
   /**
@@ -172,7 +182,7 @@ private:
     const auto result = module_ptr->run();
     module_ptr->unlockRTCCommand();
 
-    module_ptr->updateState();
+    module_ptr->updateCurrentState();
 
     module_ptr->publishRTCStatus();
 
@@ -180,6 +190,9 @@ private:
 
     return result;
   }
+
+  void generateCombinedDrivableArea(
+    BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const;
 
   /**
    * @brief get reference path from root_lanelet_ centerline.
@@ -200,11 +213,17 @@ private:
       root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
 
     lanelet::ConstLanelet closest_lane{};
-    if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-      return {};
+    if (lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return utils::getReferencePath(closest_lane, data);
     }
 
-    return utils::getReferencePath(closest_lane, data);
+    if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+      return utils::getReferencePath(closest_lane, data);
+    }
+
+    return {};  // something wrong.
   }
 
   /**
