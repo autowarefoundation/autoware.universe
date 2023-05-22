@@ -61,6 +61,75 @@ double calcLaneChangeResampleInterval(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
 }
 
+double calcMaximumAcceleration(
+  const PathWithLaneId & path, const Pose & current_pose, const double current_velocity,
+  const BehaviorPathPlannerParameters & params)
+{
+  const double & max_acc = params.max_acc;
+  if (path.points.empty()) {
+    return max_acc;
+  }
+
+  const double & nearest_dist_threshold = params.ego_nearest_dist_threshold;
+  const double & nearest_yaw_threshold = params.ego_nearest_yaw_threshold;
+
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
+  const double & max_path_velocity =
+    path.points.at(current_seg_idx).point.longitudinal_velocity_mps;
+  const double & prepare_duration = params.lane_change_prepare_duration;
+
+  const double acc = (max_path_velocity - current_velocity) / prepare_duration;
+  return std::clamp(acc, 0.0, max_acc);
+}
+
+void setPrepareVelocity(
+  PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity)
+{
+  if (current_velocity < prepare_velocity) {
+    // acceleration
+    for (size_t i = 0; i < prepare_segment.points.size(); ++i) {
+      prepare_segment.points.at(i).point.longitudinal_velocity_mps = std::min(
+        prepare_segment.points.at(i).point.longitudinal_velocity_mps,
+        static_cast<float>(prepare_velocity));
+    }
+  } else {
+    // deceleration
+    prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
+      prepare_segment.points.back().point.longitudinal_velocity_mps,
+      static_cast<float>(prepare_velocity));
+  }
+}
+
+std::vector<double> getAccelerationValues(
+  const double min_acc, const double max_acc, const size_t sampling_num)
+{
+  if (min_acc > max_acc) {
+    return {};
+  }
+
+  if (max_acc - min_acc < std::numeric_limits<double>::epsilon()) {
+    return {0.0};
+  }
+
+  constexpr double epsilon = 0.001;
+  const auto resolution = std::abs(max_acc - min_acc) / sampling_num;
+
+  std::vector<double> sampled_values{min_acc};
+  for (double sampled_acc = min_acc + resolution;
+       sampled_acc < max_acc + std::numeric_limits<double>::epsilon(); sampled_acc += resolution) {
+    // check whether if we need to add 0.0
+    if (sampled_values.back() < -epsilon && sampled_acc > epsilon) {
+      sampled_values.push_back(0.0);
+    }
+
+    sampled_values.push_back(sampled_acc);
+  }
+  std::reverse(sampled_values.begin(), sampled_values.end());
+
+  return sampled_values;
+}
+
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2)
 {
   PathWithLaneId path;
@@ -173,8 +242,6 @@ std::optional<LaneChangePath> constructCandidatePath(
         lane_changing_start_point.point.longitudinal_velocity_mps);
       continue;
     }
-    point.point.longitudinal_velocity_mps =
-      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_velocity));
     const auto nearest_idx =
       motion_utils::findNearestIndex(target_segment.points, point.point.pose);
     point.lane_ids = target_segment.points.at(*nearest_idx).lane_ids;
@@ -385,56 +452,6 @@ bool isObjectIndexIncluded(
   const size_t & index, const std::vector<size_t> & dynamic_objects_indices)
 {
   return std::count(dynamic_objects_indices.begin(), dynamic_objects_indices.end(), index) != 0;
-}
-
-PathWithLaneId getPrepareSegment(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const double arc_length_from_current, const double backward_path_length,
-  const double prepare_length, const double prepare_velocity)
-{
-  if (original_lanelets.empty()) {
-    return PathWithLaneId();
-  }
-
-  const double s_start = arc_length_from_current - backward_path_length;
-  const double s_end = arc_length_from_current + prepare_length;
-
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("behavior_path_planner")
-      .get_child("lane_change")
-      .get_child("util")
-      .get_child("getPrepareSegment"),
-    "start: %f, end: %f", s_start, s_end);
-
-  PathWithLaneId prepare_segment =
-    route_handler.getCenterLinePath(original_lanelets, s_start, s_end);
-
-  prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
-    prepare_segment.points.back().point.longitudinal_velocity_mps,
-    static_cast<float>(prepare_velocity));
-
-  return prepare_segment;
-}
-
-PathWithLaneId getPrepareSegment(
-  const PathWithLaneId & original_path, const lanelet::ConstLanelets & original_lanelets,
-  const Pose & current_pose, const double backward_path_length, const double prepare_length,
-  const double prepare_velocity)
-{
-  if (original_lanelets.empty()) {
-    return PathWithLaneId();
-  }
-
-  auto prepare_segment = original_path;
-  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    prepare_segment.points, current_pose, 3.0, 1.0);
-  utils::clipPathLength(prepare_segment, current_seg_idx, prepare_length, backward_path_length);
-
-  prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
-    prepare_segment.points.back().point.longitudinal_velocity_mps,
-    static_cast<float>(prepare_velocity));
-
-  return prepare_segment;
 }
 
 double calcLaneChangingLength(

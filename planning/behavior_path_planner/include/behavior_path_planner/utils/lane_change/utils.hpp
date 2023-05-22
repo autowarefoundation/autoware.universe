@@ -53,6 +53,16 @@ using tier4_autoware_utils::Polygon2d;
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
+double calcMaximumAcceleration(
+  const PathWithLaneId & path, const Pose & current_pose, const double current_velocity,
+  const BehaviorPathPlannerParameters & params);
+
+void setPrepareVelocity(
+  PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
+
+std::vector<double> getAccelerationValues(
+  const double min_acc, const double max_acc, const size_t sampling_num);
+
 std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
@@ -110,16 +120,6 @@ PathWithLaneId getReferencePathFromTargetLane(
   const double lane_changing_length, const double forward_path_length,
   const double resample_interval, const bool is_goal_in_route,
   const double next_lane_change_buffer);
-
-PathWithLaneId getPrepareSegment(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const double arc_length_from_current, const double backward_path_length,
-  const double prepare_length, const double prepare_velocity);
-
-PathWithLaneId getPrepareSegment(
-  const PathWithLaneId & original_path, const lanelet::ConstLanelets & original_lanelets,
-  const Pose & current_pose, const double backward_path_length, const double prepare_length,
-  const double prepare_velocity);
 
 PathWithLaneId getTargetSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,

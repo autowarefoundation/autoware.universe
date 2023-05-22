@@ -68,7 +68,11 @@ public:
     clock_{node.get_clock()},
     is_waiting_approval_{false},
     is_locked_new_module_launch_{false},
+#ifdef USE_OLD_ARCHITECTURE
     current_state_{ModuleStatus::SUCCESS},
+#else
+    current_state_{ModuleStatus::IDLE},
+#endif
     rtc_interface_ptr_map_(rtc_interface_ptr_map),
     steering_factor_interface_ptr_(
       std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
@@ -103,6 +107,11 @@ public:
    *        These condition is to be implemented in each modules.
    */
   virtual ModuleStatus updateState() = 0;
+
+  /**
+   * @brief Set the current_state_ based on updateState output.
+   */
+  virtual void updateCurrentState() { current_state_ = updateState(); }
 
   /**
    * @brief If the module plan customized reference path while waiting approval, it should output
@@ -503,7 +512,11 @@ protected:
   PlanResult path_candidate_;
   PlanResult path_reference_;
 
-  ModuleStatus current_state_;
+#ifdef USE_OLD_ARCHITECTURE
+  ModuleStatus current_state_{ModuleStatus::SUCCESS};
+#else
+  ModuleStatus current_state_{ModuleStatus::IDLE};
+#endif
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
