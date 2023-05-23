@@ -381,6 +381,11 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     filtered_commands.gear = commands.gear;  // tmp
   }
 
+  if (moderate_stop_interface_->is_stop_requested()) {  // if stop requested, stop the vehicle
+    filtered_commands.control.longitudinal.speed = 0.0;
+    filtered_commands.control.longitudinal.acceleration = moderate_stop_service_acceleration_;
+  }
+
   // Check emergency
   if (use_emergency_handling_ && is_system_emergency_) {
     RCLCPP_WARN_THROTTLE(
@@ -399,11 +404,6 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   if (pause_->is_paused()) {
     filtered_commands.control.longitudinal.speed = 0.0;
     filtered_commands.control.longitudinal.acceleration = stop_hold_acceleration_;
-  }
-
-  if (moderate_stop_interface_->is_stop_requested()) {  // if stop requested, stop the vehicle
-    filtered_commands.control.longitudinal.speed = 0.0;
-    filtered_commands.control.longitudinal.acceleration = moderate_stop_service_acceleration_;
   }
 
   // Apply limit filtering
