@@ -126,7 +126,7 @@ private:
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
-  void PullOutModule::planWithPriority(
+  void planWithPriority(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     bool priority_on_efficient_path);
   PathWithLaneId generateStopPath() const;
