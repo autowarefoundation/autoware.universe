@@ -38,9 +38,9 @@ MemMonitor::MemMonitor(const rclcpp::NodeOptions & options)
   gethostname(hostname_, sizeof(hostname_));
   updater_.setHardwareID(hostname_);
   updater_.add("Memory Usage", this, &MemMonitor::checkUsage);
-  
+
   // Enable ECC error detection if edac-utils package is installed
-  if(!bp::search_path("edac-util").empty()) {
+  if (!bp::search_path("edac-util").empty()) {
     updater_.add("Memory ECC", this, &MemMonitor::checkEcc);
   }
 }
