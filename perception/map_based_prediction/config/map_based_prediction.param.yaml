@@ -13,7 +13,7 @@
     history_time_length: 1.0 #[s]
 
     lane_change_detection:
-      method: "lat_diff_distance" # choose from "lat_diff_distance" or "time_to_change_lane"
+      method: "time_to_change_lane" # choose from "lat_diff_distance" or "time_to_change_lane"
       time_to_change_lane:
         dist_threshold_for_lane_change_detection: 1.0 #[m]
         time_threshold_for_lane_change_detection: 5.0 #[s]
