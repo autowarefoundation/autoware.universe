@@ -159,6 +159,8 @@ def launch_setup(context, *args, **kwargs):
     ) as f:
         behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    print("[test]", LaunchConfiguration("behavior_velocity_module_param_paths").perform(context))
+
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
         plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode",
@@ -243,6 +245,8 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # This condition is true if run_out module is enabled and its detection method is Points
+    launch_run_out_with_points_method = PythonExpression("True")
+    """
     launch_run_out_with_points_method = PythonExpression(
         [
             LaunchConfiguration(
@@ -254,6 +258,7 @@ def launch_setup(context, *args, **kwargs):
             "' == 'Points'",
         ]
     )
+    """
 
     # load compare map for run_out module
     load_compare_map = IncludeLaunchDescription(
