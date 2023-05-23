@@ -46,7 +46,7 @@ private:
   std::optional<bool> prev_is_start_requested_;
 
   rclcpp::Node * node_;
-  component_interface_utils::Service<SetPause>::SharedPtr srv_set_adapi_pause_;
+  component_interface_utils::Service<SetPause>::SharedPtr srv_set_pause_;
   component_interface_utils::Publisher<IsPaused>::SharedPtr pub_is_paused_;
   component_interface_utils::Publisher<IsStartRequested>::SharedPtr pub_is_start_requested_;
 
