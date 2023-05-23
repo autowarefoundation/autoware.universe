@@ -393,8 +393,9 @@ PathWithLaneId PullOutModule::getCurrentPath() const
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
 }
 
-void PullOutModule::planWithPriorityOnEfficientPath(
-  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
+void PullOutModule::planWithPriority(
+  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
+  bool priority_on_efficient_path)
 {
   status_.is_safe = false;
   status_.planner_type = PlannerType::NONE;
@@ -404,96 +405,53 @@ void PullOutModule::planWithPriorityOnEfficientPath(
     return;
   }
 
-  // plan with each planner
-  for (const auto & planner : pull_out_planners_) {
-    for (size_t i = 0; i < start_pose_candidates.size(); i++) {
-      status_.back_finished = i == 0;
-      const auto & pull_out_start_pose = start_pose_candidates.at(i);
-      planner->setPlannerData(planner_data_);
-      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
-      // not found safe path
-      if (!pull_out_path) {
-        continue;
-      }
-      // use current path if back is not needed
-      if (status_.back_finished) {
-        status_.is_safe = true;
-        status_.pull_out_path = *pull_out_path;
-        status_.pull_out_start_pose = pull_out_start_pose;
-        status_.planner_type = planner->getPlannerType();
-        break;
-      }
-
-      if (i == start_pose_candidates.size() - 1) continue;
-
-      //  check next path if back is needed
-      const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
-      const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
-      // not found safe path
-      if (!pull_out_path_next) {
-        continue;
-      }
-      status_.is_safe = true;
-      status_.pull_out_path = *pull_out_path_next;
-      status_.pull_out_start_pose = pull_out_start_pose_next;
-      status_.planner_type = planner->getPlannerType();
-      break;
-    }
-    if (status_.is_safe) {
-      break;
-    }
-  }
-}
-
-// todo: common processing with planWithPriorityOnEfficientPath
-void PullOutModule::planWithPriorityOnShortBackDistance(
-  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
-{
-  status_.is_safe = false;
-  status_.planner_type = PlannerType::NONE;
-
-  // check if start pose candidates are valid
-  if (start_pose_candidates.empty()) {
-    return;
-  }
-
-  for (size_t i = 0; i < start_pose_candidates.size(); i++) {
+  auto loop_body = [&](size_t i, const auto & planner) {
     status_.back_finished = i == 0;
     const auto & pull_out_start_pose = start_pose_candidates.at(i);
-    // plan with each planner
-    for (const auto & planner : pull_out_planners_) {
-      planner->setPlannerData(planner_data_);
-      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
-      // not found safe path
-      if (!pull_out_path) {
-        continue;
-      }
-      // use current path if back is not needed
-      if (status_.back_finished) {
-        status_.is_safe = true;
-        status_.pull_out_path = *pull_out_path;
-        status_.pull_out_start_pose = pull_out_start_pose;
-        status_.planner_type = planner->getPlannerType();
-        break;
-      }
-
-      if (i == start_pose_candidates.size() - 1) continue;
-
-      //  check next path if back is needed
-      const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
-      const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
-      // not found safe path
-      if (!pull_out_path_next) {
-        continue;
-      }
-      status_.is_safe = true;
-      status_.pull_out_path = *pull_out_path_next;
-      status_.pull_out_start_pose = pull_out_start_pose_next;
-      status_.planner_type = planner->getPlannerType();
-      break;
+    planner->setPlannerData(planner_data_);
+    const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
+    // not found safe path
+    if (!pull_out_path) {
+      return false;
     }
-    if (status_.is_safe) {
-      break;
+    // use current path if back is not needed
+    if (status_.back_finished) {
+      status_.is_safe = true;
+      status_.pull_out_path = *pull_out_path;
+      status_.pull_out_start_pose = pull_out_start_pose;
+      status_.planner_type = planner->getPlannerType();
+      return true;
+    }
+
+    if (i == start_pose_candidates.size() - 1) return false;
+
+    // check next path if back is needed
+    const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
+    const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
+    // not found safe path
+    if (!pull_out_path_next) {
+      return false;
+    }
+    status_.is_safe = true;
+    status_.pull_out_path = *pull_out_path_next;
+    status_.pull_out_start_pose = pull_out_start_pose_next;
+    status_.planner_type = planner->getPlannerType();
+    return true;
+  };
+
+  if (priority_on_efficient_path) {
+    for (const auto & planner : pull_out_planners_) {
+      for (size_t i = 0; i < start_pose_candidates.size(); i++) {
+        if (loop_body(i, planner)) break;
+      }
+      if (status_.is_safe) break;
+    }
+  } else {
+    for (size_t i = 0; i < start_pose_candidates.size(); i++) {
+      for (const auto & planner : pull_out_planners_) {
+        if (loop_body(i, planner)) break;
+      }
+      if (status_.is_safe) break;
     }
   }
 }
@@ -570,9 +528,9 @@ void PullOutModule::updatePullOutStatus()
   std::vector<Pose> start_pose_candidates = searchPullOutStartPoses();
 
   if (parameters_->search_priority == "efficient_path") {
-    planWithPriorityOnEfficientPath(start_pose_candidates, goal_pose);
+    planWithPriority(start_pose_candidates, goal_pose, true);
   } else if (parameters_->search_priority == "short_back_distance") {
-    planWithPriorityOnShortBackDistance(start_pose_candidates, goal_pose);
+    planWithPriority(start_pose_candidates, goal_pose, false);
   } else {
     RCLCPP_ERROR(
       getLogger(),
