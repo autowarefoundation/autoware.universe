@@ -320,16 +320,15 @@ bool GoalPlannerModule::isExecutionRequested() const
     return false;
   }
 
-  // if goal modification is not allowed and goal_pose in current_lanes,
-  // plan path to the original fixed goal
+  // if goal modification is not allowed
+  // 1) goal_pose is in current_lanes, plan path to the original fixed goal
+  // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
   if (!allow_goal_modification_) {
-    if (std::any_of(
-          current_lanes.begin(), current_lanes.end(),
-          [&](const lanelet::ConstLanelet & current_lane) {
-            return lanelet::utils::isInLanelet(goal_pose, current_lane);
-          })) {
-      return true;
-    }
+    // check if goal_pose is in current_lanes.
+    return std::any_of(
+      current_lanes.begin(), current_lanes.end(), [&](const lanelet::ConstLanelet & current_lane) {
+        return lanelet::utils::isInLanelet(goal_pose, current_lane);
+      });
   }
 
   // if (A) or (B) is met execute pull over
@@ -415,7 +414,7 @@ ModuleStatus GoalPlannerModule::updateState()
 {
   // finish module only when the goal is fixed
   if (!allow_goal_modification_ && hasFinishedGoalPlanner()) {
-    current_state_ = ModuleStatus::SUCCESS;
+    return ModuleStatus::SUCCESS;
   }
 
   // pull_out module will be run when setting new goal, so not need finishing pull_over module.

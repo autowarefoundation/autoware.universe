@@ -218,9 +218,18 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
   const std::vector<Point> & bound, const std::vector<Point> & edge_points,
   const bool is_object_right)
 {
+  constexpr double invalid_lat_dist_to_bound = 10.0;
+
   std::vector<PolygonPoint> full_polygon;
   for (const auto & edge_point : edge_points) {
     const auto polygon_point = transformBoundFrenetCoordinate(bound, edge_point);
+
+    // check lat dist for U-turn roads.
+    if (
+      (is_object_right && invalid_lat_dist_to_bound < polygon_point.lat_dist_to_bound) ||
+      (!is_object_right && polygon_point.lat_dist_to_bound < -invalid_lat_dist_to_bound)) {
+      return {};
+    }
     full_polygon.push_back(polygon_point);
   }
 
@@ -1424,21 +1433,38 @@ void generateDrivableArea(
     std::reverse(right_bound.begin(), right_bound.end());
   }
 
-  // Get Closest segment for the start point
-  constexpr double front_length = 0.5;
-  const auto front_pose = path.points.empty() ? current_pose : path.points.front().point.pose;
-  const size_t front_left_start_idx =
-    findNearestSegmentIndexFromLateralDistance(left_bound, front_pose.position);
-  const size_t front_right_start_idx =
-    findNearestSegmentIndexFromLateralDistance(right_bound, front_pose.position);
-  const auto left_start_point =
-    calcLongitudinalOffsetStartPoint(left_bound, front_pose, front_left_start_idx, -front_length);
-  const auto right_start_point =
-    calcLongitudinalOffsetStartPoint(right_bound, front_pose, front_right_start_idx, -front_length);
-  const size_t left_start_idx =
-    findNearestSegmentIndexFromLateralDistance(left_bound, left_start_point);
-  const size_t right_start_idx =
-    findNearestSegmentIndexFromLateralDistance(right_bound, right_start_point);
+  path.left_bound.clear();
+  path.right_bound.clear();
+
+  const auto [left_start_idx, right_start_idx] = [&]() {
+    const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
+    const auto cropped_path_points = motion_utils::cropPoints(
+      path.points, current_pose.position, current_seg_idx,
+      planner_data->parameters.forward_path_length,
+      planner_data->parameters.backward_path_length + planner_data->parameters.input_path_interval);
+
+    constexpr double front_length = 0.5;
+    const auto front_pose =
+      cropped_path_points.empty() ? current_pose : cropped_path_points.front().point.pose;
+    const size_t front_left_start_idx =
+      findNearestSegmentIndexFromLateralDistance(left_bound, front_pose.position);
+    const size_t front_right_start_idx =
+      findNearestSegmentIndexFromLateralDistance(right_bound, front_pose.position);
+    const auto left_start_point =
+      calcLongitudinalOffsetStartPoint(left_bound, front_pose, front_left_start_idx, -front_length);
+    const auto right_start_point = calcLongitudinalOffsetStartPoint(
+      right_bound, front_pose, front_right_start_idx, -front_length);
+    const size_t left_start_idx =
+      findNearestSegmentIndexFromLateralDistance(left_bound, left_start_point);
+    const size_t right_start_idx =
+      findNearestSegmentIndexFromLateralDistance(right_bound, right_start_point);
+
+    // Insert a start point
+    path.left_bound.push_back(left_start_point);
+    path.right_bound.push_back(right_start_point);
+
+    return std::make_pair(left_start_idx, right_start_idx);
+  }();
 
   // Get Closest segment for the goal point
   const auto goal_pose = path.points.empty() ? current_pose : path.points.back().point.pose;
@@ -1455,14 +1481,6 @@ void generateDrivableArea(
   const size_t right_goal_idx = std::max(
     goal_right_start_idx,
     findNearestSegmentIndexFromLateralDistance(right_bound, right_goal_point));
-
-  // Store Data
-  path.left_bound.clear();
-  path.right_bound.clear();
-
-  // Insert a start point
-  path.left_bound.push_back(left_start_point);
-  path.right_bound.push_back(right_start_point);
 
   // Insert middle points
   for (size_t i = left_start_idx + 1; i <= left_goal_idx; ++i) {
@@ -1937,7 +1955,7 @@ double getDistanceToCrosswalk(
 
   lanelet::ConstLanelet current_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
-    return std::numeric_limits<double>::max();
+    return std::numeric_limits<double>::infinity();
   }
 
   double distance = 0;
@@ -1946,24 +1964,8 @@ double getDistanceToCrosswalk(
     if (llt == current_lanelet) {
       is_after_current_lanelet = true;
     }
-    // check lane change tag
-    bool is_lane_change_yes = false;
-    const auto right_line = llt.rightBound();
-    if (right_line.hasAttribute(lanelet::AttributeNamesString::LaneChange)) {
-      const auto attr = right_line.attribute(lanelet::AttributeNamesString::LaneChange);
-      if (attr.value() == std::string("yes")) {
-        is_lane_change_yes = true;
-      }
-    }
-    const auto left_line = llt.leftBound();
-    if (left_line.hasAttribute(lanelet::AttributeNamesString::LaneChange)) {
-      const auto attr = left_line.attribute(lanelet::AttributeNamesString::LaneChange);
-      if (attr.value() == std::string("yes")) {
-        is_lane_change_yes = true;
-      }
-    }
 
-    if (is_after_current_lanelet && !is_lane_change_yes) {
+    if (is_after_current_lanelet) {
       const auto conflicting_crosswalks = overall_graphs.conflictingInGraph(llt, 1);
       if (!(conflicting_crosswalks.empty())) {
         // create centerline
@@ -1975,7 +1977,7 @@ double getDistanceToCrosswalk(
         }
 
         // create crosswalk polygon and calculate distance
-        double min_distance_to_crosswalk = std::numeric_limits<double>::max();
+        double min_distance_to_crosswalk = std::numeric_limits<double>::infinity();
         for (const auto & crosswalk : conflicting_crosswalks) {
           lanelet::CompoundPolygon2d lanelet_crosswalk_polygon = crosswalk.polygon2d();
           Polygon2d polygon;
@@ -2010,7 +2012,7 @@ double getDistanceToCrosswalk(
     distance += lanelet::utils::getLaneletLength3d(llt);
   }
 
-  return std::numeric_limits<double>::max();
+  return std::numeric_limits<double>::infinity();
 }
 
 double getSignedDistance(
@@ -2907,8 +2909,7 @@ void extractObstaclesFromDrivableArea(
     }
 
     // get a boundary that we have to change
-    const double lat_dist_to_path = motion_utils::calcLateralOffset(path.points, obj_pos);
-    const bool is_object_right = lat_dist_to_path < 0.0;
+    const bool is_object_right = !obstacle.is_left;
     const auto & bound = is_object_right ? path.right_bound : path.left_bound;
 
     // get polygon points inside the bounds
