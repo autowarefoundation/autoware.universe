@@ -58,7 +58,9 @@ std::pair<bool, bool> AvoidanceByLaneChange::getSafePath(LaneChangePath & safe_p
   }
 
   const auto direction = utils::avoidance::isOnRight(o_front) ? Direction::LEFT : Direction::RIGHT;
-  const auto target_lanes = getLaneChangeLanes(current_lanes, direction);
+  lanelet::ConstLanelets target_lanes;
+  lanelet::ConstLanelets target_preferred_lanes;
+  getLaneChangeLanes(current_lanes, direction, target_lanes, target_preferred_lanes);
 
   if (target_lanes.empty()) {
     return {false, false};
@@ -66,8 +68,8 @@ std::pair<bool, bool> AvoidanceByLaneChange::getSafePath(LaneChangePath & safe_p
 
   // find candidate paths
   LaneChangePaths valid_paths{};
-  const auto found_safe_path =
-    getLaneChangePaths(current_lanes, target_lanes, direction, &valid_paths);
+  const auto found_safe_path = getLaneChangePaths(
+    current_lanes, target_lanes, target_preferred_lanes, direction, &valid_paths);
 
   if (valid_paths.empty()) {
     return {false, false};

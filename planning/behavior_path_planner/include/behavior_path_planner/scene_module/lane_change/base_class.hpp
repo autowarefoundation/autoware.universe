@@ -186,7 +186,8 @@ protected:
 
   virtual bool getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanelets,
-    const lanelet::ConstLanelets & target_lanelets, Direction direction,
+    const lanelet::ConstLanelets & target_lanelets,
+    const lanelet::ConstLanelets & target_preferred_lanelets, Direction direction,
     LaneChangePaths * candidate_paths) const = 0;
 
   virtual std::vector<DrivableLanes> getDrivableLanes() const = 0;
@@ -197,8 +198,10 @@ protected:
 
   virtual bool isAbleToStopSafely() const = 0;
 
-  virtual lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const = 0;
+  virtual void getLaneChangeLanes(
+    const lanelet::ConstLanelets & current_lanes, Direction direction,
+    lanelet::ConstLanelets & target_lanes,
+    lanelet::ConstLanelets & target_preferred_lanes) const = 0;
 
   LaneChangeStatus status_{};
   PathShifter path_shifter_{};
