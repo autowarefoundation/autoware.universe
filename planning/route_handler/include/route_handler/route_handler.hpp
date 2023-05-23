@@ -425,6 +425,10 @@ private:
   // for path
 
   PathWithLaneId updatePathTwist(const PathWithLaneId & path) const;
+  bool noDrivableLaneInShortestPath(const lanelet::routing::LaneletPath & shortest_path) const;
+  bool findAlternativePath(
+    const lanelet::Lanelet & start_lanelet, const lanelet::Lanelet & goal_lanelet,
+    lanelet::routing::LaneletPath & alternative_path) const;
 };
 }  // namespace route_handler
 #endif  // ROUTE_HANDLER__ROUTE_HANDLER_HPP_
