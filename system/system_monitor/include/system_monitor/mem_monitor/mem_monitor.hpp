@@ -56,8 +56,7 @@ protected:
    * @brief check Memory ECC
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    */
-  void checkEcc(
-    diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
    * @brief get human-readable output for memory size

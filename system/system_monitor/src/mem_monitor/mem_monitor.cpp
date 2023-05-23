@@ -199,8 +199,7 @@ void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
     if (line.find("Uncorrected") != std::string::npos) {
       stat.summary(DiagStatus::ERROR, line);
       return;
-    }
-    else if (line.find("Corrected") != std::string::npos) {
+    } else if (line.find("Corrected") != std::string::npos) {
       stat.summary(DiagStatus::WARN, line);
       return;
     }
