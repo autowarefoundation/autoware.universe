@@ -234,8 +234,13 @@ void NormalLaneChange::getLaneChangeLanes(
 
   target_lanes = route_handler->getLaneletSequence(
     target_preferred_lane.get(), getEgoPose(), backward_length, forward_length);
-  target_preferred_lanes = route_handler->getLaneletSequence(
-    target_preferred_lane.get(), getEgoPose(), 0.0, forward_length);
+
+  // insert target lane if it is a preferred target lane
+  for (const auto & target_lane : target_lanes) {
+    if (route_handler->isPreferredLane(target_lane)) {
+      target_preferred_lanes.push_back(target_lane);
+    }
+  }
 }
 
 bool NormalLaneChange::isNearEndOfLane() const
