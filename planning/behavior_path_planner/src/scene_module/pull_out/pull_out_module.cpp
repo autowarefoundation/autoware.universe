@@ -406,8 +406,12 @@ void PullOutModule::planWithPriority(
   }
 
   auto loop_body = [&](size_t i, const auto & planner) {
+    // Set back_finished flag based on the current index
     status_.back_finished = i == 0;
+
+    // Get the pull_out_start_pose for the current index
     const auto & pull_out_start_pose = start_pose_candidates.at(i);
+
     planner->setPlannerData(planner_data_);
     const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
     // not found safe path
@@ -423,6 +427,7 @@ void PullOutModule::planWithPriority(
       return true;
     }
 
+    // If this is the last start pose candidate, return false
     if (i == start_pose_candidates.size() - 1) return false;
 
     // check next path if back is needed
@@ -432,6 +437,8 @@ void PullOutModule::planWithPriority(
     if (!pull_out_path_next) {
       return false;
     }
+
+    // Update status variables with the next path information
     status_.is_safe = true;
     status_.pull_out_path = *pull_out_path_next;
     status_.pull_out_start_pose = pull_out_start_pose_next;
@@ -439,7 +446,9 @@ void PullOutModule::planWithPriority(
     return true;
   };
 
+  // Choose loop order based on priority_on_efficient_path
   if (priority_on_efficient_path) {
+    // Try each planner for all start pose candidates first
     for (const auto & planner : pull_out_planners_) {
       for (size_t i = 0; i < start_pose_candidates.size(); i++) {
         if (loop_body(i, planner)) break;
@@ -447,6 +456,7 @@ void PullOutModule::planWithPriority(
       if (status_.is_safe) break;
     }
   } else {
+    // Try all start pose candidates for each planner first
     for (size_t i = 0; i < start_pose_candidates.size(); i++) {
       for (const auto & planner : pull_out_planners_) {
         if (loop_body(i, planner)) break;
