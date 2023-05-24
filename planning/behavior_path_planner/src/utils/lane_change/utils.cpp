@@ -158,7 +158,7 @@ lanelet::ConstLanelets getTargetPreferredLanes(
   const lanelet::ConstLanelets & target_lanes, const Direction & direction,
   const LaneChangeModuleType & type)
 {
-  if (type == LaneChangeModuleType::NORMAL) {
+  if (type != LaneChangeModuleType::NORMAL) {
     return target_lanes;
   }
 
