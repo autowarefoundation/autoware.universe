@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public:
   void setMap(const HADMapBin & map_msg);
   void setRoute(const LaneletRoute & route_msg);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
+  void clearRoute();
 
   // const methods
 
@@ -76,6 +77,7 @@ public:
   lanelet::ConstPolygon3d getExtraDrivableAreaById(const lanelet::Id id) const;
   Header getRouteHeader() const;
   UUID getRouteUuid() const;
+  bool isAllowedGoalModification() const;
 
   // for routing graph
   bool isMapMsgReady() const;
@@ -103,6 +105,8 @@ public:
   // for lanelet
   bool getPreviousLaneletsWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
+  bool getNextLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const;
   lanelet::ConstLanelets getLaneChangeableNeighbors(const lanelet::ConstLanelet & lanelet) const;
@@ -269,18 +273,45 @@ public:
   int getNumLaneToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
+  /**
+   * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
+   * the distance to the preferred lane from the give lane.
+   * The total distance is computed from the front point of the centerline of the given lane to
+   * the front point of the preferred lane.
+   * @param lanelet lanelet to query
+   * @param direction change direction
+   * @return number of lanes from input to the preferred lane
+   */
+  double getTotalLateralDistanceToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
+  /**
+   * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
+   * the distance to the preferred lane from the give lane.
+   * This computes each lateral interval to the preferred lane from the given lanelet
+   * @param lanelet lanelet to query
+   * @param direction change direction
+   * @return number of lanes from input to the preferred lane
+   */
+  std::vector<double> getLateralIntervalsToPreferredLane(
+    const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
+
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
-
+  bool getClosestLaneletWithConstrainsWithinRoute(
+    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
+    const double yaw_threshold) const;
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids & ids) const;
   lanelet::ConstLanelets getLaneletSequence(
     const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
-    const double backward_distance, const double forward_distance) const;
+    const double backward_distance, const double forward_distance,
+    const bool only_route_lanes = true) const;
   lanelet::ConstLanelets getLaneletSequence(
     const lanelet::ConstLanelet & lanelet,
     const double backward_distance = std::numeric_limits<double>::max(),
-    const double forward_distance = std::numeric_limits<double>::max()) const;
+    const double forward_distance = std::numeric_limits<double>::max(),
+    const bool only_route_lanes = true) const;
   lanelet::ConstLanelets getShoulderLaneletSequence(
     const lanelet::ConstLanelet & lanelet, const Pose & pose,
     const double backward_distance = std::numeric_limits<double>::max(),
@@ -291,6 +322,7 @@ public:
   lanelet::routing::RelationType getRelation(
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
   lanelet::ConstLanelets getShoulderLanelets() const;
+  bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
 
   // for path
   PathWithLaneId getCenterLinePath(
@@ -311,7 +343,12 @@ public:
     const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
     lanelet::ConstLanelet * target_lanelet);
   double getLaneChangeableDistance(const Pose & current_pose, const Direction & direction) const;
+  bool getLeftShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const;
+  bool getRightShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
+  bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
 
 private:
   // MUST
@@ -325,11 +362,10 @@ private:
   lanelet::ConstLanelets start_lanelets_;
   lanelet::ConstLanelets goal_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
-  LaneletRoute route_msg_;
+  std::shared_ptr<LaneletRoute> route_ptr_{nullptr};
 
   rclcpp::Logger logger_{rclcpp::get_logger("route_handler")};
 
-  bool is_route_msg_ready_{false};
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
 
@@ -346,8 +382,6 @@ private:
   bool isBijectiveConnection(
     const lanelet::ConstLanelets & lanelet_section1,
     const lanelet::ConstLanelets & lanelet_section2) const;
-  bool getNextLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool getPreviousLaneletWithinRouteExceptGoal(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
   bool getNextLaneletWithinRouteExceptStart(
@@ -359,10 +393,12 @@ private:
   lanelet::ConstLanelets getRouteLanelets() const;
   lanelet::ConstLanelets getLaneletSequenceUpTo(
     const lanelet::ConstLanelet & lanelet,
-    const double min_length = std::numeric_limits<double>::max()) const;
+    const double min_length = std::numeric_limits<double>::max(),
+    const bool only_route_lanes = true) const;
   lanelet::ConstLanelets getLaneletSequenceAfter(
     const lanelet::ConstLanelet & lanelet,
-    const double min_length = std::numeric_limits<double>::max()) const;
+    const double min_length = std::numeric_limits<double>::max(),
+    const bool only_route_lanes = true) const;
   bool getFollowingShoulderLanelet(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const;
   lanelet::ConstLanelets getShoulderLaneletSequenceAfter(

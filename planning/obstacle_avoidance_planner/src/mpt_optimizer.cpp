@@ -171,9 +171,12 @@ double calcLateralDistToBounds(
         tier4_autoware_utils::calcDistance2d(pose.position, *intersect_point) *
         (is_point_left ? 1.0 : -1.0);
 
-      closest_dist_to_bound =
-        is_left_bound ? std::min(dist_to_bound - additional_offset, closest_dist_to_bound)
-                      : std::max(dist_to_bound + additional_offset, closest_dist_to_bound);
+      // the bound which is closest to the centerline will be chosen
+      const double tmp_dist_to_bound =
+        is_left_bound ? dist_to_bound - additional_offset : dist_to_bound + additional_offset;
+      if (std::abs(tmp_dist_to_bound) < std::abs(closest_dist_to_bound)) {
+        closest_dist_to_bound = tmp_dist_to_bound;
+      }
     }
   }
 
@@ -236,12 +239,14 @@ MPTOptimizer::MPTParam::MPTParam(
   {  // avoidance
     max_longitudinal_margin_for_bound_violation =
       node->declare_parameter<double>("mpt.avoidance.max_longitudinal_margin_for_bound_violation");
+    max_bound_fixing_time = node->declare_parameter<double>("mpt.avoidance.max_bound_fixing_time");
     max_avoidance_cost = node->declare_parameter<double>("mpt.avoidance.max_avoidance_cost");
     avoidance_cost_margin = node->declare_parameter<double>("mpt.avoidance.avoidance_cost_margin");
     avoidance_cost_band_length =
       node->declare_parameter<double>("mpt.avoidance.avoidance_cost_band_length");
     avoidance_cost_decrease_rate =
       node->declare_parameter<double>("mpt.avoidance.avoidance_cost_decrease_rate");
+    min_drivable_width = node->declare_parameter<double>("mpt.avoidance.min_drivable_width");
 
     avoidance_lat_error_weight =
       node->declare_parameter<double>("mpt.avoidance.weight.lat_error_weight");
@@ -379,6 +384,8 @@ void MPTOptimizer::MPTParam::onParam(const std::vector<rclcpp::Parameter> & para
     updateParam<double>(
       parameters, "mpt.avoidance.max_longitudinal_margin_for_bound_violation",
       max_longitudinal_margin_for_bound_violation);
+    updateParam<double>(parameters, "mpt.avoidance.max_bound_fixing_time", max_bound_fixing_time);
+    updateParam<double>(parameters, "mpt.avoidance.min_drivable_width", min_drivable_width);
     updateParam<double>(parameters, "mpt.avoidance.max_avoidance_cost", max_avoidance_cost);
     updateParam<double>(parameters, "mpt.avoidance.avoidance_cost_margin", avoidance_cost_margin);
     updateParam<double>(
@@ -464,7 +471,10 @@ void MPTOptimizer::initialize(const bool enable_debug_info, const TrajectoryPara
   traj_param_ = traj_param;
 }
 
-void MPTOptimizer::resetPreviousData() { prev_ref_points_ptr_ = nullptr; }
+void MPTOptimizer::resetPreviousData()
+{
+  prev_ref_points_ptr_ = nullptr;
+}
 
 void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
@@ -553,9 +563,9 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   constexpr double tmp_margin = 10.0;
   size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
-  ref_points = trajectory_utils::cropPoints(
+  ref_points = motion_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
-    -backward_traj_length - tmp_margin);
+    backward_traj_length + tmp_margin);
   SplineInterpolationPoints2d ref_points_spline(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
@@ -565,9 +575,9 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   // 4. crop backward
   // NOTE: Start point may change. Spline calculation is required.
-  ref_points = trajectory_utils::cropPoints(
+  ref_points = motion_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
-    -backward_traj_length);
+    backward_traj_length);
   ref_points_spline = SplineInterpolationPoints2d(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
@@ -579,7 +589,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   // 6. update bounds
   // NOTE: After this, resample must not be called since bounds are not interpolated.
-  updateBounds(ref_points, p.left_bound, p.right_bound);
+  updateBounds(ref_points, p.left_bound, p.right_bound, p.ego_pose, p.ego_vel);
   updateVehicleBounds(ref_points, ref_points_spline);
 
   // 7. update delta arc length
@@ -590,7 +600,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   updateExtraPoints(ref_points);
 
   // 9. crop forward
-  // ref_points = trajectory_utils::cropForwardPoints(
+  // ref_points = motion_utils::cropForwardPoints(
   //   ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length);
   if (static_cast<size_t>(mpt_param_.num_points) < ref_points.size()) {
     ref_points.resize(mpt_param_.num_points);
@@ -774,7 +784,8 @@ void MPTOptimizer::updateExtraPoints(std::vector<ReferencePoint> & ref_points) c
 void MPTOptimizer::updateBounds(
   std::vector<ReferencePoint> & ref_points,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound) const
+  const std::vector<geometry_msgs::msg::Point> & right_bound,
+  const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -782,16 +793,31 @@ void MPTOptimizer::updateBounds(
     mpt_param_.soft_clearance_from_road + vehicle_info_.vehicle_width_m / 2.0;
 
   // calculate distance to left/right bound on each reference point
-  for (auto & ref_point : ref_points) {
-    const double dist_to_left_bound =
-      calcLateralDistToBounds(ref_point.pose, left_bound, soft_road_clearance, true);
-    const double dist_to_right_bound =
-      calcLateralDistToBounds(ref_point.pose, right_bound, soft_road_clearance, false);
-    ref_point.bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+  // NOTE: Reference points is sometimes not fully covered by the drivable area.
+  //       In some edge cases like U-turn, the wrong bound may be found. To avoid finding the wrong
+  //       bound, some beginning bounds are copied from the following one.
+  const size_t min_ref_point_index = std::min(
+    static_cast<size_t>(std::ceil(1.0 / mpt_param_.delta_arc_length)), ref_points.size() - 1);
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    const auto ref_point_for_bound_search = ref_points.at(std::max(min_ref_point_index, i));
+    const double dist_to_left_bound = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
+    const double dist_to_right_bound = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
+    ref_points.at(i).bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
   }
+
+  // keep vehicle width + margin
+  // NOTE: The drivable area's width is sometimes narrower than the vehicle width which means
+  // infeasible to run especially when obstacles are extracted from the drivable area.
+  //       In this case, the drivable area's width is forced to be wider.
+  keepMinimumBoundsWidth(ref_points);
 
   // extend violated bounds, where the input path is outside the drivable area
   ref_points = extendViolatedBounds(ref_points);
+
+  // keep previous boundary's width around ego to avoid sudden steering
+  avoidSuddenSteering(ref_points, ego_pose, ego_vel);
 
   /*
   // TODO(murooka) deal with filling data between obstacles
@@ -812,6 +838,160 @@ void MPTOptimizer::updateBounds(
 
   time_keeper_ptr_->toc(__func__, "          ");
   return;
+}
+
+void MPTOptimizer::keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_points) const
+{
+  // 1. calculate start and end sections which are out of bounds
+  std::vector<std::pair<size_t, size_t>> out_of_upper_bound_sections;
+  std::vector<std::pair<size_t, size_t>> out_of_lower_bound_sections;
+  std::optional<size_t> out_of_upper_bound_start_idx = std::nullopt;
+  std::optional<size_t> out_of_lower_bound_start_idx = std::nullopt;
+  for (size_t i = 0; i < ref_points.size(); ++i) {
+    const auto & b = ref_points.at(i).bounds;
+    // const double drivable_width = b.upper_bound - b.lower_bound;
+    // const bool is_infeasible_to_drive = drivable_width < mpt_param_.min_drivable_width;
+
+    // NOTE: The following condition should be uncommented to see obstacles outside the path.
+    //       However, on a narrow road, the ego may go outside the road border with this condition.
+    //       Currently, we cannot distinguish obstacles and road border
+    if (/*is_infeasible_to_drive ||*/ b.upper_bound < 0.0) {  // out of upper bound
+      if (!out_of_upper_bound_start_idx) {
+        out_of_upper_bound_start_idx = i;
+      }
+    } else {
+      if (out_of_upper_bound_start_idx) {
+        out_of_upper_bound_sections.push_back({*out_of_upper_bound_start_idx, i - 1});
+        out_of_upper_bound_start_idx = std::nullopt;
+      }
+    }
+    if (/*is_infeasible_to_drive ||*/ 0.0 < b.lower_bound) {  // out of lower bound
+      if (!out_of_lower_bound_start_idx) {
+        out_of_lower_bound_start_idx = i;
+      }
+    } else {
+      if (out_of_lower_bound_start_idx) {
+        out_of_lower_bound_sections.push_back({*out_of_lower_bound_start_idx, i - 1});
+        out_of_lower_bound_start_idx = std::nullopt;
+      }
+    }
+  }
+  if (out_of_upper_bound_start_idx) {
+    out_of_upper_bound_sections.push_back({*out_of_upper_bound_start_idx, ref_points.size() - 1});
+  }
+  if (out_of_lower_bound_start_idx) {
+    out_of_lower_bound_sections.push_back({*out_of_lower_bound_start_idx, ref_points.size() - 1});
+  }
+
+  auto original_ref_points = ref_points;
+  const auto is_inside_sections = [&](const size_t target_idx, const auto & sections) {
+    for (const auto & section : sections) {
+      if (section.first <= target_idx && target_idx <= section.second) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // lower bound
+  for (const auto & out_of_lower_bound_section : out_of_lower_bound_sections) {
+    std::optional<size_t> upper_bound_start_idx = std::nullopt;
+    std::optional<size_t> upper_bound_end_idx = std::nullopt;
+    for (size_t p_idx = out_of_lower_bound_section.first;
+         p_idx <= out_of_lower_bound_section.second; ++p_idx) {
+      const bool is_out_of_upper_bound = is_inside_sections(p_idx, out_of_upper_bound_sections);
+
+      const auto & original_b = original_ref_points.at(p_idx).bounds;
+      auto & b = ref_points.at(p_idx).bounds;
+      if (is_out_of_upper_bound) {
+        if (!upper_bound_start_idx) {
+          upper_bound_start_idx = p_idx;
+        }
+        upper_bound_end_idx = p_idx;
+
+        // It seems both bounds are cut out. Widen the bounds towards the both side.
+        const double center_dist_to_bounds =
+          (original_b.upper_bound + original_b.lower_bound) / 2.0;
+        b.upper_bound =
+          std::max(b.upper_bound, center_dist_to_bounds + mpt_param_.min_drivable_width / 2.0);
+        b.lower_bound =
+          std::min(b.lower_bound, center_dist_to_bounds - mpt_param_.min_drivable_width / 2.0);
+        continue;
+      }
+      // Only the Lower bound is cut out. Widen the bounds towards the lower bound since cut out too
+      // much.
+      b.lower_bound =
+        std::min(b.lower_bound, original_b.upper_bound - mpt_param_.min_drivable_width);
+      continue;
+    }
+    // extend longitudinal if it overlaps out_of_upper_bound_sections
+    if (upper_bound_start_idx) {
+      for (size_t p_idx = out_of_lower_bound_section.first; p_idx < *upper_bound_start_idx;
+           ++p_idx) {
+        auto & b = ref_points.at(p_idx).bounds;
+        b.lower_bound =
+          std::min(b.lower_bound, ref_points.at(*upper_bound_start_idx).bounds.lower_bound);
+      }
+    }
+    if (upper_bound_end_idx) {
+      for (size_t p_idx = *upper_bound_end_idx + 1; p_idx <= out_of_lower_bound_section.second;
+           ++p_idx) {
+        auto & b = ref_points.at(p_idx).bounds;
+        b.lower_bound =
+          std::min(b.lower_bound, ref_points.at(*upper_bound_end_idx).bounds.lower_bound);
+      }
+    }
+  }
+
+  // upper bound
+  for (const auto & out_of_upper_bound_section : out_of_upper_bound_sections) {
+    std::optional<size_t> lower_bound_start_idx = std::nullopt;
+    std::optional<size_t> lower_bound_end_idx = std::nullopt;
+    for (size_t p_idx = out_of_upper_bound_section.first;
+         p_idx <= out_of_upper_bound_section.second; ++p_idx) {
+      const bool is_out_of_lower_bound = is_inside_sections(p_idx, out_of_lower_bound_sections);
+
+      const auto & original_b = original_ref_points.at(p_idx).bounds;
+      auto & b = ref_points.at(p_idx).bounds;
+      if (is_out_of_lower_bound) {
+        if (!lower_bound_start_idx) {
+          lower_bound_start_idx = p_idx;
+        }
+        lower_bound_end_idx = p_idx;
+
+        // It seems both bounds are cut out. Widen the bounds towards the both side.
+        const double center_dist_to_bounds =
+          (original_b.upper_bound + original_b.lower_bound) / 2.0;
+        b.upper_bound =
+          std::max(b.upper_bound, center_dist_to_bounds + mpt_param_.min_drivable_width / 2.0);
+        b.lower_bound =
+          std::min(b.lower_bound, center_dist_to_bounds - mpt_param_.min_drivable_width / 2.0);
+        continue;
+      }
+      // Only the Upper bound is cut out. Widen the bounds towards the upper bound since cut out too
+      // much.
+      b.upper_bound =
+        std::max(b.upper_bound, original_b.lower_bound + mpt_param_.min_drivable_width);
+      continue;
+    }
+    // extend longitudinal if it overlaps out_of_lower_bound_sections
+    if (lower_bound_start_idx) {
+      for (size_t p_idx = out_of_upper_bound_section.first; p_idx < *lower_bound_start_idx;
+           ++p_idx) {
+        auto & b = ref_points.at(p_idx).bounds;
+        b.upper_bound =
+          std::max(b.upper_bound, ref_points.at(*lower_bound_start_idx).bounds.upper_bound);
+      }
+    }
+    if (lower_bound_end_idx) {
+      for (size_t p_idx = *lower_bound_end_idx + 1; p_idx <= out_of_upper_bound_section.second;
+           ++p_idx) {
+        auto & b = ref_points.at(p_idx).bounds;
+        b.upper_bound =
+          std::max(b.upper_bound, ref_points.at(*lower_bound_end_idx).bounds.upper_bound);
+      }
+    }
+  }
 }
 
 std::vector<ReferencePoint> MPTOptimizer::extendViolatedBounds(
@@ -859,6 +1039,34 @@ std::vector<ReferencePoint> MPTOptimizer::extendViolatedBounds(
   }
 
   return extended_ref_points;
+}
+
+void MPTOptimizer::avoidSuddenSteering(
+  std::vector<ReferencePoint> & ref_points, const geometry_msgs::msg::Pose & ego_pose,
+  const double ego_vel) const
+{
+  if (!prev_ref_points_ptr_) {
+    return;
+  }
+  const size_t prev_ego_idx = trajectory_utils::findEgoIndex(
+    *prev_ref_points_ptr_, tier4_autoware_utils::getPose(ref_points.front()), ego_nearest_param_);
+
+  const double max_bound_fixing_length = ego_vel * mpt_param_.max_bound_fixing_time;
+  const int max_bound_fixing_idx =
+    std::floor(max_bound_fixing_length / mpt_param_.delta_arc_length);
+
+  const size_t ego_idx = trajectory_utils::findEgoIndex(ref_points, ego_pose, ego_nearest_param_);
+  const size_t max_fixed_bound_idx =
+    std::min(ego_idx + static_cast<size_t>(max_bound_fixing_idx), ref_points.size());
+
+  for (size_t i = 0; i < max_fixed_bound_idx; ++i) {
+    const size_t prev_idx = std::min(
+      prev_ego_idx + i, static_cast<size_t>(static_cast<int>(prev_ref_points_ptr_->size()) - 1));
+    const auto & prev_bounds = prev_ref_points_ptr_->at(prev_idx).bounds;
+
+    ref_points.at(i).bounds.upper_bound = prev_bounds.upper_bound;
+    ref_points.at(i).bounds.lower_bound = prev_bounds.lower_bound;
+  }
 }
 
 void MPTOptimizer::updateVehicleBounds(
@@ -1332,6 +1540,13 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   // get optimization result
   auto optimization_result =
     std::get<0>(result);  // NOTE: const cannot be added due to the next operation.
+  const auto has_nan = std::any_of(
+    optimization_result.begin(), optimization_result.end(),
+    [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return std::nullopt;
+  }
   const Eigen::VectorXd optimized_steer_angles =
     Eigen::Map<Eigen::VectorXd>(&optimization_result[0], D_un);
 
@@ -1518,7 +1733,10 @@ double MPTOptimizer::getTrajectoryLength() const
   return forward_traj_length + backward_traj_length;
 }
 
-int MPTOptimizer::getNumberOfPoints() const { return mpt_param_.num_points; }
+int MPTOptimizer::getNumberOfPoints() const
+{
+  return mpt_param_.num_points;
+}
 
 size_t MPTOptimizer::getNumberOfSlackVariables() const
 {

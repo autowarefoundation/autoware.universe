@@ -28,7 +28,7 @@ void setFormatDate(QLabel * line, double time)
   char buffer[128];
   auto seconds = static_cast<time_t>(time);
   strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H-%M-%S", localtime(&seconds));
-  line->setText(QString("- ") + QString(buffer) + QString(".mp4"));
+  line->setText(QString("- ") + QString(buffer));
 }
 
 AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
@@ -98,13 +98,18 @@ void AutowareScreenCapturePanel::onInitialize()
     std::bind(&AutowareScreenCapturePanel::onCaptureTrigger, this, _1, _2));
 }
 
-void onPrefixChanged() {}
+void onPrefixChanged()
+{
+}
 
-void AutowareScreenCapturePanel::onRateChanged() {}
+void AutowareScreenCapturePanel::onRateChanged()
+{
+}
 
 void AutowareScreenCapturePanel::onClickScreenCapture()
 {
-  const std::string time_text = "capture/" + ros_time_label_->text().toStdString();
+  const std::string time_text =
+    "capture/" + file_name_prefix_->text().toStdString() + ros_time_label_->text().toStdString();
   getDisplayContext()->getViewManager()->getRenderPanel()->getRenderWindow()->captureScreenShot(
     time_text + ".png");
 }
@@ -187,9 +192,15 @@ void AutowareScreenCapturePanel::update()
   setFormatDate(ros_time_label_, rclcpp::Clock().now().seconds());
 }
 
-void AutowareScreenCapturePanel::save(rviz_common::Config config) const { Panel::save(config); }
+void AutowareScreenCapturePanel::save(rviz_common::Config config) const
+{
+  Panel::save(config);
+}
 
-void AutowareScreenCapturePanel::load(const rviz_common::Config & config) { Panel::load(config); }
+void AutowareScreenCapturePanel::load(const rviz_common::Config & config)
+{
+  Panel::load(config);
+}
 
 AutowareScreenCapturePanel::~AutowareScreenCapturePanel() = default;
 

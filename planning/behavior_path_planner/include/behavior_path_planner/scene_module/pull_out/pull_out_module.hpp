@@ -16,12 +16,12 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/util/geometric_parallel_parking/geometric_parallel_parking.hpp"
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/util/pull_out/geometric_pull_out.hpp"
-#include "behavior_path_planner/util/pull_out/pull_out_parameters.hpp"
-#include "behavior_path_planner/util/pull_out/pull_out_path.hpp"
-#include "behavior_path_planner/util/pull_out/shift_pull_out.hpp"
+#include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/pull_out/geometric_pull_out.hpp"
+#include "behavior_path_planner/utils/pull_out/pull_out_parameters.hpp"
+#include "behavior_path_planner/utils/pull_out/pull_out_path.hpp"
+#include "behavior_path_planner/utils/pull_out/shift_pull_out.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -36,6 +36,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -71,7 +72,7 @@ public:
   PullOutModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<PullOutParameters> & parameters,
-    const std::shared_ptr<RTCInterface> & rtc_interface);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   void updateModuleParams(const std::shared_ptr<PullOutParameters> & parameters)
   {
@@ -88,8 +89,7 @@ public:
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnExit() override;
 
   void setParameters(const std::shared_ptr<PullOutParameters> & parameters)
   {
@@ -117,7 +117,6 @@ private:
 
   std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
   PathWithLaneId getFullPath() const;
-  ParallelParkingParameters getGeometricPullOutParameters() const;
   std::vector<Pose> searchPullOutStartPoses();
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;

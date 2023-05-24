@@ -11,27 +11,98 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "behavior_path_planner/scene_module/lane_change/util.hpp"
+#include "behavior_path_planner/utils/safety_check.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-TEST(BehaviorPathPlanningLaneChangeUtilsTest, testStoppingDistance)
+constexpr double epsilon = 1e-6;
+
+TEST(BehaviorPathPlanningLaneChangeUtilsTest, projectCurrentPoseToTarget)
 {
-  const auto vehicle_velocity = 8.333;
+  geometry_msgs::msg::Pose ego_pose;
+  const auto ego_yaw = tier4_autoware_utils::deg2rad(0.0);
+  ego_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ego_yaw);
+  ego_pose.position = tier4_autoware_utils::createPoint(0, 0, 0);
 
-  const auto negative_accel = -1.5;
-  const auto distance_when_negative =
-    behavior_path_planner::lane_change_utils::stoppingDistance(vehicle_velocity, negative_accel);
-  ASSERT_NEAR(distance_when_negative, 23.1463, 1e-3);
+  geometry_msgs::msg::Pose obj_pose;
+  const auto obj_yaw = tier4_autoware_utils::deg2rad(0.0);
+  obj_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(obj_yaw);
+  obj_pose.position = tier4_autoware_utils::createPoint(-4, 3, 0);
 
-  const auto positive_accel = 1.5;
-  const auto distance_when_positive =
-    behavior_path_planner::lane_change_utils::stoppingDistance(vehicle_velocity, positive_accel);
-  ASSERT_NEAR(distance_when_positive, 34.7194, 1e-3);
+  const auto result = tier4_autoware_utils::inverseTransformPose(obj_pose, ego_pose);
 
-  const auto zero_accel = 0.0;
-  const auto distance_when_zero =
-    behavior_path_planner::lane_change_utils::stoppingDistance(vehicle_velocity, zero_accel);
-  ASSERT_NEAR(distance_when_zero, 34.7194, 1e-3);
+  EXPECT_NEAR(result.position.x, -4, epsilon);
+  EXPECT_NEAR(result.position.y, 3, epsilon);
+}
+
+TEST(BehaviorPathPlanningLaneChangeUtilsTest, TESTLateralAccelerationMap)
+{
+  LateralAccelerationMap lat_acc_map;
+  lat_acc_map.add(0.0, 0.2, 0.315);
+  lat_acc_map.add(3.0, 0.2, 0.315);
+  lat_acc_map.add(5.0, 0.2, 0.315);
+  lat_acc_map.add(6.0, 0.315, 0.40);
+  lat_acc_map.add(10.0, 0.315, 0.50);
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(-1.0);
+    EXPECT_NEAR(min_acc, 0.2, epsilon);
+    EXPECT_NEAR(max_acc, 0.315, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(0.0);
+    EXPECT_NEAR(min_acc, 0.2, epsilon);
+    EXPECT_NEAR(max_acc, 0.315, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(1.0);
+    EXPECT_NEAR(min_acc, 0.2, epsilon);
+    EXPECT_NEAR(max_acc, 0.315, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(3.0);
+    EXPECT_NEAR(min_acc, 0.2, epsilon);
+    EXPECT_NEAR(max_acc, 0.315, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(5.0);
+    EXPECT_NEAR(min_acc, 0.2, epsilon);
+    EXPECT_NEAR(max_acc, 0.315, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(5.5);
+    EXPECT_NEAR(min_acc, 0.2575, epsilon);
+    EXPECT_NEAR(max_acc, 0.3575, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(6.0);
+    EXPECT_NEAR(min_acc, 0.315, epsilon);
+    EXPECT_NEAR(max_acc, 0.4, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(8.0);
+    EXPECT_NEAR(min_acc, 0.315, epsilon);
+    EXPECT_NEAR(max_acc, 0.45, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(10.0);
+    EXPECT_NEAR(min_acc, 0.315, epsilon);
+    EXPECT_NEAR(max_acc, 0.50, epsilon);
+  }
+
+  {
+    const auto [min_acc, max_acc] = lat_acc_map.find(11.0);
+    EXPECT_NEAR(min_acc, 0.315, epsilon);
+    EXPECT_NEAR(max_acc, 0.50, epsilon);
+  }
 }

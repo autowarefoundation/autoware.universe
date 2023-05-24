@@ -168,7 +168,10 @@ void EBPathSmoother::initialize(const bool enable_debug_info, const TrajectoryPa
   traj_param_ = traj_param;
 }
 
-void EBPathSmoother::resetPreviousData() { prev_eb_traj_points_ptr_ = nullptr; }
+void EBPathSmoother::resetPreviousData()
+{
+  prev_eb_traj_points_ptr_ = nullptr;
+}
 
 std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
@@ -183,8 +186,8 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
 
   const size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(p.traj_points, p.ego_pose, ego_nearest_param_);
-  const auto cropped_traj_points = trajectory_utils::cropPoints(
-    p.traj_points, p.ego_pose.position, ego_seg_idx, forward_traj_length, -backward_traj_length);
+  const auto cropped_traj_points = motion_utils::cropPoints(
+    p.traj_points, p.ego_pose.position, ego_seg_idx, forward_traj_length, backward_traj_length);
 
   // check if goal is contained in cropped_traj_points
   const bool is_goal_contained =
@@ -375,6 +378,12 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
   // check status
   if (status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[EB]");
+    return std::nullopt;
+  }
+  const auto has_nan = std::any_of(
+    optimized_points.begin(), optimized_points.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
     return std::nullopt;
   }
 

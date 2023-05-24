@@ -45,11 +45,13 @@ def launch_setup(context, *args, **kwargs):
             ("input", LaunchConfiguration("input_pointcloud")),
             ("map", LaunchConfiguration("input_map")),
             ("output", "map_filter/pointcloud"),
+            ("map_loader_service", "/map/get_differential_pointcloud_map"),
+            ("pose_with_covariance", "/localization/pose_estimator/pose_with_covariance"),
         ],
         parameters=[load_composable_node_param("compare_map_param_path")],
     )
 
-    # separate range of poincloud when map_filter used
+    # separate range of pointcloud when map_filter used
     use_map_short_range_crop_box_filter_component = ComposableNode(
         package="pointcloud_preprocessor",
         namespace=ns,

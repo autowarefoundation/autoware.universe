@@ -19,7 +19,9 @@
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
-QPSolverOSQP::QPSolverOSQP(const rclcpp::Logger & logger) : logger_{logger} {}
+QPSolverOSQP::QPSolverOSQP(const rclcpp::Logger & logger) : logger_{logger}
+{
+}
 bool QPSolverOSQP::solve(
   const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,
   const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
@@ -58,8 +60,14 @@ bool QPSolverOSQP::solve(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    // TODO(Horibe): Should return false and the failure must be handled in an appropriate way.
     RCLCPP_WARN(logger_, "optimization failed : %s", osqpsolver_.getStatusMessage().c_str());
+    return false;
+  }
+  const auto has_nan =
+    std::any_of(U_osqp.begin(), U_osqp.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return false;
   }
 
   // polish status: successful (1), unperformed (0), (-1) unsuccessful
