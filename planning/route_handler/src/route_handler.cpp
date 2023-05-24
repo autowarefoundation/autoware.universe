@@ -1254,19 +1254,6 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTargetExceptPr
   return boost::none;
 }
 
-boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeAdjacentPreferredTarget(
-  const lanelet::ConstLanelets & lanelets, const Direction direction) const
-{
-  const auto num_to_preferred_lane = getNumLaneToPreferredLane(lanelets, direction);
-
-  // single lane change
-  if (std::abs(num_to_preferred_lane) == 1) {
-    return getLaneChangeTarget(lanelets, direction);
-  }
-
-  return boost::none;
-}
-
 bool RouteHandler::getRightLaneChangeTargetExceptPreferredLane(
   const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
 {

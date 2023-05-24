@@ -236,12 +236,11 @@ void NormalLaneChange::getLaneChangeLanes(
     target_lane.get(), getEgoPose(), backward_length, forward_length);
 
   // target preferred lanes
-  const auto target_preferred_lane =
-    route_handler->getLaneChangeAdjacentPreferredTarget(current_lanes, direction);
-  if (type_ == LaneChangeModuleType::NORMAL && target_preferred_lane) {
-    target_preferred_lanes = route_handler->getLaneletSequence(
-      target_preferred_lane.get(), getEgoPose(), 0.0, forward_length);
+  if (type_ == LaneChangeModuleType::NORMAL) {
+    target_preferred_lanes =
+      route_handler->getLaneletSequence(target_lane.get(), getEgoPose(), 0.0, forward_length);
   } else {
+    // for external lane change
     target_preferred_lanes = target_lanes;
   }
 }
