@@ -1292,7 +1292,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
 
 Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
-  const double object_detected_time)
+  const double /*object_detected_time*/)
 {
   // Step1. Check if we have the object in the buffer
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
