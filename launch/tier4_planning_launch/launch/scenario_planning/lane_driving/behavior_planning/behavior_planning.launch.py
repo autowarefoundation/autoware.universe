@@ -219,20 +219,20 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # This condition is true if run_out module is enabled and its detection method is Points
-    launch_run_out_with_points_method = PythonExpression("True")
-    """
     launch_run_out_with_points_method = PythonExpression(
         [
             LaunchConfiguration(
-                "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
+                "launch_run_out",
+                default="behavior_velocity_planner::RunOutModulePlugin"
+                in behavior_velocity_planner_params["launch_modules"],
             ),
-            " and ",
-            "'",
-            run_out_param["run_out"]["detection_method"],
-            "' == 'Points'",
+            " and "
+            + str(
+                behavior_velocity_planner_params.get("run_out", {}).get("detection_method")
+                == "Points"
+            ),
         ]
     )
-    """
 
     # load compare map for run_out module
     load_compare_map = IncludeLaunchDescription(
