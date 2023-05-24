@@ -25,7 +25,6 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
 import yaml
 
@@ -131,15 +130,22 @@ def launch_setup(context, *args, **kwargs):
         behavior_velocity_smoother_type_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # behavior velocity planner
-    behavior_velocity_planner_param = ParameterFile(
-        LaunchConfiguration("behavior_velocity_planner_param_path")
-    )
-    behavior_velocity_module_paths = LaunchConfiguration(
-        "behavior_velocity_module_param_paths"
+    behavior_velocity_planner_common_param_path = LaunchConfiguration(
+        "behavior_velocity_planner_common_param_path"
     ).perform(context)
-    behavior_velocity_module_params = [
-        ParameterFile(path) for path in yaml.safe_load(behavior_velocity_module_paths)
+    behavior_velocity_planner_module_param_paths = LaunchConfiguration(
+        "behavior_velocity_planner_module_param_paths"
+    ).perform(context)
+
+    behavior_velocity_planner_params_paths = [
+        behavior_velocity_planner_common_param_path,
+        *yaml.safe_load(behavior_velocity_planner_module_param_paths),
     ]
+
+    behavior_velocity_planner_params = {}
+    for path in behavior_velocity_planner_params_paths:
+        with open(path) as f:
+            behavior_velocity_planner_params.update(yaml.safe_load(f)["/**"]["ros__parameters"])
 
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
@@ -191,8 +197,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             nearest_search_param,
-            behavior_velocity_planner_param,
-            *behavior_velocity_module_params,
+            behavior_velocity_planner_params,
             vehicle_param,
             common_param,
             motion_velocity_smoother_param,

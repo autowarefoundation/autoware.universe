@@ -29,8 +29,8 @@
   <arg name="behavior_path_planner_param_path"/>
   <!-- behavior velocity planner -->
   <arg name="behavior_velocity_smoother_type_param_path"/>
-  <arg name="behavior_velocity_planner_param_path"/>
-  <arg name="behavior_velocity_module_param_paths"/>
+  <arg name="behavior_velocity_planner_common_param_path"/>
+  <arg name="behavior_velocity_planner_module_param_paths"/>
   <!-- parking -->
   <arg name="freespace_planner_param_path"/>
   <!-- motion -->
