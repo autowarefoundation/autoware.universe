@@ -417,15 +417,15 @@ private:
 
   rclcpp::Logger logger_;
 
+  BehaviorModuleOutput previous_module_output_;
+
+protected:
 #ifdef USE_OLD_ARCHITECTURE
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_info_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
 #endif
 
-  BehaviorModuleOutput previous_module_output_;
-
-protected:
   // TODO(murooka) Remove this function when BT-based architecture will be removed
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> createRTCInterfaceMap(
     rclcpp::Node & node, const std::string & name, const std::vector<std::string> & rtc_types)

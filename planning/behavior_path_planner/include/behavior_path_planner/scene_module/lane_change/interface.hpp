@@ -100,11 +100,14 @@ protected:
 
   void setObjectDebugVisualization() const;
 
+  void createVirtualWallMarker() const;
+
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 
   void updateSteeringFactorPtr(
     const CandidateOutput & output, const LaneChangePath & selected_path) const;
 
+  mutable MarkerArray virtual_wall_marker_;
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
 
   std::unique_ptr<PathWithLaneId> prev_approved_path_;
