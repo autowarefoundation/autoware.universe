@@ -25,6 +25,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
 import yaml
 
@@ -130,36 +131,15 @@ def launch_setup(context, *args, **kwargs):
         behavior_velocity_smoother_type_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # behavior velocity planner
-    with open(LaunchConfiguration("blind_spot_param_path").perform(context), "r") as f:
-        blind_spot_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("crosswalk_param_path").perform(context), "r") as f:
-        crosswalk_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("detection_area_param_path").perform(context), "r") as f:
-        detection_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("intersection_param_path").perform(context), "r") as f:
-        intersection_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("stop_line_param_path").perform(context), "r") as f:
-        stop_line_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("traffic_light_param_path").perform(context), "r") as f:
-        traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("virtual_traffic_light_param_path").perform(context), "r") as f:
-        virtual_traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("occlusion_spot_param_path").perform(context), "r") as f:
-        occlusion_spot_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("no_stopping_area_param_path").perform(context), "r") as f:
-        no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("run_out_param_path").perform(context), "r") as f:
-        run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("speed_bump_param_path").perform(context), "r") as f:
-        speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("out_of_lane_param_path").perform(context), "r") as f:
-        out_of_lane_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(
-        LaunchConfiguration("behavior_velocity_planner_param_path").perform(context), "r"
-    ) as f:
-        behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    print("[test]", LaunchConfiguration("behavior_velocity_module_param_paths").perform(context))
+    behavior_velocity_planner_param = ParameterFile(
+        LaunchConfiguration("behavior_velocity_planner_param_path")
+    )
+    behavior_velocity_module_paths = LaunchConfiguration(
+        "behavior_velocity_module_param_paths"
+    ).perform(context)
+    behavior_velocity_module_params = [
+        ParameterFile(path) for path in yaml.safe_load(behavior_velocity_module_paths)
+    ]
 
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
@@ -212,19 +192,8 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             nearest_search_param,
             behavior_velocity_planner_param,
-            blind_spot_param,
-            crosswalk_param,
-            detection_area_param,
-            intersection_param,
-            stop_line_param,
-            traffic_light_param,
-            virtual_traffic_light_param,
-            occlusion_spot_param,
-            no_stopping_area_param,
+            *behavior_velocity_module_params,
             vehicle_param,
-            run_out_param,
-            speed_bump_param,
-            out_of_lane_param,
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
