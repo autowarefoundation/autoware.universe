@@ -12,12 +12,12 @@
       - behavior_velocity_planner::CrosswalkModulePlugin
       - behavior_velocity_planner::WalkwayModulePlugin
       - behavior_velocity_planner::TrafficLightModulePlugin
+      # Intersection module should be before merge from private to declare intersection parameters.
       - behavior_velocity_planner::IntersectionModulePlugin
-      # Merge from private module requires intersection parameters, so place it after that.
       - behavior_velocity_planner::MergeFromPrivateModulePlugin
       - behavior_velocity_planner::BlindSpotModulePlugin
       - behavior_velocity_planner::DetectionAreaModulePlugin
-      # No stopping area module requires all the stop line, so place it after them.
+      # No stopping area module requires all the stop line. Therefore this modules should be placed at the bottom.
       - behavior_velocity_planner::NoStoppingAreaModulePlugin
       # Permanent stop line module should be after no stopping area.
       - behavior_velocity_planner::StopLineModulePlugin
