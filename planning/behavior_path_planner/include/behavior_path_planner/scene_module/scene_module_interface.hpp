@@ -31,6 +31,7 @@
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/stop_factor.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <algorithm>
@@ -57,6 +58,7 @@ using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
+using tier4_planning_msgs::msg::StopReasonArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
@@ -95,6 +97,11 @@ public:
     {
       const auto ns = std::string("~/virtual_wall/") + utils::convertToSnakeCase(name);
       pub_virtual_wall_ = node.create_publisher<MarkerArray>(ns, 20);
+    }
+
+    {
+      const auto ns = std::string("~/output/stop_reasons");
+      pub_stop_reasons_ = node.create_publisher<StopReasonArray>(ns, 20);
     }
 #endif
 
@@ -308,6 +315,22 @@ public:
 
   void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
 
+  void publishStopReasons()
+  {
+    StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = clock_->now();
+
+    const auto reason = getStopReason();
+    if (reason.reason == "") {
+      return;
+    }
+
+    stop_reason_array.stop_reasons.push_back(reason);
+
+    pub_stop_reasons_->publish(stop_reason_array);
+  }
+
   void publishVirtualWall()
   {
     MarkerArray markers{};
@@ -431,6 +454,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_info_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr pub_stop_reasons_;
 #endif
 
   BehaviorModuleOutput previous_module_output_;
