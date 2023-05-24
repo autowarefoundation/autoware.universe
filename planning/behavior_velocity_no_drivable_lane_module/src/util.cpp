@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "util.hpp"
+
 #include "motion_utils/motion_utils.hpp"
 
-#include <scene_module/no_drivable_lane/util.hpp>
-#include <utilization/util.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 
 namespace behavior_velocity_planner
 {
