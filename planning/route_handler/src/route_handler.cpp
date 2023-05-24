@@ -1363,19 +1363,6 @@ int RouteHandler::getNumLaneToPreferredLane(
   return 0;  // TODO(Horibe) check if return 0 is appropriate.
 }
 
-int RouteHandler::getNumLaneToPreferredLane(
-  const lanelet::ConstLanelets & lanelets, const Direction direction) const
-{
-  for (const auto & lanelet : lanelets) {
-    const int num = getNumLaneToPreferredLane(lanelet, direction);
-    if (std::abs(num) > 0) {
-      return num;
-    }
-  }
-
-  return 0;
-}
-
 double RouteHandler::getTotalLateralDistanceToPreferredLane(
   const lanelet::ConstLanelet & lanelet, const Direction direction) const
 {

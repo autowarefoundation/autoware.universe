@@ -273,9 +273,6 @@ public:
   int getNumLaneToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
-  int getNumLaneToPreferredLane(
-    const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
-
   /**
    * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
    * the distance to the preferred lane from the give lane.
