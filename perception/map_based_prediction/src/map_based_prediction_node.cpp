@@ -1347,11 +1347,15 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   lanelet::routing::LaneletPaths possible_paths =
     routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
   bool has_lane_changed = true;
-  for (const auto & path : possible_paths) {
-    for (const auto & lanelet : path) {
-      if (lanelet == current_lanelet) {
-        has_lane_changed = false;
-        break;
+  if (prev_lanelet == current_lanelet) {
+    has_lane_changed = false;
+  } else {
+    for (const auto & path : possible_paths) {
+      for (const auto & lanelet : path) {
+        if (lanelet == current_lanelet) {
+          has_lane_changed = false;
+          break;
+        }
       }
     }
   }
