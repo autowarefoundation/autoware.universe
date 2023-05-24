@@ -54,6 +54,7 @@ PullOutPath --o PullOutPlannerBase
 | th_arrived_distance_m             | [m]   | double | distance threshold for arrival of path termination                   | 1.0           |
 | th_stopped_velocity_mps           | [m/s] | double | velocity threshold for arrival of path termination                   | 0.01          |
 | th_stopped_time_sec               | [s]   | double | time threshold for arrival of path termination                       | 1.0           |
+| th_blinker_on_lateral_offset      | [m]   | double | lateral distance threshold for turning on blinker                    | 1.0           |
 | collision_check_margin            | [m]   | double | Obstacle collision check margin                                      | 1.0           |
 | collision_check_distance_from_end | [m]   | double | collision check distance from end point. currently only for pull out | 15.0          |
 
