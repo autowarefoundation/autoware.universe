@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/no_drivable_lane/manager.hpp"
+#include "manager.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -44,7 +44,7 @@ void NoDrivableLaneModuleManager::launchNewModules(
     }
 
     registerModule(std::make_shared<NoDrivableLaneModule>(
-      module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane"), clock_));
+      module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane_module"), clock_));
   }
 }
 
@@ -61,3 +61,7 @@ NoDrivableLaneModuleManager::getModuleExpiredFunction(
 }
 
 }  // namespace behavior_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::NoDrivableLaneModulePlugin, behavior_velocity_planner::PluginInterface)
