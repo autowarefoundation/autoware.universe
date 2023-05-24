@@ -64,9 +64,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
     return {false, false};
   }
 
-  lanelet::ConstLanelets target_lanes;
-  lanelet::ConstLanelets target_preferred_lanes;
-  getLaneChangeLanes(current_lanes, direction_, target_lanes, target_preferred_lanes);
+  const auto target_lanes = getLaneChangeLanes(current_lanes, direction_);
 
   if (target_lanes.empty()) {
     return {false, false};
@@ -74,8 +72,8 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
 
   // find candidate paths
   LaneChangePaths valid_paths{};
-  const auto found_safe_path = getLaneChangePaths(
-    current_lanes, target_lanes, target_preferred_lanes, direction_, &valid_paths);
+  const auto found_safe_path =
+    getLaneChangePaths(current_lanes, target_lanes, direction_, &valid_paths);
 
   if (valid_paths.empty()) {
     return {false, false};
@@ -192,12 +190,11 @@ lanelet::ConstLanelets NormalLaneChange::getCurrentLanes() const
   return utils::getCurrentLanesFromPath(prev_module_reference_path_, planner_data_);
 }
 
-void NormalLaneChange::getLaneChangeLanes(
-  const lanelet::ConstLanelets & current_lanes, Direction direction,
-  lanelet::ConstLanelets & target_lanes, lanelet::ConstLanelets & target_preferred_lanes) const
+lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
+  const lanelet::ConstLanelets & current_lanes, Direction direction) const
 {
   if (current_lanes.empty()) {
-    return;
+    return {};
   }
   // Get lane change lanes
   const auto & route_handler = getRouteHandler();
@@ -206,7 +203,7 @@ void NormalLaneChange::getLaneChangeLanes(
     utils::lane_change::getLaneChangeTargetLane(*route_handler, current_lanes, type_, direction);
 
   if (!target_lane) {
-    return;
+    return {};
   }
 
   const auto front_pose = std::invoke([&target_lane]() {
@@ -232,17 +229,8 @@ void NormalLaneChange::getLaneChangeLanes(
   });
   const auto backward_length = lane_change_parameters_->backward_lane_length;
 
-  target_lanes = route_handler->getLaneletSequence(
+  return route_handler->getLaneletSequence(
     target_lane.get(), getEgoPose(), backward_length, forward_length);
-
-  // target preferred lanes
-  if (type_ == LaneChangeModuleType::NORMAL) {
-    target_preferred_lanes =
-      route_handler->getLaneletSequence(target_lane.get(), getEgoPose(), 0.0, forward_length);
-  } else {
-    // for external lane change
-    target_preferred_lanes = target_lanes;
-  }
 }
 
 bool NormalLaneChange::isNearEndOfLane() const
@@ -399,11 +387,10 @@ PathWithLaneId NormalLaneChange::getPrepareSegment(
 
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
-  const lanelet::ConstLanelets & target_preferred_lanelets, Direction direction,
-  LaneChangePaths * candidate_paths) const
+  Direction direction, LaneChangePaths * candidate_paths) const
 {
   object_debug_.clear();
-  if (original_lanelets.empty() || target_lanelets.empty() || target_preferred_lanelets.empty()) {
+  if (original_lanelets.empty() || target_lanelets.empty()) {
     return false;
   }
   const auto & route_handler = *getRouteHandler();
@@ -465,6 +452,8 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto lateral_buffer =
     utils::lane_change::calcLateralBufferForFiltering(common_parameter.vehicle_width, 0.5);
 
+  const auto target_preferred_lanelets = utils::lane_change::getTargetPreferredLanes(
+    route_handler, original_lanelets, target_lanelets, direction, type_);
   const auto target_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
     target_preferred_lanelets, 0, std::numeric_limits<double>::max());
   const auto target_preferred_lane_poly_2d =
