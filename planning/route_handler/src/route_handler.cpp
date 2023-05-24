@@ -1254,6 +1254,19 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeTargetExceptPr
   return boost::none;
 }
 
+boost::optional<lanelet::ConstLanelet> RouteHandler::getLaneChangeAdjacentPreferredTarget(
+  const lanelet::ConstLanelets & lanelets, const Direction direction) const
+{
+  const auto num_to_preferred_lane = getNumLaneToPreferredLane(lanelets, direction);
+
+  // single lane change
+  if (std::abs(num_to_preferred_lane) == 1) {
+    return getLaneChangeTarget(lanelets, direction);
+  }
+
+  return boost::none;
+}
+
 bool RouteHandler::getRightLaneChangeTargetExceptPreferredLane(
   const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
 {
@@ -1361,6 +1374,19 @@ int RouteHandler::getNumLaneToPreferredLane(
   }
 
   return 0;  // TODO(Horibe) check if return 0 is appropriate.
+}
+
+int RouteHandler::getNumLaneToPreferredLane(
+  const lanelet::ConstLanelets & lanelets, const Direction direction) const
+{
+  for (const auto & lanelet : lanelets) {
+    const int num = getNumLaneToPreferredLane(lanelet, direction);
+    if (std::abs(num) > 0) {
+      return num;
+    }
+  }
+
+  return 0;
 }
 
 double RouteHandler::getTotalLateralDistanceToPreferredLane(

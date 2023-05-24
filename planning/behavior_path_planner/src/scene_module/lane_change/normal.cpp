@@ -202,17 +202,17 @@ void NormalLaneChange::getLaneChangeLanes(
   // Get lane change lanes
   const auto & route_handler = getRouteHandler();
 
-  const auto target_preferred_lane = utils::lane_change::getLaneChangeTargetLane(
-    *getRouteHandler(), current_lanes, type_, direction);
+  const auto target_lane =
+    utils::lane_change::getLaneChangeTargetLane(*route_handler, current_lanes, type_, direction);
 
-  if (!target_preferred_lane) {
+  if (!target_lane) {
     return;
   }
 
-  const auto front_pose = std::invoke([&target_preferred_lane]() {
-    const auto & p = target_preferred_lane->centerline().front();
+  const auto front_pose = std::invoke([&target_lane]() {
+    const auto & p = target_lane->centerline().front();
     const auto front_point = lanelet::utils::conversion::toGeomMsgPt(p);
-    const auto front_yaw = lanelet::utils::getLaneletAngle(*target_preferred_lane, front_point);
+    const auto front_yaw = lanelet::utils::getLaneletAngle(*target_lane, front_point);
     geometry_msgs::msg::Pose front_pose;
     front_pose.position = front_point;
     tf2::Quaternion quat;
@@ -233,13 +233,16 @@ void NormalLaneChange::getLaneChangeLanes(
   const auto backward_length = lane_change_parameters_->backward_lane_length;
 
   target_lanes = route_handler->getLaneletSequence(
-    target_preferred_lane.get(), getEgoPose(), backward_length, forward_length);
+    target_lane.get(), getEgoPose(), backward_length, forward_length);
 
-  // insert target lane if it is a preferred target lane
-  for (const auto & target_lane : target_lanes) {
-    if (route_handler->isPreferredLane(target_lane)) {
-      target_preferred_lanes.push_back(target_lane);
-    }
+  // target preferred lanes
+  const auto target_preferred_lane =
+    route_handler->getLaneChangeAdjacentPreferredTarget(current_lanes, direction);
+  if (type_ == LaneChangeModuleType::NORMAL && target_preferred_lane) {
+    target_preferred_lanes = route_handler->getLaneletSequence(
+      target_preferred_lane.get(), getEgoPose(), 0.0, forward_length);
+  } else {
+    target_preferred_lanes = target_lanes;
   }
 }
 

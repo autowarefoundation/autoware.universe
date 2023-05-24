@@ -273,6 +273,9 @@ public:
   int getNumLaneToPreferredLane(
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
+  int getNumLaneToPreferredLane(
+    const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
+
   /**
    * Query input lanelet to see whether it exist in the preferred lane. If it doesn't exist, return
    * the distance to the preferred lane from the give lane.
@@ -332,6 +335,8 @@ public:
     const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
   boost::optional<lanelet::ConstLanelet> getLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, const Direction direction) const;
+  boost::optional<lanelet::ConstLanelet> getLaneChangeAdjacentPreferredTarget(
+    const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
   bool getRightLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
   bool getLeftLaneChangeTargetExceptPreferredLane(
