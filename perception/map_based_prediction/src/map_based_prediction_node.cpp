@@ -1322,7 +1322,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
 
   // Step3. Get closest previous lanelet ID
   const auto & prev_info = object_info.at(static_cast<size_t>(prev_id));
-  const auto prev_pose = compensateTimeDelay(prev_info.pose, prev_info.twist, prev_info.time_delay);
+  const auto prev_pose = prev_info.pose;
   const lanelet::ConstLanelets prev_lanelets =
     object_info.at(static_cast<size_t>(prev_id)).current_lanelets;
   if (prev_lanelets.empty()) {
@@ -1342,10 +1342,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
 
   // Step4. Check if the vehicle has changed lane
   const auto current_lanelet = current_lanelet_data.lanelet;
-  const double current_time_delay = std::max(current_time - object_detected_time, 0.0);
-  const auto current_pose = compensateTimeDelay(
-    object.kinematics.pose_with_covariance.pose, object.kinematics.twist_with_covariance.twist,
-    current_time_delay);
+  const auto current_pose = object.kinematics.pose_with_covariance.pose;
   const double dist = tier4_autoware_utils::calcDistance2d(prev_pose, current_pose);
   lanelet::routing::LaneletPaths possible_paths =
     routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
