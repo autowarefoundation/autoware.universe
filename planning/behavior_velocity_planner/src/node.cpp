@@ -186,7 +186,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::OutOfLaneModulePlugin");
   }
   if (this->declare_parameter<bool>("launch_no_drivable_lane")) {
-    planner_manager_.launchScenePlugin(*this, "behavior_velocity_planner::NoDrivableLaneModulePlugin");
+    planner_manager_.launchScenePlugin(
+      *this, "behavior_velocity_planner::NoDrivableLaneModulePlugin");
   }
 }
 

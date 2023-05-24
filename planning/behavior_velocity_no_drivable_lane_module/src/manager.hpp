@@ -27,7 +27,6 @@
 #include <functional>
 #include <memory>
 
-
 namespace behavior_velocity_planner
 {
 class NoDrivableLaneModuleManager : public SceneModuleManagerInterface
