@@ -226,7 +226,7 @@ private:
    */
   bool executeOptimization(
     const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const double prediction_dt,
-    Eigen::VectorXd * Uex);
+    Eigen::VectorXd * Uex, const MPCTrajectory & traj);
   /**
    * @brief resample trajectory with mpc resampling time
    */
@@ -352,8 +352,10 @@ public:
   double m_admissible_yaw_error_rad;
   //!< @brief steering command limit [rad]
   double m_steer_lim;
-  //!< @brief steering rate limit [rad/s]
-  double m_steer_rate_lim;
+  //!< @brief steering rate limit list [[rad/s]]
+  std::vector<double> m_steer_rate_lim_list{};
+  //!< @brief curvature list for steering rate limit interpolation [[/m]]
+  std::vector<double> m_curvature_list_for_steer_rate_lim{};
   //!< @brief control frequency [s]
   double m_ctrl_period;
   /* parameters for path smoothing */

@@ -75,10 +75,17 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   /* mpc parameters */
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
-  const double steer_rate_lim_dps = node_->declare_parameter<double>("steer_rate_lim_dps");
   constexpr double deg2rad = static_cast<double>(M_PI) / 180.0;
   m_mpc.m_steer_lim = vehicle_info.max_steer_angle_rad;
-  m_steer_rate_lim = steer_rate_lim_dps * deg2rad;
+
+  const auto steer_rate_lim_dps_list =
+    node_->declare_parameter<std::vector<double>>("steer_rate_lim_dps_list");
+  const auto curvature_list_for_steer_rate_lim =
+    node_->declare_parameter<std::vector<double>>("curvature_list_for_steer_rate_lim");
+  for (size_t i = 0; i < steer_rate_lim_dps_list.size(); ++i) {
+    m_mpc.m_steer_rate_lim_list.push_back(steer_rate_lim_dps_list.at(i) * deg2rad);
+    m_mpc.m_curvature_list_for_steer_rate_lim.push_back(curvature_list_for_steer_rate_lim.at(i));
+  }
 
   /* vehicle model setup */
   const std::string vehicle_model_type =

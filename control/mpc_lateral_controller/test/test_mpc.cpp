@@ -168,7 +168,8 @@ protected:
     mpc.m_admissible_position_error = admissible_position_error;
     mpc.m_admissible_yaw_error_rad = admissible_yaw_error_rad;
     mpc.m_steer_lim = steer_lim;
-    mpc.m_steer_rate_lim = steer_rate_lim;
+    mpc.m_steer_rate_lim_list.push_back(steer_rate_lim);
+    mpc.m_curvature_list_for_steer_rate_lim.push_back(0.0);
     mpc.m_ctrl_period = ctrl_period;
     mpc.m_use_steer_prediction = use_steer_prediction;
     // Init filters
