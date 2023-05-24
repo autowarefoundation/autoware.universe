@@ -199,17 +199,17 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
   // Get lane change lanes
   const auto & route_handler = getRouteHandler();
 
-  const auto target_lane =
-    utils::lane_change::getLaneChangeTargetLane(*route_handler, current_lanes, type_, direction);
+  const auto lane_change_lane =
+    utils::lane_change::getLaneChangeTargetLane(getRouteHandler(), current_lanes, type_, direction);
 
-  if (!target_lane) {
+  if (!lane_change_lane) {
     return {};
   }
 
-  const auto front_pose = std::invoke([&target_lane]() {
-    const auto & p = target_lane->centerline().front();
+  const auto front_pose = std::invoke([&lane_change_lane]() {
+    const auto & p = lane_change_lane->centerline().front();
     const auto front_point = lanelet::utils::conversion::toGeomMsgPt(p);
-    const auto front_yaw = lanelet::utils::getLaneletAngle(*target_lane, front_point);
+    const auto front_yaw = lanelet::utils::getLaneletAngle(*lane_change_lane, front_point);
     geometry_msgs::msg::Pose front_pose;
     front_pose.position = front_point;
     tf2::Quaternion quat;
@@ -230,7 +230,7 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
   const auto backward_length = lane_change_parameters_->backward_lane_length;
 
   return route_handler->getLaneletSequence(
-    target_lane.get(), getEgoPose(), backward_length, forward_length);
+    lane_change_lane.get(), getEgoPose(), backward_length, forward_length);
 }
 
 bool NormalLaneChange::isNearEndOfLane() const
