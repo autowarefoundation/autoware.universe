@@ -199,8 +199,8 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
   // Get lane change lanes
   const auto & route_handler = getRouteHandler();
 
-  const auto lane_change_lane =
-    utils::lane_change::getLaneChangeTargetLane(getRouteHandler(), current_lanes, type_, direction);
+  const auto lane_change_lane = utils::lane_change::getLaneChangeTargetLane(
+    *getRouteHandler(), current_lanes, type_, direction);
 
   if (!lane_change_lane) {
     return {};
