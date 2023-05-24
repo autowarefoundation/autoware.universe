@@ -29,6 +29,8 @@
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <tier4_planning_msgs/msg/stop_factor.hpp>
+#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <algorithm>
@@ -53,6 +55,8 @@ using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+using tier4_planning_msgs::msg::StopFactor;
+using tier4_planning_msgs::msg::StopReason;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
@@ -203,6 +207,8 @@ public:
     current_state_ = ModuleStatus::IDLE;
 #endif
 
+    stop_reason_ = StopReason();
+
     processOnEntry();
   }
 
@@ -220,6 +226,8 @@ public:
     removeRTCStatus();
     unlockNewModuleLaunch();
     steering_factor_interface_ptr_->clearSteeringFactors();
+
+    stop_reason_ = StopReason();
 
     processOnExit();
   }
@@ -349,6 +357,8 @@ public:
 
   ModuleStatus getCurrentStatus() const { return current_state_; }
 
+  StopReason getStopReason() const { return stop_reason_; }
+
   virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
   std::string name() const { return name_; }
@@ -461,6 +471,22 @@ protected:
     }
   }
 
+  void setStopReason(const std::string & stop_reason, const PathWithLaneId & path)
+  {
+    stop_reason_.reason = stop_reason;
+
+    if (!stop_pose_) {
+      stop_reason_.reason = "";
+      return;
+    }
+
+    StopFactor stop_factor;
+    stop_factor.stop_pose = stop_pose_.get();
+    stop_factor.dist_to_stop_pose =
+      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.get().position);
+    stop_reason_.stop_factors.push_back(stop_factor);
+  }
+
   BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
 
   void lockNewModuleLaunch() { is_locked_new_module_launch_ = true; }
@@ -475,11 +501,14 @@ protected:
   {
     return planner_data_->self_odometry->pose.pose.position;
   }
+
   geometry_msgs::msg::Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
+
   geometry_msgs::msg::Twist getEgoTwist() const
   {
     return planner_data_->self_odometry->twist.twist;
   }
+
   double getEgoSpeed() const
   {
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
@@ -517,6 +546,8 @@ protected:
 #else
   ModuleStatus current_state_{ModuleStatus::IDLE};
 #endif
+
+  StopReason stop_reason_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
