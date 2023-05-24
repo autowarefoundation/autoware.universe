@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(behavior_velocity_planner)
+project(behavior_velocity_planner_common)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -13,28 +13,21 @@ include_directories(
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/node.cpp
-  src/planner_manager.cpp
-)
-
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  src/utilization/path_utilization.cpp
+  src/utilization/util.cpp
+  src/utilization/debug.cpp
 )
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/src/test_node_interface.cpp
+    test/src/test_state_machine.cpp
+    test/src/test_arc_lane_util.cpp
+    test/src/test_utilization.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     gtest_main
     ${PROJECT_NAME}
-    ${PCL_LIBRARIES}
   )
-  target_include_directories(test_${PROJECT_NAME} PRIVATE src)
 endif()
 
-ament_auto_package(INSTALL_TO_SHARE
-  launch
-  config
-)
+ament_auto_package()
