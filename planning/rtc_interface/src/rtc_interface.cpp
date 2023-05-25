@@ -14,6 +14,8 @@
 
 #include "rtc_interface/rtc_interface.hpp"
 
+#include <rclcpp/version.h>
+
 namespace
 {
 using tier4_rtc_msgs::msg::Module;
@@ -92,6 +94,16 @@ RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name)
 
   // Service
   callback_group_ = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  srv_commands_ = node->create_service<CooperateCommands>(
+    cooperate_commands_namespace_ + "/" + name,
+    std::bind(&RTCInterface::onCooperateCommandService, this, _1, _2), rclcpp::ServicesQoS(),
+    callback_group_);
+  srv_auto_mode_ = node->create_service<AutoMode>(
+    enable_auto_mode_namespace_ + "/" + name,
+    std::bind(&RTCInterface::onAutoModeService, this, _1, _2), rclcpp::ServicesQoS(),
+    callback_group_);
+#else
   srv_commands_ = node->create_service<CooperateCommands>(
     cooperate_commands_namespace_ + "/" + name,
     std::bind(&RTCInterface::onCooperateCommandService, this, _1, _2),
@@ -100,6 +112,7 @@ RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name)
     enable_auto_mode_namespace_ + "/" + name,
     std::bind(&RTCInterface::onAutoModeService, this, _1, _2), rmw_qos_profile_services_default,
     callback_group_);
+#endif
 
   // Module
   module_ = getModuleType(name);

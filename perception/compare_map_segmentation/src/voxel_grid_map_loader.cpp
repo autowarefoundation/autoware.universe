@@ -14,6 +14,8 @@
 
 #include "compare_map_segmentation/voxel_grid_map_loader.hpp"
 
+#include <rclcpp/version.h>
+
 VoxelGridMapLoader::VoxelGridMapLoader(
   rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex)
 : logger_(node->get_logger()), voxel_leaf_size_(leaf_size)
@@ -299,8 +301,13 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
 
   client_callback_group_ =
     node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  map_update_client_ = node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
+    "map_loader_service", rclcpp::ServicesQoS(), client_callback_group_);
+#else
   map_update_client_ = node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
     "map_loader_service", rmw_qos_profile_services_default, client_callback_group_);
+#endif
 
   while (!map_update_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(logger_, "service not available, waiting again ...");

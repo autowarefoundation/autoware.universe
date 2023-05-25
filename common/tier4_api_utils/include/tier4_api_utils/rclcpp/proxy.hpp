@@ -16,6 +16,7 @@
 #define TIER4_API_UTILS__RCLCPP__PROXY_HPP_
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/version.h"
 #include "tier4_api_utils/rclcpp/client.hpp"
 #include "tier4_api_utils/rclcpp/service.hpp"
 
@@ -34,24 +35,33 @@ public:
   template <typename ServiceT, typename CallbackT>
   typename Service<ServiceT>::SharedPtr create_service(
     const std::string & service_name, CallbackT && callback,
-    const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default,
+    const rclcpp::QoS & qos = rclcpp::ServicesQoS(),
     rclcpp::CallbackGroup::SharedPtr group = nullptr)
   {
     auto wrapped_callback = Service<ServiceT>::template wrap<CallbackT>(
       std::forward<CallbackT>(callback), node_->get_logger());
+#if RCLCPP_VERSION_GTE(17, 0, 0)
     return Service<ServiceT>::make_shared(node_->template create_service<ServiceT>(
-      service_name, std::move(wrapped_callback), qos_profile, group));
+      service_name, std::move(wrapped_callback), qos, group));
+#else
+    return Service<ServiceT>::make_shared(node_->template create_service<ServiceT>(
+      service_name, std::move(wrapped_callback), qos.get_rmw_qos_profile(), group));
+#endif
   }
 
   template <typename ServiceT>
   typename Client<ServiceT>::SharedPtr create_client(
-    const std::string & service_name,
-    const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default,
+    const std::string & service_name, const rclcpp::QoS & qos = rclcpp::ServicesQoS(),
     rclcpp::CallbackGroup::SharedPtr group = nullptr)
   {
+#if RCLCPP_VERSION_GTE(17, 0, 0)
     return Client<ServiceT>::make_shared(
-      node_->template create_client<ServiceT>(service_name, qos_profile, group),
+      node_->template create_client<ServiceT>(service_name, qos, group), node_->get_logger());
+#else
+    return Client<ServiceT>::make_shared(
+      node_->template create_client<ServiceT>(service_name, qos.get_rmw_qos_profile(), group),
       node_->get_logger());
+#endif
   }
 
 private:

@@ -16,6 +16,8 @@
 
 #include <tier4_auto_msgs_converter/tier4_auto_msgs_converter.hpp>
 
+#include <rclcpp/version.h>
+
 #include <chrono>
 #include <memory>
 #include <string>
@@ -77,10 +79,17 @@ ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_option
     subscriber_option);
 
   // Service
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  srv_select_external_command_ = create_service<CommandSourceSelect>(
+    "~/service/select_external_command",
+    std::bind(&ExternalCmdSelector::onSelectExternalCommandService, this, _1, _2),
+    rclcpp::ServicesQoS(), callback_group_services_);
+#else
   srv_select_external_command_ = create_service<CommandSourceSelect>(
     "~/service/select_external_command",
     std::bind(&ExternalCmdSelector::onSelectExternalCommandService, this, _1, _2),
     rmw_qos_profile_services_default, callback_group_services_);
+#endif
 
   // Initialize mode
   auto convert_selector_mode = [](const std::string & mode_text) {

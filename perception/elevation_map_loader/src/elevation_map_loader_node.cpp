@@ -34,6 +34,7 @@
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <rclcpp/version.h>
 #include <sensor_msgs/msg/point_cloud2.h>
 
 #include <filesystem>
@@ -97,8 +98,13 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
       constexpr auto period_ns =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0));
       group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+      pcd_loader_client_ = create_client<autoware_map_msgs::srv::GetSelectedPointCloudMap>(
+        "service/get_selected_pointcloud_map", rclcpp::ServicesQoS(), group_);
+#else
       pcd_loader_client_ = create_client<autoware_map_msgs::srv::GetSelectedPointCloudMap>(
         "service/get_selected_pointcloud_map", rmw_qos_profile_services_default, group_);
+#endif
 
       while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
         RCLCPP_DEBUG_THROTTLE(

@@ -14,6 +14,8 @@
 
 #include "ndt_scan_matcher/map_update_module.hpp"
 
+#include <rclcpp/version.h>
+
 template <typename T, typename U>
 double norm_xy(const T p1, const U p2)
 {
@@ -61,11 +63,19 @@ MapUpdateModule::MapUpdateModule(
   loaded_pcd_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "debug/loaded_pointcloud_map", rclcpp::QoS{1}.transient_local());
 
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  service_ = node->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
+    "ndt_align_srv",
+    std::bind(
+      &MapUpdateModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS(), map_callback_group_);
+#else
   service_ = node->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
     std::bind(
       &MapUpdateModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), map_callback_group_);
+#endif
 
   pcd_loader_client_ =
     node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>("pcd_loader_service");

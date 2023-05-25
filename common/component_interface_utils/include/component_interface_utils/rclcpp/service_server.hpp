@@ -21,6 +21,8 @@
 
 #include <tier4_system_msgs/msg/service_log.hpp>
 
+#include <rclcpp/version.h>
+
 #include <string>
 
 namespace component_interface_utils
@@ -58,8 +60,13 @@ public:
     rclcpp::CallbackGroup::SharedPtr group)
   : interface_(interface)
   {
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+    service_ = interface_->node->create_service<typename SpecT::Service>(
+      SpecT::name, wrap(callback), rclcpp::ServicesQoS(), group);
+#else
     service_ = interface_->node->create_service<typename SpecT::Service>(
       SpecT::name, wrap(callback), rmw_qos_profile_services_default, group);
+#endif
   }
 
   /// Create a service callback with logging added.

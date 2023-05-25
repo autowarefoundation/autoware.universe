@@ -14,6 +14,8 @@
 
 #include "ndt_scan_matcher/pose_initialization_module.hpp"
 
+#include <rclcpp/version.h>
+
 PoseInitializationModule::PoseInitializationModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
@@ -37,12 +39,21 @@ PoseInitializationModule::PoseInitializationModule(
     node->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
 
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  service_ = node->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
+    "ndt_align_srv",
+    std::bind(
+      &PoseInitializationModule::service_ndt_align, this, std::placeholders::_1,
+      std::placeholders::_2),
+    rclcpp::ServicesQoS(), main_callback_group);
+#else
   service_ = node->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
     std::bind(
       &PoseInitializationModule::service_ndt_align, this, std::placeholders::_1,
       std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
+#endif
 }
 
 void PoseInitializationModule::service_ndt_align(

@@ -14,6 +14,8 @@
 
 #include "emergency_handler/emergency_handler_core.hpp"
 
+#include <rclcpp/version.h>
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -65,14 +67,22 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Clients
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  client_mrm_emergency_stop_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  client_mrm_comfortable_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
+    "~/output/mrm/comfortable_stop/operate", rclcpp::ServicesQoS(),
+    client_mrm_comfortable_stop_group_);
+  client_mrm_emergency_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
+    "~/output/mrm/emergency_stop/operate", rclcpp::ServicesQoS(), client_mrm_emergency_stop_group_);
+#else
   client_mrm_comfortable_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
     "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default,
     client_mrm_comfortable_stop_group_);
-  client_mrm_emergency_stop_group_ =
-    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_emergency_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
     "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default,
     client_mrm_emergency_stop_group_);
+#endif
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();

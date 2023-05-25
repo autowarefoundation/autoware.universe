@@ -146,7 +146,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   group_api_service_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   srv_set_pose_ = proxy.create_service<tier4_external_api_msgs::srv::InitializePose>(
     "/api/simulator/set/pose", std::bind(&SimplePlanningSimulator::on_set_pose, this, _1, _2),
-    rmw_qos_profile_services_default, group_api_service_);
+    rclcpp::ServicesQoS(), group_api_service_);
 
   // set vehicle model type
   initialize_vehicle_model();

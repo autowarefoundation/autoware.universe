@@ -30,6 +30,7 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
+#include <rclcpp/version.h>
 
 #include <fstream>
 #include <limits>
@@ -197,6 +198,27 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 
   // services
   callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  srv_load_map_ = create_service<LoadMap>(
+    "/planning/static_centerline_optimizer/load_map",
+    std::bind(
+      &StaticCenterlineOptimizerNode::on_load_map, this, std::placeholders::_1,
+      std::placeholders::_2),
+    rclcpp::ServicesQoS(), callback_group_);
+  srv_plan_route_ = create_service<PlanRoute>(
+    "/planning/static_centerline_optimizer/plan_route",
+    std::bind(
+      &StaticCenterlineOptimizerNode::on_plan_route, this, std::placeholders::_1,
+      std::placeholders::_2),
+    rclcpp::ServicesQoS(), callback_group_);
+  srv_plan_path_ = create_service<PlanPath>(
+    "/planning/static_centerline_optimizer/plan_path",
+    std::bind(
+      &StaticCenterlineOptimizerNode::on_plan_path, this, std::placeholders::_1,
+      std::placeholders::_2),
+    rclcpp::ServicesQoS(), callback_group_);
+#else
   srv_load_map_ = create_service<LoadMap>(
     "/planning/static_centerline_optimizer/load_map",
     std::bind(
@@ -215,6 +237,7 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
       &StaticCenterlineOptimizerNode::on_plan_path, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
+#endif
 
   // vehicle info
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();

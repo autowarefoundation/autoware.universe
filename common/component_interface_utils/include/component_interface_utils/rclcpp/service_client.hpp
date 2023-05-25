@@ -21,6 +21,8 @@
 
 #include <tier4_system_msgs/msg/service_log.hpp>
 
+#include <rclcpp/version.h>
+
 #include <optional>
 #include <string>
 #include <utility>
@@ -42,8 +44,13 @@ public:
   Client(NodeInterface::SharedPtr interface, rclcpp::CallbackGroup::SharedPtr group)
   : interface_(interface)
   {
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+    client_ = interface->node->create_client<typename SpecT::Service>(
+      SpecT::name, rclcpp::ServicesQoS(), group);
+#else
     client_ = interface->node->create_client<typename SpecT::Service>(
       SpecT::name, rmw_qos_profile_services_default, group);
+#endif
   }
 
   /// Send request.

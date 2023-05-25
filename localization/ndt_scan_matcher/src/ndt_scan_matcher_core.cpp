@@ -23,6 +23,7 @@
 #include <tier4_autoware_utils/transform/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+#include <rclcpp/version.h>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -212,11 +213,19 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
+    "trigger_node_srv",
+    std::bind(
+      &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS(), main_callback_group);
+#else
   service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
       &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
+#endif
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
   diagnostic_thread_.detach();

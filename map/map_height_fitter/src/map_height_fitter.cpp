@@ -21,6 +21,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <rclcpp/version.h>
 #include <tf2_ros/transform_listener.h>
 
 namespace map_height_fitter
@@ -60,8 +61,13 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
 
     if (partial_load) {
       group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+      cli_map_ = node_->create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
+        "~/partial_map_load", rclcpp::ServicesQoS(), group_);
+#else
       cli_map_ = node_->create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
         "~/partial_map_load", rmw_qos_profile_default, group_);
+#endif
     } else {
       const auto durable_qos = rclcpp::QoS(1).transient_local();
       sub_map_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(

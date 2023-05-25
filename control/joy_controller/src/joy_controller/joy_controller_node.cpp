@@ -19,6 +19,8 @@
 
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
+#include <rclcpp/version.h>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -500,8 +502,14 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
     this->create_publisher<autoware_auto_vehicle_msgs::msg::Engage>("output/vehicle_engage", 1);
 
   // Service Client
+#if RCLCPP_VERSION_GTE(17, 0, 0)
+  client_emergency_stop_ = this->create_client<tier4_external_api_msgs::srv::SetEmergency>(
+    "service/emergency_stop", rclcpp::ServicesQoS(), callback_group_services_);
+#else
   client_emergency_stop_ = this->create_client<tier4_external_api_msgs::srv::SetEmergency>(
     "service/emergency_stop", rmw_qos_profile_services_default, callback_group_services_);
+#endif
+
   while (!client_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(get_logger(), "Interrupted while waiting for service.");
