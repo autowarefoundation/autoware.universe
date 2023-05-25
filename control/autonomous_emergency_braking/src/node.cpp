@@ -152,7 +152,8 @@ void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
   current_velocity_ptr_ = input_msg;
 }
 
-void AEB::onImu(const Imu::ConstSharedPtr input_msg) {
+void AEB::onImu(const Imu::ConstSharedPtr input_msg)
+{
   // transform imu
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
