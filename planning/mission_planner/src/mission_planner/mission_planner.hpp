@@ -87,6 +87,9 @@ private:
   LaneletRoute create_route(
     const std_msgs::msg::Header & header, const std::vector<geometry_msgs::msg::Pose> & waypoints,
     const geometry_msgs::msg::Pose & goal_pose, const bool allow_goal_modification);
+  LaneletRoute create_route(
+    const std_msgs::msg::Header & header, const geometry_msgs::msg::Pose & goal_pose,
+    const bool allow_goal_modification);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;

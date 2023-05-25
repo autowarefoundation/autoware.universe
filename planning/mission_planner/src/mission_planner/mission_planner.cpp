@@ -221,8 +221,6 @@ LaneletRoute MissionPlanner::create_route(
   const std_msgs::msg::Header & header, const std::vector<geometry_msgs::msg::Pose> & waypoints,
   const geometry_msgs::msg::Pose & goal_pose, const bool allow_goal_modification)
 {
-  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
-
   // Use temporary pose stamped for transform.
   PoseStamped pose;
   pose.header = header;
@@ -239,16 +237,20 @@ LaneletRoute MissionPlanner::create_route(
 
   // Plan route.
   LaneletRoute route = planner_->plan(points);
-  if (route.segments.empty()) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
-  }
   route.header.stamp = header.stamp;
   route.header.frame_id = map_frame_;
   route.uuid.uuid = generate_random_id();
   route.allow_modification = allow_goal_modification;
 
   return route;
+}
+
+LaneletRoute MissionPlanner::create_route(
+  const std_msgs::msg::Header & header, const geometry_msgs::msg::Pose & goal_pose,
+  const bool allow_goal_modification)
+{
+  const std::vector<geometry_msgs::msg::Pose> empty_waypoints;
+  return create_route(header, empty_waypoints, goal_pose, allow_goal_modification);
 }
 
 LaneletRoute MissionPlanner::create_route(const SetRoute::Service::Request::SharedPtr req)
@@ -342,8 +344,16 @@ void MissionPlanner::on_set_route_points(
     return;
   }
 
+  change_state(RouteState::Message::CHANGING);
+
   // Plan route.
   const auto route = create_route(req);
+
+  if (route.segments.empty()) {
+    change_state(RouteState::Message::SET);
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+  }
 
   // Update route.
   change_route(route);
@@ -378,6 +388,13 @@ void MissionPlanner::on_set_mrm_route(
 
   // Plan route.
   const auto new_route = create_route(req);
+
+  if (new_route.segments.empty()) {
+    change_route(*normal_route_);
+    change_state(RouteState::Message::SET);
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+  }
 
   // check route safety
   if (checkRerouteSafety(*normal_route_, new_route)) {
@@ -435,10 +452,15 @@ void MissionPlanner::on_clear_mrm_route(
   }
 
   // reroute with normal goal
-  const std::vector<geometry_msgs::msg::Pose> empty_waypoints;
-  const auto new_route = create_route(
-    odometry_->header, empty_waypoints, normal_route_->goal_pose,
-    normal_route_->allow_modification);
+  const auto new_route =
+    create_route(odometry_->header, normal_route_->goal_pose, normal_route_->allow_modification);
+
+  if (new_route.segments.empty()) {
+    change_route(*normal_route_);
+    change_state(RouteState::Message::SET);
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+  }
 
   // check new route safety
   if (new_route.segments.empty() || !checkRerouteSafety(*mrm_route_, new_route)) {
@@ -460,8 +482,56 @@ void MissionPlanner::on_clear_mrm_route(
 
 void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
 {
-  // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
-  arrival_checker_.modify_goal(*msg);
+  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
+
+  if (state_.state != RouteState::Message::SET) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "The route hasn't set yet. Cannot reroute.");
+  }
+  if (!odometry_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+  if (!normal_route_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
+  }
+
+  // set to changing state
+  change_state(RouteState::Message::CHANGING);
+
+  if (normal_route_->uuid == msg->uuid) {
+    const auto new_route = create_route(msg->header, msg->pose, normal_route_->allow_modification);
+    if (new_route.segments.empty()) {
+      change_route(*normal_route_);
+      change_state(RouteState::Message::SET);
+      throw component_interface_utils::ServiceException(
+        ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+    }
+    change_route(new_route);
+    change_state(RouteState::Message::SET);
+    arrival_checker_.modify_goal(*msg);
+    return;
+  }
+
+  if (mrm_route_ && mrm_route_->uuid == msg->uuid) {
+    const auto new_route = create_route(msg->header, msg->pose, mrm_route_->allow_modification);
+    if (new_route.segments.empty()) {
+      change_mrm_route(*mrm_route_);
+      change_state(RouteState::Message::SET);
+      throw component_interface_utils::ServiceException(
+        ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+    }
+    change_mrm_route(new_route);
+    change_state(RouteState::Message::SET);
+    arrival_checker_.modify_goal(*msg);
+    return;
+  }
+
+  change_state(RouteState::Message::SET);
+  throw component_interface_utils::ServiceException(
+    ResponseCode::ERROR_REROUTE_FAILED, "UUID is incorrect.");
+  return;
 }
 
 void MissionPlanner::on_change_route(
@@ -488,6 +558,13 @@ void MissionPlanner::on_change_route(
 
   // Convert request to a new route.
   const auto new_route = create_route(req);
+
+  if (new_route.segments.empty()) {
+    change_route(*normal_route_);
+    change_state(RouteState::Message::SET);
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+  }
 
   // check route safety
   if (checkRerouteSafety(*normal_route_, new_route)) {
@@ -534,6 +611,13 @@ void MissionPlanner::on_change_route_points(
 
   // Plan route.
   const auto new_route = create_route(req);
+
+  if (new_route.segments.empty()) {
+    change_route(*normal_route_);
+    change_state(RouteState::Message::SET);
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+  }
 
   // check route safety
   if (checkRerouteSafety(*normal_route_, new_route)) {
