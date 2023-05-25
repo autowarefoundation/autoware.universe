@@ -20,9 +20,9 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
 #include <utility>
 #include <vector>
-#include <memory>
 
 namespace behavior_velocity_planner
 {

@@ -16,7 +16,6 @@
 
 #include <string>
 
-
 namespace behavior_velocity_planner
 {
 
