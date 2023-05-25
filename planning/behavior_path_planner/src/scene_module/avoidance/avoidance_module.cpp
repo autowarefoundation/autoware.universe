@@ -2940,41 +2940,62 @@ void AvoidanceModule::addNewShiftLines(
 AvoidLineArray AvoidanceModule::findNewShiftLine(
   const AvoidLineArray & candidates, const PathShifter & shifter) const
 {
-  (void)shifter;
-
   if (candidates.empty()) {
-    DEBUG_PRINT("shift candidates is empty. return None.");
     return {};
   }
 
-  printShiftLines(candidates, "findNewShiftLine: candidates");
-
-  // Retrieve the subsequent linear shift point from the given index point.
-  const auto getShiftLineWithSubsequentStraight = [this, &candidates](size_t i) {
-    AvoidLineArray subsequent{candidates.at(i)};
-    for (size_t j = i + 1; j < candidates.size(); ++j) {
-      const auto next_shift = candidates.at(j);
-      if (std::abs(next_shift.getRelativeLength()) < 1.0e-2) {
-        subsequent.push_back(next_shift);
-        DEBUG_PRINT("j = %lu, relative shift is zero. add together.", j);
-      } else {
-        DEBUG_PRINT("j = %lu, relative shift is not zero = %f.", j, next_shift.getRelativeLength());
+  // add small shift lines.
+  const auto add_straight_shift = [&, this](auto & subsequent, const size_t start_idx) {
+    for (size_t i = start_idx; i < candidates.size(); ++i) {
+      if (
+        std::abs(candidates.at(i).getRelativeLength()) >
+        parameters_->lateral_small_shift_threshold) {
         break;
       }
+
+      subsequent.push_back(candidates.at(i));
     }
+
     return subsequent;
   };
 
-  const auto calcJerk = [this](const auto & al) {
-    return path_shifter_.calcJerkFromLatLonDistance(
-      al.getRelativeLength(), al.getRelativeLongitudinal(), helper_.getSharpAvoidanceEgoSpeed());
+  // get subsequent shift lines.
+  const auto get_subsequent_shift = [&, this](size_t i) {
+    AvoidLineArray subsequent{candidates.at(i)};
+
+    if (candidates.size() == i + 1) {
+      return subsequent;
+    }
+
+    if (
+      std::abs(candidates.at(i).getRelativeLength()) < parameters_->lateral_small_shift_threshold) {
+      // candidate.at(i) is small length shift line. add large length shift line.
+      subsequent.push_back(candidates.at(i + 1));
+      add_straight_shift(subsequent, i + 2);
+    } else {
+      // candidate.at(i) is large length shift line. add small length shift lines.
+      add_straight_shift(subsequent, i + 1);
+    }
+
+    return subsequent;
+  };
+
+  // check jerk limit.
+  const auto is_large_jerk = [this](const auto & s) {
+    const auto jerk = PathShifter::calcJerkFromLatLonDistance(
+      s.getRelativeLength(), s.getRelativeLongitudinal(), helper_.getSharpAvoidanceEgoSpeed());
+    return jerk > parameters_->max_lateral_jerk;
+  };
+
+  // check ignore or not.
+  const auto is_ignore_shift = [this](const auto & s) {
+    const auto current_shift = prev_linear_shift_path_.shift_length.at(
+      findNearestIndex(prev_reference_.points, s.end.position));
+    return std::abs(current_shift - s.end_shift_length) < parameters_->lateral_execution_threshold;
   };
 
   for (size_t i = 0; i < candidates.size(); ++i) {
     const auto & candidate = candidates.at(i);
-    std::stringstream ss;
-    ss << "i = " << i << ", id = " << candidate.id;
-    const auto pfx = ss.str().c_str();
 
     // new shift points must exist in front of Ego
     // this value should be larger than -eps consider path shifter calculation error.
@@ -2983,30 +3004,12 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
       continue;
     }
 
-    // TODO(Horibe): this code prohibits the changes on ego pose. Think later.
-    // if (candidate.start_idx < avoidance_data_.ego_closest_path_index) {
-    //   DEBUG_PRINT("%s, start_idx is behind ego. skip.", pfx);
-    //   continue;
-    // }
-
-    const auto current_shift = helper_.getLinearShift(candidate.end.position);
-
-    // TODO(Horibe) test fails with this print. why?
-    // DEBUG_PRINT("%s, shift current: %f, candidate: %f", pfx, current_shift,
-    // candidate.end_shift_length);
-
-    const auto new_point_threshold = parameters_->lateral_execution_threshold;
-    if (std::abs(candidate.end_shift_length - current_shift) > new_point_threshold) {
-      if (calcJerk(candidate) > parameters_->max_lateral_jerk) {
-        DEBUG_PRINT(
-          "%s, Failed to find new shift: jerk limit over (%f).", pfx, calcJerk(candidate));
+    if (!is_ignore_shift(candidate)) {
+      if (is_large_jerk(candidate)) {
         break;
       }
 
-      DEBUG_PRINT(
-        "%s, New shift point is found!!! shift change: %f -> %f", pfx, current_shift,
-        candidate.end_shift_length);
-      return getShiftLineWithSubsequentStraight(i);
+      return get_subsequent_shift(i);
     }
   }
 
