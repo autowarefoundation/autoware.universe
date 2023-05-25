@@ -22,6 +22,7 @@
 
 #include <utility>
 #include <vector>
+#include <memory>
 
 namespace behavior_velocity_planner
 {

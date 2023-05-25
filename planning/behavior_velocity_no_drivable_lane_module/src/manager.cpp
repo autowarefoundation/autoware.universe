@@ -14,6 +14,9 @@
 
 #include "manager.hpp"
 
+#include <string>
+
+
 namespace behavior_velocity_planner
 {
 

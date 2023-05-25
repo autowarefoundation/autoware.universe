@@ -18,6 +18,8 @@
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 
+#include <algorithm>
+
 namespace behavior_velocity_planner
 {
 
