@@ -14,28 +14,28 @@
 #ifndef RECORDREPLAY_PLANNER_NODES__RECORDREPLAY_PLANNER_NODE_HPP_
 #define RECORDREPLAY_PLANNER_NODES__RECORDREPLAY_PLANNER_NODE_HPP_
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
-#include <recordreplay_planner_nodes/visibility_control.hpp>
+#include <common/types.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
 #include <recordreplay_planner/recordreplay_planner.hpp>
+#include <recordreplay_planner_nodes/visibility_control.hpp>
+
 #include <autoware_auto_planning_msgs/action/record_trajectory.hpp>
 #include <autoware_auto_planning_msgs/action/replay_trajectory.hpp>
-
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
 #include <autoware_auto_planning_msgs/srv/modify_trajectory.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <common/types.hpp>
 
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
-#include <string>
 #include <memory>
+#include <string>
 
 using autoware::common::types::float64_t;
 
@@ -46,11 +46,11 @@ namespace planning
 namespace recordreplay_planner_nodes
 {
 using PlannerPtr = std::unique_ptr<motion::planning::recordreplay_planner::RecordReplayPlanner>;
+using autoware_auto_planning_msgs::action::RecordTrajectory;
+using autoware_auto_planning_msgs::action::ReplayTrajectory;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using autoware_auto_planning_msgs::srv::ModifyTrajectory;
-using autoware_auto_planning_msgs::action::RecordTrajectory;
-using autoware_auto_planning_msgs::action::ReplayTrajectory;
 using State = autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
 using Transform = geometry_msgs::msg::TransformStamped;
 // using motion::motion_common::Real;
@@ -90,17 +90,15 @@ private:
   /// \param[in] ns The namespace for the marker
   /// \returns A visualization_msgs::msg::Marker
   RECORDREPLAY_PLANNER_NODES_LOCAL Marker to_marker(
-    const TrajectoryPoint & traj_point,
-    const std::string & frame_id,
-    int32_t index,
+    const TrajectoryPoint & traj_point, const std::string & frame_id, int32_t index,
     const std::string & ns);
 
   /// \brief Converts a Trajectory to a MarkerArray for visualization
   /// \param[in] traj The Trajectory
   /// \param[in] ns The namespace for the markers
   /// \returns A visaulization_msgs::msg::MarkerArray
-  RECORDREPLAY_PLANNER_NODES_LOCAL MarkerArray to_markers(
-    const Trajectory & traj, const std::string & ns);
+  RECORDREPLAY_PLANNER_NODES_LOCAL MarkerArray
+  to_markers(const Trajectory & traj, const std::string & ns);
 
   /// \brief Clears the list of recorded markers
   RECORDREPLAY_PLANNER_NODES_LOCAL void clear_recorded_markers();
@@ -110,16 +108,14 @@ private:
     rclcpp::Client<ModifyTrajectory>::SharedFuture future);
 
   RECORDREPLAY_PLANNER_NODES_LOCAL rclcpp_action::GoalResponse record_handle_goal(
-    const rclcpp_action::GoalUUID & uuid,
-    const std::shared_ptr<const RecordTrajectory::Goal> goal);
+    const rclcpp_action::GoalUUID & uuid, const std::shared_ptr<const RecordTrajectory::Goal> goal);
   RECORDREPLAY_PLANNER_NODES_LOCAL rclcpp_action::CancelResponse record_handle_cancel(
     const std::shared_ptr<GoalHandleRecordTrajectory> goal_handle);
   RECORDREPLAY_PLANNER_NODES_LOCAL void record_handle_accepted(
     const std::shared_ptr<GoalHandleRecordTrajectory> goal_handle);
 
   RECORDREPLAY_PLANNER_NODES_LOCAL rclcpp_action::GoalResponse replay_handle_goal(
-    const rclcpp_action::GoalUUID & uuid,
-    const std::shared_ptr<const ReplayTrajectory::Goal> goal);
+    const rclcpp_action::GoalUUID & uuid, const std::shared_ptr<const ReplayTrajectory::Goal> goal);
   RECORDREPLAY_PLANNER_NODES_LOCAL rclcpp_action::CancelResponse replay_handle_cancel(
     const std::shared_ptr<GoalHandleReplayTrajectory> goal_handle);
   RECORDREPLAY_PLANNER_NODES_LOCAL void replay_handle_accepted(

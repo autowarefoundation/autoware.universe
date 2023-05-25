@@ -12,39 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <recordreplay_planner/recordreplay_planner.hpp>
-#include <motion_testing/motion_testing.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <common/types.hpp>
 #include <motion_common/config.hpp>
 #include <motion_common/motion_common.hpp>
+#include <motion_testing/motion_testing.hpp>
+#include <recordreplay_planner/recordreplay_planner.hpp>
+
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 
-#include <common/types.hpp>
+#include <gtest/gtest.h>
 
-#include <chrono>
-#include <set>
 #include <algorithm>
-#include <string>
+#include <chrono>
 #include <cstdio>
+#include <set>
+#include <string>
 
-using motion::planning::recordreplay_planner::RecordReplayPlanner;
-using std::chrono::system_clock;
-using motion::motion_testing::make_state;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using geometry_msgs::msg::Point32;
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using geometry_msgs::msg::Point32;
+using motion::motion_testing::make_state;
+using motion::planning::recordreplay_planner::RecordReplayPlanner;
+using std::chrono::system_clock;
 
 class sanity_checks_base : public ::testing::Test
 {
 protected:
   RecordReplayPlanner planner_{};
 };
-
 
 //------------------ Test basic properties of a recorded, then replayed trajectory
 struct PropertyTestParameters
@@ -53,9 +53,10 @@ struct PropertyTestParameters
   system_clock::time_point starting_time;
 };
 
-class SanityChecksTrajectoryProperties
-  : public sanity_checks_base, public testing::WithParamInterface<PropertyTestParameters>
-{};
+class SanityChecksTrajectoryProperties : public sanity_checks_base,
+                                         public testing::WithParamInterface<PropertyTestParameters>
+{
+};
 
 TEST_P(SanityChecksTrajectoryProperties, Basicproperties)
 {
@@ -68,9 +69,7 @@ TEST_P(SanityChecksTrajectoryProperties, Basicproperties)
   const auto time_increment = p.time_spacing_ms;
   const auto v = dx / (1.0e-3F * p.time_spacing_ms.count());
   for (uint32_t k = {}; k < N; ++k) {
-    const auto next_state = make_state(
-      dx * k, 0.0F, 0.0F, v, 0.0F, 0.0F,
-      t0 + k * time_increment);
+    const auto next_state = make_state(dx * k, 0.0F, 0.0F, v, 0.0F, 0.0F, t0 + k * time_increment);
     planner_.record_state(next_state);
   }
 
@@ -79,24 +78,22 @@ TEST_P(SanityChecksTrajectoryProperties, Basicproperties)
 
   // Test: Check that the plan returned has the expected time length
   auto trajectory = planner_.plan(make_state(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, t0));
-  float64_t trajectory_time_length = trajectory.points[N - 1].time_from_start.sec + 1e-9F *
-    trajectory.points[N - 1].time_from_start.nanosec;
+  float64_t trajectory_time_length = trajectory.points[N - 1].time_from_start.sec +
+                                     1e-9F * trajectory.points[N - 1].time_from_start.nanosec;
   float64_t endpoint_sec = (1.0F * (N - 1) * time_increment).count() * 1.0e-3;
   float64_t ep = 1.0e-5;
   EXPECT_NEAR(trajectory_time_length, endpoint_sec, ep);
 }
 
 INSTANTIATE_TEST_CASE_P(
-  TrajectoryProperties,
-  SanityChecksTrajectoryProperties,
+  TrajectoryProperties, SanityChecksTrajectoryProperties,
   testing::Values(
     PropertyTestParameters{std::chrono::milliseconds(100), system_clock::from_time_t({})},
     PropertyTestParameters{std::chrono::milliseconds(200), system_clock::from_time_t({})},
     PropertyTestParameters{std::chrono::milliseconds(100), system_clock::from_time_t(10)},
     PropertyTestParameters{std::chrono::milliseconds(200), system_clock::from_time_t(10)}
     // cppcheck-suppress syntaxError
-  ), );
-
+    ), );
 
 //------------------ Test that length cropping properly works
 struct LengthTestParameters
@@ -105,18 +102,17 @@ struct LengthTestParameters
   uint32_t number_of_points;
 };
 
-
-class SanityChecksTrajectoryLength
-  : public sanity_checks_base, public testing::WithParamInterface<LengthTestParameters>
-{};
+class SanityChecksTrajectoryLength : public sanity_checks_base,
+                                     public testing::WithParamInterface<LengthTestParameters>
+{
+};
 
 TEST_P(SanityChecksTrajectoryLength, Length)
 {
   const auto p = GetParam();
   const auto N = p.number_of_points;
-  const auto dummy_state = make_state(
-    0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-    system_clock::from_time_t({}));
+  const auto dummy_state =
+    make_state(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, system_clock::from_time_t({}));
 
   for (uint32_t k = {}; k < N; ++k) {
     planner_.record_state(dummy_state);
@@ -127,18 +123,12 @@ TEST_P(SanityChecksTrajectoryLength, Length)
   auto trajectory = planner_.plan(dummy_state);
 
   EXPECT_EQ(
-    trajectory.points.size(),
-    std::min(N, static_cast<uint32_t>(trajectory.points.max_size())));
+    trajectory.points.size(), std::min(N, static_cast<uint32_t>(trajectory.points.max_size())));
 }
 
 INSTANTIATE_TEST_CASE_P(
-  TrajectoryLength,
-  SanityChecksTrajectoryLength,
-  testing::Values(
-    LengthTestParameters{80},
-    LengthTestParameters{200}
-  ), );
-
+  TrajectoryLength, SanityChecksTrajectoryLength,
+  testing::Values(LengthTestParameters{80}, LengthTestParameters{200}), );
 
 // Test setup helper function. This creates a planner and records a trajectory
 // that goes along the points (0,0), (1,0), .... (N-1,0) with the heading set to
@@ -150,15 +140,12 @@ RecordReplayPlanner helper_create_and_record_example(uint32_t N)
 
   // Record some states going from
   for (uint32_t k = {}; k < N; ++k) {
-    planner.record_state(
-      make_state(
-        1.0F * k, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-        t0 + k * std::chrono::milliseconds{100LL}));
+    planner.record_state(make_state(
+      1.0F * k, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, t0 + k * std::chrono::milliseconds{100LL}));
   }
 
   return planner;
 }
-
 
 //------------------ Test that "receding horizon" planning properly works: happy case
 TEST(RecordreplaySanityChecks, RecedingHorizonHappycase)
@@ -211,32 +198,32 @@ TEST(RecordreplaySanityChecks, StateSettingMechanism)
   auto planner = RecordReplayPlanner{};
 
   // Make sure setting and reading the recording state works
-  EXPECT_FALSE(planner.is_recording() );
-  EXPECT_FALSE(planner.is_replaying() );
+  EXPECT_FALSE(planner.is_recording());
+  EXPECT_FALSE(planner.is_replaying());
 
   planner.start_recording();
 
-  EXPECT_TRUE(planner.is_recording() );
-  EXPECT_FALSE(planner.is_replaying() );
+  EXPECT_TRUE(planner.is_recording());
+  EXPECT_FALSE(planner.is_replaying());
 
   planner.stop_recording();
 
-  EXPECT_FALSE(planner.is_recording() );
-  EXPECT_FALSE(planner.is_replaying() );
+  EXPECT_FALSE(planner.is_recording());
+  EXPECT_FALSE(planner.is_replaying());
 
   // Make sure setting and reading the replaying state works
-  EXPECT_FALSE(planner.is_recording() );
-  EXPECT_FALSE(planner.is_replaying() );
+  EXPECT_FALSE(planner.is_recording());
+  EXPECT_FALSE(planner.is_replaying());
 
   planner.start_replaying();
 
-  EXPECT_FALSE(planner.is_recording() );
-  EXPECT_TRUE(planner.is_replaying() );
+  EXPECT_FALSE(planner.is_recording());
+  EXPECT_TRUE(planner.is_replaying());
 
   planner.stop_replaying();
 
-  EXPECT_FALSE(planner.is_recording() );
-  EXPECT_FALSE(planner.is_replaying() );
+  EXPECT_FALSE(planner.is_recording());
+  EXPECT_FALSE(planner.is_replaying());
 }
 
 TEST(RecordreplaySanityChecks, HeadingWeightSetting)
@@ -303,9 +290,8 @@ TEST(RecordreplayReachGoal, checkReachGoalCondition)
   {
     const float32_t x = 3.5F;
     const float32_t heading = 0.0F;
-    const auto vehicle_state = make_state(
-      x, 0.0F, heading, 0.0F, 0.0F, 0.0F,
-      system_clock::from_time_t({}));
+    const auto vehicle_state =
+      make_state(x, 0.0F, heading, 0.0F, 0.0F, 0.0F, system_clock::from_time_t({}));
     planner.plan(vehicle_state);
     EXPECT_FALSE(planner.reached_goal(vehicle_state, distance_thresh, angle_thresh));
   }
@@ -314,9 +300,8 @@ TEST(RecordreplayReachGoal, checkReachGoalCondition)
   {
     const float32_t x = 5.0F;
     const float32_t heading = -autoware::common::types::PI;
-    const auto vehicle_state = make_state(
-      x, 0.0F, heading, 0.0F, 0.0F, 0.0F,
-      system_clock::from_time_t({}));
+    const auto vehicle_state =
+      make_state(x, 0.0F, heading, 0.0F, 0.0F, 0.0F, system_clock::from_time_t({}));
     planner.plan(vehicle_state);
     EXPECT_FALSE(planner.reached_goal(vehicle_state, distance_thresh, angle_thresh));
   }
@@ -325,15 +310,15 @@ TEST(RecordreplayReachGoal, checkReachGoalCondition)
   {
     const float32_t x = 5.0F;
     const float32_t heading = 0.0F;
-    const auto vehicle_state = make_state(
-      x, 0.0F, heading, 0.0F, 0.0F, 0.0F,
-      system_clock::from_time_t({}));
+    const auto vehicle_state =
+      make_state(x, 0.0F, heading, 0.0F, 0.0F, 0.0F, system_clock::from_time_t({}));
     planner.plan(vehicle_state);
     EXPECT_TRUE(planner.reached_goal(vehicle_state, distance_thresh, angle_thresh));
   }
 }
 
-TEST(RecordreplayLoopingTrajectories, maintainTrajectoryLength) {
+TEST(RecordreplayLoopingTrajectories, maintainTrajectoryLength)
+{
   // This test assumes that `trajectory.points.max_size() > 5
   // As of 2021-08-12 it is 100
   uint32_t N = 5;
@@ -344,9 +329,8 @@ TEST(RecordreplayLoopingTrajectories, maintainTrajectoryLength) {
 
   // We will start in the middle of this, and we expect
   // that the return trajectory is of the full length
-  auto vehicle_state = make_state(
-    N / 2, 0.0F, 0.0F,
-    0.0F, 0.0F, 0.0F, system_clock::from_time_t({}));
+  auto vehicle_state =
+    make_state(N / 2, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, system_clock::from_time_t({}));
 
   auto traj = planner.plan(vehicle_state);
   EXPECT_EQ(traj.points.size(), static_cast<std::size_t>(N));
@@ -365,15 +349,14 @@ RecordReplayPlanner helper_create_and_record_pseudo_loop(uint32_t N)
     // time associated with the last point in the trajectory
     // but this isn't that important to testing loop functionality
     planner.record_state(
-      make_state(
-        0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-        system_clock::from_time_t({})));
+      make_state(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, system_clock::from_time_t({})));
 
     return planner;
   }
 }
 
-TEST(RecordreplayLoopingTrajectories, correctLoopHandling) {
+TEST(RecordreplayLoopingTrajectories, correctLoopHandling)
+{
   auto planner = helper_create_and_record_pseudo_loop(500);
   planner.set_loop(planner.is_loop(5));
 
@@ -383,8 +366,8 @@ TEST(RecordreplayLoopingTrajectories, correctLoopHandling) {
 
   auto vehicle_trajectory_point = record_buf[record_buf.size() - 10].state;
 
-  autoware_auto_vehicle_msgs::msg::VehicleKinematicState vehicle_state
-  {rosidl_runtime_cpp::MessageInitialization::ALL};
+  autoware_auto_vehicle_msgs::msg::VehicleKinematicState vehicle_state{
+    rosidl_runtime_cpp::MessageInitialization::ALL};
 
   vehicle_state.state.pose.position.x = vehicle_trajectory_point.pose.position.x;
   vehicle_state.state.pose.position.y = vehicle_trajectory_point.pose.position.y;

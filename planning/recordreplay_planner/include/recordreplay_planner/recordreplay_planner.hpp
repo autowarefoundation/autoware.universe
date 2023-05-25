@@ -15,15 +15,17 @@
 #ifndef RECORDREPLAY_PLANNER__RECORDREPLAY_PLANNER_HPP_
 #define RECORDREPLAY_PLANNER__RECORDREPLAY_PLANNER_HPP_
 
-#include <recordreplay_planner/visibility_control.hpp>
-#include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <common/types.hpp>
+#include <recordreplay_planner/visibility_control.hpp>
+
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
+
 #include <tf2/utils.h>
 
 #include <deque>
-#include <string>
 #include <map>
+#include <string>
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
@@ -37,12 +39,7 @@ namespace recordreplay_planner
 using State = autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
 using autoware_auto_planning_msgs::msg::Trajectory;
 
-enum class RecordReplayState
-{
-  IDLE,
-  RECORDING,
-  REPLAYING
-};  // enum class RecordReplayState
+enum class RecordReplayState { IDLE, RECORDING, REPLAYING };  // enum class RecordReplayState
 
 /// \brief A class for recording trajectories and replaying them as plans
 class RECORDREPLAY_PLANNER_PUBLIC RecordReplayPlanner
@@ -96,9 +93,10 @@ public:
   /**
    * \brief Judges whether current_state has reached the last point in record buffer
    * \param current_state current state of the vehicle
-   * \param distance_thresh threshold of euclidean distance between the current state the and the last point in meters
-   * \param angle_thresh threshold of difference in the headings of the current_state and the last point in radians
-   * \return true if both distance and angle conditions are satisfied
+   * \param distance_thresh threshold of euclidean distance between the current state the and the
+   * last point in meters \param angle_thresh threshold of difference in the headings of the
+   * current_state and the last point in radians \return true if both distance and angle conditions
+   * are satisfied
    */
   bool8_t reached_goal(
     const State & current_state, const float64_t & distance_thresh,
@@ -109,14 +107,9 @@ public:
    * \param distance_thresh threshold of euclidean state between the first and last points in meters
    * \return true if the distance threshold is met
    */
-  bool8_t is_loop(
-    const float64_t & distance_thresh
-  ) const;
+  bool8_t is_loop(const float64_t & distance_thresh) const;
 
-  auto get_record_buffer()
-  {
-    return m_record_buffer;
-  }
+  auto get_record_buffer() { return m_record_buffer; }
 
 private:
   // Obtain a trajectory from the internally-stored recording buffer

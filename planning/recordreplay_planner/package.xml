@@ -3,9 +3,7 @@
 <package format="2">
   <name>recordreplay_planner</name>
   <version>1.0.0</version>
-  <description>
-    RecordReplay trajectory planner
-  </description>
+  <description>RecordReplay trajectory planner</description>
   <maintainer email="zhijie.qiao@autoware.org">Zhijie Qiao</maintainer>
   <license>Apache License 2.0</license>
 
@@ -24,5 +22,7 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-  <export><build_type>ament_cmake</build_type></export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
