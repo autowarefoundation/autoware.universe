@@ -91,6 +91,8 @@ public:
 
   void setData(const std::shared_ptr<const PlannerData> & data) override;
 
+  MarkerArray getModuleVirtualWall() override;
+
 protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
 
@@ -99,8 +101,6 @@ protected:
   void resetPathIfAbort();
 
   void setObjectDebugVisualization() const;
-
-  void createVirtualWallMarker() const;
 
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 

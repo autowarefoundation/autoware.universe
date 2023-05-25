@@ -87,8 +87,6 @@ bool LaneChangeInterface::isExecutionReady() const
 
 ModuleStatus LaneChangeInterface::updateState()
 {
-  createVirtualWallMarker();
-
   if (!module_type_->isValidPath()) {
     return ModuleStatus::FAILURE;
   }
@@ -311,24 +309,24 @@ std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_arra
   return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
 }
 
-void LaneChangeInterface::createVirtualWallMarker() const
+MarkerArray LaneChangeInterface::getModuleVirtualWall()
 {
-  virtual_wall_marker_.markers.clear();
   using marker_utils::lane_change_markers::createLaneChangingVirtualWallMarker;
   MarkerArray marker;
-  if (!isWaitingApproval()) {
-    const auto & start_pose = module_type_->getLaneChangePath().lane_changing_start;
-    const auto start_marker =
-      createLaneChangingVirtualWallMarker(start_pose, name(), clock_->now(), "lane_change_start");
-
-    const auto & end_pose = module_type_->getLaneChangePath().lane_changing_end;
-    const auto end_marker =
-      createLaneChangingVirtualWallMarker(end_pose, name(), clock_->now(), "lane_change_end");
-    marker.markers.reserve(start_marker.markers.size() + end_marker.markers.size());
-    appendMarkerArray(start_marker, &marker);
-    appendMarkerArray(end_marker, &marker);
+  if (isWaitingApproval() || current_state_ != ModuleStatus::RUNNING) {
+    return marker;
   }
-  pub_virtual_wall_->publish(marker);
+  const auto & start_pose = module_type_->getLaneChangePath().lane_changing_start;
+  const auto start_marker =
+    createLaneChangingVirtualWallMarker(start_pose, name(), clock_->now(), "lane_change_start");
+
+  const auto & end_pose = module_type_->getLaneChangePath().lane_changing_end;
+  const auto end_marker =
+    createLaneChangingVirtualWallMarker(end_pose, name(), clock_->now(), "lane_change_end");
+  marker.markers.reserve(start_marker.markers.size() + end_marker.markers.size());
+  appendMarkerArray(start_marker, &marker);
+  appendMarkerArray(end_marker, &marker);
+  return marker;
 }
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
