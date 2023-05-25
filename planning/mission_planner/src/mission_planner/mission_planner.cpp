@@ -477,6 +477,11 @@ void MissionPlanner::on_change_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
+  if (is_emergency_) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Cannot reroute because of the emergency state");
+    return;
+  }
 
   // set to changing state
   change_state(RouteState::Message::CHANGING);
@@ -518,6 +523,11 @@ void MissionPlanner::on_change_route_points(
   if (!odometry_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+  if (is_emergency_) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Cannot reroute because of the emergency state");
+    return;
   }
 
   change_state(RouteState::Message::CHANGING);
