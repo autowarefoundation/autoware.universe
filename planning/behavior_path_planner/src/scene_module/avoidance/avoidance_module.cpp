@@ -418,7 +418,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * STEP 3
    * Find new shift point
    */
-  const auto new_sp = findNewShiftLine(processed_raw_sp, path_shifter);
+  const auto new_sp = findNewShiftLine(processed_raw_sp);
   if (isValidShiftLine(new_sp, path_shifter)) {
     data.unapproved_new_sl = new_sp;
   }
@@ -962,17 +962,6 @@ AvoidLine AvoidanceModule::fillAdditionalInfo(const AvoidLine & shift_line) cons
 {
   const auto ret = fillAdditionalInfo(AvoidLineArray{shift_line});
   return ret.front();
-}
-
-AvoidLine AvoidanceModule::getNonStraightShiftLine(const AvoidLineArray & shift_lines) const
-{
-  for (const auto & sl : shift_lines) {
-    if (fabs(helper_.getRelativeShiftToPath(sl)) > 0.01) {
-      return sl;
-    }
-  }
-
-  return {};
 }
 
 void AvoidanceModule::fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const
@@ -2690,7 +2679,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
     DEBUG_PRINT("new_shift_lines size = %lu", data.safe_new_sl.size());
     printShiftLines(data.safe_new_sl, "new_shift_lines");
 
-    const auto sl = getNonStraightShiftLine(data.safe_new_sl);
+    const auto sl = helper_.getMainShiftLine(data.safe_new_sl);
     if (helper_.getRelativeShiftToPath(sl) > 0.0) {
       removePreviousRTCStatusRight();
     } else if (helper_.getRelativeShiftToPath(sl) < 0.0) {
@@ -2783,7 +2772,7 @@ CandidateOutput AvoidanceModule::planCandidate() const
       shifted_path.path, data.safe_new_sl.front().start_idx, std::numeric_limits<double>::max(),
       0.0);
 
-    const auto sl = getNonStraightShiftLine(data.safe_new_sl);
+    const auto sl = helper_.getMainShiftLine(data.safe_new_sl);
     const auto sl_front = data.safe_new_sl.front();
     const auto sl_back = data.safe_new_sl.back();
 
@@ -2858,7 +2847,7 @@ void AvoidanceModule::addShiftLineIfApproved(const AvoidLineArray & shift_lines)
     // register original points for consistency
     registerRawShiftLines(shift_lines);
 
-    const auto sl = getNonStraightShiftLine(shift_lines);
+    const auto sl = helper_.getMainShiftLine(shift_lines);
     const auto sl_front = shift_lines.front();
     const auto sl_back = shift_lines.back();
 
@@ -2937,8 +2926,7 @@ void AvoidanceModule::addNewShiftLines(
   path_shifter.setShiftLines(future);
 }
 
-AvoidLineArray AvoidanceModule::findNewShiftLine(
-  const AvoidLineArray & candidates, const PathShifter & shifter) const
+AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidates) const
 {
   if (candidates.empty()) {
     return {};
@@ -2989,9 +2977,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
 
   // check ignore or not.
   const auto is_ignore_shift = [this](const auto & s) {
-    const auto current_shift = prev_linear_shift_path_.shift_length.at(
-      findNearestIndex(prev_reference_.points, s.end.position));
-    return std::abs(current_shift - s.end_shift_length) < parameters_->lateral_execution_threshold;
+    return std::abs(helper_.getRelativeShiftToPath(s)) < parameters_->lateral_execution_threshold;
   };
 
   for (size_t i = 0; i < candidates.size(); ++i) {
