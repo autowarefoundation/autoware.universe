@@ -281,11 +281,11 @@ MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
   const float & b, const double & w)
 {
-  if (shift_lines.empty()) {
-    return {};
-  }
-
   MarkerArray msg;
+
+  if (shift_lines.empty()) {
+    return msg;
+  }
 
   auto marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,

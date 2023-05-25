@@ -518,6 +518,7 @@ struct DebugData
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
+  std::vector<double> proposed_spline_shift;
 
   bool exist_adjacent_objects{false};
 
