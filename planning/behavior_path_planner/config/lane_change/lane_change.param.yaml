@@ -12,8 +12,12 @@
 
       minimum_lane_changing_velocity: 2.78        # [m/s]
       prediction_time_resolution: 0.5           # [s]
-      longitudinal_acceleration_sampling_num: 3
+      longitudinal_acceleration_sampling_num: 5
       lateral_acceleration_sampling_num: 3
+
+      # longitudinal acceleration
+      min_longitudinal_acc: -1.0
+      max_longitudinal_acc: 1.0
 
       # lateral acceleration map
       lateral_acceleration:
