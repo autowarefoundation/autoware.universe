@@ -76,6 +76,8 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   void clear_route();
   void change_route(const LaneletRoute & route);
+  LaneletRoute create_route(const SetRoute::Service::Request::SharedPtr req);
+  LaneletRoute create_route(const SetRoutePoints::Service::Request::SharedPtr req);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
@@ -119,6 +121,7 @@ private:
     const SetRoutePoints::Service::Response::SharedPtr res);
 
   double reroute_time_threshold_{10.0};
+  double minimum_reroute_length_{30.0};
   bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
 
   std::shared_ptr<LaneletRoute> original_route_{nullptr};
