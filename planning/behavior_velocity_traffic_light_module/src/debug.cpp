@@ -37,7 +37,6 @@ visualization_msgs::msg::MarkerArray TrafficLightModule::createVirtualWallMarker
 {
   visualization_msgs::msg::MarkerArray wall_marker;
 
-  auto id = module_id_;
   const auto now = this->clock_->now();
 
   for (const auto & p : debug_data_.dead_line_poses) {
@@ -45,7 +44,7 @@ visualization_msgs::msg::MarkerArray TrafficLightModule::createVirtualWallMarker
       tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
       virtual_wall_marker_creator_->createDeadLineVirtualWallMarker(
-        p_front, "traffic_light", now, id),
+        p_front, "traffic_light", now, 0.0, std::to_string(module_id_) + "_"),
       &wall_marker, now);
   }
 
@@ -53,7 +52,8 @@ visualization_msgs::msg::MarkerArray TrafficLightModule::createVirtualWallMarker
     const auto p_front =
       tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(p_front, "traffic_light", now, id),
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
+        p_front, "traffic_light", now, 0.0, std::to_string(module_id_) + "_"),
       &wall_marker, now);
   }
 
