@@ -45,6 +45,7 @@ extra_css:
   - https://use.fontawesome.com/releases/v5.15.4/css/all.css
 
 extra_javascript:
+  - js/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
 plugins:
@@ -67,8 +68,7 @@ markdown_extensions:
   - fontawesome_markdown
   - footnotes
   - md_in_html
-  - mdx_math:
-      enable_dollar_delimiter: True
+  - mdx_math
   - mdx_truly_sane_lists:
       nested_indent: 2
   - plantuml_markdown:

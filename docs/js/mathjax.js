@@ -1,0 +1,3 @@
+document$.subscribe(() => {
+  MathJax.typesetPromise()
+})
