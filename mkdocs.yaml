@@ -67,7 +67,8 @@ markdown_extensions:
   - fontawesome_markdown
   - footnotes
   - md_in_html
-  - mdx_math
+  - mdx_math:
+      enable_dollar_delimiter: True
   - mdx_truly_sane_lists:
       nested_indent: 2
   - plantuml_markdown:
