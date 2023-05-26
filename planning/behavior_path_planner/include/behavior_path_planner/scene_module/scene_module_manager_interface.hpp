@@ -153,6 +153,9 @@ public:
         appendMarkerArray(virtual_wall, &markers);
       }
 
+      const auto module_specific_wall = m->getModuleVirtualWall();
+      appendMarkerArray(module_specific_wall, &markers);
+
       m->resetWallPoses();
     }
 
