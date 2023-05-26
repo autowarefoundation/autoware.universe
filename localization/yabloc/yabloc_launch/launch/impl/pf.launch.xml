@@ -1,7 +1,7 @@
 <launch>
 
     <!-- predict update -->
-    <arg name="input_initialpose" default="/localization/yabloc/initializer/rectified/initialpose"/>
+    <arg name="input_initialpose" default="/initialpose3d"/>
     <arg name="twist_cov_for_prediction" default="/localization/twist_estimator/twist_with_covariance"/>
     <let name="inout_weighted_particles" value="weighted_particles"/>
     <let name="output_particles_marker_array" value="predicted_particles_marker"/>

@@ -36,7 +36,8 @@ Predictor::Predictor()
   number_of_particles_(declare_parameter<int>("num_of_particles")),
   resampling_interval_seconds_(declare_parameter<float>("resampling_interval_seconds")),
   static_linear_covariance_(declare_parameter<float>("static_linear_covariance")),
-  static_angular_covariance_(declare_parameter<float>("static_angular_covariance"))
+  static_angular_covariance_(declare_parameter<float>("static_angular_covariance")),
+  cov_xx_yy_{this->template declare_parameter<std::vector<double>>("cov_xx_yy")}
 {
   tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -44,6 +45,7 @@ Predictor::Predictor()
   predicted_particles_pub_ = create_publisher<ParticleArray>("predicted_particles", 10);
   pose_pub_ = create_publisher<PoseStamped>("pose", 10);
   pose_cov_pub_ = create_publisher<PoseCovStamped>("pose_with_covariance", 10);
+  marker_pub_ = create_publisher<Marker>("debug/init_marker", 10);
 
   // Subscribers
   using std::placeholders::_1;
@@ -74,7 +76,23 @@ Predictor::Predictor()
 
 void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose)
 {
-  initialize_particles(*initialpose);
+  // Publish initial pose marker
+  auto position = initialpose->pose.pose.position;
+  Eigen::Vector3f pos_vec3f;
+  pos_vec3f << position.x, position.y, position.z;
+
+  auto orientation = initialpose->pose.pose.orientation;
+  float theta = 2 * std::atan2(orientation.z, orientation.w);
+  Eigen::Vector3f tangent;
+  tangent << std::cos(theta), std::sin(theta), 0;
+
+  publish_range_marker(pos_vec3f, tangent);
+
+  // Rectify initial pose
+  auto initialpose_rectified = rectify_initial_pose(pos_vec3f, tangent, *initialpose);
+
+  // Initialize particles given the initial pose and its covariance
+  initialize_particles(initialpose_rectified);
 }
 
 void Predictor::initialize_particles(const PoseCovStamped & initialpose)
@@ -295,6 +313,71 @@ void Predictor::publish_mean_pose(
     transform.transform.rotation = mean_pose.orientation;
     tf2_broadcaster_->sendTransform(transform);
   }
+}
+
+void Predictor::publish_range_marker(const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent)
+{
+  Marker msg;
+  msg.type = Marker::LINE_STRIP;
+  msg.header.stamp = get_clock()->now();
+  msg.header.frame_id = "map";
+  msg.scale.x = 0.2;
+  msg.scale.y = 0.2;
+
+  msg.color.r = 0;
+  msg.color.g = 1;
+  msg.color.b = 0;
+  msg.color.a = 1;
+
+  auto cast2gp = [](const Eigen::Vector3f & vec3f) -> geometry_msgs::msg::Point {
+    geometry_msgs::msg::Point p;
+    p.x = vec3f.x();
+    p.y = vec3f.y();
+    p.z = vec3f.z();
+    return p;
+  };
+
+  Eigen::Vector3f binormal;
+  binormal << -tangent.y(), tangent.x(), tangent.z();
+
+  msg.points.push_back(cast2gp(pos + tangent + binormal));
+  msg.points.push_back(cast2gp(pos + tangent - binormal));
+  msg.points.push_back(cast2gp(pos - tangent - binormal));
+  msg.points.push_back(cast2gp(pos - tangent + binormal));
+  msg.points.push_back(cast2gp(pos + tangent + binormal));
+
+  marker_pub_->publish(msg);
+}
+
+Predictor::PoseCovStamped Predictor::rectify_initial_pose(
+  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
+  const PoseCovStamped & raw_initialpose) const
+{
+  PoseCovStamped msg = raw_initialpose;
+  msg.header.frame_id = "map";
+  msg.pose.pose.position.x = pos.x();
+  msg.pose.pose.position.y = pos.y();
+  msg.pose.pose.position.z = pos.z();
+
+  float theta = std::atan2(tangent.y(), tangent.x());
+
+  msg.pose.pose.orientation.w = std::cos(theta / 2);
+  msg.pose.pose.orientation.x = 0;
+  msg.pose.pose.orientation.y = 0;
+  msg.pose.pose.orientation.z = std::sin(theta / 2);
+
+  Eigen::Matrix2f cov;
+  cov << cov_xx_yy_.at(0), 0, 0, cov_xx_yy_.at(1);
+  Eigen::Rotation2D r(theta);
+  cov = r * cov * r.inverse();
+
+  msg.pose.covariance.at(6 * 0 + 0) = cov(0, 0);
+  msg.pose.covariance.at(6 * 0 + 1) = cov(0, 1);
+  msg.pose.covariance.at(6 * 1 + 0) = cov(1, 0);
+  msg.pose.covariance.at(6 * 1 + 1) = cov(1, 1);
+  msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
+
+  return msg;
 }
 
 }  // namespace yabloc::modularized_particle_filter

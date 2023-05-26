@@ -19,6 +19,7 @@
 #include "modularized_particle_filter/prediction/experimental/suspension_adaptor.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
+#include <Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -27,6 +28,7 @@
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <std_msgs/msg/float32.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <tf2_ros/transform_broadcaster.h>
 
@@ -35,11 +37,13 @@ namespace yabloc::modularized_particle_filter
 class Predictor : public rclcpp::Node
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using TwistCovStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
+  using Marker = visualization_msgs::msg::Marker;
 
   Predictor();
 
@@ -52,6 +56,8 @@ private:
   const float static_linear_covariance_;
   // Const value for Z angular velocity covariance
   const float static_angular_covariance_;
+  // Const value for initial pose covariance
+  const std::vector<double> cov_xx_yy_;
 
   // Subscriber
   rclcpp::Subscription<PoseCovStamped>::SharedPtr initialpose_sub_;
@@ -63,6 +69,7 @@ private:
   rclcpp::Publisher<ParticleArray>::SharedPtr predicted_particles_pub_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pose_pub_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pose_cov_pub_;
+  rclcpp::Publisher<Marker>::SharedPtr marker_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_;
 
   // Timer callback
@@ -92,6 +99,10 @@ private:
     ParticleArray & particle_array, const TwistCovStamped & twist, double dt);
   //
   void publish_mean_pose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
+  void publish_range_marker(const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent);
+  PoseCovStamped rectify_initial_pose(
+    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
+    const PoseCovStamped & raw_initialpose) const;
 };
 
 }  // namespace yabloc::modularized_particle_filter

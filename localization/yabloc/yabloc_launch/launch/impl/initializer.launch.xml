@@ -25,11 +25,4 @@
         <include file="$(find-pkg-share semantic_segmentation)/launch/semseg_server.launch.xml"/>
     </group>
 
-
-    <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param from="$(var particle_initializer_param_path)" />
-        <remap from="initialpose3d" to="/initialpose3d"/>
-    </node>
-
 </launch>

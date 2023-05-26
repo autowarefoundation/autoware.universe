@@ -36,14 +36,15 @@ colcon test-result --verbose --all
 
 ### Parameters
 
-| Name                          | Type   | Default | Description                                                                       |
-|-------------------------------|--------|---------|-----------------------------------------------------------------------------------|
-| `prediction_rate`             | double | 50      | frequency of forecast updates, in Hz                                              |
-| `visualize`                   | bool   | false   | whether particles are also published in visualization_msgs or not                 |
-| `num_of_particles`            | int    | 500     | the number of particles                                                           |
-| `resampling_interval_seconds` | double | 1.0     | the interval of particle resamping                                                |
-| `static_linear_covariance`    | double | 0.01    | to override the covariance of `/twist`. When using `/twist_cov`, it has no effect |
-| `static_angular_covariance`   | double | 0.01    | to override the covariance of `/twist`. When using `/twist_cov`, it has no effect |
+| Name                          | Type   | Default    | Description                                                                       |
+|-------------------------------|--------|------------|-----------------------------------------------------------------------------------|
+| `prediction_rate`             | double | 50         | frequency of forecast updates, in Hz                                              |
+| `visualize`                   | bool   | false      | whether particles are also published in visualization_msgs or not                 |
+| `num_of_particles`            | int    | 500        | the number of particles                                                           |
+| `resampling_interval_seconds` | double | 1.0        | the interval of particle resamping                                                |
+| `static_linear_covariance`    | double | 0.01       | to override the covariance of `/twist`. When using `/twist_cov`, it has no effect |
+| `static_angular_covariance`   | double | 0.01       | to override the covariance of `/twist`. When using `/twist_cov`, it has no effect |
+| `cov_xx_yy`   　　　　　　　　| list   | [2.0,0.25] | the covariance of initial pose                                                    |
 
 ## Corrector
 

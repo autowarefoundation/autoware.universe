@@ -26,7 +26,6 @@
     <!-- default parameter path -->
     <!-- initializer -->
     <arg name="camera_pose_initializer_param_path" default="$(find-pkg-share camera_pose_initializer)/config/camera_pose_initializer.param.yaml"/>
-    <arg name="particle_initializer_param_path" default="$(find-pkg-share particle_initializer)/config/particle_initializer.param.yaml"/>
     <!-- particle filter-->
     <arg name="camera_particle_corrector_param_path" default="$(find-pkg-share camera_particle_corrector)/config/camera_particle_corrector.param.yaml"/>
     <arg name="gnss_particle_corrector_param_path" default="$(find-pkg-share gnss_particle_corrector)/config/gnss_particle_corrector.param.yaml"/>

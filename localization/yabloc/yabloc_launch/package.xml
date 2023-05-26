@@ -32,7 +32,6 @@
   <!--initializer-->
   <depend>gnss_pose_initializer</depend>
   <depend>camera_pose_initializer</depend>
-  <depend>particle_initializer</depend>
   <depend>semantic_segmentation</depend>
   <!--particle filter-->
   <depend>camera_particle_corrector</depend>
