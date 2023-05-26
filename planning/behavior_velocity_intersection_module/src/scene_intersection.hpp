@@ -54,6 +54,7 @@ public:
     geometry_msgs::msg::Pose collision_stop_wall_pose;
     geometry_msgs::msg::Pose occlusion_stop_wall_pose;
     geometry_msgs::msg::Pose occlusion_first_stop_wall_pose;
+    geometry_msgs::msg::Pose pass_judge_wall_pose;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
@@ -131,6 +132,7 @@ public:
     WAIT_FIRST_STOP_LINE,
     CREEP_SECOND_STOP_LINE,
     CLEARED,
+    COLLISION_DETECTED,
   };
 
   IntersectionModule(

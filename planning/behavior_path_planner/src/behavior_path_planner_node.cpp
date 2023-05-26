@@ -67,6 +67,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
+  stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -749,6 +750,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.lateral_acc_sampling_num =
     declare_parameter<int>(parameter("lateral_acceleration_sampling_num"));
 
+  // acceleration
+  p.min_longitudinal_acc = declare_parameter<double>(parameter("min_longitudinal_acc"));
+  p.max_longitudinal_acc = declare_parameter<double>(parameter("max_longitudinal_acc"));
+
   // collision check
   p.enable_prepare_segment_collision_check =
     declare_parameter<bool>(parameter("enable_prepare_segment_collision_check"));
@@ -1245,6 +1250,7 @@ void BehaviorPathPlannerNode::run()
 #else
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
+  stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 #endif
 
 #ifdef USE_OLD_ARCHITECTURE
