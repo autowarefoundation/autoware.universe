@@ -417,10 +417,8 @@ protected:
     point_manual_object_->estimateVertexCount(msg_ptr->points.size() * 3 * 8);
     point_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-    // if also this part is commented out, no crash
-    // preVisualizePathFootprintDetail(msg_ptr);
+    preVisualizePathFootprintDetail(msg_ptr);
 
-    /* this part should be commented out
     const float offset_from_baselink = property_offset_.getFloat();
     const auto info = vehicle_footprint_info_;
     const float top = info->length - info->rear_overhang - offset_from_baselink;
@@ -497,7 +495,6 @@ protected:
 
       visualizePathFootprintDetail(msg_ptr, p_idx);
     }
-    */
 
     footprint_manual_object_->end();
     point_manual_object_->end();
