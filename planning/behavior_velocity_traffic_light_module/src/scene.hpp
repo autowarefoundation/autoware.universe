@@ -146,8 +146,7 @@ private:
   // Traffic Light State
   autoware_auto_perception_msgs::msg::LookingTrafficSignal looking_tl_state_;
 
-  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
-    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
+  motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator_;
 };
 }  // namespace behavior_velocity_planner
 
