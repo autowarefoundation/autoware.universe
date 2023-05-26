@@ -18,6 +18,7 @@
 #define ROUTE_PANEL_HPP_
 
 #include <QCheckBox>
+#include <QGroupBox>
 #include <QPushButton>
 #include <autoware_ad_api_specs/routing.hpp>
 #include <component_interface_utils/rclcpp.hpp>
@@ -46,6 +47,7 @@ private:
   QPushButton * waypoints_mode_;
   QPushButton * waypoints_reset_;
   QPushButton * waypoints_apply_;
+  QGroupBox * waypoints_group_;
   QCheckBox * allow_goal_modification_;
 
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
@@ -55,6 +57,11 @@ private:
   component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
   component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_route_;
   void setRoute(const PoseStamped & pose);
+
+private slots:
+  void onWaypointsMode(bool clicked);
+  void onWaypointsReset();
+  void onWaypointsApply();
 };
 
 }  // namespace tier4_adapi_rviz_plugins

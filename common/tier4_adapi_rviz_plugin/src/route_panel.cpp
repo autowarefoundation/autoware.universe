@@ -16,7 +16,6 @@
 
 #include "route_panel.hpp"
 
-#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
@@ -36,12 +35,14 @@ RoutePanel::RoutePanel(QWidget * parent) : rviz_common::Panel(parent)
   waypoints_mode_->setCheckable(true);
   waypoints_reset_->setDisabled(true);
   waypoints_apply_->setDisabled(true);
+  connect(waypoints_mode_, &QPushButton::clicked, this, &RoutePanel::onWaypointsMode);
+  connect(waypoints_reset_, &QPushButton::clicked, this, &RoutePanel::onWaypointsReset);
+  connect(waypoints_apply_, &QPushButton::clicked, this, &RoutePanel::onWaypointsApply);
 
-  // layout widgets
   const auto layout = new QVBoxLayout();
   setLayout(layout);
 
-  // layout waypoints mode
+  // waypoints group
   {
     const auto group = new QGroupBox("waypoints");
     const auto local = new QHBoxLayout();
@@ -50,9 +51,10 @@ RoutePanel::RoutePanel(QWidget * parent) : rviz_common::Panel(parent)
     local->addWidget(waypoints_apply_);
     group->setLayout(local);
     layout->addWidget(group);
+    waypoints_group_ = group;
   }
 
-  // layout options
+  // options group
   {
     const auto group = new QGroupBox("options");
     const auto local = new QHBoxLayout();
@@ -94,7 +96,44 @@ void RoutePanel::onPose(const PoseStamped::ConstSharedPtr msg)
     setRoute(*msg);
   } else {
     waypoints_.push_back(*msg);
+    waypoints_group_->setTitle(QString("waypoints (count: %1)").arg(waypoints_.size()));
   }
+}
+
+void RoutePanel::onWaypointsMode(bool clicked)
+{
+  waypoints_reset_->setEnabled(clicked);
+  waypoints_apply_->setEnabled(clicked);
+
+  if (clicked) {
+    onWaypointsReset();
+  } else {
+    waypoints_group_->setTitle("waypoints");
+  }
+}
+
+void RoutePanel::onWaypointsReset()
+{
+  waypoints_.clear();
+  waypoints_group_->setTitle(QString("waypoints (count: %1)").arg(waypoints_.size()));
+}
+
+void RoutePanel::onWaypointsApply()
+{
+  if (waypoints_.empty()) return;
+
+  const auto req = std::make_shared<ClearRoute::Service::Request>();
+  cli_clear_->async_send_request(req, [this](auto) {
+    const auto req = std::make_shared<SetRoutePoints::Service::Request>();
+    req->header = waypoints_.back().header;
+    req->goal = waypoints_.back().pose;
+    for (size_t i = 0; i + 1 < waypoints_.size(); ++i) {
+      req->waypoints.push_back(waypoints_[i].pose);
+    }
+    req->option.allow_goal_modification = allow_goal_modification_->isChecked();
+    cli_route_->async_send_request(req);
+    onWaypointsReset();
+  });
 }
 
 }  // namespace tier4_adapi_rviz_plugins
