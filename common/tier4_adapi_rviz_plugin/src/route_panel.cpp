@@ -16,56 +16,49 @@
 
 #include "route_panel.hpp"
 
-#include <QGridLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
+
+#include <memory>
 
 namespace tier4_adapi_rviz_plugins
 {
 
 RoutePanel::RoutePanel(QWidget * parent) : rviz_common::Panel(parent)
 {
-  mode_goal_only_ = new QPushButton("goal only");
-  mode_waypoints_ = new QPushButton("waypoints");
+  waypoints_mode_ = new QPushButton("mode");
   waypoints_reset_ = new QPushButton("reset");
   waypoints_apply_ = new QPushButton("apply");
   allow_goal_modification_ = new QCheckBox("allow goal modification");
 
-  mode_goal_only_->setCheckable(true);
-  mode_waypoints_->setCheckable(true);
+  waypoints_mode_->setCheckable(true);
+  waypoints_reset_->setDisabled(true);
+  waypoints_apply_->setDisabled(true);
 
   // layout widgets
-  const auto layout = new QGridLayout();
+  const auto layout = new QVBoxLayout();
   setLayout(layout);
 
-  // layout main mode buttons
-  {
-    const auto group = new QGroupBox("mode");
-    const auto local = new QVBoxLayout();
-    local->addWidget(mode_goal_only_);
-    local->addWidget(mode_waypoints_);
-    group->setLayout(local);
-    layout->addWidget(group, 0, 0);
-  }
-
-  // layout waypoint buttons
+  // layout waypoints mode
   {
     const auto group = new QGroupBox("waypoints");
-    const auto local = new QVBoxLayout();
+    const auto local = new QHBoxLayout();
+    local->addWidget(waypoints_mode_);
     local->addWidget(waypoints_reset_);
     local->addWidget(waypoints_apply_);
     group->setLayout(local);
-    layout->addWidget(group, 0, 1);
+    layout->addWidget(group);
   }
 
   // layout options
   {
     const auto group = new QGroupBox("options");
-    const auto local = new QVBoxLayout();
+    const auto local = new QHBoxLayout();
     local->addWidget(allow_goal_modification_);
     group->setLayout(local);
-    layout->addWidget(group, 1, 0, 1, 2);
+    layout->addWidget(group);
   }
 }
 
@@ -77,19 +70,29 @@ void RoutePanel::onInitialize()
   sub_pose_ = node->create_subscription<PoseStamped>(
     "/rviz/routing/pose", rclcpp::QoS(1),
     std::bind(&RoutePanel::onPose, this, std::placeholders::_1));
+
+  const auto adaptor = component_interface_utils::NodeAdaptor(node.get());
+  adaptor.init_cli(cli_clear_);
+  adaptor.init_cli(cli_route_);
 }
 
 void RoutePanel::setRoute(const PoseStamped & pose)
 {
-  (void)pose;
+  const auto req = std::make_shared<ClearRoute::Service::Request>();
+  cli_clear_->async_send_request(req, [this, pose](auto) {
+    const auto req = std::make_shared<SetRoutePoints::Service::Request>();
+    req->header = pose.header;
+    req->goal = pose.pose;
+    req->option.allow_goal_modification = allow_goal_modification_->isChecked();
+    cli_route_->async_send_request(req);
+  });
 }
 
 void RoutePanel::onPose(const PoseStamped::ConstSharedPtr msg)
 {
-  if (mode_goal_only_->isChecked()) {
+  if (!waypoints_mode_->isChecked()) {
     setRoute(*msg);
-  }
-  if (mode_waypoints_->isChecked()) {
+  } else {
     waypoints_.push_back(*msg);
   }
 }

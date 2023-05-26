@@ -19,6 +19,8 @@
 
 #include <QCheckBox>
 #include <QPushButton>
+#include <autoware_ad_api_specs/routing.hpp>
+#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
@@ -32,6 +34,8 @@ namespace tier4_adapi_rviz_plugins
 class RoutePanel : public rviz_common::Panel
 {
   Q_OBJECT
+  using ClearRoute = autoware_ad_api::routing::ClearRoute;
+  using SetRoutePoints = autoware_ad_api::routing::SetRoutePoints;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 public:
@@ -39,17 +43,18 @@ public:
   void onInitialize() override;
 
 private:
-  QPushButton * mode_goal_only_;
-  QPushButton * mode_waypoints_;
+  QPushButton * waypoints_mode_;
   QPushButton * waypoints_reset_;
   QPushButton * waypoints_apply_;
   QCheckBox * allow_goal_modification_;
 
-  void setRoute(const PoseStamped & pose);
-
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
   std::vector<PoseStamped> waypoints_;
   void onPose(const PoseStamped::ConstSharedPtr msg);
+
+  component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
+  component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_route_;
+  void setRoute(const PoseStamped & pose);
 };
 
 }  // namespace tier4_adapi_rviz_plugins
