@@ -351,8 +351,47 @@ void MissionPlanner::on_clear_mrm_route(
 
 void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
 {
-  // TODO(Yutaka Shimizu): reroute if the goal is outside the lane.
-  arrival_checker_.modify_goal(*msg);
+  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
+
+  if (state_.state != RouteState::Message::SET) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "The route hasn't set yet. Cannot reroute.");
+  }
+  if (!planner_->ready()) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
+  }
+  if (!odometry_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+  if (!normal_route_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
+  }
+
+  // set to changing state
+  change_state(RouteState::Message::CHANGING);
+
+  if (normal_route_->uuid == msg->uuid) {
+    const std::vector<geometry_msgs::msg::Pose> empty_waypoints;
+    const auto new_route =
+      create_route(msg->header, empty_waypoints, msg->pose, normal_route_->allow_modification);
+    if (new_route.segments.empty()) {
+      change_route(*normal_route_);
+      change_state(RouteState::Message::SET);
+      throw component_interface_utils::ServiceException(
+        ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+    }
+
+    change_route(new_route);
+    change_state(RouteState::Message::SET);
+    return;
+  }
+
+  change_state(RouteState::Message::SET);
+  throw component_interface_utils::ServiceException(
+    ResponseCode::ERROR_REROUTE_FAILED, "Goal uuid is incorrect.");
 }
 
 void MissionPlanner::on_change_route(
