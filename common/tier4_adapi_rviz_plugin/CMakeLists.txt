@@ -12,6 +12,7 @@ add_definitions(-DQT_NO_KEYWORDS)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/route_tool.cpp
+  src/route_panel.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
