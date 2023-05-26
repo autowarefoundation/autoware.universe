@@ -102,7 +102,9 @@ visualization_msgs::msg::MarkerArray SpeedBumpModule::createVirtualWallMarkerArr
   for (const auto & p : debug_data_.slow_start_poses) {
     const auto & p_front = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      createSlowDownVirtualWallMarker(p_front, "speed_bump", now, id++), &wall_marker);
+      createSlowDownVirtualWallMarker(
+        p_front, "speed_bump", now, id++, 0.0, std::to_string(module_id_)),
+      &wall_marker);
   }
 
   return wall_marker;
