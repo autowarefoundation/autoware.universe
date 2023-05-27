@@ -69,6 +69,8 @@ void RingOutlierFilterComponent::faster_filter(
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Azimuth)).offset;
   const auto distance_offset =
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Distance)).offset;
+  const auto intensity_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Intensity)).offset;
 
   std::vector<std::vector<size_t>> ring2indices;
   ring2indices.reserve(max_rings_num_);
@@ -132,10 +134,12 @@ void RingOutlierFilterComponent::faster_filter(
             output_ptr->x = p[0];
             output_ptr->y = p[1];
             output_ptr->z = p[2];
-            output_ptr->intensity = input_ptr->intensity;
           } else {
             *output_ptr = *input_ptr;
           }
+          const float & intensity =
+            *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
+          output_ptr->intensity = intensity;
 
           output_size += output.point_step;
         }
@@ -159,10 +163,12 @@ void RingOutlierFilterComponent::faster_filter(
           output_ptr->x = p[0];
           output_ptr->y = p[1];
           output_ptr->z = p[2];
-          output_ptr->intensity = input_ptr->intensity;
         } else {
           *output_ptr = *input_ptr;
         }
+        const float & intensity =
+          *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
+        output_ptr->intensity = intensity;
 
         output_size += output.point_step;
       }
@@ -180,6 +186,8 @@ void RingOutlierFilterComponent::faster_filter(
     input->fields.begin(),
     input->fields.begin() + static_cast<size_t>(autoware_point_types::PointIndex::Intensity) + 1,
     output.fields.begin());
+
+  output.fields[static_cast<size_t>(autoware_point_types::PointIndex::Intensity)].offset = 12;
 
   output.height = 1;
   output.is_bigendian = input->is_bigendian;
