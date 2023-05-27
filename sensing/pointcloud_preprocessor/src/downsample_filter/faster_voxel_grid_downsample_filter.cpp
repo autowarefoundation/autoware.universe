@@ -163,7 +163,7 @@ void FasterVoxelGridDownsampleFilter::copy_centroids_to_output(
   const TransformInfo & transform_info)
 {
   size_t output_data_size = 0;
-  for (auto & pair : voxel_centroid_map) {
+  for (const auto & pair : voxel_centroid_map) {
     Eigen::Vector4f centroid = pair.second.calc_centroid();
     if (transform_info.need_transform) {
       centroid = transform_info.eigen_transform * centroid;

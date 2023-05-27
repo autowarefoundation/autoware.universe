@@ -57,7 +57,7 @@ private:
       this->point_count_++;
     }
 
-    Eigen::Vector4f calc_centroid()
+    Eigen::Vector4f calc_centroid() const
     {
       Eigen::Vector4f centroid(
         (this->x / this->point_count_), (this->y / this->point_count_),
