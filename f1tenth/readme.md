@@ -42,7 +42,7 @@
 
 ## Install f1tenth_gym simulator dependencies
    ```bash
-   cd autoware/src/universe/autoware.universe/f1tenth_gym_ros/f1tenth_gym
+   cd autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/f1tenth_gym
    pip3 install -e .
    ```
 
