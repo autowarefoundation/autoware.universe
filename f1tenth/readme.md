@@ -55,7 +55,7 @@ On your F1Tenth car, install the slamtoolbox
    sudo apt install ros-galactic-slam-toolbox
    ```
 
-Now start the F1Tenth base system and the slamtoolbox
+Start the F1Tenth system
 
 ```(bash)
 # Terminal 1
@@ -63,6 +63,8 @@ source /opt/ros/galactic/setup.bash
 cd f1tenth_ws && . install/setup.bash
 ros2 launch f1tenth_stack bringup_launch.py
 ```
+
+Start the slamtoolbox
 
 ```(bash)
 # Terminal 2
@@ -73,8 +75,8 @@ ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware
 
 Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you ran slam_toolbox.
 
-###
-If you do not have an F1Tenth car, you can use the map provided in the F1Tenth simulation folder under /map directory. You can also create your own map which are represented as .png files.
+### Create a map without F1Tenth car
+If you do not have an F1Tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the F1Tenth simulation folder under /map directory.
 
 
 ## How to record a trajectory
