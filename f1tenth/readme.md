@@ -70,7 +70,7 @@ Record a trajectory and save at your preferred path. To stop recording, Ctrl + C
 
 ```(bash)
 # Terminal 3
-source /opt/ros/humble/setup.bash
+source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
