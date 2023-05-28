@@ -14,9 +14,11 @@
 
 #pragma once
 
-#include "pointcloud_preprocessor/filter.hpp"
+#include "pointcloud_preprocessor/transform_info.hpp"
 
 #include <pcl/filters/voxel_grid.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/msg/point_cloud2.h>
 
 #include <unordered_map>
 #include <vector>
@@ -28,7 +30,6 @@ class FasterVoxelGridDownsampleFilter
 {
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
-  using TransformInfo = pointcloud_preprocessor::Filter::TransformInfo;
 
 public:
   FasterVoxelGridDownsampleFilter();

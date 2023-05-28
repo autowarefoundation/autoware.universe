@@ -52,6 +52,8 @@
 #ifndef POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 #define POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 
+#include "pointcloud_preprocessor/transform_info.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -132,18 +134,6 @@ public:
   explicit Filter(
     const std::string & filter_name = "pointcloud_preprocessor_filter",
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
-
-  struct TransformInfo
-  {
-    TransformInfo()
-    {
-      eigen_transform = Eigen::Matrix4f::Identity(4, 4);
-      need_transform = false;
-    }
-
-    Eigen::Matrix4f eigen_transform;
-    bool need_transform;
-  };
 
 protected:
   /** \brief The input PointCloud2 subscriber. */

@@ -41,12 +41,26 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   pcl_ros
 )
 
+add_library(faster_voxel_grid_downsample_filter SHARED
+  src/downsample_filter/faster_voxel_grid_downsample_filter.cpp
+)
+
+target_include_directories(faster_voxel_grid_downsample_filter PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+
+ament_target_dependencies(faster_voxel_grid_downsample_filter
+  pcl_conversions
+  rclcpp
+  sensor_msgs
+)
+
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/utility/utilities.cpp
   src/concatenate_data/concatenate_data_nodelet.cpp
   src/crop_box_filter/crop_box_filter_nodelet.cpp
   src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
-  src/downsample_filter/faster_voxel_grid_downsample_filter.cpp
   src/downsample_filter/random_downsample_filter_nodelet.cpp
   src/downsample_filter/approximate_downsample_filter_nodelet.cpp
   src/outlier_filter/ring_outlier_filter_nodelet.cpp
@@ -66,6 +80,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
 
 target_link_libraries(pointcloud_preprocessor_filter
   pointcloud_preprocessor_filter_base
+  faster_voxel_grid_downsample_filter
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${PCL_LIBRARIES}
@@ -163,6 +178,13 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
 
 install(
   TARGETS pointcloud_preprocessor_filter_base EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
+  TARGETS faster_voxel_grid_downsample_filter EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
