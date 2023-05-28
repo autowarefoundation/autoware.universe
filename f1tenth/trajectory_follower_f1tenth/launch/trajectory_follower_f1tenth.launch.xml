@@ -10,7 +10,6 @@
     <param name="lateral_deviation" value="$(var lateral_deviation)"/>
 
     <remap from="input/kinematics" to="/ego_racecar/odom"/>
-
     <remap from="input/trajectory" to="/planning/trajectory"/>
     <remap from="output/control_cmd" to="/vehicle/command/manual_control_cmd"/>
   </node>
