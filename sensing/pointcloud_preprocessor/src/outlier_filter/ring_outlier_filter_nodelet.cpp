@@ -14,6 +14,8 @@
 
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
 #include <algorithm>
 #include <vector>
 namespace pointcloud_preprocessor
@@ -181,19 +183,18 @@ void RingOutlierFilterComponent::faster_filter(
   // == true`
   output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
 
-  output.fields.resize(4);  // x, y, z, intensity
-  std::copy(
-    input->fields.begin(),
-    input->fields.begin() + static_cast<size_t>(autoware_point_types::PointIndex::Intensity) + 1,
-    output.fields.begin());
-
-  output.fields[static_cast<size_t>(autoware_point_types::PointIndex::Intensity)].offset = 12;
-
   output.height = 1;
+  output.width = static_cast<uint32_t>(output.data.size() / output.height / output.point_step);
   output.is_bigendian = input->is_bigendian;
   output.is_dense = input->is_dense;
-  output.width = static_cast<uint32_t>(output.data.size() / output.height / output.point_step);
-  output.row_step = static_cast<uint32_t>(output.data.size() / output.height);
+
+  // set fields
+  sensor_msgs::PointCloud2Modifier pcd_modifier(output);
+  constexpr int num_fields = 4;
+  pcd_modifier.setPointCloud2Fields(
+    num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
+    sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32);
 
   // add processing time for debug
   if (debug_publisher_) {
