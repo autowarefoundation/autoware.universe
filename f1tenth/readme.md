@@ -46,6 +46,37 @@
    pip3 install -e .
    ```
 
+## How to create a map
+This part assumes that you have a fully built and properly tuned F1Tenth car. For instructions on how to configure an F1Tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the F1Tenth system installed under the __f1tenth_ws__ directory.
+
+On your F1Tenth car, install the slamtoolbox 
+
+   ```bash
+   sudo apt install ros-galactic-slam-toolbox
+   ```
+
+Now start the F1Tenth base system and the slamtoolbox
+
+```(bash)
+# Terminal 1
+source /opt/ros/galactic/setup.bash
+cd f1tenth_ws && . install/setup.bash
+ros2 launch f1tenth_stack bringup_launch.py
+```
+
+```(bash)
+# Terminal 2
+source /opt/ros/galactic/setup.bash
+cd f1tenth_ws && . install/setup.bash
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware/f1tenth_ws/src/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
+```
+
+Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you ran slam_toolbox.
+
+###
+If you do not have an F1Tenth car, you can use the map provided in the F1Tenth simulation folder under /map directory. You can also create your own map which are represented as .png files.
+
+
 ## How to record a trajectory
 
 Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), recordreplay node, and trajectory follower (not used)
