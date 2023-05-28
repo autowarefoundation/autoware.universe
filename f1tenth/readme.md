@@ -1,4 +1,4 @@
-# autoware f1tenth recordReplay demo
+# Autoware F1tenth Recordreplay Demo
 
 ## How to set up autoware development environment
 
@@ -54,7 +54,9 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
    ```
 
 ## How to create a map
-This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the f1tenth system installed under the __f1tenth_ws__ directory. Click [here](https://drive.google.com/file/d/15PViYjO-CKy2uvMqojIPj7BqdnMEidws/view?usp=share_link) for a demonstration video. 
+Click [here](https://drive.google.com/file/d/15PViYjO-CKy2uvMqojIPj7BqdnMEidws/view?usp=share_link) to watch a demonstration video. 
+
+This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the f1tenth system installed under the __f1tenth_ws__ directory. 
 
 On your f1tenth car, install the slamtoolbox 
 
@@ -90,10 +92,9 @@ If you do not have an f1tenth car, You can draw your own map and save as .png fi
 
 Navigate to /home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/config. In sim.yaml, change the map file path.
 
-
 ## How to record a trajectory (simulation)
 
-Click [here](https://drive.google.com/file/d/1AkPndsR42yFxAHseP_JW0zUfrvYIeyNb/view?usp=share_link) to see the recordreplay demonstration video. 
+Click [here](https://drive.google.com/file/d/1AkPndsR42yFxAHseP_JW0zUfrvYIeyNb/view?usp=share_link) to watch a demonstration video. 
 
 Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 
