@@ -1,4 +1,4 @@
-# Autoware f1tenth RecordReplay Demo
+# autoware f1tenth recordReplay demo
 
 ## How to set up autoware development environment
 
@@ -9,7 +9,7 @@
    cd autoware
    ```
 
-2. If you are installing autoware for the first time, you can automatically install the dependencies by using the provided Ansible script. Be careful this script will change some of your drivers and system settings. If you are not sure about this, you can install the dependencies manually. Check the [autoware installtion](https://autowarefoundation.github.io/autoware-documentation/galactic/installation/autoware/source-installation/) website for more details.
+2. If you are installing autoware for the first time, you can automatically install the dependencies by using the provided Ansible script. Be careful this script will change some of your drivers and system settings. If you are not sure about this, you can install the dependencies manually. Check the [autoware installtion](https://autowarefoundation.github.io/autoware-documentation/galactic/installation/autoware/source-installation/) page for more details.
 
    ```bash
    ./setup-dev-env.sh
@@ -54,7 +54,7 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
    ```
 
 ## How to create a map
-This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the f1tenth system installed under the __f1tenth_ws__ directory.
+This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the f1tenth system installed under the __f1tenth_ws__ directory. Click [here](https://drive.google.com/file/d/15PViYjO-CKy2uvMqojIPj7BqdnMEidws/view?usp=share_link) for a demonstration video. 
 
 On your f1tenth car, install the slamtoolbox 
 
@@ -83,13 +83,17 @@ ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware
 Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you ran slam_toolbox.
 
 ### Create a map without an f1tenth car
+
 If you do not have an f1tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the f1tenth simulation folder under /map directory.
 
 ### Change map in the f1tenth simulator
+
 Navigate to /home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/config. In sim.yaml, change the map file path.
 
 
 ## How to record a trajectory (simulation)
+
+Click [here](https://drive.google.com/file/d/1AkPndsR42yFxAHseP_JW0zUfrvYIeyNb/view?usp=share_link) to see the recordreplay demonstration video. 
 
 Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 

@@ -51,7 +51,7 @@ SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & o
 void SimpleTrajectoryFollower::onTimer()
 {
   if (!checkData()) {
-    RCLCPP_INFO(get_logger(), "data not ready!!");
+    // RCLCPP_INFO(get_logger(), "data not ready!!");
     return;
   }
 
