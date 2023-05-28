@@ -91,6 +91,8 @@ public:
 
   void setData(const std::shared_ptr<const PlannerData> & data) override;
 
+  MarkerArray getModuleVirtualWall() override;
+
 protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
 
@@ -105,6 +107,7 @@ protected:
   void updateSteeringFactorPtr(
     const CandidateOutput & output, const LaneChangePath & selected_path) const;
 
+  mutable MarkerArray virtual_wall_marker_;
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
 
   std::unique_ptr<PathWithLaneId> prev_approved_path_;
@@ -125,8 +128,6 @@ public:
     const std::shared_ptr<AvoidanceParameters> & avoidance_parameters,
     const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
-
-  ModuleStatus updateState() override;
 
 protected:
   void updateRTCStatus(const double start_distance, const double finish_distance) override;

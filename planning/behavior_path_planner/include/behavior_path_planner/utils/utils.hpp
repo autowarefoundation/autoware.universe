@@ -107,11 +107,6 @@ struct FrenetPoint
 };
 
 // data conversions
-PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double acceleration);
-
 template <class T>
 FrenetPoint convertToFrenetPoint(
   const T & points, const Point & search_point_geom, const size_t seg_idx)
@@ -301,6 +296,10 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
 
 bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes);
 
+bool isInLaneletWithYawThreshold(
+  const Pose & current_pose, const lanelet::ConstLanelet & lanelet, const double yaw_threshold,
+  const double radius = 0.0);
+
 bool isEgoOutOfRoute(
   const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler);
@@ -371,10 +370,6 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
   const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
-
-double calcLaneChangingTime(
-  const double lane_changing_velocity, const double shift_length,
-  const BehaviorPathPlannerParameters & common_parameter);
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,

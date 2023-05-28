@@ -67,6 +67,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
+  stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -397,9 +398,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
   p.lane_changing_lateral_jerk =
     declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lane_changing_lateral_acc = declare_parameter<double>("lane_change.lane_changing_lateral_acc");
-  p.lane_changing_lateral_acc_at_low_velocity =
-    declare_parameter<double>("lane_change.lane_changing_lateral_acc_at_low_velocity");
   p.lateral_acc_switching_velocity =
     declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
   p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
@@ -409,6 +407,24 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
   p.minimum_prepare_length =
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
+
+  // lateral acceleration map for lane change
+  const auto lateral_acc_velocity =
+    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.velocity");
+  const auto min_lateral_acc =
+    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.min_values");
+  const auto max_lateral_acc =
+    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.max_values");
+  if (
+    lateral_acc_velocity.size() != min_lateral_acc.size() ||
+    lateral_acc_velocity.size() != max_lateral_acc.size()) {
+    RCLCPP_ERROR(get_logger(), "Lane change lateral acceleration map has invalid size.");
+    exit(EXIT_FAILURE);
+  }
+  for (size_t i = 0; i < lateral_acc_velocity.size(); ++i) {
+    p.lane_change_lat_acc_map.add(
+      lateral_acc_velocity.at(i), min_lateral_acc.at(i), max_lateral_acc.at(i));
+  }
 
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
@@ -564,8 +580,12 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       declare_parameter<double>(ns + "threshold_time_object_is_moving");
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       declare_parameter<double>(ns + "threshold_time_force_avoidance_for_stopped_vehicle");
-    p.object_check_force_avoidance_clearance =
-      declare_parameter<double>(ns + "object_check_force_avoidance_clearance");
+    p.object_ignore_distance_traffic_light =
+      declare_parameter<double>(ns + "object_ignore_distance_traffic_light");
+    p.object_ignore_distance_crosswalk_forward =
+      declare_parameter<double>(ns + "object_ignore_distance_crosswalk_forward");
+    p.object_ignore_distance_crosswalk_backward =
+      declare_parameter<double>(ns + "object_ignore_distance_crosswalk_backward");
     p.object_check_forward_distance =
       declare_parameter<double>(ns + "object_check_forward_distance");
     p.object_check_backward_distance =
@@ -693,11 +713,23 @@ DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
   {  // drivable_area_generation
     std::string ns = "dynamic_avoidance.drivable_area_generation.";
     p.lat_offset_from_obstacle = declare_parameter<double>(ns + "lat_offset_from_obstacle");
-    p.time_to_avoid_same_directional_object =
-      declare_parameter<double>(ns + "time_to_avoid_same_directional_object");
-    p.time_to_avoid_opposite_directional_object =
-      declare_parameter<double>(ns + "time_to_avoid_opposite_directional_object");
     p.max_lat_offset_to_avoid = declare_parameter<double>(ns + "max_lat_offset_to_avoid");
+
+    p.max_time_to_collision_overtaking_object =
+      declare_parameter<double>(ns + "overtaking_object.max_time_to_collision");
+    p.start_duration_to_avoid_overtaking_object =
+      declare_parameter<double>(ns + "overtaking_object.start_duration_to_avoid");
+    p.end_duration_to_avoid_overtaking_object =
+      declare_parameter<double>(ns + "overtaking_object.end_duration_to_avoid");
+    p.duration_to_hold_avoidance_overtaking_object =
+      declare_parameter<double>(ns + "overtaking_object.duration_to_hold_avoidance");
+
+    p.max_time_to_collision_oncoming_object =
+      declare_parameter<double>(ns + "oncoming_object.max_time_to_collision");
+    p.start_duration_to_avoid_oncoming_object =
+      declare_parameter<double>(ns + "oncoming_object.start_duration_to_avoid");
+    p.end_duration_to_avoid_oncoming_object =
+      declare_parameter<double>(ns + "oncoming_object.end_duration_to_avoid");
   }
 
   return p;
@@ -709,10 +741,18 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   const auto parameter = [](std::string && name) { return "lane_change." + name; };
 
   // trajectory generation
+  p.backward_lane_length = declare_parameter<double>(parameter("backward_lane_length"));
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
-  p.lane_change_sampling_num = declare_parameter<int>(parameter("lane_change_sampling_num"));
+  p.longitudinal_acc_sampling_num =
+    declare_parameter<int>(parameter("longitudinal_acceleration_sampling_num"));
+  p.lateral_acc_sampling_num =
+    declare_parameter<int>(parameter("lateral_acceleration_sampling_num"));
+
+  // acceleration
+  p.min_longitudinal_acc = declare_parameter<double>(parameter("min_longitudinal_acc"));
+  p.max_longitudinal_acc = declare_parameter<double>(parameter("max_longitudinal_acc"));
 
   // collision check
   p.enable_prepare_segment_collision_check =
@@ -741,17 +781,20 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.enable_abort_lane_change = declare_parameter<bool>(parameter("enable_abort_lane_change"));
 
   p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
+  p.aborting_time = declare_parameter<double>(parameter("aborting_time"));
   p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
 
   // debug marker
   p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
 
   // validation of parameters
-  if (p.lane_change_sampling_num < 1) {
+  if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      get_logger(), "lane_change_sampling_num must be positive integer. Given parameter: "
-                      << p.lane_change_sampling_num << std::endl
-                      << "Terminating the program...");
+      get_logger(),
+      "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
+        << p.longitudinal_acc_sampling_num
+        << "Given lateral parameter: " << p.lateral_acc_sampling_num << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
@@ -1207,6 +1250,7 @@ void BehaviorPathPlannerNode::run()
 #else
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
+  stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 #endif
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -1460,9 +1504,9 @@ bool BehaviorPathPlannerNode::keepInputPoints(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
 #ifdef USE_OLD_ARCHITECTURE
-  const std::vector<std::string> target_modules = {"PullOver", "Avoidance"};
+  const std::vector<std::string> target_modules = {"GoalPlanner", "Avoidance"};
 #else
-  const std::vector<std::string> target_modules = {"pull_over", "avoidance"};
+  const std::vector<std::string> target_modules = {"goal_planner", "avoidance"};
 #endif
 
   const auto target_status = ModuleStatus::RUNNING;

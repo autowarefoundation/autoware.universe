@@ -110,6 +110,8 @@ PathWithLaneId resamplePathWithSpline(
   // Insert Terminal Point
   if (!has_almost_same_value(s_out, end_s)) {
     s_out.push_back(end_s);
+  } else {
+    s_out.back() = end_s;
   }
 
   // Insert Stop Point
