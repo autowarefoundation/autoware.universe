@@ -1,6 +1,6 @@
-# f1tenth RecordReplay Trajectory Demo
+# Autoware f1tenth RecordReplay Demo
 
-## How to set up Autoware development environment
+## How to set up autoware development environment
 
 1. Clone `autowarefoundation/autoware` and move to the directory.
 
@@ -9,13 +9,19 @@
    cd autoware
    ```
 
-2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
+2. If you are installing autoware for the first time, you can automatically install the dependencies by using the provided Ansible script. Be careful this script will change some of your drivers and system settings. If you are not sure about this, you can install the dependencies manually. Check the [autoware installtion](https://autowarefoundation.github.io/autoware-documentation/galactic/installation/autoware/source-installation/) website for more details.
 
-## How to set up Autoware workspace
+   ```bash
+   ./setup-dev-env.sh
+   ```
+
+3. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
+
+## How to set up autoware workspace
 
 1. Create the `src` directory and clone repositories into it.
 
-   Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces.
+   autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces.
 
    ```bash
    cd autoware
@@ -32,7 +38,7 @@
 
 3. Build the workspace.
 
-   Autoware uses [colcon](https://github.com/colcon) to build workspaces.
+   autoware uses [colcon](https://github.com/colcon) to build workspaces.
    For more advanced options, refer to the [documentation](https://colcon.readthedocs.io/).
 
    ```bash
