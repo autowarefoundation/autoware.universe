@@ -1,6 +1,6 @@
-# F1Tenth RecordReplay Trajectory Demo
+# f1tenth RecordReplay Trajectory Demo
 
-## How to set up a development environment
+## How to set up Autoware development environment
 
 1. Clone `autowarefoundation/autoware` and move to the directory.
 
@@ -11,7 +11,7 @@
 
 2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
 
-## How to set up a workspace
+## How to set up Autoware workspace
 
 1. Create the `src` directory and clone repositories into it.
 
@@ -39,23 +39,24 @@
    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
    ```
    
-
 ## Install f1tenth_gym simulator dependencies
+The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
+
    ```bash
    cd autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/f1tenth_gym
    pip3 install -e .
    ```
 
 ## How to create a map
-This part assumes that you have a fully built and properly tuned F1Tenth car. For instructions on how to configure an F1Tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the F1Tenth system installed under the __f1tenth_ws__ directory.
+This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the f1tenth system installed under the __f1tenth_ws__ directory.
 
-On your F1Tenth car, install the slamtoolbox 
+On your f1tenth car, install the slamtoolbox 
 
    ```bash
    sudo apt install ros-galactic-slam-toolbox
    ```
 
-Start the F1Tenth system
+Start the f1tenth system
 
 ```(bash)
 # Terminal 1
@@ -75,13 +76,13 @@ ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware
 
 Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you ran slam_toolbox.
 
-### Create a map without F1Tenth car
-If you do not have an F1Tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the F1Tenth simulation folder under /map directory.
+### Create a map without an f1tenth car
+If you do not have an f1tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the f1tenth simulation folder under /map directory.
 
 
-## How to record a trajectory
+## How to record a trajectory (Simulation)
 
-Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), recordreplay node, and trajectory follower (not used)
+Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 
 ```(bash)
 # Terminal 1
@@ -108,7 +109,7 @@ cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
 
-## How to replay a trajectory
+## How to replay a trajectory (Simulation)
 
 Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), recordreplay node, and trajectory follower
 
