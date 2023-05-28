@@ -9,7 +9,7 @@
    cd autoware
    ```
 
-2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth`
+2. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
 
 ## How to set up a workspace
 
@@ -26,7 +26,7 @@
 2. Install dependent ROS packages.
 
    ```bash
-   source /opt/ros/humble/setup.bash
+   source /opt/ros/galactic/setup.bash
    rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
    ```
 
