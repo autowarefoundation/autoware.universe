@@ -79,8 +79,11 @@ Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On t
 ### Create a map without an f1tenth car
 If you do not have an f1tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the f1tenth simulation folder under /map directory.
 
+### Change map in the f1tenth simulator
+Navigate to /home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/config. In sim.yaml, change the map file path.
 
-## How to record a trajectory (Simulation)
+
+## How to record a trajectory (simulation)
 
 Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 
@@ -109,9 +112,9 @@ cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
 
-## How to replay a trajectory (Simulation)
+## How to replay a trajectory (simulation)
 
-Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), recordreplay node, and trajectory follower
+Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 
 ```(bash)
 # Terminal 1
