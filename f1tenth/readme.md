@@ -52,7 +52,7 @@ Launch the [f1tenth gym simulator](https://github.com/f1tenth/f1tenth_gym_ros), 
 
 ```(bash)
 # Terminal 1
-source /opt/ros/humble/setup.bash
+source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
@@ -61,7 +61,7 @@ Launch the keyboard teleop tool
 
 ```(bash)
 # Terminal 2
-source /opt/ros/humble/setup.bash
+source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
