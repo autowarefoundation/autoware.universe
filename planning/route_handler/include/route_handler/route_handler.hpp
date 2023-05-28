@@ -105,6 +105,8 @@ public:
   // for lanelet
   bool getPreviousLaneletsWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
+  bool getNextLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const;
   lanelet::ConstLanelets getLaneChangeableNeighbors(const lanelet::ConstLanelet & lanelet) const;
@@ -346,6 +348,7 @@ public:
   bool getRightShoulderLanelet(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
+  bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
 
 private:
   // MUST
@@ -379,8 +382,6 @@ private:
   bool isBijectiveConnection(
     const lanelet::ConstLanelets & lanelet_section1,
     const lanelet::ConstLanelets & lanelet_section2) const;
-  bool getNextLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool getPreviousLaneletWithinRouteExceptGoal(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
   bool getNextLaneletWithinRouteExceptStart(
