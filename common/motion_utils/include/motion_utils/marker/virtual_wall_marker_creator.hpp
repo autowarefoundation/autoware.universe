@@ -31,13 +31,15 @@ namespace motion_utils
 enum VirtualWallStyle { stop, slowdown, deadline };
 struct VirtualWall
 {
-  geometry_msgs::msg::Pose pose;
-  std::string text;
-  std::string ns;
+  geometry_msgs::msg::Pose pose{};
+  std::string text{};
+  std::string ns{};
   VirtualWallStyle style = stop;
+  double longitudinal_offset{};
 };
+typedef std::vector<VirtualWall> VirtualWalls;
 
-class VirtualWallMarkerCreator2
+class VirtualWallMarkerCreator
 {
   struct MarkerCount
   {
@@ -50,7 +52,7 @@ class VirtualWallMarkerCreator2
     const rclcpp::Time & now, const int32_t id, const double longitudinal_offset,
     const std::string & ns_prefix)>;
 
-  std::vector<VirtualWall> virtual_walls;
+  VirtualWalls virtual_walls;
   std::unordered_map<std::string, MarkerCount> marker_count_per_namespace;
 
   /// @brief internal cleanup: clear the stored markers and remove unused namespace from the map
@@ -69,6 +71,10 @@ class VirtualWallMarkerCreator2
 
 public:
   void add_virtual_wall(const VirtualWall & virtual_wall) { virtual_walls.push_back(virtual_wall); }
+  void add_virtual_walls(const VirtualWalls & walls)
+  {
+    virtual_walls.insert(virtual_walls.end(), walls.begin(), walls.end());
+  }
 
   visualization_msgs::msg::MarkerArray create_markers(const rclcpp::Time & now = rclcpp::Time())
   {
@@ -92,7 +98,9 @@ public:
           create_fn = motion_utils::createDeadLineVirtualWallMarker;
           break;
       }
-      auto markers = create_fn(virtual_wall.pose, virtual_wall.text, now, 0, 0.0, virtual_wall.ns);
+      auto markers = create_fn(
+        virtual_wall.pose, virtual_wall.text, now, 0, virtual_wall.longitudinal_offset,
+        virtual_wall.ns);
       for (auto & marker : markers.markers) {
         marker.id = marker_count_per_namespace[marker.ns].current++;
         marker_array.markers.push_back(marker);

@@ -39,7 +39,7 @@ bool has_ns_id(
 TEST(VirtualWallMarkerCreator, oneWall)
 {
   motion_utils::VirtualWall wall;
-  motion_utils::VirtualWallMarkerCreator2 creator;
+  motion_utils::VirtualWallMarkerCreator creator;
   wall.style = motion_utils::VirtualWallStyle::stop;
   wall.pose.position.x = 1.0;
   wall.pose.position.y = 2.0;
@@ -64,7 +64,7 @@ TEST(VirtualWallMarkerCreator, oneWall)
 TEST(VirtualWallMarkerCreator, manyWalls)
 {
   motion_utils::VirtualWall wall;
-  motion_utils::VirtualWallMarkerCreator2 creator;
+  motion_utils::VirtualWallMarkerCreator creator;
   wall.style = motion_utils::VirtualWallStyle::stop;
   wall.ns = "ns1_";
   creator.add_virtual_wall(wall);
