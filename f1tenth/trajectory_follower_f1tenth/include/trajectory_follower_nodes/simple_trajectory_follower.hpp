@@ -23,7 +23,9 @@
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <memory>
 
@@ -36,6 +38,10 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using ackermann_msgs::msg::AckermannDriveStamped;
+using visualization_msgs::msg::Marker;
+using geometry_msgs::msg::Vector3;
+using std_msgs::msg::Header;
+using geometry_msgs::msg::Point;
 
 class SimpleTrajectoryFollower : public rclcpp::Node
 {
@@ -46,13 +52,18 @@ public:
 private:
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
-  // rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_cmd_;
-  rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_cmd_;
+  rclcpp::Publisher<AckermannDriveStamped>::SharedPtr drive_cmd_;
+  rclcpp::Publisher<Marker>::SharedPtr traj_marker_pub_;
+  rclcpp::Publisher<Marker>::SharedPtr goal_marker_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   Trajectory::SharedPtr trajectory_;
   Odometry::SharedPtr odometry_;
+
   TrajectoryPoint closest_traj_point_;
+
+
+
   bool use_external_target_vel_;
   double external_target_vel_;
   double lateral_deviation_;
@@ -62,6 +73,7 @@ private:
   void updateClosest();
   double calcSteerCmd();
   double calcAccCmd();
+  void createTrajectoryMarker();
 };
 
 }  // namespace simple_trajectory_follower

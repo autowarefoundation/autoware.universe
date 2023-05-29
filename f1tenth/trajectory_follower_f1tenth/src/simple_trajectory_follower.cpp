@@ -30,9 +30,9 @@ using tier4_autoware_utils::calcYawDeviation;
 SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & options)
 : Node("simple_trajectory_follower", options)
 {
-  // pub_cmd_ = create_publisher<AckermannControlCommand>("output/control_cmd", 1);
-
-  drive_cmd_ = create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/drive", 1);
+  drive_cmd_ = create_publisher<AckermannDriveStamped>("/drive", 1);
+  traj_marker_pub_ = create_publisher<Marker>("/wp_marker", 10);
+  goal_marker_pub_ = create_publisher<Marker>("/goal_marker", 10);
 
   sub_kinematics_ = create_subscription<Odometry>(
     "input/kinematics", 1, [this](const Odometry::SharedPtr msg) { odometry_ = msg; });
@@ -48,6 +48,69 @@ SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & o
     this, get_clock(), 30ms, std::bind(&SimpleTrajectoryFollower::onTimer, this));
 }
 
+void SimpleTrajectoryFollower::createTrajectoryMarker(){
+    Marker marker;
+    Pose pose;
+    Point point;
+    Vector3 scale;
+    Header header;
+
+    scale.x = 0.1;
+    scale.y = 0.1;
+    scale.z = 0.1;
+
+    header.frame_id = "map";
+
+    marker.type = marker.POINTS;
+    marker.pose = pose;
+    marker.scale = scale;
+    marker.header = header;
+
+    for(int i = 0; i < (int)trajectory_->points.size(); i++){
+      TrajectoryPoint trajectory_point_ = trajectory_->points[i];
+
+      point.x = trajectory_point_.pose.position.x;
+      point.y = trajectory_point_.pose.position.y;
+      point.z = 0.0;
+      
+      marker.points.push_back(point);
+    }
+
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    marker.color.a = 1.0;
+
+    traj_marker_pub_->publish(marker);
+
+
+    Marker goal_marker;
+
+    scale.x = 0.2;
+    scale.y = 0.2;
+    scale.z = 0.2;
+
+    header.frame_id = "map";
+
+    goal_marker.type = marker.POINTS;
+    goal_marker.pose = pose;
+    goal_marker.scale = scale;
+    goal_marker.header = header;
+
+    point.x = closest_traj_point_.pose.position.x;
+    point.y = closest_traj_point_.pose.position.y;
+    point.z = 0.0;
+      
+    goal_marker.points.push_back(point);
+
+    goal_marker.color.r = 0.0;
+    goal_marker.color.g = 0.0;
+    goal_marker.color.b = 1.0;
+    goal_marker.color.a = 1.0;
+
+    goal_marker_pub_->publish(goal_marker);
+}
+
 void SimpleTrajectoryFollower::onTimer()
 {
   if (!checkData()) {
@@ -56,6 +119,7 @@ void SimpleTrajectoryFollower::onTimer()
   }
 
   updateClosest();
+  createTrajectoryMarker();
 
   AckermannControlCommand cmd;
   cmd.stamp = cmd.lateral.stamp = cmd.longitudinal.stamp = get_clock()->now();
