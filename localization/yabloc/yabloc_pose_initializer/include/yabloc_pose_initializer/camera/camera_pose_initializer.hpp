@@ -13,17 +13,17 @@
 // limitations under the License.
 
 #pragma once
-#include "camera_pose_initializer/lane_image.hpp"
-#include "camera_pose_initializer/marker_module.hpp"
-#include "camera_pose_initializer/projector_module.hpp"
+#include "yabloc_pose_initializer/camera/lane_image.hpp"
+#include "yabloc_pose_initializer/camera/marker_module.hpp"
+#include "yabloc_pose_initializer/camera/projector_module.hpp"
 
 #include <opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <yabloc_pose_initializer/srv/semseg.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <ground_msgs/srv/ground.hpp>
-#include <semseg_msgs/srv/semseg.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
@@ -40,7 +40,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
-  using SemsegSrv = semseg_msgs::srv::Semseg;
+  using SemsegSrv = yabloc_pose_initializer::srv::Semseg;
 
   CameraPoseInitializer();
 

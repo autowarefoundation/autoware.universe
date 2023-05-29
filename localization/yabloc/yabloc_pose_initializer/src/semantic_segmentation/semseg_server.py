@@ -22,7 +22,7 @@ import sys
 import cv2
 from cv_bridge import CvBridge
 import time
-from semseg_msgs.srv import Semseg
+from yabloc_pose_initializer.srv import Semseg
 
 
 class SemsegServer(Node):

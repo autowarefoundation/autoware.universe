@@ -1,13 +1,15 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>camera_pose_initializer</name>
+  <name>yabloc_pose_initializer</name>
   <version>0.0.0</version>
-  <description>The pose initializer based on semantic matching</description>
+  <description>The pose initializer</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
+  <depend>rclpy</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>std_msgs</depend>
@@ -15,14 +17,15 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>semseg_msgs</depend>
 
   <depend>tier4_localization_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>ground_msgs</depend>
   <depend>ll2_decomposer</depend>
   <depend>yabloc_common</depend>
-  <depend>semantic_segmentation</depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

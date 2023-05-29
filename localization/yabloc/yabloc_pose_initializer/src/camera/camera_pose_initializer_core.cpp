@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "camera_pose_initializer/camera_pose_initializer.hpp"
-#include "camera_pose_initializer/lanelet_util.hpp"
+#include "yabloc_pose_initializer/camera/camera_pose_initializer.hpp"
+#include "yabloc_pose_initializer/camera/lanelet_util.hpp"
 
 #include <ll2_decomposer/from_bin_msg.hpp>
 #include <opencv2/highgui.hpp>

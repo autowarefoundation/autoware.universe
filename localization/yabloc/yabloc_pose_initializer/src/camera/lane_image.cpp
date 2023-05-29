@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "camera_pose_initializer/lane_image.hpp"
+#include "yabloc_pose_initializer/camera/lane_image.hpp"
 
 #include <opencv2/imgproc.hpp>
 

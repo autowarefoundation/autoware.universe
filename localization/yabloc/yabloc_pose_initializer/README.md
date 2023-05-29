@@ -1,8 +1,8 @@
-# Semantic Segmentation
+# YabLoc Pose Initializer
 
 This package includes multiple licenses.
 
-# Model
+## Semantic_segmentation Model
 
 [Original](https://github.com/openvinotoolkit/open_model_zoo/tree/master/models/intel/road-segmentation-adas-0001)
 : Apache-2.0 license
@@ -12,7 +12,7 @@ This package includes multiple licenses.
 
 The converted models is downloaded automatically when building.
 
-# Reference repositories
+## Reference repositories
 
 * <https://github.com/openvinotoolkit/open_model_zoo>
 * <https://github.com/PINTO0309/PINTO_model_zoo>

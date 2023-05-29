@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "camera_pose_initializer/camera_pose_initializer.hpp"
+#include "yabloc_pose_initializer/camera/camera_pose_initializer.hpp"
 
 int main(int argc, char * argv[])
 {

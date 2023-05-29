@@ -2,7 +2,7 @@
     <arg name="skip_autoware_pose_initializer"/>
 
     <group if="$(var skip_autoware_pose_initializer)">
-        <node name="gnss_pose_initializer_node" pkg="gnss_pose_initializer" exec="gnss_pose_initializer_node" output="screen" args="--ros-args --log-level info">
+        <node name="gnss_pose_initializer_node" pkg="yabloc_pose_initializer" exec="gnss_pose_initializer_node" output="screen" args="--ros-args --log-level info">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
             <remap from="pose_cov" to="/initialpose3d"/>
@@ -11,7 +11,7 @@
     </group>
 
     <group unless="$(var skip_autoware_pose_initializer)">
-        <node name="camera_pose_initializer_node" pkg="camera_pose_initializer" exec="camera_pose_initializer_node" output="screen" args="--ros-args --log-level info">
+        <node name="camera_pose_initializer_node" pkg="yabloc_pose_initializer" exec="camera_pose_initializer_node" output="screen" args="--ros-args --log-level info">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param from="$(var camera_pose_initializer_param_path)" />
             <remap from="/image_raw" to="/localization/yabloc/imgproc/undistorted/image_raw"/>
@@ -22,7 +22,12 @@
             <remap from="/semseg_srv" to="/localization/yabloc/semseg_srv"/>
             <remap from="yabloc_align_srv" to="/localization/yabloc/initializer/yabloc_align_srv"/>
         </node>
-        <include file="$(find-pkg-share semantic_segmentation)/launch/semseg_server.launch.xml"/>
+
+        <arg name="model_path" default="$(find-pkg-share yabloc_pose_initializer)/data/saved_model/model_float32.pb"/>
+        <node name="semseg_node" pkg="yabloc_pose_initializer" exec="semseg_server.py" output="screen" args="--ros-args --log-level info">
+            <param name="model_path" value="$(var model_path)"/>
+            <remap from="/srv/semseg_srv" to="/localization/yabloc/semseg_srv"/>
+        </node>
     </group>
 
 </launch>

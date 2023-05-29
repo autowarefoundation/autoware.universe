@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "camera_pose_initializer/projector_module.hpp"
+#include "yabloc_pose_initializer/camera/projector_module.hpp"
 
 #include <Eigen/Geometry>
 #include <opencv2/imgproc.hpp>

@@ -11,3 +11,4 @@
         <remap from="/out/semantic_image" to="/semseg/semantic_image"/>
     </node>
 </launch>
+

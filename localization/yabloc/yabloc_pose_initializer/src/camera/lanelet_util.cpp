@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "camera_pose_initializer/lanelet_util.hpp"
+#include "yabloc_pose_initializer/camera/lanelet_util.hpp"
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
