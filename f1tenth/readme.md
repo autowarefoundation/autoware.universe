@@ -56,7 +56,7 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
 ## How to create a map
 Click [here](https://drive.google.com/file/d/15PViYjO-CKy2uvMqojIPj7BqdnMEidws/view?usp=share_link) to watch a demonstration video. 
 
-This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, click [here](https://f1tenth.readthedocs.io/en/foxy_test/index.html). It is assumed that the f1tenth system installed under the __f1tenth_ws__ directory. 
+This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, see [f1tenth_system](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/f1tenth_system).
 
 On your f1tenth car, install the slamtoolbox 
 
@@ -69,7 +69,7 @@ Start the f1tenth system
 ```(bash)
 # Terminal 1
 source /opt/ros/galactic/setup.bash
-cd f1tenth_ws && . install/setup.bash
+cd autoware && . install/setup.bash
 ros2 launch f1tenth_stack bringup_launch.py
 ```
 
@@ -78,8 +78,8 @@ Start the slamtoolbox
 ```(bash)
 # Terminal 2
 source /opt/ros/galactic/setup.bash
-cd f1tenth_ws && . install/setup.bash
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware/f1tenth_ws/src/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
+cd autoware && . install/setup.bash
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```
 
 Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you ran slam_toolbox.
@@ -143,3 +143,5 @@ cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
 ```
 
+## How to record a trajectory (real car)
+You need a functional particle filter which depends on the library range_libc. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).

@@ -13,14 +13,13 @@ To run this, you need to ensure that both the map_server ROS package, and the py
 For the map server:
 ```
 sudo apt-get update
-rosdep install -r --from-paths src --ignore-src --rosdistro kinetic -y
+rosdep install -r --from-paths src --ignore-src --rosdistro galactic -y
 ```
 
 For [RangeLibc](https://github.com/f1tenth/range_libc):
 
 ```
 sudo pip install cython
-git clone http://github.com/kctess5/range_libc
 cd range_libc/pywrappers
 # on VM
 ./compile.sh
@@ -33,7 +32,7 @@ cd range_libc/pywrappers
 The majority of parameters you might want to tweak are in the launch/localize.launch file. You may have to modify the "odometry_topic" or "scan_topic" parameters to match your environment.
 
 ```
-roslaunch particle_filter localize.launch
+ros2 launch particle_filter localize_launch.py
 ```
 
 Once the particle filter is running, you can visualize the map and other particle filter visualization message in RViz. Use the "2D Pose Estimate" tool from the RViz toolbar to initialize the particle locations.
