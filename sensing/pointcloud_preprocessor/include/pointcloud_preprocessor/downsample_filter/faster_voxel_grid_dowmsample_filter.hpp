@@ -79,11 +79,11 @@ private:
     const PointCloud2ConstPtr & input, size_t global_offset);
 
   bool get_min_max_voxel(
-    const PointCloud2ConstPtr & input, Eigen::Vector3f & min_voxel, Eigen::Vector3f & max_voxel);
+    const PointCloud2ConstPtr & input, Eigen::Vector3i & min_voxel, Eigen::Vector3i & max_voxel);
 
   std::unordered_map<uint32_t, Centroid> calc_centroids_each_voxel(
-    const PointCloud2ConstPtr & input, const Eigen::Vector3f & max_voxel,
-    const Eigen::Vector3f & min_voxel);
+    const PointCloud2ConstPtr & input, const Eigen::Vector3i & max_voxel,
+    const Eigen::Vector3i & min_voxel);
 
   void copy_centroids_to_output(
     std::unordered_map<uint32_t, Centroid> & voxel_centroid_map, PointCloud2 & output,

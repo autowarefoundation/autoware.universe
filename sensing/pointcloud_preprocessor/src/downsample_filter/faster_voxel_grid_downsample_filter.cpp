@@ -27,9 +27,8 @@ FasterVoxelGridDownsampleFilter::FasterVoxelGridDownsampleFilter()
 void FasterVoxelGridDownsampleFilter::set_voxel_size(
   float voxel_size_x, float voxel_size_y, float voxel_size_z)
 {
-  inverse_voxel_size_[0] = 1.0f / voxel_size_x;
-  inverse_voxel_size_[1] = 1.0f / voxel_size_y;
-  inverse_voxel_size_[2] = 1.0f / voxel_size_z;
+  inverse_voxel_size_ =
+    Eigen::Array3f::Ones() / Eigen::Array3f(voxel_size_x, voxel_size_y, voxel_size_z);
 }
 
 void FasterVoxelGridDownsampleFilter::set_field_offsets(const PointCloud2ConstPtr & input)
@@ -51,7 +50,7 @@ void FasterVoxelGridDownsampleFilter::filter(
   }
 
   // Compute the minimum and maximum voxel coordinates
-  Eigen::Vector3f min_voxel, max_voxel;
+  Eigen::Vector3i min_voxel, max_voxel;
   if (!get_min_max_voxel(input, min_voxel, max_voxel)) {
     RCLCPP_ERROR(
       logger,
@@ -90,7 +89,7 @@ Eigen::Vector3f FasterVoxelGridDownsampleFilter::get_point_from_global_offset(
 }
 
 bool FasterVoxelGridDownsampleFilter::get_min_max_voxel(
-  const PointCloud2ConstPtr & input, Eigen::Vector3f & min_voxel, Eigen::Vector3f & max_voxel)
+  const PointCloud2ConstPtr & input, Eigen::Vector3i & min_voxel, Eigen::Vector3i & max_voxel)
 {
   // Compute the minimum and maximum point coordinates
   Eigen::Vector3f min_point, max_point;
@@ -127,12 +126,12 @@ bool FasterVoxelGridDownsampleFilter::get_min_max_voxel(
 
 std::unordered_map<uint32_t, FasterVoxelGridDownsampleFilter::Centroid>
 FasterVoxelGridDownsampleFilter::calc_centroids_each_voxel(
-  const PointCloud2ConstPtr & input, const Eigen::Vector3f & max_voxel,
-  const Eigen::Vector3f & min_voxel)
+  const PointCloud2ConstPtr & input, const Eigen::Vector3i & max_voxel,
+  const Eigen::Vector3i & min_voxel)
 {
   std::unordered_map<uint32_t, Centroid> voxel_centroid_map;
   // Compute the number of divisions needed along all axis
-  Eigen::Vector3f div_b = max_voxel - min_voxel + Eigen::Vector3f::Ones();
+  Eigen::Vector3i div_b = max_voxel - min_voxel + Eigen::Vector3i::Ones();
   // Set up the division multiplier
   Eigen::Vector3i div_b_mul(1, div_b[0], div_b[0] * div_b[1]);
 
