@@ -15,10 +15,13 @@
 #ifndef UTIL_TYPE_HPP_
 #define UTIL_TYPE_HPP_
 
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <lanelet2_core/primitives/CompoundPolygon.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner::util
@@ -52,6 +55,13 @@ struct DetectionLaneDivision
   int lane_id;
   // discrete fine lines from left to right
   std::vector<lanelet::ConstLineString2d> divisions;
+};
+
+struct InterpolatedPathInfo
+{
+  const autoware_auto_planning_msgs::msg::PathWithLaneId path;
+  const double interval;
+  const std::pair<size_t, size_t> lane_interval;
 };
 
 }  // namespace behavior_velocity_planner::util
