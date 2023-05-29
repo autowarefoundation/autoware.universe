@@ -34,7 +34,7 @@ void Butterworth2dFilter::initialize(const double & dt, const double & f_cutoff_
   m_u2 = 0.0;
   m_u1 = 0.0;
 
-  // 2d Butterworth low pass filter
+  // 2d Butterworth low pass filter with bi-linear transformation
   const double f_sampling_hz = 1.0 / dt;
   const double xi = 1.0 / std::tan(M_PI * f_cutoff_hz / f_sampling_hz);
   const double xi_2 = xi * xi;
