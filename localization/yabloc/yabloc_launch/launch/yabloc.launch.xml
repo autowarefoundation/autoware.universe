@@ -23,9 +23,9 @@
     <arg name="gnss_particle_corrector_param_path" default="$(find-pkg-share gnss_particle_corrector)/config/gnss_particle_corrector.param.yaml"/>
     <arg name="predictor_param_path" default="$(find-pkg-share modularized_particle_filter)/config/predictor.param.yaml"/>
     <!-- image processing -->
-    <arg name="graph_segment_param_path" default="$(find-pkg-share graph_segment)/config/graph_segment.param.yaml"/>
-    <arg name="segment_filter_param_path" default="$(find-pkg-share segment_filter)/config/segment_filter.param.yaml"/>
-    <arg name="undistort_param_path" default="$(find-pkg-share undistort)/config/undistort.param.yaml"/>
+    <arg name="graph_segment_param_path" default="$(find-pkg-share yabloc_imgproc)/config/graph_segment.param.yaml"/>
+    <arg name="segment_filter_param_path" default="$(find-pkg-share yabloc_imgproc)/config/segment_filter.param.yaml"/>
+    <arg name="undistort_param_path" default="$(find-pkg-share yabloc_imgproc)/config/undistort.param.yaml"/>
     <!-- map -->
     <arg name="ground_server_param_path" default="$(find-pkg-share ground_server)/config/ground_server.param.yaml"/>
     <arg name="ll2_decomposer_param_path" default="$(find-pkg-share ll2_decomposer)/config/ll2_decomposer.param.yaml"/>

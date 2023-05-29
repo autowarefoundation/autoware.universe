@@ -10,7 +10,7 @@
     <arg name="resized_info" description=""/>
 
     <!-- lanelet2 overlay monitor -->
-    <node name="lanelet2_overlay_monitor" pkg="lanelet2_overlay_monitor" exec="lanelet2_overlay_monitor_node" output="screen" args="--ros-args --log-level warn">
+    <node name="lanelet2_overlay" pkg="yabloc_imgproc" exec="lanelet2_overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="src_image" to="$(var resized_image)"/>
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="$(var input_overlayed_pose)"/>
@@ -22,7 +22,7 @@
     </node>
 
     <!-- line segments overlay monitor -->
-    <node name="line_segments_overlay_monitor" pkg="line_segments_overlay_monitor" exec="line_segments_overlay_monitor_node" output="screen">
+    <node name="line_segments_overlay" pkg="yabloc_imgproc" exec="line_segments_overlay_node" output="screen">
         <remap from="input_image" to="$(var resized_image)"/>
         <remap from="input_line_segments" to="$(var input_debug_line_segments)"/>
         <remap from="output_image_with_colored_line_segments" to="$(var output_image_with_colored_line_segments)"/>

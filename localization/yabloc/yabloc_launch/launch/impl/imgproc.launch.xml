@@ -5,7 +5,7 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <!-- undistort -->
-    <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level warn">
+    <node name="undistort" pkg="yabloc_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param from="$(var undistort_param_path)"/>
 
@@ -18,7 +18,7 @@
     <!-- line segment detector -->
     <arg name="output_image_with_line_segments" default="image_with_line_segments"/>
     <arg name="output_line_segments_cloud" default="line_segments_cloud"/>
-    <node name="lsd" pkg="lsd" exec="lsd_node" output="screen" args="--ros-args --log-level warn">
+    <node name="lsd" pkg="yabloc_imgproc" exec="lsd_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="src_image" to="$(var resized_image)"/>
 
@@ -29,7 +29,7 @@
     <!-- graph based segmentation -->
     <arg name="output_graph_segmented" default="graph_segmented"/>
     <arg name="output_segmented_image" default="segmented_image"/>
-    <node name="graph_segment" pkg="graph_segment" exec="graph_segment_node" output="screen" args="--ros-args --log-level warn">
+    <node name="graph_segment" pkg="yabloc_imgproc" exec="graph_segment_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param from="$(var graph_segment_param_path)"/>
 
@@ -44,7 +44,7 @@
     <arg name="output_projected_line_segments_cloud" default="/localization/yabloc/imgproc/projected_line_segments_cloud"/>
     <arg name="output_projected_image" default="/localization/yabloc/imgproc/projected_image"/>
     <arg name="output_debug_image_with_lines" default="debug/projected_image"/>
-    <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
+    <node name="segment_filter" pkg="yabloc_imgproc" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param from="$(var segment_filter_param_path)"/>
 
