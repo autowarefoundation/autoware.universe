@@ -40,7 +40,7 @@ TEST(VirtualWallMarkerCreator, oneWall)
 {
   motion_utils::VirtualWall wall;
   motion_utils::VirtualWallMarkerCreator creator;
-  wall.style = motion_utils::VirtualWallStyle::stop;
+  wall.style = motion_utils::VirtualWallType::stop;
   wall.pose.position.x = 1.0;
   wall.pose.position.y = 2.0;
   creator.add_virtual_wall(wall);
@@ -65,14 +65,14 @@ TEST(VirtualWallMarkerCreator, manyWalls)
 {
   motion_utils::VirtualWall wall;
   motion_utils::VirtualWallMarkerCreator creator;
-  wall.style = motion_utils::VirtualWallStyle::stop;
+  wall.style = motion_utils::VirtualWallType::stop;
   wall.ns = "ns1_";
   creator.add_virtual_wall(wall);
   creator.add_virtual_wall(wall);
   creator.add_virtual_wall(wall);
   wall.ns = "ns2_";
   creator.add_virtual_wall(wall);
-  wall.style = motion_utils::VirtualWallStyle::slowdown;
+  wall.style = motion_utils::VirtualWallType::slowdown;
   wall.ns = "ns2_";
   creator.add_virtual_wall(wall);
   creator.add_virtual_wall(wall);
@@ -80,7 +80,7 @@ TEST(VirtualWallMarkerCreator, manyWalls)
   creator.add_virtual_wall(wall);
   creator.add_virtual_wall(wall);
   creator.add_virtual_wall(wall);
-  wall.style = motion_utils::VirtualWallStyle::deadline;
+  wall.style = motion_utils::VirtualWallType::deadline;
   wall.ns = "ns1_";
   creator.add_virtual_wall(wall);
   wall.ns = "ns2_";

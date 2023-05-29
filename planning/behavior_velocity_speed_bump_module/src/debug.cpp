@@ -99,7 +99,7 @@ motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
   motion_utils::VirtualWall wall;
   wall.text = "speed_bump";
   wall.ns = std::to_string(module_id_) + "_";
-  wall.style = motion_utils::VirtualWallStyle::slowdown;
+  wall.style = motion_utils::VirtualWallType::slowdown;
   for (const auto & p : debug_data_.slow_start_poses) {
     wall.pose = p;
     virtual_walls.push_back(wall);

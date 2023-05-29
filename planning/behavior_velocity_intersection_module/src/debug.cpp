@@ -208,7 +208,7 @@ motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
   // TODO(Mamoru Sobue): collision stop pose depends on before/after occlusion clearance
   motion_utils::VirtualWalls virtual_walls;
   motion_utils::VirtualWall wall;
-  wall.style = motion_utils::VirtualWallStyle::stop;
+  wall.style = motion_utils::VirtualWallType::stop;
 
   if (!activated_) {
     wall.text = "intersection";
@@ -254,7 +254,7 @@ motion_utils::VirtualWalls MergeFromPrivateRoadModule::createVirtualWalls()
   const auto state = state_machine_.getState();
   if (state == StateMachine::State::STOP) {
     motion_utils::VirtualWall wall;
-    wall.style = motion_utils::VirtualWallStyle::stop;
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.pose = debug_data_.virtual_wall_pose;
     wall.text = "merge_from_private_road";
   }

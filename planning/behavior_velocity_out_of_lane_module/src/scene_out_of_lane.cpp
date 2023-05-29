@@ -169,7 +169,7 @@ motion_utils::VirtualWalls OutOfLaneModule::createVirtualWalls()
   motion_utils::VirtualWall wall;
   wall.text = "out_of_lane";
   wall.longitudinal_offset = params_.front_offset;
-  wall.style = motion_utils::VirtualWallStyle::slowdown;
+  wall.style = motion_utils::VirtualWallType::slowdown;
   for (const auto & slowdown : debug_data_.slowdowns) {
     wall.pose = slowdown.point.point.pose;
     virtual_walls.push_back(wall);

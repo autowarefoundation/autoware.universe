@@ -179,7 +179,7 @@ motion_utils::VirtualWalls RunOutDebug::createVirtualWalls()
   motion_utils::VirtualWalls virtual_walls;
   motion_utils::VirtualWall wall;
   wall.text = "run_out";
-  wall.style = motion_utils::VirtualWallStyle::stop;
+  wall.style = motion_utils::VirtualWallType::stop;
   for (const auto & p : stop_pose_) {
     wall.pose = p;
     virtual_walls.push_back(wall);

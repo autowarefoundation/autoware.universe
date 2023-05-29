@@ -175,13 +175,13 @@ motion_utils::VirtualWalls DetectionAreaModule::createVirtualWalls()
   motion_utils::VirtualWall wall;
   wall.text = "detection_area";
 
-  wall.style = motion_utils::VirtualWallStyle::stop;
+  wall.style = motion_utils::VirtualWallType::stop;
   for (const auto & p : debug_data_.stop_poses) {
     wall.pose = tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
 
-  wall.style = motion_utils::VirtualWallStyle::deadline;
+  wall.style = motion_utils::VirtualWallType::deadline;
   for (const auto & p : debug_data_.dead_line_poses) {
     wall.pose = tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);

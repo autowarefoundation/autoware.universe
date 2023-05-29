@@ -56,7 +56,7 @@ motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWalls()
   motion_utils::VirtualWall wall;
   wall.text = "virtual_traffic_light";
   wall.ns = std::to_string(module_id_) + "_";
-  wall.style = motion_utils::VirtualWallStyle::stop;
+  wall.style = motion_utils::VirtualWallType::stop;
   const auto & d = module_data_;
   // virtual_wall_stop_line
   std::vector<geometry_msgs::msg::Pose> wall_poses;

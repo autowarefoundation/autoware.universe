@@ -102,7 +102,7 @@ motion_utils::VirtualWalls StopLineModule::createVirtualWalls()
   if (!debug_data_.stop_pose && (state_ == State::APPROACH || state_ == State::STOPPED)) {
     motion_utils::VirtualWall wall;
     wall.text = "stopline";
-    wall.style = motion_utils::VirtualWallStyle::stop;
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.ns = std::to_string(module_id_) + "_";
     wall.pose = tier4_autoware_utils::calcOffsetPose(
       *debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);

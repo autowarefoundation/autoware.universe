@@ -219,7 +219,7 @@ motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
   motion_utils::VirtualWalls virtual_walls;
   motion_utils::VirtualWall wall;
   wall.text = "occlusion_spot";
-  wall.style = motion_utils::VirtualWallStyle::slowdown;
+  wall.style = motion_utils::VirtualWallType::slowdown;
   for (size_t id = 0; id < debug_data_.debug_poses.size(); id++) {
     wall.pose =
       calcOffsetPose(debug_data_.debug_poses.at(id), debug_data_.baselink_to_front, 0.0, 0.0);

@@ -28,17 +28,21 @@
 namespace motion_utils
 {
 
-enum VirtualWallStyle { stop, slowdown, deadline };
+/// @brief type of virtual wall associated with different marker styles and namespace
+enum VirtualWallType { stop, slowdown, deadline };
+/// @brief virtual wall to be visualized in rviz
 struct VirtualWall
 {
   geometry_msgs::msg::Pose pose{};
   std::string text{};
   std::string ns{};
-  VirtualWallStyle style = stop;
+  VirtualWallType style = stop;
   double longitudinal_offset{};
 };
 typedef std::vector<VirtualWall> VirtualWalls;
 
+/// @brief class to manage the creation of virtual wall markers
+/// @details creates both ADD and DELETE markers
 class VirtualWallMarkerCreator
 {
   struct MarkerCount
@@ -56,68 +60,20 @@ class VirtualWallMarkerCreator
   std::unordered_map<std::string, MarkerCount> marker_count_per_namespace;
 
   /// @brief internal cleanup: clear the stored markers and remove unused namespace from the map
-  void cleanup()
-  {
-    for (auto it = marker_count_per_namespace.begin(); it != marker_count_per_namespace.end();) {
-      const auto & marker_count = it->second;
-      const auto is_unused_namespace = marker_count.previous == 0 && marker_count.current == 0;
-      if (is_unused_namespace)
-        it = marker_count_per_namespace.erase(it);
-      else
-        ++it;
-    }
-    virtual_walls.clear();
-  }
+  void cleanup();
 
 public:
-  void add_virtual_wall(const VirtualWall & virtual_wall) { virtual_walls.push_back(virtual_wall); }
-  void add_virtual_walls(const VirtualWalls & walls)
-  {
-    virtual_walls.insert(virtual_walls.end(), walls.begin(), walls.end());
-  }
+  /// @brief add a virtual wall
+  /// @param virtual_wall virtual wall to add
+  void add_virtual_wall(const VirtualWall & virtual_wall);
+  /// @brief add virtual walls
+  /// @param virtual_walls virtual walls to add
+  void add_virtual_walls(const VirtualWalls & walls);
 
-  visualization_msgs::msg::MarkerArray create_markers(const rclcpp::Time & now = rclcpp::Time())
-  {
-    visualization_msgs::msg::MarkerArray marker_array;
-    // update marker counts
-    for (auto & [ns, count] : marker_count_per_namespace) {
-      count.previous = count.current;
-      count.current = 0UL;
-    }
-    // convert to markers
-    create_wall_function create_fn;
-    for (const auto & virtual_wall : virtual_walls) {
-      switch (virtual_wall.style) {
-        case stop:
-          create_fn = motion_utils::createStopVirtualWallMarker;
-          break;
-        case slowdown:
-          create_fn = motion_utils::createSlowDownVirtualWallMarker;
-          break;
-        case deadline:
-          create_fn = motion_utils::createDeadLineVirtualWallMarker;
-          break;
-      }
-      auto markers = create_fn(
-        virtual_wall.pose, virtual_wall.text, now, 0, virtual_wall.longitudinal_offset,
-        virtual_wall.ns);
-      for (auto & marker : markers.markers) {
-        marker.id = marker_count_per_namespace[marker.ns].current++;
-        marker_array.markers.push_back(marker);
-      }
-    }
-    // create delete markers
-    visualization_msgs::msg::Marker marker;
-    marker.action = visualization_msgs::msg::Marker::DELETE;
-    for (const auto & [ns, count] : marker_count_per_namespace) {
-      for (marker.id = count.current; marker.id < static_cast<int>(count.previous); ++marker.id) {
-        marker.ns = ns;
-        marker_array.markers.push_back(marker);
-      }
-    }
-    cleanup();
-    return marker_array;
-  }
+  /// @brief create markers for the stored virtual walls
+  /// @details also create DELETE markers for the namespace+ids that are no longer used
+  /// @param now current time to be used for displaying the markers
+  visualization_msgs::msg::MarkerArray create_markers(const rclcpp::Time & now = rclcpp::Time());
 };
 }  // namespace motion_utils
 
