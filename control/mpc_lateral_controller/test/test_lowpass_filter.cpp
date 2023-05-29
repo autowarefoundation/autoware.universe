@@ -95,7 +95,7 @@ TEST(TestLowpassFilter, Butterworth2dFilterCoeffs)
 {
   using autoware::motion::control::mpc_lateral_controller::Butterworth2dFilter;
 
-  // Case 1: 
+  // Case 1:
   // cutoff_frequency = 1.0 [Hz], sampling_time = 0.033
   //
   //   0.0093487 +0.0186974z +0.0093487z²
@@ -115,7 +115,7 @@ TEST(TestLowpassFilter, Butterworth2dFilterCoeffs)
     EXPECT_NEAR(coeff.at(4), 0.0093487, ep);   // b2
   }
 
-  // Case 1: 
+  // Case 1:
   // cutoff_frequency = 2.0 [Hz], sampling_time = 0.05
   //
   //    0.0674553 +0.1349105z +0.0674553z²
