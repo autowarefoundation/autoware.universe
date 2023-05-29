@@ -129,7 +129,7 @@ Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 
 ```(bash)
 # Terminal 1
-source /opt/ros/humble/setup.bash
+source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
@@ -138,10 +138,36 @@ Replay a trajectory from your previously saved file
 
 ```(bash)
 # Terminal 2
-source /opt/ros/humble/setup.bash
+source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
 ```
 
 ## How to record a trajectory (real car)
-You need a functional particle filter which depends on the library range_libc. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+
+Launch the f1tenth_system, recordreplay_planner, and trajectory follower
+
+```(bash)
+# Terminal 1
+source /opt/ros/galactic/setup.bash
+cd autoware && . install/setup.bash
+ros2 launch launch_autoware_f1tenth realcar_launch.py
+```
+
+Launch the particle filter for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+
+```(bash)
+# Terminal 2
+source /opt/ros/galactic/setup.bash
+cd autoware && . install/setup.bash
+ros2 launch particle_filter localiza_launch.py
+```
+
+Record a trajectory and save at your preferred path. To stop recording, Ctrl + C and your path will be automatically saved.
+
+```(bash)
+# Terminal 3
+source /opt/ros/galactic/setup.bash
+cd autoware && . install/setup.bash
+ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
+```
