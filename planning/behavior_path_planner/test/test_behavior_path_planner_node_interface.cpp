@@ -161,7 +161,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestPullOutModuleWithExceptionRoute)
 #ifndef USE_OLD_ARCHITECTURE
   module_name = "pull_out";
 #endif
-  EXPECT_EQ(isExpectedModuleRunning(test_target_node, module_name), true);
+  EXPECT_TRUE(isExpectedModuleRunning(test_target_node, module_name), true);
 
   // test with empty route
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalRoute(test_target_node));
