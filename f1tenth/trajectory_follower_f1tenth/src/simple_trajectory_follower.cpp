@@ -133,7 +133,7 @@ void SimpleTrajectoryFollower::onTimer()
   ackermann_msg.drive.steering_angle = cmd.lateral.steering_tire_angle * 10;
   drive_cmd_->publish(ackermann_msg);
 
-  cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
+  // cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
 }
 
 void SimpleTrajectoryFollower::updateClosest()
@@ -156,6 +156,12 @@ double SimpleTrajectoryFollower::calcSteerCmd()
   const auto lookahead = min_lookahead + lookahead_time * std::abs(odometry_->twist.twist.linear.x);
   const auto kp = 50.0 * wheel_base / (lookahead * lookahead);
   const auto kd = 6.0 * wheel_base / lookahead;
+
+  cout << "lat error" << lat_err << endl;
+  cout << "yaw error" << yaw_err << endl << endl;
+
+  cout << "kp steer" << -kp * lat_err << endl;
+  cout << "kd steer" << -kd * yaw_err << endl << endl;
 
   constexpr auto steer_lim = 1.0;
 
