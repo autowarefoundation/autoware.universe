@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Optionally launch in GDB, for debugging -->
+  <arg name="debug" default="false" />
+  <let name="launch_prefix" value="xterm -e gdb --args" if="$(var debug)" />
+
+  <!-- Ackermann to VESC node -->
+  <node pkg="vesc_ackermann" exec="ackermann_to_vesc_node" name="ackermann_to_vesc_node" output="screen">
+    <param name="speed_to_erpm_gain" value="4614.0" />
+    <param name="speed_to_erpm_offset" value="0.0" />
+    <param name="steering_angle_to_servo_gain" value="-1.2135" />
+    <param name="steering_angle_to_servo_offset" value="0.5304" />
+  </node>
+</launch>

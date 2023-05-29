@@ -1,0 +1,9 @@
+# Device vesc6 udev definition
+# idVendor  0x0403
+# idProduct 0x5740
+
+
+# Alias the Sparkfun 9DoF as imu, and the electronic speed controller as VESC
+#ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1b4f", ATTRS{idProduct}=="9d0f", SYMLINK+="imu" , GROUP="dialout"
+#ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="vesc%n", GROUP="dialout"
+ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740",PROGRAM="/bin/vesc_device_lookup %k", SYMLINK+="vesc/%c", GROUP="dialout"

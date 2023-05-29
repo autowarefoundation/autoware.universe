@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>vesc_driver</name>
+  <version>1.1.0</version>
+  <description>
+    ROS device driver for the Vedder VESC open source motor driver.
+  </description>
+  <maintainer email="joebetz@seas.upenn.edu">Johannes Betz</maintainer>
+  <license>BSD</license>
+  <url type="website">http://www.ros.org/wiki/vesc_driver</url>
+  <url type="repository">https://github.com/f1tenth/vesc</url>
+  <url type="bugtracker">https://github.com/f1tenth/vesc/issues</url>
+  <author email="boulet@ll.mit.edu">Michael T. Boulet</author>
+  <author email="josh.whitley@autoware.org">Joshua Whitley</author>
+  <author email="hxue@ucsd.edu">Haoru Xue</author>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>vesc_msgs</depend>
+  <depend>serial_driver</depend>
+  <depend>sensor_msgs</depend>
+
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

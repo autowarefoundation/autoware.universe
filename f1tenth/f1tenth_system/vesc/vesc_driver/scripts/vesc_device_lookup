@@ -1,0 +1,5 @@
+dme#!/bin/bash
+
+export LD_LIBRARY_PATH=/opt/ros/foxy/lib 
+
+vesc_device_namer $1 1000

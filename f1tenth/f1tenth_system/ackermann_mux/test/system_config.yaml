@@ -1,0 +1,24 @@
+twist_mux:
+  ros__parameters:
+    topics:
+      input1:
+        topic   : vel_1
+        timeout : 0.7
+        priority: 5
+      input2:
+        topic   : vel_2
+        timeout : 0.0
+        priority: 1
+      input3:
+        topic   : vel_3
+        timeout : 0.3
+        priority: 10
+    locks:
+      emergency_255:
+        topic   : lock_1
+        timeout : 0.5
+        priority: 255
+      emergency_10:
+        topic   : lock_2
+        timeout : 0.0
+        priority: 10

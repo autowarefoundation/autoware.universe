@@ -1,0 +1,116 @@
+joy_teleop:
+  ros__parameters:
+
+    walk:
+      type: topic
+      interface_type: geometry_msgs/msg/TwistStamped
+      topic_name: cmd_vel
+      deadman_buttons: [4]
+      axis_mappings:
+        linear-x:
+          axis: 1
+          scale: 0.5
+          offset: -0.03
+        angular-z:
+          axis: 0
+          scale: 0.5
+          offset: 0
+        linear-y:
+          axis: 2
+          scale: 0.3
+          offset: 0
+        linear-z:
+          button: 2
+          scale: 3.0
+        header-frame_id:
+          value: 'my_tf_frame'
+
+    force_push:
+      type: topic
+      interface_type: geometry_msgs/msg/Wrench
+      topic_name: base_link_wrench
+      deadman_buttons: [5, 7]
+      axis_mappings:
+        force-x:
+          axis: 3
+          scale: 40
+          offset: 0
+        force-y:
+          axis: 2
+          scale: 40
+          offset: 0
+
+    stop:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [0, 2]
+      message_value:
+        linear-x:
+          value: 0.0
+        angular-z:
+          value: 0.0
+        linear-y:
+          value: 0.0
+
+    hello:
+      type: topic
+      interface_type: std_msgs/msg/String
+      topic_name: chatter
+      deadman_buttons: [2]
+      message_value:
+        data:
+          value: 'Hello'
+
+    array:
+      type: topic
+      interface_type: std_msgs/msg/UInt8MultiArray
+      topic_name: bytes
+      deadman_buttons: [5]
+      message_value:
+        data:
+          value: [1,3,3,7]
+
+    array2:
+      type: topic
+      interface_type: std_msgs/msg/UInt8MultiArray
+      topic_name: bytes
+      deadman_buttons: [3]
+      message_value:
+        data:
+          value:
+            - 4
+            - 2
+
+    torso_up:
+      type: action
+      interface_type: teleop_tools_msgs/action/Increment
+      action_name: torso_controller/increment
+      action_goal:
+        increment_by: [0.05]
+      buttons: [4]
+
+    torso_down:
+      type: action
+      interface_type: teleop_tools_msgs/action/Increment
+      action_name: torso_controller/increment
+      action_goal:
+        increment_by: [-0.05]
+      buttons: [6]
+
+    fibonacci:
+      type: action
+      interface_type: action_tutorials_interfaces/action/Fibonacci
+      action_name: fibonacci
+      action_goal:
+        order: 5
+      buttons: [4, 5, 6, 7]
+
+    add_two_ints:
+      type: service
+      interface_type: example_interfaces/srv/AddTwoInts
+      service_name: add_two_ints
+      service_request:
+        a: 11
+        b: 31
+      buttons: [10]

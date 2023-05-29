@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    port: "/dev/ttyACM0"
+    brake_max: 200000.0
+    brake_min: -20000.0
+    current_max: 100.0
+    current_min: 0.0
+    duty_cycle_max: 0.0
+    duty_cycle_min: 0.0
+    position_max: 0.0
+    position_min: 0.0
+    servo_max: 0.85
+    servo_min: 0.15
+    speed_max: 23250.0
+    speed_min: -23250.0
