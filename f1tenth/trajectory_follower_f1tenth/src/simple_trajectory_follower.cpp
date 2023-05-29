@@ -65,7 +65,7 @@ void SimpleTrajectoryFollower::onTimer()
   cmd.longitudinal.acceleration = static_cast<float>(calcAccCmd());
 
   ackermann_msgs::msg::AckermannDriveStamped ackermann_msg;
-  ackermann_msg.drive.speed = cmd.longitudinal.speed * 0.4;
+  ackermann_msg.drive.speed = cmd.longitudinal.speed * 0.2;
   ackermann_msg.drive.steering_angle = cmd.lateral.steering_tire_angle * 10;
   drive_cmd_->publish(ackermann_msg);
 
