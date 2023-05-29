@@ -109,7 +109,8 @@ public:
     rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0);
 
   void publishInitialPose(
-    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0);
+    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0,
+    std::string module_name = "");
 
   void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -154,7 +155,8 @@ public:
   void testWithNominalRoute(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node);
 
-  void testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node);
+  void testWithBehaviorNominalRoute(
+    rclcpp::Node::SharedPtr target_node, std::string module_name = "");
 
   void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
@@ -252,7 +254,8 @@ private:
   void publishAbnormalRoute(
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 
-  void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishBehaviorNominalRoute(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name, std::string module_name = "");
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
