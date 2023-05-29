@@ -14,11 +14,15 @@
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
+#include "behavior_path_planner/module_status.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behaviortree_cpp_v3/bt_factory.h"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
@@ -72,10 +76,11 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
 
 void publishMandatoryTopics(
   std::shared_ptr<PlanningInterfaceTestManager> test_manager,
-  std::shared_ptr<BehaviorPathPlannerNode> test_target_node)
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node, std::string module_name = "")
 {
   // publish necessary topics from test_manager
-  test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
+  test_manager->publishInitialPose(
+    test_target_node, "behavior_path_planner/input/odometry", 0.0, module_name);
   test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
   test_manager->publishPredictedObjects(test_target_node, "behavior_path_planner/input/perception");
   test_manager->publishOccupancyGrid(
@@ -87,6 +92,20 @@ void publishMandatoryTopics(
   test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
   test_manager->publishLateralOffset(
     test_target_node, "behavior_path_planner/input/lateral_offset");
+}
+
+bool isExpectedModuleRunning(
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node, std::string module_name)
+{
+  // check if the expected module is working
+  auto execution_requested_modules_name = test_target_node->getWaitingApprovalModules();
+  for (const auto & execution_requested_module_name : execution_requested_modules_name) {
+    if (execution_requested_module_name == module_name) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
@@ -122,5 +141,29 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testRouteWithInvalidEgoPose(test_target_node));
 
+  rclcpp::shutdown();
+}
+
+// ----- test with pull out module -----
+
+TEST(PlanningModuleInterfaceTest, NodeTestPullOutModuleWithExceptionRoute)
+{
+  rclcpp::init(0, nullptr);
+  auto test_manager = generateTestManager();
+  auto test_target_node = generateNode();
+
+  std::string module_name = "PullOut";
+  publishMandatoryTopics(test_manager, test_target_node, module_name);
+  // test for normal trajectory
+  ASSERT_NO_THROW_WITH_ERROR_MSG(
+    test_manager->testWithBehaviorNominalRoute(test_target_node, module_name));
+  EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
+#ifndef USE_OLD_ARCHITECTURE
+  module_name = "pull_out";
+#endif
+  EXPECT_EQ(isExpectedModuleRunning(test_target_node, module_name), true);
+
+  // test with empty route
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalRoute(test_target_node));
   rclcpp::shutdown();
 }
