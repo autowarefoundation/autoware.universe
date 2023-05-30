@@ -124,20 +124,19 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const std::string turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 
   /* spline interpolation */
-  const auto interpolated_path_info_opt = util::generateInterpolatePath(
-    *path, planner_param_.common.path_interpolation_ds, associative_ids_, logger_);
-  if (!interpolate_path_info_opt) {
+  const auto interpolated_path_info_opt = util::generateInterpolatedPath(
+    lane_id_, associative_ids_, *path, planner_param_.common.path_interpolation_ds, logger_);
+  if (!interpolated_path_info_opt) {
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto & interpolated_path_info = interpolated_path_info.value();
+  const auto & interpolated_path_info = interpolated_path_info_opt.value();
   if (!interpolated_path_info.lane_id_interval) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto lane_interval_ip = interpolated_path_info.lane_id_interval.value();
 
   /* get detection area*/
   /* dynamically change detection area based on tl_arrow_solid_on */
@@ -161,11 +160,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     return false;
   }
 
-  const auto [stuck_stop_required, stuck_stop_line_index] = checkStuckVehicle();
-
   const std::optional<size_t> stuck_line_idx_opt = util::generateStuckStopLine(
     first_conflicting_area.value(), planner_data_, planner_param_.common.stop_line_margin,
-    planner_param_.stuck_vehicle.use_stuck_stopline, path, path_ip, interval, lane_interval_ip,
+    planner_param_.stuck_vehicle.use_stuck_stopline, path, interpolated_path_info,
     logger_.get_child("util"));
 
   const auto & detection_lanelets = intersection_lanelets_.value().attention;
@@ -192,24 +189,23 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       planner_data_->occupancy_grid->info.resolution / std::sqrt(2.0));
   }
 
-  auto default_stop_line_idx_opt = first_detection_area
-                                     ? util::generateCollisionStopLine(
-                                         lane_id_, first_detection_area.value(), planner_data_,
-                                         planner_param_.common.stop_line_margin, path, path_ip,
-                                         interval, lane_interval_ip, logger_.get_child("util"))
-                                     : std::nullopt;
+  auto default_stop_line_idx_opt =
+    first_detection_area
+      ? util::generateCollisionStopLine(
+          first_detection_area.value(), planner_data_, planner_param_.common.stop_line_margin, path,
+          interpolated_path_info, logger_.get_child("util"))
+      : std::nullopt;
 
   auto occlusion_peeking_line_idx_opt =
-    first_detection_area
-      ? util::generatePeekingLimitLine(
-          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_,
-          planner_param_.occlusion.peeking_offset)
-      : std::nullopt;
+    first_detection_area ? util::generatePeekingLimitLine(
+                             first_detection_area.value(), path, interpolated_path_info,
+                             planner_data_, planner_param_.occlusion.peeking_offset)
+                         : std::nullopt;
 
   const auto static_pass_judge_line_opt =
     first_detection_area
       ? util::generateStaticPassJudgeLine(
-          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_)
+          first_detection_area.value(), path, interpolated_path_info, planner_data_)
       : std::nullopt;
   // TODO(Mamoru Sobue): check the ordering of these stop lines and refactor
   if (static_pass_judge_line_opt && default_stop_line_idx_opt) {
@@ -290,7 +286,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     (enable_occlusion_detection_ && first_detection_area && !occlusion_attention_lanelets.empty())
       ? isOcclusionCleared(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
-          first_detection_area.value(), path_ip, lane_interval_ip, detection_divisions_.value(),
+          first_detection_area.value(), interpolated_path_info, detection_divisions_.value(),
           occlusion_dist_thr)
       : true;
 
@@ -304,6 +300,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
 
   /* set RTC distance */
+  const auto & path_ip = interpolated_path_info.path;
   const double dist_1st_stopline =
     default_stop_line_idx_opt
       ? motion_utils::calcSignedArcLength(
@@ -997,12 +994,15 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
 bool IntersectionModule::isOcclusionCleared(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
   const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
-  lanelet::ConstLanelets adjacent_lanelets, const lanelet::CompoundPolygon3d & first_detection_area,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip,
-  const std::pair<size_t, size_t> & lane_interval_ip,
+  const lanelet::ConstLanelets & adjacent_lanelets,
+  const lanelet::CompoundPolygon3d & first_detection_area,
+  const util::InterpolatedPathInfo & interpolated_path_info,
   const std::vector<util::DetectionLaneDivision> & lane_divisions,
   const double occlusion_dist_thr) const
 {
+  const auto & path_ip = interpolated_path_info.path;
+  const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
+
   const auto first_detection_area_idx =
     util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_detection_area);
   if (!first_detection_area_idx) {
