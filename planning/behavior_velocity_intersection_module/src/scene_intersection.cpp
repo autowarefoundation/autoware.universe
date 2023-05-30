@@ -68,13 +68,13 @@ static geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
 
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-  const PlannerParam & planner_param, const std::set<int> & assoc_ids,
+  const PlannerParam & planner_param, const std::set<int> & associative_ids,
   const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   node_(node),
   lane_id_(lane_id),
-  assoc_ids_(assoc_ids),
+  associative_ids_(associative_ids),
   enable_occlusion_detection_(enable_occlusion_detection),
   detection_divisions_(std::nullopt),
   occlusion_uuid_(tier4_autoware_utils::generateUUID())
@@ -124,20 +124,20 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const std::string turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 
   /* spline interpolation */
-  constexpr double interval = 0.2;
-  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!splineInterpolate(*path, interval, path_ip, logger_)) {
+  const auto interpolated_path_info_opt = util::generateInterpolatePath(
+    *path, planner_param_.common.path_interpolation_ds, associative_ids_, logger_);
+  if (!interpolate_path_info_opt) {
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto lane_interval_ip_opt = util::findLaneIdsInterval(path_ip, assoc_ids_);
-  if (!lane_interval_ip_opt) {
+  const auto & interpolated_path_info = interpolated_path_info.value();
+  if (!interpolated_path_info.lane_id_interval) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto lane_interval_ip = lane_interval_ip_opt.value();
+  const auto lane_interval_ip = interpolated_path_info.lane_id_interval.value();
 
   /* get detection area*/
   /* dynamically change detection area based on tl_arrow_solid_on */
@@ -149,17 +149,31 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     const auto lanelets_on_path = planning_utils::getLaneletsOnPath(
       *path, lanelet_map_ptr, planner_data_->current_odometry->pose);
     intersection_lanelets_ = util::getObjectiveLanelets(
-      lanelet_map_ptr, routing_graph_ptr, lane_id_, lanelets_on_path, assoc_ids_, path_ip,
-      lane_interval_ip, planner_param_.common.detection_area_length, tl_arrow_solid_on);
+      lanelet_map_ptr, routing_graph_ptr, assigned_lanelet, lanelets_on_path, associative_ids_,
+      interpolated_path_info, planner_param_.common.detection_area_length, tl_arrow_solid_on);
   }
+
+  const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting;
+  const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area;
+  if (conflicting_lanelets.empty() || !first_conflicting_area) {
+    RCLCPP_DEBUG(logger_, "conflicting area is empty");
+    RCLCPP_DEBUG(logger_, "===== plan end =====");
+    return false;
+  }
+
+  const auto [stuck_stop_required, stuck_stop_line_index] = checkStuckVehicle();
+
+  const std::optional<size_t> stuck_line_idx_opt = util::generateStuckStopLine(
+    first_conflicting_area.value(), planner_data_, planner_param_.common.stop_line_margin,
+    planner_param_.stuck_vehicle.use_stuck_stopline, path, path_ip, interval, lane_interval_ip,
+    logger_.get_child("util"));
+
   const auto & detection_lanelets = intersection_lanelets_.value().attention;
   const auto & adjacent_lanelets = intersection_lanelets_.value().adjacent;
   const auto & occlusion_attention_lanelets = intersection_lanelets_.value().occlusion_attention;
   const auto & detection_area = intersection_lanelets_.value().attention_area;
   const auto & occlusion_attention_area = intersection_lanelets_.value().occlusion_attention_area;
-  const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area;
   const auto & first_detection_area = intersection_lanelets_.value().first_detection_area;
-  const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting;
   debug_data_.detection_area = detection_area;
   debug_data_.adjacent_area = intersection_lanelets_.value().adjacent_area;
 
@@ -172,24 +186,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     debug_data_.intersection_area = toGeomPoly(intersection_area_2d);
   }
 
-  if (conflicting_lanelets.empty()) {
-    RCLCPP_DEBUG(logger_, "conflicting area is empty");
-    return false;
-  }
-
   if (!detection_divisions_.has_value()) {
     detection_divisions_ = util::generateDetectionLaneDivisions(
       occlusion_attention_lanelets, routing_graph_ptr,
       planner_data_->occupancy_grid->info.resolution / std::sqrt(2.0));
   }
-
-  const std::optional<size_t> stuck_line_idx_opt =
-    first_conflicting_area
-      ? util::generateStuckStopLine(
-          first_conflicting_area.value(), planner_data_, planner_param_.common.stop_line_margin,
-          planner_param_.stuck_vehicle.use_stuck_stopline, path, path_ip, interval,
-          lane_interval_ip, logger_.get_child("util"))
-      : std::nullopt;
 
   auto default_stop_line_idx_opt = first_detection_area
                                      ? util::generateCollisionStopLine(
@@ -744,7 +745,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
     auto reference_point = path.points.at(i);
     reference_point.point.longitudinal_velocity_mps = planner_param_.common.intersection_velocity;
     reference_path.points.push_back(reference_point);
-    bool has_objective_lane_id = util::hasLaneIds(path.points.at(i), assoc_ids_);
+    bool has_objective_lane_id = util::hasLaneIds(path.points.at(i), associative_ids_);
     if (assigned_lane_found && !has_objective_lane_id) {
       break;
     }
@@ -873,8 +874,8 @@ bool IntersectionModule::checkAngleForTargetLanelets(
 lanelet::ConstLanelets IntersectionModule::getEgoLaneWithNextLane(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const
 {
-  // NOTE: findLaneIdsInterval returns (start, end) of assoc_ids
-  const auto ego_lane_interval_opt = util::findLaneIdsInterval(path, assoc_ids_);
+  // NOTE: findLaneIdsInterval returns (start, end) of associative_ids
+  const auto ego_lane_interval_opt = util::findLaneIdsInterval(path, associative_ids_);
   if (!ego_lane_interval_opt) {
     return lanelet::ConstLanelets({});
   }
