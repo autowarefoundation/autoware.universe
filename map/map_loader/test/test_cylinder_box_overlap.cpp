@@ -18,12 +18,10 @@
 
 TEST(CylinderAndBoxOverlapExists, NoOverlap)
 {
-  // Cylinder: center = (5, 0, 0), radius = 4 - 0.1
+  // Cylinder: center = (5, 0), radius = 4 - 0.1
   // Box: p_min = (-1, -1, -1), p_max = (1, 1, 1)
-  geometry_msgs::msg::Point center;
-  center.x = 5.0;
-  center.y = 0.0;
-  center.z = 0.0;
+  double center_x = 5.0;
+  double center_y = 0.0;
 
   const double radius = 4.0 - 0.1;
 
@@ -37,19 +35,16 @@ TEST(CylinderAndBoxOverlapExists, NoOverlap)
   p_max.y = 1.0;
   p_max.z = 1.0;
 
-  bool result = cylinderAndBoxOverlapExists(center, radius, p_min, p_max);
+  bool result = cylinderAndBoxOverlapExists(center_x, center_y, radius, p_min, p_max);
   EXPECT_FALSE(result);
 }
 
 TEST(CylinderAndBoxOverlapExists, Overlap1)
 {
-  // Cylinder: center = (0, 0, 0), radius = 5
+  // Cylinder: center = (0, 0), radius = 5
   // Box: p_min = (-1, -1, -1), p_max = (1, 1, 1)
-  geometry_msgs::msg::Point center;
-  center.x = 0.0;
-  center.y = 0.0;
-  center.z = 0.0;
-
+  double center_x = 0.0;
+  double center_y = 0.0;
   const double radius = 5.0;
 
   pcl::PointXYZ p_min;
@@ -62,19 +57,16 @@ TEST(CylinderAndBoxOverlapExists, Overlap1)
   p_max.y = 1.0;
   p_max.z = 1.0;
 
-  bool result = cylinderAndBoxOverlapExists(center, radius, p_min, p_max);
+  bool result = cylinderAndBoxOverlapExists(center_x, center_y, radius, p_min, p_max);
   EXPECT_TRUE(result);
 }
 
 TEST(CylinderAndBoxOverlapExists, Overlap2)
 {
-  // Cylinder: center = (0, 0, 0), radius = 5
+  // Cylinder: center = (0, 0), radius = 5
   // Box: p_min = (-1, -1, -100), p_max = (1, 1, -99)
-  geometry_msgs::msg::Point center;
-  center.x = 0.0;
-  center.y = 0.0;
-  center.z = 0.0;
-
+  double center_x = 0.0;
+  double center_y = 0.0;
   const double radius = 5.0;
 
   pcl::PointXYZ p_min;
@@ -87,6 +79,6 @@ TEST(CylinderAndBoxOverlapExists, Overlap2)
   p_max.y = 1.0;
   p_max.z = -99.0;
 
-  bool result = cylinderAndBoxOverlapExists(center, radius, p_min, p_max);
+  bool result = cylinderAndBoxOverlapExists(center_x, center_y, radius, p_min, p_max);
   EXPECT_TRUE(result);
 }

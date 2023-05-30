@@ -64,22 +64,22 @@ std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
 }
 
 bool cylinderAndBoxOverlapExists(
-  const geometry_msgs::msg::Point center, const double radius, const pcl::PointXYZ box_min_point,
+  const double center_x, const double center_y, const double radius, const pcl::PointXYZ box_min_point,
   const pcl::PointXYZ box_max_point)
 {
   // Collision detection with x-y plane (circular base of the cylinder)
   if (
-    box_min_point.x - radius <= center.x && center.x <= box_max_point.x + radius &&
-    box_min_point.y - radius <= center.y && center.y <= box_max_point.y + radius) {
+    box_min_point.x - radius <= center_x && center_x <= box_max_point.x + radius &&
+    box_min_point.y - radius <= center_y && center_y <= box_max_point.y + radius) {
     return true;
   }
 
   // Collision detection with box edges
-  const double dx0 = center.x - box_min_point.x;
-  const double dx1 = center.x - box_max_point.x;
-  const double dy0 = center.y - box_min_point.y;
-  const double dy1 = center.y - box_max_point.y;
-
+  const double dx0 = center_x - box_min_point.x;
+  const double dx1 = center_x - box_max_point.x;
+  const double dy0 = center_y - box_min_point.y;
+  const double dy1 = center_y - box_max_point.y;
+  
   if (
     std::hypot(dx0, dy0) <= radius || std::hypot(dx1, dy0) <= radius ||
     std::hypot(dx0, dy1) <= radius || std::hypot(dx1, dy1) <= radius) {
@@ -93,8 +93,9 @@ bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata)
 {
   // Currently, the area load only supports cylindrical area
-  geometry_msgs::msg::Point center = area.center;
+  double center_x = area.center_x;
+  double center_y = area.center_y;
   double radius = area.radius;
-  bool res = cylinderAndBoxOverlapExists(center, radius, metadata.min, metadata.max);
+  bool res = cylinderAndBoxOverlapExists(center_x, center_y, radius, metadata.min, metadata.max);
   return res;
 }
