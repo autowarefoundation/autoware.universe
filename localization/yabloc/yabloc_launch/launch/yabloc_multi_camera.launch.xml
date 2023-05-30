@@ -35,10 +35,10 @@
     <arg name="segment_filter_param_path" default="$(find-pkg-share yabloc_imgproc)/config/segment_filter.param.yaml"/>
     <arg name="undistort_param_path" default="$(find-pkg-share yabloc_imgproc)/config/undistort.param.yaml"/>
     <!-- map -->
-    <arg name="ground_server_param_path" default="$(find-pkg-share ground_server)/config/ground_server.param.yaml"/>
-    <arg name="ll2_decomposer_param_path" default="$(find-pkg-share ll2_decomposer)/config/ll2_decomposer.param.yaml"/>
+    <arg name="ground_server_param_path" default="$(find-pkg-share yabloc_common)/config/ground_server.param.yaml"/>
+    <arg name="ll2_decomposer_param_path" default="$(find-pkg-share yabloc_common)/config/ll2_decomposer.param.yaml"/>
     <!-- twist estimator -->
-    <arg name="twist_estimator_param_path" default="$(find-pkg-share twist_estimator)/config/twist_estimator.param.yaml"/>
+    <arg name="twist_estimator_param_path" default="$(find-pkg-share yabloc_twist)/config/twist_estimator.param.yaml"/>
 
     <group>
         <push-ros-namespace namespace="localization/yabloc"/>

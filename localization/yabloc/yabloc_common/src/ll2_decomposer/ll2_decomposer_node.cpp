@@ -12,16 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ground_server/ground_server.hpp"
+#include "yabloc_common/ll2_decomposer/ll2_decomposer.hpp"
 
-#include <glog/logging.h>
-
-int main(int argc, char ** argv)
+int main(int argc, char * argv[])
 {
-  google::InitGoogleLogging(argv[0]);
-  google::InstallFailureSignalHandler();
-
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<yabloc::ground_server::GroundServer>());
+  rclcpp::spin(std::make_shared<yabloc::ll2_decomposer::Ll2Decomposer>());
   rclcpp::shutdown();
+  return 0;
 }

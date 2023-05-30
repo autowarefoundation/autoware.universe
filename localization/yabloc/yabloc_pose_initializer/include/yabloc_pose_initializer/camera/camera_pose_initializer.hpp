@@ -23,7 +23,6 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
@@ -36,7 +35,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using GroundSrv = ground_msgs::srv::Ground;
   using Image = sensor_msgs::msg::Image;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
@@ -55,7 +53,6 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Service<RequestPoseAlignment>::SharedPtr align_server_;
-  rclcpp::Client<GroundSrv>::SharedPtr ground_client_;
   rclcpp::Client<SemsegSrv>::SharedPtr semseg_client_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 

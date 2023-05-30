@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ground_server/polygon_operation.hpp"
+#include "yabloc_common/ground_server/polygon_operation.hpp"
 
 #include <rclcpp/logging.hpp>
 

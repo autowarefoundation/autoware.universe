@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ll2_decomposer/from_bin_msg.hpp"
-#include "ll2_decomposer/ll2_decomposer.hpp"
+#include "yabloc_common/ll2_decomposer/from_bin_msg.hpp"
+#include "yabloc_common/ll2_decomposer/ll2_decomposer.hpp"
 
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pub_sub.hpp>

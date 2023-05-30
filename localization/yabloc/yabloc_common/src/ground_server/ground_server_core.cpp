@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ground_server/ground_server.hpp"
-#include "ground_server/polygon_operation.hpp"
-#include "ground_server/util.hpp"
+#include "yabloc_common/ground_server/ground_server.hpp"
+#include "yabloc_common/ground_server/polygon_operation.hpp"
+#include "yabloc_common/ground_server/util.hpp"
 
 #include <Eigen/Eigenvalues>
-#include <ll2_decomposer/from_bin_msg.hpp>
 #include <yabloc_common/color.hpp>
+#include <yabloc_common/from_bin_msg.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
 #include <pcl/ModelCoefficients.h>
@@ -42,9 +42,6 @@ GroundServer::GroundServer()
 
   auto on_pose = std::bind(&GroundServer::on_pose_stamped, this, _1);
   auto on_map = std::bind(&GroundServer::on_map, this, _1);
-  auto on_service = std::bind(&GroundServer::on_service, this, _1, _2);
-
-  service_ = create_service<Ground>("ground", on_service);
 
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
   sub_pose_stamped_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
@@ -242,16 +239,6 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 
   if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
   return plane;
-}
-
-void GroundServer::on_service(
-  const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response)
-{
-  if (kdtree_ == nullptr) return;
-  float z = estimate_height_simply(request->point);
-  response->pose.position.x = request->point.x;
-  response->pose.position.y = request->point.y;
-  response->pose.position.z = z;
 }
 
 void GroundServer::publish_marker(const GroundPlane & plane)

@@ -28,6 +28,14 @@ find_package(PCL REQUIRED)
 # Sophus
 find_package(Sophus REQUIRED)
 
+# https://github.com/strasdat/Sophus/issues/388
+# Sophus's macro cause compile error for the "-Wpedantic" flag, so make sure to import as a system.
+# We must always call the following command after "ament_auto_find_build_dependencies()" because it rewrite CMAKE_NO_SYSTEM_FROM_IMPORTED to TRUE.
+set(CMAKE_NO_SYSTEM_FROM_IMPORTED FALSE)
+
+# glog
+find_package(glog REQUIRED)
+
 # ===================================================
 # GeographicLib
 find_package(PkgConfig)
@@ -38,6 +46,12 @@ set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
 find_library(GeographicLib_LIBRARIES NAMES Geographic)
 
 # ===================================================
+# Libraries
+file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)
+ament_auto_add_library(ll2_util SHARED
+  ${REGULATORY_ELEMENT_SOURCE})
+target_include_directories(ll2_util PUBLIC include 3rd/regulatory_elements/include)
+
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/ublox_stamp.cpp
   src/pub_sub.cpp
@@ -47,9 +61,13 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pose_conversions.cpp
   src/static_tf_subscriber.cpp
   src/extract_line_segments.cpp
+  src/from_bin_msg.cpp
   src/transform_line_segments.cpp
   src/color.cpp)
-target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus)
+target_include_directories(
+  ${PROJECT_NAME} PUBLIC include
+)
+
 target_include_directories(
   ${PROJECT_NAME} PRIVATE
   SYSTEM
@@ -57,10 +75,31 @@ target_include_directories(
   ${GeographicLib_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  include
 )
-
-ament_export_dependencies(PCL Sophus)
+target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus ll2_util)
 
 # ===================================================
-ament_auto_package()
+# Executables
+# ground_server
+set(TARGET ground_server_node)
+ament_auto_add_executable(${TARGET}
+  src/ground_server/ground_server_core.cpp
+  src/ground_server/ground_server_node.cpp
+  src/ground_server/polygon_operation.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus glog::glog)
+
+# ll2_decomposer
+set(TARGET ll2_decomposer_node)
+ament_auto_add_executable(${TARGET}
+  src/ll2_decomposer/ll2_decomposer_core.cpp
+  src/ll2_decomposer/ll2_decomposer_node.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${PCL_LIBRARIES})
+
+# ===================================================
+ament_export_dependencies(PCL Sophus)
+
+ament_auto_package(INSTALL_TO_SHARE config)

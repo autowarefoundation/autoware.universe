@@ -32,6 +32,11 @@ set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
 find_library(GeographicLib_LIBRARIES NAMES Geographic)
 
 # ===================================================
+# Clear ${PYTHON_EXECUTABLE} defined by mrt_cmake_module
+unset(PYTHON_EXECUTABLE)
+message(STATUS "PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
+
+# ===================================================
 # Message & Service
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Particle.msg"

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ll2_decomposer/from_bin_msg.hpp"
+#include "yabloc_common/from_bin_msg.hpp"
 
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
 

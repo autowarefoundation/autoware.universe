@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ll2_decomposer/ll2_decomposer.hpp"
+#pragma once
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 
-int main(int argc, char * argv[])
+#include <lanelet2_core/LaneletMap.h>
+
+namespace yabloc ::ll2_decomposer
 {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<yabloc::ll2_decomposer::Ll2Decomposer>());
-  rclcpp::shutdown();
-  return 0;
+lanelet::LaneletMapPtr from_bin_msg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
 }

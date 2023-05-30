@@ -15,9 +15,9 @@
 #include "yabloc_pose_initializer/camera/camera_pose_initializer.hpp"
 #include "yabloc_pose_initializer/camera/lanelet_util.hpp"
 
-#include <ll2_decomposer/from_bin_msg.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <yabloc_common/from_bin_msg.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -43,8 +43,6 @@ CameraPoseInitializer::CameraPoseInitializer()
   sub_image_ = create_subscription<Image>("/image_raw", 10, on_image);
 
   // Client
-  ground_client_ = create_client<GroundSrv>(
-    "/ground_srv", rmw_qos_profile_services_default, service_callback_group_);
   semseg_client_ = create_client<SemsegSrv>(
     "/semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
 
@@ -53,9 +51,6 @@ CameraPoseInitializer::CameraPoseInitializer()
   align_server_ = create_service<RequestPoseAlignment>("yabloc_align_srv", on_service);
 
   using namespace std::chrono_literals;
-  while (!ground_client_->wait_for_service(1s) && rclcpp::ok()) {
-    RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << ground_client_->get_service_name());
-  }
   while (!semseg_client_->wait_for_service(1s) && rclcpp::ok()) {
     RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << semseg_client_->get_service_name());
   }
@@ -187,31 +182,17 @@ void CameraPoseInitializer::on_service(
   RequestPoseAlignment::Response::SharedPtr response)
 {
   RCLCPP_INFO_STREAM(get_logger(), "CameraPoseInitializer on_service");
+
   response->success = false;
 
   const auto query_pos_with_cov = request->pose_with_covariance;
   const auto query_pos = request->pose_with_covariance.pose.pose.position;
   const auto orientation = request->pose_with_covariance.pose.pose.orientation;
   const double yaw_std_rad = std::sqrt(query_pos_with_cov.pose.covariance.at(35));
-
-  auto ground_request = std::make_shared<GroundSrv::Request>();
-  ground_request->point.x = query_pos.x;
-  ground_request->point.y = query_pos.y;
+  const Eigen::Vector3f pos_vec3f(query_pos.x, query_pos.y, query_pos.z);
+  RCLCPP_INFO_STREAM(get_logger(), "Given initial position " << pos_vec3f.transpose());
 
   using namespace std::chrono_literals;
-  auto result_future = ground_client_->async_send_request(ground_request);
-  std::future_status status = result_future.wait_for(1000ms);
-  if (status == std::future_status::ready) {
-  } else {
-    RCLCPP_ERROR_STREAM(get_logger(), "get height from LL2 service exited unexpectedly");
-    return;
-  }
-
-  // Retrieve 3d position
-  const auto position = result_future.get()->pose.position;
-  Eigen::Vector3f pos_vec3f;
-  pos_vec3f << position.x, position.y, position.z;
-  RCLCPP_INFO_STREAM(get_logger(), "get initial position " << pos_vec3f.transpose());
 
   // Estimate orientation
   const auto header = request->pose_with_covariance.header;

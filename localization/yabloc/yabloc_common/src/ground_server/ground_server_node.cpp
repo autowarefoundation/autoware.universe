@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "twist_estimator/twist_estimator.hpp"
+#include "yabloc_common/ground_server/ground_server.hpp"
 
-int main(int argc, char * argv[])
+#include <glog/logging.h>
+
+int main(int argc, char ** argv)
 {
+  google::InitGoogleLogging(argv[0]);
+  google::InstallFailureSignalHandler();
+
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<yabloc::twist_estimator::TwistEstimator>());
+  rclcpp::spin(std::make_shared<yabloc::ground_server::GroundServer>());
   rclcpp::shutdown();
-  return 0;
 }

@@ -20,8 +20,6 @@
 
   <depend>tier4_localization_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
-  <depend>ground_msgs</depend>
-  <depend>ll2_decomposer</depend>
   <depend>yabloc_common</depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>

@@ -7,7 +7,7 @@
     <arg name="output_ground_markers" default="ground_markers"/>
     <arg name="output_ground_status" default="ground_status"/>
     <arg name="output_near_cloud" default="near_cloud"/>
-    <node name="ground_server" pkg="ground_server" exec="ground_server_node" output="screen" args="--ros-args --log-level warn">
+    <node name="ground_server" pkg="yabloc_common" exec="ground_server_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param from="$(var ground_server_param_path)"/>
 
@@ -23,7 +23,7 @@
     <!-- lanelet2 -->
     <arg name="output_ll2_road_marking" default="ll2_road_marking"/>
     <arg name="output_ll2_sign_board" default="ll2_sign_board"/>
-    <node name="ll2_decomposer" pkg="ll2_decomposer" exec="ll2_decomposer_node" output="screen" args="--ros-args --log-level warn">
+    <node name="ll2_decomposer" pkg="yabloc_common" exec="ll2_decomposer_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param from="$(var ll2_decomposer_param_path)"/>
 
