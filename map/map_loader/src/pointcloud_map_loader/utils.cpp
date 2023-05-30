@@ -79,7 +79,7 @@ bool cylinderAndBoxOverlapExists(
   const double dx1 = center.x - box_max_point.x;
   const double dy0 = center.y - box_min_point.y;
   const double dy1 = center.y - box_max_point.y;
-  
+
   if (
     std::hypot(dx0, dy0) <= radius || std::hypot(dx1, dy0) <= radius ||
     std::hypot(dx0, dy1) <= radius || std::hypot(dx1, dy1) <= radius) {
