@@ -16,7 +16,6 @@
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behaviortree_cpp_v3/bt_factory.h"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
