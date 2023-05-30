@@ -87,6 +87,7 @@ public:
       double intersection_max_acc;   //! used for calculating intersection velocity
       double stop_overshoot_margin;  //! overshoot margin for stuck, collision detection
       bool use_intersection_area;
+      double path_interpolation_ds;
     } common;
     struct StuckVehicle
     {
@@ -138,7 +139,7 @@ public:
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const std::set<int> & assoc_ids,
+    const PlannerParam & planner_param, const std::set<int> & associative_ids,
     const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
@@ -151,7 +152,7 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
 
-  const std::set<int> & getAssocIds() const { return assoc_ids_; }
+  const std::set<int> & getAssocIds() const { return associative_ids_; }
 
   UUID getOcclusionUUID() const { return occlusion_uuid_; }
   bool getOcclusionSafety() const { return occlusion_safety_; }
@@ -170,7 +171,7 @@ private:
   std::optional<util::IntersectionLanelets> intersection_lanelets_;
   // for an intersection lane l1, its associative lanes are those that share same parent lanelet and
   // have same turn_direction
-  const std::set<int> assoc_ids_;
+  const std::set<int> associative_ids_;
 
   // for occlusion detection
   const bool enable_occlusion_detection_;

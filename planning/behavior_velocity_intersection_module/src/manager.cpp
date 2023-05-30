@@ -55,6 +55,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".common.stop_overshoot_margin");
   ip.common.use_intersection_area =
     node.declare_parameter<bool>(ns + ".common.use_intersection_area");
+  ip.common.path_interpolation_ds =
+    node.declare_parameter<double>(ns + ".common.path_interpolation_ds");
 
   ip.stuck_vehicle.use_stuck_stopline =
     node.declare_parameter<bool>(ns + ".stuck_vehicle.use_stuck_stopline");
@@ -130,11 +132,11 @@ void IntersectionModuleManager::launchNewModules(
       continue;
     }
 
-    const auto assoc_ids =
+    const auto associative_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     const auto new_module = std::make_shared<IntersectionModule>(
-      module_id, lane_id, planner_data_, intersection_param_, assoc_ids, enable_occlusion_detection,
-      node_, logger_.get_child("intersection_module"), clock_);
+      module_id, lane_id, planner_data_, intersection_param_, associative_ids,
+      enable_occlusion_detection, node_, logger_.get_child("intersection_module"), clock_);
     generateUUID(module_id);
     /* set RTC status as non_occluded status initially */
     const UUID uuid = getUUID(new_module->getModuleId());
@@ -158,7 +160,7 @@ IntersectionModuleManager::getModuleExpiredFunction(
 
   return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
-    const auto & assoc_ids = intersection_module->getAssocIds();
+    const auto & associative_ids = intersection_module->getAssocIds();
     for (const auto & lane : lane_set) {
       const std::string turn_direction = lane.attributeOr("turn_direction", "else");
       const auto is_intersection =
@@ -167,7 +169,7 @@ IntersectionModuleManager::getModuleExpiredFunction(
         continue;
       }
 
-      if (assoc_ids.find(lane.id()) != assoc_ids.end() /* contains */) {
+      if (associative_ids.find(lane.id()) != associative_ids.end() /* contains */) {
         return false;
       }
     }
@@ -180,8 +182,8 @@ bool IntersectionModuleManager::hasSameParentLaneletAndTurnDirectionWithRegister
 {
   for (const auto & scene_module : scene_modules_) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
-    const auto & assoc_ids = intersection_module->getAssocIds();
-    if (assoc_ids.find(lane.id()) != assoc_ids.end()) {
+    const auto & associative_ids = intersection_module->getAssocIds();
+    if (associative_ids.find(lane.id()) != associative_ids.end()) {
       return true;
     }
   }
@@ -295,10 +297,10 @@ void MergeFromPrivateModuleManager::launchNewModules(
       const auto next_lane = lanelets.at(i + 1);
       const std::string next_lane_location = next_lane.attributeOr("location", "else");
       if (next_lane_location != "private") {
-        const auto assoc_ids =
+        const auto associative_ids =
           planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
         registerModule(std::make_shared<MergeFromPrivateRoadModule>(
-          module_id, lane_id, planner_data_, merge_from_private_area_param_, assoc_ids,
+          module_id, lane_id, planner_data_, merge_from_private_area_param_, associative_ids,
           logger_.get_child("merge_from_private_road_module"), clock_));
         continue;
       }
@@ -309,10 +311,10 @@ void MergeFromPrivateModuleManager::launchNewModules(
       for (auto && conflicting_lanelet : conflicting_lanelets) {
         const std::string conflicting_attr = conflicting_lanelet.attributeOr("location", "else");
         if (conflicting_attr == "urban") {
-          const auto assoc_ids =
+          const auto associative_ids =
             planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
           registerModule(std::make_shared<MergeFromPrivateRoadModule>(
-            module_id, lane_id, planner_data_, merge_from_private_area_param_, assoc_ids,
+            module_id, lane_id, planner_data_, merge_from_private_area_param_, associative_ids,
             logger_.get_child("merge_from_private_road_module"), clock_));
           continue;
         }
@@ -331,7 +333,7 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
   return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto merge_from_private_module =
       std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
-    const auto & assoc_ids = merge_from_private_module->getAssocIds();
+    const auto & associative_ids = merge_from_private_module->getAssocIds();
     for (const auto & lane : lane_set) {
       const std::string turn_direction = lane.attributeOr("turn_direction", "else");
       const auto is_intersection =
@@ -340,7 +342,7 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
         continue;
       }
 
-      if (assoc_ids.find(lane.id()) != assoc_ids.end() /* contains */) {
+      if (associative_ids.find(lane.id()) != associative_ids.end() /* contains */) {
         return false;
       }
     }
@@ -354,8 +356,8 @@ bool MergeFromPrivateModuleManager::hasSameParentLaneletAndTurnDirectionWithRegi
   for (const auto & scene_module : scene_modules_) {
     const auto merge_from_private_module =
       std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
-    const auto & assoc_ids = merge_from_private_module->getAssocIds();
-    if (assoc_ids.find(lane.id()) != assoc_ids.end()) {
+    const auto & associative_ids = merge_from_private_module->getAssocIds();
+    if (associative_ids.find(lane.id()) != associative_ids.end()) {
       return true;
     }
   }

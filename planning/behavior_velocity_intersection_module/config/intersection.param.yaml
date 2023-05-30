@@ -12,6 +12,7 @@
         intersection_max_accel: 0.5 # m/ss
         stop_overshoot_margin: 0.5 # [m] overshoot margin for stuck, collision detection
         use_intersection_area: false
+        path_interpolation_ds: 0.2 # [m]
 
       stuck_vehicle:
         use_stuck_stopline: false # stopline generate before the intersection lanelet when is_stuck

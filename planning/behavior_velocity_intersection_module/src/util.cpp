@@ -427,12 +427,11 @@ bool getStopLineIndexFromMap(
 
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const lanelet::ConstLanelets & lanelets_on_path,
-  const std::set<int> & assoc_ids, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::pair<size_t, size_t> lane_interval, const double detection_area_length,
-  const double occlusion_detection_area_length, const bool tl_arrow_solid_on)
+  const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
+  const std::set<int> & associative_ids, const InterpolatedPathInfo & interpolated_path_info,
+  const double detection_area_length, const double occlusion_detection_area_length,
+  const bool tl_arrow_solid_on)
 {
-  const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
   const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 
   // retrieve a stopline associated with a traffic light
@@ -551,7 +550,7 @@ IntersectionLanelets getObjectiveLanelets(
     result.attention = std::move(detection_lanelets);
   }
   result.conflicting = std::move(conflicting_ex_ego_lanelets);
-  result.adjacent = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, assoc_ids);
+  result.adjacent = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
   result.occlusion_attention = std::move(occlusion_detection_and_preceding_lanelets);
   // compoundPolygon3d
   result.attention_area = getPolygon3dFromLanelets(result.attention);
@@ -888,6 +887,21 @@ std::vector<DetectionLaneDivision> generateDetectionLaneDivisions(
     detection_divisions.push_back(detection_division);
   }
   return detection_divisions;
+}
+
+std::optional<InterpolatedPathInfo> generateInterpolatedPath(
+  const autoware_auto_planning_mgss::msg::PathWithLaneId & input_path, const double ds,
+  const std::set<int> & associative_lane_ids, rclcpp::Loggger logger)
+{
+  InterpolatedPathInfo interpolated_path_info;
+  if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
+    return std::nullopt;
+  }
+  interpolated_path_info.ds = ds;
+  interpolated_path_info.lane_id = lane_id;
+  interpolated_path_info.lane_id_interval =
+    findLaneIdsInterval(interpolated_path_info.path, associative_lane_ids);
+  return interpolated_path_info;
 }
 
 }  // namespace util

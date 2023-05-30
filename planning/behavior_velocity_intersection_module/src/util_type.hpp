@@ -44,12 +44,6 @@ struct IntersectionLanelets
   std::optional<lanelet::CompoundPolygon3d> first_detection_area;
 };
 
-enum class StopReason : int {
-  STUCK,
-  COLLISION,
-  OCCLUSION,
-};
-
 struct DetectionLaneDivision
 {
   int lane_id;
@@ -60,8 +54,9 @@ struct DetectionLaneDivision
 struct InterpolatedPathInfo
 {
   const autoware_auto_planning_msgs::msg::PathWithLaneId path;
-  const double interval;
-  const std::pair<size_t, size_t> lane_interval;
+  const double ds;
+  const int lane_id;
+  const std::optional<std::pair<size_t, size_t>> lane_id_interval;
 };
 
 }  // namespace behavior_velocity_planner::util

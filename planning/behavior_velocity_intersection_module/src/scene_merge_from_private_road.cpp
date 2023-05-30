@@ -38,9 +38,11 @@ namespace bg = boost::geometry;
 MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
-  const PlannerParam & planner_param, const std::set<int> & assoc_ids, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id), assoc_ids_(assoc_ids)
+  const PlannerParam & planner_param, const std::set<int> & associative_ids,
+  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
+  associative_ids_(associative_ids)
 {
   velocity_factor_.init(VelocityFactor::MERGE);
   planner_param_ = planner_param;
@@ -67,24 +69,24 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* spline interpolation */
-  constexpr double interval = 0.2;
-  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!splineInterpolate(*path, interval, path_ip, logger_)) {
+  const auto interpolated_path_info_opt = util::generateInterpolatePath(
+    *path, planner_param_.common.path_interpolation_ds, associative_ids_, logger_);
+  if (!interpolate_path_info_opt) {
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
+    RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto lane_interval_ip_opt = util::findLaneIdsInterval(path_ip, assoc_ids_);
-  if (!lane_interval_ip_opt.has_value()) {
+  const auto & interpolated_path_info = interpolated_path_info.value();
+  if (!interpolated_path_info.lane_id_interval) {
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    setSafe(true);
-    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
-  const auto lane_interval_ip = lane_interval_ip_opt.value();
+  const auto lane_interval_ip = interpolated_path_info.lane_id_interval.value();
 
   /* get detection area */
   if (!intersection_lanelets_.has_value()) {
