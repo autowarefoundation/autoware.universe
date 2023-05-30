@@ -496,6 +496,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
     data.yield_required = false;
     data.safe = true;  // OVERWRITE SAFETY JUDGE
     data.safe_new_sl = data.unapproved_new_sl;
+    data.candidate_path = candidate_path;
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "avoiding now. could not transit yield maneuver!!!");
   }
