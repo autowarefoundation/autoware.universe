@@ -324,6 +324,8 @@ RouteSections combineConsecutiveRouteSections(
   return route_sections;
 }
 
+// Function to create a route from given start and goal lanelet ids
+// start pose and goal pose are set to the middle of the lanelet
 Route::Message makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
 {
   Route::Message route;
@@ -342,10 +344,13 @@ Route::Message makeBehaviorRouteFromLaneId(const int & start_lane_id, const int 
   RouteSections route_sections;
   lanelet::ConstLanelets all_route_lanelets;
 
+  // Plan the path between checkpoints (start and goal poses)
   lanelet::ConstLanelets path_lanelets;
   if (!route_handler->planPathLaneletsBetweenCheckpoints(start_pose, goal_pose, &path_lanelets)) {
     return route_msg;
   }
+
+  // Add all path_lanelets to all_route_lanelets
   for (const auto & lane : path_lanelets) {
     all_route_lanelets.push_back(lane);
   }
