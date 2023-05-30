@@ -1218,7 +1218,7 @@ lanelet::ConstLineString3d RouteHandler::getLeftMostLinestring(
   const auto & same = getLeftLanelet(lanelet, enable_same_root);
   const auto & opposite = getLeftOppositeLanelets(lanelet);
   if (!same && opposite.empty()) {
-    return lanelet.rightBound();
+    return lanelet.leftBound();
   }
 
   if (same) {
