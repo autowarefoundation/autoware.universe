@@ -72,7 +72,6 @@ using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using planning_interface::Route;
 using route_handler::RouteHandler;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
@@ -166,11 +165,11 @@ HADMapBin convertToMapBinMsg(
   return map_bin_msg;
 }
 
-Route::Message makeNormalRoute()
+LaneletRoute makeNormalRoute()
 {
   const std::array<double, 4> start_pose{5.5, 4., 0., M_PI_2};
   const std::array<double, 4> goal_pose{8.0, 26.3, 0, 0};
-  Route::Message route;
+  LaneletRoute route;
   route.header.frame_id = "map";
   route.start_pose = createPose(start_pose);
   route.goal_pose = createPose(goal_pose);
@@ -326,9 +325,9 @@ RouteSections combineConsecutiveRouteSections(
 
 // Function to create a route from given start and goal lanelet ids
 // start pose and goal pose are set to the middle of the lanelet
-Route::Message makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
+LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
 {
-  Route::Message route;
+  LaneletRoute route;
   route.header.frame_id = "map";
   auto start_pose = createPoseFromLaneID(start_lane_id);
   auto goal_pose = createPoseFromLaneID(goal_lane_id);
@@ -373,9 +372,9 @@ Route::Message makeBehaviorRouteFromLaneId(const int & start_lane_id, const int 
 
 // this is for the test lanelet2_map.osm
 // file hash: a9f84cff03b55a64917bc066451276d2293b0a54f5c088febca0c7fdf2f245d5
-Route::Message makeBehaviorNormalRoute()
+LaneletRoute makeBehaviorNormalRoute()
 {
-  Route::Message route;
+  LaneletRoute route;
   route.header.frame_id = "map";
   route.start_pose =
     createPose({3722.16015625, 73723.515625, 0.233112560494183, 0.9724497591854532});

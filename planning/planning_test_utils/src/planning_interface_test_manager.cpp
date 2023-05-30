@@ -108,9 +108,9 @@ void PlanningInterfaceTestManager::publishParkingScenario(
 
 void PlanningInterfaceTestManager::publishInitialPose(
   rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift,
-  std::string module_name)
+  ModuleName module_name)
 {
-  if (module_name == "PullOut") {
+  if (module_name == ModuleName::PULL_OUT) {
     test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, initial_pose_pub_,
       test_utils::makeInitialPoseFromLaneId(10291));
@@ -249,9 +249,9 @@ void PlanningInterfaceTestManager::publishNominalRoute(
 }
 
 void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name, std::string module_name)
+  rclcpp::Node::SharedPtr target_node, std::string topic_name, ModuleName module_name)
 {
-  if (module_name == "PullOut") {
+  if (module_name == ModuleName::PULL_OUT) {
     test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, behavior_normal_route_pub_,
       test_utils::makeBehaviorRouteFromLaneId(10291, 10333), 5);
@@ -346,7 +346,7 @@ void PlanningInterfaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr 
 
 // test for normal working
 void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(
-  rclcpp::Node::SharedPtr target_node, std::string module_name)
+  rclcpp::Node::SharedPtr target_node, ModuleName module_name)
 {
   publishBehaviorNominalRoute(target_node, input_route_name_, module_name);
 }
