@@ -60,7 +60,7 @@ public:
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
+  motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
   const int64_t lane_id_;
@@ -77,9 +77,6 @@ private:
   PathWithNoDrivableLanePolygonIntersection path_no_drivable_lane_polygon_intersection;
   geometry_msgs::msg::Point first_intersection_point;
   double distance_ego_first_intersection;
-
-  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
-    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
 
   void handle_init_state();
   void handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason);

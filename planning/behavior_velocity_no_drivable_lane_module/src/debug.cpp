@@ -70,22 +70,24 @@ visualization_msgs::msg::MarkerArray createNoDrivableLaneMarkers(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray NoDrivableLaneModule::createVirtualWallMarkerArray()
+motion_utils::VirtualWalls NoDrivableLaneModule::createVirtualWalls()
 {
-  visualization_msgs::msg::MarkerArray wall_marker;
+  motion_utils::VirtualWalls virtual_walls;
 
   const auto now = this->clock_->now();
 
   if (
     (state_ == State::APPROACHING) || (state_ == State::INSIDE_NO_DRIVABLE_LANE) ||
     (state_ == State::STOPPED)) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.stop_pose}, "no_drivable_lane", now),
-      &wall_marker, now);
+    motion_utils::VirtualWall wall;
+    wall.text = "no_drivable_lane";
+    wall.style = motion_utils::VirtualWallType::stop;
+    wall.ns = std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.stop_pose;
+    virtual_walls.push_back(wall);
   }
 
-  return wall_marker;
+  return virtual_walls;
 }
 
 visualization_msgs::msg::MarkerArray NoDrivableLaneModule::createDebugMarkerArray()
