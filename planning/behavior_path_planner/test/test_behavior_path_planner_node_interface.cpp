@@ -97,7 +97,7 @@ bool isExpectedModuleRunning(
   std::shared_ptr<BehaviorPathPlannerNode> test_target_node, std::string module_name)
 {
   // check if the expected module is working
-  auto execution_requested_modules_name = test_target_node->getWaitingApprovalModules();
+  auto execution_requested_modules_name = test_target_node->getRunningModules();
   for (const auto & execution_requested_module_name : execution_requested_modules_name) {
     if (execution_requested_module_name == module_name) {
       return true;
