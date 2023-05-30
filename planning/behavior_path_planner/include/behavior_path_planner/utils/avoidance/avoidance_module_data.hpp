@@ -316,6 +316,9 @@ struct ObjectData  // avoidance target
   // lateral shiftable ratio
   double shiftable_ratio{0.0};
 
+  // distance factor for perception noise (0.0~1.0)
+  double distance_factor{0.0};
+
   // count up when object disappeared. Removed when it exceeds threshold.
   rclcpp::Time last_seen;
   double lost_time{0.0};

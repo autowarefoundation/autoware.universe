@@ -483,22 +483,15 @@ void insertDecelPoint(
 
 void fillObjectEnvelopePolygon(
   ObjectData & object_data, const ObjectDataArray & registered_objects, const Pose & closest_pose,
-  const Pose & ego_pose, const std::shared_ptr<AvoidanceParameters> & parameters)
+  const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   using boost::geometry::within;
 
   const auto t = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(t);
 
-  const auto & obj_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
-  const auto lower = parameters->lower_distance_for_polygon_expansion;
-  const auto upper = parameters->upper_distance_for_polygon_expansion;
-  const auto distance_factor = object_parameter.max_expand_ratio *
-                               std::clamp(calcDistance2d(ego_pose, obj_pose) - lower, 0.0, upper) /
-                               upper;
-
   const auto & envelope_buffer_margin =
-    object_parameter.envelope_buffer_margin * (1.0 + distance_factor);
+    object_parameter.envelope_buffer_margin * object_data.distance_factor;
 
   const auto id = object_data.object.object_id;
   const auto same_id_obj = std::find_if(
@@ -781,7 +774,7 @@ void filterTargetObjects(
 
     // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
-    const double max_avoid_margin = object_parameter.safety_buffer_lateral +
+    const double max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
                                     parameters->lateral_collision_margin + 0.5 * vehicle_width;
     const double min_safety_lateral_distance =
       object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
