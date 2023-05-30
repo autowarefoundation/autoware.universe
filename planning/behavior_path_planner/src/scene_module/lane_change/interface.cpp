@@ -88,13 +88,22 @@ bool LaneChangeInterface::isExecutionReady() const
 ModuleStatus LaneChangeInterface::updateState()
 {
   if (!module_type_->isValidPath()) {
+#ifdef USE_OLD_ARCHITECTURE
     return ModuleStatus::FAILURE;
+#else
+    return ModuleStatus::RUNNING;
+#endif
   }
 
   if (module_type_->isAbortState()) {
-    current_state_ =
-      module_type_->hasFinishedAbort() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
-    return current_state_;
+#ifdef USE_OLD_ARCHITECTURE
+    return module_type_->hasFinishedAbort() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
+#else
+    if (module_type_->hasFinishedAbort()) {
+      resetLaneChangeModule();
+    }
+    return ModuleStatus::RUNNING;
+#endif
   }
 
   if (module_type_->hasFinishedLaneChange()) {
@@ -152,8 +161,14 @@ ModuleStatus LaneChangeInterface::updateState()
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger(), *clock_, 5000, "Lane change path is unsafe. Cancel lane change.");
     module_type_->toCancelState();
-    current_state_ = isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::FAILURE;
-    return current_state_;
+#ifdef USE_OLD_ARCHITECTURE
+    return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::FAILURE;
+#else
+    if (!isWaitingApproval()) {
+      resetLaneChangeModule();
+    }
+    return ModuleStatus::RUNNING;
+#endif
   }
 
   if (!module_type_->isAbortEnabled()) {
@@ -188,6 +203,13 @@ ModuleStatus LaneChangeInterface::updateState()
   module_type_->toAbortState();
   current_state_ = ModuleStatus::RUNNING;
   return current_state_;
+}
+
+void LaneChangeInterface::resetLaneChangeModule()
+{
+  processOnExit();
+  removeRTCStatus();
+  processOnEntry();
 }
 
 void LaneChangeInterface::updateData()
