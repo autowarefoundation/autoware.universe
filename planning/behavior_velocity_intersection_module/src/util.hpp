@@ -74,7 +74,7 @@ IntersectionLanelets getObjectiveLanelets(
  * @return nullopt if path is not intersecting with detection areas
  */
 std::optional<size_t> generateCollisionStopLine(
-  const int lane_id, const lanelet::CompoundPolygon3d & first_detection_area,
+  const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const InterpolatedPathInfo & interpolated_path_info, const rclcpp::Logger logger);
@@ -129,16 +129,6 @@ std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInside
   const std::pair<size_t, size_t> lane_interval,
   const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
-/**
- * @brief Get stop point from map if exists
- * @param stop_pose stop point defined on map
- * @return true when the stop point is defined on map.
- */
-bool getStopLineIndexFromMap(
-  const InterpolatedPathInfo & interpolated_path_info,
-  const std::shared_ptr<const PlannerData> & planner_data, size_t * stop_idx_ip,
-  const double dist_thr, const rclcpp::Logger logger);
-
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
 
@@ -186,8 +176,9 @@ std::vector<DetectionLaneDivision> generateDetectionLaneDivisions(
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
+  const int lane_id, const std::set<int> & associative_lane_ids,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
-  const std::set<int> & associative_lane_ids);
+  const rclcpp::Logger logger);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner

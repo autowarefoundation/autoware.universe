@@ -69,16 +69,16 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* spline interpolation */
-  const auto interpolated_path_info_opt = util::generateInterpolatePath(
-    *path, planner_param_.common.path_interpolation_ds, associative_ids_, logger_);
-  if (!interpolate_path_info_opt) {
+  const auto interpolated_path_info_opt = util::generateInterpolatedPath(
+    lane_id_, associative_ids_, *path, planner_param_.interpolation_ds, logger_);
+  if (!interpolated_path_info_opt) {
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto & interpolated_path_info = interpolated_path_info.value();
+  const auto & interpolated_path_info = interpolated_path_info_opt.value();
   if (!interpolated_path_info.lane_id_interval) {
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
@@ -86,13 +86,16 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto lane_interval_ip = interpolated_path_info.lane_id_interval.value();
 
   /* get detection area */
   if (!intersection_lanelets_.has_value()) {
+    const auto & assigned_lanelet =
+      planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
+    const auto lanelets_on_path = planning_utils::getLaneletsOnPath(
+      *path, lanelet_map_ptr, planner_data_->current_odometry->pose);
     intersection_lanelets_ = util::getObjectiveLanelets(
-      lanelet_map_ptr, routing_graph_ptr, lane_id_, {}, {} /* not used here */, path_ip,
-      lane_interval_ip, planner_param_.detection_area_length,
+      lanelet_map_ptr, routing_graph_ptr, assigned_lanelet, lanelets_on_path, associative_ids_,
+      interpolated_path_info, planner_param_.detection_area_length,
       false /* tl_arrow_solid on does not matter here*/);
   }
   const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area;
@@ -101,8 +104,8 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   const auto stop_line_idx_opt =
     first_conflicting_area
       ? util::generateCollisionStopLine(
-          lane_id_, first_conflicting_area.value(), planner_data_, planner_param_.stop_line_margin,
-          path, path_ip, interval, lane_interval_ip, logger_.get_child("util"))
+          first_conflicting_area.value(), planner_data_, planner_param_.stop_line_margin, path,
+          interpolated_path_info, logger_.get_child("util"))
       : std::nullopt;
   if (!stop_line_idx_opt.has_value()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
