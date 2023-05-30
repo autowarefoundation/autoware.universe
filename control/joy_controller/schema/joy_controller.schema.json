@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Joy Controller node",
+  "type": "object",
+  "definitions": {
+    "joy_controller": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "number",
+          "description": "Rate, in  Hz, which ... is updated",
+          "default": 10.0,
+          "exclusiveMinimum": 0
+        },
+        "accel_ratio": {
+          "type": "number",
+          "description": "Acceleration ratio",
+          "default": 3.0,
+          "exclusiveMinimum": 0
+        },
+        "brake_ratio": {
+          "type": "number",
+          "description": "Brake ratio",
+          "default": 5.0,
+          "exclusiveMinimum": 0
+        },
+        "steer_ratio": {
+          "type": "number",
+          "description": "Steer ratio",
+          "default": 0.5,
+          "exclusiveMinimum": 0
+        },
+        "steering_angle_velocity": {
+          "type": "number",
+          "description": "Steering angle velocity",
+          "default": 0.1,
+          "exclusiveMinimum": 0
+        },
+        "accel_sensitivity": {
+          "type": "number",
+          "description": "Acceleration sensitivity",
+          "default": 1.0,
+          "exclusiveMinimum": 0
+        },
+        "brake_sensitivity": {
+          "type": "number",
+          "description": "Brake sensitivity",
+          "default": 1.0,
+          "exclusiveMinimum": 0
+        },
+        "control_command": {
+          "type": "object",
+          "properties": {
+            "velocity_gain": {
+              "type": "number",
+              "description": "Velocity gain",
+              "default": 3.0,
+              "exclusiveMinimum": 0
+            },
+            "max_forward_velocity": {
+              "type": "number",
+              "description": "Max forward velocity",
+              "default": 20.0,
+              "exclusiveMinimum": 0
+            },
+            "max_backward_velocity": {
+              "type": "number",
+              "description": "Max backward velocity",
+              "default": 3.0,
+              "exclusiveMinimum": 0
+            },
+            "backward_accel_ratio": {
+              "type": "number",
+              "description": "Backward acceleration ratio",
+              "default": 1.0,
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "velocity_gain",
+            "max_forward_velocity",
+            "max_backward_velocity",
+            "backward_accel_ratio"
+          ]
+        }
+      },
+      "required": [
+        "update_rate",
+        "accel_ratio",
+        "brake_ratio",
+        "steer_ratio",
+        "steering_angle_velocity",
+        "accel_sensitivity",
+        "brake_sensitivity",
+        "control_command"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/joy_controller"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
