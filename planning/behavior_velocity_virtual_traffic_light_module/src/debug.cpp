@@ -50,30 +50,25 @@ namespace
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray VirtualTrafficLightModule::createVirtualWallMarkerArray()
+motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWalls()
 {
-  visualization_msgs::msg::MarkerArray wall_marker;
-
+  motion_utils::VirtualWalls virtual_walls;
+  motion_utils::VirtualWall wall;
+  wall.text = "virtual_traffic_light";
+  wall.ns = std::to_string(module_id_) + "_";
+  wall.style = motion_utils::VirtualWallType::stop;
   const auto & d = module_data_;
-  const auto now = clock_->now();
-
   // virtual_wall_stop_line
-  if (d.stop_head_pose_at_stop_line) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {*d.stop_head_pose_at_stop_line}, "virtual_traffic_light", now),
-      &wall_marker, now);
-  }
-
+  std::vector<geometry_msgs::msg::Pose> wall_poses;
+  if (d.stop_head_pose_at_stop_line) wall_poses.push_back(*d.stop_head_pose_at_stop_line);
   // virtual_wall_end_line
-  if (d.stop_head_pose_at_end_line) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {*d.stop_head_pose_at_end_line}, "virtual_traffic_light", now),
-      &wall_marker, now);
+  if (d.stop_head_pose_at_end_line) wall_poses.push_back(*d.stop_head_pose_at_end_line);
+  for (const auto & p : wall_poses) {
+    wall.pose = p;
+    virtual_walls.push_back(wall);
   }
 
-  return wall_marker;
+  return virtual_walls;
 }
 
 visualization_msgs::msg::MarkerArray VirtualTrafficLightModule::createDebugMarkerArray()
