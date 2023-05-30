@@ -356,7 +356,7 @@ std::vector<std::string> BehaviorPathPlannerNode::getRunningModules()
   auto registered_modules_ptr = bt_manager_->getSceneModules();
   std::vector<std::string> running_modules;
   for (const auto & module : registered_modules_ptr) {
-    if (module->current_state_ == ModuleStatus::RUNNING) {
+    if (module->getCurrentStatus() == ModuleStatus::RUNNING) {
       running_modules.push_back(module->name());
 #else
   auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
