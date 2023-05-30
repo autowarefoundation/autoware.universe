@@ -67,6 +67,13 @@ bool cylinderAndBoxOverlapExists(
   const geometry_msgs::msg::Point center, const double radius, const pcl::PointXYZ box_min_point,
   const pcl::PointXYZ box_max_point)
 {
+  // Collision detection with x-y plane (circular base of the cylinder)
+  if (
+    box_min_point.x - radius <= center.x && center.x <= box_max_point.x + radius &&
+    box_min_point.y - radius <= center.y && center.y <= box_max_point.y + radius) {
+    return true;
+  }
+
   // Collision detection with box edges
   const double dx0 = center.x - box_min_point.x;
   const double dx1 = center.x - box_max_point.x;

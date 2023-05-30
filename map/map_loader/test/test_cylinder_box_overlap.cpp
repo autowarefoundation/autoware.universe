@@ -41,7 +41,7 @@ TEST(CylinderAndBoxOverlapExists, NoOverlap)
   EXPECT_FALSE(result);
 }
 
-TEST(CylinderAndBoxOverlapExists, Overlap)
+TEST(CylinderAndBoxOverlapExists, Overlap1)
 {
   // Cylinder: center = (0, 0, 0), radius = 5
   // Box: p_min = (-1, -1, -1), p_max = (1, 1, 1)
@@ -61,6 +61,31 @@ TEST(CylinderAndBoxOverlapExists, Overlap)
   p_max.x = 1.0;
   p_max.y = 1.0;
   p_max.z = 1.0;
+
+  bool result = cylinderAndBoxOverlapExists(center, radius, p_min, p_max);
+  EXPECT_TRUE(result);
+}
+
+TEST(CylinderAndBoxOverlapExists, Overlap2)
+{
+  // Cylinder: center = (0, 0, 0), radius = 5
+  // Box: p_min = (-1, -1, -100), p_max = (1, 1, -99)
+  geometry_msgs::msg::Point center;
+  center.x = 0.0;
+  center.y = 0.0;
+  center.z = 0.0;
+
+  const double radius = 5.0;
+
+  pcl::PointXYZ p_min;
+  p_min.x = -1.0;
+  p_min.y = -1.0;
+  p_min.z = -100.0;
+
+  pcl::PointXYZ p_max;
+  p_max.x = 1.0;
+  p_max.y = 1.0;
+  p_max.z = -99.0;
 
   bool result = cylinderAndBoxOverlapExists(center, radius, p_min, p_max);
   EXPECT_TRUE(result);
