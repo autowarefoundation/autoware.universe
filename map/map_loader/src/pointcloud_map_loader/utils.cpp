@@ -64,8 +64,8 @@ std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
 }
 
 bool cylinderAndBoxOverlapExists(
-  const double center_x, const double center_y, const double radius, const pcl::PointXYZ box_min_point,
-  const pcl::PointXYZ box_max_point)
+  const double center_x, const double center_y, const double radius,
+  const pcl::PointXYZ box_min_point, const pcl::PointXYZ box_max_point)
 {
   // Collision detection with x-y plane (circular base of the cylinder)
   if (
@@ -79,7 +79,7 @@ bool cylinderAndBoxOverlapExists(
   const double dx1 = center_x - box_max_point.x;
   const double dy0 = center_y - box_min_point.y;
   const double dy1 = center_y - box_max_point.y;
-  
+
   if (
     std::hypot(dx0, dy0) <= radius || std::hypot(dx1, dy0) <= radius ||
     std::hypot(dx0, dy1) <= radius || std::hypot(dx1, dy1) <= radius) {

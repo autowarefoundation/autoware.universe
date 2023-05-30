@@ -42,8 +42,8 @@ std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
   const std::vector<std::string> & pcd_paths);
 
 bool cylinderAndBoxOverlapExists(
-  const double center_x, const double center_y, const double radius, const pcl::PointXYZ position_min,
-  const pcl::PointXYZ position_max);
+  const double center_x, const double center_y, const double radius,
+  const pcl::PointXYZ position_min, const pcl::PointXYZ position_max);
 bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata);
 
