@@ -199,6 +199,8 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
     return std::nullopt;
   }
 
+  target_lanes.push_back(next_lane);
+
   const auto target_pose = std::invoke([&]() {
     const auto is_goal_in_next_lane = getRouteHandler()->isInGoalRouteSection(next_lane);
     if (is_goal_in_next_lane) {
