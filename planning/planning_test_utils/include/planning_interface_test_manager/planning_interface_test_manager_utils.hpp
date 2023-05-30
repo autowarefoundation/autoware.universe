@@ -309,7 +309,7 @@ Odometry makeInitialPoseFromLaneId(const int & lane_id)
   return current_odometry;
 }
 
-RouteSections combine_consecutive_route_sections(
+RouteSections combineConsecutiveRouteSections(
   const RouteSections & route_sections1, const RouteSections & route_sections2)
 {
   RouteSections route_sections;
@@ -352,7 +352,7 @@ Route::Message makeBehaviorRouteFromLaneId(const int & start_lane_id, const int 
   // create local route sections
   route_handler->setRouteLanelets(path_lanelets);
   const auto local_route_sections = route_handler->createMapSegments(path_lanelets);
-  route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
+  route_sections = combineConsecutiveRouteSections(route_sections, local_route_sections);
   for (const auto & route_section : route_sections) {
     for (const auto & primitive : route_section.primitives) {
       std::cerr << "primitive: " << primitive.id << std::endl;
