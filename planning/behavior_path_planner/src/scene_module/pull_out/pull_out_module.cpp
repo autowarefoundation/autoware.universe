@@ -62,7 +62,7 @@ PullOutModule::PullOutModule(
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<PullOutParameters> & parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
@@ -466,23 +466,37 @@ void PullOutModule::planWithPriority(
     return true;
   };
 
-  // Choose loop order based on priority_on_efficient_path
-  if (priority_on_efficient_path) {
-    // Try each planner for all start pose candidates first
+  using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
+  const auto makePriorityOrder_PlannerFirst = [&]() {
+    PriorityOrder order_priority;
     for (const auto & planner : pull_out_planners_) {
       for (size_t i = 0; i < start_pose_candidates.size(); i++) {
-        if (loop_body(i, planner)) break;
+        order_priority.emplace_back(i, planner);
       }
-      if (status_.is_safe) break;
     }
-  } else {
-    // Try all start pose candidates for each planner first
+    return order_priority;
+  };
+
+  const auto makePriorityOrder_PoseFirst = [&]() {
+    PriorityOrder order_priority;
     for (size_t i = 0; i < start_pose_candidates.size(); i++) {
       for (const auto & planner : pull_out_planners_) {
-        if (loop_body(i, planner)) break;
+        order_priority.emplace_back(i, planner);
       }
-      if (status_.is_safe) break;
     }
+    return order_priority;
+  };
+
+  // Choose loop order based on priority_on_efficient_path
+  PriorityOrder order_priority;
+  if (priority_on_efficient_path) {
+    order_priority = makePriorityOrder_PlannerFirst();
+  } else {
+    order_priority = makePriorityOrder_PoseFirst();
+  }
+
+  for (const auto & p : order_priority) {
+    if (loop_body(p.first, p.second)) break;
   }
 }
 
