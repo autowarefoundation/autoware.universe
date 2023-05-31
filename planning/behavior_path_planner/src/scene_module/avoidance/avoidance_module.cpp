@@ -76,6 +76,19 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 {
   base_vector.insert(base_vector.end(), additional_vector.begin(), additional_vector.end());
 }
+
+bool isDrivingSameLane(
+  const lanelet::ConstLanelets & previous_lanes, const lanelet::ConstLanelets & current_lanes)
+{
+  const auto compare = [](const auto & a, const auto & b) { return a.id() < b.id(); };
+
+  lanelet::ConstLanelets same_id_lanes{};
+  std::set_intersection(
+    previous_lanes.begin(), previous_lanes.end(), current_lanes.begin(), current_lanes.end(),
+    std::inserter(same_id_lanes, same_id_lanes.end()), compare);
+
+  return !same_id_lanes.empty();
+}
 }  // namespace
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -153,6 +166,11 @@ ModuleStatus AvoidanceModule::updateState()
   const auto is_plan_running = isAvoidancePlanRunning();
   const bool has_avoidance_target = !avoidance_data_.target_objects.empty();
 
+  if (!isDrivingSameLane(prev_driving_lanes_, avoidance_data_.current_lanelets)) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "previous module lane is updated.");
+    return ModuleStatus::SUCCESS;
+  }
+
   DEBUG_PRINT(
     "is_plan_running = %d, has_avoidance_target = %d", is_plan_running, has_avoidance_target);
 
@@ -167,6 +185,7 @@ ModuleStatus AvoidanceModule::updateState()
     return ModuleStatus::SUCCESS;
   }
 
+  prev_driving_lanes_ = avoidance_data_.current_lanelets;
   return ModuleStatus::RUNNING;
 }
 
@@ -3125,6 +3144,10 @@ void AvoidanceModule::updateData()
   if (prev_reference_.points.empty()) {
     prev_reference_ = *getPreviousModuleOutput().path;
   }
+  if (prev_driving_lanes_.empty()) {
+    prev_driving_lanes_ =
+      utils::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+  }
 #endif
 
   debug_data_ = DebugData();
@@ -3180,6 +3203,7 @@ void AvoidanceModule::initVariables()
   prev_output_ = ShiftedPath();
   prev_linear_shift_path_ = ShiftedPath();
   prev_reference_ = PathWithLaneId();
+  prev_driving_lanes_.clear();
   path_shifter_ = PathShifter{};
 
   debug_data_ = DebugData();
