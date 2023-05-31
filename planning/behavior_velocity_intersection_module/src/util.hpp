@@ -75,9 +75,9 @@ IntersectionLanelets getObjectiveLanelets(
  */
 std::optional<size_t> generateCollisionStopLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
-  const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const InterpolatedPathInfo & interpolated_path_info, const rclcpp::Logger logger);
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 /**
  * @brief Generate a stop line for stuck vehicle
@@ -89,28 +89,21 @@ std::optional<size_t> generateCollisionStopLine(
  */
 std::optional<size_t> generateStuckStopLine(
   const lanelet::CompoundPolygon3d & first_conflicting_area,
-  const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
-  const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const InterpolatedPathInfo & interpolated_path_info, const rclcpp::Logger logger);
-
-std::optional<std::pair<size_t, size_t>> generateOcclusionStopLines(
-  const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
-  const std::shared_ptr<const PlannerData> & planner_data, const double collision_stop_line_margin,
-  const size_t occlusion_projection_index, const double occlusion_extra_margin,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const InterpolatedPathInfo & interpolated_path_info, const rclcpp::Logger logger);
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
+  const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<size_t> generateStaticPassJudgeLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
+  const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info,
-  const std::shared_ptr<const PlannerData> & planner_data);
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<size_t> generatePeekingLimitLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const InterpolatedPathInfo & interpolated_path_info,
-  const std::shared_ptr<const PlannerData> & planner_data, const double offset);
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const InterpolatedPathInfo & interpolated_path_info, const double offset,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path, );
 
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -129,20 +122,10 @@ std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInside
   const std::pair<size_t, size_t> lane_interval,
   const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
-std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
-  const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
-
-std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
-  const lanelet::ConstLanelets & ll_vec, double clip_length);
-
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
   const lanelet::ConstLanelets & ll_vec);
 
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
-
-lanelet::ConstLanelet generateOffsetLanelet(
-  const lanelet::ConstLanelet lanelet, double right_margin, double left_margin);
-geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p);
 
 /**
  * @brief check if ego is over the target_idx. If the index is same, compare the exact pose
