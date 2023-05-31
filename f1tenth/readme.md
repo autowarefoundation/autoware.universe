@@ -54,7 +54,7 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
    ```
 
 ## How to create a map
-Click [here](https://drive.google.com/file/d/15PViYjO-CKy2uvMqojIPj7BqdnMEidws/view?usp=share_link) to watch a demonstration video. 
+[![YouTube Demo](https://img.youtube.com/vi/wANpcMwWCrg/0.jpg)](https://www.youtube.com/watch?v=wANpcMwWCrg)
 
 This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, see [f1tenth_system](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/f1tenth_system).
 
