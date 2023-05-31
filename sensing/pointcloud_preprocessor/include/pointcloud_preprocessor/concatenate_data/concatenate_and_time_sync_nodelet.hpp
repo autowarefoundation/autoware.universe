@@ -123,6 +123,8 @@ private:
 
   double timeout_sec_ = 0.1;
 
+  bool publish_synchronized_pointcloud_;
+
   std::set<std::string> not_subscribed_topic_names_;
 
   /** \brief A vector of subscriber. */

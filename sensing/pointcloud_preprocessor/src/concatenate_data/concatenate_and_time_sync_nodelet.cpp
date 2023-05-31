@@ -108,6 +108,9 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       RCLCPP_ERROR(get_logger(), "The number of topics does not match the number of offsets.");
       return;
     }
+
+    // Check if publish synchronized pointcloud
+    publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", false);
   }
 
   // Initialize not_subscribed_topic_names_
@@ -360,14 +363,16 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   }
 
   // publish transformed raw pointclouds
-  for (const auto & e : transformed_raw_points) {
-    if (e.second) {
-      auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*e.second);
-      transformed_raw_pc_publisher_map_[e.first]->publish(std::move(output));
-    } else {
-      RCLCPP_WARN(
-        this->get_logger(), "transformed_raw_points[%s] is nullptr, skipping pointcloud publish.",
-        e.first.c_str());
+  if (publish_synchronized_pointcloud_) {
+    for (const auto & e : transformed_raw_points) {
+      if (e.second) {
+        auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*e.second);
+        transformed_raw_pc_publisher_map_[e.first]->publish(std::move(output));
+      } else {
+        RCLCPP_WARN(
+          this->get_logger(), "transformed_raw_points[%s] is nullptr, skipping pointcloud publish.",
+          e.first.c_str());
+      }
     }
   }
 
