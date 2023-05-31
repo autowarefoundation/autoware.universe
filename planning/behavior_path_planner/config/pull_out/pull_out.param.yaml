@@ -11,9 +11,9 @@
       enable_shift_pull_out: true
       shift_pull_out_velocity: 2.0
       pull_out_sampling_num: 4
-      minimum_shift_pull_out_distance: 20.0
+      minimum_shift_pull_out_distance: 0.0
       maximum_lateral_jerk: 2.0
-      minimum_lateral_jerk: 0.5
+      minimum_lateral_jerk: 0.1
       deceleration_interval: 15.0
       # geometric pull out
       enable_geometric_pull_out: true
