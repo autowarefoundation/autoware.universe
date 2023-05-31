@@ -43,5 +43,4 @@
   <group>
     <include file="$(find-pkg-share yabloc_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
   </group>
-
 </launch>
