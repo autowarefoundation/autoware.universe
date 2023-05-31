@@ -29,8 +29,6 @@
     <!-- map -->
     <arg name="ground_server_param_path" default="$(find-pkg-share yabloc_common)/config/ground_server.param.yaml"/>
     <arg name="ll2_decomposer_param_path" default="$(find-pkg-share yabloc_common)/config/ll2_decomposer.param.yaml"/>
-    <!-- twist estimator -->
-    <arg name="twist_estimator_param_path" default="$(find-pkg-share yabloc_twist)/config/twist_estimator.param.yaml"/>
 
     <group>
         <push-ros-namespace namespace="localization/yabloc"/>
@@ -76,6 +74,7 @@
         <!-- twist -->
         <group if="$(var estimate_twist_in_yabloc)">
             <push-ros-namespace namespace="twist"/>
+            <arg name="twist_estimator_param_path" default="$(find-pkg-share yabloc_twist)/config/twist_estimator.param.yaml"/>
             <include file="$(find-pkg-share yabloc_launch)/launch/impl/twist.launch.xml"/>
         </group>
 

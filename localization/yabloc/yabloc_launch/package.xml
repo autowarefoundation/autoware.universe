@@ -15,15 +15,7 @@
   <depend>yabloc_pose_initializer</depend>
   <depend>yabloc_imgproc</depend>
   <depend>yabloc_particle_filter</depend>
-  <!--map-->
-  <depend>ground_server</depend>
-  <depend>ll2_decomposer</depend>
-  <!--twist-->
-  <depend>twist_converter</depend>
-  <depend>twist_estimator</depend>
-  <!--rviz plugin-->
-  <depend>rviz2_initialpose_plugins</depend>
-  <depend>rviz2_overlay_plugins</depend>
+  <depend>yabloc_common</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
