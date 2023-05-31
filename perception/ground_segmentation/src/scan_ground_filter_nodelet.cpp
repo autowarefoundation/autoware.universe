@@ -326,8 +326,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       if (
-        !initialized_first_gnd_grid && abs(global_slope_p) < global_slope_max_angle_rad_ &&
-        abs(p->orig_point->z) < non_ground_height_threshold_local) {
+        !initialized_first_gnd_grid &&
+        (abs(global_slope_p) < global_slope_max_angle_rad_ ||
+         abs(p->orig_point->z) < non_ground_height_threshold_local)) {
         ground_cluster.addPoint(p->radius, p->orig_point->z, p->orig_index);
         p->point_state = PointLabel::GROUND;
         initialized_first_gnd_grid = static_cast<bool>(p->grid_id - prev_p->grid_id);
