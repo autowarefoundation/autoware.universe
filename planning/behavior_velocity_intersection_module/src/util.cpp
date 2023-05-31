@@ -400,7 +400,6 @@ std::optional<size_t> generateStuckStopLine(
     const auto stuck_stop_line_idx_ip_opt =
       util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, conflicting_area);
     if (!stuck_stop_line_idx_ip_opt) {
-      RCLCPP_DEBUG(
       return std::nullopt;
     }
     stuck_stop_line_idx_ip = stuck_stop_line_idx_ip_opt.value();
@@ -878,12 +877,13 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger)
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId tmp;
-  if (!splineInterpolate(input_path, ds, tmp, logger)) {
+  autoware_auto_planning_msgs::msg::PathWithLaneId interpolated_path_info;
+  if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
     return std::nullopt;
   }
-  const InterpolatedPathInfo interpolated_path_info = {
-    tmp, ds, lane_id, findLaneIdsInterval(interpolated_path_info.path, associative_lane_ids)};
+  interpolated_path_info.ds = ds;
+  interpolated_path_info.lane_id = lane_id;
+  interpolated_path_info.associative_lane_ids = associative_lane_ids;
   return interpolated_path_info;
 }
 
