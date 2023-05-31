@@ -49,12 +49,6 @@ SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & o
 }
 
 void SimpleTrajectoryFollower::createTrajectoryMarker(){
-    Marker marker;
-    Pose pose;
-    Point point;
-    Vector3 scale;
-    Header header;
-
     scale.x = 0.1;
     scale.y = 0.1;
     scale.z = 0.1;
@@ -83,16 +77,11 @@ void SimpleTrajectoryFollower::createTrajectoryMarker(){
 
     traj_marker_pub_->publish(marker);
 
-
-    Marker goal_marker;
-
     scale.x = 0.2;
     scale.y = 0.2;
     scale.z = 0.2;
 
-    header.frame_id = "map";
-
-    goal_marker.type = marker.POINTS;
+    goal_marker.type = goal_marker.POINTS;
     goal_marker.pose = pose;
     goal_marker.scale = scale;
     goal_marker.header = header;
@@ -133,7 +122,7 @@ void SimpleTrajectoryFollower::onTimer()
   ackermann_msg.drive.steering_angle = cmd.lateral.steering_tire_angle * 10;
   drive_cmd_->publish(ackermann_msg);
 
-  // cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
+  cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
 }
 
 void SimpleTrajectoryFollower::updateClosest()
@@ -154,14 +143,8 @@ double SimpleTrajectoryFollower::calcSteerCmd()
   constexpr auto lookahead_time = 3.0;
   constexpr auto min_lookahead = 3.0;
   const auto lookahead = min_lookahead + lookahead_time * std::abs(odometry_->twist.twist.linear.x);
-  const auto kp = 50.0 * wheel_base / (lookahead * lookahead);
-  const auto kd = 6.0 * wheel_base / lookahead;
-
-  cout << "lat error" << lat_err << endl;
-  cout << "yaw error" << yaw_err << endl << endl;
-
-  cout << "kp steer" << -kp * lat_err << endl;
-  cout << "kd steer" << -kd * yaw_err << endl << endl;
+  const auto kp = 25.0 * wheel_base / (lookahead * lookahead);
+  const auto kd = 5.0 * wheel_base / lookahead;
 
   constexpr auto steer_lim = 1.0;
 

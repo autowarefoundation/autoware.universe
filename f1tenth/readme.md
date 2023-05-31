@@ -1,5 +1,7 @@
 # Autoware F1tenth Recordreplay Demo
 
+This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic instead of humble is used to increase system compatibility.
+
 ## How to set up autoware development environment
 
 1. Clone `autowarefoundation/autoware` and move to the directory.

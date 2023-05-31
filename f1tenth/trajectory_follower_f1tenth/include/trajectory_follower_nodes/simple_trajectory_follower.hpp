@@ -62,7 +62,12 @@ private:
 
   TrajectoryPoint closest_traj_point_;
 
-
+  Marker marker;
+  Marker goal_marker;
+  Pose pose;
+  Point point;
+  Vector3 scale;
+  Header header;
 
   bool use_external_target_vel_;
   double external_target_vel_;
