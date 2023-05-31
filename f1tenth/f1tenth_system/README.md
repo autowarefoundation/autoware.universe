@@ -12,7 +12,7 @@ On Logitech F-710 joysticks, the LB button is the deadman's switch for teleop, a
 
 ### Sensor topics published by the driver stack
 - `/scan`: Topic for `LaserScan` messages.
-- `/odom`: Topic for `Odometry` messages.
+- `/ego_racecar/odom`: Topic for `Odometry` messages.
 - `/sensors/imu/raw`: Topic for `Imu` messages.
 - `/sensors/core`: Topic for telemetry data from the VESC
 
