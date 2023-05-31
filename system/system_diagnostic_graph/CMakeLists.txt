@@ -8,4 +8,9 @@ ament_auto_add_executable(${PROJECT_NAME}
   src/node.cpp
 )
 
+install(
+  PROGRAMS test/diagnostics.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_auto_package(INSTALL_TO_SHARE config launch)
