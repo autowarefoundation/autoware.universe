@@ -49,7 +49,8 @@ using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
-using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignal>;
+using TrafficSignalAndTime = std::pair<TrafficSignal, rclcpp::Time>;
+using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignalAndTime>;
 
 class CrosswalkTrafficLightEstimatorNode : public rclcpp::Node
 {
@@ -89,6 +90,7 @@ private:
 
   // Node param
   bool use_last_detect_color_;
+  double last_detect_color_hold_time_;
 
   // Signal history
   TrafficLightIdMap last_detect_color_;
