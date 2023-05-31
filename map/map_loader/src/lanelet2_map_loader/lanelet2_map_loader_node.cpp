@@ -126,7 +126,7 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
   return nullptr;
 }
 
-MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
+const MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
   const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type,
   const double & map_origin_lat, const double & map_origin_lon)
 {
