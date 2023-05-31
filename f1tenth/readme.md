@@ -94,7 +94,7 @@ Navigate to /home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ro
 
 ## How to record a trajectory (simulation)
 
-Click [here](https://drive.google.com/file/d/1AkPndsR42yFxAHseP_JW0zUfrvYIeyNb/view?usp=share_link) to watch a demonstration video. 
+[![YouTube Demo](./media/thumb.jpg)](https://www.youtube.com/watch?v=iQ3Bsct1q-g)
 
 Launch the f1tenth gym simulator, recordreplay node, and trajectory follower
 
