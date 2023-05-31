@@ -38,22 +38,22 @@ private:
 
   rclcpp::Subscription<LaneletMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<TrafficSignalArray>::SharedPtr perception_tlr_sub_;
-  rclcpp::Subscription<TrafficSignalArray>::SharedPtr v2x_tlr_sub_;
+  rclcpp::Subscription<TrafficSignalArray>::SharedPtr external_tlr_sub_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr pub_;
 
   void onMap(const LaneletMapBin::ConstSharedPtr msg);
   void onPerceptionMsg(const TrafficSignalArray::ConstSharedPtr msg);
-  void onV2xMsg(const TrafficSignalArray::ConstSharedPtr msg);
-  void arbiterAndPublish(const builtin_interfaces::msg::Time & stamp);
+  void onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg);
+  void arbitrateAndPublish(const builtin_interfaces::msg::Time & stamp);
 
   std::unordered_set<lanelet::Id> map_regulatory_elements_set_;
 
-  double v2x_time_tolerance_;
+  double external_time_tolerance_;
   double perception_time_tolerance_;
-  bool v2x_priority_;
+  bool external_priority_;
 
   TrafficSignalArray latest_perception_msg_;
-  TrafficSignalArray latest_v2x_msg_;
+  TrafficSignalArray latest_external_msg_;
 };
 
 #endif  // TRAFFIC_LIGHT_ARBITER_HPP_

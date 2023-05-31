@@ -48,9 +48,9 @@ std::vector<TrafficLightConstPtr> filter_traffic_signals(const LaneletMapConstPt
 TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
 : Node("traffic_light_selector", options)
 {
-  v2x_time_tolerance_ = this->declare_parameter<double>("v2x_time_tolerance", 5.0);
+  external_time_tolerance_ = this->declare_parameter<double>("external_time_tolerance", 5.0);
   perception_time_tolerance_ = this->declare_parameter<double>("perception_time_tolerance", 1.0);
-  v2x_priority_ = this->declare_parameter<bool>("v2x_priority", false);
+  external_priority_ = this->declare_parameter<bool>("external_priority", false);
 
   map_sub_ = create_subscription<LaneletMapBin>(
     "~/sub/vector_map", rclcpp::QoS(1).transient_local(),
@@ -60,9 +60,9 @@ TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
     "~/sub/perception_traffic_signals", rclcpp::QoS(1),
     std::bind(&TrafficLightArbiter::onPerceptionMsg, this, std::placeholders::_1));
 
-  v2x_tlr_sub_ = create_subscription<TrafficSignalArray>(
-    "~/sub/v2x_traffic_signals", rclcpp::QoS(1),
-    std::bind(&TrafficLightArbiter::onV2xMsg, this, std::placeholders::_1));
+  external_tlr_sub_ = create_subscription<TrafficSignalArray>(
+    "~/sub/external_traffic_signals", rclcpp::QoS(1),
+    std::bind(&TrafficLightArbiter::onExternalMsg, this, std::placeholders::_1));
 
   pub_ = create_publisher<TrafficSignalArray>("~/pub/traffic_signals", rclcpp::QoS(1));
 }
@@ -84,28 +84,28 @@ void TrafficLightArbiter::onPerceptionMsg(const TrafficSignalArray::ConstSharedP
   latest_perception_msg_ = *msg;
 
   if (
-    (rclcpp::Time(msg->stamp) - rclcpp::Time(latest_v2x_msg_.stamp)).seconds() >
-    v2x_time_tolerance_) {
-    latest_v2x_msg_.signals.clear();
+    (rclcpp::Time(msg->stamp) - rclcpp::Time(latest_external_msg_.stamp)).seconds() >
+    external_time_tolerance_) {
+    latest_external_msg_.signals.clear();
   }
 
-  arbiterAndPublish(msg->stamp);
+  arbitrateAndPublish(msg->stamp);
 }
 
-void TrafficLightArbiter::onV2xMsg(const TrafficSignalArray::ConstSharedPtr msg)
+void TrafficLightArbiter::onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg)
 {
-  latest_v2x_msg_ = *msg;
+  latest_external_msg_ = *msg;
 
   if (
     (rclcpp::Time(msg->stamp) - rclcpp::Time(latest_perception_msg_.stamp)).seconds() >
     perception_time_tolerance_) {
-    latest_v2x_msg_.signals.clear();
+    latest_external_msg_.signals.clear();
   }
 
-  arbiterAndPublish(msg->stamp);
+  arbitrateAndPublish(msg->stamp);
 }
 
-void TrafficLightArbiter::arbiterAndPublish(const builtin_interfaces::msg::Time & stamp)
+void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Time & stamp)
 {
   using ElementAndPriority = std::pair<Element, bool>;
   std::unordered_map<lanelet::Id, std::vector<ElementAndPriority>> regulatory_element_signals_map;
@@ -133,8 +133,8 @@ void TrafficLightArbiter::arbiterAndPublish(const builtin_interfaces::msg::Time 
     add_signal_function(signal, false);
   }
 
-  for (const auto & signal : latest_v2x_msg_.signals) {
-    add_signal_function(signal, v2x_priority_);
+  for (const auto & signal : latest_external_msg_.signals) {
+    add_signal_function(signal, external_priority_);
   }
 
   const auto get_highest_confidence_elements =
