@@ -128,15 +128,6 @@ public:
     } occlusion;
   };
 
-  enum OcclusionState {
-    NONE,
-    BEFORE_FIRST_STOP_LINE,
-    WAIT_FIRST_STOP_LINE,
-    CREEP_SECOND_STOP_LINE,
-    CLEARED,
-    COLLISION_DETECTED,
-  };
-
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<int> & associative_ids,
@@ -169,7 +160,7 @@ private:
   // Parameter
   PlannerParam planner_param_;
   std::optional<util::IntersectionLanelets> intersection_lanelets_;
-  // for an intersection lane l1, its associative lanes are those that share same parent lanelet and
+  // for an intersection lane, its associative lanes are those that share same parent lanelet and
   // have same turn_direction
   const std::set<int> associative_ids_;
 
@@ -192,132 +183,9 @@ private:
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
 
-  /**
-   * @brief check collision for all lanelet area & predicted objects (call checkPathCollision() as
-   * actual collision check algorithm inside this function)
-   * @param lanelet_map_ptr  lanelet map
-   * @param path             ego-car lane
-   * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet
-   * ids
-   * @param intersection_area associated intersection_area if exists
-   * @param objects_ptr      target objects
-   * @param closest_idx      ego-car position index on the lane
-   * @return true if collision is detected
-   */
-  bool checkCollision(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::ConstLanelets & detection_area_lanelets,
-    const lanelet::ConstLanelets & adjacent_lanelets,
-    const std::optional<Polygon2d> & intersection_area, const lanelet::ConstLanelet & ego_lane,
-    const lanelet::ConstLanelets & ego_lane_with_next_lane,
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx, const double time_delay);
+  void initializeRTCStatus();
 
-  /**
-   * @brief Check if there is a stopped vehicle on the ego-lane.
-   * @param lanelet_map_ptr lanelet map
-   * @param path            ego-car lane
-   * @param closest_idx     ego-car position on the lane
-   * @param objects_ptr     target objects
-   * @return true if exists
-   */
-  bool checkStuckVehicleInIntersection(
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const Polygon2d & stuck_vehicle_detect_area) const;
-
-  /**
-   * @brief Calculate the polygon of the path from the ego-car position to the end of the
-   * intersection lanelet (+ extra distance).
-   * @param lanelet_map_ptr lanelet map
-   * @param path            ego-car lane
-   * @param closest_idx     ego-car position index on the lane
-   * @param extra_dist      extra distance from the end point of the intersection lanelet
-   * @param ignore_dist     ignore distance from the start point of the ego-intersection lane
-   * @return generated polygon
-   */
-  Polygon2d generateStuckVehicleDetectAreaPolygon(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx) const;
-
-  /**
-   * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
-   * @param objects_ptr target objects
-   * @param time_thr    time threshold to cut path
-   */
-  void cutPredictPathWithDuration(
-    autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
-    const double time_thr) const;
-
-  /**
-   * @brief Calculate time that is needed for ego-vehicle to cross the intersection. (to be updated)
-   * @param path              ego-car lane
-   * @param closest_idx       ego-car position index on the lane
-   * @param objective_lane_id lanelet id on ego-car
-   * @return calculated time [s]
-   */
-  TimeDistanceArray calcIntersectionPassingTime(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const double time_delay) const;
-
-  /**
-   * @brief check if the object has a target type for collision check
-   * @param object target object
-   * @return true if the object has a target type
-   */
-  bool isTargetCollisionVehicleType(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
-   * @brief check if the object has a target type for stuck check
-   * @param object target object
-   * @return true if the object has a target type
-   */
-  bool isTargetStuckVehicleType(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
-   * @brief Whether the given pose belongs to any target lanelet or not
-   * @param pose pose to be checked
-   * @param target_lanelet_ids id list of target lanelets
-   * @param thresh_angle angle threshold considered to belong to a lanelet
-   * @return true if the given pose belongs to any target lanelet
-   */
-  bool checkAngleForTargetLanelets(
-    const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelet_ids,
-    const double margin = 0);
-
-  /**
-   * @brief Get path polygon of intersection part and next lane part
-   * @return trimmed path polygon
-   */
-  lanelet::ConstLanelets getEgoLaneWithNextLane(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const;
-
-  /**
-   * @brief Calculate distance between closest path point and intersection lanelet along path
-   * @param lanelet_map_ptr lanelet map
-   * @param path            ego-car lane
-   * @param closest_idx     closest path index
-   * @return ego lanelet and next lanelet
-   */
-  double calcDistanceUntilIntersectionLanelet(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx) const;
-
-  /**
-   * @brief Check if the ego is expected to stop in the opposite lane if the front vehicle starts
-   * deceleration from current velocity and stop befor the crosswalk. If the stop position of front
-   * vehicle is in stuck area, and the position `ego_length` meter behind is in detection area,
-   * return true
-   * @param ego_poly Polygon of ego_with_next_lane
-   * @param closest_lanelet
-   * @return true if the ego is expected to stop in the opposite lane
-   */
-  bool checkFrontVehicleDeceleration(
-    lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-    const Polygon2d & stuck_vehicle_detect_area,
-    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
+  util::DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
@@ -325,11 +193,11 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_detection_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<util::DetectionLaneDivision> & lane_divisions,
+    const std::vector<util::DescritizedLane> & lane_divisions,
     const double occlusion_dist_thr) const;
 
   // Debug
-  mutable DebugData debug_data_;
+  DebugData debug_data_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr occlusion_grid_pub_;
 };
 }  // namespace behavior_velocity_planner

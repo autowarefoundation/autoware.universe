@@ -103,7 +103,7 @@ std::optional<size_t> generatePeekingLimitLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const double offset,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path, );
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,

@@ -49,6 +49,46 @@ namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
+static bool isTargetCollisionVehicleType(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object)
+{
+  if (
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) {
+    return true;
+  }
+  return false;
+}
+
+static bool isTargetStuckVehicleType(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object)
+{
+  if (
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
+    return true;
+  }
+  return false;
+}
+
 static geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state)
 {
@@ -66,6 +106,98 @@ static geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
+static lanelet::ConstLanelets getEgoLaneWithNextLane(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const std::set<int> & associative_ids, const double width)
+{
+  // NOTE: findLaneIdsInterval returns (start, end) of associative_ids
+  const auto ego_lane_interval_opt = util::findLaneIdsInterval(path, associative_ids);
+  if (!ego_lane_interval_opt) {
+    return lanelet::ConstLanelets({});
+  }
+  const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
+  if (ego_end < path.points.size() - 1) {
+    const int next_id = path.points.at(ego_end).lane_ids.at(0);
+    const auto next_lane_interval_opt = util::findLaneIdsInterval(path, {next_id});
+    if (next_lane_interval_opt) {
+      const auto [next_start, next_end] = next_lane_interval_opt.value();
+      return {
+        planning_utils::generatePathLanelet(path, ego_start, next_start + 1, width),
+        planning_utils::generatePathLanelet(path, next_start + 1, next_end, width)};
+    }
+  }
+  return {planning_utils::generatePathLanelet(path, ego_start, ego_end, width)};
+}
+
+static bool checkStuckVehicleInIntersection(
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const Polygon2d & stuck_vehicle_detect_area, const double stuck_vehicle_vel_thr)
+{
+  for (const auto & object : objects_ptr->objects) {
+    if (!isTargetStuckVehicleType(object)) {
+      continue;  // not target vehicle type
+    }
+    const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
+    if (obj_v > stuck_vehicle.stuck_vehicle_vel_thr) {
+      continue;  // not stop vehicle
+    }
+
+    // check if the footprint is in the stuck detect area
+    const auto obj_footprint = tier4_autoware_utils::toPolygon2d(object);
+    const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
+    if (is_in_stuck_area) {
+      debug_data_.stuck_targets.objects.push_back(object);
+      return true;
+    }
+  }
+  return false;
+}
+
+static Polygon2d generateStuckVehicleDetectAreaPolygon(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
+  const double stuck_vehicle_detect_dist, const double stuck_vehicle_ignore_dist,
+  const double vehicle_length_m)
+{
+  using lanelet::utils::getArcCoordinates;
+  using lanelet::utils::getLaneletLength3d;
+  using lanelet::utils::getPolygonFromArcLength;
+  using lanelet::utils::to2D;
+
+  const double extra_dist = stuck_vehicle_detect_dist + vehicle_length_m;
+  const double ignore_dist = stuck_vehicle_ignore_dist + vehicle_length_m;
+
+  const double intersection_exit_length = getLaneletLength3d(ego_lane_with_next_lane.front());
+
+  const auto closest_arc_coords = getArcCoordinates(
+    ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point));
+
+  const double start_arc_length = intersection_exit_length - ignore_dist > closest_arc_coords.length
+                                    ? intersection_exit_length - ignore_dist
+                                    : closest_arc_coords.length;
+
+  const double end_arc_length = getLaneletLength3d(ego_lane_with_next_lane.front()) + extra_dist;
+
+  const auto target_polygon =
+    to2D(getPolygonFromArcLength(ego_lane_with_next_lane, start_arc_length, end_arc_length))
+      .basicPolygon();
+
+  Polygon2d polygon{};
+
+  if (target_polygon.empty()) {
+    return polygon;
+  }
+
+  for (const auto & p : target_polygon) {
+    polygon.outer().emplace_back(p.x(), p.y());
+  }
+
+  polygon.outer().emplace_back(polygon.outer().front());
+  bg::correct(polygon);
+
+  return polygon;
+}
+
 static std::optional<std::pair<size_t, bool>> checkStuckVehicle(
   const std::shared_ptr<const PlannerData> & planner_data,
   const util::InterpolatedPathInfo & interpolated_path_info,
@@ -74,7 +206,7 @@ static std::optional<std::pair<size_t, bool>> checkStuckVehicle(
   IntersectionModule::DebugData * debug_data)
 {
   const auto & objects_ptr = planner_data->predicted_objects;
-  const geometry_msgs::msg::Pose & current_pose = planner_data_->current_odometry->pose;
+  const geometry_msgs::msg::Pose & current_pose = planner_data->current_odometry->pose;
   const auto closest_idx_opt =
     motion_utils::findNearestIndex(input_path->points, current_pose, 3.0, M_PI_4);
   if (!closest_idx_opt) {
@@ -83,19 +215,27 @@ static std::optional<std::pair<size_t, bool>> checkStuckVehicle(
   const auto closest_idx = closest_idx_opt.value();
 
   /* considering lane change in the intersection, these lanelets are generated from the path */
-  const auto ego_lane_with_next_lane =
-    getEgoLaneWithNextLane(*input_path, planner_data->vehicle_info_.vehicle_width_m);
+  const auto ego_lane_with_next_lane = getEgoLaneWithNextLane(
+    *input_path, associative_ids, planner_data->vehicle_info_.vehicle_width_m);
   const auto ego_lane = ego_lane_with_next_lane.front();
-  debug_data_->ego_lane = ego_lane.polygon3d();
+  if (debug_data) {
+    debug_data->ego_lane = ego_lane.polygon3d();
+  }
+  const auto stuck_vehicle_detect_area = generateStuckVehicleDetectAreaPolygon(
+    *input_path, ego_lane_with_next_lane, closest_idx,
+    planner_param_.stuck_vehicle.stuck_vehicle_detect_dist,
+    planner_param_.stuck_vehicle.stuck_vehicle_ignore_dist,
+    planner_data_->vehicle_info_.vehicle_length_m);
+  if (debug_data) {
+    debug_data->stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
+  }
 
-  const auto stuck_vehicle_detect_area =
-    generateStuckVehicleDetectAreaPolygon(*input_path, ego_lane_with_next_lane, closest_idx);
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
-  debug_data->stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
 
   const std::optional<size_t> stuck_line_idx_opt = util::generateStuckStopLine(
     first_conflicting_area, planner_data, planner_param_.common.stop_line_margin,
     planner_param_.stuck_vehicle.use_stuck_stopline, input_path, interpolated_path_info);
+
   if (!stuck_line_idx_opt) {
     return std::nullopt;
   } else {
@@ -150,19 +290,9 @@ void IntersectionModule::initializeRTCStatus()
   occlusion_first_stop_required_ = false;
 }
 
-bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+util::DecisionResult IntersectionModule::modifyPathVelocityDetail(
+  PathWithLaneId * path, StopReason * stop_reason)
 {
-  RCLCPP_DEBUG(logger_, "===== plan start =====");
-
-  debug_data_ = DebugData();
-  *stop_reason = planning_utils::initializeStopReason(StopReason::INTERSECTION);
-
-  // set default RTC
-  initializeRTCStatus();
-
-  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  const geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
-
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
@@ -173,14 +303,12 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     lane_id_, associative_ids_, *path, planner_param_.common.path_interpolation_ds);
   if (!interpolated_path_info_opt) {
     RCLCPP_DEBUG(logger_, "splineInterpolate failed");
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return util::Indecisive{};
   }
   const auto & interpolated_path_info = interpolated_path_info_opt.value();
   if (!interpolated_path_info.lane_id_interval) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return util::Indecisive{};
   }
 
   // dynamically change detection area based on tl_arrow_solid_on
@@ -200,28 +328,26 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area;
   if (conflicting_lanelets.empty() || !first_conflicting_area) {
     RCLCPP_DEBUG(logger_, "conflicting area is empty");
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return util::Indecisive{};
   }
 
   const auto check_stuck_vehicle = checkStuckVehicle(
     planner_data_, interpolated_path_info, first_conflicting_area.value(), path, &debug_data_);
   if (!check_stuck_vehicle) {
     RCLCPP_DEBUG(logger_, "stuck vehicle check failed");
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return util::Indecisive{};
   }
-  const auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value();
-  if (stuck_detected) {
+
+  if (const auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value();
+      stuck_detected) {
     processStuckRTC(stuck_stop_line_idx);
-    return true;
+    return util::StuckStop{stuck_stop_line_idx};
   }
 
   const auto & detection_lanelets = intersection_lanelets_.value().attention;
   if (detection_lanelets.empty()) {
     RCLCPP_DEBUG(logger_, "detection area is empty");
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return util::Indecisive{};
   }
   const auto & adjacent_lanelets = intersection_lanelets_.value().adjacent;
   const auto & occlusion_attention_lanelets = intersection_lanelets_.value().occlusion_attention;
@@ -231,7 +357,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   debug_data_.detection_area = detection_area;
   debug_data_.adjacent_area = intersection_lanelets_.value().adjacent_area;
 
-  /* get intersection area */
+  // get intersection area
   const auto intersection_area = planner_param_.common.use_intersection_area
                                    ? util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr)
                                    : std::nullopt;
@@ -269,14 +395,14 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     }
   }
 
-  /* calc closest index */
+  // calc closest index
   const auto closest_idx_opt =
     motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
   if (!closest_idx_opt) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return;
   }
   const size_t closest_idx = closest_idx_opt.get();
 
@@ -294,25 +420,27 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     if (is_over_default_stop_line && !is_over_pass_judge_line && keep_detection) {
       RCLCPP_DEBUG(
         logger_, "is_over_default_stop_line && !is_over_pass_judge_line && keep_detection");
-      /* do nothing */
+      // do nothing
     } else if (is_over_pass_judge_line && !keep_detection && is_go_out_) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
-      return true;
+      return;
     }
   }
 
-  /* calculate dynamic collision around detection area */
-  /* set stop lines for base_link */
+  // calculate dynamic collision around detection area
+  // set stop lines for base_link */
   const double time_delay = is_go_out_
                               ? 0.0
                               : (planner_param_.collision_detection.state_transit_margin_time -
                                  collision_state_machine_.getDuration());
   const bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, ego_lane,
-    ego_lane_with_next_lane, objects_ptr, closest_idx, time_delay);
+    *path, detection_lanelets, adjacent_lanelets, intersection_area, ego_lane,
+    ego_lane_with_next_lane, objects_ptr, closest_idx, time_delay,
+    planner_param_.common.detection_area_margin,
+    planner_param_.collision_detection.minimum_ego_predicted_velocity);
 
-  /* check occlusion on detection lane */
+  // check occlusion on detection lane
   const double occlusion_dist_thr = std::fabs(
     std::pow(planner_param_.occlusion.max_vehicle_velocity_for_rss, 2) /
     (2 * planner_param_.occlusion.min_vehicle_brake_for_rss));
@@ -364,7 +492,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     if (!default_stop_line_idx_opt) {
       RCLCPP_DEBUG(logger_, "occlusion is detected but default stop line is not set or generated");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
-      return true;
+      return;
     } else if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
       if (!has_collision) {
         occlusion_stop_required = true;
@@ -450,7 +578,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   if (!stop_line_idx) {
     RCLCPP_DEBUG(logger_, "detection_area is empty");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return false;
+    return;
   }
 
   const std::string occlusion_state = std::string(magic_enum::enum_name(occlusion_state_));
@@ -478,12 +606,27 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     "first_phase_stop_required = %d, occlusion_stop_required = %d",
     has_collision, is_occlusion_cleared, collision_stop_required, first_phase_stop_required,
     occlusion_stop_required);
+}
 
-  /* make decision */
+bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+{
+  RCLCPP_DEBUG(logger_, "===== plan start =====");
+
+  debug_data_ = DebugData();
+  *stop_reason = planning_utils::initializeStopReason(StopReason::INTERSECTION);
+
+  // set default RTC
+  initializeRTCStatus();
+
+  modifyPathVelocityDetail(path, stop_reason);
+
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+
+  // make decision
   if (!occlusion_activated_) {
     is_go_out_ = false;
 
-    /* in case of creeping */
+    // in case of creeping
     if (insert_creep_during_occlusion && planner_param_.occlusion.enable_creeping) {
       const auto [start, end] = insert_creep_during_occlusion.value();
       for (size_t i = start; i < end; ++i) {
@@ -539,7 +682,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   return true;
 }
 
-void IntersectionModule::cutPredictPathWithDuration(
+static void cutPredictPathWithDuration(
   autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const
 {
   const rclcpp::Time current_time = clock_->now();
@@ -561,15 +704,59 @@ void IntersectionModule::cutPredictPathWithDuration(
   }
 }
 
-bool IntersectionModule::checkCollision(
-  lanelet::LaneletMapConstPtr lanelet_map_ptr,
+static bool checkAngleForTargetLanelets(
+  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
+  const double margin = 0.0)
+{
+  for (const auto & ll : target_lanelets) {
+    if (!lanelet::utils::isInLanelet(pose, ll, margin)) {
+      continue;
+    }
+    const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
+    const double pose_angle = tf2::getYaw(pose.orientation);
+    const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
+    if (std::fabs(angle_diff) < planner_param_.common.detection_area_angle_thr) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static double calcDistanceUntilIntersectionLanelet(
+  lanelet::ConstLanelet & assigned_lanelet,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx) const
+{
+  const auto intersection_first_itr =
+    std::find_if(path.points.cbegin(), path.points.cend(), [this](const auto & p) {
+      return std::find(p.lane_ids.begin(), p.lane_ids.end(), lane_id_) != p.lane_ids.end();
+    });
+  if (
+    intersection_first_itr == path.points.begin() || intersection_first_itr == path.points.end()) {
+    return 0.0;
+  }
+  const auto dst_idx = std::distance(path.points.begin(), intersection_first_itr) - 1;
+
+  if (closest_idx > static_cast<size_t>(dst_idx)) {
+    return 0.0;
+  }
+
+  double distance = std::abs(motion_utils::calcSignedArcLength(path.points, closest_idx, dst_idx));
+  const auto & lane_first_point = assigned_lanelet.centerline2d().front();
+  distance += std::hypot(
+    path.points.at(dst_idx).point.pose.position.x - lane_first_point.x(),
+    path.points.at(dst_idx).point.pose.position.y - lane_first_point.y());
+  return distance;
+}
+
+static bool checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::ConstLanelets & detection_area_lanelets,
   const lanelet::ConstLanelets & adjacent_lanelets,
   const std::optional<Polygon2d> & intersection_area, const lanelet::ConstLanelet & ego_lane,
   const lanelet::ConstLanelets & ego_lane_with_next_lane,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const int closest_idx, const double time_delay)
+  const int closest_idx, const double time_delay, const double detection_area_margin,
+  const double minimum_ego_velocity)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -613,14 +800,16 @@ bool IntersectionModule::checkCollision(
   /* check collision between target_objects predicted path and ego lane */
 
   // cut the predicted path at passing_time
-  const auto time_distance_array = calcIntersectionPassingTime(path, closest_idx, time_delay);
+  const auto time_distance_array = calcIntersectionPassingTime(
+    path, closest_idx, time_delay,
+    planner_param_.collision_detection.minimum_ego_predicted_velocity);
   const double passing_time = time_distance_array.back().first;
   cutPredictPathWithDuration(&target_objects, passing_time);
 
   const auto closest_arc_coords = getArcCoordinates(
     ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point));
   const double distance_until_intersection =
-    calcDistanceUntilIntersectionLanelet(lanelet_map_ptr, path, closest_idx);
+    calcDistanceUntilIntersectionLanelet(ego_lane, path, closest_idx);
   const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   const auto ego_poly = ego_lane.polygon2d().basicPolygon();
@@ -717,54 +906,9 @@ bool IntersectionModule::checkCollision(
   return collision_detected;
 }
 
-Polygon2d IntersectionModule::generateStuckVehicleDetectAreaPolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx) const
-{
-  using lanelet::utils::getArcCoordinates;
-  using lanelet::utils::getLaneletLength3d;
-  using lanelet::utils::getPolygonFromArcLength;
-  using lanelet::utils::to2D;
-
-  const double extra_dist = planner_param_.stuck_vehicle.stuck_vehicle_detect_dist +
-                            planner_data_->vehicle_info_.vehicle_length_m;
-  const double ignore_dist = planner_param_.stuck_vehicle.stuck_vehicle_ignore_dist +
-                             planner_data_->vehicle_info_.vehicle_length_m;
-
-  const double intersection_exit_length = getLaneletLength3d(ego_lane_with_next_lane.front());
-
-  const auto closest_arc_coords = getArcCoordinates(
-    ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point));
-
-  const double start_arc_length = intersection_exit_length - ignore_dist > closest_arc_coords.length
-                                    ? intersection_exit_length - ignore_dist
-                                    : closest_arc_coords.length;
-
-  const double end_arc_length = getLaneletLength3d(ego_lane_with_next_lane.front()) + extra_dist;
-
-  const auto target_polygon =
-    to2D(getPolygonFromArcLength(ego_lane_with_next_lane, start_arc_length, end_arc_length))
-      .basicPolygon();
-
-  Polygon2d polygon{};
-
-  if (target_polygon.empty()) {
-    return polygon;
-  }
-
-  for (const auto & p : target_polygon) {
-    polygon.outer().emplace_back(p.x(), p.y());
-  }
-
-  polygon.outer().emplace_back(polygon.outer().front());
-  bg::correct(polygon);
-
-  return polygon;
-}
-
-TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
+static TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const double time_delay) const
+  const double time_delay, const double minimum_ego_velocity)
 {
   double dist_sum = 0.0;
   int assigned_lane_found = false;
@@ -788,12 +932,10 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
 
   // apply smoother to reference velocity
   PathWithLaneId smoothed_reference_path = reference_path;
-  if (!smoothPath(reference_path, smoothed_reference_path, planner_data_)) {
-    RCLCPP_WARN(logger_, "smoothPath failed");
-  }
+  !smoothPath(reference_path, smoothed_reference_path, planner_data_)
 
-  // calculate when ego is going to reach each (interpolated) points on the path
-  TimeDistanceArray time_distance_array{};
+    // calculate when ego is going to reach each (interpolated) points on the path
+    TimeDistanceArray time_distance_array{};
   dist_sum = 0.0;
   double passing_time = time_delay;
   time_distance_array.emplace_back(passing_time, dist_sum);
@@ -809,158 +951,25 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
       (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
     passing_time +=
       (dist / std::max<double>(
-                planner_param_.collision_detection.minimum_ego_predicted_velocity,
+                minimum_ego_velocity,
                 average_velocity));  // to avoid zero-division
 
     time_distance_array.emplace_back(passing_time, dist_sum);
   }
-  RCLCPP_DEBUG(logger_, "intersection dist = %f, passing_time = %f", dist_sum, passing_time);
 
   return time_distance_array;
 }
 
-bool IntersectionModule::checkStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const Polygon2d & stuck_vehicle_detect_area) const
-{
-  for (const auto & object : objects_ptr->objects) {
-    if (!isTargetStuckVehicleType(object)) {
-      continue;  // not target vehicle type
-    }
-    const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
-    if (obj_v > planner_param_.stuck_vehicle.stuck_vehicle_vel_thr) {
-      continue;  // not stop vehicle
-    }
-
-    // check if the footprint is in the stuck detect area
-    const auto obj_footprint = tier4_autoware_utils::toPolygon2d(object);
-    const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
-    if (is_in_stuck_area) {
-      RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      debug_data_.stuck_targets.objects.push_back(object);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool IntersectionModule::isTargetCollisionVehicleType(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
-{
-  if (
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) {
-    return true;
-  }
-  return false;
-}
-
-bool IntersectionModule::isTargetStuckVehicleType(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
-{
-  if (
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
-    return true;
-  }
-  return false;
-}
-
-bool IntersectionModule::checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double margin)
-{
-  for (const auto & ll : target_lanelets) {
-    if (!lanelet::utils::isInLanelet(pose, ll, margin)) {
-      continue;
-    }
-    const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
-    const double pose_angle = tf2::getYaw(pose.orientation);
-    const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
-    if (std::fabs(angle_diff) < planner_param_.common.detection_area_angle_thr) {
-      return true;
-    }
-  }
-  return false;
-}
-
-lanelet::ConstLanelets IntersectionModule::getEgoLaneWithNextLane(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double width) const
-{
-  // NOTE: findLaneIdsInterval returns (start, end) of associative_ids
-  const auto ego_lane_interval_opt = util::findLaneIdsInterval(path, associative_ids_);
-  if (!ego_lane_interval_opt) {
-    return lanelet::ConstLanelets({});
-  }
-  const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
-  if (ego_end < path.points.size() - 1) {
-    const int next_id = path.points.at(ego_end).lane_ids.at(0);
-    const auto next_lane_interval_opt = util::findLaneIdsInterval(path, {next_id});
-    if (next_lane_interval_opt) {
-      const auto [next_start, next_end] = next_lane_interval_opt.value();
-      return {
-        planning_utils::generatePathLanelet(path, ego_start, next_start + 1, width),
-        planning_utils::generatePathLanelet(path, next_start + 1, next_end, width)};
-    }
-  }
-  return {planning_utils::generatePathLanelet(path, ego_start, ego_end, width)};
-}
-
-double IntersectionModule::calcDistanceUntilIntersectionLanelet(
-  lanelet::LaneletMapConstPtr lanelet_map_ptr,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx) const
-{
-  const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-  const auto intersection_first_itr =
-    std::find_if(path.points.cbegin(), path.points.cend(), [this](const auto & p) {
-      return std::find(p.lane_ids.begin(), p.lane_ids.end(), lane_id_) != p.lane_ids.end();
-    });
-  if (
-    intersection_first_itr == path.points.begin() || intersection_first_itr == path.points.end()) {
-    return 0.0;
-  }
-  const auto dst_idx = std::distance(path.points.begin(), intersection_first_itr) - 1;
-
-  if (closest_idx > static_cast<size_t>(dst_idx)) {
-    return 0.0;
-  }
-
-  double distance = std::abs(motion_utils::calcSignedArcLength(path.points, closest_idx, dst_idx));
-  const auto & lane_first_point = assigned_lanelet.centerline2d().front();
-  distance += std::hypot(
-    path.points.at(dst_idx).point.pose.position.x - lane_first_point.x(),
-    path.points.at(dst_idx).point.pose.position.y - lane_first_point.y());
-  return distance;
-}
-
-bool IntersectionModule::checkFrontVehicleDeceleration(
+[[maybe_unused]] static bool checkFrontVehicleDeceleration(
   lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
   const Polygon2d & stuck_vehicle_detect_area,
-  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
+  const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  const double assumed_front_car_decel)
 {
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
   // consider vehicle in ego-lane && in front of ego
   const auto lon_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const double object_decel =
-    planner_param_.stuck_vehicle.assumed_front_car_decel;  // NOTE: this is positive
+  const double object_decel = assumed_front_car_decel;  // NOTE: this is positive
   const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
 
   std::vector<geometry_msgs::msg::Point> center_points;
@@ -1031,8 +1040,7 @@ bool IntersectionModule::isOcclusionCleared(
   const lanelet::ConstLanelets & adjacent_lanelets,
   const lanelet::CompoundPolygon3d & first_detection_area,
   const util::InterpolatedPathInfo & interpolated_path_info,
-  const std::vector<util::DetectionLaneDivision> & lane_divisions,
-  const double occlusion_dist_thr) const
+  const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr) const
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
@@ -1318,7 +1326,7 @@ bool IntersectionModule::isOcclusionCleared(
 
 void IntersectionModule::processStuckRTC(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
-  const size_t stuck_stop_line_idx, const geometry_msgs::msg::Poose & current_pose){}
+  const size_t stuck_stop_line_idx, const geometry_msgs::msg::Pose & current_pose)
 {
   setSafe(false);
   const auto & stuck_stop_point = input_path.points.at(stuck_stop_line_idx).point.pose.position;
