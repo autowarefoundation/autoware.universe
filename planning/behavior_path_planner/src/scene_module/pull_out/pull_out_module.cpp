@@ -425,7 +425,7 @@ void PullOutModule::planWithPriority(
     return;
   }
 
-  auto loop_body = [&](size_t i, const auto & planner) {
+  const auto is_safe_with_pose_planner = [&](const size_t i, const auto & planner) {
     // Set back_finished flag based on the current index
     status_.back_finished = i == 0;
 
@@ -467,7 +467,7 @@ void PullOutModule::planWithPriority(
   };
 
   using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
-  const auto makePriorityOrder_PlannerFirst = [&]() {
+  const auto make_loop_order_planner_first = [&]() {
     PriorityOrder order_priority;
     for (const auto & planner : pull_out_planners_) {
       for (size_t i = 0; i < start_pose_candidates.size(); i++) {
@@ -477,7 +477,7 @@ void PullOutModule::planWithPriority(
     return order_priority;
   };
 
-  const auto makePriorityOrder_PoseFirst = [&]() {
+  const auto make_loop_order_pose_first = [&]() {
     PriorityOrder order_priority;
     for (size_t i = 0; i < start_pose_candidates.size(); i++) {
       for (const auto & planner : pull_out_planners_) {
@@ -490,13 +490,13 @@ void PullOutModule::planWithPriority(
   // Choose loop order based on priority_on_efficient_path
   PriorityOrder order_priority;
   if (priority_on_efficient_path) {
-    order_priority = makePriorityOrder_PlannerFirst();
+    order_priority = make_loop_order_planner_first();
   } else {
-    order_priority = makePriorityOrder_PoseFirst();
+    order_priority = make_loop_order_pose_first();
   }
 
   for (const auto & p : order_priority) {
-    if (loop_body(p.first, p.second)) break;
+    if (is_safe_with_pose_planner(p.first, p.second)) break;
   }
 }
 
