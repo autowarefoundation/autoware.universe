@@ -23,6 +23,21 @@ DiagGraph::DiagGraph()
 {
 }
 
+DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
+{
+  DiagnosticGraph graph;
+  graph.stamp = stamp;
+  graph.nodes.reserve(nodes_.size() + diags_.size());
+
+  for (const auto & node : nodes_) {
+    graph.nodes.push_back(node->report());
+  }
+  for (const auto & diag : diags_) {
+    graph.nodes.push_back(diag.second->report());
+  }
+  return graph;
+}
+
 void DiagGraph::update(const DiagnosticArray & array)
 {
   for (const auto & status : array.status) {

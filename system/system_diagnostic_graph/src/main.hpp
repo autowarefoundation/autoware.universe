@@ -33,8 +33,10 @@ public:
 
 private:
   DiagGraph graph_;
-  rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_diag_;
-  rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_diag_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_array_;
+  rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_graph_;
+  void on_timer();
   void on_diag(const DiagnosticArray::ConstSharedPtr msg);
 };
 

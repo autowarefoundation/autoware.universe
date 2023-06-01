@@ -24,12 +24,14 @@ class DiagNode
 {
 public:
   DiagNode();
+  virtual DiagnosticNode report() = 0;
 };
 
 class DiagLeaf : public DiagNode
 {
 public:
   explicit DiagLeaf(const DiagnosticStatus & status);
+  DiagnosticNode report() override;
   void update(const DiagnosticStatus & status);
 };
 

@@ -30,6 +30,11 @@ DiagLeaf::DiagLeaf(const DiagnosticStatus & status)
   RCLCPP_INFO_STREAM(logger, "Create DiagLeaf: " << status.name);
 }
 
+DiagnosticNode DiagLeaf::report()
+{
+  return DiagnosticNode();
+}
+
 void DiagLeaf::update(const DiagnosticStatus & status)
 {
   RCLCPP_INFO_STREAM(logger, "Update DiagLeaf: " << status.name);

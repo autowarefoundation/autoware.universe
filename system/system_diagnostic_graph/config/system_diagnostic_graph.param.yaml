@@ -1,4 +1,5 @@
 /**:
   ros__parameters:
+    rate: 1
     array_qos_depth: 1000
     graph_qos_depth: 1

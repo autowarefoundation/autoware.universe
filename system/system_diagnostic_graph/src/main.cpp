@@ -26,10 +26,19 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
     using std::placeholders::_1;
     const auto sub_qos = rclcpp::QoS(declare_parameter<int64_t>("array_qos_depth"));
     const auto pub_qos = rclcpp::QoS(declare_parameter<int64_t>("graph_qos_depth"));
-    sub_diag_ = create_subscription<DiagnosticArray>(
+    sub_array_ = create_subscription<DiagnosticArray>(
       "/diagnostics", sub_qos, std::bind(&MainNode::on_diag, this, _1));
-    pub_diag_ = create_publisher<DiagnosticGraph>("/diagnostics_graph", pub_qos);
+    pub_graph_ = create_publisher<DiagnosticGraph>("/diagnostics_graph", pub_qos);
+
+    const auto rate = rclcpp::Rate(declare_parameter<int64_t>("rate"));
+    timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
+}
+
+void MainNode::on_timer()
+{
+  const auto report = graph_.report(now());
+  pub_graph_->publish(report);
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)

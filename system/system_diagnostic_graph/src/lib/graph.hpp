@@ -18,6 +18,8 @@
 #include "node.hpp"
 #include "types.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <map>
 #include <memory>
 #include <string>
@@ -31,6 +33,7 @@ class DiagGraph
 {
 public:
   DiagGraph();
+  DiagnosticGraph report(const rclcpp::Time & stamp);
   void update(const DiagnosticArray & array);
 
 private:
