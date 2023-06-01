@@ -1,20 +1,29 @@
 /**:
   ros__parameters:
     lane_change:
-      lane_change_prepare_duration: 4.0         # [s]
+      backward_lane_length: 200.0 #[m]
+      prepare_duration: 4.0         # [s]
 
-      minimum_lane_change_prepare_distance: 2.0 # [m]
-      minimum_lane_change_length: 16.5          # [m]
       backward_length_buffer_for_end_of_lane: 3.0 # [m]
       lane_change_finish_judge_buffer: 2.0      # [m]
 
-      lane_changing_lateral_jerk: 0.5           # [m/s3]
-      lane_changing_lateral_acc: 0.5            # [m/s2]
+      lane_changing_lateral_jerk: 0.5              # [m/s3]
+      lateral_acc_switching_velocity: 4.0          #[m/s]
 
-      minimum_lane_change_velocity: 2.78        # [m/s]
+      minimum_lane_changing_velocity: 2.78        # [m/s]
       prediction_time_resolution: 0.5           # [s]
-      maximum_deceleration: 1.0                 # [m/s2]
-      lane_change_sampling_num: 10
+      longitudinal_acceleration_sampling_num: 5
+      lateral_acceleration_sampling_num: 3
+
+      # longitudinal acceleration
+      min_longitudinal_acc: -1.0
+      max_longitudinal_acc: 1.0
+
+      # lateral acceleration map
+      lateral_acceleration:
+        velocity: [0.0, 4.0, 10.0]
+        min_values: [0.15, 0.15, 0.15]
+        max_values: [0.5, 0.5, 0.5]
 
       # target object
       target_object:
@@ -28,8 +37,8 @@
         pedestrian: true
 
       # collision check
-      enable_collision_check_at_prepare_phase: true
-      prepare_phase_ignore_target_speed_thresh: 0.1 # [m/s]
+      enable_prepare_segment_collision_check: true
+      prepare_segment_ignore_object_velocity_thresh: 0.1 # [m/s]
       use_predicted_path_outside_lanelet: true
       use_all_predicted_path: false
 
@@ -37,8 +46,11 @@
       enable_cancel_lane_change: true
       enable_abort_lane_change: false
 
-      abort_delta_time: 3.0                      # [s]
+      abort_delta_time: 1.0                      # [s]
+      aborting_time: 5.0                         # [s]
       abort_max_lateral_jerk: 1000.0             # [m/s3]
+
+      finish_judge_lateral_threshold: 0.2        # [m]
 
       # debug
       publish_debug_marker: false

@@ -17,7 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/util/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -172,17 +172,10 @@ private:
     }
   }
 
-  /**
-   * object pre-process
-   */
+  ObjectData createObjectData(
+    const AvoidancePlanningData & data, const PredictedObject & object) const;
+
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
-
-  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
-
-  void fillObjectMovingTime(ObjectData & object_data) const;
-
-  void compensateDetectionLost(
-    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
 
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
@@ -192,6 +185,7 @@ private:
   ShiftedPath prev_output_;
   ShiftedPath prev_linear_shift_path_;  // used for shift point check
   PathWithLaneId prev_reference_;
+  lanelet::ConstLanelets prev_driving_lanes_;
 
   // for raw_shift_line registration
   AvoidLineArray registered_raw_shift_lines_;
@@ -206,10 +200,10 @@ private:
 
   // -- for pre-processing --
   void initVariables();
+  void initRTCStatus();
   AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
-  void updateRegisteredObject(const ObjectDataArray & objects);
 
   // ========= shift line generator ======
 
@@ -236,12 +230,12 @@ private:
 
   // shift point generation: trimmers
   AvoidLineArray trimShiftLine(const AvoidLineArray & shift_lines, DebugData & debug) const;
-  void quantizeShiftLine(AvoidLineArray & shift_lines, const double interval) const;
-  void trimSmallShiftLine(AvoidLineArray & shift_lines, const double shift_diff_thres) const;
+  void quantizeShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
+  void trimSmallShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
   void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
   void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
   void trimTooSharpShift(AvoidLineArray & shift_lines) const;
-  void trimSharpReturn(AvoidLineArray & shift_lines) const;
+  void trimSharpReturn(AvoidLineArray & shift_lines, const double threshold) const;
 
   // shift point generation: return-shift generator
   void addReturnShiftLineFromEgo(
@@ -276,16 +270,27 @@ private:
   // intersection (old)
   boost::optional<AvoidLine> calcIntersectionShiftLine(const AvoidancePlanningData & data) const;
 
-  bool isTargetObjectType(const PredictedObject & object) const;
-
   // debug
   mutable DebugData debug_data_;
   mutable std::shared_ptr<AvoidanceDebugMsgArray> debug_msg_ptr_;
-  void setDebugData(
-    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
-  void updateAvoidanceDebugData(std::vector<AvoidanceDebugMsg> & avoidance_debug_msg_array) const;
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
+
+  /**
+   * @brief fill debug markers.
+   */
+  void updateDebugMarker(
+    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
+
+  /**
+   * @brief fill information markers that are shown in Rviz by default.
+   */
+  void updateInfoMarker(const AvoidancePlanningData & data) const;
+
+  /**
+   * @brief fill debug msg that are published as a topic.
+   */
+  void updateAvoidanceDebugData(std::vector<AvoidanceDebugMsg> & avoidance_debug_msg_array) const;
 
   double getLateralMarginFromVelocity(const double velocity) const;
 
@@ -343,11 +348,6 @@ private:
     MarginData & margin_data) const;
 
   // ========= helper functions ==========
-
-  double getEgoSpeed() const
-  {
-    return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
-  }
 
   double getNominalAvoidanceEgoSpeed() const
   {
@@ -428,16 +428,7 @@ private:
 
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
 
-  Point getEgoPosition() const { return planner_data_->self_odometry->pose.pose.position; }
-
-  Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-
-  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
-
-  PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   // TODO(Horibe): think later.
   // for unique ID

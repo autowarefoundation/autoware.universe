@@ -1,4 +1,4 @@
-# Copyright 2021 Tier IV, Inc. All rights reserved.
+# Copyright 2021-2023 TIER IV, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ def launch_setup(context, *args, **kwargs):
     with open(vehicle_param_path, "r") as f:
         vehicle_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    # common parameter
+    with open(LaunchConfiguration("common_param_path").perform(context), "r") as f:
+        common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     # nearest search parameter
     with open(LaunchConfiguration("nearest_search_param_path").perform(context), "r") as f:
         nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -46,12 +49,12 @@ def launch_setup(context, *args, **kwargs):
         avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("avoidance_by_lc_param_path").perform(context), "r") as f:
         avoidance_by_lc_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("dynamic_avoidance_param_path").perform(context), "r") as f:
+        dynamic_avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_change_param_path").perform(context), "r") as f:
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("lane_following_param_path").perform(context), "r") as f:
-        lane_following_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("pull_over_param_path").perform(context), "r") as f:
-        pull_over_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("goal_planner_param_path").perform(context), "r") as f:
+        goal_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("pull_out_param_path").perform(context), "r") as f:
         pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("drivable_area_expansion_param_path").perform(context), "r") as f:
@@ -82,15 +85,17 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("~/output/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
             ("~/output/modified_goal", "/planning/scenario_planning/modified_goal"),
+            ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
         ],
         parameters=[
+            common_param,
             nearest_search_param,
             side_shift_param,
             avoidance_param,
             avoidance_by_lc_param,
+            dynamic_avoidance_param,
             lane_change_param,
-            lane_following_param,
-            pull_over_param,
+            goal_planner_param,
             pull_out_param,
             drivable_area_expansion_param,
             scene_module_manager_param,
@@ -116,8 +121,6 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # smoother param
-    with open(LaunchConfiguration("common_param_path").perform(context), "r") as f:
-        common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("motion_velocity_smoother_param_path").perform(context), "r"
     ) as f:
@@ -150,6 +153,8 @@ def launch_setup(context, *args, **kwargs):
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("speed_bump_param_path").perform(context), "r") as f:
         speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("out_of_lane_param_path").perform(context), "r") as f:
+        out_of_lane_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("behavior_velocity_planner_param_path").perform(context), "r"
     ) as f:
@@ -218,6 +223,7 @@ def launch_setup(context, *args, **kwargs):
             vehicle_param,
             run_out_param,
             speed_bump_param,
+            out_of_lane_param,
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
@@ -316,7 +322,7 @@ def generate_launch_description():
     add_launch_arg("use_experimental_lane_change_function")
 
     # component
-    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 
     # for points filter of run out module

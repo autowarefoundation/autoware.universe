@@ -23,6 +23,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -60,11 +61,47 @@ using vehicle_info_util::VehicleInfo;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
+using Vector3 = geometry_msgs::msg::Vector3;
 
 struct ObjectData
 {
+  rclcpp::Time stamp;
   geometry_msgs::msg::Point position;
-  double velocity;
+  double velocity{0.0};
+  double rss{0.0};
+  double distance_to_object{0.0};
+};
+
+class CollisionDataKeeper
+{
+public:
+  explicit CollisionDataKeeper(rclcpp::Clock::SharedPtr clock) { clock_ = clock; }
+
+  void setTimeout(const double timeout_sec) { timeout_sec_ = timeout_sec; }
+
+  bool checkExpired()
+  {
+    if (data_ && (clock_->now() - data_->stamp).seconds() > timeout_sec_) {
+      data_.reset();
+    }
+    return (data_ == nullptr);
+  }
+
+  void update(const ObjectData & data) { data_.reset(new ObjectData(data)); }
+
+  ObjectData get()
+  {
+    if (data_) {
+      return *data_;
+    } else {
+      return ObjectData();
+    }
+  }
+
+private:
+  std::unique_ptr<ObjectData> data_;
+  double timeout_sec_{0.0};
+  rclcpp::Clock::SharedPtr clock_;
 };
 
 class AEB : public rclcpp::Node
@@ -98,26 +135,29 @@ public:
 
   // main function
   void onCheckCollision(DiagnosticStatusWrapper & stat);
-  bool checkCollision();
+  bool checkCollision(MarkerArray & debug_markers);
   bool hasCollision(
-    const double current_v, const Path & ego_path, const std::vector<Polygon2d> & ego_polys);
+    const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects);
 
   void generateEgoPath(
     const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons);
   void generateEgoPath(
     const Trajectory & predicted_traj, Path & path, std::vector<Polygon2d> & polygons);
   void createObjectData(
-    const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
+    const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
-    const double color_r, const double color_g, const double color_b, const double color_a,
-    const std::string & path_ns, const std::string & poly_ns, MarkerArray & debug_markers);
+    const std::vector<ObjectData> & objects, const double color_r, const double color_g,
+    const double color_b, const double color_a, const std::string & ns,
+    MarkerArray & debug_markers);
+
+  void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
-  Imu::ConstSharedPtr imu_ptr_{nullptr};
+  Vector3::SharedPtr angular_velocity_ptr_{nullptr};
   Trajectory::ConstSharedPtr predicted_traj_ptr_{nullptr};
   AutowareState::ConstSharedPtr autoware_state_{nullptr};
 
@@ -144,6 +184,7 @@ public:
   double a_obj_min_;
   double prediction_time_horizon_;
   double prediction_time_interval_;
+  CollisionDataKeeper collision_data_keeper_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 
