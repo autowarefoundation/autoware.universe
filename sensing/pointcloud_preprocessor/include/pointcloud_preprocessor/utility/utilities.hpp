@@ -97,22 +97,27 @@ std::optional<std::size_t> getYOffset(const std::vector<sensor_msgs::msg::PointF
 std::optional<std::size_t> getZOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
 
 /** \brief Return offset of intensity field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getIntensityOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
+std::optional<std::size_t> getIntensityOffset(
+  const std::vector<sensor_msgs::msg::PointField> & fields);
 
 /** \brief Return offset of ring field (if any). The field should match PointXYZIRADRT one */
 std::optional<std::size_t> getRingOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
 
 /** \brief Return offset of azimuth field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getAzimuthOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
+std::optional<std::size_t> getAzimuthOffset(
+  const std::vector<sensor_msgs::msg::PointField> & fields);
 
 /** \brief Return offset of distance field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getDistanceOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
+std::optional<std::size_t> getDistanceOffset(
+  const std::vector<sensor_msgs::msg::PointField> & fields);
 
 /** \brief Return offset of return type field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getReturnTypeOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
+std::optional<std::size_t> getReturnTypeOffset(
+  const std::vector<sensor_msgs::msg::PointField> & fields);
 
 /** \brief Return offset of time stamp field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getTimeStampOffset(const std::vector<sensor_msgs::msg::PointField> & fields);
+std::optional<std::size_t> getTimeStampOffset(
+  const std::vector<sensor_msgs::msg::PointField> & fields);
 
 }  // namespace pointcloud_preprocessor::utils
 
