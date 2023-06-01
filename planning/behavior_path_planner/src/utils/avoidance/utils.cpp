@@ -70,9 +70,8 @@ geometry_msgs::msg::Polygon toMsg(const tier4_autoware_utils::Polygon2d & polygo
   return ret;
 }
 
-boost::optional<geometry_msgs::msg::Point> intersect(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
+boost::optional<Point> intersect(
+  const Point & p1, const Point & p2, const Point & p3, const Point & p4)
 {
   // calculate intersection point
   const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
@@ -86,7 +85,7 @@ boost::optional<geometry_msgs::msg::Point> intersect(
     return {};
   }
 
-  geometry_msgs::msg::Point intersect_point;
+  Point intersect_point;
   intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
   intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
   intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
@@ -733,43 +732,51 @@ void filterTargetObjects(
       // get expandable polygons for avoidance (e.g. hatched road markings)
       std::vector<lanelet::Polygon3d> expandable_polygons;
       for (const auto & point : target_line) {
-        const auto new_polygon = utils::getPolygonByPoint(rh, point, "hatched_road_markings");
-        if (!new_polygon) {
+        const auto new_polygon_candidate =
+          utils::getPolygonByPoint(rh, point, "hatched_road_markings");
+        if (!new_polygon_candidate) {
           continue;
         }
 
+        bool is_new_polygon{true};
         for (const auto & polygon : expandable_polygons) {
-          if (polygon.id() == new_polygon->id()) {
-            continue;
+          if (polygon.id() == new_polygon_candidate->id()) {
+            is_new_polygon = false;
+            break;
           }
         }
 
-        expandable_polygons.push_back(*new_polygon);
+        if (is_new_polygon) {
+          expandable_polygons.push_back(*new_polygon_candidate);
+        }
       }
 
       // calculate point laterally offset from overhang position to calculate intersection with
       // polygon
-      const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
-        lanelet::utils::to2D(target_line), lanelet::utils::to2D(overhang_basic_pose));
-      const auto closest_target_line_point =
-        lanelet::geometry::fromArcCoordinates(target_line, arc_coordinates);
-      geometry_msgs::msg::Point lat_offset_overhang_pos;
-      lat_offset_overhang_pos.x = closest_target_line_point.x() +
-                                  (closest_target_line_point.x() - o.overhang_pose.position.x) *
-                                    10.0 / o.to_road_shoulder_distance;
-      lat_offset_overhang_pos.y = closest_target_line_point.y() +
-                                  (closest_target_line_point.y() - o.overhang_pose.position.y) *
-                                    10.0 / o.to_road_shoulder_distance;
+      Point lat_offset_overhang_pos;
+      {
+        auto arc_coordinates = lanelet::geometry::toArcCoordinates(
+          lanelet::utils::to2D(target_line), lanelet::utils::to2D(overhang_basic_pose));
+        arc_coordinates.distance = 0.0;
+        const auto closest_target_line_point =
+          lanelet::geometry::fromArcCoordinates(target_line, arc_coordinates);
+
+        const double ratio = 10.0 / o.to_road_shoulder_distance;
+        lat_offset_overhang_pos.x =
+          closest_target_line_point.x() +
+          (closest_target_line_point.x() - o.overhang_pose.position.x) * ratio;
+        lat_offset_overhang_pos.y =
+          closest_target_line_point.y() +
+          (closest_target_line_point.y() - o.overhang_pose.position.y) * ratio;
+      }
 
       // update to_road_shoulder_distance with valid expandable polygon
       for (const auto & polygon : expandable_polygons) {
         std::vector<double> intersect_dist_vec;
         for (size_t i = 0; i < polygon.size(); ++i) {
-          const auto polygon_current_point = geometry_msgs::build<geometry_msgs::msg::Point>()
-                                               .x(polygon[i].x())
-                                               .y(polygon[i].y())
-                                               .z(0.0);
-          const auto polygon_next_point = geometry_msgs::build<geometry_msgs::msg::Point>()
+          const auto polygon_current_point =
+            geometry_msgs::build<Point>().x(polygon[i].x()).y(polygon[i].y()).z(0.0);
+          const auto polygon_next_point = geometry_msgs::build<Point>()
                                             .x(polygon[(i + 1) % polygon.size()].x())
                                             .y(polygon[(i + 1) % polygon.size()].y())
                                             .z(0.0);
@@ -783,11 +790,11 @@ void filterTargetObjects(
         }
 
         std::sort(intersect_dist_vec.begin(), intersect_dist_vec.end());
-        if (
-          1 < intersect_dist_vec.size() &&
-          std::abs(o.to_road_shoulder_distance - intersect_dist_vec.at(0)) < 1e-3) {
-          o.to_road_shoulder_distance =
-            std::max(o.to_road_shoulder_distance, intersect_dist_vec.at(1));
+        if (1 < intersect_dist_vec.size()) {
+          if (std::abs(o.to_road_shoulder_distance - intersect_dist_vec.at(0)) < 1e-3) {
+            o.to_road_shoulder_distance =
+              std::max(o.to_road_shoulder_distance, intersect_dist_vec.at(1));
+          }
         }
       }
 
