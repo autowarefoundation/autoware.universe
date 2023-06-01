@@ -641,12 +641,9 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
 
-  /*
-  const auto intersection_stop_lines = util::generateIntersectionStopLines(
+  const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
     first_detection_area.value(), planner_data_, interpolated_path_info,
-    planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset);
-  */
-  const auto intersection_stop_lines_opt = util::generateIntersectionStopLines();
+    planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path);
   if (!intersection_stop_lines_opt) {
     RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines()");
     return IntersectionModule::Indecisive{};

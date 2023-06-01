@@ -49,9 +49,6 @@ bool hasLaneIds(
   const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids);
 std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids);
-std::optional<size_t> getDuplicatedPointIdx(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point);
 
 /**
  * @brief get objective polygons for detection area
@@ -93,36 +90,15 @@ std::optional<size_t> generateStuckStopLine(
   const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
   const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
-std::optional<size_t> generateStaticPassJudgeLine(
+std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const InterpolatedPathInfo & interpolated_path_info,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
-
-std::optional<size_t> generatePeekingLimitLine(
-  const lanelet::CompoundPolygon3d & first_detection_area,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const InterpolatedPathInfo & interpolated_path_info, const double offset,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
-
-std::optional<IntersectionStopLines> generateIntersectionStopLines();
+  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
+  const double peeking_offset, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon);
-
-/**
- * @brief Calculate first path index that is in the polygon.
- * @param path     target path
- * @param lane_interval_start the start index of point on the lane
- * @param lane_interval_end the last index of point on the lane
- * @param polygons target polygon
- * @return path point index
- */
-std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInsidePolygons(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::pair<size_t, size_t> lane_interval,
-  const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
   const lanelet::ConstLanelets & ll_vec);
