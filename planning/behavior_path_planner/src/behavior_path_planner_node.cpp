@@ -350,6 +350,26 @@ std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
   return waiting_approval_modules;
 }
 
+std::vector<std::string> BehaviorPathPlannerNode::getRunningModules()
+{
+#ifdef USE_OLD_ARCHITECTURE
+  auto registered_modules_ptr = bt_manager_->getSceneModules();
+  std::vector<std::string> running_modules;
+  for (const auto & module : registered_modules_ptr) {
+    if (module->getCurrentStatus() == ModuleStatus::RUNNING) {
+      running_modules.push_back(module->name());
+#else
+  auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
+  std::vector<std::string> running_modules;
+  for (const auto & module : all_scene_module_ptr) {
+    if (module->status == ModuleStatus::RUNNING) {
+      running_modules.push_back(module->module_name);
+#endif
+    }
+  }
+  return running_modules;
+}
+
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
