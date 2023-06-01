@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
-#include "pointcloud_preprocessor/utility/utilities.hpp"
 
-#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include "pointcloud_preprocessor/utility/utilities.hpp"
 
 #include <range/v3/view/chunk.hpp>
 #include <range/v3/view/transform.hpp>
 #include <range/v3/view/zip.hpp>
+
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -130,13 +131,14 @@ void RingOutlierFilterComponent::faster_filter(
   //   1. Iterate over the input cloud and group point indices by ring
   //   2. For each ring:
   //   2.1. iterate over the ring points, and group points belonging to the same "walk"
-  //   2.2. when a walk is closed, copy indexed points to the output cloud if the walk is long enough.
+  //   2.2. when a walk is closed, copy indexed points to the output cloud if the walk is long
+  //   enough.
   //
-  // Because LIDAR data is naturally "azimut-major order" and not "ring-major order", such 
+  // Because LIDAR data is naturally "azimut-major order" and not "ring-major order", such
   // implementation is not cache friendly at all, and has negative impact on all the other nodes.
   //
-  // To tackle this issue, the algorithm has been rewritten so that points would be accessed in 
-  // order. To do so, all rings are being processing simultaneously instead of separately. The 
+  // To tackle this issue, the algorithm has been rewritten so that points would be accessed in
+  // order. To do so, all rings are being processing simultaneously instead of separately. The
   // overall logic is still the same.
 
   // ad-hoc struct to store finished walks information (for isCluster())
