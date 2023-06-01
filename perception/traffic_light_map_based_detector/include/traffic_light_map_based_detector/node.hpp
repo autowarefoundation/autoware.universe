@@ -115,7 +115,8 @@ private:
    * @return true       calculation succeed
    * @return false      calculation failed
    */
-  bool getTransform(const rclcpp::Time & t, const std::string & frame_id, tf2::Transform & tf) const;
+  bool getTransform(
+    const rclcpp::Time & t, const std::string & frame_id, tf2::Transform & tf) const;
   /**
    * @brief callback function for the map message
    *
