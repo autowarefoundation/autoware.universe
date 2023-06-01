@@ -256,8 +256,15 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_detection_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<util::DescritizedLane> & lane_divisions,
-    const double occlusion_dist_thr) const;
+    const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr);
+
+  /*
+  bool IntersectionModule::checkFrontVehicleDeceleration(
+    lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
+    const Polygon2d & stuck_vehicle_detect_area,
+    const autoware_auto_perception_msgs::msg::PredictedObject & object,
+    const double assumed_front_car_decel);
+  */
 
   // Debug
   DebugData debug_data_;
