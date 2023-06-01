@@ -215,7 +215,7 @@ std::optional<std::pair<size_t, bool>> IntersectionModule::checkStuckVehicle(
   }
   const auto closest_idx = closest_idx_opt.value();
 
-  /* considering lane change in the intersection, these lanelets are generated from the path */
+  // considering lane change in the intersection, these lanelets are generated from the path
   const auto ego_lane = ego_lane_with_next_lane.front();
   debug_data_.ego_lane = ego_lane.polygon3d();
   const auto stuck_vehicle_detect_area = generateStuckVehicleDetectAreaPolygon(
@@ -242,11 +242,11 @@ std::optional<std::pair<size_t, bool>> IntersectionModule::checkStuckVehicle(
     util::isOverTargetIndex(*input_path, closest_idx, current_pose, stuck_line_idx) &&
     (dist_stuck_stopline > planner_param_.common.stop_overshoot_margin);
 
-  bool is_stuck = checkStuckVehicleInIntersection(
-    objects_ptr, stuck_vehicle_detect_area, planner_param_.stuck_vehicle.stuck_vehicle_vel_thr,
-    &debug_data_);
-  if (is_over_stuck_stopline) {
-    is_stuck = false;
+  bool is_stuck = false;
+  if (!is_over_stuck_stopline) {
+    is_stuck = checkStuckVehicleInIntersection(
+      objects_ptr, stuck_vehicle_detect_area, planner_param_.stuck_vehicle.stuck_vehicle_vel_thr,
+      &debug_data_);
   }
   return std::make_optional<std::pair<size_t, bool>>(stuck_line_idx, is_stuck);
 }
@@ -428,7 +428,7 @@ bool IntersectionModule::checkCollision(
 
   const auto & objects_ptr = planner_data_->predicted_objects;
 
-  /* extract target objects */
+  // extract target objects
   autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
   target_objects.header = objects_ptr->header;
   for (const auto & object : objects_ptr->objects) {
@@ -467,8 +467,7 @@ bool IntersectionModule::checkCollision(
     }
   }
 
-  /* check collision between target_objects predicted path and ego lane */
-
+  // check collision between target_objects predicted path and ego lane
   // cut the predicted path at passing_time
   const auto time_distance_array = calcIntersectionPassingTime(
     path, planner_data_, associative_ids_, closest_idx, time_delay,
@@ -632,7 +631,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   if (const auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value();
       stuck_detected) {
-    return IntersectionModule::StuckStop{stuck_stop_line_idx};
+    return IntersectionModule::StuckStop{
+      stuck_stop_line_idx, util::IntersectionStopLines{0, 0, 0, 0}};
   }
 
   const auto & first_detection_area = intersection_lanelets_.value().first_detection_area;
@@ -659,36 +659,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
   const size_t closest_idx = closest_idx_opt.value();
-
-  /*
-  // TODO(Mamoru Sobue): check the ordering of these stop lines and refactor
-  auto default_stop_line_idx_opt = util::generateCollisionStopLine(
-    first_detection_area.value(), planner_data_, interpolated_path_info,
-    planner_param_.common.stop_line_margin, path);
-
-  if (!default_stop_line_idx_opt) {
-    RCLCPP_DEBUG(logger_, "path is not intersecting with non-empty detection area");
-    return Indecisive{};
-  }
-
-  auto occlusion_peeking_line_idx_opt = util::generatePeekingLimitLine(
-    first_detection_area.value(), path, interpolated_path_info, planner_data_,
-    planner_param_.occlusion.peeking_offset);
-
-  const auto static_pass_judge_line_opt = util::generateStaticPassJudgeLine(
-    first_detection_area.value(), path, interpolated_path_info, planner_data_);
-
-  if (static_pass_judge_line_opt) {
-    if (static_pass_judge_line_opt.value() < default_stop_line_idx_opt.value()) {
-      default_stop_line_idx_opt = default_stop_line_idx_opt.value() + 1;
-    }
-  }
-  if (static_pass_judge_line_opt && occlusion_peeking_line_idx_opt) {
-    if (static_pass_judge_line_opt.value() < occlusion_peeking_line_idx_opt.value()) {
-      occlusion_peeking_line_idx_opt = occlusion_peeking_line_idx_opt.value() + 1;
-    }
-  }
-  */
 
   // TODO(Mamoru Sobue): use optional in DebugData
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -818,9 +788,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   initializeRTCStatus();
 
   // calculate the
-  [[maybe_unused]] const auto decision_result = modifyPathVelocityDetail(path, stop_reason);
+  const auto decision_result = modifyPathVelocityDetail(path, stop_reason);
 
-  // prepareRTCStatus(decision_result)
+  prepareRTCStatus(decision_result);
 
   // move following to a function respondRTCApprovalStatus()
   /*
