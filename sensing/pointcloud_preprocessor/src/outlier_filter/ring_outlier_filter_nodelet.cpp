@@ -327,6 +327,7 @@ void RingOutlierFilterComponent::faster_filter(
       output_size += sizeof(PointXYZI);
     }
   }
+  output.data.resize(output_size);
 
   // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
   // == true`
