@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -181,12 +182,6 @@ private:
 
   void fillDebugData(const AvoidancePlanningData & data, DebugData & debug) const;
 
-  // data used in previous planning
-  ShiftedPath prev_output_;
-  ShiftedPath prev_linear_shift_path_;  // used for shift point check
-  PathWithLaneId prev_reference_;
-  lanelet::ConstLanelets prev_driving_lanes_;
-
   // for raw_shift_line registration
   AvoidLineArray registered_raw_shift_lines_;
   AvoidLineArray current_raw_shift_lines_;
@@ -328,7 +323,7 @@ private:
 
   boost::optional<double> getMildDecelDistance(const double target_velocity) const;
 
-  double getRelativeLengthFromPath(const AvoidLine & avoid_line) const;
+  // double getRelativeLengthFromPath(const AvoidLine & avoid_line) const;
 
   // ========= safety check ==============
 
@@ -347,85 +342,6 @@ private:
     const PathPointWithLaneId & p_ego, const double t, const ObjectData & object,
     MarginData & margin_data) const;
 
-  // ========= helper functions ==========
-
-  double getNominalAvoidanceEgoSpeed() const
-  {
-    return std::max(getEgoSpeed(), parameters_->min_nominal_avoidance_speed);
-  }
-
-  double getSharpAvoidanceEgoSpeed() const
-  {
-    return std::max(getEgoSpeed(), parameters_->min_sharp_avoidance_speed);
-  }
-
-  float getMinimumAvoidanceEgoSpeed() const { return parameters_->target_velocity_matrix.front(); }
-
-  float getMaximumAvoidanceEgoSpeed() const
-  {
-    return parameters_->target_velocity_matrix.at(parameters_->col_size - 1);
-  }
-
-  double getNominalPrepareDistance() const
-  {
-    const auto & p = parameters_;
-    const auto epsilon_m = 0.01;  // for floating error to pass "has_enough_distance" check.
-    const auto nominal_distance =
-      std::max(getEgoSpeed() * p->prepare_time, p->min_prepare_distance);
-    return nominal_distance + epsilon_m;
-  }
-
-  double getNominalAvoidanceDistance(const double shift_length) const
-  {
-    const auto & p = parameters_;
-    const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
-      shift_length, p->nominal_lateral_jerk, getNominalAvoidanceEgoSpeed());
-
-    return std::max(p->min_avoidance_distance, distance_by_jerk);
-  }
-
-  double getMinimumAvoidanceDistance(const double shift_length) const
-  {
-    const auto & p = parameters_;
-    const auto distance_by_jerk = path_shifter_.calcLongitudinalDistFromJerk(
-      shift_length, p->nominal_lateral_jerk, getMinimumAvoidanceEgoSpeed());
-
-    return std::max(p->min_avoidance_distance, distance_by_jerk);
-  }
-
-  double getSharpAvoidanceDistance(const double shift_length) const
-  {
-    const auto & p = parameters_;
-    const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
-      shift_length, p->max_lateral_jerk, getSharpAvoidanceEgoSpeed());
-
-    return std::max(p->min_avoidance_distance, distance_by_jerk);
-  }
-
-  double getRightShiftBound() const
-  {
-    // TODO(Horibe) write me. Real lane boundary must be considered here.
-    return -parameters_->max_right_shift_length;
-  }
-
-  double getLeftShiftBound() const
-  {
-    // TODO(Horibe) write me. Real lane boundary must be considered here.
-    return parameters_->max_left_shift_length;
-  }
-
-  double getCurrentShift() const
-  {
-    return prev_output_.shift_length.at(
-      findNearestIndex(prev_output_.path.points, getEgoPosition()));
-  }
-
-  double getCurrentLinearShift() const
-  {
-    return prev_linear_shift_path_.shift_length.at(
-      findNearestIndex(prev_linear_shift_path_.path.points, getEgoPosition()));
-  }
-
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
 
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
@@ -439,6 +355,8 @@ private:
    * avoidance module misc data
    */
   mutable ObjectDataArray stopped_objects_;
+
+  helper::avoidance::AvoidanceHelper helper_;
 };
 
 }  // namespace behavior_path_planner
