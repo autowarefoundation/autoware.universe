@@ -382,6 +382,38 @@ std::vector<std::string> BehaviorPathPlannerNode::getRunningModules()
   return running_modules;
 }
 
+std::vector<std::string> BehaviorPathPlannerNode::getExecutionReadyModules()
+{
+#ifdef USE_OLD_ARCHITECTURE
+  auto registered_modules_ptr = bt_manager_->getSceneModules();
+  std::vector<std::string> execution_requested_modules;
+  for (const auto & module : registered_modules_ptr) {
+    if (module->isExecutionRequested()) {
+      execution_requested_modules.push_back(module->name());
+      RCLCPP_ERROR(get_logger(), "Module Name: %s, Status: RUNNING", module->name().c_str());
+    } else {
+      RCLCPP_ERROR(
+        get_logger(), "Module Name: %s, waiting approval: %s", module->name().c_str(),
+        module->isWaitingApproval() ? "true" : "false");
+#else
+  auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
+  std::vector<std::string> execution_requested_modules;
+  for (const auto & module : all_scene_module_ptr) {
+    if (module->is_execution_ready) {
+      execution_requested_modules.push_back(module->module_name);
+      // Debug print for module name and status
+      RCLCPP_DEBUG(get_logger(), "Module Name: %s, Status: RUNNING", module->module_name.c_str());
+    } else {
+      // Debug print for module name and status
+      RCLCPP_DEBUG(
+        get_logger(), "Module Name: %s, waiting approval: %s", module->module_name.c_str(),
+        module->is_waiting_approval ? "true" : "false");
+#endif
+    }
+  }
+  return execution_requested_modules;
+}
+
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};

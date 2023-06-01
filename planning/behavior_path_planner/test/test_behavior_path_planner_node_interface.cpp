@@ -26,6 +26,7 @@
 #include <vector>
 
 using behavior_path_planner::BehaviorPathPlannerNode;
+using planning_test_utils::ModuleName;
 using planning_test_utils::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
@@ -75,7 +76,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
 
 void publishMandatoryTopics(
   std::shared_ptr<PlanningInterfaceTestManager> test_manager,
-  std::shared_ptr<BehaviorPathPlannerNode> test_target_node, std::string module_name = "")
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node,
+  ModuleName module_name = ModuleName::UNKNOWN)
 {
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(
@@ -93,13 +95,28 @@ void publishMandatoryTopics(
     test_target_node, "behavior_path_planner/input/lateral_offset");
 }
 
-bool isExpectedModuleRunning(
-  std::shared_ptr<BehaviorPathPlannerNode> test_target_node, std::string module_name)
+std::string moduleNameToString(ModuleName module_name)
+{
+  switch (module_name) {
+    case ModuleName::UNKNOWN:
+      return "UNKNOWN";
+    case ModuleName::PULL_OUT:
+      return "pull_out";
+    default:
+      return "INVALID_MODULE";
+  }
+}
+
+bool isWaitingApprovalAndExecutionReady(
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node,
+  ModuleName expected_module = ModuleName::UNKNOWN)
 {
   // check if the expected module is working
-  auto execution_requested_modules_name = test_target_node->getRunningModules();
-  for (const auto & execution_requested_module_name : execution_requested_modules_name) {
-    if (execution_requested_module_name == module_name) {
+  auto waiting_approval_modules = test_target_node->getRunningModules();
+  auto execution_ready_modules = test_target_node->getExecutionReadyModules();
+  std::string expected_module_str = moduleNameToString(expected_module);
+  for (const auto & running_module : running_modules) {
+    if (running_module == expected_module_str) {
       return true;
     }
   }
@@ -151,16 +168,16 @@ TEST(PlanningModuleInterfaceTest, NodeTestPullOutModuleWithExceptionRoute)
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode();
 
-  std::string module_name = "PullOut";
+  ModuleName module_name = ModuleName::PULL_OUT;
   publishMandatoryTopics(test_manager, test_target_node, module_name);
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(
     test_manager->testWithBehaviorNominalRoute(test_target_node, module_name));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
-#ifndef USE_OLD_ARCHITECTURE
-  module_name = "pull_out";
-#endif
-  EXPECT_TRUE(isExpectedModuleRunning(test_target_node, module_name), true);
+  // #ifndef USE_OLD_ARCHITECTURE
+  //   module_name = "pull_out";
+  // #endif
+  EXPECT_TRUE(isExpectedModuleRunning(test_target_node, module_name));
 
   // test with empty route
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalRoute(test_target_node));
