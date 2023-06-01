@@ -228,8 +228,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       map_stop_idx_ip) {
     stop_idx_ip_int = static_cast<int>(map_stop_idx_ip.value()) - base2front_idx_dist;
   } else {
-    stop_idx_ip_int = static_cast<size_t>(first_inside_detection_ip) - 1 -
-                      stop_line_margin_idx_dist - base2front_idx_dist;
+    stop_idx_ip_int = static_cast<size_t>(first_inside_detection_ip) - stop_line_margin_idx_dist -
+                      base2front_idx_dist;
   }
   const auto default_stop_line_ip = stop_idx_ip_int >= 0 ? static_cast<size_t>(stop_idx_ip_int) : 0;
 
@@ -240,9 +240,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   if (!closest_idx_ip_opt) {
     return std::nullopt;
   }
-  const auto closest_idx_ip = closest_idx_ip_opt.value();
-  const auto ego_front_line_ip =
-    std::min(closest_idx_ip + base2front_idx_dist, path_ip.points.size() - 1);
+  const auto ego_front_line_ip = closest_idx_ip_opt.value();
 
   // (3) occlusion peeking stop line position on interpolated path
   const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
