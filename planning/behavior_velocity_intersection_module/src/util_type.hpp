@@ -23,7 +23,6 @@
 #include <optional>
 #include <set>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace behavior_velocity_planner::util
@@ -58,51 +57,18 @@ struct InterpolatedPathInfo
   autoware_auto_planning_msgs::msg::PathWithLaneId path;
   double ds;
   int lane_id;
-  set::set<int> associative_lane_ids;
+  std::set<int> associative_lane_ids;
   std::optional<std::pair<size_t, size_t>> lane_id_interval;
 };
 
-enum OcclusionState {
-  NONE,
-  BEFORE_FIRST_STOP_LINE,
-  WAIT_FIRST_STOP_LINE,
-  CREEP_SECOND_STOP_LINE,
-  CLEARED,
-  COLLISION_DETECTED,
-};
-
-struct Indecisive;
-struct StuckStop
+struct IntersectionStopLines
 {
-  size_t stop_line_idx;
+  // NOTE: for baselink
+  size_t default_stop_line;
+  size_t ego_front_stop_line;
+  size_t occlusion_peeking_stop_line;
+  size_t pass_judge_line;
 };
-struct NonOccludedCollisionStop
-{
-  size_t stop_line_idx;
-};
-struct FirstWaitBeforeOcclusion
-{
-  size_t first_stop_line_idx;
-  std::optional<std::pair<size_t, size_t>> creep_interval;
-  size_t occlusion_stop_line_idx;
-  OcclusionState occlusion_state;
-};
-struct PeekingTowardOcclusion
-{
-  size_t stop_line_idx;
-  std::optional<std::pair<size_t, size_t>> creep_interval;
-  OcclusionState occlusion_state;
-};
-struct OccludedCollisionStop
-{
-  size_t stop_line_idx;
-  size_t occlusion_stop_line_idx;
-  OcclusionState occlusion_state;
-};
-struct Safe;
-using DecisionResult = std::variant<
-  Indecisive, NonOccludedCollisionStop, FirstWaitBeforeOcclusion, PeekingTowardOcclusion,
-  OccludedCollisionStop, Safe>;
 
 }  // namespace behavior_velocity_planner::util
 

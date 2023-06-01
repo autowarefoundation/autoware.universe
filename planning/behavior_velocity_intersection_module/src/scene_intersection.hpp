@@ -39,6 +39,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -70,7 +71,6 @@ public:
     geometry_msgs::msg::Point nearest_occlusion_projection_point;
   };
 
-public:
   struct PlannerParam
   {
     struct Common
@@ -128,6 +128,55 @@ public:
     } occlusion;
   };
 
+  enum OcclusionState {
+    NONE,
+    BEFORE_FIRST_STOP_LINE,
+    WAIT_FIRST_STOP_LINE,
+    CREEP_SECOND_STOP_LINE,
+    COLLISION_DETECTED,
+  };
+
+  using Indecisive = std::monostate;
+  struct StuckStop
+  {
+    size_t stop_line_idx;
+    util::IntersectionStopLines stop_lines;
+  };
+  struct NonOccludedCollisionStop
+  {
+    size_t stop_line_idx;
+    util::IntersectionStopLines stop_lines;
+  };
+  struct FirstWaitBeforeOcclusion
+  {
+    size_t first_stop_line_idx;
+    size_t occlusion_stop_line_idx;
+    OcclusionState occlusion_state;
+    util::IntersectionStopLines stop_lines;
+  };
+  struct PeekingTowardOcclusion
+  {
+    size_t stop_line_idx;
+    std::optional<std::pair<size_t, size_t>> creep_interval;
+    OcclusionState occlusion_state;
+    util::IntersectionStopLines stop_lines;
+  };
+  struct OccludedCollisionStop
+  {
+    size_t stop_line_idx;
+    size_t occlusion_stop_line_idx;
+    OcclusionState occlusion_state;
+    util::IntersectionStopLines stop_lines;
+  };
+  struct Safe
+  {
+    // if RTC is disapproved status, default stop lines are needed.
+    util::IntersectionStopLines stop_lines;
+  };
+  using DecisionResult = std::variant<
+    Indecisive, NonOccludedCollisionStop, FirstWaitBeforeOcclusion, PeekingTowardOcclusion,
+    OccludedCollisionStop, Safe>;
+
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<int> & associative_ids,
@@ -166,10 +215,10 @@ private:
 
   // for occlusion detection
   const bool enable_occlusion_detection_;
-  std::optional<std::vector<util::DetectionLaneDivision>> detection_divisions_;
+  std::optional<std::vector<util::DescritizedLane>> detection_divisions_;
   bool is_actually_occluded_ = false;    //! occlusion based on occupancy_grid
   bool is_forcefully_occluded_ = false;  //! fake occlusion forced by external operator
-  OcclusionState occlusion_state_ = OcclusionState::NONE;
+  OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
   const UUID occlusion_uuid_;
@@ -185,7 +234,13 @@ private:
 
   void initializeRTCStatus();
 
-  util::DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
+  DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
+
+  std::optional<std::pair<size_t, bool>> checkStuckVehicle(
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const util::InterpolatedPathInfo & interpolated_path_info,
+    const lanelet::CompoundPolygon3d & first_conflicting_area,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * input_path);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,

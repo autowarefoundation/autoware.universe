@@ -221,6 +221,11 @@ std::optional<size_t> generatePeekingLimitLine(
   }
 }
 
+std::optional<IntersectionStopLines> generateIntersectionStopLines()
+{
+  return std::nullopt;
+}
+
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon)
@@ -385,9 +390,9 @@ std::optional<size_t> generateCollisionStopLine(
 
 std::optional<size_t> generateStuckStopLine(
   const lanelet::CompoundPolygon3d & conflicting_area,
-  const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
-  const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const InterpolatedPathInfo & interpolated_path_info)
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
+  const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
@@ -744,7 +749,7 @@ bool isTrafficLightArrowActivated(
   return false;
 }
 
-std::vector<DetectionLaneDivision> generateDetectionLaneDivisions(
+std::vector<DescritizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
   [[maybe_unused]] const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const double resolution)
@@ -853,9 +858,9 @@ std::vector<DetectionLaneDivision> generateDetectionLaneDivisions(
   }
 
   // (3) discretize each merged lanelet
-  std::vector<DetectionLaneDivision> detection_divisions;
+  std::vector<DescritizedLane> detection_divisions;
   for (const auto & [last_lane_id, branch] : merged_branches) {
-    DetectionLaneDivision detection_division;
+    DescritizedLane detection_division;
     detection_division.lane_id = last_lane_id;
     const auto detection_lanelet = branch.first;
     const double area = branch.second;
@@ -877,7 +882,7 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger)
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId interpolated_path_info;
+  InterpolatedPathInfo interpolated_path_info;
   if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
     return std::nullopt;
   }
