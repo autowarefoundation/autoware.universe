@@ -88,7 +88,7 @@ void insertDecelPoint(
 
 void fillObjectEnvelopePolygon(
   ObjectData & object_data, const ObjectDataArray & registered_objects, const Pose & closest_pose,
-  const std::shared_ptr<AvoidanceParameters> & parameters);
+  const Pose & ego_pose, const std::shared_ptr<AvoidanceParameters> & parameters);
 
 void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,

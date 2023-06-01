@@ -194,7 +194,7 @@ ObjectData AvoidanceByLaneChange::createObjectData(
 
   // Calc envelop polygon.
   utils::avoidance::fillObjectEnvelopePolygon(
-    object_data, registered_objects_, object_closest_pose, avoidance_parameters_);
+    object_data, registered_objects_, object_closest_pose, getEgoPose(), avoidance_parameters_);
 
   // calc object centroid.
   object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);

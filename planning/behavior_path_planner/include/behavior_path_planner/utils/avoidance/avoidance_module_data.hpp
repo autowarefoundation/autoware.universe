@@ -50,6 +50,8 @@ struct ObjectParameter
 {
   bool enable{false};
 
+  double max_expand_ratio{0.0};
+
   double envelope_buffer_margin{0.0};
 
   double safety_buffer_lateral{1.0};
@@ -114,6 +116,12 @@ struct AvoidanceParameters
 
   // comfortable jerk
   double nominal_jerk;
+
+  // upper distance for envelope polygon expansion.
+  double upper_distance_for_polygon_expansion;
+
+  // lower distance for envelope polygon expansion.
+  double lower_distance_for_polygon_expansion;
 
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
