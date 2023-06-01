@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <list>
 #include <memory>
 #include <set>
 #include <string>
@@ -42,16 +43,38 @@ namespace bg = boost::geometry;
 
 namespace util
 {
-std::optional<size_t> insertPoint(
+
+static std::optional<size_t> getDuplicatedPointIdx(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point)
+{
+  for (size_t i = 0; i < path.points.size(); i++) {
+    const auto & p = path.points.at(i).point.pose.position;
+
+    constexpr double min_dist = 0.001;
+    if (tier4_autoware_utils::calcDistance2d(p, point) < min_dist) {
+      return i;
+    }
+  }
+
+  return std::nullopt;
+}
+
+static std::optional<size_t> insertPointIndex(
   const geometry_msgs::msg::Pose & in_pose,
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path)
 {
+  const auto duplicate_idx_opt = util::getDuplicatedPointIdx(*inout_path, in_pose.position);
+  if (duplicate_idx_opt) {
+    return duplicate_idx_opt.value();
+  }
+
   static constexpr double dist_thr = 10.0;
   static constexpr double angle_thr = M_PI / 1.5;
   const auto closest_idx_opt =
     motion_utils::findNearestIndex(inout_path->points, in_pose, dist_thr, angle_thr);
   if (!closest_idx_opt) {
-    return -1;
+    return std::nullopt;
   }
   const size_t closest_idx = closest_idx_opt.get();
   // vector.insert(i) inserts element on the left side of v[i]
@@ -113,22 +136,7 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
   return found ? std::make_optional(std::make_pair(start, end)) : std::nullopt;
 }
 
-std::optional<size_t> getDuplicatedPointIdx(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point)
-{
-  for (size_t i = 0; i < path.points.size(); i++) {
-    const auto & p = path.points.at(i).point.pose.position;
-
-    constexpr double min_dist = 0.001;
-    if (tier4_autoware_utils::calcDistance2d(p, point) < min_dist) {
-      return i;
-    }
-  }
-
-  return std::nullopt;
-}
-
+/*
 std::optional<size_t> generateStaticPassJudgeLine(
   const lanelet::CompoundPolygon3d & first_detection_area,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
@@ -220,10 +228,156 @@ std::optional<size_t> generatePeekingLimitLine(
     return insert_idx_opt;
   }
 }
+*/
 
-std::optional<IntersectionStopLines> generateIntersectionStopLines()
+/**
+ * @brief Get stop point from map if exists
+ * @param stop_pose stop point defined on map
+ * @return true when the stop point is defined on map.
+ */
+static std::optional<size_t> getStopLineIndexFromMap(
+  const InterpolatedPathInfo & interpolated_path_info,
+  const std::shared_ptr<const PlannerData> & planner_data, const double dist_thr)
 {
-  return std::nullopt;
+  const auto & path = interpolated_path_info.path;
+  const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
+
+  lanelet::ConstLanelet lanelet =
+    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(
+      interpolated_path_info.lane_id);
+  const auto road_markings = lanelet.regulatoryElementsAs<lanelet::autoware::RoadMarking>();
+  lanelet::ConstLineStrings3d stop_line;
+  for (const auto & road_marking : road_markings) {
+    const std::string type =
+      road_marking->roadMarking().attributeOr(lanelet::AttributeName::Type, "none");
+    if (type == lanelet::AttributeValueString::StopLine) {
+      stop_line.push_back(road_marking->roadMarking());
+      break;  // only one stop_line exists.
+    }
+  }
+  if (stop_line.empty()) {
+    return std::nullopt;
+  }
+
+  const auto p_start = stop_line.front().front();
+  const auto p_end = stop_line.front().back();
+  const LineString2d extended_stop_line =
+    planning_utils::extendLine(p_start, p_end, planner_data->stop_line_extend_length);
+
+  for (size_t i = lane_interval.first; i < lane_interval.second; i++) {
+    const auto & p_front = path.points.at(i).point.pose.position;
+    const auto & p_back = path.points.at(i + 1).point.pose.position;
+
+    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
+    std::vector<Point2d> collision_points;
+    bg::intersection(extended_stop_line, path_segment, collision_points);
+
+    if (collision_points.empty()) {
+      continue;
+    }
+
+    return i;
+  }
+
+  geometry_msgs::msg::Pose stop_point_from_map;
+  stop_point_from_map.position.x = 0.5 * (p_start.x() + p_end.x());
+  stop_point_from_map.position.y = 0.5 * (p_start.y() + p_end.y());
+  stop_point_from_map.position.z = 0.5 * (p_start.z() + p_end.z());
+
+  const auto stop_idx_ip_opt =
+    motion_utils::findNearestIndex(path.points, stop_point_from_map, static_cast<double>(dist_thr));
+  if (!stop_idx_ip_opt) {
+    return std::nullopt;
+  }
+  return stop_idx_ip_opt.get();
+}
+
+std::optional<IntersectionStopLines> generateIntersectionStopLines(
+  const lanelet::CompoundPolygon3d & first_detection_area,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
+  const double peeking_offset,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+{
+  const auto & path_ip = interpolated_path_info.path;
+  const double ds = interpolated_path_info.ds;
+  const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
+
+  const int stop_line_margin_idx_dist = std::ceil(stop_line_margin / ds);
+  const int base2front_idx_dist =
+    std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / ds);
+
+  // find the index of the first point that intersects with detection_areas
+  const auto first_inside_detection_idx_ip_opt =
+    getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_detection_area);
+  // if path is not intersecting with detection_area, error
+  if (!first_inside_detection_idx_ip_opt) {
+    return std::nullopt;
+  }
+  const auto first_inside_detection_ip = first_inside_detection_idx_ip_opt.value();
+
+  // (1) default stop line position on interpolated path
+  int stop_idx_ip_int = 0;
+  if (const auto map_stop_idx_ip =
+        getStopLineIndexFromMap(interpolated_path_info, planner_data, 10.0);
+      map_stop_idx_ip) {
+    stop_idx_ip_int = static_cast<int>(map_stop_idx_ip.value()) - base2front_idx_dist;
+  } else {
+    stop_idx_ip_int = static_cast<size_t>(first_inside_detection_ip) - 1 -
+                      stop_line_margin_idx_dist - base2front_idx_dist;
+  }
+  const auto default_stop_line_ip = stop_idx_ip_int >= 0 ? static_cast<size_t>(stop_idx_ip_int) : 0;
+
+  // (2) ego front stop line position on interpolated path
+  const geometry_msgs::msg::Pose & current_pose = planner_data->current_odometry->pose;
+  const auto closest_idx_ip_opt =
+    motion_utils::findNearestIndex(path_ip.points, current_pose, 3.0, M_PI_4);
+  if (!closest_idx_ip_opt) {
+    return std::nullopt;
+  }
+  const auto closest_idx_ip = closest_idx_ip_opt.value();
+  const auto ego_front_line_ip =
+    std::min(closest_idx_ip + base2front_idx_dist, path_ip.points.size() - 1);
+
+  // (3) occlusion peeking stop line position on interpolated path
+  const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
+  const auto area_2d = lanelet::utils::to2D(first_detection_area).basicPolygon();
+  int occlusion_peeking_line_ip_int = static_cast<int>(default_stop_line_ip);
+  for (size_t i = default_stop_line_ip; i <= std::get<1>(lane_interval_ip); ++i) {
+    const auto & base_pose = path_ip.points.at(i).point.pose;
+    const auto path_footprint = tier4_autoware_utils::transformVector(
+      local_footprint, tier4_autoware_utils::pose2transform(base_pose));
+    if (bg::intersects(path_footprint, area_2d)) {
+      occlusion_peeking_line_ip_int = i;
+      break;
+    }
+  }
+  occlusion_peeking_line_ip_int += std::ceil(peeking_offset / ds);
+  const auto occlusion_peeking_line_ip = static_cast<size_t>(
+    std::clamp<int>(occlusion_peeking_line_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
+
+  // (4) pass judge line position on interpolated path
+  const double velocity = planner_data->current_velocity->twist.linear.x;
+  const double acceleration = planner_data->current_acceleration->accel.accel.linear.x;
+  const double max_stop_acceleration = planner_data->max_stop_acceleration_threshold;
+  const double max_stop_jerk = planner_data->max_stop_jerk_threshold;
+  const double delay_response_time = planner_data->delay_response_time;
+  const double braking_dist = planning_utils::calcJudgeLineDistWithJerkLimit(
+    velocity, acceleration, max_stop_acceleration, max_stop_jerk, delay_response_time);
+  int pass_judge_ip_int = static_cast<int>(first_inside_detection_ip) - base2front_idx_dist -
+                          std::ceil(braking_dist / ds);
+  const auto pass_judge_line_ip = static_cast<size_t>(
+    std::clamp<int>(pass_judge_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
+
+  IntersectionStopLines intersection_stop_lines;
+  std::list<std::pair<const size_t *, size_t *>> stop_lines = {
+    {&default_stop_line_ip, &intersection_stop_lines.default_stop_line},
+    {&ego_front_line_ip, &intersection_stop_lines.ego_front_stop_line},
+    {&occlusion_peeking_line_ip, &intersection_stop_lines.occlusion_peeking_stop_line},
+    {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line}};
+  stop_lines.sort(
+    [](const auto & it1, const auto & it2) { return *(std::get<0>(it1)) < *(std::get<0>(it2)); });
+  return intersection_stop_lines;
 }
 
 std::optional<size_t> getFirstPointInsidePolygon(
@@ -241,7 +395,7 @@ std::optional<size_t> getFirstPointInsidePolygon(
   return std::nullopt;
 }
 
-std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInsidePolygons(
+static std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInsidePolygons(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval,
   const std::vector<lanelet::CompoundPolygon3d> & polygons)
@@ -263,73 +417,7 @@ std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInside
   return std::nullopt;
 }
 
-/**
- * @brief Get stop point from map if exists
- * @param stop_pose stop point defined on map
- * @return true when the stop point is defined on map.
- */
-static bool getStopLineIndexFromMap(
-  const InterpolatedPathInfo & interpolated_path_info,
-  const std::shared_ptr<const PlannerData> & planner_data, size_t * stop_idx_ip,
-  const double dist_thr)
-{
-  const auto & path = interpolated_path_info.path;
-  const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
-
-  lanelet::ConstLanelet lanelet =
-    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(
-      interpolated_path_info.lane_id);
-  const auto road_markings = lanelet.regulatoryElementsAs<lanelet::autoware::RoadMarking>();
-  lanelet::ConstLineStrings3d stop_line;
-  for (const auto & road_marking : road_markings) {
-    const std::string type =
-      road_marking->roadMarking().attributeOr(lanelet::AttributeName::Type, "none");
-    if (type == lanelet::AttributeValueString::StopLine) {
-      stop_line.push_back(road_marking->roadMarking());
-      break;  // only one stop_line exists.
-    }
-  }
-  if (stop_line.empty()) {
-    return false;
-  }
-
-  const auto p_start = stop_line.front().front();
-  const auto p_end = stop_line.front().back();
-  const LineString2d extended_stop_line =
-    planning_utils::extendLine(p_start, p_end, planner_data->stop_line_extend_length);
-
-  for (size_t i = lane_interval.first; i < lane_interval.second; i++) {
-    const auto & p_front = path.points.at(i).point.pose.position;
-    const auto & p_back = path.points.at(i + 1).point.pose.position;
-
-    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
-    std::vector<Point2d> collision_points;
-    bg::intersection(extended_stop_line, path_segment, collision_points);
-
-    if (collision_points.empty()) {
-      continue;
-    }
-
-    *stop_idx_ip = i;
-
-    return true;
-  }
-
-  geometry_msgs::msg::Pose stop_point_from_map;
-  stop_point_from_map.position.x = 0.5 * (p_start.x() + p_end.x());
-  stop_point_from_map.position.y = 0.5 * (p_start.y() + p_end.y());
-  stop_point_from_map.position.z = 0.5 * (p_start.z() + p_end.z());
-
-  const auto stop_idx_ip_opt =
-    motion_utils::findNearestIndex(path.points, stop_point_from_map, static_cast<double>(dist_thr));
-  if (!stop_idx_ip_opt) {
-    return false;
-  }
-  *stop_idx_ip = stop_idx_ip_opt.get();
-
-  return true;
-}
-
+/*
 std::optional<size_t> generateCollisionStopLine(
   const lanelet::CompoundPolygon3d & detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
@@ -370,23 +458,11 @@ std::optional<size_t> generateCollisionStopLine(
     return std::nullopt;
   }
 
-  /* insert stop_point */
   std::optional<size_t> collision_stop_line = std::nullopt;
-  const auto & insert_point = path_ip.points.at(stop_idx_ip).point.pose;
-  const auto duplicate_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
-  if (duplicate_idx_opt) {
-    collision_stop_line = duplicate_idx_opt.value();
-  } else {
-    const auto insert_idx_opt = util::insertPoint(insert_point, original_path);
-    if (!insert_idx_opt) {
-      return std::nullopt;
-    } else {
-      collision_stop_line = insert_idx_opt.value();
-    }
-  }
-
-  return collision_stop_line;
+  const auto & insert_point = path_ip.points.at(stop_idx_ip).point.pose.position;
+  return insertPoint(path, insert_point)
 }
+*/
 
 std::optional<size_t> generateStuckStopLine(
   const lanelet::CompoundPolygon3d & conflicting_area,
@@ -413,22 +489,11 @@ std::optional<size_t> generateStuckStopLine(
   const int stop_line_margin_idx_dist = std::ceil(stop_line_margin / ds);
   const int base2front_idx_dist =
     std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / ds);
-  size_t stuck_stop_line_idx = 0;
   const size_t insert_idx_ip = static_cast<size_t>(std::max(
     static_cast<int>(stuck_stop_line_idx_ip) - 1 - stop_line_margin_idx_dist - base2front_idx_dist,
     0));
   const auto & insert_point = path_ip.points.at(insert_idx_ip).point.pose;
-  const auto duplicate_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
-  if (duplicate_idx_opt) {
-    stuck_stop_line_idx = duplicate_idx_opt.value();
-    return std::make_optional<size_t>(stuck_stop_line_idx);
-  } else {
-    const auto insert_idx_opt = util::insertPoint(insert_point, original_path);
-    if (!insert_idx_opt) {
-      return std::nullopt;
-    }
-    return std::make_optional<size_t>(insert_idx_opt.value());
-  }
+  return insertPointIndex(insert_point, original_path);
 }
 
 IntersectionLanelets getObjectiveLanelets(
@@ -568,13 +633,13 @@ IntersectionLanelets getObjectiveLanelets(
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
   {
-    auto first = util::getFirstPointInsidePolygons(path, lane_interval, result.conflicting_area);
+    auto first = getFirstPointInsidePolygons(path, lane_interval, result.conflicting_area);
     if (first) {
       result.first_conflicting_area = first.value().second;
     }
   }
   {
-    auto first = util::getFirstPointInsidePolygons(path, lane_interval, result.attention_area);
+    auto first = getFirstPointInsidePolygons(path, lane_interval, result.attention_area);
     if (first) {
       result.first_detection_area = first.value().second;
     }
