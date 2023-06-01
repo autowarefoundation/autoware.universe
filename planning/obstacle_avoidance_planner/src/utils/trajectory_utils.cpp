@@ -151,11 +151,22 @@ std::vector<TrajectoryPoint> resampleTrajectoryPointsWithoutStopPoint(
 std::vector<ReferencePoint> resampleReferencePoints(
   const std::vector<ReferencePoint> ref_points, const double interval)
 {
-  // resample pose and velocity
-  const auto traj_points = convertToTrajectoryPoints(ref_points);
-  const auto resampled_traj_points =
-    resampleTrajectoryPointsWithoutStopPoint(traj_points, interval);
-  const auto resampled_ref_points = convertToReferencePoints(resampled_traj_points);
+  const auto resampled_ref_points = [&]() {
+    // resample pose and velocity
+    const auto traj_points = convertToTrajectoryPoints(ref_points);
+    const auto resampled_traj_points =
+      resampleTrajectoryPointsWithoutStopPoint(traj_points, interval);
+
+    // resample orientation with spline interpolation
+    auto ref_points = convertToReferencePoints(resampled_traj_points);
+    const auto ref_points_spline = SplineInterpolationPoints2d(ref_points);
+    const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
+    for (size_t i = 0; i < ref_points.size(); ++i) {
+      ref_points.at(i).pose.orientation =
+        tier4_autoware_utils::createQuaternionFromYaw(yaw_vec.at(i));
+    }
+    return ref_points;
+  }();
 
   // resample curvature
   std::vector<double> base_keys;
