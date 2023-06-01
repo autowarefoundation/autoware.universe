@@ -105,6 +105,8 @@ std::optional<size_t> generatePeekingLimitLine(
   const InterpolatedPathInfo & interpolated_path_info, const double offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
+std::optional<IntersectionStopLines> generateIntersectionStopLines();
+
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon);
@@ -154,7 +156,7 @@ bool isTrafficLightArrowActivated(
   lanelet::ConstLanelet lane,
   const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos);
 
-std::vector<DetectionLaneDivision> generateDetectionLaneDivisions(
+std::vector<DescritizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
 
