@@ -80,14 +80,20 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 bool isDrivingSameLane(
   const lanelet::ConstLanelets & previous_lanes, const lanelet::ConstLanelets & current_lanes)
 {
-  const auto compare = [](const auto & a, const auto & b) { return a.id() < b.id(); };
+  std::multiset<lanelet::Id> prev_ids{};
+  std::multiset<lanelet::Id> curr_ids{};
+  std::multiset<lanelet::Id> same_ids{};
 
-  lanelet::ConstLanelets same_id_lanes{};
+  std::for_each(
+    previous_lanes.begin(), previous_lanes.end(), [&](const auto & l) { prev_ids.insert(l.id()); });
+  std::for_each(
+    current_lanes.begin(), current_lanes.end(), [&](const auto & l) { curr_ids.insert(l.id()); });
+
   std::set_intersection(
-    previous_lanes.begin(), previous_lanes.end(), current_lanes.begin(), current_lanes.end(),
-    std::inserter(same_id_lanes, same_id_lanes.end()), compare);
+    prev_ids.begin(), prev_ids.end(), curr_ids.begin(), curr_ids.end(),
+    std::inserter(same_ids, same_ids.end()));
 
-  return !same_id_lanes.empty();
+  return !same_ids.empty();
 }
 }  // namespace
 
