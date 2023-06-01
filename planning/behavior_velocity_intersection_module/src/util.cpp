@@ -202,8 +202,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
-  const double peeking_offset,
-  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  const double peeking_offset, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
@@ -283,6 +282,19 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line}};
   stop_lines.sort(
     [](const auto & it1, const auto & it2) { return *(std::get<0>(it1)) < *(std::get<0>(it2)); });
+  for (const auto & [stop_idx_ip, stop_idx] : stop_lines) {
+    const auto & insert_point = path_ip.points.at(*stop_idx_ip).point.pose;
+    const auto insert_idx = insertPointIndex(insert_point, original_path);
+    if (!insert_idx) {
+      return std::nullopt;
+    }
+    *stop_idx = insert_idx.value();
+  }
+  if (
+    intersection_stop_lines.occlusion_peeking_stop_line >
+    intersection_stop_lines.default_stop_line) {
+    intersection_stop_lines.occlusion_peeking_stop_line = intersection_stop_lines.default_stop_line;
+  }
   return intersection_stop_lines;
 }
 
@@ -301,7 +313,8 @@ std::optional<size_t> getFirstPointInsidePolygon(
   return std::nullopt;
 }
 
-static std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPointInsidePolygons(
+static std::optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>
+getFirstPointInsidePolygons(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval,
   const std::vector<lanelet::CompoundPolygon3d> & polygons)
@@ -313,7 +326,8 @@ static std::optional<std::pair<size_t, lanelet::CompoundPolygon3d>> getFirstPoin
       const auto polygon_2d = lanelet::utils::to2D(polygon);
       is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
       if (is_in_lanelet) {
-        return std::make_optional<std::pair<size_t, lanelet::CompoundPolygon3d>>(i, polygon);
+        return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
+          i, polygon);
       }
     }
     if (is_in_lanelet) {
