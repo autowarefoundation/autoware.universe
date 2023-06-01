@@ -56,9 +56,14 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   if (!trt_common_->isInitialized()) {
     return;
   }
-  BOOST_ASSERT_MSG(trt_common_->getBindingDimensions() == 2, "Model number bindings must be 2!");
+  if (trt_common_->etBindingDimensions() != 2) {
+    RCLCPP_ERROR(node_ptr_->get_logger(), "Model number bindings must be 2!");
+    return;
+  }
   const auto input_dims = trt_common_->getBindingDimensions(0);
-  BOOST_ASSERT_MSG(input_dims.nbDims == 4, "Model input dimension must be 4!");
+  if (input_dims.nbDims != 4) {
+    RCLCPP_ERROR(node_ptr_->get_logger(), "Model input dimension must be 4!");
+  }
   batch_size_ = input_dims.d[0];
   input_c_ = input_dims.d[1];
   input_h_ = input_dims.d[2];

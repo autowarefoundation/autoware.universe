@@ -26,10 +26,11 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 
 ### Input
 
-| Name            | Type                                                       | Description                                      |
-| --------------- | ---------------------------------------------------------- | ------------------------------------------------ |
-| `~/input/image` | `sensor_msgs/Image`                                        | The full size camera image                       |
-| `~/input/rois`  | `autoware_auto_perception_msgs::msg::TrafficLightRoiArray` | The array of ROIs detected by map_based_detector |
+| Name            | Type                                                       | Description                                                         |
+| --------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| `~/input/image` | `sensor_msgs/Image`                                        | The full size camera image                                          |
+| `~/input/rois`  | `autoware_auto_perception_msgs::msg::TrafficLightRoiArray` | The array of ROIs detected by map_based_detector                    |
+| `~/expect/rois` | `autoware_auto_perception_msgs::msg::TrafficLightRoiArray` | The array of ROIs detected by map_based_detector without any offset |
 
 ### Output
 
@@ -42,19 +43,19 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 
 ### Core Parameters
 
-| Name                          | Type   | Default Value | Description                                                            |
-| ----------------------------- | ------ | ------------- | ---------------------------------------------------------------------- |
-| `fine_detection_score_thresh` | double | 0.3           | If the objectness score is less than this value, the object is ignored |
-| `fine_detection_nms_thresh`   | double | 0.65          | IoU threshold to perform Non-Maximum Suppression                       |
+| Name                         | Type   | Default Value | Description                                                            |
+| ---------------------------- | ------ | ------------- | ---------------------------------------------------------------------- |
+| `fine_detector_score_thresh` | double | 0.3           | If the objectness score is less than this value, the object is ignored |
+| `fine_detector_nms_thresh`   | double | 0.65          | IoU threshold to perform Non-Maximum Suppression                       |
 
 ### Node Parameters
 
-| Name                        | Type   | Default Value                 | Description                                                        |
-| --------------------------- | ------ | ----------------------------- | ------------------------------------------------------------------ |
-| `fine_detection_onnx_file`  | string | "./data/tlr_yolox-s_nms.onnx" | The onnx file name for yolo model                                  |
-| `fine_detection_label_file` | string | "./data/voc_labels_tl.txt"    | The label file with label names for detected objects written on it |
-| `fine_detector_precision`   | string | "FP32"                        | The inference mode: "FP32", "FP16", "INT8"                         |
-| `approximate_sync`          | bool   | false                         | Flag for whether to ues approximate sync policy                    |
+| Name                       | Type   | Default Value | Description                                                        |
+| -------------------------- | ------ | ------------- | ------------------------------------------------------------------ |
+| `fine_detector_model_path` | string | ""            | The onnx file name for yolo model                                  |
+| `fine_detector_label_path` | string | ""            | The label file with label names for detected objects written on it |
+| `fine_detector_precision`  | string | "fp32"        | The inference mode: "fp32", "fp16"                                 |
+| `approximate_sync`         | bool   | false         | Flag for whether to ues approximate sync policy                    |
 
 ## Assumptions / Known limits
 
