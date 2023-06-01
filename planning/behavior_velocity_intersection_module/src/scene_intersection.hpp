@@ -140,7 +140,6 @@ public:
   struct StuckStop
   {
     size_t stop_line_idx;
-    util::IntersectionStopLines stop_lines;
   };
   struct NonOccludedCollisionStop
   {
@@ -157,7 +156,7 @@ public:
   struct PeekingTowardOcclusion
   {
     size_t stop_line_idx;
-    std::optional<std::pair<size_t, size_t>> creep_interval;
+    std::pair<size_t, size_t> creep_interval;
     OcclusionState occlusion_state;
     util::IntersectionStopLines stop_lines;
   };
@@ -174,8 +173,8 @@ public:
     util::IntersectionStopLines stop_lines;
   };
   using DecisionResult = std::variant<
-    Indecisive, NonOccludedCollisionStop, FirstWaitBeforeOcclusion, PeekingTowardOcclusion,
-    OccludedCollisionStop, Safe>;
+    Indecisive, StuckStop, NonOccludedCollisionStop, FirstWaitBeforeOcclusion,
+    PeekingTowardOcclusion, OccludedCollisionStop, Safe>;
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
@@ -239,8 +238,17 @@ private:
   std::optional<std::pair<size_t, bool>> checkStuckVehicle(
     const std::shared_ptr<const PlannerData> & planner_data,
     const util::InterpolatedPathInfo & interpolated_path_info,
+    const lanelet::ConstLanelets & ego_lane_with_next_lane,
     const lanelet::CompoundPolygon3d & first_conflicting_area,
     autoware_auto_planning_msgs::msg::PathWithLaneId * input_path);
+
+  bool checkCollision(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const lanelet::ConstLanelets & detection_area_lanelets,
+    const lanelet::ConstLanelets & adjacent_lanelets,
+    const std::optional<Polygon2d> & intersection_area,
+    const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
+    const double time_delay);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
