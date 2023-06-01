@@ -140,6 +140,7 @@ public:
   struct StuckStop
   {
     size_t stop_line_idx;
+    util::IntersectionStopLines stop_lines;
   };
   struct NonOccludedCollisionStop
   {
@@ -169,7 +170,7 @@ public:
   };
   struct Safe
   {
-    // if RTC is disapproved status, default stop lines are needed.
+    // if RTC is disapproved status, default stop lines are still needed.
     util::IntersectionStopLines stop_lines;
   };
   using DecisionResult = std::variant<
@@ -191,7 +192,7 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
 
-  const std::set<int> & getAssocIds() const { return associative_ids_; }
+  const std::set<int> & getAssociativeIds() const { return associative_ids_; }
 
   UUID getOcclusionUUID() const { return occlusion_uuid_; }
   bool getOcclusionSafety() const { return occlusion_safety_; }
@@ -218,8 +219,12 @@ private:
   bool is_actually_occluded_ = false;    //! occlusion based on occupancy_grid
   bool is_forcefully_occluded_ = false;  //! fake occlusion forced by external operator
   OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
+  StateMachine collision_state_machine_;     //! for stable collision checking
+  StateMachine before_creep_state_machine_;  //! for two phase stop
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
+
+  // for RTS
   const UUID occlusion_uuid_;
   bool occlusion_safety_ = true;
   double occlusion_stop_distance_;
@@ -228,10 +233,8 @@ private:
   const UUID occlusion_first_stop_uuid_;
   bool occlusion_first_stop_required_ = false;
 
-  StateMachine collision_state_machine_;     //! for stable collision checking
-  StateMachine before_creep_state_machine_;  //! for two phase stop
-
   void initializeRTCStatus();
+  void prepareRTCStatus(const DecisionResult &);
 
   DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 

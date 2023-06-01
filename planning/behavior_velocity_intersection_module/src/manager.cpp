@@ -160,7 +160,7 @@ IntersectionModuleManager::getModuleExpiredFunction(
 
   return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
-    const auto & associative_ids = intersection_module->getAssocIds();
+    const auto & associative_ids = intersection_module->getAssociativeIds();
     for (const auto & lane : lane_set) {
       const std::string turn_direction = lane.attributeOr("turn_direction", "else");
       const auto is_intersection =
@@ -182,7 +182,7 @@ bool IntersectionModuleManager::hasSameParentLaneletAndTurnDirectionWithRegister
 {
   for (const auto & scene_module : scene_modules_) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
-    const auto & associative_ids = intersection_module->getAssocIds();
+    const auto & associative_ids = intersection_module->getAssociativeIds();
     if (associative_ids.find(lane.id()) != associative_ids.end()) {
       return true;
     }
@@ -330,7 +330,7 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
   return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto merge_from_private_module =
       std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
-    const auto & associative_ids = merge_from_private_module->getAssocIds();
+    const auto & associative_ids = merge_from_private_module->getAssociativeIds();
     for (const auto & lane : lane_set) {
       const std::string turn_direction = lane.attributeOr("turn_direction", "else");
       const auto is_intersection =
@@ -353,7 +353,7 @@ bool MergeFromPrivateModuleManager::hasSameParentLaneletAndTurnDirectionWithRegi
   for (const auto & scene_module : scene_modules_) {
     const auto merge_from_private_module =
       std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
-    const auto & associative_ids = merge_from_private_module->getAssocIds();
+    const auto & associative_ids = merge_from_private_module->getAssociativeIds();
     if (associative_ids.find(lane.id()) != associative_ids.end()) {
       return true;
     }

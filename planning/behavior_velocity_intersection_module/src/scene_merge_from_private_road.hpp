@@ -86,7 +86,7 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
 
-  const std::set<int> & getAssocIds() const { return associative_ids_; }
+  const std::set<int> & getAssociativeIds() const { return associative_ids_; }
 
 private:
   const int64_t lane_id_;
