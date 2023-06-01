@@ -12,20 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__TYPES_HPP_
-#define LIB__TYPES_HPP_
+#include "node.hpp"
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace system_diagnostic_graph
 {
 
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using tier4_system_msgs::msg::DiagnosticGraph;
+const auto logger = rclcpp::get_logger("system_diagnostic_graph");
+
+DiagNode::DiagNode()
+{
+}
+
+DiagLeaf::DiagLeaf(const DiagnosticStatus & status)
+{
+  RCLCPP_INFO_STREAM(logger, "Create DiagLeaf: " << status.name);
+}
+
+void DiagLeaf::update(const DiagnosticStatus & status)
+{
+  RCLCPP_INFO_STREAM(logger, "Update DiagLeaf: " << status.name);
+}
 
 }  // namespace system_diagnostic_graph
-
-#endif  // LIB__TYPES_HPP_

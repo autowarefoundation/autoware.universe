@@ -12,20 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__TYPES_HPP_
-#define LIB__TYPES_HPP_
+#include "graph.hpp"
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
+#include <utility>
 
 namespace system_diagnostic_graph
 {
 
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using tier4_system_msgs::msg::DiagnosticGraph;
+DiagGraph::DiagGraph()
+{
+}
+
+void DiagGraph::update(const DiagnosticArray & array)
+{
+  for (const auto & status : array.status) {
+    const auto key = std::make_pair(status.name, status.hardware_id);
+    if (!diags_.count(key)) {
+      const auto diag = std::make_shared<DiagLeaf>(status);
+      diags_.emplace(key, diag);
+    }
+    diags_.at(key)->update(status);
+  }
+}
 
 }  // namespace system_diagnostic_graph
-
-#endif  // LIB__TYPES_HPP_

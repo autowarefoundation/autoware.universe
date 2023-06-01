@@ -12,20 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__TYPES_HPP_
-#define LIB__TYPES_HPP_
+#ifndef MAIN_HPP_
+#define MAIN_HPP_
+
+#include "lib/graph.hpp"
+#include "lib/types.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <tier4_system_msgs/msg/diagnostic_graph.hpp>
 
 namespace system_diagnostic_graph
 {
 
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using tier4_system_msgs::msg::DiagnosticGraph;
+class MainNode : public rclcpp::Node
+{
+public:
+  MainNode();
+
+private:
+  DiagGraph graph_;
+  rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_diag_;
+  rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_diag_;
+  void on_diag(const DiagnosticArray::ConstSharedPtr msg);
+};
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__TYPES_HPP_
+#endif  // MAIN_HPP_

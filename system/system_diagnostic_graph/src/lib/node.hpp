@@ -12,20 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__TYPES_HPP_
-#define LIB__TYPES_HPP_
+#ifndef LIB__NODE_HPP_
+#define LIB__NODE_HPP_
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
+#include "types.hpp"
 
 namespace system_diagnostic_graph
 {
 
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using tier4_system_msgs::msg::DiagnosticGraph;
+class DiagNode
+{
+public:
+  DiagNode();
+};
+
+class DiagLeaf : public DiagNode
+{
+public:
+  explicit DiagLeaf(const DiagnosticStatus & status);
+  void update(const DiagnosticStatus & status);
+};
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__TYPES_HPP_
+#endif  // LIB__NODE_HPP_

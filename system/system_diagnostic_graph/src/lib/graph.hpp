@@ -12,30 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE_HPP_
-#define NODE_HPP_
+#ifndef LIB__GRAPH_HPP_
+#define LIB__GRAPH_HPP_
 
-#include "lib/types.hpp"
+#include "node.hpp"
+#include "types.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
 
-class MainNode : public rclcpp::Node
+class DiagGraph
 {
 public:
-  MainNode();
+  DiagGraph();
+  void update(const DiagnosticArray & array);
 
 private:
-  rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_diag_;
-  rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_diag_;
-  void on_diag(const DiagnosticArray::ConstSharedPtr msg);
+  std::vector<std::shared_ptr<DiagNode>> nodes_;
+  std::map<std::pair<std::string, std::string>, std::shared_ptr<DiagLeaf>> diags_;
 };
 
 }  // namespace system_diagnostic_graph
 
-#endif  // NODE_HPP_
+#endif  // LIB__GRAPH_HPP_

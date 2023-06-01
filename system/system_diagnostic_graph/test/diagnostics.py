@@ -27,16 +27,23 @@ class DummyDiagnostics(rclpy.node.Node):
         qos = rclpy.qos.qos_profile_system_default
         self.diags = self.create_publisher(DiagnosticArray, "/diagnostics", qos)
         self.timer = self.create_timer(0.5, self.on_timer)
+        self.array = [
+            self.create_status("/sensing/lidars/top"),
+            self.create_status("/sensing/lidars/front"),
+            self.create_status("/sensing/radars/front"),
+            self.create_status("/planning/route"),
+            self.create_status("/external/remote_command"),
+        ]
 
     def on_timer(self):
         diagnostics = DiagnosticArray()
         diagnostics.header.stamp = self.get_clock().now().to_msg()
-        diagnostics.status.append(self.create())
+        diagnostics.status = self.array
         self.diags.publish(diagnostics)
 
     @staticmethod
-    def create():
-        return DiagnosticStatus(level=DiagnosticStatus.OK, name="/test", message="OK")
+    def create_status(name: str):
+        return DiagnosticStatus(level=DiagnosticStatus.OK, name=name, message="OK")
 
 
 if __name__ == "__main__":
