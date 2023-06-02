@@ -197,11 +197,10 @@ TEST_F(MPCTest, InitializeAndCalculate)
   EXPECT_FALSE(mpc.hasVehicleModel());
   EXPECT_FALSE(mpc.hasQPSolver());
 
-  const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
       wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -228,11 +227,10 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   EXPECT_FALSE(mpc.hasVehicleModel());
   EXPECT_FALSE(mpc.hasQPSolver());
 
-  const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
       wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -266,11 +264,10 @@ TEST_F(MPCTest, OsqpCalculate)
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
     extend_trajectory_for_end_yaw_control);
 
-  const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
       wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -298,11 +295,10 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
     extend_trajectory_for_end_yaw_control);
 
-  const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
       wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -325,10 +321,9 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   mpc_lateral_controller::MPC mpc;
   initializeMPC(mpc);
 
-  const std::string vehicle_model_type = "kinematics_no_delay";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModelNoDelay>(wheelbase, steer_limit);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -362,10 +357,9 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
     extend_trajectory_for_end_yaw_control);
 
-  const std::string vehicle_model_type = "kinematics_no_delay";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModelNoDelay>(wheelbase, steer_limit);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -391,11 +385,10 @@ TEST_F(MPCTest, DynamicCalculate)
   mpc_lateral_controller::MPC mpc;
   initializeMPC(mpc);
 
-  const std::string vehicle_model_type = "dynamics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::DynamicsBicycleModel>(
       wheelbase, mass_fl, mass_fr, mass_rl, mass_rr, cf, cr);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc.hasVehicleModel());
 
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
@@ -416,11 +409,10 @@ TEST_F(MPCTest, DynamicCalculate)
 TEST_F(MPCTest, MultiSolveWithBuffer)
 {
   mpc_lateral_controller::MPC mpc;
-  const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
       wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
     std::make_shared<mpc_lateral_controller::QPSolverEigenLeastSquareLLT>();
   mpc.setQPSolver(qpsolver_ptr);
@@ -458,11 +450,10 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
 TEST_F(MPCTest, FailureCases)
 {
   mpc_lateral_controller::MPC mpc;
-  const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<mpc_lateral_controller::VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
       wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  mpc.setVehicleModel(vehicle_model_ptr);
   std::shared_ptr<mpc_lateral_controller::QPSolverInterface> qpsolver_ptr =
     std::make_shared<mpc_lateral_controller::QPSolverEigenLeastSquareLLT>();
   mpc.setQPSolver(qpsolver_ptr);
@@ -483,13 +474,5 @@ TEST_F(MPCTest, FailureCases)
   // Calculate MPC with a fast velocity to make the prediction go further than the reference path
   EXPECT_FALSE(mpc.calculateMPC(
     neutral_steer, makeOdometry(pose_far, default_velocity + 10.0), ctrl_cmd, pred_traj, diag));
-
-  // Set a wrong vehicle model (not a failure but generates an error message)
-  const std::string wrong_vehicle_model_type = "wrong_model";
-  vehicle_model_ptr = std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
-    wheelbase, steer_limit, steer_tau);
-  mpc.setVehicleModel(vehicle_model_ptr, wrong_vehicle_model_type);
-  EXPECT_TRUE(mpc.calculateMPC(
-    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
 }
 }  // namespace

@@ -411,11 +411,12 @@ VectorXd MPC::getInitialState(const MPCData & data)
   const auto & steer = m_use_steer_prediction ? data.predicted_steer : data.steer;
   const auto & yaw_err = data.yaw_err;
 
-  if (m_vehicle_model_type == "kinematics") {
+  const auto vehicle_model = m_vehicle_model_ptr->modelName();
+  if (vehicle_model == "kinematics") {
     x0 << lat_err, yaw_err, steer;
-  } else if (m_vehicle_model_type == "kinematics_no_delay") {
+  } else if (vehicle_model == "kinematics_no_delay") {
     x0 << lat_err, yaw_err;
-  } else if (m_vehicle_model_type == "dynamics") {
+  } else if (vehicle_model == "dynamics") {
     double dlat = (lat_err - m_lateral_error_prev) / m_ctrl_period;
     double dyaw = (yaw_err - m_yaw_error_prev) / m_ctrl_period;
     m_lateral_error_prev = lat_err;
@@ -833,7 +834,7 @@ double MPC::calcDesiredSteeringRate(
   const MPCMatrix & mpc_matrix, const MatrixXd & x0, const MatrixXd & Uex, const double u_filtered,
   const float current_steer, const double predict_dt) const
 {
-  if (m_vehicle_model_type != "kinematics") {
+  if (m_vehicle_model_ptr->modelName() != "kinematics") {
     // not supported yet. Use old implementation.
     return (u_filtered - current_steer) / predict_dt;
   }

@@ -185,7 +185,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_pub_steer_offset =
     node_->create_publisher<Float32Stamped>("~/output/estimated_steer_offset", 1);
 
-  // TODO(Frederik.Beaujean) ctor is too long, should factor out parameter declarations
   declareMPCparameters();
 
   /* get parameter updates */
@@ -193,7 +192,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     std::bind(&MpcLateralController::paramCallback, this, _1));
 
   m_mpc.setQPSolver(qpsolver_ptr);
-  m_mpc.setVehicleModel(vehicle_model_ptr, vehicle_model_type);
+  m_mpc.setVehicleModel(vehicle_model_ptr);
 
   m_mpc.setLogger(node_->get_logger());
   m_mpc.setClock(node_->get_clock());

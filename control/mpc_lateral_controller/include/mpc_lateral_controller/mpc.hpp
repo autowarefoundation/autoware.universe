@@ -130,7 +130,6 @@ private:
   rclcpp::Logger m_logger = rclcpp::get_logger("mpc_logger");  // ROS logger used for debug logging
   rclcpp::Clock::SharedPtr m_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);  // ROS clock
 
-  std::string m_vehicle_model_type;                            // vehicle model type for MPC
   std::shared_ptr<VehicleModelInterface> m_vehicle_model_ptr;  // vehicle model for MPC
   std::shared_ptr<QPSolverInterface> m_qpsolver_ptr;           // qp solver for MPC
 
@@ -310,7 +309,6 @@ public:
   //!< @brief steering rate limit list depending on velocity [m/s], [rad/s]
   std::vector<std::pair<double, double>> m_steer_rate_lim_map_by_velocity{};
 
-  /* parameters for path smoothing */
   bool m_use_steer_prediction;        // flag to use predicted steer, not measured steer.
   double ego_nearest_dist_threshold;  // parameters for nearest index search
   double ego_nearest_yaw_threshold;   // parameters for nearest index search
@@ -322,11 +320,6 @@ public:
 
   /**
    * @brief calculate control command by MPC algorithm
-   * @param [in] current_steer current steering of the vehicle
-   * @param [in] current_kinematics current kinematics info, e.g. pose and velocity
-   * @param [out] ctrl_cmd control command calculated with mpc algorithm
-   * @param [out] predicted_trajectory predicted MPC trajectory
-   * @param [out] diagnostic diagnostic msg to be filled-out
    */
   bool calculateMPC(
     const SteeringReport & current_steer, const Odometry & current_kinematics,
@@ -350,12 +343,9 @@ public:
   /**
    * @brief set the vehicle model of this MPC
    */
-  inline void setVehicleModel(
-    std::shared_ptr<VehicleModelInterface> vehicle_model_ptr,
-    const std::string & vehicle_model_type)
+  inline void setVehicleModel(std::shared_ptr<VehicleModelInterface> vehicle_model_ptr)
   {
     m_vehicle_model_ptr = vehicle_model_ptr;
-    m_vehicle_model_type = vehicle_model_type;
   }
 
   /**
