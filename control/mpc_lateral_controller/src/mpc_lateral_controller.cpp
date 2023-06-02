@@ -50,16 +50,22 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   const auto dp_double = [&](const std::string & s) { return node_->declare_parameter<double>(s); };
 
   m_mpc.m_ctrl_period = node_->get_parameter("ctrl_period").as_double();
-  m_enable_path_smoothing = dp_bool("enable_path_smoothing");
-  m_path_filter_moving_ave_num = dp_int("path_filter_moving_ave_num");
-  m_curvature_smoothing_num_traj = dp_int("curvature_smoothing_num_traj");
-  m_curvature_smoothing_num_ref_steer = dp_int("curvature_smoothing_num_ref_steer");
-  m_traj_resample_dist = dp_double("traj_resample_dist");
+
+  m_trajectory_filtering_param.enable_path_smoothing = dp_bool("enable_path_smoothing");
+  m_trajectory_filtering_param.path_filter_moving_ave_num = dp_int("path_filter_moving_ave_num");
+  m_trajectory_filtering_param.curvature_smoothing_num_traj =
+    dp_int("curvature_smoothing_num_traj");
+  m_trajectory_filtering_param.curvature_smoothing_num_ref_steer =
+    dp_int("curvature_smoothing_num_ref_steer");
+  m_trajectory_filtering_param.traj_resample_dist = dp_double("traj_resample_dist");
+  m_trajectory_filtering_param.extend_trajectory_for_end_yaw_control =
+    dp_bool("extend_trajectory_for_end_yaw_control");
+
   m_mpc.m_admissible_position_error = dp_double("admissible_position_error");
   m_mpc.m_admissible_yaw_error_rad = dp_double("admissible_yaw_error_rad");
   m_mpc.m_use_steer_prediction = dp_bool("use_steer_prediction");
   m_mpc.m_param.steer_tau = dp_double("vehicle_model_steer_tau");
-  m_extend_trajectory_for_end_yaw_control = dp_bool("extend_trajectory_for_end_yaw_control");
+
 
   /* stop state parameters */
   m_stop_state_entry_ego_speed = dp_double("stop_state_entry_ego_speed");
@@ -329,10 +335,7 @@ void MpcLateralController::setTrajectory(const Trajectory & msg)
     return;
   }
 
-  m_mpc.setReferenceTrajectory(
-    msg, m_traj_resample_dist, m_enable_path_smoothing, m_path_filter_moving_ave_num,
-    m_curvature_smoothing_num_traj, m_curvature_smoothing_num_ref_steer,
-    m_extend_trajectory_for_end_yaw_control);
+  m_mpc.setReferenceTrajectory(msg, m_trajectory_filtering_param);
 
   // update trajectory buffer to check the trajectory shape change.
   m_trajectory_buffer.push_back(m_current_trajectory);

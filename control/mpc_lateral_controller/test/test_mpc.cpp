@@ -79,13 +79,10 @@ protected:
   double steer_lim = 0.610865;      // 35 degrees
   double steer_rate_lim = 2.61799;  // 150 degrees
   double ctrl_period = 0.03;
-  double traj_resample_dist = 0.1;
-  int path_filter_moving_ave_num = 35;
-  int curvature_smoothing_num_traj = 1;
-  int curvature_smoothing_num_ref_steer = 35;
-  bool enable_path_smoothing = true;
+
   bool use_steer_prediction = true;
-  bool extend_trajectory_for_end_yaw_control = true;
+
+  TrajectoryFilteringParam trajectory_param;
 
   TrajectoryPoint makePoint(const double x, const double y, const float vx)
   {
@@ -126,6 +123,13 @@ protected:
     param.low_curvature_weight.steer_acc = 0.000001;
     param.low_curvature_thresh_curvature = 0.0;
 
+    trajectory_param.traj_resample_dist = 0.1;
+    trajectory_param.path_filter_moving_ave_num = 35;
+    trajectory_param.curvature_smoothing_num_traj = 1;
+    trajectory_param.curvature_smoothing_num_ref_steer = 35;
+    trajectory_param.enable_path_smoothing = true;
+    trajectory_param.extend_trajectory_for_end_yaw_control = true;
+
     dummy_straight_trajectory.points.push_back(makePoint(0.0, 0.0, 1.0f));
     dummy_straight_trajectory.points.push_back(makePoint(1.0, 0.0, 1.0f));
     dummy_straight_trajectory.points.push_back(makePoint(2.0, 0.0, 1.0f));
@@ -157,10 +161,7 @@ protected:
     mpc.initializeLowPassFilters(steering_lpf_cutoff_hz, error_deriv_lpf_cutoff_hz);
 
     // Init trajectory
-    mpc.setReferenceTrajectory(
-      dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-      path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-      extend_trajectory_for_end_yaw_control);
+    mpc.setReferenceTrajectory(dummy_straight_trajectory, trajectory_param);
   }
 
   nav_msgs::msg::Odometry makeOdometry(const geometry_msgs::msg::Pose & pose, const double velocity)
@@ -218,10 +219,7 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
 
   // Init parameters and reference trajectory
   initializeMPC(mpc);
-  mpc.setReferenceTrajectory(
-    dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    extend_trajectory_for_end_yaw_control);
+  mpc.setReferenceTrajectory(dummy_right_turn_trajectory, trajectory_param);
 
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
@@ -237,10 +235,7 @@ TEST_F(MPCTest, OsqpCalculate)
 {
   MPC mpc;
   initializeMPC(mpc);
-  mpc.setReferenceTrajectory(
-    dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    extend_trajectory_for_end_yaw_control);
+  mpc.setReferenceTrajectory(dummy_straight_trajectory, trajectory_param);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
@@ -266,10 +261,7 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
 {
   MPC mpc;
   initializeMPC(mpc);
-  mpc.setReferenceTrajectory(
-    dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    extend_trajectory_for_end_yaw_control);
+  mpc.setReferenceTrajectory(dummy_right_turn_trajectory, trajectory_param);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
@@ -307,10 +299,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   // Init filters
   mpc.initializeLowPassFilters(steering_lpf_cutoff_hz, error_deriv_lpf_cutoff_hz);
   // Init trajectory
-  mpc.setReferenceTrajectory(
-    dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    extend_trajectory_for_end_yaw_control);
+  mpc.setReferenceTrajectory(dummy_straight_trajectory, trajectory_param);
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
@@ -325,10 +314,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
 {
   MPC mpc;
   initializeMPC(mpc);
-  mpc.setReferenceTrajectory(
-    dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    extend_trajectory_for_end_yaw_control);
+  mpc.setReferenceTrajectory(dummy_right_turn_trajectory, trajectory_param);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, steer_limit);

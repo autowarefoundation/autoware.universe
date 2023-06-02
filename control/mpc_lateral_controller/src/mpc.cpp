@@ -21,7 +21,6 @@
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
-using namespace std::literals::chrono_literals;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::normalizeRadian;
 using tier4_autoware_utils::rad2deg;
@@ -169,16 +168,13 @@ Float32MultiArrayStamped MPC::generateDiagData(
 }
 
 void MPC::setReferenceTrajectory(
-  const Trajectory & trajectory_msg, const double traj_resample_dist,
-  const bool enable_path_smoothing, const int path_filter_moving_ave_num,
-  const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
-  const bool extend_trajectory_for_end_yaw_control)
+  const Trajectory & trajectory_msg, const TrajectoryFilteringParam & param)
 {
   const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
 
   // resampling
   const auto [success_resample, mpc_traj_resampled] =
-    MPCUtils::resampleMPCTrajectoryByDistance(mpc_traj_raw, traj_resample_dist);
+    MPCUtils::resampleMPCTrajectoryByDistance(mpc_traj_raw, param.traj_resample_dist);
   if (!success_resample) {
     warn_throttle("[setReferenceTrajectory] spline error when resampling by distance");
     return;
@@ -193,13 +189,14 @@ void MPC::setReferenceTrajectory(
   // path smoothing
   MPCTrajectory mpc_traj_smoothed = mpc_traj_resampled;  // smooth filtered trajectory
   const int mpc_traj_resampled_size = static_cast<int>(mpc_traj_resampled.size());
-  if (enable_path_smoothing && mpc_traj_resampled_size > 2 * path_filter_moving_ave_num) {
+  if (
+    param.enable_path_smoothing && mpc_traj_resampled_size > 2 * param.path_filter_moving_ave_num) {
     using MoveAverageFilter::filt_vector;
     if (
-      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.x) ||
-      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.y) ||
-      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.yaw) ||
-      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.vx)) {
+      !filt_vector(param.path_filter_moving_ave_num, mpc_traj_smoothed.x) ||
+      !filt_vector(param.path_filter_moving_ave_num, mpc_traj_smoothed.y) ||
+      !filt_vector(param.path_filter_moving_ave_num, mpc_traj_smoothed.yaw) ||
+      !filt_vector(param.path_filter_moving_ave_num, mpc_traj_smoothed.vx)) {
       RCLCPP_DEBUG(m_logger, "path callback: filtering error. stop filtering.");
       mpc_traj_smoothed = mpc_traj_resampled;
     }
@@ -211,9 +208,9 @@ void MPC::setReferenceTrajectory(
    * attitude angle well, resulting in improved control performance. If the trajectory is
    * well-defined considering the end point attitude angle, this feature is not necessary.
    */
-  if (extend_trajectory_for_end_yaw_control) {
+  if (param.extend_trajectory_for_end_yaw_control) {
     MPCUtils::extendTrajectoryInYawDirection(
-      mpc_traj_raw.yaw.back(), traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
+      mpc_traj_raw.yaw.back(), param.traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
   }
 
   // calculate yaw angle
@@ -222,7 +219,8 @@ void MPC::setReferenceTrajectory(
 
   // calculate curvature
   MPCUtils::calcTrajectoryCurvature(
-    curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer, &mpc_traj_smoothed);
+    param.curvature_smoothing_num_traj, param.curvature_smoothing_num_ref_steer,
+    &mpc_traj_smoothed);
 
   // add end point with vel=0 on trajectory for mpc prediction
   {

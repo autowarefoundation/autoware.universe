@@ -64,27 +64,12 @@ public:
 private:
   rclcpp::Node * node_;
 
-  //!< @brief topic publisher for predicted trajectory
   rclcpp::Publisher<Trajectory>::SharedPtr m_pub_predicted_traj;
-  //!< @brief topic publisher for control debug values
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
   rclcpp::Publisher<Float32Stamped>::SharedPtr m_pub_steer_offset;
 
   /* parameters for path smoothing */
-  //!< @brief flag for path smoothing
-  bool m_enable_path_smoothing;
-  //!< @brief param of moving average filter for path smoothing
-  int m_path_filter_moving_ave_num;
-  //!< @brief point-to-point index distance for curvature calculation for trajectory  //NOLINT
-  int m_curvature_smoothing_num_traj;
-  //!< @brief point-to-point index distance for curvature calculation for reference steer command
-  //!< //NOLINT
-  int m_curvature_smoothing_num_ref_steer;
-  //!< @brief path resampling interval [m]
-  double m_traj_resample_dist;
-
-  //!< @brief flag of traj extending for terminal yaw
-  bool m_extend_trajectory_for_end_yaw_control;
+  TrajectoryFilteringParam m_trajectory_filtering_param;
 
   /* parameters for stop state */
   double m_stop_state_entry_ego_speed;
@@ -115,8 +100,10 @@ private:
 
   //!< @brief measured kinematic state
   nav_msgs::msg::Odometry m_current_kinematic_state;
+
   //!< @brief measured steering
   autoware_auto_vehicle_msgs::msg::SteeringReport m_current_steering;
+
   //!< @brief reference trajectory
   Trajectory m_current_trajectory;
 
@@ -125,6 +112,7 @@ private:
 
   //!< @brief flag of m_ctrl_cmd_prev initialization
   bool m_is_ctrl_cmd_prev_initialized = false;
+
   //!< @brief previous control command
   AckermannLateralCommand m_ctrl_cmd_prev;
 

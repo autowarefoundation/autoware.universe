@@ -87,6 +87,27 @@ struct MPCParam
   double low_curvature_thresh_curvature;  // threshold of curvature to use "low curvature" parameter
 };
 
+struct TrajectoryFilteringParam
+{
+  // path resampling interval [m]
+  double traj_resample_dist;
+
+  // flag of traj extending for terminal yaw
+  bool extend_trajectory_for_end_yaw_control;
+
+  // flag for path smoothing
+  bool enable_path_smoothing;
+
+  // param of moving average filter for path smoothing
+  int path_filter_moving_ave_num;
+
+  // point-to-point index distance for curvature calculation for trajectory
+  int curvature_smoothing_num_traj;
+
+  // point-to-point index distance for curvature calculation for reference steer command
+  int curvature_smoothing_num_ref_steer;
+};
+
 /**
  * MPC problem data
  */
@@ -330,10 +351,7 @@ public:
    * @brief set the reference trajectory to follow
    */
   void setReferenceTrajectory(
-    const Trajectory & trajectory_msg, const double traj_resample_dist,
-    const bool enable_path_smoothing, const int path_filter_moving_ave_num,
-    const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
-    const bool extend_trajectory_for_end_yaw_control);
+    const Trajectory & trajectory_msg, const TrajectoryFilteringParam & param);
 
   /**
    * @brief reset previous result of MPC
