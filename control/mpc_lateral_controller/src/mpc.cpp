@@ -34,11 +34,11 @@ bool MPC::calculateMPC(
   Float32MultiArrayStamped & diagnostic)
 {
   /* recalculate velocity from ego-velocity with dynamics */
-  MPCTrajectory reference_trajectory =
+  const auto reference_trajectory =
     applyVelocityDynamicsFilter(m_ref_traj, current_pose, current_velocity);
 
-  MPCData mpc_data;
-  if (!getData(reference_trajectory, current_steer, current_pose, &mpc_data)) {
+  const auto [success_data, mpc_data] = getData(reference_trajectory, current_steer, current_pose);
+  if (!success_data) {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "fail to get Data.");
     return false;
   }
@@ -47,20 +47,21 @@ bool MPC::calculateMPC(
   Eigen::VectorXd x0 = getInitialState(mpc_data);
 
   /* delay compensation */
-
-  if (!updateStateForDelayCompensation(reference_trajectory, mpc_data.nearest_time, &x0)) {
+  const auto [success_delay, x0_delayed] =
+    updateStateForDelayCompensation(reference_trajectory, mpc_data.nearest_time, x0);
+  if (!success_delay) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "updateStateForDelayCompensation failed. stop computation.");
     return false;
   }
 
   /* resample ref_traj with mpc sampling time */
-  MPCTrajectory mpc_resampled_ref_traj;
   const double mpc_start_time = mpc_data.nearest_time + m_param.input_delay;
   const double prediction_dt =
     getPredictionDeltaTime(mpc_start_time, reference_trajectory, current_pose);
-  if (!resampleMPCTrajectoryByTime(
-        mpc_start_time, prediction_dt, reference_trajectory, &mpc_resampled_ref_traj)) {
+  const auto [success_resample, mpc_resampled_ref_traj] =
+    resampleMPCTrajectoryByTime(mpc_start_time, prediction_dt, reference_trajectory);
+  if (!success_resample) {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "trajectory resampling failed.");
     return false;
   }
@@ -69,9 +70,9 @@ bool MPC::calculateMPC(
   MPCMatrix mpc_matrix = generateMPCMatrix(mpc_resampled_ref_traj, prediction_dt);
 
   /* solve quadratic optimization */
-  Eigen::VectorXd Uex;
-  if (!executeOptimization(
-        mpc_matrix, x0, prediction_dt, &Uex, mpc_resampled_ref_traj, current_velocity)) {
+  const auto [success_opt, Uex] = executeOptimization(
+    mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_traj, current_velocity);
+  if (!success_opt) {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "optimization failed.");
     return false;
   }
@@ -84,7 +85,7 @@ bool MPC::calculateMPC(
   {
     ctrl_cmd.steering_tire_angle = static_cast<float>(u_filtered);
     ctrl_cmd.steering_tire_rotation_rate = static_cast<float>(calcDesiredSteeringRate(
-      mpc_matrix, x0, Uex, u_filtered, current_steer.steering_tire_angle, prediction_dt));
+      mpc_matrix, x0_delayed, Uex, u_filtered, current_steer.steering_tire_angle, prediction_dt));
   }
 
   storeSteerCmd(u_filtered);
@@ -96,7 +97,7 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   /* calculate predicted trajectory */
-  Eigen::VectorXd Xex = mpc_matrix.Aex * x0 + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
+  Eigen::VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
   MPCTrajectory mpc_predicted_traj;
   const auto & traj = mpc_resampled_ref_traj;
   for (int i = 0; i < m_param.prediction_horizon; ++i) {
@@ -117,8 +118,7 @@ bool MPC::calculateMPC(
 
   /* prepare diagnostic message */
   const double nearest_k = reference_trajectory.k[mpc_data.nearest_idx];
-  const double nearest_smooth_k =
-    reference_trajectory.smooth_k[mpc_data.nearest_idx];
+  const double nearest_smooth_k = reference_trajectory.smooth_k[mpc_data.nearest_idx];
   const double steer_cmd = ctrl_cmd.steering_tire_angle;
   const double wb = m_vehicle_model_ptr->getWheelbase();
 
@@ -253,63 +253,63 @@ void MPC::resetPrevResult(const SteeringReport & current_steer)
   m_raw_steer_cmd_pprev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);
 }
 
-bool MPC::getData(
-  const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose,
-  MPCData * data)
+std::pair<bool, MPCData> MPC::getData(
+  const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose)
 {
+  MPCData data;
   static constexpr auto duration = 5000 /*ms*/;
   size_t nearest_idx;
   if (!MPCUtils::calcNearestPoseInterp(
-        traj, current_pose, &(data->nearest_pose), &(nearest_idx), &(data->nearest_time),
+        traj, current_pose, &(data.nearest_pose), &(nearest_idx), &(data.nearest_time),
         ego_nearest_dist_threshold, ego_nearest_yaw_threshold, m_logger, *m_clock)) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "calculateMPC: error in calculating nearest pose. stop mpc.");
-    return false;
+    return {false, MPCData{}};
   }
 
   /* get data */
-  data->nearest_idx = nearest_idx;
-  data->steer = static_cast<double>(current_steer.steering_tire_angle);
-  data->lateral_err = MPCUtils::calcLateralError(current_pose, data->nearest_pose);
-  data->yaw_err = tier4_autoware_utils::normalizeRadian(
-    tf2::getYaw(current_pose.orientation) - tf2::getYaw(data->nearest_pose.orientation));
+  data.nearest_idx = nearest_idx;
+  data.steer = static_cast<double>(current_steer.steering_tire_angle);
+  data.lateral_err = MPCUtils::calcLateralError(current_pose, data.nearest_pose);
+  data.yaw_err = tier4_autoware_utils::normalizeRadian(
+    tf2::getYaw(current_pose.orientation) - tf2::getYaw(data.nearest_pose.orientation));
 
   /* get predicted steer */
   if (!m_steer_prediction_prev) {
     m_steer_prediction_prev = std::make_shared<double>(current_steer.steering_tire_angle);
   }
-  data->predicted_steer = calcSteerPrediction();
-  *m_steer_prediction_prev = data->predicted_steer;
+  data.predicted_steer = calcSteerPrediction();
+  *m_steer_prediction_prev = data.predicted_steer;
 
   /* check error limit */
   const double dist_err =
-    tier4_autoware_utils::calcDistance2d(current_pose.position, data->nearest_pose.position);
+    tier4_autoware_utils::calcDistance2d(current_pose.position, data.nearest_pose.position);
   if (dist_err > m_admissible_position_error) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "position error is over limit. error = %fm, limit: %fm",
       dist_err, m_admissible_position_error);
-    return false;
+    return {false, MPCData{}};
   }
 
   /* check yaw error limit */
-  if (std::fabs(data->yaw_err) > m_admissible_yaw_error_rad) {
+  if (std::fabs(data.yaw_err) > m_admissible_yaw_error_rad) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "yaw error is over limit. error = %f deg, limit %f deg",
-      tier4_autoware_utils::rad2deg(data->yaw_err),
+      tier4_autoware_utils::rad2deg(data.yaw_err),
       tier4_autoware_utils::rad2deg(m_admissible_yaw_error_rad));
-    return false;
+    return {false, MPCData{}};
   }
 
   /* check trajectory time length */
   const double max_prediction_time =
     m_param.min_prediction_length / static_cast<double>(m_param.prediction_horizon - 1);
-  auto end_time = data->nearest_time + m_param.input_delay + m_ctrl_period + max_prediction_time;
+  auto end_time = data.nearest_time + m_param.input_delay + m_ctrl_period + max_prediction_time;
   if (end_time > traj.relative_time.back()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "path is too short for prediction.");
-    return false;
+    return {false, MPCData{}};
   }
-  return true;
+  return {true, data};
 }
 
 double MPC::calcSteerPrediction()
@@ -388,21 +388,21 @@ void MPC::storeSteerCmd(const double steer)
   }
 }
 
-bool MPC::resampleMPCTrajectoryByTime(
-  const double ts, const double prediction_dt, const MPCTrajectory & input,
-  MPCTrajectory * output) const
+std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
+  const double ts, const double prediction_dt, const MPCTrajectory & input) const
 {
+  MPCTrajectory output;
   std::vector<double> mpc_time_v;
   for (double i = 0; i < static_cast<double>(m_param.prediction_horizon); ++i) {
     mpc_time_v.push_back(ts + i * prediction_dt);
   }
-  if (!MPCUtils::linearInterpMPCTrajectory(input.relative_time, input, mpc_time_v, output)) {
+  if (!MPCUtils::linearInterpMPCTrajectory(input.relative_time, input, mpc_time_v, &output)) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/,
       "calculateMPC: mpc resample error. stop mpc calculation. check code!");
-    return false;
+    return {false, {}};
   }
-  return true;
+  return {true, output};
 }
 
 Eigen::VectorXd MPC::getInitialState(const MPCData & data)
@@ -434,8 +434,8 @@ Eigen::VectorXd MPC::getInitialState(const MPCData & data)
   return x0;
 }
 
-bool MPC::updateStateForDelayCompensation(
-  const MPCTrajectory & traj, const double & start_time, Eigen::VectorXd * x)
+std::pair<bool, Eigen::VectorXd> MPC::updateStateForDelayCompensation(
+  const MPCTrajectory & traj, const double & start_time, const Eigen::VectorXd x0_orig)
 {
   const int DIM_X = m_vehicle_model_ptr->getDimX();
   const int DIM_U = m_vehicle_model_ptr->getDimU();
@@ -446,7 +446,7 @@ bool MPC::updateStateForDelayCompensation(
   Eigen::MatrixXd Wd(DIM_X, 1);
   Eigen::MatrixXd Cd(DIM_Y, DIM_X);
 
-  Eigen::MatrixXd x_curr = *x;
+  Eigen::MatrixXd x_curr = x0_orig;
   double mpc_curr_time = start_time;
   for (uint i = 0; i < m_input_buffer.size(); ++i) {
     double k = 0.0;
@@ -456,7 +456,7 @@ bool MPC::updateStateForDelayCompensation(
       !linearInterpolate(traj.relative_time, traj.vx, mpc_curr_time, v)) {
       RCLCPP_ERROR(
         m_logger, "mpc resample error at delay compensation, stop mpc calculation. check code!");
-      return false;
+      return {false, {}};
     }
 
     /* get discrete state matrix A, B, C, W */
@@ -468,8 +468,7 @@ bool MPC::updateStateForDelayCompensation(
     x_curr = Ad * x_curr + Bd * ud + Wd;
     mpc_curr_time += m_ctrl_period;
   }
-  *x = x_curr;
-  return true;
+  return {true, x_curr};
 }
 
 MPCTrajectory MPC::applyVelocityDynamicsFilter(
@@ -635,17 +634,20 @@ MPCMatrix MPC::generateMPCMatrix(
  *                            ~~~
  * [    -au_lim * dt    ] < [uN-uN-1] < [     au_lim * dt    ] (*N... DIM_U)
  */
-bool MPC::executeOptimization(
+
+std::pair<bool, Eigen::VectorXd> MPC::executeOptimization(
   const MPCMatrix & m, const Eigen::VectorXd & x0, const double prediction_dt,
-  Eigen::VectorXd * Uex, const MPCTrajectory & traj, const double current_velocity)
+  const MPCTrajectory & traj, const double current_velocity)
 {
   using Eigen::MatrixXd;
   using Eigen::VectorXd;
 
+  VectorXd Uex;
+
   if (!isValid(m)) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "model matrix is invalid. stop MPC.");
-    return false;
+    return {false, {}};
   }
 
   const int DIM_U_N = m_param.prediction_horizon * m_vehicle_model_ptr->getDimU();
@@ -710,11 +712,11 @@ bool MPC::executeOptimization(
   ubA(0, 0) = m_raw_steer_cmd_prev + adaptive_steer_rate_lim * m_ctrl_period;
 
   auto t_start = std::chrono::system_clock::now();
-  bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, *Uex);
+  bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);
   auto t_end = std::chrono::system_clock::now();
   if (!solve_result) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "qp solver error");
-    return false;
+    return {false, {}};
   }
 
   {
@@ -722,12 +724,12 @@ bool MPC::executeOptimization(
     RCLCPP_DEBUG(m_logger, "qp solver calculation time = %ld [ms]", t);
   }
 
-  if (Uex->array().isNaN().any()) {
+  if (Uex.array().isNaN().any()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, 1000 /*ms*/, "model Uex includes NaN, stop MPC.");
-    return false;
+    return {false, {}};
   }
-  return true;
+  return {true, Uex};
 }
 
 void MPC::addSteerWeightR(const double prediction_dt, Eigen::MatrixXd * R_ptr) const

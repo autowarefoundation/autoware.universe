@@ -115,13 +115,15 @@ struct MPCParam
  */
 struct MPCData
 {
-  size_t nearest_idx;
-  double nearest_time;
-  Pose nearest_pose;
-  double steer;
-  double predicted_steer;
-  double lateral_err;
-  double yaw_err;
+  size_t nearest_idx{};
+  double nearest_time{};
+  Pose nearest_pose{};
+  double steer{};
+  double predicted_steer{};
+  double lateral_err{};
+  double yaw_err{};
+
+  MPCData() = default;
 };
 /**
  * Matrices used for MPC optimization
@@ -136,6 +138,8 @@ struct MPCMatrix
   Eigen::MatrixXd R1ex;
   Eigen::MatrixXd R2ex;
   Eigen::MatrixXd Uref_ex;
+
+  MPCMatrix() = default;
 };
 /**
  * MPC-based waypoints follower class
@@ -182,9 +186,8 @@ private:
   /**
    * @brief get variables for mpc calculation
    */
-  bool getData(
-    const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose,
-    MPCData * data);
+  std::pair<bool, MPCData> getData(
+    const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose);
   /**
    * @brief calculate predicted steering
    */
@@ -210,8 +213,8 @@ private:
    * @param [in] start_time start time for update
    * @param [out] x updated state at delayed_time
    */
-  bool updateStateForDelayCompensation(
-    const MPCTrajectory & traj, const double & start_time, Eigen::VectorXd * x);
+  std::pair<bool, Eigen::VectorXd> updateStateForDelayCompensation(
+    const MPCTrajectory & traj, const double & start_time, const Eigen::VectorXd x0_orig);
   /**
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] reference_trajectory used for linearization around reference trajectory
@@ -223,17 +226,19 @@ private:
    * @param [in] mpc_matrix parameters matrix to use for optimization
    * @param [in] x0 initial state vector
    * @param [in] prediction_dt prediction delta time
+   * @param [in] trajectory mpc reference trajectory
+   * @param [in] current_velocity current ego velocity
    * @param [out] Uex optimized input vector
    */
-  bool executeOptimization(
+  std::pair<bool, Eigen::VectorXd> executeOptimization(
     const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const double prediction_dt,
-    Eigen::VectorXd * Uex, const MPCTrajectory & traj, const double current_velocity);
+    const MPCTrajectory & trajectory, const double current_velocity);
+
   /**
    * @brief resample trajectory with mpc resampling time
    */
-  bool resampleMPCTrajectoryByTime(
-    const double start_time, const double prediction_dt, const MPCTrajectory & input,
-    MPCTrajectory * output) const;
+  std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByTime(
+    const double start_time, const double prediction_dt, const MPCTrajectory & input) const;
   /**
    * @brief apply velocity dynamics filter with v0 from closest index
    */
