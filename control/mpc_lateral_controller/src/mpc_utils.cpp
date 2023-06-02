@@ -27,14 +27,8 @@ namespace autoware::motion::control::mpc_lateral_controller
 namespace MPCUtils
 {
 using tier4_autoware_utils::calcDistance2d;
+using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_autoware_utils::normalizeRadian;
-
-Quaternion getQuaternionFromYaw(const double & yaw)
-{
-  tf2::Quaternion q;
-  q.setRPY(0, 0, yaw);
-  return tf2::toMsg(q);
-}
 
 void convertEulerAngleToMonotonic(std::vector<double> * a)
 {
@@ -310,7 +304,7 @@ bool calcNearestPoseInterp(
   if (traj.size() == 1) {
     nearest_pose->position.x = traj.x.at(*nearest_index);
     nearest_pose->position.y = traj.y.at(*nearest_index);
-    nearest_pose->orientation = getQuaternionFromYaw(traj.yaw.at(*nearest_index));
+    nearest_pose->orientation = createQuaternionFromYaw(traj.yaw.at(*nearest_index));
     *nearest_time = traj.relative_time.at(*nearest_index);
     return true;
   }
@@ -340,7 +334,7 @@ bool calcNearestPoseInterp(
   if (c_sq < 1.0E-5) {
     nearest_pose->position.x = traj.x.at(*nearest_index);
     nearest_pose->position.y = traj.y.at(*nearest_index);
-    nearest_pose->orientation = getQuaternionFromYaw(traj.yaw.at(*nearest_index));
+    nearest_pose->orientation = createQuaternionFromYaw(traj.yaw.at(*nearest_index));
     *nearest_time = traj.relative_time.at(*nearest_index);
     return true;
   }
@@ -355,7 +349,7 @@ bool calcNearestPoseInterp(
     normalizeRadian(traj.yaw.at(*nearest_index) - traj.yaw.at(second_nearest_index));
   const double nearest_yaw =
     normalizeRadian(traj.yaw.at(second_nearest_index) + alpha * tmp_yaw_err);
-  nearest_pose->orientation = getQuaternionFromYaw(nearest_yaw);
+  nearest_pose->orientation = createQuaternionFromYaw(nearest_yaw);
   *nearest_time = alpha * traj.relative_time.at(*nearest_index) +
                   (1 - alpha) * traj.relative_time.at(second_nearest_index);
   return true;

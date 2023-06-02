@@ -48,14 +48,7 @@ namespace MPCUtils
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::Quaternion;
 
-/**
- * @brief convert from yaw to ros-Quaternion
- * @param [in] yaw input yaw angle
- * @return quaternion
- */
-Quaternion getQuaternionFromYaw(const double & yaw);
 /**
  * @brief convert Euler angle vector including +-2pi to 0 jump to continuous series data
  * @param [inout] a input angle vector
