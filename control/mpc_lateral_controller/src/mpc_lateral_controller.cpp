@@ -492,45 +492,36 @@ void MpcLateralController::declareMPCparameters()
 {
   m_mpc.m_param.prediction_horizon = node_->declare_parameter<int>("mpc_prediction_horizon");
   m_mpc.m_param.prediction_dt = node_->declare_parameter<double>("mpc_prediction_dt");
-  m_mpc.m_param.weight_lat_error = node_->declare_parameter<double>("mpc_weight_lat_error");
-  m_mpc.m_param.weight_heading_error = node_->declare_parameter<double>("mpc_weight_heading_error");
-  m_mpc.m_param.weight_heading_error_squared_vel =
-    node_->declare_parameter<double>("mpc_weight_heading_error_squared_vel");
-  m_mpc.m_param.weight_steering_input =
-    node_->declare_parameter<double>("mpc_weight_steering_input");
-  m_mpc.m_param.weight_steering_input_squared_vel =
-    node_->declare_parameter<double>("mpc_weight_steering_input_squared_vel");
-  m_mpc.m_param.weight_lat_jerk = node_->declare_parameter<double>("mpc_weight_lat_jerk");
-  m_mpc.m_param.weight_steer_rate = node_->declare_parameter<double>("mpc_weight_steer_rate");
-  m_mpc.m_param.weight_steer_acc = node_->declare_parameter<double>("mpc_weight_steer_acc");
-  m_mpc.m_param.low_curvature_weight_lat_error =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_lat_error");
-  m_mpc.m_param.low_curvature_weight_heading_error =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_heading_error");
-  m_mpc.m_param.low_curvature_weight_heading_error_squared_vel =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_heading_error_squared_vel");
-  m_mpc.m_param.low_curvature_weight_steering_input =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_steering_input");
-  m_mpc.m_param.low_curvature_weight_steering_input_squared_vel =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_steering_input_squared_vel");
-  m_mpc.m_param.low_curvature_weight_lat_jerk =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_lat_jerk");
-  m_mpc.m_param.low_curvature_weight_steer_rate =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_steer_rate");
-  m_mpc.m_param.low_curvature_weight_steer_acc =
-    node_->declare_parameter<double>("mpc_low_curvature_weight_steer_acc");
-  m_mpc.m_param.low_curvature_thresh_curvature =
-    node_->declare_parameter<double>("mpc_low_curvature_thresh_curvature");
-  m_mpc.m_param.weight_terminal_lat_error =
-    node_->declare_parameter<double>("mpc_weight_terminal_lat_error");
-  m_mpc.m_param.weight_terminal_heading_error =
-    node_->declare_parameter<double>("mpc_weight_terminal_heading_error");
-  m_mpc.m_param.zero_ff_steer_deg = node_->declare_parameter<double>("mpc_zero_ff_steer_deg");
-  m_mpc.m_param.acceleration_limit = node_->declare_parameter<double>("mpc_acceleration_limit");
-  m_mpc.m_param.velocity_time_constant =
-    node_->declare_parameter<double>("mpc_velocity_time_constant");
-  m_mpc.m_param.min_prediction_length =
-    node_->declare_parameter<double>("mpc_min_prediction_length");
+
+  const auto dp = [&](const auto & param) { return node_->declare_parameter<double>(param); };
+
+  auto & nw = m_mpc.m_param.nominal_weight;
+  nw.lat_error = dp("mpc_weight_lat_error");
+  nw.heading_error = dp("mpc_weight_heading_error");
+  nw.heading_error_squared_vel = dp("mpc_weight_heading_error_squared_vel");
+  nw.steering_input = dp("mpc_weight_steering_input");
+  nw.steering_input_squared_vel = dp("mpc_weight_steering_input_squared_vel");
+  nw.lat_jerk = dp("mpc_weight_lat_jerk");
+  nw.steer_rate = dp("mpc_weight_steer_rate");
+  nw.steer_acc = dp("mpc_weight_steer_acc");
+  nw.terminal_lat_error = dp("mpc_weight_terminal_lat_error");
+  nw.terminal_heading_error = dp("mpc_weight_terminal_heading_error");
+
+  auto & lcw = m_mpc.m_param.low_curvature_weight;
+  lcw.lat_error = dp("mpc_low_curvature_weight_lat_error");
+  lcw.heading_error = dp("mpc_low_curvature_weight_heading_error");
+  lcw.heading_error_squared_vel = dp("mpc_low_curvature_weight_heading_error_squared_vel");
+  lcw.steering_input = dp("mpc_low_curvature_weight_steering_input");
+  lcw.steering_input_squared_vel = dp("mpc_low_curvature_weight_steering_input_squared_vel");
+  lcw.lat_jerk = dp("mpc_low_curvature_weight_lat_jerk");
+  lcw.steer_rate = dp("mpc_low_curvature_weight_steer_rate");
+  lcw.steer_acc = dp("mpc_low_curvature_weight_steer_acc");
+  m_mpc.m_param.low_curvature_thresh_curvature = dp("mpc_low_curvature_thresh_curvature");
+
+  m_mpc.m_param.zero_ff_steer_deg = dp("mpc_zero_ff_steer_deg");
+  m_mpc.m_param.acceleration_limit = dp("mpc_acceleration_limit");
+  m_mpc.m_param.velocity_time_constant = dp("mpc_velocity_time_constant");
+  m_mpc.m_param.min_prediction_length = dp("mpc_min_prediction_length");
 }
 
 rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
@@ -542,44 +533,38 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
 
   // strong exception safety wrt MPCParam
   MPCParam param = m_mpc.m_param;
+  auto & nw = param.nominal_weight;
+  auto & lcw = param.low_curvature_weight;
+
   try {
     update_param(parameters, "mpc_prediction_horizon", param.prediction_horizon);
     update_param(parameters, "mpc_prediction_dt", param.prediction_dt);
-    update_param(parameters, "mpc_weight_lat_error", param.weight_lat_error);
-    update_param(parameters, "mpc_weight_heading_error", param.weight_heading_error);
-    update_param(
-      parameters, "mpc_weight_heading_error_squared_vel", param.weight_heading_error_squared_vel);
-    update_param(parameters, "mpc_weight_steering_input", param.weight_steering_input);
-    update_param(
-      parameters, "mpc_weight_steering_input_squared_vel", param.weight_steering_input_squared_vel);
-    update_param(parameters, "mpc_weight_lat_jerk", param.weight_lat_jerk);
-    update_param(parameters, "mpc_weight_steer_rate", param.weight_steer_rate);
-    update_param(parameters, "mpc_weight_steer_acc", param.weight_steer_acc);
-    update_param(
-      parameters, "mpc_low_curvature_weight_lat_error", param.low_curvature_weight_lat_error);
-    update_param(
-      parameters, "mpc_low_curvature_weight_heading_error",
-      param.low_curvature_weight_heading_error);
-    update_param(
-      parameters, "mpc_low_curvature_weight_heading_error_squared_vel",
-      param.low_curvature_weight_heading_error_squared_vel);
-    update_param(
-      parameters, "mpc_low_curvature_weight_steering_input",
-      param.low_curvature_weight_steering_input);
-    update_param(
-      parameters, "mpc_low_curvature_weight_steering_input_squared_vel",
-      param.low_curvature_weight_steering_input_squared_vel);
-    update_param(
-      parameters, "mpc_low_curvature_weight_lat_jerk", param.low_curvature_weight_lat_jerk);
-    update_param(
-      parameters, "mpc_low_curvature_weight_steer_rate", param.low_curvature_weight_steer_rate);
-    update_param(
-      parameters, "mpc_low_curvature_weight_steer_acc", param.low_curvature_weight_steer_acc);
+
+    const std::string ns_nw = "mpc_weight_";
+    update_param(parameters, ns_nw + "lat_error", nw.lat_error);
+    update_param(parameters, ns_nw + "heading_error", nw.heading_error);
+    update_param(parameters, ns_nw + "heading_error_squared_vel", nw.heading_error_squared_vel);
+    update_param(parameters, ns_nw + "steering_input", nw.steering_input);
+    update_param(parameters, ns_nw + "steering_input_squared_vel", nw.steering_input_squared_vel);
+    update_param(parameters, ns_nw + "lat_jerk", nw.lat_jerk);
+    update_param(parameters, ns_nw + "steer_rate", nw.steer_rate);
+    update_param(parameters, ns_nw + "steer_acc", nw.steer_acc);
+    update_param(parameters, ns_nw + "terminal_lat_error", nw.terminal_lat_error);
+    update_param(parameters, ns_nw + "terminal_heading_error", nw.terminal_heading_error);
+
+    const std::string ns_lcw = "mpc_low_curvature_weight_";
+    update_param(parameters, ns_lcw + "lat_error", lcw.lat_error);
+    update_param(parameters, ns_lcw + "heading_error", lcw.heading_error);
+    update_param(parameters, ns_lcw + "heading_error_squared_vel", lcw.heading_error_squared_vel);
+    update_param(parameters, ns_lcw + "steering_input", lcw.steering_input);
+    update_param(parameters, ns_lcw + "steering_input_squared_vel", lcw.steering_input_squared_vel);
+    update_param(parameters, ns_lcw + "lat_jerk", lcw.lat_jerk);
+    update_param(parameters, ns_lcw + "steer_rate", lcw.steer_rate);
+    update_param(parameters, ns_lcw + "steer_acc", lcw.steer_acc);
+
     update_param(
       parameters, "mpc_low_curvature_thresh_curvature", param.low_curvature_thresh_curvature);
-    update_param(parameters, "mpc_weight_terminal_lat_error", param.weight_terminal_lat_error);
-    update_param(
-      parameters, "mpc_weight_terminal_heading_error", param.weight_terminal_heading_error);
+
     update_param(parameters, "mpc_zero_ff_steer_deg", param.zero_ff_steer_deg);
     update_param(parameters, "mpc_acceleration_limit", param.acceleration_limit);
     update_param(parameters, "mpc_velocity_time_constant", param.velocity_time_constant);

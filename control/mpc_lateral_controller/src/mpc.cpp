@@ -74,7 +74,7 @@ bool MPC::calculateMPC(
   }
 
   // apply filters for the input limitation and low pass filter
-  const double u_saturated = std::max(std::min(Uex(0), m_steer_lim), -m_steer_lim);
+  const double u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
   const double u_filtered = m_lpf_steering_cmd.filter(u_saturated);
 
   // Set control command
@@ -549,8 +549,8 @@ MPCMatrix MPC::generateMPCMatrix(
     Q_adaptive = Q;
     R_adaptive = R;
     if (i == N - 1) {
-      Q_adaptive(0, 0) = m_param.weight_terminal_lat_error;
-      Q_adaptive(1, 1) = m_param.weight_terminal_heading_error;
+      Q_adaptive(0, 0) = m_param.nominal_weight.terminal_lat_error;
+      Q_adaptive(1, 1) = m_param.nominal_weight.terminal_heading_error;
     }
     Q_adaptive(1, 1) += ref_vx_squared * getWeightHeadingErrorSqVel(ref_k);
     R_adaptive(0, 0) += ref_vx_squared * getWeightSteerInputSqVel(ref_k);
@@ -724,20 +724,20 @@ void MPC::addSteerWeightR(const double prediction_dt, MatrixXd * R_ptr) const
 
   // add steering rate : weight for (u(i) - u(i-1) / dt )^2
   {
-    const double steer_rate_r = m_param.weight_steer_rate / (DT * DT);
+    const double steer_rate_r = m_param.nominal_weight.steer_rate / (DT * DT);
     const Eigen::Matrix2d D = steer_rate_r * (Eigen::Matrix2d() << 1.0, -1.0, -1.0, 1.0).finished();
     for (int i = 0; i < N - 1; ++i) {
       R.block(i, i, 2, 2) += D;
     }
     if (N > 1) {
       // steer rate i = 0
-      R(0, 0) += m_param.weight_steer_rate / (m_ctrl_period * m_ctrl_period);
+      R(0, 0) += m_param.nominal_weight.steer_rate / (m_ctrl_period * m_ctrl_period);
     }
   }
 
   // add steering acceleration : weight for { (u(i+1) - 2*u(i) + u(i-1)) / dt^2 }^2
   {
-    const double w = m_param.weight_steer_acc;
+    const double w = m_param.nominal_weight.steer_acc;
     const double steer_acc_r = w / std::pow(DT, 4);
     const double steer_acc_r_cp1 = w / (std::pow(DT, 3) * m_ctrl_period);
     const double steer_acc_r_cp2 = w / (std::pow(DT, 2) * std::pow(m_ctrl_period, 2));
@@ -770,13 +770,14 @@ void MPC::addSteerWeightF(const double prediction_dt, MatrixXd * f_ptr) const
   auto & f = *f_ptr;
 
   // steer rate for i = 0
-  f(0, 0) += -2.0 * m_param.weight_steer_rate / (std::pow(DT, 2)) * 0.5;
+  f(0, 0) += -2.0 * m_param.nominal_weight.steer_rate / (std::pow(DT, 2)) * 0.5;
 
   // const double steer_acc_r = m_param.weight_steer_acc / std::pow(DT, 4);
-  const double steer_acc_r_cp1 = m_param.weight_steer_acc / (std::pow(DT, 3) * m_ctrl_period);
+  const double steer_acc_r_cp1 =
+    m_param.nominal_weight.steer_acc / (std::pow(DT, 3) * m_ctrl_period);
   const double steer_acc_r_cp2 =
-    m_param.weight_steer_acc / (std::pow(DT, 2) * std::pow(m_ctrl_period, 2));
-  const double steer_acc_r_cp4 = m_param.weight_steer_acc / std::pow(m_ctrl_period, 4);
+    m_param.nominal_weight.steer_acc / (std::pow(DT, 2) * std::pow(m_ctrl_period, 2));
+  const double steer_acc_r_cp4 = m_param.nominal_weight.steer_acc / std::pow(m_ctrl_period, 4);
 
   // steer acc  i = 0
   f(0, 0) += ((-2.0 * m_raw_steer_cmd_prev + m_raw_steer_cmd_pprev) * steer_acc_r_cp4) * 0.5;
