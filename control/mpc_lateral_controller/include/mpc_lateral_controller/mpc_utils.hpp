@@ -38,6 +38,7 @@
 
 #include <cmath>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion::control::mpc_lateral_controller
