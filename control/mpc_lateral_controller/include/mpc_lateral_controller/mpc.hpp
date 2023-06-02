@@ -115,7 +115,7 @@ struct MPCParam
  */
 struct MPCData
 {
-  int nearest_idx;
+  size_t nearest_idx;
   double nearest_time;
   Pose nearest_pose;
   double steer;

@@ -99,10 +99,10 @@ bool MPC::calculateMPC(
   Eigen::VectorXd Xex = mpc_matrix.Aex * x0 + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
   MPCTrajectory mpc_predicted_traj;
   const auto & traj = mpc_resampled_ref_traj;
-  for (size_t i = 0; i < static_cast<size_t>(m_param.prediction_horizon); ++i) {
+  for (int i = 0; i < m_param.prediction_horizon; ++i) {
     const int DIM_X = m_vehicle_model_ptr->getDimX();
-    const double lat_error = Xex(static_cast<int>(i) * DIM_X);
-    const double yaw_error = Xex(static_cast<int>(i) * DIM_X + 1);
+    const double lat_error = Xex(i * DIM_X);
+    const double yaw_error = Xex(i * DIM_X + 1);
     const double x = traj.x[i] - std::sin(traj.yaw[i]) * lat_error;
     const double y = traj.y[i] + std::cos(traj.yaw[i]) * lat_error;
     const double z = traj.z[i];
@@ -116,9 +116,9 @@ bool MPC::calculateMPC(
   MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
 
   /* prepare diagnostic message */
-  const double nearest_k = reference_trajectory.k[static_cast<size_t>(mpc_data.nearest_idx)];
+  const double nearest_k = reference_trajectory.k[mpc_data.nearest_idx];
   const double nearest_smooth_k =
-    reference_trajectory.smooth_k[static_cast<size_t>(mpc_data.nearest_idx)];
+    reference_trajectory.smooth_k[mpc_data.nearest_idx];
   const double steer_cmd = ctrl_cmd.steering_tire_angle;
   const double wb = m_vehicle_model_ptr->getWheelbase();
 
@@ -145,7 +145,7 @@ bool MPC::calculateMPC(
   // [8] yaw error
   append_diag_data(mpc_data.yaw_err);
   // [9] reference velocity
-  append_diag_data(reference_trajectory.vx[static_cast<size_t>(mpc_data.nearest_idx)]);
+  append_diag_data(reference_trajectory.vx[mpc_data.nearest_idx]);
   // [10] measured velocity
   append_diag_data(current_velocity);
   // [11] angvel from steer command
@@ -268,7 +268,7 @@ bool MPC::getData(
   }
 
   /* get data */
-  data->nearest_idx = static_cast<int>(nearest_idx);
+  data->nearest_idx = nearest_idx;
   data->steer = static_cast<double>(current_steer.steering_tire_angle);
   data->lateral_err = MPCUtils::calcLateralError(current_pose, data->nearest_pose);
   data->yaw_err = tier4_autoware_utils::normalizeRadian(
@@ -488,7 +488,7 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
   const double tau = m_param.velocity_time_constant;
 
   MPCTrajectory output = input;
-  MPCUtils::dynamicSmoothingVelocity(static_cast<size_t>(nearest_idx), v0, acc_lim, tau, output);
+  MPCUtils::dynamicSmoothingVelocity(nearest_idx, v0, acc_lim, tau, output);
   const double t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
   const double t_end = output.relative_time.back() + t_ext;
   const double v_end = 0.0;
@@ -541,11 +541,11 @@ MPCMatrix MPC::generateMPCMatrix(
 
   /* predict dynamics for N times */
   for (int i = 0; i < N; ++i) {
-    const double ref_vx = reference_trajectory.vx[static_cast<size_t>(i)];
+    const double ref_vx = reference_trajectory.vx[i];
     const double ref_vx_squared = ref_vx * ref_vx;
 
-    const double ref_k = reference_trajectory.k[static_cast<size_t>(i)] * sign_vx;
-    const double ref_smooth_k = reference_trajectory.smooth_k[static_cast<size_t>(i)] * sign_vx;
+    const double ref_k = reference_trajectory.k[i] * sign_vx;
+    const double ref_smooth_k = reference_trajectory.smooth_k[i] * sign_vx;
 
     /* get discrete state matrix A, B, C, W */
     m_vehicle_model_ptr->setVelocity(ref_vx);
@@ -601,8 +601,8 @@ MPCMatrix MPC::generateMPCMatrix(
 
   /* add lateral jerk : weight for (v * {u(i) - u(i-1)} )^2 */
   for (int i = 0; i < N - 1; ++i) {
-    const double ref_vx = reference_trajectory.vx[static_cast<size_t>(i)];
-    const double ref_k = reference_trajectory.k[static_cast<size_t>(i)] * sign_vx;
+    const double ref_vx = reference_trajectory.vx[i];
+    const double ref_k = reference_trajectory.k[i] * sign_vx;
     const double j = ref_vx * ref_vx * getWeightLatJerk(ref_k) / (DT * DT);
     const Eigen::Matrix2d J = (Eigen::Matrix2d() << j, -j, -j, j).finished();
     m.R2ex.block(i, i, 2, 2) += J;
