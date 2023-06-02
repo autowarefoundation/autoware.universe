@@ -56,7 +56,7 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   if (!trt_common_->isInitialized()) {
     return;
   }
-  if (trt_common_->etBindingDimensions() != 2) {
+  if (trt_common_->getBindingDimensions() != 2) {
     RCLCPP_ERROR(node_ptr_->get_logger(), "Model number bindings must be 2!");
     return;
   }
