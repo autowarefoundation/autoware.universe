@@ -28,13 +28,13 @@ using tier4_autoware_utils::rad2deg;
 
 bool MPC::calculateMPC(
   const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
-  AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_traj,
+  AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_trajectory,
   Float32MultiArrayStamped & diagnostic)
 {
   // since the reference trajectory does not take into account the current velocity of the ego
   // vehicle, it needs to calculate the trajectory velocity considering the longitudinal dynamics.
   const auto reference_trajectory =
-    applyVelocityDynamicsFilter(m_ref_traj, current_pose, current_velocity);
+    applyVelocityDynamicsFilter(m_reference_trajectory, current_pose, current_velocity);
 
   // get the necessary data
   const auto [success_data, mpc_data] = getData(reference_trajectory, current_steer, current_pose);
@@ -57,14 +57,14 @@ bool MPC::calculateMPC(
   const double prediction_dt =
     getPredictionDeltaTime(mpc_start_time, reference_trajectory, current_pose);
 
-  const auto [success_resample, mpc_resampled_ref_traj] =
+  const auto [success_resample, mpc_resampled_ref_trajectory] =
     resampleMPCTrajectoryByTime(mpc_start_time, prediction_dt, reference_trajectory);
   if (!success_resample) {
     return fail_warn_throttle("trajectory resampling failed. Stop MPC.");
   }
 
   // generate mpc matrix : predict equation Xec = Aex * x0 + Bex * Uex + Wex
-  const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_traj, prediction_dt);
+  const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
   // solve Optimization problem
   const auto [success_opt, Uex] = executeOptimization(
@@ -92,7 +92,8 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   // calculate predicted trajectory
-  predicted_traj = calcPredictedTrajectory(mpc_resampled_ref_traj, mpc_matrix, x0_delayed, Uex);
+  predicted_trajectory =
+    calcPredictedTrajectory(mpc_resampled_ref_trajectory, mpc_matrix, x0_delayed, Uex);
 
   // prepare diagnostic message
   diagnostic = generateDiagData(
@@ -102,12 +103,12 @@ bool MPC::calculateMPC(
 }
 
 Trajectory MPC::calcPredictedTrajectory(
-  const MPCTrajectory & mpc_resampled_ref_traj, const MPCMatrix & mpc_matrix,
+  const MPCTrajectory & mpc_resampled_ref_trajectory, const MPCMatrix & mpc_matrix,
   const VectorXd & x0_delayed, const VectorXd & Uex) const
 {
   const VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
   MPCTrajectory mpc_predicted_traj;
-  const auto & traj = mpc_resampled_ref_traj;
+  const auto & traj = mpc_resampled_ref_trajectory;
   for (int i = 0; i < m_param.prediction_horizon; ++i) {
     const int DIM_X = m_vehicle_model_ptr->getDimX();
     const double lat_error = Xex(i * DIM_X);
@@ -184,6 +185,7 @@ void MPC::setReferenceTrajectory(
 
   const auto is_forward_shift =
     motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
+
   // if driving direction is unknown, use previous value
   m_is_forward_shift = is_forward_shift ? is_forward_shift.get() : m_is_forward_shift;
 
@@ -222,7 +224,7 @@ void MPC::setReferenceTrajectory(
     static_cast<size_t>(curvature_smoothing_num_traj),
     static_cast<size_t>(curvature_smoothing_num_ref_steer), &mpc_traj_smoothed);
 
-  // add end point with vel=0 on traj for mpc prediction
+  // add end point with vel=0 on trajectory for mpc prediction
   {
     auto & t = mpc_traj_smoothed;
     const double t_ext = 100.0;  // extra time to prevent mpc calc failure due to short time
@@ -239,7 +241,7 @@ void MPC::setReferenceTrajectory(
     return;
   }
 
-  m_ref_traj = mpc_traj_smoothed;
+  m_reference_trajectory = mpc_traj_smoothed;
 }
 
 void MPC::resetPrevResult(const SteeringReport & current_steer)

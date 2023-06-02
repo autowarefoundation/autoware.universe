@@ -314,7 +314,7 @@ bool MpcLateralController::isReady(const trajectory_follower::InputData & input_
       node_->get_logger(), *node_->get_clock(), 5000, "MPC does not have a QP solver");
     return false;
   }
-  if (m_mpc.m_ref_traj.size() == 0) {
+  if (m_mpc.m_reference_trajectory.size() == 0) {
     RCLCPP_INFO_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 5000, "trajectory size is zero.");
     return false;

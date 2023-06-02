@@ -149,7 +149,8 @@ private:
    * @brief get variables for mpc calculation
    */
   std::pair<bool, MPCData> getData(
-    const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose);
+    const MPCTrajectory & trajectory, const SteeringReport & current_steer,
+    const Pose & current_pose);
 
   /**
    * @brief calculate predicted steering
@@ -257,7 +258,7 @@ private:
    * @brief calculate predicted trajectory for the ego vehicle based on the mpc result
    */
   Trajectory calcPredictedTrajectory(
-    const MPCTrajectory & mpc_resampled_ref_traj, const MPCMatrix & mpc_matrix,
+    const MPCTrajectory & mpc_resampled_reference_trajectory, const MPCMatrix & mpc_matrix,
     const VectorXd & x0_delayed, const VectorXd & Uex) const;
 
   /**
@@ -286,10 +287,10 @@ private:
   }
 
 public:
-  MPCTrajectory m_ref_traj;           // reference trajectory to be followed
-  MPCParam m_param;                   // MPC design parameter
-  std::deque<double> m_input_buffer;  // mpc_output buffer for delay time compensation
-  double m_raw_steer_cmd_prev = 0.0;  // mpc raw output in previous period
+  MPCTrajectory m_reference_trajectory;  // reference trajectory to be followed
+  MPCParam m_param;                      // MPC design parameter
+  std::deque<double> m_input_buffer;     // mpc_output buffer for delay time compensation
+  double m_raw_steer_cmd_prev = 0.0;     // mpc raw output in previous period
 
   /* parameters for control*/
   double m_admissible_position_error;  // use stop cmd when lateral error exceeds this [m]
@@ -319,12 +320,12 @@ public:
    * @param [in] current_velocity current velocity of the vehicle [m/s]
    * @param [in] current_pose current pose of the vehicle
    * @param [out] ctrl_cmd control command calculated with mpc algorithm
-   * @param [out] predicted_traj predicted MPC trajectory
+   * @param [out] predicted_trajectory predicted MPC trajectory
    * @param [out] diagnostic diagnostic msg to be filled-out
    */
   bool calculateMPC(
     const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
-    AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_traj,
+    AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_trajectory,
     Float32MultiArrayStamped & diagnostic);
 
   /**
