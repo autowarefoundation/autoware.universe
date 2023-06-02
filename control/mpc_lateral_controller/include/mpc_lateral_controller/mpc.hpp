@@ -21,6 +21,7 @@
 #include "mpc_lateral_controller/mpc_utils.hpp"
 #include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
 #include "mpc_lateral_controller/qp_solver/qp_solver_unconstr_fast.hpp"
+#include "mpc_lateral_controller/steering_predictor.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
@@ -207,9 +208,15 @@ private:
   rclcpp::Logger m_logger = rclcpp::get_logger("mpc_logger");  // ROS logger used for debug logging.
   rclcpp::Clock::SharedPtr m_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);  // ROS clock.
 
-  std::shared_ptr<VehicleModelInterface>
-    m_vehicle_model_ptr;                              // Pointer to the vehicle model used for MPC.
-  std::shared_ptr<QPSolverInterface> m_qpsolver_ptr;  // Pointer to the QP solver used for MPC.
+  // Vehicle model used for MPC.
+  std::shared_ptr<VehicleModelInterface> m_vehicle_model_ptr;
+
+  // QP solver used for MPC.
+  std::shared_ptr<QPSolverInterface> m_qpsolver_ptr;
+
+  // Calculate predicted steering angle based on the steering dynamics. The predicted value should
+  // fit to the actual steering angle if the vehicle model is accurate enough.
+  std::shared_ptr<SteeringPredictor> m_steering_predictor;
 
   Butterworth2dFilter m_lpf_steering_cmd;   // Low-pass filter for smoothing the steering command.
   Butterworth2dFilter m_lpf_lateral_error;  // Low-pass filter for smoothing the lateral error.
@@ -219,12 +226,7 @@ private:
   double m_lateral_error_prev = 0.0;   // Previous lateral error for derivative calculation.
   double m_yaw_error_prev = 0.0;       // Previous heading error for derivative calculation.
 
-  std::shared_ptr<double>
-    m_steer_prediction_prev;  // Pointer to the previously predicted steering value.
-  rclcpp::Time m_time_prev = rclcpp::Time(0, 0, RCL_ROS_TIME);  // Previous computation time.
-
   bool m_is_forward_shift = true;  // Flag indicating if the shift is in the forward direction.
-  std::vector<AckermannLateralCommand> m_ctrl_cmd_vec;  // Buffer of sent control commands.
 
   double m_min_prediction_length = 5.0;  // Minimum prediction distance.
 
@@ -238,28 +240,6 @@ private:
   std::pair<bool, MPCData> getData(
     const MPCTrajectory & trajectory, const SteeringReport & current_steer,
     const Odometry & current_kinematics);
-
-  /**
-   * @brief Calculate the predicted steering based on the given vehicle model.
-   * @return The predicted steering angle.
-   */
-  double calcSteerPrediction();
-
-  /**
-   * @brief Get the sum of all steering commands over the given time range.
-   * @param t_start The start time of the range.
-   * @param t_end The end time of the range.
-   * @param time_constant The time constant for the sum calculation.
-   * @return The sum of the steering commands.
-   */
-  double getSteerCmdSum(
-    const rclcpp::Time & t_start, const rclcpp::Time & t_end, const double time_constant) const;
-
-  /**
-   * @brief Store the steering command in the buffer.
-   * @param steer The steering command to be stored.
-   */
-  void storeSteerCmd(const double steer);
 
   /**
    * @brief Get the initial state for MPC.
@@ -491,6 +471,16 @@ public:
   {
     m_qpsolver_ptr = qpsolver_ptr;
   }
+
+  /**
+   * @brief Initialize the steering predictor for this MPC.
+   */
+  inline void initializeSteeringPredictor()
+  {
+    m_steering_predictor =
+      std::make_shared<SteeringPredictor>(m_param.steer_tau, m_param.input_delay);
+  }
+
   /**
    * @brief Initialize the low-pass filters.
    * @param steering_lpf_cutoff_hz Cutoff frequency for the steering command low-pass filter.

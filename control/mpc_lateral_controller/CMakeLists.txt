@@ -13,6 +13,7 @@ ament_auto_add_library(${MPC_LAT_CON_LIB} SHARED
   src/mpc_lateral_controller.cpp
   src/interpolate.cpp
   src/lowpass_filter.cpp
+  src/steering_predictor.cpp
   src/mpc.cpp
   src/mpc_trajectory.cpp
   src/mpc_utils.cpp

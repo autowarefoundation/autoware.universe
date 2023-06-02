@@ -154,6 +154,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
 
   m_mpc.setQPSolver(qpsolver_ptr);
   m_mpc.setVehicleModel(vehicle_model_ptr);
+  m_mpc.initializeSteeringPredictor();
 
   m_mpc.setLogger(node_->get_logger());
   m_mpc.setClock(node_->get_clock());

@@ -84,7 +84,7 @@ bool MPC::calculateMPC(
     mpc_matrix, x0_delayed, Uex, u_filtered, current_steer.steering_tire_angle, prediction_dt));
 
   // save the control command for the steering prediction
-  storeSteerCmd(u_filtered);
+  m_steering_predictor->storeSteerCmd(u_filtered);
 
   // save input to buffer for delay compensation
   m_input_buffer.push_back(ctrl_cmd.steering_tire_angle);
@@ -278,11 +278,7 @@ std::pair<bool, MPCData> MPC::getData(
     tf2::getYaw(current_pose.orientation) - tf2::getYaw(data.nearest_pose.orientation));
 
   // get predicted steer
-  if (!m_steer_prediction_prev) {
-    m_steer_prediction_prev = std::make_shared<double>(current_steer.steering_tire_angle);
-  }
-  data.predicted_steer = calcSteerPrediction();
-  *m_steer_prediction_prev = data.predicted_steer;
+  data.predicted_steer = m_steering_predictor->calcSteerPrediction();
 
   // check error limit
   const double dist_err = calcDistance2d(current_pose, data.nearest_pose);
@@ -310,82 +306,6 @@ std::pair<bool, MPCData> MPC::getData(
     return {false, MPCData{}};
   }
   return {true, data};
-}
-
-double MPC::calcSteerPrediction()
-{
-  auto t_start = m_time_prev;
-  auto t_end = m_clock->now();
-  m_time_prev = t_end;
-
-  const double duration = (t_end - t_start).seconds();
-  const double time_constant = m_param.steer_tau;
-
-  const double initial_response = std::exp(-duration / time_constant) * (*m_steer_prediction_prev);
-
-  if (m_ctrl_cmd_vec.size() <= 2) {
-    return initial_response;
-  }
-
-  return initial_response + getSteerCmdSum(t_start, t_end, time_constant);
-}
-
-double MPC::getSteerCmdSum(
-  const rclcpp::Time & t_start, const rclcpp::Time & t_end, const double time_constant) const
-{
-  if (m_ctrl_cmd_vec.size() <= 2) {
-    return 0.0;
-  }
-
-  // Find first index of control command container
-  size_t idx = 1;
-  while (t_start > rclcpp::Time(m_ctrl_cmd_vec.at(idx).stamp)) {
-    if ((idx + 1) >= m_ctrl_cmd_vec.size()) {
-      return 0.0;
-    }
-    ++idx;
-  }
-
-  // Compute steer command input response
-  double steer_sum = 0.0;
-  auto t = t_start;
-  while (t_end > rclcpp::Time(m_ctrl_cmd_vec.at(idx).stamp)) {
-    const double duration = (rclcpp::Time(m_ctrl_cmd_vec.at(idx).stamp) - t).seconds();
-    t = rclcpp::Time(m_ctrl_cmd_vec.at(idx).stamp);
-    steer_sum += (1 - std::exp(-duration / time_constant)) *
-                 static_cast<double>(m_ctrl_cmd_vec.at(idx - 1).steering_tire_angle);
-    ++idx;
-    if (idx >= m_ctrl_cmd_vec.size()) {
-      break;
-    }
-  }
-
-  const double duration = (t_end - t).seconds();
-  steer_sum += (1 - std::exp(-duration / time_constant)) *
-               static_cast<double>(m_ctrl_cmd_vec.at(idx - 1).steering_tire_angle);
-
-  return steer_sum;
-}
-
-void MPC::storeSteerCmd(const double steer)
-{
-  const auto time_delayed = m_clock->now() + rclcpp::Duration::from_seconds(m_param.input_delay);
-  AckermannLateralCommand cmd;
-  cmd.stamp = time_delayed;
-  cmd.steering_tire_angle = static_cast<float>(steer);
-
-  // store published ctrl cmd
-  m_ctrl_cmd_vec.emplace_back(cmd);
-
-  if (m_ctrl_cmd_vec.size() <= 2) {
-    return;
-  }
-
-  // remove unused ctrl cmd
-  constexpr double store_time = 0.3;
-  if ((time_delayed - m_ctrl_cmd_vec.at(1).stamp).seconds() > m_param.input_delay + store_time) {
-    m_ctrl_cmd_vec.erase(m_ctrl_cmd_vec.begin());
-  }
 }
 
 std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
