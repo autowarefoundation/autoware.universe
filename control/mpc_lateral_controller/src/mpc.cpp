@@ -111,7 +111,7 @@ bool MPC::calculateMPC(
     const double relative_time = traj.relative_time[i];
     mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
   }
-  MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
+  predicted_traj = MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
 
   // prepare diagnostic message
   const double nearest_k = reference_trajectory.k[mpc_data.nearest_idx];
@@ -136,9 +136,9 @@ bool MPC::calculateMPC(
   append_diag(mpc_data.yaw_err);                                // [8] yaw error
   append_diag(reference_trajectory.vx[mpc_data.nearest_idx]);   // [9] reference velocity
   append_diag(current_velocity);                                // [10] measured velocity
-  append_diag(wz_command);  // [11] angular velocity from steer command
-  append_diag(wz_measured);                             // [12] angular velocity from measured steer
-  append_diag(current_velocity * nearest_smooth_k);     // [13] angular velocity from path curvature
+  append_diag(wz_command);                           // [11] angular velocity from steer command
+  append_diag(wz_measured);                          // [12] angular velocity from measured steer
+  append_diag(current_velocity * nearest_smooth_k);  // [13] angular velocity from path curvature
   append_diag(nearest_smooth_k);          // [14] nearest path curvature (used for feedforward)
   append_diag(nearest_k);                 // [15] nearest path curvature (not smoothed)
   append_diag(mpc_data.predicted_steer);  // [16] predicted steer
@@ -455,8 +455,7 @@ std::pair<bool, Eigen::VectorXd> MPC::updateStateForDelayCompensation(
 MPCTrajectory MPC::applyVelocityDynamicsFilter(
   const MPCTrajectory & input, const Pose & current_pose, const double v0) const
 {
-  Trajectory autoware_traj;
-  MPCUtils::convertToAutowareTrajectory(input, autoware_traj);
+  const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
   if (autoware_traj.points.empty()) {
     return input;
   }
@@ -788,8 +787,7 @@ double MPC::getPredictionDeltaTime(
   const double start_time, const MPCTrajectory & input, const Pose & current_pose) const
 {
   // Calculate the time min_prediction_length ahead from current_pose
-  Trajectory autoware_traj;
-  MPCUtils::convertToAutowareTrajectory(input, autoware_traj);
+  const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   double sum_dist = 0;
