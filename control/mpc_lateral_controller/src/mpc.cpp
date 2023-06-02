@@ -89,6 +89,8 @@ bool MPC::calculateMPC(
   // save input to buffer for delay compensation
   m_input_buffer.push_back(ctrl_cmd.steering_tire_angle);
   m_input_buffer.pop_front();
+
+  // save previous input for the mpc rate limit
   m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
   m_raw_steer_cmd_prev = Uex(0);
 
