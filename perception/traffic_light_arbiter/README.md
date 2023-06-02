@@ -2,12 +2,11 @@
 
 ## Purpose
 
-This package receives traffic signals from perception and V2X components and combines them using either a confidence-based or a V2X-preference based approach.
+This package receives traffic signals from perception and external (e.g., V2X) components and combines them using either a confidence-based or a external-preference based approach.
 
 ## TrafficLightArbiter
 
-A node that merges traffic light/signal state from image recognition and V2X to provide a planning component.
-It's currently a provisional implementation.
+A node that merges traffic light/signal state from image recognition and external (e.g., V2X) systems to provide to a planning component.
 
 ### Inputs / Outputs
 
@@ -17,7 +16,7 @@ It's currently a provisional implementation.
 | -------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
 | ~/sub/vector_map                 | autoware_auto_mapping_msgs::msg::HADMapBin   | The vector map to get valid traffic signal ids.          |
 | ~/sub/perception_traffic_signals | autoware_perception_msgs::msg::TrafficSignal | The traffic signals from the image recognition pipeline. |
-| ~/sub/v2x_traffic_signals        | autoware_perception_msgs::msg::TrafficSignal | The traffic signals from the V2X interface.              |
+| ~/sub/external_traffic_signals   | autoware_perception_msgs::msg::TrafficSignal | The traffic signals from an external system.             |
 
 #### Output
 
@@ -29,8 +28,8 @@ It's currently a provisional implementation.
 
 ### Core Parameters
 
-| Name                        | Type   | Default Value | Description                                                                                                                |
-| --------------------------- | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `v2x_time_tolerance`        | double | 5.0           | The duration in seconds a V2X message is considered valid for merging                                                      |
-| `perception_time_tolerance` | double | 1.0           | The duration in seconds a perception message is considered valid for merging                                               |
-| `v2x_priority`              | bool   | false         | Whether or not V2X signals take precedence over perception-based ones. If false, the merging uses confidence as a criteria |
+| Name                        | Type   | Default Value | Description                                                                                                                      |
+| --------------------------- | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `external_time_tolerance`   | double | 5.0           | The duration in seconds an external message is considered valid for merging                                                      |
+| `perception_time_tolerance` | double | 1.0           | The duration in seconds a perception message is considered valid for merging                                                     |
+| `external_priority`         | bool   | false         | Whether or not externals signals take precedence over perception-based ones. If false, the merging uses confidence as a criteria |
