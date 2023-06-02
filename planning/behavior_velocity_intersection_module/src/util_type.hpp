@@ -15,7 +15,11 @@
 #ifndef UTIL_TYPE_HPP_
 #define UTIL_TYPE_HPP_
 
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <lanelet2_core/primitives/CompoundPolygon.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -27,6 +31,28 @@
 
 namespace behavior_velocity_planner::util
 {
+
+struct DebugData
+{
+  geometry_msgs::msg::Pose collision_stop_wall_pose;
+  geometry_msgs::msg::Pose occlusion_stop_wall_pose;
+  geometry_msgs::msg::Pose occlusion_first_stop_wall_pose;
+  geometry_msgs::msg::Pose pass_judge_wall_pose;
+  geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
+  geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
+  std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
+  std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
+  std::vector<lanelet::CompoundPolygon3d> detection_area;
+  geometry_msgs::msg::Polygon intersection_area;
+  lanelet::CompoundPolygon3d ego_lane;
+  std::vector<lanelet::CompoundPolygon3d> adjacent_area;
+  autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
+  autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
+  geometry_msgs::msg::Pose predicted_obj_pose;
+  geometry_msgs::msg::Point nearest_occlusion_point;
+  geometry_msgs::msg::Point nearest_occlusion_projection_point;
+};
+
 struct IntersectionLanelets
 {
   bool tl_arrow_solid_on;

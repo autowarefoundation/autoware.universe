@@ -55,7 +55,6 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   *stop_reason = planning_utils::initializeStopReason(StopReason::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
-  debug_data_.path_raw = input_path;
 
   StateMachine::State current_state = state_machine_.getState();
   RCLCPP_DEBUG(

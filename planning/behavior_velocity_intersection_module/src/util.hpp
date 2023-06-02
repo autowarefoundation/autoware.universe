@@ -61,22 +61,6 @@ IntersectionLanelets getObjectiveLanelets(
   const bool tl_arrow_solid_on = false);
 
 /**
- * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
- * read it from the map; otherwise, generate a stop line at a position where it will not collide.
- * @param detection_areas used to generate stop line
- * @param original_path   ego-car lane
- * @param target_path     target lane to insert stop point (part of ego-car lane or same to ego-car
- * lane)
- " @param use_stuck_stopline if true, a stop line is generated at the beginning of intersection lane
- * @return nullopt if path is not intersecting with detection areas
- */
-std::optional<size_t> generateCollisionStopLine(
-  const lanelet::CompoundPolygon3d & first_detection_area,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
-
-/**
  * @brief Generate a stop line for stuck vehicle
  * @param conflicting_areas used to generate stop line for stuck vehicle
  * @param original_path   ego-car lane
@@ -100,11 +84,6 @@ std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon);
 
-std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
-  const lanelet::ConstLanelets & ll_vec);
-
-std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
-
 /**
  * @brief check if ego is over the target_idx. If the index is same, compare the exact pose
  * @param path path
@@ -120,9 +99,11 @@ bool isBeforeTargetIndex(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
 
+/*
 lanelet::ConstLanelets extendedAdjacentDirectionLanes(
-  lanelet::LaneletMapConstPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
-  lanelet::ConstLanelet lane);
+lanelet::LaneletMapConstPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
+lanelet::ConstLanelet lane);
+*/
 
 std::optional<Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
@@ -140,6 +121,42 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger);
+
+geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
+  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state);
+
+lanelet::ConstLanelets getEgoLaneWithNextLane(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const std::set<int> & associative_ids, const double width);
+
+bool checkStuckVehicleInIntersection(
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const Polygon2d & stuck_vehicle_detect_area, const double stuck_vehicle_vel_thr,
+  DebugData * debug_data);
+
+Polygon2d generateStuckVehicleDetectAreaPolygon(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
+  const double stuck_vehicle_detect_dist, const double stuck_vehicle_ignore_dist,
+  const double vehicle_length_m);
+
+bool checkAngleForTargetLanelets(
+  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
+  const double detection_area_angle_thr, const double margin = 0.0);
+
+void cutPredictPathWithDuration(
+  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
+  const rclcpp::Clock::SharedPtr clock, const double time_thr);
+
+TimeDistanceArray calcIntersectionPassingTime(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
+  const int closest_idx, const double time_delay, const double intersection_velocity,
+  const double minimum_ego_velocity);
+
+double calcDistanceUntilIntersectionLanelet(
+  const lanelet::ConstLanelet & assigned_lanelet,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner
