@@ -666,13 +666,24 @@ bool MPC::executeOptimization(
     A(i, i - 1) = -1.0;
   }
 
-  const auto get_adaptive_steer_rate_lim = [&](const double curvature) {
-    for (size_t i = 0; i < m_curvature_list_for_steer_rate_lim.size(); ++i) {
-      if (std::abs(curvature) <= m_curvature_list_for_steer_rate_lim.at(i)) {
-        return m_steer_rate_lim_list.at(i);
+  const auto get_adaptive_steer_rate_lim = [&](const double curvature, const double velocity) {
+    double steer_rate_lim_by_curvature = m_steer_rate_lim_map_by_curvature.back().second;
+    for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_curvature) {
+      if (std::abs(curvature) <= steer_rate_lim_info.first) {
+        steer_rate_lim_by_curvature = steer_rate_lim_info.second;
+        break;
       }
     }
-    return m_steer_rate_lim_list.back();
+
+    double steer_rate_lim_by_velocity = m_steer_rate_lim_map_by_velocity.back().second;
+    for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_velocity) {
+      if (std::abs(velocity) <= steer_rate_lim_info.first) {
+        steer_rate_lim_by_velocity = steer_rate_lim_info.second;
+        break;
+      }
+    }
+
+    return std::min(steer_rate_lim_by_curvature, steer_rate_lim_by_velocity);
   };
 
   VectorXd lb = VectorXd::Constant(DIM_U_N, -m_steer_lim);  // min steering angle
@@ -681,12 +692,14 @@ bool MPC::executeOptimization(
   VectorXd lbA(DIM_U_N);
   VectorXd ubA(DIM_U_N);
   for (int i = 0; i < DIM_U_N; ++i) {
-    const double adaptive_steer_rate_lim = get_adaptive_steer_rate_lim(traj.smooth_k.at(i));
+    const double adaptive_steer_rate_lim =
+      get_adaptive_steer_rate_lim(traj.smooth_k.at(i), traj.vx.at(i));
     const double adaptive_delta_steer_lim = adaptive_steer_rate_lim * prediction_dt;
     lbA(i) = -adaptive_delta_steer_lim;
     ubA(i) = adaptive_delta_steer_lim;
   }
-  const double adaptive_steer_rate_lim = get_adaptive_steer_rate_lim(traj.smooth_k.at(0));
+  const double adaptive_steer_rate_lim =
+    get_adaptive_steer_rate_lim(traj.smooth_k.at(0), traj.vx.at(0));
   lbA(0, 0) = m_raw_steer_cmd_prev - adaptive_steer_rate_lim * m_ctrl_period;
   ubA(0, 0) = m_raw_steer_cmd_prev + adaptive_steer_rate_lim * m_ctrl_period;
 
