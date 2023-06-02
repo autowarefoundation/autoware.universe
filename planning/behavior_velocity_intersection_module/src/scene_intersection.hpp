@@ -140,7 +140,6 @@ public:
   struct StuckStop
   {
     size_t stop_line_idx;
-    util::IntersectionStopLines stop_lines;
   };
   struct NonOccludedCollisionStop
   {
@@ -170,12 +169,18 @@ public:
   };
   struct Safe
   {
-    // if RTC is disapproved status, default stop lines are still needed.
+    // NOTE: if RTC is disapproved status, default stop lines are still needed.
     util::IntersectionStopLines stop_lines;
   };
   using DecisionResult = std::variant<
-    Indecisive, StuckStop, NonOccludedCollisionStop, FirstWaitBeforeOcclusion,
-    PeekingTowardOcclusion, OccludedCollisionStop, Safe>;
+    Indecisive,                // internal process error, or over the pass judge line
+    StuckStop,                 // detected stuck vehicle
+    NonOccludedCollisionStop,  // detected collision while FOV is clear
+    FirstWaitBeforeOcclusion,  // stop for a while before peeking to occlusion
+    PeekingTowardOcclusion,    // peeking into occlusion while collision is not detected
+    OccludedCollisionStop,     // occlusion and collision are both detected
+    Safe                       // judge as safe
+    >;
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
@@ -224,7 +229,7 @@ private:
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
 
-  // for RTS
+  // for RTC
   const UUID occlusion_uuid_;
   bool occlusion_safety_ = true;
   double occlusion_stop_distance_;
