@@ -68,7 +68,8 @@ bool MPC::calculateMPC(
 
   // solve Optimization problem
   const auto [success_opt, Uex] = executeOptimization(
-    mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_traj, current_velocity);
+    mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_trajectory,
+    current_kinematics.twist.twist.linear.x);
   if (!success_opt) {
     return fail_warn_throttle("optimization failed. Stop MPC.");
   }

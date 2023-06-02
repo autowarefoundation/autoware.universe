@@ -47,6 +47,7 @@ public:
   void push_back(
     const double & xp, const double & yp, const double & zp, const double & yawp,
     const double & vxp, const double & kp, const double & smooth_kp, const double & tp);
+
   /**
    * @brief clear for all values
    */
@@ -57,6 +58,7 @@ public:
    * @return size, or 0 if the size for each components are inconsistent
    */
   size_t size() const;
+
   /**
    * @return true if the components sizes are all 0 or are inconsistent
    */
