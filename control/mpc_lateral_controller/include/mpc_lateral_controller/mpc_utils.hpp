@@ -64,6 +64,7 @@ double calcDistance3d(const MPCTrajectory & trajectory, const size_t idx1, const
  * @param [inout] a input angle vector
  */
 void convertEulerAngleToMonotonic(std::vector<double> * a);
+
 /**
  * @brief calculate the lateral error of the given pose relative to the given reference pose
  * @param [in] ego_pose pose to check for error
@@ -71,24 +72,28 @@ void convertEulerAngleToMonotonic(std::vector<double> * a);
  * @return lateral distance between the two poses
  */
 double calcLateralError(const Pose & ego_pose, const Pose & ref_pose);
+
 /**
  * @brief convert the given Trajectory msg to a MPCTrajectory object
  * @param [in] input trajectory to convert
  * @return resulting MPCTrajectory
  */
 MPCTrajectory convertToMPCTrajectory(const Trajectory & input);
+
 /**
  * @brief convert the given MPCTrajectory to a Trajectory msg
  * @param [in] input MPCTrajectory to be converted
  * @return output converted Trajectory msg
  */
 Trajectory convertToAutowareTrajectory(const MPCTrajectory & input);
+
 /**
  * @brief calculate the arc length at each point of the given trajectory
  * @param [in] trajectory trajectory for which to calculate the arc length
  * @param [out] arclength the cumulative arc length at each point of the trajectory
  */
 void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<double> * arclength);
+
 /**
  * @brief resample the given trajectory with the given fixed interval
  * @param [in] input trajectory to resample
@@ -97,6 +102,7 @@ void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<do
  */
 std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   const MPCTrajectory & input, const double resample_interval_dist);
+
 /**
  * @brief linearly interpolate the given trajectory assuming a base indexing and a new desired
  * indexing
@@ -108,12 +114,14 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
 bool linearInterpMPCTrajectory(
   const std::vector<double> & in_index, const MPCTrajectory & in_traj,
   const std::vector<double> & out_index, MPCTrajectory * out_traj);
+
 /**
  * @brief fill the relative_time field of the given MPCTrajectory
  * @param [in] traj MPCTrajectory for which to fill in the relative_time
  * @return true if the calculation was successful
  */
 bool calcMPCTrajectoryTime(MPCTrajectory & traj);
+
 /**
  * @brief recalculate the velocity field (vx) of the MPCTrajectory with dynamic smoothing
  * @param [in] start_idx index of the trajectory point from which to start smoothing
@@ -125,12 +133,14 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj);
 void dynamicSmoothingVelocity(
   const size_t start_idx, const double start_vel, const double acc_lim, const double tau,
   MPCTrajectory & traj);
+
 /**
  * @brief calculate yaw angle in MPCTrajectory from xy vector
  * @param [inout] traj object trajectory
  * @param [in] shift is forward or not
  */
 void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift);
+
 /**
  * @brief Calculate path curvature by 3-points circle fitting with smoothing num (use nearest 3
  * points when num = 1)
@@ -142,6 +152,7 @@ void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift);
 bool calcTrajectoryCurvature(
   const size_t curvature_smoothing_num_traj, const size_t curvature_smoothing_num_ref_steer,
   MPCTrajectory * traj);
+
 /**
  * @brief Calculate path curvature by 3-points circle fitting with smoothing num (use nearest 3
  * points when num = 1)
@@ -151,6 +162,7 @@ bool calcTrajectoryCurvature(
  */
 std::vector<double> calcTrajectoryCurvature(
   const size_t curvature_smoothing_num, const MPCTrajectory & traj);
+
 /**
  * @brief calculate nearest pose on MPCTrajectory with linear interpolation
  * @param [in] traj reference trajectory
@@ -166,6 +178,7 @@ bool calcNearestPoseInterp(
   const MPCTrajectory & traj, const Pose & self_pose, Pose * nearest_pose, size_t * nearest_index,
   double * nearest_time, const double max_dist, const double max_yaw, const rclcpp::Logger & logger,
   rclcpp::Clock & clock);
+
 // /**
 //  * @brief calculate distance to stopped point
 //  */

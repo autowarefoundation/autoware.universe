@@ -17,12 +17,7 @@
 #include "motion_utils/motion_utils.hpp"
 
 #include <algorithm>
-#include <deque>
 #include <limits>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -48,7 +43,7 @@ bool MPC::calculateMPC(
   }
 
   // calculate initial state of the error dynamics
-  VectorXd x0 = getInitialState(mpc_data);
+  const VectorXd x0 = getInitialState(mpc_data);
 
   // apply time delay compensation to the initial state
   const auto [success_delay, x0_delayed] =
@@ -97,6 +92,19 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   // calculate predicted trajectory
+  predicted_traj = calcPredictedTrajectory(mpc_resampled_ref_traj, mpc_matrix, x0_delayed, Uex);
+
+  // prepare diagnostic message
+  diagnostic = generateDiagData(
+    reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_pose, current_velocity);
+
+  return true;
+}
+
+Trajectory MPC::calcPredictedTrajectory(
+  const MPCTrajectory & mpc_resampled_ref_traj, const MPCMatrix & mpc_matrix,
+  const VectorXd & x0_delayed, const VectorXd & Uex) const
+{
   const VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
   MPCTrajectory mpc_predicted_traj;
   const auto & traj = mpc_resampled_ref_traj;
@@ -114,7 +122,15 @@ bool MPC::calculateMPC(
     const double relative_time = traj.relative_time.at(i);
     mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
   }
-  predicted_traj = MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
+  return MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
+}
+
+Float32MultiArrayStamped MPC::generateDiagData(
+  const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
+  const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
+  const Pose & current_pose, const double current_velocity) const
+{
+  Float32MultiArrayStamped diagnostic;
 
   // prepare diagnostic message
   const double nearest_k = reference_trajectory.k.at(mpc_data.nearest_idx);
@@ -147,7 +163,7 @@ bool MPC::calculateMPC(
   append_diag(mpc_data.predicted_steer);  // [16] predicted steer
   append_diag(wz_predicted);              // [17] angular velocity from predicted steer
 
-  return true;
+  return diagnostic;
 }
 
 void MPC::setReferenceTrajectory(

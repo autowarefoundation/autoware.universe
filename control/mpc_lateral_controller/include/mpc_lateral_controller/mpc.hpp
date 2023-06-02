@@ -345,12 +345,33 @@ private:
                                      : m_param.weight_steer_acc;
   }
 
+  /**
+   * @brief calculate predicted trajectory for the ego vehicle based on the mpc result
+   */
+  Trajectory calcPredictedTrajectory(
+    const MPCTrajectory & mpc_resampled_ref_traj, const MPCMatrix & mpc_matrix,
+    const VectorXd & x0_delayed, const VectorXd & Uex) const;
+
+  /**
+   * @brief calculate diagnostic data for the debugging purpose
+   */
+  Float32MultiArrayStamped generateDiagData(
+    const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
+    const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
+    const Pose & current_pose, const double current_velocity) const;
+
+  /**
+   * @brief logging with warn and return false
+   */
   inline bool fail_warn_throttle(const std::string & msg, const int duration_ms = 1000) const
   {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, duration_ms, "%s", msg.c_str());
     return false;
   }
 
+  /**
+   * @brief logging with warn
+   */
   inline void warn_throttle(const std::string & msg, const int duration_ms = 1000) const
   {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, duration_ms, "%s", msg.c_str());
