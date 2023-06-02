@@ -104,21 +104,21 @@ bool MPC::calculateMPC(
     const int DIM_X = m_vehicle_model_ptr->getDimX();
     const double lat_error = Xex(i * DIM_X);
     const double yaw_error = Xex(i * DIM_X + 1);
-    const double x = traj.x[i] - std::sin(traj.yaw[i]) * lat_error;
-    const double y = traj.y[i] + std::cos(traj.yaw[i]) * lat_error;
-    const double z = traj.z[i];
-    const double yaw = traj.yaw[i] + yaw_error;
-    const double vx = traj.vx[i];
-    const double k = traj.k[i];
-    const double smooth_k = traj.smooth_k[i];
-    const double relative_time = traj.relative_time[i];
+    const double x = traj.x.at(i) - std::sin(traj.yaw.at(i)) * lat_error;
+    const double y = traj.y.at(i) + std::cos(traj.yaw.at(i)) * lat_error;
+    const double z = traj.z.at(i);
+    const double yaw = traj.yaw.at(i) + yaw_error;
+    const double vx = traj.vx.at(i);
+    const double k = traj.k.at(i);
+    const double smooth_k = traj.smooth_k.at(i);
+    const double relative_time = traj.relative_time.at(i);
     mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
   }
   predicted_traj = MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
 
   // prepare diagnostic message
-  const double nearest_k = reference_trajectory.k[mpc_data.nearest_idx];
-  const double nearest_smooth_k = reference_trajectory.smooth_k[mpc_data.nearest_idx];
+  const double nearest_k = reference_trajectory.k.at(mpc_data.nearest_idx);
+  const double nearest_smooth_k = reference_trajectory.smooth_k.at(mpc_data.nearest_idx);
   const double steer_cmd = ctrl_cmd.steering_tire_angle;
   const double wb = m_vehicle_model_ptr->getWheelbase();
   const double wz_predicted = current_velocity * std::tan(mpc_data.predicted_steer) / wb;
@@ -135,10 +135,10 @@ bool MPC::calculateMPC(
   append_diag(mpc_data.steer);                         // [4] current steering angle
   append_diag(mpc_data.lateral_err);                   // [5] lateral error
   append_diag(tf2::getYaw(current_pose.orientation));  // [6] current_pose yaw
-  append_diag(tf2::getYaw(mpc_data.nearest_pose.orientation));  // [7] nearest_pose yaw
-  append_diag(mpc_data.yaw_err);                                // [8] yaw error
-  append_diag(reference_trajectory.vx[mpc_data.nearest_idx]);   // [9] reference velocity
-  append_diag(current_velocity);                                // [10] measured velocity
+  append_diag(tf2::getYaw(mpc_data.nearest_pose.orientation));    // [7] nearest_pose yaw
+  append_diag(mpc_data.yaw_err);                                  // [8] yaw error
+  append_diag(reference_trajectory.vx.at(mpc_data.nearest_idx));  // [9] reference velocity
+  append_diag(current_velocity);                                  // [10] measured velocity
   append_diag(wz_command);                           // [11] angular velocity from steer command
   append_diag(wz_measured);                          // [12] angular velocity from measured steer
   append_diag(current_velocity * nearest_smooth_k);  // [13] angular velocity from path curvature
@@ -519,11 +519,11 @@ MPCMatrix MPC::generateMPCMatrix(
 
   // predict dynamics for N times
   for (int i = 0; i < N; ++i) {
-    const double ref_vx = reference_trajectory.vx[i];
+    const double ref_vx = reference_trajectory.vx.at(i);
     const double ref_vx_squared = ref_vx * ref_vx;
 
-    const double ref_k = reference_trajectory.k[i] * sign_vx;
-    const double ref_smooth_k = reference_trajectory.smooth_k[i] * sign_vx;
+    const double ref_k = reference_trajectory.k.at(i) * sign_vx;
+    const double ref_smooth_k = reference_trajectory.smooth_k.at(i) * sign_vx;
 
     // get discrete state matrix A, B, C, W
     m_vehicle_model_ptr->setVelocity(ref_vx);
@@ -579,8 +579,8 @@ MPCMatrix MPC::generateMPCMatrix(
 
   // add lateral jerk : weight for (v * {u(i) - u(i-1)} )^2
   for (int i = 0; i < N - 1; ++i) {
-    const double ref_vx = reference_trajectory.vx[i];
-    const double ref_k = reference_trajectory.k[i] * sign_vx;
+    const double ref_vx = reference_trajectory.vx.at(i);
+    const double ref_k = reference_trajectory.k.at(i) * sign_vx;
     const double j = ref_vx * ref_vx * getWeightLatJerk(ref_k) / (DT * DT);
     const Eigen::Matrix2d J = (Eigen::Matrix2d() << j, -j, -j, j).finished();
     m.R2ex.block(i, i, 2, 2) += J;

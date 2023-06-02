@@ -156,14 +156,13 @@ void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift)
 
   // interpolate yaw
   for (int i = 1; i < static_cast<int>(traj->yaw.size()) - 1; ++i) {
-    const double dx = traj->x[static_cast<size_t>(i + 1)] - traj->x[static_cast<size_t>(i - 1)];
-    const double dy = traj->y[static_cast<size_t>(i + 1)] - traj->y[static_cast<size_t>(i - 1)];
-    traj->yaw[static_cast<size_t>(i)] =
-      is_forward_shift ? std::atan2(dy, dx) : std::atan2(dy, dx) + M_PI;
+    const double dx = traj->x.at(i + 1) - traj->x.at(i - 1);
+    const double dy = traj->y.at(i + 1) - traj->y.at(i - 1);
+    traj->yaw.at(i) = is_forward_shift ? std::atan2(dy, dx) : std::atan2(dy, dx) + M_PI;
   }
   if (traj->yaw.size() > 1) {
-    traj->yaw[0] = traj->yaw[1];
-    traj->yaw.back() = traj->yaw[traj->yaw.size() - 2];
+    traj->yaw.at(0) = traj->yaw.at(1);
+    traj->yaw.back() = traj->yaw.at(traj->yaw.size() - 2);
   }
 }
 
@@ -194,12 +193,12 @@ std::vector<double> calcTrajectoryCurvature(
     const size_t curr_idx = i;
     const size_t prev_idx = curr_idx - L;
     const size_t next_idx = curr_idx + L;
-    p1.x = traj.x[prev_idx];
-    p2.x = traj.x[curr_idx];
-    p3.x = traj.x[next_idx];
-    p1.y = traj.y[prev_idx];
-    p2.y = traj.y[curr_idx];
-    p3.y = traj.y[next_idx];
+    p1.x = traj.x.at(prev_idx);
+    p2.x = traj.x.at(curr_idx);
+    p3.x = traj.x.at(next_idx);
+    p1.y = traj.y.at(prev_idx);
+    p2.y = traj.y.at(curr_idx);
+    p3.y = traj.y.at(next_idx);
     try {
       curvature_vec.at(curr_idx) = tier4_autoware_utils::calcCurvature(p1, p2, p3);
     } catch (...) {
@@ -238,11 +237,10 @@ Trajectory convertToAutowareTrajectory(const MPCTrajectory & input)
 {
   Trajectory output;
   TrajectoryPoint p;
-  using Real = decltype(p.pose.position.x);
   for (size_t i = 0; i < input.size(); ++i) {
-    p.pose.position.x = static_cast<Real>(input.x.at(i));
-    p.pose.position.y = static_cast<Real>(input.y.at(i));
-    p.pose.position.z = static_cast<Real>(input.z.at(i));
+    p.pose.position.x = input.x.at(i);
+    p.pose.position.y = input.y.at(i);
+    p.pose.position.z = input.z.at(i);
     p.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(input.yaw.at(i));
     p.longitudinal_velocity_mps =
       static_cast<decltype(p.longitudinal_velocity_mps)>(input.vx.at(i));
@@ -310,16 +308,16 @@ bool calcNearestPoseInterp(
   const size_t traj_size = traj.size();
 
   if (traj.size() == 1) {
-    nearest_pose->position.x = traj.x[*nearest_index];
-    nearest_pose->position.y = traj.y[*nearest_index];
-    nearest_pose->orientation = getQuaternionFromYaw(traj.yaw[*nearest_index]);
-    *nearest_time = traj.relative_time[*nearest_index];
+    nearest_pose->position.x = traj.x.at(*nearest_index);
+    nearest_pose->position.y = traj.y.at(*nearest_index);
+    nearest_pose->orientation = getQuaternionFromYaw(traj.yaw.at(*nearest_index));
+    *nearest_time = traj.relative_time.at(*nearest_index);
     return true;
   }
 
   auto calcSquaredDist = [](const Pose & p, const MPCTrajectory & t, const size_t idx) {
-    const double dx = p.position.x - t.x[idx];
-    const double dy = p.position.y - t.y[idx];
+    const double dx = p.position.x - t.x.at(idx);
+    const double dy = p.position.y - t.y.at(idx);
     return dx * dx + dy * dy;
   };
 
@@ -334,31 +332,32 @@ bool calcNearestPoseInterp(
 
   const double a_sq = calcSquaredDist(self_pose, traj, *nearest_index);
   const double b_sq = calcSquaredDist(self_pose, traj, second_nearest_index);
-  const double dx3 = traj.x[*nearest_index] - traj.x[second_nearest_index];
-  const double dy3 = traj.y[*nearest_index] - traj.y[second_nearest_index];
+  const double dx3 = traj.x.at(*nearest_index) - traj.x.at(second_nearest_index);
+  const double dy3 = traj.y.at(*nearest_index) - traj.y.at(second_nearest_index);
   const double c_sq = dx3 * dx3 + dy3 * dy3;
 
   /* if distance between two points are too close */
   if (c_sq < 1.0E-5) {
-    nearest_pose->position.x = traj.x[*nearest_index];
-    nearest_pose->position.y = traj.y[*nearest_index];
-    nearest_pose->orientation = getQuaternionFromYaw(traj.yaw[*nearest_index]);
-    *nearest_time = traj.relative_time[*nearest_index];
+    nearest_pose->position.x = traj.x.at(*nearest_index);
+    nearest_pose->position.y = traj.y.at(*nearest_index);
+    nearest_pose->orientation = getQuaternionFromYaw(traj.yaw.at(*nearest_index));
+    *nearest_time = traj.relative_time.at(*nearest_index);
     return true;
   }
 
   /* linear interpolation */
   const double alpha = std::max(std::min(0.5 * (c_sq - a_sq + b_sq) / c_sq, 1.0), 0.0);
   nearest_pose->position.x =
-    alpha * traj.x[*nearest_index] + (1 - alpha) * traj.x[second_nearest_index];
+    alpha * traj.x.at(*nearest_index) + (1 - alpha) * traj.x.at(second_nearest_index);
   nearest_pose->position.y =
-    alpha * traj.y[*nearest_index] + (1 - alpha) * traj.y[second_nearest_index];
+    alpha * traj.y.at(*nearest_index) + (1 - alpha) * traj.y.at(second_nearest_index);
   const double tmp_yaw_err =
-    normalizeRadian(traj.yaw[*nearest_index] - traj.yaw[second_nearest_index]);
-  const double nearest_yaw = normalizeRadian(traj.yaw[second_nearest_index] + alpha * tmp_yaw_err);
+    normalizeRadian(traj.yaw.at(*nearest_index) - traj.yaw.at(second_nearest_index));
+  const double nearest_yaw =
+    normalizeRadian(traj.yaw.at(second_nearest_index) + alpha * tmp_yaw_err);
   nearest_pose->orientation = getQuaternionFromYaw(nearest_yaw);
-  *nearest_time = alpha * traj.relative_time[*nearest_index] +
-                  (1 - alpha) * traj.relative_time[second_nearest_index];
+  *nearest_time = alpha * traj.relative_time.at(*nearest_index) +
+                  (1 - alpha) * traj.relative_time.at(second_nearest_index);
   return true;
 }
 
@@ -372,8 +371,8 @@ double calcStopDistance(const Trajectory & current_trajectory, const int origin)
   // search forward
   if (std::fabs(origin_velocity) > zero_velocity) {
     for (int i = origin + 1; i < static_cast<int>(current_trajectory.points.size()) - 1; ++i) {
-      const auto & p0 = current_trajectory.points.at(static_cast<size_t>(i));
-      const auto & p1 = current_trajectory.points.at(static_cast<size_t>(i - 1));
+      const auto & p0 = current_trajectory.points.at(i);
+      const auto & p1 = current_trajectory.points.at(i - 1);
       stop_dist += calcDistance2d(p0, p1);
       if (std::fabs(p0.longitudinal_velocity_mps) < zero_velocity) {
         break;
@@ -384,8 +383,8 @@ double calcStopDistance(const Trajectory & current_trajectory, const int origin)
 
   // search backward
   for (int i = origin - 1; 0 < i; --i) {
-    const auto & p0 = current_trajectory.points.at(static_cast<size_t>(i));
-    const auto & p1 = current_trajectory.points.at(static_cast<size_t>(i + 1));
+    const auto & p0 = current_trajectory.points.at(i);
+    const auto & p1 = current_trajectory.points.at(i + 1);
     if (std::fabs(p0.longitudinal_velocity_mps) > zero_velocity) {
       break;
     }
