@@ -16,6 +16,9 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__HELPER_HPP_
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/utils.hpp"
+
+#include <motion_utils/distance/distance.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -25,6 +28,7 @@ namespace behavior_path_planner::helper::avoidance
 
 using behavior_path_planner::PathShifter;
 using behavior_path_planner::PlannerData;
+using motion_utils::calcDecelDistWithJerkAndAccConstraints;
 using motion_utils::findNearestIndex;
 
 class AvoidanceHelper
@@ -141,6 +145,34 @@ public:
   double getRightShiftBound() const { return -parameters_->max_right_shift_length; }
 
   double getLeftShiftBound() const { return parameters_->max_left_shift_length; }
+
+  double getShiftLength(
+    const ObjectData & object, const bool & is_on_right, const double & margin) const
+  {
+    using utils::avoidance::calcShiftLength;
+
+    const auto shift_length = calcShiftLength(is_on_right, object.overhang_dist, margin);
+    return is_on_right ? std::min(shift_length, getLeftShiftBound())
+                       : std::max(shift_length, getRightShiftBound());
+  }
+
+  boost::optional<double> getFeasibleDecelDistance(const double target_velocity) const
+  {
+    const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
+    const auto & a_lim = parameters_->max_deceleration;
+    const auto & j_lim = parameters_->max_jerk;
+    return calcDecelDistWithJerkAndAccConstraints(
+      getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
+  }
+
+  boost::optional<double> getMildDecelDistance(const double target_velocity) const
+  {
+    const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
+    const auto & a_lim = parameters_->nominal_deceleration;
+    const auto & j_lim = parameters_->nominal_jerk;
+    return calcDecelDistWithJerkAndAccConstraints(
+      getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
+  }
 
   bool isInitialized() const
   {
