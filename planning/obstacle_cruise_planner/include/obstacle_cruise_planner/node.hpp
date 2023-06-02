@@ -118,6 +118,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_slow_down_wall_marker_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_cruise_planning_info_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_slow_down_planning_info_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
@@ -184,6 +185,7 @@ private:
     double max_lat_margin_for_stop;
     double max_lat_margin_for_cruise;
     double max_lat_margin_for_slow_down;
+    double lat_hysteresis_margin_for_slow_down;
   };
   BehaviorDeterminationParam behavior_determination_param_;
 

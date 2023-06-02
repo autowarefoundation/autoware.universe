@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,27 @@
 #include <cmath>
 #include <vector>
 
-TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
+using behavior_path_planner::BehaviorPathPlannerNode;
+using planning_test_utils::PlanningInterfaceTestManager;
+
+std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
-  rclcpp::init(0, nullptr);
+  auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
-  auto test_manager = std::make_shared<planning_test_utils::PlanningInterfaceTestManager>();
+  // set subscriber with topic name: behavior_path_planner → test_node_
+  test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
 
+  // set behavior_path_planner's input topic name(this topic is changed to test node)
+  test_manager->setRouteInputTopicName("behavior_path_planner/input/route");
+
+  test_manager->setInitialPoseTopicName("behavior_path_planner/input/odometry");
+
+  return test_manager;
+}
+
+std::shared_ptr<BehaviorPathPlannerNode> generateNode()
+{
   auto node_options = rclcpp::NodeOptions{};
-
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto behavior_path_planner_dir =
@@ -39,23 +52,28 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
     "bt_tree_config_path", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml");
 
   test_utils::updateNodeOptions(
-    node_options, {planning_test_utils_dir + "/config/test_common.param.yaml",
-                   planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-                   planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-                   behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
-                   behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
-                   behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-                   behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
-                   behavior_path_planner_dir + "/config/lane_following/lane_following.param.yaml",
-                   behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-                   behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
-                   behavior_path_planner_dir + "/config/pull_over/pull_over.param.yaml",
-                   behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
-                   behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+    node_options,
+    {planning_test_utils_dir + "/config/test_common.param.yaml",
+     planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
+     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
+     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
+     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
+     behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml",
+     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
+     behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
+     behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
+     behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
+     behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
 
-  auto test_target_node =
-    std::make_shared<behavior_path_planner::BehaviorPathPlannerNode>(node_options);
+  return std::make_shared<BehaviorPathPlannerNode>(node_options);
+}
 
+void publishMandatoryTopics(
+  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node)
+{
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
   test_manager->publishAcceleration(test_target_node, "behavior_path_planner/input/accel");
@@ -69,18 +87,40 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
   test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
   test_manager->publishLateralOffset(
     test_target_node, "behavior_path_planner/input/lateral_offset");
+}
 
-  // set subscriber with topic name: behavior_path_planner → test_node_
-  test_manager->setPathWithLaneIdSubscriber("behavior_path_planner/output/path");
+TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
+{
+  rclcpp::init(0, nullptr);
+  auto test_manager = generateTestManager();
+  auto test_target_node = generateNode();
 
-  // set behavior_path_planner's input topic name(this topic is changed to test node)
-  test_manager->setRouteInputTopicName("behavior_path_planner/input/route");
+  publishMandatoryTopics(test_manager, test_target_node);
 
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithBehaviorNominalRoute(test_target_node));
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithBehaviorNominalRoute(test_target_node));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test with empty route
-  // test_manager->testWithAbnormalRoute(test_target_node);
-  // rclcpp::shutdown();
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalRoute(test_target_node));
+  rclcpp::shutdown();
+}
+
+TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
+{
+  rclcpp::init(0, nullptr);
+
+  auto test_manager = generateTestManager();
+  auto test_target_node = generateNode();
+  publishMandatoryTopics(test_manager, test_target_node);
+
+  // test for normal trajectory
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithBehaviorNominalRoute(test_target_node));
+
+  // make sure behavior_path_planner is running
+  EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
+
+  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testRouteWithInvalidEgoPose(test_target_node));
+
+  rclcpp::shutdown();
 }

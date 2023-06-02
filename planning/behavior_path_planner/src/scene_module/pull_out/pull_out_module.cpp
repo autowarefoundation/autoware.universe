@@ -31,6 +31,7 @@
 
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
+using tier4_autoware_utils::inverseTransformPoint;
 
 namespace behavior_path_planner
 {
@@ -42,7 +43,6 @@ PullOutModule::PullOutModule(
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_out");
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
 
@@ -52,8 +52,7 @@ PullOutModule::PullOutModule(
       std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    pull_out_planners_.push_back(
-      std::make_shared<GeometricPullOut>(node, *parameters, getGeometricPullOutParameters()));
+    pull_out_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
   }
   if (pull_out_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
@@ -68,7 +67,6 @@ PullOutModule::PullOutModule(
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_out");
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
 
@@ -78,8 +76,7 @@ PullOutModule::PullOutModule(
       std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    pull_out_planners_.push_back(
-      std::make_shared<GeometricPullOut>(node, *parameters, getGeometricPullOutParameters()));
+    pull_out_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
   }
   if (pull_out_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
@@ -100,34 +97,6 @@ BehaviorModuleOutput PullOutModule::run()
   return plan();
 }
 
-void PullOutModule::processOnEntry()
-{
-  // initialize when receiving new route
-  if (
-    last_route_received_time_ == nullptr ||
-    *last_route_received_time_ != planner_data_->route_handler->getRouteHeader().stamp) {
-    RCLCPP_INFO(getLogger(), "Receive new route, so reset status");
-    resetStatus();
-    updatePullOutStatus();
-  }
-  last_route_received_time_ =
-    std::make_unique<rclcpp::Time>(planner_data_->route_handler->getRouteHeader().stamp);
-
-  // for preventing chattering between back and pull_out
-  if (!status_.back_finished) {
-    if (last_pull_out_start_update_time_ == nullptr) {
-      last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-    }
-    const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
-    if (elapsed_time < parameters_->backward_path_update_duration) {
-      return;
-    }
-    last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-  }
-
-  updatePullOutStatus();
-}
-
 void PullOutModule::processOnExit()
 {
   resetPathCandidate();
@@ -136,13 +105,33 @@ void PullOutModule::processOnExit()
 
 bool PullOutModule::isExecutionRequested() const
 {
+  has_received_new_route_ =
+    !planner_data_->prev_route_id ||
+    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
+
+#ifdef USE_OLD_ARCHITECTURE
+  if (is_executed_) {
+    return true;
+  }
+#endif
+
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
   }
 
-  const bool is_stopped = util::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
+  if (!has_received_new_route_) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
+    return false;
+  }
+
+  const bool is_stopped = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
                           parameters_->th_arrived_distance;
   if (!is_stopped) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
     return false;
   }
 
@@ -153,24 +142,20 @@ bool PullOutModule::isExecutionRequested() const
     tier4_autoware_utils::pose2transform(planner_data_->self_odometry->pose.pose));
 
   // Check if ego is not out of lanes
-  const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
+  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   const auto pull_out_lanes = pull_out_utils::getPullOutLanes(planner_data_);
   auto lanes = current_lanes;
   lanes.insert(lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
   if (LaneDepartureChecker::isOutOfLane(lanes, vehicle_footprint)) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
     return false;
   }
 
-  // Check if any of the footprint points are in the shoulder lane
-  lanelet::Lanelet closest_shoulder_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(
-        pull_out_lanes, planner_data_->self_odometry->pose.pose, &closest_shoulder_lanelet)) {
-    return false;
-  }
-  if (!isOverlappedWithLane(closest_shoulder_lanelet, vehicle_footprint)) {
-    return false;
-  }
-
+#ifdef USE_OLD_ARCHITECTURE
+  is_executed_ = true;
+#endif
   return true;
 }
 
@@ -185,8 +170,7 @@ ModuleStatus PullOutModule::updateState()
   RCLCPP_DEBUG(getLogger(), "PULL_OUT updateState");
 
   if (hasFinishedPullOut()) {
-    current_state_ = ModuleStatus::SUCCESS;
-    return current_state_;
+    return ModuleStatus::SUCCESS;
   }
 
   checkBackFinished();
@@ -211,6 +195,12 @@ BehaviorModuleOutput PullOutModule::plan()
     // the path of getCurrent() is generated by generateStopPath()
     const PathWithLaneId stop_path = getCurrentPath();
     output.path = std::make_shared<PathWithLaneId>(stop_path);
+
+    DrivableAreaInfo current_drivable_area_info;
+    current_drivable_area_info.drivable_lanes = status_.lanes;
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
     output.reference_path = getPreviousModuleOutput().reference_path;
     path_candidate_ = std::make_shared<PathWithLaneId>(stop_path);
     path_reference_ = getPreviousModuleOutput().reference_path;
@@ -228,12 +218,14 @@ BehaviorModuleOutput PullOutModule::plan()
     path = status_.backward_path;
   }
 
-  const auto shorten_lanes = util::cutOverlappedLanes(path, status_.lanes);
-  const auto expanded_lanes = util::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-  util::generateDrivableArea(
-    path, expanded_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
+  utils::generateDrivableArea(
+    path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
+
+  DrivableAreaInfo current_drivable_area_info;
+  current_drivable_area_info.drivable_lanes = target_drivable_lanes;
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
 
   output.path = std::make_shared<PathWithLaneId>(path);
   output.reference_path = getPreviousModuleOutput().reference_path;
@@ -322,6 +314,7 @@ PathWithLaneId PullOutModule::getFullPath() const
 
 BehaviorModuleOutput PullOutModule::planWaitingApproval()
 {
+  updatePullOutStatus();
   waitApproval();
 
   BehaviorModuleOutput output;
@@ -337,22 +330,28 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     return output;
   }
 
-  const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
+  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   const auto pull_out_lanes = pull_out_utils::getPullOutLanes(planner_data_);
-  const auto drivable_lanes =
-    util::generateDrivableLanesWithShoulderLanes(current_lanes, pull_out_lanes);
-  const auto expanded_lanes = util::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-
   auto stop_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
-  util::generateDrivableArea(
-    stop_path, expanded_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+  const auto drivable_lanes =
+    utils::generateDrivableLanesWithShoulderLanes(current_lanes, pull_out_lanes);
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
+  const auto expanded_lanes = utils::expandLanelets(
+    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
+  utils::generateDrivableArea(
+    stop_path, expanded_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   for (auto & p : stop_path.points) {
     p.point.longitudinal_velocity_mps = 0.0;
   }
 
+  DrivableAreaInfo current_drivable_area_info;
+  current_drivable_area_info.drivable_lanes = expanded_lanes;
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
   output.path = std::make_shared<PathWithLaneId>(stop_path);
+  output.drivable_area_info.drivable_lanes = status_.lanes;
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = calcTurnSignalInfo();
   path_candidate_ = std::make_shared<PathWithLaneId>(getFullPath());
@@ -400,20 +399,6 @@ void PullOutModule::resetStatus()
   status_ = initial_status;
 }
 
-ParallelParkingParameters PullOutModule::getGeometricPullOutParameters() const
-{
-  ParallelParkingParameters params{};
-
-  params.th_arrived_distance = parameters_->th_arrived_distance;
-  params.th_stopped_velocity = parameters_->th_stopped_velocity;
-  params.arc_path_interval = parameters_->arc_path_interval;
-  params.departing_velocity = parameters_->geometric_pull_out_velocity;
-  params.departing_lane_departure_margin = parameters_->lane_departure_margin;
-  params.max_steer_angle = parameters_->pull_out_max_steer_angle;
-
-  return params;
-}
-
 void PullOutModule::incrementPathIndex()
 {
   status_.current_path_idx =
@@ -422,6 +407,9 @@ void PullOutModule::incrementPathIndex()
 
 PathWithLaneId PullOutModule::getCurrentPath() const
 {
+  if (status_.pull_out_path.partial_paths.size() <= status_.current_path_idx) {
+    return PathWithLaneId{};
+  }
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
 }
 
@@ -553,28 +541,43 @@ PathWithLaneId PullOutModule::generateStopPath() const
   path.points.push_back(toPathPointWithLaneId(moved_pose));
 
   // generate drivable area
-  const auto shorten_lanes = util::cutOverlappedLanes(path, status_.lanes);
-  const auto expanded_lanes = util::expandLanelets(
-    shorten_lanes, parameters_->drivable_area_left_bound_offset,
-    parameters_->drivable_area_right_bound_offset, parameters_->drivable_area_types_to_skip);
-  util::generateDrivableArea(
-    path, expanded_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
+
+  // for old architecture
+  utils::generateDrivableArea(
+    path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
 
   return path;
 }
 
 void PullOutModule::updatePullOutStatus()
 {
+  if (has_received_new_route_) {
+    status_ = PullOutStatus();
+  }
+
+  // skip updating if enough time has not passed for preventing chattering between back and pull_out
+  if (!has_received_new_route_ && !last_pull_out_start_update_time_ && !status_.back_finished) {
+    if (!last_pull_out_start_update_time_) {
+      last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    }
+    const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
+    if (elapsed_time < parameters_->backward_path_update_duration) {
+      return;
+    }
+  }
+  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
-  status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
+  status_.current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   status_.pull_out_lanes = pull_out_utils::getPullOutLanes(planner_data_);
 
   // combine road and shoulder lanes
   status_.lanes =
-    util::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_out_lanes);
+    utils::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_out_lanes);
 
   // search pull out start candidates backward
   std::vector<Pose> start_pose_candidates = searchPullOutStartPoses();
@@ -609,8 +612,8 @@ void PullOutModule::updatePullOutStatus()
   }
 
   // Update status
-  status_.lane_follow_lane_ids = util::getIds(status_.current_lanes);
-  status_.pull_out_lane_ids = util::getIds(status_.pull_out_lanes);
+  status_.lane_follow_lane_ids = utils::getIds(status_.current_lanes);
+  status_.pull_out_lane_ids = utils::getIds(status_.pull_out_lanes);
 }
 
 // make this class?
@@ -669,7 +672,7 @@ std::vector<Pose> PullOutModule::searchPullOutStartPoses()
       continue;
     }
 
-    if (util::checkCollisionBetweenFootprintAndObjects(
+    if (utils::checkCollisionBetweenFootprintAndObjects(
           local_vehicle_footprint, *backed_pose, *(planner_data_->dynamic_object),
           parameters_->collision_check_margin)) {
       break;  // poses behind this has a collision, so break.
@@ -699,15 +702,36 @@ bool PullOutModule::hasFinishedPullOut() const
     return false;
   }
 
-  // check ego car is close enough to goal pose
   const auto current_pose = planner_data_->self_odometry->pose.pose;
+
+  // keep running until returning to the path, considering that other modules (e.g avoidance)
+  // are also running at the same time.
+  const double lateral_offset_to_path =
+    motion_utils::calcLateralOffset(getCurrentPath().points, current_pose.position);
+  constexpr double lateral_offset_threshold = 0.5;
+  if (std::abs(lateral_offset_to_path) > lateral_offset_threshold) {
+    return false;
+  }
+  const double yaw_deviation =
+    motion_utils::calcYawDeviation(getCurrentPath().points, current_pose);
+  constexpr double yaw_deviation_threshold = 0.5;
+  if (std::abs(yaw_deviation) > yaw_deviation_threshold) {
+    return false;
+  }
+
+  // check that ego has passed pull out end point
   const auto arclength_current =
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose);
   const auto arclength_pull_out_end =
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.end_pose);
 
-  // has passed pull out end point
-  return arclength_current.length - arclength_pull_out_end.length > 0.0;
+  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > 0.0;
+
+#ifdef USE_OLD_ARCHITECTURE
+  is_executed_ = !has_finished;
+#endif
+
+  return has_finished;
 }
 
 void PullOutModule::checkBackFinished()
@@ -718,7 +742,7 @@ void PullOutModule::checkBackFinished()
     tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_start_pose);
 
   const bool is_near = distance < parameters_->th_arrived_distance;
-  const double ego_vel = util::l2Norm(planner_data_->self_odometry->twist.twist.linear);
+  const double ego_vel = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear);
   const bool is_stopped = ego_vel < parameters_->th_stopped_velocity;
 
   if (!status_.back_finished && is_near && is_stopped) {
@@ -749,7 +773,7 @@ bool PullOutModule::isStopped()
   }
   bool is_stopped = true;
   for (const auto & odometry : odometry_buffer_) {
-    const double ego_vel = util::l2Norm(odometry->twist.twist.linear);
+    const double ego_vel = utils::l2Norm(odometry->twist.twist.linear);
     if (ego_vel > parameters_->th_stopped_velocity) {
       is_stopped = false;
       break;
@@ -772,7 +796,10 @@ bool PullOutModule::hasFinishedCurrentPath()
 TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
 {
   TurnSignalInfo turn_signal{};  // output
-  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const Pose & start_pose = status_.pull_out_path.start_pose;
+  const Pose & end_pose = status_.pull_out_path.end_pose;
 
   // turn on hazard light when backward driving
   if (!status_.back_finished) {
@@ -781,26 +808,31 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
     turn_signal.desired_start_point = back_start_pose;
     turn_signal.required_start_point = back_start_pose;
     // pull_out start_pose is same to backward driving end_pose
-    turn_signal.required_end_point = status_.pull_out_path.start_pose;
-    turn_signal.desired_end_point = status_.pull_out_path.start_pose;
+    turn_signal.required_end_point = start_pose;
+    turn_signal.desired_end_point = start_pose;
     return turn_signal;
   }
 
   // turn on right signal until passing pull_out end point
   const auto path = getFullPath();
   // pull out path does not overlap
-  const double distance_from_end = motion_utils::calcSignedArcLength(
-    path.points, status_.pull_out_path.end_pose.position, current_pose.position);
-  if (distance_from_end < 0.0) {
+  const double distance_from_end =
+    motion_utils::calcSignedArcLength(path.points, end_pose.position, current_pose.position);
+  const double lateral_offset = inverseTransformPoint(end_pose.position, start_pose).y;
+
+  if (distance_from_end < 0.0 && lateral_offset > parameters_->th_blinker_on_lateral_offset) {
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+  } else if (
+    distance_from_end < 0.0 && lateral_offset < -parameters_->th_blinker_on_lateral_offset) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
 
-  turn_signal.desired_start_point = status_.pull_out_path.start_pose;
-  turn_signal.required_start_point = status_.pull_out_path.start_pose;
-  turn_signal.required_end_point = status_.pull_out_path.end_pose;
-  turn_signal.desired_end_point = status_.pull_out_path.end_pose;
+  turn_signal.desired_start_point = start_pose;
+  turn_signal.required_start_point = start_pose;
+  turn_signal.required_end_point = end_pose;
+  turn_signal.desired_end_point = end_pose;
 
   return turn_signal;
 }
@@ -815,7 +847,9 @@ void PullOutModule::setDebugData() const
   };
 
   debug_marker_.markers.clear();
-  add(createPoseMarkerArray(status_.pull_out_start_pose, "pull_out_start_pose", 0, 0.9, 0.3, 0.3));
+  add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
+  add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
+  add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
 }
 }  // namespace behavior_path_planner

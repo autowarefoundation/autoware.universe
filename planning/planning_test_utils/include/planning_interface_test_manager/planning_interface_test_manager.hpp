@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,21 @@
 
 #ifndef PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_
 #define PLANNING_INTERFACE_TEST_MANAGER__PLANNING_INTERFACE_TEST_MANAGER_HPP_
+
+// since ASSERT_NO_THROW in gtest masks the exception message, redefine it.
+#define ASSERT_NO_THROW_WITH_ERROR_MSG(statement)                                                \
+  try {                                                                                          \
+    statement;                                                                                   \
+    SUCCEED();                                                                                   \
+  } catch (const std::exception & e) {                                                           \
+    FAIL() << "Expected: " << #statement                                                         \
+           << " doesn't throw an exception.\nActual: it throws. Error message: " << e.what()     \
+           << std::endl;                                                                         \
+  } catch (...) {                                                                                \
+    FAIL() << "Expected: " << #statement                                                         \
+           << " doesn't throw an exception.\nActual: it throws. Error message is not available." \
+           << std::endl;                                                                         \
+  }
 
 #include <component_interface_specs/planning.hpp>
 #include <component_interface_utils/rclcpp.hpp>
@@ -66,7 +81,6 @@ using autoware_auto_perception_msgs::msg::TrafficSignalArray;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Point;
@@ -75,7 +89,6 @@ using geometry_msgs::msg::Quaternion;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using planning_interface::Route;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_api_msgs::msg::CrosswalkStatus;
@@ -86,16 +99,23 @@ using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
 
+enum class ModuleName {
+  UNKNOWN = 0,
+  PULL_OUT,
+};
+
 class PlanningInterfaceTestManager
 {
 public:
   PlanningInterfaceTestManager();
 
-  void declareVehicleInfoParams(rclcpp::NodeOptions & node_options);
-  void declareNearestSearchDistanceParams(rclcpp::NodeOptions & node_options);
+  void publishOdometry(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0);
 
-  void publishOdometry(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishInitialPose(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishInitialPose(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift = 0.0,
+    ModuleName module_name = ModuleName::UNKNOWN);
+
   void publishMaxVelocity(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAcceleration(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -104,7 +124,6 @@ public:
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishCostMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishLaneDrivingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingScenario(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishParkingState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -115,12 +134,7 @@ public:
   void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExternalTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishVirtualTrafficLightState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExternalCrosswalkStates(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExternalIntersectionStates(
-    rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishInitialPoseData(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
@@ -128,6 +142,7 @@ public:
   void setRouteInputTopicName(std::string topic_name);
   void setPathInputTopicName(std::string topic_name);
   void setPathWithLaneIdTopicName(std::string topic_name);
+  void setPathTopicName(std::string topic_name);
 
   void setTrajectorySubscriber(std::string topic_name);
   void setScenarioSubscriber(std::string topic_name);
@@ -135,16 +150,35 @@ public:
   void setRouteSubscriber(std::string topic_name);
   void setPathSubscriber(std::string topic_name);
 
+  void setInitialPoseTopicName(std::string topic_name);
+  void setOdometryTopicName(std::string topic_name);
+
   void testWithNominalTrajectory(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalTrajectory(rclcpp::Node::SharedPtr target_node);
 
   void testWithNominalRoute(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalRoute(rclcpp::Node::SharedPtr target_node);
 
-  void testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node);
+  void testWithBehaviorNominalRoute(
+    rclcpp::Node::SharedPtr target_node, ModuleName module_name = ModuleName::UNKNOWN);
 
   void testWithNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
   void testWithAbnormalPathWithLaneId(rclcpp::Node::SharedPtr target_node);
+
+  void testWithNominalPath(rclcpp::Node::SharedPtr target_node);
+  void testWithAbnormalPath(rclcpp::Node::SharedPtr target_node);
+
+  // for invalid ego poses, contains some tests inside.
+  void testRouteWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+  void testPathWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+  void testPathWithLaneIdWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+  void testTrajectoryWithInvalidEgoPose(rclcpp::Node::SharedPtr target_node);
+
+  // ego vehicle is located far from trajectory
+  void testOffTrackFromRoute(rclcpp::Node::SharedPtr target_node);
+  void testOffTrackFromPath(rclcpp::Node::SharedPtr target_node);
+  void testOffTrackFromPathWithLaneId(rclcpp::Node::SharedPtr target_node);
+  void testOffTrackFromTrajectory(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();
 
@@ -171,10 +205,7 @@ private:
   rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr traffic_signals_pub_;
-  rclcpp::Publisher<TrafficSignalArray>::SharedPtr external_traffic_signals_pub_;
   rclcpp::Publisher<VirtualTrafficLightStateArray>::SharedPtr virtual_traffic_light_states_pub_;
-  rclcpp::Publisher<CrosswalkStatus>::SharedPtr external_crosswalk_states_pub_;
-  rclcpp::Publisher<IntersectionStatus>::SharedPtr external_intersection_states_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
@@ -198,12 +229,18 @@ private:
   rclcpp::Publisher<PathWithLaneId>::SharedPtr normal_path_with_lane_id_pub_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr abnormal_path_with_lane_id_pub_;
 
-  std::string input_trajectory_name_;
-  std::string input_parking_trajectory_name_;
-  std::string input_lane_driving_trajectory_name_;
-  std::string input_route_name_;
-  std::string input_path_name_;
-  std::string input_path_with_lane_id_name_;
+  // Publisher for testing(Path)
+  rclcpp::Publisher<Path>::SharedPtr normal_path_pub_;
+  rclcpp::Publisher<Path>::SharedPtr abnormal_path_pub_;
+
+  std::string input_trajectory_name_ = "";
+  std::string input_parking_trajectory_name_ = "";
+  std::string input_lane_driving_trajectory_name_ = "";
+  std::string input_route_name_ = "";
+  std::string input_path_name_ = "";
+  std::string input_path_with_lane_id_name_ = "";
+  std::string input_initial_pose_name_ = "";  // for the map based pose
+  std::string input_odometry_name_ = "";
 
   // Node
   rclcpp::Node::SharedPtr test_node_;
@@ -221,12 +258,14 @@ private:
   void publishAbnormalRoute(
     rclcpp::Node::SharedPtr target_node, const LaneletRoute & abnormal_route);
 
-  void publishBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishBehaviorNominalRoute(
+    rclcpp::Node::SharedPtr target_node, std::string topic_name,
+    ModuleName module_name = ModuleName::UNKNOWN);
   void publishNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAbNominalPathWithLaneId(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
-  void set_initial_state_with_transform(Odometry::SharedPtr & odometry);
-  TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);
+  void publishNominalPath(rclcpp::Node::SharedPtr target_node, std::string topic_name);
+  void publishAbnormalPath(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 };  // class PlanningInterfaceTestManager
 
 }  // namespace planning_test_utils

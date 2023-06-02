@@ -19,9 +19,11 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -36,6 +38,7 @@ namespace behavior_path_planner
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::StopWatch;
+using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
 
@@ -54,9 +57,7 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  PlannerManager(
-    rclcpp::Node & node, const std::shared_ptr<LaneFollowingParameters> & parameters,
-    const bool verbose);
+  PlannerManager(rclcpp::Node & node, const bool verbose);
 
   /**
    * @brief run all candidate and approved modules.
@@ -99,12 +100,21 @@ public:
   }
 
   /**
-   * @brief publish all registered modules' debug markers.
+   * @brief publish all registered modules' markers.
    */
-  void publishDebugMarker() const
+  void publishMarker() const
   {
     std::for_each(
-      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishDebugMarker(); });
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishMarker(); });
+  }
+
+  /**
+   * @brief publish all registered modules' virtual wall.
+   */
+  void publishVirtualWall() const
+  {
+    std::for_each(
+      manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->publishVirtualWall(); });
   }
 
   /**
@@ -143,6 +153,34 @@ public:
   }
 
   /**
+   * @brief aggregate launched module's stop reasons.
+   * @return stop reason array
+   */
+  StopReasonArray getStopReasons() const
+  {
+    StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = clock_.now();
+
+    std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [&](const auto & m) {
+      const auto reason = m->getStopReason();
+      if (reason.reason != "") {
+        stop_reason_array.stop_reasons.push_back(m->getStopReason());
+      }
+    });
+
+    std::for_each(
+      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [&](const auto & m) {
+        const auto reason = m->getStopReason();
+        if (reason.reason != "") {
+          stop_reason_array.stop_reasons.push_back(m->getStopReason());
+        }
+      });
+
+    return stop_reason_array;
+  }
+
+  /**
    * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
    * @param planner data.
    * @details this function is called only when it is in disengage and drive by manual.
@@ -174,7 +212,7 @@ private:
     const auto result = module_ptr->run();
     module_ptr->unlockRTCCommand();
 
-    module_ptr->updateState();
+    module_ptr->updateCurrentState();
 
     module_ptr->publishRTCStatus();
 
@@ -182,6 +220,9 @@ private:
 
     return result;
   }
+
+  void generateCombinedDrivableArea(
+    BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const;
 
   /**
    * @brief get reference path from root_lanelet_ centerline.
@@ -202,11 +243,17 @@ private:
       root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
 
     lanelet::ConstLanelet closest_lane{};
-    if (!lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-      return {};
+    if (lanelet::utils::query::getClosestLaneletWithConstrains(
+          lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+          p.ego_nearest_yaw_threshold)) {
+      return utils::getReferencePath(closest_lane, data);
     }
 
-    return util::getReferencePath(closest_lane, parameters_, data);
+    if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+      return utils::getReferencePath(closest_lane, data);
+    }
+
+    return {};  // something wrong.
   }
 
   /**
@@ -339,17 +386,15 @@ private:
 
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
 
-  std::shared_ptr<LaneFollowingParameters> parameters_;
-
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 
   std::vector<SceneModulePtr> approved_module_ptrs_;
 
   std::vector<SceneModulePtr> candidate_module_ptrs_;
 
-  rclcpp::Logger logger_;
+  mutable rclcpp::Logger logger_;
 
-  rclcpp::Clock clock_;
+  mutable rclcpp::Clock clock_;
 
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
 

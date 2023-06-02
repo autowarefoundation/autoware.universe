@@ -202,6 +202,21 @@ geometry_msgs::msg::Point toGeomPoint(const tier4_autoware_utils::Point2d & poin
   geom_point.y = point.y();
   return geom_point;
 }
+
+bool isLowerConsideringHysteresis(
+  const double current_val, const bool was_low, const double high_val, const double low_val)
+{
+  if (was_low) {
+    if (high_val < current_val) {
+      return false;
+    }
+    return true;
+  }
+  if (current_val < low_val) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 namespace motion_planning
@@ -244,6 +259,8 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     node.declare_parameter<double>("behavior_determination.cruise.max_lat_margin");
   max_lat_margin_for_slow_down =
     node.declare_parameter<double>("behavior_determination.slow_down.max_lat_margin");
+  lat_hysteresis_margin_for_slow_down =
+    node.declare_parameter<double>("behavior_determination.slow_down.lat_hysteresis_margin");
 }
 
 void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
@@ -293,6 +310,9 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
     parameters, "behavior_determination.cruise.max_lat_margin", max_lat_margin_for_cruise);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.slow_down.max_lat_margin", max_lat_margin_for_slow_down);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.slow_down.lat_hysteresis_margin",
+    lat_hysteresis_margin_for_slow_down);
 }
 
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
@@ -327,12 +347,15 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
   debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
   debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
-  debug_slow_down_wall_marker_pub_ = create_publisher<MarkerArray>("~/slow_down/virtual_wall", 1);
+  debug_slow_down_wall_marker_pub_ =
+    create_publisher<MarkerArray>("~/debug/slow_down/virtual_wall", 1);
   debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
   debug_stop_planning_info_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
   debug_cruise_planning_info_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
+  debug_slow_down_planning_info_pub_ =
+    create_publisher<Float32MultiArrayStamped>("~/debug/slow_down_planning_info", 1);
 
   const auto longitudinal_info = LongitudinalInfo(*this);
 
@@ -730,8 +753,10 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
 
   {  // consider hysteresis
     const double obstacle_projected_vel = calcObstacleProjectedVelocity(traj_points, obstacle);
-    const auto is_prev_obstacle_stop = getObstacleFromUuid(prev_stop_obstacles_, obstacle.uuid);
-    const auto is_prev_obstacle_cruise = getObstacleFromUuid(prev_cruise_obstacles_, obstacle.uuid);
+    // const bool is_prev_obstacle_stop = getObstacleFromUuid(prev_stop_obstacles_,
+    // obstacle.uuid).has_value();
+    const bool is_prev_obstacle_cruise =
+      getObstacleFromUuid(prev_cruise_obstacles_, obstacle.uuid).has_value();
 
     if (is_prev_obstacle_cruise) {
       if (obstacle_projected_vel < p.obstacle_velocity_threshold_from_cruise_to_stop) {
@@ -927,9 +952,23 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   const auto & object_id = obstacle.uuid.substr(0, 4);
   const auto & p = behavior_determination_param_;
 
-  if (
-    !enable_slow_down_planning_ || !isSlowDownObstacle(obstacle.classification.label) ||
-    p.max_lat_margin_for_slow_down < precise_lat_dist) {
+  const bool is_prev_obstacle_slow_down =
+    getObstacleFromUuid(prev_slow_down_obstacles_, obstacle.uuid).has_value();
+
+  if (!enable_slow_down_planning_ || !isSlowDownObstacle(obstacle.classification.label)) {
+    return std::nullopt;
+  }
+
+  // check lateral distance considering hysteresis
+  const bool is_lat_dist_low = isLowerConsideringHysteresis(
+    precise_lat_dist, is_prev_obstacle_slow_down,
+    p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down / 2.0,
+    p.max_lat_margin_for_slow_down - p.lat_hysteresis_margin_for_slow_down / 2.0);
+  if (!is_lat_dist_low) {
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), enable_debug_info_,
+      "[SlowDown] Ignore obstacle (%s) since it's far from trajectory. (%f [m])", object_id.c_str(),
+      precise_lat_dist);
     return std::nullopt;
   }
 
@@ -1136,7 +1175,6 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
   planner_data.ego_vel = ego_odom_ptr_->twist.twist.linear.x;
   planner_data.ego_acc = ego_accel_ptr_->accel.accel.linear.x;
   planner_data.is_driving_forward = is_driving_forward_;
-
   return planner_data;
 }
 
@@ -1286,8 +1324,8 @@ void ObstacleCruisePlannerNode::publishDebugInfo() const
   debug_cruise_planning_info_pub_->publish(cruise_debug_msg);
 
   // slow_down
-  // const auto slow_down_debug_msg = planner_ptr_->getSlowDownPlanningDebugMessage(now());
-  // debug_slow_down_planning_info_pub_->publish(slow_down_debug_msg);
+  const auto slow_down_debug_msg = planner_ptr_->getSlowDownPlanningDebugMessage(now());
+  debug_slow_down_planning_info_pub_->publish(slow_down_debug_msg);
 }
 
 void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_time) const

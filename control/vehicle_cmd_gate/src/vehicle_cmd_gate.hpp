@@ -15,6 +15,7 @@
 #ifndef VEHICLE_CMD_GATE_HPP_
 #define VEHICLE_CMD_GATE_HPP_
 
+#include "moderate_stop_interface.hpp"
 #include "pause_interface.hpp"
 #include "vehicle_cmd_filter.hpp"
 
@@ -27,7 +28,6 @@
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
@@ -52,7 +52,6 @@ using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
-using autoware_auto_vehicle_msgs::msg::GearReport;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
@@ -104,7 +103,6 @@ private:
   rclcpp::Subscription<GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_sub_;
   rclcpp::Subscription<MrmState>::SharedPtr mrm_state_sub_;
-  rclcpp::Subscription<GearReport>::SharedPtr gear_status_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr kinematics_sub_;             // for filter
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;  // for filter
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;            // for filter
@@ -116,11 +114,9 @@ private:
   bool is_engaged_;
   bool is_system_emergency_ = false;
   bool is_external_emergency_stop_ = false;
-  bool is_gate_mode_changed_ = false;
   double current_steer_ = 0;
   GateMode current_gate_mode_;
   MrmState current_mrm_state_;
-  GearReport::ConstSharedPtr current_gear_ptr_;
   Odometry current_kinematics_;
   double current_acceleration_ = 0.0;
 
@@ -165,6 +161,7 @@ private:
   double external_emergency_stop_heartbeat_timeout_;
   double stop_hold_acceleration_;
   double emergency_acceleration_;
+  double moderate_stop_service_acceleration_;
 
   // Service
   rclcpp::Service<EngageSrv>::SharedPtr srv_engage_;
@@ -221,6 +218,7 @@ private:
 
   // Pause interface for API
   std::unique_ptr<PauseInterface> pause_;
+  std::unique_ptr<ModerateStopInterface> moderate_stop_interface_;
 };
 
 }  // namespace vehicle_cmd_gate
