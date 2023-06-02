@@ -364,121 +364,146 @@ void IntersectionModule::initializeRTCStatus()
   // activated_ and occlusion_activated_ must be set from manager's RTC callback
 }
 
-static void prepareRTCByDecisionResult(
+template <typename T>
+void prepareRTCByDecisionResult(
+  [[maybe_unused]] const T & result,
+  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * occlusion_first_stop_required)
+{
+  return;
+}
+
+template <>
+void prepareRTCByDecisionResult(
   [[maybe_unused]] const IntersectionModule::Indecisive & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
   return;
 }
 
-static void prepareRTCByDecisionResult(
+template <>
+void prepareRTCByDecisionResult(
   [[maybe_unused]] const IntersectionModule::StuckStop & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
-  const auto closest_idx_opt =
-    motion_utils::findNearestIndex(path.points, current_pose, 3.0, M_PI_4);
-  if (!closest_idx_opt) {
-    return;
-  }
-  const auto stop_line_idx = result.stop_line_idx;
-  *default_safety = false;
-  *default_distance = motion_utils::calcSigendArcLength(path.points, closest_idx, stop_line_idx);
-  return;
-}
-
-static void parepareRTCByDecisionResult(
-  [[maybe_unused]] const IntersectionModule::NonOccludedCollisionStop & result,
-  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
-{
-  const auto closest_idx = result.stop_lines.ego_front_stop_line;
+  const auto closest_idx = result.closest_idx;
   const auto stop_line_idx = result.stop_line_idx;
   *default_safety = false;
   *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
   return;
 }
 
-static void prepareRTCByDecisionResult(
-  [[maybe_unused]] const IntersectionModule::PeekingTowardOcclusion & result,
+template <>
+void prepareRTCByDecisionResult(
+  [[maybe_unused]] const IntersectionModule::NonOccludedCollisionStop & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
-  const auto closest_idx = result.stop_lines.ego_front_stop_line;
+  const auto closest_idx = result.stop_lines.closest_idx;
+  const auto stop_line_idx = result.stop_line_idx;
+  *default_safety = false;
+  *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  return;
+}
+
+template <>
+void prepareRTCByDecisionResult(
+  [[maybe_unused]] const IntersectionModule::FirstWaitBeforeOcclusion & result,
+  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * occlusion_first_stop_required)
+{
+  const auto closest_idx = result.stop_lines.closest_idx;
   const auto first_stop_line_idx = result.first_stop_line_idx;
   const auto occlusion_stop_line_idx = result.occlusion_stop_line_idx;
   *default_safety = false;
   *default_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, first_stop_line_idx);
   *occlusion_safety = false;
-  *occclusion_distance =
+  *occlusion_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
   *occlusion_first_stop_required = true;
   return;
 }
 
-static void prepareRTCByDecisionResult(
+template <>
+void prepareRTCByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PeekingTowardOcclusion & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
-  const auto closest_idx = result.stop_lines.ego_front_stop_line;
+  const auto closest_idx = result.stop_lines.closest_idx;
   const auto stop_line_idx = result.stop_line_idx;
-
+  *occlusion_safety = false;
+  *occlusion_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
   return;
 }
 
-static void prepareRTCByDecisionResult(
-  [[maybe_unused]] const IntersectionModule::PeekingTowardOcclusion & result,
+template <>
+void prepareRTCByDecisionResult(
+  [[maybe_unused]] const IntersectionModule::OccludedCollisionStop & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
+  [[maybe_unused]] bool * occlusion_first_stop_required)
+{
+  const auto closest_idx = result.stop_lines.closest_idx;
+  const auto stop_line_idx = result.stop_line_idx;
+  const auto occlusion_stop_line_idx = result.occlusion_stop_line_idx;
+  *default_safety = false;
+  *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  *occlusion_safety = false;
+  *occlusion_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
+  return;
+}
+
+template <>
+void prepareRTCByDecisionResult(
+  [[maybe_unused]] const IntersectionModule::Safe & result,
+  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
   return;
 }
 
-static void prepareRTCByDecisionResult(
-  [[maybe_unused]] const IntersectionModule::PeekingTowardOcclusion & result,
-  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  [[maybe_unused]] const geometry_msgs::msg::Pose &, [[maybe_unused]] bool * defaulty,
-  [[maybe_unused]] double * default_distance, [[maybe_unused]] bool * occlusion_safety,
-  [[maybe_unused]] double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+// template-specification based visitor pattern
+// https://en.cppreference.com/w/cpp/utility/variant/visit
+template <class... Ts>
+struct VisitorSwitch : Ts...
 {
-  return;
-}
+  using Ts::operator()...;
+};
+template <class... Ts>
+VisitorSwitch(Ts...) -> VisitorSwitch<Ts...>;
 
 void IntersectionModule::prepareRTCStatus(
   const DecisionResult & decision_result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto & current_pose = planner_data_->current_odometry->pose;
   bool default_safety = true;
-  bool default_distance = std::numeric_limits<double>::lowest();
+  double default_distance = std::numeric_limits<double>::lowest();
   std::visit(
-    [&](const auto & decision) {
+    VisitorSwitch{[&](const auto & decision) {
       prepareRTCByDecisionResult(
-        decision, path, current_pose, &default_safety, &default_distance, &occlusion_safety_,
+        decision, path, &default_safety, &default_distance, &occlusion_safety_,
         &occlusion_stop_distance_, &occlusion_first_stop_required_);
-    },
+    }},
     decision_result);
   setSafe(default_safety);
   setDistance(default_distance);
@@ -495,7 +520,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   // calculate the
   const auto decision_result = modifyPathVelocityDetail(path, stop_reason);
 
-  prepareRTCStatus(decision_result);
+  prepareRTCStatus(decision_result, *path);
 
   // move following to a function respondRTCApprovalStatus()
   /*
@@ -611,13 +636,29 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
 
+  const auto & first_detection_area = intersection_lanelets_.value().first_detection_area;
+
   if (const auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value();
       stuck_detected) {
+    const auto intersection_stop_lines_opt =
+      first_detection_area
+        ? util::generateIntersectionStopLines(
+            first_detection_area.value(), planner_data_, interpolated_path_info,
+            planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path)
+        : std::nullopt;
+    if (first_detection_area && !intersection_stop_lines_opt) {
+      RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines() in stuck vehicle check");
+      return IntersectionModule::Indecisive{};
+    }
+    const auto closest_idx_opt =
+      motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
+    if (!closest_idx_opt) {
+      IntersectionModule::Indecisive{};
+    }
     return IntersectionModule::StuckStop{
-      stuck_stop_line_idx, util::IntersectionStopLines{0, 0, 0, 0}};
+      stuck_stop_line_idx, closest_idx_opt.value(), intersection_stop_lines_opt};
   }
 
-  const auto & first_detection_area = intersection_lanelets_.value().first_detection_area;
   if (!first_detection_area) {
     RCLCPP_DEBUG(logger_, "detection area is empty");
     return IntersectionModule::Indecisive{};
@@ -632,15 +673,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
   const auto intersection_stop_lines = intersection_stop_lines_opt.value();
   const auto
-    [default_stop_line_idx, ego_front_stop_line_idx, occlusion_peeking_stop_line_idx,
-     pass_judge_line_idx] = intersection_stop_lines;
-  const auto closest_idx_opt =
-    motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
-  if (!closest_idx_opt) {
-    RCLCPP_DEBUG(logger_, "failed motion_utils::findNearestIndex");
-    return IntersectionModule::Indecisive{};
-  }
-  const size_t closest_idx = closest_idx_opt.value();
+    [default_stop_line_idx, closest_idx, occlusion_peeking_stop_line_idx, pass_judge_line_idx] =
+      intersection_stop_lines;
 
   // TODO(Mamoru Sobue): use optional in DebugData
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -748,8 +782,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   } else if (has_collision_with_margin) {
     const bool isOverDefaultStopLine =
       util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
-    const auto stop_line_idx =
-      isOverDefaultStopLine ? ego_front_stop_line_idx : default_stop_line_idx;
+    const auto stop_line_idx = isOverDefaultStopLine ? closest_idx : default_stop_line_idx;
     return IntersectionModule::NonOccludedCollisionStop{stop_line_idx, intersection_stop_lines};
   } else if (!activated_) {
     return IntersectionModule::NonOccludedCollisionStop{

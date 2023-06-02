@@ -140,6 +140,11 @@ public:
   struct StuckStop
   {
     size_t stop_line_idx;
+    size_t closest_idx;
+    // NOTE: this is optional because stuck vehicle detection is possible
+    // even if the detection area is empty.
+    // Still this may be required for RTC's default stop line
+    std::optional<util::IntersectionStopLines> stop_lines_opt;
   };
   struct NonOccludedCollisionStop
   {
@@ -209,6 +214,7 @@ public:
 private:
   rclcpp::Node & node_;
   const int64_t lane_id_;
+  const std::set<int> associative_ids_;
   std::string turn_direction_;
   bool is_go_out_ = false;
   // Parameter
@@ -216,7 +222,6 @@ private:
   std::optional<util::IntersectionLanelets> intersection_lanelets_;
   // for an intersection lane, its associative lanes are those that share same parent lanelet and
   // have same turn_direction
-  const std::set<int> associative_ids_;
 
   // for occlusion detection
   const bool enable_occlusion_detection_;
@@ -239,7 +244,8 @@ private:
   bool occlusion_first_stop_required_ = false;
 
   void initializeRTCStatus();
-  void prepareRTCStatus(const DecisionResult &);
+  void prepareRTCStatus(
+    const DecisionResult &, const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
   DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 

@@ -240,7 +240,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   if (!closest_idx_ip_opt) {
     return std::nullopt;
   }
-  const auto ego_front_line_ip = closest_idx_ip_opt.value();
+  const auto closest_idx_ip = closest_idx_ip_opt.value();
 
   // (3) occlusion peeking stop line position on interpolated path
   const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
@@ -275,7 +275,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   IntersectionStopLines intersection_stop_lines;
   std::list<std::pair<const size_t *, size_t *>> stop_lines = {
     {&default_stop_line_ip, &intersection_stop_lines.default_stop_line},
-    {&ego_front_line_ip, &intersection_stop_lines.ego_front_stop_line},
+    {&closest_idx_ip, &intersection_stop_lines.closest_idx},
     {&occlusion_peeking_line_ip, &intersection_stop_lines.occlusion_peeking_stop_line},
     {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line}};
   stop_lines.sort(
