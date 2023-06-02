@@ -339,7 +339,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
   using marker_utils::lane_change_markers::createLaneChangingVirtualWallMarker;
   MarkerArray marker;
 
-  if(!parameters_->publish_debug_marker){
+  if (!parameters_->publish_debug_marker) {
     return marker;
   }
 
