@@ -68,10 +68,10 @@ private:
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
   rclcpp::Publisher<Float32Stamped>::SharedPtr m_pub_steer_offset;
 
-  /* parameters for path smoothing */
+  //!< @brief parameters for path smoothing
   TrajectoryFilteringParam m_trajectory_filtering_param;
 
-  /* parameters for stop state */
+  // parameters for stop state
   double m_stop_state_entry_ego_speed;
   double m_stop_state_entry_target_speed;
   double m_converged_steer_rad;
@@ -83,7 +83,7 @@ private:
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
 
-  // MPC object
+  //!< @brief MPC object
   MPC m_mpc;
 
   // Check is mpc output converged
@@ -119,87 +119,73 @@ private:
   //!< @brief flag whether the first trajectory has been received
   bool m_has_received_first_trajectory = false;
 
-  // ego nearest index search
+  //!< @brief ego nearest index search
   double m_ego_nearest_dist_threshold;
   double m_ego_nearest_yaw_threshold;
 
-  // for steering offset compensation
+  //!< @brief for steering offset compensation
   bool enable_auto_steering_offset_removal_;
   std::shared_ptr<SteeringOffsetEstimator> steering_offset_;
 
-  //!< initialize timer to work in real, simulation, and replay
+  //!< @brief initialize timer to work in real, simulation, and replay
   void initTimer(double period_s);
 
+  //!< @brief initialize the vehicle model
+  std::shared_ptr<VehicleModelInterface> createVehicleModel(
+    const double wheelbase, const double steer_lim, const double steer_tau);
+
+  //!< @brief initialize the quadratic problem solver interface
+  std::shared_ptr<QPSolverInterface> createQPSolverInterface();
+
+  //!< @brief initialize the offset estimator
+  std::shared_ptr<SteeringOffsetEstimator> createSteerOffsetEstimator(const double wheelbase);
+
+  //!< @brief check if all necessary data is received and ready to run the control
   bool isReady(const trajectory_follower::InputData & input_data) override;
 
-  /**
-   * @brief compute control command for path follow with a constant control period
-   */
+  //!< @brief compute control command for path follow with a constant control period
   trajectory_follower::LateralOutput run(
     trajectory_follower::InputData const & input_data) override;
 
-  /**
-   * @brief set m_current_trajectory with received message
-   */
+  //!< @brief set m_current_trajectory with received message
   void setTrajectory(const Trajectory & msg);
 
-  /**
-   * @brief check if the received data is valid.
-   */
+  //!< @brief check if the received data is valid.
   bool checkData() const;
 
-  /**
-   * @brief create control command
-   * @param [in] ctrl_cmd published control command
-   */
+  //!< @brief create control command
   AckermannLateralCommand createCtrlCmdMsg(AckermannLateralCommand ctrl_cmd);
 
-  /**
-   * @brief publish predicted future trajectory
-   * @param [in] predicted_traj published predicted trajectory
-   */
+  //!< @brief publish predicted future trajectory
   void publishPredictedTraj(Trajectory & predicted_traj) const;
 
-  /**
-   * @brief publish diagnostic message
-   * @param [in] diagnostic published diagnostic
-   */
+  //!< @brief publish diagnostic message
   void publishDebugValues(Float32MultiArrayStamped & diagnostic) const;
 
-  /**
-   * @brief get stop command
-   */
+  //!< @brief get stop command
   AckermannLateralCommand getStopControlCommand() const;
 
-  /**
-   * @brief get initial command
-   */
+  //!< @brief get initial command
   AckermannLateralCommand getInitialControlCommand() const;
 
-  /**
-   * @brief check ego car is in stopped state
-   */
+  //!< @brief Check if the ego car is in a stopped state.
   bool isStoppedState() const;
 
-  /**
-   * @brief check if the trajectory has valid value
-   */
+  //!< @brief check if the trajectory has valid value
   bool isValidTrajectory(const Trajectory & traj) const;
 
+  //!< @brief check if the trajectory shape changes
   bool isTrajectoryShapeChanged() const;
 
+  //!< @brief check if the steering control is converged and stable now
   bool isSteerConverged(const AckermannLateralCommand & cmd) const;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
-  /**
-   * @brief Declare MPC parameters as ROS parameters to allow tuning on the fly
-   */
+  //!< @brief Declare MPC parameters as ROS parameters to allow tuning on the fly
   void declareMPCparameters();
 
-  /**
-   * @brief Called when parameters are changed outside of node
-   */
+  //!< @brief Called when parameters are changed outside of node
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
 

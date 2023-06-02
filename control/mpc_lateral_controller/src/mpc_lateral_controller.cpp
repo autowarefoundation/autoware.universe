@@ -103,40 +103,11 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   }
 
   /* vehicle model setup */
-  const std::string vehicle_model_type =
-    node_->declare_parameter<std::string>("vehicle_model_type");
-  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr;
-  if (vehicle_model_type == "kinematics") {
-    vehicle_model_ptr = std::make_shared<KinematicsBicycleModel>(
-      wheelbase, m_mpc.m_steer_lim, m_mpc.m_param.steer_tau);
-  } else if (vehicle_model_type == "kinematics_no_delay") {
-    vehicle_model_ptr =
-      std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, m_mpc.m_steer_lim);
-  } else if (vehicle_model_type == "dynamics") {
-    const double mass_fl = dp_double("vehicle.mass_fl");
-    const double mass_fr = dp_double("vehicle.mass_fr");
-    const double mass_rl = dp_double("vehicle.mass_rl");
-    const double mass_rr = dp_double("vehicle.mass_rr");
-    const double cf = dp_double("vehicle.cf");
-    const double cr = dp_double("vehicle.cr");
-
-    // vehicle_model_ptr is only assigned in ctor, so parameter value have to be passed at init time
-    vehicle_model_ptr =
-      std::make_shared<DynamicsBicycleModel>(wheelbase, mass_fl, mass_fr, mass_rl, mass_rr, cf, cr);
-  } else {
-    RCLCPP_ERROR(node_->get_logger(), "vehicle_model_type is undefined");
-  }
+  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
+    createVehicleModel(wheelbase, m_mpc.m_steer_lim, m_mpc.m_param.steer_tau);
 
   /* QP solver setup */
-  const std::string qp_solver_type = node_->declare_parameter<std::string>("qp_solver_type");
-  std::shared_ptr<QPSolverInterface> qpsolver_ptr;
-  if (qp_solver_type == "unconstraint_fast") {
-    qpsolver_ptr = std::make_shared<QPSolverEigenLeastSquareLLT>();
-  } else if (qp_solver_type == "osqp") {
-    qpsolver_ptr = std::make_shared<QPSolverOSQP>(node_->get_logger());
-  } else {
-    RCLCPP_ERROR(node_->get_logger(), "qp_solver_type is undefined");
-  }
+  std::shared_ptr<QPSolverInterface> qpsolver_ptr = createQPSolverInterface();
 
   /* delay compensation */
   {
@@ -147,16 +118,9 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   }
 
   /* steering offset compensation */
-  {
-    const std::string ns = "steering_offset.";
-    enable_auto_steering_offset_removal_ = dp_bool(ns + "enable_auto_steering_offset_removal");
-    const auto vel_thres = dp_double(ns + "update_vel_threshold");
-    const auto steer_thres = dp_double(ns + "update_steer_threshold");
-    const auto limit = dp_double(ns + "steering_offset_limit");
-    const auto num = dp_int(ns + "average_num");
-    steering_offset_ =
-      std::make_shared<SteeringOffsetEstimator>(wheelbase, num, vel_thres, steer_thres, limit);
-  }
+  enable_auto_steering_offset_removal_ =
+    dp_bool("steering_offset.enable_auto_steering_offset_removal");
+  steering_offset_ = createSteerOffsetEstimator(wheelbase);
 
   /* initialize lowpass filter */
   {
@@ -197,6 +161,75 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
 
 MpcLateralController::~MpcLateralController()
 {
+}
+
+std::shared_ptr<VehicleModelInterface> MpcLateralController::createVehicleModel(
+  const double wheelbase, const double steer_lim, const double steer_tau)
+{
+  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr;
+
+  const std::string vehicle_model_type =
+    node_->declare_parameter<std::string>("vehicle_model_type");
+
+  if (vehicle_model_type == "kinematics") {
+    vehicle_model_ptr = std::make_shared<KinematicsBicycleModel>(wheelbase, steer_lim, steer_tau);
+    return vehicle_model_ptr;
+  }
+
+  if (vehicle_model_type == "kinematics_no_delay") {
+    vehicle_model_ptr = std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, steer_lim);
+    return vehicle_model_ptr;
+  }
+
+  if (vehicle_model_type == "dynamics") {
+    const double mass_fl = node_->declare_parameter<double>("vehicle.mass_fl");
+    const double mass_fr = node_->declare_parameter<double>("vehicle.mass_fr");
+    const double mass_rl = node_->declare_parameter<double>("vehicle.mass_rl");
+    const double mass_rr = node_->declare_parameter<double>("vehicle.mass_rr");
+    const double cf = node_->declare_parameter<double>("vehicle.cf");
+    const double cr = node_->declare_parameter<double>("vehicle.cr");
+
+    // vehicle_model_ptr is only assigned in ctor, so parameter value have to be passed at init time
+    vehicle_model_ptr =
+      std::make_shared<DynamicsBicycleModel>(wheelbase, mass_fl, mass_fr, mass_rl, mass_rr, cf, cr);
+    return vehicle_model_ptr;
+  }
+
+  RCLCPP_ERROR(node_->get_logger(), "vehicle_model_type is undefined");
+  return vehicle_model_ptr;
+}
+
+std::shared_ptr<QPSolverInterface> MpcLateralController::createQPSolverInterface()
+{
+  std::shared_ptr<QPSolverInterface> qpsolver_ptr;
+
+  const std::string qp_solver_type = node_->declare_parameter<std::string>("qp_solver_type");
+
+  if (qp_solver_type == "unconstraint_fast") {
+    qpsolver_ptr = std::make_shared<QPSolverEigenLeastSquareLLT>();
+    return qpsolver_ptr;
+  }
+
+  if (qp_solver_type == "osqp") {
+    qpsolver_ptr = std::make_shared<QPSolverOSQP>(node_->get_logger());
+    return qpsolver_ptr;
+  }
+
+  RCLCPP_ERROR(node_->get_logger(), "qp_solver_type is undefined");
+  return qpsolver_ptr;
+}
+
+std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffsetEstimator(
+  const double wheelbase)
+{
+  const std::string ns = "steering_offset.";
+  const auto vel_thres = node_->declare_parameter<double>(ns + "update_vel_threshold");
+  const auto steer_thres = node_->declare_parameter<double>(ns + "update_steer_threshold");
+  const auto limit = node_->declare_parameter<double>(ns + "steering_offset_limit");
+  const auto num = node_->declare_parameter<int>(ns + "average_num");
+  steering_offset_ =
+    std::make_shared<SteeringOffsetEstimator>(wheelbase, num, vel_thres, steer_thres, limit);
+  return steering_offset_;
 }
 
 trajectory_follower::LateralOutput MpcLateralController::run(
