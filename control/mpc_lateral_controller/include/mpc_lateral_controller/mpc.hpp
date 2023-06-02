@@ -345,13 +345,13 @@ private:
                                      : m_param.weight_steer_acc;
   }
 
-  inline bool fail_warn_throttle(const std::string & msg, const int duration_ms = 1000)
+  inline bool fail_warn_throttle(const std::string & msg, const int duration_ms = 1000) const
   {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, duration_ms, "%s", msg.c_str());
     return false;
   }
 
-  inline void warn_throttle(const std::string & msg, const int duration_ms = 1000)
+  inline void warn_throttle(const std::string & msg, const int duration_ms = 1000) const
   {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, duration_ms, "%s", msg.c_str());
   }

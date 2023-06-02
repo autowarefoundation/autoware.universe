@@ -244,8 +244,7 @@ std::pair<bool, MPCData> MPC::getData(
   if (!MPCUtils::calcNearestPoseInterp(
         traj, current_pose, &(data.nearest_pose), &(nearest_idx), &(data.nearest_time),
         ego_nearest_dist_threshold, ego_nearest_yaw_threshold, m_logger, *m_clock)) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, duration, "calculateMPC: error in calculating nearest pose. stop mpc.");
+    warn_throttle("calculateMPC: error in calculating nearest pose. stop mpc.");
     return {false, MPCData{}};
   }
 
@@ -285,8 +284,7 @@ std::pair<bool, MPCData> MPC::getData(
     m_param.min_prediction_length / static_cast<double>(m_param.prediction_horizon - 1);
   auto end_time = data.nearest_time + m_param.input_delay + m_ctrl_period + max_prediction_time;
   if (end_time > traj.relative_time.back()) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, 1000 /*ms*/, "path is too short for prediction.");
+    warn_throttle("path is too short for prediction.");
     return {false, MPCData{}};
   }
   return {true, data};
@@ -377,9 +375,7 @@ std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
     mpc_time_v.push_back(ts + i * prediction_dt);
   }
   if (!MPCUtils::linearInterpMPCTrajectory(input.relative_time, input, mpc_time_v, &output)) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, 1000 /*ms*/,
-      "calculateMPC: mpc resample error. stop mpc calculation. check code!");
+    warn_throttle("calculateMPC: mpc resample error. stop mpc calculation. check code!");
     return {false, {}};
   }
   return {true, output};
@@ -785,8 +781,7 @@ double MPC::getPredictionDeltaTime(
   const double target_time = [&]() {
     const double t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
     for (size_t i = nearest_idx + 1; i < input.relative_time.size(); i++) {
-      const double segment_dist =
-        std::hypot(input.x.at(i) - input.x.at(i - 1), input.y.at(i) - input.y.at(i - 1));
+      const double segment_dist = MPCUtils::calcDistance2d(input, i, i - 1);
       sum_dist += segment_dist;
       if (m_param.min_prediction_length < sum_dist) {
         const double prev_sum_dist = sum_dist - segment_dist;
