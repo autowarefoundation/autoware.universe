@@ -527,43 +527,6 @@ double l2Norm(const Vector3 vector)
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
 }
 
-PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double acceleration)
-{
-  PredictedPath predicted_path{};
-  predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
-  predicted_path.path.reserve(std::min(path.points.size(), static_cast<size_t>(100)));
-
-  if (path.points.empty()) {
-    return predicted_path;
-  }
-
-  FrenetPoint vehicle_pose_frenet =
-    convertToFrenetPoint(path.points, vehicle_pose.position, nearest_seg_idx);
-  const double initial_velocity = std::abs(vehicle_twist.linear.x);
-  const double lane_change_velocity = std::max(initial_velocity + acceleration * prepare_time, 0.0);
-
-  // prepare segment
-  for (double t = 0.0; t < prepare_time; t += resolution) {
-    const double length = initial_velocity * t + 0.5 * acceleration * t * t;
-    predicted_path.path.push_back(
-      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
-  }
-
-  // lane changing segment
-  const double offset =
-    initial_velocity * prepare_time + 0.5 * acceleration * prepare_time * prepare_time;
-  for (double t = prepare_time; t < duration; t += resolution) {
-    const double length = lane_change_velocity * (t - prepare_time) + offset;
-    predicted_path.path.push_back(
-      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
-  }
-
-  return predicted_path;
-}
-
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & object_path, const PredictedPath & ego_path, const double start_time,
   const double end_time, const double resolution)
@@ -1127,7 +1090,20 @@ bool isEgoOutOfRoute(
         "cannot find closest road lanelet");
       return false;
     }
-    return lanelet::utils::isInLanelet(self_pose, closest_road_lane);
+
+    if (lanelet::utils::isInLanelet(self_pose, closest_road_lane)) {
+      return true;
+    }
+
+    // check previous lanes for backward driving (e.g. pull out)
+    const auto prev_lanes = route_handler->getPreviousLanelets(closest_road_lane);
+    for (const auto & lane : prev_lanes) {
+      if (lanelet::utils::isInLanelet(self_pose, lane)) {
+        return true;
+      }
+    }
+
+    return false;
   });
   if (!is_in_shoulder_lane && !is_in_road_lane) {
     return true;
@@ -1955,7 +1931,7 @@ double getDistanceToCrosswalk(
 
   lanelet::ConstLanelet current_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
-    return std::numeric_limits<double>::max();
+    return std::numeric_limits<double>::infinity();
   }
 
   double distance = 0;
@@ -1964,24 +1940,8 @@ double getDistanceToCrosswalk(
     if (llt == current_lanelet) {
       is_after_current_lanelet = true;
     }
-    // check lane change tag
-    bool is_lane_change_yes = false;
-    const auto right_line = llt.rightBound();
-    if (right_line.hasAttribute(lanelet::AttributeNamesString::LaneChange)) {
-      const auto attr = right_line.attribute(lanelet::AttributeNamesString::LaneChange);
-      if (attr.value() == std::string("yes")) {
-        is_lane_change_yes = true;
-      }
-    }
-    const auto left_line = llt.leftBound();
-    if (left_line.hasAttribute(lanelet::AttributeNamesString::LaneChange)) {
-      const auto attr = left_line.attribute(lanelet::AttributeNamesString::LaneChange);
-      if (attr.value() == std::string("yes")) {
-        is_lane_change_yes = true;
-      }
-    }
 
-    if (is_after_current_lanelet && !is_lane_change_yes) {
+    if (is_after_current_lanelet) {
       const auto conflicting_crosswalks = overall_graphs.conflictingInGraph(llt, 1);
       if (!(conflicting_crosswalks.empty())) {
         // create centerline
@@ -1993,7 +1953,7 @@ double getDistanceToCrosswalk(
         }
 
         // create crosswalk polygon and calculate distance
-        double min_distance_to_crosswalk = std::numeric_limits<double>::max();
+        double min_distance_to_crosswalk = std::numeric_limits<double>::infinity();
         for (const auto & crosswalk : conflicting_crosswalks) {
           lanelet::CompoundPolygon2d lanelet_crosswalk_polygon = crosswalk.polygon2d();
           Polygon2d polygon;
@@ -2028,7 +1988,7 @@ double getDistanceToCrosswalk(
     distance += lanelet::utils::getLaneletLength3d(llt);
   }
 
-  return std::numeric_limits<double>::max();
+  return std::numeric_limits<double>::infinity();
 }
 
 double getSignedDistance(

@@ -76,6 +76,25 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 {
   base_vector.insert(base_vector.end(), additional_vector.begin(), additional_vector.end());
 }
+
+bool isDrivingSameLane(
+  const lanelet::ConstLanelets & previous_lanes, const lanelet::ConstLanelets & current_lanes)
+{
+  std::multiset<lanelet::Id> prev_ids{};
+  std::multiset<lanelet::Id> curr_ids{};
+  std::multiset<lanelet::Id> same_ids{};
+
+  std::for_each(
+    previous_lanes.begin(), previous_lanes.end(), [&](const auto & l) { prev_ids.insert(l.id()); });
+  std::for_each(
+    current_lanes.begin(), current_lanes.end(), [&](const auto & l) { curr_ids.insert(l.id()); });
+
+  std::set_intersection(
+    prev_ids.begin(), prev_ids.end(), curr_ids.begin(), curr_ids.end(),
+    std::inserter(same_ids, same_ids.end()));
+
+  return !same_ids.empty();
+}
 }  // namespace
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -153,6 +172,11 @@ ModuleStatus AvoidanceModule::updateState()
   const auto is_plan_running = isAvoidancePlanRunning();
   const bool has_avoidance_target = !avoidance_data_.target_objects.empty();
 
+  if (!isDrivingSameLane(prev_driving_lanes_, avoidance_data_.current_lanelets)) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "previous module lane is updated.");
+    return ModuleStatus::SUCCESS;
+  }
+
   DEBUG_PRINT(
     "is_plan_running = %d, has_avoidance_target = %d", is_plan_running, has_avoidance_target);
 
@@ -167,6 +191,7 @@ ModuleStatus AvoidanceModule::updateState()
     return ModuleStatus::SUCCESS;
   }
 
+  prev_driving_lanes_ = avoidance_data_.current_lanelets;
   return ModuleStatus::RUNNING;
 }
 
@@ -369,6 +394,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
 {
   constexpr double AVOIDING_SHIFT_THR = 0.1;
   data.avoiding_now = std::abs(getCurrentShift()) > AVOIDING_SHIFT_THR;
+  data.candidate_path = utils::avoidance::toShiftedPath(data.reference_path);
 
   auto path_shifter = path_shifter_;
 
@@ -443,7 +469,6 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    */
   if (!data.safe && data.avoid_required) {
     data.yield_required = data.found_avoidance_path && data.avoid_required;
-    data.candidate_path = utils::avoidance::toShiftedPath(data.reference_path);
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "not found safe avoidance path. transit yield maneuver...");
   }
@@ -454,7 +479,6 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    */
   if (!data.safe && registered) {
     data.yield_required = true;
-    data.candidate_path = utils::avoidance::toShiftedPath(data.reference_path);
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000,
       "found safe avoidance path, but it is not safe. canceling avoidance path...");
@@ -540,6 +564,10 @@ AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & dat
 
 void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path)
 {
+  if (parameters_->disable_path_update) {
+    return;
+  }
+
   switch (data.state) {
     case AvoidanceState::NOT_AVOID: {
       break;
@@ -547,10 +575,9 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     case AvoidanceState::YIELD: {
       insertYieldVelocity(path);
       insertWaitPoint(parameters_->use_constraints_for_decel, path);
+      initRTCStatus();
       removeAllRegisteredShiftPoints(path_shifter_);
-      clearWaitingApproval();
       unlockNewModuleLaunch();
-      removeRTCStatus();
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
@@ -569,6 +596,8 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     default:
       throw std::domain_error("invalid behavior");
   }
+
+  setStopReason(StopReason::AVOIDANCE, path.path);
 }
 
 /**
@@ -2816,12 +2845,13 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
 
   avoidance_data_.state = updateEgoState(data);
-  if (!parameters_->disable_path_update) {
-    updateEgoBehavior(data, avoidance_path);
-  }
 
-  updateInfoMarker(avoidance_data_);
-  updateDebugMarker(avoidance_data_, path_shifter_, debug_data_);
+  // update output data
+  {
+    updateEgoBehavior(data, avoidance_path);
+    updateInfoMarker(avoidance_data_);
+    updateDebugMarker(avoidance_data_, path_shifter_, debug_data_);
+  }
 
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
   output.reference_path = getPreviousModuleOutput().reference_path;
@@ -3119,6 +3149,10 @@ void AvoidanceModule::updateData()
   if (prev_reference_.points.empty()) {
     prev_reference_ = *getPreviousModuleOutput().path;
   }
+  if (prev_driving_lanes_.empty()) {
+    prev_driving_lanes_ =
+      utils::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+  }
 #endif
 
   debug_data_ = DebugData();
@@ -3166,6 +3200,7 @@ void AvoidanceModule::processOnEntry()
 void AvoidanceModule::processOnExit()
 {
   initVariables();
+  initRTCStatus();
 }
 
 void AvoidanceModule::initVariables()
@@ -3173,9 +3208,8 @@ void AvoidanceModule::initVariables()
   prev_output_ = ShiftedPath();
   prev_linear_shift_path_ = ShiftedPath();
   prev_reference_ = PathWithLaneId();
+  prev_driving_lanes_.clear();
   path_shifter_ = PathShifter{};
-  left_shift_array_.clear();
-  right_shift_array_.clear();
 
   debug_data_ = DebugData();
   debug_marker_.markers.clear();
@@ -3185,6 +3219,17 @@ void AvoidanceModule::initVariables()
   current_raw_shift_lines_ = {};
   original_unique_id = 0;
   is_avoidance_maneuver_starts = false;
+}
+
+void AvoidanceModule::initRTCStatus()
+{
+  removeRTCStatus();
+  clearWaitingApproval();
+  left_shift_array_.clear();
+  right_shift_array_.clear();
+  uuid_map_.at("left") = generateUUID();
+  uuid_map_.at("right") = generateUUID();
+  candidate_uuid_ = generateUUID();
 }
 
 TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) const

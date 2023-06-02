@@ -15,6 +15,10 @@
       longitudinal_acceleration_sampling_num: 5
       lateral_acceleration_sampling_num: 3
 
+      # longitudinal acceleration
+      min_longitudinal_acc: -1.0
+      max_longitudinal_acc: 1.0
+
       # lateral acceleration map
       lateral_acceleration:
         velocity: [0.0, 4.0, 10.0]
@@ -45,6 +49,8 @@
       abort_delta_time: 1.0                      # [s]
       aborting_time: 5.0                         # [s]
       abort_max_lateral_jerk: 1000.0             # [m/s3]
+
+      finish_judge_lateral_threshold: 0.2        # [m]
 
       # debug
       publish_debug_marker: false
