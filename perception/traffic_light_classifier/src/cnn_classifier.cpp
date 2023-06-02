@@ -56,10 +56,6 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   if (!trt_common_->isInitialized()) {
     return;
   }
-  if (trt_common_->getBindingDimensions() != 2) {
-    RCLCPP_ERROR(node_ptr_->get_logger(), "Model number bindings must be 2!");
-    return;
-  }
   const auto input_dims = trt_common_->getBindingDimensions(0);
   if (input_dims.nbDims != 4) {
     RCLCPP_ERROR(node_ptr_->get_logger(), "Model input dimension must be 4!");
