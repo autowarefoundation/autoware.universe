@@ -225,17 +225,14 @@ void MPC::setReferenceTrajectory(
     param.curvature_smoothing_num_traj, param.curvature_smoothing_num_ref_steer,
     &mpc_traj_smoothed);
 
-  // add end point with vel=0 on trajectory for mpc prediction
-  {
-    auto & t = mpc_traj_smoothed;
-    const double t_ext = 100.0;  // extra time to prevent mpc calc failure due to short time
-    const double t_end = t.relative_time.back() + t_ext;
-    const double v_end = 0.0;
-    t.vx.back() = v_end;  // set for end point
-    t.push_back(
-      t.x.back(), t.y.back(), t.z.back(), t.yaw.back(), v_end, t.k.back(), t.smooth_k.back(),
-      t_end);
-  }
+  // stop velocity at a terminal point
+  mpc_traj_smoothed.vx.back() = 0.0;
+
+  // add a extra point on back with extended time to make the mpc stable.
+  auto last_point = mpc_traj_smoothed.back();
+  last_point.relative_time += 100.0;  // extra time to prevent mpc calc failure due to short time
+  last_point.vx = 0.0;                // stop velocity at a terminal point
+  mpc_traj_smoothed.push_back(last_point);
 
   if (!mpc_traj_smoothed.size()) {
     RCLCPP_DEBUG(m_logger, "path callback: trajectory size is undesired.");
