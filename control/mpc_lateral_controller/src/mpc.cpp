@@ -118,47 +118,31 @@ bool MPC::calculateMPC(
   const double nearest_smooth_k = reference_trajectory.smooth_k[mpc_data.nearest_idx];
   const double steer_cmd = ctrl_cmd.steering_tire_angle;
   const double wb = m_vehicle_model_ptr->getWheelbase();
-
+  const double wz_predicted = current_velocity * std::tan(mpc_data.predicted_steer) / wb;
+  const double wz_measured = current_velocity * std::tan(mpc_data.steer) / wb;
+  const double wz_command = current_velocity * std::tan(steer_cmd) / wb;
   typedef decltype(diagnostic.data)::value_type DiagnosticValueType;
-  auto append_diag_data = [&](const auto & val) -> void {
+  const auto append_diag = [&](const auto & val) -> void {
     diagnostic.data.push_back(static_cast<DiagnosticValueType>(val));
   };
-  // [0] final steering command (MPC + LPF)
-  append_diag_data(steer_cmd);
-  // [1] mpc calculation result
-  append_diag_data(Uex(0));
-  // [2] feedforward steering value
-  append_diag_data(mpc_matrix.Uref_ex(0));
-  // [3] feedforward steering value raw
-  append_diag_data(std::atan(nearest_smooth_k * wb));
-  // [4] current steering angle
-  append_diag_data(mpc_data.steer);
-  // [5] lateral error
-  append_diag_data(mpc_data.lateral_err);
-  // [6] current_pose yaw
-  append_diag_data(tf2::getYaw(current_pose.orientation));
-  // [7] nearest_pose yaw
-  append_diag_data(tf2::getYaw(mpc_data.nearest_pose.orientation));
-  // [8] yaw error
-  append_diag_data(mpc_data.yaw_err);
-  // [9] reference velocity
-  append_diag_data(reference_trajectory.vx[mpc_data.nearest_idx]);
-  // [10] measured velocity
-  append_diag_data(current_velocity);
-  // [11] angvel from steer command
-  append_diag_data(current_velocity * tan(steer_cmd) / wb);
-  // [12] angvel from measured steer
-  append_diag_data(current_velocity * tan(mpc_data.steer) / wb);
-  // [13] angvel from path curvature
-  append_diag_data(current_velocity * nearest_smooth_k);
-  // [14] nearest path curvature (used for feedforward)
-  append_diag_data(nearest_smooth_k);
-  // [15] nearest path curvature (not smoothed)
-  append_diag_data(nearest_k);
-  // [16] predicted steer
-  append_diag_data(mpc_data.predicted_steer);
-  // [17] angvel from predicted steer
-  append_diag_data(current_velocity * tan(mpc_data.predicted_steer) / wb);
+  append_diag(steer_cmd);                              // [0] final steering command (MPC + LPF)
+  append_diag(Uex(0));                                 // [1] mpc calculation result
+  append_diag(mpc_matrix.Uref_ex(0));                  // [2] feedforward steering value
+  append_diag(std::atan(nearest_smooth_k * wb));       // [3] feedforward steering value raw
+  append_diag(mpc_data.steer);                         // [4] current steering angle
+  append_diag(mpc_data.lateral_err);                   // [5] lateral error
+  append_diag(tf2::getYaw(current_pose.orientation));  // [6] current_pose yaw
+  append_diag(tf2::getYaw(mpc_data.nearest_pose.orientation));  // [7] nearest_pose yaw
+  append_diag(mpc_data.yaw_err);                                // [8] yaw error
+  append_diag(reference_trajectory.vx[mpc_data.nearest_idx]);   // [9] reference velocity
+  append_diag(current_velocity);                                // [10] measured velocity
+  append_diag(wz_command);  // [11] angular velocity from steer command
+  append_diag(wz_measured);                             // [12] angular velocity from measured steer
+  append_diag(current_velocity * nearest_smooth_k);     // [13] angular velocity from path curvature
+  append_diag(nearest_smooth_k);          // [14] nearest path curvature (used for feedforward)
+  append_diag(nearest_k);                 // [15] nearest path curvature (not smoothed)
+  append_diag(mpc_data.predicted_steer);  // [16] predicted steer
+  append_diag(wz_predicted);              // [17] angular velocity from predicted steer
 
   return true;
 }
