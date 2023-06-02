@@ -625,8 +625,7 @@ std::pair<bool, Eigen::VectorXd> MPC::executeOptimization(
   VectorXd Uex;
 
   if (!isValid(m)) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, 1000 /*ms*/, "model matrix is invalid. stop MPC.");
+    warn_throttle("model matrix is invalid. stop MPC.");
     return {false, {}};
   }
 
@@ -695,7 +694,7 @@ std::pair<bool, Eigen::VectorXd> MPC::executeOptimization(
   bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);
   auto t_end = std::chrono::system_clock::now();
   if (!solve_result) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "qp solver error");
+    warn_throttle("qp solver error");
     return {false, {}};
   }
 
@@ -705,8 +704,7 @@ std::pair<bool, Eigen::VectorXd> MPC::executeOptimization(
   }
 
   if (Uex.array().isNaN().any()) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, 1000 /*ms*/, "model Uex includes NaN, stop MPC.");
+    warn_throttle("model Uex includes NaN, stop MPC.");
     return {false, {}};
   }
   return {true, Uex};
