@@ -15,15 +15,15 @@ It's currently a provisional implementation.
 
 | Name                             | Type                                         | Description                                              |
 | -------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
-| ~/sub/vector_map                 | autoware_auto_mapping_msgs/msg/HADMapBin     | The vector map to get valid traffic signal ids.          |
+| ~/sub/vector_map                 | autoware_auto_mapping_msgs::msg::HADMapBin   | The vector map to get valid traffic signal ids.          |
 | ~/sub/perception_traffic_signals | autoware_perception_msgs::msg::TrafficSignal | The traffic signals from the image recognition pipeline. |
 | ~/sub/v2x_traffic_signals        | autoware_perception_msgs::msg::TrafficSignal | The traffic signals from the V2X interface.              |
 
 #### Output
 
-| Name                  | Type                                            | Description                      |
-| --------------------- | ----------------------------------------------- | -------------------------------- |
-| ~/pub/traffic_signals | autoware_perception_msgs/msg/TrafficSignalArray | The merged traffic signal state. |
+| Name                  | Type                                              | Description                      |
+| --------------------- | ------------------------------------------------- | -------------------------------- |
+| ~/pub/traffic_signals | autoware_perception_msgs::msg::TrafficSignalArray | The merged traffic signal state. |
 
 ## Parameters
 
