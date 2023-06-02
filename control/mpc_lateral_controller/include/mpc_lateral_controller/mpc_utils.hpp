@@ -151,7 +151,7 @@ void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift);
  * @param [inout] traj object trajectory
  */
 bool calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num_traj, const size_t curvature_smoothing_num_ref_steer,
+  const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
   MPCTrajectory * traj);
 
 /**
@@ -162,7 +162,7 @@ bool calcTrajectoryCurvature(
  * @return vector of curvatures at each point of the given trajectory
  */
 std::vector<double> calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num, const MPCTrajectory & traj);
+  const int curvature_smoothing_num, const MPCTrajectory & traj);
 
 /**
  * @brief calculate nearest pose on MPCTrajectory with linear interpolation

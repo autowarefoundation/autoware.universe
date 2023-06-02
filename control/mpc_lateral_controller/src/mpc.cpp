@@ -44,7 +44,7 @@ bool MPC::calculateMPC(
   }
 
   // calculate initial state of the error dynamics
-  const VectorXd x0 = getInitialState(mpc_data);
+  const auto x0 = getInitialState(mpc_data);
 
   // apply time delay compensation to the initial state
   const auto [success_delay, x0_delayed] =
@@ -222,8 +222,7 @@ void MPC::setReferenceTrajectory(
 
   // calculate curvature
   MPCUtils::calcTrajectoryCurvature(
-    static_cast<size_t>(curvature_smoothing_num_traj),
-    static_cast<size_t>(curvature_smoothing_num_ref_steer), &mpc_traj_smoothed);
+    curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer, &mpc_traj_smoothed);
 
   // add end point with vel=0 on trajectory for mpc prediction
   {

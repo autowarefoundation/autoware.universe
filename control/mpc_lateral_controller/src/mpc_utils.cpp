@@ -173,7 +173,7 @@ void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift)
 }
 
 bool calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num_traj, const size_t curvature_smoothing_num_ref_steer,
+  const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
   MPCTrajectory * traj)
 {
   if (!traj) {
@@ -186,15 +186,15 @@ bool calcTrajectoryCurvature(
 }
 
 std::vector<double> calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num, const MPCTrajectory & traj)
+  const int curvature_smoothing_num, const MPCTrajectory & traj)
 {
   std::vector<double> curvature_vec(traj.x.size());
 
   /* calculate curvature by circle fitting from three points */
   geometry_msgs::msg::Point p1, p2, p3;
-  const size_t max_smoothing_num =
-    static_cast<size_t>(std::floor(0.5 * (static_cast<double>(traj.x.size() - 1))));
-  const size_t L = std::min(curvature_smoothing_num, max_smoothing_num);
+  const int max_smoothing_num =
+    static_cast<int>(std::floor(0.5 * (static_cast<double>(traj.x.size() - 1))));
+  const size_t L = static_cast<size_t>(std::min(curvature_smoothing_num, max_smoothing_num));
   for (size_t i = L; i < traj.x.size() - L; ++i) {
     const size_t curr_idx = i;
     const size_t prev_idx = curr_idx - L;
