@@ -153,6 +153,35 @@ PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWith
   return path;
 }
 
+lanelet::ConstLanelets getTargetPreferredLanes(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const Direction & direction,
+  const LaneChangeModuleType & type)
+{
+  if (type != LaneChangeModuleType::NORMAL) {
+    return target_lanes;
+  }
+
+  const auto target_lane =
+    utils::lane_change::getLaneChangeTargetLane(route_handler, current_lanes, type, direction);
+  if (!target_lane) {
+    return target_lanes;
+  }
+
+  const auto itr = std::find_if(
+    target_lanes.begin(), target_lanes.end(),
+    [&](const lanelet::ConstLanelet & lane) { return lane.id() == target_lane->id(); });
+
+  if (itr == target_lanes.end()) {
+    return target_lanes;
+  }
+
+  const int target_id = std::distance(target_lanes.begin(), itr);
+  const lanelet::ConstLanelets target_preferred_lanes(
+    target_lanes.begin() + target_id, target_lanes.end());
+  return target_preferred_lanes;
+}
+
 bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets)
@@ -225,10 +254,10 @@ std::optional<LaneChangePath> constructCandidatePath(
       .get_child("constructCandidatePath"),
     "prepare_length: %f, lane_change: %f", prepare_length, lane_changing_length);
 
-  const PathPointWithLaneId & lane_changing_end_point = target_segment.points.front();
-  const Pose & lane_changing_end_pose = lane_changing_end_point.point.pose;
+  candidate_path.lane_changing_start = prepare_segment.points.back().point.pose;
+  candidate_path.lane_changing_end = target_segment.points.front().point.pose;
   const auto lane_change_end_idx =
-    motion_utils::findNearestIndex(shifted_path.path.points, lane_changing_end_pose);
+    motion_utils::findNearestIndex(shifted_path.path.points, candidate_path.lane_changing_end);
 
   if (!lane_change_end_idx) {
     RCLCPP_ERROR_STREAM(

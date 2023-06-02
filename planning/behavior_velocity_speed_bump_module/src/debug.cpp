@@ -93,19 +93,18 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray SpeedBumpModule::createVirtualWallMarkerArray()
+motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
 {
-  const auto now = this->clock_->now();
-  auto id = module_id_;
-
-  visualization_msgs::msg::MarkerArray wall_marker;
+  motion_utils::VirtualWalls virtual_walls;
+  motion_utils::VirtualWall wall;
+  wall.text = "speed_bump";
+  wall.ns = std::to_string(module_id_) + "_";
+  wall.style = motion_utils::VirtualWallType::slowdown;
   for (const auto & p : debug_data_.slow_start_poses) {
-    const auto & p_front = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
-    appendMarkerArray(
-      createSlowDownVirtualWallMarker(p_front, "speed_bump", now, id++), &wall_marker);
+    wall.pose = p;
+    virtual_walls.push_back(wall);
   }
-
-  return wall_marker;
+  return virtual_walls;
 }
 
 visualization_msgs::msg::MarkerArray SpeedBumpModule::createDebugMarkerArray()

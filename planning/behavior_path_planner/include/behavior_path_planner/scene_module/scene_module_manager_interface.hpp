@@ -154,6 +154,9 @@ public:
         appendMarkerArray(virtual_wall, &markers);
       }
 
+      const auto module_specific_wall = m->getModuleVirtualWall();
+      appendMarkerArray(module_specific_wall, &markers);
+
       m->resetWallPoses();
     }
 
@@ -203,6 +206,10 @@ public:
 
   bool isSimultaneousExecutableAsApprovedModule() const
   {
+    if (registered_modules_.empty()) {
+      return enable_simultaneous_execution_as_approved_module_;
+    }
+
     return std::all_of(
       registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
         return module->isSimultaneousExecutableAsApprovedModule();
@@ -211,6 +218,10 @@ public:
 
   bool isSimultaneousExecutableAsCandidateModule() const
   {
+    if (registered_modules_.empty()) {
+      return enable_simultaneous_execution_as_candidate_module_;
+    }
+
     return std::all_of(
       registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
         return module->isSimultaneousExecutableAsCandidateModule();

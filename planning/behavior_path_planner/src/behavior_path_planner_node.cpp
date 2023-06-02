@@ -67,6 +67,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
+  stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -327,6 +328,26 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&BehaviorPathPlannerNode::run, this));
   }
+}
+
+std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
+{
+#ifdef USE_OLD_ARCHITECTURE
+  auto registered_modules_ptr = bt_manager_->getSceneModules();
+  std::vector<std::string> waiting_approval_modules;
+  for (const auto & module : registered_modules_ptr) {
+    if (module->isWaitingApproval() == true) {
+      waiting_approval_modules.push_back(module->name());
+#else
+  auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
+  std::vector<std::string> waiting_approval_modules;
+  for (const auto & module : all_scene_module_ptr) {
+    if (module->is_waiting_approval == true) {
+      waiting_approval_modules.push_back(module->module_name);
+#endif
+    }
+  }
+  return waiting_approval_modules;
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
@@ -783,6 +804,9 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.aborting_time = declare_parameter<double>(parameter("aborting_time"));
   p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
 
+  p.finish_judge_lateral_threshold =
+    declare_parameter<double>("lane_change.finish_judge_lateral_threshold");
+
   // debug marker
   p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
 
@@ -1030,6 +1054,7 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.th_arrived_distance = declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = declare_parameter<double>(ns + "th_stopped_time");
+  p.th_blinker_on_lateral_offset = declare_parameter<double>(ns + "th_blinker_on_lateral_offset");
   p.collision_check_margin = declare_parameter<double>(ns + "collision_check_margin");
   p.collision_check_distance_from_end =
     declare_parameter<double>(ns + "collision_check_distance_from_end");
@@ -1249,6 +1274,7 @@ void BehaviorPathPlannerNode::run()
 #else
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
+  stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 #endif
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -1261,6 +1287,8 @@ void BehaviorPathPlannerNode::run()
     planner_data_->prev_modified_goal = modified_goal;
     modified_goal_publisher_->publish(modified_goal);
   }
+
+  planner_data_->prev_route_id = planner_data_->route_handler->getRouteUuid();
 
   if (planner_data_->parameters.visualize_maximum_drivable_area) {
     const auto maximum_drivable_area = marker_utils::createFurthestLineStringMarkerArray(

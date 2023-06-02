@@ -103,6 +103,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   output.turn_signal_info = updateOutputTurnSignal();
 
   if (isAbortState()) {
+    output.reference_path = std::make_shared<PathWithLaneId>(prev_module_reference_path_);
     return output;
   }
 
@@ -261,10 +262,22 @@ bool NormalLaneChange::hasFinishedLaneChange() const
   const auto & lane_change_end = status_.lane_change_path.shift_line.end;
   const double dist_to_lane_change_end = motion_utils::calcSignedArcLength(
     lane_change_path.points, current_pose.position, lane_change_end.position);
-  if (dist_to_lane_change_end + lane_change_parameters_->lane_change_finish_judge_buffer < 0.0) {
-    return true;
+
+  const auto reach_lane_change_end =
+    dist_to_lane_change_end + lane_change_parameters_->lane_change_finish_judge_buffer < 0.0;
+  if (!reach_lane_change_end) {
+    return false;
   }
-  return false;
+
+  const auto arc_length =
+    lanelet::utils::getArcCoordinates(status_.lane_change_lanes, current_pose);
+  const auto reach_target_lane =
+    std::abs(arc_length.distance) < lane_change_parameters_->finish_judge_lateral_threshold;
+  if (!reach_target_lane) {
+    return false;
+  }
+
+  return true;
 }
 
 bool NormalLaneChange::isAbleToReturnCurrentLane() const
@@ -452,6 +465,13 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto lateral_buffer =
     utils::lane_change::calcLateralBufferForFiltering(common_parameter.vehicle_width, 0.5);
 
+  const auto target_preferred_lanelets = utils::lane_change::getTargetPreferredLanes(
+    route_handler, original_lanelets, target_lanelets, direction, type_);
+  const auto target_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
+    target_preferred_lanelets, 0, std::numeric_limits<double>::max());
+  const auto target_preferred_lane_poly_2d =
+    lanelet::utils::to2D(target_preferred_lane_poly).basicPolygon();
+
   LaneChangeTargetObjectIndices dynamic_object_indices;
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
@@ -560,6 +580,14 @@ bool NormalLaneChange::getLaneChangePaths(
         RCLCPP_DEBUG(
           rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
           "target segment is empty!! something wrong...");
+        continue;
+      }
+
+      const lanelet::BasicPoint2d lc_terminal_point(
+        target_segment.points.front().point.pose.position.x,
+        target_segment.points.front().point.pose.position.y);
+      if (!boost::geometry::covered_by(lc_terminal_point, target_preferred_lane_poly_2d)) {
+        // lane change terminal point is not inside of the target preferred lanes
         continue;
       }
 
