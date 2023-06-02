@@ -455,8 +455,7 @@ void MpcLateralController::publishDebugValues(Float32MultiArrayStamped & debug_v
   m_pub_steer_offset->publish(offset);
 }
 
-void MpcLateralController::setSteeringToHistory(
-  const autoware_auto_control_msgs::msg::AckermannLateralCommand & steering)
+void MpcLateralController::setSteeringToHistory(const AckermannLateralCommand & steering)
 {
   const auto time = node_->now();
   if (m_mpc_steering_history.empty()) {
