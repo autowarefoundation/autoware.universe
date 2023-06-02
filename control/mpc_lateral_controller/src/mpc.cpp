@@ -542,9 +542,10 @@ MPCMatrix MPC::generateMPCMatrix(
 
     Q = MatrixXd::Zero(DIM_Y, DIM_Y);
     R = MatrixXd::Zero(DIM_U, DIM_U);
-    Q(0, 0) = getWeightLatError(ref_k);
-    Q(1, 1) = getWeightHeadingError(ref_k);
-    R(0, 0) = getWeightSteerInput(ref_k);
+    const auto mpc_weight = getWeight(ref_k);
+    Q(0, 0) = mpc_weight.lat_error;
+    Q(1, 1) = mpc_weight.heading_error;
+    R(0, 0) = mpc_weight.steering_input;
 
     Q_adaptive = Q;
     R_adaptive = R;
@@ -552,8 +553,8 @@ MPCMatrix MPC::generateMPCMatrix(
       Q_adaptive(0, 0) = m_param.nominal_weight.terminal_lat_error;
       Q_adaptive(1, 1) = m_param.nominal_weight.terminal_heading_error;
     }
-    Q_adaptive(1, 1) += ref_vx_squared * getWeightHeadingErrorSqVel(ref_k);
-    R_adaptive(0, 0) += ref_vx_squared * getWeightSteerInputSqVel(ref_k);
+    Q_adaptive(1, 1) += ref_vx_squared * mpc_weight.heading_error_squared_vel;
+    R_adaptive(0, 0) += ref_vx_squared * mpc_weight.steering_input_squared_vel;
 
     // update mpc matrix
     int idx_x_i = i * DIM_X;
@@ -591,7 +592,7 @@ MPCMatrix MPC::generateMPCMatrix(
   for (int i = 0; i < N - 1; ++i) {
     const double ref_vx = reference_trajectory.vx.at(i);
     const double ref_k = reference_trajectory.k.at(i) * sign_vx;
-    const double j = ref_vx * ref_vx * getWeightLatJerk(ref_k) / (DT * DT);
+    const double j = ref_vx * ref_vx * getWeight(ref_k).lat_jerk / (DT * DT);
     const Eigen::Matrix2d J = (Eigen::Matrix2d() << j, -j, -j, j).finished();
     m.R2ex.block(i, i, 2, 2) += J;
   }
