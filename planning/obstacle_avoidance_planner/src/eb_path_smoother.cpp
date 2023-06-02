@@ -168,7 +168,10 @@ void EBPathSmoother::initialize(const bool enable_debug_info, const TrajectoryPa
   traj_param_ = traj_param;
 }
 
-void EBPathSmoother::resetPreviousData() { prev_eb_traj_points_ptr_ = nullptr; }
+void EBPathSmoother::resetPreviousData()
+{
+  prev_eb_traj_points_ptr_ = nullptr;
+}
 
 std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
@@ -375,6 +378,12 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
   // check status
   if (status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[EB]");
+    return std::nullopt;
+  }
+  const auto has_nan = std::any_of(
+    optimized_points.begin(), optimized_points.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
     return std::nullopt;
   }
 

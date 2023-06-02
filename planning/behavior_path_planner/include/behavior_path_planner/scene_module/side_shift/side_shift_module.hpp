@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/util/side_shift/side_shift_parameters.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/side_shift/side_shift_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -39,9 +40,16 @@ using tier4_planning_msgs::msg::LateralOffset;
 class SideShiftModule : public SceneModuleInterface
 {
 public:
+#ifdef USE_OLD_ARCHITECTURE
   SideShiftModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<SideShiftParameters> & parameters);
+#else
+  SideShiftModule(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<SideShiftParameters> & parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+#endif
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -49,11 +57,12 @@ public:
     const double & min_request_time_sec, bool override_requests = false) const noexcept;
   ModuleStatus updateState() override;
   void updateData() override;
+  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
-  void onEntry() override;
-  void onExit() override;
+  void processOnEntry() override;
+  void processOnExit() override;
 
   void setParameters(const std::shared_ptr<SideShiftParameters> & parameters);
 
@@ -77,7 +86,7 @@ private:
 #endif
 
   // non-const methods
-  void adjustDrivableArea(ShiftedPath * path) const;
+  BehaviorModuleOutput adjustDrivableArea(const ShiftedPath & path) const;
 
   ShiftLine calcShiftLine() const;
 
@@ -118,14 +127,15 @@ private:
   ShiftedPath prev_output_;
   ShiftLine prev_shift_line_;
 
-  // NOTE: this function is ported from avoidance.
-  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  inline Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
   PathWithLaneId extendBackwardLength(const PathWithLaneId & original_path) const;
-  PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
+
+  rclcpp::Time latest_lateral_offset_stamp_;
+
+  // debug
+  mutable SideShiftDebugData debug_data_;
+  void setDebugMarkersVisualization() const;
 };
 
 }  // namespace behavior_path_planner

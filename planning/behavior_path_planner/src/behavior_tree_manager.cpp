@@ -17,7 +17,7 @@
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -89,6 +89,18 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
     *s = SceneModuleStatus{s->module_name};
   });
 
+  const bool is_any_module_running = std::any_of(
+    scene_modules_.begin(), scene_modules_.end(),
+    [](const auto & module) { return module->getCurrentStatus() == BT::NodeStatus::RUNNING; });
+
+  if (
+    !is_any_module_running &&
+    utils::isEgoOutOfRoute(
+      data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler)) {
+    BehaviorModuleOutput output = utils::createGoalAroundPath(data);
+    return output;
+  }
+
   // reset blackboard
   blackboard_->set<BehaviorModuleOutput>("output", BehaviorModuleOutput{});
 
@@ -101,7 +113,10 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
   resetNotRunningModulePathCandidate();
 
   std::for_each(scene_modules_.begin(), scene_modules_.end(), [](const auto & m) {
+    m->publishInfoMarker();
     m->publishDebugMarker();
+    m->publishStopReasons();
+    m->publishVirtualWall();
     if (!m->isExecutionRequested()) {
       m->onExit();
     }
@@ -130,7 +145,10 @@ void BehaviorTreeManager::resetNotRunningModulePathCandidate()
   }
 }
 
-void BehaviorTreeManager::resetBehaviorTree() { bt_tree_.haltTree(); }
+void BehaviorTreeManager::resetBehaviorTree()
+{
+  bt_tree_.haltTree();
+}
 
 void BehaviorTreeManager::addGrootMonitoring(
   BT::Tree * tree, uint16_t publisher_port, uint16_t server_port, uint16_t max_msg_per_second)
