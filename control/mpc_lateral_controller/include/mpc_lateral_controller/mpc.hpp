@@ -342,6 +342,12 @@ private:
                                      : m_param.weight_steer_acc;
   }
 
+  inline bool fail_warn_throttle(const std::string & msg)
+  {
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "%s", msg.c_str());
+    return false;
+  }
+
 public:
   //!< @brief reference trajectory to be followed
   MPCTrajectory m_ref_traj;

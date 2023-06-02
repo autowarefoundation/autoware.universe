@@ -39,8 +39,7 @@ bool MPC::calculateMPC(
 
   const auto [success_data, mpc_data] = getData(reference_trajectory, current_steer, current_pose);
   if (!success_data) {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "fail to get Data.");
-    return false;
+    return fail_warn_throttle("fail to get MPC Data. Stop MPC.");
   }
 
   /* define initial state for error dynamics */
@@ -50,20 +49,18 @@ bool MPC::calculateMPC(
   const auto [success_delay, x0_delayed] =
     updateStateForDelayCompensation(reference_trajectory, mpc_data.nearest_time, x0);
   if (!success_delay) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, 1000 /*ms*/, "updateStateForDelayCompensation failed. stop computation.");
-    return false;
+    return fail_warn_throttle("delay compensation failed. Stop MPC.");
   }
 
   /* resample ref_traj with mpc sampling time */
   const double mpc_start_time = mpc_data.nearest_time + m_param.input_delay;
   const double prediction_dt =
     getPredictionDeltaTime(mpc_start_time, reference_trajectory, current_pose);
+
   const auto [success_resample, mpc_resampled_ref_traj] =
     resampleMPCTrajectoryByTime(mpc_start_time, prediction_dt, reference_trajectory);
   if (!success_resample) {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "trajectory resampling failed.");
-    return false;
+    return fail_warn_throttle("trajectory resampling failed. Stop MPC.");
   }
 
   /* generate mpc matrix : predict equation Xec = Aex * x0 + Bex * Uex + Wex */
@@ -73,8 +70,7 @@ bool MPC::calculateMPC(
   const auto [success_opt, Uex] = executeOptimization(
     mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_traj, current_velocity);
   if (!success_opt) {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "optimization failed.");
-    return false;
+    return fail_warn_throttle("optimization failed. Stop MPC.");
   }
 
   /* apply saturation and filter */
