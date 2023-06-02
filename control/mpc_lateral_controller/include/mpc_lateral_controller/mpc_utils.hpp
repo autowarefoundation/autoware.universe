@@ -199,6 +199,25 @@ double calcStopDistance(const Trajectory & current_trajectory, const int origin)
 void extendTrajectoryInYawDirection(
   const double yaw, const double interval, const bool is_forward_shift, MPCTrajectory & traj);
 
+/**
+ * @brief Updates the value of a parameter with the given name.
+ * @tparam T The type of the parameter value.
+ * @param parameters A vector of rclcpp::Parameter objects.
+ * @param name The name of the parameter to update.
+ * @param value A reference variable to store the updated parameter value.
+ */
+template <typename T>
+void update_param(
+  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+{
+  auto it = std::find_if(
+    parameters.cbegin(), parameters.cend(),
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+  if (it != parameters.cend()) {
+    value = static_cast<T>(it->template get_value<T>());
+  }
+}
+
 }  // namespace MPCUtils
 }  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_

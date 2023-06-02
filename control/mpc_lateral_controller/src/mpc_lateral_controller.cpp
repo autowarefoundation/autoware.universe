@@ -28,20 +28,6 @@
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
-namespace
-{
-template <typename T>
-void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
-{
-  auto it = std::find_if(
-    parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
-  if (it != parameters.cend()) {
-    value = static_cast<T>(it->template get_value<T>());
-  }
-}
-}  // namespace
 
 MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
 {
@@ -557,6 +543,7 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
   auto & nw = param.nominal_weight;
   auto & lcw = param.low_curvature_weight;
 
+  using MPCUtils::update_param;
   try {
     update_param(parameters, "mpc_prediction_horizon", param.prediction_horizon);
     update_param(parameters, "mpc_prediction_dt", param.prediction_dt);
