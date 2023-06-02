@@ -220,20 +220,10 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # This condition is true if run_out module is enabled and its detection method is Points
-    launch_run_out_with_points_method = PythonExpression(
-        [
-            LaunchConfiguration(
-                "launch_run_out",
-                default="behavior_velocity_planner::RunOutModulePlugin"
-                in behavior_velocity_planner_params["launch_modules"],
-            ),
-            " and "
-            + str(
-                behavior_velocity_planner_params.get("run_out", {}).get("detection_method")
-                == "Points"
-            ),
-        ]
-    )
+    run_out_module = "behavior_velocity_planner::RunOutModulePlugin"
+    run_out_method = behavior_velocity_planner_params.get("run_out", {}).get("detection_method")
+    launch_run_out = run_out_module in behavior_velocity_planner_params["launch_modules"]
+    launch_run_out_with_points_method = launch_run_out and run_out_method == "Points"
 
     # load compare map for run_out module
     load_compare_map = IncludeLaunchDescription(
@@ -249,7 +239,7 @@ def launch_setup(context, *args, **kwargs):
             "use_multithread": "true",
         }.items(),
         # launch compare map only when run_out module is enabled and detection method is Points
-        condition=IfCondition(launch_run_out_with_points_method),
+        condition=IfCondition(PythonExpression(str(launch_run_out_with_points_method))),
     )
 
     load_vector_map_inside_area_filter = IncludeLaunchDescription(
@@ -266,7 +256,7 @@ def launch_setup(context, *args, **kwargs):
             "polygon_type": "no_obstacle_segmentation_area_for_run_out",
         }.items(),
         # launch vector map filter only when run_out module is enabled and detection method is Points
-        condition=IfCondition(launch_run_out_with_points_method),
+        condition=IfCondition(PythonExpression(str(launch_run_out_with_points_method))),
     )
 
     group = GroupAction(
