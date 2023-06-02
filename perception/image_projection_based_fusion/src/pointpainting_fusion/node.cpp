@@ -58,6 +58,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
   const std::size_t encoder_in_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("encoder_in_feature_size"));
+  std::cout << "pointpainting encoder_in_feature_size:" << encoder_in_feature_size << std::endl;
   const auto allow_remapping_by_area_matrix =
     this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix");
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
@@ -103,13 +104,14 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
   sensor_msgs::PointCloud2Modifier pcd_modifier(painted_pointcloud_msg);
   pcd_modifier.clear();
   painted_pointcloud_msg.width = tmp.width;
-  constexpr int num_fields = 7;
+  constexpr int num_fields = 9;
   pcd_modifier.setPointCloud2Fields(
     num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
     sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
     "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, "CAR", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "BICYCLE", 1, sensor_msgs::msg::PointField::FLOAT32);
+    sensor_msgs::msg::PointField::FLOAT32, "TRUCK", 1, sensor_msgs::msg::PointField::FLOAT32, "BUS",
+    1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32);
   painted_pointcloud_msg.point_step = num_fields * sizeof(float);
 
   // filter points out of range
@@ -176,12 +178,15 @@ void PointPaintingFusionNode::fuseOnSingleImage(
 
   // iterate points
   sensor_msgs::PointCloud2Iterator<float> iter_car(painted_pointcloud_msg, "CAR");
-  sensor_msgs::PointCloud2Iterator<float> iter_ped(painted_pointcloud_msg, "PEDESTRIAN");
+  sensor_msgs::PointCloud2Iterator<float> iter_trk(painted_pointcloud_msg, "TRUCK");
+  sensor_msgs::PointCloud2Iterator<float> iter_bus(painted_pointcloud_msg, "BUS");
   sensor_msgs::PointCloud2Iterator<float> iter_bic(painted_pointcloud_msg, "BICYCLE");
+  sensor_msgs::PointCloud2Iterator<float> iter_ped(painted_pointcloud_msg, "PEDESTRIAN");
 
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_pointcloud, "x"),
        iter_y(transformed_pointcloud, "y"), iter_z(transformed_pointcloud, "z");
-       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++iter_car, ++iter_ped, ++iter_bic) {
+       iter_x != iter_x.end();
+       ++iter_x, ++iter_y, ++iter_z, ++iter_car, ++iter_trk, ++iter_bus, ++iter_ped, ++iter_bic) {
     // filter the points outside of the horizontal field of view
     if (
       *iter_z <= 0.0 || (*iter_x / *iter_z) > tan_h_.at(image_id) ||
@@ -210,13 +215,13 @@ void PointPaintingFusionNode::fuseOnSingleImage(
             *iter_car = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK:
-            *iter_car = 1.0;
+            *iter_trk = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER:
             *iter_car = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::BUS:
-            *iter_car = 1.0;
+            *iter_bus = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN:
             *iter_ped = 1.0;

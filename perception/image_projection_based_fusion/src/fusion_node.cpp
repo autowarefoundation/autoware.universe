@@ -142,6 +142,31 @@ void FusionNode<Msg, Obj>::preprocess(Msg & ouput_msg __attribute__((unused)))
 template <class Msg, class Obj>
 void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_msg)
 {
+  if (sub_std_pair_.second != nullptr) {
+    // std::cout << sub_std_pair_.first << " postprocessed without ";
+    // for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    //   if (is_fused_.at(roi_i) == false) {
+    //     std::cout << roi_i << ",";
+    //   }
+    // }
+    // std::cout << std::endl;
+    timer_->cancel();
+    postprocess(*(sub_std_pair_.second));
+    publish(*(sub_std_pair_.second));
+    sub_std_pair_.second = nullptr;
+    // std::fill(is_fused_tmp_.begin(), is_fused_tmp_.end(), false);
+
+    // add processing time for debug
+    if (debug_publisher_) {
+      const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+      const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        "debug/cyclic_time_ms", cyclic_time_ms);
+      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        "debug/processing_time_ms", processing_time_ms);
+    }
+  }
+
   std::lock_guard<std::mutex> lock(mutex_);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timeout_ms_));
@@ -233,22 +258,22 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
         "debug/processing_time_ms", processing_time_ms);
     }
   } else {
-    if (sub_std_pair_.second != nullptr) {
-      timer_->cancel();
-      postprocess(*(sub_std_pair_.second));
-      publish(*(sub_std_pair_.second));
-      std::fill(is_fused_.begin(), is_fused_.end(), false);
+    // if (sub_std_pair_.second != nullptr) {
+    //   timer_->cancel();
+    //   postprocess(*(sub_std_pair_.second));
+    //   publish(*(sub_std_pair_.second));
+    //   std::fill(is_fused_.begin(), is_fused_.end(), false);
 
-      // add processing time for debug
-      if (debug_publisher_) {
-        const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-        const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug/cyclic_time_ms", cyclic_time_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug/processing_time_ms", processing_time_ms);
-      }
-    }
+    //   // add processing time for debug
+    //   if (debug_publisher_) {
+    //     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    //     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    //     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    //       "debug/cyclic_time_ms", cyclic_time_ms);
+    //     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    //       "debug/processing_time_ms", processing_time_ms);
+    //   }
+    // }
 
     sub_std_pair_.first = int64_t(timestamp_nsec);
     sub_std_pair_.second = output_msg;
