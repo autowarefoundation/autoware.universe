@@ -49,18 +49,13 @@ class MergeFromPrivateRoadModule : public SceneModuleInterface
 public:
   struct DebugData
   {
-    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
-
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon ego_lane_polygon;
-    geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
-    autoware_auto_planning_msgs::msg::PathWithLaneId spline_path;
     geometry_msgs::msg::Point first_collision_point;
-    autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
   };
 
 public:

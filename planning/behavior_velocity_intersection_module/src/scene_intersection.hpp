@@ -25,10 +25,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/point.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -44,33 +41,12 @@
 
 namespace behavior_velocity_planner
 {
-// first: time, second: distance
-using TimeDistanceArray = std::vector<std::pair<double, double>>;
+
+using TimeDistanceArray = std::vector<std::pair<double /* time*/, double /* distance*/>>;
 
 class IntersectionModule : public SceneModuleInterface
 {
 public:
-  struct DebugData
-  {
-    geometry_msgs::msg::Pose collision_stop_wall_pose;
-    geometry_msgs::msg::Pose occlusion_stop_wall_pose;
-    geometry_msgs::msg::Pose occlusion_first_stop_wall_pose;
-    geometry_msgs::msg::Pose pass_judge_wall_pose;
-    geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
-    geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
-    std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
-    std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
-    std::vector<lanelet::CompoundPolygon3d> detection_area;
-    geometry_msgs::msg::Polygon intersection_area;
-    lanelet::CompoundPolygon3d ego_lane;
-    std::vector<lanelet::CompoundPolygon3d> adjacent_area;
-    autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
-    autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
-    geometry_msgs::msg::Pose predicted_obj_pose;
-    geometry_msgs::msg::Point nearest_occlusion_point;
-    geometry_msgs::msg::Point nearest_occlusion_projection_point;
-  };
-
   struct PlannerParam
   {
     struct Common
@@ -280,10 +256,10 @@ private:
     const double assumed_front_car_decel);
   */
 
-  // Debug
-  DebugData debug_data_;
+  util::DebugData debug_data_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr occlusion_grid_pub_;
 };
+
 }  // namespace behavior_velocity_planner
 
 #endif  // SCENE_INTERSECTION_HPP_
