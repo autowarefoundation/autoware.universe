@@ -54,6 +54,7 @@ public:
     geometry_msgs::msg::Pose collision_stop_wall_pose;
     geometry_msgs::msg::Pose occlusion_stop_wall_pose;
     geometry_msgs::msg::Pose occlusion_first_stop_wall_pose;
+    geometry_msgs::msg::Pose pass_judge_wall_pose;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
@@ -85,6 +86,7 @@ public:
       double intersection_velocity;  //! used for intersection passing time
       double intersection_max_acc;   //! used for calculating intersection velocity
       double stop_overshoot_margin;  //! overshoot margin for stuck, collision detection
+      bool use_intersection_area;
     } common;
     struct StuckVehicle
     {
@@ -121,6 +123,7 @@ public:
       double min_vehicle_brake_for_rss;
       double max_vehicle_velocity_for_rss;
       double denoise_kernel;
+      bool pub_debug_grid;
     } occlusion;
   };
 
@@ -130,6 +133,7 @@ public:
     WAIT_FIRST_STOP_LINE,
     CREEP_SECOND_STOP_LINE,
     CLEARED,
+    COLLISION_DETECTED,
   };
 
   IntersectionModule(
@@ -145,7 +149,7 @@ public:
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
+  motion_utils::VirtualWalls createVirtualWalls() override;
 
   const std::set<int> & getAssocIds() const { return assoc_ids_; }
 
@@ -326,9 +330,6 @@ private:
 
   // Debug
   mutable DebugData debug_data_;
-
-  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_ =
-    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr occlusion_grid_pub_;
 };
 }  // namespace behavior_velocity_planner
