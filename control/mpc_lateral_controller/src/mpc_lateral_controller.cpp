@@ -66,7 +66,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_mpc.m_use_steer_prediction = dp_bool("use_steer_prediction");
   m_mpc.m_param.steer_tau = dp_double("vehicle_model_steer_tau");
 
-
   /* stop state parameters */
   m_stop_state_entry_ego_speed = dp_double("stop_state_entry_ego_speed");
   m_stop_state_entry_target_speed = dp_double("stop_state_entry_target_speed");
@@ -270,9 +269,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   }
 
   if (!is_mpc_solved) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000 /*ms*/,
-      "MPC is not solved. publish 0 velocity.");
+    warn_throttle("MPC is not solved. publish 0 velocity.");
     ctrl_cmd = getStopControlCommand();
   }
 
@@ -303,18 +300,15 @@ bool MpcLateralController::isReady(const trajectory_follower::InputData & input_
   m_current_steering = input_data.current_steering;
 
   if (!m_mpc.hasVehicleModel()) {
-    RCLCPP_INFO_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "MPC does not have a vehicle model");
+    info_throttle("MPC does not have a vehicle model");
     return false;
   }
   if (!m_mpc.hasQPSolver()) {
-    RCLCPP_INFO_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "MPC does not have a QP solver");
+    info_throttle("MPC does not have a QP solver");
     return false;
   }
   if (m_mpc.m_reference_trajectory.empty()) {
-    RCLCPP_INFO_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "trajectory size is zero.");
+    info_throttle("trajectory size is zero.");
     return false;
   }
 

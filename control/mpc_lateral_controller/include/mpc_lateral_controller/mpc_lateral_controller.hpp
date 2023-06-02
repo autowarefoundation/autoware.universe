@@ -202,6 +202,16 @@ private:
    */
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
+
+  inline void info_throttle(const std::string & s, const uint duration_ms = 5000)
+  {
+    RCLCPP_INFO_THROTTLE(node_->get_logger(), *node_->get_clock(), duration_ms, "%s", s.c_str());
+  }
+
+  inline void warn_throttle(const std::string & s, const uint duration_ms = 5000)
+  {
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), duration_ms, "%s", s.c_str());
+  }
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
 
