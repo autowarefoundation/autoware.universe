@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_ARBITER_HPP_
-#define TRAFFIC_LIGHT_ARBITER_HPP_
+#ifndef TRAFFIC_LIGHT_ARBITER__TRAFFIC_LIGHT_ARBITER_HPP_
+#define TRAFFIC_LIGHT_ARBITER__TRAFFIC_LIGHT_ARBITER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -56,4 +56,4 @@ private:
   TrafficSignalArray latest_external_msg_;
 };
 
-#endif  // TRAFFIC_LIGHT_ARBITER_HPP_
+#endif  // TRAFFIC_LIGHT_ARBITER__TRAFFIC_LIGHT_ARBITER_HPP_
