@@ -30,6 +30,21 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_autoware_utils::normalizeRadian;
 
+double calcDistance2d(const MPCTrajectory & trajectory, const size_t idx1, const size_t idx2)
+{
+  const double dx = trajectory.x.at(idx1) - trajectory.x.at(idx2);
+  const double dy = trajectory.y.at(idx1) - trajectory.y.at(idx2);
+  return std::hypot(dx, dy);
+}
+
+double calcDistance3d(const MPCTrajectory & trajectory, const size_t idx1, const size_t idx2)
+{
+  const double dx = trajectory.x.at(idx1) - trajectory.x.at(idx2);
+  const double dy = trajectory.y.at(idx1) - trajectory.y.at(idx2);
+  const double dz = trajectory.z.at(idx1) - trajectory.z.at(idx2);
+  return std::hypot(dx, dy, dz);
+}
+
 void convertEulerAngleToMonotonic(std::vector<double> * a)
 {
   if (!a) {
@@ -56,28 +71,24 @@ void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<do
   arclength->clear();
   arclength->push_back(dist);
   for (uint i = 1; i < trajectory.size(); ++i) {
-    const double dx = trajectory.x.at(i) - trajectory.x.at(i - 1);
-    const double dy = trajectory.y.at(i) - trajectory.y.at(i - 1);
-    dist += std::sqrt(dx * dx + dy * dy);
+    dist += calcDistance2d(trajectory, i, i - 1);
     arclength->push_back(dist);
   }
 }
 
-bool resampleMPCTrajectoryByDistance(
-  const MPCTrajectory & input, const double resample_interval_dist, MPCTrajectory * output)
+std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
+  const MPCTrajectory & input, const double resample_interval_dist)
 {
-  if (!output) {
-    return false;
-  }
+  MPCTrajectory output;
+
   if (input.empty()) {
-    *output = input;
-    return true;
+    return {true, output};
   }
   std::vector<double> input_arclength;
   calcMPCTrajectoryArclength(input, &input_arclength);
 
   if (input_arclength.empty()) {
-    return false;
+    return {false, output};
   }
 
   std::vector<double> output_arclength;
@@ -88,17 +99,18 @@ bool resampleMPCTrajectoryByDistance(
   std::vector<double> input_yaw = input.yaw;
   convertEulerAngleToMonotonic(&input_yaw);
 
-  output->x = interpolation::spline(input_arclength, input.x, output_arclength);
-  output->y = interpolation::spline(input_arclength, input.y, output_arclength);
-  output->z = interpolation::spline(input_arclength, input.z, output_arclength);
-  output->yaw = interpolation::spline(input_arclength, input.yaw, output_arclength);
-  output->vx = interpolation::lerp(input_arclength, input.vx, output_arclength);
-  output->k = interpolation::spline(input_arclength, input.k, output_arclength);
-  output->smooth_k = interpolation::spline(input_arclength, input.smooth_k, output_arclength);
-  output->relative_time =
-    interpolation::lerp(input_arclength, input.relative_time, output_arclength);
+  using interpolation::lerp;
+  using interpolation::spline;
+  output.x = spline(input_arclength, input.x, output_arclength);
+  output.y = spline(input_arclength, input.y, output_arclength);
+  output.z = spline(input_arclength, input.z, output_arclength);
+  output.yaw = spline(input_arclength, input.yaw, output_arclength);
+  output.vx = lerp(input_arclength, input.vx, output_arclength);
+  output.k = spline(input_arclength, input.k, output_arclength);
+  output.smooth_k = spline(input_arclength, input.smooth_k, output_arclength);
+  output.relative_time = lerp(input_arclength, input.relative_time, output_arclength);
 
-  return true;
+  return {true, output};
 }
 
 bool linearInterpMPCTrajectory(
@@ -210,9 +222,9 @@ std::vector<double> calcTrajectoryCurvature(
   return curvature_vec;
 }
 
-bool convertToMPCTrajectory(const Trajectory & input, MPCTrajectory & output)
+MPCTrajectory convertToMPCTrajectory(const Trajectory & input)
 {
-  output.clear();
+  MPCTrajectory output;
   for (const TrajectoryPoint & p : input.points) {
     const double x = p.pose.position.x;
     const double y = p.pose.position.y;
@@ -224,7 +236,7 @@ bool convertToMPCTrajectory(const Trajectory & input, MPCTrajectory & output)
     output.push_back(x, y, z, yaw, vx, k, k, t);
   }
   calcMPCTrajectoryTime(output);
-  return true;
+  return output;
 }
 
 Trajectory convertToAutowareTrajectory(const MPCTrajectory & input)
@@ -252,9 +264,7 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj)
   traj.relative_time.clear();
   traj.relative_time.push_back(t);
   for (size_t i = 0; i < traj.x.size() - 1; ++i) {
-    const double dist = std::hypot(
-      traj.x.at(i + 1) - traj.x.at(i), traj.y.at(i + 1) - traj.y.at(i),
-      traj.z.at(i + 1) - traj.z.at(i));
+    const double dist = calcDistance3d(traj, i, i + 1);
     const double v = std::max(std::fabs(traj.vx.at(i)), 0.1);
     t += (dist / v);
     traj.relative_time.push_back(t);
@@ -270,7 +280,7 @@ void dynamicSmoothingVelocity(
   traj.vx.at(start_idx) = start_vel;
 
   for (size_t i = start_idx + 1; i < traj.size(); ++i) {
-    const double ds = std::hypot(traj.x.at(i) - traj.x.at(i - 1), traj.y.at(i) - traj.y.at(i - 1));
+    const double ds = calcDistance2d(traj, i, i - 1);
     const double dt = ds / std::max(std::fabs(curr_v), std::numeric_limits<double>::epsilon());
     const double a = tau / std::max(tau + dt, std::numeric_limits<double>::epsilon());
     const double updated_v = a * curr_v + (1.0 - a) * traj.vx.at(i);

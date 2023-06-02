@@ -50,6 +50,16 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
 
 /**
+ * @brief calculate 2d distance from trajectory[idx1] to trajectory[idx2]
+ */
+double calcDistance2d(const MPCTrajectory & trajectory, const size_t idx1, const size_t idx2);
+
+/**
+ * @brief calculate 3d distance from trajectory[idx1] to trajectory[idx2]
+ */
+double calcDistance3d(const MPCTrajectory & trajectory, const size_t idx1, const size_t idx2);
+
+/**
  * @brief convert Euler angle vector including +-2pi to 0 jump to continuous series data
  * @param [inout] a input angle vector
  */
@@ -64,10 +74,9 @@ double calcLateralError(const Pose & ego_pose, const Pose & ref_pose);
 /**
  * @brief convert the given Trajectory msg to a MPCTrajectory object
  * @param [in] input trajectory to convert
- * @param [out] output resulting MPCTrajectory
- * @return true if the conversion was successful
+ * @return resulting MPCTrajectory
  */
-bool convertToMPCTrajectory(const Trajectory & input, MPCTrajectory & output);
+MPCTrajectory convertToMPCTrajectory(const Trajectory & input);
 /**
  * @brief convert the given MPCTrajectory to a Trajectory msg
  * @param [in] input MPCTrajectory to be converted
@@ -84,10 +93,10 @@ void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<do
  * @brief resample the given trajectory with the given fixed interval
  * @param [in] input trajectory to resample
  * @param [in] resample_interval_dist the desired distance between two successive trajectory points
- * @param [out] output the resampled trajectory
+ * @return The pair contains the successful flag and the resultant resampled trajectory
  */
-bool resampleMPCTrajectoryByDistance(
-  const MPCTrajectory & input, const double resample_interval_dist, MPCTrajectory * output);
+std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
+  const MPCTrajectory & input, const double resample_interval_dist);
 /**
  * @brief linearly interpolate the given trajectory assuming a base indexing and a new desired
  * indexing

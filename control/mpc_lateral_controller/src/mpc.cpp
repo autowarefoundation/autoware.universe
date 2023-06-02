@@ -156,15 +156,13 @@ void MPC::setReferenceTrajectory(
   const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
   const bool extend_trajectory_for_end_yaw_control)
 {
-  MPCTrajectory mpc_traj_raw;        // received raw trajectory
-  MPCTrajectory mpc_traj_resampled;  // resampled trajectory
-  MPCTrajectory mpc_traj_smoothed;   // smooth filtered trajectory
+  const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
 
   // resampling
-  MPCUtils::convertToMPCTrajectory(trajectory_msg, mpc_traj_raw);
-  if (!MPCUtils::resampleMPCTrajectoryByDistance(
-        mpc_traj_raw, traj_resample_dist, &mpc_traj_resampled)) {
-    RCLCPP_WARN(m_logger, "[setReferenceTrajectory] spline error when resampling by distance");
+  const auto [success_resample, mpc_traj_resampled] =
+    MPCUtils::resampleMPCTrajectoryByDistance(mpc_traj_raw, traj_resample_dist);
+  if (!success_resample) {
+    warn_throttle("[setReferenceTrajectory] spline error when resampling by distance");
     return;
   }
 
@@ -174,7 +172,7 @@ void MPC::setReferenceTrajectory(
   m_is_forward_shift = is_forward_shift ? is_forward_shift.get() : m_is_forward_shift;
 
   // path smoothing
-  mpc_traj_smoothed = mpc_traj_resampled;
+  MPCTrajectory mpc_traj_smoothed = mpc_traj_resampled;  // smooth filtered trajectory
   const int mpc_traj_resampled_size = static_cast<int>(mpc_traj_resampled.size());
   if (enable_path_smoothing && mpc_traj_resampled_size > 2 * path_filter_moving_ave_num) {
     using MoveAverageFilter::filt_vector;
