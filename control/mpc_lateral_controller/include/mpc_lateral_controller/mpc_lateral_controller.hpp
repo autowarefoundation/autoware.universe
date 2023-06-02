@@ -28,9 +28,6 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 #include "trajectory_follower_base/lateral_controller_base.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
@@ -41,7 +38,6 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tf2_msgs/msg/tf_message.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <deque>
@@ -62,14 +58,7 @@ using tier4_debug_msgs::msg::Float32Stamped;
 class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
-  /**
-   * @brief constructor
-   */
   explicit MpcLateralController(rclcpp::Node & node);
-
-  /**
-   * @brief destructor
-   */
   virtual ~MpcLateralController();
 
 private:
@@ -80,9 +69,6 @@ private:
   //!< @brief topic publisher for control debug values
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
   rclcpp::Publisher<Float32Stamped>::SharedPtr m_pub_steer_offset;
-  //!< @brief subscription for transform messages
-  rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_sub;
-  rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_static_sub;
 
   /* parameters for path smoothing */
   //!< @brief flag for path smoothing

@@ -86,6 +86,7 @@ struct MPCParam
 
   double low_curvature_thresh_curvature;  // threshold of curvature to use "low curvature" parameter
 };
+
 /**
  * MPC problem data
  */
@@ -101,6 +102,7 @@ struct MPCData
 
   MPCData() = default;
 };
+
 /**
  * Matrices used for MPC optimization
  */
@@ -117,6 +119,7 @@ struct MPCMatrix
 
   MPCMatrix() = default;
 };
+
 /**
  * MPC-based waypoints follower class
  * @brief calculate control command to follow reference waypoints
@@ -180,7 +183,7 @@ private:
    * @brief update status for delay compensation
    * @param [in] traj MPCTrajectory to follow
    * @param [in] start_time start time for update
-   * @param [out] x updated state at delayed_time
+   * @return updated state at delayed_time
    */
   std::pair<bool, VectorXd> updateStateForDelayCompensation(
     const MPCTrajectory & traj, const double & start_time, const VectorXd x0_orig);
@@ -199,7 +202,7 @@ private:
    * @param [in] prediction_dt prediction delta time
    * @param [in] trajectory mpc reference trajectory
    * @param [in] current_velocity current ego velocity
-   * @param [out] Uex optimized input vector
+   * @return success flag and optimized input vector
    */
   std::pair<bool, VectorXd> executeOptimization(
     const MPCMatrix & mpc_matrix, const VectorXd & x0, const double prediction_dt,
@@ -320,8 +323,7 @@ public:
   /**
    * @brief calculate control command by MPC algorithm
    * @param [in] current_steer current steering of the vehicle
-   * @param [in] current_velocity current velocity of the vehicle [m/s]
-   * @param [in] current_pose current pose of the vehicle
+   * @param [in] current_kinematics current kinematics info, e.g. pose and velocity
    * @param [out] ctrl_cmd control command calculated with mpc algorithm
    * @param [out] predicted_trajectory predicted MPC trajectory
    * @param [out] diagnostic diagnostic msg to be filled-out
