@@ -34,6 +34,7 @@
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <deque>
@@ -49,6 +50,7 @@ using autoware_auto_control_msgs::msg::AckermannLateralCommand;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Pose;
+using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 
 using Eigen::MatrixXd;
@@ -150,7 +152,7 @@ private:
    */
   std::pair<bool, MPCData> getData(
     const MPCTrajectory & trajectory, const SteeringReport & current_steer,
-    const Pose & current_pose);
+    const Odometry & current_kinematics);
 
   /**
    * @brief calculate predicted steering
@@ -213,14 +215,15 @@ private:
    * @brief apply velocity dynamics filter with v0 from closest index
    */
   MPCTrajectory applyVelocityDynamicsFilter(
-    const MPCTrajectory & trajectory, const Pose & current_pose, const double v0) const;
+    const MPCTrajectory & trajectory, const Odometry & current_kinematics) const;
 
   /**
    * @brief get prediction delta time of mpc.
    * If trajectory length is shorter than min_prediction length, adjust delta time.
    */
   double getPredictionDeltaTime(
-    const double start_time, const MPCTrajectory & input, const Pose & current_pose) const;
+    const double start_time, const MPCTrajectory & input,
+    const Odometry & current_kinematics) const;
 
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into R
@@ -267,7 +270,7 @@ private:
   Float32MultiArrayStamped generateDiagData(
     const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
     const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-    const Pose & current_pose, const double current_velocity) const;
+    const Odometry & current_kinematics) const;
 
   /**
    * @brief logging with warn and return false
@@ -324,7 +327,7 @@ public:
    * @param [out] diagnostic diagnostic msg to be filled-out
    */
   bool calculateMPC(
-    const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
+    const SteeringReport & current_steer, const Odometry & current_kinematics,
     AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_trajectory,
     Float32MultiArrayStamped & diagnostic);
 

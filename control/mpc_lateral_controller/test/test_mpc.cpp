@@ -180,6 +180,14 @@ protected:
       path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
       extend_trajectory_for_end_yaw_control);
   }
+
+  nav_msgs::msg::Odometry makeOdometry(const geometry_msgs::msg::Pose & pose, const double velocity)
+  {
+    nav_msgs::msg::Odometry odometry;
+    odometry.pose.pose = pose;
+    odometry.twist.twist.linear.x = velocity;
+    return odometry;
+  }
 };  // class MPCTest
 
 /* cppcheck-suppress syntaxError */
@@ -208,8 +216,8 @@ TEST_F(MPCTest, InitializeAndCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -243,8 +251,8 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_LT(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -275,8 +283,8 @@ TEST_F(MPCTest, OsqpCalculate)
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   // with OSQP this function returns false despite finding correct solutions
-  EXPECT_FALSE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  EXPECT_FALSE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -306,8 +314,8 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_LT(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -339,8 +347,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -372,8 +380,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_LT(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -399,8 +407,8 @@ TEST_F(MPCTest, DynamicCalculate)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
 }
@@ -425,23 +433,23 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
-  ASSERT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  ASSERT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
   EXPECT_EQ(ctrl_cmd.steering_tire_rotation_rate, 0.0f);
   EXPECT_EQ(mpc.m_input_buffer.size(), size_t(3));
@@ -469,19 +477,19 @@ TEST_F(MPCTest, FailureCases)
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
-  EXPECT_FALSE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_far, ctrl_cmd, pred_traj, diag));
+  EXPECT_FALSE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_far, default_velocity), ctrl_cmd, pred_traj, diag));
 
   // Calculate MPC with a fast velocity to make the prediction go further than the reference path
-  EXPECT_FALSE(
-    mpc.calculateMPC(neutral_steer, default_velocity + 10.0, pose_far, ctrl_cmd, pred_traj, diag));
+  EXPECT_FALSE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_far, default_velocity + 10.0), ctrl_cmd, pred_traj, diag));
 
   // Set a wrong vehicle model (not a failure but generates an error message)
   const std::string wrong_vehicle_model_type = "wrong_model";
   vehicle_model_ptr = std::make_shared<mpc_lateral_controller::KinematicsBicycleModel>(
     wheelbase, steer_limit, steer_tau);
   mpc.setVehicleModel(vehicle_model_ptr, wrong_vehicle_model_type);
-  EXPECT_TRUE(
-    mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
+  EXPECT_TRUE(mpc.calculateMPC(
+    neutral_steer, makeOdometry(pose_zero, default_velocity), ctrl_cmd, pred_traj, diag));
 }
 }  // namespace

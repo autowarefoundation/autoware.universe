@@ -207,6 +207,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
 {
   // set input data
   setTrajectory(input_data.current_trajectory);
+
   m_current_kinematic_state = input_data.current_odometry;
   m_current_steering = input_data.current_steering;
   if (enable_auto_steering_offset_removal_) {
@@ -223,8 +224,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   }
 
   const bool is_mpc_solved = m_mpc.calculateMPC(
-    m_current_steering, m_current_kinematic_state.twist.twist.linear.x,
-    m_current_kinematic_state.pose.pose, ctrl_cmd, predicted_traj, debug_values);
+    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
@@ -314,7 +314,7 @@ bool MpcLateralController::isReady(const trajectory_follower::InputData & input_
       node_->get_logger(), *node_->get_clock(), 5000, "MPC does not have a QP solver");
     return false;
   }
-  if (m_mpc.m_reference_trajectory.size() == 0) {
+  if (m_mpc.m_reference_trajectory.empty()) {
     RCLCPP_INFO_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 5000, "trajectory size is zero.");
     return false;
@@ -391,8 +391,7 @@ bool MpcLateralController::isStoppedState() const
     m_ego_nearest_yaw_threshold);
 
   const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
-  const double target_vel =
-    m_current_trajectory.points.at(static_cast<size_t>(nearest)).longitudinal_velocity_mps;
+  const double target_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
 
   const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
   if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
@@ -594,10 +593,9 @@ bool MpcLateralController::isTrajectoryShapeChanged() const
   // TODO(Horibe): update implementation to check trajectory shape around ego vehicle.
   // Now temporally check the goal position.
   for (const auto & trajectory : m_trajectory_buffer) {
-    if (
-      tier4_autoware_utils::calcDistance2d(
-        trajectory.points.back().pose, m_current_trajectory.points.back().pose) >
-      m_new_traj_end_dist) {
+    const auto change_distance = tier4_autoware_utils::calcDistance2d(
+      trajectory.points.back().pose, m_current_trajectory.points.back().pose);
+    if (change_distance > m_new_traj_end_dist) {
       return true;
     }
   }

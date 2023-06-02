@@ -27,17 +27,18 @@ using tier4_autoware_utils::normalizeRadian;
 using tier4_autoware_utils::rad2deg;
 
 bool MPC::calculateMPC(
-  const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
+  const SteeringReport & current_steer, const Odometry & current_kinematics,
   AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_trajectory,
   Float32MultiArrayStamped & diagnostic)
 {
   // since the reference trajectory does not take into account the current velocity of the ego
   // vehicle, it needs to calculate the trajectory velocity considering the longitudinal dynamics.
   const auto reference_trajectory =
-    applyVelocityDynamicsFilter(m_reference_trajectory, current_pose, current_velocity);
+    applyVelocityDynamicsFilter(m_reference_trajectory, current_kinematics);
 
   // get the necessary data
-  const auto [success_data, mpc_data] = getData(reference_trajectory, current_steer, current_pose);
+  const auto [success_data, mpc_data] =
+    getData(reference_trajectory, current_steer, current_kinematics);
   if (!success_data) {
     return fail_warn_throttle("fail to get MPC Data. Stop MPC.");
   }
@@ -55,7 +56,7 @@ bool MPC::calculateMPC(
   // resample reference trajectory with mpc sampling time
   const double mpc_start_time = mpc_data.nearest_time + m_param.input_delay;
   const double prediction_dt =
-    getPredictionDeltaTime(mpc_start_time, reference_trajectory, current_pose);
+    getPredictionDeltaTime(mpc_start_time, reference_trajectory, current_kinematics);
 
   const auto [success_resample, mpc_resampled_ref_trajectory] =
     resampleMPCTrajectoryByTime(mpc_start_time, prediction_dt, reference_trajectory);
@@ -77,7 +78,7 @@ bool MPC::calculateMPC(
   const double u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
   const double u_filtered = m_lpf_steering_cmd.filter(u_saturated);
 
-  // Set control command
+  // set control command
   ctrl_cmd.steering_tire_angle = static_cast<float>(u_filtered);
   ctrl_cmd.steering_tire_rotation_rate = static_cast<float>(calcDesiredSteeringRate(
     mpc_matrix, x0_delayed, Uex, u_filtered, current_steer.steering_tire_angle, prediction_dt));
@@ -96,8 +97,8 @@ bool MPC::calculateMPC(
     calcPredictedTrajectory(mpc_resampled_ref_trajectory, mpc_matrix, x0_delayed, Uex);
 
   // prepare diagnostic message
-  diagnostic = generateDiagData(
-    reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_pose, current_velocity);
+  diagnostic =
+    generateDiagData(reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
 
   return true;
 }
@@ -129,33 +130,33 @@ Trajectory MPC::calcPredictedTrajectory(
 Float32MultiArrayStamped MPC::generateDiagData(
   const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
   const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-  const Pose & current_pose, const double current_velocity) const
+  const Odometry & current_kinematics) const
 {
   Float32MultiArrayStamped diagnostic;
 
   // prepare diagnostic message
   const double nearest_k = reference_trajectory.k.at(mpc_data.nearest_idx);
   const double nearest_smooth_k = reference_trajectory.smooth_k.at(mpc_data.nearest_idx);
-  const double steer_cmd = ctrl_cmd.steering_tire_angle;
   const double wb = m_vehicle_model_ptr->getWheelbase();
+  const double current_velocity = current_kinematics.twist.twist.linear.x;
   const double wz_predicted = current_velocity * std::tan(mpc_data.predicted_steer) / wb;
   const double wz_measured = current_velocity * std::tan(mpc_data.steer) / wb;
-  const double wz_command = current_velocity * std::tan(steer_cmd) / wb;
+  const double wz_command = current_velocity * std::tan(ctrl_cmd.steering_tire_angle) / wb;
   typedef decltype(diagnostic.data)::value_type DiagnosticValueType;
   const auto append_diag = [&](const auto & val) -> void {
     diagnostic.data.push_back(static_cast<DiagnosticValueType>(val));
   };
-  append_diag(steer_cmd);                              // [0] final steering command (MPC + LPF)
-  append_diag(Uex(0));                                 // [1] mpc calculation result
-  append_diag(mpc_matrix.Uref_ex(0));                  // [2] feedforward steering value
-  append_diag(std::atan(nearest_smooth_k * wb));       // [3] feedforward steering value raw
-  append_diag(mpc_data.steer);                         // [4] current steering angle
-  append_diag(mpc_data.lateral_err);                   // [5] lateral error
-  append_diag(tf2::getYaw(current_pose.orientation));  // [6] current_pose yaw
-  append_diag(tf2::getYaw(mpc_data.nearest_pose.orientation));    // [7] nearest_pose yaw
-  append_diag(mpc_data.yaw_err);                                  // [8] yaw error
-  append_diag(reference_trajectory.vx.at(mpc_data.nearest_idx));  // [9] reference velocity
-  append_diag(current_velocity);                                  // [10] measured velocity
+  append_diag(ctrl_cmd.steering_tire_angle);      // [0] final steering command (MPC + LPF)
+  append_diag(Uex(0));                            // [1] mpc calculation result
+  append_diag(mpc_matrix.Uref_ex(0));             // [2] feedforward steering value
+  append_diag(std::atan(nearest_smooth_k * wb));  // [3] feedforward steering value raw
+  append_diag(mpc_data.steer);                    // [4] current steering angle
+  append_diag(mpc_data.lateral_err);              // [5] lateral error
+  append_diag(tf2::getYaw(current_kinematics.pose.pose.orientation));  // [6] current_pose yaw
+  append_diag(tf2::getYaw(mpc_data.nearest_pose.orientation));         // [7] nearest_pose yaw
+  append_diag(mpc_data.yaw_err);                                       // [8] yaw error
+  append_diag(reference_trajectory.vx.at(mpc_data.nearest_idx));       // [9] reference velocity
+  append_diag(current_velocity);                                       // [10] measured velocity
   append_diag(wz_command);                           // [11] angular velocity from steer command
   append_diag(wz_measured);                          // [12] angular velocity from measured steer
   append_diag(current_velocity * nearest_smooth_k);  // [13] angular velocity from path curvature
@@ -254,8 +255,11 @@ void MPC::resetPrevResult(const SteeringReport & current_steer)
 }
 
 std::pair<bool, MPCData> MPC::getData(
-  const MPCTrajectory & traj, const SteeringReport & current_steer, const Pose & current_pose)
+  const MPCTrajectory & traj, const SteeringReport & current_steer,
+  const Odometry & current_kinematics)
 {
+  const auto current_pose = current_kinematics.pose.pose;
+
   MPCData data;
   static constexpr auto duration = 5000 /*ms*/;
   size_t nearest_idx;
@@ -466,7 +470,7 @@ std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
 }
 
 MPCTrajectory MPC::applyVelocityDynamicsFilter(
-  const MPCTrajectory & input, const Pose & current_pose, const double v0) const
+  const MPCTrajectory & input, const Odometry & current_kinematics) const
 {
   const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
   if (autoware_traj.points.empty()) {
@@ -474,13 +478,15 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
   }
 
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+    autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
+    ego_nearest_yaw_threshold);
 
   const double acc_lim = m_param.acceleration_limit;
   const double tau = m_param.velocity_time_constant;
 
   MPCTrajectory output = input;
-  MPCUtils::dynamicSmoothingVelocity(nearest_idx, v0, acc_lim, tau, output);
+  MPCUtils::dynamicSmoothingVelocity(
+    nearest_idx, current_kinematics.twist.twist.linear.x, acc_lim, tau, output);
   const double t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
   const double t_end = output.relative_time.back() + t_ext;
   const double v_end = 0.0;
@@ -791,12 +797,13 @@ void MPC::addSteerWeightF(const double prediction_dt, MatrixXd * f_ptr) const
 }
 
 double MPC::getPredictionDeltaTime(
-  const double start_time, const MPCTrajectory & input, const Pose & current_pose) const
+  const double start_time, const MPCTrajectory & input, const Odometry & current_kinematics) const
 {
   // Calculate the time min_prediction_length ahead from current_pose
   const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+    autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
+    ego_nearest_yaw_threshold);
   double sum_dist = 0;
   const double target_time = [&]() {
     const double t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
