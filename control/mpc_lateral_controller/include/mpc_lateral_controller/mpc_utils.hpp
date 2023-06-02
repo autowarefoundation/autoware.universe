@@ -45,12 +45,17 @@ namespace autoware::motion::control::mpc_lateral_controller
 namespace MPCUtils
 {
 
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Quaternion;
+
 /**
  * @brief convert from yaw to ros-Quaternion
  * @param [in] yaw input yaw angle
  * @return quaternion
  */
-geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double & yaw);
+Quaternion getQuaternionFromYaw(const double & yaw);
 /**
  * @brief convert Euler angle vector including +-2pi to 0 jump to continuous series data
  * @param [inout] a input angle vector
@@ -62,23 +67,20 @@ void convertEulerAngleToMonotonic(std::vector<double> * a);
  * @param [in] ref_pose reference pose
  * @return lateral distance between the two poses
  */
-double calcLateralError(
-  const geometry_msgs::msg::Pose & ego_pose, const geometry_msgs::msg::Pose & ref_pose);
+double calcLateralError(const Pose & ego_pose, const Pose & ref_pose);
 /**
  * @brief convert the given Trajectory msg to a MPCTrajectory object
  * @param [in] input trajectory to convert
  * @param [out] output resulting MPCTrajectory
  * @return true if the conversion was successful
  */
-bool convertToMPCTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & input, MPCTrajectory & output);
+bool convertToMPCTrajectory(const Trajectory & input, MPCTrajectory & output);
 /**
  * @brief convert the given MPCTrajectory to a Trajectory msg
  * @param [in] input MPCTrajectory to be converted
  * @return output converted Trajectory msg
  */
-autoware_auto_planning_msgs::msg::Trajectory convertToAutowareTrajectory(
-  const MPCTrajectory & input);
+Trajectory convertToAutowareTrajectory(const MPCTrajectory & input);
 /**
  * @brief calculate the arc length at each point of the given trajectory
  * @param [in] trajectory trajectory for which to calculate the arc length
@@ -159,15 +161,13 @@ std::vector<double> calcTrajectoryCurvature(
  * @return false when nearest pose couldn't find for some reasons
  */
 bool calcNearestPoseInterp(
-  const MPCTrajectory & traj, const geometry_msgs::msg::Pose & self_pose,
-  geometry_msgs::msg::Pose * nearest_pose, size_t * nearest_index, double * nearest_time,
-  const double max_dist, const double max_yaw, const rclcpp::Logger & logger,
+  const MPCTrajectory & traj, const Pose & self_pose, Pose * nearest_pose, size_t * nearest_index,
+  double * nearest_time, const double max_dist, const double max_yaw, const rclcpp::Logger & logger,
   rclcpp::Clock & clock);
 // /**
 //  * @brief calculate distance to stopped point
 //  */
-double calcStopDistance(
-  const autoware_auto_planning_msgs::msg::Trajectory & current_trajectory, const int origin);
+double calcStopDistance(const Trajectory & current_trajectory, const int origin);
 
 /**
  * @brief extend terminal points

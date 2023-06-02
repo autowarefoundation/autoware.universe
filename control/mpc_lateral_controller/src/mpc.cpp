@@ -27,6 +27,9 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 using namespace std::literals::chrono_literals;
+using tier4_autoware_utils::calcDistance2d;
+using tier4_autoware_utils::normalizeRadian;
+using tier4_autoware_utils::rad2deg;
 
 bool MPC::calculateMPC(
   const SteeringReport & current_steer, const double current_velocity, const Pose & current_pose,
@@ -45,7 +48,7 @@ bool MPC::calculateMPC(
   }
 
   // calculate initial state of the error dynamics
-  Eigen::VectorXd x0 = getInitialState(mpc_data);
+  VectorXd x0 = getInitialState(mpc_data);
 
   // apply time delay compensation to the initial state
   const auto [success_delay, x0_delayed] =
@@ -94,7 +97,7 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   // calculate predicted trajectory
-  const Eigen::VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
+  const VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
   MPCTrajectory mpc_predicted_traj;
   const auto & traj = mpc_resampled_ref_traj;
   for (int i = 0; i < m_param.prediction_horizon; ++i) {
@@ -252,7 +255,7 @@ std::pair<bool, MPCData> MPC::getData(
   data.nearest_idx = nearest_idx;
   data.steer = static_cast<double>(current_steer.steering_tire_angle);
   data.lateral_err = MPCUtils::calcLateralError(current_pose, data.nearest_pose);
-  data.yaw_err = tier4_autoware_utils::normalizeRadian(
+  data.yaw_err = normalizeRadian(
     tf2::getYaw(current_pose.orientation) - tf2::getYaw(data.nearest_pose.orientation));
 
   // get predicted steer
@@ -263,8 +266,7 @@ std::pair<bool, MPCData> MPC::getData(
   *m_steer_prediction_prev = data.predicted_steer;
 
   // check error limit
-  const double dist_err =
-    tier4_autoware_utils::calcDistance2d(current_pose.position, data.nearest_pose.position);
+  const double dist_err = calcDistance2d(current_pose, data.nearest_pose);
   if (dist_err > m_admissible_position_error) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "position error is over limit. error = %fm, limit: %fm",
@@ -276,8 +278,7 @@ std::pair<bool, MPCData> MPC::getData(
   if (std::fabs(data.yaw_err) > m_admissible_yaw_error_rad) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "yaw error is over limit. error = %f deg, limit %f deg",
-      tier4_autoware_utils::rad2deg(data.yaw_err),
-      tier4_autoware_utils::rad2deg(m_admissible_yaw_error_rad));
+      rad2deg(data.yaw_err), rad2deg(m_admissible_yaw_error_rad));
     return {false, MPCData{}};
   }
 
@@ -386,10 +387,10 @@ std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
   return {true, output};
 }
 
-Eigen::VectorXd MPC::getInitialState(const MPCData & data)
+VectorXd MPC::getInitialState(const MPCData & data)
 {
   const int DIM_X = m_vehicle_model_ptr->getDimX();
-  Eigen::VectorXd x0 = Eigen::VectorXd::Zero(DIM_X);
+  VectorXd x0 = VectorXd::Zero(DIM_X);
 
   const auto & lat_err = data.lateral_err;
   const auto & steer = m_use_steer_prediction ? data.predicted_steer : data.steer;
@@ -415,19 +416,19 @@ Eigen::VectorXd MPC::getInitialState(const MPCData & data)
   return x0;
 }
 
-std::pair<bool, Eigen::VectorXd> MPC::updateStateForDelayCompensation(
-  const MPCTrajectory & traj, const double & start_time, const Eigen::VectorXd x0_orig)
+std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
+  const MPCTrajectory & traj, const double & start_time, const VectorXd x0_orig)
 {
   const int DIM_X = m_vehicle_model_ptr->getDimX();
   const int DIM_U = m_vehicle_model_ptr->getDimU();
   const int DIM_Y = m_vehicle_model_ptr->getDimY();
 
-  Eigen::MatrixXd Ad(DIM_X, DIM_X);
-  Eigen::MatrixXd Bd(DIM_X, DIM_U);
-  Eigen::MatrixXd Wd(DIM_X, 1);
-  Eigen::MatrixXd Cd(DIM_Y, DIM_X);
+  MatrixXd Ad(DIM_X, DIM_X);
+  MatrixXd Bd(DIM_X, DIM_U);
+  MatrixXd Wd(DIM_X, 1);
+  MatrixXd Cd(DIM_Y, DIM_X);
 
-  Eigen::MatrixXd x_curr = x0_orig;
+  MatrixXd x_curr = x0_orig;
   double mpc_curr_time = start_time;
   for (uint i = 0; i < m_input_buffer.size(); ++i) {
     double k = 0.0;
@@ -444,7 +445,7 @@ std::pair<bool, Eigen::VectorXd> MPC::updateStateForDelayCompensation(
     m_vehicle_model_ptr->setVelocity(v);
     m_vehicle_model_ptr->setCurvature(k);
     m_vehicle_model_ptr->calculateDiscreteMatrix(Ad, Bd, Cd, Wd, m_ctrl_period);
-    Eigen::MatrixXd ud = Eigen::MatrixXd::Zero(DIM_U, 1);
+    MatrixXd ud = MatrixXd::Zero(DIM_U, 1);
     ud(0, 0) = m_input_buffer.at(i);  // for steering input delay
     x_curr = Ad * x_curr + Bd * ud + Wd;
     mpc_curr_time += m_ctrl_period;
@@ -486,8 +487,6 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
 MPCMatrix MPC::generateMPCMatrix(
   const MPCTrajectory & reference_trajectory, const double prediction_dt)
 {
-  using Eigen::MatrixXd;
-
   const int N = m_param.prediction_horizon;
   const double DT = prediction_dt;
   const int DIM_X = m_vehicle_model_ptr->getDimX();
@@ -531,8 +530,8 @@ MPCMatrix MPC::generateMPCMatrix(
     m_vehicle_model_ptr->setCurvature(ref_k);
     m_vehicle_model_ptr->calculateDiscreteMatrix(Ad, Bd, Cd, Wd, DT);
 
-    Q = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-    R = Eigen::MatrixXd::Zero(DIM_U, DIM_U);
+    Q = MatrixXd::Zero(DIM_Y, DIM_Y);
+    R = MatrixXd::Zero(DIM_U, DIM_U);
     Q(0, 0) = getWeightLatError(ref_k);
     Q(1, 1) = getWeightHeadingError(ref_k);
     R(0, 0) = getWeightSteerInput(ref_k);
@@ -614,14 +613,10 @@ MPCMatrix MPC::generateMPCMatrix(
  *                            ~~~
  * [    -au_lim * dt    ] < [uN-uN-1] < [     au_lim * dt    ] (*N... DIM_U)
  */
-
-std::pair<bool, Eigen::VectorXd> MPC::executeOptimization(
-  const MPCMatrix & m, const Eigen::VectorXd & x0, const double prediction_dt,
-  const MPCTrajectory & traj, const double current_velocity)
+std::pair<bool, VectorXd> MPC::executeOptimization(
+  const MPCMatrix & m, const VectorXd & x0, const double prediction_dt, const MPCTrajectory & traj,
+  const double current_velocity)
 {
-  using Eigen::MatrixXd;
-  using Eigen::VectorXd;
-
   VectorXd Uex;
 
   if (!isValid(m)) {
@@ -710,7 +705,7 @@ std::pair<bool, Eigen::VectorXd> MPC::executeOptimization(
   return {true, Uex};
 }
 
-void MPC::addSteerWeightR(const double prediction_dt, Eigen::MatrixXd * R_ptr) const
+void MPC::addSteerWeightR(const double prediction_dt, MatrixXd * R_ptr) const
 {
   const int N = m_param.prediction_horizon;
   const double DT = prediction_dt;
@@ -755,7 +750,7 @@ void MPC::addSteerWeightR(const double prediction_dt, Eigen::MatrixXd * R_ptr) c
   }
 }
 
-void MPC::addSteerWeightF(const double prediction_dt, Eigen::MatrixXd * f_ptr) const
+void MPC::addSteerWeightF(const double prediction_dt, MatrixXd * f_ptr) const
 {
   if (f_ptr->rows() < 2) {
     return;
@@ -816,8 +811,8 @@ double MPC::getPredictionDeltaTime(
 }
 
 double MPC::calcDesiredSteeringRate(
-  const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-  const double u_filtered, const float current_steer, const double predict_dt) const
+  const MPCMatrix & mpc_matrix, const MatrixXd & x0, const MatrixXd & Uex, const double u_filtered,
+  const float current_steer, const double predict_dt) const
 {
   if (m_vehicle_model_type != "kinematics") {
     // not supported yet. Use old implementation.
@@ -826,7 +821,7 @@ double MPC::calcDesiredSteeringRate(
 
   // calculate predicted states to get the steering motion
   const auto & m = mpc_matrix;
-  const Eigen::MatrixXd Xex = m.Aex * x0 + m.Bex * Uex + m.Wex;
+  const MatrixXd Xex = m.Aex * x0 + m.Bex * Uex + m.Wex;
 
   const size_t STEER_IDX = 2;  // for kinematics model
 

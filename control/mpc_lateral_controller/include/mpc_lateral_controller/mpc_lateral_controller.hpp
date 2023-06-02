@@ -54,6 +54,10 @@ namespace autoware::motion::control::mpc_lateral_controller
 {
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
+using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using tier4_debug_msgs::msg::Float32MultiArrayStamped;
+using tier4_debug_msgs::msg::Float32Stamped;
 
 class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
@@ -72,10 +76,10 @@ private:
   rclcpp::Node * node_;
 
   //!< @brief topic publisher for predicted trajectory
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_pub_predicted_traj;
+  rclcpp::Publisher<Trajectory>::SharedPtr m_pub_predicted_traj;
   //!< @brief topic publisher for control debug values
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr m_pub_steer_offset;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
+  rclcpp::Publisher<Float32Stamped>::SharedPtr m_pub_steer_offset;
   //!< @brief subscription for transform messages
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_sub;
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_static_sub;
@@ -106,7 +110,7 @@ private:
   bool m_keep_steer_control_until_converged;
 
   // trajectory buffer for detecting new trajectory
-  std::deque<autoware_auto_planning_msgs::msg::Trajectory> m_trajectory_buffer;
+  std::deque<Trajectory> m_trajectory_buffer;
 
   // MPC object
   MPC m_mpc;
@@ -128,7 +132,7 @@ private:
   //!< @brief measured steering
   autoware_auto_vehicle_msgs::msg::SteeringReport m_current_steering;
   //!< @brief reference trajectory
-  autoware_auto_planning_msgs::msg::Trajectory m_current_trajectory;
+  Trajectory m_current_trajectory;
 
   //!< @brief mpc filtered output in previous period
   double m_steer_cmd_prev = 0.0;
@@ -136,7 +140,7 @@ private:
   //!< @brief flag of m_ctrl_cmd_prev initialization
   bool m_is_ctrl_cmd_prev_initialized = false;
   //!< @brief previous control command
-  autoware_auto_control_msgs::msg::AckermannLateralCommand m_ctrl_cmd_prev;
+  AckermannLateralCommand m_ctrl_cmd_prev;
 
   //!< @brief flag whether the first trajectory has been received
   bool m_has_received_first_trajectory = false;
@@ -163,7 +167,7 @@ private:
   /**
    * @brief set m_current_trajectory with received message
    */
-  void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & msg);
+  void setTrajectory(const Trajectory & msg);
 
   /**
    * @brief check if the received data is valid.
@@ -174,30 +178,29 @@ private:
    * @brief create control command
    * @param [in] ctrl_cmd published control command
    */
-  autoware_auto_control_msgs::msg::AckermannLateralCommand createCtrlCmdMsg(
-    autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd);
+  AckermannLateralCommand createCtrlCmdMsg(AckermannLateralCommand ctrl_cmd);
 
   /**
    * @brief publish predicted future trajectory
    * @param [in] predicted_traj published predicted trajectory
    */
-  void publishPredictedTraj(autoware_auto_planning_msgs::msg::Trajectory & predicted_traj) const;
+  void publishPredictedTraj(Trajectory & predicted_traj) const;
 
   /**
    * @brief publish diagnostic message
    * @param [in] diagnostic published diagnostic
    */
-  void publishDebugValues(tier4_debug_msgs::msg::Float32MultiArrayStamped & diagnostic) const;
+  void publishDebugValues(Float32MultiArrayStamped & diagnostic) const;
 
   /**
    * @brief get stop command
    */
-  autoware_auto_control_msgs::msg::AckermannLateralCommand getStopControlCommand() const;
+  AckermannLateralCommand getStopControlCommand() const;
 
   /**
    * @brief get initial command
    */
-  autoware_auto_control_msgs::msg::AckermannLateralCommand getInitialControlCommand() const;
+  AckermannLateralCommand getInitialControlCommand() const;
 
   /**
    * @brief check ego car is in stopped state
@@ -207,11 +210,11 @@ private:
   /**
    * @brief check if the trajectory has valid value
    */
-  bool isValidTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & traj) const;
+  bool isValidTrajectory(const Trajectory & traj) const;
 
   bool isTrajectoryShapeChanged() const;
 
-  bool isSteerConverged(const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd) const;
+  bool isSteerConverged(const AckermannLateralCommand & cmd) const;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 

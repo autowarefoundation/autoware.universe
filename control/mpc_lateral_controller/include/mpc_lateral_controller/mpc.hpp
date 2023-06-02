@@ -51,6 +51,9 @@ using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Pose;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+
 struct MPCParam
 {
   //!< @brief prediction horizon step
@@ -130,14 +133,14 @@ struct MPCData
  */
 struct MPCMatrix
 {
-  Eigen::MatrixXd Aex;
-  Eigen::MatrixXd Bex;
-  Eigen::MatrixXd Wex;
-  Eigen::MatrixXd Cex;
-  Eigen::MatrixXd Qex;
-  Eigen::MatrixXd R1ex;
-  Eigen::MatrixXd R2ex;
-  Eigen::MatrixXd Uref_ex;
+  MatrixXd Aex;
+  MatrixXd Bex;
+  MatrixXd Wex;
+  MatrixXd Cex;
+  MatrixXd Qex;
+  MatrixXd R1ex;
+  MatrixXd R2ex;
+  MatrixXd Uref_ex;
 
   MPCMatrix() = default;
 };
@@ -206,15 +209,15 @@ private:
    * @brief set initial condition for mpc
    * @param [in] data mpc data
    */
-  Eigen::VectorXd getInitialState(const MPCData & data);
+  VectorXd getInitialState(const MPCData & data);
   /**
    * @brief update status for delay compensation
    * @param [in] traj MPCTrajectory to follow
    * @param [in] start_time start time for update
    * @param [out] x updated state at delayed_time
    */
-  std::pair<bool, Eigen::VectorXd> updateStateForDelayCompensation(
-    const MPCTrajectory & traj, const double & start_time, const Eigen::VectorXd x0_orig);
+  std::pair<bool, VectorXd> updateStateForDelayCompensation(
+    const MPCTrajectory & traj, const double & start_time, const VectorXd x0_orig);
   /**
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] reference_trajectory used for linearization around reference trajectory
@@ -230,8 +233,8 @@ private:
    * @param [in] current_velocity current ego velocity
    * @param [out] Uex optimized input vector
    */
-  std::pair<bool, Eigen::VectorXd> executeOptimization(
-    const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const double prediction_dt,
+  std::pair<bool, VectorXd> executeOptimization(
+    const MPCMatrix & mpc_matrix, const VectorXd & x0, const double prediction_dt,
     const MPCTrajectory & trajectory, const double current_velocity);
 
   /**
@@ -253,18 +256,18 @@ private:
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into R
    */
-  void addSteerWeightR(const double prediction_dt, Eigen::MatrixXd * R) const;
+  void addSteerWeightR(const double prediction_dt, MatrixXd * R) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into f
    */
-  void addSteerWeightF(const double prediction_dt, Eigen::MatrixXd * f) const;
+  void addSteerWeightF(const double prediction_dt, MatrixXd * f) const;
 
   /**
    * @brief calculate desired steering rate.
    */
   double calcDesiredSteeringRate(
-    const MPCMatrix & m, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-    const double u_filtered, const float current_steer, const double predict_dt) const;
+    const MPCMatrix & m, const MatrixXd & x0, const MatrixXd & Uex, const double u_filtered,
+    const float current_steer, const double predict_dt) const;
 
   /**
    * @brief check if the matrix has invalid value

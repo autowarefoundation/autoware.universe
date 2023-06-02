@@ -178,12 +178,11 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_mpc.ego_nearest_dist_threshold = m_ego_nearest_dist_threshold;
   m_mpc.ego_nearest_yaw_threshold = m_ego_nearest_yaw_threshold;
 
-  m_pub_predicted_traj = node_->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/output/predicted_trajectory", 1);
-  m_pub_debug_values = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
-    "~/output/lateral_diagnostic", 1);
-  m_pub_steer_offset = node_->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-    "~/output/estimated_steer_offset", 1);
+  m_pub_predicted_traj = node_->create_publisher<Trajectory>("~/output/predicted_trajectory", 1);
+  m_pub_debug_values =
+    node_->create_publisher<Float32MultiArrayStamped>("~/output/lateral_diagnostic", 1);
+  m_pub_steer_offset =
+    node_->create_publisher<Float32Stamped>("~/output/estimated_steer_offset", 1);
 
   // TODO(Frederik.Beaujean) ctor is too long, should factor out parameter declarations
   declareMPCparameters();
@@ -214,9 +213,9 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     m_current_steering.steering_tire_angle -= steering_offset_->getOffset();
   }
 
-  autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd;
-  autoware_auto_planning_msgs::msg::Trajectory predicted_traj;
-  tier4_debug_msgs::msg::Float32MultiArrayStamped debug_values;
+  AckermannLateralCommand ctrl_cmd;
+  Trajectory predicted_traj;
+  Float32MultiArrayStamped debug_values;
 
   if (!m_is_ctrl_cmd_prev_initialized) {
     m_ctrl_cmd_prev = getInitialControlCommand();
@@ -283,8 +282,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   return createLateralOutput(ctrl_cmd, is_mpc_solved);
 }
 
-bool MpcLateralController::isSteerConverged(
-  const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd) const
+bool MpcLateralController::isSteerConverged(const AckermannLateralCommand & cmd) const
 {
   // wait for a while to propagate the trajectory shape to the output command when the trajectory
   // shape is changed.
@@ -325,7 +323,7 @@ bool MpcLateralController::isReady(const trajectory_follower::InputData & input_
   return true;
 }
 
-void MpcLateralController::setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & msg)
+void MpcLateralController::setTrajectory(const Trajectory & msg)
 {
   m_current_trajectory = msg;
 
@@ -361,19 +359,17 @@ void MpcLateralController::setTrajectory(const autoware_auto_planning_msgs::msg:
   }
 }
 
-autoware_auto_control_msgs::msg::AckermannLateralCommand
-MpcLateralController::getStopControlCommand() const
+AckermannLateralCommand MpcLateralController::getStopControlCommand() const
 {
-  autoware_auto_control_msgs::msg::AckermannLateralCommand cmd;
+  AckermannLateralCommand cmd;
   cmd.steering_tire_angle = static_cast<decltype(cmd.steering_tire_angle)>(m_steer_cmd_prev);
   cmd.steering_tire_rotation_rate = 0.0;
   return cmd;
 }
 
-autoware_auto_control_msgs::msg::AckermannLateralCommand
-MpcLateralController::getInitialControlCommand() const
+AckermannLateralCommand MpcLateralController::getInitialControlCommand() const
 {
-  autoware_auto_control_msgs::msg::AckermannLateralCommand cmd;
+  AckermannLateralCommand cmd;
   cmd.steering_tire_angle = m_current_steering.steering_tire_angle;
   cmd.steering_tire_rotation_rate = 0.0;
   return cmd;
@@ -412,29 +408,26 @@ bool MpcLateralController::isStoppedState() const
   }
 }
 
-autoware_auto_control_msgs::msg::AckermannLateralCommand MpcLateralController::createCtrlCmdMsg(
-  autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd)
+AckermannLateralCommand MpcLateralController::createCtrlCmdMsg(AckermannLateralCommand ctrl_cmd)
 {
   ctrl_cmd.stamp = node_->now();
   m_steer_cmd_prev = ctrl_cmd.steering_tire_angle;
   return ctrl_cmd;
 }
 
-void MpcLateralController::publishPredictedTraj(
-  autoware_auto_planning_msgs::msg::Trajectory & predicted_traj) const
+void MpcLateralController::publishPredictedTraj(Trajectory & predicted_traj) const
 {
   predicted_traj.header.stamp = node_->now();
   predicted_traj.header.frame_id = m_current_trajectory.header.frame_id;
   m_pub_predicted_traj->publish(predicted_traj);
 }
 
-void MpcLateralController::publishDebugValues(
-  tier4_debug_msgs::msg::Float32MultiArrayStamped & debug_values) const
+void MpcLateralController::publishDebugValues(Float32MultiArrayStamped & debug_values) const
 {
   debug_values.stamp = node_->now();
   m_pub_debug_values->publish(debug_values);
 
-  tier4_debug_msgs::msg::Float32Stamped offset;
+  Float32Stamped offset;
   offset.stamp = node_->now();
   offset.data = steering_offset_->getOffset();
   m_pub_steer_offset->publish(offset);
@@ -626,8 +619,7 @@ bool MpcLateralController::isTrajectoryShapeChanged() const
   return false;
 }
 
-bool MpcLateralController::isValidTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj) const
+bool MpcLateralController::isValidTrajectory(const Trajectory & traj) const
 {
   for (const auto & p : traj.points) {
     if (

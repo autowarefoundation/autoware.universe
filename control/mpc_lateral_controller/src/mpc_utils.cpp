@@ -29,7 +29,7 @@ namespace MPCUtils
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::normalizeRadian;
 
-geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double & yaw)
+Quaternion getQuaternionFromYaw(const double & yaw)
 {
   tf2::Quaternion q;
   q.setRPY(0, 0, yaw);
@@ -47,8 +47,7 @@ void convertEulerAngleToMonotonic(std::vector<double> * a)
   }
 }
 
-double calcLateralError(
-  const geometry_msgs::msg::Pose & ego_pose, const geometry_msgs::msg::Pose & ref_pose)
+double calcLateralError(const Pose & ego_pose, const Pose & ref_pose)
 {
   const double err_x = ego_pose.position.x - ref_pose.position.x;
   const double err_y = ego_pose.position.y - ref_pose.position.y;
@@ -218,11 +217,10 @@ std::vector<double> calcTrajectoryCurvature(
   return curvature_vec;
 }
 
-bool convertToMPCTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & input, MPCTrajectory & output)
+bool convertToMPCTrajectory(const Trajectory & input, MPCTrajectory & output)
 {
   output.clear();
-  for (const autoware_auto_planning_msgs::msg::TrajectoryPoint & p : input.points) {
+  for (const TrajectoryPoint & p : input.points) {
     const double x = p.pose.position.x;
     const double y = p.pose.position.y;
     const double z = p.pose.position.z;
@@ -236,11 +234,10 @@ bool convertToMPCTrajectory(
   return true;
 }
 
-autoware_auto_planning_msgs::msg::Trajectory convertToAutowareTrajectory(
-  const MPCTrajectory & input)
+Trajectory convertToAutowareTrajectory(const MPCTrajectory & input)
 {
-  autoware_auto_planning_msgs::msg::Trajectory output;
-  autoware_auto_planning_msgs::msg::TrajectoryPoint p;
+  Trajectory output;
+  TrajectoryPoint p;
   using Real = decltype(p.pose.position.x);
   for (size_t i = 0; i < input.size(); ++i) {
     p.pose.position.x = static_cast<Real>(input.x.at(i));
@@ -293,9 +290,9 @@ void dynamicSmoothingVelocity(
 }
 
 bool calcNearestPoseInterp(
-  const MPCTrajectory & traj, const geometry_msgs::msg::Pose & self_pose,
-  geometry_msgs::msg::Pose * nearest_pose, size_t * nearest_index, double * nearest_time,
-  const double max_dist, const double max_yaw, const rclcpp::Logger & logger, rclcpp::Clock & clock)
+  const MPCTrajectory & traj, const Pose & self_pose, Pose * nearest_pose, size_t * nearest_index,
+  double * nearest_time, const double max_dist, const double max_yaw, const rclcpp::Logger & logger,
+  rclcpp::Clock & clock)
 {
   if (traj.empty() || !nearest_pose || !nearest_index || !nearest_time) {
     return false;
@@ -320,12 +317,11 @@ bool calcNearestPoseInterp(
     return true;
   }
 
-  auto calcSquaredDist =
-    [](const geometry_msgs::msg::Pose & p, const MPCTrajectory & t, const size_t idx) {
-      const double dx = p.position.x - t.x[idx];
-      const double dy = p.position.y - t.y[idx];
-      return dx * dx + dy * dy;
-    };
+  auto calcSquaredDist = [](const Pose & p, const MPCTrajectory & t, const size_t idx) {
+    const double dx = p.position.x - t.x[idx];
+    const double dy = p.position.y - t.y[idx];
+    return dx * dx + dy * dy;
+  };
 
   /* get second nearest index = next to nearest_index */
   const size_t next = static_cast<size_t>(
@@ -366,8 +362,7 @@ bool calcNearestPoseInterp(
   return true;
 }
 
-double calcStopDistance(
-  const autoware_auto_planning_msgs::msg::Trajectory & current_trajectory, const int origin)
+double calcStopDistance(const Trajectory & current_trajectory, const int origin)
 {
   constexpr float zero_velocity = std::numeric_limits<float>::epsilon();
   const float origin_velocity =
