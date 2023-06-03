@@ -415,7 +415,7 @@ PathWithLaneId PullOutModule::getCurrentPath() const
 
 void PullOutModule::planWithPriority(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
-  std::string search_priority)
+  const std::string search_priority)
 {
   status_.is_safe = false;
   status_.planner_type = PlannerType::NONE;
