@@ -294,13 +294,6 @@ bool GoalPlannerModule::isExecutionRequested() const
       return lanelet::utils::isInLanelet(goal_pose, current_lane);
     });
 
-  // if goal modification is not allowed
-  // 1) goal_pose is in current_lanes, plan path to the original fixed goal
-  // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
-  if (!allow_goal_modification_) {
-    return goal_is_in_current_lanes;
-  }
-
   // check that goal is in current neghibor shoulder lane
   const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
     lanelet::ConstLanelet neighbor_shoulder_lane{};
@@ -329,6 +322,13 @@ bool GoalPlannerModule::isExecutionRequested() const
   if (self_to_goal_arc_length < 0.0 || self_to_goal_arc_length > request_length) {
     // if current position is far from goal or behind goal, do not execute goal_planner
     return false;
+  }
+
+  // if goal modification is not allowed
+  // 1) goal_pose is in current_lanes, plan path to the original fixed goal
+  // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
+  if (!allow_goal_modification_) {
+    return goal_is_in_current_lanes;
   }
 
   // if (A) or (B) is met execute pull over
