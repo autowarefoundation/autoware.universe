@@ -14,7 +14,10 @@
 
 #include "mpc_lateral_controller/mpc_utils.hpp"
 
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 #include "motion_utils/motion_utils.hpp"
+#include "mpc_lateral_controller/interpolate.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>

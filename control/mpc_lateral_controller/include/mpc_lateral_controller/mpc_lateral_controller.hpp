@@ -15,21 +15,12 @@
 #ifndef MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
 #define MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
 
-#include "mpc_lateral_controller/interpolate.hpp"
-#include "mpc_lateral_controller/lowpass_filter.hpp"
 #include "mpc_lateral_controller/mpc.hpp"
 #include "mpc_lateral_controller/mpc_trajectory.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_unconstr_fast.hpp"
 #include "mpc_lateral_controller/steering_offset/steering_offset.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
-#include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "trajectory_follower_base/lateral_controller_base.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -39,6 +30,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
+#include "tier4_debug_msgs/msg/float32_stamped.hpp"
 
 #include <deque>
 #include <memory>

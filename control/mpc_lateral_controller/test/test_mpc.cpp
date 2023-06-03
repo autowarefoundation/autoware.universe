@@ -16,7 +16,9 @@
 #include "mpc_lateral_controller/mpc.hpp"
 #include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
 #include "mpc_lateral_controller/qp_solver/qp_solver_unconstr_fast.hpp"
+#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"

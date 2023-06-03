@@ -15,7 +15,7 @@
 #ifndef MPC_LATERAL_CONTROLLER__MPC_TRAJECTORY_HPP_
 #define MPC_LATERAL_CONTROLLER__MPC_TRAJECTORY_HPP_
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include "geometry_msgs/msg/point.hpp"
 

@@ -15,21 +15,12 @@
 #ifndef MPC_LATERAL_CONTROLLER__MPC_HPP_
 #define MPC_LATERAL_CONTROLLER__MPC_HPP_
 
-#include "mpc_lateral_controller/interpolate.hpp"
 #include "mpc_lateral_controller/lowpass_filter.hpp"
 #include "mpc_lateral_controller/mpc_trajectory.hpp"
-#include "mpc_lateral_controller/mpc_utils.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_unconstr_fast.hpp"
+#include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
 #include "mpc_lateral_controller/steering_predictor.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
-#include "osqp_interface/osqp_interface.hpp"
+#include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_components/register_node_macro.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"

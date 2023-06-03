@@ -15,8 +15,14 @@
 #include "mpc_lateral_controller/mpc_lateral_controller.hpp"
 
 #include "motion_utils/motion_utils.hpp"
+#include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
+#include "mpc_lateral_controller/qp_solver/qp_solver_unconstr_fast.hpp"
+#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
+#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/create_timer_ros.h"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
 #include <deque>
@@ -109,7 +115,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     dp_bool("steering_offset.enable_auto_steering_offset_removal");
   steering_offset_ = createSteerOffsetEstimator(wheelbase);
 
-  /* initialize lowpass filter */
+  /* initialize low-pass filter */
   {
     const double steering_lpf_cutoff_hz = dp_double("steering_lpf_cutoff_hz");
     const double error_deriv_lpf_cutoff_hz = dp_double("error_deriv_lpf_cutoff_hz");
