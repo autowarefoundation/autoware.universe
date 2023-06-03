@@ -37,15 +37,13 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
 
   m_mpc.m_ctrl_period = node_->get_parameter("ctrl_period").as_double();
 
-  m_trajectory_filtering_param.enable_path_smoothing = dp_bool("enable_path_smoothing");
-  m_trajectory_filtering_param.path_filter_moving_ave_num = dp_int("path_filter_moving_ave_num");
-  m_trajectory_filtering_param.curvature_smoothing_num_traj =
-    dp_int("curvature_smoothing_num_traj");
-  m_trajectory_filtering_param.curvature_smoothing_num_ref_steer =
-    dp_int("curvature_smoothing_num_ref_steer");
-  m_trajectory_filtering_param.traj_resample_dist = dp_double("traj_resample_dist");
-  m_trajectory_filtering_param.extend_trajectory_for_end_yaw_control =
-    dp_bool("extend_trajectory_for_end_yaw_control");
+  auto & p_filt = m_trajectory_filtering_param;
+  p_filt.enable_path_smoothing = dp_bool("enable_path_smoothing");
+  p_filt.path_filter_moving_ave_num = dp_int("path_filter_moving_ave_num");
+  p_filt.curvature_smoothing_num_traj = dp_int("curvature_smoothing_num_traj");
+  p_filt.curvature_smoothing_num_ref_steer = dp_int("curvature_smoothing_num_ref_steer");
+  p_filt.traj_resample_dist = dp_double("traj_resample_dist");
+  p_filt.extend_trajectory_for_end_yaw_control = dp_bool("extend_trajectory_for_end_yaw_control");
 
   m_mpc.m_admissible_position_error = dp_double("admissible_position_error");
   m_mpc.m_admissible_yaw_error_rad = dp_double("admissible_yaw_error_rad");
@@ -89,11 +87,14 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   }
 
   /* vehicle model setup */
-  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
+  auto vehicle_model_ptr =
     createVehicleModel(wheelbase, m_mpc.m_steer_lim, m_mpc.m_param.steer_tau);
+  m_mpc.setVehicleModel(vehicle_model_ptr);
 
   /* QP solver setup */
-  std::shared_ptr<QPSolverInterface> qpsolver_ptr = createQPSolverInterface();
+  m_mpc.setVehicleModel(vehicle_model_ptr);
+  auto qpsolver_ptr = createQPSolverInterface();
+  m_mpc.setQPSolver(qpsolver_ptr);
 
   /* delay compensation */
   {
@@ -116,12 +117,11 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   }
 
   // ego nearest index search
-  m_ego_nearest_dist_threshold = node_->has_parameter("ego_nearest_dist_threshold")
-                                   ? node_->get_parameter("ego_nearest_dist_threshold").as_double()
-                                   : dp_double("ego_nearest_dist_threshold");  // [m]
-  m_ego_nearest_yaw_threshold = node_->has_parameter("ego_nearest_yaw_threshold")
-                                  ? node_->get_parameter("ego_nearest_yaw_threshold").as_double()
-                                  : dp_double("ego_nearest_yaw_threshold");  // [rad]
+  const auto check_and_get_param = [&](const auto & param) {
+    return node_->has_parameter(param) ? node_->get_parameter(param).as_double() : dp_double(param);
+  };
+  m_ego_nearest_dist_threshold = check_and_get_param("ego_nearest_dist_threshold");
+  m_ego_nearest_yaw_threshold = check_and_get_param("ego_nearest_yaw_threshold");
   m_mpc.ego_nearest_dist_threshold = m_ego_nearest_dist_threshold;
   m_mpc.ego_nearest_yaw_threshold = m_ego_nearest_yaw_threshold;
 
@@ -138,8 +138,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_set_param_res = node_->add_on_set_parameters_callback(
     std::bind(&MpcLateralController::paramCallback, this, _1));
 
-  m_mpc.setQPSolver(qpsolver_ptr);
-  m_mpc.setVehicleModel(vehicle_model_ptr);
   m_mpc.initializeSteeringPredictor();
 
   m_mpc.setLogger(node_->get_logger());
