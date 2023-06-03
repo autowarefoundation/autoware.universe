@@ -15,7 +15,6 @@
 #include "mpc_lateral_controller/mpc.hpp"
 
 #include "motion_utils/motion_utils.hpp"
-#include "mpc_lateral_controller/interpolate.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
 
 #include <algorithm>
@@ -367,14 +366,16 @@ std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
 
   MatrixXd x_curr = x0_orig;
   double mpc_curr_time = start_time;
-  for (uint i = 0; i < m_input_buffer.size(); ++i) {
-    double k = 0.0;
-    double v = 0.0;
-    if (
-      !linearInterpolate(traj.relative_time, traj.k, mpc_curr_time, k) ||
-      !linearInterpolate(traj.relative_time, traj.vx, mpc_curr_time, v)) {
-      RCLCPP_ERROR(
-        m_logger, "mpc resample error at delay compensation, stop mpc calculation. check code!");
+  // for (const auto & tt : traj.relative_time) {
+  //   std::cerr << "traj.relative_time = " << tt << std::endl;
+  // }
+  for (size_t i = 0; i < m_input_buffer.size(); ++i) {
+    double k, v = 0.0;
+    try {
+      k = interpolation::lerp(traj.relative_time, traj.k, mpc_curr_time);
+      v = interpolation::lerp(traj.relative_time, traj.vx, mpc_curr_time);
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR(m_logger, "mpc resample failed at delay compensation, stop mpc: %s", e.what());
       return {false, {}};
     }
 

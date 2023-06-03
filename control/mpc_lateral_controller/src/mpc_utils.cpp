@@ -17,8 +17,8 @@
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "mpc_lateral_controller/interpolate.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/math/normalization.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -102,16 +102,21 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   std::vector<double> input_yaw = input.yaw;
   convertEulerAngleToMonotonic(&input_yaw);
 
-  using interpolation::lerp;
-  using interpolation::spline;
-  output.x = spline(input_arclength, input.x, output_arclength);
-  output.y = spline(input_arclength, input.y, output_arclength);
-  output.z = spline(input_arclength, input.z, output_arclength);
-  output.yaw = spline(input_arclength, input.yaw, output_arclength);
-  output.vx = lerp(input_arclength, input.vx, output_arclength);
-  output.k = spline(input_arclength, input.k, output_arclength);
-  output.smooth_k = spline(input_arclength, input.smooth_k, output_arclength);
-  output.relative_time = lerp(input_arclength, input.relative_time, output_arclength);
+  const auto lerp_arc_length = [&](const auto & input_value) {
+    return interpolation::lerp(input_arclength, input_value, output_arclength);
+  };
+  const auto spline_arc_length = [&](const auto & input_value) {
+    return interpolation::spline(input_arclength, input_value, output_arclength);
+  };
+
+  output.x = spline_arc_length(input.x);
+  output.y = spline_arc_length(input.y);
+  output.z = spline_arc_length(input.z);
+  output.yaw = spline_arc_length(input.yaw);
+  output.vx = lerp_arc_length(input.vx);  // must be linear
+  output.k = spline_arc_length(input.k);
+  output.smooth_k = spline_arc_length(input.smooth_k);
+  output.relative_time = lerp_arc_length(input.relative_time);  // must be linear
 
   return {true, output};
 }
@@ -132,17 +137,21 @@ bool linearInterpMPCTrajectory(
   std::vector<double> in_traj_yaw = in_traj.yaw;
   convertEulerAngleToMonotonic(&in_traj_yaw);
 
-  if (
-    !linearInterpolate(in_index, in_traj.x, out_index, out_traj->x) ||
-    !linearInterpolate(in_index, in_traj.y, out_index, out_traj->y) ||
-    !linearInterpolate(in_index, in_traj.z, out_index, out_traj->z) ||
-    !linearInterpolate(in_index, in_traj_yaw, out_index, out_traj->yaw) ||
-    !linearInterpolate(in_index, in_traj.vx, out_index, out_traj->vx) ||
-    !linearInterpolate(in_index, in_traj.k, out_index, out_traj->k) ||
-    !linearInterpolate(in_index, in_traj.smooth_k, out_index, out_traj->smooth_k) ||
-    !linearInterpolate(in_index, in_traj.relative_time, out_index, out_traj->relative_time)) {
-    std::cerr << "linearInterpMPCTrajectory error!" << std::endl;
-    return false;
+  const auto lerp_arc_length = [&](const auto & input_value) {
+    return interpolation::lerp(in_index, input_value, out_index);
+  };
+
+  try {
+    out_traj->x = lerp_arc_length(in_traj.x);
+    out_traj->y = lerp_arc_length(in_traj.y);
+    out_traj->z = lerp_arc_length(in_traj.z);
+    out_traj->yaw = lerp_arc_length(in_traj.yaw);
+    out_traj->vx = lerp_arc_length(in_traj.vx);
+    out_traj->k = lerp_arc_length(in_traj.k);
+    out_traj->smooth_k = lerp_arc_length(in_traj.smooth_k);
+    out_traj->relative_time = lerp_arc_length(in_traj.relative_time);
+  } catch (const std::exception & e) {
+    std::cerr << "linearInterpMPCTrajectory error!: " << e.what() << std::endl;
   }
 
   if (out_traj->empty()) {
@@ -263,13 +272,14 @@ Trajectory convertToAutowareTrajectory(const MPCTrajectory & input)
 
 bool calcMPCTrajectoryTime(MPCTrajectory & traj)
 {
+  constexpr auto min_dt = 1.0e-4;  // must be positive value to avoid duplication in time
   double t = 0.0;
   traj.relative_time.clear();
   traj.relative_time.push_back(t);
   for (size_t i = 0; i < traj.x.size() - 1; ++i) {
     const double dist = calcDistance3d(traj, i, i + 1);
     const double v = std::max(std::fabs(traj.vx.at(i)), 0.1);
-    t += (dist / v);
+    t += std::max(dist / v, min_dt);
     traj.relative_time.push_back(t);
   }
   return true;
