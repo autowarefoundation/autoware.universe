@@ -207,7 +207,8 @@ void MPC::setReferenceTrajectory(
     }
   }
 
-  /* extend terminal points
+  /*
+   * Extend terminal points
    * Note: The current MPC does not properly take into account the attitude angle at the end of the
    * path. By extending the end of the path in the attitude direction, the MPC can consider the
    * attitude angle well, resulting in improved control performance. If the trajectory is
@@ -403,19 +404,15 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
     autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
 
-  const double acc_lim = m_param.acceleration_limit;
-  const double tau = m_param.velocity_time_constant;
-
   MPCTrajectory output = input;
   MPCUtils::dynamicSmoothingVelocity(
-    nearest_idx, current_kinematics.twist.twist.linear.x, acc_lim, tau, output);
-  const double t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
-  const double t_end = output.relative_time.back() + t_ext;
-  const double v_end = 0.0;
-  output.vx.back() = v_end;  // set for end point
-  output.push_back(
-    output.x.back(), output.y.back(), output.z.back(), output.yaw.back(), v_end, output.k.back(),
-    output.smooth_k.back(), t_end);
+    nearest_idx, current_kinematics.twist.twist.linear.x, m_param.acceleration_limit,
+    m_param.velocity_time_constant, output);
+
+  auto last_point = output.back();
+  last_point.relative_time += 100.0;  // extra time to prevent mpc calc failure due to short time
+  last_point.vx = 0.0;                // stop velocity at a terminal point
+  output.push_back(last_point);
   return output;
 }
 
