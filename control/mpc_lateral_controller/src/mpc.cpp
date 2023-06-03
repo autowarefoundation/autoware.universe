@@ -276,22 +276,16 @@ std::pair<bool, MPCData> MPC::getData(
   // get predicted steer
   data.predicted_steer = m_steering_predictor->calcSteerPrediction();
 
-  static constexpr auto duration = 5000 /*ms*/;
-
   // check error limit
   const double dist_err = calcDistance2d(current_pose, data.nearest_pose);
   if (dist_err > m_admissible_position_error) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, duration, "position error is over limit. error = %fm, limit: %fm",
-      dist_err, m_admissible_position_error);
+    warn_throttle("Too large position error: %fm > %fm", dist_err, m_admissible_position_error);
     return {false, MPCData{}};
   }
 
   // check yaw error limit
   if (std::fabs(data.yaw_err) > m_admissible_yaw_error_rad) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      m_logger, *m_clock, duration, "yaw error is over limit. error = %f deg, limit %f deg",
-      rad2deg(data.yaw_err), rad2deg(m_admissible_yaw_error_rad));
+    warn_throttle("Too large yaw error: %f > %f", data.yaw_err, m_admissible_yaw_error_rad);
     return {false, MPCData{}};
   }
 

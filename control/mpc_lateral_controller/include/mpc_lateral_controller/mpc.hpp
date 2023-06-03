@@ -380,16 +380,18 @@ private:
     const Odometry & current_kinematics) const;
 
   //!< @brief logging with warn and return false
-  inline bool fail_warn_throttle(const std::string & msg, const int duration_ms = 1000) const
+  template <typename... Args>
+  inline bool fail_warn_throttle(Args &&... args) const
   {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, duration_ms, "%s", msg.c_str());
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, args...);
     return false;
   }
 
   //!< @brief logging with warn
-  inline void warn_throttle(const std::string & msg, const int duration_ms = 1000) const
+  template <typename... Args>
+  inline void warn_throttle(Args &&... args) const
   {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, duration_ms, "%s", msg.c_str());
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, args...);
   }
 
 public:
