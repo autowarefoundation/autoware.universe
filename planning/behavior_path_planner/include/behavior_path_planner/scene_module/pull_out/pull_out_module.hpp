@@ -131,7 +131,7 @@ private:
   PathWithLaneId getCurrentPath() const;
   void planWithPriority(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
-    std::string search_priority);
+    const std::string search_priority);
   PathWithLaneId generateStopPath() const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
