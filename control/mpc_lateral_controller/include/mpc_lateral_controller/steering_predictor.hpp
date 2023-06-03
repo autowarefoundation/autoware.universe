@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
+#define MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
@@ -77,3 +80,5 @@ private:
 };
 
 }  // namespace autoware::motion::control::mpc_lateral_controller
+
+#endif  // MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_

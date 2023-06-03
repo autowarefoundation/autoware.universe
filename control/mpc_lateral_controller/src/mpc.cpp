@@ -144,14 +144,15 @@ Float32MultiArrayStamped MPC::generateDiagData(
   const double wz_predicted = current_velocity * std::tan(mpc_data.predicted_steer) / wb;
   const double wz_measured = current_velocity * std::tan(mpc_data.steer) / wb;
   const double wz_command = current_velocity * std::tan(ctrl_cmd.steering_tire_angle) / wb;
+
   typedef decltype(diagnostic.data)::value_type DiagnosticValueType;
   const auto append_diag = [&](const auto & val) -> void {
     diagnostic.data.push_back(static_cast<DiagnosticValueType>(val));
   };
   append_diag(ctrl_cmd.steering_tire_angle);      // [0] final steering command (MPC + LPF)
   append_diag(Uex(0));                            // [1] mpc calculation result
-  append_diag(mpc_matrix.Uref_ex(0));             // [2] feedforward steering value
-  append_diag(std::atan(nearest_smooth_k * wb));  // [3] feedforward steering value raw
+  append_diag(mpc_matrix.Uref_ex(0));             // [2] feed-forward steering value
+  append_diag(std::atan(nearest_smooth_k * wb));  // [3] feed-forward steering value raw
   append_diag(mpc_data.steer);                    // [4] current steering angle
   append_diag(mpc_data.lateral_err);              // [5] lateral error
   append_diag(tf2::getYaw(current_kinematics.pose.pose.orientation));  // [6] current_pose yaw
@@ -162,7 +163,7 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(wz_command);                           // [11] angular velocity from steer command
   append_diag(wz_measured);                          // [12] angular velocity from measured steer
   append_diag(current_velocity * nearest_smooth_k);  // [13] angular velocity from path curvature
-  append_diag(nearest_smooth_k);          // [14] nearest path curvature (used for feedforward)
+  append_diag(nearest_smooth_k);          // [14] nearest path curvature (used for feed-forward)
   append_diag(nearest_k);                 // [15] nearest path curvature (not smoothed)
   append_diag(mpc_data.predicted_steer);  // [16] predicted steer
   append_diag(wz_predicted);              // [17] angular velocity from predicted steer
@@ -244,7 +245,7 @@ void MPC::setReferenceTrajectory(
 
 void MPC::resetPrevResult(const SteeringReport & current_steer)
 {
-  // Consider limit. The prev value larger than limitaion brakes the optimization constraint and
+  // Consider limit. The prev value larger than limitation brakes the optimization constraint and
   // results in optimization failure.
   const float steer_lim_f = static_cast<float>(m_steer_lim);
   m_raw_steer_cmd_prev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);

@@ -43,6 +43,8 @@ public:
   double relative_time;
 };
 
+// This class individually maintains an array of each element. This allows for easy application of
+// filtering processes. For example: filter_vector(mpc_trajectory.x).
 class MPCTrajectory
 {
 public:

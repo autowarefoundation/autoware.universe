@@ -483,11 +483,11 @@ bool MpcLateralController::isMpcConverged()
   double min_steering_value = m_mpc_steering_history[0].first.steering_tire_angle;
   double max_steering_value = m_mpc_steering_history[0].first.steering_tire_angle;
   for (size_t i = 1; i < m_mpc_steering_history.size(); i++) {
-    if (m_mpc_steering_history[i].first.steering_tire_angle < min_steering_value) {
-      min_steering_value = m_mpc_steering_history[i].first.steering_tire_angle;
+    if (m_mpc_steering_history.at(i).first.steering_tire_angle < min_steering_value) {
+      min_steering_value = m_mpc_steering_history.at(i).first.steering_tire_angle;
     }
-    if (m_mpc_steering_history[i].first.steering_tire_angle > max_steering_value) {
-      max_steering_value = m_mpc_steering_history[i].first.steering_tire_angle;
+    if (m_mpc_steering_history.at(i).first.steering_tire_angle > max_steering_value) {
+      max_steering_value = m_mpc_steering_history.at(i).first.steering_tire_angle;
     }
   }
   return (max_steering_value - min_steering_value) < m_mpc_converged_threshold_rps;
