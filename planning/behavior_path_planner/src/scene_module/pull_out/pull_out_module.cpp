@@ -415,7 +415,7 @@ PathWithLaneId PullOutModule::getCurrentPath() const
 
 void PullOutModule::planWithPriority(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
-  bool priority_on_efficient_path)
+  std::string search_priority)
 {
   status_.is_safe = false;
   status_.planner_type = PlannerType::NONE;
@@ -489,10 +489,16 @@ void PullOutModule::planWithPriority(
 
   // Choose loop order based on priority_on_efficient_path
   PriorityOrder order_priority;
-  if (priority_on_efficient_path) {
+  if (search_priority == "efficient_path") {
     order_priority = make_loop_order_planner_first();
-  } else {
+  } else if (search_priority == "short_back_distance") {
     order_priority = make_loop_order_pose_first();
+  } else {
+    RCLCPP_ERROR(
+      getLogger(),
+      "search_priority should be efficient_path or short_back_distance, but %s is given.",
+      search_priority.c_str());
+    throw std::domain_error("[pull_out] invalid search_priority");
   }
 
   for (const auto & p : order_priority) {
@@ -563,18 +569,7 @@ void PullOutModule::updatePullOutStatus()
 
   // search pull out start candidates backward
   std::vector<Pose> start_pose_candidates = searchPullOutStartPoses();
-
-  if (parameters_->search_priority == "efficient_path") {
-    planWithPriority(start_pose_candidates, goal_pose, true);
-  } else if (parameters_->search_priority == "short_back_distance") {
-    planWithPriority(start_pose_candidates, goal_pose, false);
-  } else {
-    RCLCPP_ERROR(
-      getLogger(),
-      "search_priority should be efficient_path or short_back_distance, but %s is given.",
-      parameters_->search_priority.c_str());
-    throw std::domain_error("[pull_out] invalid search_priority");
-  }
+  planWithPriority(start_pose_candidates, goal_pose, parameters_->search_priority);
 
   if (!status_.is_safe) {
     RCLCPP_WARN_THROTTLE(
