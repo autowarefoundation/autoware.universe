@@ -420,11 +420,13 @@ bool MpcLateralController::isStoppedState() const
   }
 }
 
-AckermannLateralCommand MpcLateralController::createCtrlCmdMsg(AckermannLateralCommand ctrl_cmd)
+AckermannLateralCommand MpcLateralController::createCtrlCmdMsg(
+  const AckermannLateralCommand & ctrl_cmd)
 {
-  ctrl_cmd.stamp = node_->now();
-  m_steer_cmd_prev = ctrl_cmd.steering_tire_angle;
-  return ctrl_cmd;
+  auto out = ctrl_cmd;
+  out.stamp = node_->now();
+  m_steer_cmd_prev = out.steering_tire_angle;
+  return out;
 }
 
 void MpcLateralController::publishPredictedTraj(Trajectory & predicted_traj) const

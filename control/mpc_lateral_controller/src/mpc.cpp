@@ -220,13 +220,12 @@ void MPC::setReferenceTrajectory(
   }
 
   // calculate yaw angle
-  MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, m_is_forward_shift);
-  MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
+  MPCUtils::calcTrajectoryYawFromXY(mpc_traj_smoothed, m_is_forward_shift);
+  MPCUtils::convertEulerAngleToMonotonic(mpc_traj_smoothed.yaw);
 
   // calculate curvature
   MPCUtils::calcTrajectoryCurvature(
-    param.curvature_smoothing_num_traj, param.curvature_smoothing_num_ref_steer,
-    &mpc_traj_smoothed);
+    param.curvature_smoothing_num_traj, param.curvature_smoothing_num_ref_steer, mpc_traj_smoothed);
 
   // stop velocity at a terminal point
   mpc_traj_smoothed.vx.back() = 0.0;
@@ -261,17 +260,14 @@ std::pair<bool, MPCData> MPC::getData(
   const auto current_pose = current_kinematics.pose.pose;
 
   MPCData data;
-  static constexpr auto duration = 5000 /*ms*/;
-  size_t nearest_idx;
   if (!MPCUtils::calcNearestPoseInterp(
-        traj, current_pose, &(data.nearest_pose), &(nearest_idx), &(data.nearest_time),
-        ego_nearest_dist_threshold, ego_nearest_yaw_threshold, m_logger, *m_clock)) {
+        traj, current_pose, &(data.nearest_pose), &(data.nearest_idx), &(data.nearest_time),
+        ego_nearest_dist_threshold, ego_nearest_yaw_threshold)) {
     warn_throttle("calculateMPC: error in calculating nearest pose. stop mpc.");
     return {false, MPCData{}};
   }
 
   // get data
-  data.nearest_idx = nearest_idx;
   data.steer = static_cast<double>(current_steer.steering_tire_angle);
   data.lateral_err = MPCUtils::calcLateralError(current_pose, data.nearest_pose);
   data.yaw_err = normalizeRadian(
@@ -279,6 +275,8 @@ std::pair<bool, MPCData> MPC::getData(
 
   // get predicted steer
   data.predicted_steer = m_steering_predictor->calcSteerPrediction();
+
+  static constexpr auto duration = 5000 /*ms*/;
 
   // check error limit
   const double dist_err = calcDistance2d(current_pose, data.nearest_pose);
@@ -316,7 +314,7 @@ std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
   for (double i = 0; i < static_cast<double>(m_param.prediction_horizon); ++i) {
     mpc_time_v.push_back(ts + i * prediction_dt);
   }
-  if (!MPCUtils::linearInterpMPCTrajectory(input.relative_time, input, mpc_time_v, &output)) {
+  if (!MPCUtils::linearInterpMPCTrajectory(input.relative_time, input, mpc_time_v, output)) {
     warn_throttle("calculateMPC: mpc resample error. stop mpc calculation. check code!");
     return {false, {}};
   }
@@ -354,7 +352,7 @@ VectorXd MPC::getInitialState(const MPCData & data)
 }
 
 std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
-  const MPCTrajectory & traj, const double & start_time, const VectorXd x0_orig)
+  const MPCTrajectory & traj, const double & start_time, const VectorXd & x0_orig)
 {
   const int DIM_X = m_vehicle_model_ptr->getDimX();
   const int DIM_U = m_vehicle_model_ptr->getDimU();
@@ -524,7 +522,7 @@ MPCMatrix MPC::generateMPCMatrix(
     m.R2ex.block(i, i, 2, 2) += J;
   }
 
-  addSteerWeightR(prediction_dt, &m.R1ex);
+  addSteerWeightR(prediction_dt, m.R1ex);
 
   return m;
 }
@@ -574,7 +572,7 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   H.triangularView<Eigen::Upper>() += m.R1ex + m.R2ex;
   H.triangularView<Eigen::Lower>() = H.transpose();
   MatrixXd f = (m.Cex * (m.Aex * x0 + m.Wex)).transpose() * QCB - m.Uref_ex.transpose() * m.R1ex;
-  addSteerWeightF(prediction_dt, &f);
+  addSteerWeightF(prediction_dt, f);
 
   MatrixXd A = MatrixXd::Identity(DIM_U_N, DIM_U_N);
   for (int i = 1; i < DIM_U_N; i++) {
@@ -643,12 +641,10 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   return {true, Uex};
 }
 
-void MPC::addSteerWeightR(const double prediction_dt, MatrixXd * R_ptr) const
+void MPC::addSteerWeightR(const double prediction_dt, MatrixXd & R) const
 {
   const int N = m_param.prediction_horizon;
   const double DT = prediction_dt;
-
-  auto & R = *R_ptr;
 
   // add steering rate : weight for (u(i) - u(i-1) / dt )^2
   {
@@ -688,14 +684,13 @@ void MPC::addSteerWeightR(const double prediction_dt, MatrixXd * R_ptr) const
   }
 }
 
-void MPC::addSteerWeightF(const double prediction_dt, MatrixXd * f_ptr) const
+void MPC::addSteerWeightF(const double prediction_dt, MatrixXd & f) const
 {
-  if (f_ptr->rows() < 2) {
+  if (f.rows() < 2) {
     return;
   }
 
   const double DT = prediction_dt;
-  auto & f = *f_ptr;
 
   // steer rate for i = 0
   f(0, 0) += -2.0 * m_param.nominal_weight.steer_rate / (std::pow(DT, 2)) * 0.5;

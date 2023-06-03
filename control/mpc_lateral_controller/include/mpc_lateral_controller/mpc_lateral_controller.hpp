@@ -194,7 +194,7 @@ private:
    * @param ctrl_cmd Control command to be created.
    * @return Created control command.
    */
-  AckermannLateralCommand createCtrlCmdMsg(AckermannLateralCommand ctrl_cmd);
+  AckermannLateralCommand createCtrlCmdMsg(const AckermannLateralCommand & ctrl_cmd);
 
   /**
    * @brief Publish the predicted future trajectory.

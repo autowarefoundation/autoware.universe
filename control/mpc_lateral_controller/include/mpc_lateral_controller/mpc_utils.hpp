@@ -59,9 +59,9 @@ double calcDistance3d(const MPCTrajectory & trajectory, const size_t idx1, const
 
 /**
  * @brief convert Euler angle vector including +-2pi to 0 jump to continuous series data
- * @param [inout] a input angle vector
+ * @param [inout] angle_vector input angle vector
  */
-void convertEulerAngleToMonotonic(std::vector<double> * a);
+void convertEulerAngleToMonotonic(std::vector<double> & angle_vector);
 
 /**
  * @brief calculate the lateral error of the given pose relative to the given reference pose
@@ -88,9 +88,9 @@ Trajectory convertToAutowareTrajectory(const MPCTrajectory & input);
 /**
  * @brief calculate the arc length at each point of the given trajectory
  * @param [in] trajectory trajectory for which to calculate the arc length
- * @param [out] arclength the cumulative arc length at each point of the trajectory
+ * @param [out] arc_length the cumulative arc length at each point of the trajectory
  */
-void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<double> * arclength);
+void calcMPCTrajectoryArcLength(const MPCTrajectory & trajectory, std::vector<double> & arc_length);
 
 /**
  * @brief resample the given trajectory with the given fixed interval
@@ -111,7 +111,7 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
  */
 bool linearInterpMPCTrajectory(
   const std::vector<double> & in_index, const MPCTrajectory & in_traj,
-  const std::vector<double> & out_index, MPCTrajectory * out_traj);
+  const std::vector<double> & out_index, MPCTrajectory & out_traj);
 
 /**
  * @brief fill the relative_time field of the given MPCTrajectory
@@ -137,7 +137,7 @@ void dynamicSmoothingVelocity(
  * @param [inout] traj object trajectory
  * @param [in] shift is forward or not
  */
-void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift);
+void calcTrajectoryYawFromXY(MPCTrajectory & traj, const bool is_forward_shift);
 
 /**
  * @brief Calculate path curvature by 3-points circle fitting with smoothing num (use nearest 3
@@ -147,9 +147,9 @@ void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift);
  * calculation
  * @param [inout] traj object trajectory
  */
-bool calcTrajectoryCurvature(
+void calcTrajectoryCurvature(
   const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
-  MPCTrajectory * traj);
+  MPCTrajectory & traj);
 
 /**
  * @brief Calculate path curvature by 3-points circle fitting with smoothing num (use nearest 3
@@ -168,18 +168,15 @@ std::vector<double> calcTrajectoryCurvature(
  * @param [out] nearest_pose nearest pose on path
  * @param [out] nearest_index path index of nearest pose
  * @param [out] nearest_time time of nearest pose on trajectory
- * @param [out] logger to output the reason for failure
- * @param [in] clock to throttle log output
  * @return false when nearest pose couldn't find for some reasons
  */
 bool calcNearestPoseInterp(
   const MPCTrajectory & traj, const Pose & self_pose, Pose * nearest_pose, size_t * nearest_index,
-  double * nearest_time, const double max_dist, const double max_yaw, const rclcpp::Logger & logger,
-  rclcpp::Clock & clock);
+  double * nearest_time, const double max_dist, const double max_yaw);
 
-// /**
-//  * @brief calculate distance to stopped point
-//  */
+/**
+ * @brief calculate distance to stopped point
+ */
 double calcStopDistance(const Trajectory & current_trajectory, const int origin);
 
 /**

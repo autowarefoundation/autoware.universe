@@ -48,14 +48,11 @@ double calcDistance3d(const MPCTrajectory & trajectory, const size_t idx1, const
   return std::hypot(dx, dy, dz);
 }
 
-void convertEulerAngleToMonotonic(std::vector<double> * a)
+void convertEulerAngleToMonotonic(std::vector<double> & angle_vector)
 {
-  if (!a) {
-    return;
-  }
-  for (uint i = 1; i < a->size(); ++i) {
-    const double da = a->at(i) - a->at(i - 1);
-    a->at(i) = a->at(i - 1) + normalizeRadian(da);
+  for (uint i = 1; i < angle_vector.size(); ++i) {
+    const double da = angle_vector.at(i) - angle_vector.at(i - 1);
+    angle_vector.at(i) = angle_vector.at(i - 1) + normalizeRadian(da);
   }
 }
 
@@ -68,14 +65,14 @@ double calcLateralError(const Pose & ego_pose, const Pose & ref_pose)
   return lat_err;
 }
 
-void calcMPCTrajectoryArclength(const MPCTrajectory & trajectory, std::vector<double> * arclength)
+void calcMPCTrajectoryArcLength(const MPCTrajectory & trajectory, std::vector<double> & arc_length)
 {
   double dist = 0.0;
-  arclength->clear();
-  arclength->push_back(dist);
+  arc_length.clear();
+  arc_length.push_back(dist);
   for (uint i = 1; i < trajectory.size(); ++i) {
     dist += calcDistance2d(trajectory, i, i - 1);
-    arclength->push_back(dist);
+    arc_length.push_back(dist);
   }
 }
 
@@ -88,7 +85,7 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
     return {true, output};
   }
   std::vector<double> input_arclength;
-  calcMPCTrajectoryArclength(input, &input_arclength);
+  calcMPCTrajectoryArcLength(input, input_arclength);
 
   if (input_arclength.empty()) {
     return {false, output};
@@ -100,7 +97,7 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   }
 
   std::vector<double> input_yaw = input.yaw;
-  convertEulerAngleToMonotonic(&input_yaw);
+  convertEulerAngleToMonotonic(input_yaw);
 
   const auto lerp_arc_length = [&](const auto & input_value) {
     return interpolation::lerp(input_arclength, input_value, output_arclength);
@@ -123,38 +120,34 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
 
 bool linearInterpMPCTrajectory(
   const std::vector<double> & in_index, const MPCTrajectory & in_traj,
-  const std::vector<double> & out_index, MPCTrajectory * out_traj)
+  const std::vector<double> & out_index, MPCTrajectory & out_traj)
 {
-  if (!out_traj) {
-    return false;
-  }
-
   if (in_traj.empty()) {
-    *out_traj = in_traj;
+    out_traj = in_traj;
     return true;
   }
 
   std::vector<double> in_traj_yaw = in_traj.yaw;
-  convertEulerAngleToMonotonic(&in_traj_yaw);
+  convertEulerAngleToMonotonic(in_traj_yaw);
 
   const auto lerp_arc_length = [&](const auto & input_value) {
     return interpolation::lerp(in_index, input_value, out_index);
   };
 
   try {
-    out_traj->x = lerp_arc_length(in_traj.x);
-    out_traj->y = lerp_arc_length(in_traj.y);
-    out_traj->z = lerp_arc_length(in_traj.z);
-    out_traj->yaw = lerp_arc_length(in_traj.yaw);
-    out_traj->vx = lerp_arc_length(in_traj.vx);
-    out_traj->k = lerp_arc_length(in_traj.k);
-    out_traj->smooth_k = lerp_arc_length(in_traj.smooth_k);
-    out_traj->relative_time = lerp_arc_length(in_traj.relative_time);
+    out_traj.x = lerp_arc_length(in_traj.x);
+    out_traj.y = lerp_arc_length(in_traj.y);
+    out_traj.z = lerp_arc_length(in_traj.z);
+    out_traj.yaw = lerp_arc_length(in_traj.yaw);
+    out_traj.vx = lerp_arc_length(in_traj.vx);
+    out_traj.k = lerp_arc_length(in_traj.k);
+    out_traj.smooth_k = lerp_arc_length(in_traj.smooth_k);
+    out_traj.relative_time = lerp_arc_length(in_traj.relative_time);
   } catch (const std::exception & e) {
     std::cerr << "linearInterpMPCTrajectory error!: " << e.what() << std::endl;
   }
 
-  if (out_traj->empty()) {
+  if (out_traj.empty()) {
     std::cerr << "[mpc util] linear interpolation error" << std::endl;
     return false;
   }
@@ -162,39 +155,34 @@ bool linearInterpMPCTrajectory(
   return true;
 }
 
-void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift)
+void calcTrajectoryYawFromXY(MPCTrajectory & traj, const bool is_forward_shift)
 {
-  if (traj->yaw.size() < 3) {  // at least 3 points are required to calculate yaw
+  if (traj.yaw.size() < 3) {  // at least 3 points are required to calculate yaw
     return;
   }
-  if (traj->yaw.size() != traj->vx.size()) {
+  if (traj.yaw.size() != traj.vx.size()) {
     RCLCPP_ERROR(rclcpp::get_logger("mpc_utils"), "trajectory size has no consistency.");
     return;
   }
 
   // interpolate yaw
-  for (int i = 1; i < static_cast<int>(traj->yaw.size()) - 1; ++i) {
-    const double dx = traj->x.at(i + 1) - traj->x.at(i - 1);
-    const double dy = traj->y.at(i + 1) - traj->y.at(i - 1);
-    traj->yaw.at(i) = is_forward_shift ? std::atan2(dy, dx) : std::atan2(dy, dx) + M_PI;
+  for (int i = 1; i < static_cast<int>(traj.yaw.size()) - 1; ++i) {
+    const double dx = traj.x.at(i + 1) - traj.x.at(i - 1);
+    const double dy = traj.y.at(i + 1) - traj.y.at(i - 1);
+    traj.yaw.at(i) = is_forward_shift ? std::atan2(dy, dx) : std::atan2(dy, dx) + M_PI;
   }
-  if (traj->yaw.size() > 1) {
-    traj->yaw.at(0) = traj->yaw.at(1);
-    traj->yaw.back() = traj->yaw.at(traj->yaw.size() - 2);
+  if (traj.yaw.size() > 1) {
+    traj.yaw.at(0) = traj.yaw.at(1);
+    traj.yaw.back() = traj.yaw.at(traj.yaw.size() - 2);
   }
 }
 
-bool calcTrajectoryCurvature(
+void calcTrajectoryCurvature(
   const int curvature_smoothing_num_traj, const int curvature_smoothing_num_ref_steer,
-  MPCTrajectory * traj)
+  MPCTrajectory & traj)
 {
-  if (!traj) {
-    return false;
-  }
-
-  traj->k = calcTrajectoryCurvature(curvature_smoothing_num_traj, *traj);
-  traj->smooth_k = calcTrajectoryCurvature(curvature_smoothing_num_ref_steer, *traj);
-  return true;
+  traj.k = calcTrajectoryCurvature(curvature_smoothing_num_traj, traj);
+  traj.smooth_k = calcTrajectoryCurvature(curvature_smoothing_num_ref_steer, traj);
 }
 
 std::vector<double> calcTrajectoryCurvature(
@@ -306,8 +294,7 @@ void dynamicSmoothingVelocity(
 
 bool calcNearestPoseInterp(
   const MPCTrajectory & traj, const Pose & self_pose, Pose * nearest_pose, size_t * nearest_index,
-  double * nearest_time, const double max_dist, const double max_yaw, const rclcpp::Logger & logger,
-  rclcpp::Clock & clock)
+  double * nearest_time, const double max_dist, const double max_yaw)
 {
   if (traj.empty() || !nearest_pose || !nearest_index || !nearest_time) {
     return false;
@@ -315,8 +302,9 @@ bool calcNearestPoseInterp(
 
   const auto autoware_traj = convertToAutowareTrajectory(traj);
   if (autoware_traj.points.empty()) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger, clock, 5000, "[calcNearestPoseInterp] input trajectory is empty");
+    const auto logger = rclcpp::get_logger("mpc_util");
+    auto clock = rclcpp::Clock(RCL_ROS_TIME);
+    RCLCPP_WARN_THROTTLE(logger, clock, 5000, "[calcNearestPoseInterp] input trajectory is empty");
     return false;
   }
 

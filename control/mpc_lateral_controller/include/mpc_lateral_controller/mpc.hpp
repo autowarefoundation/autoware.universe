@@ -247,7 +247,7 @@ private:
    * @return A pair of a boolean flag indicating success and the updated state at delayed_time.
    */
   std::pair<bool, VectorXd> updateStateForDelayCompensation(
-    const MPCTrajectory & traj, const double & start_time, const VectorXd x0_orig);
+    const MPCTrajectory & traj, const double & start_time, const VectorXd & x0_orig);
 
   /**
    * @brief Generate the MPC matrix using the reference trajectory and vehicle model.
@@ -309,7 +309,7 @@ private:
    * @param prediction_dt The prediction time step.
    * @param R The R matrix to modify.
    */
-  void addSteerWeightR(const double prediction_dt, MatrixXd * R) const;
+  void addSteerWeightR(const double prediction_dt, MatrixXd & R) const;
 
   /**
    * @brief Add weights related to lateral jerk, steering rate, and steering acceleration to the f
@@ -317,7 +317,7 @@ private:
    * @param prediction_dt The prediction time step.
    * @param f The f matrix to modify.
    */
-  void addSteerWeightF(const double prediction_dt, MatrixXd * f) const;
+  void addSteerWeightF(const double prediction_dt, MatrixXd & f) const;
 
   /**
    * @brief Calculate the desired steering rate for the steering_rate command.
