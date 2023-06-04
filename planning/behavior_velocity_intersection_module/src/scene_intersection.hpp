@@ -137,7 +137,6 @@ public:
   struct PeekingTowardOcclusion
   {
     size_t stop_line_idx;
-    std::pair<size_t, size_t> creep_interval;
     OcclusionState occlusion_state;
     util::IntersectionStopLines stop_lines;
   };

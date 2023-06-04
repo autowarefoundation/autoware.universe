@@ -267,7 +267,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   prepareRTCStatus(decision_result, *path);
 
-  // move following to a function respondRTCApprovalStatus()
+  // reactRTCApproval(activated_, occlusion_activated_, decision_result);
   /*
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   if (!occlusion_activated_) {
@@ -509,7 +509,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
           OcclusionState::COLLISION_DETECTED, intersection_stop_lines};
       } else {
         return IntersectionModule::PeekingTowardOcclusion{
-          occlusion_peeking_stop_line_idx, creep_interval, OcclusionState::CREEP_SECOND_STOP_LINE,
+          occlusion_peeking_stop_line_idx, OcclusionState::CREEP_SECOND_STOP_LINE,
           intersection_stop_lines};
       }
     } else {
@@ -529,9 +529,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
     const auto stop_line_idx = isOverDefaultStopLine ? closest_idx : default_stop_line_idx;
     return IntersectionModule::NonOccludedCollisionStop{stop_line_idx, intersection_stop_lines};
-  } else if (!activated_) {
-    return IntersectionModule::NonOccludedCollisionStop{
-      default_stop_line_idx, intersection_stop_lines};
   }
 
   return IntersectionModule::Safe{intersection_stop_lines};
