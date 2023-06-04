@@ -109,6 +109,16 @@ void IntersectionModule::initializeRTCStatus()
   // activated_ and occlusion_activated_ must be set from manager's RTC callback
 }
 
+// template-specification based visitor pattern
+// https://en.cppreference.com/w/cpp/utility/variant/visit
+template <class... Ts>
+struct VisitorSwitch : Ts...
+{
+  using Ts::operator()...;
+};
+template <class... Ts>
+VisitorSwitch(Ts...) -> VisitorSwitch<Ts...>;
+
 template <typename T>
 void prepareRTCByDecisionResult(
   [[maybe_unused]] const T & result,
@@ -117,6 +127,7 @@ void prepareRTCByDecisionResult(
   [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
+  static_assert("Unsupported type passed to prepareRTCByDecisionResult");
   return;
 }
 
@@ -227,16 +238,6 @@ void prepareRTCByDecisionResult(
   return;
 }
 
-// template-specification based visitor pattern
-// https://en.cppreference.com/w/cpp/utility/variant/visit
-template <class... Ts>
-struct VisitorSwitch : Ts...
-{
-  using Ts::operator()...;
-};
-template <class... Ts>
-VisitorSwitch(Ts...) -> VisitorSwitch<Ts...>;
-
 void IntersectionModule::prepareRTCStatus(
   const DecisionResult & decision_result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
@@ -254,6 +255,119 @@ void IntersectionModule::prepareRTCStatus(
   setDistance(default_distance);
 }
 
+template <typename T>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval, [[maybe_unused]] const T & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  static_assert("Unsupported type passed to reactRTCByDecisionResult");
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::Indecisive & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::StuckStop & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::NonOccludedCollisionStop & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::FirstWaitBeforeOcclusion & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::PeekingTowardOcclusion & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::OccludedCollisionStop & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approval,
+  [[maybe_unused]] const bool rtc_occlusion_approval,
+  [[maybe_unused]] const IntersectionModule::Safe & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
+{
+  return;
+}
+
+void reactRTCApproval(
+  const bool rtc_default_approval, const bool rtc_occlusion_approval,
+  const IntersectionModule::DecisionResult & decision_result,
+  const IntersectionModule::PlannerParam & planner_param,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
+  util::DebugData * debug_data)
+{
+  std::visit(
+    VisitorSwitch{[&](const auto & decision) {
+      reactRTCApprovalByDecisionResult(
+        rtc_default_approval, rtc_occlusion_approval, decision, planner_param, path, stop_reason,
+        debug_data);
+    }},
+    decision_result);
+  return;
+}
+
 bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_ = util::DebugData();
@@ -267,7 +381,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   prepareRTCStatus(decision_result, *path);
 
-  // reactRTCApproval(activated_, occlusion_activated_, decision_result);
+  reactRTCApproval(
+    activated_, occlusion_activated_, decision_result, planner_param_, path, stop_reason,
+    &debug_data_);
   /*
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   if (!occlusion_activated_) {
@@ -502,7 +618,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool is_stopped = planner_data_->isVehicleStopped();
     if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
-      const auto creep_interval = std::make_pair(closest_idx, occlusion_peeking_stop_line_idx);
       if (has_collision) {
         return IntersectionModule::OccludedCollisionStop{
           default_stop_line_idx, occlusion_peeking_stop_line_idx,
