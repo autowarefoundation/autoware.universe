@@ -23,7 +23,6 @@ protected:
 
   void SetUp() override
   {
-    rclcpp::init(0, nullptr);
     rclcpp::NodeOptions node_options;
     node_ = std::make_shared<AutowareAutoMsgsAdapterNode>(node_options);
   }
