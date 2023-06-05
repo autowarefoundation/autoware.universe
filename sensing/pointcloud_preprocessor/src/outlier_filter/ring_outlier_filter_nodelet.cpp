@@ -71,28 +71,28 @@ void RingOutlierFilterComponent::faster_filter(
 
   // FIXME(VRichardJP) Everything would be simpler if Autoware enforced strict PointCloud2 format
 
-  auto maybe_intensity_offset = utils::getIntensityOffset(input->fields);
+  auto maybe_intensity_offset = utils::getIntensityOffset(*input);
   if (!maybe_intensity_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'intensity' data field");
     return;
   }
   const auto intensity_offset = *maybe_intensity_offset;
 
-  auto maybe_ring_offset = utils::getRingOffset(input->fields);
+  auto maybe_ring_offset = utils::getRingOffset(*input);
   if (!maybe_ring_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'ring' data field");
     return;
   }
   const auto ring_offset = *maybe_ring_offset;
 
-  auto maybe_azimuth_offset = utils::getAzimuthOffset(input->fields);
+  auto maybe_azimuth_offset = utils::getAzimuthOffset(*input);
   if (!maybe_azimuth_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'azimuth' data field");
     return;
   }
   const auto azimuth_offset = *maybe_azimuth_offset;
 
-  auto maybe_distance_offset = utils::getDistanceOffset(input->fields);
+  auto maybe_distance_offset = utils::getDistanceOffset(*input);
   if (!maybe_distance_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'distance' data field");
     return;
