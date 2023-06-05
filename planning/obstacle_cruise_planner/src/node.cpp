@@ -107,17 +107,6 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
     obstacle.twist.linear.x * std::sin(object_yaw - traj_yaw));
 }
 
-double calcObstacleProjectedVelocity(
-  const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle)
-{
-  const size_t object_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose.position);
-
-  const double object_yaw = tf2::getYaw(obstacle.pose.orientation);
-  const double traj_yaw = tf2::getYaw(traj_points.at(object_idx).pose.orientation);
-
-  return obstacle.twist.linear.x * std::cos(object_yaw - traj_yaw);
-}
-
 double calcObstacleMaxLength(const Shape & shape)
 {
   if (shape.type == Shape::BOUNDING_BOX) {
