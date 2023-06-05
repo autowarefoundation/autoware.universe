@@ -84,9 +84,9 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   const auto curvature_list_for_steer_rate_lim =
     node_->declare_parameter<std::vector<double>>("curvature_list_for_steer_rate_lim");
   for (size_t i = 0; i < steer_rate_lim_dps_list_by_curvature.size(); ++i) {
-    m_mpc.m_steer_rate_lim_map_by_curvature.push_back(
-      {steer_rate_lim_dps_list_by_curvature.at(i) * deg2rad,
-       curvature_list_for_steer_rate_lim.at(i)});
+    m_mpc.m_steer_rate_lim_map_by_curvature.emplace_back(
+      steer_rate_lim_dps_list_by_curvature.at(i) * deg2rad,
+      curvature_list_for_steer_rate_lim.at(i));
   }
 
   // steer rate limit depending on velocity
@@ -95,9 +95,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   const auto velocity_list_for_steer_rate_lim =
     node_->declare_parameter<std::vector<double>>("velocity_list_for_steer_rate_lim");
   for (size_t i = 0; i < steer_rate_lim_dps_list_by_velocity.size(); ++i) {
-    m_mpc.m_steer_rate_lim_map_by_velocity.push_back(
-      {steer_rate_lim_dps_list_by_velocity.at(i) * deg2rad,
-       velocity_list_for_steer_rate_lim.at(i)});
+    m_mpc.m_steer_rate_lim_map_by_velocity.emplace_back(
+      steer_rate_lim_dps_list_by_velocity.at(i) * deg2rad, velocity_list_for_steer_rate_lim.at(i));
   }
 
   /* vehicle model setup */
@@ -222,17 +221,6 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   if (!m_is_ctrl_cmd_prev_initialized) {
     m_ctrl_cmd_prev = getInitialControlCommand();
     m_is_ctrl_cmd_prev_initialized = true;
-  }
-
-  const bool is_vehicle_stopped = std::fabs(m_current_kinematic_state.twist.twist.linear.x) < 0.01;
-
-  // if the vehicle is stopped, set steering angle rate limit to a large value to get a proper
-  // steering value from mpc.
-  // TODO(someone): solve mpc cannot create output in low steering rate limit problem
-  if (is_vehicle_stopped) {
-    m_mpc.m_steer_rate_lim = std::numeric_limits<double>::max();
-  } else {
-    m_mpc.m_steer_rate_lim = m_steer_rate_lim;
   }
 
   const bool is_mpc_solved = m_mpc.calculateMPC(

@@ -227,7 +227,7 @@ private:
    */
   bool executeOptimization(
     const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const double prediction_dt,
-    Eigen::VectorXd * Uex, const MPCTrajectory & traj);
+    Eigen::VectorXd * Uex, const MPCTrajectory & traj, const double current_velocity);
   /**
    * @brief resample trajectory with mpc resampling time
    */

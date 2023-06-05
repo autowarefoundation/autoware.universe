@@ -70,7 +70,8 @@ bool MPC::calculateMPC(
 
   /* solve quadratic optimization */
   Eigen::VectorXd Uex;
-  if (!executeOptimization(mpc_matrix, x0, prediction_dt, &Uex, mpc_resampled_ref_traj)) {
+  if (!executeOptimization(
+        mpc_matrix, x0, prediction_dt, &Uex, mpc_resampled_ref_traj, current_velocity)) {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "optimization failed.");
     return false;
   }
@@ -636,7 +637,7 @@ MPCMatrix MPC::generateMPCMatrix(
  */
 bool MPC::executeOptimization(
   const MPCMatrix & m, const Eigen::VectorXd & x0, const double prediction_dt,
-  Eigen::VectorXd * Uex, const MPCTrajectory & traj)
+  Eigen::VectorXd * Uex, const MPCTrajectory & traj, const double current_velocity)
 {
   using Eigen::MatrixXd;
   using Eigen::VectorXd;
@@ -666,7 +667,12 @@ bool MPC::executeOptimization(
     A(i, i - 1) = -1.0;
   }
 
+  const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
   const auto get_adaptive_steer_rate_lim = [&](const double curvature, const double velocity) {
+    if (is_vehicle_stopped) {
+      return std::numeric_limits<double>::max();
+    }
+
     double steer_rate_lim_by_curvature = m_steer_rate_lim_map_by_curvature.back().second;
     for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_curvature) {
       if (std::abs(curvature) <= steer_rate_lim_info.first) {
