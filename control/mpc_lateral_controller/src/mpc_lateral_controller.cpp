@@ -85,8 +85,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     node_->declare_parameter<std::vector<double>>("curvature_list_for_steer_rate_lim");
   for (size_t i = 0; i < steer_rate_lim_dps_list_by_curvature.size(); ++i) {
     m_mpc.m_steer_rate_lim_map_by_curvature.emplace_back(
-      steer_rate_lim_dps_list_by_curvature.at(i) * deg2rad,
-      curvature_list_for_steer_rate_lim.at(i));
+      curvature_list_for_steer_rate_lim.at(i),
+      steer_rate_lim_dps_list_by_curvature.at(i) * deg2rad);
   }
 
   // steer rate limit depending on velocity
@@ -96,7 +96,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     node_->declare_parameter<std::vector<double>>("velocity_list_for_steer_rate_lim");
   for (size_t i = 0; i < steer_rate_lim_dps_list_by_velocity.size(); ++i) {
     m_mpc.m_steer_rate_lim_map_by_velocity.emplace_back(
-      steer_rate_lim_dps_list_by_velocity.at(i) * deg2rad, velocity_list_for_steer_rate_lim.at(i));
+      velocity_list_for_steer_rate_lim.at(i), steer_rate_lim_dps_list_by_velocity.at(i) * deg2rad);
   }
 
   /* vehicle model setup */
