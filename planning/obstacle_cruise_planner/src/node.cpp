@@ -1004,7 +1004,6 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
     }
     return false;
   }();
-  std::cerr << "is_slow_down_required " << is_slow_down_required << std::endl;
   if (!is_slow_down_required) {
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
