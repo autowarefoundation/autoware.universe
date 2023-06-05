@@ -160,6 +160,7 @@ public:
     PeekingTowardOcclusion,    // peeking into occlusion while collision is not detected
     OccludedCollisionStop,     // occlusion and collision are both detected
     Safe                       // judge as safe
+    /* TODO(Mamoru Sobue): TrafficLightArrowSolidOn */
     >;
 
   IntersectionModule(
@@ -172,7 +173,8 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+    bool
+    modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
