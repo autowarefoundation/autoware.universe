@@ -17,8 +17,8 @@ rclcpp_components_register_node(${NODE_NAME}
   EXECUTABLE ${EXEC_NAME})
 
 if(BUILD_TESTING)
-  file(GLOB_RECURSE FILES_TEST test/*.cpp)
-  ament_add_ros_isolated_gtest(${TEST_NAME} ${FILES_TEST})
+  file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
+  ament_add_ros_isolated_gtest(${TEST_NAME} ${TEST_SOURCES})
   target_link_libraries(${TEST_NAME} ${NODE_NAME})
 endif()
 

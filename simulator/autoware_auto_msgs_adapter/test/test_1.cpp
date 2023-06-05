@@ -12,10 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware_auto_msgs_adapter/autoware_auto_msgs_adapter_core.hpp>
+
 #include <gtest/gtest.h>
 
-TEST(Test1, Test1_1)  // NOLINT for gtest
+class AutowareAutoMsgsAdapterFixture : public testing::Test
 {
-  auto a = 1;
-  EXPECT_EQ(a, 1);
+protected:
+  using AutowareAutoMsgsAdapterNode = autoware_auto_msgs_adapter::AutowareAutoMsgsAdapterNode;
+
+  void SetUp() override
+  {
+    rclcpp::init(0, nullptr);
+    rclcpp::NodeOptions node_options;
+    node_ = std::make_shared<AutowareAutoMsgsAdapterNode>(node_options);
+  }
+
+  void TearDown() override { rclcpp::shutdown(); }
+
+  autoware_auto_control_msgs::msg::AckermannControlCommand ackermann_control_command_;
+
+  AutowareAutoMsgsAdapterNode::SharedPtr node_;
+};
+
+TEST_F(AutowareAutoMsgsAdapterFixture, Test1_1)  // NOLINT for gtest
+{
+  auto dummy_node = std::make_shared<rclcpp::Node>("dummy_node", rclcpp::NodeOptions{});
+  auto pub = dummy_node->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    "ackermann_control_command", rclcpp::QoS{1});
+  pub->publish(ackermann_control_command_);
 }
