@@ -1123,6 +1123,9 @@ bool isEgoWithinOriginalLane(
   const auto vehicle_width = common_param.vehicle_width;
   const auto vehicle_poly =
     tier4_autoware_utils::toFootprint(current_pose, base_link2front, base_link2rear, vehicle_width);
+
+  // Check if the ego vehicle is entirely within the lane by checking if the vehicle's polygon
+  // is within the lane's polygon
   return boost::geometry::within(vehicle_poly, lanelet::utils::to2D(lane_poly).basicPolygon());
 }
 

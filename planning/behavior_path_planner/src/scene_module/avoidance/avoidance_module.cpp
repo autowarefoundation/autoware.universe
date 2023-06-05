@@ -3465,17 +3465,19 @@ void AvoidanceModule::insertStopPoint(
   const auto stop_distance =
     calcSignedArcLength(shifted_path.path.points, getEgoPosition(), stop_idx);
 
+  // Insert deceleration point at stop distance without deceleration if use_constraints_for_decel is
+  // false
   if (!use_constraints_for_decel) {
     utils::avoidance::insertDecelPoint(
       getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
     return;
   }
 
+  // Otherwise, consider deceleration constraints before inserting deceleration point
   const auto decel_distance = helper_.getMildDecelDistance(0.0);
   if (!decel_distance) {
     return;
   }
-
   if (stop_distance < decel_distance) {
     return;
   }
