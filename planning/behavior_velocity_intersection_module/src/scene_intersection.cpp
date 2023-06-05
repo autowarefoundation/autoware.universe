@@ -475,6 +475,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     activated_, occlusion_activated_, decision_result, planner_param_, baselink2front, path,
     stop_reason, &debug_data_);
 
+  if (!activated_ || !occlusion_activated_) {
+    is_go_out_ = false;
+  }
   /*
   if (!occlusion_activated_) {
     is_go_out_ = false;
