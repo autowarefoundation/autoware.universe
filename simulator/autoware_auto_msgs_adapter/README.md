@@ -1,0 +1,1 @@
+# autoware_auto_msgs_adapter
