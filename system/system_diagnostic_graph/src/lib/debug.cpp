@@ -13,38 +13,24 @@
 // limitations under the License.
 
 #include "graph.hpp"
+#include "node.hpp"
+
+#include <iostream>
 
 namespace system_diagnostic_graph
 {
 
-DiagGraph::DiagGraph()
+void DiagGraph::dump()
 {
-}
-
-DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
-{
-  DiagnosticGraph graph;
-  graph.stamp = stamp;
-  graph.nodes.reserve(nodes_.size() + diags_.size());
-
-  for (const auto & node : nodes_) {
-    graph.nodes.push_back(node->report());
-  }
+  std::cout << "============================== dump ==============================" << std::endl;
   for (const auto & diag : diags_) {
-    graph.nodes.push_back(diag.second->report());
+    diag.second->dump();
   }
-  return graph;
 }
 
-void DiagGraph::update(const DiagnosticArray & array)
+void DiagLeaf::dump()
 {
-  for (const auto & status : array.status) {
-    const auto key = DiagLeaf::get_key(status);
-    if (!diags_.count(key)) {
-      diags_.emplace(key, std::make_shared<DiagLeaf>(status));
-    }
-    diags_.at(key)->update(status);
-  }
+  std::cout << key_.first << " " << key_.second << std::endl;
 }
 
 }  // namespace system_diagnostic_graph

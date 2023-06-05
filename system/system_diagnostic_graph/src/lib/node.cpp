@@ -16,18 +16,21 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <utility>
+
 namespace system_diagnostic_graph
 {
 
 const auto logger = rclcpp::get_logger("system_diagnostic_graph");
 
-DiagNode::DiagNode()
+DiagLeaf::Key DiagLeaf::get_key(const DiagnosticStatus & status)
 {
+  return std::make_pair(status.name, status.hardware_id);
 }
 
-DiagLeaf::DiagLeaf(const DiagnosticStatus & status)
+DiagLeaf::DiagLeaf(const DiagnosticStatus & status) : key_(get_key(status))
 {
-  RCLCPP_INFO_STREAM(logger, "Create DiagLeaf: " << status.name);
+  RCLCPP_INFO_STREAM(logger, "found a new diagnosis: " << status.name);
 }
 
 DiagnosticNode DiagLeaf::report()
@@ -37,7 +40,7 @@ DiagnosticNode DiagLeaf::report()
 
 void DiagLeaf::update(const DiagnosticStatus & status)
 {
-  RCLCPP_INFO_STREAM(logger, "Update DiagLeaf: " << status.name);
+  (void)status;
 }
 
 }  // namespace system_diagnostic_graph

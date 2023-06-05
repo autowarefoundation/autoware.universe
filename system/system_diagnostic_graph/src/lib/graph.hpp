@@ -22,8 +22,6 @@
 
 #include <map>
 #include <memory>
-#include <string>
-#include <utility>
 #include <vector>
 
 namespace system_diagnostic_graph
@@ -35,10 +33,11 @@ public:
   DiagGraph();
   DiagnosticGraph report(const rclcpp::Time & stamp);
   void update(const DiagnosticArray & array);
+  void dump();
 
 private:
   std::vector<std::shared_ptr<DiagNode>> nodes_;
-  std::map<std::pair<std::string, std::string>, std::shared_ptr<DiagLeaf>> diags_;
+  std::map<DiagLeaf::Key, std::shared_ptr<DiagLeaf>> diags_;
 };
 
 }  // namespace system_diagnostic_graph

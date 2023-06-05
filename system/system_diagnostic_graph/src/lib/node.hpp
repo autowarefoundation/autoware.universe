@@ -17,15 +17,11 @@
 
 #include "types.hpp"
 
+#include <string>
+#include <utility>
+
 namespace system_diagnostic_graph
 {
-
-class DiagNode
-{
-public:
-  DiagNode();
-  virtual DiagnosticNode report() = 0;
-};
 
 class DiagLeaf : public DiagNode
 {
@@ -33,6 +29,13 @@ public:
   explicit DiagLeaf(const DiagnosticStatus & status);
   DiagnosticNode report() override;
   void update(const DiagnosticStatus & status);
+  void dump();
+
+  using Key = std::pair<std::string, std::string>;
+  static Key get_key(const DiagnosticStatus & status);
+
+private:
+  const Key key_;
 };
 
 }  // namespace system_diagnostic_graph
