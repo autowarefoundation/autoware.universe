@@ -2933,19 +2933,22 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
   }
 
   // add small shift lines.
-  const auto add_straight_shift = [&, this](auto & subsequent, const size_t start_idx) {
-    for (size_t i = start_idx; i < candidates.size(); ++i) {
-      if (
-        std::abs(candidates.at(i).getRelativeLength()) >
-        parameters_->lateral_small_shift_threshold) {
-        break;
+  const auto add_straight_shift =
+    [&, this](auto & subsequent, bool has_large_shift, const size_t start_idx) {
+      for (size_t i = start_idx; i < candidates.size(); ++i) {
+        if (
+          std::abs(candidates.at(i).getRelativeLength()) >
+          parameters_->lateral_small_shift_threshold) {
+          if (has_large_shift) {
+            break;
+          }
+
+          has_large_shift = true;
+        }
+
+        subsequent.push_back(candidates.at(i));
       }
-
-      subsequent.push_back(candidates.at(i));
-    }
-
-    return subsequent;
-  };
+    };
 
   // get subsequent shift lines.
   const auto get_subsequent_shift = [&, this](size_t i) {
@@ -2957,12 +2960,15 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
 
     if (
       std::abs(candidates.at(i).getRelativeLength()) < parameters_->lateral_small_shift_threshold) {
+      const auto has_large_shift =
+        candidates.at(i + 1).getRelativeLength() > parameters_->lateral_small_shift_threshold;
+
       // candidate.at(i) is small length shift line. add large length shift line.
       subsequent.push_back(candidates.at(i + 1));
-      add_straight_shift(subsequent, i + 2);
+      add_straight_shift(subsequent, has_large_shift, i + 2);
     } else {
       // candidate.at(i) is large length shift line. add small length shift lines.
-      add_straight_shift(subsequent, i + 1);
+      add_straight_shift(subsequent, true, i + 1);
     }
 
     return subsequent;
