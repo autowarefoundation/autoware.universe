@@ -289,6 +289,13 @@ private:
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
   /**
+   * @brief fill ego status based on the candidate path safety check result.
+   * @param avoidance data.
+   * @param debug data.
+   */
+  void fillEgoStatus(AvoidancePlanningData & data, DebugData & debug) const;
+
+  /**
    * @brief fill debug data.
    * @param avoidance data.
    * @param debug data.
@@ -306,6 +313,12 @@ private:
    * behind ego pose.
    */
   void updateRegisteredRawShiftLines();
+
+  /**
+   * @brief check whether the ego can transit yield maneuver.
+   * @param avoidance data.
+   */
+  bool canYieldManeuver(const AvoidancePlanningData & data) const;
 
   // shift line generation
 
@@ -689,6 +702,8 @@ private:
   UUID candidate_uuid_;
 
   ObjectDataArray registered_objects_;
+
+  mutable ObjectDataArray ego_stopped_objects_;
 
   mutable ObjectDataArray stopped_objects_;
 

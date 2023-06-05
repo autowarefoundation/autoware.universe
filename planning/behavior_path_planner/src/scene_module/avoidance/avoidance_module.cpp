@@ -407,11 +407,45 @@ ObjectData AvoidanceModule::createObjectData(
   return object_data;
 }
 
+bool AvoidanceModule::canYieldManeuver(const AvoidancePlanningData & data) const
+{
+  // transit yield maneuver only when the avoidance maneuver is not initiated.
+  if (data.avoiding_now) {
+    return false;
+  }
+
+  if (!data.stop_target_object) {
+    return true;
+  }
+
+  constexpr double TH_STOP_SPEED = 0.01;
+  constexpr double TH_STOP_POSITION = 0.5;
+
+  const auto stopped_for_the_object =
+    getEgoSpeed() < TH_STOP_SPEED && std::abs(data.to_stop_line) < TH_STOP_POSITION;
+
+  const auto id = data.stop_target_object.get().object.object_id;
+  const auto same_id_obj = std::find_if(
+    ego_stopped_objects_.begin(), ego_stopped_objects_.end(),
+    [&id](const auto & o) { return o.object.object_id == id; });
+
+  // if the ego already started avoiding for the object, never transit yield maneuver again.
+  if (same_id_obj != ego_stopped_objects_.end()) {
+    return stopped_for_the_object;
+  }
+
+  // registered objects whom the ego stopped for at the moment of stopping.
+  if (stopped_for_the_object) {
+    ego_stopped_objects_.push_back(data.stop_target_object.get());
+  }
+
+  return true;
+}
+
 void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const
 {
   constexpr double AVOIDING_SHIFT_THR = 0.1;
   data.avoiding_now = std::abs(helper_.getEgoShift()) > AVOIDING_SHIFT_THR;
-  data.candidate_path = utils::avoidance::toShiftedPath(data.reference_path);
 
   auto path_shifter = path_shifter_;
 
@@ -453,20 +487,19 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * STEP 5
    * Generate avoidance path.
    */
-  auto candidate_path = generateAvoidancePath(path_shifter);
+  data.candidate_path = generateAvoidancePath(path_shifter);
 
   /**
    * STEP 6
    * Check avoidance path safety. For each target objects and the objects in adjacent lanes,
    * check that there is a certain amount of margin in the lateral and longitudinal direction.
    */
-  data.safe = isSafePath(path_shifter, candidate_path, debug);
+  data.safe = isSafePath(path_shifter, data.candidate_path, debug);
+}
 
-  if (data.safe) {
-    data.safe_new_sl = data.unapproved_new_sl;
-    data.candidate_path = candidate_path;
-  }
-
+void AvoidanceModule::fillEgoStatus(
+  AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug) const
+{
   /**
    * Find the nearest object that should be avoid. When the ego follows reference path,
    * if the both of following two conditions are satisfied, the module surely avoid the object.
@@ -485,25 +518,25 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
     }
   }
 
+  const auto can_yield_maneuver = canYieldManeuver(data);
+
   /**
-   * If the avoidance path is not safe in situation where the ego should avoid object, the ego
-   * stops in front of the front object with the necessary distance to avoid the object.
+   * If the avoidance path is safe, use unapproved_new_sl for avoidance path generation.
    */
-  if (!data.safe && data.avoid_required) {
-    data.yield_required = data.found_avoidance_path && data.avoid_required;
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "not found safe avoidance path. transit yield maneuver...");
+  if (data.safe) {
+    data.yield_required = false;
+    data.safe_new_sl = data.unapproved_new_sl;
+    return;
   }
 
   /**
-   * Even if data.avoid_required is false, the module cancels registered shift point when the
-   * approved avoidance path is not safe.
+   * If the yield maneuver is disabled, use unapproved_new_sl for avoidance path generation even if
+   * the shift line is unsafe.
    */
-  if (!data.safe && registered) {
-    data.yield_required = true;
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000,
-      "found avoidance path, but it is not safe. canceling avoidance path...");
+  if (!parameters_->enable_yield_maneuver) {
+    data.yield_required = false;
+    data.safe_new_sl = data.unapproved_new_sl;
+    return;
   }
 
   /**
@@ -511,15 +544,38 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * Even if it is determined that a yield is necessary, the yield maneuver is not executed
    * if the avoidance has already been initiated.
    */
-  constexpr double THRESHOLD = -0.5;
-  const auto exceed_stop_line = data.to_stop_line < THRESHOLD;
-  if (!data.safe && (data.avoiding_now || exceed_stop_line)) {
+  if (!can_yield_maneuver) {
     data.yield_required = false;
     data.safe_new_sl = data.unapproved_new_sl;
-    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "could not transit yield maneuver!!!");
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "unsafe. but could not transit yield status.");
+    return;
   }
 
-  fillDebugData(data, debug);
+  /**
+   * Transit yield maneuver. Clear shift lines and output yield path.
+   */
+  {
+    data.yield_required = true;
+    data.safe_new_sl.clear();
+  }
+
+  /**
+   * Even if data.avoid_required is false, the module cancels registered shift point when the
+   * approved avoidance path is not safe.
+   */
+  const auto approved_path_exist = !path_shifter_.getShiftLines().empty();
+  if (approved_path_exist) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe. canceling approved path...");
+    return;
+  }
+
+  /**
+   * If the avoidance path is not safe in situation where the ego should avoid object, the ego
+   * stops in front of the front object with the necessary distance to avoid the object.
+   */
+  {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe. transit yield maneuver...");
+  }
 }
 
 void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugData & debug) const
@@ -565,7 +621,7 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
 
 AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & data) const
 {
-  if (data.yield_required && parameters_->enable_yield_maneuver) {
+  if (data.yield_required) {
     return AvoidanceState::YIELD;
   }
 
@@ -771,13 +827,8 @@ void AvoidanceModule::registerRawShiftLines(const AvoidLineArray & future)
 }
 
 AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
-  AvoidancePlanningData & data, DebugData & debug) const
+  AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug) const
 {
-  {
-    debug_avoidance_initializer_for_shift_line_.clear();
-    debug.unavoidable_objects.clear();
-  }
-
   const auto prepare_distance = helper_.getNominalPrepareDistance();
 
   // To be consistent with changes in the ego position, the current shift length is considered.
@@ -786,26 +837,9 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
   const auto & base_link2rear = planner_data_->parameters.base_link2rear;
 
   AvoidLineArray avoid_lines;
-  std::vector<AvoidanceDebugMsg> avoidance_debug_msg_array;
-  avoidance_debug_msg_array.reserve(data.target_objects.size());
   for (auto & o : data.target_objects) {
-    AvoidanceDebugMsg avoidance_debug_msg;
-    const auto avoidance_debug_array_false_and_push_back =
-      [&avoidance_debug_msg, &avoidance_debug_msg_array](const std::string & failed_reason) {
-        avoidance_debug_msg.allow_avoidance = false;
-        avoidance_debug_msg.failed_reason = failed_reason;
-        avoidance_debug_msg_array.push_back(avoidance_debug_msg);
-      };
-
-    avoidance_debug_msg.object_id = toHexString(o.object.object_id);
-    avoidance_debug_msg.longitudinal_distance = o.longitudinal;
-    avoidance_debug_msg.lateral_distance_from_centerline = o.lateral;
-    avoidance_debug_msg.to_furthest_linestring_distance = o.to_road_shoulder_distance;
-
     if (!o.avoid_margin) {
-      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
       o.reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
-      debug.unavoidable_objects.push_back(o);
       if (o.avoid_required) {
         break;
       } else {
@@ -816,9 +850,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
     const auto is_object_on_right = utils::avoidance::isOnRight(o);
     const auto shift_length = helper_.getShiftLength(o, is_object_on_right, o.avoid_margin.get());
     if (utils::avoidance::isSameDirectionShift(is_object_on_right, shift_length)) {
-      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::SAME_DIRECTION_SHIFT);
       o.reason = AvoidanceDebugFactor::SAME_DIRECTION_SHIFT;
-      debug.unavoidable_objects.push_back(o);
       if (o.avoid_required) {
         break;
       } else {
@@ -854,11 +886,8 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         // TODO(Horibe) Even if there is no enough distance for avoidance shift, the
         // return-to-center shift must be considered for each object if the current_shift
         // is not zero.
-        avoidance_debug_array_false_and_push_back(
-          AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO);
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
-          debug.unavoidable_objects.push_back(o);
           if (o.avoid_required) {
             break;
           } else {
@@ -870,13 +899,9 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
       // This is the case of exceeding the jerk limit. Use the sharp avoidance ego speed.
       const auto required_jerk = path_shifter_.calcJerkFromLatLonDistance(
         avoiding_shift, remaining_distance, helper_.getSharpAvoidanceEgoSpeed());
-      avoidance_debug_msg.required_jerk = required_jerk;
-      avoidance_debug_msg.maximum_jerk = parameters_->max_lateral_jerk;
       if (required_jerk > parameters_->max_lateral_jerk) {
-        avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::TOO_LARGE_JERK);
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
-          debug.unavoidable_objects.push_back(o);
           if (o.avoid_required) {
             break;
           } else {
@@ -929,14 +954,32 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
       avoiding_shift, return_shift, al_avoid.start_longitudinal, al_avoid.end_longitudinal,
       al_return.end_longitudinal, nominal_avoid_distance, avoiding_distance, o.avoid_margin.get(),
       nominal_return_distance);
-    avoidance_debug_msg.allow_avoidance = true;
-    avoidance_debug_msg_array.push_back(avoidance_debug_msg);
 
     o.is_avoidable = true;
   }
 
-  debug_avoidance_initializer_for_shift_line_ = std::move(avoidance_debug_msg_array);
-  debug_avoidance_initializer_for_shift_line_time_ = clock_->now();
+  // debug
+  {
+    std::vector<AvoidanceDebugMsg> debug_info_array;
+    const auto append = [&](const auto & o) {
+      AvoidanceDebugMsg debug_info;
+      debug_info.object_id = toHexString(o.object.object_id);
+      debug_info.longitudinal_distance = o.longitudinal;
+      debug_info.lateral_distance_from_centerline = o.lateral;
+      debug_info.allow_avoidance = o.reason == "";
+      debug_info.failed_reason = o.reason;
+      debug_info_array.push_back(debug_info);
+    };
+
+    for (const auto & o : data.target_objects) {
+      append(o);
+    }
+
+    debug_avoidance_initializer_for_shift_line_.clear();
+    debug_avoidance_initializer_for_shift_line_ = std::move(debug_info_array);
+    debug_avoidance_initializer_for_shift_line_time_ = clock_->now();
+  }
+
   fillAdditionalInfoFromLongitudinal(avoid_lines);
 
   return avoid_lines;
@@ -2781,7 +2824,8 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
   CandidateOutput output;
 
-  auto shifted_path = data.candidate_path;
+  auto shifted_path = data.yield_required ? utils::avoidance::toShiftedPath(data.reference_path)
+                                          : data.candidate_path;
 
   if (!data.safe_new_sl.empty()) {  // clip from shift start index for visualize
     utils::clipPathLength(
@@ -3115,6 +3159,8 @@ void AvoidanceModule::updateData()
 #endif
 
   fillShiftLine(avoidance_data_, debug_data_);
+  fillEgoStatus(avoidance_data_, debug_data_);
+  fillDebugData(avoidance_data_, debug_data_);
 }
 
 void AvoidanceModule::processOnEntry()
@@ -3461,6 +3507,10 @@ void AvoidanceModule::insertStopPoint(
   const auto & data = avoidance_data_;
 
   if (data.safe) {
+    return;
+  }
+
+  if (!parameters_->enable_yield_maneuver_during_shifting) {
     return;
   }
 
