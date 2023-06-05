@@ -51,12 +51,13 @@
 class Simple1DFilter
 {
 public:
-  Simple1DFilter()
+  Simple1DFilter(double gate_threshold = 2.0)
   {
     initialized_ = false;
     x_ = 0;
     dev_ = 1e9;
     proc_dev_x_c_ = 0.0;
+    gate_threshold_ = gate_threshold;
     return;
   };
   void init(const double init_obs, const double obs_dev, const rclcpp::Time time)
@@ -71,6 +72,11 @@ public:
   {
     if (!initialized_) {
       init(obs, obs_dev, time);
+      return;
+    }
+
+    if(!is_within_mahalanobis_distance(obs)) {
+      // The observation is not within the Mahalanobis distance. Ignore it.
       return;
     }
 
@@ -96,6 +102,15 @@ private:
   double dev_;
   double proc_dev_x_c_;
   rclcpp::Time latest_time_;
+  double gate_threshold_;
+  bool is_within_mahalanobis_distance(double obs)
+  {
+    // Compute Mahalanobis distance
+    double dist = abs(obs - x_) / sqrt(dev_);
+
+    // Check if the distance is within the threshold
+    return dist <= gate_threshold_;
+  }
 };
 
 class EKFLocalizer : public rclcpp::Node
