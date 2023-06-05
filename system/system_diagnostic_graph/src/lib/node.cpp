@@ -31,6 +31,7 @@ DiagLeaf::Key DiagLeaf::get_key(const DiagnosticStatus & status)
 DiagLeaf::DiagLeaf(const DiagnosticStatus & status) : key_(get_key(status))
 {
   RCLCPP_INFO_STREAM(logger, "found a new diagnosis: " << status.name);
+  level_ = status.level;
 }
 
 DiagnosticNode DiagLeaf::report()
@@ -40,7 +41,7 @@ DiagnosticNode DiagLeaf::report()
 
 void DiagLeaf::update(const DiagnosticStatus & status)
 {
-  (void)status;
+  level_ = status.level;
 }
 
 }  // namespace system_diagnostic_graph

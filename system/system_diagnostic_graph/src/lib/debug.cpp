@@ -14,11 +14,19 @@
 
 #include "graph.hpp"
 #include "node.hpp"
+#include "types.hpp"
 
 #include <iostream>
+#include <unordered_map>
 
 namespace system_diagnostic_graph
 {
+
+const std::unordered_map<DiagnosticLevel, std::string> level_names = {
+  {DiagnosticStatus::OK, "OK"},
+  {DiagnosticStatus::WARN, "WARN"},
+  {DiagnosticStatus::ERROR, "ERROR"},
+  {DiagnosticStatus::STALE, "STALE"}};
 
 void DiagGraph::dump()
 {
@@ -30,7 +38,9 @@ void DiagGraph::dump()
 
 void DiagLeaf::dump()
 {
-  std::cout << key_.first << " " << key_.second << std::endl;
+  std::cout << key_.first << " " << key_.second << " ";
+  std::cout << level_names.at(level_) << " ";
+  std::cout << std::endl;
 }
 
 }  // namespace system_diagnostic_graph

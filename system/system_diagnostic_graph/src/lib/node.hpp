@@ -36,6 +36,7 @@ public:
 
 private:
   const Key key_;
+  DiagnosticLevel level_;
 };
 
 }  // namespace system_diagnostic_graph
