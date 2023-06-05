@@ -75,7 +75,7 @@ public:
       return;
     }
 
-    if(!is_within_mahalanobis_distance(obs)) {
+    if (!is_within_mahalanobis_distance(obs)) {
       // The observation is not within the Mahalanobis distance. Ignore it.
       return;
     }
