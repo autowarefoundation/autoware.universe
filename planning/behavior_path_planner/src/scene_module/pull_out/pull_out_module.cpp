@@ -31,6 +31,7 @@
 
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
+using tier4_autoware_utils::inverseTransformPoint;
 
 namespace behavior_path_planner
 {
@@ -61,7 +62,7 @@ PullOutModule::PullOutModule(
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<PullOutParameters> & parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
@@ -104,13 +105,33 @@ void PullOutModule::processOnExit()
 
 bool PullOutModule::isExecutionRequested() const
 {
+  has_received_new_route_ =
+    !planner_data_->prev_route_id ||
+    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
+
+#ifdef USE_OLD_ARCHITECTURE
+  if (is_executed_) {
+    return true;
+  }
+#endif
+
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
+  }
+
+  if (!has_received_new_route_) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
+    return false;
   }
 
   const bool is_stopped = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
                           parameters_->th_arrived_distance;
   if (!is_stopped) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
     return false;
   }
 
@@ -126,19 +147,15 @@ bool PullOutModule::isExecutionRequested() const
   auto lanes = current_lanes;
   lanes.insert(lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
   if (LaneDepartureChecker::isOutOfLane(lanes, vehicle_footprint)) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
     return false;
   }
 
-  // Check if any of the footprint points are in the shoulder lane
-  lanelet::Lanelet closest_shoulder_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(
-        pull_out_lanes, planner_data_->self_odometry->pose.pose, &closest_shoulder_lanelet)) {
-    return false;
-  }
-  if (!isOverlappedWithLane(closest_shoulder_lanelet, vehicle_footprint)) {
-    return false;
-  }
-
+#ifdef USE_OLD_ARCHITECTURE
+  is_executed_ = true;
+#endif
   return true;
 }
 
@@ -390,11 +407,15 @@ void PullOutModule::incrementPathIndex()
 
 PathWithLaneId PullOutModule::getCurrentPath() const
 {
+  if (status_.pull_out_path.partial_paths.size() <= status_.current_path_idx) {
+    return PathWithLaneId{};
+  }
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
 }
 
-void PullOutModule::planWithPriorityOnEfficientPath(
-  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
+void PullOutModule::planWithPriority(
+  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
+  const std::string search_priority)
 {
   status_.is_safe = false;
   status_.planner_type = PlannerType::NONE;
@@ -404,97 +425,84 @@ void PullOutModule::planWithPriorityOnEfficientPath(
     return;
   }
 
-  // plan with each planner
-  for (const auto & planner : pull_out_planners_) {
-    for (size_t i = 0; i < start_pose_candidates.size(); i++) {
-      status_.back_finished = i == 0;
-      const auto & pull_out_start_pose = start_pose_candidates.at(i);
-      planner->setPlannerData(planner_data_);
-      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
-      // not found safe path
-      if (!pull_out_path) {
-        continue;
-      }
-      // use current path if back is not needed
-      if (status_.back_finished) {
-        status_.is_safe = true;
-        status_.pull_out_path = *pull_out_path;
-        status_.pull_out_start_pose = pull_out_start_pose;
-        status_.planner_type = planner->getPlannerType();
-        break;
-      }
-
-      if (i == start_pose_candidates.size() - 1) continue;
-
-      //  check next path if back is needed
-      const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
-      const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
-      // not found safe path
-      if (!pull_out_path_next) {
-        continue;
-      }
-      status_.is_safe = true;
-      status_.pull_out_path = *pull_out_path_next;
-      status_.pull_out_start_pose = pull_out_start_pose_next;
-      status_.planner_type = planner->getPlannerType();
-      break;
-    }
-    if (status_.is_safe) {
-      break;
-    }
-  }
-}
-
-// todo: common processing with planWithPriorityOnEfficientPath
-void PullOutModule::planWithPriorityOnShortBackDistance(
-  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
-{
-  status_.is_safe = false;
-  status_.planner_type = PlannerType::NONE;
-
-  // check if start pose candidates are valid
-  if (start_pose_candidates.empty()) {
-    return;
-  }
-
-  for (size_t i = 0; i < start_pose_candidates.size(); i++) {
+  const auto is_safe_with_pose_planner = [&](const size_t i, const auto & planner) {
+    // Set back_finished flag based on the current index
     status_.back_finished = i == 0;
+
+    // Get the pull_out_start_pose for the current index
     const auto & pull_out_start_pose = start_pose_candidates.at(i);
-    // plan with each planner
-    for (const auto & planner : pull_out_planners_) {
-      planner->setPlannerData(planner_data_);
-      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
-      // not found safe path
-      if (!pull_out_path) {
-        continue;
-      }
-      // use current path if back is not needed
-      if (status_.back_finished) {
-        status_.is_safe = true;
-        status_.pull_out_path = *pull_out_path;
-        status_.pull_out_start_pose = pull_out_start_pose;
-        status_.planner_type = planner->getPlannerType();
-        break;
-      }
 
-      if (i == start_pose_candidates.size() - 1) continue;
-
-      //  check next path if back is needed
-      const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
-      const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
-      // not found safe path
-      if (!pull_out_path_next) {
-        continue;
-      }
+    planner->setPlannerData(planner_data_);
+    const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
+    // not found safe path
+    if (!pull_out_path) {
+      return false;
+    }
+    // use current path if back is not needed
+    if (status_.back_finished) {
       status_.is_safe = true;
-      status_.pull_out_path = *pull_out_path_next;
-      status_.pull_out_start_pose = pull_out_start_pose_next;
+      status_.pull_out_path = *pull_out_path;
+      status_.pull_out_start_pose = pull_out_start_pose;
       status_.planner_type = planner->getPlannerType();
-      break;
+      return true;
     }
-    if (status_.is_safe) {
-      break;
+
+    // If this is the last start pose candidate, return false
+    if (i == start_pose_candidates.size() - 1) return false;
+
+    // check next path if back is needed
+    const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
+    const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
+    // not found safe path
+    if (!pull_out_path_next) {
+      return false;
     }
+
+    // Update status variables with the next path information
+    status_.is_safe = true;
+    status_.pull_out_path = *pull_out_path_next;
+    status_.pull_out_start_pose = pull_out_start_pose_next;
+    status_.planner_type = planner->getPlannerType();
+    return true;
+  };
+
+  using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
+  const auto make_loop_order_planner_first = [&]() {
+    PriorityOrder order_priority;
+    for (const auto & planner : pull_out_planners_) {
+      for (size_t i = 0; i < start_pose_candidates.size(); i++) {
+        order_priority.emplace_back(i, planner);
+      }
+    }
+    return order_priority;
+  };
+
+  const auto make_loop_order_pose_first = [&]() {
+    PriorityOrder order_priority;
+    for (size_t i = 0; i < start_pose_candidates.size(); i++) {
+      for (const auto & planner : pull_out_planners_) {
+        order_priority.emplace_back(i, planner);
+      }
+    }
+    return order_priority;
+  };
+
+  // Choose loop order based on priority_on_efficient_path
+  PriorityOrder order_priority;
+  if (search_priority == "efficient_path") {
+    order_priority = make_loop_order_planner_first();
+  } else if (search_priority == "short_back_distance") {
+    order_priority = make_loop_order_pose_first();
+  } else {
+    RCLCPP_ERROR(
+      getLogger(),
+      "search_priority should be efficient_path or short_back_distance, but %s is given.",
+      search_priority.c_str());
+    throw std::domain_error("[pull_out] invalid search_priority");
+  }
+
+  for (const auto & p : order_priority) {
+    if (is_safe_with_pose_planner(p.first, p.second)) break;
   }
 }
 
@@ -532,28 +540,21 @@ PathWithLaneId PullOutModule::generateStopPath() const
 
 void PullOutModule::updatePullOutStatus()
 {
-  // if new route is received, reset status
-  const bool has_received_new_route =
-    last_route_received_time_ == nullptr ||
-    *last_route_received_time_ != planner_data_->route_handler->getRouteHeader().stamp;
-  if (has_received_new_route) {
-    RCLCPP_INFO(getLogger(), "Receive new route, so reset status");
-    resetStatus();
+  if (has_received_new_route_) {
+    status_ = PullOutStatus();
   }
-  last_route_received_time_ =
-    std::make_unique<rclcpp::Time>(planner_data_->route_handler->getRouteHeader().stamp);
 
   // skip updating if enough time has not passed for preventing chattering between back and pull_out
-  if (!has_received_new_route && !status_.back_finished) {
-    if (last_pull_out_start_update_time_ == nullptr) {
+  if (!has_received_new_route_ && !last_pull_out_start_update_time_ && !status_.back_finished) {
+    if (!last_pull_out_start_update_time_) {
       last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
     }
     const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
     if (elapsed_time < parameters_->backward_path_update_duration) {
       return;
     }
-    last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
   }
+  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
 
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
@@ -568,18 +569,7 @@ void PullOutModule::updatePullOutStatus()
 
   // search pull out start candidates backward
   std::vector<Pose> start_pose_candidates = searchPullOutStartPoses();
-
-  if (parameters_->search_priority == "efficient_path") {
-    planWithPriorityOnEfficientPath(start_pose_candidates, goal_pose);
-  } else if (parameters_->search_priority == "short_back_distance") {
-    planWithPriorityOnShortBackDistance(start_pose_candidates, goal_pose);
-  } else {
-    RCLCPP_ERROR(
-      getLogger(),
-      "search_priority should be efficient_path or short_back_distance, but %s is given.",
-      parameters_->search_priority.c_str());
-    throw std::domain_error("[pull_out] invalid search_priority");
-  }
+  planWithPriority(start_pose_candidates, goal_pose, parameters_->search_priority);
 
   if (!status_.is_safe) {
     RCLCPP_WARN_THROTTLE(
@@ -711,7 +701,14 @@ bool PullOutModule::hasFinishedPullOut() const
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose);
   const auto arclength_pull_out_end =
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.end_pose);
-  return arclength_current.length - arclength_pull_out_end.length > 0.0;
+
+  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > 0.0;
+
+#ifdef USE_OLD_ARCHITECTURE
+  is_executed_ = !has_finished;
+#endif
+
+  return has_finished;
 }
 
 void PullOutModule::checkBackFinished()
@@ -776,7 +773,10 @@ bool PullOutModule::hasFinishedCurrentPath()
 TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
 {
   TurnSignalInfo turn_signal{};  // output
-  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const Pose & start_pose = status_.pull_out_path.start_pose;
+  const Pose & end_pose = status_.pull_out_path.end_pose;
 
   // turn on hazard light when backward driving
   if (!status_.back_finished) {
@@ -785,26 +785,31 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
     turn_signal.desired_start_point = back_start_pose;
     turn_signal.required_start_point = back_start_pose;
     // pull_out start_pose is same to backward driving end_pose
-    turn_signal.required_end_point = status_.pull_out_path.start_pose;
-    turn_signal.desired_end_point = status_.pull_out_path.start_pose;
+    turn_signal.required_end_point = start_pose;
+    turn_signal.desired_end_point = start_pose;
     return turn_signal;
   }
 
   // turn on right signal until passing pull_out end point
   const auto path = getFullPath();
   // pull out path does not overlap
-  const double distance_from_end = motion_utils::calcSignedArcLength(
-    path.points, status_.pull_out_path.end_pose.position, current_pose.position);
-  if (distance_from_end < 0.0) {
+  const double distance_from_end =
+    motion_utils::calcSignedArcLength(path.points, end_pose.position, current_pose.position);
+  const double lateral_offset = inverseTransformPoint(end_pose.position, start_pose).y;
+
+  if (distance_from_end < 0.0 && lateral_offset > parameters_->th_blinker_on_lateral_offset) {
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+  } else if (
+    distance_from_end < 0.0 && lateral_offset < -parameters_->th_blinker_on_lateral_offset) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
 
-  turn_signal.desired_start_point = status_.pull_out_path.start_pose;
-  turn_signal.required_start_point = status_.pull_out_path.start_pose;
-  turn_signal.required_end_point = status_.pull_out_path.end_pose;
-  turn_signal.desired_end_point = status_.pull_out_path.end_pose;
+  turn_signal.desired_start_point = start_pose;
+  turn_signal.required_start_point = start_pose;
+  turn_signal.required_end_point = end_pose;
+  turn_signal.desired_end_point = end_pose;
 
   return turn_signal;
 }
