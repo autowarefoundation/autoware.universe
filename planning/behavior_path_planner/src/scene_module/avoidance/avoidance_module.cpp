@@ -171,11 +171,25 @@ bool AvoidanceModule::isExecutionReady() const
 
 ModuleStatus AvoidanceModule::updateState()
 {
+  const auto & data = avoidance_data_;
   const auto is_plan_running = isAvoidancePlanRunning();
-  const bool has_avoidance_target = !avoidance_data_.target_objects.empty();
+  const bool has_avoidance_target = !data.target_objects.empty();
 
-  if (!isDrivingSameLane(helper_.getPreviousDrivingLanes(), avoidance_data_.current_lanelets)) {
+  if (!isDrivingSameLane(helper_.getPreviousDrivingLanes(), data.current_lanelets)) {
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "previous module lane is updated.");
+    return ModuleStatus::SUCCESS;
+  }
+
+  const auto idx = planner_data_->findEgoIndex(data.reference_path.points);
+  if (idx == data.reference_path.points.size() - 1) {
+    arrived_path_end_ = true;
+  }
+
+  constexpr double THRESHOLD = 1.0;
+  if (
+    calcDistance2d(getEgoPose(), getPose(data.reference_path.points.back())) > THRESHOLD &&
+    arrived_path_end_) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "reach path end point. exit avoidance module.");
     return ModuleStatus::SUCCESS;
   }
 
@@ -193,7 +207,7 @@ ModuleStatus AvoidanceModule::updateState()
     return ModuleStatus::SUCCESS;
   }
 
-  helper_.setPreviousDrivingLanes(avoidance_data_.current_lanelets);
+  helper_.setPreviousDrivingLanes(data.current_lanelets);
   return ModuleStatus::RUNNING;
 }
 
@@ -3128,6 +3142,7 @@ void AvoidanceModule::initVariables()
   current_raw_shift_lines_ = {};
   original_unique_id = 0;
   is_avoidance_maneuver_starts = false;
+  arrived_path_end_ = false;
 }
 
 void AvoidanceModule::initRTCStatus()

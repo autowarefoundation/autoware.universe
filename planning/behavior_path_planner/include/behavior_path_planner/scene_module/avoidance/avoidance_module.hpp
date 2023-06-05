@@ -666,6 +666,8 @@ private:
 
   bool is_avoidance_maneuver_starts;
 
+  bool arrived_path_end_{false};
+
   std::shared_ptr<AvoidanceParameters> parameters_;
 
   std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
