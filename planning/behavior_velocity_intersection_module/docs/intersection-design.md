@@ -1,6 +1,6 @@
 ## Role
 
-The *intersection* module is responsible for safely going through junctions by (1)checking collisions with upcoming vehicles (2)recognizing the occluded area in the intersection (3)responding to arrow signals of associated traffic lights.
+The _intersection_ module is responsible for safely going through junctions by (1)checking collisions with upcoming vehicles (2)recognizing the occluded area in the intersection (3)responding to arrow signals of associated traffic lights.
 
 ![topology](./intersection-topology.drawio.svg)
 
@@ -22,7 +22,7 @@ For [stuck vehicle detection](intersection-design.md#stuck-vehicle-detection) an
 
 The `Attention Area` in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `detection_area_length` meters. `RightOfWay` tag is used to rule out the lanes that each lane has priority given the traffic light relation and `turn_direction` priority.
 
-`Intersection Area`, which is supposed to be defined on the HDMap, is an area convering the entire intersection. 
+`Intersection Area`, which is supposed to be defined on the HDMap, is an area convering the entire intersection.
 
 ![attention_area](./intersection-attention.drawio.svg)
 
@@ -31,7 +31,7 @@ The `Attention Area` in the intersection are defined as the set of lanes that ar
 Following table shows an example of how to assign `right_of_way` tag and set `yield_lanes` to each lane in intersections.
 
 | turn direction \ traffic light | w/ traffic light                                                | w/o traffic light                                |
-|--------------------------------|-----------------------------------------------------------------|--------------------------------------------------|
+| ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------ |
 | straight                       | Highest priority of all                                         | Priority over left/right lanes of the same group |
 | left(Left hand rule)           | Priority over the other group and right lanes of the same group | Priority over right lanes of the same group      |
 | right(Left hand rule)          | Priority only over the other group                              | priority only over the other gruop               |
