@@ -370,10 +370,10 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
   }
 
-  // set to changing state
-  change_state(RouteState::Message::CHANGING);
-
   if (normal_route_->uuid == msg->uuid) {
+    // set to changing state
+    change_state(RouteState::Message::CHANGING);
+
     const std::vector<geometry_msgs::msg::Pose> empty_waypoints;
     const auto new_route =
       create_route(msg->header, empty_waypoints, msg->pose, normal_route_->allow_modification);
@@ -384,12 +384,12 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
         ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
     }
 
+    arrival_checker_.modify_goal(*msg);
     change_route(new_route);
     change_state(RouteState::Message::SET);
     return;
   }
 
-  change_state(RouteState::Message::SET);
   throw component_interface_utils::ServiceException(
     ResponseCode::ERROR_REROUTE_FAILED, "Goal uuid is incorrect.");
 }
