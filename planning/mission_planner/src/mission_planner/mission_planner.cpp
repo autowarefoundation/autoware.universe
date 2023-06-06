@@ -382,7 +382,6 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
       return;
     }
 
-    arrival_checker_.modify_goal(*msg);
     change_route(new_route);
     change_state(RouteState::Message::SET);
     return;
