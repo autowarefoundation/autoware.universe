@@ -298,8 +298,6 @@ void MissionPlanner::on_set_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
 {
-  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
-
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
