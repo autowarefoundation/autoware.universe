@@ -380,8 +380,8 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
     if (new_route.segments.empty()) {
       change_route(*normal_route_);
       change_state(RouteState::Message::SET);
-      throw component_interface_utils::ServiceException(
-        ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+      RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+      return;
     }
 
     arrival_checker_.modify_goal(*msg);
@@ -390,8 +390,7 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
     return;
   }
 
-  throw component_interface_utils::ServiceException(
-    ResponseCode::ERROR_REROUTE_FAILED, "Goal uuid is incorrect.");
+  RCLCPP_ERROR(get_logger(), "Goal uuid is incorrect.");
 }
 
 void MissionPlanner::on_change_route(
