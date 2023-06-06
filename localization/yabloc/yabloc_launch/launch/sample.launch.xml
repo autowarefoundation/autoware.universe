@@ -1,7 +1,0 @@
-<launch>
-    <arg name="standalone" default="true" description="Set to true if not connected to Autoware's P/C."/>
-
-    <include file="$(find-pkg-share yabloc_launch)/launch/yabloc.launch.xml">
-        <arg name="standalone" value="$(var standalone)"/>
-    </include>
-</launch>
