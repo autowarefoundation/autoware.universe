@@ -354,20 +354,20 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
 
   if (state_.state != RouteState::Message::SET) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_INVALID_STATE, "The route hasn't set yet. Cannot reroute.");
+    RCLCPP_ERROR(get_logger(), "The route hasn't set yet. Cannot reroute.");
+    return;
   }
   if (!planner_->ready()) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
+    RCLCPP_ERROR(get_logger(), "The planner is not ready.");
+    return;
   }
   if (!odometry_) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+    RCLCPP_ERROR(get_logger(), "The vehicle pose is not received.");
+    return;
   }
   if (!normal_route_) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
+    RCLCPP_ERROR(get_logger(), "Normal route has not set yet.");
+    return;
   }
 
   if (normal_route_->uuid == msg->uuid) {
