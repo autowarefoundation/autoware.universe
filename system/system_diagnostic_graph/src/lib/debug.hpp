@@ -12,34 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__GRAPH_HPP_
-#define LIB__GRAPH_HPP_
+#ifndef LIB__DEBUG_HPP_
+#define LIB__DEBUG_HPP_
 
-#include "node.hpp"
-#include "types.hpp"
-
-#include <rclcpp/rclcpp.hpp>
-
-#include <map>
-#include <memory>
-#include <vector>
+#include <array>
+#include <string>
 
 namespace system_diagnostic_graph
 {
 
-class DiagGraph
-{
-public:
-  DiagGraph();
-  DiagnosticGraph report(const rclcpp::Time & stamp);
-  void update(const DiagnosticArray & array);
-  void debug();
-
-private:
-  std::vector<std::shared_ptr<DiagNode>> nodes_;
-  std::map<DiagLeaf::Key, std::shared_ptr<DiagLeaf>> diags_;
-};
+constexpr size_t diag_debug_size = 3;
+using DiagDebugData = std::array<std::string, diag_debug_size>;
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__GRAPH_HPP_
+#endif  // LIB__DEBUG_HPP_

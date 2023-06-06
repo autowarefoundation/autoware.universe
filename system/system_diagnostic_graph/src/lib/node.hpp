@@ -15,6 +15,7 @@
 #ifndef LIB__NODE_HPP_
 #define LIB__NODE_HPP_
 
+#include "debug.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -29,7 +30,7 @@ public:
   explicit DiagLeaf(const DiagnosticStatus & status);
   DiagnosticNode report() override;
   void update(const DiagnosticStatus & status);
-  void dump();
+  DiagDebugData debug();
 
   using Key = std::pair<std::string, std::string>;
   static Key get_key(const DiagnosticStatus & status);

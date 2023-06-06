@@ -37,7 +37,7 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
 
 void MainNode::on_timer()
 {
-  graph_.dump();
+  graph_.debug();
 
   const auto report = graph_.report(now());
   pub_graph_->publish(report);

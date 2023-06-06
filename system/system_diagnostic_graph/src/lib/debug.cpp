@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "debug.hpp"
+
 #include "graph.hpp"
 #include "node.hpp"
 #include "types.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
@@ -28,19 +32,32 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
   {DiagnosticStatus::ERROR, "ERROR"},
   {DiagnosticStatus::STALE, "STALE"}};
 
-void DiagGraph::dump()
+void DiagGraph::debug()
 {
-  std::cout << "============================== dump ==============================" << std::endl;
+  std::vector<DiagDebugData> lines;
   for (const auto & diag : diags_) {
-    diag.second->dump();
+    lines.push_back(diag.second->debug());
+  }
+
+  std::array<size_t, diag_debug_size> widths = {};
+  for (const auto & line : lines) {
+    for (size_t i = 0; i < diag_debug_size; ++i) {
+      widths[i] = std::max(widths[i], line[i].length());
+    }
+  }
+
+  std::cout << "============================================================" << std::endl;
+  for (const auto & line : lines) {
+    for (size_t i = 0; i < diag_debug_size; ++i) {
+      std::cout << "| " << std::left << std::setw(widths[i]) << line[i] << " ";
+    }
+    std::cout << "|" << std::endl;
   }
 }
 
-void DiagLeaf::dump()
+DiagDebugData DiagLeaf::debug()
 {
-  std::cout << key_.first << " " << key_.second << " ";
-  std::cout << level_names.at(level_) << " ";
-  std::cout << std::endl;
+  return DiagDebugData{key_.first, key_.second, level_names.at(level_)};
 }
 
 }  // namespace system_diagnostic_graph
