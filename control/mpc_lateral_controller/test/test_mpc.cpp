@@ -159,8 +159,8 @@ protected:
     mpc.m_ctrl_period = ctrl_period;
     mpc.m_use_steer_prediction = use_steer_prediction;
 
-    // Init filters
     mpc.initializeLowPassFilters(steering_lpf_cutoff_hz, error_deriv_lpf_cutoff_hz);
+    mpc.initializeSteeringPredictor();
 
     // Init trajectory
     mpc.setReferenceTrajectory(dummy_straight_trajectory, trajectory_param);
