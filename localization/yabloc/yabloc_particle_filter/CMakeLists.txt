@@ -120,4 +120,4 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-ament_auto_package(INSTALL_TO_SHARE config)
+ament_auto_package(INSTALL_TO_SHARE config launch)

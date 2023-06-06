@@ -102,4 +102,4 @@ target_link_libraries(${TARGET} ${PCL_LIBRARIES})
 # ===================================================
 ament_export_dependencies(PCL Sophus)
 
-ament_auto_package(INSTALL_TO_SHARE config)
+ament_auto_package(INSTALL_TO_SHARE config launch)

@@ -81,4 +81,4 @@ target_include_directories(${TARGET} PUBLIC include ${EIGEN_INCLUDE_DIRS} ${PCL_
 target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES})
 
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE config)
+ament_auto_package(INSTALL_TO_SHARE config launch)

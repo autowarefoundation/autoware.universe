@@ -75,4 +75,4 @@ install(PROGRAMS
 )
 
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE config data)
+ament_auto_package(INSTALL_TO_SHARE config data launch)

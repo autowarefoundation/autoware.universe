@@ -1,0 +1,34 @@
+<launch>
+    <arg name="input_particle_pose" default="/localization/pose_twist_fusion_filter/pose"/>
+
+    <!-- ground server -->
+    <arg name="output_height" default="height"/>
+    <arg name="output_ground" default="ground"/>
+    <arg name="output_ground_markers" default="ground_markers"/>
+    <arg name="output_ground_status" default="ground_status"/>
+    <arg name="output_near_cloud" default="near_cloud"/>
+    <node name="ground_server" pkg="yabloc_common" exec="ground_server_node" output="screen" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param from="$(var ground_server_param_path)"/>
+
+        <remap from="particle_pose" to="$(var input_particle_pose)"/>
+        <remap from="height" to="$(var output_height)"/>
+        <remap from="ground" to="$(var output_ground)"/>
+        <remap from="ground_markers" to="$(var output_ground_markers)"/>
+        <remap from="ground_status" to="$(var output_ground_status)"/>
+        <remap from="near_cloud" to="$(var output_near_cloud)"/>
+    </node>
+
+
+    <!-- lanelet2 -->
+    <arg name="output_ll2_road_marking" default="ll2_road_marking"/>
+    <arg name="output_ll2_sign_board" default="ll2_sign_board"/>
+    <node name="ll2_decomposer" pkg="yabloc_common" exec="ll2_decomposer_node" output="screen" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param from="$(var ll2_decomposer_param_path)"/>
+
+        <remap from="ll2_road_marking" to="$(var output_ll2_road_marking)"/>
+        <remap from="ll2_sign_board" to="$(var output_ll2_sign_board)"/>
+    </node>
+</launch>
+
