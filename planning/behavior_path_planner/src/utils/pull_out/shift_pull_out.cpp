@@ -39,6 +39,11 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
+bool ShiftPullOut::canGetSafeOrValidPath()
+{
+  return true;
+}
+
 boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;

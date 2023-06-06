@@ -161,7 +161,15 @@ bool PullOutModule::isExecutionRequested() const
 
 bool PullOutModule::isExecutionReady() const
 {
-  return true;
+  PullOutPath selected_path;
+  // module_type_->setPreviousModulePaths(
+  //   getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  for (const auto & pull_out_planner : pull_out_planners_) {
+    if (pull_out_planner->canGetSafeOrValidPath()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // this runs only when RUNNING
