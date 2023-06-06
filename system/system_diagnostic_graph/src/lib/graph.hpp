@@ -22,6 +22,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace system_diagnostic_graph
@@ -30,7 +31,7 @@ namespace system_diagnostic_graph
 class DiagGraph
 {
 public:
-  DiagGraph();
+  void create(const std::string & file);
   DiagnosticGraph report(const rclcpp::Time & stamp);
   void update(const DiagnosticArray & array);
   void debug();

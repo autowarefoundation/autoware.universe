@@ -15,6 +15,7 @@
 #include "main.hpp"
 
 #include <memory>
+#include <string>
 
 namespace system_diagnostic_graph
 {
@@ -32,6 +33,12 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
 
     const auto rate = rclcpp::Rate(declare_parameter<int64_t>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
+  }
+
+  // Init diagnostics graph.
+  {
+    const auto file = declare_parameter<std::string>("file");
+    graph_.create(file);
   }
 }
 

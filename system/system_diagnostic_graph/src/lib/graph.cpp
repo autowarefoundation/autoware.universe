@@ -14,11 +14,17 @@
 
 #include "graph.hpp"
 
+#include <yaml-cpp/yaml.h>
+
+#include <string>
+
 namespace system_diagnostic_graph
 {
 
-DiagGraph::DiagGraph()
+void DiagGraph::create(const std::string & file)
 {
+  YAML::Node yaml = YAML::LoadFile(file);
+  std::cout << YAML::Dump(yaml) << std::endl;
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
