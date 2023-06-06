@@ -39,12 +39,113 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
-bool ShiftPullOut::canGetSafeOrValidPath()
+bool ShiftPullOut::canGetSafeOrValidPath(const std::vector<Pose> & start_pose_candidates)
 {
-  return true;
+  const auto & route_handler = planner_data_->route_handler;
+  const auto & common_parameters = planner_data_->parameters;
+  const auto & dynamic_objects = planner_data_->dynamic_object;
+  const auto & road_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  const auto & shoulder_lanes = getPullOutLanes(planner_data_);
+  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
+
+  if (shoulder_lanes.empty()) {
+    RCLCPP_ERROR(getLogger(), "Shoulder lane is empty.")
+    return false;
+  }
+
+  // find candidate paths
+  auto pull_out_paths = calcPullOutPaths(
+    *route_handler, road_lanes, shoulder_lanes, start_pose, goal_pose, common_parameters,
+    parameters_);
+  if (pull_out_paths.empty()) {
+    RCLCPP_ERROR(getLogger(), "Pull out paths are empty")
+    return false;
+  }
+
+  // TODO(Sugahara): extract objects in shoulder lane for collision check
+  // extract objects in road lane for collision check
+  const auto [road_lane_objects, others] =
+    utils::separateObjectsByLanelets(*dynamic_objects, road_lanes);
+
+  // get safe path
+  for (auto & pull_out_path : pull_out_paths) {
+    auto & shift_path =
+      pull_out_path.partial_paths.front();  // shift path is not separate but only one.
+
+    // check lane_departure and collision with path between pull_out_start to pull_out_end
+    PathWithLaneId path_start_to_end{};
+    {
+      const size_t pull_out_start_idx = findNearestIndex(shift_path.points, start_pose.position);
+
+      // calculate collision check end idx
+      const size_t collision_check_end_idx = std::invoke([&]() {
+        const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
+          shift_path.points, pull_out_path.end_pose.position,
+          parameters_.collision_check_distance_from_end);
+
+        if (collision_check_end_pose) {
+          return findNearestIndex(shift_path.points, collision_check_end_pose->position);
+        } else {
+          return shift_path.points.size() - 1;
+        }
+      });
+      path_start_to_end.points.insert(
+        path_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
+        shift_path.points.begin() + collision_check_end_idx + 1);
+    }
+
+    // check lane departure
+    const auto drivable_lanes =
+      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
+    const auto & dp = planner_data_->drivable_area_expansion_parameters;
+    const auto expanded_lanes = utils::expandLanelets(
+      drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+      dp.drivable_area_types_to_skip);
+    if (lane_departure_checker_->checkPathWillLeaveLane(
+          utils::transformToLanelets(expanded_lanes), path_start_to_end)) {
+      continue;
+    }
+
+    // check collision
+    if (utils::checkCollisionBetweenPathFootprintsAndObjects(
+          vehicle_footprint_, path_start_to_end, shoulder_lane_objects,
+          parameters_.collision_check_margin)) {
+      continue;
+    }
+    const auto current_lanes = getCurrentLanes();
+
+    if (current_lanes.empty()) {
+      return {false, false};
+    }
+
+    const auto target_lanes = getLaneChangeLanes(current_lanes, direction_);
+
+    if (target_lanes.empty()) {
+      return {false, false};
+    }
+
+    // find candidate paths
+    LaneChangePaths valid_paths{};
+    const auto found_safe_path =
+      getLaneChangePaths(current_lanes, target_lanes, direction_, &valid_paths);
+
+    if (valid_paths.empty()) {
+      return {false, false};
+    }
+
+    if (found_safe_path) {
+      safe_path = valid_paths.back();
+    } else {
+      // force candidate
+      safe_path = valid_paths.front();
+    }
+
+    return {true, found_safe_path};
+    return true;
+  }
 }
 
-boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
+boost::optional<PullOutPath> ShiftPullOut::plan()
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
@@ -52,6 +153,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
   const auto & road_lanes = utils::getExtendedCurrentLanes(planner_data_);
   const auto & shoulder_lanes = getPullOutLanes(planner_data_);
   if (shoulder_lanes.empty()) {
+    RCLCPP_ERROR(getLogger(), "Shoulder lane is empty.")
     return boost::none;
   }
 
