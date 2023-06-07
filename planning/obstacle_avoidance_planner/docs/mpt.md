@@ -469,4 +469,17 @@ To prevent this, the forward drivable area's shape from the ego is fixed as prev
 
 ### Calculate avoidance cost
 
+A raw normalized avoidance cost is calculated as follows.
+min(- d*{lower_bound} - d*{cost}, d*{upper_bound} + d*{cost})
+
+![avoidance_cost](../media/avoidance_cost.drawio.svg)
+
 ### Change optimization weights
+
+$$
+\begin{align}
+r & = \mathrm{lerp}(w^{steer}_{normal}, w^{steer}_{avoidance}, c) \\
+w^{lat} & = \mathrm{lerp}(w^{lat}_{normal}, w^{lat}_{avoidance}, c) \\
+w^{yaw} & = \mathrm{lerp}(w^{yaw}_{normal}, w^{yaw}_{avoidance}, c)
+\end{align}
+$$
