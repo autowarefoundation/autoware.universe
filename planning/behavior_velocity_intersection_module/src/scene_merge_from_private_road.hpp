@@ -51,17 +51,12 @@ public:
   {
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
-    geometry_msgs::msg::Pose judge_point_pose;
-    geometry_msgs::msg::Polygon ego_lane_polygon;
-    std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
-    std::vector<lanelet::CompoundPolygon3d> detection_area;
-    geometry_msgs::msg::Point first_collision_point;
   };
 
 public:
   struct PlannerParam
   {
-    double detection_area_length;
+    double attention_area_length;
     double stop_line_margin;
     double stop_duration_sec;
     double interpolation_ds;

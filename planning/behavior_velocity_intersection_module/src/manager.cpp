@@ -36,12 +36,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-  ip.common.detection_area_margin =
-    node.declare_parameter<double>(ns + ".common.detection_area_margin");
-  ip.common.detection_area_length =
-    node.declare_parameter<double>(ns + ".common.detection_area_length");
-  ip.common.detection_area_angle_thr =
-    node.declare_parameter<double>(ns + ".common.detection_area_angle_threshold");
+  ip.common.attention_area_margin =
+    node.declare_parameter<double>(ns + ".common.attention_area_margin");
+  ip.common.attention_area_length =
+    node.declare_parameter<double>(ns + ".common.attention_area_length");
+  ip.common.attention_area_angle_thr =
+    node.declare_parameter<double>(ns + ".common.attention_area_angle_threshold");
   ip.common.stop_line_margin = node.declare_parameter<double>(ns + ".common.stop_line_margin");
   ip.common.intersection_velocity =
     node.declare_parameter<double>(ns + ".common.intersection_velocity");
@@ -82,8 +82,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".collision_detection.keep_detection_vel_thr");
 
   ip.occlusion.enable = node.declare_parameter<bool>(ns + ".occlusion.enable");
-  ip.occlusion.occlusion_detection_area_length =
-    node.declare_parameter<double>(ns + ".occlusion.occlusion_detection_area_length");
+  ip.occlusion.occlusion_attention_area_length =
+    node.declare_parameter<double>(ns + ".occlusion.occlusion_attention_area_length");
   ip.occlusion.enable_creeping = node.declare_parameter<bool>(ns + ".occlusion.enable_creeping");
   ip.occlusion.occlusion_creep_velocity =
     node.declare_parameter<double>(ns + ".occlusion.occlusion_creep_velocity");
@@ -244,8 +244,8 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   const std::string ns(getModuleName());
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = node.declare_parameter<double>(ns + ".stop_duration_sec");
-  mp.detection_area_length =
-    node.declare_parameter<double>("intersection.common.detection_area_length");
+  mp.attention_area_length =
+    node.declare_parameter<double>("intersection.common.attention_area_length");
   mp.stop_line_margin = node.declare_parameter<double>("intersection.common.stop_line_margin");
   mp.interpolation_ds = node.declare_parameter<double>("intersection.common.interpolation_ds");
 }
