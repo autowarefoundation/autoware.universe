@@ -4,7 +4,7 @@
 
 This module plans safe velocity to slow down before reaching collision point that hidden object is darting out from `occlusion spot` where driver can't see clearly because of obstacles.
 
-![brief](./occlusion_spot.drawio.svg)
+![brief](./docs/occlusion_spot.drawio.svg)
 
 ### Activation Timing
 
@@ -34,7 +34,7 @@ This module considers TTV from pedestrian velocity and lateral distance to occlu
 TTC is calculated from ego velocity and acceleration and longitudinal distance until collision point using motion velocity smoother.
 To compute fast this module only consider occlusion spot whose TTV is less than TTC and only consider area within "max lateral distance".
 
-![brief](./da.drawio.svg)
+![brief](./docs/da.drawio.svg)
 
 #### Occlusion Spot Occupancy Grid Base
 
@@ -47,7 +47,7 @@ TODO: consider hight of obstacle point cloud to generate occupancy grid.
 
 obstacle that can run out from occlusion should have free space until intersection from ego vehicle
 
-![brief](./collision_free.drawio.svg)
+![brief](./docs/collision_free.drawio.svg)
 
 ##### Partition Lanelet
 
@@ -57,17 +57,17 @@ By using static object information, it is possible to make occupancy grid more a
 
 To make occupancy grid for planning is one of the TODOs.
 
-![brief](./object_info_partition.drawio.svg)
+![brief](./docs/object_info_partition.drawio.svg)
 
 ##### Possible Collision
 
 obstacle that can run out from occlusion is interrupted by moving vehicle.
 
-![brief](./raycast_shadow.drawio.svg)
+![brief](./docs/raycast_shadow.drawio.svg)
 
 #### About safe motion
 
-![brief](./velocity_planning.drawio.svg)
+![brief](./docs/velocity_planning.drawio.svg)
 
 ##### The Concept of Safe Velocity and Margin
 
@@ -80,12 +80,12 @@ Below calculation is included but change velocity dynamically is not recommended
 - time to collision of pedestrian[s]
   with these parameters we can briefly define safe motion before occlusion spot for ideal environment.
 
-  ![occupancy_grid](./safe_motion.drawio.svg)
+  ![occupancy_grid](./docs/safe_motion.drawio.svg)
 
 This module defines safe margin to consider ego distance to stop and collision path point geometrically.
 While ego is cruising from safe margin to collision path point, ego vehicle keeps the same velocity as occlusion spot safe velocity.
 
-![brief](./behavior_after_safe_margin.drawio.svg)
+![brief](./docs/behavior_after_safe_margin.drawio.svg)
 
 Note: This logic assumes high-precision vehicle speed tracking and margin for decel point might not be the best solution, and override with manual driver is considered if pedestrian really run out from occlusion spot.
 
@@ -105,7 +105,7 @@ The maximum slowdown velocity is calculated from the below parameters of ego cur
 - $v_{0}$ current velocity[m/s]
 - $a_{0}$ current acceleration[m/s]
 
-![brief](./maximum_slowdown_velocity.drawio.svg)
+![brief](./docs/maximum_slowdown_velocity.drawio.svg)
 
 #### Module Parameters
 

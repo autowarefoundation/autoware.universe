@@ -12,10 +12,10 @@ Autonomous vehicles have to cooperate with the infrastructures such as:
 The following items are example cases:
 
 1. Traffic control by traffic lights with V2X support
-   ![traffic_light](V2X_support_traffic_light.png)
+   ![traffic_light](docs/V2X_support_traffic_light.png)
 
 2. Intersection coordination of multiple vehicles by FMS.
-   ![FMS](intersection-coordination.png)
+   ![FMS](docs/intersection-coordination.png)
 
 It's possible to make each function individually, however, the use cases can be generalized with these three elements.
 
@@ -221,17 +221,17 @@ If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving du
 This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module (\_front_to_stop_line < hold_stop_margin_distance), the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
 
 <figure markdown>
-  ![example](restart_prevention.svg){width=1000}
+  ![example](docs/restart_prevention.svg){width=1000}
   <figcaption>parameters</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](restart.svg){width=1000}
+  ![example](docs/restart.svg){width=1000}
   <figcaption>outside the hold_stop_margin_distance</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](keep_stopping.svg){width=1000}
+  ![example](docs/keep_stopping.svg){width=1000}
   <figcaption>inside the hold_stop_margin_distance</figcaption>
 </figure>
 

@@ -7,7 +7,7 @@ This module is designed for rule-based intersection velocity decision that is ea
 
 In addition, the external users / modules (e.g. remote operation) to can intervene the STOP/GO decision for the vehicle behavior. The override interface is expected to be used, for example, for remote intervention in emergency situations or gathering information on operator decisions during development.
 
-![brief](./intersection.drawio.svg)
+![brief](./docs/intersection.drawio.svg)
 
 ### Activation Timing
 
@@ -226,3 +226,30 @@ As a default, IntersectionModule estimates a stop position by the crossing point
 ### Exclusion setting of attention lanes [RightOfWay] (Fig.3)
 
 By default, IntersectionModule treats all lanes crossing with the registered lane as attention targets (yellow and green lanelets). But in some cases (e.g. when driving lane is priority lane or traffic light is green for the driving lane), we want to ignore some of the yield lanes. By setting `RightOfWay` of the `RegulatoryElement` item, we can define lanes to be ignored. Register ignored lanes as “yield” and register the attention lanes and driving lane as “right_of_way” lanelets in `RightOfWay` RegulatoryElement (For an intersection with traffic lights, we need to create items for each lane in the intersection. Please note that it needs a lot of man-hours.)
+
+## Merge From Private
+
+### Role
+
+When an ego vehicle enters a public road from a private road (e.g. a parking lot), it needs to face and stop before entering the public road to make sure it is safe.
+
+This module is activated when there is an intersection at the private area from which the vehicle enters the public road. The stop line is generated both when the goal is in the intersection lane and when the path goes beyond the intersection lane. The basic behavior is the same as the intersection module, but the ego vehicle must stop once at the stop line.
+
+![merge-from-private](docs/merge_from_private.png)
+
+### Activation Timing
+
+This module is activated when the following conditions are met:
+
+- ego-lane has a `private` tag
+- ego-lane has a conflict with other no-private lanelets
+
+### Module Parameters
+
+| Parameter                                   | Type   | Description                     |
+| ------------------------------------------- | ------ | ------------------------------- |
+| `merge_from_private_road/stop_duration_sec` | double | [m] time margin to change state |
+
+### Known Issue
+
+If ego vehicle go over the stop line for a certain distance, then ego vehicle will not transit from STOP.

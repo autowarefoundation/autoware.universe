@@ -18,7 +18,7 @@ The algorithm is made of the following steps.
 4. For each overlapping range, decide if a stop or slow down action must be taken.
 5. For each action, insert the corresponding stop or slow down point in the path.
 
-![overview](./out_of_lane-footprints_other_lanes_overlaps_ranges.png)
+![overview](./docs/out_of_lane-footprints_other_lanes_overlaps_ranges.png)
 
 #### 1. Ego Path Footprints
 

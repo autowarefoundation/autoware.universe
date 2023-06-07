@@ -4,7 +4,7 @@
 
 `run_out` is the module that decelerates and stops for dynamic obstacles such as pedestrians and bicycles.
 
-![brief](./run_out_overview.svg)
+![brief](./docs/run_out_overview.svg)
 
 ### Activation Timing
 
@@ -50,7 +50,7 @@ stop
 Calculate the expected target velocity for the ego vehicle path to calculate time to collision with obstacles more precisely.
 The expected target velocity is calculated with [motion velocity smoother module](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/motion_velocity_smoother) by using current velocity, current acceleration and velocity limits directed by the map and external API.
 
-![brief](./calculate_expected_target_velocity.svg)
+![brief](./docs/calculate_expected_target_velocity.svg)
 
 ##### Extend the path
 
@@ -80,7 +80,7 @@ Abstracted obstacle data has following information.
 | min_velocity_mps | `float`                                                                 | minimum velocity of the obstacle. specified by parameter of `dynamic_obstacle.min_vel_kmph`                            |
 | max_velocity_mps | `float`                                                                 | maximum velocity of the obstacle. specified by parameter of `dynamic_obstacle.max_vel_kmph`                            |
 
-Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](./run-out-design.md#Collision-detection).
+Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](./docs/run-out-design.md#Collision-detection).
 
 Future work: Determine the maximum/minimum velocity from the estimated velocity with covariance of the object
 
@@ -97,7 +97,7 @@ Method of `ObjectWithoutPath` has the characteristics of an intermediate of `Obj
 | ObjectWithoutPath | use an object but not use the predicted path for collision detection. replace the path assuming that an object jumps out to the lane at specified velocity.           |
 | Points            | use filtered points for collision detection. the path is created assuming that points jump out to the lane. points are regarded as an small circular shaped obstacle. |
 
-![brief](./create_dynamic_obstacle.svg)
+![brief](./docs/create_dynamic_obstacle.svg)
 
 ##### Exclude obstacles outside of partition
 
@@ -106,7 +106,7 @@ We need lanelet map that has the information of partition to use this feature.
 By this feature, we can reduce unnecessary deceleration by obstacles that are unlikely to jump out to the lane.
 You can choose whether to use this feature by parameter of `use_partition_lanelet`.
 
-![brief](./exclude_obstacles_by_partition.svg)
+![brief](./docs/exclude_obstacles_by_partition.svg)
 
 #### Collision detection
 
@@ -114,20 +114,20 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 Along the ego vehicle path, determine the points where collision detection is to be performed for each `detection_span`.
 
-The travel times to the each points are calculated from [the expected target velocity](./run-out-design.md#Calculate-the-expected-target-velocity-for-ego-vehicle).
+The travel times to the each points are calculated from [the expected target velocity](./docs/run-out-design.md#Calculate-the-expected-target-velocity-for-ego-vehicle).
 
-![brief](./create_polygon_on_path_point.svg)
+![brief](./docs/create_polygon_on_path_point.svg)
 
 For the each points, collision detection is performed using the footprint polygon of the ego vehicle and the polygon of the predicted location of the obstacles.
 The predicted location of the obstacles is described as rectangle or polygon that has the range calculated by min velocity, max velocity and the ego vehicle's travel time to the point.
 If the input type of the dynamic obstacle is `Points`, the obstacle shape is defined as a small cylinder.
 
-![brief](./collision_detection_for_shape.svg)
+![brief](./docs/collision_detection_for_shape.svg)
 
 Multiple points are detected as collision points because collision detection is calculated between two polygons.
 So we select the point that is on the same side as the obstacle and close to ego vehicle as the collision point.
 
-![brief](./collision_points.svg)
+![brief](./docs/collision_points.svg)
 
 #### Insert velocity
 
@@ -135,7 +135,7 @@ So we select the point that is on the same side as the obstacle and close to ego
 
 If the collision is detected, stop point is inserted on distance of base link to front + stop margin from the selected collision point. The base link to front means the distance between base_link (center of rear-wheel axis) and front of the car. Stop margin is determined by the parameter of `stop_margin`.
 
-![brief](./insert_velocity.svg)
+![brief](./docs/insert_velocity.svg)
 
 #### Insert velocity to approach the obstacles
 
@@ -145,7 +145,7 @@ If the parameter of `approaching.enable` is set to true, ego will approach the o
 The maximum velocity of approaching can be specified by the parameter of `approaching.limit_vel_kmph`.
 The decision to approach the obstacle is determined by a simple state transition as following image.
 
-![brief](./insert_velocity_to_approach.svg)
+![brief](./docs/insert_velocity_to_approach.svg)
 
 ```plantuml
 @startuml
