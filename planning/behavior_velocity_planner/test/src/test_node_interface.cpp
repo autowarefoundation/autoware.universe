@@ -80,22 +80,11 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      get_behavior_velocity_module_config("virtual_traffic_light"),
      get_behavior_velocity_module_config("out_of_lane")});
 
-  node_options.append_parameter_override("launch_stop_line", true);
-  node_options.append_parameter_override("launch_crosswalk", true);
-  node_options.append_parameter_override("launch_traffic_light", true);
-  node_options.append_parameter_override("launch_intersection", true);
-  node_options.append_parameter_override("launch_blind_spot", true);
-  node_options.append_parameter_override("launch_detection_area", true);
-  node_options.append_parameter_override(
-    "launch_virtual_traffic_light", false);  // TODO(Kyoichi Sugahara) set to true
-  node_options.append_parameter_override(
-    "launch_occlusion_spot", false);  // TODO(Kyoichi Sugahara) set to true
-  node_options.append_parameter_override("launch_no_stopping_area", true);
-  node_options.append_parameter_override(
-    "launch_run_out", false);  // TODO(Kyoichi Sugahara) set to true
-  node_options.append_parameter_override(
-    "launch_speed_bump", false);  // TODO(Kyoichi Sugahara) set to true
-  node_options.append_parameter_override("launch_out_of_lane", true);
+  // TODO(Takagi, Isamu): set launch_modules
+  // TODO(Kyoichi Sugahara) set to true launch_virtual_traffic_light
+  // TODO(Kyoichi Sugahara) set to true launch_occlusion_spot
+  // TODO(Kyoichi Sugahara) set to true launch_run_out
+  // TODO(Kyoichi Sugahara) set to true launch_speed_bump
 
   return std::make_shared<BehaviorVelocityPlannerNode>(node_options);
 }
