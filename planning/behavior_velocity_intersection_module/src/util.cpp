@@ -290,7 +290,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     *stop_idx = insert_idx.value();
   }
   if (
-    intersection_stop_lines.occlusion_peeking_stop_line >
+    intersection_stop_lines.occlusion_peeking_stop_line <
     intersection_stop_lines.default_stop_line) {
     intersection_stop_lines.occlusion_peeking_stop_line = intersection_stop_lines.default_stop_line;
   }
@@ -823,6 +823,8 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   interpolated_path_info.ds = ds;
   interpolated_path_info.lane_id = lane_id;
   interpolated_path_info.associative_lane_ids = associative_lane_ids;
+  interpolated_path_info.lane_id_interval =
+    findLaneIdsInterval(interpolated_path_info.path, associative_lane_ids);
   return interpolated_path_info;
 }
 
