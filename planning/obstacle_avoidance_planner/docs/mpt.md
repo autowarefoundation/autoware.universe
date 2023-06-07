@@ -443,3 +443,30 @@ $$
 \in \boldsymbol{R}^{3N_{ref} \times D_v + N_{ref}}
 \end{align}
 $$
+
+## Tips for stable trajectory planning
+
+In order to make the trajectory optimization problem stabler to solve, the boundary constraint which the trajectory footprints should be inside and optimization weights are modified.
+
+### Calculate bound from drivable area
+
+From the drivable area, raw boundary is calculated.
+
+### Keep minimum boundary width
+
+Since we cannot distinguish the boundary by roads from the boundary by obstacles for avoidance,
+
+![keep_minimum_boundary_width](../media/keep_minimum_boundary_width.drawio.svg)
+
+### Extend violated boundary
+
+### Avoid sudden steering
+
+When the obstacle suddenly appears which is determined to avoid by the behavior module, the drivable area's shape just in front of the ego will change, resulting in the sudden steering.
+To prevent this, the forward drivable area's shape from the ego is fixed as previous drivable area's shape.
+
+![avoid_sudden_steering](../media/avoid_sudden_steering.drawio.svg)
+
+### Calculate avoidance cost
+
+### Change optimization weights
