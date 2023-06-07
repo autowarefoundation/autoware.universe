@@ -131,10 +131,10 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   const auto now = this->clock_->now();
 
-  if (debug_data_.detection_area) {
+  if (debug_data_.attention_area) {
     appendMarkerArray(
       createLaneletPolygonsMarkerArray(
-        debug_data_.detection_area.value(), "detection_area", lane_id_, 0.0, 1.0, 0.0),
+        debug_data_.attention_area.value(), "attention_area", lane_id_, 0.0, 1.0, 0.0),
       &debug_marker_array);
   }
 

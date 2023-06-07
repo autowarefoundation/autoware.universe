@@ -523,7 +523,7 @@ IntersectionLanelets getObjectiveLanelets(
   {
     auto first = getFirstPointInsidePolygons(path, lane_interval, result.attention_area);
     if (first) {
-      result.first_detection_area = first.value().second;
+      result.first_attention_area = first.value().second;
     }
   }
 

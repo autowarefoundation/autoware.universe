@@ -79,7 +79,7 @@ IntersectionModule::IntersectionModule(
   lane_id_(lane_id),
   associative_ids_(associative_ids),
   enable_occlusion_detection_(enable_occlusion_detection),
-  detection_divisions_(std::nullopt),
+  occlusion_attention_divisions_(std::nullopt),
   occlusion_uuid_(tier4_autoware_utils::generateUUID())
 {
   velocity_factor_.init(VelocityFactor::INTERSECTION);
@@ -570,7 +570,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       planning_utils::getLaneletsOnPath(*path, lanelet_map_ptr, current_pose);
     intersection_lanelets_ = util::getObjectiveLanelets(
       lanelet_map_ptr, routing_graph_ptr, assigned_lanelet, lanelets_on_path, associative_ids_,
-      interpolated_path_info, planner_param_.common.detection_area_length, tl_arrow_solid_on);
+      interpolated_path_info, planner_param_.common.attention_area_length, tl_arrow_solid_on);
   }
 
   const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting;
@@ -590,17 +590,17 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
 
-  const auto & first_detection_area = intersection_lanelets_.value().first_detection_area;
+  const auto & first_attention_area = intersection_lanelets_.value().first_attention_area;
 
   if (const auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value();
       stuck_detected) {
     const auto intersection_stop_lines_opt =
-      first_detection_area
+      first_attention_area
         ? util::generateIntersectionStopLines(
-            first_detection_area.value(), planner_data_, interpolated_path_info,
+            first_attention_area.value(), planner_data_, interpolated_path_info,
             planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path)
         : std::nullopt;
-    if (first_detection_area && !intersection_stop_lines_opt) {
+    if (first_attention_area && !intersection_stop_lines_opt) {
       RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines() in stuck vehicle check");
       return IntersectionModule::Indecisive{};
     }
@@ -613,13 +613,13 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       stuck_stop_line_idx, closest_idx_opt.value(), intersection_stop_lines_opt};
   }
 
-  if (!first_detection_area) {
-    RCLCPP_DEBUG(logger_, "detection area is empty");
+  if (!first_attention_area) {
+    RCLCPP_DEBUG(logger_, "attention area is empty");
     return IntersectionModule::Indecisive{};
   }
 
   const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
-    first_detection_area.value(), planner_data_, interpolated_path_info,
+    first_attention_area.value(), planner_data_, interpolated_path_info,
     planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path);
   if (!intersection_stop_lines_opt) {
     RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines()");
@@ -650,12 +650,12 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
 
-  const auto & detection_lanelets = intersection_lanelets_.value().attention;
+  const auto & attention_lanelets = intersection_lanelets_.value().attention;
   const auto & adjacent_lanelets = intersection_lanelets_.value().adjacent;
   const auto & occlusion_attention_lanelets = intersection_lanelets_.value().occlusion_attention;
-  const auto & detection_area = intersection_lanelets_.value().attention_area;
+  const auto & attention_area = intersection_lanelets_.value().attention_area;
   const auto & occlusion_attention_area = intersection_lanelets_.value().occlusion_attention_area;
-  debug_data_.detection_area = detection_area;
+  debug_data_.attention_area = attention_area;
   debug_data_.adjacent_area = intersection_lanelets_.value().adjacent_area;
 
   // get intersection area
@@ -673,7 +673,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
                               : (planner_param_.collision_detection.state_transit_margin_time -
                                  collision_state_machine_.getDuration());
   const bool has_collision = checkCollision(
-    *path, detection_lanelets, adjacent_lanelets, intersection_area, ego_lane_with_next_lane,
+    *path, attention_lanelets, adjacent_lanelets, intersection_area, ego_lane_with_next_lane,
     closest_idx, time_delay);
   const bool has_collision_with_margin =
     collision_state_machine_.getState() == StateMachine::State::STOP;
@@ -682,8 +682,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     logger_.get_child("collision state_machine"), *clock_);
 
   // check occlusion on detection lane
-  if (!detection_divisions_.has_value()) {
-    detection_divisions_ = util::generateDetectionLaneDivisions(
+  if (!occlusion_attention_divisions_) {
+    occlusion_attention_divisions_ = util::generateDetectionLaneDivisions(
       occlusion_attention_lanelets, routing_graph_ptr,
       planner_data_->occupancy_grid->info.resolution / std::sqrt(2.0));
   }
@@ -695,8 +695,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty())
       ? isOcclusionCleared(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
-          first_detection_area.value(), interpolated_path_info, detection_divisions_.value(),
-          occlusion_dist_thr)
+          first_attention_area.value(), interpolated_path_info,
+          occlusion_attention_divisions_.value(), occlusion_dist_thr)
       : true;
 
   // check safety
@@ -796,7 +796,7 @@ std::optional<std::pair<size_t, bool>> IntersectionModule::checkStuckVehicle(
 
 bool IntersectionModule::checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::ConstLanelets & detection_area_lanelets,
+  const lanelet::ConstLanelets & attention_area_lanelets,
   const lanelet::ConstLanelets & adjacent_lanelets,
   const std::optional<Polygon2d> & intersection_area,
   const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
@@ -819,8 +819,8 @@ bool IntersectionModule::checkCollision(
     // check direction of objects
     const auto object_direction = util::getObjectPoseWithVelocityDirection(object.kinematics);
     const auto is_in_adjacent_lanelets = util::checkAngleForTargetLanelets(
-      object_direction, adjacent_lanelets, planner_param_.common.detection_area_angle_thr,
-      planner_param_.common.detection_area_margin);
+      object_direction, adjacent_lanelets, planner_param_.common.attention_area_angle_thr,
+      planner_param_.common.attention_area_margin);
     if (is_in_adjacent_lanelets) {
       continue;
     }
@@ -832,15 +832,15 @@ bool IntersectionModule::checkCollision(
       if (is_in_intersection_area) {
         target_objects.objects.push_back(object);
       } else if (util::checkAngleForTargetLanelets(
-                   object_direction, detection_area_lanelets,
-                   planner_param_.common.detection_area_angle_thr,
-                   planner_param_.common.detection_area_margin)) {
+                   object_direction, attention_area_lanelets,
+                   planner_param_.common.attention_area_angle_thr,
+                   planner_param_.common.attention_area_margin)) {
         target_objects.objects.push_back(object);
       }
     } else if (util::checkAngleForTargetLanelets(
-                 object_direction, detection_area_lanelets,
-                 planner_param_.common.detection_area_angle_thr,
-                 planner_param_.common.detection_area_margin)) {
+                 object_direction, attention_area_lanelets,
+                 planner_param_.common.attention_area_angle_thr,
+                 planner_param_.common.attention_area_margin)) {
       // intersection_area is not available, use detection_area_with_margin as before
       target_objects.objects.push_back(object);
     }
@@ -958,26 +958,26 @@ bool IntersectionModule::checkCollision(
 
 bool IntersectionModule::isOcclusionCleared(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
-  const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
   const lanelet::ConstLanelets & adjacent_lanelets,
-  const lanelet::CompoundPolygon3d & first_detection_area,
+  const lanelet::CompoundPolygon3d & first_attention_area,
   const util::InterpolatedPathInfo & interpolated_path_info,
   const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
 
-  const auto first_detection_area_idx =
-    util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_detection_area);
-  if (!first_detection_area_idx) {
+  const auto first_attention_area_idx =
+    util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_attention_area);
+  if (!first_attention_area_idx) {
     return false;
   }
 
-  const auto first_inside_detection_idx_ip_opt =
-    util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_detection_area);
-  const std::pair<size_t, size_t> lane_detection_interval_ip =
-    first_inside_detection_idx_ip_opt
-      ? std::make_pair(first_inside_detection_idx_ip_opt.value(), std::get<1>(lane_interval_ip))
+  const auto first_inside_attention_idx_ip_opt =
+    util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_attention_area);
+  const std::pair<size_t, size_t> lane_attention_interval_ip =
+    first_inside_attention_idx_ip_opt
+      ? std::make_pair(first_inside_attention_idx_ip_opt.value(), std::get<1>(lane_interval_ip))
       : lane_interval_ip;
 
   const int width = occ_grid.info.width;
@@ -986,7 +986,7 @@ bool IntersectionModule::isOcclusionCleared(
   const auto & origin = occ_grid.info.origin.position;
 
   // NOTE: interesting area is set to 0 for later masking
-  cv::Mat detection_mask(width, height, CV_8UC1, cv::Scalar(0));
+  cv::Mat attention_mask(width, height, CV_8UC1, cv::Scalar(0));
   cv::Mat unknown_mask(width, height, CV_8UC1, cv::Scalar(0));
 
   // (1) prepare detection area mask
@@ -999,9 +999,9 @@ bool IntersectionModule::isOcclusionCleared(
   grid_poly.outer().emplace_back(origin.x, origin.y);
   bg::correct(grid_poly);
 
-  std::vector<std::vector<cv::Point>> detection_area_cv_polygons;
-  for (const auto & detection_area : detection_areas) {
-    const auto area2d = lanelet::utils::to2D(detection_area);
+  std::vector<std::vector<cv::Point>> attention_area_cv_polygons;
+  for (const auto & attention_area : attention_areas) {
+    const auto area2d = lanelet::utils::to2D(attention_area);
     Polygon2d area2d_poly;
     for (const auto & p : area2d) {
       area2d_poly.outer().emplace_back(p.x(), p.y());
@@ -1018,20 +1018,20 @@ bool IntersectionModule::isOcclusionCleared(
       bg::correct(common_areas[i]);
     }
     for (const auto & common_area : common_areas) {
-      std::vector<cv::Point> detection_area_cv_polygon;
+      std::vector<cv::Point> attention_area_cv_polygon;
       for (const auto & p : common_area.outer()) {
         const int idx_x = static_cast<int>((p.x() - origin.x) / resolution);
         const int idx_y = static_cast<int>((p.y() - origin.y) / resolution);
-        detection_area_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
+        attention_area_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
       }
-      detection_area_cv_polygons.push_back(detection_area_cv_polygon);
+      attention_area_cv_polygons.push_back(attention_area_cv_polygon);
     }
   }
-  for (const auto & poly : detection_area_cv_polygons) {
-    cv::fillPoly(detection_mask, poly, cv::Scalar(255), cv::LINE_AA);
+  for (const auto & poly : attention_area_cv_polygons) {
+    cv::fillPoly(attention_mask, poly, cv::Scalar(255), cv::LINE_AA);
   }
   // (1.1)
-  // reset adjacent_lanelets area to 0 on detection_mask
+  // reset adjacent_lanelets area to 0 on attention_mask
   std::vector<std::vector<cv::Point>> adjacent_lane_cv_polygons;
   for (const auto & adjacent_lanelet : adjacent_lanelets) {
     const auto area2d = adjacent_lanelet.polygon2d().basicPolygon();
@@ -1061,7 +1061,7 @@ bool IntersectionModule::isOcclusionCleared(
     }
   }
   for (const auto & poly : adjacent_lane_cv_polygons) {
-    cv::fillPoly(detection_mask, poly, cv::Scalar(0), cv::LINE_AA);
+    cv::fillPoly(attention_mask, poly, cv::Scalar(0), cv::LINE_AA);
   }
 
   // (2) prepare unknown mask
@@ -1080,7 +1080,7 @@ bool IntersectionModule::isOcclusionCleared(
 
   // (3) occlusion mask
   cv::Mat occlusion_mask_raw(width, height, CV_8UC1, cv::Scalar(0));
-  cv::bitwise_and(detection_mask, unknown_mask, occlusion_mask_raw);
+  cv::bitwise_and(attention_mask, unknown_mask, occlusion_mask_raw);
   // (3.1) apply morphologyEx
   cv::Mat occlusion_mask;
   const int morph_size = std::ceil(planner_param_.occlusion.denoise_kernel / resolution);
@@ -1118,7 +1118,7 @@ bool IntersectionModule::isOcclusionCleared(
   cv::Mat distance_grid(width, height, CV_8UC1, cv::Scalar(undef_pixel));
   cv::Mat projection_ind_grid(width, height, CV_32S, cv::Scalar(-1));
 
-  const auto [lane_start, lane_end] = lane_detection_interval_ip;
+  const auto [lane_start, lane_end] = lane_attention_interval_ip;
   for (int i = static_cast<int>(lane_end); i >= static_cast<int>(lane_start); i--) {
     const auto & path_pos = path_ip.points.at(i).point.pose.position;
     const int idx_x = (path_pos.x - origin.x) / resolution;

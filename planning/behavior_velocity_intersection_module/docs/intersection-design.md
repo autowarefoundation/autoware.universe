@@ -14,15 +14,15 @@ The module is desinged to be agnositc to left-hand/right-hand traffic rules and 
 
 This module is activated when the path contains the lanes with `turn_direction` tag. More precisely, if the `lane_ids` of the path contains the ids of those lanes, corresponding instances of intersection module are activated on each lanes respectively.
 
-## Limitations
+## Requirements/Limitations
 
-- The HDMap needs to have the information of `turn_direction` tag (which should be one of `straight`, `left`, `right`) for all the lanes in intersections and `right_of_way` tag for specific lanes (refer to [RightOfWay](intersection-design.md#right-of-way) section for more details).
+- The HDMap needs to have the information of `turn_direction` tag (which should be one of `straight`, `left`, `right`) for all the lanes in intersections and `right_of_way` tag for specific lanes (refer to [RightOfWay](intersection-design.md#right-of-way) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
 - WIP(perception requirements/limitations)
 - WIP(sensor visibility requirements/limitations)
 
 ## Attention area
 
-The `Attention Area` in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `detection_area_length` meters. `RightOfWay` tag is used to rule out the lanes that each lane has priority given the traffic light relation and `turn_direction` priority.
+The `Attention Area` in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `attention_area_length` meters. `RightOfWay` tag is used to rule out the lanes that each lane has priority given the traffic light relation and `turn_direction` priority.
 
 `Intersection Area`, which is supposed to be defined on the HDMap, is an area convering the entire intersection.
 
@@ -52,72 +52,80 @@ For [stuck vehicle detection](intersection-design.md#stuck-vehicle-detection) an
 
 Objects that satisfy all of the following conditions are considered as target objects (possible collision objects):
 
-- The type of object type is **car**, **truck**, **bus** or **motorbike**. (Bicycle, pedestrian, animal, unknown are not.)
-- The center of gravity of object is **located within a certain distance** from the attention lane (threshold = `detection_area_margin`) .
+- The center of mass of the object is **within a certain distance** from the attention lane (threshold = `attention_area_margin`) .
   - (Optional condition) The center of gravity is in the **intersection area**.
     - To deal with objects that is in the area not covered by the lanelets in the intersection.
-- The posture of object is **the same direction as the attention lane** (threshold = `detection_area_angle_threshold`).
-  - The orientation of the target is recalculated in this module according to the `orientation_reliable` and the sign of the velocity of the target.
-- Not being **in the neighboring lanes of the ego vehicle**.
-  - neighboring lanes include the ego lane of the vehicle and the adjacent lanes of it with turn_direction as the ego lane.
+- The posture of object is **the same direction as the attention lane** (threshold = `attention_area_angle_threshold`).
+- Not being **in the adjacent lanes of the ego vehicle**.
 
-### Collision Check and Crossing Judgement
+### Stuck Vehicle Detection
 
-The following process is performed for the attention targets to determine whether the ego vehicle can cross the intersection safely. If it is judged that the ego vehicle cannot pass through the intersection with enough margin, it will insert the stopping speed on the stop line of the intersection.
+If there is any object in a certain distance (`stuck_vehicle_ignore_dist` and `stuck_vehicle_detect_dist`) before and after the exit of the intersection lane and the object velocity is less than a threshold (=`stuck_vehicle_vel_thr`), the object is regarded as a stuck vehicle. If stuck vehicles exist, this module inserts a stopline a certain distance (=`stop_line_margin`) before the overlapped region with other lanes. The stuck vehicle detection area is generated based on the vehicle path, so the stuck vehicle stopline is not inserted if the upstream module generated avoidance path
 
-1. calculate the passing time and the time that the ego vehicle is in the intersection. This time is set as $t_s$ ~ $t_e$
+![stuck_vehicle_detection](./stuck-vehicle.drawio.svg)
+
+### Collision detection
+
+The following process is performed for the targets objects to determine whether the ego vehicle can pass the intersection safely. If it is judged that the ego vehicle cannot pass through the intersection with enough _margin_, it will insert a stopline on the _path_.
+
+1. calculate the time interval that the ego vehicle is in the intersection. This time is set as $t_s$ ~ $t_e$
 2. extract the predicted path of the target object whose confidence is greater than `min_predicted_path_confidence`.
 3. detect collision between the extracted predicted path and ego's predicted path in the following process.
    1. obtain the passing area of the ego vehicle $A_{ego}$ in $t_s$ ~ $t_e$.
    2. calculate the passing area of the target object $A_{target}$ at $t_s$ - `collision_start_margin_time` ~ $t_e$ + `collision_end_margin_time` for each predicted path (\*1).
-   3. check if $A_{ego}$ and $A_{target}$ regions are overlapped (has collision).
-4. when a collision is detected, the module inserts a stop velocity in front of the intersection. Note that there is a time margin for the stop release (\*2).
-5. If ego is over the `pass_judge_line`, collision checking is not processed to avoid sudden braking. However if ego velocity is lower than the threshold `keep_detection_vel_thr` then this module continues collision checking.
+   3. check if $A_{ego}$ and $A_{target}$ polygons are overlapped (has collision).
+4. when a collision is detected, the module inserts a stopline.
+5. If ego is over the `pass_judge_line`, collision checking is not processed to avoid sudden braking and/or unnecessary stop in the middle of the intersection.
 
-(\*1) The parameters `collision_start_margin_time` and `collision_end_margin_time` can be interpreted as follows:
+The parameters `collision_start_margin_time` and `collision_end_margin_time` can be interpreted as follows:
 
-- If the ego vehicle passes through the intersection earlier than the target object, the collision is detected if the time difference between the two is less than `collision_start_margin_time`.
-- If the ego vehicle passes through the intersection later than the target object, the collision is detected if the time difference between the two is less than `collision_end_margin_time`.
+- If the ego vehicle was to pass through the intersection earlier than the target object, collision would be detected if the time difference between the two was less than `collision_start_margin_time`.
+- If the ego vehicle was to pass through the intersection later than the target object, collision would be detected if the time difference between the two was less than `collision_end_margin_time`.
 
-(\*2) If the collision is detected, the state transits to "stop" immediately. On the other hand, the collision judgment must be clear for a certain period (default : 2.0[s]) to transit from "stop" to "go" to prevent to prevent chattering of decisions.
+If collision is detected, the state transits to "STOP" immediately. On the other hand, the state does not transit to "GO" unless _safe_ judgement continues for a certain period to prevent the chattering of decisions.
 
 ### Stop Line Automatic Generation
 
-The driving lane is complemented at a certain intervals (default : 20 [cm]), and the line which is a margin distance (default : 100cm) in front of the attention lane is defined as a stop line. (Also the length of the vehicle is considered and the stop point is set at the base_link point in front of the stop lane.)
+If a stopline is associated with the intersection lane, that line is used as the stopline for collision detection. Otherwise the path is interpolated at a certain intervals (=`path_interpolation_ds`), and the point which is `stop_line_margin` meters behind the attention lane is defined as the position of the stop line for the vehicle front.
 
 ### Pass Judge Line
 
-To avoid a rapid braking, in case that a deceleration more than a threshold (default : 0.5[G]) is needed, the ego vehicle doesn’t stop. In order to judge this condition, pass judge line is set a certain distance (default : 0.5 \* v_current^2 / a_max) in front of the stop line.
-To prevent a chattering, once the ego vehicle passes this line, “stop” decision in the intersection won’t be done any more.
-To prevent going over the pass judge line before the traffic light stop line, the distance between stop line and pass judge line become 0m in case that there is a stop line between the ego vehicle and an intersection stop line.
-
-### Stuck Vehicle Detection
-
-If there is any object in a certain distance (default : 5[m]) from the end point of the intersection lane on the driving lane and the object velocity is less than a threshold (default 3.0[km/h]), the object is regarded as a stuck vehicle. If the stuck vehicle exists, the ego vehicle cannot enter the intersection.
-
-As a related case, if the object in front of the ego vehicle is turning the same direction, this module predicts the stopping point that the object will reach at a certain deceleration (default: -1.0[m/s^2]). If the predicted position is in stuck vehicle detection area AND the position which `vehicle length` [m] behind the predicted position is in detection area, the ego vehicle will also stop.
+To avoid a rapid braking, if deceleration and jerk more than a threshold (`behavior_velocity_planner.max_accel` and `behavior_velocity_planner.max_jerk`) are needed to stop just in front of the attention area, this module does not insert stopline after passing the default stopline position.
 
 ## Module Parameters
 
-| Parameter                                           | Type   | Description                                                                   |
-| --------------------------------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `common.detection_area_margin`                      | double | [m] range for expanding detection area                                        |
-| `common.detection_area_length`                      | double | [m] range for lidar detection 200[m] is by default                            |
-| `common.detection_area_angle_threshold`             | double | [rad] threshold of angle difference between the detection object and lane     |
-| `common.stop_line_margin`                           | double | [m] margin before stop line                                                   |
-| `common.intersection_velocity`                      | double | [m/s] velocity to pass intersection. 10[km/h] is by default                   |
-| `common.intersection_max_accel`                     | double | [m/s^2] acceleration in intersection                                          |
-| `stuck_vehicle.stuck_vehicle_detect_dist`           | double | [m] this should be the length between cars when they are stopped.             |
-| `stuck_vehicle.stuck_vehicle_ignore_dist`           | double | [m] obstacle stop max distance(5.0[m]) + stuck vehicle size / 2.0[m])         |
-| `stuck_vehicle.stuck_vehicle_vel_thr`               | double | [m/s] velocity below 3[km/h] is ignored by default                            |
-| `collision_detection.state_transit_margin_time`     | double | [m] time margin to change state                                               |
-| `collision_detection.min_predicted_path_confidence` | double | [-] minimum confidence value of predicted path to use for collision detection |
+| Parameter                                           | Type   | Description                                                                                    |
+| --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| `common.attention_area_margin`                      | double | [m] margin for expanding attention area width                                                  |
+| `common.attention_area_length`                      | double | [m] range for object detection                                                                 |
+| `common.attention_area_angle_threshold`             | double | [rad] threshold of angle difference between the detected object and lane                       |
+| `common.stop_line_margin`                           | double | [m] margin before stop line                                                                    |
+| `common.intersection_velocity`                      | double | [m/s] velocity profile for pass judge calculation                                              |
+| `common.intersection_max_accel`                     | double | [m/s^2] acceleration profile for pass judge calculation                                        |
+| `common.stop_overshoot_margin`                      | double | [m] margin for the overshoot from stopline                                                     |
+| `common.path_interpolation_ds`                      | double | [m] path interpolation interval                                                                |
+| `stuck_vehicle.stuck_vehicle_detect_dist`           | double | [m] length toward from the exit of intersection for stuck vehicle detection                    |
+| `stuck_vehicle.stuck_vehicle_ignore_dist`           | double | [m] length behind the exit of intersection for stuck vehicle detection                         |
+| `stuck_vehicle.stuck_vehicle_vel_thr`               | double | [m/s] velocity threhsold for stuck vehicle detection                                           |
+| `collision_detection.state_transit_margin_time`     | double | [m] time margin to change state                                                                |
+| `collision_detection.min_predicted_path_confidence` | double | [-] minimum confidence value of predicted path to use for collision detection                  |
+| `collision_detection.collision_start_margin_time`   | double | [s] time margin for the beginning of collision with upcoming vehicle                           |
+| `collision_detection.collision_end_margin_time`     | double | [s] time margin for the finish of collision with upcoming vehicle                              |
+| `collision_detection.keep_detection_vel_thr`        | double | [m/s] ego velocity threshold for continuing collision detection before pass judge line         |
+| `occlusion.occlusion_attention_area_length`         | double | [m] the length of attention are for occlusion detection                                        |
+| `occlusion.enable_creeping`                         | bool   | [-] flag to insert `occlusion_creep_velocity` while peeking to intersection occlusion stopline |
+| `occlusion.peeking_offset`                          | double | [m] the offset of the front of the vehicle into the attention area for peeking to occlusion    |
+| `occlusion.min_vehicle_brake_for_rss`               | double | [m/s] assumed minimum brake of the vehicle running from behind the occlusion                   |
+| `occlusion.max_vehicle_velocity_for_rss`            | double | [m/s] assumed maximum velocity of the vehicle running from behind the occlusion                |
+| `occlusion.denoise_kernel`                          | double | [m] the window size of morphology process for clearing noisy occlusion                         |
 
-### How to turn parameters
+## How to turn parameters
 
 WIP
 
-### Flowchart
+## Flowchart
+
+WIP
 
 ```plantuml
 @startuml

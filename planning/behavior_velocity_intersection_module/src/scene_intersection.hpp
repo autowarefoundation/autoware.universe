@@ -51,13 +51,9 @@ public:
   {
     struct Common
     {
-      double detection_area_margin;        //! used for detecting objects in detection area
-      double detection_area_right_margin;  //! used for detecting objects in detection area only
-                                           //! right direction
-      double detection_area_left_margin;  //! used for detecting objects in detection area only left
-                                          //! direction
-      double detection_area_length;       //! used to create detection area polygon
-      double detection_area_angle_thr;    //! threshold in checking the angle of detecting objects
+      double attention_area_margin;     //! used for detecting objects in attention area
+      double attention_area_length;     //! used to create attention area polygon
+      double attention_area_angle_thr;  //! threshold in checking the angle of detecting objects
       double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
       double intersection_velocity;  //! used for intersection passing time
       double intersection_max_acc;   //! used for calculating intersection velocity
@@ -89,7 +85,7 @@ public:
     struct Occlusion
     {
       bool enable;
-      double occlusion_detection_area_length;  //! used for occlusion detection
+      double occlusion_attention_area_length;  //! used for occlusion detection
       bool enable_creeping;
       double occlusion_creep_velocity;  //! the creep velocity to occlusion limit stop line
       double peeking_offset;
@@ -201,7 +197,7 @@ private:
 
   // for occlusion detection
   const bool enable_occlusion_detection_;
-  std::optional<std::vector<util::DescritizedLane>> detection_divisions_;
+  std::optional<std::vector<util::DescritizedLane>> occlusion_attention_divisions_;
   bool is_actually_occluded_ = false;    //! occlusion based on occupancy_grid
   bool is_forcefully_occluded_ = false;  //! fake occlusion forced by external operator
   OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
@@ -234,7 +230,7 @@ private:
 
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::ConstLanelets & detection_area_lanelets,
+    const lanelet::ConstLanelets & attention_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
     const std::optional<Polygon2d> & intersection_area,
     const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
@@ -242,9 +238,9 @@ private:
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
-    const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+    const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
     const lanelet::ConstLanelets & adjacent_lanelets,
-    const lanelet::CompoundPolygon3d & first_detection_area,
+    const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
     const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr);
 

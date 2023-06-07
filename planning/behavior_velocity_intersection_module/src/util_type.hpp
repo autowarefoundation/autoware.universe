@@ -38,7 +38,7 @@ struct DebugData
   std::optional<geometry_msgs::msg::Pose> occlusion_stop_wall_pose = std::nullopt;
   std::optional<geometry_msgs::msg::Pose> occlusion_first_stop_wall_pose = std::nullopt;
   std::optional<geometry_msgs::msg::Pose> pass_judge_wall_pose = std::nullopt;
-  std::optional<std::vector<lanelet::CompoundPolygon3d>> detection_area = std::nullopt;
+  std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area = std::nullopt;
   std::optional<geometry_msgs::msg::Polygon> intersection_area = std::nullopt;
   std::optional<lanelet::CompoundPolygon3d> ego_lane = std::nullopt;
   std::optional<std::vector<lanelet::CompoundPolygon3d>> adjacent_area = std::nullopt;
@@ -66,7 +66,7 @@ struct IntersectionLanelets
   // even if lane change/re-routing happened on the intersection, these areas area are supposed to
   // be invariant under the 'associative' lanes.
   std::optional<lanelet::CompoundPolygon3d> first_conflicting_area;
-  std::optional<lanelet::CompoundPolygon3d> first_detection_area;
+  std::optional<lanelet::CompoundPolygon3d> first_attention_area;
 };
 
 struct DescritizedLane
