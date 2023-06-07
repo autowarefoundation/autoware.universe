@@ -483,11 +483,12 @@ w^{\mathrm{yaw}} & = \mathrm{lerp}(w^{\mathrm{yaw}}_{\mathrm{normal}}, w^{\mathr
 $$
 
 Assume that $c$ is the normalized avoidance cost, $w^{\mathrm{lat}}$ is the weight for lateral error, $w^{\mathrm{yaw}}$ is the weight for yaw error, and other variables are as follows.
-| Parameter | Type | Description |
-| ------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------- |
-| $w^{\mathrm{steer}}_{\mathrm{normal}}$ | double | weight for steering minimization in normal cases |
-| $w^{\mathrm{steer}}_{\mathrm{avoidance}}$ | double | weight for steering minimization in avoidance cases |
-| $w^{\mathrm{lat}}_{\mathrm{normal}}$ | double | weight for lateral error minimization in normal cases |
-| $w^{\mathrm{lat}}_{\mathrm{avoidance}}$ | double | weight for lateral error minimization in avoidance cases |
-| $w^{\mathrm{yaw}}_{\mathrm{normal}}$ | double | weight for yaw error minimization in normal cases |
-| $w^{\mathrm{yaw}}_{\mathrm{avoidance}}$ | double | weight for yaw error minimization in avoidance cases |
+
+| Parameter                                 | Type   | Description                                              |
+| ----------------------------------------- | ------ | -------------------------------------------------------- |
+| $w^{\mathrm{steer}}_{\mathrm{normal}}$    | double | weight for steering minimization in normal cases         |
+| $w^{\mathrm{steer}}_{\mathrm{avoidance}}$ | double | weight for steering minimization in avoidance cases      |
+| $w^{\mathrm{lat}}_{\mathrm{normal}}$      | double | weight for lateral error minimization in normal cases    |
+| $w^{\mathrm{lat}}_{\mathrm{avoidance}}$   | double | weight for lateral error minimization in avoidance cases |
+| $w^{\mathrm{yaw}}_{\mathrm{normal}}$      | double | weight for yaw error minimization in normal cases        |
+| $w^{\mathrm{yaw}}_{\mathrm{avoidance}}$   | double | weight for yaw error minimization in avoidance cases     |
