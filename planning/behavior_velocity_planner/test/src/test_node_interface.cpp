@@ -53,6 +53,12 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
   const auto motion_velocity_smoother_dir =
     ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
 
+  const auto get_behavior_velocity_module_config = [](const std::string & module) {
+    const auto package_name = "behavior_velocity_" + module + "_module";
+    const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
+    return package_path + "/config/" + module + ".param.yaml";
+  };
+
   test_utils::updateNodeOptions(
     node_options,
     {planning_test_utils_dir + "/config/test_common.param.yaml",
@@ -61,18 +67,18 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
      motion_velocity_smoother_dir + "/config/Analytical.param.yaml",
      behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
-     behavior_velocity_planner_dir + "/config/blind_spot.param.yaml",
-     behavior_velocity_planner_dir + "/config/crosswalk.param.yaml",
-     behavior_velocity_planner_dir + "/config/detection_area.param.yaml",
-     behavior_velocity_planner_dir + "/config/intersection.param.yaml",
-     behavior_velocity_planner_dir + "/config/no_stopping_area.param.yaml",
-     behavior_velocity_planner_dir + "/config/occlusion_spot.param.yaml",
-     behavior_velocity_planner_dir + "/config/run_out.param.yaml",
-     behavior_velocity_planner_dir + "/config/speed_bump.param.yaml",
-     behavior_velocity_planner_dir + "/config/stop_line.param.yaml",
-     behavior_velocity_planner_dir + "/config/traffic_light.param.yaml",
-     behavior_velocity_planner_dir + "/config/virtual_traffic_light.param.yaml",
-     behavior_velocity_planner_dir + "/config/out_of_lane.param.yaml"});
+     get_behavior_velocity_module_config("blind_spot"),
+     get_behavior_velocity_module_config("crosswalk"),
+     get_behavior_velocity_module_config("detection_area"),
+     get_behavior_velocity_module_config("intersection"),
+     get_behavior_velocity_module_config("no_stopping_area"),
+     get_behavior_velocity_module_config("occlusion_spot"),
+     get_behavior_velocity_module_config("run_out"),
+     get_behavior_velocity_module_config("speed_bump"),
+     get_behavior_velocity_module_config("stop_line"),
+     get_behavior_velocity_module_config("traffic_light"),
+     get_behavior_velocity_module_config("virtual_traffic_light"),
+     get_behavior_velocity_module_config("out_of_lane")});
 
   node_options.append_parameter_override("launch_stop_line", true);
   node_options.append_parameter_override("launch_crosswalk", true);
