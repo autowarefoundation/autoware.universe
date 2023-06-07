@@ -80,7 +80,7 @@ Abstracted obstacle data has following information.
 | min_velocity_mps | `float`                                                                 | minimum velocity of the obstacle. specified by parameter of `dynamic_obstacle.min_vel_kmph`                            |
 | max_velocity_mps | `float`                                                                 | maximum velocity of the obstacle. specified by parameter of `dynamic_obstacle.max_vel_kmph`                            |
 
-Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](./docs/run-out-design.md#Collision-detection).
+Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](.#Collision-detection).
 
 Future work: Determine the maximum/minimum velocity from the estimated velocity with covariance of the object
 
@@ -114,7 +114,7 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 Along the ego vehicle path, determine the points where collision detection is to be performed for each `detection_span`.
 
-The travel times to the each points are calculated from [the expected target velocity](./docs/run-out-design.md#Calculate-the-expected-target-velocity-for-ego-vehicle).
+The travel times to the each points are calculated from [the expected target velocity](.#Calculate-the-expected-target-velocity-for-ego-vehicle).
 
 ![brief](./docs/create_polygon_on_path_point.svg)
 
@@ -166,7 +166,7 @@ APPROACH --> APPROACH : Approach duration is less than threshold
 ##### Limit velocity with specified jerk and acc limit
 
 The maximum slowdown velocity is calculated in order not to slowdown too much.
-See the [Occlusion Spot document](../../behavior_velocity_occlusion_spot_module/docs/occlusion-spot-design.md#maximum-slowdown-velocity) for more details.
+See the [Occlusion Spot document](../behavior_velocity_occlusion_spot_module/#maximum-slowdown-velocity) for more details.
 You can choose whether to use this feature by parameter of `slow_down_limit.enable`.
 
 ### Module Parameters

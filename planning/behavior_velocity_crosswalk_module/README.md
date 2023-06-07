@@ -204,7 +204,7 @@ In current autoware implementation if there are no target objects around a cross
 will not slow down for the crosswalk. However, if ego vehicle to slow down to a certain speed in
 such cases is wanted then it is possible by adding some tags to the related crosswalk definition as
 it is instructed
-in [lanelet2_format_extension.md](docs/<https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)>
+in [lanelet2_format_extension.md](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)
 document.
 
 ### Limitations

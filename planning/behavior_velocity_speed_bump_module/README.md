@@ -55,7 +55,7 @@ is being used.
 
 ### Future Work
 
-- In an article [here](docs/<https://journals.sagepub.com/doi/10.1155/2014/736576)>, a bump modeling method
+- In an article [here](https://journals.sagepub.com/doi/10.1155/2014/736576), a bump modeling method
   is proposed. Simply it is based on fitting the bump in a circle and a radius calculation is done
   with it. Although the velocity calculation is based on just the height of the bump in the recent
   implementation, applying this method is intended in the future which will yield more realistic

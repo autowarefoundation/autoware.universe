@@ -61,10 +61,10 @@ If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s wil
 <table width="100%">
   <tr>
   <td>
-    <img src="./out_of_lane_slow.png" width="550px"/>
+    <img src="./docs/out_of_lane_slow.png" width="550px"/>
   </td>
   <td>
-    <img src="./out_of_lane_stop.png" width="550px"/>
+    <img src="./docs/out_of_lane_stop.png" width="550px"/>
   </td>
   </tr>
 </table>
