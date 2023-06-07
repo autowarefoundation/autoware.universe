@@ -1,6 +1,12 @@
 ## Role
 
-The _intersection_ module is responsible for safely going through junctions by (1)checking collisions with upcoming vehicles (2)recognizing the occluded area in the intersection (3)responding to arrow signals of associated traffic lights.
+The _intersection_ module is responsible for safely going through urban intersections by:
+
+1. checking collisions with upcoming vehicles
+2. recognizing the occluded area in the intersection
+3. reacting to arrow signals of associated traffic lights
+
+The module is desinged to be agnositc to left-hand/right-hand traffic rules and works on crossroads, T-shape junctions, etc.
 
 ![topology](./intersection-topology.drawio.svg)
 
@@ -13,10 +19,6 @@ This module is activated when the path contains the lanes with `turn_direction` 
 - The HDMap needs to have the information of `turn_direction` tag (which should be one of `straight`, `left`, `right`) for all the lanes in intersections and `right_of_way` tag for specific lanes (refer to [RightOfWay](intersection-design.md#right-of-way) section for more details).
 - WIP(perception requirements/limitations)
 - WIP(sensor visibility requirements/limitations)
-
-## Target objects
-
-For [stuck vehicle detection](intersection-design.md#stuck-vehicle-detection) and [collision detection](intersection-design.md#collision-detection), this module checks **car**, **bus**, **truck**, **trailer**, **motor cycle**, and **bicycle** type objects.
 
 ## Attention area
 
@@ -33,12 +35,20 @@ Following table shows an example of how to assign `right_of_way` tag and set `yi
 | turn direction \ traffic light | w/ traffic light                                                | w/o traffic light                                |
 | ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------ |
 | straight                       | Highest priority of all                                         | Priority over left/right lanes of the same group |
-| left(Left hand rule)           | Priority over the other group and right lanes of the same group | Priority over right lanes of the same group      |
-| right(Left hand rule)          | Priority only over the other group                              | priority only over the other gruop               |
-| left(Right hand rule)          | Priority only over the other group                              | Priority only over the other group               |
-| right(Right hand rule)         | Priority over the other group and left lanes of the same group  | priority over left lanes of the same group       |
+| left(Left hand traffic)        | Priority over the other group and right lanes of the same group | Priority over right lanes of the same group      |
+| right(Left hand traffic)       | Priority only over the other group                              | priority only over the other gruop               |
+| left(Right hand traffic)       | Priority only over the other group                              | Priority only over the other group               |
+| right(Right hand traffic)      | Priority over the other group and left lanes of the same group  | priority over left lanes of the same group       |
 
-## temp
+This setting gives the following `attention_area` configurations.
+
+![attention_area_straight](./intersection-attention-straight.drawio.svg)
+![attention_area_ll_rr](./intersection-attention-ll-rr.drawio.svg)
+![attention_area_lr_rl](./intersection-attention-lr-rl.drawio.svg)
+
+## Target objects
+
+For [stuck vehicle detection](intersection-design.md#stuck-vehicle-detection) and [collision detection](intersection-design.md#collision-detection), this module checks **car**, **bus**, **truck**, **trailer**, **motor cycle**, and **bicycle** type objects.
 
 Objects that satisfy all of the following conditions are considered as target objects (possible collision objects):
 
@@ -50,23 +60,6 @@ Objects that satisfy all of the following conditions are considered as target ob
   - The orientation of the target is recalculated in this module according to the `orientation_reliable` and the sign of the velocity of the target.
 - Not being **in the neighboring lanes of the ego vehicle**.
   - neighboring lanes include the ego lane of the vehicle and the adjacent lanes of it with turn_direction as the ego lane.
-
-### How to Define Attention Lanes
-
-Target objects are limited by lanelets to prevent unexpected behavior. A lane that satisfies the following conditions is defined as an "Attention Lane" and used to define the target object.
-
-- The lane crosses with the driving lane of the ego-vehicle
-- The lane has high priority for the driving lane of the ego-vehicle (priority tags are needed to be configured in Lanelet-map according to the situation).
-
-See the following figures to know how to create an attention area and its rationale.
-
-![intersection_straight](intersection_straight.png)
-
-![intersection_turn_right](intersection_turn_right.png)
-
-![intersection_turn_left](intersection_turn_left.png)
-
-Note: the case `traffic light, turn right only` is not currently implemented.
 
 ### Collision Check and Crossing Judgement
 
@@ -104,34 +97,25 @@ If there is any object in a certain distance (default : 5[m]) from the end point
 
 As a related case, if the object in front of the ego vehicle is turning the same direction, this module predicts the stopping point that the object will reach at a certain deceleration (default: -1.0[m/s^2]). If the predicted position is in stuck vehicle detection area AND the position which `vehicle length` [m] behind the predicted position is in detection area, the ego vehicle will also stop.
 
-### Module Parameters
+## Module Parameters
 
-| Parameter                                     | Type   | Description                                                                                    |
-| --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `intersection/state_transit_margin_time`      | double | [m] time margin to change state                                                                |
-| `intersection/path_expand_width`              | bool   | [m] path area to see with expansion                                                            |
-| `intersection/stop_line_margin`               | double | [m] margin before stop line                                                                    |
-| `intersection/stuck_vehicle_detect_dist`      | double | [m] this should be the length between cars when they are stopped.                              |
-| `intersection/stuck_vehicle_ignore_dist`      | double | [m] obstacle stop max distance(5.0[m]) + stuck vehicle size / 2.0[m])                          |
-| `intersection/stuck_vehicle_vel_thr`          | double | [m/s] velocity below 3[km/h] is ignored by default                                             |
-| `intersection/intersection_velocity`          | double | [m/s] velocity to pass intersection. 10[km/h] is by default                                    |
-| `intersection/intersection_max_accel`         | double | [m/s^2] acceleration in intersection                                                           |
-| `intersection/detection_area_margin`          | double | [m] range for expanding detection area                                                         |
-| `intersection/detection_area_length`          | double | [m] range for lidar detection 200[m] is by default                                             |
-| `intersection/detection_area_angle_threshold` | double | [rad] threshold of angle difference between the detection object and lane                      |
-| `intersection/min_predicted_path_confidence`  | double | [-] minimum confidence value of predicted path to use for collision detection                  |
-| `merge_from_private_road/stop_duration_sec`   | double | [s] duration to stop                                                                           |
-| `assumed_front_car_decel: 1.0`                | double | [m/s^2] deceleration of front car used to check if it could stop in the stuck area at the exit |
-| `keep_detection_vel_threshold`                | double | [m/s] the threshold for ego vehicle for keeping detection after passing `pass_judge_line`      |
+| Parameter                                           | Type   | Description                                                                   |
+| --------------------------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `common.detection_area_margin`                      | double | [m] range for expanding detection area                                        |
+| `common.detection_area_length`                      | double | [m] range for lidar detection 200[m] is by default                            |
+| `common.detection_area_angle_threshold`             | double | [rad] threshold of angle difference between the detection object and lane     |
+| `common.stop_line_margin`                           | double | [m] margin before stop line                                                   |
+| `common.intersection_velocity`                      | double | [m/s] velocity to pass intersection. 10[km/h] is by default                   |
+| `common.intersection_max_accel`                     | double | [m/s^2] acceleration in intersection                                          |
+| `stuck_vehicle.stuck_vehicle_detect_dist`           | double | [m] this should be the length between cars when they are stopped.             |
+| `stuck_vehicle.stuck_vehicle_ignore_dist`           | double | [m] obstacle stop max distance(5.0[m]) + stuck vehicle size / 2.0[m])         |
+| `stuck_vehicle.stuck_vehicle_vel_thr`               | double | [m/s] velocity below 3[km/h] is ignored by default                            |
+| `collision_detection.state_transit_margin_time`     | double | [m] time margin to change state                                               |
+| `collision_detection.min_predicted_path_confidence` | double | [-] minimum confidence value of predicted path to use for collision detection |
 
 ### How to turn parameters
 
-- The time to change state form `Stop` to `GO` is too long.
-  - Change `state_transit_margin_time` to lower value. Be careful if this margin is too small then vehicle is going to change state many times and cause chattering.
-- The distance to stuck vehicle is too long.
-  - Change `stuck_vehicle_detect_dist` to lower value. Note this module consider obstacle stop max distance as detection distance.
-- The speed in intersection is too slow
-- Change `intersection_velocity` to higher value.
+WIP
 
 ### Flowchart
 
@@ -215,33 +199,3 @@ stop
 
 @enduml
 ```
-
-NOTE current state is treated as `STOP` if `is_entry_prohibited` = `true` else `GO`
-
-### Known Limits
-
-- This module generate intersection stop line and ignoring lanelet automatically form lanelet map , however if you want to set intersection stop line and ignoring lanelet manually you need to tag `right_of_way` and `yield` to all conflicting lanes properly.
-
----
-
-### How to Set Lanelet Map fot Intersection
-
-![intersection_fig](intersection_fig.png)
-
-#### Set a turn_direction tag (Fig. 1)
-
-IntersectionModule will be activated by this tag. If this tag is not set, ego-vehicle don’t recognize the lane as an intersection. Even if it’s a straight lane, this tag is mandatory if it is located within intersection.
-
-Set a value in `turn_direction` tag to light up turn signals.
-
-Values of `turn_direction` must be one of “straight”(no turn signal), “right” or “left”. Autoware will light up respective turn signals 30[m] before entering the specified lane. You may also set optional tag “turn_signal_distance” to modify the distance to start lighting up turn signals.
-
-Lanes within intersections must be defined as a single Lanelet. For example, blue lane in Fig.3 cannot be split into 2 Lanelets.
-
-#### Explicitly describe a stop position [RoadMarking] (Optional) (Fig. 2)
-
-As a default, IntersectionModule estimates a stop position by the crossing point of driving lane and attention lane. But there are some cases like Fig.2 in which we would like to set a stop position explicitly. When a `stop_line` is defined as a `RoadMarking` item in the intersection lane, it overwrites the stop position. (Not only creating `stop_line`, but also defining as a `RoadMaking` item are needed.)
-
-### Exclusion setting of attention lanes [RightOfWay] (Fig.3)
-
-By default, IntersectionModule treats all lanes crossing with the registered lane as attention targets (yellow and green lanelets). But in some cases (e.g. when driving lane is priority lane or traffic light is green for the driving lane), we want to ignore some of the yield lanes. By setting `RightOfWay` of the `RegulatoryElement` item, we can define lanes to be ignored. Register ignored lanes as “yield” and register the attention lanes and driving lane as “right_of_way” lanelets in `RightOfWay` RegulatoryElement (For an intersection with traffic lights, we need to create items for each lane in the intersection. Please note that it needs a lot of man-hours.)

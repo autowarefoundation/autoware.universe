@@ -38,10 +38,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   ip.common.detection_area_margin =
     node.declare_parameter<double>(ns + ".common.detection_area_margin");
-  ip.common.detection_area_right_margin =
-    node.declare_parameter<double>(ns + ".common.detection_area_right_margin");
-  ip.common.detection_area_left_margin =
-    node.declare_parameter<double>(ns + ".common.detection_area_left_margin");
   ip.common.detection_area_length =
     node.declare_parameter<double>(ns + ".common.detection_area_length");
   ip.common.detection_area_angle_thr =
