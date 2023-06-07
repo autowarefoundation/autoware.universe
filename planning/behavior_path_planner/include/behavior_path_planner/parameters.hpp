@@ -118,8 +118,8 @@ struct BehaviorPathPlannerParameters
   double turn_signal_shift_length_threshold;
   bool turn_signal_on_swerving;
 
-  double enable_akima_spline_first;
-  double enable_cog_on_centerline;
+  bool enable_akima_spline_first;
+  bool enable_cog_on_centerline;
   double input_path_interval;
   double output_path_interval;
 
@@ -145,6 +145,7 @@ struct BehaviorPathPlannerParameters
   // collision check
   double lateral_distance_max_threshold;
   double longitudinal_distance_min_threshold;
+  double longitudinal_velocity_delta_time;
 
   double expected_front_deceleration;  // brake parameter under normal lane change
   double expected_rear_deceleration;   // brake parameter under normal lane change

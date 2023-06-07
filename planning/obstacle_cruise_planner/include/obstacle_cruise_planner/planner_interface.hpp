@@ -170,8 +170,12 @@ private:
     SlowDownOutput(
       const std::string & arg_uuid, const std::vector<TrajectoryPoint> & traj_points,
       const std::optional<size_t> & start_idx, const std::optional<size_t> & end_idx,
-      const double arg_target_vel, const double arg_precise_lat_dist)
-    : uuid(arg_uuid), target_vel(arg_target_vel), precise_lat_dist(arg_precise_lat_dist)
+      const double arg_target_vel, const double arg_feasible_target_vel,
+      const double arg_precise_lat_dist)
+    : uuid(arg_uuid),
+      target_vel(arg_target_vel),
+      feasible_target_vel(arg_feasible_target_vel),
+      precise_lat_dist(arg_precise_lat_dist)
     {
       if (start_idx) {
         start_point = traj_points.at(*start_idx).pose;
@@ -183,13 +187,14 @@ private:
 
     std::string uuid;
     double target_vel;
+    double feasible_target_vel;
     double precise_lat_dist;
     std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
     std::optional<geometry_msgs::msg::Pose> end_point{std::nullopt};
   };
   double calculateSlowDownVelocity(
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
-  std::tuple<double, double, double> calculateDistanceToSlowDownWithConstraints(
+  std::optional<std::tuple<double, double, double>> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
     const double dist_to_ego) const;

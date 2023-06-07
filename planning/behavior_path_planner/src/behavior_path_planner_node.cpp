@@ -475,6 +475,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.lateral_distance_max_threshold = declare_parameter<double>("lateral_distance_max_threshold");
   p.longitudinal_distance_min_threshold =
     declare_parameter<double>("longitudinal_distance_min_threshold");
+  p.longitudinal_velocity_delta_time =
+    declare_parameter<double>("longitudinal_velocity_delta_time");
 
   p.expected_front_deceleration = declare_parameter<double>("expected_front_deceleration");
   p.expected_rear_deceleration = declare_parameter<double>("expected_rear_deceleration");
@@ -637,6 +639,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
     p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
     p.lateral_execution_threshold = declare_parameter<double>(ns + "lateral_execution_threshold");
+    p.lateral_small_shift_threshold =
+      declare_parameter<double>(ns + "lateral_small_shift_threshold");
     p.max_right_shift_length = declare_parameter<double>(ns + "max_right_shift_length");
     p.max_left_shift_length = declare_parameter<double>(ns + "max_left_shift_length");
   }
