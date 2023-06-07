@@ -448,13 +448,12 @@ $$
 
 In order to make the trajectory optimization problem stabler to solve, the boundary constraint which the trajectory footprints should be inside and optimization weights are modified.
 
-### Calculate bound from drivable area
-
-From the drivable area, raw boundary is calculated.
-
 ### Keep minimum boundary width
 
-Since we cannot distinguish the boundary by roads from the boundary by obstacles for avoidance,
+The drivable area's width is sometimes smaller than the vehicle width since the behavior module does not consider the width.
+To realize the stable trajectory optimization, the drivable area's width is guaranteed to be larger than the vehicle wdith and an additional margin in a rule-based way.
+
+We cannot distinguish the boundary by roads from the boundary by obstacles for avoidance in the motion planner, the drivable area is modified in the following multi steps assuming that $l_{width}$ is the vehicle width and $l_{margin}$ is an additional margin.
 
 ![keep_minimum_boundary_width](../media/keep_minimum_boundary_width.drawio.svg)
 
@@ -463,14 +462,13 @@ Since we cannot distinguish the boundary by roads from the boundary by obstacles
 ### Avoid sudden steering
 
 When the obstacle suddenly appears which is determined to avoid by the behavior module, the drivable area's shape just in front of the ego will change, resulting in the sudden steering.
-To prevent this, the forward drivable area's shape from the ego is fixed as previous drivable area's shape.
+To prevent this, the drivable area's shape close to the ego is fixed as previous drivable area's shape.
+
+Assume that $v_{ego}$ is the ego velocity, and $t_{fix}$ is the time to fix the forward drivable area's shape.
 
 ![avoid_sudden_steering](../media/avoid_sudden_steering.drawio.svg)
 
 ### Calculate avoidance cost
-
-A raw normalized avoidance cost is calculated as follows.
-min(- d*{lower_bound} - d*{cost}, d*{upper_bound} + d*{cost})
 
 ![avoidance_cost](../media/avoidance_cost.drawio.svg)
 
@@ -478,8 +476,18 @@ min(- d*{lower_bound} - d*{cost}, d*{upper_bound} + d*{cost})
 
 $$
 \begin{align}
-r & = \mathrm{lerp}(w^{steer}_{normal}, w^{steer}_{avoidance}, c) \\
-w^{lat} & = \mathrm{lerp}(w^{lat}_{normal}, w^{lat}_{avoidance}, c) \\
-w^{yaw} & = \mathrm{lerp}(w^{yaw}_{normal}, w^{yaw}_{avoidance}, c)
+r & = \mathrm{lerp}(w^{\mathrm{steer}}_{\mathrm{normal}}, w^{\mathrm{steer}}_{\mathrm{avoidance}}, c) \\
+w^{\mathrm{lat}} & = \mathrm{lerp}(w^{\mathrm{lat}}_{\mathrm{normal}}, w^{\mathrm{lat}}_{\mathrm{avoidance}}, r) \\
+w^{\mathrm{yaw}} & = \mathrm{lerp}(w^{\mathrm{yaw}}_{\mathrm{normal}}, w^{\mathrm{yaw}}_{\mathrm{avoidance}}, r)
 \end{align}
 $$
+
+Assume that $c$ is the normalized avoidance cost, $w^{\mathrm{lat}}$ is the weight for lateral error, $w^{\mathrm{yaw}}$ is the weight for yaw error, and other variables are as follows.
+| Parameter | Type | Description |
+| ------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------- |
+| $w^{\mathrm{steer}}_{\mathrm{normal}}$ | double | weight for steering minimization in normal cases |
+| $w^{\mathrm{steer}}_{\mathrm{avoidance}}$ | double | weight for steering minimization in avoidance cases |
+| $w^{\mathrm{lat}}_{\mathrm{normal}}$ | double | weight for lateral error minimization in normal cases |
+| $w^{\mathrm{lat}}_{\mathrm{avoidance}}$ | double | weight for lateral error minimization in avoidance cases |
+| $w^{\mathrm{yaw}}_{\mathrm{normal}}$ | double | weight for yaw error minimization in normal cases |
+| $w^{\mathrm{yaw}}_{\mathrm{avoidance}}$ | double | weight for yaw error minimization in avoidance cases |

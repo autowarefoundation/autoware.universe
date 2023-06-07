@@ -269,7 +269,7 @@
                                   <g data-mml-node="mi">
                                     <use data-c="1D464" xlink:href="#MJX-27-TEX-I-1D464"/>
                                   </g>
-                                  <g data-mml-node="mrow" id="h} + l_{min}}{2}" transform="translate(716,694)">
+                                  <g data-mml-node="mrow" id="h} + l_{margin}}{2}" transform="translate(716,694)">
                                     <text data-id-align="true"/>
                                     <g data-idbox="true" transform="translate(0,-694)">
                                       <g data-mml-node="mi">
@@ -311,7 +311,7 @@
             </div>
           </div>
         </foreignObject>
-        <text x="1700" y="461" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="9px" text-anchor="middle">`\frac{l_{width} + l_{min}}...</text>
+        <text x="1700" y="461" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="9px" text-anchor="middle">`\frac{l_{width} + l_{margin}}...</text>
       </switch>
     </g>
     <ellipse cx="1632" cy="471" rx="1" ry="1" fill="#000000" stroke="rgb(0, 0, 0)" pointer-events="all"/>
@@ -419,7 +419,7 @@
                               <g data-mml-node="mi">
                                 <use data-c="1D464" xlink:href="#MJX-28-TEX-I-1D464"/>
                               </g>
-                              <g data-mml-node="mrow" id="h} + l_{min}" transform="translate(716,694)">
+                              <g data-mml-node="mrow" id="h} + l_{margin}" transform="translate(716,694)">
                                 <text data-id-align="true"/>
                                 <g data-idbox="true" transform="translate(0,-694)">
                                   <g data-mml-node="mi">
@@ -523,7 +523,7 @@
                               <g data-mml-node="mi">
                                 <use data-c="1D464" xlink:href="#MJX-29-TEX-I-1D464"/>
                               </g>
-                              <g data-mml-node="mrow" id="h} + l_{min}" transform="translate(716,694)">
+                              <g data-mml-node="mrow" id="h} + l_{margin}" transform="translate(716,694)">
                                 <text data-id-align="true"/>
                                 <g data-idbox="true" transform="translate(0,-694)">
                                   <g data-mml-node="mi">
@@ -631,7 +631,7 @@
                                   <g data-mml-node="mi">
                                     <use data-c="1D464" xlink:href="#MJX-30-TEX-I-1D464"/>
                                   </g>
-                                  <g data-mml-node="mrow" id="h} + l_{min}}{2}" transform="translate(716,694)">
+                                  <g data-mml-node="mrow" id="h} + l_{margin}}{2}" transform="translate(716,694)">
                                     <text data-id-align="true"/>
                                     <g data-idbox="true" transform="translate(0,-694)">
                                       <g data-mml-node="mi">
@@ -673,7 +673,7 @@
             </div>
           </div>
         </foreignObject>
-        <text x="1700" y="488" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="9px" text-anchor="middle">`\frac{l_{width} + l_{min}}...</text>
+        <text x="1700" y="488" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="9px" text-anchor="middle">`\frac{l_{width} + l_{margin}}...</text>
       </switch>
     </g>
     <rect x="1132" y="4" width="380" height="30" fill="none" stroke="none" pointer-events="all"/>
