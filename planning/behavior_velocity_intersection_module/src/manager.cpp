@@ -63,10 +63,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     vehicle_info.max_longitudinal_offset_m;
   ip.stuck_vehicle.stuck_vehicle_vel_thr =
     node.declare_parameter<double>(ns + ".stuck_vehicle.stuck_vehicle_vel_thr");
+  /*
   ip.stuck_vehicle.assumed_front_car_decel =
     node.declare_parameter<double>(ns + ".stuck_vehicle.assumed_front_car_decel");
   ip.stuck_vehicle.enable_front_car_decel_prediction =
     node.declare_parameter<bool>(ns + ".stuck_vehicle.enable_front_car_decel_prediction");
+  */
 
   ip.collision_detection.state_transit_margin_time =
     node.declare_parameter<double>(ns + ".collision_detection.state_transit_margin_time");
@@ -245,9 +247,10 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = node.declare_parameter<double>(ns + ".stop_duration_sec");
   mp.attention_area_length =
-    node.declare_parameter<double>("intersection.common.attention_area_length");
-  mp.stop_line_margin = node.declare_parameter<double>("intersection.common.stop_line_margin");
-  mp.interpolation_ds = node.declare_parameter<double>("intersection.common.interpolation_ds");
+    node.get_parameter("intersection.common.attention_area_length").as_double();
+  mp.stop_line_margin = node.get_parameter("intersection.common.stop_line_margin").as_double();
+  mp.path_interpolation_ds =
+    node.get_parameter("intersection.common.path_interpolation_ds").as_double();
 }
 
 void MergeFromPrivateModuleManager::launchNewModules(

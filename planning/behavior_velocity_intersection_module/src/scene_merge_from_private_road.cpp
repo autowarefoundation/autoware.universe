@@ -69,7 +69,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
 
   /* spline interpolation */
   const auto interpolated_path_info_opt = util::generateInterpolatedPath(
-    lane_id_, associative_ids_, *path, planner_param_.interpolation_ds, logger_);
+    lane_id_, associative_ids_, *path, planner_param_.path_interpolation_ds, logger_);
   if (!interpolated_path_info_opt) {
     RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
     RCLCPP_DEBUG(logger_, "===== plan end =====");

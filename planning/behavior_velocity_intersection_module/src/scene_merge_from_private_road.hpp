@@ -59,7 +59,7 @@ public:
     double attention_area_length;
     double stop_line_margin;
     double stop_duration_sec;
-    double interpolation_ds;
+    double path_interpolation_ds;
   };
 
   MergeFromPrivateRoadModule(

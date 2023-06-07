@@ -68,9 +68,11 @@ public:
       double stuck_vehicle_ignore_dist;  //! distance from intersection start to start stuck vehicle
                                          //! check
       double stuck_vehicle_vel_thr;      //! Threshold of the speed to be recognized as stopped
+      /*
       double
         assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
       bool enable_front_car_decel_prediction;  //! flag for using above feature
+      */
     } stuck_vehicle;
     struct CollisionDetection
     {
