@@ -451,7 +451,7 @@ In order to make the trajectory optimization problem stabler to solve, the bound
 ### Keep minimum boundary width
 
 The drivable area's width is sometimes smaller than the vehicle width since the behavior module does not consider the width.
-To realize the stable trajectory optimization, the drivable area's width is guaranteed to be larger than the vehicle wdith and an additional margin in a rule-based way.
+To realize the stable trajectory optimization, the drivable area's width is guaranteed to be larger than the vehicle width and an additional margin in a rule-based way.
 
 We cannot distinguish the boundary by roads from the boundary by obstacles for avoidance in the motion planner, the drivable area is modified in the following multi steps assuming that $l_{width}$ is the vehicle width and $l_{margin}$ is an additional margin.
 
