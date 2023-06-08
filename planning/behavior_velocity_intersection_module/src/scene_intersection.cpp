@@ -601,8 +601,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   const auto & first_attention_area = intersection_lanelets_.value().first_attention_area;
 
-  if (const auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value();
-      stuck_detected) {
+  if (auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value(); stuck_detected) {
     const auto intersection_stop_lines_opt =
       first_attention_area
         ? util::generateIntersectionStopLines(
@@ -613,13 +612,22 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines() in stuck vehicle check");
       return IntersectionModule::Indecisive{};
     }
+    if (intersection_stop_lines_opt) {
+      const auto closest_idx = intersection_stop_lines_opt.value().closest_idx;
+      if (closest_idx < stuck_stop_line_idx) {
+        stuck_stop_line_idx += 1;
+      }
+      return IntersectionModule::StuckStop{
+        stuck_stop_line_idx, closest_idx, intersection_stop_lines_opt};
+    }
     const auto closest_idx_opt =
       motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
     if (!closest_idx_opt) {
       IntersectionModule::Indecisive{};
     }
+    const auto closest_idx = closest_idx_opt.value();
     return IntersectionModule::StuckStop{
-      stuck_stop_line_idx, closest_idx_opt.value(), intersection_stop_lines_opt};
+      stuck_stop_line_idx, closest_idx, intersection_stop_lines_opt};
   }
 
   if (!first_attention_area) {
