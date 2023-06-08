@@ -17,13 +17,16 @@ Currently, it supports the following two types:
 ### Prerequisites
 
 #### Prerequisites on pointcloud map file(s)
+
 You may provide either a single .pcd file or multiple .pcd files. If you are using multiple PCD data and either of `enable_partial_load` or `enable_differential_load` is set true, it MUST obey the following rules:
+
 1. **It must be divided by straight lines parallel to the x-axis and y-axis**. The system does not support division by diagonal lines or curved lines.
 2. **The division size along each axis should be equal.**
 3. **The division size should be about 20m x 20m.** Particularly, care should be taken as it cannot be denied that if the division is made too large (for example, more than 100m), it may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher) and [compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/compare_map_segmentation).
 4. **All the split maps should not overlap with each other.**
 
 #### Metadata structure
+
 You also must provide a metadata for each set of pointcloud maps (currently it is exempted when you are using only single .pcd file). The metadata should look like this:
 
 ```yaml
@@ -36,7 +39,8 @@ D.pcd: [1240, 2520] # -> 1240 < x < 1260, 2520 < y < 2540
 ```
 
 where,
-- `x_resolution` and `y_resolution` 
+
+- `x_resolution` and `y_resolution`
 - `A.pcd`, `B.pcd`, etc, are the names of PCD files.
 - List such as `[1200, 2500]` are the values indicate that for this PCD file, x coordinates are between 1200 and 1220 (`x_resolution` + `x_coordinate`) and y coordinates are between 2500 and 2520 (`y_resolution` + `y_coordinate`).
 
@@ -65,8 +69,7 @@ sample-map-rosbag
 └── pointcloud_map_metadata.yaml
 ```
 
-#### If you want to load multiple files but also difficult to follow the above rules:
-
+#### If you want to load multiple files but also difficult to follow the above rules
 
 ### Specific features
 
