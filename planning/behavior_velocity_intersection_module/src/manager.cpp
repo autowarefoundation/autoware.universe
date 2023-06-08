@@ -199,6 +199,8 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     const auto occlusion_distance = intersection_module->getOcclusionDistance();
     const auto occlusion_safety = intersection_module->getOcclusionSafety();
+    RCLCPP_INFO(
+      rclcpp::get_logger("temp@manager"), "sending occlusion safety %d", occlusion_safety);
     occlusion_rtc_interface_.updateCooperateStatus(
       occlusion_uuid, occlusion_safety, occlusion_distance, occlusion_distance, stamp);
   }
@@ -212,6 +214,9 @@ void IntersectionModuleManager::setActivation()
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     scene_module->setActivation(rtc_interface_.isActivated(getUUID(scene_module->getModuleId())));
+    RCLCPP_INFO(
+      rclcpp::get_logger("temp@manager"), "set occlusion activation to %d",
+      occlusion_rtc_interface_.isActivated(occlusion_uuid));
     intersection_module->setOcclusionActivation(
       occlusion_rtc_interface_.isActivated(occlusion_uuid));
   }
