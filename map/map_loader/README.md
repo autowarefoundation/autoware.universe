@@ -14,6 +14,57 @@ Currently, it supports the following two types:
 - Send partial pointcloud map loading via ROS 2 service
 - Send differential pointcloud map loading via ROS 2 service
 
+### Prerequisites
+
+#### Prerequisites on pointcloud map file(s)
+You must provide metadata in YAML format as well as pointcloud map files. If you are using multiple PCD data, it MUST obey the following rules:
+1. **It must be divided by straight lines parallel to the x-axis and y-axis**. The system does not support division by diagonal lines or curved lines.
+2. **The division size along each axis should be equal.**
+3. **The division size should be about 20m x 20m.** Particularly, care should be taken as it cannot be denied that if the division is made too large (for example, more than 100m), it may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher) and [compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/compare_map_segmentation).
+4. **All the split maps should not overlap.**
+
+#### Metadata structure
+Metadata should look like this:
+
+```yaml
+x_resolution: 100.0
+y_resolution: 150.0
+A.pcd: [1200, 2500] # -> 1200 < x < 1300, 2500 < y < 2650
+B.pcd: [1300, 2500] # -> 1300 < x < 1400, 2500 < y < 2650
+C.pcd: [1200, 2650] # -> 1200 < x < 1300, 2650 < y < 2800
+D.pcd: [1400, 2650] # -> 1400 < x < 1500, 2650 < y < 2800
+```
+
+- `x_resolution` and `y_resolution` 
+- `A.pcd`, `B.pcd`, etc, are the names of PCD files.
+- List such as `[1200, 2500]` are the values indicate that for this PCD file, x coordinates are between 1200 and 1300 (`x_resolution` + `x_coordinate`) and y coordinates are between 2500 and 2650 (`y_resolution` + `y_coordinate`).
+
+You may use [pointcloud_divider](https://github.com/MapIV/pointcloud_divider) from MAP IV for dividing pointcloud map as well as generating the compatible metadata.yaml.
+
+#### Directory structure of these files
+
+If you only have one pointcloud map, Autoware will assume the following directory structure by default.
+
+```bash
+sample-map-rosbag
+├── lanelet2_map.osm
+├── pointcloud_map.pcd
+```
+
+If you have multiple rosbags, an example directory structure would be as follows. Note that you need to have a metadata when you have multiple pointcloud map files.
+
+```bash
+sample-map-rosbag
+├── lanelet2_map.osm
+├── pointcloud_map.pcd
+│ ├── A.pcd
+│ ├── B.pcd
+│ ├── C.pcd
+│ └── ...
+└── pointcloud_map_metadata.yaml
+```
+
+### Specific features
 #### Publish raw pointcloud map (ROS 2 topic)
 
 The node publishes the raw pointcloud map loaded from the `.pcd` file(s).
@@ -70,46 +121,6 @@ Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.co
 - `service/get_selected_pcd_map` (autoware_map_msgs/srv/GetSelectedPointCloudMap) : Selected pointcloud map
 - pointcloud map file(s) (.pcd)
 - metadata of pointcloud map(s) (.yaml)
-
-### Metadata
-
-You must provide metadata in YAML format as well as pointcloud map files. Pointcloud map should be divided into one or more files with x-y grid.
-
-Metadata should look like this:
-
-```yaml
-x_resolution: 100.0
-y_resolution: 150.0
-A.pcd: [1200, 2500] # -> 1200 < x < 1300, 2500 < y < 2650
-B.pcd: [1300, 2500] # -> 1300 < x < 1400, 2500 < y < 2650
-C.pcd: [1200, 2650] # -> 1200 < x < 1300, 2650 < y < 2800
-D.pcd: [1400, 2650] # -> 1400 < x < 1500, 2650 < y < 2800
-```
-
-You may use [pointcloud_divider](https://github.com/MapIV/pointcloud_divider) from MAP IV for dividing pointcloud map as well as generating the compatible metadata.yaml.
-
-### How to store map-related files
-
-If you only have one pointcloud map, Autoware will assume the following directory structure by default.
-
-```bash
-sample-map-rosbag
-├── lanelet2_map.osm
-├── pointcloud_map.pcd
-```
-
-If you have multiple rosbags, an example directory structure would be as follows. Note that you need to have a metadata when you have multiple pointcloud map files.
-
-```bash
-sample-map-rosbag
-├── lanelet2_map.osm
-├── pointcloud_map.pcd
-│ ├── A.pcd
-│ ├── B.pcd
-│ ├── C.pcd
-│ └── ...
-└── pointcloud_map_metadata.yaml
-```
 
 ---
 
