@@ -17,13 +17,16 @@ Currently, it supports the following two types:
 ### Prerequisites
 
 #### Prerequisites on pointcloud map file(s)
+
 You must provide metadata in YAML format as well as pointcloud map files. If you are using multiple PCD data, it MUST obey the following rules:
+
 1. **It must be divided by straight lines parallel to the x-axis and y-axis**. The system does not support division by diagonal lines or curved lines.
 2. **The division size along each axis should be equal.**
 3. **The division size should be about 20m x 20m.** Particularly, care should be taken as it cannot be denied that if the division is made too large (for example, more than 100m), it may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher) and [compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/compare_map_segmentation).
 4. **All the split maps should not overlap.**
 
 #### Metadata structure
+
 Metadata should look like this:
 
 ```yaml
@@ -35,7 +38,7 @@ C.pcd: [1200, 2650] # -> 1200 < x < 1300, 2650 < y < 2800
 D.pcd: [1400, 2650] # -> 1400 < x < 1500, 2650 < y < 2800
 ```
 
-- `x_resolution` and `y_resolution` 
+- `x_resolution` and `y_resolution`
 - `A.pcd`, `B.pcd`, etc, are the names of PCD files.
 - List such as `[1200, 2500]` are the values indicate that for this PCD file, x coordinates are between 1200 and 1300 (`x_resolution` + `x_coordinate`) and y coordinates are between 2500 and 2650 (`y_resolution` + `y_coordinate`).
 
@@ -65,6 +68,7 @@ sample-map-rosbag
 ```
 
 ### Specific features
+
 #### Publish raw pointcloud map (ROS 2 topic)
 
 The node publishes the raw pointcloud map loaded from the `.pcd` file(s).
