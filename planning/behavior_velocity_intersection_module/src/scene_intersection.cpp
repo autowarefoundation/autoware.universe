@@ -634,7 +634,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     RCLCPP_DEBUG(
       logger_, "is_over_default_stop_line && !is_over_pass_judge_line && keep_detection");
     // do nothing
-  } else if (is_over_pass_judge_line && !keep_detection && is_go_out_) {
+  } else if (is_over_pass_judge_line && is_go_out_) {
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     return IntersectionModule::Indecisive{};
   }
