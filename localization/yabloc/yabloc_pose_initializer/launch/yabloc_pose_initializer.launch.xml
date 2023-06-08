@@ -15,7 +15,7 @@
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param from="$(var camera_pose_initializer_param_path)" />
             <remap from="/image_raw" to="/localization/yabloc/imgproc/undistorted/image_raw"/>
-            <remap from="camera_info" to="/localization/yabloc/imgproc/undistorted/camera_info"/>
+            <remap from="input/camera_info" to="/localization/yabloc/imgproc/undistorted/camera_info"/>
             <remap from="initialpose" to="/initialpose"/>
             <remap from="/map/ll2_road_marking" to="/localization/yabloc/map/ll2_road_marking"/>
             <remap from="/ground_srv" to="/localization/yabloc/map/ground"/>

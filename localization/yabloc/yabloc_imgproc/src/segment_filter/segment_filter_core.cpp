@@ -31,7 +31,7 @@ SegmentFilter::SegmentFilter()
   max_segment_distance_(declare_parameter<float>("max_segment_distance")),
   max_lateral_distance_(declare_parameter<float>("max_lateral_distance")),
   info_(this),
-  synchro_subscriber_(this, "line_segments_cloud", "mask_image"),
+  synchro_subscriber_(this, "input/line_segments_cloud", "input/graph_segmented"),
   tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
@@ -39,9 +39,9 @@ SegmentFilter::SegmentFilter()
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
   synchro_subscriber_.set_callback(std::move(cb));
 
-  pub_projected_cloud_ = create_publisher<PointCloud2>("projected_line_segments_cloud", 10);
-  pub_debug_cloud_ = create_publisher<PointCloud2>("debug/line_segments_cloud", 10);
-  pub_image_ = create_publisher<Image>("projected_image", 10);
+  pub_projected_cloud_ = create_publisher<PointCloud2>("output/projected_line_segments_cloud", 10);
+  pub_debug_cloud_ = create_publisher<PointCloud2>("output/debug_line_segments", 10);
+  pub_image_ = create_publisher<Image>("output/projected_image", 10);
 }
 
 cv::Point2i SegmentFilter::to_cv_point(const Eigen::Vector3f & v) const

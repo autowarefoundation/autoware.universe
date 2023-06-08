@@ -1,6 +1,6 @@
 # yabloc_common
 
-This package contains some executable node related to map. Also, This provides some yabloc common library.
+This package contains some executable nodes related to map. Also, This provides some yabloc common library.
 
 * [ground_server](#ground_server)
 * [ll2_decomposer](#ll2_decomposer)
@@ -15,20 +15,20 @@ It estimates the height and tilt of the ground from lanelet2.
 
 ### Input
 
-| Name             | Type                                         | Description         |
-|------------------|----------------------------------------------|---------------------|
-| `map/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map          |
-| `particle_pose`  | `geometry_msgs::msg::PoseStamped`            | estiamted self pose |
+| Name               | Type                                         | Description         |
+|--------------------|----------------------------------------------|---------------------|
+| `input/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map          |
+| `input/pose`       | `geometry_msgs::msg::PoseStamped`            | estiamted self pose |
 
 ### Output
 
-| Name             | Type                               | Description                                                                     |
-|------------------|------------------------------------|---------------------------------------------------------------------------------|
-| `ground`         | `std_msgs::msg::Float32MultiArray` | estimated ground parameters. it contains x, y, z, normal_x, normal_y, normal_z. |
-| `ground_markers` | `visualization_msgs::msg::Marker`  | visualization of estimated ground plane                                         |
-| `ground_status`  | `std_msgs::msg::String`            | status log of ground plane estimation                                           |
-| `height`         | `std_msgs::msg::Float32`           | altitude                                                                        |
-| `near_cloud`     | `sensor_msgs::msg::PointCloud2`    | point cloud extracted from lanelet2 and used for ground tilt estimation         |
+| Name                    | Type                               | Description                                                                     |
+|-------------------------|------------------------------------|---------------------------------------------------------------------------------|
+| `output/ground`         | `std_msgs::msg::Float32MultiArray` | estimated ground parameters. it contains x, y, z, normal_x, normal_y, normal_z. |
+| `output/ground_markers` | `visualization_msgs::msg::Marker`  | visualization of estimated ground plane                                         |
+| `output/ground_status`  | `std_msgs::msg::String`            | status log of ground plane estimation                                           |
+| `output/height`         | `std_msgs::msg::Float32`           | altitude                                                                        |
+| `output/near_cloud`     | `sensor_msgs::msg::PointCloud2`    | point cloud extracted from lanelet2 and used for ground tilt estimation         |
 
 ## Parameters
 | Name              | Type   | Description                                              |
@@ -46,18 +46,18 @@ This node extracts the elements related to the road surface markings and yabloc 
 
 ### Input
 
-| Name             | Type                                         | Description |
-|------------------|----------------------------------------------|-------------|
-| `map/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map  |
+| Name               | Type                                         | Description |
+|--------------------|----------------------------------------------|-------------|
+| `input/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map  |
 
 ### Output
 
-| Name                | Type                                   | Description                                   |
-|---------------------|----------------------------------------|-----------------------------------------------|
-| `ll2_bounding_box`  | `sensor_msgs::msg::PointCloud2`        | bounding boxes extracted from lanelet2        |
-| `ll2_road_marking`  | `sensor_msgs::msg::PointCloud2`        | road surface markings extracted from lanelet2 |
-| `ll2_sign_board`    | `sensor_msgs::msg::PointCloud2`        | traffic sign boards extracted from lanelet2   |
-| `sign_board_marker` | `visualization_msgs::msg::MarkerArray` | visualized traffic sign boards                |
+| Name                       | Type                                   | Description                                   |
+|----------------------------|----------------------------------------|-----------------------------------------------|
+| `output/ll2_bounding_box`  | `sensor_msgs::msg::PointCloud2`        | bounding boxes extracted from lanelet2        |
+| `output/ll2_road_marking`  | `sensor_msgs::msg::PointCloud2`        | road surface markings extracted from lanelet2 |
+| `output/ll2_sign_board`    | `sensor_msgs::msg::PointCloud2`        | traffic sign boards extracted from lanelet2   |
+| `output/sign_board_marker` | `visualization_msgs::msg::MarkerArray` | visualized traffic sign boards                |
 
 
 ## Parameters

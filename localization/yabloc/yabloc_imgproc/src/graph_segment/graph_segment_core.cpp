@@ -32,10 +32,10 @@ GraphSegment::GraphSegment()
 
   // Subscriber
   sub_image_ =
-    create_subscription<Image>("src_image", 10, std::bind(&GraphSegment::on_image, this, _1));
+    create_subscription<Image>("input/image_raw", 10, std::bind(&GraphSegment::on_image, this, _1));
 
-  pub_mask_image_ = create_publisher<Image>("mask_image", 10);
-  pub_debug_image_ = create_publisher<Image>("segmented_image", 10);
+  pub_mask_image_ = create_publisher<Image>("output/mask_image", 10);
+  pub_debug_image_ = create_publisher<Image>("output/segmented_image", 10);
 
   const double sigma = declare_parameter<double>("sigma");
   const float k = declare_parameter<float>("k");

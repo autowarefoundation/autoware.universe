@@ -20,14 +20,23 @@ CameraInfoSubscriber::CameraInfoSubscriber(rclcpp::Node * node)
 {
   rclcpp::QoS qos(10);
   auto callback = [this](const CameraInfo & msg) -> void { opt_info_ = msg; };
-  sub_info_ = node->create_subscription<CameraInfo>("camera_info", qos, callback);
+  sub_info_ = node->create_subscription<CameraInfo>("input/camera_info", qos, callback);
 }
 
-bool CameraInfoSubscriber::is_camera_info_ready() const { return opt_info_.has_value(); }
+bool CameraInfoSubscriber::is_camera_info_ready() const
+{
+  return opt_info_.has_value();
+}
 
-bool CameraInfoSubscriber::is_camera_info_nullopt() const { return !(opt_info_.has_value()); }
+bool CameraInfoSubscriber::is_camera_info_nullopt() const
+{
+  return !(opt_info_.has_value());
+}
 
-std::string CameraInfoSubscriber::get_frame_id() const { return opt_info_->header.frame_id; }
+std::string CameraInfoSubscriber::get_frame_id() const
+{
+  return opt_info_->header.frame_id;
+}
 
 Eigen::Vector2i CameraInfoSubscriber::size() const
 {
