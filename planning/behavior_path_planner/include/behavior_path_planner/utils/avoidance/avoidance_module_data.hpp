@@ -91,6 +91,9 @@ struct AvoidanceParameters
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
 
+  // enable yield maneuver.
+  bool enable_yield_maneuver_during_shifting{false};
+
   // disable path update
   bool disable_path_update{false};
 
@@ -446,6 +449,8 @@ struct AvoidancePlanningData
   bool yield_required{false};
 
   bool found_avoidance_path{false};
+
+  double to_stop_line{std::numeric_limits<double>::max()};
 };
 
 /*
@@ -511,6 +516,7 @@ struct DebugData
   AvoidLineArray extra_return_shift;
 
   AvoidLineArray merged;
+  AvoidLineArray gap_filled;
   AvoidLineArray trim_similar_grad_shift;
   AvoidLineArray quantized;
   AvoidLineArray trim_small_shift;
