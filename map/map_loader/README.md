@@ -71,7 +71,6 @@ sample-map-rosbag
 └── pointcloud_map_metadata.yaml
 ```
 
-
 ### Specific features
 
 #### Publish raw pointcloud map (ROS 2 topic)
