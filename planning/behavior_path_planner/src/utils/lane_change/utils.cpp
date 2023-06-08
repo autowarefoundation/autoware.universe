@@ -1028,10 +1028,23 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
   return route_handler.getLaneChangeTargetExceptPreferredLane(current_lanes, direction);
 }
 
+void addSegment(
+  std::vector<Pose> & path, const double initial_velocity, const double acc,
+  const double start_time, const double end_time, const double resolution,
+  const FrenetPoint & vehicle_pose_frenet, const double offset)
+{
+  for (double t = start_time; t < end_time; t += resolution) {
+    const double delta_t = t - start_time;
+    const double length = initial_velocity * delta_t + 0.5 * acc * delta_t * delta_t + offset;
+    path.push_back(motion_utils::calcInterpolatedPose(path, vehicle_pose_frenet.length + length));
+  }
+}
+
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
   const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double prepare_acc, const double lane_changing_acc)
+  const double before_shifting_time, const double acc_before_shifting,
+  const double acc_during_shifting)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
@@ -1045,25 +1058,19 @@ PredictedPath convertToPredictedPath(
     convertToFrenetPoint(path.points, vehicle_pose.position, nearest_seg_idx);
   const double initial_velocity = std::abs(vehicle_twist.linear.x);
 
-  // prepare segment
-  for (double t = 0.0; t < prepare_time; t += resolution) {
-    const double length = initial_velocity * t + 0.5 * prepare_acc * t * t;
-    predicted_path.path.push_back(
-      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
-  }
+  // before shift segment
+  addSegment(
+    predicted_path.path, initial_velocity, acc_before_shifting, 0.0, before_shifting_time,
+    resolution, vehicle_pose_frenet);
 
-  // lane changing segment
-  const double lane_changing_velocity =
-    std::max(initial_velocity + prepare_acc * prepare_time, 0.0);
-  const double offset =
-    initial_velocity * prepare_time + 0.5 * prepare_acc * prepare_time * prepare_time;
-  for (double t = prepare_time; t < duration; t += resolution) {
-    const double delta_t = t - prepare_time;
-    const double length =
-      lane_changing_velocity * delta_t + 0.5 * lane_changing_acc * delta_t * delta_t + offset;
-    predicted_path.path.push_back(
-      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
-  }
+  // during shift segment
+  const double velocity_at_shift_start =
+    std::max(initial_velocity + acc_before_shifting * before_shifting_time, 0.0);
+  const double offset = initial_velocity * before_shifting_time +
+                        0.5 * acc_before_shifting * before_shifting_time * before_shifting_time;
+  addSegment(
+    predicted_path.path, velocity_at_shift_start, acc_during_shifting, before_shifting_time,
+    duration, resolution, vehicle_pose_frenet, offset);
 
   return predicted_path;
 }
