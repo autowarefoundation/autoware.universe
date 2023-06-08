@@ -91,6 +91,9 @@ struct AvoidanceParameters
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
 
+  // enable yield maneuver.
+  bool enable_yield_maneuver_during_shifting{false};
+
   // disable path update
   bool disable_path_update{false};
 
@@ -243,6 +246,10 @@ struct AvoidanceParameters
   // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
   double lateral_execution_threshold;
+
+  // shift lines whose shift length is less than threshold is added a request with other large shift
+  // line.
+  double lateral_small_shift_threshold;
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
@@ -442,6 +449,8 @@ struct AvoidancePlanningData
   bool yield_required{false};
 
   bool found_avoidance_path{false};
+
+  double to_stop_line{std::numeric_limits<double>::max()};
 };
 
 /*
@@ -507,6 +516,7 @@ struct DebugData
   AvoidLineArray extra_return_shift;
 
   AvoidLineArray merged;
+  AvoidLineArray gap_filled;
   AvoidLineArray trim_similar_grad_shift;
   AvoidLineArray quantized;
   AvoidLineArray trim_small_shift;
@@ -514,10 +524,21 @@ struct DebugData
   AvoidLineArray trim_similar_grad_shift_third;
   AvoidLineArray trim_momentary_return;
   AvoidLineArray trim_too_sharp_shift;
+
+  // shift length
   std::vector<double> pos_shift;
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
+
+  // shift grad
+  std::vector<double> pos_shift_grad;
+  std::vector<double> neg_shift_grad;
+  std::vector<double> total_forward_grad;
+  std::vector<double> total_backward_grad;
+
+  // shift path
+  std::vector<double> proposed_spline_shift;
 
   bool exist_adjacent_objects{false};
 

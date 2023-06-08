@@ -35,6 +35,10 @@ struct LaneChangeParameters
   int longitudinal_acc_sampling_num{10};
   int lateral_acc_sampling_num{10};
 
+  // acceleration data
+  double min_longitudinal_acc{-1.0};
+  double max_longitudinal_acc{1.0};
+
   // collision check
   bool enable_prepare_segment_collision_check{true};
   double prepare_segment_ignore_object_velocity_thresh{0.1};
@@ -58,6 +62,8 @@ struct LaneChangeParameters
   double abort_delta_time{1.0};
   double aborting_time{5.0};
   double abort_max_lateral_jerk{10.0};
+
+  double finish_judge_lateral_threshold{0.2};
 
   // debug marker
   bool publish_debug_marker{false};

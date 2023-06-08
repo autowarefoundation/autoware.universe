@@ -14,10 +14,14 @@
 
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
+#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/module_status.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -84,11 +88,22 @@ bool LaneChangeInterface::isExecutionReady() const
 ModuleStatus LaneChangeInterface::updateState()
 {
   if (!module_type_->isValidPath()) {
+#ifdef USE_OLD_ARCHITECTURE
     return ModuleStatus::FAILURE;
+#else
+    return ModuleStatus::RUNNING;
+#endif
   }
 
   if (module_type_->isAbortState()) {
+#ifdef USE_OLD_ARCHITECTURE
     return module_type_->hasFinishedAbort() ? ModuleStatus::FAILURE : ModuleStatus::RUNNING;
+#else
+    if (module_type_->hasFinishedAbort()) {
+      resetLaneChangeModule();
+    }
+    return ModuleStatus::RUNNING;
+#endif
   }
 
   if (module_type_->hasFinishedLaneChange()) {
@@ -143,7 +158,14 @@ ModuleStatus LaneChangeInterface::updateState()
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe. Cancel lane change.");
     module_type_->toCancelState();
+#ifdef USE_OLD_ARCHITECTURE
     return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::FAILURE;
+#else
+    if (!isWaitingApproval()) {
+      resetLaneChangeModule();
+    }
+    return ModuleStatus::RUNNING;
+#endif
   }
 
   if (!module_type_->isAbortEnabled()) {
@@ -176,6 +198,13 @@ ModuleStatus LaneChangeInterface::updateState()
     "Lane change path is unsafe. Abort lane change.");
   module_type_->toAbortState();
   return ModuleStatus::RUNNING;
+}
+
+void LaneChangeInterface::resetLaneChangeModule()
+{
+  processOnExit();
+  removeRTCStatus();
+  processOnEntry();
 }
 
 void LaneChangeInterface::updateData()
@@ -303,6 +332,31 @@ std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_arra
 
   lane_change_debug_msg_array_.header.stamp = clock_->now();
   return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
+}
+
+MarkerArray LaneChangeInterface::getModuleVirtualWall()
+{
+  using marker_utils::lane_change_markers::createLaneChangingVirtualWallMarker;
+  MarkerArray marker;
+
+  if (!parameters_->publish_debug_marker) {
+    return marker;
+  }
+
+  if (isWaitingApproval() || current_state_ != ModuleStatus::RUNNING) {
+    return marker;
+  }
+  const auto & start_pose = module_type_->getLaneChangePath().lane_changing_start;
+  const auto start_marker =
+    createLaneChangingVirtualWallMarker(start_pose, name(), clock_->now(), "lane_change_start");
+
+  const auto & end_pose = module_type_->getLaneChangePath().lane_changing_end;
+  const auto end_marker =
+    createLaneChangingVirtualWallMarker(end_pose, name(), clock_->now(), "lane_change_end");
+  marker.markers.reserve(start_marker.markers.size() + end_marker.markers.size());
+  appendMarkerArray(start_marker, &marker);
+  appendMarkerArray(end_marker, &marker);
+  return marker;
 }
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)

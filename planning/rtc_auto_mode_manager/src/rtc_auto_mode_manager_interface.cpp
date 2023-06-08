@@ -53,8 +53,8 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::AVOIDANCE_RIGHT;
   } else if (module_name == "goal_planner") {
     module.type = Module::GOAL_PLANNER;
-  } else if (module_name == "pull_out") {
-    module.type = Module::PULL_OUT;
+  } else if (module_name == "start_planner") {
+    module.type = Module::START_PLANNER;
   } else if (module_name == "intersection_occlusion") {
     module.type = Module::INTERSECTION_OCCLUSION;
   } else {
@@ -71,8 +71,8 @@ RTCAutoModeManagerInterface::RTCAutoModeManagerInterface(
   using std::placeholders::_2;
 
   // Service client
-  enable_cli_ = node->create_client<AutoMode>(
-    enable_auto_mode_namespace_ + "/internal/" + module_name, rmw_qos_profile_services_default);
+  enable_cli_ =
+    node->create_client<AutoMode>(enable_auto_mode_namespace_ + "/internal/" + module_name);
 
   while (!enable_cli_->wait_for_service(1s)) {
     if (!rclcpp::ok()) {

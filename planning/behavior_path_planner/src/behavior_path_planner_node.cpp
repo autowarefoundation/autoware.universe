@@ -67,6 +67,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
+  stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -124,7 +125,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     dynamic_avoidance_param_ptr_ =
       std::make_shared<DynamicAvoidanceParameters>(getDynamicAvoidanceParam());
     lane_change_param_ptr_ = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
-    pull_out_param_ptr_ = std::make_shared<PullOutParameters>(getPullOutParam());
+    start_planner_param_ptr_ = std::make_shared<StartPlannerParameters>(getStartPlannerParam());
     goal_planner_param_ptr_ = std::make_shared<GoalPlannerParameters>(getGoalPlannerParam());
     side_shift_param_ptr_ = std::make_shared<SideShiftParameters>(getSideShiftParam());
     avoidance_by_lc_param_ptr_ = std::make_shared<AvoidanceByLCParameters>(
@@ -185,10 +186,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       "GoalPlanner", create_publisher<Path>(path_candidate_name_space + "goal_planner", 1));
     bt_manager_->registerSceneModule(goal_planner);
 
-    auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, pull_out_param_ptr_);
+    auto start_planner_module =
+      std::make_shared<StartPlannerModule>("StartPlanner", *this, start_planner_param_ptr_);
     path_candidate_publishers_.emplace(
-      "PullOut", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
-    bt_manager_->registerSceneModule(pull_out_module);
+      "StartPlanner", create_publisher<Path>(path_candidate_name_space + "start_planner", 1));
+    bt_manager_->registerSceneModule(start_planner_module);
 
     bt_manager_->createBehaviorTree();
   }
@@ -213,14 +215,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
         module_name, create_publisher<Path>(path_reference_name_space + module_name, 1));
     };
 
-    if (p.config_pull_out.enable_module) {
-      auto manager = std::make_shared<PullOutModuleManager>(
-        this, "pull_out", p.config_pull_out, pull_out_param_ptr_);
+    if (p.config_start_planner.enable_module) {
+      auto manager = std::make_shared<StartPlannerModuleManager>(
+        this, "start_planner", p.config_start_planner, start_planner_param_ptr_);
       planner_manager_->registerSceneModuleManager(manager);
       path_candidate_publishers_.emplace(
-        "pull_out", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
+        "start_planner", create_publisher<Path>(path_candidate_name_space + "start_planner", 1));
       path_reference_publishers_.emplace(
-        "pull_out", create_publisher<Path>(path_reference_name_space + "pull_out", 1));
+        "start_planner", create_publisher<Path>(path_reference_name_space + "start_planner", 1));
     }
 
     if (p.config_goal_planner.enable_module) {
@@ -329,6 +331,26 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 }
 
+std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
+{
+#ifdef USE_OLD_ARCHITECTURE
+  auto registered_modules_ptr = bt_manager_->getSceneModules();
+  std::vector<std::string> waiting_approval_modules;
+  for (const auto & module : registered_modules_ptr) {
+    if (module->isWaitingApproval() == true) {
+      waiting_approval_modules.push_back(module->name());
+#else
+  auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
+  std::vector<std::string> waiting_approval_modules;
+  for (const auto & module : all_scene_module_ptr) {
+    if (module->is_waiting_approval == true) {
+      waiting_approval_modules.push_back(module->module_name);
+#endif
+    }
+  }
+  return waiting_approval_modules;
+}
+
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
@@ -338,6 +360,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;
     config.enable_module = declare_parameter<bool>(ns + "enable_module");
+    config.enable_rtc = declare_parameter<bool>(ns + "enable_rtc");
     config.enable_simultaneous_execution_as_approved_module =
       declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
     config.enable_simultaneous_execution_as_candidate_module =
@@ -347,7 +370,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     return config;
   };
 
-  p.config_pull_out = get_scene_module_manager_param("pull_out.");
+  p.config_start_planner = get_scene_module_manager_param("start_planner.");
   p.config_goal_planner = get_scene_module_manager_param("goal_planner.");
   p.config_side_shift = get_scene_module_manager_param("side_shift.");
   p.config_lane_change_left = get_scene_module_manager_param("lane_change_left.");
@@ -454,6 +477,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.lateral_distance_max_threshold = declare_parameter<double>("lateral_distance_max_threshold");
   p.longitudinal_distance_min_threshold =
     declare_parameter<double>("longitudinal_distance_min_threshold");
+  p.longitudinal_velocity_delta_time =
+    declare_parameter<double>("longitudinal_velocity_delta_time");
 
   p.expected_front_deceleration = declare_parameter<double>("expected_front_deceleration");
   p.expected_rear_deceleration = declare_parameter<double>("expected_rear_deceleration");
@@ -540,6 +565,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       declare_parameter<bool>(ns + "enable_force_avoidance_for_stopped_vehicle");
     p.enable_safety_check = declare_parameter<bool>(ns + "enable_safety_check");
     p.enable_yield_maneuver = declare_parameter<bool>(ns + "enable_yield_maneuver");
+    p.enable_yield_maneuver_during_shifting =
+      declare_parameter<bool>(ns + "enable_yield_maneuver_during_shifting");
     p.disable_path_update = declare_parameter<bool>(ns + "disable_path_update");
     p.use_hatched_road_markings = declare_parameter<bool>(ns + "use_hatched_road_markings");
     p.publish_debug_marker = declare_parameter<bool>(ns + "publish_debug_marker");
@@ -616,6 +643,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
     p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
     p.lateral_execution_threshold = declare_parameter<double>(ns + "lateral_execution_threshold");
+    p.lateral_small_shift_threshold =
+      declare_parameter<double>(ns + "lateral_small_shift_threshold");
     p.max_right_shift_length = declare_parameter<double>(ns + "max_right_shift_length");
     p.max_left_shift_length = declare_parameter<double>(ns + "max_left_shift_length");
   }
@@ -749,6 +778,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.lateral_acc_sampling_num =
     declare_parameter<int>(parameter("lateral_acceleration_sampling_num"));
 
+  // acceleration
+  p.min_longitudinal_acc = declare_parameter<double>(parameter("min_longitudinal_acc"));
+  p.max_longitudinal_acc = declare_parameter<double>(parameter("max_longitudinal_acc"));
+
   // collision check
   p.enable_prepare_segment_collision_check =
     declare_parameter<bool>(parameter("enable_prepare_segment_collision_check"));
@@ -778,6 +811,9 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
   p.aborting_time = declare_parameter<double>(parameter("aborting_time"));
   p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
+
+  p.finish_judge_lateral_threshold =
+    declare_parameter<double>("lane_change.finish_judge_lateral_threshold");
 
   // debug marker
   p.publish_debug_marker = declare_parameter<bool>(parameter("publish_debug_marker"));
@@ -1017,15 +1053,16 @@ GoalPlannerParameters BehaviorPathPlannerNode::getGoalPlannerParam()
   return p;
 }
 
-PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
+StartPlannerParameters BehaviorPathPlannerNode::getStartPlannerParam()
 {
-  PullOutParameters p;
+  StartPlannerParameters p;
 
-  std::string ns = "pull_out.";
+  std::string ns = "start_planner.";
 
   p.th_arrived_distance = declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = declare_parameter<double>(ns + "th_stopped_time");
+  p.th_blinker_on_lateral_offset = declare_parameter<double>(ns + "th_blinker_on_lateral_offset");
   p.collision_check_margin = declare_parameter<double>(ns + "collision_check_margin");
   p.collision_check_distance_from_end =
     declare_parameter<double>(ns + "collision_check_distance_from_end");
@@ -1245,6 +1282,7 @@ void BehaviorPathPlannerNode::run()
 #else
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
+  stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 #endif
 
 #ifdef USE_OLD_ARCHITECTURE
@@ -1257,6 +1295,8 @@ void BehaviorPathPlannerNode::run()
     planner_data_->prev_modified_goal = modified_goal;
     modified_goal_publisher_->publish(modified_goal);
   }
+
+  planner_data_->prev_route_id = planner_data_->route_handler->getRouteUuid();
 
   if (planner_data_->parameters.visualize_maximum_drivable_area) {
     const auto maximum_drivable_area = marker_utils::createFurthestLineStringMarkerArray(
