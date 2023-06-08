@@ -208,7 +208,7 @@ void prepareRTCByDecisionResult(
   RCLCPP_INFO(rclcpp::get_logger("temp"), "prepareRTCByDecisionResult PeekingTowardOcclusion");
   const auto closest_idx = result.stop_lines.closest_idx;
   const auto stop_line_idx = result.stop_line_idx;
-  *occlusion_safety = false;
+  *occlusion_safety = result.is_actually_occlusion_cleared;
   *occlusion_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
   return;
 }
@@ -241,6 +241,15 @@ void prepareRTCByDecisionResult(
   [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
+  const auto closest_idx = result.stop_lines.closest_idx;
+  const auto default_stop_line_idx = result.stop_lines.default_stop_line;
+  const auto occlusion_stop_line_idx = result.stop_lines.occlusion_peeking_stop_line;
+  *default_safety = true;
+  *default_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
+  *occlusion_safety = true;
+  *occlusion_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
   RCLCPP_INFO(rclcpp::get_logger("temp"), "prepareRTCByDecisionResult Safe");
   return;
 }
@@ -440,12 +449,14 @@ void reactRTCApprovalByDecisionResult(
 {
   RCLCPP_INFO(rclcpp::get_logger("temp"), "reactRTCByDecisionResult Safe");
   if (!rtc_default_approved) {
+    RCLCPP_INFO(rclcpp::get_logger("temp"), "!rtc_default_approved");
     const auto stop_line_idx = decision_result.stop_lines.default_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
   }
   if (!rtc_occlusion_approved) {
+    RCLCPP_INFO(rclcpp::get_logger("temp"), "!rtc_occlusion_approved");
     const auto stop_line_idx = decision_result.stop_lines.occlusion_peeking_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -715,8 +726,9 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   // check safety
   const bool ext_occlusion_requested = (is_occlusion_cleared && !occlusion_activated_);
-  is_actually_occluded_ = !is_occlusion_cleared;
-  is_forcefully_occluded_ = ext_occlusion_requested;
+  RCLCPP_INFO(
+    logger_, "is_occlusion_cleared = %d, occlusion_activated_ = %d", is_occlusion_cleared,
+    occlusion_activated_);
   if (!is_occlusion_cleared || ext_occlusion_requested) {
     const double dist_stopline = motion_utils::calcSignedArcLength(
       path->points, path->points.at(closest_idx).point.pose.position,
@@ -727,29 +739,24 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
       if (has_collision_with_margin) {
         return IntersectionModule::OccludedCollisionStop{
-          default_stop_line_idx, occlusion_peeking_stop_line_idx,
-          OcclusionState::COLLISION_DETECTED, intersection_stop_lines};
+          default_stop_line_idx, occlusion_peeking_stop_line_idx, intersection_stop_lines};
       } else {
         return IntersectionModule::PeekingTowardOcclusion{
-          occlusion_peeking_stop_line_idx, OcclusionState::CREEP_SECOND_STOP_LINE,
-          intersection_stop_lines};
+          occlusion_peeking_stop_line_idx, is_occlusion_cleared, intersection_stop_lines};
       }
     } else {
-      OcclusionState occlusion_state = OcclusionState::BEFORE_FIRST_STOP_LINE;
       if (is_stopped && approached_stop_line) {
         // start waiting at the first stop line
         before_creep_state_machine_.setStateWithMarginTime(
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
-        occlusion_state = OcclusionState::WAIT_FIRST_STOP_LINE;
       }
       return IntersectionModule::FirstWaitBeforeOcclusion{
-        default_stop_line_idx, occlusion_peeking_stop_line_idx, occlusion_state,
-        intersection_stop_lines};
+        default_stop_line_idx, occlusion_peeking_stop_line_idx, intersection_stop_lines};
     }
   } else if (has_collision_with_margin) {
-    const bool isOverDefaultStopLine =
+    const bool is_over_default_stopLine =
       util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
-    const auto stop_line_idx = isOverDefaultStopLine ? closest_idx : default_stop_line_idx;
+    const auto stop_line_idx = is_over_default_stopLine ? closest_idx : default_stop_line_idx;
     return IntersectionModule::NonOccludedCollisionStop{stop_line_idx, intersection_stop_lines};
   }
 

@@ -129,20 +129,20 @@ public:
   {
     size_t first_stop_line_idx;
     size_t occlusion_stop_line_idx;
-    OcclusionState occlusion_state;
     util::IntersectionStopLines stop_lines;
   };
   struct PeekingTowardOcclusion
   {
     size_t stop_line_idx;
-    OcclusionState occlusion_state;
+    // NOTE: if intersection_occlusion is disapproved externally through RTC,
+    // it indicates "is_forcefully_occluded"
+    bool is_actually_occlusion_cleared;
     util::IntersectionStopLines stop_lines;
   };
   struct OccludedCollisionStop
   {
     size_t stop_line_idx;
     size_t occlusion_stop_line_idx;
-    OcclusionState occlusion_state;
     util::IntersectionStopLines stop_lines;
   };
   struct Safe
@@ -182,7 +182,6 @@ public:
   bool getOcclusionSafety() const { return occlusion_safety_; }
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
-  bool isOccluded() const { return is_actually_occluded_ || is_forcefully_occluded_; }
   bool isOcclusionFirstStopRequired() { return occlusion_first_stop_required_; }
 
 private:
@@ -200,8 +199,6 @@ private:
   // for occlusion detection
   const bool enable_occlusion_detection_;
   std::optional<std::vector<util::DescritizedLane>> occlusion_attention_divisions_;
-  bool is_actually_occluded_ = false;    //! occlusion based on occupancy_grid
-  bool is_forcefully_occluded_ = false;  //! fake occlusion forced by external operator
   OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
