@@ -55,7 +55,8 @@ struct IntersectionLanelets
 {
   bool tl_arrow_solid_on;
   lanelet::ConstLanelets attention;
-  lanelet::ConstLanelets conflicting;
+  // TODO(Mamoru Sobue): remove the following variable if it's fine to remove
+  // lanelet::ConstLanelets conflicting;
   lanelet::ConstLanelets adjacent;
   lanelet::ConstLanelets occlusion_attention;  // for occlusion detection
   std::vector<lanelet::CompoundPolygon3d> attention_area;

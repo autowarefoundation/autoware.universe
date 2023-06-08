@@ -192,13 +192,13 @@ private:
   bool is_go_out_ = false;
   // Parameter
   PlannerParam planner_param_;
-  std::optional<util::IntersectionLanelets> intersection_lanelets_;
+  std::optional<util::IntersectionLanelets> prev_intersection_lanelets_;
   // for an intersection lane, its associative lanes are those that share same parent lanelet and
   // have same turn_direction
 
   // for occlusion detection
   const bool enable_occlusion_detection_;
-  std::optional<std::vector<util::DescritizedLane>> occlusion_attention_divisions_;
+  std::optional<std::vector<util::DescritizedLane>> prev_occlusion_attention_divisions_;
   OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop

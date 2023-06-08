@@ -134,7 +134,10 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
     }
   }
   start = start > 0 ? start - 1 : 0;  // the idx of last point before the interval
-  return found ? std::make_optional(std::make_pair(start, end)) : std::nullopt;
+  if (found) {
+    return std::make_pair(start, end);
+  }
+  return std::nullopt;
 }
 
 /**
@@ -306,7 +309,7 @@ std::optional<size_t> getFirstPointInsidePolygon(
     auto p = path.points.at(i).point.pose.position;
     const auto is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
     if (is_in_lanelet) {
-      return std::make_optional<size_t>(i);
+      return i;
     }
   }
   return std::nullopt;
@@ -325,8 +328,7 @@ getFirstPointInsidePolygons(
       const auto polygon_2d = lanelet::utils::to2D(polygon);
       is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
       if (is_in_lanelet) {
-        return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
-          i, polygon);
+        return std::pair<size_t, const lanelet::CompoundPolygon3d &>(i, polygon);
       }
     }
     if (is_in_lanelet) {
@@ -502,12 +504,12 @@ IntersectionLanelets getObjectiveLanelets(
   } else {
     result.attention = std::move(detection_lanelets);
   }
-  result.conflicting = std::move(conflicting_ex_ego_lanelets);
+  // result.conflicting = std::move(conflicting_ex_ego_lanelets);
   result.adjacent = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
   result.occlusion_attention = std::move(occlusion_detection_and_preceding_lanelets);
   // compoundPolygon3d
   result.attention_area = getPolygon3dFromLanelets(result.attention);
-  result.conflicting_area = getPolygon3dFromLanelets(result.conflicting);
+  result.conflicting_area = getPolygon3dFromLanelets(conflicting_ex_ego_lanelets);
   result.adjacent_area = getPolygon3dFromLanelets(result.adjacent);
   result.occlusion_attention_area = getPolygon3dFromLanelets(result.occlusion_attention);
 
@@ -635,7 +637,7 @@ std::optional<Polygon2d> getIntersectionArea(
   const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
   Polygon2d poly{};
   for (const auto & p : poly_3d) poly.outer().emplace_back(p.x(), p.y());
-  return std::make_optional(poly);
+  return poly;
 }
 
 bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
@@ -811,15 +813,14 @@ std::vector<DescritizedLane> generateDetectionLaneDivisions(
   return detection_divisions;
 }
 
-std::optional<InterpolatedPathInfo> generateInterpolatedPath(
+InterpolatedPathInfo generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
-  const rclcpp::Logger logger)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds)
 {
+  const auto resampled_path = motion_utils::resamplePath(input_path, ds, false, true, true, false);
+
   InterpolatedPathInfo interpolated_path_info;
-  if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
-    return std::nullopt;
-  }
+  interpolated_path_info.path = resampled_path;
   interpolated_path_info.ds = ds;
   interpolated_path_info.lane_id = lane_id;
   interpolated_path_info.associative_lane_ids = associative_lane_ids;

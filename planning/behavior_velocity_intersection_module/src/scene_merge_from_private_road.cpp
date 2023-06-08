@@ -68,14 +68,14 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* spline interpolation */
-  const auto interpolated_path_info_opt = util::generateInterpolatedPath(
-    lane_id_, associative_ids_, *path, planner_param_.path_interpolation_ds, logger_);
-  if (!interpolated_path_info_opt) {
-    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
+  if (path->points.size() < 2) {
+    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(
+      logger_, *clock_, 1000 /* ms */, "The number of path points is less than 2.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
-  const auto & interpolated_path_info = interpolated_path_info_opt.value();
+  const auto interpolated_path_info = util::generateInterpolatedPath(
+    lane_id_, associative_ids_, *path, planner_param_.path_interpolation_ds);
   if (!interpolated_path_info.lane_id_interval) {
     RCLCPP_WARN(logger_, "Path has no interval on intersection lane %ld", lane_id_);
     RCLCPP_DEBUG(logger_, "===== plan end =====");

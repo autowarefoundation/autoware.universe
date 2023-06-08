@@ -117,10 +117,9 @@ std::vector<DescritizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
 
-std::optional<InterpolatedPathInfo> generateInterpolatedPath(
+InterpolatedPathInfo generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
-  const rclcpp::Logger logger);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds);
 
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state);
