@@ -6,7 +6,9 @@
   <arg name="expect/rois" default="~/expect/rois"/>
   <arg name="output/rois" default="~/output/rois"/>
   <arg name="output/camera_info" default="~/camera_info"/>
+  <!--This parameter should be configured differently for each camera considering their delay.-->
   <arg name="min_timestamp_offset" default="0.0"/>
+  <!--This parameter should be configured differently for each camera considering their delay.-->
   <arg name="max_timestamp_offset" default="0.0"/>
   <arg name="timestamp_sample_len" default="0.02"/>
   <arg name="param_path" default="$(find-pkg-share traffic_light_map_based_detector)/config/traffic_light_map_based_detector.param.yaml"/>
