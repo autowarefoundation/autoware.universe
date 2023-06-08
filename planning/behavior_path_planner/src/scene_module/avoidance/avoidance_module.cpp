@@ -1298,9 +1298,13 @@ AvoidLineArray AvoidanceModule::extractShiftLinesFromLine(ShiftLineData & shift_
 
 AvoidLineArray AvoidanceModule::fillShiftLineGap(const AvoidLineArray & input) const
 {
+  using utils::avoidance::setEndData;
+
   if (input.empty()) {
     return input;
   }
+
+  const auto & data = avoidance_data_;
 
   AvoidLineArray sorted_input = input;
 
@@ -1308,37 +1312,34 @@ AvoidLineArray AvoidanceModule::fillShiftLineGap(const AvoidLineArray & input) c
 
   AvoidLineArray output = sorted_input;
 
-  {
-    const auto front = sorted_input.front();
-    const auto has_gap = front.start_idx > avoidance_data_.ego_closest_path_index;
-
-    if (has_gap) {
-      AvoidLine new_line{};
-      new_line.start_shift_length = helper_.getEgoLinearShift();
-      new_line.start_longitudinal = 0.0;
-      new_line.end_shift_length = front.start_shift_length;
-      new_line.end_longitudinal = front.start_longitudinal;
-      new_line.id = getOriginalShiftLineUniqueId();
-
-      output.push_back(new_line);
+  const auto fill_gap = [&output, this](const auto & front_line, const auto & back_line) {
+    const auto has_gap = back_line.start_longitudinal - front_line.end_longitudinal > 0.0;
+    if (!has_gap) {
+      return;
     }
+
+    AvoidLine new_line{};
+    new_line.start_shift_length = front_line.end_shift_length;
+    new_line.start_longitudinal = front_line.end_longitudinal;
+    new_line.end_shift_length = back_line.start_shift_length;
+    new_line.end_longitudinal = back_line.start_longitudinal;
+    new_line.id = getOriginalShiftLineUniqueId();
+
+    output.push_back(new_line);
+  };
+
+  // fill gap between ego and nearest shift line.
+  {
+    AvoidLine ego_line{};
+    setEndData(
+      ego_line, helper_.getEgoLinearShift(), data.reference_pose, data.ego_closest_path_index, 0.0);
+
+    fill_gap(ego_line, sorted_input.front());
   }
 
+  // fill gap among shift lines.
   for (size_t i = 0; i < sorted_input.size() - 1; ++i) {
-    const auto front = sorted_input.at(i);
-    const auto back = sorted_input.at(i + 1);
-    const auto has_gap = back.start_longitudinal - front.end_longitudinal > 0.0;
-
-    if (has_gap) {
-      AvoidLine new_line{};
-      new_line.start_shift_length = front.end_shift_length;
-      new_line.start_longitudinal = front.end_longitudinal;
-      new_line.end_shift_length = back.start_shift_length;
-      new_line.end_longitudinal = back.start_longitudinal;
-      new_line.id = getOriginalShiftLineUniqueId();
-
-      output.push_back(new_line);
-    }
+    fill_gap(sorted_input.at(i), sorted_input.at(i + 1));
   }
 
   fillAdditionalInfoFromLongitudinal(output);
@@ -2038,6 +2039,8 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
       }
     }
 
+    // If return shift already exists in candidate or registered shift lines, skip adding return
+    // shift.
     if (has_candidate_point || has_registered_point) {
       return;
     }
