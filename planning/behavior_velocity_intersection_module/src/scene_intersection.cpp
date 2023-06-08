@@ -150,10 +150,16 @@ void prepareRTCByDecisionResult(
   [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
   [[maybe_unused]] bool * occlusion_first_stop_required)
 {
-  const auto closest_idx = result.closest_idx;
+  const auto closest_idx = result.stop_lines.closest_idx;
   const auto stop_line_idx = result.stop_line_idx;
   *default_safety = false;
   *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  *occlusion_safety = true;
+  if (!result.is_detection_area_empty) {
+    const auto occlusion_stop_line_idx = result.stop_lines.occlusion_peeking_stop_line;
+    *occlusion_distance =
+      motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
+  }
   return;
 }
 
@@ -169,6 +175,10 @@ void prepareRTCByDecisionResult(
   const auto stop_line_idx = result.stop_line_idx;
   *default_safety = false;
   *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  const auto occlusion_stop_line = result.stop_lines.occlusion_peeking_stop_line;
+  *occlusion_safety = true;
+  *occlusion_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line);
   return;
 }
 
@@ -205,6 +215,10 @@ void prepareRTCByDecisionResult(
   const auto stop_line_idx = result.stop_line_idx;
   *occlusion_safety = result.is_actually_occlusion_cleared;
   *occlusion_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  const auto default_stop_line_idx = result.stop_lines.default_stop_line;
+  *default_safety = true;
+  *default_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
   return;
 }
 
@@ -358,7 +372,16 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
   }
   if (!rtc_occlusion_approved) {
+    if (planner_param.occlusion.enable_creeping) {
+      const size_t occlusion_peeking_stop_line = decision_result.occlusion_stop_line_idx;
+      const size_t closest_idx = decision_result.stop_lines.closest_idx;
+      for (size_t i = closest_idx; i < occlusion_peeking_stop_line; i++) {
+        planning_utils::setVelocityFromIndex(
+          i, planner_param.occlusion.occlusion_creep_velocity, path);
+      }
+    }
     const auto stop_line_idx = decision_result.occlusion_stop_line_idx;
+    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
   }
@@ -612,7 +635,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   if (stuck_detected) {
     return IntersectionModule::StuckStop{
-      stuck_stop_line, closest_idx, !first_attention_area.has_value(), intersection_stop_lines};
+      stuck_stop_line, !first_attention_area.has_value(), intersection_stop_lines};
   }
 
   if (!first_attention_area) {
@@ -664,11 +687,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const bool has_collision = checkCollision(
     *path, attention_lanelets, adjacent_lanelets, intersection_area, ego_lane_with_next_lane,
     closest_idx, time_delay);
-  const bool has_collision_with_margin =
-    collision_state_machine_.getState() == StateMachine::State::STOP;
   collision_state_machine_.setStateWithMarginTime(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
+  const bool has_collision_with_margin =
+    collision_state_machine_.getState() == StateMachine::State::STOP;
 
   // check occlusion on detection lane
   if (!occlusion_attention_divisions_) {

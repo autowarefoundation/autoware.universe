@@ -102,6 +102,7 @@ public:
     } occlusion;
   };
 
+  /*
   enum OcclusionState {
     NONE,
     BEFORE_FIRST_STOP_LINE,
@@ -109,12 +110,12 @@ public:
     CREEP_SECOND_STOP_LINE,
     COLLISION_DETECTED,
   };
+  */
 
   using Indecisive = std::monostate;
   struct StuckStop
   {
     size_t stop_line_idx;
-    size_t closest_idx;
     // NOTE: this is optional because stuck vehicle detection is possible
     // even if the detection area is empty.
     // Still this may be required for RTC's default stop line
@@ -200,7 +201,7 @@ private:
   // for occlusion detection
   const bool enable_occlusion_detection_;
   std::optional<std::vector<util::DescritizedLane>> occlusion_attention_divisions_;
-  OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
+  // OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
   // NOTE: uuid_ is base member
