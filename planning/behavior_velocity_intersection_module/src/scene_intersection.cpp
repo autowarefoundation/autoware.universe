@@ -301,14 +301,14 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] StopReason * stop_reason, [[maybe_unused]] util::DebugData * debug_data)
 {
   if (!rtc_default_approved) {
+    // use default_rtc uuid for stuck vehicle detection
     const auto stop_line_idx = decision_result.stop_line_idx;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
   }
-  if (!rtc_occlusion_approved && decision_result.stop_lines_opt) {
-    const auto occlusion_stop_line_idx =
-      decision_result.stop_lines_opt.value().occlusion_peeking_stop_line;
+  if (!rtc_occlusion_approved && !decision_result.is_detection_area_empty) {
+    const auto occlusion_stop_line_idx = decision_result.stop_lines.occlusion_peeking_stop_line;
     planning_utils::setVelocityFromIndex(occlusion_stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(occlusion_stop_line_idx, baselink2front, *path);
@@ -589,45 +589,30 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
 
-  const auto ego_lane_with_next_lane = util::getEgoLaneWithNextLane(
-    *path, associative_ids_, planner_data_->vehicle_info_.vehicle_width_m);
-  const auto check_stuck_vehicle = checkStuckVehicle(
-    planner_data_, interpolated_path_info, ego_lane_with_next_lane, first_conflicting_area.value(),
-    path);
-  if (!check_stuck_vehicle) {
-    RCLCPP_DEBUG(logger_, "stuck vehicle check failed");
+  const auto & first_attention_area = intersection_lanelets_.value().first_attention_area;
+  const auto & dummy_first_attention_area =
+    first_attention_area ? first_attention_area.value() : first_conflicting_area.value();
+  const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
+    first_conflicting_area.value(), dummy_first_attention_area, planner_data_,
+    interpolated_path_info, planner_param_.stuck_vehicle.use_stuck_stopline,
+    planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path);
+  if (!intersection_stop_lines_opt) {
+    RCLCPP_DEBUG(logger_, "failed to generate intersection_stop_lines");
     return IntersectionModule::Indecisive{};
   }
+  const auto & intersection_stop_lines = intersection_stop_lines_opt.value();
+  const auto
+    [closest_idx, stuck_stop_line, default_stop_line_idx, occlusion_peeking_stop_line_idx,
+     pass_judge_line_idx] = intersection_stop_lines;
 
-  const auto & first_attention_area = intersection_lanelets_.value().first_attention_area;
+  const auto ego_lane_with_next_lane = util::getEgoLaneWithNextLane(
+    *path, associative_ids_, planner_data_->vehicle_info_.vehicle_width_m);
+  const bool stuck_detected =
+    checkStuckVehicle(planner_data_, ego_lane_with_next_lane, *path, intersection_stop_lines);
 
-  if (auto [stuck_stop_line_idx, stuck_detected] = check_stuck_vehicle.value(); stuck_detected) {
-    const auto intersection_stop_lines_opt =
-      first_attention_area
-        ? util::generateIntersectionStopLines(
-            first_attention_area.value(), planner_data_, interpolated_path_info,
-            planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path)
-        : std::nullopt;
-    if (first_attention_area && !intersection_stop_lines_opt) {
-      RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines() in stuck vehicle check");
-      return IntersectionModule::Indecisive{};
-    }
-    if (intersection_stop_lines_opt) {
-      const auto closest_idx = intersection_stop_lines_opt.value().closest_idx;
-      if (closest_idx < stuck_stop_line_idx) {
-        stuck_stop_line_idx += 1;
-      }
-      return IntersectionModule::StuckStop{
-        stuck_stop_line_idx, closest_idx, intersection_stop_lines_opt};
-    }
-    const auto closest_idx_opt =
-      motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
-    if (!closest_idx_opt) {
-      IntersectionModule::Indecisive{};
-    }
-    const auto closest_idx = closest_idx_opt.value();
+  if (stuck_detected) {
     return IntersectionModule::StuckStop{
-      stuck_stop_line_idx, closest_idx, intersection_stop_lines_opt};
+      stuck_stop_line, closest_idx, !first_attention_area.has_value(), intersection_stop_lines};
   }
 
   if (!first_attention_area) {
@@ -635,19 +620,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return IntersectionModule::Indecisive{};
   }
 
-  const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
-    first_attention_area.value(), planner_data_, interpolated_path_info,
-    planner_param_.common.stop_line_margin, planner_param_.occlusion.peeking_offset, path);
-  if (!intersection_stop_lines_opt) {
-    RCLCPP_DEBUG(logger_, "failed util::generateIntersectionStopLines()");
-    return IntersectionModule::Indecisive{};
-  }
-  const auto intersection_stop_lines = intersection_stop_lines_opt.value();
-  const auto
-    [default_stop_line_idx, closest_idx, occlusion_peeking_stop_line_idx, pass_judge_line_idx] =
-      intersection_stop_lines;
-
-  // TODO(Mamoru Sobue): use optional in DebugData
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.pass_judge_wall_pose =
     planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, *path);
@@ -752,47 +724,32 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   return IntersectionModule::Safe{intersection_stop_lines};
 }
 
-std::optional<std::pair<size_t, bool>> IntersectionModule::checkStuckVehicle(
+bool IntersectionModule::checkStuckVehicle(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const util::InterpolatedPathInfo & interpolated_path_info,
   const lanelet::ConstLanelets & ego_lane_with_next_lane,
-  const lanelet::CompoundPolygon3d & first_conflicting_area,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * input_path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+  const util::IntersectionStopLines & intersection_stop_lines)
 {
   const auto & objects_ptr = planner_data->predicted_objects;
   const geometry_msgs::msg::Pose & current_pose = planner_data->current_odometry->pose;
-  const auto closest_idx_opt =
-    motion_utils::findNearestIndex(input_path->points, current_pose, 3.0, M_PI_4);
-  if (!closest_idx_opt) {
-    return std::nullopt;
-  }
-  const auto closest_idx = closest_idx_opt.value();
+  const auto closest_idx = intersection_stop_lines.closest_idx;
+  const auto stuck_line_idx = intersection_stop_lines.stuck_stop_line;
 
   // considering lane change in the intersection, these lanelets are generated from the path
   const auto ego_lane = ego_lane_with_next_lane.front();
   debug_data_.ego_lane = ego_lane.polygon3d();
   const auto stuck_vehicle_detect_area = util::generateStuckVehicleDetectAreaPolygon(
-    *input_path, ego_lane_with_next_lane, closest_idx,
+    input_path, ego_lane_with_next_lane, closest_idx,
     planner_param_.stuck_vehicle.stuck_vehicle_detect_dist,
     planner_param_.stuck_vehicle.stuck_vehicle_ignore_dist,
     planner_data->vehicle_info_.vehicle_length_m);
   debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
 
-  const std::optional<size_t> stuck_line_idx_opt = util::generateStuckStopLine(
-    first_conflicting_area, planner_data, interpolated_path_info,
-    planner_param_.common.stop_line_margin, planner_param_.stuck_vehicle.use_stuck_stopline,
-    input_path);
-
-  if (!stuck_line_idx_opt) {
-    return std::nullopt;
-  }
-  const auto stuck_line_idx = stuck_line_idx_opt.value();
-
   const double dist_stuck_stopline = motion_utils::calcSignedArcLength(
-    input_path->points, input_path->points.at(stuck_line_idx).point.pose.position,
-    input_path->points.at(closest_idx).point.pose.position);
+    input_path.points, input_path.points.at(stuck_line_idx).point.pose.position,
+    input_path.points.at(closest_idx).point.pose.position);
   const bool is_over_stuck_stopline =
-    util::isOverTargetIndex(*input_path, closest_idx, current_pose, stuck_line_idx) &&
+    util::isOverTargetIndex(input_path, closest_idx, current_pose, stuck_line_idx) &&
     (dist_stuck_stopline > planner_param_.common.stop_overshoot_margin);
 
   bool is_stuck = false;
@@ -801,7 +758,7 @@ std::optional<std::pair<size_t, bool>> IntersectionModule::checkStuckVehicle(
       objects_ptr, stuck_vehicle_detect_area, planner_param_.stuck_vehicle.stuck_vehicle_vel_thr,
       &debug_data_);
   }
-  return std::make_optional<std::pair<size_t, bool>>(stuck_line_idx, is_stuck);
+  return is_stuck;
 }
 
 bool IntersectionModule::checkCollision(

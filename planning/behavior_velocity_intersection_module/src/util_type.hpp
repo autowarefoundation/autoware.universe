@@ -88,8 +88,9 @@ struct InterpolatedPathInfo
 struct IntersectionStopLines
 {
   // NOTE: for baselink
-  size_t default_stop_line;
   size_t closest_idx;
+  size_t stuck_stop_line;
+  size_t default_stop_line;
   size_t occlusion_peeking_stop_line;
   size_t pass_judge_line;
 };

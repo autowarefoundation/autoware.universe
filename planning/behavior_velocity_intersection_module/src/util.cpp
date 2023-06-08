@@ -200,10 +200,12 @@ static std::optional<size_t> getStopLineIndexFromMap(
 }
 
 std::optional<IntersectionStopLines> generateIntersectionStopLines(
+  const lanelet::CompoundPolygon3d & first_conflicting_area,
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
-  const double peeking_offset, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
+  const double stop_line_margin, const double peeking_offset,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
@@ -273,12 +275,29 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const auto pass_judge_line_ip = static_cast<size_t>(
     std::clamp<int>(pass_judge_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
 
+  // (5) stuck vehicle stop line
+  int stuck_stop_line_ip_int = 0;
+  if (use_stuck_stopline) {
+    stuck_stop_line_ip_int = std::get<0>(lane_interval_ip);
+  } else {
+    const auto stuck_stop_line_idx_ip_opt =
+      getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_conflicting_area);
+    if (!stuck_stop_line_idx_ip_opt) {
+      return std::nullopt;
+    }
+    stuck_stop_line_ip_int = stuck_stop_line_idx_ip_opt.value();
+  }
+  const auto stuck_stop_line_ip = static_cast<size_t>(
+    std::max(0, stuck_stop_line_ip_int - stop_line_margin_idx_dist - base2front_idx_dist));
+
   IntersectionStopLines intersection_stop_lines;
   std::list<std::pair<const size_t *, size_t *>> stop_lines = {
-    {&default_stop_line_ip, &intersection_stop_lines.default_stop_line},
     {&closest_idx_ip, &intersection_stop_lines.closest_idx},
+    {&stuck_stop_line_ip, &intersection_stop_lines.stuck_stop_line},
+    {&default_stop_line_ip, &intersection_stop_lines.default_stop_line},
     {&occlusion_peeking_line_ip, &intersection_stop_lines.occlusion_peeking_stop_line},
-    {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line}};
+    {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line},
+  };
   stop_lines.sort(
     [](const auto & it1, const auto & it2) { return *(std::get<0>(it1)) < *(std::get<0>(it2)); });
   for (const auto & [stop_idx_ip, stop_idx] : stop_lines) {

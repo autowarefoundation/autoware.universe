@@ -118,7 +118,8 @@ public:
     // NOTE: this is optional because stuck vehicle detection is possible
     // even if the detection area is empty.
     // Still this may be required for RTC's default stop line
-    std::optional<util::IntersectionStopLines> stop_lines_opt;
+    bool is_detection_area_empty;
+    util::IntersectionStopLines stop_lines;
   };
   struct NonOccludedCollisionStop
   {
@@ -220,12 +221,11 @@ private:
 
   DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 
-  std::optional<std::pair<size_t, bool>> checkStuckVehicle(
+  bool checkStuckVehicle(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const util::InterpolatedPathInfo & interpolated_path_info,
     const lanelet::ConstLanelets & ego_lane_with_next_lane,
-    const lanelet::CompoundPolygon3d & first_conflicting_area,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * input_path);
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+    const util::IntersectionStopLines & intersection_stop_lines);
 
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
