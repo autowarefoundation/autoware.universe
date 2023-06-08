@@ -21,7 +21,6 @@ ament_auto_add_library(${MPC_LAT_CON_LIB} SHARED
   src/vehicle_model/vehicle_model_bicycle_dynamics.cpp
   src/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.cpp
   src/vehicle_model/vehicle_model_bicycle_kinematics.cpp
-  src/vehicle_model/vehicle_model_four_wheel_steering_kinematics_no_delay.cpp
   src/vehicle_model/vehicle_model_interface.cpp
 )
 target_link_libraries(${MPC_LAT_CON_LIB} steering_offset_lib)

@@ -88,9 +88,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   } else if (vehicle_model_type == "kinematics_no_delay") {
     vehicle_model_ptr =
       std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, m_mpc.m_steer_lim);
-  } else if (vehicle_model_type == "kinematics_4ws_no_delay"){
-    vehicle_model_ptr =
-      std::make_shared<KinematicsFourWheelSteeringModelNoDelay>(wheelbase, m_mpc.m_steer_lim);
   } else if (vehicle_model_type == "dynamics") {
     const double mass_fl = node_->declare_parameter<double>("vehicle.mass_fl");
     const double mass_fr = node_->declare_parameter<double>("vehicle.mass_fr");
