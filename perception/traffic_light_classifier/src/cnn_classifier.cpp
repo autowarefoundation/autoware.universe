@@ -68,6 +68,10 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   const auto output_dims = trt_common_->getBindingDimensions(1);
   num_output_ =
     std::accumulate(output_dims.d, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
+  if (node_ptr_->declare_parameter("build_only", false)) {
+    RCLCPP_INFO(node_ptr_->get_logger(), "TensorRT engine is built and shutdown node.");
+    rclcpp::shutdown();
+  }
 }
 
 bool CNNClassifier::getTrafficSignal(

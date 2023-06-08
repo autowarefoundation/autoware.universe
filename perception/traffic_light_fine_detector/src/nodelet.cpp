@@ -97,6 +97,11 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
     sync_->registerCallback(
       std::bind(&TrafficLightFineDetectorNodelet::callback, this, _1, _2, _3));
   }
+
+  if (declare_parameter("build_only", false)) {
+    RCLCPP_INFO(get_logger(), "TensorRT engine is built and shutdown node.");
+    rclcpp::shutdown();
+  }
 }
 
 void TrafficLightFineDetectorNodelet::connectCb()
