@@ -24,12 +24,13 @@ You may provide either a single .pcd file or multiple .pcd files. If you are usi
 2. **The division size along each axis should be equal.**
 3. **The division size should be about 20m x 20m.** Particularly, care should be taken as using too large division size (for example, more than 100m) may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher) and [compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/compare_map_segmentation).
 4. **All the split maps should not overlap with each other.**
+5. **Metadata file should also be provided.** The metadata structure description is provided below.
 
 Note that these rules are not applicable when `enable_partial_load`, `enable_differential_load` and `enable_selected_load` are all set false. In this case, however, you also need to disable dynamic map loading mode for other nodes as well ([ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher) and [compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/compare_map_segmentation) as of June 2023).
 
 #### Metadata structure
 
-You also must provide a metadata for each set of pointcloud maps (currently it is exempted when you are using only single .pcd file). The metadata should look like this:
+The metadata should look like this:
 
 ```yaml
 x_resolution: 20.0
