@@ -18,6 +18,8 @@
     <let name="input/camera_info" value="/sensing/camera/$(var namespace1)/camera_info"/>
     <let name="map_based_detector_output_topic" value="rough/rois" if="$(var enable_fine_detection)"/>
     <let name="map_based_detector_output_topic" value="rois" unless="$(var enable_fine_detection)"/>
+
+    <node pkg="topic_tools" exec="relay" name="traffic_light_camra_info_relay" args="$(var input/camera_info) camera_info"/>
     <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
       <arg name="input/camera_info" value="$(var input/camera_info)"/>
       <arg name="min_timestamp_offset" value="-0.3"/>
@@ -46,6 +48,8 @@
     <let name="input/camera_info" value="/sensing/camera/$(var namespace2)/camera_info"/>
     <let name="map_based_detector_output_topic" value="rough/rois" if="$(var enable_fine_detection)"/>
     <let name="map_based_detector_output_topic" value="rois" unless="$(var enable_fine_detection)"/>
+
+    <node pkg="topic_tools" exec="relay" name="traffic_light_camra_info_relay" args="$(var input/camera_info) camera_info"/>
     <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
       <arg name="input/camera_info" value="$(var input/camera_info)"/>
       <arg name="min_timestamp_offset" value="-0.04"/>

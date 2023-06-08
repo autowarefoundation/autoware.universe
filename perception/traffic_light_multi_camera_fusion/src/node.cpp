@@ -116,8 +116,8 @@ MultiCameraFusion::MultiCameraFusion(const rclcpp::NodeOptions & node_options)
       new mf::Subscriber<RoiArrayType>(this, roi_topic, rclcpp::QoS{1}.get_rmw_qos_profile()));
     signal_subs_.emplace_back(new mf::Subscriber<SignalArrayType>(
       this, signal_topic, rclcpp::QoS{1}.get_rmw_qos_profile()));
-    cam_info_subs_.emplace_back(
-      new mf::Subscriber<CamInfoType>(this, cam_info_topic, rclcpp::QoS{1}.get_rmw_qos_profile()));
+    cam_info_subs_.emplace_back(new mf::Subscriber<CamInfoType>(
+      this, cam_info_topic, rclcpp::SensorDataQoS().get_rmw_qos_profile()));
     if (is_approximate_sync_ == false) {
       exact_sync_subs_.emplace_back(new ExactSync(
         ExactSyncPolicy(10), *(cam_info_subs_.back()), *(roi_subs_.back()),

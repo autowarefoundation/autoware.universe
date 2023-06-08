@@ -167,7 +167,6 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
   expect_roi_pub_ =
     this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
       "~/expect/rois", 1);
-  cam_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("~/output/camera_info", 1);
   viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
 }
 
@@ -271,7 +270,6 @@ void MapBasedDetector::cameraInfoCallback(
 
   roi_pub_->publish(output_msg);
   expect_roi_pub_->publish(expect_roi_msg);
-  cam_info_pub_->publish(*input_msg);
   publishVisibleTrafficLights(
     tf_map2camera_vec[0], input_msg->header, visible_traffic_lights, viz_pub_);
 }

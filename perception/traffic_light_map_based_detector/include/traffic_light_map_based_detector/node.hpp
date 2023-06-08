@@ -85,12 +85,6 @@ private:
    */
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
     expect_roi_pub_;
-  /**
-   * @brief publish the camera info which would be used in traffic_light_multi_camera_fusion node.
-   * The reason of publishing this topic instead of using the original camera info topic
-   * is explained in traffic_light_multi_camera_fusion package.
-   */
-  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr cam_info_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr viz_pub_;
 
   tf2_ros::Buffer tf_buffer_;
