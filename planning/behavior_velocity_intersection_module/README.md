@@ -10,7 +10,7 @@ The _intersection_ module is responsible for safely going through urban intersec
 
 The module is desinged to be agnositc to left-hand/right-hand traffic rules and works on crossroads, T-shape junctions, etc.
 
-![topology](./intersection-topology.drawio.svg)
+![topology](./docs/intersection-topology.drawio.svg)
 
 ### Activation condition
 
@@ -28,7 +28,7 @@ The `Attention Area` in the intersection are defined as the set of lanes that ar
 
 `Intersection Area`, which is supposed to be defined on the HDMap, is an area convering the entire intersection.
 
-![attention_area](./intersection-attention.drawio.svg)
+![attention_area](./docs/intersection-attention.drawio.svg)
 
 #### Right Of Way
 
@@ -44,9 +44,9 @@ Following table shows an example of how to assign `right_of_way` tag and set `yi
 
 This setting gives the following `attention_area` configurations.
 
-![attention_area_straight](./intersection-attention-straight.drawio.svg)
-![attention_area_ll_rr](./intersection-attention-ll-rr.drawio.svg)
-![attention_area_lr_rl](./intersection-attention-lr-rl.drawio.svg)
+![attention_area_straight](./docs/intersection-attention-straight.drawio.svg)
+![attention_area_ll_rr](./docs/intersection-attention-ll-rr.drawio.svg)
+![attention_area_lr_rl](./docs/intersection-attention-lr-rl.drawio.svg)
 
 ### Target objects
 
@@ -64,7 +64,7 @@ Objects that satisfy all of the following conditions are considered as target ob
 
 If there is any object in a certain distance (`stuck_vehicle_ignore_dist` and `stuck_vehicle_detect_dist`) before and after the exit of the intersection lane and the object velocity is less than a threshold (=`stuck_vehicle_vel_thr`), the object is regarded as a stuck vehicle. If stuck vehicles exist, this module inserts a stopline a certain distance (=`stop_line_margin`) before the overlapped region with other lanes. The stuck vehicle detection area is generated based on the vehicle path, so the stuck vehicle stopline is not inserted if the upstream module generated avoidance path
 
-![stuck_vehicle_detection](./stuck-vehicle.drawio.svg)
+![stuck_vehicle_detection](./docs/stuck-vehicle.drawio.svg)
 
 #### Collision detection
 
