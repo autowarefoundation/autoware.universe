@@ -17,8 +17,8 @@
 #include "yabloc_common/ground_server/util.hpp"
 
 #include <Eigen/Eigenvalues>
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <yabloc_common/color.hpp>
-#include <yabloc_common/from_bin_msg.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
 #include <pcl/ModelCoefficients.h>
@@ -100,7 +100,8 @@ void GroundServer::on_pose_stamped(const PoseStamped & msg)
 
 void GroundServer::on_map(const HADMapBin & msg)
 {
-  lanelet::LaneletMapPtr lanelet_map = ll2_decomposer::from_bin_msg(msg);
+  lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
+  lanelet::utils::conversion::fromBinMsg(msg, lanelet_map);
 
   // TODO: has to be loaded from rosparm
   const std::set<std::string> visible_labels = {

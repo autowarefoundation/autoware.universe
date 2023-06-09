@@ -15,9 +15,9 @@
 #include "yabloc_pose_initializer/camera/camera_pose_initializer.hpp"
 #include "yabloc_pose_initializer/camera/lanelet_util.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <yabloc_common/from_bin_msg.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -168,7 +168,8 @@ bool CameraPoseInitializer::estimate_pose(
 
 void CameraPoseInitializer::on_map(const HADMapBin & msg)
 {
-  lanelet::LaneletMapPtr lanelet_map = ll2_decomposer::from_bin_msg(msg);
+  lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
+  lanelet::utils::conversion::fromBinMsg(msg, lanelet_map);
   lane_image_ = std::make_unique<LaneImage>(lanelet_map);
 
   const_lanelets_.clear();

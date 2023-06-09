@@ -47,11 +47,6 @@ find_library(GeographicLib_LIBRARIES NAMES Geographic)
 
 # ===================================================
 # Libraries
-file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)
-ament_auto_add_library(ll2_util SHARED
-  ${REGULATORY_ELEMENT_SOURCE})
-target_include_directories(ll2_util PUBLIC include 3rd/regulatory_elements/include)
-
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/ublox_stamp.cpp
   src/pub_sub.cpp
@@ -61,7 +56,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pose_conversions.cpp
   src/static_tf_subscriber.cpp
   src/extract_line_segments.cpp
-  src/from_bin_msg.cpp
   src/transform_line_segments.cpp
   src/color.cpp)
 target_include_directories(
@@ -76,7 +70,7 @@ target_include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus ll2_util)
+target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus)
 
 # ===================================================
 # Executables

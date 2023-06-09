@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "yabloc_common/ll2_decomposer/from_bin_msg.hpp"
 #include "yabloc_common/ll2_decomposer/ll2_decomposer.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
@@ -105,7 +105,8 @@ pcl::PointCloud<pcl::PointXYZL> Ll2Decomposer::load_bounding_boxes(
 void Ll2Decomposer::on_map(const HADMapBin & msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
-  lanelet::LaneletMapPtr lanelet_map = from_bin_msg(msg);
+  lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
+  lanelet::utils::conversion::fromBinMsg(msg, lanelet_map);
   print_attr(lanelet_map, get_logger());
 
   const rclcpp::Time stamp = msg.header.stamp;
