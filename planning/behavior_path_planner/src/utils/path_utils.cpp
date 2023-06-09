@@ -126,6 +126,43 @@ PathWithLaneId resamplePathWithSpline(
   return motion_utils::resamplePath(path, s_out);
 }
 
+PredictedPath createPredictedPathFromTargetVelocity(
+  const PathWithLaneId & trajectory, const double & current_velocity,
+  const double & target_velocity, const double acc_till_target_velocity, const Pose & pose,
+  const size_t nearest_seg_idx, const double resolution)
+{
+  PredictedPath predicted_path{};
+  predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
+  predicted_path.path.reserve(std::min(trajectory.points.size(), static_cast<size_t>(100)));
+
+  if (trajectory.points.empty()) {
+    return predicted_path;
+  }
+
+  FrenetPoint vehicle_pose_frenet =
+    convertToFrenetPoint(trajectory.points, pose.position, nearest_seg_idx);
+
+  // Calculate time required to reach target velocity
+  double acc_time = (target_velocity - current_velocity) / acc_till_target_velocity;
+  if (acc_time < 0.0) {
+    acc_time = 0.0;
+  }
+
+  // Acceleration segment
+  addSegment(
+    predicted_path.path, current_velocity, acc_till_target_velocity, 0.0, acc_time, resolution,
+    vehicle_pose_frenet);
+
+  // Constant velocity segment
+  const double offset =
+    current_velocity * acc_time + 0.5 * acc_till_target_velocity * acc_time * acc_time;
+  addSegment(
+    predicted_path.path, target_velocity, 0.0, acc_time, acc_time + (target_velocity / resolution),
+    resolution, vehicle_pose_frenet, offset);
+
+  return predicted_path;
+}
+
 Path toPath(const PathWithLaneId & input)
 {
   Path output{};

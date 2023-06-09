@@ -828,6 +828,7 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects()
 {
   // TODO(Sugahara): should safety check for backward path later
   const auto & pull_out_path = status_.pull_out_path.partial_paths.at(0);
+  // create ego predicted path
   const auto & ego_predicted_path = convertToPredictedPath(
   path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
   prepare_duration, prepare_acc, lane_changing_acc);
