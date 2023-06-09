@@ -1,6 +1,16 @@
 units:
   - name: /autoware/localization
-  - name: /autoware/percepiton/front-obstable-detection
-  - name: /autoware/perception/front-obstable-prediction
   - name: /autoware/planning
   - name: /autoware/planning/route
+
+  - name: /autoware/percepiton/front-obstable-detection
+    type: any
+    list:
+      - [/sensing/lidars/front]
+      - [/sensing/radars/front]
+
+  - name: /autoware/perception/front-obstable-prediction
+    type: all
+    list:
+      - [/sensing/lidars/front]
+      - [/sensing/radars/front]

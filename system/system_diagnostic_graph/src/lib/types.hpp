@@ -30,12 +30,6 @@ using tier4_system_msgs::msg::DiagnosticNode;
 
 using DiagnosticLevel = DiagnosticStatus::_level_type;
 
-class DiagNode
-{
-public:
-  virtual DiagnosticNode report() = 0;
-};
-
 }  // namespace system_diagnostic_graph
 
 #endif  // LIB__TYPES_HPP_

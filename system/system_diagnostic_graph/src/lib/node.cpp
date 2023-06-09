@@ -23,6 +23,11 @@ namespace system_diagnostic_graph
 
 const auto logger = rclcpp::get_logger("system_diagnostic_graph");
 
+DiagUnit::DiagUnit(const ConfigNode & config)
+{
+  name_ = config.yaml["name"].as<std::string>();
+}
+
 DiagLeaf::Key DiagLeaf::get_key(const DiagnosticStatus & status)
 {
   return std::make_pair(status.name, status.hardware_id);

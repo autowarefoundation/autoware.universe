@@ -25,7 +25,7 @@ void DiagGraph::create(const std::string & file)
 {
   const auto units = load_config_file(file);
   for (const auto & unit : units) {
-    std::cout << YAML::Dump(unit) << std::endl;
+    nodes_.push_back(std::make_unique<DiagUnit>(unit));
   }
 }
 

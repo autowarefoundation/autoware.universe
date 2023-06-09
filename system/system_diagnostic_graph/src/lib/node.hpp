@@ -15,6 +15,7 @@
 #ifndef LIB__NODE_HPP_
 #define LIB__NODE_HPP_
 
+#include "config.hpp"
 #include "debug.hpp"
 #include "types.hpp"
 
@@ -23,6 +24,22 @@
 
 namespace system_diagnostic_graph
 {
+
+class DiagNode
+{
+public:
+  virtual DiagnosticNode report() = 0;
+};
+
+class DiagUnit : public DiagNode
+{
+public:
+  explcit DiagUnit(const ConfigNode & config);
+  virtual DiagnosticNode report() { return DiagnosticNode(); }
+
+private:
+  std::string name_;
+};
 
 class DiagLeaf : public DiagNode
 {

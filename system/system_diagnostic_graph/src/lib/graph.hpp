@@ -37,7 +37,7 @@ public:
   void debug();
 
 private:
-  std::vector<std::shared_ptr<DiagNode>> nodes_;
+  std::vector<std::unique_ptr<DiagNode>> nodes_;
   std::map<DiagLeaf::Key, std::shared_ptr<DiagLeaf>> diags_;
 };
 

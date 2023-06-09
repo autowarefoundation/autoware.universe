@@ -24,12 +24,19 @@
 namespace system_diagnostic_graph
 {
 
-class ConfigError : public std::runtime_error
+struct ConfigError : public std::runtime_error
 {
   using runtime_error::runtime_error;
 };
 
-std::vector<YAML::Node> load_config_file(const std::string & path);
+struct ConfigNode
+{
+  YAML::Node yaml;
+  std::string name;
+  std::string hint;
+};
+
+std::vector<ConfigNode> load_config_file(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 
