@@ -824,15 +824,13 @@ void StartPlannerModule::setDebugData() const
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
+  size_t nearest_segment_index = motion_utils::findNearestIndex(
+    status_.pull_out_path.partial_paths.back().points,
+    planner_data_->self_odometry->pose.pose.position);
 
   const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    status_.pull_out_path.partial_paths.back().points,
-    planner_data_->self_odometry->twist.twist.linear.x, 2.0, 0.5,
-    planner_data_->self_odometry->pose.pose,
-    motion_utils::findNearestIndex(
-      status_.pull_out_path.partial_paths.back().points,
-      planner_data_->self_odometry->pose.pose.position),
-    0.5, 1.0);
+    status_.pull_out_path.partial_paths.back(), planner_data_->self_odometry->twist.twist.linear.x,
+    2.0, 0.5, planner_data_->self_odometry->pose.pose, nearest_segment_index, 0.5, 1.0);
 
   debug_marker_.markers.clear();
   add(createEgoPredictedPathMarkerArray(

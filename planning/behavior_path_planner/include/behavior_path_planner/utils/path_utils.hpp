@@ -60,7 +60,7 @@ PathWithLaneId resamplePathWithSpline(
   const std::pair<double, double> target_section = {0.0, std::numeric_limits<double>::max()});
 
 PredictedPath createPredictedPathFromTargetVelocity(
-  const std::vector<PathPointWithLaneId> & following_trajectory, const double current_velocity,
+  const PathWithLaneId & following_trajectory, const double current_velocity,
   const double target_velocity, const double acc_till_target_velocity, const Pose & pose,
   const size_t nearest_seg_idx, const double resolution, const double stopping_time);
 
