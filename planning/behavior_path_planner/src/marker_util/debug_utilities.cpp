@@ -218,6 +218,8 @@ MarkerArray createEgoPredictedPathMarkerArray(
   size_t i = 0;
   for (const auto & point : path) {
     marker.points.push_back(point.position);
+    // std::cerr << "point " << i << " : " << point.position.x << ", " << point.position.y << ", "
+    //           << point.position.z << std::endl;
     i++;
   }
   std::cerr << "the number of points in the path : " << i << std::endl;
