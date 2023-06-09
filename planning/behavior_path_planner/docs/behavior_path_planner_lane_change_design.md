@@ -45,7 +45,7 @@ Computing candidate paths that assumes ego vehicle's slows down is performed by 
 
 The predetermined acceleration values are a set of value that starts from `acceleration = maximum_acceleration`, and decrease by `acceleration_resolution` until it reaches `acceleration = -maximum_deceleration`. Both `maximum_acceleration` and `maximum_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
 
-```
+```C++
 maximum_acceleration = min(common_param.max_acc, lane_change_param.max_acc)
 maximum_deceleration = max(common_param.min_acc, lane_change_param.min_acc)
 ```
