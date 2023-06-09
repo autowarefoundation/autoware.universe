@@ -835,7 +835,7 @@ void StartPlannerModule::setDebugData() const
     0.5, 1.0);
 
   debug_marker_.markers.clear();
-  add(createEgoPredictedPathMarkerArray(ego_predicted_path, "ego_predicted_path"));
+  add(createEgoPredictedPathMarkerArray(ego_predicted_path, "ego_predicted_path", 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));

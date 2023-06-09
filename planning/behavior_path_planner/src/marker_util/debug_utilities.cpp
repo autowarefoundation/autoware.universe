@@ -197,33 +197,30 @@ MarkerArray createShiftGradMarkerArray(
 }
 
 MarkerArray createEgoPredictedPathMarkerArray(
-  const PredictedPath & ego_predicted_path, std::string && ns)
+  const PredictedPath & ego_predicted_path, std::string && ns, const float & r, const float & g,
+  const float & b)
 {
   if (ego_predicted_path.path.empty()) {
+    std::cerr << "Ego predicted path is empty" << std::endl;
     return MarkerArray{};
   }
 
   MarkerArray msg;
-  constexpr auto colors = colorsList();
-  constexpr float scale_val = 0.2;
   const auto current_time{rclcpp::Clock{RCL_ROS_TIME}.now()};
 
-  int32_t id{0};
-
   const auto & path = ego_predicted_path.path;
-  const auto & color = colors.at(0);
 
   Marker marker = createDefaultMarker(
-    "map", current_time, ns, ++id, Marker::LINE_STRIP,
-    createMarkerScale(scale_val, scale_val, scale_val),
-    createMarkerColor(color[0], color[1], color[2], 0.9));
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::LINE_STRIP,
+    createMarkerScale(0.1, 0.1, 0.1), createMarkerColor(r, g, b, 0.999));
 
   marker.points.reserve(path.size());
-
+  size_t i = 0;
   for (const auto & point : path) {
     marker.points.push_back(point.position);
+    i++;
   }
-
+  std::cerr << "the number of points in the path : " << i << std::endl;
   msg.markers.push_back(marker);
   return msg;
 }
