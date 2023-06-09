@@ -824,17 +824,25 @@ void StartPlannerModule::setDebugData() const
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
+
+  // TODO(Sugahara): define param for target_velocity, acc_till_target_velocity, resolution,
+  // stopping_time
   size_t nearest_segment_index = motion_utils::findNearestIndex(
     status_.pull_out_path.partial_paths.back().points,
     planner_data_->self_odometry->pose.pose.position);
+  const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  const double target_velocity = 2.0;
+  const double acc_till_target_velocity = 0.5;
+  const Pose current_pose = planner_data_->self_odometry->pose.pose;
+  const double resolution = 0.5;
+  const double stopping_time = 1.0;
 
   const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    status_.pull_out_path.partial_paths.back(), planner_data_->self_odometry->twist.twist.linear.x,
-    2.0, 0.5, planner_data_->self_odometry->pose.pose, nearest_segment_index, 0.5, 1.0);
+    status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
+    acc_till_target_velocity, current_pose, nearest_segment_index, resolution, stopping_time);
 
   debug_marker_.markers.clear();
-  add(createEgoPredictedPathMarkerArray(
-    ego_predicted_path, "ego_predicted_path_start_planner", 0.9, 0.3, 0.3));
+  add(createEgoPredictedPathMarkerArray(ego_predicted_path, "ego_predicted_path", 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
