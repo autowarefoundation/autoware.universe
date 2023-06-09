@@ -6,6 +6,7 @@ autoware_package()
 
 ament_auto_add_executable(${PROJECT_NAME}
   src/main.cpp
+  src/lib/config.cpp
   src/lib/debug.cpp
   src/lib/graph.cpp
   src/lib/node.cpp

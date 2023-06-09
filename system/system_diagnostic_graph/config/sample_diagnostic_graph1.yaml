@@ -1,0 +1,11 @@
+files:
+  - { package: system_diagnostic_graph, path: config/sample_diagnostic_graph2.yaml }
+
+units:
+  - name: /autoware/operation/stop
+  - name: /autoware/operation/autonomous
+  - name: /autoware/operation/local
+  - name: /autoware/operation/remote
+  - name: /autoware/operation/emergency-stop
+  - name: /autoware/operation/comfortable-stop
+  - name: /autoware/operation/pull-over

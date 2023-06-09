@@ -1,6 +1,6 @@
 <launch>
   <node pkg="system_diagnostic_graph" exec="system_diagnostic_graph" name="system_diagnostic_graph">
     <param from="$(find-pkg-share system_diagnostic_graph)/config/system_diagnostic_graph.param.yaml"/>
-    <param name="file" value="$(find-pkg-share system_diagnostic_graph)/config/sample_diagnostic_graph.yaml"/>
+    <param name="file" value="$(find-pkg-share system_diagnostic_graph)/config/sample_diagnostic_graph1.yaml"/>
   </node>
 </launch>

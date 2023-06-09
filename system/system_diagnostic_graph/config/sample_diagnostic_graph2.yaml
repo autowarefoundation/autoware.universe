@@ -1,0 +1,6 @@
+units:
+  - name: /autoware/localization
+  - name: /autoware/percepiton/front-obstable-detection
+  - name: /autoware/perception/front-obstable-prediction
+  - name: /autoware/planning
+  - name: /autoware/planning/route

@@ -14,7 +14,7 @@
 
 #include "graph.hpp"
 
-#include <yaml-cpp/yaml.h>
+#include "config.hpp"
 
 #include <string>
 
@@ -23,8 +23,10 @@ namespace system_diagnostic_graph
 
 void DiagGraph::create(const std::string & file)
 {
-  YAML::Node yaml = YAML::LoadFile(file);
-  std::cout << YAML::Dump(yaml) << std::endl;
+  const auto units = load_config_file(file);
+  for (const auto & unit : units) {
+    std::cout << YAML::Dump(unit) << std::endl;
+  }
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
