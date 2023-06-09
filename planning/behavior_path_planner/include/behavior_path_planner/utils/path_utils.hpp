@@ -35,6 +35,7 @@
 
 namespace behavior_path_planner::utils
 {
+using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
@@ -58,10 +59,10 @@ PathWithLaneId resamplePathWithSpline(
   const PathWithLaneId & path, const double interval, const bool keep_input_points = false,
   const std::pair<double, double> target_section = {0.0, std::numeric_limits<double>::max()});
 
-const PredictedPath createPredictedPathFromTargetVelocity(
+PredictedPath createPredictedPathFromTargetVelocity(
   const std::vector<PathPointWithLaneId> & following_trajectory, const double current_velocity,
   const double target_velocity, const double acc_till_target_velocity, const Pose & pose,
-  const size_t nearest_seg_idx, const double resolution, const double stopping_time = 0.0);
+  const size_t nearest_seg_idx, const double resolution, const double stopping_time);
 
 Path toPath(const PathWithLaneId & input);
 

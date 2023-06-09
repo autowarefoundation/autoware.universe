@@ -127,26 +127,26 @@ PathWithLaneId resamplePathWithSpline(
 }
 
 PredictedPath createPredictedPathFromTargetVelocity(
-  const std::vector<PathPointWithLaneId> & following_trajectory,
-  const double current_velocity, const double target_velocity,
-  const double acc_till_target_velocity, const Pose & pose, const size_t nearest_seg_idx,
-  const double resolution, const double stopping_time)
+  const std::vector<PathPointWithLaneId> & following_trajectory, const double current_velocity,
+  const double target_velocity, const double acc_till_target_velocity, const Pose & pose,
+  const size_t nearest_seg_idx, const double resolution, const double stopping_time)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
-  predicted_path.path.reserve(std::min(trajectory.points.size(), static_cast<size_t>(100)));
+  predicted_path.path.reserve(std::min(following_trajectory.size(), static_cast<size_t>(100)));
 
-  if (trajectory.points.empty()) {
+  if (following_trajectory.empty()) {
     return predicted_path;
   }
 
   FrenetPoint vehicle_pose_frenet =
-    convertToFrenetPoint(trajectory.points, pose.position, nearest_seg_idx);
+    convertToFrenetPoint(following_trajectory, pose.position, nearest_seg_idx);
 
   // add a segment to the path
   auto addSegment = [&](
-                      std::vector<Pose> & path, const double initial_velocity, const double acc,
-                      const double start_time, const double end_time, const double offset) {
+                      rosidl_runtime_cpp::BoundedVector<geometry_msgs::msg::Pose, 100> & path,
+                      const double initial_velocity, const double acc, const double start_time,
+                      const double end_time, const double offset) {
     for (double t = start_time; t < end_time; t += resolution) {
       const double delta_t = t - start_time;
       const double length = initial_velocity * delta_t + 0.5 * acc * delta_t * delta_t + offset;
@@ -161,8 +161,7 @@ PredictedPath createPredictedPathFromTargetVelocity(
   }
 
   // Stopping segment, only if stopping_time is greater than zero
-  if(stopping_time > 0.0)
-  {
+  if (stopping_time > 0.0) {
     addSegment(predicted_path.path, 0.0, 0.0, 0.0, stopping_time, 0.0);
   }
 
