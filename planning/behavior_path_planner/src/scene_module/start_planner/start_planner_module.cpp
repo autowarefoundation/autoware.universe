@@ -16,8 +16,8 @@
 
 #include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -829,14 +829,14 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects()
   // TODO(Sugahara): should safety check for backward path later
   const auto & pull_out_path = status_.pull_out_path.partial_paths.at(0);
   // create ego predicted path
-  const auto & ego_predicted_path = convertToPredictedPath(
-  path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
-  prepare_duration, prepare_acc, lane_changing_acc);
+  const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
+    path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
+    prepare_duration, prepare_acc, lane_changing_acc);
   return utils::safety_check::isSafeInLaneletCollisionCheck(
-            pull_out_path, interpolated_ego, current_twist, check_durations,
-            lane_change_path.duration.prepare, obj, obj_path, common_parameter,
-            lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel,
-            rear_decel, current_debug_data.second);
+    pull_out_path, interpolated_ego, current_twist, check_durations,
+    lane_change_path.duration.prepare, obj, obj_path, common_parameter,
+    lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel, rear_decel,
+    current_debug_data.second);
 }
 
 void StartPlannerModule::setDebugData() const

@@ -127,9 +127,10 @@ PathWithLaneId resamplePathWithSpline(
 }
 
 PredictedPath createPredictedPathFromTargetVelocity(
-  const PathWithLaneId & trajectory, const double & current_velocity,
-  const double & target_velocity, const double acc_till_target_velocity, const Pose & pose,
-  const size_t nearest_seg_idx, const double resolution)
+  const std::vector<PathPointWithLaneId> & following_trajectory,
+  const double current_velocity, const double target_velocity,
+  const double acc_till_target_velocity, const Pose & pose, const size_t nearest_seg_idx,
+  const double resolution, const double stopping_time)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
@@ -142,23 +143,41 @@ PredictedPath createPredictedPathFromTargetVelocity(
   FrenetPoint vehicle_pose_frenet =
     convertToFrenetPoint(trajectory.points, pose.position, nearest_seg_idx);
 
+  // add a segment to the path
+  auto addSegment = [&](
+                      std::vector<Pose> & path, const double initial_velocity, const double acc,
+                      const double start_time, const double end_time, const double offset) {
+    for (double t = start_time; t < end_time; t += resolution) {
+      const double delta_t = t - start_time;
+      const double length = initial_velocity * delta_t + 0.5 * acc * delta_t * delta_t + offset;
+      path.push_back(motion_utils::calcInterpolatedPose(path, vehicle_pose_frenet.length + length));
+    }
+  };
+
   // Calculate time required to reach target velocity
   double acc_time = (target_velocity - current_velocity) / acc_till_target_velocity;
   if (acc_time < 0.0) {
     acc_time = 0.0;
   }
 
+  // Stopping segment, only if stopping_time is greater than zero
+  if(stopping_time > 0.0)
+  {
+    addSegment(predicted_path.path, 0.0, 0.0, 0.0, stopping_time, 0.0);
+  }
+
   // Acceleration segment
+  double offset = 0.0;
   addSegment(
-    predicted_path.path, current_velocity, acc_till_target_velocity, 0.0, acc_time, resolution,
-    vehicle_pose_frenet);
+    predicted_path.path, current_velocity, acc_till_target_velocity, stopping_time,
+    stopping_time + acc_time, offset);
 
   // Constant velocity segment
-  const double offset =
-    current_velocity * acc_time + 0.5 * acc_till_target_velocity * acc_time * acc_time;
+  offset += current_velocity * acc_time + 0.5 * acc_till_target_velocity * acc_time * acc_time;
+  double constant_velocity_time = stopping_time + acc_time + (target_velocity / resolution);
   addSegment(
-    predicted_path.path, target_velocity, 0.0, acc_time, acc_time + (target_velocity / resolution),
-    resolution, vehicle_pose_frenet, offset);
+    predicted_path.path, target_velocity, 0.0, stopping_time + acc_time, constant_velocity_time,
+    offset);
 
   return predicted_path;
 }
