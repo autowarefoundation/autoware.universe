@@ -108,6 +108,9 @@ MarkerArray createShiftGradMarkerArray(
   const PathWithLaneId & reference, std::string && ns, const float & r, const float & g,
   const float & b);
 
+MarkerArray createEgoPredictedPathMarkerArray(
+  const PredictedPath & ego_predicted_path, std::string && ns);
+
 MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,
   const float & g, const float & b);

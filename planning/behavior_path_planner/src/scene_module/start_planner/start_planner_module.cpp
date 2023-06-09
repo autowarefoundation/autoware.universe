@@ -817,6 +817,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 
 void StartPlannerModule::setDebugData() const
 {
+  using marker_utils::createEgoPredictedPathMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
 
@@ -824,7 +825,17 @@ void StartPlannerModule::setDebugData() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
+  const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
+    status_.pull_out_path.partial_paths.back().points,
+    planner_data_->self_odometry->twist.twist.linear.x, 2.0, 0.5,
+    planner_data_->self_odometry->pose.pose,
+    motion_utils::findNearestIndex(
+      status_.pull_out_path.partial_paths.back().points,
+      planner_data_->self_odometry->pose.pose.position),
+    0.5, 1.0);
+
   debug_marker_.markers.clear();
+  add(createEgoPredictedPathMarkerArray(ego_predicted_path, "ego_predicted_path"));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));

@@ -196,6 +196,38 @@ MarkerArray createShiftGradMarkerArray(
   return msg;
 }
 
+MarkerArray createEgoPredictedPathMarkerArray(
+  const PredictedPath & ego_predicted_path, std::string && ns)
+{
+  if (ego_predicted_path.path.empty()) {
+    return MarkerArray{};
+  }
+
+  MarkerArray msg;
+  constexpr auto colors = colorsList();
+  constexpr float scale_val = 0.2;
+  const auto current_time{rclcpp::Clock{RCL_ROS_TIME}.now()};
+
+  int32_t id{0};
+
+  const auto & path = ego_predicted_path.path;
+  const auto & color = colors.at(0);
+
+  Marker marker = createDefaultMarker(
+    "map", current_time, ns, ++id, Marker::LINE_STRIP,
+    createMarkerScale(scale_val, scale_val, scale_val),
+    createMarkerColor(color[0], color[1], color[2], 0.9));
+
+  marker.points.reserve(path.size());
+
+  for (const auto & point : path) {
+    marker.points.push_back(point.position);
+  }
+
+  msg.markers.push_back(marker);
+  return msg;
+}
+
 MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,
   const float & g, const float & b)
