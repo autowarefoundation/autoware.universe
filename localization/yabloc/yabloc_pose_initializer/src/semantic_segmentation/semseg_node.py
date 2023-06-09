@@ -34,12 +34,12 @@ class SemsegNode(Node):
         self.get_logger().info('model path: ' + model_path)
 
         self.sub_image_ = self.create_subscription(
-            Image, '/in/image_raw', self.imageCallback, 10)
+            Image, 'input/image_raw', self.imageCallback, 10)
 
         self.pub_overlay_image_ = self.create_publisher(
-            Image, '/out/overlay_image', 10)
+            Image, 'output/overlay_image', 10)
         self.pub_image_ = self.create_publisher(
-            Image, '/out/semantic_image', 10)
+            Image, 'output/semantic_image', 10)
 
         self.dnn_ = semseg_core.SemSeg(model_path)
         self.bridge_ = CvBridge()

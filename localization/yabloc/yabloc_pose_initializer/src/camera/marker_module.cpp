@@ -21,7 +21,7 @@ namespace yabloc::initializer
 
 MarkerModule::MarkerModule(rclcpp::Node * node)
 {
-  pub_marker_ = node->create_publisher<MarkerArray>("init/candidates", 10);
+  pub_marker_ = node->create_publisher<MarkerArray>("debug/init_candidates", 10);
 }
 
 void MarkerModule::publish_marker(

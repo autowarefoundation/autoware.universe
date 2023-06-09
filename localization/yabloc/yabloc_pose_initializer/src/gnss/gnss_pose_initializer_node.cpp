@@ -38,11 +38,11 @@ public:
     auto on_navpvt = std::bind(&GnssBasedPoseInitializer::on_navpvt, this, _1);
     auto on_pf_pose = [this](const PoseStamped &) -> void { pf_is_initialized_ = true; };
     auto on_initialpose = [this](const PoseCovStamped & msg) { pub_pose_stamped_->publish(msg); };
-    sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, on_navpvt);
-    sub_pf_pose_ = create_subscription<PoseStamped>("pf_pose", 10, on_pf_pose);
-    sub_initialpose_ = create_subscription<PoseCovStamped>("/initialpose", 10, on_initialpose);
+    sub_navpvt_ = create_subscription<NavPVT>("input/ublox_topic", 10, on_navpvt);
+    sub_pf_pose_ = create_subscription<PoseStamped>("input/pose", 10, on_pf_pose);
+    sub_initialpose_ = create_subscription<PoseCovStamped>("input/initialpose", 10, on_initialpose);
     // Publisher
-    pub_pose_stamped_ = this->create_publisher<PoseCovStamped>("pose_cov", 10);
+    pub_pose_stamped_ = this->create_publisher<PoseCovStamped>("output/initialpose3d", 10);
   }
 
 private:

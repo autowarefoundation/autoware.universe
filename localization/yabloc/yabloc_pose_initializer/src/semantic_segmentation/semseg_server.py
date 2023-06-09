@@ -36,7 +36,7 @@ class SemsegServer(Node):
         self.bridge_ = CvBridge()
 
         self.srv = self.create_service(
-            Semseg, '/srv/semseg_srv', self.on_service)
+            Semseg, 'semseg_srv', self.on_service)
 
     def on_service(self, request, response):
         response.dst_image = self.__inference(request.src_image)

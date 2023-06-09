@@ -11,7 +11,7 @@ This package contains some executable nodes related to particle filter.
 ## Purpose
 
 * This node performs predictive updating and resampling of particles.
-* This node retroactively reflects the particle weights determined by the corrector node.
+* It retroactively reflects the particle weights determined by the corrector node.
 
 ## Inputs / Outputs
 
