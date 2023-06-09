@@ -11,52 +11,17 @@
 * [yabloc_particle_filter](yabloc_particle_filter/README.md)
 * [yabloc_pose_initializer](yabloc_pose_initializer/README.md)
 
-## Architecture
+## How to launch YabLoc instead of NDT
 
+When launching autoware, if you set `localization_mode:=yabloc` as an argument, YabLoc will be launched instead of NDT.
+By default, `localization_mode` is `ndt`.
 
-![node_diagram](docs/yabloc_architecture.drawio.svg)
+A sample command to use YabLoc is as follows
 
-
-### Input topics
-
-| topic name                                            | msg type                                       |
-|-------------------------------------------------------|------------------------------------------------|
-| `/sensing/camera/traffic_light/image_raw/compressed`  | `sensor_msgs/msg/CompressedImage`              |
-| `/sensing/camera/traffic_light/camera_info`           | `sensor_msgs/msg/CameraInfo`                   |
-| `/sensing/gnss/pose_with_covariance`                  | `geometry_msgs/msg/PoseWithCovarianceStamped`  |
-| `/localization/twist_estimator/twist_with_covariance` | `geometry_msgs/msg/TwistWithCovarianceStamped` |
-| `/map/vector_map`                                     | `autoware_auto_mapping_msgs/msg/HADMapBin`     |
-| `/tf_static`                                          | `tf2_msgs/msg/TFMessage`                       |
-| `/initialpose3d`                                      | `geometry_msgs/msg/PoseWithCovarianceStamped`  |
-
-### Output pose topics
-
-
-| topic name                                            | msg type                                      |
-|-------------------------------------------------------|-----------------------------------------------|
-| `/localicazation/pose_estimator/pose_with_covariance` | `geometry_msgs/msg/PoseWithCovarianceStamped` |
-
-### Output topics for visualization
-
-**These topics are not visualized by default.**
-
-<img src="docs/yabloc_rviz_description.png" width="800">
-
-
-| index | topic name                                       | description                                                                                                                                                            |
-|-------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1     | `/localicazation/pf/predicted_particle_marker`   | particle distribution of particle fitler. Red particles are probable candidate.                                                                                        |
-| 2     | `/localicazation/pf/scored_cloud`                | 3D projected line segments. the color indicates how well they  match the map.                                                                                          |
-| 3     | `/localicazation/imgproc/lanelet2_overlay_image` | overlay of lanelet2 (yellow lines) onto image based on estimated pose. If they match well with the actual road markings, it means that the localization performs well. |
-
-### Output image topics for visualization
-
-<img src="docs/yabloc_image_description.png" width="800">
-
-
-| index | topic name                                                | description                                                                                           |
-|-------|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| 1     | `/localicazation/pf/match_image`                          | projected line segments                                                                               |
-| 2     | `/localicazation/imgproc/segmented_image`                 | graph based segmentation result                                                                       |
-| 3     | `/localicazation/imgproc/lanelet2_overlay_image`          | overlay of lanelet2                                                                                   |
-| 4     | `/localicazation/imgproc/image_with_colored_line_segment` | classifified line segments. green line segments are used in particle correction |
+```shell
+ros2 launch autoware_launch logging_simulator.launch.xml \
+  map_path:=$HOME/autoware_map/sample-map-rosbag\
+  vehicle_model:=sample_vehicle \
+  sensor_model:=sample_sensor_kit \
+  localization_mode:=yabloc
+```

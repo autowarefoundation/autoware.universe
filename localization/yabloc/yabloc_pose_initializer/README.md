@@ -52,15 +52,15 @@ https://github.com/PINTO0309/PINTO_model_zoo/tree/main/136_road-segmentation-ada
 
 ## Services
 
-| Name               | Type                                                    | Description                     |
-|--------------------|---------------------------------------------------------|---------------------------------|
-| `yabloc_align_srv` | tier4_localization_msgs::srv::PoseWithCovarianceStamped | initial pose estimation request |
+| Name               | Type                                                      | Description                     |
+|--------------------|-----------------------------------------------------------|---------------------------------|
+| `yabloc_align_srv` | `tier4_localization_msgs::srv::PoseWithCovarianceStamped` | initial pose estimation request |
 
 ## Clients
 
-| Name         | Type                                 | Description                   |
-|--------------|--------------------------------------|-------------------------------|
-| `semseg_srv` | yabloc_pose_initializer::srv::Semseg | semantic segmentation request |
+| Name         | Type                                   | Description                   |
+|--------------|----------------------------------------|-------------------------------|
+| `semseg_srv` | `yabloc_pose_initializer::srv::Semseg` | semantic segmentation request |
 
 
 # semantic_segmentation
@@ -69,9 +69,9 @@ https://github.com/PINTO0309/PINTO_model_zoo/tree/main/136_road-segmentation-ada
 
 * This node performs semantic segmentation.
 ## Services
-| Name         | Type                                 | Description                   |
-|--------------|--------------------------------------|-------------------------------|
-| `semseg_srv` | yabloc_pose_initializer::srv::Semseg | semantic segmentation request |
+| Name         | Type                                   | Description                   |
+|--------------|----------------------------------------|-------------------------------|
+| `semseg_srv` | `yabloc_pose_initializer::srv::Semseg` | semantic segmentation request |
 
 
 # gnss_pose_initializer
@@ -83,14 +83,14 @@ https://github.com/PINTO0309/PINTO_model_zoo/tree/main/136_road-segmentation-ada
 * It is not launched by default.
 ### Input
 
-| Name                | Type                                         | Description              |
-|---------------------|----------------------------------------------|--------------------------|
-| `input/ublox_topic` | `ublox_msgs::msg::NavPVT`               | gnss measurement |
-| `input/pose`   | `geometry_msgs::msg::PoseStamped`                    |  to check yabloc is initialized    |
-| `input/initialpose`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | published from rviz 2d pose estimate        |
+| Name                | Type                                            | Description                          |
+|---------------------|-------------------------------------------------|--------------------------------------|
+| `input/ublox_topic` | `ublox_msgs::msg::NavPVT`                       | gnss measurement                     |
+| `input/pose`        | `geometry_msgs::msg::PoseStamped`               | to check yabloc is initialized       |
+| `input/initialpose` | `geometry_msgs::msg::PoseWithCovarianceStamped` | published from rviz 2d pose estimate |
 
 ### Output
 
-| Name                | Type                                   | Description             |
-|---------------------|----------------------------------------|-------------------------|
-| `output/initialpose3d`| `geometry_msgs::msg::PoseWithCovarianceStamped` | initial pose |
+| Name                   | Type                                            | Description  |
+|------------------------|-------------------------------------------------|--------------|
+| `output/initialpose3d` | `geometry_msgs::msg::PoseWithCovarianceStamped` | initial pose |

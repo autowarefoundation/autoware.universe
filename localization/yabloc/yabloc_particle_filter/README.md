@@ -36,16 +36,16 @@ This package contains some executable nodes related to particle filter.
 
 ## Parameters
 
-| Name                          | Type   | Description                                                                          |
-|-------------------------------|--------|--------------------------------------------------------------------------------------|
-| `visualize`                   | bool   | whether particles are also published in visualization_msgs or not                    |
-| `static_linear_covariance`    | double | to override the covariance of `/twist_with_covariance`                               |
-| `static_angular_covariance`   | double | to override the covariance of `/twist_with_covariance`                               |
-| `resampling_interval_seconds` | double | the interval of particle resamping                                                   |
-| `num_of_particles`            | int    | the number of particles                                                              |
-| `prediction_rate`             | double | frequency of forecast updates, in Hz                                                 |
-| `is_swap_mode`                | bool   | (under development) swap_mode will allow to switch between ndt and yabloc at runtime |
-| `cov_xx_yy`                   | list   | the covariance of initial pose                                                       |
+| Name                          | Type             | Description                                                                          |
+|-------------------------------|------------------|--------------------------------------------------------------------------------------|
+| `visualize`                   | bool             | whether particles are also published in visualization_msgs or not                    |
+| `static_linear_covariance`    | double           | to override the covariance of `/twist_with_covariance`                               |
+| `static_angular_covariance`   | double           | to override the covariance of `/twist_with_covariance`                               |
+| `resampling_interval_seconds` | double           | the interval of particle resamping                                                   |
+| `num_of_particles`            | int              | the number of particles                                                              |
+| `prediction_rate`             | double           | frequency of forecast updates, in Hz                                                 |
+| `is_swap_mode`                | bool             | (under development) swap_mode will allow to switch between ndt and yabloc at runtime |
+| `cov_xx_yy`                   | vector\<double\> | the covariance of initial pose                                                       |
 
 # gnss_particle_corrector
 
@@ -77,21 +77,21 @@ This package contains some executable nodes related to particle filter.
 
 ## Parameters
 
-| Name                             | Type  | Description                                                                                           |
-|----------------------------------|-------|-------------------------------------------------------------------------------------------------------|
-| `acceptable_max_delay`           | float | how long to hold the predicted particles                                                              |
-| `visualize`                      | float | whether publish particles as marker_array   or not                                                    |
-| `mahalanobis_distance_threshold` | float | if the Mahalanobis distance to the GNSS for particle exceeds this, the correction skips.              |
-| `use_ublox_msg`                  | bool  | whether use to ublox_msgs. if it is false, pose_with_covariance is used                               |
-| `ignore_less_than_float`         | bool  | if this is true, only FIX or FLOAT is used for correction (No effect when using pose_with_covariance) |
-| `for_fixed/max_weight`           | bool  | parameter for gnss weight distribution                                                                |
-| `for_fixed/flat_radius`          | bool  | parameter for gnss weight distribution                                                                |
-| `for_fixed/max_radius`           | bool  | parameter for gnss weight distribution                                                                |
-| `for_fixed/min_weight`           | bool  | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/flat_radius`      | bool  | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/max_radius`       | bool  | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/min_weight`       | bool  | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/max_weight`       | bool  | parameter for gnss weight distribution                                                                |
+| Name                             | Type   | Description                                                                                           |
+|----------------------------------|--------|-------------------------------------------------------------------------------------------------------|
+| `acceptable_max_delay`           | double | how long to hold the predicted particles                                                              |
+| `visualize`                      | double | whether publish particles as marker_array   or not                                                    |
+| `mahalanobis_distance_threshold` | double | if the Mahalanobis distance to the GNSS for particle exceeds this, the correction skips.              |
+| `use_ublox_msg`                  | bool   | whether use to ublox_msgs. if it is false, pose_with_covariance is used                               |
+| `ignore_less_than_float`         | bool   | if this is true, only FIX or FLOAT is used for correction (No effect when using pose_with_covariance) |
+| `for_fixed/max_weight`           | bool   | parameter for gnss weight distribution                                                                |
+| `for_fixed/flat_radius`          | bool   | parameter for gnss weight distribution                                                                |
+| `for_fixed/max_radius`           | bool   | parameter for gnss weight distribution                                                                |
+| `for_fixed/min_weight`           | bool   | parameter for gnss weight distribution                                                                |
+| `for_not_fixed/flat_radius`      | bool   | parameter for gnss weight distribution                                                                |
+| `for_not_fixed/max_radius`       | bool   | parameter for gnss weight distribution                                                                |
+| `for_not_fixed/min_weight`       | bool   | parameter for gnss weight distribution                                                                |
+| `for_not_fixed/max_weight`       | bool   | parameter for gnss weight distribution                                                                |
 
 
 # camera_particle_corrector
@@ -140,6 +140,6 @@ This package contains some executable nodes related to particle filter.
 
 ## Services
 
-| Name         | Type                   | Description                               |
-|--------------|------------------------|-------------------------------------------|
-| `switch_srv` | std_srvs::srv::SetBool | activation and deactivation of correction |
+| Name         | Type                     | Description                               |
+|--------------|--------------------------|-------------------------------------------|
+| `switch_srv` | `std_srvs::srv::SetBool` | activation and deactivation of correction |
