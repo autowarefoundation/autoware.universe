@@ -173,11 +173,6 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType type, const Direction & direction);
 
-void addSegment(
-  std::vector<Pose> & path, const double initial_velocity, const double acc,
-  const double start_time, const double end_time, const double resolution,
-  const FrenetPoint & vehicle_pose_frenet, const double offset = 0.0);
-
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
   const size_t nearest_seg_idx, const double duration, const double resolution,
