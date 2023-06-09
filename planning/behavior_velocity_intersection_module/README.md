@@ -34,7 +34,7 @@ The `Attention Area` in the intersection are defined as the set of lanes that ar
 
 Following table shows an example of how to assign `right_of_way` tag and set `yield_lanes` to each lane in intersections.
 
-| turn direction \ traffic light | w/ traffic light                                                | w/o traffic light                                |
+| turn direction / traffic light | w/ traffic light                                                | w/o traffic light                                |
 | ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------ |
 | straight                       | Highest priority of all                                         | Priority over left/right lanes of the same group |
 | left(Left hand traffic)        | Priority over the other group and right lanes of the same group | Priority over right lanes of the same group      |
