@@ -165,6 +165,10 @@ public:
 
   std::string getModuleTypeStr() const { return std::string{magic_enum::enum_name(type_)}; }
 
+  LaneChangeModuleType getModuleType() const { return type_; }
+
+  TurnSignalDecider getTurnSignalDecider() { return planner_data_->turn_signal_decider; }
+
   Direction getDirection() const
   {
     if (direction_ == Direction::NONE && !status_.lane_change_path.path.points.empty()) {
