@@ -201,7 +201,6 @@ MarkerArray createEgoPredictedPathMarkerArray(
   const float & b)
 {
   if (ego_predicted_path.path.empty()) {
-    std::cerr << "Ego predicted path is empty" << std::endl;
     return MarkerArray{};
   }
 
@@ -215,14 +214,9 @@ MarkerArray createEgoPredictedPathMarkerArray(
     createMarkerScale(0.1, 0.1, 0.1), createMarkerColor(r, g, b, 0.999));
 
   marker.points.reserve(path.size());
-  size_t i = 0;
   for (const auto & point : path) {
     marker.points.push_back(point.position);
-    // std::cerr << "point " << i << " : " << point.position.x << ", " << point.position.y << ", "
-    //           << point.position.z << std::endl;
-    i++;
   }
-  std::cerr << "the number of points in the path : " << i << std::endl;
   msg.markers.push_back(marker);
   return msg;
 }

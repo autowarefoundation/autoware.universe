@@ -137,7 +137,6 @@ PredictedPath createPredictedPathFromTargetVelocity(
     std::min(following_trajectory.points.size(), static_cast<size_t>(100)));
 
   if (following_trajectory.points.empty()) {
-    std::cerr << "Trajectory path is empty" << std::endl;
     return predicted_path;
   }
 
