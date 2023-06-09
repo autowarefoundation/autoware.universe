@@ -43,11 +43,13 @@ The `backward_length_buffer_for_end_of_lane` is added to allow some window for a
 Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
 Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `prepare_length`, `prepare_velocity` and `lane_changing_length` equation.
 
-The predetermined acceleration values are a set of value that starts from `acceleration = maximum_acceleration`, and decrease by `acceleration_resolution` until it reaches `acceleration = -maximum_deceleration`. Both `maximum_acceleration` and  `maximum_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
+The predetermined acceleration values are a set of value that starts from `acceleration = maximum_acceleration`, and decrease by `acceleration_resolution` until it reaches `acceleration = -maximum_deceleration`. Both `maximum_acceleration` and `maximum_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
+
 ```
 maximum_acceleration = min(common_param.max_acc, lane_change_param.max_acc)
 maximum_deceleration = max(common_param.min_acc, lane_change_param.min_acc)
 ```
+
 where `common_param` is vehicle common parameter, which defines vehicle common maximum acceleration and deceleration. Whereas, `lane_change_param` has maximum acceleration and deceleration for the lane change module. For example, if a user set and `common_param.max_acc=1.0` and `lane_change_param.max_acc=0.0`, `maximum_acceleration` becomes `0.0`, and the lane change does not accelerate in the lane change phase.
 
 The `acceleration_resolution` is determine by the following
@@ -241,19 +243,19 @@ The last behavior will also occur if the ego vehicle has departed from the curre
 
 The following parameters are configurable in `lane_change.param.yaml`.
 
-| Name                                     | Unit   | Type   | Description                                                                             | Default value |
-| :--------------------------------------- | ------ | ------ | --------------------------------------------------------------------------------------- | ------------- |
-| `prepare_duration`                       | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.            | 4.0           |
-| `lane_changing_safety_check_duration`    | [m]    | double | The total time that is taken to complete the lane-changing task.                        | 8.0           |
-| `backward_length_buffer_for_end_of_lane` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change   | 2.0           |
-| `lane_change_finish_judge_buffer`        | [m]    | double | The additional buffer used to confirm lane change process completion                    | 3.0           |
-| `lane_changing_lateral_jerk`             | [m/s3] | double | Lateral jerk value for lane change path generation                                      | 0.5           |
-| `minimum_lane_changing_velocity`         | [m/s]  | double | Minimum speed during lane changing process.                                             | 2.78          |
-| `prediction_time_resolution`             | [s]    | double | Time resolution for object's path interpolation and collision check.                    | 0.5           |
-| `longitudinal_acceleration_sampling_num`               | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration| 5            |
-| `lateral_acceleration_sampling_num`               | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration| 3            |
-| `max_longitudinal_acc`               | [-]    | double | maximum longitudinal acceleration for lane change |  1.0            |
-| `min_longitudinal_acc`               | [-]    | double | maximum longitudinal deceleration for lane change | -1.0            |
+| Name                                     | Unit   | Type   | Description                                                                                          | Default value |
+| :--------------------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------- | ------------- |
+| `prepare_duration`                       | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.                         | 4.0           |
+| `lane_changing_safety_check_duration`    | [m]    | double | The total time that is taken to complete the lane-changing task.                                     | 8.0           |
+| `backward_length_buffer_for_end_of_lane` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                | 2.0           |
+| `lane_change_finish_judge_buffer`        | [m]    | double | The additional buffer used to confirm lane change process completion                                 | 3.0           |
+| `lane_changing_lateral_jerk`             | [m/s3] | double | Lateral jerk value for lane change path generation                                                   | 0.5           |
+| `minimum_lane_changing_velocity`         | [m/s]  | double | Minimum speed during lane changing process.                                                          | 2.78          |
+| `prediction_time_resolution`             | [s]    | double | Time resolution for object's path interpolation and collision check.                                 | 0.5           |
+| `longitudinal_acceleration_sampling_num` | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration | 5             |
+| `lateral_acceleration_sampling_num`      | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration      | 3             |
+| `max_longitudinal_acc`                   | [-]    | double | maximum longitudinal acceleration for lane change                                                    | 1.0           |
+| `min_longitudinal_acc`                   | [-]    | double | maximum longitudinal deceleration for lane change                                                    | -1.0          |
 
 ### Collision checks during lane change
 
