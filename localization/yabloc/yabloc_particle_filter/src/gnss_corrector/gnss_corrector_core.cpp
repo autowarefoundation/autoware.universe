@@ -41,7 +41,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   height_sub_ = create_subscription<Float32>("input/height", 10, on_height);
 
   // Publisher
-  marker_pub_ = create_publisher<MarkerArray>("gnss/range_marker", 10);
+  marker_pub_ = create_publisher<MarkerArray>("debug/gnss_range_marker", 10);
 }
 
 Eigen::Vector3f extract_enu_vel(const GnssParticleCorrector::NavPVT & msg)

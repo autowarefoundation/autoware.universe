@@ -48,7 +48,7 @@ GroundServer::GroundServer()
 
   pub_ground_height_ = create_publisher<Float32>("output/height", 10);
   pub_ground_plane_ = create_publisher<Float32Array>("output/ground", 10);
-  pub_marker_ = create_publisher<Marker>("output/ground_marker", 10);
+  pub_marker_ = create_publisher<Marker>("output/ground_markers", 10);
   pub_string_ = create_publisher<String>("output/ground_status", 10);
   pub_near_cloud_ = create_publisher<PointCloud2>("output/near_cloud", 10);
 }

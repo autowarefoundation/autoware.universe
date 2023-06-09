@@ -41,12 +41,12 @@ CameraParticleCorrector::CameraParticleCorrector()
   enable_switch_ = declare_parameter<bool>("enabled_at_first");
 
   // Publication
-  pub_image_ = create_publisher<Image>("match_image", 10);
-  pub_map_image_ = create_publisher<Image>("cost_map_image", 10);
-  pub_marker_ = create_publisher<MarkerArray>("cost_map_range", 10);
-  pub_string_ = create_publisher<String>("state_string", 10);
-  pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
-  pub_scored_posteriori_cloud_ = create_publisher<PointCloud2>("scored_post_cloud", 10);
+  pub_image_ = create_publisher<Image>("debug/match_image", 10);
+  pub_map_image_ = create_publisher<Image>("debug/cost_map_image", 10);
+  pub_marker_ = create_publisher<MarkerArray>("debug/cost_map_range", 10);
+  pub_string_ = create_publisher<String>("debug/state_string", 10);
+  pub_scored_cloud_ = create_publisher<PointCloud2>("debug/scored_cloud", 10);
+  pub_scored_posteriori_cloud_ = create_publisher<PointCloud2>("debug/scored_post_cloud", 10);
 
   // Subscription
   auto on_line_segments = std::bind(&CameraParticleCorrector::on_line_segments, this, _1);
@@ -54,10 +54,11 @@ CameraParticleCorrector::CameraParticleCorrector()
   auto on_bounding_box = std::bind(&CameraParticleCorrector::on_bounding_box, this, _1);
   auto on_pose = std::bind(&CameraParticleCorrector::on_pose, this, _1);
   sub_line_segments_cloud_ =
-    create_subscription<PointCloud2>("line_segments_cloud", 10, on_line_segments);
-  sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
-  sub_bounding_box_ = create_subscription<PointCloud2>("ll2_bounding_box", 10, on_bounding_box);
-  sub_pose_ = create_subscription<PoseStamped>("pose", 10, on_pose);
+    create_subscription<PointCloud2>("input/line_segments_cloud", 10, on_line_segments);
+  sub_ll2_ = create_subscription<PointCloud2>("input/ll2_road_marking", 10, on_ll2);
+  sub_bounding_box_ =
+    create_subscription<PointCloud2>("input/ll2_bounding_box", 10, on_bounding_box);
+  sub_pose_ = create_subscription<PoseStamped>("input/pose", 10, on_pose);
 
   auto on_service = std::bind(&CameraParticleCorrector::on_service, this, _1, _2);
   switch_service_ = create_service<SetBool>("switch_srv", on_service);
@@ -68,7 +69,10 @@ CameraParticleCorrector::CameraParticleCorrector()
     rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer));
 }
 
-void CameraParticleCorrector::on_pose(const PoseStamped & msg) { latest_pose_ = msg; }
+void CameraParticleCorrector::on_pose(const PoseStamped & msg)
+{
+  latest_pose_ = msg;
+}
 
 void CameraParticleCorrector::on_service(
   SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response)
