@@ -420,7 +420,7 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const auto & lane_change_path = module_type_->getLaneChangeStatus().lane_change_path;
 
   if (
-    module_type_->getModuleType() == LaneChangeModuleType::NORMAL || !target_lanes.empty() ||
+    module_type_->getModuleType() != LaneChangeModuleType::NORMAL || !target_lanes.empty() ||
     !is_valid) {
     return current_turn_signal_info;
   }
