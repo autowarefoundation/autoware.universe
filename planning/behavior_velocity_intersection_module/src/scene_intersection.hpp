@@ -131,6 +131,7 @@ public:
   {
     size_t first_stop_line_idx;
     size_t occlusion_stop_line_idx;
+    bool is_actually_occlusion_cleared;
     util::IntersectionStopLines stop_lines;
   };
   struct PeekingTowardOcclusion
@@ -145,6 +146,7 @@ public:
   {
     size_t stop_line_idx;
     size_t occlusion_stop_line_idx;
+    bool is_actually_occlusion_cleared;
     util::IntersectionStopLines stop_lines;
   };
   struct Safe
