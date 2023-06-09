@@ -250,53 +250,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   module_type_->updateLaneChangeStatus();
 
   // change turn signal when the vehicle reaches at the end of the path for waiting lane change
-  const auto & target_lanes = module_type_->getLaneChangeStatus().lane_change_lanes;
-  if (
-    !out.path->points.empty() && !target_lanes.empty() &&
-    module_type_->getModuleType() == LaneChangeModuleType::NORMAL) {
-    const double minimum_lc_turn_signal_length = 10.0;
-    const auto & route_handler = module_type_->getRouteHandler();
-    const auto & common_parameter = module_type_->getCommonParam();
-    const auto shift_intervals =
-      route_handler->getLateralIntervalsToPreferredLane(target_lanes.back());
-    const double next_lane_change_buffer =
-      utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
-    const double & nearest_dist_threshold = common_parameter.ego_nearest_dist_threshold;
-    const double & nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
-
-    const double buffer = next_lane_change_buffer + minimum_lc_turn_signal_length;
-    const double path_length = motion_utils::calcArcLength(out.path->points);
-    const auto & current_pose = module_type_->getEgoPose();
-    const auto & front_point = out.path->points.front().point.pose.position;
-    const size_t & current_nearest_seg_idx =
-      motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        out.path->points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
-    const double length_front_to_ego = motion_utils::calcSignedArcLength(
-      out.path->points, front_point, static_cast<size_t>(0), current_pose.position,
-      current_nearest_seg_idx);
-    const auto start_pose = motion_utils::calcLongitudinalOffsetPose(
-      out.path->points, 0, std::max(path_length - buffer, 0.0));
-    if (path_length - length_front_to_ego < buffer && start_pose) {
-      // modify turn signal
-      const auto new_turn_signal_info = [&](const Direction & direction) {
-        TurnSignalInfo new_turn_signal_info;
-        new_turn_signal_info.desired_start_point = *start_pose;
-        new_turn_signal_info.desired_end_point = out.path->points.back().point.pose;
-        new_turn_signal_info.required_start_point = new_turn_signal_info.desired_start_point;
-        new_turn_signal_info.required_end_point = new_turn_signal_info.desired_end_point;
-        if (direction == Direction::LEFT) {
-          new_turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-        } else if (direction == Direction::RIGHT) {
-          new_turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-        }
-        return new_turn_signal_info;
-      };
-      const auto lc_turn_signal_info = new_turn_signal_info(module_type_->getDirection());
-      out.turn_signal_info = module_type_->getTurnSignalDecider().use_prior_turn_signal(
-        *out.path, current_pose, current_nearest_seg_idx, out.turn_signal_info, lc_turn_signal_info,
-        nearest_dist_threshold, nearest_yaw_threshold);
-    }
-  }
+  out.turn_signal_info = getCurrentTurnSignalInfo(*out.path, out.turn_signal_info);
 
   if (!module_type_->isValidPath()) {
     path_candidate_ = std::make_shared<PathWithLaneId>();
@@ -454,6 +408,72 @@ void LaneChangeInterface::acceptVisitor(const std::shared_ptr<SceneModuleVisitor
   if (visitor) {
     visitor->visitLaneChangeInterface(this);
   }
+}
+
+TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
+  const PathWithLaneId & path, const TurnSignalInfo & original_turn_signal_info)
+{
+  TurnSignalInfo current_turn_signal_info;
+
+  const auto & target_lanes = module_type_->getLaneChangeStatus().lane_change_lanes;
+  const auto & is_valid = module_type_->getLaneChangeStatus().is_valid_path;
+  const auto & lane_change_path = module_type_->getLaneChangeStatus().lane_change_path;
+
+  if (
+    module_type_->getModuleType() == LaneChangeModuleType::NORMAL || !target_lanes.empty() ||
+    !is_valid) {
+    return current_turn_signal_info;
+  }
+
+  // check direction
+  const auto & current_pose = module_type_->getEgoPose();
+  const auto direction = module_type_->getDirection();
+  if (direction == Direction::LEFT) {
+    current_turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+  } else if (direction == Direction::RIGHT) {
+    current_turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+  }
+
+  if (path.points.empty()) {
+    current_turn_signal_info.desired_start_point = current_pose;
+    current_turn_signal_info.required_start_point = current_pose;
+    current_turn_signal_info.desired_end_point = lane_change_path.lane_changing_end;
+    current_turn_signal_info.required_end_point = lane_change_path.lane_changing_end;
+    return current_turn_signal_info;
+  }
+
+  const double minimum_lc_turn_signal_length = 10.0;
+  const auto & route_handler = module_type_->getRouteHandler();
+  const auto & common_parameter = module_type_->getCommonParam();
+  const auto shift_intervals =
+    route_handler->getLateralIntervalsToPreferredLane(target_lanes.back());
+  const double next_lane_change_buffer =
+    utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
+  const double & nearest_dist_threshold = common_parameter.ego_nearest_dist_threshold;
+  const double & nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
+
+  const double buffer = next_lane_change_buffer + minimum_lc_turn_signal_length;
+  const double path_length = motion_utils::calcArcLength(path.points);
+  const auto & front_point = path.points.front().point.pose.position;
+  const size_t & current_nearest_seg_idx =
+    motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
+  const double length_front_to_ego = motion_utils::calcSignedArcLength(
+    path.points, front_point, static_cast<size_t>(0), current_pose.position,
+    current_nearest_seg_idx);
+  const auto start_pose =
+    motion_utils::calcLongitudinalOffsetPose(path.points, 0, std::max(path_length - buffer, 0.0));
+  if (path_length - length_front_to_ego < buffer && start_pose) {
+    // modify turn signal
+    current_turn_signal_info.desired_start_point = *start_pose;
+    current_turn_signal_info.desired_end_point = lane_change_path.lane_changing_end;
+    current_turn_signal_info.required_start_point = current_turn_signal_info.desired_start_point;
+    current_turn_signal_info.required_end_point = current_turn_signal_info.desired_end_point;
+  }
+
+  return module_type_->getTurnSignalDecider().use_prior_turn_signal(
+    path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
+    current_turn_signal_info, nearest_dist_threshold, nearest_yaw_threshold);
 }
 
 void SceneModuleVisitor::visitLaneChangeInterface(const LaneChangeInterface * interface) const
