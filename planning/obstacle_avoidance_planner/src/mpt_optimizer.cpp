@@ -844,11 +844,19 @@ void MPTOptimizer::keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_poin
 {
   // calculate drivable area width considering the curvature
   std::vector<double> min_dynamic_drivable_width_vec;
-  for (const auto & ref_point : ref_points) {
+  for (int i = 0; i < static_cast<int>(ref_points.size()); ++i) {
+    double curvature = std::abs(ref_points.at(i).curvature);
+    if (i != static_cast<int>(ref_points.size()) - 1) {
+      curvature = std::max(curvature, std::abs(ref_points.at(i + 1).curvature));
+    }
+    if (i != 0) {
+      curvature = std::max(curvature, std::abs(ref_points.at(i - 1).curvature));
+    }
+
     const double max_longitudinal_length = std::max(
       std::abs(vehicle_info_.max_longitudinal_offset_m),
       std::abs(vehicle_info_.min_longitudinal_offset_m));
-    const double turning_radius = 1.0 / std::abs(ref_point.curvature);
+    const double turning_radius = 1.0 / curvature;
     const double additional_drivable_width_by_curvature =
       std::hypot(max_longitudinal_length, turning_radius + vehicle_info_.vehicle_width_m / 2.0) -
       turning_radius - vehicle_info_.vehicle_width_m / 2.0;
