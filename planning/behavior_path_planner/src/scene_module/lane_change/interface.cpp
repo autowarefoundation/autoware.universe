@@ -413,19 +413,18 @@ void LaneChangeInterface::acceptVisitor(const std::shared_ptr<SceneModuleVisitor
 TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const PathWithLaneId & path, const TurnSignalInfo & original_turn_signal_info)
 {
-  TurnSignalInfo current_turn_signal_info;
-
   const auto & target_lanes = module_type_->getLaneChangeStatus().lane_change_lanes;
   const auto & is_valid = module_type_->getLaneChangeStatus().is_valid_path;
   const auto & lane_change_path = module_type_->getLaneChangeStatus().lane_change_path;
 
   if (
-    module_type_->getModuleType() != LaneChangeModuleType::NORMAL || !target_lanes.empty() ||
+    module_type_->getModuleType() != LaneChangeModuleType::NORMAL || target_lanes.empty() ||
     !is_valid) {
-    return current_turn_signal_info;
+    return original_turn_signal_info;
   }
 
   // check direction
+  TurnSignalInfo current_turn_signal_info;
   const auto & current_pose = module_type_->getEgoPose();
   const auto direction = module_type_->getDirection();
   if (direction == Direction::LEFT) {
