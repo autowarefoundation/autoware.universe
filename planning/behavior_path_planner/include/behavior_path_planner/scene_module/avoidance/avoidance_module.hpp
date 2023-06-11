@@ -429,19 +429,6 @@ private:
    */
   void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
 
-  /**
-   * @brief remove short "return to center" shift point. ¯¯\_/¯¯　-> ¯¯¯¯¯¯
-   * @param input shift lines.
-   * @details
-   * Is the shift point for "return to center"?
-   *  - no : Do not trim anything.
-   *  - yes: Is it short distance enough to be removed?
-   *     - no : Do not trim anything.
-   *     - yes: Remove the "return" shift point.
-   *            Recalculate longitudinal distance and modify the shift point.
-   */
-  void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
-
   /*
    * @brief trim invalid shift lines whose gradient it too large to follow.
    * @param target shift lines.
