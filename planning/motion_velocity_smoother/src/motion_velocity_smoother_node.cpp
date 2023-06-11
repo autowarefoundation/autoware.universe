@@ -747,9 +747,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
           get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
       }
     } else if (target_vel > 0.0) {
-      auto clock{rclcpp::Clock{RCL_ROS_TIME}};
       RCLCPP_WARN_THROTTLE(
-        get_logger(), clock, 3000,
+        get_logger(), *clock_, 3000,
         "calcInitialMotion : target velocity(%.3f[m/s]) is lower than engage velocity(%.3f[m/s]). ",
         target_vel, node_param_.engage_velocity);
     }

@@ -147,7 +147,7 @@ private:
 
   double over_stop_velocity_warn_thr_;  // threshold to publish over velocity warn
 
-  rclcpp::Clock::SharedPtr clock_;
+  mutable rclcpp::Clock::SharedPtr clock_;
 
   void setupSmoother(const double wheelbase);
 
