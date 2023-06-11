@@ -701,33 +701,28 @@ std::pair<Motion, MotionVelocitySmootherNode::InitializeType>
 MotionVelocitySmootherNode::calcInitialMotion(
   const TrajectoryPoints & input_traj, const size_t input_closest) const
 {
-  const double vehicle_speed{std::fabs(current_odometry_ptr_->twist.twist.linear.x)};
-  const double target_vel{std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps)};
-
-  Motion initial_motion;
-  InitializeType type{};
+  const double vehicle_speed = std::fabs(current_odometry_ptr_->twist.twist.linear.x);
+  const double target_vel = std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps);
 
   // first time
   if (!current_closest_point_from_prev_output_) {
-    initial_motion.vel = vehicle_speed;
-    initial_motion.acc = 0.0;
-    type = InitializeType::INIT;
-    return std::make_pair(initial_motion, type);
+    Motion initial_motion = {vehicle_speed, 0.0};
+    return {initial_motion, InitializeType::INIT};
   }
 
   // when velocity tracking deviation is large
-  const double desired_vel{current_closest_point_from_prev_output_->longitudinal_velocity_mps};
-  const double vel_error{vehicle_speed - std::fabs(desired_vel)};
+  const double desired_vel = current_closest_point_from_prev_output_->longitudinal_velocity_mps;
+  const double desired_acc = current_closest_point_from_prev_output_->acceleration_mps2;
+  const double vel_error = vehicle_speed - std::fabs(desired_vel);
+
   if (std::fabs(vel_error) > node_param_.replan_vel_deviation) {
-    type = InitializeType::LARGE_DEVIATION_REPLAN;
-    initial_motion.vel = vehicle_speed;  // use current vehicle speed
-    initial_motion.acc = current_closest_point_from_prev_output_->acceleration_mps2;
+    Motion initial_motion = {vehicle_speed, desired_acc};  // TODO(Horibe): use current acc
     RCLCPP_DEBUG(
       get_logger(),
       "calcInitialMotion : Large deviation error for speed control. Use current speed for "
       "initial value, desired_vel = %f, vehicle_speed = %f, vel_error = %f, error_thr = %f",
       desired_vel, vehicle_speed, vel_error, node_param_.replan_vel_deviation);
-    return std::make_pair(initial_motion, type);
+    return {initial_motion, InitializeType::LARGE_DEVIATION_REPLAN};
   }
 
   // if current vehicle velocity is low && base_desired speed is high,
@@ -740,15 +735,13 @@ MotionVelocitySmootherNode::calcInitialMotion(
                                        input_traj.at(*idx), input_traj.at(input_closest))
                                    : 0.0;
       if (!idx || stop_dist > node_param_.stop_dist_to_prohibit_engage) {
-        type = InitializeType::ENGAGING;
-        initial_motion.vel = node_param_.engage_velocity;
-        initial_motion.acc = node_param_.engage_acceleration;
+        Motion initial_motion = {node_param_.engage_velocity, node_param_.engage_acceleration};
         RCLCPP_DEBUG(
           get_logger(),
           "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
           vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist);
-        return std::make_pair(initial_motion, type);
+        return {initial_motion, InitializeType::ENGAGING};
       } else {
         RCLCPP_DEBUG(
           get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
@@ -763,14 +756,12 @@ MotionVelocitySmootherNode::calcInitialMotion(
   }
 
   // normal update: use closest in current_closest_point_from_prev_output
-  type = InitializeType::NORMAL;
-  initial_motion.vel = current_closest_point_from_prev_output_->longitudinal_velocity_mps;
-  initial_motion.acc = current_closest_point_from_prev_output_->acceleration_mps2;
+  Motion initial_motion = {desired_vel, desired_acc};
   RCLCPP_DEBUG(
     get_logger(),
     "calcInitialMotion : normal update. v0 = %f, a0 = %f, vehicle_speed = %f, target_vel = %f",
     initial_motion.vel, initial_motion.acc, vehicle_speed, target_vel);
-  return std::make_pair(initial_motion, type);
+  return {initial_motion, InitializeType::NORMAL};
 }
 
 void MotionVelocitySmootherNode::overwriteStopPoint(
