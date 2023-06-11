@@ -347,13 +347,6 @@ private:
     AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
 
   /*
-   * @brief fill gap between two shift lines.
-   * @param original shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray fillShiftLineGap(const AvoidLineArray & shift_lines) const;
-
-  /*
    * @brief merge negative & positive shift lines.
    * @param original shift lines.
    * @param debug data.
@@ -392,15 +385,19 @@ private:
   /*
    * @brief add return shift line from ego position.
    * @param shift lines which the return shift is added.
-   * @param current shift lines.
    * Pick up the last shift point, which is the most farthest from ego, from the current candidate
    * avoidance points and registered points in the shifter. If the last shift length of the point is
    * non-zero, add a return-shift to center line from the point. If there is no shift point in
    * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
    * center line from ego.
    */
-  void addReturnShiftLineFromEgo(
-    AvoidLineArray & sl_candidates, AvoidLineArray & current_raw_shift_lines) const;
+  void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines) const;
+
+  /*
+   * @brief fill gap between two shift lines.
+   * @param original shift lines.
+   */
+  void fillShiftLineGap(AvoidLineArray & shift_lines) const;
 
   /*
    * @brief generate total shift line. total shift line has shift length and gradient array.
