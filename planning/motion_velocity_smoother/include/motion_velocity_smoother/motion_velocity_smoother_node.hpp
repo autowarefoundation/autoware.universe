@@ -146,6 +146,8 @@ private:
 
   rclcpp::Clock::SharedPtr clock_;
 
+  void setupSmoother(const double wheelbase);
+
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(

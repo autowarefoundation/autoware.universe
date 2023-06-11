@@ -45,40 +45,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   over_stop_velocity_warn_thr_ = declare_parameter<double>("over_stop_velocity_warn_thr");
 
   // create smoother
-  switch (node_param_.algorithm_type) {
-    case AlgorithmType::JERK_FILTERED: {
-      smoother_ = std::make_shared<JerkFilteredSmoother>(*this);
-
-      // Set Publisher for jerk filtered algorithm
-      pub_forward_filtered_trajectory_ =
-        create_publisher<Trajectory>("~/debug/forward_filtered_trajectory", 1);
-      pub_backward_filtered_trajectory_ =
-        create_publisher<Trajectory>("~/debug/backward_filtered_trajectory", 1);
-      pub_merged_filtered_trajectory_ =
-        create_publisher<Trajectory>("~/debug/merged_filtered_trajectory", 1);
-      pub_closest_merged_velocity_ =
-        create_publisher<Float32Stamped>("~/closest_merged_velocity", 1);
-      break;
-    }
-    case AlgorithmType::L2: {
-      smoother_ = std::make_shared<L2PseudoJerkSmoother>(*this);
-      break;
-    }
-    case AlgorithmType::LINF: {
-      smoother_ = std::make_shared<LinfPseudoJerkSmoother>(*this);
-      break;
-    }
-    case AlgorithmType::ANALYTICAL: {
-      smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(*this);
-      break;
-    }
-    default:
-      throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
-  }
-  // Initialize the wheelbase
-  auto p = smoother_->getBaseParam();
-  p.wheel_base = wheelbase_;
-  smoother_->setParam(p);
+  setupSmoother(wheelbase_);
 
   // publishers, subscribers
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -125,6 +92,42 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   pub_velocity_limit_->publish(max_vel_msg);
 
   clock_ = get_clock();
+}
+
+void MotionVelocitySmootherNode::setupSmoother(const double wheelbase)
+{
+  switch (node_param_.algorithm_type) {
+    case AlgorithmType::JERK_FILTERED: {
+      smoother_ = std::make_shared<JerkFilteredSmoother>(*this);
+
+      // Set Publisher for jerk filtered algorithm
+      pub_forward_filtered_trajectory_ =
+        create_publisher<Trajectory>("~/debug/forward_filtered_trajectory", 1);
+      pub_backward_filtered_trajectory_ =
+        create_publisher<Trajectory>("~/debug/backward_filtered_trajectory", 1);
+      pub_merged_filtered_trajectory_ =
+        create_publisher<Trajectory>("~/debug/merged_filtered_trajectory", 1);
+      pub_closest_merged_velocity_ =
+        create_publisher<Float32Stamped>("~/closest_merged_velocity", 1);
+      break;
+    }
+    case AlgorithmType::L2: {
+      smoother_ = std::make_shared<L2PseudoJerkSmoother>(*this);
+      break;
+    }
+    case AlgorithmType::LINF: {
+      smoother_ = std::make_shared<LinfPseudoJerkSmoother>(*this);
+      break;
+    }
+    case AlgorithmType::ANALYTICAL: {
+      smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(*this);
+      break;
+    }
+    default:
+      throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
+  }
+
+  smoother_->setWheelBase(wheelbase);
 }
 
 rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter(
