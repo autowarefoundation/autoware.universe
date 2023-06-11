@@ -665,9 +665,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     RCLCPP_DEBUG(
       logger_, "is_over_default_stop_line && !is_over_pass_judge_line && keep_detection");
     // do nothing
-  } else if (is_over_pass_judge_line && is_go_out_ && activated_) {
+  } else if (
+    (is_over_default_stop_line && is_over_pass_judge_line && is_go_out_) || is_permanent_go_) {
     // is_go_out_: previous RTC approval
     // activated_: current RTC approval
+    is_permanent_go_ = true;
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     return IntersectionModule::Indecisive{};
   }
