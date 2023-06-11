@@ -64,8 +64,8 @@ struct Motion
   double vel = 0.0;
   double acc = 0.0;
 
-  Motion(){};
-  Motion(const double v, const double a) : vel(v), acc(a){};
+  Motion() {}
+  Motion(const double v, const double a) : vel(v), acc(a) {}
 };
 
 class MotionVelocitySmootherNode : public rclcpp::Node
