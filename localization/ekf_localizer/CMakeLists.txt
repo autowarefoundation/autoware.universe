@@ -45,6 +45,10 @@ if(BUILD_TESTING)
     test/test_ekf_localizer_launch.py
     TIMEOUT "30"
   )
+  add_ros_test(
+    test/test_ekf_localizer_mahalanobis.py
+    TIMEOUT "30"
+  )
   find_package(ament_cmake_gtest REQUIRED)
 
   set(TEST_FILES

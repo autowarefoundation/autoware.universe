@@ -17,20 +17,23 @@
 import os
 import time
 import unittest
+import yaml
 
 from ament_index_python import get_package_share_directory
-from geometry_msgs.msg import PoseWithCovarianceStamped
+import launch
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-from launch.logging import get_logger
 from launch_ros.actions import Node
+from launch.logging import get_logger
 import launch_testing
-from nav_msgs.msg import Odometry
 import pytest
+
 import rclpy
+
 from std_srvs.srv import SetBool
-import yaml
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 logger = get_logger(__name__)
 
@@ -54,73 +57,6 @@ def generate_test_description():
         ]
     )
 
-
-# class TestManager(Node):
-#     def __init__(self):
-#         super().__init__('test_manager')
-#         self.msg_buffer = []
-#         self.sub_odom = self.create_subscription(
-#             Odometry, "/ekf_odom", lambda msg: self.msg_buffer.append(msg), 10
-#         )
-
-#         self.cli = self.create_client(SetBool, '/trigger_node')
-#         while not self.cli.wait_for_service(timeout_sec=1.0):
-#             self.get_logger().info('service not available, waiting again...')
-#         self.req = SetBool.Request()
-
-#     def send_request(self):
-#         self.req.data = True
-#         self.future = self.cli.call_async(self.req)
-
-
-# class TestEKFLocalizer(unittest.TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         # Initialize the ROS context for the test node
-#         rclpy.init()
-
-#     @classmethod
-#     def tearDownClass(cls):
-#         # Shutdown the ROS context
-#         rclpy.shutdown()
-
-#     def setUp(self):
-#         # Create a ROS node for tests
-#         self.test_node = TestManager()
-#         self.evaluation_time = 0.2  # 200ms
-
-#     def tearDown(self):
-#         self.test_node.destroy_node()
-
-#     @staticmethod
-#     def print_message(stat):
-#         logger.debug("===========================")
-#         logger.debug(stat)
-
-#     def test_node_link(self):
-#         """
-#         Test node linkage.
-#         """
-#         # Trigger ekf_localizer to activate the node
-#         self.test_node.send_request()
-#         while rclpy.ok():
-#             rclpy.spin_once(self.test_node)
-#             if self.test_node.future.done():
-#                 try:
-#                     response = self.test_node.future.result()
-#                 except Exception as e:
-#                     self.test_node.get_logger().info(
-#                         'Service call failed %r' % (e,))
-#                 break
-
-#         # Test init state.
-#         # Wait until the talker transmits two messages over the ROS topic
-#         end_time = time.time() + self.evaluation_time
-#         while time.time() < end_time:
-#             rclpy.spin_once(self.test_node, timeout_sec=0.1)
-
-#         # Check if the EKF outputs some Odometry
-#         self.assertTrue(len(self.msg_buffer) > 0)
 
 class TestEKFLocalizer(unittest.TestCase):
     @classmethod
@@ -166,11 +102,9 @@ class TestEKFLocalizer(unittest.TestCase):
             self.test_node.get_logger().error('Exception while calling service: %r' % future.exception())
 
         # Send initial pose
-        pub_init_pose = self.test_node.create_publisher(
-            PoseWithCovarianceStamped, "/initialpose3d", 10
-        )
+        pub_init_pose = self.test_node.create_publisher(PoseWithCovarianceStamped, "/initialpose3d", 10)
         init_pose = PoseWithCovarianceStamped()
-        init_pose.header.frame_id = "map"
+        init_pose.header.frame_id = 'map'
         init_pose.pose.pose.position.x = 0.0
         init_pose.pose.pose.position.y = 0.0
         init_pose.pose.pose.position.z = 0.0
@@ -185,6 +119,26 @@ class TestEKFLocalizer(unittest.TestCase):
                                      0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
                                      0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
         pub_init_pose.publish(init_pose)
+        rclpy.spin_once(self.test_node, timeout_sec=0.1)
+
+        # Send pose that should be ignored by mahalanobis gate in ekf_localizer
+        pub_pose = self.test_node.create_publisher(PoseWithCovarianceStamped, "/in_pose_with_covariance", 10)
+        pose = PoseWithCovarianceStamped()
+        pose.header.frame_id = 'map'
+        pose.pose.pose.position.x = 1000000.0
+        pose.pose.pose.position.y = 1000000.0
+        pose.pose.pose.position.z = 10.0
+        pose.pose.pose.orientation.x = 0.0
+        pose.pose.pose.orientation.y = 0.0
+        pose.pose.pose.orientation.z = 0.0
+        pose.pose.pose.orientation.w = 1.0
+        pose.pose.covariance = [0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                                0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
+        pub_pose.publish(pose)
 
         # Receive Odometry
         msg_buffer = []
@@ -200,6 +154,10 @@ class TestEKFLocalizer(unittest.TestCase):
         # Check if the EKF outputs some Odometry
         self.assertTrue(len(msg_buffer) > 0)
 
+        # Assert msg to be at the origin
+        self.assertEqual(msg_buffer[-1].pose.pose.position.x, 0.0)
+        self.assertEqual(msg_buffer[-1].pose.pose.position.y, 0.0)
+        self.assertEqual(msg_buffer[-1].pose.pose.position.z, 0.0)
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
