@@ -17,23 +17,20 @@
 import os
 import time
 import unittest
-import yaml
 
 from ament_index_python import get_package_share_directory
-import launch
+from geometry_msgs.msg import PoseWithCovarianceStamped
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-from launch_ros.actions import Node
 from launch.logging import get_logger
+from launch_ros.actions import Node
 import launch_testing
-import pytest
-
-import rclpy
-
-from std_srvs.srv import SetBool
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovarianceStamped
+import pytest
+import rclpy
+from std_srvs.srv import SetBool
+import yaml
 
 logger = get_logger(__name__)
 
@@ -83,9 +80,11 @@ class TestEKFLocalizer(unittest.TestCase):
         logger.debug(stat)
 
     def set_initial_pose(self):
-        pub_init_pose = self.test_node.create_publisher(PoseWithCovarianceStamped, "/initialpose3d", 10)
+        pub_init_pose = self.test_node.create_publisher(
+            PoseWithCovarianceStamped, "/initialpose3d", 10
+        )
         init_pose = PoseWithCovarianceStamped()
-        init_pose.header.frame_id = 'map'
+        init_pose.header.frame_id = "map"
         init_pose.pose.pose.position.x = 0.0
         init_pose.pose.pose.position.y = 0.0
         init_pose.pose.pose.position.z = 0.0
@@ -94,7 +93,7 @@ class TestEKFLocalizer(unittest.TestCase):
         init_pose.pose.pose.orientation.z = 0.0
         init_pose.pose.pose.orientation.w = 1.0
         pub_init_pose.publish(init_pose)
-    
+
     def activate_node(self):
         cli_trigger = self.test_node.create_client(SetBool, "/trigger_node")
         request = SetBool.Request()
@@ -125,6 +124,7 @@ class TestEKFLocalizer(unittest.TestCase):
 
         # Check if the EKF outputs some Odometry
         self.assertTrue(len(msg_buffer) > 0)
+
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
