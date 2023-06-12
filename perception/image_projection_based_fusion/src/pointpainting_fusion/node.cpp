@@ -150,6 +150,12 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::CameraInfo & camera_info,
   sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
+  // return if no bounding box is detected
+  auto num_bbox = (input_roi_msg.feature_objects).size();
+  if (num_bbox == 0) {
+    return;
+  }
+
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
 
@@ -165,6 +171,9 @@ void PointPaintingFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
+  // std::chrono::system_clock::time_point start, end;
+  // start = std::chrono::system_clock::now();
+
   // projection matrix
   Eigen::Matrix4d camera_projection;
   camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
@@ -176,6 +185,11 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   sensor_msgs::msg::PointCloud2 transformed_pointcloud;
   tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
+  // end = std::chrono::system_clock::now();
+  // auto time = end - start;
+  // auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+  // std::cout << "transform time: " << msec << " msec" << std::endl;
+
   // iterate points
   sensor_msgs::PointCloud2Iterator<float> iter_car(painted_pointcloud_msg, "CAR");
   sensor_msgs::PointCloud2Iterator<float> iter_trk(painted_pointcloud_msg, "TRUCK");
@@ -183,6 +197,7 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   sensor_msgs::PointCloud2Iterator<float> iter_bic(painted_pointcloud_msg, "BICYCLE");
   sensor_msgs::PointCloud2Iterator<float> iter_ped(painted_pointcloud_msg, "PEDESTRIAN");
 
+  // start = std::chrono::system_clock::now();
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_pointcloud, "x"),
        iter_y(transformed_pointcloud, "y"), iter_z(transformed_pointcloud, "z");
        iter_x != iter_x.end();
@@ -194,20 +209,18 @@ void PointPaintingFusionNode::fuseOnSingleImage(
       continue;
     }
     // project
-    Eigen::Vector4d projected_point =
+    Eigen::Vector4d normalized_projected_point =
       camera_projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
-    Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
-      projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
 
     // iterate 2d bbox
     for (const auto & feature_object : input_roi_msg.feature_objects) {
       sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
       // paint current point if it is inside bbox
       if (
-        normalized_projected_point.x() >= roi.x_offset &&
-        normalized_projected_point.x() <= roi.x_offset + roi.width &&
-        normalized_projected_point.y() >= roi.y_offset &&
-        normalized_projected_point.y() <= roi.y_offset + roi.height &&
+        normalized_projected_point.x() >= roi.x_offset * (*iter_z) &&
+        normalized_projected_point.x() <= (roi.x_offset + roi.width) * (*iter_z) &&
+        normalized_projected_point.y() >= roi.y_offset * (*iter_z) &&
+        normalized_projected_point.y() <= (roi.y_offset + roi.height) * (*iter_z) &&
         feature_object.object.classification.front().label !=
           autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
         switch (feature_object.object.classification.front().label) {
@@ -218,7 +231,7 @@ void PointPaintingFusionNode::fuseOnSingleImage(
             *iter_trk = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER:
-            *iter_car = 1.0;
+            *iter_trk = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::BUS:
             *iter_bus = 1.0;
@@ -234,29 +247,42 @@ void PointPaintingFusionNode::fuseOnSingleImage(
             break;
         }
       }
-      if (debugger_) {
-        debug_image_points.push_back(normalized_projected_point);
-      }
+      // if (debugger_) {
+      //   debug_image_points.push_back(normalized_projected_point);
+      // }
     }
   }
+  // end = std::chrono::system_clock::now();
+  // time = end - start;
+  // msec = std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+  // std::cout << painted_pointcloud_msg.width << " painttime: " << msec << " msec" << std::endl;
+
   for (const auto & feature_object : input_roi_msg.feature_objects) {
     debug_image_rois.push_back(feature_object.feature.roi);
   }
 
   if (debugger_) {
     debugger_->image_rois_ = debug_image_rois;
-    debugger_->obstacle_points_ = debug_image_points;
+    // debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }
 
 void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
+  // std::chrono::system_clock::time_point start, end;
+  // start = std::chrono::system_clock::now();
+
   std::vector<centerpoint::Box3D> det_boxes3d;
   bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
   }
+
+  // end = std::chrono::system_clock::now();
+  // auto time = end - start;
+  // auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+  // std::cout << " centerpoint time: " << msec << " msec" << std::endl;
 
   autoware_auto_perception_msgs::msg::DetectedObjects output_obj_msg;
   output_obj_msg.header = painted_pointcloud_msg.header;
