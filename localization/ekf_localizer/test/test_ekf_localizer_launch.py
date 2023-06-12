@@ -17,20 +17,23 @@
 import os
 import time
 import unittest
+import yaml
 
 from ament_index_python import get_package_share_directory
-from geometry_msgs.msg import PoseWithCovarianceStamped
+import launch
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-from launch.logging import get_logger
 from launch_ros.actions import Node
+from launch.logging import get_logger
 import launch_testing
-from nav_msgs.msg import Odometry
 import pytest
+
 import rclpy
+
 from std_srvs.srv import SetBool
-import yaml
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 logger = get_logger(__name__)
 
@@ -79,12 +82,20 @@ class TestEKFLocalizer(unittest.TestCase):
         logger.debug("===========================")
         logger.debug(stat)
 
-    def set_initial_pose(self):
-        pub_init_pose = self.test_node.create_publisher(
-            PoseWithCovarianceStamped, "/initialpose3d", 10
-        )
+    def test_node_link(self):
+        """
+        Test node linkage.
+        """
+        # Trigger ekf_localizer to activate the node
+        cli_trigger = self.test_node.create_client(SetBool, "/trigger_node")
+        request = SetBool.Request()
+        request.data = True
+        cli_trigger.call_async(request)
+
+        # Send initial pose
+        pub_init_pose = self.test_node.create_publisher(PoseWithCovarianceStamped, "/initialpose3d", 10)
         init_pose = PoseWithCovarianceStamped()
-        init_pose.header.frame_id = "map"
+        init_pose.header.frame_id = 'map'
         init_pose.pose.pose.position.x = 0.0
         init_pose.pose.pose.position.y = 0.0
         init_pose.pose.pose.position.z = 0.0
@@ -93,22 +104,6 @@ class TestEKFLocalizer(unittest.TestCase):
         init_pose.pose.pose.orientation.z = 0.0
         init_pose.pose.pose.orientation.w = 1.0
         pub_init_pose.publish(init_pose)
-
-    def activate_node(self):
-        cli_trigger = self.test_node.create_client(SetBool, "/trigger_node")
-        request = SetBool.Request()
-        request.data = True
-        cli_trigger.call_async(request)
-
-    def test_node_link(self):
-        """
-        Test node linkage.
-        """
-        # Trigger ekf_localizer to activate the node
-        self.activate_node()
-
-        # Send initial pose
-        self.set_initial_pose()
 
         # Receive Odometry
         msg_buffer = []
@@ -124,7 +119,6 @@ class TestEKFLocalizer(unittest.TestCase):
 
         # Check if the EKF outputs some Odometry
         self.assertTrue(len(msg_buffer) > 0)
-
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
