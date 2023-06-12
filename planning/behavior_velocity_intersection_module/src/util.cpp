@@ -471,6 +471,17 @@ IntersectionLanelets getObjectiveLanelets(
       ego_lanelets.push_back(following_lanelet);
     }
   }
+  // add the 'following of adjacent lanelets' to ego_lanelets
+  const lanelet::ConstLanelets adjacent_lanelets =
+    planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, assoc_ids);
+  for (const auto & adjacent_lanelet : adjacent_lanelets) {
+    for (const auto & following_lanelet : routing_graph_ptr->following(adjacent_lanelet)) {
+      if (lanelet::utils::contains(ego_lanelets, following_lanelet)) {
+        continue;
+      }
+      ego_lanelets.push_back(following_lanelet);
+    }
+  }
 
   // get conflicting lanes on assigned lanelet
   const auto & conflicting_lanelets =
@@ -551,7 +562,7 @@ IntersectionLanelets getObjectiveLanelets(
     result.attention = std::move(detection_lanelets);
   }
   result.conflicting = std::move(conflicting_ex_ego_lanelets);
-  result.adjacent = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, assoc_ids);
+  result.adjacent = std::move(adjacent_lanelets);
   result.occlusion_attention = std::move(occlusion_detection_and_preceding_lanelets);
   // compoundPolygon3d
   result.attention_area = getPolygon3dFromLanelets(result.attention);
