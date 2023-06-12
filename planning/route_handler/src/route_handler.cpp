@@ -2058,7 +2058,8 @@ lanelet::ConstLanelets RouteHandler::getMainLanelets(
   return main_lanelets;
 }
 
-bool RouteHandler::noDrivableLaneInShortestPath(const lanelet::routing::LaneletPath & shortest_path) const
+bool RouteHandler::noDrivableLaneInShortestPath(
+  const lanelet::routing::LaneletPath & shortest_path) const
 {
   for (const auto & llt : shortest_path) {
     const std::string no_drivable_lane_attribute = llt.attributeOr("no_drivable_lane", "no");
