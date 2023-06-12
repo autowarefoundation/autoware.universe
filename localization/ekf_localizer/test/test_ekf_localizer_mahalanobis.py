@@ -17,23 +17,20 @@
 import os
 import time
 import unittest
-import yaml
 
 from ament_index_python import get_package_share_directory
-import launch
+from geometry_msgs.msg import PoseWithCovarianceStamped
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-from launch_ros.actions import Node
 from launch.logging import get_logger
+from launch_ros.actions import Node
 import launch_testing
-import pytest
-
-import rclpy
-
-from std_srvs.srv import SetBool
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovarianceStamped
+import pytest
+import rclpy
+from std_srvs.srv import SetBool
+import yaml
 
 logger = get_logger(__name__)
 
@@ -97,14 +94,18 @@ class TestEKFLocalizer(unittest.TestCase):
         rclpy.spin_until_future_complete(self.test_node, future)
 
         if future.result() is not None:
-            self.test_node.get_logger().info('Result of bool service: %s' % future.result().message)
+            self.test_node.get_logger().info("Result of bool service: %s" % future.result().message)
         else:
-            self.test_node.get_logger().error('Exception while calling service: %r' % future.exception())
+            self.test_node.get_logger().error(
+                "Exception while calling service: %r" % future.exception()
+            )
 
         # Send initial pose
-        pub_init_pose = self.test_node.create_publisher(PoseWithCovarianceStamped, "/initialpose3d", 10)
+        pub_init_pose = self.test_node.create_publisher(
+            PoseWithCovarianceStamped, "/initialpose3d", 10
+        )
         init_pose = PoseWithCovarianceStamped()
-        init_pose.header.frame_id = 'map'
+        init_pose.header.frame_id = "map"
         init_pose.pose.pose.position.x = 0.0
         init_pose.pose.pose.position.y = 0.0
         init_pose.pose.pose.position.z = 0.0
@@ -112,19 +113,53 @@ class TestEKFLocalizer(unittest.TestCase):
         init_pose.pose.pose.orientation.y = 0.0
         init_pose.pose.pose.orientation.z = 0.0
         init_pose.pose.pose.orientation.w = 1.0
-        init_pose.pose.covariance = [0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 
-                                     0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
-                                     0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
-                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
+        init_pose.pose.covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
         pub_init_pose.publish(init_pose)
         rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
         # Send pose that should be ignored by mahalanobis gate in ekf_localizer
-        pub_pose = self.test_node.create_publisher(PoseWithCovarianceStamped, "/in_pose_with_covariance", 10)
+        pub_pose = self.test_node.create_publisher(
+            PoseWithCovarianceStamped, "/in_pose_with_covariance", 10
+        )
         pose = PoseWithCovarianceStamped()
-        pose.header.frame_id = 'map'
+        pose.header.frame_id = "map"
         pose.pose.pose.position.x = 1000000.0
         pose.pose.pose.position.y = 1000000.0
         pose.pose.pose.position.z = 10.0
@@ -132,12 +167,44 @@ class TestEKFLocalizer(unittest.TestCase):
         pose.pose.pose.orientation.y = 0.0
         pose.pose.pose.orientation.z = 0.0
         pose.pose.pose.orientation.w = 1.0
-        pose.pose.covariance = [0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 
-                                0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
+        pose.pose.covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
         pub_pose.publish(pose)
 
         # Receive Odometry
@@ -158,6 +225,7 @@ class TestEKFLocalizer(unittest.TestCase):
         self.assertEqual(msg_buffer[-1].pose.pose.position.x, 0.0)
         self.assertEqual(msg_buffer[-1].pose.pose.position.y, 0.0)
         self.assertEqual(msg_buffer[-1].pose.pose.position.z, 0.0)
+
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):

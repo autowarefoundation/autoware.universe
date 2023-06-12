@@ -54,6 +54,7 @@ def generate_test_description():
         ]
     )
 
+
 class TestEKFLocalizer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -93,9 +94,11 @@ class TestEKFLocalizer(unittest.TestCase):
         rclpy.spin_until_future_complete(self.test_node, future)
 
         if future.result() is not None:
-            self.test_node.get_logger().info('Result of bool service: %s' % future.result().message)
+            self.test_node.get_logger().info("Result of bool service: %s" % future.result().message)
         else:
-            self.test_node.get_logger().error('Exception while calling service: %r' % future.exception())
+            self.test_node.get_logger().error(
+                "Exception while calling service: %r" % future.exception()
+            )
 
         # Send initial pose
         pub_init_pose = self.test_node.create_publisher(
@@ -110,12 +113,44 @@ class TestEKFLocalizer(unittest.TestCase):
         init_pose.pose.pose.orientation.y = 0.0
         init_pose.pose.pose.orientation.z = 0.0
         init_pose.pose.pose.orientation.w = 1.0
-        init_pose.pose.covariance = [0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 
-                                     0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
-                                     0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
-                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
+        init_pose.pose.covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
         pub_init_pose.publish(init_pose)
 
         # Receive Odometry
