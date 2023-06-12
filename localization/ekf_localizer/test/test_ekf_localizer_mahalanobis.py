@@ -24,7 +24,6 @@ import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.logging import get_logger
-from launch_ros.actions import Node
 import launch_testing
 from nav_msgs.msg import Odometry
 import pytest
