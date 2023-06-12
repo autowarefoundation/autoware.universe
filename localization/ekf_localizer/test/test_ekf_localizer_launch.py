@@ -72,7 +72,7 @@ class TestEKFLocalizer(unittest.TestCase):
     def setUp(self):
         # Create a ROS node for tests
         self.test_node = rclpy.create_node("test_node")
-        self.evaluation_time = 0.5  # 100ms
+        self.evaluation_time = 0.5  # 500ms
 
     def tearDown(self):
         self.test_node.destroy_node()
