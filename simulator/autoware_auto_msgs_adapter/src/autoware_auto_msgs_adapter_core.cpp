@@ -14,6 +14,8 @@
 
 #include "autoware_auto_msgs_adapter/autoware_auto_msgs_adapter_core.hpp"
 
+#include "autoware_auto_msgs_adapter/adapter_control.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 namespace autoware_auto_msgs_adapter
@@ -25,18 +27,17 @@ using autoware_control_msgs::msg::Control;
 AutowareAutoMsgsAdapterNode::AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("autoware_auto_msgs_adapter", node_options)
 {
-  using Adapter = rclcpp::TypeAdapter<Control, AckermannControlCommand>;
+  std::string msg_type_target = declare_parameter<std::string>("msg_type_target");
+  std::string topic_name_source = declare_parameter<std::string>("topic_name_source");
+  std::string topic_name_target = declare_parameter<std::string>("topic_name_target");
 
-  pub_ackermann_control_command_ =
-    create_publisher<AckermannControlCommand>("ackermann_control_command", rclcpp::QoS{1});
-
-  sub_control_ = create_subscription<Adapter>(
-    "control_command", rclcpp::QoS{1}, [this](const Control::SharedPtr msg) {
-      AckermannControlCommand ackermann_control_command;
-      rclcpp::TypeAdapter<Control, AckermannControlCommand>::convert_to_ros_message(
-        *msg, ackermann_control_command);
-      pub_ackermann_control_command_->publish(ackermann_control_command);
-    });
+  if (msg_type_target == "autoware_auto_control_msgs::msg::AckermannControlCommand") {
+    AdapterControl::SharedPtr adapter =
+      std::make_shared<AdapterControl>(*this, topic_name_source, topic_name_target);
+    adapter_ = std::dynamic_pointer_cast<AdapterBaseInterface>(adapter);
+  } else {
+    RCLCPP_ERROR(get_logger(), "Unknown msg type: %s", msg_type_target.c_str());
+  }
 }
 
 }  // namespace autoware_auto_msgs_adapter

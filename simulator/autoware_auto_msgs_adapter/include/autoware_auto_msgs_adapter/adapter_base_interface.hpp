@@ -11,26 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE_AUTO_MSGS_ADAPTER__AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
-#define AUTOWARE_AUTO_MSGS_ADAPTER__AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
-
-#include "autoware_auto_msgs_adapter/adapter_control.hpp"
+#ifndef BUILD_ADAPTER_BASE_INTERFACE_HPP
+#define BUILD_ADAPTER_BASE_INTERFACE_HPP
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <map>
+#include <memory>
 
 namespace autoware_auto_msgs_adapter
 {
 
-class AutowareAutoMsgsAdapterNode : public rclcpp::Node
+class AdapterBaseInterface
 {
 public:
-  explicit AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptions & node_options);
-
-private:
-  AdapterBaseInterface::SharedPtrInterface adapter_;
+  using SharedPtrInterface = std::shared_ptr<AdapterBaseInterface>;
+  using ConstSharedPtrInterface = const SharedPtrInterface;
 };
+
 }  // namespace autoware_auto_msgs_adapter
 
-#endif  // AUTOWARE_AUTO_MSGS_ADAPTER__AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
+#endif  // BUILD_ADAPTER_BASE_INTERFACE_HPP

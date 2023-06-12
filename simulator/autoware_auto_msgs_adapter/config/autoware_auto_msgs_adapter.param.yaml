@@ -1,3 +1,5 @@
 /**:
   ros__parameters:
-    test: 123
+    msg_type_target: "autoware_auto_control_msgs::msg::AckermannControlCommand"
+    topic_name_source: "topic_name_source"
+    topic_name_target: "topic_name_target"
