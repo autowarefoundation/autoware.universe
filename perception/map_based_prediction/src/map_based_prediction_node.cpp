@@ -1124,15 +1124,21 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
+    auto adjacent_left = routing_graph_ptr_->adjacentLeft(current_lanelet_data.lanelet);
     if (!!opt_left) {
       left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
+    } else if (!!adjacent_left) {
+      left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
+    auto adjacent_right = routing_graph_ptr_->adjacentRight(current_lanelet_data.lanelet);
     if (!!opt_right) {
       right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
+    } else if (!!adjacent_right) {
+      right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
     }
 
     // Step1.3 Get the centerline
