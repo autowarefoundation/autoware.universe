@@ -24,13 +24,11 @@ import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.logging import get_logger
-from launch_ros.actions import Node
 import launch_testing
 from nav_msgs.msg import Odometry
 import pytest
 import rclpy
 from std_srvs.srv import SetBool
-import yaml
 
 logger = get_logger(__name__)
 
@@ -80,9 +78,6 @@ class TestEKFLocalizer(unittest.TestCase):
         logger.debug(stat)
 
     def test_node_link(self):
-        """
-        Test node linkage.
-        """
         # Trigger ekf_localizer to activate the node
         cli_trigger = self.test_node.create_client(SetBool, "/trigger_node")
         while not cli_trigger.wait_for_service(timeout_sec=1.0):
