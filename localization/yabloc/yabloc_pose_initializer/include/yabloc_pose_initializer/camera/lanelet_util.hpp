@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_POSE_INITIALIZER__CAMERA__LANELET_UTIL_HPP_
+#define YABLOC_POSE_INITIALIZER__CAMERA__LANELET_UTIL_HPP_
+
 #include <lanelet2_core/LaneletMap.h>
 
 #include <optional>
@@ -31,3 +33,5 @@ ConstLineString3d get_closest_segment(
   const lanelet::BasicPoint2d & search_pt, const lanelet::ConstLineString3d & linestring);
 
 }  // namespace lanelet
+
+#endif  // YABLOC_POSE_INITIALIZER__CAMERA__LANELET_UTIL_HPP_

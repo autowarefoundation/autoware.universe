@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_POSE_INITIALIZER__CAMERA__LANE_IMAGE_HPP_
+#define YABLOC_POSE_INITIALIZER__CAMERA__LANE_IMAGE_HPP_
+
 #include <Eigen/Geometry>
 #include <opencv2/core.hpp>
 
@@ -37,3 +39,5 @@ private:
   lanelet::LaneletMapPtr map_;
 };
 }  // namespace yabloc
+
+#endif  // YABLOC_POSE_INITIALIZER__CAMERA__LANE_IMAGE_HPP_

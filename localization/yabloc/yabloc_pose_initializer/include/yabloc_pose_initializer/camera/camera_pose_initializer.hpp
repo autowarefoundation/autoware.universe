@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_POSE_INITIALIZER__CAMERA__CAMERA_POSE_INITIALIZER_HPP_
+#define YABLOC_POSE_INITIALIZER__CAMERA__CAMERA_POSE_INITIALIZER_HPP_
+
 #include "yabloc_pose_initializer/camera/lane_image.hpp"
 #include "yabloc_pose_initializer/camera/marker_module.hpp"
 #include "yabloc_pose_initializer/camera/projector_module.hpp"
@@ -69,3 +71,5 @@ private:
   bool estimate_pose(const Eigen::Vector3f & position, double & yaw_angle_rad, double yaw_std_rad);
 };
 }  // namespace yabloc
+
+#endif  // YABLOC_POSE_INITIALIZER__CAMERA__CAMERA_POSE_INITIALIZER_HPP_

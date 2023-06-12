@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_POSE_INITIALIZER__CAMERA__PROJECTOR_MODULE_HPP_
+#define YABLOC_POSE_INITIALIZER__CAMERA__PROJECTOR_MODULE_HPP_
+
 #include <Eigen/Core>
 #include <opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -40,3 +42,5 @@ private:
   common::StaticTfSubscriber tf_subscriber_;
 };
 }  // namespace yabloc::initializer
+
+#endif  // YABLOC_POSE_INITIALIZER__CAMERA__PROJECTOR_MODULE_HPP_

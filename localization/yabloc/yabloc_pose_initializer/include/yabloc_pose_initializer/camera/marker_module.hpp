@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_POSE_INITIALIZER__CAMERA__MARKER_MODULE_HPP_
+#define YABLOC_POSE_INITIALIZER__CAMERA__MARKER_MODULE_HPP_
+
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,3 +37,5 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 };
 }  // namespace yabloc::initializer
+
+#endif  // YABLOC_POSE_INITIALIZER__CAMERA__MARKER_MODULE_HPP_
