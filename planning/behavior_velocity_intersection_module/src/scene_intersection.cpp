@@ -616,28 +616,9 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   if (!activated_ || !occlusion_activated_) {
     is_go_out_ = false;
+  } else {
+    is_go_out_ = true;
   }
-  /*
-  if (!isActivated() ) {
-    // Get stop point and stop factor
-    {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stop_line_idx.value()).point.pose;
-      const auto stop_factor_conflict =
-        planning_utils::toRosPoints(debug_data_.conflicting_targets);
-      const auto stop_factor_stuck = planning_utils::toRosPoints(debug_data_.stuck_targets);
-      stop_factor.stop_factor_points =
-        planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
-      planning_utils::appendStopReason(stop_factor, stop_reason);
-
-      const auto & stop_pose = path->points.at(stop_line_idx.value()).point.pose;
-      velocity_factor_.set(
-        path->points, planner_data_->current_odometry->pose, stop_pose,
-  VelocityFactor::INTERSECTION);
-    }
-  }
-  */
-  is_go_out_ = true;
   RCLCPP_DEBUG(logger_, "===== plan end =====");
   return true;
 }
