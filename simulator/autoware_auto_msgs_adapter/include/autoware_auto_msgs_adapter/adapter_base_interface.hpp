@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef BUILD_ADAPTER_BASE_INTERFACE_HPP
-#define BUILD_ADAPTER_BASE_INTERFACE_HPP
+#ifndef AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_BASE_INTERFACE_HPP_
+#define AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_BASE_INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -30,4 +30,4 @@ public:
 
 }  // namespace autoware_auto_msgs_adapter
 
-#endif  // BUILD_ADAPTER_BASE_INTERFACE_HPP
+#endif  // AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_BASE_INTERFACE_HPP_

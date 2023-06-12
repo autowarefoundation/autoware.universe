@@ -40,5 +40,4 @@ TEST_F(AutowareAutoMsgsAdapterFixture, Test1_1)  // NOLINT for gtest
   auto pub = dummy_node->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "ackermann_control_command", rclcpp::QoS{1});
   pub->publish(ackermann_control_command_);
-
 }
