@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef YABLOC_PARTILCE_CORRECTOR__GNSS_CORRECTOR__WEIGHT_MANAGER_HPP_
-#define YABLOC_PARTILCE_CORRECTOR__GNSS_CORRECTOR__WEIGHT_MANAGER_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__GNSS_CORRECTOR__WEIGHT_MANAGER_HPP_
+#define YABLOC_PARTICLE_FILTER__GNSS_CORRECTOR__WEIGHT_MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -89,4 +89,4 @@ struct WeightManager
 };
 }  // namespace yabloc::modularized_particle_filter
 
-#endif  // YABLOC_PARTILCE_CORRECTOR__GNSS_CORRECTOR__WEIGHT_MANAGER_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__GNSS_CORRECTOR__WEIGHT_MANAGER_HPP_

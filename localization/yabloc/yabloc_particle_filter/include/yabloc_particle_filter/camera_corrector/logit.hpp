@@ -29,4 +29,4 @@ float logit_to_prob(float logit, float gain = 1.0f);
 float prob_to_logit(float prob);
 }  // namespace yabloc
 
-#endif  //  YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__LOGIT_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__LOGIT_HPP_

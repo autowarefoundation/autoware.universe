@@ -50,4 +50,4 @@ private:
 
 }  // namespace yabloc::common
 
-#endif  //  YABLOC_COMMON__TIMER_HPP_
+#endif  // YABLOC_COMMON__TIMER_HPP_

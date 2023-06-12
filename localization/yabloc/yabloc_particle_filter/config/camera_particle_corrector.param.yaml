@@ -1,10 +1,10 @@
-/**: 
+/**:
   ros__parameters:
     # Declared in AbstParticleCorrector
     acceptable_max_delay: 1.0
     visualize: false
 
-    # Declared in ll2_cost_map 
+    # Declared in ll2_cost_map
     image_size: 800 # cost map image made by lanelet2
     max_range: 40.0 # [m] a cost map scale size
     gamma: 5.0 # cost map intensity gradient

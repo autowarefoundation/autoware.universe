@@ -1,34 +1,33 @@
 <launch>
-    <arg name="skip_autoware_pose_initializer" default="false"/>
+  <arg name="skip_autoware_pose_initializer" default="false"/>
 
-    <group if="$(var skip_autoware_pose_initializer)">
-        <node name="gnss_pose_initializer_node" pkg="yabloc_pose_initializer" exec="gnss_pose_initializer_node" output="screen" args="--ros-args --log-level info">
-            <param name="use_sim_time" value="$(var use_sim_time)"/>
-            <remap from="input/ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
-            <remap from="input/pose" to="/localization/yabloc/pf/pose"/>
-            <remap from="input/initialpose" to="/initialpose"/>
-            <remap from="output/initialpose3d" to="/initialpose3d"/>
-        </node> 
-    </group>
+  <group if="$(var skip_autoware_pose_initializer)">
+    <node name="gnss_pose_initializer_node" pkg="yabloc_pose_initializer" exec="gnss_pose_initializer_node" output="screen" args="--ros-args --log-level info">
+      <param name="use_sim_time" value="$(var use_sim_time)"/>
+      <remap from="input/ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
+      <remap from="input/pose" to="/localization/yabloc/pf/pose"/>
+      <remap from="input/initialpose" to="/initialpose"/>
+      <remap from="output/initialpose3d" to="/initialpose3d"/>
+    </node>
+  </group>
 
-    <group unless="$(var skip_autoware_pose_initializer)">
-        <node name="camera_pose_initializer_node" pkg="yabloc_pose_initializer" exec="camera_pose_initializer_node" output="screen" args="--ros-args --log-level info">
-            <param name="use_sim_time" value="$(var use_sim_time)"/>
-            <param from="$(var camera_pose_initializer_param_path)" />
-            <remap from="input/camera_info" to="/localization/yabloc/imgproc/undistorted/camera_info"/>
-            <remap from="input/image_raw" to="/localization/yabloc/imgproc/undistorted/image_raw"/>
-            <remap from="input/vector_map" to="/map/vector_map"/>
-            <remap from="debug/init_candidates" to="init_candidates"/>
-            <remap from="yabloc_align_srv" to="/localization/yabloc/initializer/yabloc_align_srv"/>
-            <remap from="ground_srv" to="/localization/yabloc/map/ground"/>
-            <remap from="semseg_srv" to="/localization/yabloc/initializer/semseg_srv"/>
-        </node>
+  <group unless="$(var skip_autoware_pose_initializer)">
+    <node name="camera_pose_initializer_node" pkg="yabloc_pose_initializer" exec="camera_pose_initializer_node" output="screen" args="--ros-args --log-level info">
+      <param name="use_sim_time" value="$(var use_sim_time)"/>
+      <param from="$(var camera_pose_initializer_param_path)"/>
+      <remap from="input/camera_info" to="/localization/yabloc/imgproc/undistorted/camera_info"/>
+      <remap from="input/image_raw" to="/localization/yabloc/imgproc/undistorted/image_raw"/>
+      <remap from="input/vector_map" to="/map/vector_map"/>
+      <remap from="debug/init_candidates" to="init_candidates"/>
+      <remap from="yabloc_align_srv" to="/localization/yabloc/initializer/yabloc_align_srv"/>
+      <remap from="ground_srv" to="/localization/yabloc/map/ground"/>
+      <remap from="semseg_srv" to="/localization/yabloc/initializer/semseg_srv"/>
+    </node>
 
-        <arg name="model_path" default="$(find-pkg-share yabloc_pose_initializer)/data/saved_model/model_float32.pb"/>
-        <node name="semseg_node" pkg="yabloc_pose_initializer" exec="semseg_server.py" output="screen" args="--ros-args --log-level info">
-            <param name="model_path" value="$(var model_path)"/>
-            <remap from="semseg_srv" to="/localization/yabloc/initializer/semseg_srv"/>
-        </node>
-    </group>
-
+    <arg name="model_path" default="$(find-pkg-share yabloc_pose_initializer)/data/saved_model/model_float32.pb"/>
+    <node name="semseg_node" pkg="yabloc_pose_initializer" exec="semseg_server.py" output="screen" args="--ros-args --log-level info">
+      <param name="model_path" value="$(var model_path)"/>
+      <remap from="semseg_srv" to="/localization/yabloc/initializer/semseg_srv"/>
+    </node>
+  </group>
 </launch>

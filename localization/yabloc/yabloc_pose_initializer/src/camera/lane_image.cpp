@@ -31,7 +31,9 @@ typedef bg::model::d2::point_xy<double> point_t;
 typedef bg::model::box<point_t> box_t;
 typedef bg::model::polygon<point_t> polygon_t;
 
-LaneImage::LaneImage(lanelet::LaneletMapPtr map) : map_(map) {}
+LaneImage::LaneImage(lanelet::LaneletMapPtr map) : map_(map)
+{
+}
 
 cv::Point2i to_cv_point(const Eigen::Vector3f & v)
 {

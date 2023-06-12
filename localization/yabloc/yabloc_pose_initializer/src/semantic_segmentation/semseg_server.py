@@ -14,29 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import semseg_core
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Image
 import sys
+import time
+
 import cv2
 from cv_bridge import CvBridge
-import time
+import rclpy
+from rclpy.node import Node
+import semseg_core
+from sensor_msgs.msg import Image
 from yabloc_pose_initializer.srv import Semseg
 
 
 class SemsegServer(Node):
     def __init__(self):
-        super().__init__('semseg_node')
+        super().__init__("semseg_node")
 
-        model_path = self.declare_parameter('model_path', '').value
+        model_path = self.declare_parameter("model_path", "").value
 
-        self.get_logger().info('model path: ' + model_path)
+        self.get_logger().info("model path: " + model_path)
         self.dnn_ = semseg_core.SemSeg(model_path)
         self.bridge_ = CvBridge()
 
-        self.srv = self.create_service(
-            Semseg, 'semseg_srv', self.on_service)
+        self.srv = self.create_service(Semseg, "semseg_srv", self.on_service)
 
     def on_service(self, request, response):
         response.dst_image = self.__inference(request.src_image)
@@ -44,7 +44,7 @@ class SemsegServer(Node):
 
     def __inference(self, msg: Image):
         stamp = msg.header.stamp
-        self.get_logger().info('Subscribed image: ' + str(stamp))
+        self.get_logger().info("Subscribed image: " + str(stamp))
 
         src_image = self.bridge_.imgmsg_to_cv2(msg)
         start_time = time.time()
@@ -52,7 +52,7 @@ class SemsegServer(Node):
         elapsed_time = time.time() - start_time
 
         dst_msg = self.bridge_.cv2_to_imgmsg(mask)
-        dst_msg.encoding = 'bgr8'
+        dst_msg.encoding = "bgr8"
         return dst_msg
 
 
@@ -65,5 +65,5 @@ def main():
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

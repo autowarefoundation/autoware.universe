@@ -15,9 +15,10 @@
 # limitations under the License.
 
 import copy
-import numpy as np
-import cv2
 import os
+
+import cv2
+import numpy as np
 
 
 class SemSeg:
@@ -43,9 +44,7 @@ class SemSeg:
         mask = np.squeeze(mask).transpose(1, 2, 0)
 
         mask = cv2.resize(
-            mask,
-            dsize=(image.shape[1], image.shape[0]),
-            interpolation=cv2.INTER_LINEAR
+            mask, dsize=(image.shape[1], image.shape[0]), interpolation=cv2.INTER_LINEAR
         )
 
         return self.__normalize(mask, score_threshold)
@@ -54,20 +53,19 @@ class SemSeg:
         masks = cv2.split(mask)[1:]
         bin_masks = []
         for mask in masks:
-            bin_mask = np.where(mask > score_threshold, 0, 1).astype('uint8')
+            bin_mask = np.where(mask > score_threshold, 0, 1).astype("uint8")
             bin_masks.append(255 - 255 * bin_mask)
         return cv2.merge(bin_masks)
 
     def drawOverlay(self, image, segmentation) -> np.ndarray:
         overlay_image = copy.deepcopy(image)
-        return cv2.addWeighted(
-            overlay_image, 0.5, segmentation, 0.5, 1.0)
+        return cv2.addWeighted(overlay_image, 0.5, segmentation, 0.5, 1.0)
 
 
 def main():
     dirname = os.path.dirname(__file__)
-    path = dirname + '/../data/model_32.pb'
+    path = dirname + "/../data/model_32.pb"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

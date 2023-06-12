@@ -9,18 +9,18 @@
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
-  <depend>rclpy</depend>
+  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
-  <depend>tf2</depend>
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>visualization_msgs</depend>
-
+  <depend>tf2</depend>
   <depend>tier4_localization_msgs</depend>
-  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>visualization_msgs</depend>
   <depend>yabloc_common</depend>
+
 
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>

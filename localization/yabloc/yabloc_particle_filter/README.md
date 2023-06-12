@@ -1,33 +1,33 @@
 # yabLoc_particle_filter
 
-This package contains some executable nodes related to particle filter. 
+This package contains some executable nodes related to particle filter.
 
-* [particle_predictor](#particle_predictor)
-* [gnss_particle_corrector](#gnss_particle_corrector)
-* [camera_particle_corrector](#camera_particle_corrector)
-
+- [particle_predictor](#particle_predictor)
+- [gnss_particle_corrector](#gnss_particle_corrector)
+- [camera_particle_corrector](#camera_particle_corrector)
 
 # particle_predictor
+
 ## Purpose
 
-* This node performs predictive updating and resampling of particles.
-* It retroactively reflects the particle weights determined by the corrector node.
+- This node performs predictive updating and resampling of particles.
+- It retroactively reflects the particle weights determined by the corrector node.
 
 ## Inputs / Outputs
 
 ### Input
 
 | Name                          | Type                                             | Description                                               |
-|-------------------------------|--------------------------------------------------|-----------------------------------------------------------|
+| ----------------------------- | ------------------------------------------------ | --------------------------------------------------------- |
 | `input/initialpose`           | `geometry_msgs::msg::PoseWithCovarianceStamped`  | to specity the initial position of particles              |
 | `input/twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | linear velocity and angular velocity of prediction update |
 | `input/height`                | `std_msgs::msg::Float32`                         | ground height                                             |
-| `input/weighted_particles`    | `yabloc_particle_filter::msg::ParticleArray`     | particles weighted  by corrector nodes                    |
+| `input/weighted_particles`    | `yabloc_particle_filter::msg::ParticleArray`     | particles weighted by corrector nodes                     |
 
 ### Output
 
 | Name                           | Type                                            | Description                                               |
-|--------------------------------|-------------------------------------------------|-----------------------------------------------------------|
+| ------------------------------ | ----------------------------------------------- | --------------------------------------------------------- |
 | `output/pose_with_covariance`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | particle centroid with covariance                         |
 | `output/pose`                  | `geometry_msgs::msg::PoseStamped`               | particle centroid with covariance                         |
 | `output/predicted_particles`   | `yabloc_particle_filter::msg::ParticleArray`    | particles weighted by predictor nodes                     |
@@ -37,7 +37,7 @@ This package contains some executable nodes related to particle filter.
 ## Parameters
 
 | Name                          | Type             | Description                                                                          |
-|-------------------------------|------------------|--------------------------------------------------------------------------------------|
+| ----------------------------- | ---------------- | ------------------------------------------------------------------------------------ |
 | `visualize`                   | bool             | whether particles are also published in visualization_msgs or not                    |
 | `static_linear_covariance`    | double           | to override the covariance of `/twist_with_covariance`                               |
 | `static_angular_covariance`   | double           | to override the covariance of `/twist_with_covariance`                               |
@@ -51,26 +51,24 @@ This package contains some executable nodes related to particle filter.
 
 ## Purpose
 
-* This node estimated particles weight using GNSS.
-* It supports two types of input: `ublox_msgs::msg::NavPVT` and `geometry_msgs::msg::PoseWithCovarianceStamped`.
+- This node estimated particles weight using GNSS.
+- It supports two types of input: `ublox_msgs::msg::NavPVT` and `geometry_msgs::msg::PoseWithCovarianceStamped`.
 
 ## Inputs / Outputs
 
 ### Input
 
 | Name                         | Type                                            | Description                                        |
-|------------------------------|-------------------------------------------------|----------------------------------------------------|
+| ---------------------------- | ----------------------------------------------- | -------------------------------------------------- |
 | `input/height`               | `std_msgs::msg::Float32`                        | ground height                                      |
 | `input/predicted_particles`  | `yabloc_particle_filter::msg::ParticleArray`    | predicted particles                                |
 | `input/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | gnss measurement. used if `use_ublox_msg` is false |
 | `input/navpvt`               | `ublox_msgs::msg::NavPVT`                       | gnss measurement. used if `use_ublox_msg` is true  |
 
-
-
 ### Output
 
 | Name                           | Type                                         | Description                                               |
-|--------------------------------|----------------------------------------------|-----------------------------------------------------------|
+| ------------------------------ | -------------------------------------------- | --------------------------------------------------------- |
 | `output/weighted_particles`    | `yabloc_particle_filter::msg::ParticleArray` | weighted particles                                        |
 | `debug/gnss_range_marker`      | `visualization_msgs::msg::MarkerArray`       | gnss weight distribution                                  |
 | `debug/particles_marker_array` | `visualization_msgs::msg::MarkerArray`       | particles visualization. published if `visualize` is true |
@@ -78,9 +76,9 @@ This package contains some executable nodes related to particle filter.
 ## Parameters
 
 | Name                             | Type   | Description                                                                                           |
-|----------------------------------|--------|-------------------------------------------------------------------------------------------------------|
+| -------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
 | `acceptable_max_delay`           | double | how long to hold the predicted particles                                                              |
-| `visualize`                      | double | whether publish particles as marker_array   or not                                                    |
+| `visualize`                      | double | whether publish particles as marker_array or not                                                      |
 | `mahalanobis_distance_threshold` | double | if the Mahalanobis distance to the GNSS for particle exceeds this, the correction skips.              |
 | `use_ublox_msg`                  | bool   | whether use to ublox_msgs. if it is false, pose_with_covariance is used                               |
 | `ignore_less_than_float`         | bool   | if this is true, only FIX or FLOAT is used for correction (No effect when using pose_with_covariance) |
@@ -93,19 +91,18 @@ This package contains some executable nodes related to particle filter.
 | `for_not_fixed/min_weight`       | bool   | parameter for gnss weight distribution                                                                |
 | `for_not_fixed/max_weight`       | bool   | parameter for gnss weight distribution                                                                |
 
-
 # camera_particle_corrector
 
 ## Purpose
 
-* This node estimated particles weight using GNSS.
+- This node estimated particles weight using GNSS.
 
 ## Inputs / Outputs
 
 ### Input
 
 | Name                                  | Type                                         | Description                                                 |
-|---------------------------------------|----------------------------------------------|-------------------------------------------------------------|
+| ------------------------------------- | -------------------------------------------- | ----------------------------------------------------------- |
 | `input/predicted_particles`           | `yabloc_particle_filter::msg::ParticleArray` | predicted particles                                         |
 | `input/ll2_bounding_box`              | `sensor_msgs::msg::PointCloud2`              | road surface markings converted to line segments            |
 | `input/ll2_road_marking`              | `sensor_msgs::msg::PointCloud2`              | road surface markings converted to line segments            |
@@ -115,7 +112,7 @@ This package contains some executable nodes related to particle filter.
 ### Output
 
 | Name                           | Type                                         | Description                                               |
-|--------------------------------|----------------------------------------------|-----------------------------------------------------------|
+| ------------------------------ | -------------------------------------------- | --------------------------------------------------------- |
 | `output/weighted_particles`    | `yabloc_particle_filter::msg::ParticleArray` | weighted particles                                        |
 | `debug/cost_map_image`         | `sensor_msgs::msg::Image`                    | cost map created from lanelet2                            |
 | `debug/cost_map_range`         | `visualization_msgs::msg::MarkerArray`       | cost map boundary                                         |
@@ -128,9 +125,9 @@ This package contains some executable nodes related to particle filter.
 ## Parameters
 
 | Name                   | Type   | Description                                                                                                                               |
-|------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `acceptable_max_delay` | double | how long to hold the predicted particles                                                                                                  |
-| `visualize`            | double | whether publish particles as marker_array   or not                                                                                        |
+| `visualize`            | double | whether publish particles as marker_array or not                                                                                          |
 | `image_size`           | int    | image size of debug/cost_map_image                                                                                                        |
 | `max_range`            | double | width of heararchical cost map                                                                                                            |
 | `gamma`                | double | gamma value of the intensity gradient of the cost map                                                                                     |
@@ -141,5 +138,5 @@ This package contains some executable nodes related to particle filter.
 ## Services
 
 | Name         | Type                     | Description                               |
-|--------------|--------------------------|-------------------------------------------|
+| ------------ | ------------------------ | ----------------------------------------- |
 | `switch_srv` | `std_srvs::srv::SetBool` | activation and deactivation of correction |

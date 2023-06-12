@@ -1,4 +1,4 @@
-/**: 
+/**:
   ros__parameters:
     # Declared in AbstParticleCorrector
     acceptable_max_delay: 1.0
@@ -7,7 +7,7 @@
     mahalanobis_distance_threshold: 30.0 # If the distance to GNSS observation exceeds this, the correction is skipped.
     use_ublox_msg: true # Raw sensor data should not be used when running as Autoware.
     ignore_less_than_float: false
-    # 
+    #
     for_fixed/max_weight: 5.0
     for_fixed/flat_radius: 0.5
     for_fixed/max_radius: 10.0

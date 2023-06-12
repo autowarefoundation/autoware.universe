@@ -6,10 +6,10 @@
 
 ## Packages
 
-* [yabloc_common](yabloc_common/README.md)
-* [yabloc_imgproc](yabloc_imgproc/README.md)
-* [yabloc_particle_filter](yabloc_particle_filter/README.md)
-* [yabloc_pose_initializer](yabloc_pose_initializer/README.md)
+- [yabloc_common](yabloc_common/README.md)
+- [yabloc_imgproc](yabloc_imgproc/README.md)
+- [yabloc_particle_filter](yabloc_particle_filter/README.md)
+- [yabloc_pose_initializer](yabloc_pose_initializer/README.md)
 
 ## How to launch YabLoc instead of NDT
 
