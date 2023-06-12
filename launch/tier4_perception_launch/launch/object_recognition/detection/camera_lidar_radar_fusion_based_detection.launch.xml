@@ -63,7 +63,8 @@
   <group>
     <push-ros-namespace namespace="radar"/>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/radar_based_detection.launch.xml">
-      <arg name="output/objects" value="front_center/objects"/>
+      <arg name="input/radar_objects" value="/sensing/radar/front_center/objects_raw"/>
+      <arg name="output/objects" value="objects"/>
     </include>
   </group>
 
