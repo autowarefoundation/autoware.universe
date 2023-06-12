@@ -21,6 +21,8 @@
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_control_msgs/msg/control.hpp>
 
+#include <string>
+
 namespace autoware_auto_msgs_adapter
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
