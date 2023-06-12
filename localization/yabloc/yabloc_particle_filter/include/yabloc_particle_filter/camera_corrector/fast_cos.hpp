@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__FAST_COS_HPP_
+#define YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__FAST_COS_HPP_
 
 namespace yabloc::modularized_particle_filter
 {
@@ -49,3 +50,5 @@ private:
   std::vector<float> cos_;
 };
 }  // namespace yabloc::modularized_particle_filter
+
+#endif  // YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__FAST_COS_HPP_

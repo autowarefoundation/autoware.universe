@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
-#define GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
+#ifndef YABLOC_PARTILCE_CORRECTOR__GNSS_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
+#define YABLOC_PARTILCE_CORRECTOR__GNSS_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
 
 #include "yabloc_particle_filter/gnss_corrector/weight_manager.hpp"
 
@@ -76,4 +76,4 @@ private:
 };
 }  // namespace yabloc::modularized_particle_filter
 
-#endif  // GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
+#endif  // YABLOC_PARTILCE_CORRECTOR__GNSS_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_

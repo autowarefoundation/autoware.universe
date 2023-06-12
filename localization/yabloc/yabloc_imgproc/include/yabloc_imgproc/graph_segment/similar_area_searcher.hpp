@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__GRAPH_SEGMENT__SIMILAR_AREA_SEARCHER_HPP_
+#define YABLOC_IMGPROC__GRAPH_SEGMENT__SIMILAR_AREA_SEARCHER_HPP_
+
 #include <Eigen/Core>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/logger.hpp>
@@ -38,3 +40,5 @@ private:
   rclcpp::Logger logger_;
 };
 }  // namespace yabloc::graph_segment
+
+#endif  // YABLOC_IMGPROC__GRAPH_SEGMENT__SIMILAR_AREA_SEARCHER_HPP_

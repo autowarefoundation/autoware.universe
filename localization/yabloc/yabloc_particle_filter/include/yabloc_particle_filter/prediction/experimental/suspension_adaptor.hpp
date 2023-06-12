@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_PARTICLE_FILTER__PREDICTION__EXPERIMENTAL__SUSPENSION_ADAPTOR_HPP_
+#define YABLOC_PARTICLE_FILTER__PREDICTION__EXPERIMENTAL__SUSPENSION_ADAPTOR_HPP_
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -94,3 +96,5 @@ struct SwapModeAdaptor
 };
 
 }  // namespace yabloc::modularized_particle_filter
+
+#endif  // YABLOC_PARTICLE_FILTER__PREDICTION__EXPERIMENTAL__SUSPENSION_ADAPTOR_HPP_

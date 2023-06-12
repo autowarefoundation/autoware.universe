@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_PARTICLE_FILTER__LL2_COST_MAP__HIERARCHICAL_COST_MAP_HPP_
+#define YABLOC_PARTICLE_FILTER__LL2_COST_MAP__HIERARCHICAL_COST_MAP_HPP_
+
 #include <Eigen/StdVector>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/node.hpp>
@@ -136,3 +138,5 @@ private:
   cv::Mat create_available_area_image(const Area & area) const;
 };
 }  // namespace yabloc
+
+#endif  // YABLOC_PARTICLE_FILTER__LL2_COST_MAP__HIERARCHICAL_COST_MAP_HPP_

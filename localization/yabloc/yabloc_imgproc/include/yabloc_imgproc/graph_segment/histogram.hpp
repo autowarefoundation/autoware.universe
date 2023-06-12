@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__GRAPH_SEGMENT__HISTOGRAM_HPP_
+#define YABLOC_IMGPROC__GRAPH_SEGMENT__HISTOGRAM_HPP_
+
 #include <Eigen/Core>
 #include <opencv4/opencv2/core.hpp>
 
@@ -64,3 +66,5 @@ struct Histogram
 };
 
 }  // namespace yabloc::graph_segment
+
+#endif  // YABLOC_IMGPROC__GRAPH_SEGMENT__HISTOGRAM_HPP_

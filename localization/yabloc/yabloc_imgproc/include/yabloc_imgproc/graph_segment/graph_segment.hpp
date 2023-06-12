@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__GRAPH_SEGMENT__GRAPH_SEGMENT_HPP_
+#define YABLOC_IMGPROC__GRAPH_SEGMENT__GRAPH_SEGMENT_HPP_
+
 #include "yabloc_imgproc/graph_segment/similar_area_searcher.hpp"
 
 #include <opencv4/opencv2/ximgproc/segmentation.hpp>
@@ -48,3 +50,5 @@ private:
     const cv::Mat & raw_image, const cv::Mat & debug_image, const rclcpp::Time & stamp);
 };
 }  // namespace yabloc::graph_segment
+
+#endif  // YABLOC_IMGPROC__GRAPH_SEGMENT__GRAPH_SEGMENT_HPP_

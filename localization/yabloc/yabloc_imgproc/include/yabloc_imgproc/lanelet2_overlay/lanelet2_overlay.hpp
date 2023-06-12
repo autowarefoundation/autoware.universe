@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__LANELET2_OVERLAY__LANELET2_OVERLAY_HPP_
+#define YABLOC_IMGPROC__LANELET2_OVERLAY__LANELET2_OVERLAY_HPP_
+
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -80,3 +82,5 @@ private:
   void make_vis_marker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };
 }  // namespace yabloc::lanelet2_overlay
+
+#endif  // YABLOC_IMGPROC__LANELET2_OVERLAY__LANELET2_OVERLAY_HPP_

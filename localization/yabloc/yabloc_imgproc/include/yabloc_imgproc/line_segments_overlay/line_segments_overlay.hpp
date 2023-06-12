@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__LINE_SEGMENTS_OVERLAY__LINE_SEGMENTS_OVERLAY_HPP_
+#define YABLOC_IMGPROC__LINE_SEGMENTS_OVERLAY__LINE_SEGMENTS_OVERLAY_HPP_
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/image.hpp>
@@ -33,8 +35,8 @@ public:
   LineSegmentsOverlay();
 
 private:
-  void on_image(const Image::ConstSharedPtr& img_msg);
-  void on_line_segments(const PointCloud2::ConstSharedPtr& line_segments_msg);
+  void on_image(const Image::ConstSharedPtr & img_msg);
+  void on_line_segments(const PointCloud2::ConstSharedPtr & line_segments_msg);
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_line_segments_;
   rclcpp::Publisher<Image>::SharedPtr pub_debug_image_;
@@ -42,4 +44,6 @@ private:
   std::map<rclcpp::Time, Image::ConstSharedPtr> image_buffer_;
   size_t max_buffer_size_;
 };
-}  // namespace yabloc::overlay
+}  // namespace yabloc::line_segments_overlay
+
+#endif  // YABLOC_IMGPROC__LINE_SEGMENTS_OVERLAY__LINE_SEGMENTS_OVERLAY_HPP_

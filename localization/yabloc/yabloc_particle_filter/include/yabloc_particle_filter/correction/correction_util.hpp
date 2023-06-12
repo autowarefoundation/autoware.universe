@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MODULARIZED_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
-#define MODULARIZED_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
+#define YABLOC_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "yabloc_particle_filter/msg/particle_array.hpp"
@@ -32,4 +32,4 @@ std::optional<yabloc_particle_filter::msg::ParticleArray> find_synced_particles(
 }
 }  // namespace yabloc
 
-#endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_

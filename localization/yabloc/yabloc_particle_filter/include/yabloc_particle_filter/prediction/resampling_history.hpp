@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_
-#define MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_
+#define YABLOC_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_
 
 #include <algorithm>
 #include <numeric>
@@ -71,4 +71,4 @@ private:
 
 }  // namespace yabloc::modularized_particle_filter
 
-#endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__PREDICTION__RESAMPLING_HISTORY_HPP_

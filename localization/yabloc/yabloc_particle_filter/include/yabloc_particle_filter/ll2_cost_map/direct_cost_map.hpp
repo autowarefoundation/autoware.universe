@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_PARTICLE_FILTER__LL2_COST_MAP__DIRECT_COST_MAP_HPP_
+#define YABLOC_PARTICLE_FILTER__LL2_COST_MAP__DIRECT_COST_MAP_HPP_
+
 #include <opencv4/opencv2/imgproc.hpp>
 
 namespace yabloc
@@ -22,3 +24,5 @@ cv::Mat direct_cost_map(const cv::Mat & cost_map, const cv::Mat & intensity);
 cv::Mat visualize_direction_map(const cv::Mat & cost_map);
 
 }  // namespace yabloc
+
+#endif  // YABLOC_PARTICLE_FILTER__LL2_COST_MAP__DIRECT_COST_MAP_HPP_

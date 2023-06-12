@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
-#define MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
+#define YABLOC_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
 
 #include <Eigen/SVD>
 
@@ -65,4 +65,4 @@ double normalize_radian(const double rad, const double min_rad = -M_PI)
 
 }  // namespace modularized_particle_filter::util
 }  // namespace yabloc
-#endif  // MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_

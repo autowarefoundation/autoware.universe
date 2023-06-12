@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_
-#define MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_
+#define YABLOC_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_
 
 #include "yabloc_particle_filter/msg/particle_array.hpp"
 #include "yabloc_particle_filter/prediction/resampling_history.hpp"
@@ -62,4 +62,4 @@ private:
 };
 }  // namespace yabloc::modularized_particle_filter
 
-#endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__PREDICTION__RESAMPLER_HPP_

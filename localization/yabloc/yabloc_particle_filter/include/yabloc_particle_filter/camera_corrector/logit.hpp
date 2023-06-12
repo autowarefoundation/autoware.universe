@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__LOGIT_HPP_
+#define YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__LOGIT_HPP_
+
 namespace yabloc
 {
 float logit_to_prob(float logit, float gain = 1.0f);
@@ -26,3 +28,5 @@ float logit_to_prob(float logit, float gain = 1.0f);
  */
 float prob_to_logit(float prob);
 }  // namespace yabloc
+
+#endif  //  YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__LOGIT_HPP_

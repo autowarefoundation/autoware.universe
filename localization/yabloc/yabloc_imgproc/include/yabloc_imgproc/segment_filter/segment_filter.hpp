@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__SEGMENT_FILTER__SEGMENT_FILTER_HPP_
+#define YABLOC_IMGPROC__SEGMENT_FILTER__SEGMENT_FILTER_HPP_
+
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <yabloc_common/camera_info_subscriber.hpp>
@@ -70,3 +72,5 @@ private:
   bool is_near_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
 }  // namespace yabloc::segment_filter
+
+#endif  // YABLOC_IMGPROC__SEGMENT_FILTER__SEGMENT_FILTER_HPP_

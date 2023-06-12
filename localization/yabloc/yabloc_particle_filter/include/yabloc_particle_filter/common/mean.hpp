@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MODULARIZED_PARTICLE_FILTER__COMMON__MEAN_HPP_
-#define MODULARIZED_PARTICLE_FILTER__COMMON__MEAN_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__COMMON__MEAN_HPP_
+#define YABLOC_PARTICLE_FILTER__COMMON__MEAN_HPP_
 
 #include <Eigen/Core>
 #include <yabloc_particle_filter/msg/particle_array.hpp>
@@ -34,4 +34,4 @@ float std_of_weight(const yabloc_particle_filter::msg::ParticleArray & particle_
 }  // namespace modularized_particle_filter
 }  // namespace yabloc
 
-#endif  // MODULARIZED_PARTICLE_FILTER__COMMON__MEAN_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__COMMON__MEAN_HPP_

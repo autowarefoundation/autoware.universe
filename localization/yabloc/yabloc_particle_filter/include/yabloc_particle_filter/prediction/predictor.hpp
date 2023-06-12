@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
-#define MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
+#define YABLOC_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
 
 #include "yabloc_particle_filter/common/visualize.hpp"
 #include "yabloc_particle_filter/prediction/experimental/suspension_adaptor.hpp"
@@ -106,4 +106,4 @@ private:
 };
 
 }  // namespace yabloc::modularized_particle_filter
-#endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_

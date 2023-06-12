@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_IMGPROC__LSD__LSD_HPP_
+#define YABLOC_IMGPROC__LSD__LSD_HPP_
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core/eigen.hpp>
@@ -54,3 +56,5 @@ private:
   void execute(const cv::Mat & image, const rclcpp::Time & stamp);
 };
 }  // namespace yabloc::lsd
+
+#endif  // YABLOC_IMGPROC__LSD__LSD_HPP_

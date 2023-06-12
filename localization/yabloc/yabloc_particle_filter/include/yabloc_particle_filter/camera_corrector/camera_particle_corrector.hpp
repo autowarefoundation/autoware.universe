@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__CAMERA_PARTICLE_CORRECTOR_HPP_
+#define YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__CAMERA_PARTICLE_CORRECTOR_HPP_
 
 #include <opencv4/opencv2/core.hpp>
-#include <std_srvs/srv/set_bool.hpp>
 #include <yabloc_particle_filter/correction/abst_corrector.hpp>
 #include <yabloc_particle_filter/ll2_cost_map/hierarchical_cost_map.hpp>
 
@@ -24,6 +24,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -91,3 +92,5 @@ private:
   std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
 };
 }  // namespace yabloc::modularized_particle_filter
+
+#endif  // YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__CAMERA_PARTICLE_CORRECTOR_HPP_
