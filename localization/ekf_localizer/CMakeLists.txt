@@ -41,6 +41,10 @@ function(add_testcase filepath)
 endfunction()
 
 if(BUILD_TESTING)
+  add_ros_test(
+    test/test_ekf_localizer_launch.py
+    TIMEOUT "30"
+  )
   find_package(ament_cmake_gtest REQUIRED)
 
   set(TEST_FILES
