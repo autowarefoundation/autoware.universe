@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__GAMMA_CONVERTER_HPP_
+#define YABLOC_COMMON__GAMMA_CONVERTER_HPP_
 #include <opencv4/opencv2/core.hpp>
 
 namespace yabloc::common
@@ -41,3 +42,5 @@ private:
   cv::Mat lut_;
 };
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__GAMMA_CONVERTER_HPP_

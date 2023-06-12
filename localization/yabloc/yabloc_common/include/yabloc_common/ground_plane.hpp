@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__GROUND_PLANE_HPP_
+#define YABLOC_COMMON__GROUND_PLANE_HPP_
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 #include <sophus/geometry.hpp>
@@ -84,3 +86,5 @@ struct GroundPlane
   }
 };
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__GROUND_PLANE_HPP_

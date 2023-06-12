@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__TIMER_HPP_
+#define YABLOC_COMMON__TIMER_HPP_
+
 #include <chrono>
 #include <ostream>
 namespace yabloc::common
@@ -47,3 +49,5 @@ private:
 };
 
 }  // namespace yabloc::common
+
+#endif  //  YABLOC_COMMON__TIMER_HPP_

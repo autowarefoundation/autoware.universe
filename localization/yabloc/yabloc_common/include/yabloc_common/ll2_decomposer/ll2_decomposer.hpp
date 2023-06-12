@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__LL2_DECOMPOSER__LL2_DECOMPOSER_HPP_
+#define YABLOC_COMMON__LL2_DECOMPOSER__LL2_DECOMPOSER_HPP_
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -72,3 +74,5 @@ private:
   void publish_additional_marker(const lanelet::LaneletMapPtr & lanelet_map);
 };
 }  // namespace yabloc::ll2_decomposer
+
+#endif  // YABLOC_COMMON__LL2_DECOMPOSER__LL2_DECOMPOSER_HPP_

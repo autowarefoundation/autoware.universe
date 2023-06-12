@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__CAMERA_INFO_SUBSCRIBER_HPP_
+#define YABLOC_COMMON__CAMERA_INFO_SUBSCRIBER_HPP_
+
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
 
@@ -45,3 +47,5 @@ private:
   std::optional<CameraInfo> opt_info_;
 };
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__CAMERA_INFO_SUBSCRIBER_HPP_

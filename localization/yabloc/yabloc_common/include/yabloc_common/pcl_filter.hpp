@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__PCL_FILTER_HPP_
+#define YABLOC_COMMON__PCL_FILTER_HPP_
+
 #include <pcl/PointIndices.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/point_cloud.h>
@@ -31,3 +33,5 @@ pcl::PointCloud<T> extract(const pcl::PointCloud<T> & cloud, pcl::PointIndices::
   return extracted_cloud;
 }
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__PCL_FILTER_HPP_

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__FIX2MGRS_HPP_
+#define YABLOC_COMMON__FIX2MGRS_HPP_
+
 #include <Eigen/Core>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
@@ -24,3 +26,5 @@ Eigen::Vector3d ublox_to_mgrs(const ublox_msgs::msg::NavPVT & msg);
 
 Eigen::Vector3d fix_to_mgrs(const sensor_msgs::msg::NavSatFix & msg);
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__FIX2MGRS_HPP_

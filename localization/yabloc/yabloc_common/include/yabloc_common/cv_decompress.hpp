@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__CV_DECOMPRESS_HPP_
+#define YABLOC_COMMON__CV_DECOMPRESS_HPP_
+
 #include <opencv4/opencv2/core.hpp>
 
 #include <sensor_msgs/msg/compressed_image.hpp>
@@ -28,3 +30,5 @@ sensor_msgs::msg::Image::ConstSharedPtr decompress_to_ros_msg(
 cv::Mat decompress_to_cv_mat(const sensor_msgs::msg::CompressedImage & compressed_img);
 
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__CV_DECOMPRESS_HPP_

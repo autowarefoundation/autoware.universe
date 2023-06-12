@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__GROUND_SERVER__FILTER__LOW_PASS_FILTER_HPP_
+#define YABLOC_COMMON__GROUND_SERVER__FILTER__LOW_PASS_FILTER_HPP_
+
 #include <Eigen/Core>
 #include <rclcpp/time.hpp>
 #include <yabloc_common/ground_plane.hpp>
@@ -57,3 +59,5 @@ private:
   float cov_height_;
 };
 }  // namespace yabloc::ground_server
+
+#endif  // YABLOC_COMMON__GROUND_SERVER__FILTER__LOW_PASS_FILTER_HPP_

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__GROUND_SERVER__GROUND_SERVER_HPP_
+#define YABLOC_COMMON__GROUND_SERVER__GROUND_SERVER_HPP_
+
 #include "yabloc_common/ground_server/filter/low_pass_filter.hpp"
 #include "yabloc_common/ground_server/filter/moving_averaging.hpp"
 
@@ -100,3 +102,5 @@ private:
 };
 
 }  // namespace yabloc::ground_server
+
+#endif  // YABLOC_COMMON__GROUND_SERVER__GROUND_SERVER_HPP_

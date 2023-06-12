@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__GROUND_SERVER__POLYGON_OPERATION_HPP_
+#define YABLOC_COMMON__GROUND_SERVER__POLYGON_OPERATION_HPP_
+
 #include <lanelet2_core/LaneletMap.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -24,3 +26,5 @@ pcl::PointCloud<pcl::PointXYZ> sample_from_polygons(const lanelet::PolygonLayer 
 pcl::PointCloud<pcl::PointXYZ> fill_points_in_polygon(
   const pcl::PointCloud<pcl::PointXYZ> & src_cloud);
 }  // namespace yabloc::ground_server
+
+#endif  // YABLOC_COMMON__GROUND_SERVER__POLYGON_OPERATION_HPP_

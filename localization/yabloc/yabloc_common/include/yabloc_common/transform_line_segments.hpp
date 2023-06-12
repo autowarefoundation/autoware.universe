@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__TRANSFORM_LINE_SEGMENTS_HPP_
+#define YABLOC_COMMON__TRANSFORM_LINE_SEGMENTS_HPP_
+
 #include <sophus/geometry.hpp>
 
 #include <pcl/point_cloud.h>
@@ -26,3 +28,5 @@ pcl::PointCloud<pcl::PointXYZLNormal> transform_line_segments(
 pcl::PointCloud<pcl::PointNormal> transform_line_segments(
   const pcl::PointCloud<pcl::PointNormal> & src, const Sophus::SE3f & transform);
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__TRANSFORM_LINE_SEGMENTS_HPP_

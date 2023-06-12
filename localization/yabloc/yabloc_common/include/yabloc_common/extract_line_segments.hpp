@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__EXTRACT_LINE_SEGMENTS_HPP_
+#define YABLOC_COMMON__EXTRACT_LINE_SEGMENTS_HPP_
+
 #include <sophus/geometry.hpp>
 
 #include <pcl/point_cloud.h>
@@ -25,3 +27,5 @@ pcl::PointCloud<pcl::PointNormal> extract_near_line_segments(
   const float max_range = 40);
 
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__EXTRACT_LINE_SEGMENTS_HPP_

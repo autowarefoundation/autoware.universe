@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__GROUND_SERVER__FILTER__MOVING_AVERAGING_HPP_
+#define YABLOC_COMMON__GROUND_SERVER__FILTER__MOVING_AVERAGING_HPP_
+
 #include <Eigen/Core>
 
 #include <boost/circular_buffer.hpp>
@@ -39,3 +41,5 @@ private:
   boost::circular_buffer<Eigen::Vector3f> buffer_;
 };
 }  // namespace yabloc::ground_server
+
+#endif  // YABLOC_COMMON__GROUND_SERVER__FILTER__MOVING_AVERAGING_HPP_

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__POSE_CONVERSIONS_HPP_
+#define YABLOC_COMMON__POSE_CONVERSIONS_HPP_
+
 #include <eigen3/Eigen/Geometry>
 #include <sophus/geometry.hpp>
 
@@ -26,3 +28,5 @@ geometry_msgs::msg::Pose affine_to_pose(const Eigen::Affine3f & affine);
 Sophus::SE3f pose_to_se3(const geometry_msgs::msg::Pose & pose);
 geometry_msgs::msg::Pose se3_to_pose(const Sophus::SE3f & se3f);
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__POSE_CONVERSIONS_HPP_

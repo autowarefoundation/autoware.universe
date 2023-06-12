@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__PUB_SUB_HPP_
+#define YABLOC_COMMON__PUB_SUB_HPP_
+
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -33,3 +35,5 @@ void publish_cloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
   const pcl::PointCloud<PointT> & cloud, const rclcpp::Time & stamp);
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__PUB_SUB_HPP_

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef YABLOC_COMMON__STATIC_TF_HPP_
+#define YABLOC_COMMON__STATIC_TF_HPP_
+
 #include <Eigen/Geometry>
 #include <sophus/geometry.hpp>
 
@@ -41,3 +43,5 @@ private:
 };
 
 }  // namespace yabloc::common
+
+#endif  // YABLOC_COMMON__STATIC_TF_HPP_
