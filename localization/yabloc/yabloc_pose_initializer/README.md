@@ -4,7 +4,6 @@ This package contains some nodes related to initial pose estimation.
 
 - [camera_pose_initializer](#camera_pose_initializer)
 - [semantic_segmentation](#semantic_segmentation)
-- [gnss_pose_initializer(debug)](#gnss_pose_initializer)
 
 ## Note
 
@@ -76,25 +75,3 @@ Converted model URL
 | Name         | Type                                   | Description                   |
 | ------------ | -------------------------------------- | ----------------------------- |
 | `semseg_srv` | `yabloc_pose_initializer::srv::Semseg` | semantic segmentation request |
-
-# gnss_pose_initializer
-
-## Purpose
-
-- debug feature
-- This node estimate initial pose from GNSS and GNSS doppler.
-- It is not launched by default.
-
-### Input
-
-| Name                | Type                                            | Description                          |
-| ------------------- | ----------------------------------------------- | ------------------------------------ |
-| `input/ublox_topic` | `ublox_msgs::msg::NavPVT`                       | gnss measurement                     |
-| `input/pose`        | `geometry_msgs::msg::PoseStamped`               | to check yabloc is initialized       |
-| `input/initialpose` | `geometry_msgs::msg::PoseWithCovarianceStamped` | published from rviz 2d pose estimate |
-
-### Output
-
-| Name                   | Type                                            | Description  |
-| ---------------------- | ----------------------------------------------- | ------------ |
-| `output/initialpose3d` | `geometry_msgs::msg::PoseWithCovarianceStamped` | initial pose |

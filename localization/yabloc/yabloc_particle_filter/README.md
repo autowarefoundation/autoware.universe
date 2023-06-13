@@ -80,8 +80,6 @@ This package contains some executable nodes related to particle filter.
 | `acceptable_max_delay`           | double | how long to hold the predicted particles                                                              |
 | `visualize`                      | double | whether publish particles as marker_array or not                                                      |
 | `mahalanobis_distance_threshold` | double | if the Mahalanobis distance to the GNSS for particle exceeds this, the correction skips.              |
-| `use_ublox_msg`                  | bool   | whether use to ublox_msgs. if it is false, pose_with_covariance is used                               |
-| `ignore_less_than_float`         | bool   | if this is true, only FIX or FLOAT is used for correction (No effect when using pose_with_covariance) |
 | `for_fixed/max_weight`           | bool   | parameter for gnss weight distribution                                                                |
 | `for_fixed/flat_radius`          | bool   | parameter for gnss weight distribution                                                                |
 | `for_fixed/max_radius`           | bool   | parameter for gnss weight distribution                                                                |

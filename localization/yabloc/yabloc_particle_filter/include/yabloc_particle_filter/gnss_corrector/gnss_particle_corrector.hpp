@@ -24,7 +24,6 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/float32.hpp>
-#include <ublox_msgs/msg/nav_pvt.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 namespace yabloc::modularized_particle_filter
@@ -35,7 +34,6 @@ public:
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using NavSatFix = sensor_msgs::msg::NavSatFix;
-  using NavPVT = ublox_msgs::msg::NavPVT;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Float32 = std_msgs::msg::Float32;
@@ -43,19 +41,16 @@ public:
   GnssParticleCorrector();
 
 private:
-  const bool ignore_less_than_float_;
   const float mahalanobis_distance_threshold_;
   const WeightManager weight_manager_;
 
   rclcpp::Subscription<Float32>::SharedPtr height_sub_;
-  rclcpp::Subscription<NavPVT>::SharedPtr ublox_sub_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr pose_sub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
 
   Float32 latest_height_;
   Eigen::Vector3f last_mean_position_;
 
-  void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
   void on_pose(const PoseCovStamped::ConstSharedPtr pose_msg);
 
   void process(
