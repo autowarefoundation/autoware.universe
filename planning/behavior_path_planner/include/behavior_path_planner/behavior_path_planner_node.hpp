@@ -24,16 +24,16 @@
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/goal_planner_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
+#include "behavior_path_planner/scene_module/start_planner/start_planner_module.hpp"
 #else
 #include "behavior_path_planner/planner_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
-#include "behavior_path_planner/scene_module/pull_out/manager.hpp"
 #include "behavior_path_planner/scene_module/side_shift/manager.hpp"
+#include "behavior_path_planner/scene_module/start_planner/manager.hpp"
 #endif
 
 #include "behavior_path_planner/steering_factor_interface.hpp"
@@ -41,8 +41,8 @@
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "behavior_path_planner/utils/pull_out/pull_out_parameters.hpp"
 #include "behavior_path_planner/utils/side_shift/side_shift_parameters.hpp"
+#include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
 
 #include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -61,6 +61,7 @@
 #include <tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <map>
@@ -90,6 +91,7 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::Scenario;
+using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
@@ -97,6 +99,9 @@ class BehaviorPathPlannerNode : public rclcpp::Node
 {
 public:
   explicit BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options);
+
+  // Getter method for waiting approval modules
+  std::vector<std::string> getWaitingApprovalModules();
 
 private:
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
@@ -114,6 +119,7 @@ private:
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
   rclcpp::Publisher<PoseWithUuidStamped>::SharedPtr modified_goal_publisher_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
@@ -149,7 +155,7 @@ private:
   std::shared_ptr<DynamicAvoidanceParameters> dynamic_avoidance_param_ptr_;
   std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
-  std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
+  std::shared_ptr<StartPlannerParameters> start_planner_param_ptr_;
   std::shared_ptr<GoalPlannerParameters> goal_planner_param_ptr_;
 
   BehaviorPathPlannerParameters getCommonParam();
@@ -163,7 +169,7 @@ private:
   LaneChangeParameters getLaneChangeParam();
   SideShiftParameters getSideShiftParam();
   GoalPlannerParameters getGoalPlannerParam();
-  PullOutParameters getPullOutParam();
+  StartPlannerParameters getStartPlannerParam();
   AvoidanceByLCParameters getAvoidanceByLCParam(
     const std::shared_ptr<AvoidanceParameters> & avoidance_param,
     const std::shared_ptr<LaneChangeParameters> & lane_change_param);

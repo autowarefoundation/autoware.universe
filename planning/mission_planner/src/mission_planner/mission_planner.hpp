@@ -74,8 +74,17 @@ private:
   void on_odometry(const Odometry::ConstSharedPtr msg);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
-  void change_route();
+  void clear_route();
   void change_route(const LaneletRoute & route);
+  LaneletRoute create_route(const SetRoute::Service::Request::SharedPtr req);
+  LaneletRoute create_route(const SetRoutePoints::Service::Request::SharedPtr req);
+  LaneletRoute create_route(
+    const std_msgs::msg::Header & header,
+    const std::vector<autoware_adapi_v1_msgs::msg::RouteSegment> & route_segments,
+    const geometry_msgs::msg::Pose & goal_pose, const bool allow_goal_modification);
+  LaneletRoute create_route(
+    const std_msgs::msg::Header & header, const std::vector<geometry_msgs::msg::Pose> & waypoints,
+    const geometry_msgs::msg::Pose & goal_pose, const bool allow_goal_modification);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
@@ -119,7 +128,11 @@ private:
     const SetRoutePoints::Service::Response::SharedPtr res);
 
   double reroute_time_threshold_{10.0};
+  double minimum_reroute_length_{30.0};
   bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
+
+  std::shared_ptr<LaneletRoute> original_route_{nullptr};
+  std::shared_ptr<LaneletRoute> normal_route_{nullptr};
 };
 
 }  // namespace mission_planner

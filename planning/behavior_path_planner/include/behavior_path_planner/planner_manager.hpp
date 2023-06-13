@@ -23,6 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -37,6 +38,7 @@ namespace behavior_path_planner
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::StopWatch;
+using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
 
@@ -151,6 +153,34 @@ public:
   }
 
   /**
+   * @brief aggregate launched module's stop reasons.
+   * @return stop reason array
+   */
+  StopReasonArray getStopReasons() const
+  {
+    StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = clock_.now();
+
+    std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [&](const auto & m) {
+      const auto reason = m->getStopReason();
+      if (reason.reason != "") {
+        stop_reason_array.stop_reasons.push_back(m->getStopReason());
+      }
+    });
+
+    std::for_each(
+      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [&](const auto & m) {
+        const auto reason = m->getStopReason();
+        if (reason.reason != "") {
+          stop_reason_array.stop_reasons.push_back(m->getStopReason());
+        }
+      });
+
+    return stop_reason_array;
+  }
+
+  /**
    * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
    * @param planner data.
    * @details this function is called only when it is in disengage and drive by manual.
@@ -182,7 +212,7 @@ private:
     const auto result = module_ptr->run();
     module_ptr->unlockRTCCommand();
 
-    module_ptr->updateState();
+    module_ptr->updateCurrentState();
 
     module_ptr->publishRTCStatus();
 
@@ -362,9 +392,9 @@ private:
 
   std::vector<SceneModulePtr> candidate_module_ptrs_;
 
-  rclcpp::Logger logger_;
+  mutable rclcpp::Logger logger_;
 
-  rclcpp::Clock clock_;
+  mutable rclcpp::Clock clock_;
 
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
 

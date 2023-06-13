@@ -67,8 +67,8 @@ MapUpdateModule::MapUpdateModule(
       &MapUpdateModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), map_callback_group_);
 
-  pcd_loader_client_ = node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
-    "pcd_loader_service", rmw_qos_profile_services_default);
+  pcd_loader_client_ =
+    node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>("pcd_loader_service");
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(
       logger_,
@@ -163,7 +163,8 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
 void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 {
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
-  request->area.center = position;
+  request->area.center_x = position.x;
+  request->area.center_y = position.y;
   request->area.radius = dynamic_map_loading_map_radius_;
   request->cached_ids = ndt_ptr_->getCurrentMapIDs();
 
