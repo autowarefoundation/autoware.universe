@@ -1099,6 +1099,10 @@ StartPlannerParameters BehaviorPathPlannerNode::getStartPlannerParam()
   p.backward_search_resolution = declare_parameter<double>(ns + "backward_search_resolution");
   p.backward_path_update_duration = declare_parameter<double>(ns + "backward_path_update_duration");
   p.ignore_distance_from_lane_end = declare_parameter<double>(ns + "ignore_distance_from_lane_end");
+  p.stop_time_before_departure = declare_parameter<double>(ns + "stop_time_before_departure");
+  p.acceleration_to_target_velocity =
+    declare_parameter<double>(ns + "acceleration_to_target_velocity");
+  p.prediction_time_resolution = declare_parameter<double>(ns + "prediction_time_resolution");
 
   // validation of parameters
   if (p.pull_out_sampling_num < 1) {
