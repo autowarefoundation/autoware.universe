@@ -19,6 +19,7 @@
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
 
+#include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
 
@@ -423,7 +424,7 @@ void NDTScanMatcher::callback_sensor_points(
     skipping_publish_num = 0;
   } else {
     ++skipping_publish_num;
-    RCLCPP_WARN(get_logger(), "Not Converged");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10, "Not Converged");
   }
 
   // publish
@@ -604,8 +605,8 @@ bool NDTScanMatcher::validate_num_iteration(const int iter_num, const int max_it
 {
   bool is_ok_iter_num = iter_num < max_iter_num;
   if (!is_ok_iter_num) {
-    RCLCPP_WARN(
-      get_logger(),
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 10,
       "The number of iterations has reached its upper limit. The number of iterations: %d, Limit: "
       "%d",
       iter_num, max_iter_num);
@@ -618,9 +619,9 @@ bool NDTScanMatcher::validate_score(
 {
   bool is_ok_score = score > score_threshold;
   if (!is_ok_score) {
-    RCLCPP_WARN(
-      get_logger(), "%s is below the threshold. Score: %lf, Threshold: %lf", score_name.c_str(),
-      score, score_threshold);
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 10, "%s is below the threshold. Score: %lf, Threshold: %lf",
+      score_name.c_str(), score, score_threshold);
   }
   return is_ok_score;
 }
