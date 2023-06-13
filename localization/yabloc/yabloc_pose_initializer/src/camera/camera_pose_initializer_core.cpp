@@ -26,7 +26,7 @@
 namespace yabloc
 {
 CameraPoseInitializer::CameraPoseInitializer()
-: Node("camera_pose_initializer"), angle_resolution_{declare_parameter<int>("angle_resolution")}
+: Node("camera_pose_initializer"), angle_resolution_(declare_parameter<int>("angle_resolution"))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

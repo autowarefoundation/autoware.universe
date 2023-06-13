@@ -1,15 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(yabloc_particle_filter)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-# ===================================================
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
@@ -32,7 +26,7 @@ set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
 find_library(GeographicLib_LIBRARIES NAMES Geographic)
 
 # ===================================================
-# Clear ${PYTHON_EXECUTABLE} defined by mrt_cmake_module
+# Clear ${PYTHON_EXECUTABLE} defined by mrt_cmake_module so that rosidl_generate_interfaces can look for it properly
 unset(PYTHON_EXECUTABLE)
 message(STATUS "PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
 

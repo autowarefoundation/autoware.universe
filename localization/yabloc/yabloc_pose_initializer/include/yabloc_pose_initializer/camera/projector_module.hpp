@@ -36,10 +36,10 @@ public:
   cv::Mat project_image(const sensor_msgs::msg::Image & image_msg);
 
 private:
-  ProjectFunc project_func_ = nullptr;
-  rclcpp::Logger logger_;
   common::CameraInfoSubscriber info_;
   common::StaticTfSubscriber tf_subscriber_;
+  rclcpp::Logger logger_;
+  ProjectFunc project_func_ = nullptr;
 };
 }  // namespace yabloc::initializer
 

@@ -200,7 +200,7 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
   bool negative) const
 {
   pcl::PointCloud<pcl::PointNormal> projected_points;
-  for (int index = 0; index < points.size(); ++index) {
+  for (size_t index = 0; index < points.size(); ++index) {
     if (negative) {
       if (indices.count(index) > 0) continue;
     } else {

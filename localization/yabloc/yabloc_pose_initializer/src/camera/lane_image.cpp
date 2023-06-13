@@ -59,7 +59,7 @@ void draw_lane(cv::Mat & image, const polygon_t & polygon)
 {
   std::vector<cv::Point> contour;
   for (auto p : polygon.outer()) {
-    cv::Point2i pt = to_cv_point({p.x(), p.y(), 0});
+    cv::Point2i pt = to_cv_point(Eigen::Vector3f(p.x(), p.y(), 0));
     contour.push_back(pt);
   }
 
@@ -72,7 +72,7 @@ void draw_line(cv::Mat & image, const lanelet::LineString2d & line, geometry_msg
 {
   std::vector<cv::Point> contour;
   for (auto p : line) {
-    cv::Point2i pt = to_cv_point({p.x() - xyz.x, p.y() - xyz.y, 0});
+    cv::Point2i pt = to_cv_point(Eigen::Vector3f(p.x() - xyz.x, p.y() - xyz.y, 0));
     contour.push_back(pt);
   }
   cv::polylines(image, contour, false, cv::Scalar(0, 0, 255), 2);
