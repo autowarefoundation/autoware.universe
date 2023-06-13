@@ -849,7 +849,8 @@ void StartPlannerModule::setDebugData() const
     acc_till_target_velocity, current_pose, nearest_segment_index, resolution, stopping_time);
 
   debug_marker_.markers.clear();
-  add(createEgoPredictedPathMarkerArray(ego_predicted_path, "ego_predicted_path", 0.9, 0.3, 0.3));
+  add(createPredictedPathMarkerArray(
+    ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
