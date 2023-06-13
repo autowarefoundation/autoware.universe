@@ -469,6 +469,9 @@ IntersectionLanelets getObjectiveLanelets(
           continue;
         }
         detection_lanelets.push_back(conflicting_lanelet);
+        if (!adjacent_followings.empty()){
+          detection_lanelets.push_back(adjacent_followings.front());
+        }
       }
     } else {
       // otherwise we need to know the priority from RightOfWay
