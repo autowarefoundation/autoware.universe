@@ -75,19 +75,19 @@ This package contains some executable nodes related to particle filter.
 
 ## Parameters
 
-| Name                             | Type   | Description                                                                                           |
-| -------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| `acceptable_max_delay`           | double | how long to hold the predicted particles                                                              |
-| `visualize`                      | double | whether publish particles as marker_array or not                                                      |
-| `mahalanobis_distance_threshold` | double | if the Mahalanobis distance to the GNSS for particle exceeds this, the correction skips.              |
-| `for_fixed/max_weight`           | bool   | parameter for gnss weight distribution                                                                |
-| `for_fixed/flat_radius`          | bool   | parameter for gnss weight distribution                                                                |
-| `for_fixed/max_radius`           | bool   | parameter for gnss weight distribution                                                                |
-| `for_fixed/min_weight`           | bool   | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/flat_radius`      | bool   | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/max_radius`       | bool   | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/min_weight`       | bool   | parameter for gnss weight distribution                                                                |
-| `for_not_fixed/max_weight`       | bool   | parameter for gnss weight distribution                                                                |
+| Name                             | Type   | Description                                                                              |
+| -------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `acceptable_max_delay`           | double | how long to hold the predicted particles                                                 |
+| `visualize`                      | double | whether publish particles as marker_array or not                                         |
+| `mahalanobis_distance_threshold` | double | if the Mahalanobis distance to the GNSS for particle exceeds this, the correction skips. |
+| `for_fixed/max_weight`           | bool   | parameter for gnss weight distribution                                                   |
+| `for_fixed/flat_radius`          | bool   | parameter for gnss weight distribution                                                   |
+| `for_fixed/max_radius`           | bool   | parameter for gnss weight distribution                                                   |
+| `for_fixed/min_weight`           | bool   | parameter for gnss weight distribution                                                   |
+| `for_not_fixed/flat_radius`      | bool   | parameter for gnss weight distribution                                                   |
+| `for_not_fixed/max_radius`       | bool   | parameter for gnss weight distribution                                                   |
+| `for_not_fixed/min_weight`       | bool   | parameter for gnss weight distribution                                                   |
+| `for_not_fixed/max_weight`       | bool   | parameter for gnss weight distribution                                                   |
 
 # camera_particle_corrector
 
