@@ -57,8 +57,8 @@ public:
 
   ModuleStatus updateState() override;
   ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
-  BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
+  BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -323,20 +323,6 @@ private:
   // shift line generation
 
   /**
-   * @brief fill index and longitudinal.
-   * @param target shift line.
-   * @return processed shift line.
-   */
-  AvoidLine fillAdditionalInfo(const AvoidLine & shift_line) const;
-
-  /**
-   * @brief fill index and longitudinal.
-   * @param target shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray fillAdditionalInfo(const AvoidLineArray & shift_lines) const;
-
-  /**
    * @brief Calculate the shift points (start/end point, shift length) from the object lateral
    * and longitudinal positions in the Frenet coordinate. The jerk limit is also considered here.
    * @param avoidance data.
@@ -359,23 +345,6 @@ private:
    */
   AvoidLineArray applyPreProcessToRawShiftLines(
     AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
-
-  /*
-   * @brief Combine points A into B. If shift_line of A which has same object_id and
-   * similar shape is already in B, it will not be added into B.
-   * @param original shift lines.
-   * @param new shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray combineRawShiftLinesWithUniqueCheck(
-    const AvoidLineArray & base_lines, const AvoidLineArray & added_lines) const;
-
-  /*
-   * @brief fill gap between two shift lines.
-   * @param original shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray fillShiftLineGap(const AvoidLineArray & shift_lines) const;
 
   /*
    * @brief merge negative & positive shift lines.
@@ -414,26 +383,21 @@ private:
   AvoidLineArray findNewShiftLine(const AvoidLineArray & shift_lines) const;
 
   /*
-   * @brief calculate parent ids.
-   * @param parent shift lines.
-   * @param child shift lines.
-   * @return parent ids.
-   */
-  std::vector<size_t> calcParentIds(
-    const AvoidLineArray & parent_candidates, const AvoidLine & child) const;
-
-  /*
    * @brief add return shift line from ego position.
    * @param shift lines which the return shift is added.
-   * @param current shift lines.
    * Pick up the last shift point, which is the most farthest from ego, from the current candidate
    * avoidance points and registered points in the shifter. If the last shift length of the point is
    * non-zero, add a return-shift to center line from the point. If there is no shift point in
    * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
    * center line from ego.
    */
-  void addReturnShiftLineFromEgo(
-    AvoidLineArray & sl_candidates, AvoidLineArray & current_raw_shift_lines) const;
+  void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines) const;
+
+  /*
+   * @brief fill gap between two shift lines.
+   * @param original shift lines.
+   */
+  void fillShiftLineGap(AvoidLineArray & shift_lines) const;
 
   /*
    * @brief generate total shift line. total shift line has shift length and gradient array.
@@ -465,19 +429,6 @@ private:
    */
   void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
 
-  /**
-   * @brief remove short "return to center" shift point. ¯¯\_/¯¯　-> ¯¯¯¯¯¯
-   * @param input shift lines.
-   * @details
-   * Is the shift point for "return to center"?
-   *  - no : Do not trim anything.
-   *  - yes: Is it short distance enough to be removed?
-   *     - no : Do not trim anything.
-   *     - yes: Remove the "return" shift point.
-   *            Recalculate longitudinal distance and modify the shift point.
-   */
-  void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
-
   /*
    * @brief trim invalid shift lines whose gradient it too large to follow.
    * @param target shift lines.
@@ -489,26 +440,6 @@ private:
    * @param target shift lines.
    */
   void trimSharpReturn(AvoidLineArray & shift_lines, const double threshold) const;
-
-  /*
-   * @brief sort shift line order based on their end longitudinal distance.
-   * @param target shift lines.
-   * @param re-calculate shift line start length from previous one's. (optional)
-   */
-  void alignShiftLinesOrder(
-    AvoidLineArray & shift_lines, const bool recalculate_start_length = true) const;
-
-  /**
-   * @brief fill index and longitudinal.
-   * @param target shift line.
-   */
-  void fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const;
-
-  /**
-   * @brief fill index and pose.
-   * @param target shift line.
-   */
-  void fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const;
 
   /**
    * @brief add new shift line to path shifter if the RTC status is activated.
