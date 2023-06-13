@@ -24,8 +24,7 @@ namespace autoware_auto_msgs_adapter
 class AdapterBaseInterface
 {
 public:
-  using SharedPtrInterface = std::shared_ptr<AdapterBaseInterface>;
-  using ConstSharedPtrInterface = const SharedPtrInterface;
+  RCLCPP_SHARED_PTR_DEFINITIONS(AdapterBaseInterface)
 
   virtual ~AdapterBaseInterface() = default;
 };

@@ -29,7 +29,7 @@ public:
   explicit AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  AdapterBaseInterface::SharedPtrInterface adapter_;
+  AdapterBaseInterface::SharedPtr adapter_;
 };
 }  // namespace autoware_auto_msgs_adapter
 
