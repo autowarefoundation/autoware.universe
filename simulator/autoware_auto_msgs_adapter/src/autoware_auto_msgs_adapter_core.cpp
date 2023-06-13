@@ -34,7 +34,7 @@ AutowareAutoMsgsAdapterNode::AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptio
   if (msg_type_target == "autoware_auto_control_msgs::msg::AckermannControlCommand") {
     AdapterControl::SharedPtr adapter =
       std::make_shared<AdapterControl>(*this, topic_name_source, topic_name_target);
-    adapter_ = std::dynamic_pointer_cast<AdapterBaseInterface>(adapter);
+    adapter_ = std::static_pointer_cast<AdapterBaseInterface>(adapter);
   } else {
     RCLCPP_ERROR(get_logger(), "Unknown msg type: %s", msg_type_target.c_str());
   }
