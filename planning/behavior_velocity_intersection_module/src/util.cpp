@@ -989,7 +989,7 @@ bool checkAngleForTargetLanelets(
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
-    if (std::fabs(angle_diff) < detection_area_angle_thr) {
+    if (std::fabs(angle_diff) < detection_area_angle_thr/2 || std::fabs(angle_diff) > detection_area_angle_thr) {
       return true;
     }
   }
