@@ -132,6 +132,10 @@ PredictedPath createPredictedPathFromTargetVelocity(
   const double acc_till_target_velocity, const Pose & pose, const size_t nearest_seg_idx,
   const double resolution, const double stopping_time)
 {
+  [[maybe_unused]] size_t nearest_segment_index =
+    motion_utils::findNearestIndex(following_trajectory_points, pose.position);
+  std::cerr << "nearest_segment_index and nearest_seg_idx is same? : "
+            << (nearest_segment_index == nearest_seg_idx) << std::endl;
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
   predicted_path.path.reserve(
@@ -165,9 +169,9 @@ PredictedPath createPredictedPathFromTargetVelocity(
     acc_time = 0.0;
   }
 
-  // TODO(Sugahara): Stopping time is considered only when the vehicle is stopping.
-  // Stopping segment, only if stopping_time is greater than zero
-  if (stopping_time > 0.0) {
+  // Stopping segment, only if stopping_time is greater than zero and current_velocity is almost
+  // zero
+  if (current_velocity < 0.01 && stopping_time > 0.0) {
     addSegment(following_trajectory_points, predicted_path, 0.0, 0.0, 0.0, stopping_time, 0.0);
   }
 
