@@ -3,9 +3,29 @@ files:
 
 units:
   - name: /autoware/operation/stop
+    type: temp
+
   - name: /autoware/operation/autonomous
+    type: all
+    list:
+      - { type: unit, name: /autoware/localization }
+      - { type: unit, name: /autoware/planning }
+      - { type: unit, name: /autoware/percepiton }
+
   - name: /autoware/operation/local
+    type: temp
+
   - name: /autoware/operation/remote
+    type: all
+    list:
+      - { type: diag, name: /external/remote_command }
+
   - name: /autoware/operation/emergency-stop
+    type: temp
+
   - name: /autoware/operation/comfortable-stop
-  - name: /autoware/operation/pull-over
+    type: all
+    list:
+      - { type: unit, name: /autoware/localization }
+      - { type: unit, name: /autoware/planning }
+      - { type: unit, name: /autoware/percepiton/front-obstable-detection }

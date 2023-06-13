@@ -29,14 +29,28 @@ struct ConfigError : public std::runtime_error
   using runtime_error::runtime_error;
 };
 
-struct ConfigNode
+struct LinkConfig
 {
-  YAML::Node yaml;
+  bool is_unit_type;
   std::string name;
-  std::string hint;
+  std::string hardware;
 };
 
-std::vector<ConfigNode> load_config_file(const std::string & path);
+struct ExprConfig
+{
+  std::string type;
+  std::vector<LinkConfig> list;
+  YAML::Node yaml;
+};
+
+struct UnitConfig
+{
+  std::string name;
+  std::string hint;
+  ExprConfig expr;
+};
+
+std::vector<UnitConfig> load_config_file(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 

@@ -19,11 +19,16 @@
 #include "debug.hpp"
 #include "types.hpp"
 
+#include <map>
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
+
+class DiagGraphInit;
 
 class DiagNode
 {
@@ -34,27 +39,51 @@ public:
 class DiagUnit : public DiagNode
 {
 public:
-  explcit DiagUnit(const ConfigNode & config);
-  virtual DiagnosticNode report() { return DiagnosticNode(); }
+  using KeyType = std::string;
+  explicit DiagUnit(const KeyType & key);
+  DiagnosticNode report() override { return DiagnosticNode(); }
+  DiagDebugData debug();
+  std::vector<DiagNode *> create(DiagGraphInit & graph, const UnitConfig & config);
 
 private:
-  std::string name_;
+  const KeyType key_;
 };
 
 class DiagLeaf : public DiagNode
 {
 public:
-  explicit DiagLeaf(const DiagnosticStatus & status);
+  using KeyType = std::pair<std::string, std::string>;
+  explicit DiagLeaf(const KeyType & key);
   DiagnosticNode report() override;
-  void update(const DiagnosticStatus & status);
   DiagDebugData debug();
-
-  using Key = std::pair<std::string, std::string>;
-  static Key get_key(const DiagnosticStatus & status);
+  void update(const DiagnosticStatus & status);
 
 private:
-  const Key key_;
+  const KeyType key_;
   DiagnosticLevel level_;
+};
+
+struct DiagGraphData
+{
+  std::vector<std::unique_ptr<DiagUnit>> unit_list;
+  std::vector<std::unique_ptr<DiagLeaf>> leaf_list;
+  std::map<DiagUnit::KeyType, DiagUnit *> unit_dict;
+  std::map<DiagLeaf::KeyType, DiagLeaf *> leaf_dict;
+
+  DiagUnit * make_unit(const std::string & name);
+  DiagUnit * find_unit(const std::string & name);
+  DiagLeaf * make_leaf(const std::string & name, const std::string & hardware);
+  DiagLeaf * find_leaf(const std::string & name, const std::string & hardware);
+};
+
+class DiagGraphInit
+{
+public:
+  explicit DiagGraphInit(DiagGraphData & data) : data_(data) {}
+  DiagNode * get(const LinkConfig & link);
+
+private:
+  DiagGraphData & data_;
 };
 
 }  // namespace system_diagnostic_graph

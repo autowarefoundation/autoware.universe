@@ -49,60 +49,113 @@ ConfigError ErrorHint::create_error(const std::string & message) const
   return ConfigError(message + ": " + file_);
 }
 
-ConfigNode parse_unit(YAML::Node unit, ErrorHint hint)
+LinkConfig parse_link(YAML::Node yaml, ErrorHint hint)
 {
-  if (!unit.IsMap()) {
+  if (!yaml.IsMap()) {
+    throw hint.create_error("link object is not a dict");
+  }
+  if (!yaml["type"]) {
+    throw hint.create_error("link object has no type");
+  }
+  if (!yaml["name"]) {
+    throw hint.create_error("link object has no name");
+  }
+
+  const auto type = yaml["type"].as<std::string>();
+  const auto name = yaml["name"].as<std::string>();
+  if (type == "unit") {
+    return LinkConfig{true, name, ""};
+  }
+  if (type == "diag") {
+    const auto hardware = yaml["hardware"].as<std::string>("");
+    return LinkConfig{false, name, hardware};
+  }
+  throw hint.create_error("link object has invalid type");
+}
+
+std::vector<LinkConfig> parse_list(YAML::Node yaml, ErrorHint hint)
+{
+  if (!yaml.IsDefined() || yaml.IsNull()) {
+    return {};
+  }
+  if (!yaml.IsSequence()) {
+    throw hint.create_error("list object is not a list");
+  }
+  std::vector<LinkConfig> list;
+  for (const auto & link : yaml) {
+    list.push_back(parse_link(link, hint));
+  }
+  return list;
+}
+
+ExprConfig parse_expr(YAML::Node yaml, ErrorHint hint)
+{
+  if (!yaml.IsMap()) {
+    throw hint.create_error("expr object is not a dict");
+  }
+  if (!yaml["type"]) {
+    throw hint.create_error("expr object has no type");
+  }
+  const auto type = yaml["type"].as<std::string>();
+  const auto list = parse_list(yaml["list"], hint);
+  return ExprConfig{type, list, yaml};
+}
+
+UnitConfig parse_unit(YAML::Node yaml, ErrorHint hint)
+{
+  if (!yaml.IsMap()) {
     throw hint.create_error("unit object is not a dict");
   }
-  if (!unit["name"]) {
+  if (!yaml["name"]) {
     throw hint.create_error("unit object has no name");
   }
-  const auto name = unit["name"].as<std::string>();
-  return ConfigNode{unit, name, hint};
+  const auto name = yaml["name"].as<std::string>();
+  const auto expr = parse_expr(yaml, hint);
+  return UnitConfig{name, hint, expr};
 }
 
-std::vector<ConfigNode> parse_file(YAML::Node file, ErrorHint hint)
+std::vector<UnitConfig> parse_units(YAML::Node yaml, ErrorHint hint)
 {
-  if (!file.IsMap()) {
-    throw hint.create_error("file object is not a dict");
-  }
-  const auto package_name = file["package"].as<std::string>();
-  const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
-  return load_config_file(package_path + "/" + file["path"].as<std::string>());
-}
-
-std::vector<ConfigNode> parse_units(YAML::Node units, ErrorHint hint)
-{
-  if (!units.IsDefined() || units.IsNull()) {
+  if (!yaml.IsDefined() || yaml.IsNull()) {
     return {};
   }
-  if (!units.IsSequence()) {
+  if (!yaml.IsSequence()) {
     throw hint.create_error("units section is not a list");
   }
-  std::vector<ConfigNode> result;
-  for (const auto & unit : units) {
-    result.push_back(parse_unit(unit, hint));
+  std::vector<UnitConfig> units;
+  for (const auto & unit : yaml) {
+    units.push_back(parse_unit(unit, hint));
   }
-  return result;
+  return units;
 }
 
-std::vector<ConfigNode> parse_files(YAML::Node files, ErrorHint hint)
+std::vector<UnitConfig> parse_file(YAML::Node yaml, ErrorHint hint)
 {
-  if (!files.IsDefined() || files.IsNull()) {
+  if (!yaml.IsMap()) {
+    throw hint.create_error("file object is not a dict");
+  }
+  const auto package_name = yaml["package"].as<std::string>();
+  const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
+  return load_config_file(package_path + "/" + yaml["path"].as<std::string>());
+}
+
+std::vector<UnitConfig> parse_files(YAML::Node yaml, ErrorHint hint)
+{
+  if (!yaml.IsDefined() || yaml.IsNull()) {
     return {};
   }
-  if (!files.IsSequence()) {
+  if (!yaml.IsSequence()) {
     throw hint.create_error("files section is not a list");
   }
-  std::vector<ConfigNode> result;
-  for (const auto & file : files) {
+  std::vector<UnitConfig> files;
+  for (const auto & file : yaml) {
     const auto units = parse_file(file, hint);
-    result.insert(result.end(), units.begin(), units.end());
+    files.insert(files.end(), units.begin(), units.end());
   }
-  return result;
+  return files;
 }
 
-std::vector<ConfigNode> load_config_file(const std::string & path)
+std::vector<UnitConfig> load_config_file(const std::string & path)
 {
   const auto hint = ErrorHint(path);
   if (!std::filesystem::exists(path)) {
@@ -115,7 +168,7 @@ std::vector<ConfigNode> load_config_file(const std::string & path)
   const auto units = parse_units(yaml["units"], hint);
   const auto files = parse_files(yaml["files"], hint);
 
-  std::vector<ConfigNode> result;
+  std::vector<UnitConfig> result;
   result.insert(result.end(), units.begin(), units.end());
   result.insert(result.end(), files.begin(), files.end());
   return result;

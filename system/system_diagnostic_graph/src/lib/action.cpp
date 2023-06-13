@@ -12,31 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__GRAPH_HPP_
-#define LIB__GRAPH_HPP_
-
-#include "node.hpp"
-#include "types.hpp"
-
-#include <rclcpp/rclcpp.hpp>
-
-#include <string>
+#include "action.hpp"
 
 namespace system_diagnostic_graph
 {
 
-class DiagGraph
-{
-public:
-  void create(const std::string & file);
-  DiagnosticGraph report(const rclcpp::Time & stamp);
-  void update(const DiagnosticArray & array);
-  void debug();
-
-private:
-  DiagGraphData data_;
-};
-
 }  // namespace system_diagnostic_graph
-
-#endif  // LIB__GRAPH_HPP_

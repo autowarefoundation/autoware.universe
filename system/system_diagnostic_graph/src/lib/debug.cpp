@@ -35,8 +35,11 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
 void DiagGraph::debug()
 {
   std::vector<DiagDebugData> lines;
-  for (const auto & diag : diags_) {
-    lines.push_back(diag.second->debug());
+  for (const auto & leaf : data_.leaf_list) {
+    lines.push_back(leaf->debug());
+  }
+  for (const auto & unit : data_.unit_list) {
+    lines.push_back(unit->debug());
   }
 
   std::array<size_t, diag_debug_size> widths = {};
@@ -55,9 +58,14 @@ void DiagGraph::debug()
   }
 }
 
+DiagDebugData DiagUnit::debug()
+{
+  return DiagDebugData{"unit", key_, "-----", "-----"};
+}
+
 DiagDebugData DiagLeaf::debug()
 {
-  return DiagDebugData{key_.first, key_.second, level_names.at(level_)};
+  return DiagDebugData{"diag", key_.first, key_.second, level_names.at(level_)};
 }
 
 }  // namespace system_diagnostic_graph

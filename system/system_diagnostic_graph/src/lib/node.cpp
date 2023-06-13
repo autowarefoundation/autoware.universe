@@ -23,20 +23,25 @@ namespace system_diagnostic_graph
 
 const auto logger = rclcpp::get_logger("system_diagnostic_graph");
 
-DiagUnit::DiagUnit(const ConfigNode & config)
+DiagUnit::DiagUnit(const KeyType & key) : key_(key)
 {
-  name_ = config.yaml["name"].as<std::string>();
 }
 
-DiagLeaf::Key DiagLeaf::get_key(const DiagnosticStatus & status)
+std::vector<DiagNode *> DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
 {
-  return std::make_pair(status.name, status.hardware_id);
+  (void)graph;
+  (void)config;
+
+  RCLCPP_INFO_STREAM(logger, config.name << ": " << config.expr.type);
+  for (const auto & link : config.expr.list) {
+    graph.get(link);
+  }
+  return {};
 }
 
-DiagLeaf::DiagLeaf(const DiagnosticStatus & status) : key_(get_key(status))
+DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
 {
-  RCLCPP_INFO_STREAM(logger, "found a new diagnosis: " << status.name);
-  level_ = status.level;
+  level_ = DiagnosticStatus::STALE;
 }
 
 DiagnosticNode DiagLeaf::report()
@@ -47,6 +52,46 @@ DiagnosticNode DiagLeaf::report()
 void DiagLeaf::update(const DiagnosticStatus & status)
 {
   level_ = status.level;
+}
+
+DiagUnit * DiagGraphData::make_unit(const std::string & name)
+{
+  const auto key = name;
+  auto unit = unit_list.emplace_back(std::make_unique<DiagUnit>(key)).get();
+  unit_dict[key] = unit;
+  return unit;
+}
+
+DiagUnit * DiagGraphData::find_unit(const std::string & name)
+{
+  const auto key = name;
+  return unit_dict.count(key) ? unit_dict.at(key) : nullptr;
+}
+
+DiagLeaf * DiagGraphData::make_leaf(const std::string & name, const std::string & hardware)
+{
+  const auto key = std::make_pair(name, hardware);
+  auto leaf = leaf_list.emplace_back(std::make_unique<DiagLeaf>(key)).get();
+  leaf_dict[key] = leaf;
+  return leaf;
+}
+
+DiagLeaf * DiagGraphData::find_leaf(const std::string & name, const std::string & hardware)
+{
+  const auto key = std::make_pair(name, hardware);
+  return leaf_dict.count(key) ? leaf_dict.at(key) : nullptr;
+}
+
+DiagNode * DiagGraphInit::get(const LinkConfig & link)
+{
+  // For link to unit type.
+  if (link.is_unit_type) {
+    return data_.find_unit(link.name);
+  }
+  // For link to diag type.
+  auto * leaf = data_.find_leaf(link.name, link.hardware);
+  if (leaf) return leaf;
+  return data_.make_leaf(link.name, link.hardware);
 }
 
 }  // namespace system_diagnostic_graph

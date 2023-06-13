@@ -16,43 +16,69 @@
 
 #include "config.hpp"
 
+#include <map>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
 
 void DiagGraph::create(const std::string & file)
 {
-  const auto units = load_config_file(file);
-  for (const auto & unit : units) {
-    nodes_.push_back(std::make_unique<DiagUnit>(unit));
+  struct TempUnit
+  {
+    UnitConfig config;
+    DiagUnit * node;
+    std::vector<DiagNode *> links;
+  };
+
+  const auto configs = load_config_file(file);
+  DiagGraphData data;
+  DiagGraphInit init(data);
+
+  std::vector<TempUnit> units;
+  for (const auto & config : configs) {
+    TempUnit unit;
+    unit.config = config;
+    unit.node = data.make_unit(config.name);
+    units.push_back(unit);
   }
+
+  for (auto & unit : units) {
+    unit.links = unit.node->create(init, unit.config);
+  }
+
+  data_ = std::move(data);
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 {
   DiagnosticGraph graph;
   graph.stamp = stamp;
-  graph.nodes.reserve(nodes_.size() + diags_.size());
+  graph.nodes.reserve(data_.leaf_list.size() + data_.unit_list.size());
 
-  for (const auto & node : nodes_) {
-    graph.nodes.push_back(node->report());
+  for (const auto & leaf : data_.leaf_list) {
+    graph.nodes.push_back(leaf->report());
   }
-  for (const auto & diag : diags_) {
-    graph.nodes.push_back(diag.second->report());
+  for (const auto & unit : data_.unit_list) {
+    graph.nodes.push_back(unit->report());
   }
   return graph;
 }
 
 void DiagGraph::update(const DiagnosticArray & array)
 {
+  (void)array;
+  /*
   for (const auto & status : array.status) {
     const auto key = DiagLeaf::get_key(status);
-    if (!diags_.count(key)) {
-      diags_.emplace(key, std::make_shared<DiagLeaf>(status));
+    if (!data_.leaf_dict.count(key)) {
+      data_.leaf_dict.emplace(key, std::make_shared<DiagLeaf>(status));
     }
-    diags_.at(key)->update(status);
+    data_.leaf_dict.at(key)->update(status);
   }
+  */
 }
 
 }  // namespace system_diagnostic_graph
