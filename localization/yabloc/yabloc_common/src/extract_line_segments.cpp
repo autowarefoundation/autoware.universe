@@ -20,22 +20,24 @@ pcl::PointCloud<pcl::PointNormal> extract_near_line_segments(
   const pcl::PointCloud<pcl::PointNormal> & line_segments, const Sophus::SE3f & transform,
   const float max_range)
 {
-  Eigen::Vector3f pose_vector = transform.translation();
+  constexpr double sqrt_two = std::sqrt(2);
+  const Eigen::Vector3f pose_vector = transform.translation();
 
-  // Compute distance between pose and linesegment of linestring
+  // All line segments contained in a square with max_range on one side must be taken out,
+  // so pick up those that are closer than the **diagonals** of the square.
   auto check_intersection = [max_range, pose_vector](const pcl::PointNormal & pn) -> bool {
     const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
     const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
 
     Eigen::Vector3f tangent = to - from;
     if (tangent.squaredNorm() < 1e-3f) {
-      return from.norm() < 1.414 * max_range;
+      return from.norm() < sqrt_two * max_range;
     }
 
     float inner = from.dot(tangent);
     float mu = std::clamp(inner / tangent.squaredNorm(), -1.0f, 0.0f);
     Eigen::Vector3f nearest = from - tangent * mu;
-    return nearest.norm() < 1.414 * max_range;
+    return nearest.norm() < sqrt_two * max_range;
   };
 
   pcl::PointCloud<pcl::PointNormal> dst;
