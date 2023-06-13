@@ -290,6 +290,7 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
   }
   return tracked_objects;
 }
+
 uint8_t RadarTracksMsgsConverterNode::convertClassification(const uint16_t classification)
 {
   if (classification == static_cast<uint16_t>(RadarTrackObjectID::UNKNOWN)) {
