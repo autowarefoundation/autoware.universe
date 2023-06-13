@@ -27,9 +27,9 @@ using autoware_control_msgs::msg::Control;
 AutowareAutoMsgsAdapterNode::AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("autoware_auto_msgs_adapter", node_options)
 {
-  std::string msg_type_target = declare_parameter<std::string>("msg_type_target");
-  std::string topic_name_source = declare_parameter<std::string>("topic_name_source");
-  std::string topic_name_target = declare_parameter<std::string>("topic_name_target");
+  const std::string msg_type_target = declare_parameter<std::string>("msg_type_target");
+  const std::string topic_name_source = declare_parameter<std::string>("topic_name_source");
+  const std::string topic_name_target = declare_parameter<std::string>("topic_name_target");
 
   if (msg_type_target == "autoware_auto_control_msgs::msg::AckermannControlCommand") {
     AdapterControl::SharedPtr adapter =
