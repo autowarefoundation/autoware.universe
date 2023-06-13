@@ -15,7 +15,6 @@
 #include "yabloc_particle_filter/gnss_corrector/gnss_particle_corrector.hpp"
 
 #include <yabloc_common/color.hpp>
-#include <yabloc_common/fix2mgrs.hpp>
 #include <yabloc_common/pose_conversions.hpp>
 
 namespace yabloc::modularized_particle_filter
