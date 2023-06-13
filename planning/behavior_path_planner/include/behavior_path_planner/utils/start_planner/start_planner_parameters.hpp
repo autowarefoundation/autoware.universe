@@ -51,12 +51,6 @@ struct StartPlannerParameters
   double backward_search_resolution;
   double backward_path_update_duration;
   double ignore_distance_from_lane_end;
-  // safety check
-  double stop_time_before_departure;  // stop time before departure which is used to create ego's
-                                      // predicted path
-  double acceleration_to_target_velocity;  // acceleration to target velocity which is used to
-                                           // create ego's predicted path
-  double prediction_time_resolution;       // resolution of predicted path
 };
 
 }  // namespace behavior_path_planner

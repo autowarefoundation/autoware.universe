@@ -30,7 +30,3 @@
       backward_search_resolution: 2.0
       backward_path_update_duration: 3.0
       ignore_distance_from_lane_end: 15.0
-      # safety check
-      stop_time_before_departure: 1.0 # stop time before departure which is used to create ego's predicted path
-      acceleration_to_target_velocity: 1.0 # acceleration to target velocity which is used to create ego's predicted path
-      prediction_time_resolution: 0.5 # resolution of predicted path
