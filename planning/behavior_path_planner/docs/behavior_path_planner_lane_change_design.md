@@ -38,33 +38,54 @@ lane_changing_distance = lane_change_prepare_velocity * lane_changing_duration
 
 The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
 
-#### Multiple candidate path samples
+#### Multiple candidate path samples (longitudinal acceleration)
 
 Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
 Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `prepare_length`, `prepare_velocity` and `lane_changing_length` equation.
 
-The predetermined acceleration values are a set of value that starts from `acceleration = maximum_acceleration`, and decrease by `acceleration_resolution` until it reaches `acceleration = -maximum_deceleration`. Both `maximum_acceleration` and `maximum_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
+The predetermined longitudinal acceleration values are a set of value that starts from `longitudinal_acceleration = maximum_longitudinal_acceleration`, and decrease by `longitudinal_acceleration_resolution` until it reaches `longitudinal_acceleration = -maximum_longitudinal_deceleration`. Both `maximum_longitudinal_acceleration` and `maximum_longitudinal_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
 
 ```C++
-maximum_acceleration = min(common_param.max_acc, lane_change_param.max_acc)
-maximum_deceleration = max(common_param.min_acc, lane_change_param.min_acc)
+maximum_longitudinal_acceleration = min(common_param.max_acc, lane_change_param.max_acc)
+maximum_longitudinal_deceleration = max(common_param.min_acc, lane_change_param.min_acc)
 ```
 
-where `common_param` is vehicle common parameter, which defines vehicle common maximum acceleration and deceleration. Whereas, `lane_change_param` has maximum acceleration and deceleration for the lane change module. For example, if a user set and `common_param.max_acc=1.0` and `lane_change_param.max_acc=0.0`, `maximum_acceleration` becomes `0.0`, and the lane change does not accelerate in the lane change phase.
+where `common_param` is vehicle common parameter, which defines vehicle common maximum longitudinal acceleration and deceleration. Whereas, `lane_change_param` has maximum longitudinal acceleration and deceleration for the lane change module. For example, if a user set and `common_param.max_acc=1.0` and `lane_change_param.max_acc=0.0`, `maximum_longitudinal_acceleration` becomes `0.0`, and the lane change does not accelerate in the lane change phase.
 
-The `acceleration_resolution` is determine by the following
+The `longitudinal_acceleration_resolution` is determine by the following
 
 ```C++
-acceleration_resolution = (maximum_acceleration - maximum_deceleration) / lane_change_sampling_num
+longitudinal_acceleration_resolution = (maximum_longitudinal_acceleration - minimum_longitudinal_deceleration) / longitudinal_acceleration_sampling_num
 ```
 
-Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, the acceleration becomes positive value (not deceleration).
+Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, longitudinal acceleration becomes positive value (not decelerate).
 
 The following figure illustrates when `lane_change_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
 
 ![path_samples](../image/lane_change/lane_change-candidate_path_samples.png)
 
 Which path will be chosen will depend on validity and collision check.
+
+#### Multiple candidate path samples (lateral acceleration)
+
+In addition to longitudinal acceleration sampling, we also sample lane change paths by changing the value of lateral acceleration. Since lateral acceleration affects lane change time, small lateral acceleration value makes longer lane change path, and big lateral acceleration value makes the lane change path shorter. This enables the lane change module to generate a short lane change path by making the lateral acceleration larger when it does not have long space to perform the lane change.
+
+Maximum lateral acceleration and minimum lateral acceleration are defined in the lane change parameter file as a map. Lateral acceleration range is defined at each velocity by linearly interpolating the map. Let assume we have the following map.
+
+| Ego Velocity | Minimum lateral acceleration | Maximum lateral acceleration |
+| :----------- | ---------------------------- | ---------------------------- |
+| 0.0          | 0.2                          | 0.3                          |
+| 2.0          | 0.2                          | 0.4                          |
+| 4.0          | 0.3                          | 0.4                          |
+| 6.0          | 0.3                          | 0.5                          |
+
+In this case, if the current velocity of the ego vehicle is `3.0`, minimum lateral acceleration and maximum lateral acceleration are `0.2` and `0.35` respectively. They can be computed from the second and third low of the map by linearly interpolating minimum and maximum lateral acceleration values.
+
+In this range, we sample the lateral acceleration for the ego vehicle. Similar to longitudinal acceleration sampling method, `lateral acceleration_resolution` is determine by the following
+
+```C++
+lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_deceleration) / lateral_acceleration_sampling_num
+```
 
 #### Candidate Path's validity check
 
