@@ -137,6 +137,8 @@ public:
 
   const BehaviorPathPlannerParameters & getCommonParam() const { return planner_data_->parameters; }
 
+  LaneChangeParameters getLaneChangeParam() const { return *lane_change_parameters_; }
+
   bool isCancelEnabled() const { return lane_change_parameters_->enable_cancel_lane_change; }
 
   bool isAbortEnabled() const { return lane_change_parameters_->enable_abort_lane_change; }
