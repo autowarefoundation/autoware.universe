@@ -2,6 +2,16 @@ files:
   - { package: system_diagnostic_graph, path: config/sample_diagnostic_graph2.yaml }
 
 units:
+  - name: /autoware/report
+    type: temp
+    list:
+      - { type: unit, name: /autoware/operation/stop }
+      - { type: unit, name: /autoware/operation/autonomous }
+      - { type: unit, name: /autoware/operation/local }
+      - { type: unit, name: /autoware/operation/remote }
+      - { type: unit, name: /autoware/operation/emergency-stop }
+      - { type: unit, name: /autoware/operation/comfortable-stop }
+
   - name: /autoware/operation/stop
     type: temp
 

@@ -34,6 +34,11 @@ class DiagNode
 {
 public:
   virtual DiagnosticNode report() = 0;
+  virtual std::vector<DiagNode *> links() const = 0;
+  virtual std::string name() const = 0;
+
+protected:
+  DiagnosticLevel level_;
 };
 
 class DiagUnit : public DiagNode
@@ -43,10 +48,15 @@ public:
   explicit DiagUnit(const KeyType & key);
   DiagnosticNode report() override { return DiagnosticNode(); }
   DiagDebugData debug();
-  std::vector<DiagNode *> create(DiagGraphInit & graph, const UnitConfig & config);
+  void update();
+  void create(DiagGraphInit & graph, const UnitConfig & config);
+
+  std::vector<DiagNode *> links() const override { return links_; }
+  std::string name() const override { return "Unit[" + key_ + "]"; }
 
 private:
   const KeyType key_;
+  std::vector<DiagNode *> links_;
 };
 
 class DiagLeaf : public DiagNode
@@ -58,9 +68,11 @@ public:
   DiagDebugData debug();
   void update(const DiagnosticStatus & status);
 
+  std::vector<DiagNode *> links() const override { return {}; }
+  std::string name() const override { return "Diag[" + key_.first + "]"; }
+
 private:
   const KeyType key_;
-  DiagnosticLevel level_;
 };
 
 struct DiagGraphData

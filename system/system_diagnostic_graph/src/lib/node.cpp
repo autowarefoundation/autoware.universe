@@ -21,22 +21,20 @@
 namespace system_diagnostic_graph
 {
 
-const auto logger = rclcpp::get_logger("system_diagnostic_graph");
-
 DiagUnit::DiagUnit(const KeyType & key) : key_(key)
 {
+  level_ = DiagnosticStatus::STALE;
 }
 
-std::vector<DiagNode *> DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
+void DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
 {
-  (void)graph;
-  (void)config;
-
-  RCLCPP_INFO_STREAM(logger, config.name << ": " << config.expr.type);
   for (const auto & link : config.expr.list) {
-    graph.get(link);
+    DiagNode * node = graph.get(link);
+    if (!node) {
+      throw ConfigError("unknown unit name: " + config.hint);
+    }
+    links_.push_back(node);
   }
-  return {};
 }
 
 DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
@@ -51,6 +49,7 @@ DiagnosticNode DiagLeaf::report()
 
 void DiagLeaf::update(const DiagnosticStatus & status)
 {
+  // TODO(Takagi, Isamu): timeout, error hold
   level_ = status.level;
 }
 

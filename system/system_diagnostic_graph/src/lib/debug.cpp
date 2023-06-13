@@ -49,7 +49,9 @@ void DiagGraph::debug()
     }
   }
 
-  std::cout << "============================================================" << std::endl;
+  const size_t total_width = std::accumulate(widths.begin(), widths.end(), 0);
+  std::cout << std::string(total_width + 3 * diag_debug_size + 1, '=') << std::endl;
+
   for (const auto & line : lines) {
     for (size_t i = 0; i < diag_debug_size; ++i) {
       std::cout << "| " << std::left << std::setw(widths[i]) << line[i] << " ";
@@ -60,7 +62,7 @@ void DiagGraph::debug()
 
 DiagDebugData DiagUnit::debug()
 {
-  return DiagDebugData{"unit", key_, "-----", "-----"};
+  return DiagDebugData{"unit", key_, "-----", level_names.at(level_)};
 }
 
 DiagDebugData DiagLeaf::debug()

@@ -16,8 +16,9 @@
 
 #include "config.hpp"
 
-#include <map>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -26,30 +27,24 @@ namespace system_diagnostic_graph
 
 void DiagGraph::create(const std::string & file)
 {
-  struct TempUnit
-  {
-    UnitConfig config;
-    DiagUnit * node;
-    std::vector<DiagNode *> links;
-  };
-
   const auto configs = load_config_file(file);
-  DiagGraphData data;
-  DiagGraphInit init(data);
+  data_ = DiagGraphData();
 
-  std::vector<TempUnit> units;
+  // Create unit nodes.
+  std::vector<std::pair<UnitConfig, DiagUnit *>> units;
   for (const auto & config : configs) {
-    TempUnit unit;
-    unit.config = config;
-    unit.node = data.make_unit(config.name);
-    units.push_back(unit);
+    DiagUnit * unit = data_.make_unit(config.name);
+    units.push_back(std::make_pair(config, unit));
   }
 
-  for (auto & unit : units) {
-    unit.links = unit.node->create(init, unit.config);
+  DiagGraphInit graph(data_);
+  for (auto & [config, unit] : units) {
+    unit->create(graph, config);
   }
 
-  data_ = std::move(data);
+  // Sort unit nodes in topological order.
+  std::cout << "============================== sort ==============================" << std::endl;
+  topological_sort();
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
@@ -79,6 +74,69 @@ void DiagGraph::update(const DiagnosticArray & array)
     data_.leaf_dict.at(key)->update(status);
   }
   */
+}
+
+void DiagGraph::topological_sort()
+{
+  std::unordered_map<DiagNode *, int> degrees;
+  std::vector<DiagNode *> nodes;
+  std::vector<DiagNode *> result;
+  std::vector<DiagNode *> buffer;
+
+  // Create a list of unit nodes and leaf nodes.
+  for (const auto & unit : data_.unit_list) {
+    nodes.push_back(unit.get());
+  }
+  for (const auto & leaf : data_.leaf_list) {
+    nodes.push_back(leaf.get());
+  }
+
+  // Count degrees of each node.
+  for (const auto & node : nodes) {
+    for (const auto & link : node->links()) {
+      ++degrees[link];
+    }
+  }
+
+  // Find initial nodes that are zero degrees.
+  for (const auto & node : nodes) {
+    if (degrees[node] == 0) {
+      buffer.push_back(node);
+    }
+  }
+
+  // Sort by topological order.
+  while (!buffer.empty()) {
+    const auto node = buffer.back();
+    buffer.pop_back();
+    for (const auto & link : node->links()) {
+      if (--degrees[link] == 0) {
+        buffer.push_back(link);
+      }
+    }
+    result.push_back(node);
+  }
+
+  // Cyclic nodes are not included in the result.
+  if (result.size() != nodes.size()) {
+    throw ConfigError("detect graph circulation");
+  }
+
+  // Create indices to update original vector.
+  std::unordered_map<DiagNode *, size_t> indices;
+  for (size_t i = 0; i < data_.unit_list.size(); ++i) {
+    indices[data_.unit_list[i].get()] = i;
+  }
+
+  // Update original vector.
+  std::vector<std::unique_ptr<DiagUnit>> unit_list;
+  for (const auto & node : result) {
+    if (indices.count(node)) {
+      unit_list.push_back(std::move(data_.unit_list[indices[node]]));
+    }
+  }
+  std::reverse(unit_list.begin(), unit_list.end());
+  data_.unit_list = std::move(unit_list);
 }
 
 }  // namespace system_diagnostic_graph

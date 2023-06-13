@@ -34,6 +34,7 @@ public:
   void debug();
 
 private:
+  void topological_sort();
   DiagGraphData data_;
 };
 
