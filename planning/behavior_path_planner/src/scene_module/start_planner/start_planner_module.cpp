@@ -833,6 +833,8 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 
 bool StartPlannerModule::isSafeConsideringDynamicObjects()
 {
+  // TODO(Sugahara): should safety check for backward path later
+  const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
   const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
   double target_velocity = 0.0;
   switch (status_.planner_type) {
@@ -846,18 +848,12 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects()
       break;
   }
   const Pose current_pose = planner_data_->self_odometry->pose.pose;
-
+  // create ego predicted path
   const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
+    pull_out_path.points, current_velocity, target_velocity,
     parameters_->acceleration_to_target_velocity, current_pose,
     parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
-  // TODO(Sugahara): should safety check for backward path later
-  const auto & pull_out_path = status_.pull_out_path.partial_paths.at(0);
-  // create ego predicted path
-  const auto & ego_predicted_path = createPredictedPathFromTargetVelocity(
-    path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
-    prepare_duration, prepare_acc, lane_changing_acc);
   return utils::safety_check::isSafeInLaneletCollisionCheck(
     pull_out_path, interpolated_ego, current_twist, check_durations,
     lane_change_path.duration.prepare, obj, obj_path, common_parameter,

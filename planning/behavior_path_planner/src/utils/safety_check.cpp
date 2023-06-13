@@ -149,13 +149,13 @@ double calcMinimumLongitudinalLength(
 }
 
 bool isSafeInLaneletCollisionCheck(
-  const PathWithLaneId & path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
-  const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const double prepare_duration, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_velocity_thresh, const double front_object_deceleration,
-  const double rear_object_deceleration, CollisionCheckDebug & debug)
+  const PathWithLaneId & planned_path,
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & predicted_ego_poses,
+  const double & ego_current_velocity, const std::vector<double> & check_duration,
+  const PredictedObject & target_object, const PredictedPath & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
+  const double rear_object_deceleration, CollisionCheckDebug & debug,
+  const double prepare_duration = 0.0, const double velocity_threshold_for_prepare_duration = 0.0);
 {
   debug.lerped_path.reserve(check_duration.size());
 
@@ -166,9 +166,11 @@ bool isSafeInLaneletCollisionCheck(
   for (size_t i = 0; i < check_duration.size(); ++i) {
     const auto current_time = check_duration.at(i);
 
-    if (
-      current_time < prepare_duration &&
-      object_velocity < prepare_phase_ignore_target_velocity_thresh) {
+    // ignore low velocity object during prepare duration
+    const bool prepare_phase = current_time < prepare_duration;
+    const bool ignore_target_velocity_during_prepare_phase =
+      object_velocity < prepare_phase_ignore_target_velocity_thresh;
+    if (prepare_phase && ignore_target_velocity_during_prepare_phase) {
       continue;
     }
 
@@ -221,6 +223,7 @@ bool isSafeInLaneletCollisionCheck(
     debug.expected_obj_pose = *obj_pose;
     debug.is_front = is_object_front;
 
+    // check overlap with extended polygon
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
       debug.failed_reason = "overlap_extended_polygon";
       return false;
