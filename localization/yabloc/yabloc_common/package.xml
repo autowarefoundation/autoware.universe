@@ -10,6 +10,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
+  <depend>autoware_auto_mapping_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>geographiclib</depend>
   <depend>geometry_msgs</depend>
@@ -22,14 +23,13 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
+  <depend>signal_processing</depend>
   <depend>sophus</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>ublox_msgs</depend>
   <depend>visualization_msgs</depend>
 
-  <depend>autoware_auto_mapping_msgs</depend>
-  <depend>signal_processing</depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
