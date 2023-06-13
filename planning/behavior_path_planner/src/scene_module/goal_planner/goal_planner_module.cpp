@@ -488,8 +488,27 @@ void GoalPlannerModule::returnToLaneParking()
 
 void GoalPlannerModule::generateGoalCandidates()
 {
+  const auto & route_handler = planner_data_->route_handler;
+
+// with old architecture, module instance is not cleared when new route is received
+// so need to reset status here.
+#ifdef USE_OLD_ARCHITECTURE
+  // initialize when receiving new route
+  if (!last_received_time_ || *last_received_time_ != route_handler->getRouteHeader().stamp) {
+    // this process causes twice reset when receiving first route.
+    resetStatus();
+  }
+  last_received_time_ = std::make_unique<rclcpp::Time>(route_handler->getRouteHeader().stamp);
+
+#else
+  // todo: move this check out of this function after old architecture is removed
+  if (!goal_candidates_.empty()) {
+    return;
+  }
+#endif
+
   // calculate goal candidates
-  const Pose goal_pose = planner_data_->route_handler->getGoalPose();
+  const Pose goal_pose = route_handler->getGoalPose();
   refined_goal_pose_ = calcRefinedGoal(goal_pose);
   if (allow_goal_modification_) {
     goal_searcher_->setPlannerData(planner_data_);
@@ -504,9 +523,7 @@ void GoalPlannerModule::generateGoalCandidates()
 
 BehaviorModuleOutput GoalPlannerModule::plan()
 {
-  if (goal_candidates_.empty()) {
-    generateGoalCandidates();
-  }
+  generateGoalCandidates();
 
   if (allow_goal_modification_) {
     return planWithGoalModification();
