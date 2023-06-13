@@ -5,7 +5,6 @@
   <let name="inout_weighted_particles" value="weighted_particles"/>
   <let name="output_particles_marker_array" value="predicted_particles_marker"/>
   <node pkg="yabloc_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level info">
-    <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var predictor_param_path)"/>
 
     <remap from="~/input/initialpose" to="$(var input_initialpose)"/>
@@ -24,7 +23,6 @@
   <arg name="input_ll2_road_marking" default="/localization/yabloc/map/ll2_road_marking"/>
   <arg name="input_ll2_bounding_box" default="/localization/yabloc/map/ll2_bounding_box"/>
   <node pkg="yabloc_particle_filter" exec="camera_particle_corrector_node" name="camera_corrector" output="screen" args="--ros-args --log-level warn">
-    <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var camera_particle_corrector_param_path)"/>
 
     <remap from="~/input/predicted_particles" to="predicted_particles"/>
@@ -46,7 +44,6 @@
 
   <!-- gnss correction -->
   <node pkg="yabloc_particle_filter" exec="gnss_particle_corrector_node" name="gnss_corrector" output="screen" args="--ros-args --log-level warn">
-    <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var gnss_particle_corrector_param_path)"/>
 
     <remap from="~/input/predicted_particles" to="predicted_particles"/>
