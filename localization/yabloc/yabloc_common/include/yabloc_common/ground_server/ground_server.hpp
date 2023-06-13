@@ -15,10 +15,10 @@
 #ifndef YABLOC_COMMON__GROUND_SERVER__GROUND_SERVER_HPP_
 #define YABLOC_COMMON__GROUND_SERVER__GROUND_SERVER_HPP_
 
-#include "yabloc_common/ground_server/filter/low_pass_filter.hpp"
 #include "yabloc_common/ground_server/filter/moving_averaging.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <signal_processing/lowpass_filter_1d.hpp>
 #include <yabloc_common/ground_plane.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -77,7 +77,7 @@ private:
 
   // Smoother
   MovingAveraging normal_filter_;
-  LowPassFilter height_filter_;
+  LowpassFilter1d height_filter_{0.2};
 
   // For debug
   std::vector<int> last_indices_;

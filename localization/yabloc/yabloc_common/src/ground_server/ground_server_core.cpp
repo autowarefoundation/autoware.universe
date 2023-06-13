@@ -51,6 +51,8 @@ GroundServer::GroundServer()
   pub_marker_ = create_publisher<Marker>("output/ground_markers", 10);
   pub_string_ = create_publisher<String>("output/ground_status", 10);
   pub_near_cloud_ = create_publisher<PointCloud2>("output/near_cloud", 10);
+
+  height_filter_.reset(0);
 }
 
 void GroundServer::on_initial_pose(const PoseCovStamped & msg)
@@ -61,7 +63,7 @@ void GroundServer::on_initial_pose(const PoseCovStamped & msg)
   }
 
   const Point point = msg.pose.pose.position;
-  height_filter_.initialize(estimate_height_simply(point));
+  height_filter_.reset(estimate_height_simply(point));
 }
 
 void GroundServer::on_pose_stamped(const PoseStamped & msg)
@@ -181,7 +183,8 @@ std::vector<int> GroundServer::estimate_inliers_by_ransac(const std::vector<int>
 
 GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 {
-  const float predicted_z = height_filter_.get_estimate();
+  // Because height_filter_ is always initialized, getValue does not return nullopt
+  const float predicted_z = height_filter_.getValue().value();
   const pcl::PointXYZ xyz(point.x, point.y, predicted_z);
 
   std::vector<int> raw_indices;
@@ -236,7 +239,7 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
     plane.xyz.z() = (inner - px_nx - py_ny) / plane.normal.z();
   }
 
-  height_filter_.update(plane.xyz.z());
+  height_filter_.filter(plane.xyz.z());
 
   if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
   return plane;
