@@ -60,6 +60,7 @@ public:
     double stop_line_margin;
     double stop_duration_sec;
     double path_interpolation_ds;
+    double occlusion_attention_area_length;
     bool consider_wrong_direction_vehicle;
   };
 
