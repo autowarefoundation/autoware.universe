@@ -28,8 +28,7 @@ template <typename SourceT, typename TargetT>
 class AdapterBase : public AdapterBaseInterface
 {
 public:
-  using SharedPtr = std::shared_ptr<AdapterBase<SourceT, TargetT>>;
-  using ConstSharedPtr = const SharedPtr;
+  RCLCPP_SHARED_PTR_DEFINITIONS(AdapterBase<SourceT, TargetT>)
 
   explicit AdapterBase(
     rclcpp::Node & node, const std::string & topic_name_source,
