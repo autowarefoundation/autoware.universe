@@ -250,6 +250,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   bool need_transform = points.header.frame_id != base_link_frame_;
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
+
     while (velocity_it != std::end(vehicle_velocity_queue_) - 1 &&
            *it_time_stamp > velocity_stamp) {
       ++velocity_it;
@@ -295,7 +296,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     const float dis = v * time_offset;
     x += dis * tier4_autoware_utils::cos(theta);
     y += dis * tier4_autoware_utils::sin(theta);
-
     baselink_tf_odom.setOrigin(tf2::Vector3(x, y, 0.0));
     baselink_tf_odom.setRotation(baselink_quat);
 
@@ -311,6 +311,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     prev_time_stamp_sec = *it_time_stamp;
   }
+
   return true;
 }
 
