@@ -20,7 +20,7 @@ namespace yabloc::modularized_particle_filter
 {
 ParticleVisualizer::ParticleVisualizer(rclcpp::Node & node)
 {
-  pub_marker_array_ = node.create_publisher<MarkerArray>("debug/particles_marker_array", 10);
+  pub_marker_array_ = node.create_publisher<MarkerArray>("~/debug/particles_marker_array", 10);
 }
 
 void ParticleVisualizer::publish(const ParticleArray & msg)

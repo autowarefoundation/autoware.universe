@@ -43,14 +43,14 @@ GroundServer::GroundServer()
   auto on_pose = std::bind(&GroundServer::on_pose_stamped, this, _1);
   auto on_map = std::bind(&GroundServer::on_map, this, _1);
 
-  sub_map_ = create_subscription<HADMapBin>("input/vector_map", map_qos, on_map);
-  sub_pose_stamped_ = create_subscription<PoseStamped>("input/pose", 10, on_pose);
+  sub_map_ = create_subscription<HADMapBin>("~/input/vector_map", map_qos, on_map);
+  sub_pose_stamped_ = create_subscription<PoseStamped>("~/input/pose", 10, on_pose);
 
-  pub_ground_height_ = create_publisher<Float32>("output/height", 10);
-  pub_ground_plane_ = create_publisher<Float32Array>("output/ground", 10);
-  pub_marker_ = create_publisher<Marker>("output/ground_markers", 10);
-  pub_string_ = create_publisher<String>("output/ground_status", 10);
-  pub_near_cloud_ = create_publisher<PointCloud2>("output/near_cloud", 10);
+  pub_ground_height_ = create_publisher<Float32>("~/output/height", 10);
+  pub_ground_plane_ = create_publisher<Float32Array>("~/output/ground", 10);
+  pub_marker_ = create_publisher<Marker>("~/debug/ground_markers", 10);
+  pub_string_ = create_publisher<String>("~/debug/ground_status", 10);
+  pub_near_cloud_ = create_publisher<PointCloud2>("~/debug/near_cloud", 10);
 
   height_filter_.reset(0);
 }

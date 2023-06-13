@@ -51,11 +51,12 @@ public:
 
     auto on_image = std::bind(&UndistortNode::on_image, this, _1);
     auto on_info = std::bind(&UndistortNode::on_info, this, _1);
-    sub_image_ = create_subscription<CompressedImage>("input/image_raw", qos, std::move(on_image));
-    sub_info_ = create_subscription<CameraInfo>("input/camera_info", qos, std::move(on_info));
+    sub_image_ =
+      create_subscription<CompressedImage>("~/input/image_raw", qos, std::move(on_image));
+    sub_info_ = create_subscription<CameraInfo>("~/input/camera_info", qos, std::move(on_info));
 
-    pub_info_ = create_publisher<CameraInfo>("output/resized_info", 10);
-    pub_image_ = create_publisher<Image>("output/resized_image", 10);
+    pub_info_ = create_publisher<CameraInfo>("~/output/resized_info", 10);
+    pub_image_ = create_publisher<Image>("~/output/resized_image", 10);
   }
 
 private:

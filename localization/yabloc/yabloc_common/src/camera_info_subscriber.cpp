@@ -20,7 +20,7 @@ CameraInfoSubscriber::CameraInfoSubscriber(rclcpp::Node * node)
 {
   rclcpp::QoS qos(10);
   auto callback = [this](const CameraInfo & msg) -> void { opt_info_ = msg; };
-  sub_info_ = node->create_subscription<CameraInfo>("input/camera_info", qos, callback);
+  sub_info_ = node->create_subscription<CameraInfo>("~/input/camera_info", qos, callback);
 }
 
 bool CameraInfoSubscriber::is_camera_info_ready() const

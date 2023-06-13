@@ -42,10 +42,10 @@ Predictor::Predictor()
   tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   // Publishers
-  predicted_particles_pub_ = create_publisher<ParticleArray>("output/predicted_particles", 10);
-  pose_pub_ = create_publisher<PoseStamped>("output/pose", 10);
-  pose_cov_pub_ = create_publisher<PoseCovStamped>("output/pose_with_covariance", 10);
-  marker_pub_ = create_publisher<Marker>("debug/init_marker", 10);
+  predicted_particles_pub_ = create_publisher<ParticleArray>("~/output/predicted_particles", 10);
+  pose_pub_ = create_publisher<PoseStamped>("~/output/pose", 10);
+  pose_cov_pub_ = create_publisher<PoseCovStamped>("~/output/pose_with_covariance", 10);
+  marker_pub_ = create_publisher<Marker>("~/debug/init_marker", 10);
 
   // Subscribers
   using std::placeholders::_1;
@@ -54,11 +54,12 @@ Predictor::Predictor()
   auto on_particle = std::bind(&Predictor::on_weighted_particles, this, _1);
   auto on_height = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
 
-  initialpose_sub_ = create_subscription<PoseCovStamped>("input/initialpose", 1, on_initial);
-  particles_sub_ = create_subscription<ParticleArray>("input/weighted_particles", 10, on_particle);
-  height_sub_ = create_subscription<std_msgs::msg::Float32>("input/height", 10, on_height);
+  initialpose_sub_ = create_subscription<PoseCovStamped>("~/input/initialpose", 1, on_initial);
+  particles_sub_ =
+    create_subscription<ParticleArray>("~/input/weighted_particles", 10, on_particle);
+  height_sub_ = create_subscription<std_msgs::msg::Float32>("~/input/height", 10, on_height);
   twist_cov_sub_ =
-    create_subscription<TwistCovStamped>("input/twist_with_covariance", 10, on_twist_cov);
+    create_subscription<TwistCovStamped>("~/input/twist_with_covariance", 10, on_twist_cov);
 
   // Timer callback
   const double prediction_rate = declare_parameter<double>("prediction_rate");

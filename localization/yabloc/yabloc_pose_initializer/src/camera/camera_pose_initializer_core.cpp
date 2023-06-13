@@ -39,16 +39,16 @@ CameraPoseInitializer::CameraPoseInitializer()
   // Subscriber
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
   auto on_image = [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; };
-  sub_map_ = create_subscription<HADMapBin>("input/vector_map", map_qos, on_map);
-  sub_image_ = create_subscription<Image>("input/image_raw", 10, on_image);
+  sub_map_ = create_subscription<HADMapBin>("~/input/vector_map", map_qos, on_map);
+  sub_image_ = create_subscription<Image>("~/input/image_raw", 10, on_image);
 
   // Client
   semseg_client_ = create_client<SemsegSrv>(
-    "semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
+    "~/semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
 
   // Server
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
-  align_server_ = create_service<RequestPoseAlignment>("yabloc_align_srv", on_service);
+  align_server_ = create_service<RequestPoseAlignment>("~/yabloc_align_srv", on_service);
 
   using namespace std::chrono_literals;
   while (!semseg_client_->wait_for_service(1s) && rclcpp::ok()) {

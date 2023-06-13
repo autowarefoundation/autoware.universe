@@ -30,13 +30,13 @@ LineSegmentsOverlay::LineSegmentsOverlay()
   using std::placeholders::_1;
 
   auto cb_image = std::bind(&LineSegmentsOverlay::on_image, this, _1);
-  sub_image_ = create_subscription<Image>("input/image_raw", 10, cb_image);
-
   auto cb_line_segments_ = std::bind(&LineSegmentsOverlay::on_line_segments, this, _1);
-  sub_line_segments_ =
-    create_subscription<PointCloud2>("input/line_segments", 10, cb_line_segments_);
 
-  pub_debug_image_ = create_publisher<Image>("output/image_with_colored_line_segments", 10);
+  sub_image_ = create_subscription<Image>("~/input/image_raw", 10, cb_image);
+  sub_line_segments_ =
+    create_subscription<PointCloud2>("~/input/line_segments", 10, cb_line_segments_);
+
+  pub_debug_image_ = create_publisher<Image>("~/debug/image_with_colored_line_segments", 10);
 }
 
 void LineSegmentsOverlay::on_image(const Image::ConstSharedPtr & img_msg)

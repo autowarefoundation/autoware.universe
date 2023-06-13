@@ -11,13 +11,13 @@
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var ground_server_param_path)"/>
 
-    <remap from="input/vector_map" to="/map/vector_map"/>
-    <remap from="input/pose" to="$(var input_particle_pose)"/>
-    <remap from="output/height" to="$(var output_height)"/>
-    <remap from="output/ground" to="$(var output_ground)"/>
-    <remap from="output/ground_markers" to="$(var output_ground_markers)"/>
-    <remap from="output/ground_status" to="$(var output_ground_status)"/>
-    <remap from="output/near_cloud" to="$(var output_near_cloud)"/>
+    <remap from="~/input/vector_map" to="/map/vector_map"/>
+    <remap from="~/input/pose" to="$(var input_particle_pose)"/>
+    <remap from="~/output/height" to="$(var output_height)"/>
+    <remap from="~/output/ground" to="$(var output_ground)"/>
+    <remap from="~/debug/ground_markers" to="$(var output_ground_markers)"/>
+    <remap from="~/debug/ground_status" to="$(var output_ground_status)"/>
+    <remap from="~/debug/near_cloud" to="$(var output_near_cloud)"/>
   </node>
 
   <!-- lanelet2 -->
@@ -30,10 +30,10 @@
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var ll2_decomposer_param_path)"/>
 
-    <remap from="input/vector_map" to="/map/vector_map"/>
-    <remap from="output/ll2_road_marking" to="$(var output_ll2_road_marking)"/>
-    <remap from="output/ll2_sign_board" to="$(var output_ll2_sign_board)"/>
-    <remap from="output/ll2_bounding_box" to="$(var output_ll2_bounding_box)"/>
-    <remap from="output/sign_board_marker" to="$(var output_sign_board_marker)"/>
+    <remap from="~/input/vector_map" to="/map/vector_map"/>
+    <remap from="~/output/ll2_road_marking" to="$(var output_ll2_road_marking)"/>
+    <remap from="~/output/ll2_sign_board" to="$(var output_ll2_sign_board)"/>
+    <remap from="~/output/ll2_bounding_box" to="$(var output_ll2_bounding_box)"/>
+    <remap from="~/debug/sign_board_marker" to="$(var output_sign_board_marker)"/>
   </node>
 </launch>

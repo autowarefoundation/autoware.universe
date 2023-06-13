@@ -29,11 +29,11 @@ LineSegmentDetector::LineSegmentDetector() : Node("line_detector")
 
   // Subscriber
   auto cb_image = std::bind(&LineSegmentDetector::on_image, this, _1);
-  sub_image_ = create_subscription<Image>("input/image_raw", 10, cb_image);
+  sub_image_ = create_subscription<Image>("~/input/image_raw", 10, cb_image);
 
   // Publisher
-  pub_image_with_line_segments_ = create_publisher<Image>("output/image_with_line_segments", 10);
-  pub_cloud_ = create_publisher<PointCloud2>("output/line_segments_cloud", 10);
+  pub_image_with_line_segments_ = create_publisher<Image>("~/debug/image_with_line_segments", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("~/output/line_segments_cloud", 10);
 
   line_segment_detector_ =
     cv::createLineSegmentDetector(cv::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);

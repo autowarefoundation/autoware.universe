@@ -6,8 +6,8 @@
   <node name="semseg_node" pkg="semantic_segmentation" exec="semseg_node.py" output="screen" args="--ros-args --log-level info">
     <param name="model_path" value="$(var model_path)"/>
     <param name="imshow" value="$(var imshow)"/>
-    <remap from="/in/image_raw" to="/sensing/camera/undistorted/image_raw"/>
-    <remap from="/out/overlay_image" to="/semseg/overlay_image"/>
-    <remap from="/out/semantic_image" to="/semseg/semantic_image"/>
+    <remap from="~/in/image_raw" to="/sensing/camera/undistorted/image_raw"/>
+    <remap from="~/out/overlay_image" to="/semseg/overlay_image"/>
+    <remap from="~/out/semantic_image" to="/semseg/semantic_image"/>
   </node>
 </launch>
