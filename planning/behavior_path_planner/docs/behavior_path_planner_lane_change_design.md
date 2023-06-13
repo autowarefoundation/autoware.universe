@@ -68,9 +68,9 @@ Which path will be chosen will depend on validity and collision check.
 
 #### Multiple candidate path samples (lateral acceleration)
 
-In addition to longitudinal acceleration sampling, we also sample lane change paths by changing the value of lateral acceleration. Since lateral acceleration affects lane change time, small lateral acceleration value makes longer lane change path, and big lateral acceleration value makes the lane change path shorter. This enables the lane change module to generate a short lane change path by making the lateral acceleration larger when it does not have long space to perform the lane change.
+In addition to sampling longitudinal acceleration, we also sample lane change paths by adjusting the value of lateral acceleration. Since lateral acceleration influences the duration of a lane change, a lower lateral acceleration value results in a longer lane change path, while a higher lateral acceleration value leads to a shorter lane change path. This allows the lane change module to generate a shorter lane change path by increasing the lateral acceleration when there is limited space for the lane change.
 
-Maximum lateral acceleration and minimum lateral acceleration are defined in the lane change parameter file as a map. Lateral acceleration range is defined at each velocity by linearly interpolating the map. Let assume we have the following map.
+The maximum and minimum lateral accelerations are defined in the lane change parameter file as a map. The range of lateral acceleration is determined for each velocity by linearly interpolating the values in the map. Let's assume we have the following map
 
 | Ego Velocity | Minimum lateral acceleration | Maximum lateral acceleration |
 | :----------- | ---------------------------- | ---------------------------- |
