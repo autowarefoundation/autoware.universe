@@ -79,9 +79,9 @@ The maximum and minimum lateral accelerations are defined in the lane change par
 | 4.0          | 0.3                          | 0.4                          |
 | 6.0          | 0.3                          | 0.5                          |
 
-In this case, if the current velocity of the ego vehicle is `3.0`, minimum lateral acceleration and maximum lateral acceleration are `0.2` and `0.35` respectively. They can be computed from the second and third low of the map by linearly interpolating minimum and maximum lateral acceleration values.
+In this case, when the current velocity of the ego vehicle is 3.0, the minimum and maximum lateral accelerations are 0.2 and 0.35 respectively. These values are obtained by linearly interpolating the second and third rows of the map, which provide the minimum and maximum lateral acceleration values.
 
-In this range, we sample the lateral acceleration for the ego vehicle. Similar to longitudinal acceleration sampling method, `lateral acceleration_resolution` is determine by the following
+Within this range, we sample the lateral acceleration for the ego vehicle. Similar to the method used for sampling longitudinal acceleration, the resolution of lateral acceleration (lateral_acceleration_resolution) is determined by the following:
 
 ```C++
 lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_deceleration) / lateral_acceleration_sampling_num
