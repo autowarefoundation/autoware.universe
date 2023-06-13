@@ -126,6 +126,67 @@ PathWithLaneId resamplePathWithSpline(
   return motion_utils::resamplePath(path, s_out);
 }
 
+PredictedPath createPredictedPathFromTargetVelocity(
+  const std::vector<PathPointWithLaneId> & following_trajectory_points,
+  const double current_velocity, const double target_velocity,
+  const double acc_till_target_velocity, const Pose & pose, const double resolution,
+  const double stopping_time)
+{
+  // Check if following_trajectory_points is empty
+  if (following_trajectory_points.empty()) {
+    return PredictedPath();
+  }
+
+  size_t nearest_segment_index =
+    motion_utils::findNearestIndex(following_trajectory_points, pose.position);
+  FrenetPoint vehicle_pose_frenet =
+    convertToFrenetPoint(following_trajectory_points, pose.position, nearest_segment_index);
+
+  PredictedPath predicted_path;
+  predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
+  predicted_path.path.reserve(
+    std::min(following_trajectory_points.size(), static_cast<size_t>(100)));
+
+  // add a segment to the path
+  auto addSegment = [&](
+                      const std::vector<PathPointWithLaneId> & following_trajectory_points,
+                      PredictedPath & predicted_path, const double initial_velocity,
+                      const double acc, const double start_time, const double end_time,
+                      double & offset) {
+    for (double t = start_time; t < end_time; t += resolution) {
+      const double delta_t = t - start_time;
+      const double length = initial_velocity * delta_t + 0.5 * acc * delta_t * delta_t + offset;
+      const auto pose = motion_utils::calcInterpolatedPose(
+        following_trajectory_points, vehicle_pose_frenet.length + length);
+      predicted_path.path.push_back(pose);
+    }
+  };
+
+  // Calculate time required to reach target velocity
+  double acc_time = std::max(0.0, (target_velocity - current_velocity) / acc_till_target_velocity);
+
+  // If stopping time is greater than zero and current velocity is almost zero, add stopping segment
+  if (current_velocity < 0.01 && stopping_time > 0.0) {
+    double offset = 0.0;  // Initialize offset here as it's not used before this point
+    addSegment(following_trajectory_points, predicted_path, 0.0, 0.0, 0.0, stopping_time, offset);
+  }
+
+  // Add acceleration segment
+  double offset = 0.0;
+  addSegment(
+    following_trajectory_points, predicted_path, current_velocity, acc_till_target_velocity,
+    stopping_time, stopping_time + acc_time, offset);
+
+  // Add constant velocity segment
+  offset += current_velocity * acc_time + 0.5 * acc_till_target_velocity * acc_time * acc_time;
+  double constant_velocity_time = stopping_time + acc_time + (target_velocity / resolution);
+  addSegment(
+    following_trajectory_points, predicted_path, target_velocity, 0.0, stopping_time + acc_time,
+    constant_velocity_time, offset);
+
+  return predicted_path;
+}
+
 Path toPath(const PathWithLaneId & input)
 {
   Path output{};

@@ -834,6 +834,7 @@ void StartPlannerModule::setDebugData() const
 {
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using marker_utils::createPredictedPathMarkerArray;
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
@@ -859,6 +860,8 @@ void StartPlannerModule::setDebugData() const
     parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
   debug_marker_.markers.clear();
+  add(createPredictedPathMarkerArray(
+    ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
