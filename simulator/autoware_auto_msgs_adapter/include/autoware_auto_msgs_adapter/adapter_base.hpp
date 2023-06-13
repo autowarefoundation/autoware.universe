@@ -38,7 +38,6 @@ public:
     sub_source_ = node.create_subscription<SourceT>(
       topic_name_source, qos, std::bind(&AdapterBase::callback, this, std::placeholders::_1));
   }
-  virtual ~AdapterBase() = default;
 
   typename rclcpp::Subscription<SourceT>::SharedPtr sub_source_;
   typename rclcpp::Publisher<TargetT>::SharedPtr pub_target_;
