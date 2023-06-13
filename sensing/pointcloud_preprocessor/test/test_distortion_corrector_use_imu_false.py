@@ -16,18 +16,21 @@
 
 import unittest
 
-from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import TwistWithCovarianceStamped
 import launch
 from launch.logging import get_logger
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 import launch_testing
+import numpy as np
 import pytest
 import rclpy
-from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
-import numpy as np
-from sensor_msgs.msg import PointField, PointCloud2
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
+from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointField
 from std_msgs.msg import Header
 
 logger = get_logger(__name__)
